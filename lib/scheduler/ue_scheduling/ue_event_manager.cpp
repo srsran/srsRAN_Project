@@ -106,7 +106,7 @@ private:
 static constexpr size_t INITIAL_COMMON_EVENT_LIST_SIZE = MAX_NOF_DU_UES;
 static constexpr size_t INITIAL_CELL_EVENT_LIST_SIZE   = MAX_NOF_DU_UES;
 
-ue_event_manager::ue_event_manager(ue_repository& ue_db_, scheduler_metrics_handler& metrics_handler_) :
+ue_event_manager::ue_event_manager(ue_repository& ue_db_, cell_metrics_handler& metrics_handler_) :
   ue_db(ue_db_),
   metrics_handler(metrics_handler_),
   logger(srslog::fetch_basic_logger("SCHED")),

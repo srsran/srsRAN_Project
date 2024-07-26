@@ -15,7 +15,7 @@ using namespace srsran;
 
 ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_,
                                      sched_configuration_notifier&     mac_notif,
-                                     scheduler_metrics_handler&        metric_handler) :
+                                     cell_metrics_handler&             metric_handler) :
   expert_cfg(expert_cfg_),
   ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
   event_mng(ue_db, metric_handler),

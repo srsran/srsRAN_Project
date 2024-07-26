@@ -20,8 +20,8 @@
 
 namespace srsran {
 
-///\brief Handler of scheduler slot metrics.
-class scheduler_metrics_handler final : public harq_timeout_handler, public sched_metrics_ue_configurator
+///\brief Handler of scheduler slot metrics for a given cell.
+class cell_metrics_handler final : public harq_timeout_handler, public sched_metrics_ue_configurator
 {
   using msecs = std::chrono::milliseconds;
   using usecs = std::chrono::microseconds;
@@ -91,8 +91,9 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
   scheduler_cell_metrics next_report;
 
 public:
-  /// \brief Creates a scheduler UE metrics handler. In case the metrics_report_period is zero, no metrics are reported.
-  explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
+  /// \brief Creates a scheduler UE metrics handler for a given cell. In case the metrics_report_period is zero,
+  /// no metrics are reported.
+  explicit cell_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
 
   /// \brief Register creation of a UE.
   void handle_ue_creation(du_ue_index_t ue_index,
@@ -143,21 +144,22 @@ private:
   void handle_slot_result(const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
 };
 
-class main_scheduler_metrics_handler
+/// Handler of metrics for all the UEs and cells of the scheduler.
+class scheduler_metrics_handler
 {
   using msecs = std::chrono::milliseconds;
 
 public:
   /// \brief Creates a scheduler metrics handler. In case the metrics_report_period is zero, no metrics are reported.
-  explicit main_scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
+  explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
 
-  scheduler_metrics_handler* add_cell(du_cell_index_t cell_idx);
+  cell_metrics_handler* add_cell(du_cell_index_t cell_idx);
 
 private:
   scheduler_metrics_notifier&     notifier;
   const std::chrono::milliseconds report_period;
 
-  slotted_array<scheduler_metrics_handler, MAX_NOF_DU_CELLS> cells;
+  slotted_array<cell_metrics_handler, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace srsran

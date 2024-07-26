@@ -26,7 +26,7 @@ scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  scheduler_metrics_handler* cell_metrics = metrics.add_cell(msg.cell_index);
+  cell_metrics_handler* cell_metrics = metrics.add_cell(msg.cell_index);
   if (cell_metrics == nullptr) {
     return false;
   }

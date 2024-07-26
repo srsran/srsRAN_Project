@@ -20,7 +20,7 @@
 
 namespace srsran {
 
-class scheduler_metrics_handler;
+class cell_metrics_handler;
 class scheduler_event_logger;
 class uci_scheduler_impl;
 
@@ -32,7 +32,7 @@ class ue_event_manager final : public sched_ue_configuration_handler,
                                public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler);
+  ue_event_manager(ue_repository& ue_db, cell_metrics_handler& metrics_handler);
   ~ue_event_manager();
 
   void add_cell(cell_resource_allocator& cell_res_grid,
@@ -105,9 +105,9 @@ private:
                        std::optional<float>                   pucch_snr);
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
-  ue_repository&             ue_db;
-  scheduler_metrics_handler& metrics_handler;
-  srslog::basic_logger&      logger;
+  ue_repository&        ue_db;
+  cell_metrics_handler& metrics_handler;
+  srslog::basic_logger& logger;
 
   /// List of added and configured cells.
   struct du_cell {

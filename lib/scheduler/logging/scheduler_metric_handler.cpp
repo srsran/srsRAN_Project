@@ -13,17 +13,16 @@
 
 using namespace srsran;
 
-scheduler_metrics_handler::scheduler_metrics_handler(msecs                       metrics_report_period,
-                                                     scheduler_metrics_notifier& notifier_) :
+cell_metrics_handler::cell_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier_) :
   notifier(notifier_), report_period(metrics_report_period)
 {
 }
 
-void scheduler_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
-                                                   rnti_t        rnti,
-                                                   pci_t         pcell_pci,
-                                                   unsigned      num_prbs,
-                                                   unsigned      num_slots_per_frame)
+void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
+                                              rnti_t        rnti,
+                                              pci_t         pcell_pci,
+                                              unsigned      num_prbs,
+                                              unsigned      num_slots_per_frame)
 {
   ues.emplace(ue_index);
   ues[ue_index].rnti                = rnti;
@@ -34,7 +33,7 @@ void scheduler_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
 }
 
-void scheduler_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
+void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
 {
   if (ues.contains(ue_index)) {
     rnti_to_ue_index_lookup.erase(ues[ue_index].rnti);
@@ -42,7 +41,7 @@ void scheduler_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   }
 }
 
-void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs)
+void cell_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs)
 {
   if (ues.contains(crc_pdu.ue_index)) {
     auto& u = ues[crc_pdu.ue_index];
@@ -65,13 +64,13 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
   }
 }
 
-void scheduler_metrics_handler::handle_pucch_sinr(ue_metric_context& u, float sinr)
+void cell_metrics_handler::handle_pucch_sinr(ue_metric_context& u, float sinr)
 {
   u.data.nof_pucch_snr_reports++;
   u.data.sum_pucch_snrs += sinr;
 }
 
-void scheduler_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_report_data& csi)
+void cell_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_report_data& csi)
 {
   // Add new CQI and RI observations if they are available in the CSI report.
   if (csi.first_tb_wideband_cqi.has_value()) {
@@ -82,7 +81,7 @@ void scheduler_metrics_handler::handle_csi_report(ue_metric_context& u, const cs
   }
 }
 
-void scheduler_metrics_handler::handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs)
+void cell_metrics_handler::handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs)
 {
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
@@ -94,7 +93,7 @@ void scheduler_metrics_handler::handle_dl_harq_ack(du_ue_index_t ue_index, bool 
   }
 }
 
-void scheduler_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool is_dl)
+void cell_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool is_dl)
 {
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
@@ -106,7 +105,7 @@ void scheduler_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool
   }
 }
 
-void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu)
+void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu)
 {
   if (ues.contains(pdu.ue_index)) {
     auto& u = ues[pdu.ue_index];
@@ -142,7 +141,7 @@ void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::
   }
 }
 
-void scheduler_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
+void cell_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
 {
   if (ues.contains(bsr.ue_index)) {
     auto& u = ues[bsr.ue_index];
@@ -156,7 +155,7 @@ void scheduler_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication
   }
 }
 
-void scheduler_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
+void cell_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
 {
   if (ues.contains(phr_ind.ue_index)) {
     auto& u = ues[phr_ind.ue_index];
@@ -170,7 +169,7 @@ void scheduler_metrics_handler::handle_ul_phr_indication(const ul_phr_indication
   }
 }
 
-void scheduler_metrics_handler::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bs)
+void cell_metrics_handler::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bs)
 {
   if (ues.contains(dl_bs.ue_index)) {
     auto& u = ues[dl_bs.ue_index];
@@ -180,12 +179,12 @@ void scheduler_metrics_handler::handle_dl_buffer_state_indication(const dl_buffe
   }
 }
 
-void scheduler_metrics_handler::handle_error_indication()
+void cell_metrics_handler::handle_error_indication()
 {
   error_indication_counter++;
 }
 
-void scheduler_metrics_handler::report_metrics()
+void cell_metrics_handler::report_metrics()
 {
   next_report.ue_metrics.clear();
 
@@ -207,8 +206,8 @@ void scheduler_metrics_handler::report_metrics()
   notifier.report_metrics(next_report);
 }
 
-void scheduler_metrics_handler::handle_slot_result(const sched_result&       slot_result,
-                                                   std::chrono::microseconds slot_decision_latency)
+void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
+                                              std::chrono::microseconds slot_decision_latency)
 {
   for (const dl_msg_alloc& dl_grant : slot_result.dl.ue_grants) {
     auto it = rnti_to_ue_index_lookup.find(dl_grant.pdsch_cfg.rnti);
@@ -256,16 +255,16 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result&       slo
   decision_latency_hist[bin_idx]++;
 }
 
-void scheduler_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay)
+void cell_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay)
 {
   if (ues.contains(ue_index)) {
     ues[ue_index].data.sum_ul_delay_ms += delay * (10 / (ues[ue_index].num_slots_per_frame));
   }
 }
 
-void scheduler_metrics_handler::push_result(slot_point                sl_tx,
-                                            const sched_result&       slot_result,
-                                            std::chrono::microseconds slot_decision_latency)
+void cell_metrics_handler::push_result(slot_point                sl_tx,
+                                       const sched_result&       slot_result,
+                                       std::chrono::microseconds slot_decision_latency)
 {
   if (report_period_slots == 0) {
     // The SCS common is now known.
@@ -283,7 +282,7 @@ void scheduler_metrics_handler::push_result(slot_point                sl_tx,
 }
 
 scheduler_ue_metrics
-scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period)
+cell_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period)
 {
   scheduler_ue_metrics ret{};
   ret.pci           = pci;
@@ -324,19 +323,19 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   return ret;
 }
 
-void scheduler_metrics_handler::ue_metric_context::reset()
+void cell_metrics_handler::ue_metric_context::reset()
 {
   // Note: for BSR and CQI we just keep the last without resetting the value at every slot.
   data = {};
 }
 
-main_scheduler_metrics_handler::main_scheduler_metrics_handler(msecs                       metrics_report_period,
-                                                               scheduler_metrics_notifier& notifier_) :
+scheduler_metrics_handler::scheduler_metrics_handler(msecs                       metrics_report_period,
+                                                     scheduler_metrics_notifier& notifier_) :
   notifier(notifier_), report_period(metrics_report_period)
 {
 }
 
-scheduler_metrics_handler* main_scheduler_metrics_handler::add_cell(du_cell_index_t cell_idx)
+cell_metrics_handler* scheduler_metrics_handler::add_cell(du_cell_index_t cell_idx)
 {
   if (cells.contains(cell_idx)) {
     srslog::fetch_basic_logger("SCHED").warning("Cell={} already exists", cell_idx);
