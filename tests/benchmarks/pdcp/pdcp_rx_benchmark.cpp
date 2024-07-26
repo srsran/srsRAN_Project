@@ -123,11 +123,13 @@ std::vector<byte_buffer_chain> gen_pdu_list(bench_params                  params
   // Set TX config
   pdcp_tx_config config         = {};
   config.rb_type                = pdcp_rb_type::drb;
-  config.rlc_mode               = pdcp_rlc_mode::am;
+  config.rlc_mode               = pdcp_rlc_mode::um;
   config.sn_size                = pdcp_sn_size::size18bits;
   config.direction              = pdcp_security_direction::uplink;
   config.discard_timer          = pdcp_discard_timer::ms10;
   config.status_report_required = false;
+  config.custom.rlc_sdu_queue   = params.nof_repetitions;
+  config.custom.test_mode       = true; // imediatly notify transmit notification to avoid buffering
 
   security::sec_128_as_config sec_cfg = {};
 
@@ -251,6 +253,8 @@ int run_benchmark(bench_params params, int algo)
 
   security::integrity_algorithm int_algo  = static_cast<security::integrity_algorithm>(algo);
   security::ciphering_algorithm ciph_algo = static_cast<security::ciphering_algorithm>(algo);
+
+  init_byte_buffer_segment_pool(1048576, byte_buffer_segment_pool_default_segment_size());
 
   if (algo == 0) {
     benchmark_pdcp_rx(params,
