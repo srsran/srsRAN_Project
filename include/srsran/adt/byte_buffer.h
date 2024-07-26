@@ -29,6 +29,13 @@ size_t byte_buffer_segment_pool_default_segment_size();
 void init_byte_buffer_segment_pool(std::size_t nof_segments,
                                    std::size_t memory_block_size = byte_buffer_segment_pool_default_segment_size());
 
+/// \brief Get total capacity of the byte buffer segment pool in terms of segments.
+size_t get_byte_buffer_segment_pool_capacity();
+
+/// \brief Get an estimate of the number of segments of the byte buffer segment pool that are currently available for
+/// allocation in the caller thread.
+size_t get_byte_buffer_segment_pool_current_size_approx();
+
 /// \brief Non-owning view to a byte sequence.
 ///
 /// The underlying byte sequence is not contiguous in memory. Instead, it is represented as an intrusive linked list of
