@@ -74,12 +74,8 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
       // Load noise variance in a SIMD register.
       simd_f_t port_noise_var_est = srsran_simd_f_set1(noise_var_est[i_port]);
 
-      // Detect abnormal computation parameters. This detects whether the channel estimate and the port noise variance
-      // estimation are negative, NaN or infinite.
-      simd_sel_t isnormal_mask = srsran_simd_f_max(ch_est_norm, zero);
-      isnormal_mask            = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(infinity, ch_est_norm));
-      isnormal_mask            = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(port_noise_var_est, zero));
-      isnormal_mask            = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(infinity, port_noise_var_est));
+      // Detect an abnormal computation parameter. This detects whether the channel estimate is NaN or infinite.
+      simd_sel_t isnormal_mask = srsran_simd_f_max(infinity, ch_est_norm);
 
       // Compute the channel square norm, by accumulating the channel square absolute values.
       ch_mod_sq = srsran_simd_f_add_sel(ch_mod_sq, ch_est_norm, isnormal_mask);
@@ -105,12 +101,6 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
 
     // Calculate noise variances.
     simd_f_t vars_out = srsran_simd_f_mul(nvar_acc, srsran_simd_f_mul(d_pinv_rcp, d_pinv_rcp));
-
-    // Detect whenever the post-equalization noise variances are zero, negative or NaN.
-    isnormal_mask = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(vars_out, zero));
-
-    // Detect whenever the post-equalization noise variances are set to infinity.
-    isnormal_mask = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(infinity, vars_out));
 
     // If abnormal calculation parameters are detected, the noise variances are set to infinity.
     srsran_simd_f_storeu(nvars_out.data() + i_re, srsran_simd_f_select(infinity, vars_out, isnormal_mask));

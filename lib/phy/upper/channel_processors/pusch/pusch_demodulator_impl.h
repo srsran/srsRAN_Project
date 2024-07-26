@@ -46,7 +46,6 @@ public:
     evm_calc(std::move(evm_calc_)),
     descrambler(std::move(descrambler_)),
     ch_re_copy(MAX_PORTS, max_nof_rb * NRE),
-    ch_re_view(pusch_constants::MAX_NOF_RX_PORTS),
     temp_eq_re(max_nof_rb * NRE * pusch_constants::MAX_NOF_LAYERS),
     temp_eq_noise_vars(max_nof_rb * NRE * pusch_constants::MAX_NOF_LAYERS),
     ch_estimates_copy(max_nof_rb * NRE, pusch_constants::MAX_NOF_RX_PORTS, pusch_constants::MAX_NOF_LAYERS),
@@ -215,7 +214,7 @@ private:
   /// Copy buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
   dynamic_re_buffer<cbf16_t> ch_re_copy;
   /// View buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
-  modular_re_buffer_reader<cbf16_t> ch_re_view;
+  modular_re_buffer_reader<MAX_PORTS, cbf16_t> ch_re_view;
   /// Buffer used to store channel modulation resource elements at the equalizer output.
   std::vector<cf_t> temp_eq_re;
   /// Buffer used to transfer symbol noise variances at the equalizer output.
@@ -223,7 +222,7 @@ private:
   /// Copy buffer used to transfer channel estimation coefficients from the channel estimate to the equalizer.
   dynamic_ch_est_list ch_estimates_copy;
   /// View buffer used to transfer channel estimation coefficients from the channel estimate to the equalizer.
-  modular_ch_est_list ch_estimates_view;
+  modular_ch_est_list<pusch_constants::MAX_NOF_RX_PORTS * pusch_constants::MAX_NOF_LAYERS> ch_estimates_view;
   /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
   std::array<float, MAX_PORTS> noise_var_estimates;
 
