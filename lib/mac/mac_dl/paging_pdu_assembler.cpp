@@ -39,7 +39,7 @@ static asn1::rrc_nr::paging_s make_asn1_rrc_cell_paging_msg(const dl_paging_allo
 /// \return byte buffer with packed cell PCCH-PCH message.
 static byte_buffer make_asn1_rrc_cell_pcch_pch_msg(const dl_paging_allocation& pg)
 {
-  byte_buffer   buf;
+  byte_buffer   buf{byte_buffer::fallback_allocation_tag{}};
   asn1::bit_ref bref{buf};
 
   asn1::rrc_nr::pcch_msg_s pcch_msg{};
