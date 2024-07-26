@@ -287,9 +287,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   // configure rx security
   auto& pdcp_rx_ctrl = new_drb->pdcp->get_rx_upper_control_interface();
-  pdcp_rx_ctrl.configure_security(sec_128);
-  pdcp_rx_ctrl.set_integrity_protection(integrity_enabled);
-  pdcp_rx_ctrl.set_ciphering(ciphering_enabled);
+  pdcp_rx_ctrl.configure_security(sec_128, integrity_enabled, ciphering_enabled);
 
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler

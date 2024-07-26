@@ -9,11 +9,7 @@
  */
 
 #include "pdcp_rx_reestablish_test.h"
-#include "lib/pdcp/pdcp_entity_impl.h"
-#include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/support/bit_encoding.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -28,9 +24,7 @@ TEST_P(pdcp_rx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
   security::sec_128_as_config reest_sec_cfg = sec_cfg;
   reest_sec_cfg.integ_algo                  = security::integrity_algorithm::nia3;
   reest_sec_cfg.cipher_algo                 = security::ciphering_algorithm::nea3;
-  pdcp_rx->configure_security(sec_cfg);
-  pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
-  pdcp_rx->set_ciphering(security::ciphering_enabled::on);
+  pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;
@@ -77,9 +71,7 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_um_reestablish_then_pdus_forwared)
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::um);
   uint32_t count = 0;
 
-  pdcp_rx->configure_security(sec_cfg);
-  pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
-  pdcp_rx->set_ciphering(security::ciphering_enabled::on);
+  pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;
@@ -126,9 +118,7 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
   uint32_t                    count         = 0;
   security::sec_128_as_config reest_sec_cfg = sec_cfg;
 
-  pdcp_rx->configure_security(sec_cfg);
-  pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
-  pdcp_rx->set_ciphering(security::ciphering_enabled::on);
+  pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;

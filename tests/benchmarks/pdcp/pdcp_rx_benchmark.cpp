@@ -212,9 +212,7 @@ void benchmark_pdcp_rx(bench_params                  params,
   // Create PDCP entities
   std::unique_ptr<pdcp_entity_rx> pdcp_rx = std::make_unique<pdcp_entity_rx>(
       0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
-  pdcp_rx->configure_security(sec_cfg);
-  pdcp_rx->set_integrity_protection(int_enabled);
-  pdcp_rx->set_ciphering(ciph_enabled);
+  pdcp_rx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
   // Prepare SDU list for benchmark
   std::vector<byte_buffer> sdu_list  = {};
