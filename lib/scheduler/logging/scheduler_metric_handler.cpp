@@ -9,6 +9,7 @@
  */
 
 #include "scheduler_metrics_handler.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
@@ -327,4 +328,22 @@ void scheduler_metrics_handler::ue_metric_context::reset()
 {
   // Note: for BSR and CQI we just keep the last without resetting the value at every slot.
   data = {};
+}
+
+main_scheduler_metrics_handler::main_scheduler_metrics_handler(msecs                       metrics_report_period,
+                                                               scheduler_metrics_notifier& notifier_) :
+  notifier(notifier_), report_period(metrics_report_period)
+{
+}
+
+scheduler_metrics_handler* main_scheduler_metrics_handler::add_cell(du_cell_index_t cell_idx)
+{
+  if (cells.contains(cell_idx)) {
+    srslog::fetch_basic_logger("SCHED").warning("Cell={} already exists", cell_idx);
+    return nullptr;
+  }
+
+  cells.emplace(cell_idx, report_period, notifier);
+
+  return &cells[cell_idx];
 }

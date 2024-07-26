@@ -61,7 +61,7 @@ private:
   srslog::basic_logger& logger;
 
   // Slot metrics sink.
-  scheduler_metrics_handler metrics;
+  main_scheduler_metrics_handler metrics;
 
   // Manager of configurations forwarded to the scheduler.
   sched_config_manager cfg_mng;

@@ -143,4 +143,21 @@ private:
   void handle_slot_result(const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
 };
 
+class main_scheduler_metrics_handler
+{
+  using msecs = std::chrono::milliseconds;
+
+public:
+  /// \brief Creates a scheduler metrics handler. In case the metrics_report_period is zero, no metrics are reported.
+  explicit main_scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
+
+  scheduler_metrics_handler* add_cell(du_cell_index_t cell_idx);
+
+private:
+  scheduler_metrics_notifier&     notifier;
+  const std::chrono::milliseconds report_period;
+
+  slotted_array<scheduler_metrics_handler, MAX_NOF_DU_CELLS> cells;
+};
+
 } // namespace srsran

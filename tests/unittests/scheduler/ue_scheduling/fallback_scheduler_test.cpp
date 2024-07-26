@@ -81,7 +81,7 @@ struct test_bench {
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
   cell_config_builder_params              builder_params;
 
-  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif, metrics_notif}, metrics_ue_handler};
+  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif, metrics_notif}};
   const cell_configuration& cell_cfg;
 
   cell_resource_allocator       res_grid{cell_cfg};
@@ -98,7 +98,7 @@ struct test_bench {
                       const sched_cell_configuration_request_message& cell_req) :
     sched_cfg{sched_cfg_},
     builder_params{builder_params_},
-    cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
+    cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req, metrics_ue_handler); }()},
     ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
     fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db),
     csi_rs_sched(cell_cfg)

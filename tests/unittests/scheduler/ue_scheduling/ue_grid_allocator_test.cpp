@@ -37,7 +37,8 @@ protected:
           GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
       cfg_builder_params.band           = band_helper::get_band_from_dl_arfcn(cfg_builder_params.dl_arfcn);
       cfg_builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
-      auto* cfg = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(cfg_builder_params));
+      auto* cfg = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(cfg_builder_params),
+                                   metrics_ue_handler);
       srsran_assert(cfg != nullptr, "Cell configuration failed");
       return cfg;
     }()),
@@ -110,7 +111,7 @@ protected:
   scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
 
   cell_config_builder_params cfg_builder_params;
-  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}, metrics_ue_handler};
+  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}};
   const cell_configuration&  cell_cfg;
 
   cell_resource_allocator res_grid{cell_cfg};
