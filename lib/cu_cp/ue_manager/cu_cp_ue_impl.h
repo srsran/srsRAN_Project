@@ -104,6 +104,9 @@ public:
   /// \param[in] rrc_ue_srb_notifier_ RRC UE SRB control notifier of the UE.
   void set_rrc_ue_srb_notifier(du_processor_rrc_ue_srb_control_notifier& rrc_ue_srb_notifier_);
 
+  /// \brief Set the RRC UE of the UE.
+  void set_rrc_ue(rrc_ue_interface& rrc_ue_);
+
   /// \brief Get the RRC UE PDU notifier of the UE.
   ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override;
 
@@ -133,6 +136,9 @@ public:
   /// \brief Get the RRC to CU-CP adapter of the UE.
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter() { return rrc_ue_cu_cp_ev_notifier; }
 
+  /// \brief Get the RRC UE of the UE.
+  rrc_ue_interface* get_rrc_ue() { return rrc_ue; }
+
 private:
   // common context
   ue_index_t             ue_index = ue_index_t::invalid;
@@ -148,6 +154,9 @@ private:
   rrc_ue_cu_cp_ue_adapter                       rrc_ue_cu_cp_ue_ev_notifier;
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier     = nullptr;
   du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
+
+  // rrc ue
+  rrc_ue_interface* rrc_ue = nullptr;
 
   // ngap ue context
   ngap_cu_cp_ue_adapter ngap_cu_cp_ue_ev_notifier;

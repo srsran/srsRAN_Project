@@ -90,6 +90,13 @@ void cu_cp_ue::set_rrc_ue_srb_notifier(du_processor_rrc_ue_srb_control_notifier&
   rrc_ue_srb_notifier = &rrc_ue_srb_notifier_;
 }
 
+/// \brief Set the RRC UE of the UE.
+/// \param[in] rrc_ue_ RRC UE of the UE.
+void cu_cp_ue::set_rrc_ue(rrc_ue_interface& rrc_ue_)
+{
+  rrc_ue = &rrc_ue_;
+}
+
 /// \brief Get the RRC UE PDU notifier of the UE.
 ngap_rrc_ue_pdu_notifier& cu_cp_ue::get_rrc_ue_pdu_notifier()
 {

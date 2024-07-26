@@ -207,6 +207,10 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
   }
 
   auto* const old_ue = ue_mng.find_du_ue(old_ue_index);
+  if (old_ue == nullptr) {
+    logger.debug("ue={}: Could not find UE", old_ue_index);
+    return reest_context;
+  }
 
   // check if a DRB and SRB2 were setup
   if (old_ue->get_up_resource_manager().get_drbs().empty()) {
@@ -222,21 +226,15 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
     return reest_context;
   }
 
-  if (du_db.find_du_processor(old_ue->get_du_index()) == nullptr) {
-    logger.debug("ue={}: DU processor not found for this UE - rejecting RRC reestablishment", old_ue_index);
-    reest_context.ue_index = old_ue_index;
-    return reest_context;
-  }
-
-  if (du_db.find_du_processor(old_ue->get_du_index())->get_rrc_du_handler().find_ue(old_ue_index) == nullptr) {
+  auto* rrc_ue = old_ue->get_rrc_ue();
+  if (rrc_ue == nullptr) {
     logger.debug("ue={}: RRC UE not found for this UE - rejecting RRC reestablishment", old_ue_index);
     reest_context.ue_index = old_ue_index;
     return reest_context;
   }
 
   // Get RRC Reestablishment UE Context from old UE
-  reest_context =
-      du_db.find_du_processor(old_ue->get_du_index())->get_rrc_du_handler().find_ue(old_ue_index)->get_context();
+  reest_context                       = rrc_ue->get_context();
   reest_context.old_ue_fully_attached = true;
   reest_context.ue_index              = old_ue_index;
 
@@ -413,7 +411,7 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
 {
   cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find UE", request.ue_index);
-  rrc_ue_interface* rrc_ue = du_db.get_du_processor(ue->get_du_index()).get_rrc_du_handler().find_ue(request.ue_index);
+  rrc_ue_interface* rrc_ue = ue->get_rrc_ue();
   srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", request.ue_index);
 
   return launch_async<initial_context_setup_routine>(request,
@@ -648,13 +646,12 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)
 {
   srsran_assert(ue_mng.find_du_ue(ue_index) != nullptr, "ue={}: Could not find DU UE", ue_index);
-  du_index_t du_index = ue_mng.find_du_ue(ue_index)->get_du_index();
 
   // Clear all enqueued tasks for this UE.
   ue_mng.get_task_sched().clear_pending_tasks(ue_index);
 
   // Cancel running transactions for the RRC UE.
-  rrc_ue_interface* rrc_ue = du_db.get_du_processor(du_index).get_rrc_du_handler().find_ue(ue_index);
+  rrc_ue_interface* rrc_ue = ue_mng.find_du_ue(ue_index)->get_rrc_ue();
   if (rrc_ue != nullptr) {
     rrc_ue->get_controller().stop();
   }
@@ -664,6 +661,10 @@ void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)
 
 void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue)
 {
+  // Store the RRC UE in the UE manager
+  auto* ue = ue_mng.find_ue(ue_index);
+  ue->set_rrc_ue(rrc_ue);
+
   // Connect RRC UE to NGAP to RRC UE adapter
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_dl_nas_message_handler(),
                                                           rrc_ue.get_rrc_ue_radio_access_capability_handler(),
@@ -673,7 +674,7 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
   ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(get_cu_cp_rrc_ue_interface(),
                                                           get_cu_cp_ue_removal_handler(),
                                                           *controller,
-                                                          ue_mng.find_ue(ue_index)->get_up_resource_manager(),
+                                                          ue->get_up_resource_manager(),
                                                           get_cu_cp_measurement_handler());
 }
 
