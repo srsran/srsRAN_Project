@@ -142,6 +142,8 @@ public:
 
     bin_idx = std::min(bin_idx, rlc_tx_metrics_lower::pdu_latency_hist_bins - 1);
     metrics_lo.pdu_latency_hist_ns[bin_idx]++;
+
+    metrics_lo.max_pdu_latency_ns = std::max(pdu_latency, metrics_lo.max_pdu_latency_ns);
   }
 
   // TM specific metrics

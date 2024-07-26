@@ -92,6 +92,7 @@ struct rlc_tx_metrics_lower {
   static constexpr unsigned                   pdu_latency_hist_bins = 8;
   constexpr static unsigned                   nof_usec_per_bin      = 10;
   std::array<uint32_t, pdu_latency_hist_bins> pdu_latency_hist_ns;
+  uint32_t                                    max_pdu_latency_ns;
 
   /// RLC mode of the entity
   rlc_mode mode;
@@ -123,6 +124,7 @@ struct rlc_tx_metrics_lower {
     sum_sdu_latency_us            = {};
     sum_pdu_latency_ns            = {};
     pdu_latency_hist_ns           = {};
+    max_pdu_latency_ns            = {};
 
     // reset mode-specific values
     switch (mode) {
@@ -216,7 +218,7 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
   for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {
     fmt::format_to(buffer, " {}", float_to_eng_string(m.tx_low.pdu_latency_hist_ns[i], 1, false));
   }
-  fmt::format_to(buffer, "] ");
+  fmt::format_to(buffer, "] max_pull_latency={}us", m.tx_low.max_pdu_latency_ns * 1e-3);
   return to_c_str(buffer);
 }
 } // namespace srsran
