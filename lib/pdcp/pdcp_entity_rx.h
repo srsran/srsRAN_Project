@@ -145,10 +145,9 @@ public:
   /*
    * Testing Helpers
    */
-  void                        set_state(pdcp_rx_state st_) { st = st_; }
-  pdcp_rx_state               get_state() { return st; }
-  security::sec_128_as_config get_sec_config() { return sec_cfg; }
-  bool                        is_reordering_timer_running() { return reordering_timer.is_running(); }
+  void          set_state(pdcp_rx_state st_) { st = st_; }
+  pdcp_rx_state get_state() { return st; }
+  bool          is_reordering_timer_running() { return reordering_timer.is_running(); }
 
 private:
   pdcp_bearer_logger   logger;

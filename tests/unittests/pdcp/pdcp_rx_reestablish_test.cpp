@@ -29,6 +29,8 @@ TEST_P(pdcp_rx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
   reest_sec_cfg.integ_algo                  = security::integrity_algorithm::nia3;
   reest_sec_cfg.cipher_algo                 = security::ciphering_algorithm::nea3;
   pdcp_rx->configure_security(sec_cfg);
+  pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+  pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;
@@ -62,11 +64,11 @@ TEST_P(pdcp_rx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
   }
   ASSERT_EQ(0, test_frame->sdu_queue.size());
 
-  // Check security config changed
-  {
-    security::sec_128_as_config reest_sec_config2 = pdcp_rx->get_sec_config();
-    ASSERT_EQ(reest_sec_cfg, reest_sec_config2);
-  }
+  // Check security config changed by passing test PDUs from NxA3 testset
+  byte_buffer test_pdu_nxa3;
+  get_test_pdu(count, test_pdu_nxa3, 3);
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu_nxa3)).value());
+  ASSERT_EQ(1, test_frame->sdu_queue.size());
 }
 
 /// Test DRB UM reestablishment
