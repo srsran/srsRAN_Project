@@ -78,6 +78,8 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_um_reestablish_then_pdus_forwared)
   uint32_t count = 0;
 
   pdcp_rx->configure_security(sec_cfg);
+  pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+  pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;
@@ -125,6 +127,8 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
   security::sec_128_as_config reest_sec_cfg = sec_cfg;
 
   pdcp_rx->configure_security(sec_cfg);
+  pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+  pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;
