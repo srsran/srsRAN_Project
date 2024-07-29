@@ -107,7 +107,9 @@ protected:
 
   bool is_prach_slot()
   {
-    if (sl.sfn() % prach_cfg.x != prach_cfg.y) {
+    bool prach_occasion_sfn =
+        std::any_of(prach_cfg.y.begin(), prach_cfg.y.end(), [this](uint8_t y) { return sl.sfn() % prach_cfg.x != y; });
+    if (prach_occasion_sfn) {
       return false;
     }
     if (std::find(prach_cfg.subframe.begin(), prach_cfg.subframe.end(), sl.subframe_index()) ==

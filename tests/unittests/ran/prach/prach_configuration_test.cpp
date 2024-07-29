@@ -10,10 +10,29 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include <fmt/ostream.h>
 #include <gtest/gtest.h>
 #include <set>
 
 using namespace srsran;
+
+namespace srsran {
+
+std::ostream& operator<<(std::ostream& os, prach_format_type format)
+{
+  fmt::print(os, "{}", to_string(format));
+  return os;
+}
+
+bool operator==(int left, const static_vector<uint8_t, 2> right)
+{
+  if (right.size() == 1) {
+    return left == right.front();
+  }
+  return false;
+}
+
+} // namespace srsran
 
 TEST(PrachConfiguration, Fr1Paired)
 {
@@ -470,6 +489,155 @@ TEST(PrachConfiguration, Fr1Unpaired)
     } else if (prach_config_index < 145) {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
     } else if (prach_config_index < 169) {
+      ASSERT_EQ(12, config.duration);
+    } else {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
+    }
+  }
+}
+
+TEST(PrachConfiguration, Fr2Unpaired)
+{
+  for (unsigned prach_config_index = 0; prach_config_index != UINT8_MAX; ++prach_config_index) {
+    prach_configuration config = prach_configuration_get(frequency_range::FR2, duplex_mode::TDD, prach_config_index);
+
+    // Assert format.
+    if (prach_config_index < 112) {
+      ASSERT_EQ(config.format, PRACH_CONFIG_RESERVED.format);
+    } else if (prach_config_index < 144) {
+      ASSERT_EQ(config.format, prach_format_type::B4);
+    } else {
+      ASSERT_EQ(config.format, PRACH_CONFIG_RESERVED.format);
+    }
+
+    // Assert x.
+    if (prach_config_index < 112) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
+    } else if (prach_config_index < 114) {
+      ASSERT_EQ(16, config.x);
+    } else if (prach_config_index < 117) {
+      ASSERT_EQ(8, config.x);
+    } else if (prach_config_index < 120) {
+      ASSERT_EQ(4, config.x);
+    } else if (prach_config_index < 124) {
+      ASSERT_EQ(2, config.x);
+    } else if (prach_config_index < 144) {
+      ASSERT_EQ(1, config.x);
+    } else {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
+    }
+
+    // Assert y.
+    static const static_vector<uint8_t, 2> value_y_0   = {0};
+    static const static_vector<uint8_t, 2> value_y_1   = {1};
+    static const static_vector<uint8_t, 2> value_y_1_2 = {1, 2};
+    if (prach_config_index < 112) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
+    } else if ((prach_config_index < 117) || (prach_config_index == 119)) {
+      ASSERT_EQ(value_y_1_2, config.y);
+    } else if (prach_config_index < 124) {
+      ASSERT_EQ(value_y_1, config.y);
+    } else if (prach_config_index < 144) {
+      ASSERT_EQ(value_y_0, config.y);
+    } else {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
+    }
+
+    // Assert subframe number.
+    static const std::set<unsigned> config_subframe_4_9_etc   = {112, 114, 117, 118, 121, 122, 135, 136};
+    static const std::set<unsigned> config_subframe_3_7_etc   = {113, 115, 119, 123, 138, 139};
+    static const std::set<unsigned> config_subframe_9_19_etc  = {116, 127, 128};
+    static const std::set<unsigned> config_subframe_7_15_etc  = {120, 129, 130};
+    static const std::set<unsigned> config_subframe_19_39     = {124};
+    static const std::set<unsigned> config_subframe_17_19_etc = {125};
+    static const std::set<unsigned> config_subframe_24_29_etc = {126};
+    static const std::set<unsigned> config_subframe_9_19_etc2 = {127, 128};
+    static const std::set<unsigned> config_subframe_7_15_etc2 = {129, 130};
+    static const std::set<unsigned> config_subframe_23_27_etc = {131, 132};
+    static const std::set<unsigned> config_subframe_9_11_etc  = {133};
+    static const std::set<unsigned> config_subframe_3_5_etc   = {134};
+    static const std::set<unsigned> config_subframe_13_14_etc = {137};
+    static const std::set<unsigned> config_subframe_3_5_etc2  = {140, 141};
+    static const std::set<unsigned> config_subframe_1_3_etc   = {142};
+    static const std::set<unsigned> config_subframe_0_1_etc   = {143};
+    if (config_subframe_4_9_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({4, 9, 14, 19, 24, 29, 34, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_3_7_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({3, 7, 11, 15, 19, 23, 27, 31, 35, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_9_19_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({9, 19, 29, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_7_15_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({7, 15, 23, 31, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_19_39.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({19, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_17_19_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({17, 19, 37, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_24_29_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({24, 29, 34, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_9_19_etc2.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({9, 19, 29, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_7_15_etc2.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({7, 15, 23, 31, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_23_27_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({23, 27, 31, 35, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_9_11_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({9, 11, 13, 15, 17, 19}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_3_5_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({3, 5, 7, 9, 11, 13}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_13_14_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({13, 14, 15, 29, 30, 31, 37, 38, 39}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_3_5_etc2.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25}),
+                span<const uint8_t>(config.subframe));
+    } else if (config_subframe_1_3_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39}),
+                span<const uint8_t>(config.subframe));
+    } else if (config_subframe_0_1_etc.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+                                     20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39}),
+                span<const uint8_t>(config.subframe));
+    } else {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.subframe, config.subframe) << "prach_config_index=" << prach_config_index;
+    }
+
+    // Assert starting symbol.
+    static const std::set<unsigned> config_starting_symbol_2 = {120, 124, 126, 127, 132, 134, 136, 137, 139, 140, 143};
+    if (config_starting_symbol_2.count(prach_config_index)) {
+      ASSERT_EQ(2, config.starting_symbol);
+    } else if (prach_config_index < 112) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.starting_symbol, config.starting_symbol);
+    } else if (prach_config_index < 144) {
+      ASSERT_EQ(0, config.starting_symbol);
+    } else {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.starting_symbol, config.starting_symbol);
+    }
+
+    // Assert number of PRACH slots within a 60 kHz slot.
+    static const std::set<unsigned> config_slots_2 = {
+        112, 114, 116, 118, 120, 122, 124, 127, 128, 130, 132, 136, 137, 141};
+    if (config_slots_2.count(prach_config_index)) {
+      ASSERT_EQ(2, config.nof_prach_slots_within_subframe);
+    } else if (prach_config_index < 112) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_prach_slots_within_subframe, config.nof_prach_slots_within_subframe);
+    } else if (prach_config_index < 144) {
+      ASSERT_EQ(1, config.nof_prach_slots_within_subframe);
+    } else {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_prach_slots_within_subframe, config.nof_prach_slots_within_subframe);
+    }
+
+    // Assert number of time-domain PRACH occasions within a PRACH slot.
+    if (prach_config_index < 112) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_occasions_within_slot, config.nof_occasions_within_slot);
+    } else if (prach_config_index < 144) {
+      ASSERT_EQ(1, config.nof_occasions_within_slot);
+    } else {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_occasions_within_slot, config.nof_occasions_within_slot);
+    }
+
+    // Assert PRACH duration.
+    if (prach_config_index < 112) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
+    } else if (prach_config_index < 144) {
       ASSERT_EQ(12, config.duration);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);

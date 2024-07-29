@@ -31,12 +31,16 @@ struct prach_configuration {
   /// SFN period, \f$x\f$.
   unsigned x;
   /// SFN offset \f$y\f$.
-  unsigned y;
+  static_vector<uint8_t, 2> y;
   /// Subframes within a frame that contain PRACH occasions.
-  static_vector<uint8_t, NOF_SUBFRAMES_PER_FRAME> subframe;
+  static_vector<uint8_t, 40> subframe;
   /// Starting OFDM symbol index.
   uint8_t starting_symbol;
-  /// Number of PRACH slots within a subframe. Set zero for reserved.
+  /// \brief Number of PRACH slots. Set zero for reserved.
+  ///
+  /// Depending on the frequency range:
+  /// - FR1: within a subframe (15 kHz slot); or
+  /// - FR2: within a 60 kHz slot.
   uint8_t nof_prach_slots_within_subframe;
   /// Number of time-domain PRACH occasions within a PRACH slot. Set zero for reserved.
   uint8_t nof_occasions_within_slot;
@@ -45,8 +49,7 @@ struct prach_configuration {
 };
 
 /// Reserved PRACH configuration. Indicates the configuration parameters are invalid.
-static const prach_configuration PRACH_CONFIG_RESERVED =
-    {prach_format_type::invalid, UINT32_MAX, UINT32_MAX, {}, 0, 0, 0, 0};
+static const prach_configuration PRACH_CONFIG_RESERVED = {prach_format_type::invalid, UINT32_MAX, {}, {}, 0, 0, 0, 0};
 
 /// \brief Gets a PRACH configuration.
 ///
