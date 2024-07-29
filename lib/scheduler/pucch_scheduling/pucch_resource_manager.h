@@ -30,8 +30,8 @@ enum class pucch_resource_usage { NOT_USED = 0, HARQ_SET_0, HARQ_SET_1, SR, CSI 
 /// The correct functioning of pucch_resource_manager is based on the following assumptions:
 /// (i)   Each UE has max 8 PUCCH F0/F1 and max 8 PUCCH F2 dedicated to HARQ-ACK reporting.
 /// (ii)  Each UE has max 1 SR-dedicated PUCCH F0/F1 resource and max 1 CSI-dedicated PUCCH F2 resource.
-/// (iii) The cell PUCCH resource list can have max 128 PUCCH resource, including all formats; at cell level, there is
-///       no constraint on how many resource must be F0/F1, F2, or for SR or for CSI.
+/// (iii) The cell PUCCH resource list can have max \c MAX_NOF_CELL_PUCCH_RESOURCES PUCCH resource, including all
+///       formats; at cell level, there is no constraint on how many resource must be F0/F1, F2, or for SR or for CSI.
 /// (vi)  UEs can have different PUCCH resource lists; however the PUCCH resource ID is unique with the cell. This
 ///       implies that if two UEs have the same PUCCH resource within their lists, their PUCCH resource ID must be the
 ///       same.
