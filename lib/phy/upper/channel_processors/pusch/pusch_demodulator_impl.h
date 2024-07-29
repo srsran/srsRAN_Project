@@ -214,7 +214,7 @@ private:
   /// Copy buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
   dynamic_re_buffer<cbf16_t> ch_re_copy;
   /// View buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
-  modular_re_buffer_reader<MAX_PORTS, cbf16_t> ch_re_view;
+  modular_re_buffer_reader<cbf16_t, MAX_PORTS> ch_re_view;
   /// Buffer used to store channel modulation resource elements at the equalizer output.
   std::vector<cf_t> temp_eq_re;
   /// Buffer used to transfer symbol noise variances at the equalizer output.

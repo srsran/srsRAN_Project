@@ -278,7 +278,7 @@ private:
 /// \ref set_slice method.
 ///
 /// \tparam T Resource element type.
-template <unsigned MaxNofSlices, typename T = cf_t>
+template <typename T, unsigned MaxNofSlices>
 class modular_re_buffer_reader : public re_buffer_reader<T>
 {
 public:
@@ -350,8 +350,9 @@ private:
 /// In this implementation, each slice is a view to an external block of contiguous REs that must be loaded with the
 /// \ref set_slice method.
 ///
-/// \tparam T Resource element type.
-template <unsigned MaxNofSlices, typename T = cf_t>
+/// \tparam T            Resource element type.
+/// \tparam MaxNofSlices Maximum number of slices.
+template <typename T, unsigned MaxNofSlices>
 class modular_re_buffer_writer : public re_buffer_writer<T>
 {
 public:

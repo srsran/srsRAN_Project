@@ -119,14 +119,15 @@ void equalize_zf_single_tx_layer<1>(unsigned /**/,
 }
 
 template <unsigned NOF_PORTS>
-void equalize_zf_single_tx_layer_reduction(unsigned                              nof_ports,
-                                           span<cf_t>                            eq_symbols,
+void equalize_zf_single_tx_layer_reduction(span<cf_t>                            eq_symbols,
                                            span<float>                           eq_noise_vars,
                                            const re_buffer_reader<cbf16_t>&      ch_symbols,
                                            const channel_equalizer::ch_est_list& ch_estimates,
                                            span<const float>                     noise_var,
                                            float                                 tx_scaling)
 {
+  unsigned nof_ports = noise_var.size();
+
   // Function for checking if a noise variance is valid.
   const auto func_valid_noise_var = [](float nvar) {
     return (nvar > 0) && (nvar < std::numeric_limits<float>::infinity());
@@ -146,7 +147,7 @@ void equalize_zf_single_tx_layer_reduction(unsigned                             
   if (nof_valid_noise_var != nof_ports) {
     // Reduce ports.
     static_vector<float, NOF_PORTS>              reduced_noise_var(nof_valid_noise_var);
-    modular_re_buffer_reader<NOF_PORTS, cbf16_t> reduced_ch_symbols(nof_ports, ch_symbols.get_nof_re());
+    modular_re_buffer_reader<cbf16_t, NOF_PORTS> reduced_ch_symbols(nof_ports, ch_symbols.get_nof_re());
     modular_ch_est_list<NOF_PORTS>               reduced_ch_estimates(nof_ports, ch_symbols.get_nof_re());
     for (unsigned i_port = 0, i_reduced_port = 0; i_port != nof_ports; ++i_port) {
       if (func_valid_noise_var(noise_var[i_port])) {
@@ -231,7 +232,7 @@ void channel_equalizer_generic_impl::equalize(span<cf_t>                       e
     // Single transmit layer and any number of receive ports.
     if (nof_tx_layers == 1) {
       equalize_zf_single_tx_layer_reduction<MAX_PORTS>(
-          nof_rx_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
+          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
       return;
     }
 
