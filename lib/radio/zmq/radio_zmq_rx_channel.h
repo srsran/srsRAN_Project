@@ -23,6 +23,7 @@
 
 namespace srsran {
 
+/// Radio receive channel over ZeroMQ socket.
 class radio_zmq_rx_channel
 {
 private:

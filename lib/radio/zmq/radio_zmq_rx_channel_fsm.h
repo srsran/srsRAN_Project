@@ -15,6 +15,7 @@
 #include <mutex>
 
 namespace srsran {
+/// Finite state machine for the ZeroMQ-based radio receive channel.
 class radio_zmq_rx_channel_fsm
 {
 private:
