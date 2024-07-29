@@ -88,7 +88,7 @@ static pucch_resource* get_sr_pucch_res_cfg(const pucch_config& pucch_cfg)
         return res.res_id.cell_res_id == sr_pucch_res_id;
       });
 
-  return res_cfg != pucch_res_list.end() ? const_cast<pucch_resource*>(&(*res_cfg)) : nullptr;
+  return res_cfg != pucch_res_list.end() ? const_cast<pucch_resource*>(res_cfg) : nullptr;
 }
 
 //////////////    Public functions       //////////////
