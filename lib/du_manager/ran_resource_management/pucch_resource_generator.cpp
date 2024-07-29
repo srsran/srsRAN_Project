@@ -584,10 +584,18 @@ srsran::srs_du::generate_cell_pucch_res_list(unsigned                           
   const std::vector<pucch_grant> pucch_f2_resource_list =
       nof_res_f2 > 0 ? compute_f2_res(nof_res_f2, f2_params, bwp_size_rbs) : std::vector<pucch_grant>{};
 
-  return merge_f0_f1_f2_resource_lists(pucch_f0_f1_resource_list,
-                                       pucch_f2_resource_list,
-                                       has_f0 ? std::nullopt : std::optional<unsigned>{nof_css},
-                                       bwp_size_rbs);
+  auto res_list = merge_f0_f1_f2_resource_lists(pucch_f0_f1_resource_list,
+                                                pucch_f2_resource_list,
+                                                has_f0 ? std::nullopt : std::optional<unsigned>{nof_css},
+                                                bwp_size_rbs);
+  if (res_list.size() > pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
+    srsran_assertion_failure("With the given parameters, the number of PUCCH resources generated for the "
+                             "cell exceeds maximum supported limit of {}",
+                             pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES);
+    return {};
+  }
+
+  return res_list;
 }
 
 static unsigned cell_res_list_validator(const std::vector<pucch_resource>&                  res_list,
