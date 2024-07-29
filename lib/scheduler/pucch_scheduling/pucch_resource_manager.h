@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../config/ue_configuration.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 
 namespace srsran {
 
@@ -152,20 +153,14 @@ private:
   static const size_t RES_MANAGER_RING_BUFFER_SIZE =
       get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + NTN_CELL_SPECIFIC_KOFFSET_MAX);
 
-  // [Implementation-defined] We assume as the maximum number of PUCCH resources that can be handled by the resource
-  // manager \c maxNrofPUCCH-Resources, TS 38.331.
-  static const size_t MAX_PUCCH_RESOURCES{128};
-  // As per Section 9.2.1, TS 38.213, this is given by the number of possible values of r_PUCCH, which is 16.
-  static const size_t MAX_COMMON_PUCCH_RESOURCES{16};
-
   // Tracks usage of PUCCH resources.
   struct resource_tracker {
     rnti_t               rnti;
     pucch_resource_usage resource_usage;
   };
 
-  using pucch_res_record_array  = std::array<resource_tracker, MAX_PUCCH_RESOURCES>;
-  using common_res_record_array = std::array<bool, MAX_COMMON_PUCCH_RESOURCES>;
+  using pucch_res_record_array  = std::array<resource_tracker, pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES>;
+  using common_res_record_array = std::array<bool, pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES>;
 
   // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot; this information is
   // used to keep track of which resources are available and which UE is using them. This information is preserved over
