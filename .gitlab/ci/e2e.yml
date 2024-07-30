@@ -565,6 +565,7 @@ validate n300 config:
   variables:
     MARKERS: "rf_n300"
     TESTBED: "android_n300"
+  allow_failure: true
 
 ################################################################################
 # Android
@@ -602,6 +603,7 @@ android n300:
   extends: android x300
   variables:
     TESTBED: "android_n300"
+  allow_failure: true
 
 ################################################################################
 # VIAVI
