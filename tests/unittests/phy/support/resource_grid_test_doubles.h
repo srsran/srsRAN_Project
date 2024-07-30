@@ -209,7 +209,7 @@ private:
   /// Defines the maximum allowed error when asserting the resource grid.
   static constexpr float ASSERT_MAX_ERROR = 1e-6;
   /// Counts the number of times a \c put method is called.
-  unsigned count = 0;
+  std::atomic<unsigned> count = {0};
   /// Maximum number of ports.
   unsigned max_ports;
   /// Maximum number of OFDM symbols.
