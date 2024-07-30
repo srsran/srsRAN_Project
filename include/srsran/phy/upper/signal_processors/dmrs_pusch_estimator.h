@@ -43,7 +43,7 @@ public:
 
   /// Parameters for pseudo-random sequence.
   struct low_papr_sequence_configuration {
-    /// Reference signal sequence identifier [0..1007].
+    /// Reference signal sequence identifier {0, ..., 1007}.
     unsigned n_rs_id;
   };
 
@@ -77,7 +77,7 @@ public:
 
     /// \brief Gets the number of transmit layers.
     ///
-    /// The number of transmit layers when low-PAPR sequences are used is always one. Otherwise, it is given in the
+    /// The number of transmit layers when low-PAPR sequences are used is always one. Otherwise, it is specified in the
     /// sequence configuration.
     unsigned get_nof_tx_layers() const
     {
@@ -90,7 +90,7 @@ public:
 
     /// \brief  Gets the DM-RS type.
     ///
-    /// The DM-RS type is always 1 when low-PAPR sequences are used. Otherwise, it is given in the sequence
+    /// The DM-RS type is always 1 when low-PAPR sequences are used. Otherwise, it is specified in the sequence
     /// configuration.
     dmrs_type get_dmrs_type() const
     {

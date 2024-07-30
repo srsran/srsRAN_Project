@@ -338,7 +338,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ulsch_config.nof_rb                = rb_mask.count();
   ulsch_config.start_symbol_index    = pdu.start_symbol_index;
   ulsch_config.nof_symbols           = pdu.nof_symbols;
-  ulsch_config.dmrs_type = dmrs_config.dmrs == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2;
+  ulsch_config.dmrs_type = (dmrs_config.dmrs == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2);
   ulsch_config.dmrs_symbol_mask            = pdu.dmrs_symbol_mask;
   ulsch_config.nof_cdm_groups_without_data = dmrs_config.nof_cdm_groups_without_data;
   ulsch_config.nof_layers                  = pdu.nof_tx_layers;

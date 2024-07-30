@@ -91,12 +91,12 @@ public:
     } ref_point;
     /// Indicates which symbol in the slot transmit DMRS.
     symbol_slot_mask dmrs_symbol_mask;
-    /// Indicates the DMRS type.
+    /// Indicates the DM-RS type.
     dmrs_type dmrs;
     /// \brief Parameter \f$N^{n_{SCID}}_{ID}\f$ TS 38.211 section 7.4.1.1.1.
     ///
     /// It is equal to:
-    /// - {0,1, … ,65535} given by the higher-layer parameters scramblingID0 and scramblingID1,
+    /// - {0,1, ... ,65535} given by the higher-layer parameters scramblingID0 and scramblingID1,
     /// - \f$N^{cell}_{ID}\f$ otherwise.
     unsigned scrambling_id;
     /// \brief Parameter \f$n_{SCID}\f$ from TS 38.211 section 7.4.1.1.1.

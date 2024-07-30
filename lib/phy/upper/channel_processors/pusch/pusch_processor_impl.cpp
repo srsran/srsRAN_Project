@@ -164,7 +164,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ulsch_config.nof_rb                = nof_rb;
   ulsch_config.start_symbol_index    = pdu.start_symbol_index;
   ulsch_config.nof_symbols           = pdu.nof_symbols;
-  ulsch_config.dmrs_type        = dmrs_type == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2;
+  ulsch_config.dmrs_type        = (dmrs_type == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2);
   ulsch_config.dmrs_symbol_mask = pdu.dmrs_symbol_mask;
   ulsch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
   ulsch_config.nof_layers                  = pdu.nof_tx_layers;

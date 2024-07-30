@@ -22,8 +22,11 @@ using namespace srsran;
 namespace {
 
 /// Maximum number of layers the PUSCH processor supports.
-static constexpr unsigned max_supported_nof_layers = 2;
-
+constexpr unsigned max_supported_nof_layers = 2;
+/// Default DM-RS symbol mask within the slot.
+const symbol_slot_mask dmrs_symbol_mask =
+    {false, false, true, false, false, false, false, false, false, false, false, true, false, false};
+/// Default valid PUSCH processor configuration.
 const pusch_processor::pdu_t base_pdu = {.context          = std::nullopt,
                                          .slot             = {0, 9},
                                          .rnti             = 8323,
@@ -36,7 +39,7 @@ const pusch_processor::pdu_t base_pdu = {.context          = std::nullopt,
                                          .n_id             = 935,
                                          .nof_tx_layers    = 1,
                                          .rx_ports         = {0, 1, 2, 3},
-                                         .dmrs_symbol_mask = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+                                         .dmrs_symbol_mask = dmrs_symbol_mask,
                                          .dmrs       = pusch_processor::dmrs_configuration{.dmrs          = dmrs_type::TYPE1,
                                                                                            .scrambling_id = 0,
                                                                                            .n_scid        = false,
@@ -45,7 +48,7 @@ const pusch_processor::pdu_t base_pdu = {.context          = std::nullopt,
                                          .start_symbol_index = 0,
                                          .nof_symbols        = 14,
                                          .tbs_lbrm           = units::bytes(ldpc::MAX_CODEBLOCK_SIZE / 8),
-                                         .dc_position        = std::nullopt}; // namespace
+                                         .dc_position        = std::nullopt};
 
 struct test_case_t {
   std::function<pusch_processor::pdu_t()> get_pdu;
