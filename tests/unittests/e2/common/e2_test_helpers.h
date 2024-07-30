@@ -892,7 +892,7 @@ class e2_entity_test : public e2_test_base
     factory               = timer_factory{timers, task_worker};
     rc_param_configurator = std::make_unique<dummy_du_configurator>();
     e2                    = create_e2_entity(
-        cfg, e2_client.get(), *du_metrics, *f1ap_ue_id_mapper, *rc_param_configurator, factory, task_worker);
+        cfg, e2_client.get(), &(*du_metrics), *f1ap_ue_id_mapper, &(*rc_param_configurator), factory, task_worker);
   }
 
   void TearDown() override

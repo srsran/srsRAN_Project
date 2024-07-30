@@ -100,6 +100,19 @@ public:
   virtual void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) = 0;
 };
 
+class e2_cu_metrics_interface
+{
+public:
+  virtual ~e2_cu_metrics_interface() = default;
+  /// @brief Get the metrics from the scheduler.
+  /// @param ue_metrics
+  virtual void get_metrics(scheduler_ue_metrics& ue_metrics) = 0;
+
+  /// \brief connects e2_cu_metric_provider
+  /// \param[in] meas_provider pointer to the e2_cu_metric_provider
+  virtual void connect_e2_cu_meas_provider(std::unique_ptr<e2_cu_metrics_notifier> meas_provider) = 0;
+};
+
 /// This interface is used to pack outgoing and unpack incoming E2 messages.
 class e2ap_packer : public e2_message_handler
 {

@@ -192,7 +192,7 @@ protected:
     e2_client             = std::make_unique<e2_gateway_remote_connector>(*epoll_broker, nw_config, *pcap);
     du_param_configurator = std::make_unique<dummy_du_configurator>();
     e2ap                  = create_e2_entity(
-        cfg, e2_client.get(), *du_metrics, *f1ap_ue_id_mapper, *du_param_configurator, factory, ctrl_worker);
+        cfg, e2_client.get(), &(*du_metrics), *f1ap_ue_id_mapper, &(*du_param_configurator), factory, ctrl_worker);
   }
 
   e2ap_configuration                           cfg;
