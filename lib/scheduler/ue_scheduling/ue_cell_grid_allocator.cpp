@@ -60,7 +60,7 @@ void ue_cell_grid_allocator::slot_indication(slot_point sl)
 
 alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 {
-  srsran_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
+  srsran_assert(ues.contains(grant.user->ue_index()), "Invalid UE candidate index={}", grant.user->ue_index());
   srsran_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
 
   if (dl_attempts_count++ >= expert_cfg.max_pdcch_alloc_attempts_per_slot) {
@@ -69,7 +69,7 @@ alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gra
     return {alloc_status::skip_slot};
   }
 
-  ue& u = ues[grant.user->ue_index];
+  ue& u = ues[grant.user->ue_index()];
 
   // Verify UE carrier is active.
   ue_cell* ue_cc = u.find_cell(grant.cell_index);
@@ -495,7 +495,7 @@ alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gra
 
 alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 {
-  srsran_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
+  srsran_assert(ues.contains(grant.user->ue_index()), "Invalid UE candidate index={}", grant.user->ue_index());
   srsran_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
   constexpr static unsigned pdcch_delay_in_slots = 0;
 
@@ -505,7 +505,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
     return {alloc_status::skip_slot};
   }
 
-  ue& u = ues[grant.user->ue_index];
+  ue& u = ues[grant.user->ue_index()];
 
   // Verify UE carrier is active.
   ue_cell* ue_cc = u.find_cell(grant.cell_index);

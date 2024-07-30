@@ -44,8 +44,8 @@ private:
     /// Returns average UL rate expressed in bytes per slot.
     [[nodiscard]] double ul_avg_rate() const { return ul_nof_samples == 0 ? 0 : ul_avg_rate_; }
 
-    void compute_dl_prio(const ue& u);
-    void compute_ul_prio(const ue& u, const ue_resource_grid_view& res_grid);
+    void compute_dl_prio(const slice_ue& u);
+    void compute_ul_prio(const slice_ue& u, const ue_resource_grid_view& res_grid);
 
     void save_dl_alloc(uint32_t alloc_bytes);
     void save_ul_alloc(uint32_t alloc_bytes);

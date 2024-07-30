@@ -35,12 +35,12 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 
   // Add new users to history db, and update DL priority queue.
   for (const auto& u : ues) {
-    if (not ue_history_db.contains(u->ue_index)) {
+    if (not ue_history_db.contains(u.ue_index())) {
       // TODO: Consider other cells when carrier aggregation is supported.
-      ue_history_db.emplace(u->ue_index, ue_ctxt{u->ue_index, u->get_pcell().cell_index, this});
+      ue_history_db.emplace(u.ue_index(), ue_ctxt{u.ue_index(), u.get_pcell().cell_index, this});
     }
-    ue_ctxt& ctxt = ue_history_db[u->ue_index];
-    ctxt.compute_dl_prio(*u);
+    ue_ctxt& ctxt = ue_history_db[u.ue_index()];
+    ctxt.compute_dl_prio(u);
     dl_queue.push(&ctxt);
   }
 
@@ -80,12 +80,12 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
 
   // Add new users to history db, and update UL priority queue.
   for (const auto& u : ues) {
-    if (not ue_history_db.contains(u->ue_index)) {
+    if (not ue_history_db.contains(u.ue_index())) {
       // TODO: Consider other cells when carrier aggregation is supported.
-      ue_history_db.emplace(u->ue_index, ue_ctxt{u->ue_index, u->get_pcell().cell_index, this});
+      ue_history_db.emplace(u.ue_index(), ue_ctxt{u.ue_index(), u.get_pcell().cell_index, this});
     }
-    ue_ctxt& ctxt = ue_history_db[u->ue_index];
-    ctxt.compute_ul_prio(*u, res_grid);
+    ue_ctxt& ctxt = ue_history_db[u.ue_index()];
+    ctxt.compute_ul_prio(u, res_grid);
     ul_queue.push(&ctxt);
   }
 
@@ -113,7 +113,7 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
                                              unsigned                   max_rbs)
 {
   alloc_result   alloc_result = {alloc_status::invalid_params};
-  ue_pdsch_grant grant{ues[ctxt.ue_index], ctxt.cell_index};
+  ue_pdsch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
   // Prioritize reTx over newTx.
   if (ctxt.dl_retx_h != nullptr) {
     grant.h_id   = ctxt.dl_retx_h->id;
@@ -129,7 +129,7 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
   if (ctxt.dl_newtx_h != nullptr) {
     grant.h_id                  = ctxt.dl_newtx_h->id;
     grant.recommended_nof_bytes = ctxt.dl_newtx_srb_pending_bytes > 0 ? ctxt.dl_newtx_srb_pending_bytes
-                                                                      : ues[ctxt.ue_index]->pending_dl_newtx_bytes();
+                                                                      : ues[ctxt.ue_index].pending_dl_newtx_bytes();
     grant.max_nof_rbs           = max_rbs;
     alloc_result                = pdsch_alloc.allocate_dl_grant(grant);
     if (alloc_result.status == alloc_status::success) {
@@ -147,7 +147,7 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
                                              unsigned                   max_rbs)
 {
   alloc_result   alloc_result = {alloc_status::invalid_params};
-  ue_pusch_grant grant{ues[ctxt.ue_index], ctxt.cell_index};
+  ue_pusch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
   // Prioritize reTx over newTx.
   if (ctxt.ul_retx_h != nullptr) {
     grant.h_id   = ctxt.ul_retx_h->id;
@@ -163,7 +163,7 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
   if (ctxt.ul_newtx_h != nullptr) {
     grant.h_id                  = ctxt.ul_newtx_h->id;
     grant.recommended_nof_bytes = ctxt.ul_newtx_srb_pending_bytes > 0 ? ctxt.ul_newtx_srb_pending_bytes
-                                                                      : ues[ctxt.ue_index]->pending_ul_newtx_bytes();
+                                                                      : ues[ctxt.ue_index].pending_ul_newtx_bytes();
     grant.max_nof_rbs           = max_rbs;
     alloc_result                = pusch_alloc.allocate_ul_grant(grant);
     if (alloc_result.status == alloc_status::success) {
@@ -177,7 +177,7 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
+void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u)
 {
   dl_retx_h                  = nullptr;
   dl_newtx_h                 = nullptr;
@@ -253,7 +253,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
   dl_newtx_h = nullptr;
 }
 
-void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_grid_view& res_grid)
+void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u, const ue_resource_grid_view& res_grid)
 {
   ul_retx_h                  = nullptr;
   ul_newtx_h                 = nullptr;
