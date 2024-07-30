@@ -16,6 +16,7 @@
 
 namespace srsran {
 
+/// DFT-based implementation of the time alignment estimator.
 class time_alignment_estimator_dft_impl : public time_alignment_estimator
 {
 public:

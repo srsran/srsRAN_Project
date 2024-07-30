@@ -33,7 +33,7 @@ public:
   /// \brief Constructs a resource grid pool.
   /// \param expire_timeout_slots_ Resource grid timeout expiration in slots.
   /// \param async_executor_       Asynchronous housekeeping executor.
-  /// \param grids_                Resource grids.
+  /// \param grids                 Resource grids.
   resource_grid_pool_asynchronous_impl(unsigned                                    expire_timeout_slots_,
                                        task_executor&                              async_executor_,
                                        std::vector<std::unique_ptr<resource_grid>> grids);
