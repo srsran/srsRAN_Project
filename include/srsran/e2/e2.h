@@ -81,6 +81,12 @@ public:
   using scheduler_metrics_notifier::report_metrics;
 };
 
+class e2_cu_metrics_notifier
+{
+public:
+  virtual ~e2_cu_metrics_notifier() = default;
+};
+
 class e2_du_metrics_interface
 {
 public:

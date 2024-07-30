@@ -28,6 +28,7 @@ set(SOURCES
     e2sm/e2sm_kpm/e2sm_kpm_utils.cpp
     e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.cpp
     e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.cpp
+    e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
     common/e2_du_metrics_connector.cpp
  )
 
