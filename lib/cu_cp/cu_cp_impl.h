@@ -202,6 +202,10 @@ private:
   unique_timer statistics_report_timer;
 
   std::atomic<bool> stopped{false};
+
+  // Plug-ins
+  [[nodiscard]] bool                             load_plugins();
+  start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
 };
 
 } // namespace srs_cu_cp

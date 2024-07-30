@@ -13,6 +13,7 @@
 #include "ngap_types.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/security/security.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -152,6 +153,9 @@ struct ngap_handover_resource_allocation_response {
   // common
   std::optional<crit_diagnostics_t> crit_diagnostics;
 };
+
+// Function pointer prototype for starting handover from plugin
+using start_ngap_handover_preparation_procedure_func = async_task<ngap_handover_preparation_response> (*)();
 
 } // namespace srs_cu_cp
 } // namespace srsran

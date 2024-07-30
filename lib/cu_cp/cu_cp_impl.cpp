@@ -27,6 +27,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/rrc/rrc_du.h"
 #include <chrono>
+#include <dlfcn.h>
 #include <future>
 #include <thread>
 
@@ -66,6 +67,11 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
       std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor, *cfg.services.timers, ue_mng, du_db))
 {
   assert_cu_cp_configuration_valid(cfg);
+
+  if (not load_plugins()) {
+    logger.error("Could not load CU-CP plugins");
+    report_fatal_error("Could not load CU-CP plugins");
+  }
 
   // connect event notifiers to layers
   ngap_cu_cp_ev_notifier.connect_cu_cp(*this, paging_handler);
@@ -129,6 +135,41 @@ void cu_cp_impl::stop()
   controller->stop();
 
   logger.info("CU-CP stopped successfully.");
+}
+
+bool cu_cp_impl::load_plugins()
+{
+  char*       err         = nullptr;
+  std::string plugin_name = "libsrsran_plugin_ng_handover.so";
+
+  void* dl_handle = ::dlopen(plugin_name.c_str(), RTLD_NOW + RTLD_DEEPBIND + RTLD_GLOBAL);
+  if (dl_handle == nullptr) {
+    err = ::dlerror();
+    if (err != nullptr) {
+      fmt::print("Failed to load HO plugin {}: {}\n", plugin_name, err);
+    } else {
+      fmt::print("Failed to load HO plugin {}\n", plugin_name);
+    }
+    return false;
+  }
+  fmt::print("loaded plugin\n");
+
+  // Load symbol.
+  start_ho_prep_func = reinterpret_cast<start_ngap_handover_preparation_procedure_func>(
+      ::dlsym(dl_handle, "_ZN6srsran9srs_cu_cp15testing_funtionERNS_25fifo_async_task_schedulerE"));
+
+  // Handle an error loading the symbol.
+  if (start_ho_prep_func == nullptr) {
+    err = ::dlerror();
+    if (err != nullptr) {
+      fmt::print("Error loading symbol {}: {}\n", "testing_function", err);
+    } else {
+      fmt::print("Error loading symbol {}:\n", "testing_function");
+    }
+    return false;
+  }
+  fmt::print("loaded start function\n");
+  return true;
 }
 
 ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& plmn)
