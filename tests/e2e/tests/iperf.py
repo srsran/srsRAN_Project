@@ -382,7 +382,7 @@ def test_zmq_2x2_mimo(
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration=0,
-        always_download_artifacts=False,
+        always_download_artifacts=True,
         rx_to_tx_latency=2,
         enable_dddsu=True,
     )
