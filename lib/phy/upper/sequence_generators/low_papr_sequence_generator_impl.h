@@ -58,6 +58,7 @@ private:
   ///
   /// \param[in] u Sequence group index {0, 29}.
   /// \param[in] v Sequence base index {0, 1}.
+  /// \param[in] M_zc Sequence length, parameter \f$M_{ZC}\f$.
   span<const int> r_uv_arg_mprb(unsigned u, unsigned v, unsigned M_zc);
 
   /// \brief Generates argument for the sequence \f$r^{(\alpha, \beta)}_{u,v}(n)\f$.
