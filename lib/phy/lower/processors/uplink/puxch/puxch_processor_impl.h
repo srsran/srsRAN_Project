@@ -21,6 +21,7 @@
 
 namespace srsran {
 
+/// Implements PUxCH baseband processor.
 class puxch_processor_impl : public puxch_processor,
                              private puxch_processor_baseband,
                              private puxch_processor_request_handler

@@ -43,7 +43,7 @@ public:
   /// The notification contains the exact context and grid.
   ///
   /// \param[in] context Resource grid context.
-  /// \param[in] buffer  Resource grid to store the processed slot.
+  /// \param[in] grid    Resource grid to store the processed slot.
   virtual void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) = 0;
 };
 
