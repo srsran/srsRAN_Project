@@ -211,7 +211,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
 
   // [TS38.473, 8.4.2.2.] If a UE-associated logical F1-connection exists, the DL RRC MESSAGE TRANSFER message shall
-  // contain the gNBDU UE F1AP ID IE, which should be used by gNB-DU to lookup the stored UE context.
+  // contain the gNB DU UE F1AP ID IE, which should be used by gNB-DU to lookup the stored UE context.
   f1ap_du_ue* ue = ues.find(gnb_du_ue_f1ap_id);
 
   if (ue == nullptr) {
@@ -221,6 +221,25 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
                    gnb_du_ue_f1ap_id);
     // TODO.
     return;
+  }
+
+  if (msg->old_gnb_du_ue_f1ap_id_present) {
+    // [TS38.473, 8.4.2.2] If the gNB-DU identifies the UE-associated logical F1-connection by the gNB-DU UE F1AP ID IE
+    // in the DL RRC MESSAGE TRANSFER message and the old gNB-DU UE F1AP ID IE is included, it shall release the old
+    // gNB-DU UE F1AP ID and the related configurations associated with the old gNB-DU UE F1AP ID.
+    const gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->old_gnb_du_ue_f1ap_id);
+    f1ap_du_ue*               old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
+    if (old_ue != nullptr) {
+      // Delete gNB-CU-UE-F1AP-Id so that the UE is not reachable by the CU, and the gNB-CU-UE-F1AP-Id can be reused.
+      old_ue->context.gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
+      // Mark the old UE so that no UE context release procedure gets initiated.
+      old_ue->context.marked_for_release = true;
+
+      // Notify DU that the old UE needs to be released.
+      du_mng.notify_reestablishment_of_old_ue(ue->context.ue_index, old_ue->context.ue_index);
+    } else {
+      logger.warning("old gNB-DU UE F1AP ID={} not found", old_gnb_du_ue_f1ap_id);
+    }
   }
 
   // Handle gNB-CU UE F1AP ID.
@@ -235,19 +254,6 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
     ue->context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->new_gnb_cu_ue_f1ap_id);
   }
 
-  if (msg->old_gnb_du_ue_f1ap_id_present) {
-    // > If the gNB-DU identifies the UE-associated logical F1-connection by the gNB-DU UE F1AP ID IE in the
-    // DL RRC MESSAGE TRANSFER message and the old gNB-DU UE F1AP ID IE is included, it shall release the old gNB-DU
-    // UE F1AP ID and the related configurations associated with the old gNB-DU UE F1AP ID.
-    const gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->old_gnb_du_ue_f1ap_id);
-    f1ap_du_ue*               old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
-    if (old_ue != nullptr) {
-      du_mng.notify_reestablishment_of_old_ue(ue->context.ue_index, old_ue->context.ue_index);
-    } else {
-      logger.warning("old gNB-DU UE F1AP ID={} not found", old_gnb_du_ue_f1ap_id);
-    }
-  }
-
   if (ue->context.rrc_state == f1ap_ue_context::ue_rrc_state::no_config and not msg->old_gnb_du_ue_f1ap_id_present) {
     // If the UE has no dedicated configuration yet, we assume that this DL RRC Message Transfer contains it (e.g.
     // RRC Setup or RRC Reconfiguration). The only exception is when this DL RRC Message Transfer is an RRC
@@ -259,18 +265,15 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   const srb_id_t srb_id     = int_to_srb_id(msg->srb_id);
   f1c_bearer*    srb_bearer = ue->bearers.find_srb(srb_id);
   if (srb_bearer == nullptr) {
-    logger.warning("Discarding DlRrcMessageTransfer cause=SRB-ID={} not found", srb_id);
-    // TODO: Handle error.
+    logger.warning("Discarding DLRRCMessageTransfer cause=SRB-ID={} not found", srb_id);
+    cause_c cause;
+    cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::no_radio_res_available;
+    send_error_indication(cause, std::nullopt, gnb_du_ue_f1ap_id, ue->context.gnb_cu_ue_f1ap_id);
     return;
   }
 
   // Forward SDU to lower layers.
-  byte_buffer sdu;
-  if (not sdu.append(msg->rrc_container)) {
-    logger.error("Discarding DlRrcMessageTransfer, could not append RRC container to SDU. srb_id={}", srb_id);
-    return;
-  }
-  srb_bearer->handle_pdu(std::move(sdu));
+  srb_bearer->handle_pdu(msg->rrc_container.copy());
 }
 
 void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_release_request& request)
