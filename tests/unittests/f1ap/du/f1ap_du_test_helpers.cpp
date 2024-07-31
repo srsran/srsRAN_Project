@@ -260,10 +260,13 @@ void f1ap_du_test::run_f1_removal_procedure()
 
 f1ap_du_test::ue_test_context* f1ap_du_test::run_f1ap_ue_create(du_ue_index_t ue_index)
 {
+  unsigned srb0_idx = srb_id_to_uint(srb_id_t::srb0);
   unsigned srb1_idx = srb_id_to_uint(srb_id_t::srb1);
   test_ues.emplace(ue_index);
   test_ues[ue_index].crnti    = to_rnti(0x4601 + ue_index);
   test_ues[ue_index].ue_index = ue_index;
+  test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb0));
+  test_ues[ue_index].f1c_bearers[srb0_idx].srb_id = srb_id_t::srb0;
   test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb1));
   test_ues[ue_index].f1c_bearers[srb1_idx].srb_id = srb_id_t::srb1;
 
