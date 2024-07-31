@@ -10,7 +10,7 @@
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   labels: 
-    - ${ZMQ_HOSTLABEL_1}
+    - ${ZMQ_HOSTLABEL_0}
   nof_ports: 4
   requirements:
     arch: amd64
@@ -36,7 +36,7 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/agent-ubuntu-${UBUNTU_VERSION}:${RETINA_VERSION}
   labels: 
-    - ${ZMQ_HOSTLABEL_1}
+    - ${ZMQ_HOSTLABEL_0}
   requirements:
     arch: amd64
     cpu:
@@ -70,4 +70,4 @@
       limits: "6G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   labels: 
-    - ${ZMQ_HOSTLABEL_1}
+    - ${ZMQ_HOSTLABEL_0}

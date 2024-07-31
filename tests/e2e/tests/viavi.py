@@ -333,6 +333,8 @@ def _test_viavi(
                 "max_puschs_per_slot": test_declaration.max_puschs_per_slot,
                 "max_pdschs_per_slot": test_declaration.max_pdschs_per_slot,
                 "enable_qos_viavi": test_declaration.enable_qos_viavi,
+                "nof_antennas_dl": 4,
+                "nof_antennas_ul": 1,
             },
         },
     }

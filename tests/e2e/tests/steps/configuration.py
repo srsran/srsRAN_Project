@@ -42,6 +42,8 @@ def configure_test_parameters(
     enable_security_mode: bool = False,
     rx_to_tx_latency: int = -1,
     enable_dddsu: bool = False,
+    nof_antennas_dl: int = 1,
+    nof_antennas_ul: int = 1,
 ):
     """
     Configure test parameters
@@ -61,6 +63,8 @@ def configure_test_parameters(
                 "num_cells": num_cells,
                 "cell_position_offset": cell_position_offset,
                 "rx_to_tx_latency": rx_to_tx_latency,
+                "nof_antennas_dl": nof_antennas_dl,
+                "nof_antennas_ul": nof_antennas_ul,
             },
         },
         "gnb": {
@@ -77,6 +81,8 @@ def configure_test_parameters(
                 "num_cells": num_cells,
                 "enable_security_mode": enable_security_mode,
                 "enable_dddsu": enable_dddsu,
+                "nof_antennas_dl": nof_antennas_dl,
+                "nof_antennas_ul": nof_antennas_ul,
             },
         },
     }

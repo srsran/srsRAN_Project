@@ -80,6 +80,8 @@ def test_ue(
                     "gnb_id": 1,
                     "log_level": "warning",
                     "pcap": False,
+                    "nof_antennas_dl": nof_ant,
+                    "nof_antennas_ul": nof_ant,
                 },
                 "templates": {
                     "cu": str(Path(__file__).joinpath("../test_mode/config_ue.yml").resolve()),
@@ -116,7 +118,7 @@ def test_ue(
                     timeout=gnb_startup_timeout,
                     post_commands=(
                         "",
-                        f"cell_cfg --nof_antennas_dl {nof_ant} --nof_antennas_ul {nof_ant}" + " " + extra_config,
+                        extra_config,
                     ),
                 ),
             )
@@ -203,6 +205,8 @@ def _test_ru(
                     "gnb_id": 1,
                     "log_level": "warning",
                     "pcap": False,
+                    "nof_antennas_dl": nof_ant,
+                    "nof_antennas_ul": nof_ant,
                 },
                 "templates": {
                     "cu": str(Path(__file__).joinpath("../test_mode/config_ru.yml").resolve()),

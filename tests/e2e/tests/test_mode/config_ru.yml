@@ -20,8 +20,8 @@ cell_cfg:
   plmn: "00101"
   tac: 7
   pci: 1
-  nof_antennas_dl: 4
-  nof_antennas_ul: 4
+  nof_antennas_dl: {{nof_antennas_dl}}
+  nof_antennas_ul: {{nof_antennas_ul}}
   pdsch:
     min_ue_mcs: 27
     mcs_table: qam256
