@@ -57,6 +57,8 @@ public:
   /// Transfer) until the CU receives the RRC Setup Complete (via UL RRC Message Transfer).
   bool run_rrc_setup(rnti_t rnti);
 
+  bool run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti);
+
   bool run_ue_context_setup(rnti_t rnti);
 
   void run_slot();
@@ -80,7 +82,7 @@ public:
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-private:
+protected:
   struct ue_sim_context {
     struct srb_context {
       uint32_t next_pdcp_sn = 0;
@@ -92,6 +94,8 @@ private:
     du_cell_index_t                       pcell_index;
     std::array<srb_context, MAX_NOF_SRBS> srbs;
   };
+
+  bool run_msg4_and_await_msg5(const ue_sim_context& u, const f1ap_message& msg);
 
   std::unordered_map<rnti_t, ue_sim_context> ues;
 

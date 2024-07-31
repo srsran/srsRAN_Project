@@ -276,24 +276,58 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
     test_logger.error("rnti={}: Failed to run RRC Setup procedure. Cause: UE not found", rnti);
     return false;
   }
-  const ue_sim_context& u        = it->second;
-  const auto&           phy_cell = phy.cells[u.pcell_index];
+  const ue_sim_context& u = it->second;
 
   // Send DL RRC Message which contains RRC Setup.
   f1ap_message msg = generate_dl_rrc_message_transfer(
       *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
   du_hi->get_f1ap_message_handler().handle_message(msg);
 
+  return run_msg4_and_await_msg5(u, msg);
+}
+
+bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    test_logger.error("rnti={}: Failed to run RRC Reestablishment. Cause: UE not found", rnti);
+    return false;
+  }
+  const ue_sim_context& u      = it->second;
+  auto                  old_it = ues.find(old_rnti);
+  if (old_it == ues.end()) {
+    test_logger.error(
+        "rnti={}: Failed to run RRC Reestablishment. Cause: Old UE with c-rnti={} not found", rnti, old_rnti);
+    return false;
+  }
+  const ue_sim_context& old_u = old_it->second;
+
+  f1ap_message msg = generate_dl_rrc_message_transfer(
+      *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  msg.pdu.init_msg().value.dl_rrc_msg_transfer()->old_gnb_du_ue_f1ap_id_present = true;
+  msg.pdu.init_msg().value.dl_rrc_msg_transfer()->old_gnb_du_ue_f1ap_id         = (uint64_t)old_u.du_ue_id.value();
+
+  return run_msg4_and_await_msg5(u, msg);
+}
+
+bool du_high_env_simulator::run_msg4_and_await_msg5(const ue_sim_context& u, const f1ap_message& msg)
+{
+  const auto& phy_cell = phy.cells[u.pcell_index];
+
+  du_hi->get_f1ap_message_handler().handle_message(msg);
+
+  lcid_t msg4_lcid = msg.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id == 0 ? LCID_SRB0 : LCID_SRB1;
+
   // Wait for Msg4 to be sent to the PHY.
   bool ret = run_until([&]() {
     if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
       auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
-      return find_ue_pdsch_with_lcid(rnti, LCID_SRB0, dl_res.ue_grants) != nullptr;
+      return find_ue_pdsch_with_lcid(u.rnti, msg4_lcid, dl_res.ue_grants) != nullptr;
     }
     return false;
   });
   if (not ret) {
-    test_logger.error("rnti={}: Msg4 not sent to the PHY", rnti);
+    test_logger.error("rnti={}: Msg4 not sent to the PHY", u.rnti);
     return false;
   }
 
@@ -303,15 +337,16 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
     run_slot();
   }
 
-  // UE sends RRC Setup Complete. Wait until F1AP forwards UL RRC Message to CU-CP.
+  // UE sends Msg5. Wait until F1AP forwards UL RRC Message to CU-CP.
   cu_notifier.last_f1ap_msgs.clear();
   du_hi->get_pdu_handler().handle_rx_data_indication(
-      test_helpers::create_pdu_with_sdu(next_slot, rnti, lcid_t::LCID_SRB1));
+      test_helpers::create_pdu_with_sdu(next_slot, u.rnti, lcid_t::LCID_SRB1));
   ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
   if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), srb_id_t::srb1)) {
-    test_logger.error("rnti={}: F1AP UL RRC Message (containing rrcSetupComplete) not sent or is invalid", rnti);
+    test_logger.error("rnti={}: F1AP UL RRC Message (containing Msg5) not sent or is invalid", u.rnti);
     return false;
   }
+
   return true;
 }
 
