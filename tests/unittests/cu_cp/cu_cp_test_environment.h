@@ -71,45 +71,47 @@ public:
   bool run_e1_setup(unsigned cu_up_idx);
 
   /// Connect a new UE to CU-CP through a provided DU. It runs the full RRC setup procedure.
-  bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
+  [[nodiscard]] bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
   /// Runs the NAS Authentication for a given UE.
-  bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
+  [[nodiscard]] bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
   /// Runs the Security Mode procedure for a given UE.
-  bool setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id);
+  [[nodiscard]] bool setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id);
   /// Finishes the registration for a given UE.
-  bool finish_ue_registration(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id);
+  [[nodiscard]] bool finish_ue_registration(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id);
   /// Requests PDU Session Resource Setup
-  bool request_pdu_session_resource_setup(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id);
+  [[nodiscard]] bool
+  request_pdu_session_resource_setup(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id);
   /// Runs PDU Session Resource Setup for a given UE.
-  bool setup_pdu_session(unsigned               du_idx,
-                         unsigned               cu_up_idx,
-                         gnb_du_ue_f1ap_id_t    du_ue_id,
-                         rnti_t                 crnti,
-                         gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
-                         pdu_session_id_t       psi               = pdu_session_id_t::min,
-                         drb_id_t               drb_id            = drb_id_t::drb1,
-                         qos_flow_id_t          qfi               = qos_flow_id_t::min,
-                         byte_buffer rrc_reconfiguration_complete = make_byte_buffer("00070e00cc6fcda5").value(),
-                         bool        is_initial_session           = true);
+  [[nodiscard]] bool
+  setup_pdu_session(unsigned               du_idx,
+                    unsigned               cu_up_idx,
+                    gnb_du_ue_f1ap_id_t    du_ue_id,
+                    rnti_t                 crnti,
+                    gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
+                    pdu_session_id_t       psi                          = pdu_session_id_t::min,
+                    drb_id_t               drb_id                       = drb_id_t::drb1,
+                    qos_flow_id_t          qfi                          = qos_flow_id_t::min,
+                    byte_buffer            rrc_reconfiguration_complete = make_byte_buffer("00070e00cc6fcda5").value(),
+                    bool                   is_initial_session           = true);
   /// Runs RRC setup, authentication, security, RRC Reconfiguration, PDU session setup for a given UE.
-  bool attach_ue(unsigned               du_idx,
-                 unsigned               cu_up_idx,
-                 gnb_du_ue_f1ap_id_t    du_ue_id,
-                 rnti_t                 crnti,
-                 amf_ue_id_t            amf_ue_id,
-                 gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
-                 pdu_session_id_t       psi                          = pdu_session_id_t::min,
-                 drb_id_t               drb_id                       = drb_id_t::drb1,
-                 qos_flow_id_t          qfi                          = qos_flow_id_t::min,
-                 byte_buffer            rrc_reconfiguration_complete = make_byte_buffer("00070e00cc6fcda5").value());
+  [[nodiscard]] bool attach_ue(unsigned               du_idx,
+                               unsigned               cu_up_idx,
+                               gnb_du_ue_f1ap_id_t    du_ue_id,
+                               rnti_t                 crnti,
+                               amf_ue_id_t            amf_ue_id,
+                               gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
+                               pdu_session_id_t       psi               = pdu_session_id_t::min,
+                               drb_id_t               drb_id            = drb_id_t::drb1,
+                               qos_flow_id_t          qfi               = qos_flow_id_t::min,
+                               byte_buffer rrc_reconfiguration_complete = make_byte_buffer("00070e00cc6fcda5").value());
   /// Reestablishes a UE connection, including RRC Reestablishment and RRC Reconfiguration procedures.
   /// \return True if the reestablishment was successful, false if RRC Setup/Reject was performed instead.
-  bool reestablish_ue(unsigned            du_idx,
-                      unsigned            cu_up_idx,
-                      gnb_du_ue_f1ap_id_t new_du_ue_id,
-                      rnti_t              new_crnti,
-                      rnti_t              old_crnti,
-                      pci_t               old_pci);
+  [[nodiscard]] bool reestablish_ue(unsigned            du_idx,
+                                    unsigned            cu_up_idx,
+                                    gnb_du_ue_f1ap_id_t new_du_ue_id,
+                                    rnti_t              new_crnti,
+                                    rnti_t              old_crnti,
+                                    pci_t               old_pci);
 
   /// Tick the CU-CP clock.
   void tick();
@@ -136,17 +138,17 @@ public:
   const cu_cp_configuration& get_cu_cp_cfg() const { return cu_cp_cfg; }
 
   // Helper functions
-  bool send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
+  [[nodiscard]] bool send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
       const ngap_message& pdu_session_resource_setup_request,
       unsigned            du_idx,
       unsigned            cu_up_idx,
       gnb_du_ue_f1ap_id_t du_ue_id);
 
-  bool send_pdu_session_resource_setup_request_and_await_bearer_context_modification_request(
+  [[nodiscard]] bool send_pdu_session_resource_setup_request_and_await_bearer_context_modification_request(
       const ngap_message& pdu_session_resource_setup_request,
       unsigned            cu_up_idx);
 
-  bool
+  [[nodiscard]] bool
   send_bearer_context_setup_response_and_await_ue_context_modification_request(unsigned               du_idx,
                                                                                unsigned               cu_up_idx,
                                                                                gnb_du_ue_f1ap_id_t    du_ue_id,
@@ -154,19 +156,21 @@ public:
                                                                                pdu_session_id_t       psi,
                                                                                qos_flow_id_t          qfi);
 
-  bool send_bearer_context_modification_response_and_await_ue_context_modification_request(unsigned du_idx,
-                                                                                           unsigned cu_up_idx,
-                                                                                           gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                                           pdu_session_id_t    psi,
-                                                                                           drb_id_t            drb_id,
-                                                                                           qos_flow_id_t       qfi);
+  [[nodiscard]] bool
+  send_bearer_context_modification_response_and_await_ue_context_modification_request(unsigned            du_idx,
+                                                                                      unsigned            cu_up_idx,
+                                                                                      gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                                      pdu_session_id_t    psi,
+                                                                                      drb_id_t            drb_id,
+                                                                                      qos_flow_id_t       qfi);
 
-  bool send_ue_context_modification_response_and_await_bearer_context_modification_request(unsigned du_idx,
-                                                                                           unsigned cu_up_idx,
-                                                                                           gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                                           rnti_t              crnti);
+  [[nodiscard]] bool
+  send_ue_context_modification_response_and_await_bearer_context_modification_request(unsigned            du_idx,
+                                                                                      unsigned            cu_up_idx,
+                                                                                      gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                                      rnti_t              crnti);
 
-  bool send_bearer_context_modification_response_and_await_rrc_reconfiguration(
+  [[nodiscard]] bool send_bearer_context_modification_response_and_await_rrc_reconfiguration(
       unsigned                                           du_idx,
       unsigned                                           cu_up_idx,
       gnb_du_ue_f1ap_id_t                                du_ue_id,
@@ -175,7 +179,7 @@ public:
       const std::optional<std::vector<srb_id_t>>& expected_srbs_to_add_mod = std::nullopt,
       const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod = std::nullopt);
 
-  bool send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
+  [[nodiscard]] bool send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
       unsigned                             du_idx,
       gnb_du_ue_f1ap_id_t                  du_ue_id,
       byte_buffer                          rrc_reconfiguration_complete,

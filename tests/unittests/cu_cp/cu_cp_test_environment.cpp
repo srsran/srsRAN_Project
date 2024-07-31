@@ -700,8 +700,10 @@ bool cu_cp_test_environment::setup_pdu_session(unsigned               du_idx,
 
   if (is_initial_session) {
     // Inject PDU Session Resource Setup Request and wait for Bearer Context Setup Request.
-    send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
-        pdu_session_resource_setup_request, du_idx, cu_up_idx, du_ue_id);
+    if (not send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
+            pdu_session_resource_setup_request, du_idx, cu_up_idx, du_ue_id)) {
+      return false;
+    }
 
     // Inject Bearer Context Setup Response and wait for F1AP UE Context Modification Request.
     if (not send_bearer_context_setup_response_and_await_ue_context_modification_request(
@@ -710,8 +712,10 @@ bool cu_cp_test_environment::setup_pdu_session(unsigned               du_idx,
     }
   } else {
     // Inject PDU Session Resource Setup Request and wait for Bearer Context Modification Request.
-    send_pdu_session_resource_setup_request_and_await_bearer_context_modification_request(
-        pdu_session_resource_setup_request, du_idx);
+    if (not send_pdu_session_resource_setup_request_and_await_bearer_context_modification_request(
+            pdu_session_resource_setup_request, du_idx)) {
+      return false;
+    }
 
     // Inject Bearer Context Modification Response and wait for F1AP UE Context Modification Request.
     if (not send_bearer_context_modification_response_and_await_ue_context_modification_request(
