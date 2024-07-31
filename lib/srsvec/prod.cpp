@@ -46,6 +46,37 @@ static void prod_fff_simd(const float* x, const float* y, float* z, std::size_t 
   }
 }
 
+static void prod_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::size_t len)
+{
+  std::size_t i = 0;
+
+#if SRSRAN_SIMD_S_SIZE
+  if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
+    for (; i + SRSRAN_SIMD_S_SIZE < len + 1; i += SRSRAN_SIMD_S_SIZE) {
+      simd_s_t a = srsran_simd_s_load(x + i);
+      simd_s_t b = srsran_simd_s_load(y + i);
+
+      simd_s_t r = srsran_simd_s_mul(a, b);
+
+      srsran_simd_s_store(z + i, r);
+    }
+  } else {
+    for (; i + SRSRAN_SIMD_S_SIZE < len + 1; i += SRSRAN_SIMD_S_SIZE) {
+      simd_s_t a = srsran_simd_s_loadu(x + i);
+      simd_s_t b = srsran_simd_s_loadu(y + i);
+
+      simd_s_t r = srsran_simd_s_mul(a, b);
+
+      srsran_simd_s_storeu(z + i, r);
+    }
+  }
+#endif
+
+  for (; i != len; ++i) {
+    z[i] = x[i] * y[i];
+  }
+}
+
 static void prod_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_t len)
 {
   std::size_t i = 0;
@@ -122,6 +153,14 @@ void srsran::srsvec::prod(span<const float> x, span<const float> y, span<float> 
   srsran_srsvec_assert_size(x, z);
 
   prod_fff_simd(x.data(), y.data(), z.data(), x.size());
+}
+
+void srsran::srsvec::prod(span<const int16_t> x, span<const int16_t> y, span<int16_t> z)
+{
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
+
+  prod_sss_simd(x.data(), y.data(), z.data(), x.size());
 }
 
 void srsran::srsvec::prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
