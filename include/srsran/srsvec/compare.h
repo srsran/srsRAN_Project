@@ -30,7 +30,7 @@ bool equal(const T1& s1, const T2& s2)
   return std::equal(s1.begin(), s1.end(), s2.begin(), s2.end());
 }
 
-/// \brief Finds the first value in \input that is equal to \c value.
+/// \brief Finds the first value in \c input that is equal to \c value.
 ///
 /// The implementation is equivalent to:
 /// \code

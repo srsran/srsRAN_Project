@@ -37,9 +37,18 @@ bool check_different(const T& in1, const T& in2)
   return (in1.data() != in2.data());
 }
 
+/// \name No padding convolution.
+/// Convolution between two sequences without zero-padding the edges (MATLAB calls this the \e valid section of the
+/// convolution).
+///@{
+
+/// Real sequences.
 void multiply_and_accumulate(span<float> out, span<const float> x, span<const float> y);
+/// One real and one complex sequence.
 void multiply_and_accumulate(span<cf_t> out, span<const float> x, span<const cf_t> y);
+/// Complex sequences.
 void multiply_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const float> y);
+///@}
 
 } // namespace detail
 
