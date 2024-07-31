@@ -81,7 +81,7 @@ TEST_F(f1ap_du_test,
   ASSERT_EQ(err_ind->gnb_du_ue_f1ap_id, 0);
   ASSERT_TRUE(err_ind->cause_present);
   ASSERT_EQ(err_ind->cause.radio_network().value,
-            asn1::f1ap::cause_radio_network_opts::unknown_or_already_allocated_gnb_cu_ue_f1ap_id);
+            asn1::f1ap::cause_radio_network_opts::unknown_or_inconsistent_pair_of_ue_f1ap_id);
 }
 
 TEST_F(f1ap_du_test,

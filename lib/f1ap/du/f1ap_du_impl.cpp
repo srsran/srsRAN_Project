@@ -417,8 +417,6 @@ bool f1ap_du_impl::handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue
     return true;
   }
 
-  // [TS38.473, Cause IE] The action failed because the gNB-CU UE F1AP ID is either unknown, or (for a first
-  // message received at the gNB-CU) is known and already allocated to an existing context.
   const f1ap_du_ue* ue_cu_id = ues.find(gnb_cu_ue_f1ap_id);
   if (ue.context.gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid and ue_cu_id == nullptr) {
     // First message from the gNB-CU for this UE. Update gNB-CU-UE-F1AP-ID.
@@ -426,22 +424,56 @@ bool f1ap_du_impl::handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue
     return true;
   }
   cause_c cause;
-  cause.set_radio_network().value = cause_radio_network_opts::unknown_or_already_allocated_gnb_cu_ue_f1ap_id;
   if (ue_cu_id == nullptr) {
-    logger.warning("Discarding message cause=gNB-CU UE F1AP ID={} is unknown");
+    cause.set_radio_network().value = cause_radio_network_opts::unknown_or_inconsistent_pair_of_ue_f1ap_id;
+    logger.warning("Discarding message. Cause: gNB-CU UE F1AP ID={} does not match existing context",
+                   gnb_cu_ue_f1ap_id);
   } else {
+    // [TS38.473, Cause IE] The action failed because the gNB-CU UE F1AP ID is either unknown, or (for a first
+    // message received at the gNB-CU) is known and already allocated to an existing context.
+    cause.set_radio_network().value = cause_radio_network_opts::unknown_or_already_allocated_gnb_cu_ue_f1ap_id;
     logger.warning("Discarding message cause=gNB-CU UE F1AP ID={} is known and already allocated to an existing "
                    "context with gNB-DU UE F1AP ID={}",
                    gnb_cu_ue_f1ap_id,
                    ue_cu_id->context.gnb_du_ue_f1ap_id);
   }
-  send_error_indication(cause);
+  send_error_indication(cause, std::nullopt, ue.context.gnb_du_ue_f1ap_id, ue.context.gnb_cu_ue_f1ap_id);
   return false;
 }
 
-void f1ap_du_impl::send_error_indication(const asn1::f1ap::cause_c& cause)
+void f1ap_du_impl::send_error_indication(const asn1::f1ap::cause_c&         cause,
+                                         std::optional<uint8_t>             transaction_id,
+                                         std::optional<gnb_du_ue_f1ap_id_t> du_ue_id,
+                                         std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id)
 {
-  // TODO
+  f1ap_message msg;
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_ERROR_IND);
+  auto& err_ind = msg.pdu.init_msg().value.error_ind();
+
+  if (transaction_id.has_value()) {
+    err_ind->transaction_id = transaction_id.value();
+  } else {
+    auto transaction        = events->transactions.create_transaction();
+    err_ind->transaction_id = transaction.id();
+  }
+
+  // Set cause.
+  err_ind->cause_present = true;
+  err_ind->cause         = cause;
+
+  // [TS 38.473, 8.2.2.2] In case the Error Indication procedure is triggered by utilising UE associated signalling
+  // the gNB-CU UE F1AP ID IE and gNBDU UE F1AP ID IE shall be included in the ERROR INDICATION message.
+  err_ind->gnb_cu_ue_f1ap_id_present = cu_ue_id.has_value();
+  if (err_ind->gnb_cu_ue_f1ap_id_present) {
+    err_ind->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(*cu_ue_id);
+  }
+  err_ind->gnb_du_ue_f1ap_id_present = du_ue_id.has_value();
+  if (err_ind->gnb_du_ue_f1ap_id_present) {
+    err_ind->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(*du_ue_id);
+  }
+
+  // Send message to CU.
+  tx_pdu_notifier->on_new_message(msg);
 }
 
 void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
