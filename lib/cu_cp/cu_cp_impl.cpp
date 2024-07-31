@@ -95,7 +95,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   controller = std::make_unique<cu_cp_controller>(cfg,
                                                   common_task_sched,
-                                                  ue_mng,
                                                   ngap_entity->get_ngap_connection_manager(),
                                                   cu_up_db,
                                                   du_db,

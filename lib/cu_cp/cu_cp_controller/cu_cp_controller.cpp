@@ -18,13 +18,11 @@ using namespace srs_cu_cp;
 
 cu_cp_controller::cu_cp_controller(const cu_cp_configuration&  config_,
                                    common_task_scheduler&      common_task_sched_,
-                                   ue_manager&                 ue_mng_,
                                    ngap_connection_manager&    ngap_conn_mng_,
                                    cu_up_processor_repository& cu_ups_,
                                    du_processor_repository&    dus_,
                                    task_executor&              ctrl_exec_) :
   cfg(config_),
-  ue_mng(ue_mng_),
   common_task_sched(common_task_sched_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("CU-CP")),
@@ -32,7 +30,6 @@ cu_cp_controller::cu_cp_controller(const cu_cp_configuration&  config_,
   du_mng(cfg.admission.max_nof_dus, dus_, ctrl_exec, common_task_sched_),
   cu_up_mng(cfg.admission.max_nof_cu_ups, cu_ups_, ctrl_exec, common_task_sched_)
 {
-  (void)ue_mng;
 }
 
 void cu_cp_controller::stop()
