@@ -311,13 +311,13 @@ endif (ENABLE_DPDK)
 ########################################################################
 # Instruction Set Architecture setup
 ########################################################################
-set(ARCH "native" CACHE STRING "Compiler march flag. Default value is 'native'")
-set(TUNE "generic" CACHE STRING "Compiler mtune flag. Default value is 'generic'")
-message(STATUS "ARCH value is ${ARCH}")
-message(STATUS "TUNE value is ${TUNE}")
+set(MARCH "native" CACHE STRING "Compiler march flag. Default value is 'native'")
+set(MTUNE "generic" CACHE STRING "Compiler mtune flag. Default value is 'generic'")
+message(STATUS "ARCH value is ${MARCH}")
+message(STATUS "TUNE value is ${MTUNE}")
 
 # Append march and mtune to the compilation flags.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${ARCH} -mtune=${TUNE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH} -mtune=${MTUNE}")
 
 ########################################################################
 # Compiler launcher setup
