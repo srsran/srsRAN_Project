@@ -32,6 +32,9 @@ byte_buffer generate_container_with_cell_group_config();
 /// \brief Generate RRC Container with RRC Setup Complete message.
 byte_buffer generate_rrc_setup_complete();
 
+// Generate RRC Reconfiguration Complete PDU.
+byte_buffer generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count);
+
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
   explicit dummy_du_processor_cu_cp_notifier(ue_manager* ue_mng_ = nullptr) : ue_mng(ue_mng_) {}

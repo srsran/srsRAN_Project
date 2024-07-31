@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/cu_types.h"
 namespace srsran {
 
 namespace srs_cu_cp {
@@ -37,6 +38,12 @@ bool is_valid_pdu_session_resource_setup_response(const srs_cu_cp::ngap_message&
 bool is_valid_pdu_session_resource_release_response(const srs_cu_cp::ngap_message& msg);
 
 bool is_valid_pdu_session_resource_modify_response(const srs_cu_cp::ngap_message& msg);
+
+// Check if the NGAP PDU contains the expected PDU session setup response.
+bool is_expected_pdu_session_resource_setup_response(
+    const srs_cu_cp::ngap_message&       ngap_pdu,
+    const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
+    const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup);
 
 } // namespace test_helpers
 } // namespace srsran

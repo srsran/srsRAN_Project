@@ -648,92 +648,6 @@ bool cu_cp_test_environment::send_bearer_context_modification_response_and_await
   return true;
 }
 
-bool cu_cp_test_environment::is_expected_pdu_session_resource_setup_response(
-    const ngap_message&                  ngap_pdu,
-    const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
-    const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup)
-{
-  // Check failed PDU sessions
-  if (expected_pdu_sessions_failed_to_setup.empty() && ngap_pdu.pdu.successful_outcome()
-                                                           .value.pdu_session_res_setup_resp()
-                                                           ->pdu_session_res_failed_to_setup_list_su_res_present) {
-    return false;
-  }
-
-  if (!expected_pdu_sessions_failed_to_setup.empty() && !ngap_pdu.pdu.successful_outcome()
-                                                             .value.pdu_session_res_setup_resp()
-                                                             ->pdu_session_res_failed_to_setup_list_su_res_present) {
-    return false;
-  }
-
-  if (expected_pdu_sessions_failed_to_setup.size() != ngap_pdu.pdu.successful_outcome()
-                                                          .value.pdu_session_res_setup_resp()
-                                                          ->pdu_session_res_failed_to_setup_list_su_res.size()) {
-    return false;
-  }
-
-  for (const auto& asn1_failed_item : ngap_pdu.pdu.successful_outcome()
-                                          .value.pdu_session_res_setup_resp()
-                                          ->pdu_session_res_failed_to_setup_list_su_res) {
-    if (std::find(expected_pdu_sessions_failed_to_setup.begin(),
-                  expected_pdu_sessions_failed_to_setup.end(),
-                  uint_to_pdu_session_id(asn1_failed_item.pdu_session_id)) ==
-        expected_pdu_sessions_failed_to_setup.end()) {
-      return false;
-    }
-  }
-
-  // Check successful PDU sessions
-  if (expected_pdu_sessions_to_setup.empty() &&
-      ngap_pdu.pdu.successful_outcome().value.pdu_session_res_setup_resp()->pdu_session_res_setup_list_su_res_present) {
-    return false;
-  }
-
-  if (!expected_pdu_sessions_to_setup.empty() && !ngap_pdu.pdu.successful_outcome()
-                                                      .value.pdu_session_res_setup_resp()
-                                                      ->pdu_session_res_setup_list_su_res_present) {
-    return false;
-  }
-
-  if (expected_pdu_sessions_to_setup.size() !=
-      ngap_pdu.pdu.successful_outcome().value.pdu_session_res_setup_resp()->pdu_session_res_setup_list_su_res.size()) {
-    return false;
-  }
-
-  for (const auto& asn1_setup_item :
-       ngap_pdu.pdu.successful_outcome().value.pdu_session_res_setup_resp()->pdu_session_res_setup_list_su_res) {
-    if (std::find(expected_pdu_sessions_to_setup.begin(),
-                  expected_pdu_sessions_to_setup.end(),
-                  uint_to_pdu_session_id(asn1_setup_item.pdu_session_id)) == expected_pdu_sessions_to_setup.end()) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-byte_buffer cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count)
-{
-  byte_buffer pdu_with_count = byte_buffer::create({0x00, count}).value();
-  if (!pdu_with_count.append(pack_ul_dcch_msg(create_rrc_reconfiguration_complete(transaction_id)))) {
-    return {};
-  }
-
-  security::sec_mac mac_exp   = {};
-  auto              k_128_int = std::array<uint8_t, 16>{
-                   0xf3, 0xd5, 0x99, 0x4a, 0x3b, 0x29, 0x06, 0xfb, 0x27, 0x00, 0x4a, 0x44, 0x90, 0x6c, 0x6b, 0xd1};
-  byte_buffer_view buf = pdu_with_count;
-
-  security::security_nia2(
-      mac_exp, k_128_int, count, srb_id_to_uint(srb_id_t::srb1) - 1, security::security_direction::uplink, buf);
-
-  if (!pdu_with_count.append(mac_exp)) {
-    return {};
-  }
-
-  return pdu_with_count;
-}
-
 bool cu_cp_test_environment::send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
     unsigned                             du_idx,
     gnb_du_ue_f1ap_id_t                  du_ue_id,
@@ -753,7 +667,7 @@ bool cu_cp_test_environment::send_rrc_reconfiguration_complete_and_await_pdu_ses
   report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
   report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                             "Invalid PDU Session Resource Setup Response");
-  report_fatal_error_if_not(is_expected_pdu_session_resource_setup_response(
+  report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(
                                 ngap_pdu, expected_pdu_sessions_to_setup, expected_pdu_sessions_failed_to_setup),
                             "Unsuccessful PDU Session Resource Setup Response");
 

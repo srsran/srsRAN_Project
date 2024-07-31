@@ -14,6 +14,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -123,17 +124,13 @@ public:
 
     // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Setup Response
     get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
-        du_ue_id,
-        ue_ctx->cu_ue_id.value(),
-        srb_id_t::srb1,
-        cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(0, 8)));
+        du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, generate_rrc_reconfiguration_complete_pdu(0, 8)));
     result = this->wait_for_ngap_tx_pdu(ngap_pdu);
     report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
-    report_fatal_error_if_not(
-        cu_cp_test_environment::is_expected_pdu_session_resource_setup_response(ngap_pdu, {psi2}, {}),
-        "Unsuccessful PDU Session Resource Setup Response");
+    report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {psi2}, {}),
+                              "Unsuccessful PDU Session Resource Setup Response");
   }
 
   void send_pdu_session_release_command_and_await_bearer_context_modification_request()
@@ -240,10 +237,7 @@ public:
     // Inject UL RRC Message (containing RRC Reconfiguration Complete) and wait for PDU Session Resource Release
     // Response
     get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
-        du_ue_id,
-        ue_ctx->cu_ue_id.value(),
-        srb_id_t::srb1,
-        cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(3, 7)));
+        du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, generate_rrc_reconfiguration_complete_pdu(3, 7)));
     bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
     report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Release Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_release_response(ngap_pdu),

@@ -99,7 +99,7 @@ public:
     report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
-    report_fatal_error_if_not(is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
+    report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
                               "Unsuccessful PDU Session Resource Setup Response");
   }
 
@@ -127,7 +127,7 @@ public:
     report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
-    report_fatal_error_if_not(is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
+    report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
                               "Unsuccessful PDU Session Resource Setup Response");
   }
 
@@ -153,7 +153,7 @@ public:
     report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
-    report_fatal_error_if_not(is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
+    report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
                               "Unsuccessful PDU Session Resource Setup Response");
   }
 
@@ -173,7 +173,7 @@ public:
     report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
-    report_fatal_error_if_not(is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
+    report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
                               "Unsuccessful PDU Session Resource Setup Response");
   }
 
@@ -202,7 +202,7 @@ public:
     report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
-    report_fatal_error_if_not(is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
+    report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
                               "Unsuccessful PDU Session Resource Setup Response");
   }
 
@@ -414,7 +414,7 @@ TEST_F(
   report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
   report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                             "Invalid PDU Session Resource Setup Response");
-  report_fatal_error_if_not(is_expected_pdu_session_resource_setup_response(ngap_pdu, {psi}, {psi2}),
+  report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {psi}, {psi2}),
                             "Unsuccessful PDU Session Resource Setup Response");
 }
 

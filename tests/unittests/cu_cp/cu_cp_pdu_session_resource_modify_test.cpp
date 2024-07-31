@@ -14,6 +14,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -422,7 +423,7 @@ TEST_F(cu_cp_pdu_session_resource_modify_test,
 
   // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Modify Response
   send_rrc_reconfiguration_complete_and_await_pdu_session_modify_response(
-      cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(1, 9));
+      generate_rrc_reconfiguration_complete_pdu(1, 9));
 }
 
 TEST_F(cu_cp_pdu_session_resource_modify_test, when_many_qos_flows_are_added_pdu_session_modification_succeeds)
@@ -431,11 +432,10 @@ TEST_F(cu_cp_pdu_session_resource_modify_test, when_many_qos_flows_are_added_pdu
   unsigned transaction_id = 0;
   unsigned count          = 8;
   for (unsigned i = 2; i <= MAX_NOF_DRBS; ++i) {
-    modify_pdu_session_and_add_qos_flow(
-        psi,
-        uint_to_drb_id(i),
-        uint_to_qos_flow_id(i),
-        cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(transaction_id, count));
+    modify_pdu_session_and_add_qos_flow(psi,
+                                        uint_to_drb_id(i),
+                                        uint_to_qos_flow_id(i),
+                                        generate_rrc_reconfiguration_complete_pdu(transaction_id, count));
     count++;
     transaction_id++;
     if (transaction_id == 4) {
@@ -450,11 +450,10 @@ TEST_F(cu_cp_pdu_session_resource_modify_test, when_one_to_many_qos_flows_are_ad
   unsigned transaction_id = 0;
   unsigned count          = 8;
   for (unsigned i = 2; i <= MAX_NOF_DRBS; ++i) {
-    modify_pdu_session_and_add_qos_flow(
-        psi,
-        uint_to_drb_id(i),
-        uint_to_qos_flow_id(i),
-        cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(transaction_id, count));
+    modify_pdu_session_and_add_qos_flow(psi,
+                                        uint_to_drb_id(i),
+                                        uint_to_qos_flow_id(i),
+                                        generate_rrc_reconfiguration_complete_pdu(transaction_id, count));
     count++;
     transaction_id++;
     if (transaction_id == 4) {

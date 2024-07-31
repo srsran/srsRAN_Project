@@ -182,13 +182,6 @@ public:
       const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
       const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup);
 
-  bool is_expected_pdu_session_resource_setup_response(
-      const ngap_message&                  ngap_pdu,
-      const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
-      const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup);
-
-  byte_buffer generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count);
-
 private:
   class worker_manager;
 

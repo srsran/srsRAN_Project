@@ -13,6 +13,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -186,11 +187,8 @@ public:
   void send_rrc_reconfiguration_complete_and_await_initial_context_setup_response()
   {
     // Inject UL RRC Message Transfer (containing RRC Reconfiguration Complete)
-    f1ap_message ul_rrc_msg_transfer =
-        generate_ul_rrc_message_transfer(ue_ctx->cu_ue_id.value(),
-                                         du_ue_id,
-                                         srb_id_t::srb1,
-                                         cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(3, 5));
+    f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+        ue_ctx->cu_ue_id.value(), du_ue_id, srb_id_t::srb1, generate_rrc_reconfiguration_complete_pdu(3, 5));
     get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
     // Wait for Initial Context Setup Response
