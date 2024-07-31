@@ -295,7 +295,7 @@ grafana server image latest:
     - |
       export NAME="srsran-project"
       export VERSION="${SPLIT}_${SUFFIX}"
-      export BUILD_ARGS="LIB=${LIB};LIB_VERSION=${LIB_VERSION};ARCH=${ARCH};NUM_CORES=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
+      export BUILD_ARGS="LIB=${LIB};LIB_VERSION=${LIB_VERSION};MARCH=${MARCH};NUM_CORES=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
   needs:
     - job: gnb docker compose
       optional: true
@@ -310,32 +310,32 @@ srsran image split72:
     matrix:
       # AMD AVX2
       - SUFFIX: release_avx2
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
       - SUFFIX: release_with_debug_avx2
         EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
       # AMD AVX512
       - SUFFIX: release_avx512
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
         TAG: amd64-avx2-avx512
         PLATFORM: amd64
       - SUFFIX: release_with_debug_avx512
         EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
         TAG: amd64-avx2-avx512
         PLATFORM: amd64
       # ARM
       - SUFFIX: release_arm
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64
       - SUFFIX: release_with_debug_arm
         EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64
 
@@ -348,21 +348,21 @@ srsran image split8:
     matrix:
       # AMD AVX2
       - SUFFIX: release_avx2
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
       - SUFFIX: release_with_debug_avx2
         EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
       # ARM
       - SUFFIX: release_arm
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64
       - SUFFIX: release_with_debug_arm
         EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64

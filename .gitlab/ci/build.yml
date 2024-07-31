@@ -76,12 +76,12 @@ variables:
 ################
 
 .cache_build_set: &cache_build_set
-  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${ARCH}
+  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${MARCH}
     paths: [ccache]
     policy: push
 
 .cache_build_get: &cache_build_get
-  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${ARCH}
+  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${MARCH}
     paths: [ccache]
     policy: pull-push
 
@@ -112,8 +112,8 @@ variables:
     ENABLE_GCOV: "" # Empty for cmake default
     ENABLE_WERROR: "" # Empty for cmake default
     FORCE_DEBUG_INFO: "" # Empty for cmake default
-    ARCH: ""
-    TUNE: ""
+    MARCH: ""
+    MTUNE: ""
     # TEST
     TEST_EXECUTION_TIMEOUT: 0
     # CI
@@ -172,11 +172,11 @@ variables:
         if [ -n "${ENABLE_GCOV}" ]; then
           BUILD_CMD="${BUILD_CMD} -DENABLE_GCOV=${ENABLE_GCOV}"
         fi
-        if [ -n "${ARCH}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DARCH=${ARCH}"
+        if [ -n "${MARCH}" ]; then
+          BUILD_CMD="${BUILD_CMD} -DMARCH=${MARCH}"
         fi
-        if [ -n "${TUNE}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DTUNE=${TUNE}"
+        if [ -n "${MTUNE}" ]; then
+          BUILD_CMD="${BUILD_CMD} -DTUNE=${MTUNE}"
         fi
         if [ -n "${ENABLE_WERROR}" ]; then
           BUILD_CMD="${BUILD_CMD} -DENABLE_WERROR=${ENABLE_WERROR}"
@@ -362,7 +362,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: coverage
     ENABLE_GCOV: "True"
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke relwithdeb:
@@ -373,7 +373,7 @@ variables:
     BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke tsan:
@@ -385,7 +385,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke rhel:
@@ -396,7 +396,7 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke archlinux:
@@ -408,7 +408,7 @@ variables:
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke dpdk:
@@ -422,7 +422,7 @@ variables:
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
     DPDK_VERSION: "23.11_avx2"
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke valgrind:
@@ -433,7 +433,7 @@ variables:
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     TEST_MODE: valgrind
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke avx512:
@@ -444,7 +444,7 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX512_TAG}"]
 
 .smoke arm:
@@ -455,7 +455,7 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    ARCH: armv8-a
+    MARCH: armv8-a
   tags: ["${ARM64_TAG}"]
 
 .smoke arm neon:
@@ -466,7 +466,7 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    ARCH: armv8.2-a+crypto+fp16+dotprod
+    MARCH: armv8.2-a+crypto+fp16+dotprod
   tags: ["${ARM64_TAG}"]
 
 # Combinations to use in schedules matrix
@@ -902,7 +902,7 @@ smoke asan:
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
     TEST_MODE: asan
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 # Packaging
@@ -923,12 +923,12 @@ package:
     KUBERNETES_MEMORY_LIMIT: 12Gi
     DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
     MAKEFLAGS: -j${KUBERNETES_CPU_LIMIT}
-    extraopts: -DARCH=x86-64-v3
+    extraopts: -DMARCH=x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
       - OS_VERSION: "20.04"
-        extraopts: -DARCH=x86-64
+        extraopts: -DMARCH=x86-64
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.10"
       - OS_VERSION: "24.04"
@@ -978,7 +978,7 @@ export on amd64:
     matrix:
       - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
       - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 export on amd64 avx512:
   extends: export on amd64
@@ -986,7 +986,7 @@ export on amd64 avx512:
   parallel:
     matrix:
       - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 # Build + unit tests combinations
 
@@ -1002,7 +1002,7 @@ ubuntu-24.04 amd64 avx2:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 ubuntu-24.04 amd64 avx512:
   extends: .build_and_unit
@@ -1016,7 +1016,7 @@ ubuntu-24.04 amd64 avx512:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 ubuntu-23.10 amd64 avx2:
   extends: .build_and_unit
@@ -1030,7 +1030,7 @@ ubuntu-23.10 amd64 avx2:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 ubuntu-23.10 amd64 avx512:
   extends: .build_and_unit
@@ -1044,7 +1044,7 @@ ubuntu-23.10 amd64 avx512:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 ubuntu-22.04 amd64 avx2:
   extends: .build_and_unit
@@ -1058,7 +1058,7 @@ ubuntu-22.04 amd64 avx2:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 ubuntu-20.04 amd64 avx2:
   extends: .build_and_unit
@@ -1072,7 +1072,7 @@ ubuntu-20.04 amd64 avx2:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 rhel-8 amd64 avx2:
   extends: .build_and_unit
@@ -1086,7 +1086,7 @@ rhel-8 amd64 avx2:
     matrix:
       - OS: rhel-8
         <<: *basic_combinations
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 # Basic ARM NO_ISA / NEON
 
@@ -1102,7 +1102,7 @@ ubuntu-24.04 arm neon:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
 
 ubuntu-23.10 arm neon:
   extends: .build_and_unit
@@ -1116,7 +1116,7 @@ ubuntu-23.10 arm neon:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
 
 # Basic DPDK
 
@@ -1132,7 +1132,7 @@ ubuntu dpdk:
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
@@ -1177,7 +1177,7 @@ archlinux amd64 avx2:
       - OS: archlinux-latest
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 archlinux amd64 avx512:
   extends: .build_and_unit
@@ -1190,7 +1190,7 @@ archlinux amd64 avx512:
       - OS: archlinux-latest
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 debian 12 amd64 native:
   extends: .build_and_unit
@@ -1219,7 +1219,7 @@ debian 12 amd64 avx2:
       - OS: debian-12
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 debian 12 amd64 avx512:
   extends: .build_and_unit
@@ -1234,7 +1234,7 @@ debian 12 amd64 avx512:
       - OS: debian-12
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 debian 11 amd64 native:
   extends: .build_and_unit
@@ -1263,7 +1263,7 @@ debian 11 amd64 avx2:
       - OS: debian-11
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        ARCH: x86-64-v2
+        MARCH: x86-64-v2
 
 debian 11 amd64 avx512:
   extends: .build_and_unit
@@ -1278,7 +1278,7 @@ debian 11 amd64 avx512:
       - OS: debian-11
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 ##########
 # Weekly #
@@ -1345,13 +1345,13 @@ sanitizers amd64 native:
 sanitizers amd64 avx2:
   extends: .weekly sanitizers
   variables:
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
 sanitizers amd64 avx512:
   extends: .weekly sanitizers
   variables:
-    ARCH: x86-64-v4
+    MARCH: x86-64-v4
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
@@ -1381,7 +1381,7 @@ sanitizers arm native:
 sanitizers arm neon:
   extends: .weekly sanitizers
   variables:
-    ARCH: armv8.2-a+crypto+fp16+dotprod
+    MARCH: armv8.2-a+crypto+fp16+dotprod
   tags: ["${ARM64_TAG}"]
 
 # UHD Alternatives
@@ -1394,7 +1394,7 @@ build uhd alt:
   variables:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
-    ARCH: x86-64-v3
+    MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
@@ -1490,7 +1490,7 @@ ubuntu-22.04 amd64 avx512:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 ubuntu-22.04 arm native:
   extends: .build_and_unit
@@ -1517,7 +1517,7 @@ ubuntu-22.04 arm neon:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
 
 ubuntu-20.04 amd64 native:
   extends: .build_and_unit
@@ -1544,7 +1544,7 @@ ubuntu-20.04 amd64 avx512:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 ubuntu-20.04 arm native:
   extends: .build_and_unit
@@ -1571,7 +1571,7 @@ ubuntu-20.04 arm neon:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
 
 rhel-8 amd64 native:
   extends: .build_and_unit
@@ -1598,7 +1598,7 @@ rhel-8 amd64 avx512:
     matrix:
       - OS: rhel-8
         <<: *basic_combinations
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 rhel-8 arm native:
   extends: .build_and_unit
@@ -1625,7 +1625,7 @@ rhel-8 arm neon:
     matrix:
       - OS: rhel-8
         <<: *basic_combinations
-        ARCH: armv8.2-a+crypto+fp16+dotprod
+        MARCH: armv8.2-a+crypto+fp16+dotprod
 
 # DPDK
 
@@ -1649,7 +1649,7 @@ ubuntu-20.04 amd64 avx2 dpdk:
       - OS: ubuntu-20.04
         <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.3", "23.11"]
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 ubuntu-20.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1664,7 +1664,7 @@ ubuntu-20.04 amd64 avx512 dpdk:
       - OS: ubuntu-20.04
         <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.3", "23.11"]
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 ubuntu-22.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1679,7 +1679,7 @@ ubuntu-22.04 amd64 avx2 dpdk:
       - OS: ubuntu-22.04
         <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 ubuntu-22.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1694,7 +1694,7 @@ ubuntu-22.04 amd64 avx512 dpdk:
       - OS: ubuntu-22.04
         <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.3_avx512", "23.11_avx512"]
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 ubuntu-23.10 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1709,7 +1709,7 @@ ubuntu-23.10 amd64 avx2 dpdk:
       - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 ubuntu-23.10 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1724,7 +1724,7 @@ ubuntu-23.10 amd64 avx512 dpdk:
       - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.3_avx512", "23.11_avx512"]
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 ubuntu-24.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1739,7 +1739,7 @@ ubuntu-24.04 amd64 avx2 dpdk:
       - OS: ubuntu-24.04
         <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11_avx2"
-        ARCH: x86-64-v3
+        MARCH: x86-64-v3
 
 ubuntu-24.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1754,7 +1754,7 @@ ubuntu-24.04 amd64 avx512 dpdk:
       - OS: ubuntu-24.04
         <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11_avx512"
-        ARCH: x86-64-v4
+        MARCH: x86-64-v4
 
 #############
 # Run check #
@@ -1886,7 +1886,7 @@ basic avx512 dpdk:
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
     DPDK_VERSION: "23.11_avx512"
-    ARCH: x86-64-v4
+    MARCH: x86-64-v4
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: MINIMAL
   tags: ["${AMD64_AVX512_TAG}"]
