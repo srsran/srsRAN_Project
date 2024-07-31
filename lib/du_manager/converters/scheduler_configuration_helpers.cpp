@@ -82,6 +82,8 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
     sched_req.nzp_csi_rs_res_list = du_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list;
   }
 
+  sched_req.rrm_policy_members = du_cfg.rrm_policy_members;
+
   return sched_req;
 }
 
@@ -112,6 +114,8 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
     sched_lc_ch.lc_sr_mask                = bearer.second->mac_cfg.lc_sr_mask;
     sched_lc_ch.lc_sr_delay_timer_applied = bearer.second->mac_cfg.lc_sr_delay_applied;
     sched_lc_ch.sr_id.emplace(bearer.second->mac_cfg.sr_id);
+    sched_lc_ch.rrm_policy.s_nssai = bearer.second->s_nssai;
+    sched_lc_ch.rrm_policy.plmn_id = ue_ctx.nr_cgi.plmn_id.to_string();
 
     sched_cfg.drb_info_list.emplace_back(sched_drb_info{.lcid         = bearer.second->lcid,
                                                         .s_nssai      = bearer.second->s_nssai,

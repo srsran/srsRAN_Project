@@ -44,7 +44,7 @@ struct n2_connection_client_config {
     std::string            bind_address;
     std::string            bind_interface;
     std::string            amf_address;
-    int                    amf_port = 38412;
+    int                    amf_port = NGAP_PORT;
     std::optional<int32_t> rto_initial;
     std::optional<int32_t> rto_min;
     std::optional<int32_t> rto_max;

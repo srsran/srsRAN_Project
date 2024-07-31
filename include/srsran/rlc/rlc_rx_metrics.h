@@ -29,11 +29,18 @@
 
 namespace srsran {
 
-struct rlc_tm_rx_metrics {};
+struct rlc_tm_rx_metrics {
+  void reset() {}
+};
 
 struct rlc_um_rx_metrics {
   uint32_t num_sdu_segments;      ///< Number of SDU segments RX'ed
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments Bytes
+  void     reset()
+  {
+    num_sdu_segments      = {};
+    num_sdu_segment_bytes = {};
+  }
 };
 
 struct rlc_am_rx_metrics {
@@ -41,6 +48,13 @@ struct rlc_am_rx_metrics {
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments bytes
   uint32_t num_ctrl_pdus;         ///< Number of control PDUs
   uint32_t num_ctrl_pdu_bytes;    ///< Number of control PDUs bytes
+  void     reset()
+  {
+    num_sdu_segments      = {};
+    num_sdu_segment_bytes = {};
+    num_ctrl_pdus         = {};
+    num_ctrl_pdu_bytes    = {};
+  }
 };
 
 struct rlc_rx_metrics {
@@ -67,6 +81,46 @@ struct rlc_rx_metrics {
     rlc_um_rx_metrics um;
     rlc_am_rx_metrics am;
   } mode_specific;
+
+  uint32_t counter = 0; ///< Counter of amount of times we collected metrics.
+                        ///  Useful to aggregate high and low metrics.
+
+  rlc_rx_metrics get()
+  {
+    rlc_rx_metrics ret = *this;
+    counter++;
+    return ret;
+  }
+
+  void reset()
+  {
+    // SDU metrics
+    num_sdus           = {};
+    num_sdu_bytes      = {};
+    num_pdus           = {};
+    num_pdu_bytes      = {};
+    num_lost_pdus      = {};
+    num_malformed_pdus = {};
+    sdu_latency_us     = {};
+
+    // reset mode-specific values
+    switch (mode) {
+      case rlc_mode::tm:
+        mode_specific.tm.reset();
+        break;
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+        mode_specific.um.reset();
+        break;
+      case rlc_mode::am:
+        mode_specific.am.reset();
+        break;
+      default:
+        // nothing to do here
+        break;
+    }
+    // do not reset mode or counter
+  }
 };
 
 class rlc_rx_metrics_interface
@@ -87,12 +141,13 @@ public:
 inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rlc_rx_metrics& m)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer,
-                 "num_sdus={} sdu_rate={}bps num_pdus={} pdu_rate={}bps",
-                 scaled_fmt_integer(m.num_sdus, false),
-                 float_to_eng_string(static_cast<float>(m.num_sdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
-                 scaled_fmt_integer(m.num_pdus, false),
-                 (double)m.num_pdu_bytes * 8 / (double)metrics_period.count());
+  fmt::format_to(
+      buffer,
+      "num_sdus={} sdu_rate={}bps num_pdus={} pdu_rate={}bps",
+      scaled_fmt_integer(m.num_sdus, false),
+      float_to_eng_string(static_cast<float>(m.num_sdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
+      scaled_fmt_integer(m.num_pdus, false),
+      float_to_eng_string(static_cast<double>(m.num_pdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false));
 
   // No TM specific metrics for RX
   if ((m.mode == rlc_mode::um_bidir || m.mode == rlc_mode::um_unidir_ul)) {
@@ -107,8 +162,7 @@ inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rl
   } else if (m.mode == rlc_mode::am) {
     fmt::format_to(
         buffer,
-        " num_sdu_segments={} sdu_segmments_rate={}bps",
-        " ctrl_pdus={} ctrl_rate={}bps",
+        " num_sdu_segments={} sdu_segmments_rate={}bps ctrl_pdus={} ctrl_rate={}bps",
         scaled_fmt_integer(m.mode_specific.am.num_sdu_segments, false),
         float_to_eng_string(
             static_cast<float>(m.mode_specific.am.num_sdu_segment_bytes) * 8 * 1000 / metrics_period.count(), 1, false),

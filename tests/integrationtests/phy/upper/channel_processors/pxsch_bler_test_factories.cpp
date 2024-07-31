@@ -65,7 +65,7 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
                                                                                    unsigned       nof_ldpc_iterations,
                                                                                    bool           dec_enable_early_stop)
 {
-  std::shared_ptr<dft_processor_factory> dft_proc_factory = create_dft_processor_factory_fftw_fast();
+  std::shared_ptr<dft_processor_factory> dft_proc_factory = create_dft_processor_factory_fftw_slow();
   report_fatal_error_if_not(dft_proc_factory, "Failed to create factory.");
 
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");

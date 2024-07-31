@@ -21,6 +21,7 @@
  */
 
 #include "ue_manager.h"
+#include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -36,6 +37,7 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
                        gtpu_teid_pool&                             n3_teid_allocator_,
                        gtpu_teid_pool&                             f1u_teid_allocator_,
                        cu_up_executor_pool&                        exec_pool_,
+                       task_executor&                              ctrl_executor_,
                        dlt_pcap&                                   gtpu_pcap_,
                        srslog::basic_logger&                       logger_) :
   net_config(net_config_),
@@ -48,17 +50,21 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
   n3_teid_allocator(n3_teid_allocator_),
   f1u_teid_allocator(f1u_teid_allocator_),
   exec_pool(exec_pool_),
+  ctrl_executor(ctrl_executor_),
   gtpu_pcap(gtpu_pcap_),
   timers(timers_),
-  logger(logger_),
-  task_sched(MAX_NOF_UES)
+  logger(logger_)
 {
+  // Initialize a ue task schedulers for all UE indexes.
+  for (size_t i = 0; i < MAX_NOF_UES; ++i) {
+    ue_task_schedulers.emplace(i, UE_TASK_QUEUE_SIZE);
+  }
 }
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", ue_index);
-  return ue_db.contains(ue_index) ? ue_db[ue_index].get() : nullptr;
+  return ue_db.find(ue_index) != ue_db.end() ? ue_db[ue_index].get() : nullptr;
 }
 
 ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
@@ -92,6 +98,7 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      n3_config,
                                                                      test_mode_config,
                                                                      std::move(ue_exec_mapper),
+                                                                     ue_task_schedulers[new_idx],
                                                                      ue_dl_timer_factory,
                                                                      ue_ul_timer_factory,
                                                                      ue_ctrl_timer_factory,
@@ -107,23 +114,29 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
   return ue_db[new_idx].get();
 }
 
-void ue_manager::remove_ue(ue_index_t ue_index)
+async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
 {
   logger.debug("ue={}: Scheduling UE deletion", ue_index);
-  srsran_assert(ue_db.contains(ue_index), "Remove UE called for nonexistent ue_index={}", ue_index);
+  srsran_assert(ue_db.find(ue_index) != ue_db.end(), "Remove UE called for nonexistent ue_index={}", ue_index);
 
-  // TODO: remove lookup maps
+  // Move UE context out from ue_db and erase the slot (from CU-UP shared ctrl executor)
+  std::unique_ptr<ue_context> ue_ctxt = std::move(ue_db[ue_index]);
+  ue_db.erase(ue_index);
 
-  task_sched.schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
+  // Dispatch the stopping and deletion of the UE context to UE-specific ctrl executor
+  return launch_async([this, ue_ctxt = std::move(ue_ctxt), ue_index](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    // Stop UE activity.
-    CORO_AWAIT(ue_db[ue_index]->stop());
+    // Dispatch execution context switch.
+    CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor()));
 
-    // remove UE from database
-    ue_db.erase(ue_index);
-
+    // Stop and delete
+    CORO_AWAIT(ue_ctxt->stop());
+    ue_ctxt.reset();
     logger.info("ue={}: UE removed", ue_index);
+
+    // Continuation in the original executor.
+    CORO_AWAIT(execute_on_blocking(ctrl_executor));
 
     CORO_RETURN();
   });
@@ -133,7 +146,7 @@ ue_index_t ue_manager::get_next_ue_index()
 {
   // Search unallocated UE index
   for (int i = 0; i < MAX_NOF_UES; i++) {
-    if (not ue_db.contains(i)) {
+    if (ue_db.find(static_cast<ue_index_t>(i)) == ue_db.end()) {
       return int_to_ue_index(i);
       break;
     }

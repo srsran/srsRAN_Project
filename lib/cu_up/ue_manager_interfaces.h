@@ -34,10 +34,10 @@ class ue_manager_ctrl
 public:
   virtual ~ue_manager_ctrl() = default;
 
-  virtual ue_context* add_ue(const ue_context_cfg& ue_cfg) = 0;
-  virtual void        remove_ue(ue_index_t ue_index)       = 0;
-  virtual ue_context* find_ue(ue_index_t ue_index)         = 0;
-  virtual size_t      get_nof_ues() const                  = 0;
+  virtual ue_context*      add_ue(const ue_context_cfg& ue_cfg) = 0;
+  virtual async_task<void> remove_ue(ue_index_t ue_index)       = 0;
+  virtual ue_context*      find_ue(ue_index_t ue_index)         = 0;
+  virtual size_t           get_nof_ues() const                  = 0;
 };
 
 } // namespace srs_cu_up

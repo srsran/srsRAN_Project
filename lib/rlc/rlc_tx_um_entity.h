@@ -68,8 +68,6 @@ private:
   const uint32_t head_len_first;
   const uint32_t head_len_not_first;
 
-  task_executor& pcell_executor;
-
   pcap_rlc_pdu_context pcap_context;
 
   // Storage for previous buffer state
@@ -89,13 +87,22 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   task_executor&                       pcell_executor_,
+                   rlc_metrics_aggregator&              metrics_agg_,
                    bool                                 metrics_enabled,
-                   rlc_pcap&                            pcap_);
+                   rlc_pcap&                            pcap_,
+                   task_executor&                       pcell_executor_,
+                   task_executor&                       ue_executor_,
+                   timer_manager&                       timers);
 
-  void stop() final{
-      // There are no timers to be stopped here.
-  };
+  void stop() final
+  {
+    // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
+    if (not stopped) {
+      high_metrics_timer.stop();
+      low_metrics_timer.stop();
+      stopped = true;
+    }
+  }
 
   // Interfaces for higher layers
   void handle_sdu(byte_buffer sdu_buf, bool is_retx) override;
@@ -128,6 +135,8 @@ private:
   void update_mac_buffer_state();
 
   void log_state(srslog::basic_levels level) { logger.log(level, "TX entity state. {} next_so={}", st, next_so); }
+
+  bool stopped = false;
 };
 
 } // namespace srsran

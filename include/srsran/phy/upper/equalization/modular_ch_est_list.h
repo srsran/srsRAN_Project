@@ -28,6 +28,7 @@
 namespace srsran {
 
 /// Implements the list of channel estimates with views to each of the channels.
+template <unsigned MaxNofElements>
 class modular_ch_est_list : public channel_equalizer::ch_est_list
 {
 public:
@@ -37,6 +38,12 @@ public:
   modular_ch_est_list(unsigned max_nof_rx_ports_, unsigned max_nof_layers_) :
     max_nof_rx_ports(max_nof_rx_ports_), max_nof_layers(max_nof_layers_), data({max_nof_rx_ports, max_nof_layers})
   {
+    srsran_assert(max_nof_rx_ports * max_nof_layers <= MaxNofElements,
+                  "The maximum number of layers (i.e., {}) times the maximum number of ports (i.e., {}) exceeds the "
+                  "maximum number of elements (i.e., {})",
+                  max_nof_layers,
+                  max_nof_rx_ports,
+                  MaxNofElements);
   }
 
   /// \brief Sets the contents of a channel.
@@ -109,7 +116,7 @@ private:
   /// Maximum number of layers.
   unsigned max_nof_layers;
   /// Data storage as a tensor of views for each channel.
-  dynamic_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), span<const cbf16_t>, ch_dims> data;
+  static_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), span<const cbf16_t>, MaxNofElements, ch_dims> data;
 };
 
 } // namespace srsran

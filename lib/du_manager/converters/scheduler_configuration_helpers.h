@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {

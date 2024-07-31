@@ -138,17 +138,17 @@ rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
   rlc_metric.rx.num_lost_pdus      = 1;
   rlc_metric.rx.num_malformed_pdus = 0;
 
-  rlc_metric.tx.mode                                        = rlc_mode::am;
-  rlc_metric.tx.num_sdus                                    = 10;
-  rlc_metric.tx.num_sdu_bytes                               = rlc_metric.tx.num_sdus * 1000;
-  rlc_metric.tx.num_dropped_sdus                            = 1;
-  rlc_metric.tx.num_discarded_sdus                          = 0;
-  rlc_metric.tx.num_discard_failures                        = 0;
-  rlc_metric.tx.num_pdus_no_segmentation                    = 8;
-  rlc_metric.tx.num_pdu_bytes_no_segmentation               = rlc_metric.tx.num_pdus_no_segmentation * 1000;
-  rlc_metric.tx.mode_specific.am.num_pdus_with_segmentation = 2;
-  rlc_metric.tx.mode_specific.am.num_pdu_bytes_with_segmentation =
-      rlc_metric.tx.mode_specific.am.num_pdus_with_segmentation * 1000;
+  rlc_metric.tx.tx_low.mode                          = rlc_mode::am;
+  rlc_metric.tx.tx_high.num_sdus                     = 10;
+  rlc_metric.tx.tx_high.num_sdu_bytes                = rlc_metric.tx.tx_high.num_sdus * 1000;
+  rlc_metric.tx.tx_high.num_dropped_sdus             = 1;
+  rlc_metric.tx.tx_high.num_discarded_sdus           = 0;
+  rlc_metric.tx.tx_high.num_discard_failures         = 0;
+  rlc_metric.tx.tx_low.num_pdus_no_segmentation      = 8;
+  rlc_metric.tx.tx_low.num_pdu_bytes_no_segmentation = rlc_metric.tx.tx_low.num_pdus_no_segmentation * 1000;
+  rlc_metric.tx.tx_low.mode_specific.am.num_pdus_with_segmentation = 2;
+  rlc_metric.tx.tx_low.mode_specific.am.num_pdu_bytes_with_segmentation =
+      rlc_metric.tx.tx_low.mode_specific.am.num_pdus_with_segmentation * 1000;
 
   return rlc_metric;
 }

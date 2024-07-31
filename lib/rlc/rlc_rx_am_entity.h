@@ -149,22 +149,28 @@ private:
 
   pcap_rlc_pdu_context pcap_context;
 
+  bool stopped = false;
+
 public:
   rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
                    du_ue_index_t                     ue_index,
                    rb_id_t                           rb_id,
                    const rlc_rx_am_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   timer_factory                     timers,
-                   task_executor&                    ue_executor,
+                   rlc_metrics_aggregator&           metrics_agg_,
                    bool                              metrics_enabled,
-                   rlc_pcap&                         pcap_);
+                   rlc_pcap&                         pcap_,
+                   task_executor&                    ue_executor_,
+                   timer_manager&                    timers);
 
   void stop() final
   {
     // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
-    status_prohibit_timer.stop();
-    reassembly_timer.stop();
+    if (not stopped) {
+      status_prohibit_timer.stop();
+      reassembly_timer.stop();
+      stopped = true;
+    }
   };
 
   // Rx/Tx interconnect
@@ -325,21 +331,21 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_rx_am_sdu_info> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::rlc_rx_am_sdu_info& info, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (std::holds_alternative<srsran::byte_buffer_slice>(info.sdu_data)) {
       // full SDU
       const srsran::byte_buffer_slice& payload = std::get<srsran::byte_buffer_slice>(info.sdu_data);
       return format_to(
           ctx.out(), "has_gap={} fully_received={} sdu_len={}", info.has_gap, info.fully_received, payload.length());
-    } else if (std::holds_alternative<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data)) {
+    }
+    if (std::holds_alternative<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data)) {
       // segmented SDU
       const srsran::rlc_rx_am_sdu_info::segment_set_t& segments =
           std::get<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data);
@@ -357,13 +363,13 @@ struct formatter<srsran::rlc_rx_am_sdu_info> {
 template <>
 struct formatter<srsran::rlc_rx_am_state> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_am_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_rx_am_state& st, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "rx_next={} rx_next_status_trigger={} rx_highest_status={} rx_next_highest={}",

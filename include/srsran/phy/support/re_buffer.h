@@ -290,13 +290,15 @@ private:
 /// \ref set_slice method.
 ///
 /// \tparam T Resource element type.
-template <typename T = cf_t>
+template <typename T, unsigned MaxNofSlices>
 class modular_re_buffer_reader : public re_buffer_reader<T>
 {
 public:
-  /// \brief Constructs a modular resource element buffer for a given maximum number of slices and resource elements.
-  /// \param[in] max_nof_slices Maximum number of slices.
-  modular_re_buffer_reader(unsigned max_nof_slices) : nof_slices(0), nof_re(0), data(max_nof_slices) {}
+  /// Constructs a modular resource element buffer.
+  modular_re_buffer_reader() : nof_slices(0), nof_re(0) {}
+
+  /// Constructs a modular resource element buffer for a given number of slices and resource elements.
+  modular_re_buffer_reader(unsigned nof_slices_, unsigned nof_re_) { resize(nof_slices_, nof_re_); }
 
   /// \brief Resizes the buffer view to a desired number of RE and slices.
   /// \param[in] nof_slices Number of slices.
@@ -352,7 +354,7 @@ private:
   unsigned nof_re;
 
   /// Internal data storage.
-  std::vector<span<const T>> data;
+  std::array<span<const T>, MaxNofSlices> data;
 };
 
 /// \brief Implements a modular resource element buffer writer.
@@ -360,8 +362,9 @@ private:
 /// In this implementation, each slice is a view to an external block of contiguous REs that must be loaded with the
 /// \ref set_slice method.
 ///
-/// \tparam T Resource element type.
-template <unsigned MaxNofSlices, typename T = cf_t>
+/// \tparam T            Resource element type.
+/// \tparam MaxNofSlices Maximum number of slices.
+template <typename T, unsigned MaxNofSlices>
 class modular_re_buffer_writer : public re_buffer_writer<T>
 {
 public:

@@ -349,6 +349,59 @@ def test_android_hp(
 
 @mark.parametrize(
     "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq_2x2_mimo
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+# pylint: disable=too-many-arguments
+def test_zmq_2x2_mimo(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_32: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ 4x4 mimo IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_32,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        always_download_artifacts=True,
+        rx_to_tx_latency=2,
+        enable_dddsu=True,
+    )
+
+
+@mark.parametrize(
+    "direction",
     (
         param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
         param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
@@ -629,6 +682,8 @@ def _iperf(
     common_search_space_enable: bool = False,
     prach_config_index=-1,
     ue_stop_timeout: int = 0,
+    rx_to_tx_latency: int = -1,
+    enable_dddsu: bool = False,
 ):
     wait_before_power_off = 5
 
@@ -645,6 +700,8 @@ def _iperf(
         time_alignment_calibration=time_alignment_calibration,
         common_search_space_enable=common_search_space_enable,
         prach_config_index=prach_config_index,
+        rx_to_tx_latency=rx_to_tx_latency,
+        enable_dddsu=enable_dddsu,
     )
     configure_artifacts(
         retina_data=retina_data,

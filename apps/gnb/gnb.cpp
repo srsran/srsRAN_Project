@@ -184,6 +184,26 @@ static void register_app_logs(const logger_appconfig&         log_cfg,
   register_dynamic_du_loggers(du_loggers);
 }
 
+static void autoderive_slicing_args(dynamic_du_unit_config& du_unit_cfg, cu_cp_unit_config& cu_cp_config)
+{
+  std::vector<s_nssai_t> du_slices;
+  for (const auto& cell_cfg : du_unit_cfg.du_high_cfg.config.cells_cfg) {
+    for (const auto& slice : cell_cfg.cell.slice_cfg) {
+      if (du_slices.end() == std::find(du_slices.begin(), du_slices.end(), slice.s_nssai)) {
+        du_slices.push_back(slice.s_nssai);
+      }
+    }
+  }
+  // NOTE: A CU-CP can serve more slices than slices configured in the DU cells.
+  // [Implementation-defined] Ensure that all slices served by DU cells are part of CU-CP served slices.
+  for (const auto& slice : du_slices) {
+    if (cu_cp_config.slice_cfg.end() ==
+        std::find(cu_cp_config.slice_cfg.begin(), cu_cp_config.slice_cfg.end(), slice)) {
+      cu_cp_config.slice_cfg.push_back(slice);
+    }
+  }
+}
+
 int main(int argc, char** argv)
 {
   // Set the application error handler.
@@ -225,6 +245,7 @@ int main(int argc, char** argv)
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &gnb_cfg, &du_unit_cfg, &cu_cp_config]() {
     autoderive_gnb_parameters_after_parsing(app, gnb_cfg);
+    autoderive_slicing_args(du_unit_cfg, cu_cp_config);
     autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
 
     // Create the PLMN and TAC list from the cells.

@@ -32,6 +32,7 @@
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
+#include "srsran/scheduler/config/slice_rrm_policy_config.h"
 
 namespace srsran {
 
@@ -179,6 +180,9 @@ struct du_cell_config {
 
   /// Defines the maximum allowable channel delay in slots when runnning in NTN mode. seee (TS 38.300 section 16.14.2)
   unsigned ntn_cs_koffset = 0;
+
+  /// List of RAN slices to support in the scheduler.
+  std::vector<slice_rrm_policy_config> rrm_policy_members;
 };
 
 } // namespace srsran

@@ -53,6 +53,18 @@ void srsran::init_byte_buffer_segment_pool(std::size_t nof_segments, std::size_t
   report_fatal_error_if_not(memory_block_size > 64U, "memory blocks must be larger than the segment control header");
 }
 
+size_t srsran::get_byte_buffer_segment_pool_capacity()
+{
+  auto& pool = detail::byte_buffer_segment_pool::get_instance();
+  return pool.nof_memory_blocks();
+}
+
+size_t srsran::get_byte_buffer_segment_pool_current_size_approx()
+{
+  auto& pool = detail::byte_buffer_segment_pool::get_instance();
+  return pool.get_central_cache_approx_size() + pool.get_local_cache_size();
+}
+
 // ------- byte_buffer class -------
 
 void byte_buffer::control_block::destroy_node(node_t* node) const

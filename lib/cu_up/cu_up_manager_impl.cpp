@@ -59,6 +59,7 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_configuration&    config_,
                                         n3_teid_allocator,
                                         f1u_teid_allocator,
                                         *cfg.ue_exec_pool,
+                                        *cfg.ctrl_executor,
                                         *cfg.gtpu_pcap,
                                         logger);
 }
@@ -115,7 +116,12 @@ cu_up_manager_impl::handle_bearer_context_modification_request(const e1ap_bearer
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
     logger.error("Could not find UE context");
-    return {};
+    return launch_async([](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      e1ap_bearer_context_modification_response res;
+      res.success = false;
+      CORO_RETURN(res);
+    });
   }
   return execute_and_continue_on_blocking(
       ue_ctxt->ue_exec_mapper->ctrl_executor(), *cfg.ctrl_executor, [this, ue_ctxt, msg]() {
@@ -180,17 +186,21 @@ cu_up_manager_impl::handle_bearer_context_modification_request_impl(ue_context& 
   return response;
 }
 
-void cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg)
+async_task<void>
+cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg)
 {
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
     logger.error("ue={}: Discarding E1 Bearer Context Release Command. UE context not found", msg.ue_index);
-    return;
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
   }
 
   ue_ctxt->get_logger().log_debug("Received E1 Bearer Context Release Command");
 
-  ue_mng->remove_ue(msg.ue_index);
+  return ue_mng->remove_ue(msg.ue_index);
 }
 
 async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable_test_mode()

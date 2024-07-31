@@ -284,7 +284,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
 {
   // Temporary intermediate buffer for storing precoded symbols.
   static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB, cbf16_t> precoding_buffer_copy;
-  modular_re_buffer_writer<MAX_PORTS, cbf16_t>                                precoding_buffer_view;
+  modular_re_buffer_writer<cbf16_t, MAX_PORTS>                                precoding_buffer_view;
 
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();

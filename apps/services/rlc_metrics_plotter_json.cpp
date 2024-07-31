@@ -96,17 +96,17 @@ void rlc_metrics_plotter_json::report_metrics(const rlc_metrics& drb)
   ctx.get<mlist_drbs>().emplace_back();
   auto& output = ctx.get<mlist_drbs>().back();
 
-  output.write<metric_du_id>(drb.du_index);
+  output.write<metric_du_id>(static_cast<uint32_t>(drb.du_index));
   output.write<metric_ue_id>(drb.ue_index);
   output.write<metric_drb_id>(static_cast<uint8_t>(drb.rb_id.get_drb_id()));
 
   // TX metrics
   auto& tx_output = output.get<mset_drb_tx_container>();
-  tx_output.write<metric_tx_num_sdus>(drb.tx.num_sdus);
-  tx_output.write<metric_tx_num_sdu_bytes>(drb.tx.num_sdu_bytes);
-  tx_output.write<metric_tx_num_dropped_sdus>(drb.tx.num_dropped_sdus);
-  tx_output.write<metric_tx_num_discarded_sdus>(drb.tx.num_discarded_sdus);
-  tx_output.write<metric_tx_num_discard_failures>(drb.tx.num_discarded_sdus);
+  tx_output.write<metric_tx_num_sdus>(drb.tx.tx_high.num_sdus);
+  tx_output.write<metric_tx_num_sdu_bytes>(drb.tx.tx_high.num_sdu_bytes);
+  tx_output.write<metric_tx_num_dropped_sdus>(drb.tx.tx_high.num_dropped_sdus);
+  tx_output.write<metric_tx_num_discarded_sdus>(drb.tx.tx_high.num_discarded_sdus);
+  tx_output.write<metric_tx_num_discard_failures>(drb.tx.tx_high.num_discarded_sdus);
 
   // RX metrics
   auto& rx_output = output.get<mset_drb_rx_container>();

@@ -84,6 +84,17 @@ struct nru_dl_user_data {
   /// This parameter indicates that the node hosting the NR PDCP entity requests the other side to provide the downlink
   /// delivery status report.
   bool report_polling = false;
+  /// Request OutOfSeq Report.
+  /// This parameter indicates that the node hosting the NR PDCP entity requests the corresponding node to report the NR
+  /// PDCP PDU sequence number successfully delivered out of sequence in downlink delivery status report.
+  bool request_out_of_seq_report = false;
+  /// Report Delivered.
+  /// This parameter indicates the presence of DL report NR PDCP PDU SN.
+  bool report_delivered = false;
+  /// User data existence flag.
+  /// This parameter indicates whether the node hosting the NR PDCP entity has some user data for the concerned data
+  /// radio bearer.
+  bool user_data_existence_flag = false;
   /// Assistance Information Report Polling Flag.
   /// This parameter indicates that the node hosting the NR PDCP entity requests the corresponding node to send an
   /// ASSISTANCE INFORMATION DATA PDU.
@@ -101,13 +112,19 @@ struct nru_dl_user_data {
   std::optional<uint32_t> dl_discard_pdcp_sn;
   /// Container holding the DL discard NR PDCP PDU SN blocks.
   std::optional<nru_pdcp_sn_discard_blocks> discard_blocks;
+  /// DL report NR PDCP PDU SN.
+  /// This parameter indicates that the node hosting PDCP entity requests providing the down link delivery status report
+  /// when the NR PDCP PDU with this sequence number has been successfully delivered.
+  uint32_t dl_report_pdcp_sn = 0;
 
   bool operator==(const nru_dl_user_data& other) const
   {
-    return report_polling == other.report_polling &&
+    return report_polling == other.report_polling && request_out_of_seq_report == other.request_out_of_seq_report &&
+           report_delivered == other.report_delivered && user_data_existence_flag == other.user_data_existence_flag &&
            assist_info_report_polling_flag == other.assist_info_report_polling_flag &&
            retransmission_flag == other.retransmission_flag && nru_sn == other.nru_sn &&
-           dl_discard_pdcp_sn == other.dl_discard_pdcp_sn && discard_blocks == other.discard_blocks;
+           dl_discard_pdcp_sn == other.dl_discard_pdcp_sn && discard_blocks == other.discard_blocks &&
+           dl_report_pdcp_sn == other.dl_report_pdcp_sn;
   }
 };
 

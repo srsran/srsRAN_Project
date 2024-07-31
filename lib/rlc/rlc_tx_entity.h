@@ -23,6 +23,7 @@
 #pragma once
 
 #include "rlc_bearer_logger.h"
+#include "rlc_metrics_aggregator.h"
 #include "rlc_tx_metrics_container.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_tx.h"
@@ -44,25 +45,61 @@ protected:
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
+                rlc_metrics_aggregator&              metrics_agg_,
                 bool                                 metrics_enabled,
-                rlc_pcap&                            pcap_) :
+                rlc_pcap&                            pcap_,
+                task_executor&                       pcell_executor_,
+                task_executor&                       ue_executor_,
+                timer_manager&                       timers) :
     logger("RLC", {gnb_du_id, ue_index, rb_id_, "DL"}),
-    metrics(metrics_enabled),
+    metrics_high(metrics_enabled),
+    metrics_low(metrics_enabled),
     rb_id(rb_id_),
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),
     lower_dn(lower_dn_),
-    pcap(pcap_)
+    pcap(pcap_),
+    pcell_executor{pcell_executor_},
+    ue_executor{ue_executor_},
+    pcell_timer_factory{timers, pcell_executor},
+    ue_timer_factory{timers, ue_executor},
+    high_metrics_timer(pcell_timer_factory.create_timer()),
+    low_metrics_timer(ue_timer_factory.create_timer()),
+    metrics_agg(metrics_agg_)
   {
+    if (metrics_enabled) {
+      high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
+        metrics_agg.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
+        high_metrics_timer.run();
+      });
+      low_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
+        metrics_agg.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
+        low_metrics_timer.run();
+      });
+
+      high_metrics_timer.run();
+      low_metrics_timer.run();
+    }
   }
 
   rlc_bearer_logger                    logger;
-  rlc_tx_metrics_container             metrics;
+  rlc_tx_metrics_high_container        metrics_high;
+  rlc_tx_metrics_low_container         metrics_low;
   rb_id_t                              rb_id;
   rlc_tx_upper_layer_data_notifier&    upper_dn;
   rlc_tx_upper_layer_control_notifier& upper_cn;
   rlc_tx_lower_layer_notifier&         lower_dn;
   rlc_pcap&                            pcap;
+  task_executor&                       pcell_executor;
+  task_executor&                       ue_executor;
+  timer_factory                        pcell_timer_factory;
+  timer_factory                        ue_timer_factory;
+
+  unique_timer high_metrics_timer;
+  unique_timer low_metrics_timer;
+
+private:
+  rlc_metrics_aggregator& metrics_agg;
 
 public:
   /// \brief Stops all internal timers.
@@ -75,8 +112,13 @@ public:
   /// Note: This function shall only be called from ue_executor.
   virtual void stop() = 0;
 
-  rlc_tx_metrics get_metrics() { return metrics.get_metrics(); }
-  void           reset_metrics() { return metrics.reset_metrics(); }
+  rlc_tx_metrics get_metrics()
+  {
+    rlc_tx_metrics m;
+    m.tx_high = metrics_high.get_hi_metrics();
+    m.tx_low  = metrics_low.get_low_metrics();
+    return m;
+  }
 };
 
 } // namespace srsran

@@ -34,7 +34,7 @@ const std::chrono::milliseconds procedure_timeout{100};
 class f1ap_cu_ue_context_setup_test : public f1ap_cu_test
 {
 protected:
-  f1ap_cu_ue_context_setup_test() : f1ap_cu_test(f1ap_configuration{.ue_context_setup_timeout = procedure_timeout}) {}
+  f1ap_cu_ue_context_setup_test() : f1ap_cu_test(f1ap_configuration{.proc_timeout = procedure_timeout}) {}
 
   void start_procedure(const f1ap_ue_context_setup_request& req)
   {

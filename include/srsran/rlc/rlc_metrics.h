@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/rlc/rlc_rx_metrics.h"
 #include "srsran/rlc/rlc_tx_metrics.h"
@@ -31,7 +32,7 @@ namespace srsran {
 
 /// Container to hold TX/RX metrics
 struct rlc_metrics {
-  uint32_t       du_index;
+  gnb_du_id_t    du_index;
   du_ue_index_t  ue_index;
   rb_id_t        rb_id;
   rlc_tx_metrics tx;

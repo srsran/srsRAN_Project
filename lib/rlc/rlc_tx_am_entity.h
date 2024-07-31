@@ -137,6 +137,8 @@ private:
   /// latest buffer state upon execution.
   std::atomic_flag pending_buffer_state = ATOMIC_FLAG_INIT;
 
+  bool stopped = false;
+
 public:
   rlc_tx_am_entity(gnb_du_id_t                          gnb_du_id,
                    du_ue_index_t                        ue_index,
@@ -145,16 +147,22 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   timer_factory                        timers,
+                   rlc_metrics_aggregator&              metrics_aggregator_,
+                   bool                                 metrics_enabled_,
+                   rlc_pcap&                            pcap_,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,
-                   bool                                 metrics_enabled_,
-                   rlc_pcap&                            pcap_);
+                   timer_manager&                       timers);
 
   void stop() final
   {
     // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
-    poll_retransmit_timer.stop();
+    if (not stopped) {
+      poll_retransmit_timer.stop();
+      high_metrics_timer.stop();
+      low_metrics_timer.stop();
+      stopped = true;
+    }
   };
 
   // TX/RX interconnect

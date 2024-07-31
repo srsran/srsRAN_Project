@@ -59,7 +59,7 @@ public:
 
   /// \brief Handle bearer release command and remove the associated UE context.
   /// \param[in] msg The original bearer release command.
-  virtual void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) = 0;
+  virtual async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) = 0;
 
   /// \brief Get the state of the E1AP connection.
   /// \return True if E1AP is connected, false otherwise.

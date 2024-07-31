@@ -108,8 +108,8 @@ struct cu_cp_unit_security_config {
 
 /// F1AP-CU configuration parameters.
 struct cu_cp_unit_f1ap_config {
-  /// Timeout for the UE context setup procedure in milliseconds.
-  unsigned ue_context_setup_timeout = 1000;
+  /// Timeout for the F1AP procedures in milliseconds.
+  unsigned procedure_timeout = 1000;
 };
 
 /// RLC UM TX configuration

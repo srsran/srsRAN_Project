@@ -109,10 +109,10 @@ protected:
                                            tester1,
                                            tester1,
                                            tester1,
-                                           timers,
+                                           pcap1,
                                            pcell_worker,
                                            ue_worker,
-                                           pcap1);
+                                           timers);
     rlc2 = std::make_unique<rlc_um_entity>(gnb_du_id_t::min,
                                            du_ue_index_t::MIN_DU_UE_INDEX,
                                            srb_id_t::srb0,
@@ -123,10 +123,10 @@ protected:
                                            tester2,
                                            tester2,
                                            tester2,
-                                           timers,
+                                           pcap2,
                                            pcell_worker,
                                            ue_worker,
-                                           pcap2);
+                                           timers);
 
     // Bind interfaces
     rlc1_rx_lower = rlc1->get_rx_lower_layer_interface();
@@ -524,24 +524,24 @@ TEST_P(rlc_um_test, sdu_discard)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr, expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 0);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 0);
 
   // Try discard of invalid SDU
   rlc1_tx_upper->discard_sdu(999);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester1.bsr, expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 1);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 1);
 
   // Try discard of already discarded SDU
   rlc1_tx_upper->discard_sdu(0);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester1.bsr, expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 2);
 
   // Transmit full PDU
   std::vector<uint8_t> tx_pdu(data_pdu_size);
@@ -555,16 +555,16 @@ TEST_P(rlc_um_test, sdu_discard)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 2);
 
   // Try discard of already transmitted SDU
   rlc1_tx_upper->discard_sdu(1);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 3);
 
   // Transmit full PDU
   tx_pdu.resize(data_pdu_size);
@@ -577,8 +577,8 @@ TEST_P(rlc_um_test, sdu_discard)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 3);
 
   // Discard remaining SDU
   rlc1_tx_upper->discard_sdu(5);
@@ -588,8 +588,8 @@ TEST_P(rlc_um_test, sdu_discard)
   EXPECT_EQ(tester1.bsr, expect_buffer_state);
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 2);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 4);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 4);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 3);
 }
 
 TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
@@ -626,24 +626,24 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr, expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 0);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 0);
 
   // Try discard of invalid SDU
   rlc1_tx_upper->discard_sdu((pdcp_sn_start + 999) % pdcp_sn_mod);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester1.bsr, expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 1);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 1);
 
   // Try discard of already discarded SDU
   rlc1_tx_upper->discard_sdu((pdcp_sn_start + 0) % pdcp_sn_mod);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester1.bsr, expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 2);
 
   // Transmit full PDU
   std::vector<uint8_t> tx_pdu(data_pdu_size);
@@ -657,16 +657,16 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 2);
 
   // Try discard of already transmitted SDU
   rlc1_tx_upper->discard_sdu((pdcp_sn_start + 1) % pdcp_sn_mod);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 3);
 
   // Transmit full PDU
   nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
@@ -678,8 +678,8 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 1);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 3);
 
   // Discard remaining SDU
   rlc1_tx_upper->discard_sdu((pdcp_sn_start + 5) % pdcp_sn_mod);
@@ -688,8 +688,8 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester1.bsr_count, 2);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 4);
-  EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discarded_sdus, 4);
+  EXPECT_EQ(rlc1->get_metrics().tx.tx_high.num_discard_failures, 3);
 }
 
 TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)

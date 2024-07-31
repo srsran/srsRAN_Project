@@ -158,7 +158,7 @@ static YAML::Node build_cu_cp_f1ap_section(const cu_cp_unit_f1ap_config& config)
 {
   YAML::Node node;
 
-  node["ue_context_setup_timeout"] = config.ue_context_setup_timeout;
+  node["procedure_timeout"] = config.procedure_timeout;
 
   return node;
 }

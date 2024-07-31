@@ -25,6 +25,7 @@
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
 #include "srsran/adt/expected.h"
+#include "srsran/rlc/rlc_metrics.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
@@ -108,10 +109,11 @@ public:
                    rb_id_t                           rb_id,
                    const rlc_rx_um_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   timer_factory                     timers,
-                   task_executor&                    ue_executor,
+                   rlc_metrics_aggregator&           metrics_agg_,
                    bool                              metrics_enabled_,
-                   rlc_pcap&                         pcap_);
+                   rlc_pcap&                         pcap_,
+                   task_executor&                    ue_executor,
+                   timer_manager&                    timers);
 
   void stop() final
   {
@@ -178,14 +180,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_rx_um_sdu_info> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::rlc_rx_um_sdu_info& info, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "has_gap={} fully_received={} nof_segments={}",
@@ -198,13 +199,13 @@ struct formatter<srsran::rlc_rx_um_sdu_info> {
 template <>
 struct formatter<srsran::rlc_rx_um_state> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_rx_um_state& st, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "rx_next_reassembly={} rx_timer_trigger={} rx_next_highest={}",

@@ -28,6 +28,7 @@
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/async/async_task.h"
 #include <optional>
@@ -47,6 +48,7 @@ struct f1_cell_setup_params {
   byte_buffer                          packed_meas_time_cfg;
   byte_buffer                          packed_mib;
   byte_buffer                          packed_sib1;
+  std::vector<s_nssai_t>               slices;
 };
 
 /// \brief Message that initiates a F1 Setup procedure.

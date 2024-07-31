@@ -110,8 +110,10 @@ expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context()
     return make_unexpected(ue_res.get_error());
   }
 
+  // Fetch the DU cell configuration of the primary cell UE is connected to.
+  const auto& cell_cfg = du_params.ran.cells[req.pcell_index];
   // Create the DU UE context.
-  return ue_mng.add_ue(du_ue_context(req.ue_index, req.pcell_index, req.tc_rnti), std::move(ue_res));
+  return ue_mng.add_ue(du_ue_context(req.ue_index, req.pcell_index, req.tc_rnti, cell_cfg.nr_cgi), std::move(ue_res));
 }
 
 async_task<void> ue_creation_procedure::clear_ue()

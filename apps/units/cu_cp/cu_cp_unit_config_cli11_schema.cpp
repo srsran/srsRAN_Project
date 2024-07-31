@@ -233,9 +233,9 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
 static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1ap_params)
 {
   add_option(app,
-             "--ue_context_setup_timeout",
-             f1ap_params.ue_context_setup_timeout,
-             "UE context setup timeout in milliseconds")
+             "--procedure_timeout",
+             f1ap_params.procedure_timeout,
+             "Time that the F1AP waits for a DU response in milliseconds")
       ->capture_default_str();
 }
 
@@ -479,10 +479,10 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
 
   // Slicing section.
   auto slicing_lambda = [&unit_cfg](const std::vector<std::string>& values) {
-    // Prepare the radio bearers
+    // Prepare the slices.
     unit_cfg.slice_cfg.resize(values.size());
 
-    // Format every QoS setting.
+    // Format every slicing setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
       CLI::App subapp("Slicing parameters", "Slicing config, item #" + std::to_string(i));
       subapp.config_formatter(create_yaml_config_parser());

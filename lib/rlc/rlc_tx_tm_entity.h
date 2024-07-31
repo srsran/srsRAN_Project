@@ -37,8 +37,6 @@ private:
   rlc_sdu_queue_lockfree sdu_queue;
   rlc_sdu                sdu;
 
-  task_executor& pcell_executor;
-
   pcap_rlc_pdu_context pcap_context;
 
   /// This atomic_flag indicates whether a buffer state update task has been queued but not yet run by pcell_executor.
@@ -55,13 +53,24 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   task_executor&                       pcell_executor_,
+                   rlc_metrics_aggregator&              metrics_agg_,
                    bool                                 metrics_enabled_,
-                   rlc_pcap&                            pcap_);
+                   rlc_pcap&                            pcap_,
+                   task_executor&                       pcell_executor_,
+                   task_executor&                       ue_executor_,
+                   timer_manager&                       timers);
 
-  void stop() final{
-      // There are no timers to be stopped here.
-  };
+  ~rlc_tx_tm_entity() override { stop(); }
+
+  void stop() final
+  {
+    // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
+    if (not stopped) {
+      high_metrics_timer.stop();
+      low_metrics_timer.stop();
+      stopped = true;
+    }
+  }
 
   // Interfaces for higher layers
   void handle_sdu(byte_buffer sdu_buf, bool is_retx) override;
@@ -86,6 +95,8 @@ private:
   ///
   /// Safe execution from: pcell_executor
   void update_mac_buffer_state();
+
+  bool stopped = false;
 };
 
 } // namespace srsran
