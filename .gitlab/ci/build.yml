@@ -928,7 +928,7 @@ package:
   parallel:
     matrix:
       - OS_VERSION: "20.04"
-        extraopts: -DMARCH=x86-64
+        extraopts: -DMARCH=x86-64 -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt"
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.10"
       - OS_VERSION: "24.04"
@@ -977,16 +977,22 @@ export on amd64:
   parallel:
     matrix:
       - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
-      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
         MARCH: x86-64-v3
+      - OS: ubuntu-20.04
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt"
 
 export on amd64 avx512:
   extends: export on amd64
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
         MARCH: x86-64-v4
+      - OS: ubuntu-20.04
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
 
 # Build + unit tests combinations
 
@@ -1072,7 +1078,8 @@ ubuntu-20.04 amd64 avx2:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        MARCH: x86-64-v3
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt"
 
 rhel-8 amd64 avx2:
   extends: .build_and_unit
@@ -1148,6 +1155,8 @@ ubuntu dpdk:
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.3", "23.11"]
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt"
 
 ###################
 # Alternative OSs #
@@ -1347,6 +1356,36 @@ sanitizers amd64 avx2:
   variables:
     MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
+  parallel:
+    matrix:
+      # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
+      - OS: [ubuntu-24.04, ubuntu-23.10]
+        SANITIZER: tsan
+        COMPILER: [gcc, clang]
+        ENABLE_TSAN: "True"
+        TEST_MODE: default
+      - OS: ubuntu-22.04
+        SANITIZER: asan
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: ubuntu-20.04
+        SANITIZER: asan
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt"
+      - OS: [ubuntu-24.04, ubuntu-23.10]
+        SANITIZER: asan
+        COMPILER: clang
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-24.04]
+        SANITIZER: valgrind
+        COMPILER: gcc
+        TEST_MODE: valgrind
 
 sanitizers amd64 avx512:
   extends: .weekly sanitizers
@@ -1362,11 +1401,18 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: ubuntu-22.04
         SANITIZER: asan
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
+      - OS: ubuntu-20.04
+        SANITIZER: asan
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
       - OS: [ubuntu-24.04, ubuntu-23.10]
         SANITIZER: asan
         COMPILER: clang
@@ -1410,6 +1456,8 @@ build uhd alt:
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt"
 
 # Build + unit tests combinations
 
@@ -1544,7 +1592,8 @@ ubuntu-20.04 amd64 avx512:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        MARCH: x86-64-v4
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
 
 ubuntu-20.04 arm native:
   extends: .build_and_unit
@@ -1649,7 +1698,8 @@ ubuntu-20.04 amd64 avx2 dpdk:
       - OS: ubuntu-20.04
         <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.3", "23.11"]
-        MARCH: x86-64-v3
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt"
 
 ubuntu-20.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1664,7 +1714,8 @@ ubuntu-20.04 amd64 avx512 dpdk:
       - OS: ubuntu-20.04
         <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.3", "23.11"]
-        MARCH: x86-64-v4
+        MARCH: x86-64
+        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
 
 ubuntu-22.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1849,7 +1900,8 @@ basic asan:
   interruptible: false
   variables:
     TEST_MODE: none
-    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3" -DEXIT_TIMEOUT=15
+    MARCH: x86-64-v3
+    BUILD_ARGS: -DEXIT_TIMEOUT=15
   tags: ["${AMD64_AVX2_TAG}"]
   after_script:
     - *build_after_script
