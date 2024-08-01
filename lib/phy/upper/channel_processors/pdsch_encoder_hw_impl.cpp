@@ -23,10 +23,13 @@ void pdsch_encoder_hw_impl::encode(span<uint8_t>        codeword,
                                    span<const uint8_t>  transport_block,
                                    const configuration& config)
 {
-  // CB mode will be forced if TB mode is requested for a TB larger than the maximum supported size.
-  cb_mode     = encoder->get_cb_mode();
-  max_tb_size = encoder->get_max_tb_size();
-  if (!cb_mode && transport_block.size_bytes() > max_tb_size) {
+  // CB mode will be forced if TB mode is requested for a TB requiring a larger buffer than the maximum supported size.
+  cb_mode         = encoder->is_cb_mode_supported();
+  max_buffer_size = encoder->get_max_supported_buff_size();
+  unsigned max_required_buff_size =
+      std::max(static_cast<unsigned>(transport_block.size_bytes()),
+               static_cast<unsigned>(units::bits(codeword.size()).round_up_to_bytes().value()));
+  if (!cb_mode && max_required_buff_size > max_buffer_size) {
     cb_mode = true;
   }
 

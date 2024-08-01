@@ -33,6 +33,7 @@ static expected<Integer, std::string> parse_int(const std::string& value)
 static void configure_cli11_log_args(CLI::App& app, du_low_unit_logger_config& log_params)
 {
   app_services::add_log_option(app, log_params.phy_level, "--phy_level", "PHY log level");
+  app_services::add_log_option(app, log_params.hal_level, "--hal_level", "HAL log level");
 
   add_option(app,
              "--broadcast_enabled",
@@ -200,6 +201,94 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
       ->check(CLI::Range(0, 30));
 }
 
+static void configure_cli11_hwacc_pdsch_enc_args(CLI::App& app, std::optional<hwacc_pdsch_appconfig>& config)
+{
+  config.emplace();
+
+  app.add_option("--nof_hwacc", config->nof_hwacc, "Number of hardware-accelerated PDSCH encoding functions")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 64));
+  app.add_option("--cb_mode", config->cb_mode, "Operation mode of the PDSCH encoder (CB = true, TB = false [default])")
+      ->capture_default_str();
+  app.add_option("--max_buffer_size",
+                 config->max_buffer_size,
+                 "Maximum supported buffer size in bytes (CB mode will be forced for larger TBs)")
+      ->capture_default_str();
+  app.add_option("--dedicated_queue",
+                 config->dedicated_queue,
+                 "Hardware queue use for the PDSCH encoder (dedicated = true [default], shared = false)")
+      ->capture_default_str();
+}
+static void configure_cli11_hwacc_pusch_dec_args(CLI::App& app, std::optional<hwacc_pusch_appconfig>& config)
+{
+  config.emplace();
+
+  app.add_option("--nof_hwacc", config->nof_hwacc, "Number of hardware-accelerated PDSCH encoding functions")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 64));
+  app.add_option("--ext_softbuffer",
+                 config->ext_softbuffer,
+                 "Defines if the soft-buffer is implemented in the accelerator or not")
+      ->capture_default_str();
+  app.add_option("--harq_context_size", config->harq_context_size, "Size of the HARQ context repository")
+      ->capture_default_str();
+  app.add_option("--dedicated_queue",
+                 config->dedicated_queue,
+                 "Hardware queue use for the PUSCH decoder (dedicated = true [default], shared = false)")
+      ->capture_default_str();
+}
+
+static void configure_cli11_bbdev_hwacc_args(CLI::App& app, std::optional<bbdev_appconfig>& config)
+{
+  config.emplace();
+
+  app.add_option("--bbdev_acc_type", config->hwacc_type, "Type of BBDEV implementation")->capture_default_str();
+  app.add_option("--hwacc_type", config->hwacc_type, "Type of BBDEV hardware-accelerator")->capture_default_str();
+  app.add_option("--id", config->id, "ID of the BBDEV-based hardware-accelerator.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 65535));
+
+  // (Optional) Hardware-accelerated PDSCH encoding functions configuration.
+  CLI::App* hwacc_pdsch_enc_subcmd =
+      app.add_subcommand("pdsch_enc", "Hardware-accelerated PDSCH encoding functions configuration");
+  configure_cli11_hwacc_pdsch_enc_args(*hwacc_pdsch_enc_subcmd, config->pdsch_enc);
+
+  // (Optional) Hardware-accelerated PUSCH decoding functions configuration.
+  CLI::App* hwacc_pusch_dec_subcmd =
+      app.add_subcommand("pusch_dec", "Hardware-accelerated PUSCH decoding functions configuration");
+  configure_cli11_hwacc_pusch_dec_args(*hwacc_pusch_dec_subcmd, config->pusch_dec);
+
+  app.add_option("--msg_mbuf_size",
+                 config->msg_mbuf_size,
+                 "Size of the mbufs storing unencoded and unrate-matched messages (in bytes)")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 64000));
+  app.add_option("--rm_mbuf_size",
+                 config->rm_mbuf_size,
+                 "Size of the mbufs storing encoded and rate-matched messages (in bytes)")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 64000));
+  app.add_option("--nof_mbuf", config->nof_mbuf, "Number of mbufs in the memory pool")->capture_default_str();
+}
+
+static void configure_cli11_hal_args(CLI::App& app, std::optional<du_low_unit_hal_config>& config)
+{
+  config.emplace();
+
+  // (Optional) BBDEV-based hardware-accelerator configuration.
+  CLI::App* bbdev_hwacc_subcmd =
+      add_subcommand(app, "bbdev_hwacc", "BBDEV-based hardware-acceleration configuration parameters");
+  configure_cli11_bbdev_hwacc_args(*bbdev_hwacc_subcmd, config->bbdev_hwacc);
+}
+
+static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
+{
+  // Clean the HAL optional.
+  if (app.get_subcommand("hal")->count_all() == 0) {
+    parsed_cfg.hal_config.reset();
+  }
+}
+
 void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Loggers section.
@@ -214,6 +303,10 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
   // Expert execution section.
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.expert_execution_cfg);
+
+  // HAL section.
+  CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
+  configure_cli11_hal_args(*hal_subcmd, parsed_cfg.hal_config);
 }
 
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
@@ -253,4 +346,6 @@ void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
   if (parsed_cfg.expert_execution_cfg.cell_affinities.size() < nof_cells) {
     parsed_cfg.expert_execution_cfg.cell_affinities.resize(nof_cells);
   }
+
+  manage_hal_optional(app, parsed_cfg);
 }

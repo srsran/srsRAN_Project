@@ -74,8 +74,9 @@ private:
   /// Defines if the PDSCH encoder operates in CB mode (true) or TB mode (false).
   bool cb_mode;
 
-  /// Defines the maximum supported TB size in bytes (CB mode will be forced for larger TBs). Only used in TB mode.
-  unsigned max_tb_size;
+  /// Defines the maximum supported buffer size in bytes (CB mode will be forced for TBs requiring larger sizes). Only
+  /// used in TB mode.
+  unsigned max_buffer_size;
 
   /// CRC calculator for transport-block checksum.
   sch_crc crc_set;
