@@ -46,6 +46,11 @@ public:
   scheduler_policy&              get_policy(ran_slice_id_t id) { return *slices[id.value()].policy; }
 
 private:
+  /// RAN slice ID for default slice used to schedule SRB(s) traffic.
+  const ran_slice_id_t default_srb_ran_slice_id = ran_slice_id_t{0};
+  /// RAN slice ID for default slice used to schedule DRB(s) traffic.
+  const ran_slice_id_t default_drb_ran_slice_id = ran_slice_id_t{1};
+
   /// Class responsible for tracking the scheduling context of each RAN slice instance.
   struct ran_slice_sched_context {
     ran_slice_instance                inst;
@@ -101,7 +106,7 @@ private:
     }
   };
 
-  ran_slice_instance& get_slice(const rrm_policy_member& rrm);
+  ran_slice_instance& get_slice(const rrm_policy_member& rrm, const logical_channel_config& lc_cfg);
 
   template <bool IsDownlink>
   std::optional<std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>> get_next_candidate();
