@@ -250,8 +250,8 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_transmit_notification)
   constexpr uint32_t pdcp_sn         = 123;
   constexpr uint32_t highest_pdcp_sn = 55;
 
-  f1u->handle_transmit_notification(highest_pdcp_sn);
-  f1u->handle_transmit_notification(highest_pdcp_sn + 1);
+  f1u->handle_transmit_notification(highest_pdcp_sn, 0);
+  f1u->handle_transmit_notification(highest_pdcp_sn + 1, 0);
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   auto        chain1       = byte_buffer_chain::create(tx_pdcp_pdu1.deep_copy().value());
@@ -351,7 +351,7 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
   EXPECT_TRUE(tester->tx_msg_list.empty());
 
   // handle another transmit notification; check UL notif timer has been reset to full time
-  f1u->handle_transmit_notification(highest_pdcp_sn + 2);
+  f1u->handle_transmit_notification(highest_pdcp_sn + 2, 0);
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
@@ -385,8 +385,8 @@ TEST_F(f1u_du_test, tx_transmit_notification)
 {
   constexpr uint32_t highest_pdcp_sn = 123;
 
-  f1u->handle_transmit_notification(highest_pdcp_sn);
-  f1u->handle_transmit_notification(highest_pdcp_sn + 1);
+  f1u->handle_transmit_notification(highest_pdcp_sn, 0);
+  f1u->handle_transmit_notification(highest_pdcp_sn + 1, 0);
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());

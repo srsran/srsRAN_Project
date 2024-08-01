@@ -93,11 +93,13 @@ void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
   }
 }
 
-void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn)
+void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_bytes_free)
 {
   // This function may be called from pcell_executor, since it only writes to an atomic variable
-  logger.log_debug("Storing highest transmitted pdcp_sn={}", highest_pdcp_sn);
+  logger.log_debug(
+      "Storing highest transmitted pdcp_sn={} and desired buffer size bs={}", highest_pdcp_sn, queue_bytes_free);
   highest_transmitted_pdcp_sn.store(highest_pdcp_sn, std::memory_order_relaxed);
+  desired_buffer_size_for_data_radio_bearer.store(queue_bytes_free, std::memory_order_relaxed);
 }
 
 void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)
@@ -119,6 +121,19 @@ void f1u_bearer_impl::handle_delivery_retransmitted_notification(uint32_t highes
   // This function may be called from pcell_executor, since it only writes to an atomic variable
   logger.log_debug("Storing highest successfully delivered retransmitted pdcp_sn={}", highest_pdcp_sn);
   highest_delivered_retransmitted_pdcp_sn.store(highest_pdcp_sn, std::memory_order_relaxed);
+}
+
+bool f1u_bearer_impl::fill_desired_buffer_size_of_data_radio_bearer(nru_dl_data_delivery_status& status)
+{
+  uint32_t cur_desired_buffer_size_for_data_radio_bearer =
+      desired_buffer_size_for_data_radio_bearer.load(std::memory_order_relaxed);
+  logger.log_debug("Adding desired buffer size for DRB. bs={}", cur_desired_buffer_size_for_data_radio_bearer);
+  status.desired_buffer_size_for_drb = cur_desired_buffer_size_for_data_radio_bearer;
+  if (cur_desired_buffer_size_for_data_radio_bearer != notif_desired_buffer_size_for_data_radio_bearer) {
+    notif_desired_buffer_size_for_data_radio_bearer = cur_desired_buffer_size_for_data_radio_bearer;
+    return true;
+  }
+  return false;
 }
 
 bool f1u_bearer_impl::fill_highest_transmitted_pdcp_sn(nru_dl_data_delivery_status& status)
@@ -175,6 +190,7 @@ void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
   nru_dl_data_delivery_status status         = {};
   bool                        status_changed = false;
 
+  status_changed |= fill_desired_buffer_size_of_data_radio_bearer(status);
   status_changed |= fill_highest_transmitted_pdcp_sn(status);
   status_changed |= fill_highest_delivered_pdcp_sn(status);
   status_changed |= fill_highest_retransmitted_pdcp_sn(status);

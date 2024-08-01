@@ -318,8 +318,7 @@ struct formatter<srsran::rlc_sdu_queue_lockfree::state_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_sdu_queue_lockfree::state_t& state,
-              FormatContext&                                 ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_sdu_queue_lockfree::state_t& state, FormatContext& ctx)
   {
     return format_to(ctx.out(), "queued_sdus={} queued_bytes={}", state.n_sdus, state.n_bytes);
   }

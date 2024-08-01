@@ -267,7 +267,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
     if (sdu.is_retx) {
       upper_dn.on_retransmitted_sdu(sdu.pdcp_sn.value());
     } else {
-      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), queue_state.n_bytes);
+      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), queue_bytes_limit - queue_state.n_bytes);
     }
   }
 

@@ -39,7 +39,7 @@ public:
   /// transfer message.
   void handle_sdu(byte_buffer_chain sdu) override;
 
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override;
+  void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
   void             handle_pdu(byte_buffer pdu) override;
@@ -73,7 +73,7 @@ public:
   /// \param[in] sdu The message to be encoded in the RRC container of the UL RRC message transfer message to transmit.
   void handle_sdu(byte_buffer_chain sdu) override;
 
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override;
+  void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
   void             handle_pdu(byte_buffer sdu) override;
