@@ -13,6 +13,7 @@
 #include "srsran/srslog/detail/support/tmpl_utils.h"
 #include <cassert>
 #include <string>
+#include <vector>
 
 namespace srslog {
 
@@ -127,7 +128,14 @@ struct metric {
 /// Template specialization that tags metrics with arithmetic values (integers
 /// and floating point) as numeric.
 template <typename Ty, typename Name, typename Units>
-struct metric_kind_selector<metric<Ty, Name, Units>, typename std::enable_if<std::is_arithmetic<Ty>::value>::type> {
+struct metric_kind_selector<metric<Ty, Name, Units>, std::enable_if_t<std::is_arithmetic_v<Ty>>> {
+  static const metric_kind kind = metric_kind::numeric;
+};
+
+/// Template specialization that tags vector metrics with arithmetic values (integers
+/// and floating point) as numeric.
+template <typename Ty, typename Name, typename Units>
+struct metric_kind_selector<metric<std::vector<Ty>, Name, Units>, std::enable_if_t<std::is_arithmetic_v<Ty>>> {
   static const metric_kind kind = metric_kind::numeric;
 };
 
@@ -160,7 +168,7 @@ namespace detail {
 /// eg: using my_metric_t = srslog::build_metric_set_type<m1_t, set1_t, m2_t>;
 /// NOTE: Adding duplicated types into the list is not allowed.
 template <typename Name, typename... Ts>
-using build_metric_set_type = metric_set<Name, typename std::decay<Ts>::type...>;
+using build_metric_set_type = metric_set<Name, std::decay_t<Ts>...>;
 
 } // namespace detail
 
@@ -168,7 +176,7 @@ using build_metric_set_type = metric_set<Name, typename std::decay<Ts>::type...>
 /// eg: using my_context_t = srslog::build_context_type<set1_t, set2_t>;
 /// NOTE: Adding duplicated types into the list is not allowed.
 template <typename... Ts>
-using build_context_type = context<typename std::decay<Ts>::type...>;
+using build_context_type = context<std::decay_t<Ts>...>;
 
 /// This macro defines a new metric type using the following attributes:
 ///   a) name: encoded as a string.
