@@ -143,7 +143,7 @@ void srsran::srsvec::add(span<const cf_t> x, span<const cbf16_t> y, span<cf_t> z
   srsran_srsvec_assert_size(x, y);
   srsran_srsvec_assert_size(x, z);
 
-  add_ccc_simd(x.data(), y.data(), z.data(), 2 * z.size());
+  add_ccc_simd(x.data(), y.data(), z.data(), z.size());
 }
 
 void srsran::srsvec::add(span<const float> x, span<const float> y, span<float> z)
