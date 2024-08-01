@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+        f1ap_du_ue_context_common.cpp
         gnb_cu_configuration_update_procedure.cpp
         f1ap_du_setup_procedure.cpp
         f1ap_du_removal_procedure.cpp

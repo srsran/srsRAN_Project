@@ -105,6 +105,72 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index)};
 }
 
+static bool equals(const drb_rlc_mode& lhs, const rlc_mode& rhs)
+{
+  return (lhs == drb_rlc_mode::am and rhs == rlc_mode::am) or
+         (lhs == drb_rlc_mode::um_bidir and rhs == rlc_mode::um_bidir) or
+         (lhs == drb_rlc_mode::um_unidir_dl and rhs == rlc_mode::um_unidir_dl) or
+         (lhs == drb_rlc_mode::um_unidir_ul and rhs == rlc_mode::um_unidir_ul);
+}
+
+static expected<const rlc_bearer_config*, std::string>
+validate_drb_config_request(const f1ap_drb_config_request&            drb,
+                            span<const rlc_bearer_config>             rlc_bearers,
+                            const std::map<five_qi_t, du_qos_config>& qos_config)
+{
+  // Validate QOS config.
+  auto qos_it = qos_config.find(drb.five_qi);
+  if (qos_it == qos_config.end()) {
+    return make_unexpected(fmt::format("Failed to allocate {}. Cause: No {} 5QI configured", drb.drb_id, drb.five_qi));
+  }
+  const du_qos_config& qos = qos_it->second;
+  if (drb.mode.has_value() and not equals(qos.rlc.mode, *drb.mode)) {
+    return make_unexpected(
+        fmt::format("RLC mode mismatch for {}. QoS config for {} configures {} but CU-CP requested {}",
+                    drb.drb_id,
+                    drb.five_qi,
+                    qos.rlc.mode,
+                    drb.mode));
+  }
+
+  // Search for established DRB with matching DRB-Id.
+  auto prev_drb_it = std::find_if(rlc_bearers.begin(), rlc_bearers.end(), [&drb](const rlc_bearer_config& item) {
+    return item.drb_id.has_value() and item.drb_id.value() == drb.drb_id;
+  });
+  bool new_drb     = prev_drb_it == rlc_bearers.end();
+
+  if (new_drb) {
+    if (not drb.mode.has_value()) {
+      // RLC mode needs to be specified.
+      return make_unexpected(fmt::format("Failed to allocate {}. Cause: RLC mode not specified", drb.drb_id));
+    }
+
+    // CU-assigned LCID.
+    if (drb.lcid.has_value()) {
+      if (std::any_of(
+              rlc_bearers.begin(), rlc_bearers.end(), [&drb](const auto& item) { return *drb.lcid == item.lcid; })) {
+        return make_unexpected(fmt::format(
+            "Failed to allocate {}. Cause: Specified lcid={} already exists", drb.drb_id, drb.lcid.value()));
+      }
+    }
+  } else {
+    // Modified DRB
+    if (drb.mode.has_value() and not equals(drb.mode.value(), prev_drb_it->rlc_cfg.mode)) {
+      // RLC mode cannot be changed.
+      return make_unexpected(
+          fmt::format("Failed to configure {}. Cause: RLC mode cannot be changed for an existing DRB", drb.drb_id));
+    }
+
+    if (drb.lcid.has_value() and drb.lcid.value() != prev_drb_it->lcid) {
+      // LCID cannot be changed.
+      return make_unexpected(
+          fmt::format("Failed to configure {}. Cause: LCID cannot be changed for an existing DRB", drb.drb_id));
+    }
+  }
+
+  return {};
+}
+
 du_ue_resource_update_response
 du_ran_resource_manager_impl::update_context(du_ue_index_t                         ue_index,
                                              du_cell_index_t                       pcell_idx,
@@ -139,7 +205,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     ue_mcg.rlc_bearers.erase(it);
   }
 
-  // > Allocate new or modified bearers.
+  // > Allocate new SRBs.
   for (srb_id_t srb_id : upd_req.srbs_to_setup) {
     // >> New or Modified SRB.
     lcid_t lcid = srb_id_to_lcid(srb_id);
@@ -161,19 +227,25 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       ue_mcg.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(lcid);
     }
   }
-  for (const f1ap_drb_to_setup& drb : upd_req.drbs_to_setup) {
+
+  // > Allocate new or modify existing DRBs.
+  for (const f1ap_drb_config_request& drb : upd_req.drbs_to_setupmod) {
     // >> New or Modified DRB.
+    auto res = validate_drb_config_request(drb, ue_mcg.rlc_bearers, qos_config);
+    if (not res.has_value()) {
+      resp.failed_drbs.push_back(drb.drb_id);
+      continue;
+    }
+    bool new_drb = res.value() == nullptr;
+    if (not new_drb) {
+      // TODO: Support DRB modification.
+      continue;
+    }
+
     lcid_t lcid;
     if (drb.lcid.has_value()) {
       // >> CU-assigned LCID.
       lcid = *drb.lcid;
-      if (std::any_of(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [&drb](const auto& item) {
-            return *drb.lcid == item.lcid;
-          })) {
-        logger.warning("Failed to allocate {}. Cause: Specified lcid={} already exists", drb.drb_id, lcid);
-        resp.failed_drbs.push_back(drb.drb_id);
-        continue;
-      }
     } else {
       // >> Allocate LCID if not specified by F1AP.
       lcid = find_empty_lcid(ue_mcg.rlc_bearers);
@@ -185,24 +257,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
 
     // >> Get RLC config from 5QI
-    if (qos_config.find(drb.five_qi) == qos_config.end()) {
-      logger.warning("Failed to allocate {}. Cause: No {} configured", drb.drb_id, drb.five_qi);
-      resp.failed_drbs.push_back(drb.drb_id);
-      continue;
-    }
-    logger.debug("Getting RLC and MAC config for {} from {}", drb.drb_id, drb.five_qi);
     const du_qos_config& qos = qos_config.at(drb.five_qi);
-
-    if (!equals(qos.rlc.mode, drb.mode)) {
-      logger.warning("RLC mode mismatch for {}. QoS config for {} configures {} but CU-UP requested {}",
-                     drb.drb_id,
-                     drb.five_qi,
-                     qos.rlc.mode,
-                     drb.mode);
-      resp.failed_drbs.push_back(drb.drb_id);
-      continue;
-    }
-
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
     ue_mcg.rlc_bearers.back().drb_id  = drb.drb_id;

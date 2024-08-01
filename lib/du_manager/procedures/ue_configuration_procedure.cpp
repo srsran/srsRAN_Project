@@ -36,7 +36,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   proc_logger.log_proc_started();
 
-  if (request.drbs_to_setup.empty() and request.srbs_to_setup.empty() and request.drbs_to_rem.empty() and
+  if (request.drbs_to_setupmod.empty() and request.srbs_to_setup.empty() and request.drbs_to_rem.empty() and
       request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
     // No SCells, DRBs or SRBs to setup or release so nothing to do.
     proc_logger.log_proc_completed();
@@ -135,7 +135,7 @@ void ue_configuration_procedure::update_ue_context()
   }
 
   // > Create DU UE DRB objects.
-  for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
+  for (const f1ap_drb_config_request& drbtoadd : request.drbs_to_setupmod) {
     if (drbtoadd.uluptnl_info_list.empty()) {
       proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
       continue;
@@ -218,7 +218,7 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     mac_ue_reconf_req.bearers_to_rem.push_back(drb->lcid);
   }
 
-  for (const auto& drb : request.drbs_to_setup) {
+  for (const auto& drb : request.drbs_to_setupmod) {
     if (ue->bearers.drbs().count(drb.drb_id) == 0) {
       // The DRB failed to be setup. Carry on with other DRBs.
       continue;
@@ -243,7 +243,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   resp.result = true;
 
   // > Handle DRBs that were setup or failed to be setup.
-  for (const f1ap_drb_to_setup& drb_req : request.drbs_to_setup) {
+  for (const f1ap_drb_config_request& drb_req : request.drbs_to_setupmod) {
     if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
       resp.drbs_failed_to_setup.push_back(drb_req.drb_id);
       continue;

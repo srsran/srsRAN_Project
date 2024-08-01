@@ -74,9 +74,9 @@ TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1a
   const f1ap_ue_context_update_request& req = *this->f1ap_du_cfg_handler.last_ue_context_update_req;
   ASSERT_EQ(req.ue_index, test_ue_index);
   ASSERT_EQ(req.srbs_to_setup.size(), 0);
-  ASSERT_EQ(req.drbs_to_setup.size(), 1);
-  ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
-  ASSERT_FALSE(req.drbs_to_setup[0].lcid.has_value());
+  ASSERT_EQ(req.drbs_to_setupmod.size(), 1);
+  ASSERT_EQ(req.drbs_to_setupmod[0].drb_id, drb_id_t::drb1);
+  ASSERT_FALSE(req.drbs_to_setupmod[0].lcid.has_value());
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,

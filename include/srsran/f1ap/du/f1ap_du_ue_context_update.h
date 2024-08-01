@@ -17,6 +17,7 @@
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/qos/qos_info.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
@@ -40,15 +41,17 @@ struct f1ap_ue_context_creation_response {
   rnti_t crnti;
 };
 
-/// \brief DRB to be setup in the UE context.
-struct f1ap_drb_to_setup {
+/// \brief DRB to be setup or modify in the UE context.
+struct f1ap_drb_config_request {
   drb_id_t              drb_id;
   std::optional<lcid_t> lcid;
-  drb_rlc_mode          mode;
-  pdcp_sn_size          pdcp_sn_len = pdcp_sn_size::invalid;
-  five_qi_t             five_qi;
-  uint8_t               arp_priority_level;
-  s_nssai_t             s_nssai;
+  /// \brief RLC mode. If it is a new bearer to setup, this field is present. If it is an existing bearer that needs
+  /// to be modified, this field is absent.
+  std::optional<drb_rlc_mode> mode;
+  pdcp_sn_size                pdcp_sn_len = pdcp_sn_size::invalid;
+  five_qi_t                   five_qi;
+  uint8_t                     arp_priority_level;
+  s_nssai_t                   s_nssai;
   /// GBR flow information is present only for GBR QoS flows. See TS 38.473, clause 9.3.1.45.
   std::optional<gbr_qos_info_t>        gbr_flow_info;
   std::vector<up_transport_layer_info> uluptnl_info_list;
@@ -69,12 +72,13 @@ struct f1ap_drb_setup {
 
 /// \brief Request from DU F1AP to DU manager to modify existing UE configuration.
 struct f1ap_ue_context_update_request {
-  du_ue_index_t                    ue_index;
-  std::vector<srb_id_t>            srbs_to_setup;
-  std::vector<f1ap_drb_to_setup>   drbs_to_setup;
-  std::vector<drb_id_t>            drbs_to_rem;
-  std::vector<f1ap_scell_to_setup> scells_to_setup;
-  std::vector<serv_cell_index_t>   scells_to_rem;
+  du_ue_index_t         ue_index;
+  std::vector<srb_id_t> srbs_to_setup;
+  /// List of DRBs to either setup or modify.
+  std::vector<f1ap_drb_config_request> drbs_to_setupmod;
+  std::vector<drb_id_t>                drbs_to_rem;
+  std::vector<f1ap_scell_to_setup>     scells_to_setup;
+  std::vector<serv_cell_index_t>       scells_to_rem;
   /// \brief If true, the gnb-DU shall generate a cell group configuration using full configuration. Otherwise, delta,
   /// should be used.
   bool full_config_required;

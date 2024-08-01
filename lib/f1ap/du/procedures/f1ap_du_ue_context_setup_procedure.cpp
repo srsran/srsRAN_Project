@@ -131,7 +131,7 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
 
   // > Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list) {
-    du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
+    du_request.drbs_to_setupmod.push_back(make_drb_config_request(drb.value().drbs_to_be_setup_item()));
   }
 
   if (msg->cu_to_du_rrc_info.ie_exts_present) {

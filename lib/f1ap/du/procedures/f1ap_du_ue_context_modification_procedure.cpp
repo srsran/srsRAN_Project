@@ -73,7 +73,13 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
 
   // >> Pass DRBs to setup/modify.
   for (const auto& drb : msg->drbs_to_be_setup_mod_list) {
-    du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_mod_item()));
+    du_request.drbs_to_setupmod.push_back(make_drb_config_request(drb.value().drbs_to_be_setup_mod_item()));
+  }
+
+  // >> Pass DRBs to modify.
+  // Note: This field is used during RRC Reestablishment.
+  for (const auto& drb : msg->drbs_to_be_modified_list) {
+    du_request.drbs_to_setupmod.push_back(make_drb_config_request(drb.value().drbs_to_be_modified_item()));
   }
 
   // >> Pass DRBs to remove
@@ -100,7 +106,7 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
     resp->drbs_setup_mod_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
     const f1ap_drb_setup&  drb_setup = du_response.drbs_setup[i];
     drbs_setup_mod_item_s& asn1_drb  = resp->drbs_setup_mod_list[i]->drbs_setup_mod_item();
-    asn1_drb.drb_id                  = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
+    asn1_drb.drb_id                  = drb_id_to_uint(du_request.drbs_to_setupmod[i].drb_id);
     asn1_drb.lcid_present            = drb_setup.lcid.has_value();
     if (asn1_drb.lcid_present) {
       asn1_drb.lcid = drb_setup.lcid.value();
