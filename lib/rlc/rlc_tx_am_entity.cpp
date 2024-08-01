@@ -19,6 +19,8 @@
 
 using namespace srsran;
 
+const uint32_t queue_bytes_limit = 6172672;
+
 rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_id,
                                    du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id_,
@@ -45,7 +47,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
                 ue_executor_,
                 timers),
   cfg(config),
-  sdu_queue(cfg.queue_size, logger),
+  sdu_queue(cfg.queue_size, queue_bytes_limit, logger),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
@@ -243,8 +245,9 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   }
 
   // Read new SDU from TX queue
-  rlc_sdu sdu;
-  logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue.get_state());
+  rlc_sdu                         sdu;
+  rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
+  logger.log_debug("Reading SDU from sdu_queue. {}", queue_state);
   if (not sdu_queue.read(sdu)) {
     logger.log_debug("SDU queue empty. grant_len={}", grant_len);
     return 0;
@@ -264,7 +267,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
     if (sdu.is_retx) {
       upper_dn.on_retransmitted_sdu(sdu.pdcp_sn.value());
     } else {
-      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
+      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), queue_state.n_bytes);
     }
   }
 

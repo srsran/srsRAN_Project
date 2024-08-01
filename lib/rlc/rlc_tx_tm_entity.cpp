@@ -12,6 +12,8 @@
 
 using namespace srsran;
 
+const uint32_t queue_bytes_limit = 6172672;
+
 rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                                    du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id_,
@@ -38,7 +40,7 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                 ue_executor_,
                 timers),
   cfg(config),
-  sdu_queue(cfg.queue_size, logger),
+  sdu_queue(cfg.queue_size, queue_bytes_limit, logger),
   pcap_context(ue_index, rb_id_, /* is_uplink */ false)
 {
   metrics_low.metrics_set_mode(rlc_mode::tm);
@@ -87,13 +89,13 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
-    logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue.get_state());
     if (not sdu_queue.read(sdu)) {
       logger.log_debug("SDU queue empty. grant_len={}", grant_len);
       return 0;
     }
     logger.log_debug("Read SDU. pdcp_sn={} sdu_len={}", sdu.pdcp_sn, sdu.buf.length());
   }
+  rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
 
   size_t sdu_len = sdu.buf.length();
   if (sdu_len > grant_len) {
@@ -104,7 +106,7 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
   if (sdu.pdcp_sn.has_value()) {
-    upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
+    upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), queue_state.n_bytes);
   }
 
   // In TM there is no header, just pass the plain SDU

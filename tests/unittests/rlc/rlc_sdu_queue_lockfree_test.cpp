@@ -21,7 +21,9 @@ void queue_unqueue_test()
 {
   rlc_bearer_logger   logger("RLC", {gnb_du_id_t::min, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
   test_delimit_logger delimiter{"RLC SDU queue unqueue test"};
-  rlc_sdu_queue_lockfree tx_queue(4096, logger);
+
+  const uint32_t         queue_bytes_limit = 6172672;
+  rlc_sdu_queue_lockfree tx_queue(4096, queue_bytes_limit, logger);
 
   // Write 1 SDU
   byte_buffer buf       = byte_buffer::create({0x00, 0x01}).value();
@@ -53,8 +55,10 @@ void full_capacity_test()
 {
   rlc_bearer_logger   logger("RLC", {gnb_du_id_t::min, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
   test_delimit_logger delimiter{"RLC SDU capacity test"};
-  unsigned            capacity = 5;
-  rlc_sdu_queue_lockfree tx_queue(capacity, logger);
+
+  unsigned               capacity          = 5;
+  const uint32_t         queue_bytes_limit = 6172672;
+  rlc_sdu_queue_lockfree tx_queue(capacity, queue_bytes_limit, logger);
 
   // Write Capacity + 1 SDUs
   for (uint32_t pdcp_sn = 0; pdcp_sn < capacity + 1; pdcp_sn++) {
@@ -95,9 +99,10 @@ void discard_test()
 {
   rlc_bearer_logger   logger("RLC", {gnb_du_id_t::min, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
   test_delimit_logger delimiter{"RLC SDU discard test"};
-  unsigned            capacity = 10;
-  unsigned            n_sdus   = capacity;
-  rlc_sdu_queue_lockfree tx_queue(capacity, logger);
+  unsigned            capacity          = 10;
+  unsigned            n_sdus            = capacity;
+  const uint32_t      queue_bytes_limit = 6172672;
+  rlc_sdu_queue_lockfree tx_queue(capacity, queue_bytes_limit, logger);
 
   // Fill SDU queue with SDUs
   for (uint32_t pdcp_sn = 0; pdcp_sn < n_sdus; pdcp_sn++) {
@@ -138,9 +143,10 @@ void discard_all_test()
 {
   rlc_bearer_logger   logger("RLC", {gnb_du_id_t::min, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
   test_delimit_logger delimiter{"RLC SDU discard all test"};
-  unsigned            capacity = 10;
-  unsigned            n_sdus   = capacity / 2;
-  rlc_sdu_queue_lockfree tx_queue(capacity, logger);
+  unsigned            capacity          = 10;
+  unsigned            n_sdus            = capacity / 2;
+  const uint32_t      queue_bytes_limit = 6172672;
+  rlc_sdu_queue_lockfree tx_queue(capacity, queue_bytes_limit, logger);
 
   // Fill SDU queue with SDUs
   for (uint32_t pdcp_sn = 0; pdcp_sn < n_sdus; pdcp_sn++) {
