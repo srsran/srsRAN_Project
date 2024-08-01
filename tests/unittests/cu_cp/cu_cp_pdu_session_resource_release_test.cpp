@@ -74,18 +74,20 @@ public:
   f1ap_message f1ap_pdu;
   e1ap_message e1ap_pdu;
 
-  void setup_second_pdu_session()
+  [[nodiscard]] bool setup_second_pdu_session()
   {
-    srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
-    srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
-    srsran_assert(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
-                  "there are still E1AP messages to pop from CU-UP");
+    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                              "there are still NGAP messages to pop from AMF");
+    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                              "there are still F1AP DL messages to pop from DU");
+    report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                              "there are still E1AP messages to pop from CU-UP");
 
     // Inject NGAP PDU Session Resource Setup Request and await Bearer Context Modification Request
     get_amf().push_tx_pdu(generate_valid_pdu_session_resource_setup_request_message(
         ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi2, {{uint_to_qos_flow_id(2), 7}}}}));
-    bool result = this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive Bearer Context Modification Request");
+    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
+                              "Failed to receive Bearer Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
                               "Invalid Bearer Context Modification Request");
 
@@ -95,21 +97,22 @@ public:
                                                       cu_up_e1ap_id,
                                                       {{psi2, drb_test_params{drb_id_t::drb2, uint_to_qos_flow_id(2)}}},
                                                       {}));
-    result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive UE Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
                               "Invalid UE Context Modification Request");
 
     // Inject UE Context Modification Response and await Bearer Context Modification Request
-    ASSERT_TRUE(
-        cu_cp_test_environment::send_ue_context_modification_response_and_await_bearer_context_modification_request(
-            du_idx, cu_up_idx, du_ue_id, crnti));
+    if (!cu_cp_test_environment::send_ue_context_modification_response_and_await_bearer_context_modification_request(
+            du_idx, cu_up_idx, du_ue_id, crnti)) {
+      return false;
+    }
 
     // Inject Bearer Context Modification Response and await DL RRC Message Transfer containing RRC Reconfiguration
     get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(
         ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value(), {}, {{psi2, drb_id_t::drb2}}));
-    result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
     report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                               "Invalid DL RRC Message Transfer");
     {
@@ -125,86 +128,96 @@ public:
     // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Setup Response
     get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
         du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, generate_rrc_reconfiguration_complete_pdu(0, 8)));
-    result = this->wait_for_ngap_tx_pdu(ngap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
+    report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
+                              "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {psi2}, {}),
                               "Unsuccessful PDU Session Resource Setup Response");
+    return true;
   }
 
-  void send_pdu_session_release_command_and_await_bearer_context_modification_request()
+  [[nodiscard]] bool send_pdu_session_release_command_and_await_bearer_context_modification_request()
   {
-    srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
-    srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
-    srsran_assert(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
-                  "there are still E1AP messages to pop from CU-UP");
+    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                              "there are still NGAP messages to pop from AMF");
+    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                              "there are still F1AP DL messages to pop from DU");
+    report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                              "there are still E1AP messages to pop from CU-UP");
 
     // Inject Bearer Context Setup Response and wait for UE Context Modification Request
     get_amf().push_tx_pdu(
         generate_valid_pdu_session_resource_release_command(amf_ue_id, ue_ctx->ran_ue_id.value(), psi));
-    bool result = this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive Bearer Context Modification Request");
+    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
+                              "Failed to receive Bearer Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
                               "Invalid Bearer Context Modification Request");
+    return true;
   }
 
-  void send_pdu_session_release_command_and_await_bearer_context_release_command()
+  [[nodiscard]] bool send_pdu_session_release_command_and_await_bearer_context_release_command()
   {
-    srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
-    srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
-    srsran_assert(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
-                  "there are still E1AP messages to pop from CU-UP");
+    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                              "there are still NGAP messages to pop from AMF");
+    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                              "there are still F1AP DL messages to pop from DU");
+    report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                              "there are still E1AP messages to pop from CU-UP");
 
     // Inject Bearer Context Setup Response and wait for UE Context Release Command
     get_amf().push_tx_pdu(
         generate_valid_pdu_session_resource_release_command(amf_ue_id, ue_ctx->ran_ue_id.value(), psi));
-    bool result = this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive Bearer Context Release Command");
+    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
+                              "Failed to receive Bearer Context Release Command");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_release_command(e1ap_pdu),
                               "Invalid Bearer Context Release Command");
+    return true;
   }
 
-  void send_bearer_context_modification_failure_and_await_ue_context_modification_request()
+  [[nodiscard]] bool send_bearer_context_modification_failure_and_await_ue_context_modification_request()
   {
     // Inject Bearer Context Modification Failure and wait for UE Context Modification Request
     get_cu_up(cu_up_idx).push_tx_pdu(
         generate_bearer_context_modification_failure(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
-    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive UE Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
                               "Invalid UE Context Modification Request");
+    return true;
   }
 
-  void send_bearer_context_modification_response_and_await_ue_context_modification_request()
+  [[nodiscard]] bool send_bearer_context_modification_response_and_await_ue_context_modification_request()
   {
     // Inject Bearer Context Modification Response and wait for UE Context Modification Request
     get_cu_up(cu_up_idx).push_tx_pdu(
         generate_bearer_context_modification_response(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
-    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive UE Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
                               "Invalid UE Context Modification Request");
+    return true;
   }
 
-  void send_bearer_context_release_complete_and_await_ue_context_modification_request()
+  [[nodiscard]] bool send_bearer_context_release_complete_and_await_ue_context_modification_request()
   {
     // Inject Bearer Context Release Complete and wait for UE Context Modification Request
     get_cu_up(cu_up_idx).push_tx_pdu(
         generate_bearer_context_release_complete(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
-    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive UE Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
                               "Invalid UE Context Modification Request");
+    return true;
   }
 
-  void send_ue_context_modification_response_and_await_rrc_reconfiguration()
+  [[nodiscard]] bool send_ue_context_modification_response_and_await_rrc_reconfiguration()
   {
     // Inject UE Context Modification Response and wait for DL RRC Message (containing RRC Reconfiguration)
     get_du(du_idx).push_ul_pdu(
         test_helpers::generate_ue_context_modification_response(du_ue_id, ue_ctx->cu_ue_id.value(), crnti));
-    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
     report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                               "Invalid DL RRC Message Transfer");
     {
@@ -213,15 +226,16 @@ public:
           test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container), {}, {}),
           "Invalid RRC Reconfiguration");
     }
+    return true;
   }
 
-  void send_ue_context_modification_failure_and_await_rrc_reconfiguration()
+  [[nodiscard]] bool send_ue_context_modification_failure_and_await_rrc_reconfiguration()
   {
     // Inject UE Context Modification Failure and wait for DL RRC Message (containing RRC Reconfiguration)
     get_du(du_idx).push_ul_pdu(
         generate_ue_context_modification_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
-    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
     report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                               "Invalid DL RRC Message Transfer");
     {
@@ -230,19 +244,19 @@ public:
           test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container), {}, {}),
           "Invalid RRC Reconfiguration");
     }
+    return true;
   }
 
-  bool send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response()
+  [[nodiscard]] bool send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response()
   {
     // Inject UL RRC Message (containing RRC Reconfiguration Complete) and wait for PDU Session Resource Release
     // Response
     get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
         du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, generate_rrc_reconfiguration_complete_pdu(3, 7)));
-    bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Release Response");
+    report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
+                              "Failed to receive PDU Session Resource Release Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_release_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
-
     return true;
   }
 };
@@ -250,68 +264,68 @@ public:
 TEST_F(cu_cp_pdu_session_resource_release_test, when_bearer_context_modification_failure_received_then_release_succeeds)
 {
   // Add second PDU session
-  setup_second_pdu_session();
+  ASSERT_TRUE(setup_second_pdu_session());
 
   // Inject NGAP PDU Session Resource Release Command and await Bearer Context Modification Request
-  send_pdu_session_release_command_and_await_bearer_context_modification_request();
+  ASSERT_TRUE(send_pdu_session_release_command_and_await_bearer_context_modification_request());
 
   // Inject Bearer Context Modification Failure and await UE Context Modification Request
-  send_bearer_context_modification_failure_and_await_ue_context_modification_request();
+  ASSERT_TRUE(send_bearer_context_modification_failure_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Response and await RRC Reconfiguration
-  send_ue_context_modification_response_and_await_rrc_reconfiguration();
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_rrc_reconfiguration());
 
   // Inject RRC Reconfiguration Complete and await PDU Session Resource Release Response
-  send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response();
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response());
 }
 
 TEST_F(cu_cp_pdu_session_resource_release_test, when_ue_context_modification_failure_received_then_release_succeeds)
 {
   // Add second PDU session
-  setup_second_pdu_session();
+  ASSERT_TRUE(setup_second_pdu_session());
 
   // Inject NGAP PDU Session Resource Release Command and await Bearer Context Modification Request
-  send_pdu_session_release_command_and_await_bearer_context_modification_request();
+  ASSERT_TRUE(send_pdu_session_release_command_and_await_bearer_context_modification_request());
 
   // Inject Bearer Context Modification Response and await UE Context Modification Request
-  send_bearer_context_modification_response_and_await_ue_context_modification_request();
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Failure and await RRC Reconfiguration
-  send_ue_context_modification_failure_and_await_rrc_reconfiguration();
+  ASSERT_TRUE(send_ue_context_modification_failure_and_await_rrc_reconfiguration());
 
   // Inject RRC Reconfiguration Complete and await PDU Session Resource Release Response
-  send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response();
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response());
 }
 
 TEST_F(cu_cp_pdu_session_resource_release_test, when_all_sub_actions_succeed_then_release_succeeds)
 {
   // Add second PDU session
-  setup_second_pdu_session();
+  ASSERT_TRUE(setup_second_pdu_session());
 
   // Inject NGAP PDU Session Resource Release Command and await Bearer Context Modification Request
-  send_pdu_session_release_command_and_await_bearer_context_modification_request();
+  ASSERT_TRUE(send_pdu_session_release_command_and_await_bearer_context_modification_request());
 
   // Inject Bearer Context Modification Response and await UE Context Modification Request
-  send_bearer_context_modification_response_and_await_ue_context_modification_request();
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Response and await RRC Reconfiguration
-  send_ue_context_modification_response_and_await_rrc_reconfiguration();
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_rrc_reconfiguration());
 
   // Inject RRC Reconfiguration Complete and await PDU Session Resource Release Response
-  send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response();
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response());
 }
 
 TEST_F(cu_cp_pdu_session_resource_release_test, when_only_pdu_session_released_then_bearer_context_release_command_sent)
 {
   // Inject NGAP PDU Session Resource Release Command and await Bearer Context Release Command
-  send_pdu_session_release_command_and_await_bearer_context_release_command();
+  ASSERT_TRUE(send_pdu_session_release_command_and_await_bearer_context_release_command());
 
   // Inject Bearer Context Release Complete and await UE Context Modification Request
-  send_bearer_context_release_complete_and_await_ue_context_modification_request();
+  ASSERT_TRUE(send_bearer_context_release_complete_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Response and await RRC Reconfiguration
-  send_ue_context_modification_response_and_await_rrc_reconfiguration();
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_rrc_reconfiguration());
 
   // Inject RRC Reconfiguration Complete and await PDU Session Resource Release Response
-  send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response();
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response());
 }
