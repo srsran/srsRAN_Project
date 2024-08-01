@@ -14,8 +14,8 @@
 using namespace srsran;
 using namespace ofh;
 
-closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handler_config& config,
-                                                   closed_rx_window_handler_dependencies  dependencies) :
+closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handler_config&  config,
+                                                   closed_rx_window_handler_dependencies&& dependencies) :
   notification_delay_in_symbols(config.nof_symbols_to_process_uplink + config.rx_timing_params.sym_end + 1),
   log_unreceived_messages(config.warn_unreceived_ru_frames),
   logger(*dependencies.logger),
@@ -24,31 +24,26 @@ closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handle
   uplink_repo(std::move(dependencies.uplink_repo)),
   notifier(std::move(dependencies.notifier))
 {
-  srsran_assert(dependencies.logger, "Invalid logger");
-  srsran_assert(dependencies.executor, "Invalid executor");
   srsran_assert(prach_repo, "Invalid PRACH context repository");
   srsran_assert(uplink_repo, "Invalid uplink context repository");
   srsran_assert(notifier, "Invalid U-Plane received symbol notifier");
 }
 
-void closed_rx_window_handler::on_new_symbol(slot_symbol_point slot_symbol)
+void closed_rx_window_handler::on_new_symbol(slot_symbol_point symbol_point)
 {
-  if (!executor.defer([slot_symbol, this]() {
-        // Use an internal slot symbol to decide the context to notify.
-        slot_symbol_point internal_slot = slot_symbol - notification_delay_in_symbols;
-        handle_uplink(internal_slot);
-        handle_prach(internal_slot);
+  if (!executor.defer([internal_slot = symbol_point - notification_delay_in_symbols, this]() {
+        handle_uplink_context(internal_slot);
+        handle_prach_context(internal_slot);
       })) {
-    logger.warning("Failed to dispatch checking for lost messages in reception for slot '{}' and symbol '{}'",
-                   slot_symbol.get_slot(),
-                   slot_symbol.get_symbol_index());
+    logger.warning("Failed to dispatch task for checking for lost messages in reception for slot '{}' and symbol '{}'",
+                   symbol_point.get_slot(),
+                   symbol_point.get_symbol_index());
   }
 }
 
-void closed_rx_window_handler::handle_uplink(slot_symbol_point slot_symbol)
+void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_point)
 {
-  const auto& context =
-      uplink_repo->pop_complete_resource_grid_symbol(slot_symbol.get_slot(), slot_symbol.get_symbol_index());
+  const auto& context = uplink_repo->pop_resource_grid_symbol(symbol_point.get_slot(), symbol_point.get_symbol_index());
 
   if (!context.has_value()) {
     return;
@@ -56,14 +51,13 @@ void closed_rx_window_handler::handle_uplink(slot_symbol_point slot_symbol)
 
   const auto               ctx_value            = context.value();
   uplane_rx_symbol_context notification_context = {
-      ctx_value.context.slot, slot_symbol.get_symbol_index(), ctx_value.context.sector};
+      ctx_value.context.slot, symbol_point.get_symbol_index(), ctx_value.context.sector};
   notifier->on_new_uplink_symbol(notification_context, ctx_value.grid->get_reader());
 
-  // Log unreceived messages.
   if (log_unreceived_messages) {
     logger.warning("Missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",
                    ctx_value.context.slot,
-                   slot_symbol.get_symbol_index(),
+                   symbol_point.get_symbol_index(),
                    ctx_value.context.sector);
   }
 
@@ -73,14 +67,14 @@ void closed_rx_window_handler::handle_uplink(slot_symbol_point slot_symbol)
                notification_context.sector);
 }
 
-void closed_rx_window_handler::handle_prach(slot_symbol_point slot_symbol)
+void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_point)
 {
-  // As the PRACH is send when all the symbols are received, wait until new slot to notify it PRACH buffer.
-  if (slot_symbol.get_symbol_index() != 0) {
+  // As the PRACH is sent when all the symbols are received, wait until new slot to notify it PRACH buffer.
+  if (symbol_point.get_symbol_index() != 0) {
     return;
   }
 
-  slot_point  slot    = slot_symbol.get_slot() - 1;
+  slot_point  slot    = symbol_point.get_slot() - 1;
   const auto& context = prach_repo->pop_prach_buffer(slot);
 
   // Nothing to do.

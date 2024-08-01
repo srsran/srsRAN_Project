@@ -148,12 +148,6 @@ public:
 
     for (unsigned symbol_id = symbol_range.start(), symbol_end = symbol_range.stop(); symbol_id != symbol_end;
          ++symbol_id) {
-      // Sanity check. As the context are notified on reception window close, the context should always be empty.
-      srsran_assert(entry(context.slot, symbol_id).empty(),
-                    "Unnotified PRACH context for slot '{}', symbol '{}' and sector '{}'",
-                    entry(context.slot, symbol_id).get_grid_context().slot,
-                    symbol_id,
-                    entry(context.slot, symbol_id).get_grid_context().sector);
       entry(context.slot, symbol_id) = uplink_context(symbol_id, context, grid);
     }
   }
@@ -174,9 +168,9 @@ public:
 
   /// \brief Tries to pop a complete resource grid for the given slot and symbol.
   ///
-  /// A resource grid is considered completed when  all the PRBs for all the ports have been written.
-  expected<uplink_context::uplink_context_resource_grid_info> try_poping_complete_resource_grid_symbol(slot_point slot,
-                                                                                                       unsigned symbol)
+  /// A resource grid is considered completed when all the PRBs for all the ports have been written.
+  expected<uplink_context::uplink_context_resource_grid_info> try_popping_complete_resource_grid_symbol(slot_point slot,
+                                                                                                        unsigned symbol)
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -190,9 +184,8 @@ public:
     return result;
   }
 
-  /// Pops a complete resource grid for the given slot and symbol.
-  expected<uplink_context::uplink_context_resource_grid_info> pop_complete_resource_grid_symbol(slot_point slot,
-                                                                                                unsigned   symbol)
+  /// Pops a resource grid for the given slot and symbol.
+  expected<uplink_context::uplink_context_resource_grid_info> pop_resource_grid_symbol(slot_point slot, unsigned symbol)
   {
     std::lock_guard<std::mutex> lock(mutex);
 

@@ -49,8 +49,8 @@ unsigned T1a_min_cp_ul = 8;  // 285us.
 unsigned T1a_max_up    = 9;  // 350us.
 unsigned T1a_min_up    = 2;  // 50us.
 /// Reception window parameters expressed in symbols, given the 30kHz scs.
-unsigned Ta4_min = 1; // 150us.
-unsigned Ta4_max = 5; // 25us.
+unsigned Ta4_min = 1;  // 35us.
+unsigned Ta4_max = 28; // 1ms.
 
 static const tdd_ul_dl_pattern tdd_pattern_7d2u{10, 7, 0, 2, 0};
 static const tdd_ul_dl_pattern tdd_pattern_6d3u{10, 6, 0, 3, 0};
@@ -921,9 +921,9 @@ struct worker_manager {
       const std::string exec_name = "ru_rx_exec";
 
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+                                    {concurrent_queue_policy::locking_mpmc, task_worker_queue_size},
                                     {{exec_name}},
-                                    std::chrono::microseconds{1},
+                                    std::nullopt,
                                     os_thread_realtime_priority::max() - 1};
       if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);

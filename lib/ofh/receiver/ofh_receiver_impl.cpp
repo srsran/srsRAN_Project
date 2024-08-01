@@ -32,15 +32,16 @@ static message_receiver_config get_message_receiver_configuration(const receiver
   return config;
 }
 
-static message_receiver_dependencies get_message_receiver_dependencies(receiver_impl_dependencies& rx_dependencies,
-                                                                       rx_window_checker&          window_checker)
+static message_receiver_dependencies
+get_message_receiver_dependencies(receiver_impl_dependencies::message_rx_dependencies rx_dependencies,
+                                  rx_window_checker&                                  window_checker)
 {
   message_receiver_dependencies dependencies;
-
   dependencies.logger         = rx_dependencies.logger;
   dependencies.window_checker = &window_checker;
   dependencies.eth_receiver   = std::move(rx_dependencies.eth_receiver);
-  dependencies.ecpri_decoder  = std::move(rx_dependencies.ecpri_decoder);
+  srsran_assert(dependencies.eth_receiver, "Invalid ethernet receiver");
+  dependencies.ecpri_decoder = std::move(rx_dependencies.ecpri_decoder);
   srsran_assert(dependencies.ecpri_decoder, "Invalid eCPRI decoder");
   dependencies.eth_frame_decoder = std::move(rx_dependencies.eth_frame_decoder);
   srsran_assert(dependencies.eth_frame_decoder, "Invalid Ethernet frame decoder");
@@ -65,22 +66,6 @@ static closed_rx_window_handler_config get_closed_rx_window_handler_config(const
   return out_config;
 }
 
-static closed_rx_window_handler_dependencies
-get_closed_rx_window_handler_dependencies(receiver_impl_dependencies& dependencies)
-{
-  closed_rx_window_handler_dependencies out_dependencies;
-  out_dependencies.executor   = dependencies.executor;
-  out_dependencies.logger     = dependencies.logger;
-  out_dependencies.prach_repo = std::move(dependencies.prach_repo);
-  srsran_assert(out_dependencies.prach_repo, "Invalid PRACH context repository");
-  out_dependencies.uplink_repo = std::move(dependencies.uplink_repo);
-  srsran_assert(out_dependencies.uplink_repo, "Invalid uplink context repository");
-  out_dependencies.notifier = std::move(dependencies.notifier);
-  srsran_assert(out_dependencies.notifier, "Invalid OFH U-Plane notifier");
-
-  return out_dependencies;
-}
-
 void ota_symbol_boundary_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
 {
   for (auto& handler : handlers) {
@@ -90,7 +75,7 @@ void ota_symbol_boundary_dispatcher::on_new_symbol(slot_symbol_point symbol_poin
 
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies) :
   closed_window_handler(get_closed_rx_window_handler_config(config),
-                        get_closed_rx_window_handler_dependencies(dependencies)),
+                        std::move(dependencies.window_handler_dependencies)),
   window_checker(*dependencies.logger,
                  config.rx_timing_params,
                  std::chrono::duration<double, std::nano>(
@@ -105,7 +90,7 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
     return handlers;
   }(closed_window_handler, window_checker)),
   msg_receiver(get_message_receiver_configuration(config),
-               get_message_receiver_dependencies(dependencies, window_checker)),
+               get_message_receiver_dependencies(std::move(dependencies.msg_rx_dependencies), window_checker)),
   rcv_task_dispatcher(msg_receiver, *dependencies.executor),
   ctrl(rcv_task_dispatcher)
 {

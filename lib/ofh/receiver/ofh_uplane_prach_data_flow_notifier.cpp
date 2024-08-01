@@ -19,7 +19,7 @@ void uplane_prach_data_flow_notifier::notify_prach(slot_point slot)
   expected<prach_context::prach_context_information> context =
       prach_context_repo->try_poping_complete_prach_buffer(slot);
 
-  if (not context.has_value()) {
+  if (!context.has_value()) {
     return;
   }
 

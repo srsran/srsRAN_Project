@@ -27,28 +27,31 @@ namespace ofh {
 
 /// Open Fronthaul receiver implementation dependencies.
 struct receiver_impl_dependencies {
+  /// Message receiver dependencies.
+  struct message_rx_dependencies {
+    /// Logger.
+    srslog::basic_logger* logger = nullptr;
+    /// Ethernet receiver.
+    std::unique_ptr<ether::receiver> eth_receiver;
+    /// eCPRI packet decoder.
+    std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
+    /// Ethernet frame decoder.
+    std::unique_ptr<ether::vlan_frame_decoder> eth_frame_decoder;
+    /// User-Plane uplink data flow.
+    std::unique_ptr<data_flow_uplane_uplink_data> data_flow_uplink;
+    /// User-Plane uplink PRACH data flow.
+    std::unique_ptr<data_flow_uplane_uplink_prach> data_flow_prach;
+    /// Sequence id checker.
+    std::unique_ptr<sequence_id_checker> seq_id_checker;
+  };
   /// Logger.
   srslog::basic_logger* logger = nullptr;
-  /// Uplink task executor.
+  /// Task executor.
   task_executor* executor = nullptr;
-  /// Ethernet receiver.
-  std::unique_ptr<ether::receiver> eth_receiver;
-  /// eCPRI packet decoder.
-  std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
-  /// Ethernet frame decoder.
-  std::unique_ptr<ether::vlan_frame_decoder> eth_frame_decoder;
-  /// User-Plane uplink data flow.
-  std::unique_ptr<data_flow_uplane_uplink_data> data_flow_uplink;
-  /// User-Plane uplink PRACH data flow.
-  std::unique_ptr<data_flow_uplane_uplink_prach> data_flow_prach;
-  /// Sequence id checker.
-  std::unique_ptr<sequence_id_checker> seq_id_checker;
-  /// PRACH context repository.
-  std::shared_ptr<prach_context_repository> prach_repo;
-  /// Uplink context repository.
-  std::shared_ptr<uplink_context_repository> uplink_repo;
-  /// User-Plane received symbol notifier.
-  std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+  /// Message receiver dependencies.
+  message_rx_dependencies msg_rx_dependencies;
+  /// Closed reception window handler dependencies.
+  closed_rx_window_handler_dependencies window_handler_dependencies;
 };
 
 /// OTA symbol boundary dispatcher for the receiver.

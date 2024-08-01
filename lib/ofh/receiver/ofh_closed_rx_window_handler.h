@@ -26,7 +26,8 @@ namespace ofh {
 
 /// Closed reception window handler configuration.
 struct closed_rx_window_handler_config {
-  /// Number of symbols that takes to decode an Open Fronthaul message. It delays closing the reception window.
+  /// Time in number of symbols that the decoder needs to process an Open Fronthaul message. It delays closing the
+  /// reception window.
   unsigned nof_symbols_to_process_uplink = 0;
   /// Open Fronthaul receive window parameters.
   rx_window_timing_parameters rx_timing_params;
@@ -47,18 +48,27 @@ struct closed_rx_window_handler_dependencies {
 class closed_rx_window_handler : public ota_symbol_boundary_notifier
 {
 public:
-  closed_rx_window_handler(const closed_rx_window_handler_config& config,
-                           closed_rx_window_handler_dependencies  dependencies);
+  closed_rx_window_handler(const closed_rx_window_handler_config&  config,
+                           closed_rx_window_handler_dependencies&& dependencies);
 
-  void on_new_symbol(slot_symbol_point slot_symbol) override;
-
-private:
-  void handle_uplink(slot_symbol_point slot_symbol);
-
-  void handle_prach(slot_symbol_point slot_symbol);
+  // See interface for documentation.
+  void on_new_symbol(slot_symbol_point symbol_point) override;
 
 private:
-  /// \brief Notification delay of the resource grid or PRACH buffer in symbol unit.
+  /// \brief Handles the uplink context for the closed reception window given by symbol point.
+  ///
+  /// Pops an uplink context from the uplink repository and when the context is valid, notifies it using the User-Plane
+  /// received symbol notifier.
+  void handle_uplink_context(slot_symbol_point symbol_point);
+
+  /// \brief Handles the PRACH context for the closed reception window given by symbol point.
+  ///
+  /// Pops a PRACH context from the PRACH repository and when the context is valid, notifies it using the User-Plane
+  /// received symbol notifier.
+  void handle_prach_context(slot_symbol_point symbol_point);
+
+private:
+  /// \brief Notification delay of the resource grid or PRACH buffer in symbol units.
   ///
   /// This delay is calculated with the T4a_max parameter plus the number of symbols that takes to decode a received
   /// Open Fronthaul message.

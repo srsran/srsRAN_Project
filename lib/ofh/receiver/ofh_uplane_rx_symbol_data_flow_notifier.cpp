@@ -17,7 +17,7 @@ using namespace ofh;
 void uplane_rx_symbol_data_flow_notifier::notify_received_symbol(slot_point slot, unsigned symbol)
 {
   expected<uplink_context::uplink_context_resource_grid_info> context =
-      ul_context_repo->try_poping_complete_resource_grid_symbol(slot, symbol);
+      ul_context_repo->try_popping_complete_resource_grid_symbol(slot, symbol);
 
   if (!context.has_value()) {
     return;

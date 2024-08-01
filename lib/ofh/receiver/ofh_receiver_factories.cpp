@@ -104,31 +104,37 @@ resolve_receiver_dependencies(const receiver_config&                            
                               std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
 {
   receiver_impl_dependencies dependencies;
+  dependencies.logger   = &logger;
+  dependencies.executor = &uplink_executor;
 
-  dependencies.logger      = &logger;
-  dependencies.executor    = &uplink_executor;
-  dependencies.prach_repo  = prach_context_repo;
-  dependencies.uplink_repo = ul_slot_context_repo;
-  dependencies.notifier    = notifier;
+  auto& rx_window_handler_dependencies       = dependencies.window_handler_dependencies;
+  rx_window_handler_dependencies.logger      = &logger;
+  rx_window_handler_dependencies.executor    = &uplink_executor;
+  rx_window_handler_dependencies.prach_repo  = prach_context_repo;
+  rx_window_handler_dependencies.uplink_repo = ul_slot_context_repo;
+  rx_window_handler_dependencies.notifier    = notifier;
+
+  auto& msg_rx_dependencies  = dependencies.msg_rx_dependencies;
+  msg_rx_dependencies.logger = &logger;
 
   if (receiver_cfg.ignore_ecpri_payload_size_field) {
-    dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(logger);
+    msg_rx_dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(logger);
   } else {
-    dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_using_payload_size(logger);
+    msg_rx_dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_using_payload_size(logger);
   }
-  dependencies.eth_frame_decoder = ether::create_vlan_frame_decoder(logger);
+  msg_rx_dependencies.eth_frame_decoder = ether::create_vlan_frame_decoder(logger);
 
-  dependencies.data_flow_uplink =
+  msg_rx_dependencies.data_flow_uplink =
       create_uplink_data_flow(receiver_cfg, logger, notifier, std::move(ul_slot_context_repo), ul_cp_context_repo);
-  dependencies.data_flow_prach =
+  msg_rx_dependencies.data_flow_prach =
       create_uplink_prach_data_flow(receiver_cfg, logger, notifier, std::move(prach_context_repo), ul_cp_context_repo);
 
-  dependencies.seq_id_checker =
+  msg_rx_dependencies.seq_id_checker =
       (receiver_cfg.ignore_ecpri_seq_id_field)
           ? static_cast<std::unique_ptr<sequence_id_checker>>(std::make_unique<sequence_id_checker_dummy_impl>())
           : static_cast<std::unique_ptr<sequence_id_checker>>(std::make_unique<sequence_id_checker_impl>());
 
-  dependencies.eth_receiver = std::move(eth_receiver);
+  msg_rx_dependencies.eth_receiver = std::move(eth_receiver);
 
   return dependencies;
 }

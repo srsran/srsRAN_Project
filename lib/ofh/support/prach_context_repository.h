@@ -139,7 +139,7 @@ public:
 
   /// Tries to get a complete PRACH buffer. A PRACH buffer is considered completed when all the PRBs for all the ports
   /// have been written.
-  expected<prach_context_information> try_getting_complete_prach_buffer()
+  expected<prach_context_information> try_getting_complete_prach_buffer() const
   {
     if (!context_info.buffer) {
       return make_unexpected(default_error_t{});
@@ -210,14 +210,7 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
 
     slot_point current_slot = slot.value_or(context.slot);
-
-    // Sanity check. As the context are notified on reception window close, the context should always be empty.
-    srsran_assert(entry(current_slot).empty(),
-                  "Unnotified PRACH context for slot '{}' and sector '{}'",
-                  entry(current_slot).get_context().slot,
-                  entry(current_slot).get_context().sector);
-
-    entry(current_slot) = prach_context(context, buffer_, start_symbol);
+    entry(current_slot)     = prach_context(context, buffer_, start_symbol);
   }
 
   /// Function to write the uplink PRACH buffer.
@@ -236,8 +229,8 @@ public:
 
   /// \brief Tries to pop a complete PRACH buffer from the repository.
   ///
-  /// A PRACH buffer is considered completed when all the PRBs for all the ports have been written. If the pop was a
-  /// success, clears the entry of the repository for that slot.
+  /// A PRACH buffer is considered completed when all the PRBs for all the ports have been written. If the pop is
+  /// successful it clears the entry of the repository for that slot.
   expected<prach_context::prach_context_information> try_poping_complete_prach_buffer(slot_point slot)
   {
     std::lock_guard<std::mutex> lock(mutex);
