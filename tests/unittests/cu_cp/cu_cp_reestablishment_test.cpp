@@ -13,6 +13,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
@@ -46,10 +47,10 @@ public:
 
   /// Run RRC Reestablishment.
   /// \return Returns true if Reestablishment is successful, and false if the gNB fallbacked to RRC Setup.
-  bool send_rrc_reest_request_and_wait_response(gnb_du_ue_f1ap_id_t new_du_ue_id,
-                                                rnti_t              new_rnti,
-                                                rnti_t              old_rnti_,
-                                                pci_t               old_pci_)
+  [[nodiscard]] bool send_rrc_reest_request_and_wait_response(gnb_du_ue_f1ap_id_t new_du_ue_id,
+                                                              rnti_t              new_rnti,
+                                                              rnti_t              old_rnti_,
+                                                              pci_t               old_pci_)
   {
     // Generate RRC Reestablishment Request.
     byte_buffer rrc_container =
@@ -103,34 +104,44 @@ public:
     return f1ap_pdu;
   }
 
-  void ue_sends_rrc_setup_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
+  [[nodiscard]] bool ue_sends_rrc_setup_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
     // Generate RRC Setup Complete.
     byte_buffer pdu = pack_ul_dcch_msg(create_rrc_setup_complete());
 
     // Prepend PDCP header and append MAC.
-    EXPECT_TRUE(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U}));
-    EXPECT_TRUE(pdu.append(std::array<uint8_t, 4>{}));
+    if (!pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U})) {
+      return false;
+    }
+    if (!pdu.append(std::array<uint8_t, 4>{})) {
+      return false;
+    }
 
     // Send UL RRC Message to CU-CP.
     f1ap_message f1ap_ul_rrc_msg =
         test_helpers::create_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
     get_du(du_idx).push_ul_pdu(f1ap_ul_rrc_msg);
+    return true;
   }
 
-  void ue_sends_rrc_reest_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
+  [[nodiscard]] bool ue_sends_rrc_reest_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
     // Generate RRC Reestablishment Complete.
     byte_buffer pdu = pack_ul_dcch_msg(create_rrc_reestablishment_complete());
 
     // Prepend PDCP header and append MAC.
-    EXPECT_TRUE(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U}));
-    EXPECT_TRUE(pdu.append(std::array<uint8_t, 4>{0x01, 0x1d, 0x37, 0x38}));
+    if (!pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U})) {
+      return false;
+    }
+    if (!pdu.append(std::array<uint8_t, 4>{0x01, 0x1d, 0x37, 0x38})) {
+      return false;
+    }
 
     // Send UL RRC Message to CU-CP.
     f1ap_message f1ap_ul_rrc_msg =
         test_helpers::create_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
     get_du(du_idx).push_ul_pdu(f1ap_ul_rrc_msg);
+    return true;
   }
 
   unsigned du_idx    = 0;
@@ -154,7 +165,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_does_not_exist_then_reestablishme
       << "RRC setup should have been sent";
 
   // UE sends RRC Setup Complete
-  this->ue_sends_rrc_setup_complete(int_to_gnb_du_ue_f1ap_id(1), int_to_gnb_cu_ue_f1ap_id(1));
+  ASSERT_TRUE(this->ue_sends_rrc_setup_complete(int_to_gnb_du_ue_f1ap_id(1), int_to_gnb_cu_ue_f1ap_id(1)));
 
   // old UE should not be removed.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
@@ -175,7 +186,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_has_no_ngap_context_then_reestabl
   ASSERT_EQ(report.ues.size(), 2) << "Old UE should not be removed yet";
 
   // UE sends RRC Setup Complete
-  this->ue_sends_rrc_setup_complete(int_to_gnb_du_ue_f1ap_id(1), int_to_gnb_cu_ue_f1ap_id(1));
+  ASSERT_TRUE(this->ue_sends_rrc_setup_complete(int_to_gnb_du_ue_f1ap_id(1), int_to_gnb_cu_ue_f1ap_id(1)));
 
   // Given that the old UE still has no AMF-UE-ID, the CU-CP removes the UE context without sending the
   // NGAP UE Context Release Request to the AMF.
@@ -246,7 +257,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_ree
 
   // EVENT: new UE sends RRC Setup Complete and completes fallback procedure.
   gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(1);
-  this->ue_sends_rrc_setup_complete(new_du_ue_id, cu_ue_id);
+  ASSERT_TRUE(this->ue_sends_rrc_setup_complete(new_du_ue_id, cu_ue_id));
 
   // STATUS: NGAP Initial UE Message should be sent for the new UE.
   ngap_message ngap_pdu;
