@@ -978,6 +978,11 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
 
   // STATUS: CU-CP sends F1AP UE Context Modification Request to DU.
   report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu), "F1AP UEContextModificationRequest NOT sent");
+  report_fatal_error_if_not(f1ap_pdu.pdu.init_msg().value.ue_context_mod_request()->drbs_to_be_modified_list_present,
+                            "UE Context Modification Request for RRC Reestablishment must contain DRBs to be modified");
+  report_fatal_error_if_not(
+      not f1ap_pdu.pdu.init_msg().value.ue_context_mod_request()->drbs_to_be_setup_mod_list_present,
+      "UE Context Modification Request for RRC Reestablishment must not contain DRBs to be setup");
 
   // EVENT: Inject F1AP UE Context Modification Response
   get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_modification_response(
