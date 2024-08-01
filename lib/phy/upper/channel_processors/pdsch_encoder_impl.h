@@ -59,8 +59,6 @@ private:
   static constexpr units::bits MAX_CB_LENGTH{3 * MAX_SEG_LENGTH.value()};
   /// Buffer for storing temporary encoded and packed codeblock.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> codeblock_packed;
-  /// Temporary rate match buffer.
-  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> rm_buffer;
 };
 
 } // namespace srsran

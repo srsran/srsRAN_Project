@@ -110,11 +110,8 @@ pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const 
     nof_used_bits += nof_zeros;
   }
 
-  // Prepare rate matching buffer.
-  rm_buffer.resize(config.metadata.cb_specific.full_length);
-
   // Encode the segment into a codeblock.
-  encoder->encode(rm_buffer, cb_data, config.metadata.tb_common);
+  const ldpc_encoder_buffer& rm_buffer = encoder->encode(cb_data, config.metadata.tb_common);
 
   // Rate match the codeblock.
   temp_packed_bits.resize(rm_length);

@@ -412,23 +412,45 @@ void ldpc_encoder_neon::ext_region_inner()
   }
 }
 
-void ldpc_encoder_neon::write_codeblock(bit_buffer& out)
+void ldpc_encoder_neon::write_codeblock(span<uint8_t> out, unsigned offset) const
 {
-  unsigned nof_nodes = codeblock_length / lifting_size;
+  srsran_assert(out.size() + offset <= bg_N_short * lifting_size,
+                "The output size (i.e., {}) plus the offset (i.e., {}) exceeds the codeblock length (i.e., {}).",
+                out.size(),
+                offset,
+                bg_N_short * lifting_size);
 
-  // The first two blocks are shortened and the last node is not considered, since it can be incomplete.
+  // Calculate the node size in bytes, considering SIMD alignment.
   unsigned            node_size_byte = node_size_neon * NEON_SIZE_BYTE;
-  unsigned            out_offset     = 0;
   span<const uint8_t> codeblock(codeblock_buffer);
-  codeblock = codeblock.last(codeblock.size() - 2 * node_size_byte);
-  for (unsigned i_node = 2, max_i_node = nof_nodes - 1; i_node != max_i_node; ++i_node) {
-    srsvec::bit_pack(out, out_offset, codeblock.first(lifting_size));
 
+  // Select the initial node. The first two blocks are shortened and the last node is not considered, since it can be
+  // incomplete.
+  unsigned i_node_begin = 2 + offset / lifting_size;
+
+  // Advance the codeblock to the initial node.
+  codeblock = codeblock.last(codeblock.size() - i_node_begin * node_size_byte);
+
+  // End node.
+  unsigned i_node_end = i_node_begin + divide_ceil(out.size(), lifting_size);
+
+  // Calculate the offset within the first node.
+  offset = offset % lifting_size;
+
+  for (unsigned i_node = i_node_begin; i_node != i_node_end; ++i_node) {
+    // Determine the number of bits to read from this node.
+    unsigned count = std::min(lifting_size - offset, static_cast<unsigned>(out.size()));
+
+    // Copy node bits.
+    srsvec::copy(out.first(count), codeblock.subspan(offset, count));
+
+    // Advance codeblock.
     codeblock = codeblock.last(codeblock.size() - node_size_byte);
-    out_offset += lifting_size;
-  }
 
-  // Take care of the last node.
-  unsigned remainder = out.size() - out_offset;
-  srsvec::bit_pack(out, out_offset, codeblock.first(remainder));
+    // Advance output.
+    out = out.last(out.size() - count);
+
+    // The offset is no longer required after the first node.
+    offset = 0;
+  }
 }

@@ -36,11 +36,8 @@ void pdsch_encoder_impl::encode(span<uint8_t>        codeword,
     // Select segment description.
     const described_segment& descr_seg = d_segments[i_cb];
 
-    // Prepare rate matching buffer.
-    rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
-
     // Encode the segment into a codeblock.
-    encoder->encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+    const ldpc_encoder_buffer& rm_buffer = encoder->encode(descr_seg.get_data(), descr_seg.get_metadata().tb_common);
 
     // Select the correct chunk of the output codeword.
     unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;

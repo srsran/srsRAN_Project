@@ -27,7 +27,7 @@ private:
   void preprocess_systematic_bits() override { (this->*systematic_bits)(); }
   void encode_high_rate() override { (this->*high_rate)(); }
   void encode_ext_region() override { (this->*ext_region)(); }
-  void write_codeblock(bit_buffer& out) override;
+  void write_codeblock(span<uint8_t> out, unsigned offset) const override;
 
   /// Alias for pointer to private methods.
   using strategy_method = void (ldpc_encoder_avx2::*)();
