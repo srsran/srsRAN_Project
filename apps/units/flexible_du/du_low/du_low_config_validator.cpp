@@ -50,14 +50,14 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
   }
 
 #ifdef DPDK_FOUND
-  if (config.nof_dl_threads > nof_hwacc_pdsch) {
+  if ((nof_hwacc_pdsch > 0) && (config.nof_dl_threads > nof_hwacc_pdsch)) {
     fmt::print("Not enough hardware-accelerated PDSCH encoder functions. Number of PHY DL threads (i.e., {}) must be "
                "in range {}.\n",
                config.nof_dl_threads,
                nof_hwacc_pdsch);
     valid = false;
   }
-  if ((config.nof_ul_threads + config.nof_pusch_decoder_threads) > nof_hwacc_pusch) {
+  if ((nof_hwacc_pusch > 0) && ((config.nof_ul_threads + config.nof_pusch_decoder_threads) > nof_hwacc_pusch)) {
     fmt::print("Not enough hardware-accelerated PUSCH decoder functions. Combined number of PHY UL threads (i.e., {}) "
                "and PUSCH decoder threads (i.e., {}) must be in range {}.\n",
                config.nof_ul_threads,
