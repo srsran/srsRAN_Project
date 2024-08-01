@@ -27,7 +27,7 @@ class udp_network_gateway_impl final : public udp_network_gateway
 public:
   explicit udp_network_gateway_impl(udp_network_gateway_config                   config_,
                                     network_gateway_data_notifier_with_src_addr& data_notifier_,
-                                    task_executor&                               io_executor_);
+                                    task_executor&                               io_tx_executor_);
   ~udp_network_gateway_impl() override { close_socket(); }
 
   bool subscribe_to(io_broker& broker) override;

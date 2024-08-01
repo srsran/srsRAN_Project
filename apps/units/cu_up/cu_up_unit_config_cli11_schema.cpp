@@ -87,6 +87,9 @@ static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_p
              "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
   add_option(app, "--udp_max_rx_msgs", upf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
+  add_option(
+      app, "--pool_threshold", upf_params.pool_threshold, "Pool accupancy threshold after which packets are dropped")
+      ->check(CLI::Range(0.0, 1.0));
   add_option(app, "--no_core", upf_params.no_core, "Allow gNB to run without a core");
 }
 

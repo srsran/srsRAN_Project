@@ -31,7 +31,7 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
   logger(srslog::fetch_basic_logger("UDP-GW")),
   io_tx_executor(io_tx_executor_)
 {
-  logger.info("UDP GW configured. rx_max_mmsg={}", config.rx_max_mmsg);
+  logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={}", config.rx_max_mmsg, config.pool_occupancy_threshold);
 
   // Allocate RX buffers
   rx_mem.resize(config.rx_max_mmsg);
@@ -225,6 +225,12 @@ void udp_network_gateway_impl::receive()
     if (!config.non_blocking_mode) {
       logger.debug("Socket timeout reached");
     }
+    return;
+  }
+
+  float pool_occupancy = get_byte_buffer_segment_pool_current_size_approx() / get_byte_buffer_segment_pool_capacity();
+  if (pool_occupancy >= config.pool_occupancy_threshold) {
+    logger.debug("Buffer pool occupancy at {}. Dropping {} packets", pool_occupancy, rx_msgs);
     return;
   }
 
