@@ -66,6 +66,7 @@ inline constexpr const char* to_string(prach_format_type format)
     case prach_format_type::C2:
       return "C2";
     case prach_format_type::invalid:
+    default:
       break;
   }
   return "invalid";

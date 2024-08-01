@@ -26,14 +26,24 @@ namespace srsran {
 ///
 /// The PRACH transmission occasions are in the system frames \f$n_{SFN}\f$ that satisfy \f$n_{SFN} \bmod x = y\f$.
 struct prach_configuration {
+  /// Maximum number of system frame offsets.
+  static constexpr unsigned max_nof_sfn_offsets = 2;
+  /// Maximum number of PRACH slots per radio frame assuming a subcarrier spacing of 60kHz.
+  static constexpr unsigned max_nof_slots_per_frame =
+      NOF_SUBFRAMES_PER_FRAME * (1U << to_numerology_value(subcarrier_spacing::kHz60));
+
   /// Preamble format (see [here](\ref preamble_format) for more information).
   prach_format_type format;
   /// SFN period, \f$x\f$.
   unsigned x;
   /// SFN offset \f$y\f$.
-  static_vector<uint8_t, 2> y;
-  /// Subframes within a frame that contain PRACH occasions.
-  static_vector<uint8_t, 40> subframe;
+  static_vector<uint8_t, max_nof_sfn_offsets> y;
+  /// \brief Slots within a radio frame that contain PRACH occasions.
+  ///
+  /// The slot numbering assumes the subcarrier spacing:
+  /// - 15kHz for FR1; and
+  /// - 60kHz for FR2.
+  static_vector<uint8_t, max_nof_slots_per_frame> subframe;
   /// Starting OFDM symbol index.
   uint8_t starting_symbol;
   /// \brief Number of PRACH slots. Set zero for reserved.

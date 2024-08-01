@@ -24,14 +24,6 @@ std::ostream& operator<<(std::ostream& os, prach_format_type format)
   return os;
 }
 
-bool operator==(int left, const static_vector<uint8_t, 2> right)
-{
-  if (right.size() == 1) {
-    return left == right.front();
-  }
-  return false;
-}
-
 } // namespace srsran
 
 TEST(PrachConfiguration, Fr1Paired)
@@ -100,33 +92,35 @@ TEST(PrachConfiguration, Fr1Paired)
     }
 
     // Assert y.
-    static const std::set<unsigned> config_B4_y_1 = {199, 201, 204};
+    static const std::set<unsigned>                                               config_B4_y_1 = {199, 201, 204};
+    static const static_vector<uint8_t, prach_configuration::max_nof_sfn_offsets> value_y_0     = {0};
+    static const static_vector<uint8_t, prach_configuration::max_nof_sfn_offsets> value_y_1     = {1};
     if (prach_config_index < 16) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 28) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else if (prach_config_index < 44) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 53) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else if (prach_config_index < 55) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 60) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else if (prach_config_index < 75) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 87) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else if (prach_config_index < 93) {
-      ASSERT_EQ((prach_config_index - 87) % 2, config.y);
+      ASSERT_EQ(((prach_config_index - 1) % 2) ? value_y_1 : value_y_0, config.y);
     } else if (prach_config_index < 108) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else if (prach_config_index < 198) {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
     } else if (config_B4_y_1.count(prach_config_index) > 0) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 219) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
     }
@@ -319,36 +313,38 @@ TEST(PrachConfiguration, Fr1Unpaired)
     }
 
     // Assert y.
+    static const static_vector<uint8_t, prach_configuration::max_nof_sfn_offsets> value_y_0 = {0};
+    static const static_vector<uint8_t, prach_configuration::max_nof_sfn_offsets> value_y_1 = {1};
     if (prach_config_index < 3) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 7) {
-      ASSERT_EQ((prach_config_index + 1) % 2, config.y);
+      ASSERT_EQ(((prach_config_index + 1) % 2) ? value_y_1 : value_y_0, config.y);
     } else if (prach_config_index < 28) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else if (prach_config_index < 31) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 34) {
-      ASSERT_EQ((prach_config_index - 1) % 2, config.y);
+      ASSERT_EQ(((prach_config_index - 1) % 2) ? value_y_1 : value_y_0, config.y);
     } else if (prach_config_index < 36) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 40) {
-      ASSERT_EQ((prach_config_index + 1) % 2, config.y);
+      ASSERT_EQ(((prach_config_index + 1) % 2) ? value_y_1 : value_y_0, config.y);
     } else if (prach_config_index < 42) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 47) {
-      ASSERT_EQ((prach_config_index + 1) % 2, config.y);
+      ASSERT_EQ(((prach_config_index + 1) % 2) ? value_y_1 : value_y_0, config.y);
     } else if (prach_config_index < 67) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else if (prach_config_index < 77) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 87) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else if (prach_config_index < 145) {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
     } else if (prach_config_index < 155) {
-      ASSERT_EQ(1, config.y);
+      ASSERT_EQ(value_y_1, config.y);
     } else if (prach_config_index < 169) {
-      ASSERT_EQ(0, config.y);
+      ASSERT_EQ(value_y_0, config.y);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
     }
@@ -528,9 +524,9 @@ TEST(PrachConfiguration, Fr2Unpaired)
     }
 
     // Assert y.
-    static const static_vector<uint8_t, 2> value_y_0   = {0};
-    static const static_vector<uint8_t, 2> value_y_1   = {1};
-    static const static_vector<uint8_t, 2> value_y_1_2 = {1, 2};
+    static const static_vector<uint8_t, prach_configuration::max_nof_sfn_offsets> value_y_0   = {0};
+    static const static_vector<uint8_t, prach_configuration::max_nof_sfn_offsets> value_y_1   = {1};
+    static const static_vector<uint8_t, prach_configuration::max_nof_sfn_offsets> value_y_1_2 = {1, 2};
     if (prach_config_index < 112) {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
     } else if ((prach_config_index < 117) || (prach_config_index == 119)) {
