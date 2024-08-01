@@ -11,6 +11,7 @@
 #include "reestablishment_context_modification_routine.h"
 #include "pdu_session_routine_helpers.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsran/f1ap/common/ue_context_config.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -182,11 +183,6 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
         e1ap_pdu_session_resource_modify_list)
 {
-  // Set up SRB2 in DU
-  f1ap_srb_to_setup srb2;
-  srb2.srb_id = srb_id_t::srb2;
-  ue_context_mod_req.srbs_to_be_setup_mod_list.push_back(srb2);
-
   for (const auto& e1ap_item : e1ap_pdu_session_resource_modify_list) {
     cu_cp_pdu_session_resource_modify_response_item item;
     item.pdu_session_id = e1ap_item.pdu_session_id;
@@ -217,31 +213,15 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
 
       // Fill UE context modification for DU
       {
-        f1ap_drb_to_setup drb_setup_mod_item;
-        drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
+        f1ap_drb_to_modify drb_modified_item;
+        drb_modified_item.drb_id = e1ap_drb_item.drb_id;
 
         // Add up tnl info
         for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
-          drb_setup_mod_item.uluptnl_info_list.push_back(ul_up_transport_param.up_tnl_info);
+          drb_modified_item.uluptnl_info_list.push_back(ul_up_transport_param.up_tnl_info);
         }
 
-        // Add rlc mode
-        drb_setup_mod_item.mode        = drb_up_context.rlc_mod;
-        drb_setup_mod_item.pdcp_sn_len = drb_up_context.pdcp_cfg.tx.sn_size;
-
-        // fill QoS info
-        drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
-        drb_setup_mod_item.qos_info.s_nssai    = drb_up_context.s_nssai;
-        drb_setup_mod_item.qos_info.notif_ctrl = drb_notification_control::active;
-        // Fill QoS flows for UE context modification.
-        for (const auto& flow : drb_up_context.qos_flows) {
-          // Add mapped flows and extract required QoS info from original NGAP request
-          flow_mapped_to_drb mapped_flow_item;
-          mapped_flow_item.qos_flow_id               = flow.first;
-          mapped_flow_item.qos_flow_level_qos_params = drb_up_context.qos_params;
-          drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(mapped_flow_item);
-        }
-        ue_context_mod_req.drbs_to_be_setup_mod_list.push_back(drb_setup_mod_item);
+        ue_context_mod_req.drbs_to_be_modified_list.push_back(drb_modified_item);
       }
     }
 
@@ -297,7 +277,7 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
     e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
     e1ap_mod_item.pdu_session_id = pdu_session.pdu_session_id;
 
-    for (const auto& drb_item : ue_context_modification_resp.drbs_setup_list) {
+    for (const auto& drb_item : ue_context_modification_resp.drbs_modified_list) {
       // Only include the DRB if it belongs to the this session.
       if (pdu_session.drb_modified_list_ng_ran.contains(drb_item.drb_id)) {
         // DRB belongs to this PDU session
