@@ -29,7 +29,7 @@ struct prach_configuration {
   /// Maximum number of system frame offsets.
   static constexpr unsigned max_nof_sfn_offsets = 2;
   /// Maximum number of PRACH slots per radio frame assuming a subcarrier spacing of 60kHz.
-  static constexpr unsigned max_nof_slots_per_frame =
+  static constexpr unsigned max_nof_slots_60kHz_frame =
       NOF_SUBFRAMES_PER_FRAME * (1U << to_numerology_value(subcarrier_spacing::kHz60));
 
   /// Preamble format (see [here](\ref preamble_format) for more information).
@@ -43,7 +43,7 @@ struct prach_configuration {
   /// The slot numbering assumes the subcarrier spacing:
   /// - 15kHz for FR1; and
   /// - 60kHz for FR2.
-  static_vector<uint8_t, max_nof_slots_per_frame> subframe;
+  static_vector<uint8_t, max_nof_slots_60kHz_frame> slots;
   /// Starting OFDM symbol index.
   uint8_t starting_symbol;
   /// \brief Number of PRACH slots. Set zero for reserved.

@@ -30,7 +30,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   static const unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 
   // Convert list of PRACH subframe occasions to bitmap.
-  for (const unsigned pos : prach_cfg.subframe) {
+  for (const unsigned pos : prach_cfg.slots) {
     prach_subframe_occasion_bitmap.set(pos, true);
   }
 

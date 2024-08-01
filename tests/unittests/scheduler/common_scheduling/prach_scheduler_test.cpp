@@ -112,8 +112,7 @@ protected:
     if (prach_occasion_sfn) {
       return false;
     }
-    if (std::find(prach_cfg.subframe.begin(), prach_cfg.subframe.end(), sl.subframe_index()) ==
-        prach_cfg.subframe.end()) {
+    if (std::find(prach_cfg.slots.begin(), prach_cfg.slots.end(), sl.subframe_index()) == prach_cfg.slots.end()) {
       return false;
     }
 
