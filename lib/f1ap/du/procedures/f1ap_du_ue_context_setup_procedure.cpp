@@ -192,13 +192,13 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   }
 
   // > DRBs setup List.
-  resp->drbs_setup_list_present = not du_ue_cfg_response.drbs_setup.empty();
+  resp->drbs_setup_list_present = not du_ue_cfg_response.drbs_configured.empty();
   if (resp->drbs_setup_list_present) {
-    resp->drbs_setup_list.resize(du_ue_cfg_response.drbs_setup.size());
+    resp->drbs_setup_list.resize(du_ue_cfg_response.drbs_configured.size());
     for (unsigned i = 0; i != resp->drbs_setup_list.size(); ++i) {
       resp->drbs_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
       drbs_setup_item_s& asn1_drb = resp->drbs_setup_list[i].value().drbs_setup_item();
-      auto&              drb_resp = du_ue_cfg_response.drbs_setup[i];
+      auto&              drb_resp = du_ue_cfg_response.drbs_configured[i];
       asn1_drb.drb_id             = drb_id_to_uint(drb_resp.drb_id);
       asn1_drb.lcid_present       = drb_resp.lcid.has_value();
       if (asn1_drb.lcid_present) {
@@ -213,13 +213,13 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   }
 
   // > DRBs-FailedToBeSetupMod-List.
-  resp->drbs_failed_to_be_setup_list_present = not du_ue_cfg_response.drbs_failed_to_setup.empty();
+  resp->drbs_failed_to_be_setup_list_present = not du_ue_cfg_response.failed_drbs.empty();
   if (resp->drbs_failed_to_be_setup_list_present) {
-    resp->drbs_failed_to_be_setup_list.resize(du_ue_cfg_response.drbs_failed_to_setup.size());
-    for (unsigned i = 0; i != du_ue_cfg_response.drbs_failed_to_setup.size(); ++i) {
+    resp->drbs_failed_to_be_setup_list.resize(du_ue_cfg_response.failed_drbs.size());
+    for (unsigned i = 0; i != du_ue_cfg_response.failed_drbs.size(); ++i) {
       resp->drbs_failed_to_be_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
       drbs_failed_to_be_setup_item_s& asn1_drb = resp->drbs_failed_to_be_setup_list[i]->drbs_failed_to_be_setup_item();
-      asn1_drb.drb_id                          = drb_id_to_uint(du_ue_cfg_response.drbs_failed_to_setup[i]);
+      asn1_drb.drb_id                          = drb_id_to_uint(du_ue_cfg_response.failed_drbs[i]);
       asn1_drb.cause.set_transport().value     = cause_transport_opts::transport_res_unavailable;
     }
   }

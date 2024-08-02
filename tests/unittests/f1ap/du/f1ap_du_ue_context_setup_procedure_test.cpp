@@ -67,13 +67,13 @@ protected:
     du_to_f1_resp.result                 = true;
     du_to_f1_resp.du_to_cu_rrc_container = byte_buffer::create({0x1, 0x2, 0x3}).value();
     if (ue_ctx_setup.drbs_to_be_setup_list_present) {
-      du_to_f1_resp.drbs_setup.resize(ue_ctx_setup.drbs_to_be_setup_list.size());
+      du_to_f1_resp.drbs_configured.resize(ue_ctx_setup.drbs_to_be_setup_list.size());
       for (size_t i = 0; i < ue_ctx_setup.drbs_to_be_setup_list.size(); ++i) {
-        uint8_t drb_id                     = ue_ctx_setup.drbs_to_be_setup_list[i]->drbs_to_be_setup_item().drb_id;
-        du_to_f1_resp.drbs_setup[i].drb_id = uint_to_drb_id(drb_id);
-        du_to_f1_resp.drbs_setup[i].lcid   = uint_to_lcid((uint8_t)LCID_MIN_DRB + drb_id);
-        du_to_f1_resp.drbs_setup[i].dluptnl_info_list.resize(1);
-        du_to_f1_resp.drbs_setup[i].dluptnl_info_list[0] =
+        uint8_t drb_id                          = ue_ctx_setup.drbs_to_be_setup_list[i]->drbs_to_be_setup_item().drb_id;
+        du_to_f1_resp.drbs_configured[i].drb_id = uint_to_drb_id(drb_id);
+        du_to_f1_resp.drbs_configured[i].lcid   = uint_to_lcid((uint8_t)LCID_MIN_DRB + drb_id);
+        du_to_f1_resp.drbs_configured[i].dluptnl_info_list.resize(1);
+        du_to_f1_resp.drbs_configured[i].dluptnl_info_list[0] =
             up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(1)};
       }
     }
@@ -144,9 +144,9 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
   ASSERT_EQ(drb_setup.drb_id, 1);
   ASSERT_TRUE(drb_setup.lcid_present);
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(),
-            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list.size());
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_configured[0].dluptnl_info_list.size());
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number(),
-            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_configured[0].dluptnl_info_list[0].gtp_teid);
   ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
             this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
@@ -235,9 +235,9 @@ TEST_F(
   ASSERT_EQ(drb_setup.drb_id, 1);
   ASSERT_TRUE(drb_setup.lcid_present);
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(),
-            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list.size());
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_configured[0].dluptnl_info_list.size());
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number(),
-            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_configured[0].dluptnl_info_list[0].gtp_teid);
 }
 
 TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)

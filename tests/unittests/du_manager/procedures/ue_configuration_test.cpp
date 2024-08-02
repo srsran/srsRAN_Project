@@ -284,9 +284,9 @@ TEST_F(ue_config_tester, when_f1u_gw_fails_to_create_bearer_then_drb_is_included
   ASSERT_TRUE(proc.ready());
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
-  ASSERT_EQ(resp.drbs_setup.size(), 0);
-  ASSERT_EQ(resp.drbs_failed_to_setup.size(), 1);
-  ASSERT_EQ(resp.drbs_failed_to_setup[0], drb_id_t::drb1);
+  ASSERT_EQ(resp.drbs_configured.size(), 0);
+  ASSERT_EQ(resp.failed_drbs.size(), 1);
+  ASSERT_EQ(resp.failed_drbs[0], drb_id_t::drb1);
 }
 
 TEST_F(ue_config_tester, when_config_is_invalid_of_drb_to_create_then_drb_is_included_in_failed_list)
@@ -317,9 +317,9 @@ TEST_F(ue_config_tester, when_config_is_invalid_of_drb_to_create_then_drb_is_inc
   ASSERT_TRUE(proc.ready());
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
-  ASSERT_EQ(resp.drbs_setup.size(), 0);
-  ASSERT_EQ(resp.drbs_failed_to_setup.size(), 1);
-  ASSERT_EQ(resp.drbs_failed_to_setup[0], drb_id_t::drb1);
+  ASSERT_EQ(resp.drbs_configured.size(), 0);
+  ASSERT_EQ(resp.failed_drbs.size(), 1);
+  ASSERT_EQ(resp.failed_drbs[0], drb_id_t::drb1);
 }
 
 TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_other_layers_and_returns_success)
@@ -337,8 +337,8 @@ TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
   ASSERT_FALSE(resp.du_to_cu_rrc_container.empty());
-  ASSERT_TRUE(resp.drbs_setup.empty());
-  ASSERT_TRUE(resp.drbs_failed_to_setup.empty());
+  ASSERT_TRUE(resp.drbs_configured.empty());
+  ASSERT_TRUE(resp.failed_drbs.empty());
 }
 
 TEST_F(ue_config_tester, when_drbs_are_released_then_they_are_added_in_rrc_container)

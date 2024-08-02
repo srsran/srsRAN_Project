@@ -245,15 +245,15 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   // > Handle DRBs that were setup or failed to be setup.
   for (const f1ap_drb_config_request& drb_req : request.drbs_to_setupmod) {
     if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
-      resp.drbs_failed_to_setup.push_back(drb_req.drb_id);
+      resp.failed_drbs.push_back(drb_req.drb_id);
       continue;
     }
     du_ue_drb& drb_added = *ue->bearers.drbs().at(drb_req.drb_id);
 
-    resp.drbs_setup.emplace_back();
-    f1ap_drb_setup& drb_setup   = resp.drbs_setup.back();
-    drb_setup.drb_id            = drb_added.drb_id;
-    drb_setup.dluptnl_info_list = drb_added.dluptnl_info_list;
+    resp.drbs_configured.emplace_back();
+    f1ap_drb_configured& drb_setup = resp.drbs_configured.back();
+    drb_setup.drb_id               = drb_added.drb_id;
+    drb_setup.dluptnl_info_list    = drb_added.dluptnl_info_list;
   }
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
