@@ -36,8 +36,8 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   proc_logger.log_proc_started();
 
-  if (request.drbs_to_setupmod.empty() and request.srbs_to_setup.empty() and request.drbs_to_rem.empty() and
-      request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
+  if (request.drbs_to_setup.empty() and request.drbs_to_mod.empty() and request.srbs_to_setup.empty() and
+      request.drbs_to_rem.empty() and request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
     // No SCells, DRBs or SRBs to setup or release so nothing to do.
     proc_logger.log_proc_completed();
     CORO_EARLY_RETURN(make_empty_ue_config_response());
@@ -134,14 +134,15 @@ void ue_configuration_procedure::update_ue_context()
     drbs_to_rem.push_back(ue->bearers.remove_drb(drb_to_rem));
   }
 
-  // > Create DU UE DRB objects.
-  for (const f1ap_drb_config_request& drbtoadd : request.drbs_to_setupmod) {
+  // > Create new DU UE DRB objects.
+  for (const f1ap_drb_config_request& drbtoadd : request.drbs_to_setup) {
     if (drbtoadd.uluptnl_info_list.empty()) {
       proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
       continue;
     }
     if (ue->bearers.drbs().count(drbtoadd.drb_id) > 0) {
-      proc_logger.log_proc_warning("Failed to modify {}. Cause: DRB modifications not supported.", drbtoadd.drb_id);
+      proc_logger.log_proc_warning("Failed to setup {}. Cause: DRB setup for an already existing DRB.",
+                                   drbtoadd.drb_id);
       continue;
     }
 
@@ -180,6 +181,7 @@ void ue_configuration_procedure::update_ue_context()
     }
     ue->bearers.add_drb(std::move(drb));
   }
+  // TODO: Support DRB modifications.
 }
 
 void ue_configuration_procedure::clear_old_ue_context()
@@ -218,7 +220,7 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     mac_ue_reconf_req.bearers_to_rem.push_back(drb->lcid);
   }
 
-  for (const auto& drb : request.drbs_to_setupmod) {
+  for (const auto& drb : request.drbs_to_setup) {
     if (ue->bearers.drbs().count(drb.drb_id) == 0) {
       // The DRB failed to be setup. Carry on with other DRBs.
       continue;
@@ -230,6 +232,7 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
+  // TODO: Support modifications in the MAC.
 
   // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
   mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue);
@@ -243,17 +246,31 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   resp.result = true;
 
   // > Handle DRBs that were setup or failed to be setup.
-  for (const f1ap_drb_config_request& drb_req : request.drbs_to_setupmod) {
+  for (const f1ap_drb_config_request& drb_req : request.drbs_to_setup) {
     if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
-      resp.failed_drbs.push_back(drb_req.drb_id);
+      resp.failed_drbs_setups.push_back({drb_req.drb_id, f1ap_cause_radio_network_t::no_radio_res_available});
       continue;
     }
     du_ue_drb& drb_added = *ue->bearers.drbs().at(drb_req.drb_id);
 
-    resp.drbs_configured.emplace_back();
-    f1ap_drb_configured& drb_setup = resp.drbs_configured.back();
-    drb_setup.drb_id               = drb_added.drb_id;
-    drb_setup.dluptnl_info_list    = drb_added.dluptnl_info_list;
+    resp.drbs_setup.emplace_back();
+    f1ap_drb_setupmod& drb_setup = resp.drbs_setup.back();
+    drb_setup.drb_id             = drb_added.drb_id;
+    drb_setup.dluptnl_info_list  = drb_added.dluptnl_info_list;
+  }
+
+  // > Handle DRBs that were modified or failed to be modified.
+  for (const f1ap_drb_config_request& drb_req : request.drbs_to_mod) {
+    if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
+      resp.failed_drb_mods.push_back({drb_req.drb_id, f1ap_cause_radio_network_t::unknown_drb_id});
+      continue;
+    }
+    du_ue_drb& drb_modified = *ue->bearers.drbs().at(drb_req.drb_id);
+
+    resp.drbs_mod.emplace_back();
+    f1ap_drb_setupmod& drb_mod = resp.drbs_mod.back();
+    drb_mod.drb_id             = drb_modified.drb_id;
+    drb_mod.dluptnl_info_list  = drb_modified.dluptnl_info_list;
   }
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.

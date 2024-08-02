@@ -59,18 +59,18 @@ struct f1ap_scell_to_setup {
   du_cell_index_t   cell_index;
 };
 
-/// \brief DRB that was setup successfully in the F1AP UE context.
-using f1ap_drb_configured = f1ap_drb_setupmod;
-
 /// \brief Request from DU F1AP to DU manager to modify existing UE configuration.
 struct f1ap_ue_context_update_request {
   du_ue_index_t         ue_index;
   std::vector<srb_id_t> srbs_to_setup;
-  /// List of DRBs to either setup or modify.
-  std::vector<f1ap_drb_config_request> drbs_to_setupmod;
-  std::vector<drb_id_t>                drbs_to_rem;
-  std::vector<f1ap_scell_to_setup>     scells_to_setup;
-  std::vector<serv_cell_index_t>       scells_to_rem;
+  /// List of new DRBs to setup.
+  std::vector<f1ap_drb_config_request> drbs_to_setup;
+  /// List of DRBs to modify.
+  std::vector<f1ap_drb_config_request> drbs_to_mod;
+  /// List of DRBs to remove.
+  std::vector<drb_id_t>            drbs_to_rem;
+  std::vector<f1ap_scell_to_setup> scells_to_setup;
+  std::vector<serv_cell_index_t>   scells_to_rem;
   /// \brief If true, the gnb-DU shall generate a cell group configuration using full configuration. Otherwise, delta,
   /// should be used.
   bool full_config_required;
@@ -84,11 +84,17 @@ struct f1ap_ue_context_update_request {
 
 /// \brief Response from DU manager to DU F1AP with the result of the UE context update.
 struct f1ap_ue_context_update_response {
-  bool                             result;
-  std::vector<f1ap_drb_configured> drbs_configured;
-  std::vector<drb_id_t>            failed_drbs;
-  byte_buffer                      du_to_cu_rrc_container;
-  bool                             full_config_present = false;
+  bool result;
+  /// List of DRBs that were successfully setup.
+  std::vector<f1ap_drb_setupmod> drbs_setup;
+  /// List of DRBs that were successfully modified.
+  std::vector<f1ap_drb_setupmod> drbs_mod;
+  /// List of DRBs that failed to be setup.
+  std::vector<f1ap_drb_failed_to_setupmod> failed_drbs_setups;
+  /// List of DRBs that failed to be modified.
+  std::vector<f1ap_drb_failed_to_setupmod> failed_drb_mods;
+  byte_buffer                              du_to_cu_rrc_container;
+  bool                                     full_config_present = false;
 };
 
 /// \brief Handled causes for RLF.

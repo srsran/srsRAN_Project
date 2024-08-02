@@ -71,15 +71,15 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
     du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_mod_item()));
   }
 
-  // >> Pass DRBs to setup/modify.
+  // >> Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_mod_list) {
-    du_request.drbs_to_setupmod.push_back(make_drb_config_request(drb.value().drbs_to_be_setup_mod_item()));
+    du_request.drbs_to_setup.push_back(make_drb_config_request(drb.value().drbs_to_be_setup_mod_item()));
   }
 
   // >> Pass DRBs to modify.
   // Note: This field is used during RRC Reestablishment.
   for (const auto& drb : msg->drbs_to_be_modified_list) {
-    du_request.drbs_to_setupmod.push_back(make_drb_config_request(drb.value().drbs_to_be_modified_item()));
+    du_request.drbs_to_mod.push_back(make_drb_config_request(drb.value().drbs_to_be_modified_item()));
   }
 
   // >> Pass DRBs to remove
@@ -99,67 +99,18 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->gnb_cu_ue_f1ap_id                           = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
   resp->res_coordination_transfer_container_present = false;
 
-  // DRBs-SetupMod-List + DRBs-FailedToBeSetupMod-List.
-  for (const auto& req_drb : req->drbs_to_be_setup_mod_list) {
-    drb_id_t drb_id = uint_to_drb_id(req_drb.value().drbs_to_be_setup_mod_item().drb_id);
-    auto     drb_it = std::find_if(du_response.drbs_configured.begin(),
-                               du_response.drbs_configured.end(),
-                               [drb_id](const f1ap_drb_configured& drb) { return drb.drb_id == drb_id; });
-    if (drb_it != du_response.drbs_configured.end()) {
-      // > DRBs-SetupMod-List.
-      const f1ap_drb_configured& drb_setup = *drb_it;
-      resp->drbs_setup_mod_list_present    = true;
-      resp->drbs_setup_mod_list.push_back({});
-      resp->drbs_setup_mod_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-      resp->drbs_setup_mod_list.back().value().drbs_setup_mod_item() = make_drbs_setup_mod_item(drb_setup);
-      continue;
-    }
-
-    // > DRBs-FailedToBeSetupMod-List.
-    if (std::count(du_response.failed_drbs.begin(), du_response.failed_drbs.end(), drb_id) == 0) {
-      logger.warning("DRB{} was not found in the list of configured DRBs by the DU.", drb_id);
-      continue;
-    }
-    resp->drbs_failed_to_be_setup_mod_list_present = true;
-    resp->drbs_failed_to_be_setup_mod_list.push_back({});
-    resp->drbs_failed_to_be_setup_mod_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
-    drbs_failed_to_be_setup_mod_item_s& asn1_drb =
-        resp->drbs_failed_to_be_setup_mod_list.back()->drbs_failed_to_be_setup_mod_item();
-    asn1_drb.drb_id                          = drb_id_to_uint(drb_id);
-    asn1_drb.cause_present                   = true;
-    asn1_drb.cause.set_radio_network().value = cause_radio_network_opts::no_radio_res_available;
-  }
-
-  // DRBs-Modified-List + DRBs-FailedToBeModified-List.
-  for (const auto& req_drb : req->drbs_to_be_modified_list) {
-    drb_id_t drb_id = uint_to_drb_id(req_drb.value().drbs_to_be_modified_item().drb_id);
-    auto     drb_it = std::find_if(du_response.drbs_configured.begin(),
-                               du_response.drbs_configured.end(),
-                               [drb_id](const f1ap_drb_configured& drb) { return drb.drb_id == drb_id; });
-    if (drb_it != du_response.drbs_configured.end()) {
-      // > DRBs-Modified-List.
-      const f1ap_drb_configured& drb_mod = *drb_it;
-      resp->drbs_modified_list_present   = true;
-      resp->drbs_modified_list.push_back({});
-      resp->drbs_modified_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_MODIFIED_ITEM);
-      resp->drbs_modified_list.back().value().drbs_modified_item() = make_drbs_modified_item(drb_mod);
-      continue;
-    }
-
-    // > DRBs-FailedToBeModified-List.
-    if (std::count(du_response.failed_drbs.begin(), du_response.failed_drbs.end(), drb_id) == 0) {
-      logger.warning("DRB{} was not found in the list of configured DRBs by the DU.", drb_id);
-      continue;
-    }
-    resp->drbs_failed_to_be_modified_list_present = true;
-    resp->drbs_failed_to_be_modified_list.push_back({});
-    resp->drbs_failed_to_be_modified_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_MODIFIED_ITEM);
-    drbs_failed_to_be_modified_item_s& asn1_drb =
-        resp->drbs_failed_to_be_modified_list.back()->drbs_failed_to_be_modified_item();
-    asn1_drb.drb_id                          = drb_id_to_uint(drb_id);
-    asn1_drb.cause_present                   = true;
-    asn1_drb.cause.set_radio_network().value = cause_radio_network_opts::no_radio_res_available;
-  }
+  // DRBs-SetupMod-List
+  resp->drbs_setup_mod_list         = make_drbs_setup_mod_list(du_response.drbs_setup);
+  resp->drbs_setup_mod_list_present = resp->drbs_setup_mod_list.size() > 0;
+  // DRBs-FailedToBeSetupMod-List
+  resp->drbs_failed_to_be_setup_mod_list = make_drbs_failed_to_be_setup_mod_list(du_response.failed_drbs_setups);
+  resp->drbs_failed_to_be_setup_mod_list_present = resp->drbs_failed_to_be_setup_mod_list.size() > 0;
+  // DRBs-Modified-List
+  resp->drbs_modified_list         = make_drbs_modified_list(du_response.drbs_mod);
+  resp->drbs_modified_list_present = resp->drbs_modified_list.size() > 0;
+  // DRBs-FailedToBeModified-List
+  resp->drbs_failed_to_be_modified_list         = make_drbs_failed_to_be_modified_list(du_response.failed_drb_mods);
+  resp->drbs_failed_to_be_modified_list_present = resp->drbs_failed_to_be_modified_list.size() > 0;
 
   resp->scell_failedto_setup_mod_list_present = false;
   resp->inactivity_monitoring_resp_present    = false;

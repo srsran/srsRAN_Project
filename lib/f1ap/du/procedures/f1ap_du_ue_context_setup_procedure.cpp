@@ -131,7 +131,7 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
 
   // > Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list) {
-    du_request.drbs_to_setupmod.push_back(make_drb_config_request(drb.value().drbs_to_be_setup_item()));
+    du_request.drbs_to_setup.push_back(make_drb_config_request(drb.value().drbs_to_be_setup_item()));
   }
 
   if (msg->cu_to_du_rrc_info.ie_exts_present) {
@@ -192,27 +192,11 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   }
 
   // > DRBs setup List.
-  resp->drbs_setup_list_present = not du_ue_cfg_response.drbs_configured.empty();
-  if (resp->drbs_setup_list_present) {
-    resp->drbs_setup_list.resize(du_ue_cfg_response.drbs_configured.size());
-    for (unsigned i = 0; i != resp->drbs_setup_list.size(); ++i) {
-      resp->drbs_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
-      resp->drbs_setup_list[i].value().drbs_setup_item() = make_drbs_setup_item(du_ue_cfg_response.drbs_configured[i]);
-    }
-  }
-
-  // > DRBs-FailedToBeSetupMod-List.
-  resp->drbs_failed_to_be_setup_list_present = not du_ue_cfg_response.failed_drbs.empty();
-  if (resp->drbs_failed_to_be_setup_list_present) {
-    resp->drbs_failed_to_be_setup_list.resize(du_ue_cfg_response.failed_drbs.size());
-    for (unsigned i = 0; i != du_ue_cfg_response.failed_drbs.size(); ++i) {
-      resp->drbs_failed_to_be_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
-      drbs_failed_to_be_setup_item_s& asn1_drb = resp->drbs_failed_to_be_setup_list[i]->drbs_failed_to_be_setup_item();
-      asn1_drb.drb_id                          = drb_id_to_uint(du_ue_cfg_response.failed_drbs[i]);
-      asn1_drb.cause_present                   = true;
-      asn1_drb.cause.set_radio_network().value = cause_radio_network_opts::no_radio_res_available;
-    }
-  }
+  resp->drbs_setup_list         = make_drbs_setup_list(du_ue_cfg_response.drbs_setup);
+  resp->drbs_setup_list_present = resp->drbs_setup_list.size() > 0;
+  // > DRBs-FailedToBeSetup-List.
+  resp->drbs_failed_to_be_setup_list         = make_drbs_failed_to_be_setup_list(du_ue_cfg_response.failed_drbs_setups);
+  resp->drbs_failed_to_be_setup_list_present = resp->drbs_failed_to_be_setup_list.size() > 0;
 
   // Send Response to CU-CP.
   ue->f1ap_msg_notifier.on_new_message(f1ap_msg);

@@ -42,7 +42,7 @@ protected:
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg =
           make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
     }
-    for (const f1ap_drb_config_request& drb : req.drbs_to_setupmod) {
+    for (const f1ap_drb_config_request& drb : req.drbs_to_setup) {
       this->cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid = uint_to_lcid(3 + (unsigned)drb.drb_id);
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
@@ -78,7 +78,7 @@ protected:
       }
     }
 
-    ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), req.srbs_to_setup.size() + req.drbs_to_setupmod.size());
+    ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), req.srbs_to_setup.size() + req.drbs_to_setup.size());
     for (srb_id_t srb_id : req.srbs_to_setup) {
       auto srb_it = std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
                                  cell_group.rlc_bearer_to_add_mod_list.end(),
@@ -99,7 +99,7 @@ protected:
         ASSERT_FALSE(srb_it->reestablish_rlc_present);
       }
     }
-    for (const f1ap_drb_config_request& drb : req.drbs_to_setupmod) {
+    for (const f1ap_drb_config_request& drb : req.drbs_to_setup) {
       auto drb_it = std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
                                  cell_group.rlc_bearer_to_add_mod_list.end(),
                                  [&drb](const auto& b) {
@@ -284,9 +284,9 @@ TEST_F(ue_config_tester, when_f1u_gw_fails_to_create_bearer_then_drb_is_included
   ASSERT_TRUE(proc.ready());
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
-  ASSERT_EQ(resp.drbs_configured.size(), 0);
-  ASSERT_EQ(resp.failed_drbs.size(), 1);
-  ASSERT_EQ(resp.failed_drbs[0], drb_id_t::drb1);
+  ASSERT_EQ(resp.drbs_setup.size(), 0);
+  ASSERT_EQ(resp.failed_drbs_setups.size(), 1);
+  ASSERT_EQ(resp.failed_drbs_setups[0].drb_id, drb_id_t::drb1);
 }
 
 TEST_F(ue_config_tester, when_config_is_invalid_of_drb_to_create_then_drb_is_included_in_failed_list)
@@ -294,7 +294,7 @@ TEST_F(ue_config_tester, when_config_is_invalid_of_drb_to_create_then_drb_is_inc
   // Start Procedure.
   f1ap_ue_context_update_request req =
       create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
-  req.drbs_to_setupmod[0].uluptnl_info_list.clear();
+  req.drbs_to_setup[0].uluptnl_info_list.clear();
   start_procedure(req);
 
   // Check MAC received request to update UE configuration without the DRB that could not be created.
@@ -317,9 +317,9 @@ TEST_F(ue_config_tester, when_config_is_invalid_of_drb_to_create_then_drb_is_inc
   ASSERT_TRUE(proc.ready());
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
-  ASSERT_EQ(resp.drbs_configured.size(), 0);
-  ASSERT_EQ(resp.failed_drbs.size(), 1);
-  ASSERT_EQ(resp.failed_drbs[0], drb_id_t::drb1);
+  ASSERT_EQ(resp.drbs_setup.size(), 0);
+  ASSERT_EQ(resp.failed_drbs_setups.size(), 1);
+  ASSERT_EQ(resp.failed_drbs_setups[0].drb_id, drb_id_t::drb1);
 }
 
 TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_other_layers_and_returns_success)
@@ -337,8 +337,8 @@ TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
   ASSERT_FALSE(resp.du_to_cu_rrc_container.empty());
-  ASSERT_TRUE(resp.drbs_configured.empty());
-  ASSERT_TRUE(resp.failed_drbs.empty());
+  ASSERT_TRUE(resp.drbs_setup.empty());
+  ASSERT_TRUE(resp.failed_drbs_setups.empty());
 }
 
 TEST_F(ue_config_tester, when_drbs_are_released_then_they_are_added_in_rrc_container)

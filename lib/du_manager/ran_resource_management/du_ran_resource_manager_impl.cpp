@@ -212,9 +212,8 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
   }
 
-  // > Allocate new or modify existing DRBs.
-  for (const f1ap_drb_config_request& drb : upd_req.drbs_to_setupmod) {
-    // >> New or Modified DRB.
+  // > Allocate new DRBs.
+  for (const f1ap_drb_config_request& drb : upd_req.drbs_to_setup) {
     auto res = validate_drb_config_request(drb, ue_mcg.rlc_bearers, qos_config);
     if (not res.has_value()) {
       resp.failed_drbs.push_back(drb.drb_id);
@@ -222,7 +221,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
     bool new_drb = res.value() == nullptr;
     if (not new_drb) {
-      // TODO: Support DRB modification.
+      resp.failed_drbs.push_back(drb.drb_id);
       continue;
     }
 
@@ -261,6 +260,20 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       default:
         break;
     }
+  }
+  // > Modify existing DRBs.
+  for (const f1ap_drb_config_request& drb : upd_req.drbs_to_mod) {
+    auto res = validate_drb_config_request(drb, ue_mcg.rlc_bearers, qos_config);
+    if (not res.has_value()) {
+      resp.failed_drbs.push_back(drb.drb_id);
+      continue;
+    }
+    bool new_drb = res.value() == nullptr;
+    if (new_drb) {
+      resp.failed_drbs.push_back(drb.drb_id);
+      continue;
+    }
+    // TODO: Support DRB modification.
   }
   // >> Sort by LCID.
   std::sort(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [](const auto& lhs, const auto& rhs) {

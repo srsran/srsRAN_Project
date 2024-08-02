@@ -35,8 +35,8 @@ protected:
     // Prepare DU manager response to F1AP.
     this->f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
     for (drb_id_t drb_id : drbs) {
-      this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_configured.emplace_back();
-      auto& drb  = this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_configured.back();
+      this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup.emplace_back();
+      auto& drb  = this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup.back();
       drb.drb_id = drb_id;
       drb.dluptnl_info_list.resize(1);
       drb.dluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(test_rgen::uniform_int<uint32_t>());
@@ -74,9 +74,9 @@ TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1a
   const f1ap_ue_context_update_request& req = *this->f1ap_du_cfg_handler.last_ue_context_update_req;
   ASSERT_EQ(req.ue_index, test_ue_index);
   ASSERT_EQ(req.srbs_to_setup.size(), 0);
-  ASSERT_EQ(req.drbs_to_setupmod.size(), 1);
-  ASSERT_EQ(req.drbs_to_setupmod[0].drb_id, drb_id_t::drb1);
-  ASSERT_FALSE(req.drbs_to_setupmod[0].lcid.has_value());
+  ASSERT_EQ(req.drbs_to_setup.size(), 1);
+  ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
+  ASSERT_FALSE(req.drbs_to_setup[0].lcid.has_value());
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,
@@ -100,10 +100,10 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
   ASSERT_EQ(
       int_to_gtpu_teid(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number()),
-      this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_configured[0].dluptnl_info_list[0].gtp_teid);
+      this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
   ASSERT_EQ(
       drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().transport_layer_address.to_string(),
-      this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_configured[0]
+      this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0]
           .dluptnl_info_list[0]
           .tp_address.to_bitstring());
   ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
@@ -115,7 +115,8 @@ TEST_F(f1ap_du_ue_context_modification_test,
 {
   // Prepare DU manager response to F1AP with failed DRB.
   this->f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
-  this->f1ap_du_cfg_handler.next_ue_context_update_response.failed_drbs.push_back(drb_id_t::drb1);
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.failed_drbs_setups.push_back(
+      {drb_id_t::drb1, f1ap_cause_radio_network_t::no_radio_res_available});
   this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container =
       byte_buffer::create({0x1, 0x2, 0x3}).value();
 
