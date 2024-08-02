@@ -18,14 +18,6 @@
 using namespace srsran;
 using namespace srs_du;
 
-constexpr bool equals(const rlc_mode& lhs, const drb_rlc_mode& rhs)
-{
-  return (lhs == rlc_mode::am && rhs == drb_rlc_mode::am) ||
-         (lhs == rlc_mode::um_bidir && rhs == drb_rlc_mode::um_bidir) ||
-         (lhs == rlc_mode::um_unidir_dl && rhs == drb_rlc_mode::um_unidir_dl) ||
-         (lhs == rlc_mode::um_unidir_ul && rhs == drb_rlc_mode::um_unidir_ul);
-}
-
 /// \brief Finds an unused LCID for DRBs given a list of UE configured RLC bearers.
 static lcid_t find_empty_lcid(const std::vector<rlc_bearer_config>& rlc_bearers)
 {
@@ -105,14 +97,6 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index)};
 }
 
-static bool equals(const drb_rlc_mode& lhs, const rlc_mode& rhs)
-{
-  return (lhs == drb_rlc_mode::am and rhs == rlc_mode::am) or
-         (lhs == drb_rlc_mode::um_bidir and rhs == rlc_mode::um_bidir) or
-         (lhs == drb_rlc_mode::um_unidir_dl and rhs == rlc_mode::um_unidir_dl) or
-         (lhs == drb_rlc_mode::um_unidir_ul and rhs == rlc_mode::um_unidir_ul);
-}
-
 static expected<const rlc_bearer_config*, std::string>
 validate_drb_config_request(const f1ap_drb_config_request&            drb,
                             span<const rlc_bearer_config>             rlc_bearers,
@@ -124,7 +108,7 @@ validate_drb_config_request(const f1ap_drb_config_request&            drb,
     return make_unexpected(fmt::format("Failed to allocate {}. Cause: No {} 5QI configured", drb.drb_id, drb.five_qi));
   }
   const du_qos_config& qos = qos_it->second;
-  if (drb.mode.has_value() and not equals(qos.rlc.mode, *drb.mode)) {
+  if (drb.mode.has_value() and qos.rlc.mode != *drb.mode) {
     return make_unexpected(
         fmt::format("RLC mode mismatch for {}. QoS config for {} configures {} but CU-CP requested {}",
                     drb.drb_id,
@@ -155,7 +139,7 @@ validate_drb_config_request(const f1ap_drb_config_request&            drb,
     }
   } else {
     // Modified DRB
-    if (drb.mode.has_value() and not equals(drb.mode.value(), prev_drb_it->rlc_cfg.mode)) {
+    if (drb.mode.has_value() and drb.mode.value() != prev_drb_it->rlc_cfg.mode) {
       // RLC mode cannot be changed.
       return make_unexpected(
           fmt::format("Failed to configure {}. Cause: RLC mode cannot be changed for an existing DRB", drb.drb_id));

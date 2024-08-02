@@ -20,12 +20,10 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
+#include "srsran/rlc/rlc_mode.h"
 
 namespace srsran {
 namespace srs_du {
-
-/// \brief Possible modes for an DRB RLC entity.
-enum class drb_rlc_mode { am = 0, um_bidir, um_unidir_ul, um_unidir_dl };
 
 /// \brief F1AP sends this request to the DU to create a new UE context. This happens in the particular case
 /// of a F1AP UE Context Setup Request received without associated logical F1-connection.
@@ -47,11 +45,11 @@ struct f1ap_drb_config_request {
   std::optional<lcid_t> lcid;
   /// \brief RLC mode. If it is a new bearer to setup, this field is present. If it is an existing bearer that needs
   /// to be modified, this field is absent.
-  std::optional<drb_rlc_mode> mode;
-  pdcp_sn_size                pdcp_sn_len = pdcp_sn_size::invalid;
-  five_qi_t                   five_qi;
-  uint8_t                     arp_priority_level;
-  s_nssai_t                   s_nssai;
+  std::optional<rlc_mode> mode;
+  pdcp_sn_size            pdcp_sn_len = pdcp_sn_size::invalid;
+  five_qi_t               five_qi;
+  uint8_t                 arp_priority_level;
+  s_nssai_t               s_nssai;
   /// GBR flow information is present only for GBR QoS flows. See TS 38.473, clause 9.3.1.45.
   std::optional<gbr_qos_info_t>        gbr_flow_info;
   std::vector<up_transport_layer_info> uluptnl_info_list;

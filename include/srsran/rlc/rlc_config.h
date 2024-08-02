@@ -11,41 +11,14 @@
 #pragma once
 
 #include "srsran/pdcp/pdcp_sn_size.h"
+#include "srsran/rlc/rlc_mode.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/timers.h"
-#include "fmt/format.h"
 #include <cstdint>
 #include <optional>
 #include <string>
 
 namespace srsran {
-
-/// RLC NR modes
-enum class rlc_mode { tm, um_bidir, um_unidir_ul, um_unidir_dl, am };
-inline bool from_string(rlc_mode& mode, const std::string& str)
-{
-  if (str == "am") {
-    mode = rlc_mode::am;
-    return true;
-  }
-  if (str == "um-bidir") {
-    mode = rlc_mode::um_bidir;
-    return true;
-  }
-  if (str == "um-unidir-ul") {
-    mode = rlc_mode::um_unidir_ul;
-    return true;
-  }
-  if (str == "um-unidir-dl") {
-    mode = rlc_mode::um_unidir_dl;
-    return true;
-  }
-  if (str == "tm") {
-    mode = rlc_mode::tm;
-    return true;
-  }
-  return false;
-}
 
 /// RLC UM NR sequence number field
 enum class rlc_um_sn_size : uint16_t { size6bits = 6, size12bits = 12 };
@@ -765,22 +738,6 @@ struct rlc_config {
 } // namespace srsran
 
 namespace fmt {
-
-template <>
-struct formatter<srsran::rlc_mode> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(srsran::rlc_mode mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
-  {
-    constexpr static const char* options[] = {"TM", "UM Bi-dir", "UM Uni-dir-UL", "UM Uni-dir-DL", "AM"};
-    return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
-  }
-};
 
 template <>
 struct formatter<srsran::rlc_um_sn_size> {

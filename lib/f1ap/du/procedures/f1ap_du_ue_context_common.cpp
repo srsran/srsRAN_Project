@@ -13,6 +13,23 @@
 using namespace srsran;
 using namespace srs_du;
 
+static rlc_mode get_rlc_mode(const asn1::f1ap::rlc_mode_e& asn1type)
+{
+  switch (asn1type) {
+    case asn1::f1ap::rlc_mode_opts::rlc_am:
+      return rlc_mode::am;
+    case asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional:
+      return rlc_mode::um_bidir;
+    case asn1::f1ap::rlc_mode_opts::rlc_um_unidirectional_ul:
+      return rlc_mode::um_unidir_ul;
+    case asn1::f1ap::rlc_mode_opts::rlc_um_unidirectional_dl:
+      return rlc_mode::um_unidir_dl;
+    default:
+      break;
+  }
+  report_fatal_error("Invalid RLC mode");
+}
+
 template <typename ASN1Type>
 static void fill_common_drb_config_request_fields(f1ap_drb_config_request& drb_obj, const ASN1Type& drb_item)
 {
@@ -53,7 +70,7 @@ f1ap_drb_config_request srsran::srs_du::make_drb_config_request(const asn1::f1ap
   f1ap_drb_config_request drb_obj;
   fill_common_drb_config_request_fields(drb_obj, drb_item);
 
-  drb_obj.mode = static_cast<drb_rlc_mode>(static_cast<unsigned>(drb_item.rlc_mode));
+  drb_obj.mode = get_rlc_mode(drb_item.rlc_mode);
 
   if (drb_item.ie_exts_present) {
     drb_obj.pdcp_sn_len = pdcp_sn_size_from_f1ap_asn1(drb_item.ie_exts.dl_pdcp_sn_len);
@@ -67,7 +84,7 @@ f1ap_drb_config_request srsran::srs_du::make_drb_config_request(const asn1::f1ap
   f1ap_drb_config_request drb_obj;
   fill_common_drb_config_request_fields(drb_obj, drb_item);
 
-  drb_obj.mode = static_cast<drb_rlc_mode>(static_cast<unsigned>(drb_item.rlc_mode));
+  drb_obj.mode = get_rlc_mode(drb_item.rlc_mode);
 
   if (drb_item.ie_exts_present) {
     if (drb_item.ie_exts.dl_pdcp_sn_len_present) {

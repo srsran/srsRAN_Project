@@ -87,7 +87,7 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
   for (drb_id_t drb_id : drbs_to_addmod) {
     req.drbs_to_setupmod.emplace_back();
     req.drbs_to_setupmod.back().drb_id  = drb_id;
-    req.drbs_to_setupmod.back().mode    = drb_rlc_mode::am;
+    req.drbs_to_setupmod.back().mode    = rlc_mode::am;
     req.drbs_to_setupmod.back().five_qi = uint_to_five_qi(9);
     req.drbs_to_setupmod.back().uluptnl_info_list.resize(1);
     req.drbs_to_setupmod.back().uluptnl_info_list[0].gtp_teid = int_to_gtpu_teid(0);
