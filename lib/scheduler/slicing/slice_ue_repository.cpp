@@ -14,14 +14,16 @@ using namespace srsran;
 
 slice_ue::slice_ue(const ue& u_) : u(u_), bearers(MAX_NOF_RB_LCIDS) {}
 
-void slice_ue::add_logical_channel(lcid_t lcid)
+void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
 {
   bearers.set(lcid);
+  lcid_to_lcg_id_lookup[lcid] = lcg_id;
 }
 
 void slice_ue::rem_logical_channel(lcid_t lcid)
 {
   bearers.reset(lcid);
+  lcid_to_lcg_id_lookup.erase(lcid);
 }
 
 bool slice_ue::has_pending_dl_newtx_bytes() const

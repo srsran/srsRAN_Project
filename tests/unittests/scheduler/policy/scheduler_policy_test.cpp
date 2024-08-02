@@ -115,7 +115,7 @@ protected:
     ues.add_ue(std::make_unique<ue>(
         ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
     for (const auto& lc_cfg : *ue_req.cfg.lc_config_list) {
-      slice_instance.add_logical_channel(ues[ue_req.ue_index], lc_cfg.lcid);
+      slice_instance.add_logical_channel(ues[ue_req.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
     }
     return ues[ue_req.ue_index];
   }

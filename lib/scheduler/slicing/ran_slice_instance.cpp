@@ -54,10 +54,10 @@ const slice_ue_repository& ran_slice_instance::get_ues()
   return slice_ues;
 }
 
-void ran_slice_instance::add_logical_channel(const ue& u, lcid_t lcid)
+void ran_slice_instance::add_logical_channel(const ue& u, lcid_t lcid, lcg_id_t lcg_id)
 {
   if (not slice_ues.contains(u.ue_index)) {
     slice_ues.emplace(u.ue_index, u);
   }
-  slice_ues[u.ue_index].add_logical_channel(lcid);
+  slice_ues[u.ue_index].add_logical_channel(lcid, lcg_id);
 }
