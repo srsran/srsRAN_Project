@@ -98,24 +98,6 @@ ldpc_encoder_neon::strategy_method ldpc_encoder_neon::select_sys_bits_strategy<1
   return &ldpc_encoder_neon::systematic_bits_inner<BG2_K, BG2_M, 1>;
 }
 
-// Recursively selects the proper strategy for the extended region by successively decreasing the value of the template
-// parameter.
-template <unsigned NODE_SIZE_NEON_PH>
-ldpc_encoder_neon::strategy_method ldpc_encoder_neon::select_ext_strategy(unsigned node_size_neon)
-{
-  if (node_size_neon == NODE_SIZE_NEON_PH) {
-    return &ldpc_encoder_neon::ext_region_inner<NODE_SIZE_NEON_PH>;
-  }
-  return select_ext_strategy<NODE_SIZE_NEON_PH - 1>(node_size_neon);
-}
-
-// Ensures that the recursion stops when NODE_SIZE_NEON_PH == 1.
-template <>
-ldpc_encoder_neon::strategy_method ldpc_encoder_neon::select_ext_strategy<1>(unsigned /*node_size_neon*/)
-{
-  return &ldpc_encoder_neon::ext_region_inner<1>;
-}
-
 void ldpc_encoder_neon::select_strategy()
 {
   ldpc_base_graph_type current_bg       = current_graph->get_base_graph();
@@ -126,7 +108,6 @@ void ldpc_encoder_neon::select_strategy()
 
   systematic_bits = select_sys_bits_strategy<MAX_NODE_SIZE_NEON>(current_bg, node_size_neon);
   high_rate       = select_hr_strategy<MAX_NODE_SIZE_NEON>(current_bg, current_ls_index, node_size_neon);
-  ext_region      = select_ext_strategy<MAX_NODE_SIZE_NEON>(node_size_neon);
 }
 
 void ldpc_encoder_neon::load_input(const bit_buffer& in)
@@ -151,8 +132,10 @@ void ldpc_encoder_neon::load_input(const bit_buffer& in)
 
 // Computes the XOR logical operation (modulo-2 sum) between the contents of "in0" and "in1". The result is stored in
 // "out". The representation is unpacked (1 byte represents 1 bit).
-static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
+template <typename Type>
+static void fast_xor(span<Type> out, span<const Type> in0, span<const Type> in1)
 {
+  static_assert(sizeof(Type) == 1, "Type size must be one byte.");
   unsigned              nof_vectors = in0.size() / NEON_SIZE_BYTE;
   neon::neon_const_span in0_local(in0, nof_vectors);
   neon::neon_const_span in1_local(in1, nof_vectors);
@@ -212,7 +195,7 @@ void ldpc_encoder_neon::systematic_bits_inner()
     span<int8_t> plain_auxiliary = set_plain_auxiliary();
 
     if (m_mask[m]) {
-      fast_xor(plain_auxiliary, blk.subspan(node_shift, lifting_size), plain_auxiliary);
+      fast_xor<int8_t>(plain_auxiliary, blk.subspan(node_shift, lifting_size), plain_auxiliary);
     } else {
       srsvec::copy(plain_auxiliary, blk.subspan(node_shift, lifting_size));
       m_mask[m] = true;
@@ -373,42 +356,29 @@ void ldpc_encoder_neon::high_rate_bg2_other_inner()
   }
 }
 
-template <unsigned NODE_SIZE_NEON_PH>
-void ldpc_encoder_neon::ext_region_inner()
+void ldpc_encoder_neon::ext_region_inner(span<uint8_t> out_node, unsigned m) const
 {
-  // We only compute the variable nodes needed to fill the codeword.
-  // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
-  unsigned nof_layers = codeblock_length / lifting_size - bg_K;
+  unsigned            node_size_byte = node_size_neon * NEON_SIZE_BYTE;
+  span<const uint8_t> codeblock(codeblock_buffer);
 
-  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
+  // Copy the current data in the node.
+  srsvec::copy(out_node, codeblock.subspan((bg_K + m) * node_size_byte, lifting_size));
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
+  for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
+    unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
 
-  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
-
-  // Encode the extended region.
-  for (unsigned m = bg_hr_parity_nodes; m != nof_layers; ++m) {
-    unsigned skip = (bg_K + m) * NODE_SIZE_NEON_PH;
-
-    for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
-      unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
-
-      if (node_shift == NO_EDGE) {
-        continue;
-      }
-
-      // At this point, the codeblock nodes in the extended region already contain the contribution from the systematic
-      // bits (they were computed in systematic_bits_inner). All is left to do is to sum the contribution due to the
-      // high-rate region (also stored in codeblock), with the proper circular shifts.
-      srsvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size),
-                                  codeblock.plain_span((bg_K + k) * NODE_SIZE_NEON_PH, lifting_size),
-                                  node_shift);
-
-      for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-        codeblock.set_at(skip + j, veorq_s8(codeblock.get_at(skip + j), rotated_node.get_at(j)));
-      }
+    if (node_shift == NO_EDGE) {
+      continue;
     }
-    skip += NODE_SIZE_NEON_PH;
+
+    // At this point, the codeblock nodes in the extended region already contain the contribution from the systematic
+    // bits (they were computed in systematic_bits_inner). All is left to do is to sum the contribution due to the
+    // high-rate region (also stored in codeblock), with the proper circular shifts.
+    span<const uint8_t> in_node = codeblock.subspan((bg_K + k) * node_size_byte, lifting_size);
+    fast_xor<uint8_t>(out_node.first(lifting_size - node_shift),
+                      out_node.first(lifting_size - node_shift),
+                      in_node.last(lifting_size - node_shift));
+    fast_xor<uint8_t>(out_node.last(node_shift), out_node.last(node_shift), in_node.first(node_shift));
   }
 }
 
@@ -441,8 +411,30 @@ void ldpc_encoder_neon::write_codeblock(span<uint8_t> out, unsigned offset) cons
     // Determine the number of bits to read from this node.
     unsigned count = std::min(lifting_size - offset, static_cast<unsigned>(out.size()));
 
-    // Copy node bits.
-    srsvec::copy(out.first(count), codeblock.subspan(offset, count));
+    // Check if it is operating in the extended region.
+    if (i_node < bg_hr_parity_nodes + bg_K) {
+      srsvec::copy(out.first(count), codeblock.subspan(offset, count));
+    } else {
+      // Detect if the extended region can be done directly on the output.
+      bool inplace = ((offset == 0) && (count == lifting_size));
+
+      // Create temporary data.
+      static_vector<uint8_t, MAX_LIFTING_SIZE> temp(lifting_size);
+      span<uint8_t>                            node_view = temp;
+
+      // Use direct output for the extended node.
+      if (inplace) {
+        node_view = out.first(lifting_size);
+      }
+
+      // Process extended region for the given node.
+      ext_region_inner(node_view, i_node - bg_K);
+
+      // Copy data if temporal buffer was used.
+      if (!inplace) {
+        srsvec::copy(out.first(count), node_view.subspan(offset, count));
+      }
+    }
 
     // Advance codeblock.
     codeblock = codeblock.last(codeblock.size() - node_size_byte);

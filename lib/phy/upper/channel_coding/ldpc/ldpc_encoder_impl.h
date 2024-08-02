@@ -40,8 +40,6 @@ private:
   /// Computes the shortest possible codeword (systematic part plus high-rate region, that is the first
   /// 4 x lifting size redundancy bits).
   virtual void encode_high_rate() = 0;
-  /// Computes the rest of the redundancy bits (extension region).
-  virtual void encode_ext_region() = 0;
   // See ldpc_encoder_buffer interface for documentation.
   virtual void write_codeblock(span<uint8_t> data, unsigned offset) const override = 0;
   // See ldpc_encoder_buffer interface for documentation.

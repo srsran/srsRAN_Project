@@ -58,8 +58,6 @@ ldpc_encoder_buffer& ldpc_encoder_impl::encode(const bit_buffer&                
 
   encode_high_rate();
 
-  encode_ext_region();
-
   return *this;
 }
 

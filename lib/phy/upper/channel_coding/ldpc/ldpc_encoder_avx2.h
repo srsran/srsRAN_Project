@@ -26,7 +26,6 @@ private:
   void load_input(const bit_buffer& in) override;
   void preprocess_systematic_bits() override { (this->*systematic_bits)(); }
   void encode_high_rate() override { (this->*high_rate)(); }
-  void encode_ext_region() override {}
   void write_codeblock(span<uint8_t> out, unsigned offset) const override;
 
   /// Alias for pointer to private methods.
