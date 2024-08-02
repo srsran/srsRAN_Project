@@ -444,7 +444,7 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    MARCH: x86-64-v3
+    MARCH: x86-64-v4
   tags: ["${AMD64_AVX512_TAG}"]
 
 .smoke arm:
