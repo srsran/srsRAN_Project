@@ -606,7 +606,7 @@ bool srsran::srs_cu_cp::update_modify_list(
 
 void srsran::srs_cu_cp::fill_e1ap_bearer_context_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& e1ap_list,
-    const slotted_id_vector<drb_id_t, f1ap_drb_setupmod>&                     drb_setup_items,
+    const std::vector<f1ap_drb_setupmod>&                                     drb_setup_items,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&          pdu_sessions_update_list)
 {
   /// Iterate over all PDU sessions to be updated and match the containing DRBs.
@@ -718,10 +718,10 @@ bool srsran::srs_cu_cp::update_modify_list(
   return ue_context_modification_response.success;
 }
 
-bool srsran::srs_cu_cp::update_setup_list(e1ap_bearer_context_modification_request&             bearer_ctxt_mod_request,
-                                          const slotted_id_vector<drb_id_t, f1ap_drb_setupmod>& drb_setup_mod_list,
-                                          const up_config_update&                               next_config,
-                                          const srslog::basic_logger&                           logger)
+bool srsran::srs_cu_cp::update_setup_list(e1ap_bearer_context_modification_request& bearer_ctxt_mod_request,
+                                          const std::vector<f1ap_drb_setupmod>&     drb_setup_mod_list,
+                                          const up_config_update&                   next_config,
+                                          const srslog::basic_logger&               logger)
 {
   // Start with empty message.
   e1ap_ng_ran_bearer_context_mod_request& e1ap_bearer_context_mod =

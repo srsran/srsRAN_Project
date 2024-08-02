@@ -436,9 +436,7 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
   if (asn1_response->drbs_setup_list_present) {
     for (auto asn1_drbs_setup_list_item : asn1_response->drbs_setup_list) {
       auto& asn1_drb_mod_item = asn1_drbs_setup_list_item.value().drbs_setup_item();
-
-      f1ap_drb_setupmod drb_item = asn1_to_f1ap_drbs_setup_mod_item(asn1_drb_mod_item);
-      response.drbs_setup_list.emplace(drb_item.drb_id, drb_item);
+      response.drbs_setup_list.push_back(asn1_to_f1ap_drbs_setup_mod_item(asn1_drb_mod_item));
     }
   }
 
@@ -446,9 +444,8 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
   if (asn1_response->srbs_failed_to_be_setup_list_present) {
     for (auto asn1_srbs_failed_setup_list_item : asn1_response->srbs_failed_to_be_setup_list) {
       auto& asn1_srb_failed_item = asn1_srbs_failed_setup_list_item.value().srbs_failed_to_be_setup_item();
-
-      f1ap_srb_failed_to_setup srb_item = asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(asn1_srb_failed_item);
-      response.srbs_failed_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
+      response.srbs_failed_to_be_setup_list.push_back(
+          asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(asn1_srb_failed_item));
     }
   }
 
@@ -456,9 +453,8 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
   if (asn1_response->drbs_failed_to_be_setup_list_present) {
     for (auto asn1_drbs_failed_setup_list_item : asn1_response->drbs_failed_to_be_setup_list) {
       auto& asn1_drb_failed_item = asn1_drbs_failed_setup_list_item.value().drbs_failed_to_be_setup_item();
-
-      f1ap_drb_failed_to_setupmod drb_item = asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(asn1_drb_failed_item);
-      response.drbs_failed_to_be_setup_list.emplace(drb_item.drb_id, drb_item);
+      response.drbs_failed_to_be_setup_list.push_back(
+          asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(asn1_drb_failed_item));
     }
   }
 
@@ -491,10 +487,7 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
   if (asn1_response->srbs_setup_list_present) {
     for (auto asn1_srbs_setup_list_item : asn1_response->srbs_setup_list) {
       auto& asn1_srbs_setup_item = asn1_srbs_setup_list_item.value().srbs_setup_item();
-
-      f1ap_srbs_setup_mod_item srbs_setup_item = asn1_to_f1ap_srbs_setup_mod_item(asn1_srbs_setup_item);
-
-      response.srbs_setup_list.emplace(srbs_setup_item.srb_id, srbs_setup_item);
+      response.srbs_setup_list.push_back(asn1_to_f1ap_srbs_setup_mod_item(asn1_srbs_setup_item));
     }
   }
 }

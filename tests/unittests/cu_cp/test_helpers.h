@@ -469,7 +469,7 @@ public:
         // add only the most relevant items
         f1ap_drb_setupmod drb_item;
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
-        res.drbs_setup_list.emplace(drb_item.drb_id, drb_item);
+        res.drbs_setup_list.push_back(drb_item);
       }
       res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008").value();
       // TODO: add failed list and other fields here ..

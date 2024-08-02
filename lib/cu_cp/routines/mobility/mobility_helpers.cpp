@@ -56,11 +56,13 @@ bool srsran::srs_cu_cp::handle_context_setup_response(
       e1ap_mod_item.pdu_session_id = pdu_session.first;
 
       for (const auto& drb_item : pdu_session.second.drb_to_add) {
-        srsran_assert(target_ue_context_setup_response.drbs_setup_list.contains(drb_item.first),
+        auto drb_it = std::find_if(target_ue_context_setup_response.drbs_setup_list.begin(),
+                                   target_ue_context_setup_response.drbs_setup_list.end(),
+                                   [&drb_item](const auto& drb) { return drb.drb_id == drb_item.first; });
+        srsran_assert(drb_it != target_ue_context_setup_response.drbs_setup_list.end(),
                       "Couldn't find {} in UE context setup response",
                       drb_item.first);
-
-        const auto& context_setup_drb_item = target_ue_context_setup_response.drbs_setup_list[drb_item.first];
+        const auto& context_setup_drb_item = *drb_it;
 
         e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
         e1ap_drb_item.drb_id = drb_item.first;
