@@ -79,6 +79,9 @@ private:
 
   // Temporary Tx buffer for transmission.
   std::array<uint8_t, network_gateway_udp_max_len> tx_mem;
+
+  // Helper boolean to avoid spamming the logs in case of buffer pool depletion
+  bool warn_low_buffer_pool = true;
 };
 
 } // namespace srsran

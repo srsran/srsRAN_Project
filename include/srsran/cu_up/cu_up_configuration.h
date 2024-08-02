@@ -116,8 +116,7 @@ struct formatter<srsran::srs_cu_up::network_interface_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_up::network_interface_config cfg,
-              FormatContext&                              ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::srs_cu_up::network_interface_config& cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "upf_port={}, n3_bind_addr={}, n3_bind_port={}, f1u_bind_addr={}, f1u_bind_port={}",

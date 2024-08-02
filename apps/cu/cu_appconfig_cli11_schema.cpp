@@ -33,7 +33,7 @@ static void configure_cli11_nru_args(CLI::App& app, srs_cu::cu_nru_appconfig& nr
   add_option(app,
              "--pool_threshold",
              nru_cfg.pool_occupancy_threshold,
-             "Pool accupancy threshold after which packets are dropped")
+             "Pool occupancy threshold after which packets are dropped")
       ->check(CLI::Range(0.0, 1.0));
   ;
 }

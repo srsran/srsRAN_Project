@@ -66,8 +66,6 @@ void udp_network_gateway_impl::handle_pdu(byte_buffer pdu, const sockaddr_storag
 
 void udp_network_gateway_impl::handle_pdu_impl(const byte_buffer& pdu, const sockaddr_storage& dest_addr)
 {
-  logger.debug("Sending PDU of {} bytes", pdu.length());
-
   if (not sock_fd.is_open()) {
     logger.error("Socket not initialized");
     return;
@@ -94,7 +92,7 @@ void udp_network_gateway_impl::handle_pdu_impl(const byte_buffer& pdu, const soc
                  strerror(errno));
   }
 
-  logger.debug("PDU was sent successfully");
+  logger.debug("Sent PDU of {} bytes", pdu.length());
 }
 
 void udp_network_gateway_impl::handle_io_error(io_broker::error_code code)
@@ -228,17 +226,23 @@ void udp_network_gateway_impl::receive()
     return;
   }
 
-  float pool_occupancy = get_byte_buffer_segment_pool_current_size_approx() / get_byte_buffer_segment_pool_capacity();
-  if (pool_occupancy >= config.pool_occupancy_threshold) {
-    logger.debug("Buffer pool occupancy at {}. Dropping {} packets", pool_occupancy, rx_msgs);
-    return;
-  }
-
   for (int i = 0; i < rx_msgs; ++i) {
+    float pool_occupancy =
+        (1 - (float)get_byte_buffer_segment_pool_current_size_approx() / get_byte_buffer_segment_pool_capacity());
+    if (pool_occupancy >= config.pool_occupancy_threshold) {
+      if (warn_low_buffer_pool) {
+        logger.warning("Buffer pool at {}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
+        warn_low_buffer_pool = false;
+        return;
+      }
+      logger.info("Buffer pool at {}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
+      return;
+    }
     span<uint8_t> payload(rx_mem[i].data(), rx_msghdr[i].msg_len);
-    byte_buffer   pdu = {};
+
+    byte_buffer pdu = {};
     if (pdu.append(payload)) {
-      logger.debug("Received {} bytes on UDP socket", rx_msghdr[i].msg_len);
+      logger.debug("Received {} bytes on UDP socket. Pool occupancy {}%", rx_msghdr[i].msg_len, pool_occupancy * 100);
       data_notifier.on_new_pdu(std::move(pdu), *(sockaddr_storage*)rx_msghdr[i].msg_hdr.msg_name);
     } else {
       logger.error("Could not allocate byte buffer. Received {} bytes on UDP socket", rx_msghdr[i].msg_len);
