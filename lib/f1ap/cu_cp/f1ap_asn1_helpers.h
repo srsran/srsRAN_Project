@@ -183,7 +183,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
       }
 
       // ul up tnl info to be setup list
-      for (const auto& ul_up_tnl_info_item : drb_to_be_modified_item.ul_up_tnl_info_to_be_setup_list) {
+      for (const auto& ul_up_tnl_info_item : drb_to_be_modified_item.uluptnl_info_list) {
         asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
         up_transport_layer_info_to_asn1(item.ul_up_tnl_info, ul_up_tnl_info_item);
         asn1_drb_to_be_modified_item.ul_up_tnl_info_to_be_setup_list.push_back(item);

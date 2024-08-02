@@ -12,15 +12,13 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/f1ap/common/ue_context_config.h"
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/five_qi.h"
-#include "srsran/ran/lcid.h"
 #include "srsran/ran/qos/qos_info.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
-#include "srsran/ran/up_transport_layer_info.h"
-#include "srsran/rlc/rlc_mode.h"
 
 namespace srsran {
 namespace srs_du {
@@ -62,11 +60,7 @@ struct f1ap_scell_to_setup {
 };
 
 /// \brief DRB that was setup successfully in the F1AP UE context.
-struct f1ap_drb_configured {
-  drb_id_t                             drb_id;
-  std::optional<lcid_t>                lcid;
-  std::vector<up_transport_layer_info> dluptnl_info_list;
-};
+using f1ap_drb_configured = f1ap_drb_setupmod;
 
 /// \brief Request from DU F1AP to DU manager to modify existing UE configuration.
 struct f1ap_ue_context_update_request {

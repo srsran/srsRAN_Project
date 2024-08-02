@@ -12,6 +12,7 @@
 
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/f1ap/common/ue_context_config.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
@@ -23,10 +24,6 @@
 
 namespace srsran {
 namespace srs_cu_cp {
-
-struct f1ap_dl_up_tnl_info_to_be_setup_item {
-  up_transport_layer_info dl_up_tnl_info;
-};
 
 enum class f1ap_cell_ul_cfg { none = 0, ul, sul, ul_and_sul };
 
@@ -105,14 +102,10 @@ struct f1ap_ul_cfg {
 
 enum class f1ap_dupl_activation { active = 0, inactive };
 
-struct f1ap_drbs_to_be_setup_mod_item {
-  drb_id_t                             drb_id = drb_id_t::invalid;
-  f1ap_drb_info                        qos_info;
-  std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list;
-  srsran::rlc_mode                     rlc_mod;
-  pdcp_sn_size                         pdcp_sn_len = pdcp_sn_size::invalid;
-  std::optional<f1ap_ul_cfg>           ul_cfg;
-  std::optional<f1ap_dupl_activation>  dupl_activation;
+struct f1ap_drbs_to_be_setup_mod_item : public f1ap_drb_to_setup {
+  f1ap_drb_info                       qos_info;
+  std::optional<f1ap_ul_cfg>          ul_cfg;
+  std::optional<f1ap_dupl_activation> dupl_activation;
 };
 
 struct f1ap_rat_freq_prio_info {
@@ -158,21 +151,14 @@ struct f1ap_du_to_cu_rrc_info {
   byte_buffer requested_p_max_fr1;
 };
 
-struct f1ap_drbs_setup_mod_item {
-  drb_id_t                                          drb_id = drb_id_t::invalid;
-  std::optional<lcid_t>                             lcid   = lcid_t::INVALID_LCID;
-  std::vector<f1ap_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list;
-};
+using f1ap_drbs_setup_mod_item = f1ap_drb_setupmod;
 
 struct f1ap_srbs_failed_to_be_setup_mod_item {
   srb_id_t                    srb_id = srb_id_t::nulltype;
   std::optional<f1ap_cause_t> cause;
 };
 
-struct f1ap_drbs_failed_to_be_setup_mod_item {
-  drb_id_t                    drb_id = drb_id_t::invalid;
-  std::optional<f1ap_cause_t> cause;
-};
+using f1ap_drbs_failed_to_be_setup_mod_item = f1ap_drb_failed_to_setupmod;
 
 struct f1ap_scell_failed_to_setup_mod_item {
   nr_cell_global_id_t         scell_id;
@@ -221,11 +207,9 @@ struct f1ap_scell_to_be_remd_item {
   nr_cell_global_id_t scell_id;
 };
 
-struct f1ap_drbs_to_be_modified_item {
-  drb_id_t                             drb_id = drb_id_t::invalid;
-  std::optional<f1ap_drb_info>         qos_info;
-  std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list;
-  std::optional<f1ap_ul_cfg>           ul_cfg;
+struct f1ap_drbs_to_be_modified_item : public f1ap_drb_to_modify {
+  std::optional<f1ap_drb_info> qos_info;
+  std::optional<f1ap_ul_cfg>   ul_cfg;
 };
 
 struct f1ap_rlc_fail_ind {

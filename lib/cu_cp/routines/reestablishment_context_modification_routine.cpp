@@ -223,11 +223,11 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
 
         // Add up tnl info
         for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
-          drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+          drb_setup_mod_item.uluptnl_info_list.push_back(ul_up_transport_param.up_tnl_info);
         }
 
         // Add rlc mode
-        drb_setup_mod_item.rlc_mod     = drb_up_context.rlc_mod;
+        drb_setup_mod_item.mode        = drb_up_context.rlc_mod;
         drb_setup_mod_item.pdcp_sn_len = drb_up_context.pdcp_cfg.tx.sn_size;
 
         // fill QoS info
@@ -306,9 +306,9 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
         e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
         e1ap_drb_item.drb_id = drb_item.drb_id;
 
-        for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
+        for (const auto& dl_up_tnl_info : drb_item.dluptnl_info_list) {
           e1ap_up_params_item e1ap_dl_up_param;
-          e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
+          e1ap_dl_up_param.up_tnl_info   = dl_up_tnl_info;
           e1ap_dl_up_param.cell_group_id = 0; // TODO: Remove hardcoded value
 
           e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);

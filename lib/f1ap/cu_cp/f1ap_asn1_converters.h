@@ -490,14 +490,14 @@ inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&          
   asn1_drb_to_be_setup_mod_item.qos_info = f1ap_qos_info_to_asn1(drb_to_be_setup_mod_item.qos_info);
 
   // ul up tnl info to be setup list
-  for (const auto& ul_up_tnl_info_item : drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list) {
+  for (const auto& ul_up_tnl_info_item : drb_to_be_setup_mod_item.uluptnl_info_list) {
     asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
     up_transport_layer_info_to_asn1(item.ul_up_tnl_info, ul_up_tnl_info_item);
     asn1_drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(item);
   }
 
   // rlc mode
-  asn1_drb_to_be_setup_mod_item.rlc_mode = rlc_mode_to_f1ap_asn1(drb_to_be_setup_mod_item.rlc_mod);
+  asn1_drb_to_be_setup_mod_item.rlc_mode = rlc_mode_to_f1ap_asn1(drb_to_be_setup_mod_item.mode);
 
   // pdcp sn size
   f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1_drb_to_be_setup_mod_item.ie_exts, drb_to_be_setup_mod_item);
@@ -725,10 +725,8 @@ inline f1ap_drbs_setup_mod_item asn1_to_f1ap_drbs_setup_mod_item(const template_
 
   // Add DL UP TNL to be setup list
   for (auto asn1_dl_up_tnl_info_to_be_setup_item : asn1_drbs_setup_mod_item.dl_up_tnl_info_to_be_setup_list) {
-    f1ap_dl_up_tnl_info_to_be_setup_item dl_up_tnl_info_to_be_setup_item;
-    dl_up_tnl_info_to_be_setup_item.dl_up_tnl_info =
-        asn1_to_up_transport_layer_info(asn1_dl_up_tnl_info_to_be_setup_item.dl_up_tnl_info);
-    drb_setup_mod_item.dl_up_tnl_info_to_be_setup_list.push_back(dl_up_tnl_info_to_be_setup_item);
+    drb_setup_mod_item.dluptnl_info_list.push_back(
+        asn1_to_up_transport_layer_info(asn1_dl_up_tnl_info_to_be_setup_item.dl_up_tnl_info));
   }
 
   if (asn1_drbs_setup_mod_item.lcid_present) {

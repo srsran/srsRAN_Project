@@ -209,12 +209,12 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
   // S-NSSAI
   drb_setup_mod_item.qos_info.s_nssai = next_drb_config.s_nssai;
 
-  drb_setup_mod_item.rlc_mod     = next_drb_config.rlc_mod;
+  drb_setup_mod_item.mode        = next_drb_config.rlc_mod;
   drb_setup_mod_item.pdcp_sn_len = next_drb_config.pdcp_cfg.tx.sn_size;
 
   // Add up tnl info
   for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
-    drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+    drb_setup_mod_item.uluptnl_info_list.push_back(ul_up_transport_param.up_tnl_info);
     // Store UL tunnel information in DRB context (required for mobility).
     next_drb_config.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
   }
@@ -622,9 +622,9 @@ void srsran::srs_cu_cp::fill_e1ap_bearer_context_list(
         e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
         e1ap_drb_item.drb_id = drb_item.drb_id;
 
-        for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
+        for (const auto& dl_up_tnl_info : drb_item.dluptnl_info_list) {
           e1ap_up_params_item e1ap_dl_up_param;
-          e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
+          e1ap_dl_up_param.up_tnl_info   = dl_up_tnl_info;
           e1ap_dl_up_param.cell_group_id = 0; // TODO: Remove hardcoded value
 
           e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);

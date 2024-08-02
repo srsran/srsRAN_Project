@@ -285,10 +285,10 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   // ul up tnl info to be setup list
   up_transport_layer_info ul_up_tnl_info_item = {transport_layer_address::create_from_string("127.0.0.1"),
                                                  int_to_gtpu_teid(1)};
-  drbs_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
+  drbs_to_be_setup_mod_item.uluptnl_info_list.push_back(ul_up_tnl_info_item);
 
   // rlc mode
-  drbs_to_be_setup_mod_item.rlc_mod     = rlc_mode::am;
+  drbs_to_be_setup_mod_item.mode        = rlc_mode::am;
   drbs_to_be_setup_mod_item.pdcp_sn_len = pdcp_sn_size::size12bits;
 
   // ul cfg
@@ -338,7 +338,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   drbs_to_be_modified_item.qos_info = qos_info;
 
   // ul up tnl info to be setup list
-  drbs_to_be_modified_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
+  drbs_to_be_modified_item.uluptnl_info_list.push_back(ul_up_tnl_info_item);
 
   // ul cfg
   drbs_to_be_modified_item.ul_cfg = ul_cfg;
