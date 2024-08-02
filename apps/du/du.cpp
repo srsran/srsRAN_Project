@@ -280,7 +280,8 @@ int main(int argc, char** argv)
   udp_network_gateway_config  du_f1u_gw_config      = {};
   du_f1u_gw_config.bind_address                     = du_cfg.nru_cfg.bind_address;
   du_f1u_gw_config.bind_port                        = GTPU_PORT;
-  du_f1u_gw_config.reuse_addr                       = true;
+  du_f1u_gw_config.reuse_addr                       = false;
+  du_f1u_gw_config.pool_occupancy_threshold         = du_cfg.nru_cfg.pool_threshold;
   std::unique_ptr<srs_cu_up::ngu_gateway> du_f1u_gw = srs_cu_up::create_udp_ngu_gateway(
       du_f1u_gw_config,
       *epoll_broker,

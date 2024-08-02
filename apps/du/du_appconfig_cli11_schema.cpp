@@ -236,6 +236,9 @@ static void configure_cli11_f1u_args(CLI::App& app, srs_du::nru_appconfig& f1u_p
   app.add_option(
          "--bind_addr", f1u_params.bind_address, "DU F1-U bind address. If left empty, implicit bind is performed")
       ->capture_default_str();
+  app.add_option(
+         "--pool_threshold", f1u_params.pool_threshold, "Pool occupancy threshold after which packets are dropped")
+      ->capture_default_str();
 }
 
 static void configure_cli11_hal_args(CLI::App& app, std::optional<hal_appconfig>& config)
