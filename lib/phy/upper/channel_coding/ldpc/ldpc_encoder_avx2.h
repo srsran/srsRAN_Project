@@ -69,7 +69,7 @@ private:
   /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
   template <unsigned NODE_SIZE_AVX2_PH>
   void high_rate_bg2_other_inner();
-  /// Carries out the extended region encoding when the lifting size is long.
+  /// Carries out the extended region encoding when the lifting size is large.
   void ext_region_inner(span<uint8_t> output_node, unsigned i_layer) const;
 
   /// Buffer containing the codeblock.
