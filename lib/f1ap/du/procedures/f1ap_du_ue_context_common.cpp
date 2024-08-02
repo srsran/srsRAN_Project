@@ -108,3 +108,40 @@ f1ap_drb_config_request srsran::srs_du::make_drb_config_request(const asn1::f1ap
 
   return drb_obj;
 }
+
+// helper function to fill asn1 DRBs-SetupMod and DRBs-Modified types.
+template <typename ASN1Type>
+static void fill_drb_setup_mod_common(ASN1Type& asn1obj, const f1ap_drb_configured& drb)
+{
+  asn1obj.drb_id       = drb_id_to_uint(drb.drb_id);
+  asn1obj.lcid_present = drb.lcid.has_value();
+  if (asn1obj.lcid_present) {
+    asn1obj.lcid = drb.lcid.value();
+  }
+  asn1obj.dl_up_tnl_info_to_be_setup_list.resize(drb.dluptnl_info_list.size());
+  for (unsigned j = 0; j != drb.dluptnl_info_list.size(); ++j) {
+    up_transport_layer_info_to_asn1(asn1obj.dl_up_tnl_info_to_be_setup_list[j].dl_up_tnl_info,
+                                    drb.dluptnl_info_list[j]);
+  }
+}
+
+asn1::f1ap::drbs_setup_item_s srsran::srs_du::make_drbs_setup_item(const f1ap_drb_configured& drb_obj)
+{
+  asn1::f1ap::drbs_setup_item_s asn1_drb;
+  fill_drb_setup_mod_common(asn1_drb, drb_obj);
+  return asn1_drb;
+}
+
+asn1::f1ap::drbs_setup_mod_item_s srsran::srs_du::make_drbs_setup_mod_item(const f1ap_drb_configured& drb_obj)
+{
+  asn1::f1ap::drbs_setup_mod_item_s asn1_drb;
+  fill_drb_setup_mod_common(asn1_drb, drb_obj);
+  return asn1_drb;
+}
+
+asn1::f1ap::drbs_modified_item_s srsran::srs_du::make_drbs_modified_item(const f1ap_drb_configured& drb_obj)
+{
+  asn1::f1ap::drbs_modified_item_s asn1_drb;
+  fill_drb_setup_mod_common(asn1_drb, drb_obj);
+  return asn1_drb;
+}

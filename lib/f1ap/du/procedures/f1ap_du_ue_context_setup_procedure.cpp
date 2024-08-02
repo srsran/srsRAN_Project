@@ -197,18 +197,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
     resp->drbs_setup_list.resize(du_ue_cfg_response.drbs_configured.size());
     for (unsigned i = 0; i != resp->drbs_setup_list.size(); ++i) {
       resp->drbs_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
-      drbs_setup_item_s& asn1_drb = resp->drbs_setup_list[i].value().drbs_setup_item();
-      auto&              drb_resp = du_ue_cfg_response.drbs_configured[i];
-      asn1_drb.drb_id             = drb_id_to_uint(drb_resp.drb_id);
-      asn1_drb.lcid_present       = drb_resp.lcid.has_value();
-      if (asn1_drb.lcid_present) {
-        asn1_drb.lcid = drb_resp.lcid.value();
-      }
-      asn1_drb.dl_up_tnl_info_to_be_setup_list.resize(drb_resp.dluptnl_info_list.size());
-      for (unsigned j = 0; j != drb_resp.dluptnl_info_list.size(); ++j) {
-        up_transport_layer_info_to_asn1(asn1_drb.dl_up_tnl_info_to_be_setup_list[j].dl_up_tnl_info,
-                                        drb_resp.dluptnl_info_list[j]);
-      }
+      resp->drbs_setup_list[i].value().drbs_setup_item() = make_drbs_setup_item(du_ue_cfg_response.drbs_configured[i]);
     }
   }
 
@@ -220,7 +209,8 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
       resp->drbs_failed_to_be_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
       drbs_failed_to_be_setup_item_s& asn1_drb = resp->drbs_failed_to_be_setup_list[i]->drbs_failed_to_be_setup_item();
       asn1_drb.drb_id                          = drb_id_to_uint(du_ue_cfg_response.failed_drbs[i]);
-      asn1_drb.cause.set_transport().value     = cause_transport_opts::transport_res_unavailable;
+      asn1_drb.cause_present                   = true;
+      asn1_drb.cause.set_radio_network().value = cause_radio_network_opts::no_radio_res_available;
     }
   }
 

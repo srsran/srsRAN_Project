@@ -40,6 +40,10 @@ f1ap_drb_config_request make_drb_config_request(const asn1::f1ap::drbs_to_be_set
 /// Convert 3GPP TS 38.473, DRBs-ToBeModified-Item ASN.1 type into f1ap_drb_config_request.
 f1ap_drb_config_request make_drb_config_request(const asn1::f1ap::drbs_to_be_modified_item_s& drb_item);
 
+asn1::f1ap::drbs_setup_item_s     make_drbs_setup_item(const f1ap_drb_configured& drb_obj);
+asn1::f1ap::drbs_setup_mod_item_s make_drbs_setup_mod_item(const f1ap_drb_configured& drb_obj);
+asn1::f1ap::drbs_modified_item_s  make_drbs_modified_item(const f1ap_drb_configured& drb_obj);
+
 /// \brief Creates a \c drb_id_t from ASN.1 type.
 ///
 /// This function is used by the following procedures:

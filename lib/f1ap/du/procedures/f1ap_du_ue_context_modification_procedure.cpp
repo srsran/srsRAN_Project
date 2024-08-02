@@ -88,22 +88,6 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
   }
 }
 
-// helper function to fill asn1 DRBs-SetupMod and DRBs-Modified types.
-template <typename ASN1Type>
-static void fill_drb_setup_mod_common(ASN1Type& asn1obj, const f1ap_drb_configured& drb)
-{
-  asn1obj.drb_id       = drb_id_to_uint(drb.drb_id);
-  asn1obj.lcid_present = drb.lcid.has_value();
-  if (asn1obj.lcid_present) {
-    asn1obj.lcid = drb.lcid.value();
-  }
-  asn1obj.dl_up_tnl_info_to_be_setup_list.resize(drb.dluptnl_info_list.size());
-  for (unsigned j = 0; j != drb.dluptnl_info_list.size(); ++j) {
-    up_transport_layer_info_to_asn1(asn1obj.dl_up_tnl_info_to_be_setup_list[j].dl_up_tnl_info,
-                                    drb.dluptnl_info_list[j]);
-  }
-}
-
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_response()
 {
   f1ap_message f1ap_msg;
@@ -127,8 +111,7 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
       resp->drbs_setup_mod_list_present    = true;
       resp->drbs_setup_mod_list.push_back({});
       resp->drbs_setup_mod_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-      drbs_setup_mod_item_s& asn1_drb = resp->drbs_setup_mod_list.back().value().drbs_setup_mod_item();
-      fill_drb_setup_mod_common(asn1_drb, drb_setup);
+      resp->drbs_setup_mod_list.back().value().drbs_setup_mod_item() = make_drbs_setup_mod_item(drb_setup);
       continue;
     }
 
@@ -159,8 +142,7 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
       resp->drbs_modified_list_present   = true;
       resp->drbs_modified_list.push_back({});
       resp->drbs_modified_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_MODIFIED_ITEM);
-      drbs_modified_item_s& asn1_drb = resp->drbs_modified_list.back().value().drbs_modified_item();
-      fill_drb_setup_mod_common(asn1_drb, drb_mod);
+      resp->drbs_modified_list.back().value().drbs_modified_item() = make_drbs_modified_item(drb_mod);
       continue;
     }
 
