@@ -157,6 +157,7 @@ def test_android_hp(
         "Attach timeout reached",
         "Some packages got lost",
         "socket is already closed",
+        "5GC crashed",
     ],
 )
 # pylint: disable=too-many-arguments

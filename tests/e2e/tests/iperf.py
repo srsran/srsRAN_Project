@@ -545,6 +545,7 @@ def test_smoke(
         "iperf did not achieve the expected data rate",
         "socket is already closed",
         "failed to connect to all addresses",
+        "5GC crashed",
     ],
 )
 # pylint: disable=too-many-arguments
