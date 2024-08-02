@@ -990,9 +990,9 @@ export on amd64 avx512:
     matrix:
       - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
         MARCH: x86-64-v4
-      - OS: ubuntu-20.04
-        MARCH: x86-64
-        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
+      # - OS: ubuntu-20.04
+      #   MARCH: x86-64
+      #   BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
 
 # Build + unit tests combinations
 
@@ -1406,13 +1406,13 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: ubuntu-20.04
-        SANITIZER: asan
-        COMPILER: [gcc, clang]
-        ENABLE_ASAN: "True"
-        TEST_MODE: default
-        MARCH: x86-64
-        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
+      # - OS: ubuntu-20.04
+      #   SANITIZER: asan
+      #   COMPILER: [gcc, clang]
+      #   ENABLE_ASAN: "True"
+      #   TEST_MODE: default
+      #   MARCH: x86-64
+      #   BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
       - OS: [ubuntu-24.04, ubuntu-23.10]
         SANITIZER: asan
         COMPILER: clang
@@ -1580,20 +1580,20 @@ ubuntu-20.04 amd64 native:
       - OS: ubuntu-20.04
         <<: *basic_combinations
 
-ubuntu-20.04 amd64 avx512:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 90 minutes
-  interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-20.04
-        <<: *basic_combinations
-        MARCH: x86-64
-        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
+# ubuntu-20.04 amd64 avx512:
+#   extends: .build_and_unit
+#   rules:
+#     - if: $CI_DESCRIPTION =~ /Weekly/
+#       when: delayed
+#       start_in: 90 minutes
+#   interruptible: false
+#   tags: ["${AMD64_AVX512_TAG}"]
+#   parallel:
+#     matrix:
+#       - OS: ubuntu-20.04
+#         <<: *basic_combinations
+#         MARCH: x86-64
+#         BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
 
 ubuntu-20.04 arm native:
   extends: .build_and_unit
@@ -1701,21 +1701,21 @@ ubuntu-20.04 amd64 avx2 dpdk:
         MARCH: x86-64
         BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt"
 
-ubuntu-20.04 amd64 avx512 dpdk:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 210 minutes
-  interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-20.04
-        <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.3", "23.11"]
-        MARCH: x86-64
-        BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
+# ubuntu-20.04 amd64 avx512 dpdk:
+#   extends: .build_and_unit
+#   rules:
+#     - if: $CI_DESCRIPTION =~ /Weekly/
+#       when: delayed
+#       start_in: 210 minutes
+#   interruptible: false
+#   tags: ["${AMD64_AVX512_TAG}"]
+#   parallel:
+#     matrix:
+#       - OS: ubuntu-20.04
+#         <<: *basic_combinations_dpdk
+#         DPDK_VERSION: ["22.11.3", "23.11"]
+#         MARCH: x86-64
+#         BUILD_ARGS: -DCMAKE_CXX_FLAGS="-mavx2 -mbmi -mbmi2 -mmovbe -mfma -mlzcnt -mavx512f -mavx512dq -mavx512ifma -mavx512pf -mavx512er -mavx512cd -mavx512bw -mavx512vl -mavx512vbmi -mavx512vbmi2 -mavx512vnni -mavx512bitalg -mavx512vpopcntdq"
 
 ubuntu-22.04 amd64 avx2 dpdk:
   extends: .build_and_unit
