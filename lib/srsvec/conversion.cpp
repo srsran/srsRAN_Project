@@ -107,7 +107,7 @@ static void convert_if_simd(float* z, const int16_t* x, float scale, unsigned le
     __m256 float_vec = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(input_vec));
     float_vec        = _mm256_mul_ps(float_vec, scale256);
 
-    // Store the result back to memory.
+    // Store the result back to memory
     _mm256_storeu_ps(z + i, float_vec);
   }
 #endif // defined(__AVX__) && defined(__AVX2__)
@@ -136,17 +136,6 @@ static void convert_bf16_to_f_simd(float* out, const bf16_t* in, unsigned len)
 {
   unsigned i = 0;
 
-#if defined(__ARM_NEON) && defined(__ARM_FEATURE_BF16_VECTOR_ARITHMETIC)
-  for (unsigned i_end = (len / 4) * 4; i != i_end; i += 4) {
-    // Load 4 bf16 elements into a 64-bit vector register.
-    bfloat16x4_t input_vec = vld1_bf16(reinterpret_cast<const bfloat16_t*>(in + i));
-    // Convert bf16 to single-precision floating point.
-    float32x4_t output_vec = vcvt_f32_bf16(input_vec);
-    // Store the result back to memory.
-    srsran_simd_f_storeu(out + i, output_vec);
-  }
-#else // __ARM_FEATURE_BF16
-
 #if SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
   for (unsigned end = (len / SRSRAN_SIMD_S_SIZE) * SRSRAN_SIMD_S_SIZE; i != end; i += SRSRAN_SIMD_S_SIZE) {
     simd_f_t even, odd;
@@ -156,7 +145,6 @@ static void convert_bf16_to_f_simd(float* out, const bf16_t* in, unsigned len)
     srsran_simd_f_storeu_interleaved(out + i, even, odd);
   }
 #endif // SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
-#endif // __ARM_FEATURE_BF16
 
   for (; i != len; ++i) {
     out[i] = to_float(in[i]);
@@ -315,25 +303,6 @@ static void convert_int16_to_bf16_simd(bf16_t* out, const int16_t* in, float sca
 #endif // defined(__AVX__) && defined(__AVX2__)
 #endif // defined(__AVX__) && defined(__AVX512F__)
 
-#if defined(__ARM_NEON)
-  // Load the scale factor into a vector register.
-  float32x4_t scale_f32 = vdupq_n_f32(gain);
-
-  // Process 8 elements at a time (128 bits / 16 bits per brain float = 8 floats).
-  for (unsigned i_end = (len / 8) * 8; i != i_end; i += 8) {
-    // Load 8 int16_t elements into a 128-bit vector register.
-    int16x8_t input_vec = vld1q_s16(in + i);
-
-    // Convert the int16_t elements to float and scale them.
-    float32x4_t float_vec_1 = vcvtq_f32_s32(vmovl_s16(vget_low_s16(input_vec)));
-    float32x4_t float_vec_2 = vcvtq_f32_s32(vmovl_high_s16(input_vec));
-    float_vec_1             = vmulq_f32(float_vec_1, scale_f32);
-    float_vec_2             = vmulq_f32(float_vec_2, scale_f32);
-
-    // Convert float to brain float and store the result back to memory.
-    srsran_simd_bf16_storeu(out + i, float_vec_1, float_vec_2);
-  }
-#endif // defined(__ARM_NEON)
   for (; i != len; ++i) {
     out[i] = to_bf16(static_cast<float>(in[i]) * gain);
   }

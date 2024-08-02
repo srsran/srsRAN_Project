@@ -1803,25 +1803,6 @@ inline simd_s_t srsran_simd_s_sub(simd_s_t a, simd_s_t b)
 #endif /* __AVX512F__ */
 }
 
-inline simd_s_t srsran_simd_s_set1(int16_t x)
-{
-#ifdef __AVX512F__
-  return _mm512_set1_epi16(x);
-#else /* __AVX512F__ */
-#ifdef __AVX2__
-  return _mm256_set1_epi16(x);
-#else /* __AVX2__ */
-#ifdef __SSE4_1__
-  return _mm_set1_epi16(x);
-#else /* __SSE4_1__ */
-#ifdef __ARM_NEON
-  return vdupq_n_s16(x);
-#endif /* __ARM_NEON */
-#endif /* __SSE4_1__ */
-#endif /* __AVX2__ */
-#endif /* __AVX512F__ */
-}
-
 #endif /* SRSRAN_SIMD_S_SIZE */
 
 #if SRSRAN_SIMD_C16_SIZE
@@ -2226,7 +2207,7 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
                                                     0x3b0039,
                                                     0x3f003d),
                                   b_i32);
-#else  // __AVX512BW__
+#else // __AVX512BW__
   const __m512i mask = _mm512_set1_epi32(0xffff0000);
   // Input:            a0 xx | a1 xx | a2 xx | a3 xx | a4 xx | a5 xx | a6 xx | a7 xx | ... | a15 xx |
   // Transformations:
@@ -2263,8 +2244,9 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
       a_packed,
       _mm512_setr_epi32(0x0, 0x2, 0x4, 0x6, 0x8, 0xa, 0xc, 0xe, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e),
       b_packed);
-#endif // __AVX512BW__
-#else  /* __AVX512F__ */
+#endif
+
+#else /* __AVX512F__ */
 #ifdef __AVX2__
   const __m256i bias = _mm256_set1_epi32(0x7fff);
   const __m256i one  = _mm256_set1_epi32(0x1);
@@ -2329,11 +2311,6 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
   ret                = _mm_blend_epi16(a_packed, b_packed, 0xf0);
 #else /* __ARM_NEON */
 #ifdef __ARM_NEON
-#ifdef __ARM_FEATURE_BF16_VECTOR_ARITHMETIC
-  bfloat16x4_t tmp1     = vcvt_bf16_f32(a);
-  bfloat16x4_t tmp2     = vcvt_bf16_f32(b);
-  ret                   = vreinterpretq_s16_bf16(vcombine_bf16(tmp1, tmp2));
-#else  // __ARM_FEATURE_BF16_VECTOR_ARITHMETIC
   const uint32x4_t bias = vdupq_n_u32(0x7fff);
   const uint32x4_t one  = vdupq_n_u32(0x1);
 
@@ -2353,8 +2330,7 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
   uint16x8_t tmp_b_2  = vextq_u16(tmp_b_1, tmp_b_1, 1);
   uint32x4_t b_packed = vreinterpretq_u32_u16(vorrq_u16(tmp_b_1, tmp_b_2));
 
-  ret = vreinterpretq_s16_u32(vuzpq_u32(a_packed, b_packed).val[0]);
-#endif /* __ARM_FEATURE_BF16_VECTOR_ARITHMETIC */
+  ret                   = vreinterpretq_s16_u32(vuzpq_u32(a_packed, b_packed).val[0]);
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
