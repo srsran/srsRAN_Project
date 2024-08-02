@@ -111,7 +111,6 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_notif
   ASSERT_EQ(req.srbs_to_setup[0], srb_id_t::srb2);
   ASSERT_EQ(req.drbs_to_setup.size(), 1);
   ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
-  ASSERT_FALSE(req.drbs_to_setup[0].lcid.has_value());
   ASSERT_EQ(req.drbs_to_setup[0].mode, rlc_mode::am);
   ASSERT_EQ(req.drbs_to_setup[0].pdcp_sn_len, pdcp_sn_size::size12bits);
 }

@@ -302,46 +302,11 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   msg.drbs_to_be_setup_mod_list.emplace(uint_to_drb_id(1), drbs_to_be_setup_mod_item);
 
   // drbs to be modified list
-  f1ap_drbs_to_be_modified_item drbs_to_be_modified_item;
-
+  f1ap_drb_to_modify drbs_to_be_modified_item;
   drbs_to_be_modified_item.drb_id = uint_to_drb_id(1);
-
-  // qos info
-  f1ap_drb_info qos_info;
-  // drb qos
-  // qos flow level qos params
-  // qos characteristics
-  qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
-
-  // ng ran alloc retention prio
-  qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp            = 1;
-  qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap           = "shall-not-trigger-pre-emption";
-  qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
-
-  // gbr qos flow info
-  qos_info.drb_qos.gbr_qos_info = gbr_qos_info;
-
-  // reflective qos attribute
-  qos_info.drb_qos.reflective_qos_attribute = true;
-
-  // s nssai
-  qos_info.s_nssai.sst = 1;
-  qos_info.s_nssai.sd  = 128;
-
-  // notif ctrl
-  qos_info.notif_ctrl = f1ap_notif_ctrl::active;
-
-  // flows mapped to drb list
-  qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);
-
-  // qos info
-  drbs_to_be_modified_item.qos_info = qos_info;
 
   // ul up tnl info to be setup list
   drbs_to_be_modified_item.uluptnl_info_list.push_back(ul_up_tnl_info_item);
-
-  // ul cfg
-  drbs_to_be_modified_item.ul_cfg = ul_cfg;
 
   msg.drbs_to_be_modified_list.emplace(uint_to_drb_id(1), drbs_to_be_modified_item);
 

@@ -716,9 +716,9 @@ inline nr_cell_global_id_t f1ap_asn1_to_nr_cgi(const asn1::f1ap::nr_cgi_s& asn1_
 /// \param[in] asn1_drbs_to_be_setup_mod_item The ASN.1 drbs setup/setup mod item struct.
 /// \return The drbs setup/setup item mod common type struct.
 template <typename template_asn1_item>
-inline f1ap_drbs_setup_mod_item asn1_to_f1ap_drbs_setup_mod_item(const template_asn1_item& asn1_drbs_setup_mod_item)
+inline f1ap_drb_setupmod asn1_to_f1ap_drbs_setup_mod_item(const template_asn1_item& asn1_drbs_setup_mod_item)
 {
-  f1ap_drbs_setup_mod_item drb_setup_mod_item;
+  f1ap_drb_setupmod drb_setup_mod_item;
 
   // drb id
   drb_setup_mod_item.drb_id = uint_to_drb_id(asn1_drbs_setup_mod_item.drb_id);
@@ -740,36 +740,36 @@ inline f1ap_drbs_setup_mod_item asn1_to_f1ap_drbs_setup_mod_item(const template_
 /// \param[in] asn1_srbs_failed_to_be_setup_mod_item The ASN.1 srbs failed to be setup/setup mod item struct.
 /// \return The srbs failed to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
-inline f1ap_srbs_failed_to_be_setup_mod_item
+inline f1ap_srb_failed_to_setup
 asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_srbs_failed_to_be_setup_mod_item)
 {
-  f1ap_srbs_failed_to_be_setup_mod_item srbs_failed_to_be_setup_mod_item;
+  f1ap_srb_failed_to_setup item;
 
   // srb id
-  srbs_failed_to_be_setup_mod_item.srb_id = int_to_srb_id(asn1_srbs_failed_to_be_setup_mod_item.srb_id);
+  item.srb_id = int_to_srb_id(asn1_srbs_failed_to_be_setup_mod_item.srb_id);
   if (asn1_srbs_failed_to_be_setup_mod_item.cause_present) {
-    srbs_failed_to_be_setup_mod_item.cause = asn1_to_cause(asn1_srbs_failed_to_be_setup_mod_item.cause);
+    item.cause = asn1_to_cause(asn1_srbs_failed_to_be_setup_mod_item.cause);
   }
 
-  return srbs_failed_to_be_setup_mod_item;
+  return item;
 }
 
-// \brief Convert F1AP ASN.1 drbs failed to be setup/setup mod item to common type.
+/// \brief Convert F1AP ASN.1 drbs failed to be setup/setup mod item to common type.
 /// \param[in] asn1_drbs_failed_to_be_setup_mod_item The ASN.1 drbs failed to be setup/setup mod item struct.
 /// \return The drbs failed to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
-inline f1ap_drbs_failed_to_be_setup_mod_item
+inline f1ap_drb_failed_to_setupmod
 asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_drbs_failed_to_be_setup_mod_item)
 {
-  f1ap_drbs_failed_to_be_setup_mod_item drbs_failed_to_be_setup_mod_item;
+  f1ap_drb_failed_to_setupmod item;
 
   // drb id
-  drbs_failed_to_be_setup_mod_item.drb_id = uint_to_drb_id(asn1_drbs_failed_to_be_setup_mod_item.drb_id);
+  item.drb_id = uint_to_drb_id(asn1_drbs_failed_to_be_setup_mod_item.drb_id);
   if (asn1_drbs_failed_to_be_setup_mod_item.cause_present) {
-    drbs_failed_to_be_setup_mod_item.cause = asn1_to_cause(asn1_drbs_failed_to_be_setup_mod_item.cause);
+    item.cause = asn1_to_cause(asn1_drbs_failed_to_be_setup_mod_item.cause);
   }
 
-  return drbs_failed_to_be_setup_mod_item;
+  return item;
 }
 
 /// \brief Convert F1AP ASN.1 srbs setup/setup mod item to common type.

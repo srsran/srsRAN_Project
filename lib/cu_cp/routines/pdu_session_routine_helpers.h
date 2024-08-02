@@ -30,7 +30,7 @@ void fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_item&      e1ap_qos_i
                                    const qos_flow_setup_request_item& request_item);
 void fill_e1ap_bearer_context_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& e1ap_list,
-    const slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>&              drb_setup_items,
+    const slotted_id_vector<drb_id_t, f1ap_drb_setupmod>&                     drb_setup_items,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&          pdu_sessions_update_list);
 void fill_e1ap_pdu_session_res_to_setup_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>&     pdu_session_res_to_setup_list,
@@ -94,10 +94,10 @@ bool update_setup_list(slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_ite
                        up_resource_manager&        up_resource_mng,
                        const srslog::basic_logger& logger);
 
-bool update_setup_list(e1ap_bearer_context_modification_request&                    bearer_ctxt_mod_request,
-                       const slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>& drb_setup_mod_list,
-                       const up_config_update&                                      next_config,
-                       const srslog::basic_logger&                                  logger);
+bool update_setup_list(e1ap_bearer_context_modification_request&             bearer_ctxt_mod_request,
+                       const slotted_id_vector<drb_id_t, f1ap_drb_setupmod>& drb_setup_mod_list,
+                       const up_config_update&                               next_config,
+                       const srslog::basic_logger&                           logger);
 
 void update_failed_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,

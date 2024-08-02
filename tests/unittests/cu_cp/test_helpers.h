@@ -467,9 +467,9 @@ public:
       res.success = ue_context_modification_outcome.outcome;
       for (const auto& drb_id : ue_context_modification_outcome.drb_success_list) {
         // add only the most relevant items
-        f1ap_drbs_setup_mod_item drb_item;
+        f1ap_drb_setupmod drb_item;
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
-        res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
+        res.drbs_setup_list.emplace(drb_item.drb_id, drb_item);
       }
       res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008").value();
       // TODO: add failed list and other fields here ..

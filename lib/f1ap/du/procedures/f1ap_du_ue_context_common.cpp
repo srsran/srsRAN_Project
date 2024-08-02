@@ -9,7 +9,6 @@
  */
 
 #include "f1ap_du_ue_context_common.h"
-#include "../../cu_cp/f1ap_asn1_converters.h"
 #include "srsran/asn1/f1ap/common.h"
 
 using namespace srsran;
@@ -33,14 +32,10 @@ static rlc_mode get_rlc_mode(const asn1::f1ap::rlc_mode_e& asn1type)
 }
 
 template <typename ASN1Type>
-static void fill_common_drb_config_request_fields(f1ap_drb_config_request& drb_obj, const ASN1Type& drb_item)
+static void fill_common_drb_config_request_fields(f1ap_drb_setup_request& drb_obj, const ASN1Type& drb_item)
 {
-  drb_obj.drb_id = static_cast<drb_id_t>(drb_item.drb_id);
-
-  drb_obj.uluptnl_info_list.reserve(drb_item.ul_up_tnl_info_to_be_setup_list.size());
-  for (const auto& tnl_info : drb_item.ul_up_tnl_info_to_be_setup_list) {
-    drb_obj.uluptnl_info_list.push_back(asn1_to_up_transport_layer_info(tnl_info.ul_up_tnl_info));
-  }
+  drb_obj.drb_id            = static_cast<drb_id_t>(drb_item.drb_id);
+  drb_obj.uluptnl_info_list = make_ul_up_tnl_info_list(drb_item.ul_up_tnl_info_to_be_setup_list);
 
   // TODO: Handle Dynamic 5QI.
   const auto& asn1_drbinfo   = drb_item.qos_info.choice_ext().value().drb_info();
@@ -67,9 +62,9 @@ static void fill_common_drb_config_request_fields(f1ap_drb_config_request& drb_o
   }
 }
 
-f1ap_drb_config_request srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_item_s& drb_item)
+f1ap_drb_setup_request srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_item_s& drb_item)
 {
-  f1ap_drb_config_request drb_obj;
+  f1ap_drb_setup_request drb_obj;
   fill_common_drb_config_request_fields(drb_obj, drb_item);
 
   drb_obj.mode = get_rlc_mode(drb_item.rlc_mode);
@@ -81,9 +76,9 @@ f1ap_drb_config_request srsran::srs_du::make_drb_config_request(const asn1::f1ap
   return drb_obj;
 }
 
-f1ap_drb_config_request srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item)
+f1ap_drb_setup_request srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item)
 {
-  f1ap_drb_config_request drb_obj;
+  f1ap_drb_setup_request drb_obj;
   fill_common_drb_config_request_fields(drb_obj, drb_item);
 
   drb_obj.mode = get_rlc_mode(drb_item.rlc_mode);
@@ -95,107 +90,4 @@ f1ap_drb_config_request srsran::srs_du::make_drb_config_request(const asn1::f1ap
   }
 
   return drb_obj;
-}
-
-f1ap_drb_config_request srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_modified_item_s& drb_item)
-{
-  f1ap_drb_config_request drb_obj;
-  fill_common_drb_config_request_fields(drb_obj, drb_item);
-
-  if (drb_item.ie_exts_present) {
-    if (drb_item.ie_exts.dl_pdcp_sn_len_present) {
-      drb_obj.pdcp_sn_len = pdcp_sn_size_from_f1ap_asn1(drb_item.ie_exts.dl_pdcp_sn_len);
-    }
-  }
-
-  return drb_obj;
-}
-
-// helper function to fill asn1 DRBs-SetupMod and DRBs-Modified types.
-template <typename ASN1Type>
-static void fill_drb_setup_mod_common(ASN1Type& asn1obj, const f1ap_drb_setupmod& drb)
-{
-  asn1obj.drb_id       = drb_id_to_uint(drb.drb_id);
-  asn1obj.lcid_present = drb.lcid.has_value();
-  if (asn1obj.lcid_present) {
-    asn1obj.lcid = drb.lcid.value();
-  }
-  asn1obj.dl_up_tnl_info_to_be_setup_list.resize(drb.dluptnl_info_list.size());
-  for (unsigned j = 0; j != drb.dluptnl_info_list.size(); ++j) {
-    up_transport_layer_info_to_asn1(asn1obj.dl_up_tnl_info_to_be_setup_list[j].dl_up_tnl_info,
-                                    drb.dluptnl_info_list[j]);
-  }
-}
-
-template <typename ASN1Type>
-void fill_drb_failed_item(ASN1Type& asn1obj, const f1ap_drb_failed_to_setupmod& drb_obj)
-{
-  asn1obj.drb_id        = drb_id_to_uint(drb_obj.drb_id);
-  asn1obj.cause_present = drb_obj.cause.has_value();
-  if (asn1obj.cause_present) {
-    asn1obj.cause = srs_cu_cp::cause_to_asn1(drb_obj.cause.value());
-  }
-}
-
-asn1::f1ap::drbs_setup_list_l srsran::srs_du::make_drbs_setup_list(span<const f1ap_drb_setupmod> drbs)
-{
-  asn1::f1ap::drbs_setup_list_l list(drbs.size());
-  for (unsigned i = 0; i != drbs.size(); ++i) {
-    list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
-    fill_drb_setup_mod_common(list[i]->drbs_setup_item(), drbs[i]);
-  }
-  return list;
-}
-
-asn1::f1ap::drbs_setup_mod_list_l srsran::srs_du::make_drbs_setup_mod_list(span<const f1ap_drb_setupmod> drbs)
-{
-  asn1::f1ap::drbs_setup_mod_list_l list(drbs.size());
-  for (unsigned i = 0; i != drbs.size(); ++i) {
-    list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-    fill_drb_setup_mod_common(list[i]->drbs_setup_mod_item(), drbs[i]);
-  }
-  return list;
-}
-
-asn1::f1ap::drbs_modified_list_l srsran::srs_du::make_drbs_modified_list(span<const f1ap_drb_setupmod> drbs)
-{
-  asn1::f1ap::drbs_modified_list_l list(drbs.size());
-  for (unsigned i = 0; i != drbs.size(); ++i) {
-    list[i].load_info_obj(ASN1_F1AP_ID_DRBS_MODIFIED_ITEM);
-    fill_drb_setup_mod_common(list[i]->drbs_modified_item(), drbs[i]);
-  }
-  return list;
-}
-
-asn1::f1ap::drbs_failed_to_be_setup_list_l
-srsran::srs_du::make_drbs_failed_to_be_setup_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs)
-{
-  asn1::f1ap::drbs_failed_to_be_setup_list_l list(failed_drbs.size());
-  for (unsigned i = 0; i != failed_drbs.size(); ++i) {
-    list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_ITEM);
-    fill_drb_failed_item(list[i]->drbs_failed_to_be_setup_item(), failed_drbs[i]);
-  }
-  return list;
-}
-
-asn1::f1ap::drbs_failed_to_be_setup_mod_list_l
-srsran::srs_du::make_drbs_failed_to_be_setup_mod_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs)
-{
-  asn1::f1ap::drbs_failed_to_be_setup_mod_list_l list(failed_drbs.size());
-  for (unsigned i = 0; i != failed_drbs.size(); ++i) {
-    list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
-    fill_drb_failed_item(list[i]->drbs_failed_to_be_setup_mod_item(), failed_drbs[i]);
-  }
-  return list;
-}
-
-asn1::f1ap::drbs_failed_to_be_modified_list_l
-srsran::srs_du::make_drbs_failed_to_be_modified_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs)
-{
-  asn1::f1ap::drbs_failed_to_be_modified_list_l list(failed_drbs.size());
-  for (unsigned i = 0; i != failed_drbs.size(); ++i) {
-    list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_MODIFIED_ITEM);
-    fill_drb_failed_item(list[i]->drbs_failed_to_be_modified_item(), failed_drbs[i]);
-  }
-  return list;
 }

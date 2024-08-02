@@ -76,7 +76,6 @@ TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1a
   ASSERT_EQ(req.srbs_to_setup.size(), 0);
   ASSERT_EQ(req.drbs_to_setup.size(), 1);
   ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
-  ASSERT_FALSE(req.drbs_to_setup[0].lcid.has_value());
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,

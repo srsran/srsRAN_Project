@@ -264,9 +264,8 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
     bool                                             reestablish_pdcp)
 {
   // Fail procedure if (single) DRB couldn't be setup
-  if (!ue_context_modification_resp.drbs_failed_to_be_setup_mod_list.empty()) {
-    logger.warning("Couldn't setup {} DRBs at DU",
-                   ue_context_modification_resp.drbs_failed_to_be_setup_mod_list.size());
+  if (!ue_context_modification_resp.drbs_failed_to_be_setup_list.empty()) {
+    logger.warning("Couldn't setup {} DRBs at DU", ue_context_modification_resp.drbs_failed_to_be_setup_list.size());
     return false;
   }
 
@@ -299,7 +298,7 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
     e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
     e1ap_mod_item.pdu_session_id = pdu_session.pdu_session_id;
 
-    for (const auto& drb_item : ue_context_modification_resp.drbs_setup_mod_list) {
+    for (const auto& drb_item : ue_context_modification_resp.drbs_setup_list) {
       // Only include the DRB if it belongs to the this session.
       if (pdu_session.drb_modified_list_ng_ran.contains(drb_item.drb_id)) {
         // DRB belongs to this PDU session

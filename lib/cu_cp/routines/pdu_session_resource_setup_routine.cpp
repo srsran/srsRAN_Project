@@ -338,14 +338,14 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                const srslog::basic_logger&                     logger)
 {
   // Fail procedure if (single) DRB couldn't be setup
-  if (!ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
+  if (!ue_context_modification_response.drbs_failed_to_be_setup_list.empty()) {
     logger.warning("Couldn't setup {} DRBs at DU",
-                   ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
+                   ue_context_modification_response.drbs_failed_to_be_setup_list.size());
     return false;
   }
 
   if (!update_setup_list(
-          bearer_ctxt_mod_request, ue_context_modification_response.drbs_setup_mod_list, next_config, logger)) {
+          bearer_ctxt_mod_request, ue_context_modification_response.drbs_setup_list, next_config, logger)) {
     return false;
   }
 

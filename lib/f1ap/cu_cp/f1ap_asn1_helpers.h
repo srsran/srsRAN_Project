@@ -176,25 +176,11 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
       auto& asn1_drb_to_be_modified_item  = asn1_drb_to_be_modified_item_container.value().drbs_to_be_modified_item();
       asn1_drb_to_be_modified_item.drb_id = drb_id_to_uint(drb_to_be_modified_item.drb_id);
 
-      // qos info
-      if (drb_to_be_modified_item.qos_info.has_value()) {
-        asn1_drb_to_be_modified_item.qos_info_present = true;
-        asn1_drb_to_be_modified_item.qos_info         = f1ap_qos_info_to_asn1(drb_to_be_modified_item.qos_info.value());
-      }
-
       // ul up tnl info to be setup list
       for (const auto& ul_up_tnl_info_item : drb_to_be_modified_item.uluptnl_info_list) {
         asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
         up_transport_layer_info_to_asn1(item.ul_up_tnl_info, ul_up_tnl_info_item);
         asn1_drb_to_be_modified_item.ul_up_tnl_info_to_be_setup_list.push_back(item);
-      }
-
-      // ul cfg
-      if (drb_to_be_modified_item.ul_cfg.has_value()) {
-        asn1_drb_to_be_modified_item.ul_cfg_present = true;
-
-        asn1_drb_to_be_modified_item.ul_cfg.ul_ue_cfg =
-            f1ap_ul_ue_cfg_to_asn1(drb_to_be_modified_item.ul_cfg.value().ul_ue_cfg);
       }
 
       asn1_request->drbs_to_be_modified_list.push_back(asn1_drb_to_be_modified_item_container);
@@ -332,9 +318,8 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
     for (auto asn1_drb_setup_mod_list_item : asn1_response->drbs_setup_mod_list) {
       auto& asn1_drb_mod_item = asn1_drb_setup_mod_list_item.value().drbs_setup_mod_item();
 
-      f1ap_drbs_setup_mod_item drb_setup_mod_item = asn1_to_f1ap_drbs_setup_mod_item(asn1_drb_mod_item);
-
-      res.drbs_setup_mod_list.emplace(drb_setup_mod_item.drb_id, drb_setup_mod_item);
+      f1ap_drb_setupmod mod_item = asn1_to_f1ap_drbs_setup_mod_item(asn1_drb_mod_item);
+      res.drbs_setup_list.emplace(mod_item.drb_id, mod_item);
     }
   }
 
@@ -343,9 +328,9 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
     for (auto asn1_drbs_modified_list_item : asn1_response->drbs_modified_list) {
       auto& asn1_drb_mod_item = asn1_drbs_modified_list_item.value().drbs_modified_item();
 
-      f1ap_drbs_setup_mod_item drb_setup_mod_item = asn1_to_f1ap_drbs_setup_mod_item(asn1_drb_mod_item);
+      f1ap_drb_setupmod mod_item = asn1_to_f1ap_drbs_setup_mod_item(asn1_drb_mod_item);
 
-      res.drbs_modified_list.emplace(drb_setup_mod_item.drb_id, drb_setup_mod_item);
+      res.drbs_modified_list.emplace(mod_item.drb_id, mod_item);
     }
   }
 
@@ -354,10 +339,8 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
     for (auto asn1_srbs_failed_setup_mod_list_item : asn1_response->srbs_failed_to_be_setup_mod_list) {
       auto& asn1_srb_failed_item = asn1_srbs_failed_setup_mod_list_item.value().srbs_failed_to_be_setup_mod_item();
 
-      f1ap_srbs_failed_to_be_setup_mod_item srb_failed_item =
-          asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(asn1_srb_failed_item);
-
-      res.srbs_failed_to_be_setup_mod_list.emplace(srb_failed_item.srb_id, srb_failed_item);
+      f1ap_srb_failed_to_setup srb_item = asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(asn1_srb_failed_item);
+      res.srbs_failed_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
     }
   }
 
@@ -366,10 +349,8 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
     for (auto asn1_drbs_failed_setup_mod_list_item : asn1_response->drbs_failed_to_be_setup_mod_list) {
       auto& asn1_drb_failed_item = asn1_drbs_failed_setup_mod_list_item.value().drbs_failed_to_be_setup_mod_item();
 
-      f1ap_drbs_failed_to_be_setup_mod_item drb_failed_item =
-          asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(asn1_drb_failed_item);
-
-      res.drbs_failed_to_be_setup_mod_list.emplace(drb_failed_item.drb_id, drb_failed_item);
+      f1ap_drb_failed_to_setupmod drb_item = asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(asn1_drb_failed_item);
+      res.drbs_failed_to_be_setup_list.emplace(drb_item.drb_id, drb_item);
     }
   }
 
@@ -383,7 +364,7 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
       if (asn1_scell_failed_item.cause_present) {
         scell_failed_item.cause = asn1_to_cause(asn1_scell_failed_item.cause);
       }
-      res.scell_failed_to_setup_mod_list.push_back(scell_failed_item);
+      res.scell_failed_to_be_setup_list.push_back(scell_failed_item);
     }
   }
 
@@ -392,10 +373,8 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
     for (auto asn1_drbs_failed_modified_list_item : asn1_response->drbs_failed_to_be_modified_list) {
       auto& asn1_drb_failed_item = asn1_drbs_failed_modified_list_item.value().drbs_failed_to_be_modified_item();
 
-      f1ap_drbs_failed_to_be_setup_mod_item drb_failed_item =
-          asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(asn1_drb_failed_item);
-
-      res.drbs_failed_to_be_modified_list.emplace(drb_failed_item.drb_id, drb_failed_item);
+      f1ap_drb_failed_to_setupmod drb_item = asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(asn1_drb_failed_item);
+      res.drbs_failed_to_be_modified_list.emplace(drb_item.drb_id, drb_item);
     }
   }
 

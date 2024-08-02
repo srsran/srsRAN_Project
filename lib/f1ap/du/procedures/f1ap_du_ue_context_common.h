@@ -33,38 +33,10 @@ srb_id_t make_srb_id(const Asn1Type& srb_item)
 }
 
 /// Convert 3GPP TS 38.473, DRBs-ToBeSetup-Item ASN.1 type into f1ap_drb_config_request.
-f1ap_drb_config_request make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_item_s& drb_item);
+f1ap_drb_setup_request make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_item_s& drb_item);
 
 /// Convert 3GPP TS 38.473, DRBs-ToBeSetupMod-Item ASN.1 type into f1ap_drb_config_request.
-f1ap_drb_config_request make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item);
-
-/// Convert 3GPP TS 38.473, DRBs-ToBeModified-Item ASN.1 type into f1ap_drb_config_request.
-f1ap_drb_config_request make_drb_config_request(const asn1::f1ap::drbs_to_be_modified_item_s& drb_item);
-
-asn1::f1ap::drbs_setup_list_l     make_drbs_setup_list(span<const f1ap_drb_setupmod> drbs);
-asn1::f1ap::drbs_setup_mod_list_l make_drbs_setup_mod_list(span<const f1ap_drb_setupmod> drbs);
-asn1::f1ap::drbs_modified_list_l  make_drbs_modified_list(span<const f1ap_drb_setupmod> drbs);
-
-/// Convert F1AP failed to setup/modify types to respective ASN.1 TS 48.473 types.
-asn1::f1ap::drbs_failed_to_be_setup_list_l
-make_drbs_failed_to_be_setup_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs);
-asn1::f1ap::drbs_failed_to_be_setup_mod_list_l
-make_drbs_failed_to_be_setup_mod_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs);
-asn1::f1ap::drbs_failed_to_be_modified_list_l
-make_drbs_failed_to_be_modified_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs);
-
-/// \brief Creates a \c drb_id_t from ASN.1 type.
-///
-/// This function is used by the following procedures:
-/// - f1ap_du_ue_context_modification_procedure
-///
-/// \param drb_item ASN.1 item with DRB-specific parameters to be removed.
-/// \return drb_id_t object.
-template <typename Asn1Type>
-drb_id_t make_drb_id(const Asn1Type& drb_item)
-{
-  return static_cast<drb_id_t>(drb_item.drb_id);
-}
+f1ap_drb_setup_request make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item);
 
 } // namespace srs_du
 } // namespace srsran

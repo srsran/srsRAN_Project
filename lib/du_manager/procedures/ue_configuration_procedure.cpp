@@ -135,7 +135,7 @@ void ue_configuration_procedure::update_ue_context()
   }
 
   // > Create new DU UE DRB objects.
-  for (const f1ap_drb_config_request& drbtoadd : request.drbs_to_setup) {
+  for (const f1ap_drb_setup_request& drbtoadd : request.drbs_to_setup) {
     if (drbtoadd.uluptnl_info_list.empty()) {
       proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
       continue;
@@ -246,7 +246,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   resp.result = true;
 
   // > Handle DRBs that were setup or failed to be setup.
-  for (const f1ap_drb_config_request& drb_req : request.drbs_to_setup) {
+  for (const f1ap_drb_setup_request& drb_req : request.drbs_to_setup) {
     if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
       resp.failed_drbs_setups.push_back({drb_req.drb_id, f1ap_cause_radio_network_t::no_radio_res_available});
       continue;
@@ -260,7 +260,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   }
 
   // > Handle DRBs that were modified or failed to be modified.
-  for (const f1ap_drb_config_request& drb_req : request.drbs_to_mod) {
+  for (const f1ap_drb_to_modify& drb_req : request.drbs_to_mod) {
     if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
       resp.failed_drb_mods.push_back({drb_req.drb_id, f1ap_cause_radio_network_t::unknown_drb_id});
       continue;

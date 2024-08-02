@@ -79,12 +79,12 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
   // >> Pass DRBs to modify.
   // Note: This field is used during RRC Reestablishment.
   for (const auto& drb : msg->drbs_to_be_modified_list) {
-    du_request.drbs_to_mod.push_back(make_drb_config_request(drb.value().drbs_to_be_modified_item()));
+    du_request.drbs_to_mod.push_back(make_drb_to_modify(drb.value().drbs_to_be_modified_item()));
   }
 
   // >> Pass DRBs to remove
   for (const auto& drb : msg->drbs_to_be_released_list) {
-    du_request.drbs_to_rem.push_back(make_drb_id(drb.value().drbs_to_be_released_item()));
+    du_request.drbs_to_rem.push_back(get_drb_id(drb.value().drbs_to_be_released_item()));
   }
 }
 
