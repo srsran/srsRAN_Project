@@ -317,7 +317,7 @@ bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti
   }
 
   // Generate UE Context Modification procedure for DRB Reestablishment.
-  msg = test_helpers::generate_ue_context_modification_request(*u.du_ue_id, *u.cu_ue_id, {}, {}, {drb_id_t::drb1});
+  msg = test_helpers::generate_ue_context_modification_request(*u.du_ue_id, *u.cu_ue_id, {}, {drb_id_t::drb1}, {});
   cu_notifier.last_f1ap_msgs.clear();
   du_hi->get_f1ap_message_handler().handle_message(msg);
   bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });

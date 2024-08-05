@@ -90,7 +90,8 @@ f1ap_message generate_ue_context_modification_request(gnb_du_ue_f1ap_id_t       
                                                       gnb_cu_ue_f1ap_id_t                    cu_ue_id,
                                                       const std::initializer_list<drb_id_t>& drbs_to_setup = {},
                                                       const std::initializer_list<drb_id_t>& drbs_to_mod   = {},
-                                                      const std::initializer_list<drb_id_t>& drbs_to_rem   = {});
+                                                      const std::initializer_list<drb_id_t>& drbs_to_rem   = {},
+                                                      byte_buffer                            rrc_container = {});
 
 /// \brief Generates dummy F1AP UE CONTEXT MODIFICATION RESPONSE message.
 f1ap_message

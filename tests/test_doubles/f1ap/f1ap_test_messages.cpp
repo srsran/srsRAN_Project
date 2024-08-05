@@ -405,7 +405,8 @@ srsran::test_helpers::generate_ue_context_modification_request(gnb_du_ue_f1ap_id
                                                                gnb_cu_ue_f1ap_id_t                    cu_ue_id,
                                                                const std::initializer_list<drb_id_t>& drbs_to_setup,
                                                                const std::initializer_list<drb_id_t>& drbs_to_mod,
-                                                               const std::initializer_list<drb_id_t>& drbs_to_rem)
+                                                               const std::initializer_list<drb_id_t>& drbs_to_rem,
+                                                               byte_buffer                            rrc_container)
 {
   using namespace asn1::f1ap;
   f1ap_message msg;
@@ -442,10 +443,8 @@ srsran::test_helpers::generate_ue_context_modification_request(gnb_du_ue_f1ap_id
     ++count;
   }
 
-  dl_msg->rrc_container_present = true;
-  report_fatal_error_if_not(
-      dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))),
-      "Failed to allocate RRC container");
+  dl_msg->rrc_container_present = not rrc_container.empty();
+  dl_msg->rrc_container         = rrc_container.copy();
 
   return msg;
 }
