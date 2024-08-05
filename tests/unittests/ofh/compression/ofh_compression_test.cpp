@@ -70,18 +70,7 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
   std::vector<uint8_t> test_compr_param = test_case.compressed_params.read();
 
   std::vector<cbf16_t> test_data_cbf16(test_data.size());
-  std::vector<cf_t>    test_data_cf(test_data.size());
   srsvec::convert(test_data_cbf16, test_data);
-
-  // Calculate error introduced by single-precision float to brain float conversion.
-  srsvec::convert(test_data_cf, test_data_cbf16);
-  std::vector<float> f_bf16_error;
-  for (unsigned i = 0, e = test_data.size(); i != e; ++i) {
-    float re_err = std::abs(std::real(test_data[i]) - std::real(test_data_cf[i]));
-    float im_err = std::abs(std::imag(test_data[i]) - std::imag(test_data_cf[i]));
-    f_bf16_error.push_back(re_err);
-    f_bf16_error.push_back(im_err);
-  }
 
   // Prepare vectors to store compression/decompression results.
   std::vector<compressed_prb> compressed_data(nof_prb);
@@ -101,8 +90,7 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
       int16_t sample = q.sign_extend(unpacker.unpack(read_pos, params.data_width));
       read_pos += params.data_width;
 
-      uint16_t err_tolerance =
-          1 + std::ceil(f_bf16_error[j * NOF_SUBCARRIERS_PER_RB * 2 + i] * iq_scaling * (1 << (params.data_width - 1)));
+      constexpr uint16_t err_tolerance = 1;
 
       ASSERT_TRUE(std::abs(sample - test_compr_data[j * NOF_SUBCARRIERS_PER_RB * 2 + i]) <= err_tolerance)
           << fmt::format("Compressed samples mismatch at position {}", j * NOF_SUBCARRIERS_PER_RB * 2 + i);
@@ -122,8 +110,8 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
     result = {std::real(result) / iq_scaling, std::imag(result) / iq_scaling};
   }
 
-  ASSERT_TRUE(std::equal(test_data_cf.begin(),
-                         test_data_cf.end(),
+  ASSERT_TRUE(std::equal(test_data.begin(),
+                         test_data.end(),
                          decompressed_data_cf.begin(),
                          [&](cf_t& test_value, cf_t& result) {
                            // Make sure the sign is the same and diff is minimal.
