@@ -81,7 +81,7 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
     nru_dl_message f1u_pdu{
         .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
-    cu_up_sim.created_du_notifs[0]->on_new_pdu(f1u_pdu);
+    cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
   }
 
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
@@ -141,7 +141,7 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
     nru_dl_message f1u_pdu{
         .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
-    cu_up_sim.created_du_notifs[0]->on_new_pdu(f1u_pdu);
+    cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
   }
 
   // DU receives F1AP UE Context Release Command.
@@ -230,7 +230,7 @@ TEST_F(du_high_tester, when_ue_context_modification_with_rem_drbs_is_received_th
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
     nru_dl_message f1u_pdu{
         .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
-    cu_up_sim.created_du_notifs[0]->on_new_pdu(f1u_pdu);
+    cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
   }
 
   // DU receives F1AP UE Context Modification Command.
@@ -269,7 +269,7 @@ TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_old_u
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
     nru_dl_message f1u_pdu{
         .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
-    cu_up_sim.created_du_notifs[0]->on_new_pdu(f1u_pdu);
+    cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
   }
 
   // Send DL RRC Message Transfer with old gNB-DU-UE-F1AP-ID.
