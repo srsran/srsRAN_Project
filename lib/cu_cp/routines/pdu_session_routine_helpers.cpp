@@ -73,18 +73,18 @@ bool srsran::srs_cu_cp::verify_and_log_cell_group_config(const byte_buffer&     
 }
 
 bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
-    rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
-    const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
-    const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
-    const std::vector<drb_id_t>&                                       drb_to_remove,
-    const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
-    const std::vector<byte_buffer>&                                    nas_pdus,
-    const std::optional<rrc_meas_cfg>                                  rrc_meas_cfg,
-    bool                                                               reestablish_srbs,
-    bool                                                               reestablish_drbs,
-    bool                                                               update_keys,
-    byte_buffer                                                        sib1,
-    const srslog::basic_logger&                                        logger)
+    rrc_reconfiguration_procedure_request&                           rrc_reconfig_args,
+    const std::vector<f1ap_srbs_to_be_setup_mod_item>&               srbs_to_be_setup_mod_list,
+    const std::map<pdu_session_id_t, up_pdu_session_context_update>& pdu_sessions,
+    const std::vector<drb_id_t>&                                     drb_to_remove,
+    const f1ap_du_to_cu_rrc_info&                                    du_to_cu_rrc_info,
+    const std::vector<byte_buffer>&                                  nas_pdus,
+    const std::optional<rrc_meas_cfg>                                rrc_meas_cfg,
+    bool                                                             reestablish_srbs,
+    bool                                                             reestablish_drbs,
+    bool                                                             update_keys,
+    byte_buffer                                                      sib1,
+    const srslog::basic_logger&                                      logger)
 {
   rrc_radio_bearer_config radio_bearer_config;
   // if default DRB is being setup, SRB2 needs to be setup as well
@@ -260,8 +260,8 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
 
 bool srsran::srs_cu_cp::update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                    srb_setup_mod_list,
-    slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                    drb_setup_mod_list,
+    std::vector<f1ap_srbs_to_be_setup_mod_item>&                                    srb_setup_mod_list,
+    std::vector<f1ap_drbs_to_be_setup_mod_item>&                                    drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                  pdu_session_resource_setup_list,
@@ -274,7 +274,7 @@ bool srsran::srs_cu_cp::update_setup_list(
   if (up_resource_mng.get_nof_drbs() == 0) {
     f1ap_srbs_to_be_setup_mod_item srb2;
     srb2.srb_id = srb_id_t::srb2;
-    srb_setup_mod_list.emplace(srb2.srb_id, srb2);
+    srb_setup_mod_list.push_back(srb2);
   }
 
   for (const auto& e1ap_item : pdu_session_resource_setup_list) {
@@ -375,7 +375,7 @@ bool srsran::srs_cu_cp::update_setup_list(
         logger.warning("Couldn't populate DRB setup/mod item {}", e1ap_drb_item.drb_id);
         return false;
       }
-      drb_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
+      drb_setup_mod_list.push_back(drb_setup_mod_item);
     }
 
     // Fail on any DRB that fails to be setup
@@ -391,8 +391,8 @@ bool srsran::srs_cu_cp::update_setup_list(
 }
 
 bool srsran::srs_cu_cp::update_setup_list(
-    slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                 srb_setup_mod_list,
-    slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                 drb_setup_mod_list,
+    std::vector<f1ap_srbs_to_be_setup_mod_item>&                                 srb_setup_mod_list,
+    std::vector<f1ap_drbs_to_be_setup_mod_item>&                                 drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                 pdu_session_resource_setup_list,
@@ -405,7 +405,7 @@ bool srsran::srs_cu_cp::update_setup_list(
   for (unsigned srb_id = 1; srb_id < 3; ++srb_id) {
     f1ap_srbs_to_be_setup_mod_item srb_item;
     srb_item.srb_id = int_to_srb_id(srb_id);
-    srb_setup_mod_list.emplace(srb_item.srb_id, srb_item);
+    srb_setup_mod_list.push_back(srb_item);
   }
 
   for (const auto& e1ap_item : pdu_session_resource_setup_list) {
@@ -444,7 +444,7 @@ bool srsran::srs_cu_cp::update_setup_list(
         logger.warning("Couldn't populate DRB setup/mod item {}", e1ap_drb_item.drb_id);
         return false;
       }
-      drb_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
+      drb_setup_mod_list.push_back(drb_setup_mod_item);
     }
 
     // Fail on any DRB that fails to be setup
@@ -586,7 +586,7 @@ bool srsran::srs_cu_cp::update_modify_list(
       }
 
       // Finally add DRB to setup to UE context modification.
-      ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
+      ue_context_mod_request.drbs_to_be_setup_mod_list.push_back(drb_setup_mod_item);
     }
 
     // Add DRB to be removed to UE context modifcation.

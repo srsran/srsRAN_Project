@@ -59,24 +59,23 @@ void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_lis
 /// \param[in] sib1 Packed SIB1 content for direct delivery to UE (optional).
 /// \param[in] logger Logger reference.
 /// \return True on success, false otherwise.
-bool fill_rrc_reconfig_args(
-    rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
-    const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
-    const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
-    const std::vector<drb_id_t>&                                       drb_to_remove,
-    const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
-    const std::vector<byte_buffer>&                                    nas_pdus,
-    const std::optional<rrc_meas_cfg>                                  rrc_meas_cfg,
-    bool                                                               reestablish_srbs,
-    bool                                                               reestablish_drbs,
-    bool                                                               update_keys,
-    byte_buffer                                                        sib1,
-    const srslog::basic_logger&                                        logger);
+bool fill_rrc_reconfig_args(rrc_reconfiguration_procedure_request&                           rrc_reconfig_args,
+                            const std::vector<f1ap_srbs_to_be_setup_mod_item>&               srbs_to_be_setup_mod_list,
+                            const std::map<pdu_session_id_t, up_pdu_session_context_update>& pdu_sessions,
+                            const std::vector<drb_id_t>&                                     drb_to_remove,
+                            const f1ap_du_to_cu_rrc_info&                                    du_to_cu_rrc_info,
+                            const std::vector<byte_buffer>&                                  nas_pdus,
+                            const std::optional<rrc_meas_cfg>                                rrc_meas_cfg,
+                            bool                                                             reestablish_srbs,
+                            bool                                                             reestablish_drbs,
+                            bool                                                             update_keys,
+                            byte_buffer                                                      sib1,
+                            const srslog::basic_logger&                                      logger);
 
 bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                    srb_setup_mod_list,
-    slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                    drb_setup_mod_list,
+    std::vector<f1ap_srbs_to_be_setup_mod_item>&                                    srb_setup_mod_list,
+    std::vector<f1ap_drbs_to_be_setup_mod_item>&                                    drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                  pdu_session_resource_setup_list,
@@ -85,8 +84,8 @@ bool update_setup_list(
     const security_indication_t& default_security_indication,
     const srslog::basic_logger&  logger);
 
-bool update_setup_list(slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                 srb_setup_mod_list,
-                       slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                 drb_setup_mod_list,
+bool update_setup_list(std::vector<f1ap_srbs_to_be_setup_mod_item>&                                 srb_setup_mod_list,
+                       std::vector<f1ap_drbs_to_be_setup_mod_item>&                                 drb_setup_mod_list,
                        const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
                        const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                                    pdu_session_resource_setup_list,

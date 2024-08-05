@@ -222,7 +222,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   f1ap_srbs_to_be_setup_mod_item srbs_to_be_setup_mod_item;
   srbs_to_be_setup_mod_item.srb_id   = int_to_srb_id(1);
   srbs_to_be_setup_mod_item.dupl_ind = f1ap_dupl_ind::true_value;
-  msg.srbs_to_be_setup_mod_list.emplace(int_to_srb_id(1), srbs_to_be_setup_mod_item);
+  msg.srbs_to_be_setup_mod_list.push_back(srbs_to_be_setup_mod_item);
 
   // drbs to be setup mod list
   f1ap_drbs_to_be_setup_mod_item drbs_to_be_setup_mod_item;
@@ -299,7 +299,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   // dupl activation
   drbs_to_be_setup_mod_item.dupl_activation = f1ap_dupl_activation::active;
 
-  msg.drbs_to_be_setup_mod_list.emplace(uint_to_drb_id(1), drbs_to_be_setup_mod_item);
+  msg.drbs_to_be_setup_mod_list.push_back(drbs_to_be_setup_mod_item);
 
   // drbs to be modified list
   f1ap_drb_to_modify drbs_to_be_modified_item;
@@ -308,7 +308,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   // ul up tnl info to be setup list
   drbs_to_be_modified_item.uluptnl_info_list.push_back(ul_up_tnl_info_item);
 
-  msg.drbs_to_be_modified_list.emplace(uint_to_drb_id(1), drbs_to_be_modified_item);
+  msg.drbs_to_be_modified_list.push_back(drbs_to_be_modified_item);
 
   // srbs to be released list
   msg.srbs_to_be_released_list.push_back(int_to_srb_id(1));

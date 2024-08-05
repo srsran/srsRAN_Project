@@ -155,7 +155,7 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
     drb_item.mode                                                                = rlc_mode::am;
     drb_item.pdcp_sn_len                                                         = pdcp_sn_size::size12bits;
 
-    req.drbs_to_be_setup_list.emplace(drb, drb_item);
+    req.drbs_to_be_setup_list.push_back(drb_item);
   }
   return req;
 }

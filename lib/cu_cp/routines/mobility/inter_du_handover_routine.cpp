@@ -262,7 +262,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
   for (const auto& srb_id : srbs) {
     f1ap_srbs_to_be_setup_mod_item srb_item;
     srb_item.srb_id = srb_id;
-    setup_request.srbs_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
+    setup_request.srbs_to_be_setup_list.push_back(srb_item);
   }
 
   for (const auto& pdu_session : next_config.pdu_sessions_to_setup_list) {
@@ -284,7 +284,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
       drb_item.mode              = drb_context.rlc_mod;
       drb_item.pdcp_sn_len       = drb_context.pdcp_cfg.tx.sn_size;
 
-      setup_request.drbs_to_be_setup_list.emplace(drb_item.drb_id, drb_item);
+      setup_request.drbs_to_be_setup_list.push_back(drb_item);
     }
   }
 
