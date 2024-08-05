@@ -144,7 +144,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
       auto& asn1_srbs_to_be_setup_mod_item =
           asn1_srbs_to_be_setup_mod_item_container.value().srbs_to_be_setup_mod_item();
 
-      f1ap_srbs_to_be_setup_mod_item_to_asn1(asn1_srbs_to_be_setup_mod_item, srbs_to_be_setup_mod_item);
+      f1ap_srb_to_setup_to_asn1(asn1_srbs_to_be_setup_mod_item, srbs_to_be_setup_mod_item);
       asn1_request->srbs_to_be_setup_mod_list.push_back(asn1_srbs_to_be_setup_mod_item_container);
     }
   }
@@ -177,11 +177,8 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
       asn1_drb_to_be_modified_item.drb_id = drb_id_to_uint(drb_to_be_modified_item.drb_id);
 
       // ul up tnl info to be setup list
-      for (const auto& ul_up_tnl_info_item : drb_to_be_modified_item.uluptnl_info_list) {
-        asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
-        up_transport_layer_info_to_asn1(item.ul_up_tnl_info, ul_up_tnl_info_item);
-        asn1_drb_to_be_modified_item.ul_up_tnl_info_to_be_setup_list.push_back(item);
-      }
+      asn1_drb_to_be_modified_item.ul_up_tnl_info_to_be_setup_list =
+          make_asn1_ul_up_tnl_info_list(drb_to_be_modified_item.uluptnl_info_list);
 
       asn1_request->drbs_to_be_modified_list.push_back(asn1_drb_to_be_modified_item_container);
     }

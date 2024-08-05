@@ -78,6 +78,17 @@ srsran::make_ul_up_tnl_info_list(const asn1::f1ap::ul_up_tnl_info_to_be_setup_li
   return uluptnl_info_list;
 }
 
+asn1::f1ap::ul_up_tnl_info_to_be_setup_list_l
+srsran::make_asn1_ul_up_tnl_info_list(span<const up_transport_layer_info> list)
+{
+  asn1::f1ap::ul_up_tnl_info_to_be_setup_list_l ret;
+  ret.resize(list.size());
+  for (unsigned i = 0; i != list.size(); ++i) {
+    up_transport_layer_info_to_asn1(ret[i].ul_up_tnl_info, list[i]);
+  }
+  return ret;
+}
+
 f1ap_drb_to_modify srsran::make_drb_to_modify(const asn1::f1ap::drbs_to_be_modified_item_s& drb_item)
 {
   f1ap_drb_to_modify drb_obj;

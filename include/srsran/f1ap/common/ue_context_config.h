@@ -18,6 +18,11 @@
 
 namespace srsran {
 
+/// Parameters of a SRB to setup in the DU UE context.
+struct f1ap_srb_to_setup {
+  srb_id_t srb_id = srb_id_t::nulltype;
+};
+
 /// Parameters of a failed SRB setup in the DU UE context.
 struct f1ap_srb_failed_to_setup {
   srb_id_t srb_id = srb_id_t::nulltype;

@@ -67,20 +67,8 @@ struct f1ap_scell_to_be_setup_mod_item {
   std::optional<f1ap_cell_ul_cfg> scell_ul_cfg;
 };
 
-enum class f1ap_dupl_ind { true_value = 0, false_value };
-
-struct f1ap_srbs_to_be_setup_mod_item {
-  srb_id_t                     srb_id = srb_id_t::nulltype;
-  std::optional<f1ap_dupl_ind> dupl_ind;
-};
-
-struct f1ap_eutran_qos {
-  uint16_t                          qci;
-  cu_cp_alloc_and_retention_prio    alloc_and_retention_prio;
-  std::optional<cu_cp_gbr_qos_info> gbr_qos_info;
-};
-
-enum class f1ap_notif_ctrl { active = 0, not_active };
+/// \brief Used to activate notification control for a given DRB.
+enum class drb_notification_control { active = 0, not_active };
 
 struct f1ap_flows_mapped_to_drb_item {
   qos_flow_id_t                   qos_flow_id = qos_flow_id_t::invalid;
@@ -88,24 +76,19 @@ struct f1ap_flows_mapped_to_drb_item {
 };
 
 struct f1ap_drb_info {
-  cu_cp_qos_flow_level_qos_params                                 drb_qos;
-  s_nssai_t                                                       s_nssai;
-  std::optional<f1ap_notif_ctrl>                                  notif_ctrl;
-  slotted_id_vector<qos_flow_id_t, f1ap_flows_mapped_to_drb_item> flows_mapped_to_drb_list;
+  cu_cp_qos_flow_level_qos_params drb_qos;
+  s_nssai_t                       s_nssai;
+  /// \brief Sets whether notification control is active.
+  /// [TS 38.473 8.3.1.2] If the Notification Control IE is included in the DRB to Be Setup List IE and it is set to
+  /// active, the gNB-DU shall, if supported, monitor the QoS of the DRB and notify the gNB-CU if the QoS cannot be
+  /// fulfilled any longer or if the QoS can be fulfilled again. The Notification Control IE can only be applied to GBR
+  /// bearers.
+  std::optional<drb_notification_control>    notif_ctrl;
+  std::vector<f1ap_flows_mapped_to_drb_item> flows_mapped_to_drb_list;
 };
-
-enum class f1ap_ul_ue_cfg { no_data = 0, shared, only };
-
-struct f1ap_ul_cfg {
-  f1ap_ul_ue_cfg ul_ue_cfg;
-};
-
-enum class f1ap_dupl_activation { active = 0, inactive };
 
 struct f1ap_drbs_to_be_setup_mod_item : public f1ap_drb_to_setup {
-  f1ap_drb_info                       qos_info;
-  std::optional<f1ap_ul_cfg>          ul_cfg;
-  std::optional<f1ap_dupl_activation> dupl_activation;
+  f1ap_drb_info qos_info;
 };
 
 struct f1ap_rat_freq_prio_info {
@@ -116,7 +99,6 @@ struct f1ap_rat_freq_prio_info {
 
 struct f1ap_res_coordination_transfer_info {
   nr_cell_identity m_enb_cell_id;
-  // ResourceCoordinationEUTRACellInfo (optional)
 };
 
 /// \brief Request from CU to F1AP-CU to start an F1AP "UE Context Setup" procedure, as per TS38.473 8.3.1.
@@ -130,7 +112,7 @@ struct f1ap_ue_context_setup_request {
   std::optional<f1ap_drx_cycle>                      drx_cycle;
   byte_buffer                                        res_coordination_transfer_container;
   std::vector<f1ap_scell_to_be_setup_mod_item>       scell_to_be_setup_list; // max size = 32
-  std::vector<f1ap_srbs_to_be_setup_mod_item>        srbs_to_be_setup_list;  // max size = 8
+  std::vector<f1ap_srb_to_setup>                     srbs_to_be_setup_list;  // max size = 8
   std::vector<f1ap_drbs_to_be_setup_mod_item>        drbs_to_be_setup_list;  // max size = 64
   std::optional<bool>                                inactivity_monitoring_request;
   std::optional<f1ap_rat_freq_prio_info>             rat_freq_prio_info;
@@ -216,7 +198,7 @@ struct f1ap_ue_context_modification_request {
   byte_buffer                                        rrc_container;
   std::vector<f1ap_scell_to_be_setup_mod_item>       scell_to_be_setup_mod_list;
   std::vector<f1ap_scell_to_be_remd_item>            scell_to_be_remd_list;
-  std::vector<f1ap_srbs_to_be_setup_mod_item>        srbs_to_be_setup_mod_list;
+  std::vector<f1ap_srb_to_setup>                     srbs_to_be_setup_mod_list;
   std::vector<f1ap_drbs_to_be_setup_mod_item>        drbs_to_be_setup_mod_list;
   std::vector<f1ap_drb_to_modify>                    drbs_to_be_modified_list;
   std::vector<srb_id_t>                              srbs_to_be_released_list;

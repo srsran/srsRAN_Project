@@ -219,9 +219,8 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   msg.scell_to_be_remd_list.push_back(scell_to_be_remd_item);
 
   // srbs to be setup mod list
-  f1ap_srbs_to_be_setup_mod_item srbs_to_be_setup_mod_item;
-  srbs_to_be_setup_mod_item.srb_id   = int_to_srb_id(1);
-  srbs_to_be_setup_mod_item.dupl_ind = f1ap_dupl_ind::true_value;
+  f1ap_srb_to_setup srbs_to_be_setup_mod_item;
+  srbs_to_be_setup_mod_item.srb_id = int_to_srb_id(1);
   msg.srbs_to_be_setup_mod_list.push_back(srbs_to_be_setup_mod_item);
 
   // drbs to be setup mod list
@@ -262,7 +261,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   drbs_to_be_setup_mod_item.qos_info.s_nssai.sd  = 128;
 
   // notif ctrl
-  drbs_to_be_setup_mod_item.qos_info.notif_ctrl = f1ap_notif_ctrl::active;
+  drbs_to_be_setup_mod_item.qos_info.notif_ctrl = drb_notification_control::active;
 
   // flows mapped to drb list
   f1ap_flows_mapped_to_drb_item flows_mapped_to_drb_item;
@@ -280,7 +279,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   // reflective qos attribute
   flows_mapped_to_drb_item.qos_flow_level_qos_params.reflective_qos_attribute = true;
 
-  drbs_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);
+  drbs_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(flows_mapped_to_drb_item);
 
   // ul up tnl info to be setup list
   up_transport_layer_info ul_up_tnl_info_item = {transport_layer_address::create_from_string("127.0.0.1"),
@@ -290,14 +289,6 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   // rlc mode
   drbs_to_be_setup_mod_item.mode        = rlc_mode::am;
   drbs_to_be_setup_mod_item.pdcp_sn_len = pdcp_sn_size::size12bits;
-
-  // ul cfg
-  f1ap_ul_cfg ul_cfg;
-  ul_cfg.ul_ue_cfg                 = f1ap_ul_ue_cfg::no_data;
-  drbs_to_be_setup_mod_item.ul_cfg = ul_cfg;
-
-  // dupl activation
-  drbs_to_be_setup_mod_item.dupl_activation = f1ap_dupl_activation::active;
 
   msg.drbs_to_be_setup_mod_list.push_back(drbs_to_be_setup_mod_item);
 

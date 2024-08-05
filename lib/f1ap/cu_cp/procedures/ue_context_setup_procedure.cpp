@@ -292,7 +292,7 @@ static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
       asn1_srbs_to_be_setup_item_container.set_item(ASN1_F1AP_ID_SRBS_TO_BE_SETUP_ITEM);
       auto& asn1_srbs_to_be_setup_item = asn1_srbs_to_be_setup_item_container.value().srbs_to_be_setup_item();
 
-      f1ap_srbs_to_be_setup_mod_item_to_asn1(asn1_srbs_to_be_setup_item, srbs_to_be_setup_item);
+      f1ap_srb_to_setup_to_asn1(asn1_srbs_to_be_setup_item, srbs_to_be_setup_item);
 
       asn1_request->srbs_to_be_setup_list.push_back(asn1_srbs_to_be_setup_item_container);
     }

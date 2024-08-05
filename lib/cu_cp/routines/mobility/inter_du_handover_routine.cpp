@@ -260,7 +260,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
   setup_request.cu_to_du_rrc_info.ue_cap_rat_container_list    = transfer_context.ue_cap_rat_container_list.copy();
 
   for (const auto& srb_id : srbs) {
-    f1ap_srbs_to_be_setup_mod_item srb_item;
+    f1ap_srb_to_setup srb_item;
     srb_item.srb_id = srb_id;
     setup_request.srbs_to_be_setup_list.push_back(srb_item);
   }
@@ -278,7 +278,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
         f1ap_flows_mapped_to_drb_item flow_item;
         flow_item.qos_flow_id               = flow.first;
         flow_item.qos_flow_level_qos_params = flow.second.qos_params;
-        drb_item.qos_info.flows_mapped_to_drb_list.emplace(flow_item.qos_flow_id, flow_item);
+        drb_item.qos_info.flows_mapped_to_drb_list.push_back(flow_item);
       }
       drb_item.uluptnl_info_list = drb_context.ul_up_tnl_info_to_be_setup_list;
       drb_item.mode              = drb_context.rlc_mod;

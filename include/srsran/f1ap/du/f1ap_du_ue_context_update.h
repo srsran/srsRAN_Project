@@ -37,7 +37,7 @@ struct f1ap_ue_context_creation_response {
   rnti_t crnti;
 };
 
-/// \brief DRB to be setup or modify in the UE context.
+/// \brief DRB to be setup or modified in the UE context.
 struct f1ap_drb_setup_request : public f1ap_drb_to_setup {
   five_qi_t five_qi;
   uint8_t   arp_priority_level;

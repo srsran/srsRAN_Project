@@ -182,15 +182,15 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
 /// \brief Convert \c f1ap_notif_ctrl to F1AP ASN.1.
 /// \param[in] notif_ctrl The common type notif ctrl.
 /// \return The ASN.1 notif ctrl.
-inline asn1::f1ap::notif_ctrl_e f1ap_notif_ctrl_to_asn1(const f1ap_notif_ctrl& notif_ctrl)
+inline asn1::f1ap::notif_ctrl_e f1ap_notif_ctrl_to_asn1(const drb_notification_control& notif_ctrl)
 {
   asn1::f1ap::notif_ctrl_e asn1_notif_ctrl;
 
   switch (notif_ctrl) {
-    case f1ap_notif_ctrl::active:
+    case drb_notification_control::active:
       asn1_notif_ctrl = asn1::f1ap::notif_ctrl_opts::options::active;
       break;
-    case f1ap_notif_ctrl::not_active:
+    case drb_notification_control::not_active:
       asn1_notif_ctrl = asn1::f1ap::notif_ctrl_opts::options::not_active;
       break;
   }
@@ -375,80 +375,15 @@ inline void f1ap_scell_to_be_setup_mod_item_to_asn1(template_asn1_item& asn1_sce
   }
 }
 
-/// \brief Convert \c f1ap_dupl_ind to F1AP ASN.1.
-/// \param[in] dupl_ind The common type dupl ind.
-/// \return The ASN.1 dupl ind.
-inline asn1::f1ap::dupl_ind_e f1ap_dupl_ind_to_asn1(const f1ap_dupl_ind& dupl_ind)
-{
-  asn1::f1ap::dupl_ind_e asn1_dupl_ind;
-
-  switch (dupl_ind) {
-    case f1ap_dupl_ind::true_value:
-      asn1_dupl_ind = asn1::f1ap::dupl_ind_opts::options::true_value;
-      break;
-    case f1ap_dupl_ind::false_value:
-      asn1_dupl_ind = asn1::f1ap::dupl_ind_opts::options::false_value;
-      break;
-  }
-
-  return asn1_dupl_ind;
-}
-
 /// \brief Convert srbs to be setup/setup mod item to F1AP ASN.1.
 /// \param[out] asn1_srbs_to_be_setup_mod_item The ASN.1 struct to store the result.
 /// \param[in] srbs_to_be_setup_mod_item The srbs to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
-inline void f1ap_srbs_to_be_setup_mod_item_to_asn1(template_asn1_item&                   asn1_srbs_to_be_setup_mod_item,
-                                                   const f1ap_srbs_to_be_setup_mod_item& srbs_to_be_setup_mod_item)
+inline void f1ap_srb_to_setup_to_asn1(template_asn1_item&      asn1_srbs_to_be_setup_mod_item,
+                                      const f1ap_srb_to_setup& srbs_to_be_setup_mod_item)
 {
   // srb id
   asn1_srbs_to_be_setup_mod_item.srb_id = srb_id_to_uint(srbs_to_be_setup_mod_item.srb_id);
-
-  // dupl ind
-  if (srbs_to_be_setup_mod_item.dupl_ind.has_value()) {
-    asn1_srbs_to_be_setup_mod_item.dupl_ind = f1ap_dupl_ind_to_asn1(srbs_to_be_setup_mod_item.dupl_ind.value());
-  }
-}
-
-/// \brief Convert \c f1ap_ul_ue_cfg to F1AP ASN.1.
-/// \param[in] ul_ue_cfg The common type ul ue cfg.
-/// \return The ASN.1 ul ue cfg.
-inline asn1::f1ap::ul_ue_cfg_e f1ap_ul_ue_cfg_to_asn1(const f1ap_ul_ue_cfg& ul_ue_cfg)
-{
-  asn1::f1ap::ul_ue_cfg_e asn1_ul_ue_cfg;
-
-  switch (ul_ue_cfg) {
-    case f1ap_ul_ue_cfg::no_data:
-      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::no_data;
-      break;
-    case f1ap_ul_ue_cfg::shared:
-      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::shared;
-      break;
-    case f1ap_ul_ue_cfg::only:
-      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::only;
-      break;
-  }
-
-  return asn1_ul_ue_cfg;
-}
-
-/// \brief Convert \c f1ap_dupl_activation to F1AP ASN.1.
-/// \param[in] dupl_activation The common type dupl activation.
-/// \return The ASN.1 dupl activation.
-inline asn1::f1ap::dupl_activation_e f1ap_dupl_activation_to_asn1(const f1ap_dupl_activation& dupl_activation)
-{
-  asn1::f1ap::dupl_activation_e asn1_dupl_activation;
-
-  switch (dupl_activation) {
-    case f1ap_dupl_activation::active:
-      asn1_dupl_activation = asn1::f1ap::dupl_activation_e::dupl_activation_opts::options::active;
-      break;
-    case f1ap_dupl_activation::inactive:
-      asn1_dupl_activation = asn1::f1ap::dupl_activation_e::dupl_activation_opts::options::inactive;
-      break;
-  }
-
-  return asn1_dupl_activation;
 }
 
 /// \brief Convert extension fields of drb to be setup item to F1AP ASN.1.
@@ -502,20 +437,6 @@ inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&          
   // pdcp sn size
   f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1_drb_to_be_setup_mod_item.ie_exts, drb_to_be_setup_mod_item);
   asn1_drb_to_be_setup_mod_item.ie_exts_present = true;
-
-  // ul cfg
-  if (drb_to_be_setup_mod_item.ul_cfg.has_value()) {
-    asn1_drb_to_be_setup_mod_item.ul_cfg_present = true;
-    asn1_drb_to_be_setup_mod_item.ul_cfg.ul_ue_cfg =
-        f1ap_ul_ue_cfg_to_asn1(drb_to_be_setup_mod_item.ul_cfg.value().ul_ue_cfg);
-  }
-
-  // dupl activation
-  if (drb_to_be_setup_mod_item.dupl_activation.has_value()) {
-    asn1_drb_to_be_setup_mod_item.dupl_activation_present = true;
-    asn1_drb_to_be_setup_mod_item.dupl_activation =
-        f1ap_dupl_activation_to_asn1(drb_to_be_setup_mod_item.dupl_activation.value());
-  }
 }
 
 /// \brief Convert \c f1ap_tx_action_ind to F1AP ASN.1.

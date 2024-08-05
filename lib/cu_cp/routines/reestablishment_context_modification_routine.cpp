@@ -103,9 +103,9 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
       // add SRB2 again
-      std::vector<f1ap_srbs_to_be_setup_mod_item> srbs_to_setup_list;
-      f1ap_srbs_to_be_setup_mod_item              srb_to_setup = {};
-      srb_to_setup.srb_id                                      = srb_id_t::srb2;
+      std::vector<f1ap_srb_to_setup> srbs_to_setup_list;
+      f1ap_srb_to_setup              srb_to_setup = {};
+      srb_to_setup.srb_id                         = srb_id_t::srb2;
       srbs_to_setup_list.push_back(srb_to_setup);
 
       // convert pdu session context
@@ -183,7 +183,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         e1ap_pdu_session_resource_modify_list)
 {
   // Set up SRB2 in DU
-  f1ap_srbs_to_be_setup_mod_item srb2;
+  f1ap_srb_to_setup srb2;
   srb2.srb_id = srb_id_t::srb2;
   ue_context_mod_req.srbs_to_be_setup_mod_list.push_back(srb2);
 
@@ -232,14 +232,14 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         // fill QoS info
         drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
         drb_setup_mod_item.qos_info.s_nssai    = drb_up_context.s_nssai;
-        drb_setup_mod_item.qos_info.notif_ctrl = f1ap_notif_ctrl::active;
+        drb_setup_mod_item.qos_info.notif_ctrl = drb_notification_control::active;
         // Fill QoS flows for UE context modification.
         for (const auto& flow : drb_up_context.qos_flows) {
           // Add mapped flows and extract required QoS info from original NGAP request
           f1ap_flows_mapped_to_drb_item mapped_flow_item;
           mapped_flow_item.qos_flow_id               = flow.first;
           mapped_flow_item.qos_flow_level_qos_params = drb_up_context.qos_params;
-          drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
+          drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(mapped_flow_item);
         }
         ue_context_mod_req.drbs_to_be_setup_mod_list.push_back(drb_setup_mod_item);
       }

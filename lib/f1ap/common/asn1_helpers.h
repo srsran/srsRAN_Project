@@ -36,6 +36,7 @@ asn1::f1ap::pdcp_sn_len_e pdcp_sn_size_to_f1ap_asn1(pdcp_sn_size sn_size);
 
 std::vector<up_transport_layer_info>
 make_ul_up_tnl_info_list(const asn1::f1ap::ul_up_tnl_info_to_be_setup_list_l& asn1_list);
+asn1::f1ap::ul_up_tnl_info_to_be_setup_list_l make_asn1_ul_up_tnl_info_list(span<const up_transport_layer_info> list);
 
 /// Convert 3GPP TS 38.473, DRBs-ToBeModified-Item ASN.1 type into f1ap_drb_to_modify.
 f1ap_drb_to_modify make_drb_to_modify(const asn1::f1ap::drbs_to_be_modified_item_s& drb_item);

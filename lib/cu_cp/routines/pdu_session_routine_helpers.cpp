@@ -74,7 +74,7 @@ bool srsran::srs_cu_cp::verify_and_log_cell_group_config(const byte_buffer&     
 
 bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                           rrc_reconfig_args,
-    const std::vector<f1ap_srbs_to_be_setup_mod_item>&               srbs_to_be_setup_mod_list,
+    const std::vector<f1ap_srb_to_setup>&                            srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>& pdu_sessions,
     const std::vector<drb_id_t>&                                     drb_to_remove,
     const f1ap_du_to_cu_rrc_info&                                    du_to_cu_rrc_info,
@@ -89,7 +89,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
   rrc_radio_bearer_config radio_bearer_config;
   // if default DRB is being setup, SRB2 needs to be setup as well
   if (!srbs_to_be_setup_mod_list.empty()) {
-    for (const f1ap_srbs_to_be_setup_mod_item& srb_to_add_mod : srbs_to_be_setup_mod_list) {
+    for (const f1ap_srb_to_setup& srb_to_add_mod : srbs_to_be_setup_mod_list) {
       rrc_srb_to_add_mod srb = {};
       srb.srb_id             = srb_to_add_mod.srb_id;
       if (reestablish_srbs) {
@@ -248,7 +248,7 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
     flow_mapped_to_drb.qos_flow_id               = e1ap_flow.qos_flow_id;
     flow_mapped_to_drb.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
 
-    drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(flow_mapped_to_drb.qos_flow_id, flow_mapped_to_drb);
+    drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(flow_mapped_to_drb);
 
     // Store flow QoS params in UP config.
     auto& next_config_flow_cfg      = next_drb_config.qos_flows.at(e1ap_flow.qos_flow_id);
@@ -260,7 +260,7 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
 
 bool srsran::srs_cu_cp::update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    std::vector<f1ap_srbs_to_be_setup_mod_item>&                                    srb_setup_mod_list,
+    std::vector<f1ap_srb_to_setup>&                                                 srb_setup_mod_list,
     std::vector<f1ap_drbs_to_be_setup_mod_item>&                                    drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
@@ -272,7 +272,7 @@ bool srsran::srs_cu_cp::update_setup_list(
 {
   // Set up SRB2 if this is the first DRB to be setup
   if (up_resource_mng.get_nof_drbs() == 0) {
-    f1ap_srbs_to_be_setup_mod_item srb2;
+    f1ap_srb_to_setup srb2;
     srb2.srb_id = srb_id_t::srb2;
     srb_setup_mod_list.push_back(srb2);
   }
@@ -391,7 +391,7 @@ bool srsran::srs_cu_cp::update_setup_list(
 }
 
 bool srsran::srs_cu_cp::update_setup_list(
-    std::vector<f1ap_srbs_to_be_setup_mod_item>&                                 srb_setup_mod_list,
+    std::vector<f1ap_srb_to_setup>&                                              srb_setup_mod_list,
     std::vector<f1ap_drbs_to_be_setup_mod_item>&                                 drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
@@ -403,7 +403,7 @@ bool srsran::srs_cu_cp::update_setup_list(
   // Set up SRB1 and SRB2 (this is for inter CU handover, so no SRBs are setup yet)
   // TODO: Do we need to setup SRB0 here as well?
   for (unsigned srb_id = 1; srb_id < 3; ++srb_id) {
-    f1ap_srbs_to_be_setup_mod_item srb_item;
+    f1ap_srb_to_setup srb_item;
     srb_item.srb_id = int_to_srb_id(srb_id);
     srb_setup_mod_list.push_back(srb_item);
   }
