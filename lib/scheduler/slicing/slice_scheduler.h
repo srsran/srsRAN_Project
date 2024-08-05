@@ -106,7 +106,7 @@ private:
     }
   };
 
-  ran_slice_instance& get_slice(const rrm_policy_member& rrm, const logical_channel_config& lc_cfg);
+  ran_slice_instance& get_slice(const logical_channel_config& lc_cfg);
 
   template <bool IsDownlink>
   std::optional<std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>> get_next_candidate();

@@ -343,7 +343,6 @@ static alloc_result alloc_ul_ue(const slice_ue&              u,
     if (ue_with_srb_data_only and not u.has_srb_bearers_in_slice()) {
       return {alloc_status::skip_ue};
     }
-    pending_newtx_bytes = u.pending_ul_newtx_bytes();
     if (pending_newtx_bytes == 0) {
       return {alloc_status::skip_ue};
     }

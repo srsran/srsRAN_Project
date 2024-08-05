@@ -14,16 +14,14 @@ using namespace srsran;
 
 slice_ue::slice_ue(const ue& u_) : u(u_), bearers(MAX_NOF_RB_LCIDS) {}
 
-void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
+void slice_ue::add_logical_channel(lcid_t lcid)
 {
   bearers.set(lcid);
-  lcid_to_lcg_id_lookup[lcid] = lcg_id;
 }
 
 void slice_ue::rem_logical_channel(lcid_t lcid)
 {
   bearers.reset(lcid);
-  lcid_to_lcg_id_lookup.erase(lcid);
 }
 
 bool slice_ue::has_pending_dl_newtx_bytes() const
@@ -55,7 +53,7 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
   unsigned                     pending_bytes = 0;
   for (unsigned lcid = 0; lcid < bearers.size(); ++lcid) {
     if (bearers.test(lcid)) {
-      lcg_ids.set(lcid_to_lcg_id_lookup.at(uint_to_lcid(lcid)));
+      lcg_ids.set(get_lcg_id_for_bearer(uint_to_lcid(lcid)));
     }
   }
   for (unsigned lcg_id = 0; lcg_id < lcg_ids.size(); ++lcg_id) {
@@ -87,4 +85,16 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
 bool slice_ue::has_pending_sr() const
 {
   return u.has_pending_sr();
+}
+
+lcg_id_t slice_ue::get_lcg_id_for_bearer(lcid_t lcid) const
+{
+  const ue_configuration*            ue_ded_cfg = u.ue_cfg_dedicated();
+  span<const logical_channel_config> lc_cfgs    = ue_ded_cfg->logical_channels();
+  for (const auto& cfg : lc_cfgs) {
+    if (cfg.lcid == lcid) {
+      return cfg.lc_group;
+    }
+  }
+  return LCG_ID_INVALID;
 }

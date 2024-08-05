@@ -123,6 +123,10 @@ TEST_F(default_slice_scheduler_test,
   ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
 
   next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_TRUE(next_dl_slice.has_value());
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+
+  next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_FALSE(next_dl_slice.has_value());
 }
 
@@ -340,4 +344,32 @@ TEST_F(rb_ratio_slice_scheduler_test,
   }
 
   ASSERT_EQ(slice_3_count, slice_2_count) << "Round-robin of slices of same priority failed";
+}
+
+class srb_prioritization_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
+{
+protected:
+  const ue_configuration* add_ue(du_ue_index_t ue_idx)
+  {
+    auto req               = test_cfg.get_default_ue_config_request();
+    req.ue_index           = ue_idx;
+    req.crnti              = to_rnti(0x4601 + ue_idx);
+    req.starts_in_fallback = false;
+    return slice_scheduler_test::add_ue(req);
+  }
+};
+
+TEST_F(srb_prioritization_slice_scheduler_test, schedules_default_srb_slice_first_before_any_other_slices)
+{
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
+  ASSERT_NE(this->add_ue(to_du_ue_index(1)), nullptr);
+  slice_sched.slot_indication();
+
+  auto next_ul_slice = slice_sched.get_next_ul_candidate();
+  ASSERT_TRUE(next_ul_slice.has_value());
+  ASSERT_EQ(next_ul_slice->id(), ran_slice_id_t{0});
+
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_TRUE(next_dl_slice.has_value());
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
 }

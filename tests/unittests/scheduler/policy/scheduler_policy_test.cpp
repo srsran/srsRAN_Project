@@ -12,8 +12,8 @@
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/policy/scheduler_policy_factory.h"
-#include "lib/scheduler/policy/scheduler_time_rr.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
+#include "lib/scheduler/slicing/slice_scheduler.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
@@ -51,18 +51,13 @@ protected:
     cell_cfg(*[this, &msg]() {
       return cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg)).get();
     }()),
-    slice_instance(ran_slice_id_t{0}, cell_cfg, slice_rrm_policy_config{})
+    slice_sched(cell_cfg, ues)
   {
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
 
     grid_alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
     ue_res_grid.add_cell(res_grid);
-
-    sched = create_scheduler_strategy(sched_cfg.ue);
-    if (sched == nullptr) {
-      report_fatal_error("Failed to initialize slice scheduler");
-    }
   }
 
   ~base_scheduler_policy_test() { srslog::flush(); }
@@ -72,7 +67,7 @@ protected:
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
     grid_alloc.slot_indication(next_slot);
-    slice_instance.slot_indication(ues);
+    slice_sched.slot_indication();
 
     res_grid.slot_indication(next_slot);
     pdcch_alloc.slot_indication(next_slot);
@@ -80,8 +75,20 @@ protected:
     uci_alloc.slot_indication(next_slot);
 
     if (cell_cfg.is_dl_enabled(next_slot)) {
-      sched->dl_sched(slice_pdsch_alloc, ue_res_grid, dl_slice_candidate);
-      sched->ul_sched(slice_pusch_alloc, ue_res_grid, ul_slice_candidate);
+      auto dl_slice_candidate = slice_sched.get_next_dl_candidate();
+      while (dl_slice_candidate.has_value()) {
+        auto&                           policy = slice_sched.get_policy(dl_slice_candidate->id());
+        dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{grid_alloc, *dl_slice_candidate};
+        policy.dl_sched(slice_pdsch_alloc, ue_res_grid, *dl_slice_candidate);
+        dl_slice_candidate = slice_sched.get_next_dl_candidate();
+      }
+      auto ul_slice_candidate = slice_sched.get_next_ul_candidate();
+      while (ul_slice_candidate.has_value()) {
+        auto&                           policy = slice_sched.get_policy(ul_slice_candidate->id());
+        ul_slice_ue_cell_grid_allocator slice_pusch_alloc{grid_alloc, *ul_slice_candidate};
+        policy.ul_sched(slice_pusch_alloc, ue_res_grid, *ul_slice_candidate);
+        ul_slice_candidate = slice_sched.get_next_ul_candidate();
+      }
     }
 
     // Log scheduler results.
@@ -114,9 +121,7 @@ protected:
         std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
     ues.add_ue(std::make_unique<ue>(
         ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
-    for (const auto& lc_cfg : *ue_req.cfg.lc_config_list) {
-      slice_instance.add_logical_channel(ues[ue_req.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
-    }
+    slice_sched.add_ue(*ues[ue_req.ue_index].ue_cfg_dedicated());
     return ues[ue_req.ue_index];
   }
 
@@ -177,14 +182,8 @@ protected:
   ue_resource_grid_view  ue_res_grid;
   ue_repository          ues;
   ue_cell_grid_allocator grid_alloc{sched_cfg.ue, ues, logger};
-  std::unique_ptr<scheduler_policy> sched;
-
-  // Default RAN slice instance.
-  ran_slice_instance              slice_instance;
-  dl_ran_slice_candidate          dl_slice_candidate{slice_instance};
-  ul_ran_slice_candidate          ul_slice_candidate{slice_instance};
-  dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{grid_alloc, dl_slice_candidate};
-  ul_slice_ue_cell_grid_allocator slice_pusch_alloc{grid_alloc, ul_slice_candidate};
+  // NOTE: Policy scheduler is part of RAN slice instances created in slice scheduler.
+  slice_scheduler slice_sched;
 
   slot_point next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };

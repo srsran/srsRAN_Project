@@ -62,9 +62,9 @@ void slice_scheduler::slot_indication()
 void slice_scheduler::add_ue(const ue_configuration& ue_cfg)
 {
   for (const logical_channel_config& lc_cfg : ue_cfg.logical_channels()) {
-    ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy, lc_cfg);
+    ran_slice_instance& sl_inst = get_slice(lc_cfg);
     if (ues.contains(ue_cfg.ue_index)) {
-      sl_inst.add_logical_channel(ues[ue_cfg.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
+      sl_inst.add_logical_channel(ues[ue_cfg.ue_index], lc_cfg.lcid);
     }
   }
 }
@@ -73,15 +73,15 @@ void slice_scheduler::reconf_ue(const ue_configuration& next_ue_cfg, const ue_co
 {
   // Remove old bearers.
   for (const logical_channel_config& lc_cfg : prev_ue_cfg.logical_channels()) {
-    ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy, lc_cfg);
+    ran_slice_instance& sl_inst = get_slice(lc_cfg);
     sl_inst.rem_logical_channel(prev_ue_cfg.ue_index, lc_cfg.lcid);
   }
 
   // Add new bearers.
   for (const logical_channel_config& lc_cfg : next_ue_cfg.logical_channels()) {
-    ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy, lc_cfg);
+    ran_slice_instance& sl_inst = get_slice(lc_cfg);
     if (ues.contains(next_ue_cfg.ue_index)) {
-      sl_inst.add_logical_channel(ues[next_ue_cfg.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
+      sl_inst.add_logical_channel(ues[next_ue_cfg.ue_index], lc_cfg.lcid);
     }
   }
 }
@@ -93,13 +93,13 @@ void slice_scheduler::rem_ue(du_ue_index_t ue_idx)
   }
 }
 
-ran_slice_instance& slice_scheduler::get_slice(const rrm_policy_member& rrm, const logical_channel_config& lc_cfg)
+ran_slice_instance& slice_scheduler::get_slice(const logical_channel_config& lc_cfg)
 {
-  auto it = std::find_if(slices.begin(), slices.end(), [&rrm](const ran_slice_sched_context& slice) {
-    return slice.inst.cfg.rrc_member == rrm;
+  auto it = std::find_if(slices.begin(), slices.end(), [&lc_cfg](const ran_slice_sched_context& slice) {
+    return slice.inst.cfg.rrc_member == lc_cfg.rrm_policy;
   });
-  if (it == slices.end()) {
-    // Slice with the provided RRM policy member was not found. If logicall channel is a SRB then return default SRB
+  if (it == slices.end() or lc_cfg.rrm_policy == rrm_policy_member{}) {
+    // Slice with the provided RRM policy member was not found. If logical channel is an SRB then return default SRB
     // slice. Else, return default DRB slice.
     if (lc_cfg.lcid < LCID_MIN_DRB) {
       return slices[default_srb_ran_slice_id.value()].inst;

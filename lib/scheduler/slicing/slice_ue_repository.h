@@ -53,7 +53,7 @@ public:
   const ue_cell& get_pcell() const { return u.get_pcell(); }
 
   /// Add LCID to the bearers of the UE belonging to this slice.
-  void add_logical_channel(lcid_t lcid, lcg_id_t lcg_id);
+  void add_logical_channel(lcid_t lcid);
 
   /// Remove LCID from the bearers of the UE belonging to this slice.
   void rem_logical_channel(lcid_t lcid);
@@ -75,9 +75,11 @@ public:
   bool has_pending_sr() const;
 
 private:
-  const ue&                            u;
-  bounded_bitset<MAX_NOF_RB_LCIDS>     bearers;
-  std::unordered_map<lcid_t, lcg_id_t> lcid_to_lcg_id_lookup;
+  /// Helper function to get LCG ID of a bearer.
+  lcg_id_t get_lcg_id_for_bearer(lcid_t lcid) const;
+
+  const ue&                        u;
+  bounded_bitset<MAX_NOF_RB_LCIDS> bearers;
 };
 
 /// Container that store all UEs belonging to a slice.
