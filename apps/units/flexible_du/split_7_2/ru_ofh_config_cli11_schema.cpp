@@ -269,6 +269,15 @@ static void configure_cli11_ofh_threads_args(CLI::App& app, ru_ofh_unit_expert_t
       ->capture_default_str();
 }
 
+static void configure_cli11_txrx_affinity_args(CLI::App& app, os_sched_affinity_bitmask& mask)
+{
+  add_option_function<std::string>(
+      app,
+      "--ru_txrx_cpus",
+      [&mask](const std::string& value) { parse_affinity_mask(mask, value, "txrx_cpus"); },
+      "Number of CPUs used for the Radio Unit tasks");
+}
+
 static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_expert_execution_config& config)
 {
   // Affinity section.
@@ -286,6 +295,27 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_exp
   CLI::App* ofh_threads_subcmd =
       add_subcommand(*threads_subcmd, "ofh", "Open Fronthaul thread configuration")->configurable();
   configure_cli11_ofh_threads_args(*ofh_threads_subcmd, config.threads);
+
+  // RU txrx affinity section.
+  add_option_cell(
+      *affinities_subcmd,
+      "--ofh",
+      [&config](const std::vector<std::string>& values) {
+        config.txrx_affinities.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("RU tx-rx thread CPU affinities",
+                          "RU tx-rx thread CPU affinities config #" + std::to_string(i));
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras();
+          configure_cli11_txrx_affinity_args(subapp, config.txrx_affinities[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the CPU affinities configuration for RU cells tx-rx threads. Number of entries specified defines the "
+      "number of tx-rx threads created. By default if no entries is specifies, the number of tx-rx threads equals the "
+      "number of RU cells");
 
   // Cell affinity section.
   add_option_cell(

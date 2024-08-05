@@ -31,6 +31,22 @@ static void fill_ru_ofh_expert_execution_section(YAML::Node node, const ru_ofh_u
     ofh_node["enable_dl_parallelization"] = config.threads.is_downlink_parallelized;
   }
 
+  if (config.txrx_affinities.size() > 0) {
+    YAML::Node affinities_node = node["affinities"];
+    YAML::Node ofh_node        = affinities_node["ofh"];
+    while (config.txrx_affinities.size() > ofh_node.size()) {
+      ofh_node.push_back(YAML::Node());
+    }
+
+    unsigned index = 0;
+    for (auto subnode : ofh_node) {
+      const auto& mask = config.txrx_affinities[index];
+
+      subnode["ru_txrx_cpus"] = fmt::format("{:,}", span<const size_t>(mask.get_cpu_ids()));
+      ++index;
+    }
+  }
+
   auto cell_affinities_node = node["cell_affinities"];
   while (config.cell_affinities.size() > cell_affinities_node.size()) {
     cell_affinities_node.push_back(YAML::Node());

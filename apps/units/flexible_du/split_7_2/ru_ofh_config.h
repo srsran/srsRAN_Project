@@ -129,6 +129,8 @@ struct ru_ofh_unit_expert_execution_config {
   os_sched_affinity_bitmask ru_timing_cpu;
   /// Expert thread configuration of the Open Fronthaul Radio Unit.
   ru_ofh_unit_expert_threads_config threads;
+  /// CPU affinities per RU txrx thread.
+  std::vector<os_sched_affinity_bitmask> txrx_affinities;
   /// CPU affinities per cell.
   std::vector<ru_ofh_unit_cpu_affinities_cell_config> cell_affinities = {{}};
 };
