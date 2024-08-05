@@ -171,7 +171,9 @@ public:
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
   /// \remark Excludes SRB0.
-  unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, lcid_t lcid = INVALID_LCID);
+  unsigned build_dl_transport_block_info(dl_msg_tb_info&                         tb_info,
+                                         unsigned                                tb_size_bytes,
+                                         const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids);
 
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
   /// SRB0 or for SRB1 in fallback mode.

@@ -177,11 +177,18 @@ bool ue::has_pending_sr() const
   return ul_lc_ch_mgr.has_pending_sr();
 }
 
-unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, lcid_t lcid)
+unsigned ue::build_dl_transport_block_info(dl_msg_tb_info&                         tb_info,
+                                           unsigned                                tb_size_bytes,
+                                           const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, lcid);
+  for (unsigned lcid = 0; lcid < lcids.size(); ++lcid) {
+    if (lcids.test(lcid)) {
+      total_subpdu_bytes +=
+          allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
+    }
+  }
   return total_subpdu_bytes;
 }
 
