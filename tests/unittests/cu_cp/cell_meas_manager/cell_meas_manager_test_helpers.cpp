@@ -96,8 +96,8 @@ void cell_meas_manager_test::create_default_manager()
   cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
   // Add periodic event.
-  rrc_report_cfg_nr periodic_report_cfg;
-  auto&             periodical_cfg = periodic_report_cfg.periodical.emplace();
+  rrc_report_cfg_nr         periodic_report_cfg;
+  rrc_periodical_report_cfg periodical_cfg;
 
   periodical_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
   periodical_cfg.report_interv          = 1024;
@@ -107,17 +107,19 @@ void cell_meas_manager_test::create_default_manager()
   periodical_cfg.report_quant_cell.sinr = true;
   periodical_cfg.max_report_cells       = 4;
 
-  periodic_report_cfg.periodical = periodical_cfg;
+  periodic_report_cfg = periodical_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_report_cfg);
 
   // Add A3 event.
-  rrc_report_cfg_nr a3_report_cfg;
-  auto&             event_trigger_cfg = a3_report_cfg.event_triggered.emplace();
-  auto&             event_a3          = a3_report_cfg.event_triggered.value().event_id.event_a3.emplace();
+  rrc_report_cfg_nr     a3_report_cfg;
+  rrc_event_trigger_cfg event_trigger_cfg = {};
 
+  rrc_event_a3 event_a3;
   event_a3.a3_offset.rsrp.emplace() = 6;
   event_a3.hysteresis               = 0;
   event_a3.time_to_trigger          = 100;
+
+  event_trigger_cfg.event_id = event_a3;
 
   event_trigger_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
   event_trigger_cfg.report_interv          = 1024;
@@ -133,7 +135,7 @@ void cell_meas_manager_test::create_default_manager()
   report_quant_rs_idxes.sinr              = true;
   event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
-  a3_report_cfg.event_triggered = event_trigger_cfg;
+  a3_report_cfg = event_trigger_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
 
   manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
@@ -172,8 +174,8 @@ void cell_meas_manager_test::create_manager_with_incomplete_cells_and_periodic_r
   cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
   // Add periodic event.
-  rrc_report_cfg_nr periodic_report_cfg;
-  auto&             periodical_cfg = periodic_report_cfg.periodical.emplace();
+  rrc_report_cfg_nr         periodic_report_cfg;
+  rrc_periodical_report_cfg periodical_cfg;
 
   periodical_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
   periodical_cfg.report_interv          = 1024;
@@ -183,17 +185,19 @@ void cell_meas_manager_test::create_manager_with_incomplete_cells_and_periodic_r
   periodical_cfg.report_quant_cell.sinr = true;
   periodical_cfg.max_report_cells       = 4;
 
-  periodic_report_cfg.periodical = periodical_cfg;
+  periodic_report_cfg = periodical_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_report_cfg);
 
   // Add A3 event.
-  rrc_report_cfg_nr a3_report_cfg;
-  auto&             event_trigger_cfg = a3_report_cfg.event_triggered.emplace();
-  auto&             event_a3          = a3_report_cfg.event_triggered.value().event_id.event_a3.emplace();
+  rrc_report_cfg_nr     a3_report_cfg;
+  rrc_event_trigger_cfg event_trigger_cfg = {};
 
+  rrc_event_a3 event_a3;
   event_a3.a3_offset.rsrp.emplace() = 6;
   event_a3.hysteresis               = 0;
   event_a3.time_to_trigger          = 100;
+
+  event_trigger_cfg.event_id = event_a3;
 
   event_trigger_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
   event_trigger_cfg.report_interv          = 1024;
@@ -209,7 +213,7 @@ void cell_meas_manager_test::create_manager_with_incomplete_cells_and_periodic_r
   report_quant_rs_idxes.sinr              = true;
   event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
-  a3_report_cfg.event_triggered = event_trigger_cfg;
+  a3_report_cfg = event_trigger_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
 
   manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
@@ -239,13 +243,15 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
   // Add A3 event.
-  rrc_report_cfg_nr a3_report_cfg;
-  auto&             event_trigger_cfg = a3_report_cfg.event_triggered.emplace();
-  auto&             event_a3          = a3_report_cfg.event_triggered.value().event_id.event_a3.emplace();
+  rrc_report_cfg_nr     a3_report_cfg;
+  rrc_event_trigger_cfg event_trigger_cfg = {};
+  rrc_event_a3          event_a3;
 
   event_a3.a3_offset.rsrp.emplace() = 6;
   event_a3.hysteresis               = 0;
   event_a3.time_to_trigger          = 100;
+
+  event_trigger_cfg.event_id = event_a3;
 
   event_trigger_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
   event_trigger_cfg.report_interv          = 1024;
@@ -261,7 +267,7 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   report_quant_rs_idxes.sinr              = true;
   event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
-  a3_report_cfg.event_triggered = event_trigger_cfg;
+  a3_report_cfg = event_trigger_cfg = {};
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), a3_report_cfg);
 
   manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);

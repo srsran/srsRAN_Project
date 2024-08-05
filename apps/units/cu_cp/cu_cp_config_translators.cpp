@@ -286,13 +286,13 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
       periodical.include_beam_meass          = true;
       periodical.use_allowed_cell_list       = false;
 
-      report_cfg.periodical = periodical;
+      report_cfg = periodical;
     } else {
-      srs_cu_cp::rrc_event_trigger_cfg event_trigger_cfg;
+      srs_cu_cp::rrc_event_trigger_cfg event_trigger_cfg = {};
 
       // event id
       // A3 event config is currently the only supported event.
-      auto& event_a3 = event_trigger_cfg.event_id.event_a3.emplace();
+      srs_cu_cp::rrc_event_a3 event_a3;
 
       if (report_cfg_item.a3_report_type.empty() or !report_cfg_item.a3_offset_db.has_value() or
           !report_cfg_item.a3_hysteresis_db.has_value()) {
@@ -314,6 +314,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
 
       event_a3.use_allowed_cell_list = false;
 
+      event_trigger_cfg.event_id = event_a3;
+
       event_trigger_cfg.rs_type = srs_cu_cp::rrc_nr_rs_type::ssb;
       if (report_cfg_item.report_interval_ms.has_value()) {
         event_trigger_cfg.report_interv = report_cfg_item.report_interval_ms.value();
@@ -332,7 +334,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
       report_quant_rs_idxes.sinr              = true;
       event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
-      report_cfg.event_triggered = event_trigger_cfg;
+      report_cfg = event_trigger_cfg;
     }
 
     // Store config.

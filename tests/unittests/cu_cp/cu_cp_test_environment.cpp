@@ -142,8 +142,8 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
 
       // Add periodic event
       {
-        rrc_report_cfg_nr periodic_report_cfg;
-        auto&             periodical_cfg = periodic_report_cfg.periodical.emplace();
+        rrc_report_cfg_nr         periodic_report_cfg;
+        rrc_periodical_report_cfg periodical_cfg;
 
         periodical_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
         periodical_cfg.report_interv          = 1024;
@@ -153,19 +153,21 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         periodical_cfg.report_quant_cell.sinr = true;
         periodical_cfg.max_report_cells       = 4;
 
-        periodic_report_cfg.periodical = periodical_cfg;
+        periodic_report_cfg = periodical_cfg;
         meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_report_cfg);
       }
 
       // Add event A3
       {
-        rrc_report_cfg_nr a3_report_cfg;
-        auto&             event_trigger_cfg = a3_report_cfg.event_triggered.emplace();
-        auto&             event_a3          = a3_report_cfg.event_triggered.value().event_id.event_a3.emplace();
+        rrc_report_cfg_nr     a3_report_cfg;
+        rrc_event_trigger_cfg event_trigger_cfg = {};
 
+        rrc_event_a3 event_a3;
         event_a3.a3_offset.rsrp.emplace() = 6;
         event_a3.hysteresis               = 0;
         event_a3.time_to_trigger          = 100;
+
+        event_trigger_cfg.event_id = event_a3;
 
         event_trigger_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
         event_trigger_cfg.report_interv          = 1024;
@@ -181,7 +183,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         report_quant_rs_idxes.sinr              = true;
         event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
-        a3_report_cfg.event_triggered = event_trigger_cfg;
+        a3_report_cfg = event_trigger_cfg;
         meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
       }
     }

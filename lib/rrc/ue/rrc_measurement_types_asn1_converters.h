@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/common.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
@@ -218,23 +217,22 @@ inline asn1::rrc_nr::ssb_cfg_mob_s ssb_cfg_mob_to_rrc_asn1(const rrc_ssb_cfg_mob
       // setup
       asn1_ssb_cfg_mob.ssb_to_measure.set_setup();
       // short bitmap
-      if (ssb_to_measure.setup.value().short_bitmap.has_value()) {
+      if (ssb_to_measure.setup.value().type == rrc_ssb_to_measure::bitmap_type_t::short_bitmap) {
         asn1_ssb_cfg_mob.ssb_to_measure.setup().set_short_bitmap();
         asn1_ssb_cfg_mob.ssb_to_measure.setup().short_bitmap().from_number(
-            ssb_to_measure.setup.value().short_bitmap.value());
-      } else if (ssb_to_measure.setup.value().medium_bitmap.has_value()) {
-        // medium bitmap
+            static_cast<uint8_t>(ssb_to_measure.setup.value().bitmap));
+      }
+      // medium bitmap
+      if (ssb_to_measure.setup.value().type == rrc_ssb_to_measure::bitmap_type_t::medium_bitmap) {
         asn1_ssb_cfg_mob.ssb_to_measure.setup().set_medium_bitmap();
         asn1_ssb_cfg_mob.ssb_to_measure.setup().medium_bitmap().from_number(
-            ssb_to_measure.setup.value().medium_bitmap.value());
-      } else if (ssb_to_measure.setup.value().long_bitmap.has_value()) {
-        // long bitmap
-        asn1_ssb_cfg_mob.ssb_to_measure.setup().set_long_bitmap();
-        asn1_ssb_cfg_mob.ssb_to_measure.setup().long_bitmap().from_number(
-            ssb_to_measure.setup.value().long_bitmap.value());
+            static_cast<uint8_t>(ssb_to_measure.setup.value().bitmap));
       }
-      // error
-      report_fatal_error("Cannot convert SSB to measure to ASN.1 type");
+      // long bitmap
+      if (ssb_to_measure.setup.value().type == rrc_ssb_to_measure::bitmap_type_t::long_bitmap) {
+        asn1_ssb_cfg_mob.ssb_to_measure.setup().set_long_bitmap();
+        asn1_ssb_cfg_mob.ssb_to_measure.setup().long_bitmap().from_number(ssb_to_measure.setup.value().bitmap);
+      }
     }
   }
 
@@ -285,24 +283,20 @@ csi_res_cfg_mob_to_rrc_asn1(const rrc_csi_rs_res_cfg_mob_setup_release& csi_rs_r
         // csi rs idx
         asn1_csi_rs_res_mob.csi_rs_idx = csi_rs_res_mob.csi_rs_idx;
         // slot cfg
-        if (csi_rs_res_mob.slot_cfg.ms4.has_value()) {
-          asn1_csi_rs_res_mob.slot_cfg.set_ms4();
-          asn1_csi_rs_res_mob.slot_cfg.ms4() = csi_rs_res_mob.slot_cfg.ms4.value();
-        } else if (csi_rs_res_mob.slot_cfg.ms5.has_value()) {
-          asn1_csi_rs_res_mob.slot_cfg.set_ms5();
-          asn1_csi_rs_res_mob.slot_cfg.ms5() = csi_rs_res_mob.slot_cfg.ms5.value();
-        } else if (csi_rs_res_mob.slot_cfg.ms10.has_value()) {
-          asn1_csi_rs_res_mob.slot_cfg.set_ms10();
-          asn1_csi_rs_res_mob.slot_cfg.ms10() = csi_rs_res_mob.slot_cfg.ms10.value();
-        } else if (csi_rs_res_mob.slot_cfg.ms20.has_value()) {
-          asn1_csi_rs_res_mob.slot_cfg.set_ms20();
-          asn1_csi_rs_res_mob.slot_cfg.ms20() = csi_rs_res_mob.slot_cfg.ms20.value();
-        } else if (csi_rs_res_mob.slot_cfg.ms40.has_value()) {
-          asn1_csi_rs_res_mob.slot_cfg.set_ms40();
-          asn1_csi_rs_res_mob.slot_cfg.ms40() = csi_rs_res_mob.slot_cfg.ms40.value();
-        } else {
-          // error
-          report_fatal_error("Cannot convert slot cfg to ASN.1 type");
+        if (csi_rs_res_mob.slot_cfg.period == rrc_slot_cfg::period_t::ms4) {
+          asn1_csi_rs_res_mob.slot_cfg.set_ms4() = static_cast<uint8_t>(csi_rs_res_mob.slot_cfg.offset);
+        }
+        if (csi_rs_res_mob.slot_cfg.period == rrc_slot_cfg::period_t::ms5) {
+          asn1_csi_rs_res_mob.slot_cfg.set_ms5() = static_cast<uint8_t>(csi_rs_res_mob.slot_cfg.offset);
+        }
+        if (csi_rs_res_mob.slot_cfg.period == rrc_slot_cfg::period_t::ms10) {
+          asn1_csi_rs_res_mob.slot_cfg.set_ms10() = static_cast<uint8_t>(csi_rs_res_mob.slot_cfg.offset);
+        }
+        if (csi_rs_res_mob.slot_cfg.period == rrc_slot_cfg::period_t::ms20) {
+          asn1_csi_rs_res_mob.slot_cfg.set_ms20() = static_cast<uint8_t>(csi_rs_res_mob.slot_cfg.offset);
+        }
+        if (csi_rs_res_mob.slot_cfg.period == rrc_slot_cfg::period_t::ms40) {
+          asn1_csi_rs_res_mob.slot_cfg.set_ms40() = csi_rs_res_mob.slot_cfg.offset;
         }
         // associated ssb
         if (csi_rs_res_mob.associated_ssb.has_value()) {
@@ -312,15 +306,15 @@ csi_res_cfg_mob_to_rrc_asn1(const rrc_csi_rs_res_cfg_mob_setup_release& csi_rs_r
               csi_rs_res_mob.associated_ssb.value().is_quasi_colocated;
         }
         // freq domain alloc
-        if (csi_rs_res_mob.freq_domain_alloc.row1.has_value()) {
+        if (std::holds_alternative<rrc_freq_domain_alloc_row1>(csi_rs_res_mob.freq_domain_alloc)) {
           asn1_csi_rs_res_mob.freq_domain_alloc.set_row1();
-          asn1_csi_rs_res_mob.freq_domain_alloc.row1().from_number(csi_rs_res_mob.freq_domain_alloc.row1.value());
-        } else if (csi_rs_res_mob.freq_domain_alloc.row2.has_value()) {
+          asn1_csi_rs_res_mob.freq_domain_alloc.row1().from_number(
+              std::get<rrc_freq_domain_alloc_row1>(csi_rs_res_mob.freq_domain_alloc));
+        }
+        if (std::holds_alternative<rrc_freq_domain_alloc_row2>(csi_rs_res_mob.freq_domain_alloc)) {
           asn1_csi_rs_res_mob.freq_domain_alloc.set_row2();
-          asn1_csi_rs_res_mob.freq_domain_alloc.row2().from_number(csi_rs_res_mob.freq_domain_alloc.row2.value());
-        } else {
-          // error
-          report_fatal_error("Cannot convert freq domain alloc to ASN.1 type");
+          asn1_csi_rs_res_mob.freq_domain_alloc.row2().from_number(
+              std::get<rrc_freq_domain_alloc_row2>(csi_rs_res_mob.freq_domain_alloc));
         }
         // first ofdm symbol in time domain
         asn1_csi_rs_res_mob.first_ofdm_symbol_in_time_domain = csi_rs_res_mob.first_ofdm_symbol_in_time_domain;
@@ -574,59 +568,56 @@ template <class asn1_srs_periodicity_and_offset>
 void srs_periodicity_and_offset_to_rrc_asn1(asn1_srs_periodicity_and_offset&      asn1_srs_period_and_offset,
                                             const rrc_srs_periodicity_and_offset& srs_period_and_offset)
 {
-  if (srs_period_and_offset.is_sl1) {
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms1) {
     asn1_srs_period_and_offset.set_sl1();
-  } else if (srs_period_and_offset.sl2.has_value()) {
-    asn1_srs_period_and_offset.set_sl2();
-    asn1_srs_period_and_offset.sl2() = srs_period_and_offset.sl2.value();
-  } else if (srs_period_and_offset.sl4.has_value()) {
-    asn1_srs_period_and_offset.set_sl4();
-    asn1_srs_period_and_offset.sl4() = srs_period_and_offset.sl4.value();
-  } else if (srs_period_and_offset.sl5.has_value()) {
-    asn1_srs_period_and_offset.set_sl5();
-    asn1_srs_period_and_offset.sl5() = srs_period_and_offset.sl5.value();
-  } else if (srs_period_and_offset.sl8.has_value()) {
-    asn1_srs_period_and_offset.set_sl8();
-    asn1_srs_period_and_offset.sl8() = srs_period_and_offset.sl8.value();
-  } else if (srs_period_and_offset.sl10.has_value()) {
-    asn1_srs_period_and_offset.set_sl10();
-    asn1_srs_period_and_offset.sl10() = srs_period_and_offset.sl10.value();
-  } else if (srs_period_and_offset.sl16.has_value()) {
-    asn1_srs_period_and_offset.set_sl16();
-    asn1_srs_period_and_offset.sl16() = srs_period_and_offset.sl16.value();
-  } else if (srs_period_and_offset.sl20.has_value()) {
-    asn1_srs_period_and_offset.set_sl20();
-    asn1_srs_period_and_offset.sl20() = srs_period_and_offset.sl20.value();
-  } else if (srs_period_and_offset.sl32.has_value()) {
-    asn1_srs_period_and_offset.set_sl32();
-    asn1_srs_period_and_offset.sl32() = srs_period_and_offset.sl32.value();
-  } else if (srs_period_and_offset.sl40.has_value()) {
-    asn1_srs_period_and_offset.set_sl40();
-    asn1_srs_period_and_offset.sl40() = srs_period_and_offset.sl40.value();
-  } else if (srs_period_and_offset.sl64.has_value()) {
-    asn1_srs_period_and_offset.set_sl64();
-    asn1_srs_period_and_offset.sl64() = srs_period_and_offset.sl64.value();
-  } else if (srs_period_and_offset.sl80.has_value()) {
-    asn1_srs_period_and_offset.set_sl80();
-    asn1_srs_period_and_offset.sl80() = srs_period_and_offset.sl80.value();
-  } else if (srs_period_and_offset.sl160.has_value()) {
-    asn1_srs_period_and_offset.set_sl160();
-    asn1_srs_period_and_offset.sl160() = srs_period_and_offset.sl160.value();
-  } else if (srs_period_and_offset.sl320.has_value()) {
-    asn1_srs_period_and_offset.set_sl320();
-    asn1_srs_period_and_offset.sl320() = srs_period_and_offset.sl320.value();
-  } else if (srs_period_and_offset.sl640.has_value()) {
-    asn1_srs_period_and_offset.set_sl640();
-    asn1_srs_period_and_offset.sl640() = srs_period_and_offset.sl640.value();
-  } else if (srs_period_and_offset.sl1280.has_value()) {
-    asn1_srs_period_and_offset.set_sl1280();
-    asn1_srs_period_and_offset.sl1280() = srs_period_and_offset.sl1280.value();
-  } else if (srs_period_and_offset.sl2560.has_value()) {
-    asn1_srs_period_and_offset.set_sl2560();
-    asn1_srs_period_and_offset.sl2560() = srs_period_and_offset.sl2560.value();
-  } else {
-    // error
-    report_fatal_error("Cannot convert SRS periodicity and offset to ASN.1 type");
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms2) {
+    asn1_srs_period_and_offset.set_sl2() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms4) {
+    asn1_srs_period_and_offset.set_sl4() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms5) {
+    asn1_srs_period_and_offset.set_sl5() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms8) {
+    asn1_srs_period_and_offset.set_sl8() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms10) {
+    asn1_srs_period_and_offset.set_sl10() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms16) {
+    asn1_srs_period_and_offset.set_sl16() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms20) {
+    asn1_srs_period_and_offset.set_sl20() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms32) {
+    asn1_srs_period_and_offset.set_sl32() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms40) {
+    asn1_srs_period_and_offset.set_sl40() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms64) {
+    asn1_srs_period_and_offset.set_sl64() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms80) {
+    asn1_srs_period_and_offset.set_sl80() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms160) {
+    asn1_srs_period_and_offset.set_sl160() = static_cast<uint8_t>(srs_period_and_offset.offset);
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms320) {
+    asn1_srs_period_and_offset.set_sl320() = srs_period_and_offset.offset;
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms640) {
+    asn1_srs_period_and_offset.set_sl640() = srs_period_and_offset.offset;
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms1280) {
+    asn1_srs_period_and_offset.set_sl1280() = srs_period_and_offset.offset;
+  }
+  if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms2560) {
+    asn1_srs_period_and_offset.set_sl2560() = srs_period_and_offset.offset;
   }
 };
 
@@ -647,17 +638,16 @@ inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const rrc_srs_res& srs_res)
   }
 
   // tx comb
-  if (srs_res.tx_comb.n2.has_value()) {
+  if (const auto* n2 = std::get_if<rrc_n2>(&srs_res.tx_comb); n2 != nullptr) {
     asn1_srs_res.tx_comb.set_n2();
-    asn1_srs_res.tx_comb.n2().comb_offset_n2  = srs_res.tx_comb.n2.value().comb_offset_n2;
-    asn1_srs_res.tx_comb.n2().cyclic_shift_n2 = srs_res.tx_comb.n2.value().cyclic_shift_n2;
-  } else if (srs_res.tx_comb.n4.has_value()) {
+    asn1_srs_res.tx_comb.n2().comb_offset_n2  = n2->comb_offset_n2;
+    asn1_srs_res.tx_comb.n2().cyclic_shift_n2 = n2->cyclic_shift_n2;
+  }
+
+  if (const auto* n4 = std::get_if<rrc_n4>(&srs_res.tx_comb); n4 != nullptr) {
     asn1_srs_res.tx_comb.set_n4();
-    asn1_srs_res.tx_comb.n4().comb_offset_n4  = srs_res.tx_comb.n4.value().comb_offset_n4;
-    asn1_srs_res.tx_comb.n4().cyclic_shift_n4 = srs_res.tx_comb.n4.value().cyclic_shift_n4;
-  } else {
-    // error
-    report_fatal_error("Cannot convert tx comb to ASN.1 type");
+    asn1_srs_res.tx_comb.n4().comb_offset_n4  = n4->comb_offset_n4;
+    asn1_srs_res.tx_comb.n4().cyclic_shift_n4 = n4->cyclic_shift_n4;
   }
 
   // res map
@@ -680,21 +670,19 @@ inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const rrc_srs_res& srs_res)
   asn1::string_to_enum(asn1_srs_res.group_or_seq_hop, srs_res.group_or_seq_hop);
 
   // res type
-  if (srs_res.res_type.is_aperiodic) {
+  if (std::holds_alternative<bool>(srs_res.res_type)) {
     asn1_srs_res.res_type.set_aperiodic();
-  } else if (srs_res.res_type.semi_persistent.has_value()) {
+  }
+  if (std::holds_alternative<rrc_semi_persistent>(srs_res.res_type)) {
     asn1_srs_res.res_type.set_semi_persistent();
     srs_periodicity_and_offset_to_rrc_asn1(asn1_srs_res.res_type.semi_persistent().periodicity_and_offset_sp,
-                                           srs_res.res_type.semi_persistent.value().periodicity_and_offset_sp_p);
-  } else if (srs_res.res_type.periodic.has_value()) {
+                                           std::get<rrc_semi_persistent>(srs_res.res_type).periodicity_and_offset_sp_p);
+  }
+  if (std::holds_alternative<rrc_periodic>(srs_res.res_type)) {
     asn1_srs_res.res_type.set_periodic();
     srs_periodicity_and_offset_to_rrc_asn1(asn1_srs_res.res_type.periodic().periodicity_and_offset_p,
-                                           srs_res.res_type.periodic.value().periodicity_and_offset_sp_p);
-  } else {
-    // error
-    report_fatal_error("Cannot convert res type to ASN.1 type");
+                                           std::get<rrc_periodic>(srs_res.res_type).periodicity_and_offset_sp_p);
   }
-
   // seq id
   asn1_srs_res.seq_id = srs_res.seq_id;
 
@@ -707,21 +695,22 @@ inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const rrc_srs_res& srs_res)
           srs_res.spatial_relation_info.value().serving_cell_id.value();
     }
     // ref sig
-    if (srs_res.spatial_relation_info.value().ref_sig.ssb_idx.has_value()) {
-      asn1_srs_res.spatial_relation_info.ref_sig.set_ssb_idx() =
-          srs_res.spatial_relation_info.value().ref_sig.ssb_idx.value();
-    } else if (srs_res.spatial_relation_info.value().ref_sig.csi_rs_idx.has_value()) {
-      asn1_srs_res.spatial_relation_info.ref_sig.set_csi_rs_idx() =
-          srs_res.spatial_relation_info.value().ref_sig.csi_rs_idx.value();
-    } else if (srs_res.spatial_relation_info.value().ref_sig.srs.has_value()) {
+    if (std::holds_alternative<rrc_srs_spatial_relation_info::ssb_idx_t>(
+            srs_res.spatial_relation_info.value().ref_sig)) {
+      asn1_srs_res.spatial_relation_info.ref_sig.set_ssb_idx() = static_cast<uint8_t>(
+          std::get<rrc_srs_spatial_relation_info::ssb_idx_t>(srs_res.spatial_relation_info.value().ref_sig));
+    }
+    if (std::holds_alternative<rrc_srs_spatial_relation_info::csi_rs_idx_t>(
+            srs_res.spatial_relation_info.value().ref_sig)) {
+      asn1_srs_res.spatial_relation_info.ref_sig.set_csi_rs_idx() = static_cast<uint8_t>(
+          std::get<rrc_srs_spatial_relation_info::csi_rs_idx_t>(srs_res.spatial_relation_info.value().ref_sig));
+    }
+    if (std::holds_alternative<rrc_srs>(srs_res.spatial_relation_info.value().ref_sig)) {
       asn1_srs_res.spatial_relation_info.ref_sig.set_srs();
       asn1_srs_res.spatial_relation_info.ref_sig.srs().res_id =
-          srs_res.spatial_relation_info.value().ref_sig.srs.value().res_id;
+          std::get<rrc_srs>(srs_res.spatial_relation_info.value().ref_sig).res_id;
       asn1_srs_res.spatial_relation_info.ref_sig.srs().ul_bwp =
-          srs_res.spatial_relation_info.value().ref_sig.srs.value().ul_bwp;
-    } else {
-      // error
-      report_fatal_error("Cannot convert ref sig to ASN.1 type");
+          std::get<rrc_srs>(srs_res.spatial_relation_info.value().ref_sig).ul_bwp;
     }
   }
 
@@ -838,157 +827,159 @@ void meas_trigger_quant_to_rrc_asn1(asn1_meas_trigger_quant_quant_offset& asn1_m
 inline asn1::rrc_nr::event_trigger_cfg_s
 event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigger_cfg& event_triggered_cfg)
 {
-  asn1::rrc_nr::event_trigger_cfg_s asn1_event_triggered_cfg;
+  asn1::rrc_nr::event_trigger_cfg_s asn1_event_trigger_cfg = {};
 
   // report add neigh meas present
-  asn1_event_triggered_cfg.report_add_neigh_meas_present = event_triggered_cfg.report_add_neigh_meas_present;
+  asn1_event_trigger_cfg.report_add_neigh_meas_present = event_triggered_cfg.report_add_neigh_meas_present;
 
   // event id
-  if (event_triggered_cfg.event_id.event_a1.has_value()) {
+  if (const auto* a1 = std::get_if<rrc_event_a1>(&event_triggered_cfg.event_id); a1 != nullptr) {
     // event a1
-    auto& asn1_event_a1 = asn1_event_triggered_cfg.event_id.set_event_a1();
+    auto& asn1_event_a1 = asn1_event_trigger_cfg.event_id.set_event_a1();
     // a1 thres
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a1.a1_thres, event_triggered_cfg.event_id.event_a1.value().a1_thres);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a1.a1_thres, a1->a1_thres);
     // report on leave
-    asn1_event_a1.report_on_leave = event_triggered_cfg.event_id.event_a1.value().report_on_leave;
+    asn1_event_a1.report_on_leave = a1->report_on_leave;
     // hysteresis
-    asn1_event_a1.hysteresis = event_triggered_cfg.event_id.event_a1.value().hysteresis;
+    asn1_event_a1.hysteresis = a1->hysteresis;
     // time to trigger
-    asn1::number_to_enum(asn1_event_a1.time_to_trigger, event_triggered_cfg.event_id.event_a1.value().time_to_trigger);
-  } else if (event_triggered_cfg.event_id.event_a2.has_value()) {
+    asn1::number_to_enum(asn1_event_a1.time_to_trigger, a1->time_to_trigger);
+  }
+  if (const auto* a2 = std::get_if<rrc_event_a2>(&event_triggered_cfg.event_id); a2 != nullptr) {
     // event a2
-    auto& asn1_event_a2 = asn1_event_triggered_cfg.event_id.set_event_a2();
+    auto& asn1_event_a2 = asn1_event_trigger_cfg.event_id.set_event_a2();
     // a2 thres
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a2.a2_thres, event_triggered_cfg.event_id.event_a2.value().a2_thres);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a2.a2_thres, a2->a2_thres);
     // report on leave
-    asn1_event_a2.report_on_leave = event_triggered_cfg.event_id.event_a2.value().report_on_leave;
+    asn1_event_a2.report_on_leave = a2->report_on_leave;
     // hysteresis
-    asn1_event_a2.hysteresis = event_triggered_cfg.event_id.event_a2.value().hysteresis;
+    asn1_event_a2.hysteresis = a2->hysteresis;
     // time to trigger
-    asn1::number_to_enum(asn1_event_a2.time_to_trigger, event_triggered_cfg.event_id.event_a2.value().time_to_trigger);
-  } else if (event_triggered_cfg.event_id.event_a3.has_value()) {
+    asn1::number_to_enum(asn1_event_a2.time_to_trigger, a2->time_to_trigger);
+  }
+  if (const auto* a3 = std::get_if<rrc_event_a3>(&event_triggered_cfg.event_id); a3 != nullptr) {
     // event a3
-    auto& asn1_event_a3 = asn1_event_triggered_cfg.event_id.set_event_a3();
+    auto& asn1_event_a3 = asn1_event_trigger_cfg.event_id.set_event_a3();
     // a3 offset
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a3.a3_offset, event_triggered_cfg.event_id.event_a3.value().a3_offset);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a3.a3_offset, a3->a3_offset);
     // report on leave
-    asn1_event_a3.report_on_leave = event_triggered_cfg.event_id.event_a3.value().report_on_leave;
+    asn1_event_a3.report_on_leave = a3->report_on_leave;
     // hysteresis
-    asn1_event_a3.hysteresis = event_triggered_cfg.event_id.event_a3.value().hysteresis;
+    asn1_event_a3.hysteresis = a3->hysteresis;
     // time to trigger
-    asn1::number_to_enum(asn1_event_a3.time_to_trigger, event_triggered_cfg.event_id.event_a3.value().time_to_trigger);
+    asn1::number_to_enum(asn1_event_a3.time_to_trigger, a3->time_to_trigger);
     // use allowed cell list
-    asn1_event_a3.use_allowed_cell_list = event_triggered_cfg.event_id.event_a3.value().use_allowed_cell_list;
-  } else if (event_triggered_cfg.event_id.event_a4.has_value()) {
+    asn1_event_a3.use_allowed_cell_list = a3->use_allowed_cell_list;
+  }
+  if (const auto* a4 = std::get_if<rrc_event_a4>(&event_triggered_cfg.event_id); a4 != nullptr) {
     // event a4
-    auto& asn1_event_a4 = asn1_event_triggered_cfg.event_id.set_event_a4();
+    auto& asn1_event_a4 = asn1_event_trigger_cfg.event_id.set_event_a4();
     // a4 thres
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a4.a4_thres, event_triggered_cfg.event_id.event_a4.value().a4_thres);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a4.a4_thres, a4->a4_thres);
     // report on leave
-    asn1_event_a4.report_on_leave = event_triggered_cfg.event_id.event_a4.value().report_on_leave;
+    asn1_event_a4.report_on_leave = a4->report_on_leave;
     // hysteresis
-    asn1_event_a4.hysteresis = event_triggered_cfg.event_id.event_a4.value().hysteresis;
+    asn1_event_a4.hysteresis = a4->hysteresis;
     // time to trigger
-    asn1::number_to_enum(asn1_event_a4.time_to_trigger, event_triggered_cfg.event_id.event_a4.value().time_to_trigger);
+    asn1::number_to_enum(asn1_event_a4.time_to_trigger, a4->time_to_trigger);
     // use allowed cell list
-    asn1_event_a4.use_allowed_cell_list = event_triggered_cfg.event_id.event_a4.value().use_allowed_cell_list;
-  } else if (event_triggered_cfg.event_id.event_a5.has_value()) {
+    asn1_event_a4.use_allowed_cell_list = a4->use_allowed_cell_list;
+  }
+  if (const auto* a5 = std::get_if<rrc_event_a5>(&event_triggered_cfg.event_id); a5 != nullptr) {
     // event a5
-    auto& asn1_event_a5 = asn1_event_triggered_cfg.event_id.set_event_a5();
+    auto& asn1_event_a5 = asn1_event_trigger_cfg.event_id.set_event_a5();
     // a5 thres 1
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres1, event_triggered_cfg.event_id.event_a5.value().a5_thres_1);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres1, a5->a5_thres_1);
     // a5 thres 2
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres2, event_triggered_cfg.event_id.event_a5.value().a5_thres_2);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres2, a5->a5_thres_2);
     // report on leave
-    asn1_event_a5.report_on_leave = event_triggered_cfg.event_id.event_a5.value().report_on_leave;
+    asn1_event_a5.report_on_leave = a5->report_on_leave;
     // hysteresis
-    asn1_event_a5.hysteresis = event_triggered_cfg.event_id.event_a5.value().hysteresis;
+    asn1_event_a5.hysteresis = a5->hysteresis;
     // time to trigger
-    asn1::number_to_enum(asn1_event_a5.time_to_trigger, event_triggered_cfg.event_id.event_a5.value().time_to_trigger);
+    asn1::number_to_enum(asn1_event_a5.time_to_trigger, a5->time_to_trigger);
     // use allowed cell list
-    asn1_event_a5.use_allowed_cell_list = event_triggered_cfg.event_id.event_a5.value().use_allowed_cell_list;
-  } else if (event_triggered_cfg.event_id.event_a6.has_value()) {
+    asn1_event_a5.use_allowed_cell_list = a5->use_allowed_cell_list;
+  }
+  if (const auto* a6 = std::get_if<rrc_event_a6>(&event_triggered_cfg.event_id); a6 != nullptr) {
     // event a6
-    auto& asn1_event_a6 = asn1_event_triggered_cfg.event_id.set_event_a6();
+    auto& asn1_event_a6 = asn1_event_trigger_cfg.event_id.set_event_a6();
     // a6 offset
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a6.a6_offset, event_triggered_cfg.event_id.event_a6.value().a6_offset);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a6.a6_offset, a6->a6_offset);
     // report on leave
-    asn1_event_a6.report_on_leave = event_triggered_cfg.event_id.event_a6.value().report_on_leave;
+    asn1_event_a6.report_on_leave = a6->report_on_leave;
     // hysteresis
-    asn1_event_a6.hysteresis = event_triggered_cfg.event_id.event_a6.value().hysteresis;
+    asn1_event_a6.hysteresis = a6->hysteresis;
     // time to trigger
-    asn1::number_to_enum(asn1_event_a6.time_to_trigger, event_triggered_cfg.event_id.event_a6.value().time_to_trigger);
+    asn1::number_to_enum(asn1_event_a6.time_to_trigger, a6->time_to_trigger);
     // use allowed cell list
-    asn1_event_a6.use_allowed_cell_list = event_triggered_cfg.event_id.event_a6.value().use_allowed_cell_list;
-  } else {
-    // error
-    report_fatal_error("Cannot convert event id to ASN.1 type");
+    asn1_event_a6.use_allowed_cell_list = a6->use_allowed_cell_list;
   }
 
   // rs type
-  asn1_event_triggered_cfg.rs_type = rrc_nr_rs_type_to_asn1(event_triggered_cfg.rs_type);
+  asn1_event_trigger_cfg.rs_type = rrc_nr_rs_type_to_asn1(event_triggered_cfg.rs_type);
 
   // report interv
   // report interv. This struct mixes ms and minutes so we need to convert the value before conversion
   if (event_triggered_cfg.report_interv < 60000) {
-    asn1::number_to_enum(asn1_event_triggered_cfg.report_interv, event_triggered_cfg.report_interv);
+    asn1::number_to_enum(asn1_event_trigger_cfg.report_interv, event_triggered_cfg.report_interv);
   } else {
-    asn1::number_to_enum(asn1_event_triggered_cfg.report_interv, event_triggered_cfg.report_interv / 60000);
+    asn1::number_to_enum(asn1_event_trigger_cfg.report_interv, event_triggered_cfg.report_interv / 60000);
   }
 
   // report amount
-  asn1::number_to_enum(asn1_event_triggered_cfg.report_amount, event_triggered_cfg.report_amount);
+  asn1::number_to_enum(asn1_event_trigger_cfg.report_amount, event_triggered_cfg.report_amount);
 
   // report quant cell
-  asn1_event_triggered_cfg.report_quant_cell = meas_report_quant_to_rrc_asn1(event_triggered_cfg.report_quant_cell);
+  asn1_event_trigger_cfg.report_quant_cell = meas_report_quant_to_rrc_asn1(event_triggered_cfg.report_quant_cell);
 
   // max report cells
-  asn1_event_triggered_cfg.max_report_cells = event_triggered_cfg.max_report_cells;
+  asn1_event_trigger_cfg.max_report_cells = event_triggered_cfg.max_report_cells;
 
   // report quant rx idxes
   if (event_triggered_cfg.report_quant_rs_idxes.has_value()) {
-    asn1_event_triggered_cfg.report_quant_rs_idxes_present = true;
-    asn1_event_triggered_cfg.report_quant_rs_idxes =
+    asn1_event_trigger_cfg.report_quant_rs_idxes_present = true;
+    asn1_event_trigger_cfg.report_quant_rs_idxes =
         meas_report_quant_to_rrc_asn1(event_triggered_cfg.report_quant_rs_idxes.value());
   }
 
   // max nrof rs idxes to report
   if (event_triggered_cfg.max_nrof_rs_idxes_to_report.has_value()) {
-    asn1_event_triggered_cfg.max_nrof_rs_idxes_to_report_present = true;
-    asn1_event_triggered_cfg.max_nrof_rs_idxes_to_report = event_triggered_cfg.max_nrof_rs_idxes_to_report.value();
+    asn1_event_trigger_cfg.max_nrof_rs_idxes_to_report_present = true;
+    asn1_event_trigger_cfg.max_nrof_rs_idxes_to_report = event_triggered_cfg.max_nrof_rs_idxes_to_report.value();
   }
 
   // include beam meass
-  asn1_event_triggered_cfg.include_beam_meass = event_triggered_cfg.include_beam_meass;
+  asn1_event_trigger_cfg.include_beam_meass = event_triggered_cfg.include_beam_meass;
 
-  return asn1_event_triggered_cfg;
+  return asn1_event_trigger_cfg;
 }
 
 inline asn1::rrc_nr::report_cfg_nr_s report_cfg_nr_to_rrc_asn1(const rrc_report_cfg_nr& report_cfg_nr)
 {
   asn1::rrc_nr::report_cfg_nr_s asn1_report_cfg_nr;
 
-  if (report_cfg_nr.periodical.has_value()) {
+  if (const auto* periodical = std::get_if<rrc_periodical_report_cfg>(&report_cfg_nr); periodical != nullptr) {
     // periodical
-    asn1_report_cfg_nr.report_type.set_periodical() =
-        periodical_report_cfg_to_rrc_asn1(report_cfg_nr.periodical.value());
-  } else if (report_cfg_nr.event_triggered.has_value()) {
+    asn1_report_cfg_nr.report_type.set_periodical() = periodical_report_cfg_to_rrc_asn1(*periodical);
+  }
+
+  if (const auto* event_triggered = std::get_if<rrc_event_trigger_cfg>(&report_cfg_nr); event_triggered != nullptr) {
     // event triggered
-    asn1_report_cfg_nr.report_type.set_event_triggered() =
-        event_triggered_report_cfg_to_rrc_asn1(report_cfg_nr.event_triggered.value());
-  } else if (report_cfg_nr.report_cgi.has_value()) {
+    asn1_report_cfg_nr.report_type.set_event_triggered() = event_triggered_report_cfg_to_rrc_asn1(*event_triggered);
+  }
+
+  if (const auto* report_cgi = std::get_if<rrc_report_cgi>(&report_cfg_nr); report_cgi != nullptr) {
     // report cgi
     asn1_report_cfg_nr.report_type.set_report_cgi();
-    asn1_report_cfg_nr.report_type.report_cgi().cell_for_which_to_report_cgi =
-        report_cfg_nr.report_cgi.value().cell_for_which_to_report_cgi;
-  } else if (report_cfg_nr.report_sftd.has_value()) {
+    asn1_report_cfg_nr.report_type.report_cgi().cell_for_which_to_report_cgi = report_cgi->cell_for_which_to_report_cgi;
+  }
+
+  if (const auto* report_sftd = std::get_if<rrc_report_sftd_nr>(&report_cfg_nr); report_sftd != nullptr) {
     // report sftd
     asn1_report_cfg_nr.report_type.set_report_sftd();
-    asn1_report_cfg_nr.report_type.report_sftd().report_sftd_meas = report_cfg_nr.report_sftd.value().report_sftd_meas;
-    asn1_report_cfg_nr.report_type.report_sftd().report_rsrp      = report_cfg_nr.report_sftd.value().report_rsrp;
-  } else {
-    // error
-    report_fatal_error("Cannot convert report cfg nr to ASN.1 type");
+    asn1_report_cfg_nr.report_type.report_sftd().report_sftd_meas = report_sftd->report_sftd_meas;
+    asn1_report_cfg_nr.report_type.report_sftd().report_rsrp      = report_sftd->report_rsrp;
   }
 
   return asn1_report_cfg_nr;
@@ -1105,13 +1096,12 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const rrc_meas_cfg& meas
   // s measure cfg
   if (meas_cfg.s_measure_cfg.has_value()) {
     asn1_meas_cfg.s_measure_cfg_present = true;
-    if (meas_cfg.s_measure_cfg.value().ssb_rsrp.has_value()) {
-      asn1_meas_cfg.s_measure_cfg.set_ssb_rsrp() = meas_cfg.s_measure_cfg.value().ssb_rsrp.value();
-    } else if (meas_cfg.s_measure_cfg.value().csi_rsrp.has_value()) {
-      asn1_meas_cfg.s_measure_cfg.set_csi_rsrp() = meas_cfg.s_measure_cfg.value().csi_rsrp.value();
-    } else {
-      // error
-      report_fatal_error("Cannot convert s measure cfg to ASN.1 type");
+    if (meas_cfg.s_measure_cfg.value().type == rrc_s_measure_cfg::measure_type_t::ssb_rsrp) {
+      asn1_meas_cfg.s_measure_cfg.set_ssb_rsrp() = meas_cfg.s_measure_cfg.value().measure_config;
+    }
+
+    if (meas_cfg.s_measure_cfg.value().type == rrc_s_measure_cfg::measure_type_t::csi_rsrp) {
+      asn1_meas_cfg.s_measure_cfg.set_csi_rsrp() = meas_cfg.s_measure_cfg.value().measure_config;
     }
   }
 
