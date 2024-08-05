@@ -167,6 +167,11 @@ unsigned ue::pending_ul_newtx_bytes() const
   return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
 }
 
+unsigned ue::pending_ul_newtx_bytes(lcg_id_t lcg_id) const
+{
+  return ul_lc_ch_mgr.pending_bytes(lcg_id);
+}
+
 bool ue::has_pending_sr() const
 {
   return ul_lc_ch_mgr.has_pending_sr();

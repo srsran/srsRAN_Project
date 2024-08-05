@@ -202,7 +202,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u)
   // Calculate DL priority.
   dl_retx_h                  = srb_retx_h != nullptr ? srb_retx_h : ue_cc->harqs.find_pending_dl_retx();
   dl_newtx_h                 = ue_cc->harqs.find_empty_dl_harq();
-  dl_newtx_srb_pending_bytes = u.pending_dl_srb_newtx_bytes();
+  dl_newtx_srb_pending_bytes = u.has_srb_bearers_in_slice() ? u.pending_dl_newtx_bytes() : 0;
   if (dl_retx_h != nullptr or (dl_newtx_h != nullptr and u.has_pending_dl_newtx_bytes())) {
     // NOTE: It does not matter whether it's a reTx or newTx since DL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
@@ -269,7 +269,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u, const ue_res
   ul_retx_h                  = ue_cc->harqs.find_pending_ul_retx();
   ul_newtx_h                 = ue_cc->harqs.find_empty_ul_harq();
   sr_ind_received            = u.has_pending_sr();
-  ul_newtx_srb_pending_bytes = u.pending_ul_srb_newtx_bytes();
+  ul_newtx_srb_pending_bytes = u.has_srb_bearers_in_slice() ? u.pending_ul_newtx_bytes() : 0;
   if (ul_retx_h != nullptr or (ul_newtx_h != nullptr and u.pending_ul_newtx_bytes() > 0)) {
     // NOTE: It does not matter whether it's a reTx or newTx since UL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.

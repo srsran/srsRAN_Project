@@ -156,6 +156,9 @@ public:
   /// to derive the required transport block size for an UL grant.
   unsigned pending_ul_newtx_bytes() const;
 
+  /// \brief Computes the number of UL pending bytes for a LCG ID.
+  unsigned pending_ul_newtx_bytes(lcg_id_t lcg_id) const;
+
   /// \brief Computes the number of UL pending bytes in SRBs. The value is used to derive the required transport block
   /// size for an UL grant.
   /// \return The number of UL pending bytes in SRBs.

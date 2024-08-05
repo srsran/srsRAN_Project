@@ -276,7 +276,7 @@ static alloc_result alloc_dl_ue(const slice_ue&                   u,
                                 std::optional<unsigned>           dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   if (not is_retx) {
-    if (ue_with_srb_data_only and not u.has_pending_dl_srb_newtx_bytes()) {
+    if (ue_with_srb_data_only and not u.has_srb_bearers_in_slice()) {
       return {alloc_status::skip_ue};
     }
     if (not u.has_pending_dl_newtx_bytes()) {
@@ -311,9 +311,8 @@ static alloc_result alloc_dl_ue(const slice_ue&                   u,
     for (const dl_harq_process* h_dl : harq_candidates) {
       ue_pdsch_grant grant{&u, ue_cc.cell_index, h_dl->id};
       if (not is_retx) {
-        grant.recommended_nof_bytes =
-            ue_with_srb_data_only ? u.pending_dl_srb_newtx_bytes() : u.pending_dl_newtx_bytes();
-        grant.max_nof_rbs = dl_new_tx_max_nof_rbs_per_ue_per_slot;
+        grant.recommended_nof_bytes = u.pending_dl_newtx_bytes();
+        grant.max_nof_rbs           = dl_new_tx_max_nof_rbs_per_ue_per_slot;
       }
       const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
@@ -335,15 +334,13 @@ static alloc_result alloc_ul_ue(const slice_ue&              u,
                                 srslog::basic_logger&        logger,
                                 std::optional<unsigned>      ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
-  unsigned pending_newtx_bytes     = 0;
-  unsigned pending_srb_newtx_bytes = 0;
+  unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
     if (schedule_sr_only and not u.has_pending_sr()) {
       return {alloc_status::skip_ue};
     }
-    // Fetch pending bytes of SRBs.
-    pending_srb_newtx_bytes = u.pending_ul_srb_newtx_bytes();
-    if (ue_with_srb_data_only and pending_srb_newtx_bytes == 0) {
+    pending_newtx_bytes = u.pending_ul_newtx_bytes();
+    if (ue_with_srb_data_only and not u.has_srb_bearers_in_slice()) {
       return {alloc_status::skip_ue};
     }
     pending_newtx_bytes = u.pending_ul_newtx_bytes();
@@ -371,7 +368,7 @@ static alloc_result alloc_ul_ue(const slice_ue&              u,
     for (const ul_harq_process* h_ul : harq_candidates) {
       ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id};
       if (not is_retx) {
-        grant.recommended_nof_bytes = ue_with_srb_data_only ? pending_srb_newtx_bytes : pending_newtx_bytes;
+        grant.recommended_nof_bytes = pending_newtx_bytes;
         grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
       }
       const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
