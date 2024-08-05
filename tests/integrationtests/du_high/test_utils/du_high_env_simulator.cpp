@@ -419,12 +419,14 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
 
 void du_high_env_simulator::run_slot()
 {
+  // Dispatch a slot indication to all cells in the L2 (fork work across cells).
   for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
-    // Dispatch a slot indication to each cell in the L2.
     du_hi->get_slot_handler(to_du_cell_index(i)).handle_slot_indication(next_slot);
+  }
 
-    // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
-    // main thread).
+  // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (join cell results, in this
+  // case, with the join point being the test main thread).
+  for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
     const unsigned MAX_COUNT = 100000;
     for (unsigned count = 0; count < MAX_COUNT and phy.cells[i].last_slot_res != next_slot; ++count) {
       // Process tasks dispatched to the test main thread (e.g. L2 slot result)
@@ -439,7 +441,7 @@ void du_high_env_simulator::run_slot()
                        phy.cells[i].last_slot_res);
     const std::optional<mac_dl_sched_result>& dl_result = phy.cells[i].last_dl_res;
     if (dl_result.has_value()) {
-      EXPECT_TRUE(dl_result->slot == next_slot);
+      EXPECT_EQ(dl_result->slot, next_slot);
     }
 
     // Process results.
