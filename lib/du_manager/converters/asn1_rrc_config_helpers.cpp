@@ -817,6 +817,9 @@ asn1::rrc_nr::bwp_ul_common_s srsran::srs_du::make_asn1_rrc_initial_up_bwp(const
       rach_cfg.nof_ssb_per_ro, rach_cfg.nof_cb_preambles_per_ssb, rach);
   rach.ra_contention_resolution_timer.value =
       asn1::rrc_nr::rach_cfg_common_s::ra_contention_resolution_timer_opts::sf64;
+  if (rach_cfg.msg3_transform_precoder) {
+    rach.msg3_transform_precoder_present = true;
+  }
   if (rach_cfg.is_prach_root_seq_index_l839) {
     rach.prach_root_seq_idx.set_l839() = rach_cfg.prach_root_seq_index;
   } else {

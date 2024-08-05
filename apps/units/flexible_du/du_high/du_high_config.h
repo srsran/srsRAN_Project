@@ -203,6 +203,9 @@ struct du_high_unit_pusch_config {
   unsigned start_rb = 0;
   /// End RB for resource allocation of UE PUSCHs.
   unsigned end_rb = MAX_NOF_PRBS;
+
+  /// Set to true to enable transform precoding in PUSCH.
+  bool enable_transform_precoding = false;
 };
 
 struct du_high_unit_pucch_config {

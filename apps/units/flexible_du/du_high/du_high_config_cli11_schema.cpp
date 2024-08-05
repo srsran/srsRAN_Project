@@ -749,6 +749,10 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   app.add_option("--end_rb", pusch_params.end_rb, "End RB for resource allocation of UE PUSCHs")
       ->capture_default_str()
       ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--enable_transform_precoding",
+                 pusch_params.enable_transform_precoding,
+                 "Enable transform precoding for PUSCH.")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config& pucch_params)

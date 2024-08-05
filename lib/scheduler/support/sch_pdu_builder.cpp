@@ -629,10 +629,11 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   // parameter msg3-transformPrecoder".
   pusch.transform_precoding = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
   // As per TS 38.211, Section 6.3.1.1, n_ID is set to Physical Cell ID for TC-RNTI.
-  pusch.n_id          = cell_cfg.pci;
-  pusch.nof_layers    = pusch_cfg.nof_layers;
-  pusch.dmrs          = pusch_cfg.dmrs;
-  pusch.pusch_dmrs_id = 0;
+  pusch.n_id       = cell_cfg.pci;
+  pusch.nof_layers = pusch_cfg.nof_layers;
+  pusch.dmrs       = pusch_cfg.dmrs;
+  // TS 38.211, Section 6.4.1.1.1.2, n^RS_ID is set to to Physical Cell ID for TC-RNTI.
+  pusch.pusch_dmrs_id = cell_cfg.pci;
   pusch.rv_index      = dci_cfg.redundancy_version;
   // TS 38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used".
   pusch.harq_id  = 0;
@@ -729,15 +730,17 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   pusch.mcs_index = dci_cfg.modulation_coding_scheme;
   pusch.mcs_descr = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, pusch_cfg.tp_pi2bpsk_present);
 
-  pusch.n_id = cell_cfg.pci;
+  pusch.n_id          = cell_cfg.pci;
+  pusch.pusch_dmrs_id = cell_cfg.pci;
+  if (opt_rach_cfg.has_value()) {
+    pusch.transform_precoding = opt_rach_cfg.value().msg3_transform_precoder;
+  }
 
   // Dedicated config overrides previously set value.
   if (pusch_cfg_ded.has_value()) {
     pusch.transform_precoding = false;
     if (pusch_cfg_ded.value().trans_precoder != pusch_config::transform_precoder::not_set) {
       pusch.transform_precoding = pusch_cfg_ded.value().trans_precoder == pusch_config::transform_precoder::enabled;
-    } else if (opt_rach_cfg.has_value()) {
-      pusch.transform_precoding = opt_rach_cfg.value().msg3_transform_precoder;
     }
 
     if (pusch_cfg_ded.value().data_scrambling_id_pusch.has_value()) {
@@ -745,8 +748,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
     }
   }
 
-  pusch.dmrs          = pusch_cfg.dmrs;
-  pusch.pusch_dmrs_id = pusch_cfg.dmrs.dmrs_scrambling_id;
+  pusch.dmrs = pusch_cfg.dmrs;
 
   // TBS.
   pusch.nof_layers    = pusch_cfg.nof_layers;

@@ -378,7 +378,6 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
       prach_configuration_get(freq_range, duplex, cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format);
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index      = 1;
-  cfg.init_ul_bwp.rach_cfg_common->msg3_transform_precoder   = false;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm = 1;
   // Add +3 PRBS to the MSG1 frequency start, which act as a guardband between the PUCCH and PRACH.
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start = 6;

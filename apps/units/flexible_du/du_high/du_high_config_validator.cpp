@@ -15,6 +15,7 @@
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/pucch/pucch_constants.h"
+#include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/rlc/rlc_config.h"
 #include <algorithm>
 
@@ -360,6 +361,24 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
     fmt::print("Invalid UE PUSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size",
                config.min_rb_size,
                config.max_rb_size);
+    return false;
+  }
+
+  if (config.enable_transform_precoding && !is_transform_precoding_nof_prb_valid(config.min_rb_size)) {
+    fmt::print("Invalid minimum UE PUSCH RB (i.e., {}) with transform precoding. The nearest lower number of PRB is {} "
+               "and the higher is {}.\n",
+               config.min_rb_size,
+               get_transform_precoding_nearest_lower_nof_prb_valid(config.min_rb_size),
+               get_transform_precoding_nearest_higher_nof_prb_valid(config.min_rb_size));
+    return false;
+  }
+
+  if (config.enable_transform_precoding && !is_transform_precoding_nof_prb_valid(config.max_rb_size)) {
+    fmt::print("Invalid maximum UE PUSCH RB (i.e., {}) with transform precoding. The nearest lower number of PRB is {} "
+               "and the higher is {}.\n",
+               config.max_rb_size,
+               get_transform_precoding_nearest_lower_nof_prb_valid(config.max_rb_size),
+               get_transform_precoding_nearest_higher_nof_prb_valid(config.max_rb_size));
     return false;
   }
 
