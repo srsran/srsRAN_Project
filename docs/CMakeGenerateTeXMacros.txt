@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/math_macros.tex
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/math_macros.tex
   "\\renewcommand{\\Re}{\\mathbb{R}\\mathrm{e}}\n"
   "\\renewcommand{\\Im}{\\mathbb{I}\\mathrm{m}}\n"
   "\n"
