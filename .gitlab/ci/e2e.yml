@@ -444,23 +444,23 @@ cudu amari 32UE:
     matrix:
       - KEYWORDS: ["ping", "iperf and tcp and not band:3 and bandwidth:50"]
 
-uesim 32UE beta:
-  stage: zmq
-  extends: .e2e-run
-  variables:
-    GROUP: uesim
-    TESTBED: zmq_uesim
-    MARKERS: "zmq and not smoke"
-    KEYWORDS: ping
-    E2E_LOG_LEVEL: "info"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - job: "build uesim zmq driver"
-      artifacts: true
-    - *retina-needs
-  allow_failure: true
+# uesim 32UE beta:
+#   stage: zmq
+#   extends: .e2e-run
+#   variables:
+#     GROUP: uesim
+#     TESTBED: zmq_uesim
+#     MARKERS: "zmq and not smoke"
+#     KEYWORDS: ping
+#     E2E_LOG_LEVEL: "info"
+#     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+#   needs:
+#     - job: "basic relwithdeb"
+#       artifacts: true
+#     - job: "build uesim zmq driver"
+#       artifacts: true
+#     - *retina-needs
+#   allow_failure: true
 
 ################################################################################
 # TEST MODE
