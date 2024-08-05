@@ -832,88 +832,65 @@ event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigger_cfg& event_trigge
   // report add neigh meas present
   asn1_event_trigger_cfg.report_add_neigh_meas_present = event_triggered_cfg.report_add_neigh_meas_present;
 
-  // event id
-  if (const auto* a1 = std::get_if<rrc_event_a1>(&event_triggered_cfg.event_id); a1 != nullptr) {
-    // event a1
+  const auto& event_id = event_triggered_cfg.event_id;
+
+  // event a1
+  if (event_id.id == rrc_event_id::event_id_t::a1) {
     auto& asn1_event_a1 = asn1_event_trigger_cfg.event_id.set_event_a1();
-    // a1 thres
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a1.a1_thres, a1->a1_thres);
-    // report on leave
-    asn1_event_a1.report_on_leave = a1->report_on_leave;
-    // hysteresis
-    asn1_event_a1.hysteresis = a1->hysteresis;
-    // time to trigger
-    asn1::number_to_enum(asn1_event_a1.time_to_trigger, a1->time_to_trigger);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a1.a1_thres, event_id.meas_trigger_quant_thres_or_offset.value());
+    asn1_event_a1.report_on_leave = event_id.report_on_leave;
+    asn1_event_a1.hysteresis      = event_id.hysteresis;
+    asn1::number_to_enum(asn1_event_a1.time_to_trigger, event_id.time_to_trigger);
   }
-  if (const auto* a2 = std::get_if<rrc_event_a2>(&event_triggered_cfg.event_id); a2 != nullptr) {
-    // event a2
+
+  // event a2
+  if (event_id.id == rrc_event_id::event_id_t::a2) {
     auto& asn1_event_a2 = asn1_event_trigger_cfg.event_id.set_event_a2();
-    // a2 thres
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a2.a2_thres, a2->a2_thres);
-    // report on leave
-    asn1_event_a2.report_on_leave = a2->report_on_leave;
-    // hysteresis
-    asn1_event_a2.hysteresis = a2->hysteresis;
-    // time to trigger
-    asn1::number_to_enum(asn1_event_a2.time_to_trigger, a2->time_to_trigger);
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a2.a2_thres, event_id.meas_trigger_quant_thres_or_offset.value());
+    asn1_event_a2.report_on_leave = event_id.report_on_leave;
+    asn1_event_a2.hysteresis      = event_id.hysteresis;
+    asn1::number_to_enum(asn1_event_a2.time_to_trigger, event_id.time_to_trigger);
   }
-  if (const auto* a3 = std::get_if<rrc_event_a3>(&event_triggered_cfg.event_id); a3 != nullptr) {
-    // event a3
+
+  // event a3
+  if (event_id.id == rrc_event_id::event_id_t::a3) {
     auto& asn1_event_a3 = asn1_event_trigger_cfg.event_id.set_event_a3();
-    // a3 offset
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a3.a3_offset, a3->a3_offset);
-    // report on leave
-    asn1_event_a3.report_on_leave = a3->report_on_leave;
-    // hysteresis
-    asn1_event_a3.hysteresis = a3->hysteresis;
-    // time to trigger
-    asn1::number_to_enum(asn1_event_a3.time_to_trigger, a3->time_to_trigger);
-    // use allowed cell list
-    asn1_event_a3.use_allowed_cell_list = a3->use_allowed_cell_list;
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a3.a3_offset, event_id.meas_trigger_quant_thres_or_offset.value());
+    asn1_event_a3.report_on_leave = event_id.report_on_leave;
+    asn1_event_a3.hysteresis      = event_id.hysteresis;
+    asn1::number_to_enum(asn1_event_a3.time_to_trigger, event_id.time_to_trigger);
+    asn1_event_a3.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
   }
-  if (const auto* a4 = std::get_if<rrc_event_a4>(&event_triggered_cfg.event_id); a4 != nullptr) {
-    // event a4
+
+  // event a4
+  if (event_id.id == rrc_event_id::event_id_t::a4) {
     auto& asn1_event_a4 = asn1_event_trigger_cfg.event_id.set_event_a4();
-    // a4 thres
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a4.a4_thres, a4->a4_thres);
-    // report on leave
-    asn1_event_a4.report_on_leave = a4->report_on_leave;
-    // hysteresis
-    asn1_event_a4.hysteresis = a4->hysteresis;
-    // time to trigger
-    asn1::number_to_enum(asn1_event_a4.time_to_trigger, a4->time_to_trigger);
-    // use allowed cell list
-    asn1_event_a4.use_allowed_cell_list = a4->use_allowed_cell_list;
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a4.a4_thres, event_id.meas_trigger_quant_thres_or_offset.value());
+    asn1_event_a4.report_on_leave = event_id.report_on_leave;
+    asn1_event_a4.hysteresis      = event_id.hysteresis;
+    asn1::number_to_enum(asn1_event_a4.time_to_trigger, event_id.time_to_trigger);
+    asn1_event_a4.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
   }
-  if (const auto* a5 = std::get_if<rrc_event_a5>(&event_triggered_cfg.event_id); a5 != nullptr) {
-    // event a5
+
+  // event a5
+  if (event_id.id == rrc_event_id::event_id_t::a5) {
     auto& asn1_event_a5 = asn1_event_trigger_cfg.event_id.set_event_a5();
-    // a5 thres 1
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres1, a5->a5_thres_1);
-    // a5 thres 2
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres2, a5->a5_thres_2);
-    // report on leave
-    asn1_event_a5.report_on_leave = a5->report_on_leave;
-    // hysteresis
-    asn1_event_a5.hysteresis = a5->hysteresis;
-    // time to trigger
-    asn1::number_to_enum(asn1_event_a5.time_to_trigger, a5->time_to_trigger);
-    // use allowed cell list
-    asn1_event_a5.use_allowed_cell_list = a5->use_allowed_cell_list;
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres1, event_id.meas_trigger_quant_thres_or_offset.value());
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres2, event_id.meas_trigger_quant_thres_or_offset.value());
+    asn1_event_a5.report_on_leave = event_id.report_on_leave;
+    asn1_event_a5.hysteresis      = event_id.hysteresis;
+    asn1::number_to_enum(asn1_event_a5.time_to_trigger, event_id.time_to_trigger);
+    asn1_event_a5.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
   }
-  if (const auto* a6 = std::get_if<rrc_event_a6>(&event_triggered_cfg.event_id); a6 != nullptr) {
-    // event a6
+
+  // event a6
+  if (event_id.id == rrc_event_id::event_id_t::a6) {
     auto& asn1_event_a6 = asn1_event_trigger_cfg.event_id.set_event_a6();
-    // a6 offset
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a6.a6_offset, a6->a6_offset);
-    // report on leave
-    asn1_event_a6.report_on_leave = a6->report_on_leave;
-    // hysteresis
-    asn1_event_a6.hysteresis = a6->hysteresis;
-    // time to trigger
-    asn1::number_to_enum(asn1_event_a6.time_to_trigger, a6->time_to_trigger);
-    // use allowed cell list
-    asn1_event_a6.use_allowed_cell_list = a6->use_allowed_cell_list;
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a6.a6_offset, event_id.meas_trigger_quant_thres_or_offset.value());
+    asn1_event_a6.report_on_leave = event_id.report_on_leave;
+    asn1_event_a6.hysteresis      = event_id.hysteresis;
+    asn1::number_to_enum(asn1_event_a6.time_to_trigger, event_id.time_to_trigger);
+    asn1_event_a6.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
   }
 
   // rs type

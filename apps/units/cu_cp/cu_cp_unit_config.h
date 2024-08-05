@@ -23,14 +23,18 @@ namespace srsran {
 
 /// Report configuration, for now only supporting the A3 event.
 struct cu_cp_unit_report_config {
-  unsigned                report_cfg_id;
-  std::string             report_type;
-  std::optional<unsigned> report_interval_ms;
-  std::string             a3_report_type;
-  /// [-30..30] Note the actual value is field value * 0.5 dB. E.g. putting a value of -6 here results in -3dB offset.
-  std::optional<int>      a3_offset_db;
-  std::optional<unsigned> a3_hysteresis_db;
-  std::optional<unsigned> a3_time_to_trigger_ms;
+  unsigned    report_cfg_id;
+  std::string report_type;
+  unsigned    report_interval_ms;
+
+  std::optional<std::string> event_triggered_report_type;
+  std::optional<std::string> meas_trigger_quantity;
+  std::optional<int>         meas_trigger_quantity_threshold_db;
+  std::optional<int>         meas_trigger_quantity_threshold_2_db;
+  std::optional<int> meas_trigger_quantity_offset_db; ///< [-30..30] Note the actual value is field value * 0.5 dB. E.g.
+                                                      ///< putting a value of -6 here results in -3dB offset.
+  std::optional<unsigned> hysteresis_db;
+  std::optional<unsigned> time_to_trigger_ms;
 };
 
 struct cu_cp_unit_neighbor_cell_config_item {

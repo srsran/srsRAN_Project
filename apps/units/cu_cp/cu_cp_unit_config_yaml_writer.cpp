@@ -86,21 +86,31 @@ static YAML::Node build_cu_cp_mobility_report_section(const cu_cp_unit_report_co
 {
   YAML::Node node;
 
-  node["report_cfg_id"]  = config.report_cfg_id;
-  node["report_type"]    = config.report_type;
-  node["a3_report_type"] = config.a3_report_type;
-  if (config.report_interval_ms) {
-    node["report_interval_ms"] = config.report_interval_ms.value();
+  node["report_cfg_id"] = config.report_cfg_id;
+  node["report_type"]   = config.report_type;
+  if (config.event_triggered_report_type) {
+    node["event_triggered_report_type"] = config.event_triggered_report_type.value();
+    if (config.meas_trigger_quantity_threshold_db) {
+      node["meas_trigger_quantity_threshold_db"] = config.meas_trigger_quantity_threshold_db.value();
+    }
+    if (config.meas_trigger_quantity_threshold_2_db) {
+      node["meas_trigger_quantity_threshold_2_db"] = config.meas_trigger_quantity_threshold_2_db.value();
+    }
+    if (config.meas_trigger_quantity_offset_db) {
+      node["meas_trigger_quantity_offset_db"] = config.meas_trigger_quantity_offset_db.value();
+    }
+    if (config.hysteresis_db) {
+      node["hysteresis_db"] = config.hysteresis_db.value();
+    }
+    if (config.meas_trigger_quantity) {
+      node["meas_trigger_quantity"] = config.meas_trigger_quantity.value();
+    }
+    if (config.time_to_trigger_ms) {
+      node["time_to_trigger_ms"] = config.time_to_trigger_ms.value();
+    }
   }
-  if (config.a3_offset_db) {
-    node["a3_offset_db"] = config.a3_offset_db.value();
-  }
-  if (config.a3_hysteresis_db) {
-    node["a3_hysteresis_db"] = config.a3_hysteresis_db.value();
-  }
-  if (config.a3_time_to_trigger_ms) {
-    node["a3_time_to_trigger_ms"] = config.a3_time_to_trigger_ms.value();
-  }
+
+  node["report_interval_ms"] = config.report_interval_ms;
 
   return node;
 }

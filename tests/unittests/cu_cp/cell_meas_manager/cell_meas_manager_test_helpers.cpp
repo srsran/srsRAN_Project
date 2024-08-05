@@ -114,10 +114,11 @@ void cell_meas_manager_test::create_default_manager()
   rrc_report_cfg_nr     a3_report_cfg;
   rrc_event_trigger_cfg event_trigger_cfg = {};
 
-  rrc_event_a3 event_a3;
-  event_a3.a3_offset.rsrp.emplace() = 6;
-  event_a3.hysteresis               = 0;
-  event_a3.time_to_trigger          = 100;
+  rrc_event_id event_a3;
+  event_a3.meas_trigger_quant_thres_or_offset.emplace();
+  event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
+  event_a3.hysteresis                                                = 0;
+  event_a3.time_to_trigger                                           = 100;
 
   event_trigger_cfg.event_id = event_a3;
 
@@ -192,10 +193,11 @@ void cell_meas_manager_test::create_manager_with_incomplete_cells_and_periodic_r
   rrc_report_cfg_nr     a3_report_cfg;
   rrc_event_trigger_cfg event_trigger_cfg = {};
 
-  rrc_event_a3 event_a3;
-  event_a3.a3_offset.rsrp.emplace() = 6;
-  event_a3.hysteresis               = 0;
-  event_a3.time_to_trigger          = 100;
+  rrc_event_id event_a3;
+  event_a3.meas_trigger_quant_thres_or_offset.emplace();
+  event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
+  event_a3.hysteresis                                                = 0;
+  event_a3.time_to_trigger                                           = 100;
 
   event_trigger_cfg.event_id = event_a3;
 
@@ -245,11 +247,12 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   // Add A3 event.
   rrc_report_cfg_nr     a3_report_cfg;
   rrc_event_trigger_cfg event_trigger_cfg = {};
-  rrc_event_a3          event_a3;
 
-  event_a3.a3_offset.rsrp.emplace() = 6;
-  event_a3.hysteresis               = 0;
-  event_a3.time_to_trigger          = 100;
+  rrc_event_id event_a3;
+  event_a3.meas_trigger_quant_thres_or_offset.emplace();
+  event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
+  event_a3.hysteresis                                                = 0;
+  event_a3.time_to_trigger                                           = 100;
 
   event_trigger_cfg.event_id = event_a3;
 

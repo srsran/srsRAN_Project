@@ -368,56 +368,26 @@ struct rrc_meas_trigger_quant {
   std::optional<uint8_t> sinr;
 };
 
-struct rrc_event_a1 {
-  rrc_meas_trigger_quant a1_thres;
-  bool                   report_on_leave;
-  uint8_t                hysteresis;
-  uint16_t               time_to_trigger;
-};
-
-struct rrc_event_a2 {
-  rrc_meas_trigger_quant a2_thres;
-  bool                   report_on_leave;
-  uint8_t                hysteresis;
-  uint16_t               time_to_trigger;
-};
-
 using rrc_meas_trigger_quant_offset = rrc_meas_trigger_quant;
 
-struct rrc_event_a3 {
-  rrc_meas_trigger_quant_offset a3_offset;
-  bool                          report_on_leave;
-  uint8_t                       hysteresis;
-  uint16_t                      time_to_trigger;
-  bool                          use_allowed_cell_list;
-};
+struct rrc_event_id {
+  enum class event_id_t : uint8_t { a1, a2, a3, a4, a5, a6 };
+  // common parameters
+  event_id_t id;
 
-struct rrc_event_a4 {
-  rrc_meas_trigger_quant a4_thres;
-  bool                   report_on_leave;
-  uint8_t                hysteresis;
-  uint16_t               time_to_trigger;
-  bool                   use_allowed_cell_list;
-};
+  bool     report_on_leave;
+  uint8_t  hysteresis;
+  uint16_t time_to_trigger;
 
-struct rrc_event_a5 {
-  rrc_meas_trigger_quant a5_thres_1;
-  rrc_meas_trigger_quant a5_thres_2;
-  bool                   report_on_leave;
-  uint8_t                hysteresis;
-  uint16_t               time_to_trigger;
-  bool                   use_allowed_cell_list;
-};
+  // event A1/A2/A4/A5
+  std::optional<rrc_meas_trigger_quant>
+      meas_trigger_quant_thres_or_offset; ///< Threshold for the measurement trigger quantity of event A1/A2/A4/A5 or
+                                          ///< offset for event A3/A6
+  std::optional<rrc_meas_trigger_quant>
+      meas_trigger_quant_thres_2; ///< Threshold 2 for the measurement trigger quantity of event A5
 
-struct rrc_event_a6 {
-  rrc_meas_trigger_quant_offset a6_offset;
-  bool                          report_on_leave;
-  uint8_t                       hysteresis;
-  uint16_t                      time_to_trigger;
-  bool                          use_allowed_cell_list;
+  std::optional<bool> use_allowed_cell_list; ///< For event A3/A4/A5/A6
 };
-
-using rrc_event_id = std::variant<rrc_event_a1, rrc_event_a2, rrc_event_a3, rrc_event_a4, rrc_event_a5, rrc_event_a6>;
 
 struct rrc_event_trigger_cfg {
   bool                                 report_add_neigh_meas_present;

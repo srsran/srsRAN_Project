@@ -142,9 +142,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
 
       // Add periodic event
       {
-        rrc_report_cfg_nr         periodic_report_cfg;
         rrc_periodical_report_cfg periodical_cfg;
-
         periodical_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
         periodical_cfg.report_interv          = 1024;
         periodical_cfg.report_amount          = -1;
@@ -153,19 +151,18 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         periodical_cfg.report_quant_cell.sinr = true;
         periodical_cfg.max_report_cells       = 4;
 
-        periodic_report_cfg = periodical_cfg;
-        meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_report_cfg);
+        meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), rrc_report_cfg_nr{periodical_cfg});
       }
 
       // Add event A3
       {
-        rrc_report_cfg_nr     a3_report_cfg;
         rrc_event_trigger_cfg event_trigger_cfg = {};
 
-        rrc_event_a3 event_a3;
-        event_a3.a3_offset.rsrp.emplace() = 6;
-        event_a3.hysteresis               = 0;
-        event_a3.time_to_trigger          = 100;
+        rrc_event_id event_a3;
+        event_a3.meas_trigger_quant_thres_or_offset.emplace();
+        event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
+        event_a3.hysteresis                                                = 0;
+        event_a3.time_to_trigger                                           = 100;
 
         event_trigger_cfg.event_id = event_a3;
 
@@ -183,8 +180,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         report_quant_rs_idxes.sinr              = true;
         event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
-        a3_report_cfg = event_trigger_cfg;
-        meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
+        meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), rrc_report_cfg_nr{event_trigger_cfg});
       }
     }
     cu_cp_cfg.mobility.meas_manager_config = meas_mng_cfg;

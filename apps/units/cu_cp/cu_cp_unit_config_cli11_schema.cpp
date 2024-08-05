@@ -52,25 +52,45 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config&
       ->check(CLI::Range(1, 64));
   add_option(app, "--report_type", report_params.report_type, "Type of the report configuration")
       ->check(CLI::IsMember({"periodical", "event_triggered"}));
+  add_option(app,
+             "--event_triggered_report_type",
+             report_params.event_triggered_report_type,
+             "Type of the event triggered report")
+      ->check(CLI::IsMember({"a1", "a2", "a3", "a4", "a5", "a6"}));
   add_option(app, "--report_interval_ms", report_params.report_interval_ms, "Report interval in ms")
       ->check(
           CLI::IsMember({120, 240, 480, 640, 1024, 2048, 5120, 10240, 20480, 40960, 60000, 360000, 720000, 1800000}));
-  add_option(app, "--a3_report_type", report_params.a3_report_type, "A3 report type")
+  add_option(app,
+             "--meas_trigger_quantity",
+             report_params.meas_trigger_quantity,
+             "Measurement trigger quantity (RSRP/RSRQ/SINR)")
       ->check(CLI::IsMember({"rsrp", "rsrq", "sinr"}));
   add_option(app,
-             "--a3_offset_db",
-             report_params.a3_offset_db,
-             "A3 offset in dB used for measurement report trigger. Note the actual value is field value * 0.5 dB")
+             "--meas_trigger_quantitiy_threshold_db",
+             report_params.meas_trigger_quantity_threshold_db,
+             "Measurement trigger quantity threshold in dB used for measurement report trigger of event A1/A2/A4/A5")
+      ->check(CLI::Range(0, 127));
+  add_option(app,
+             "--meas_trigger_quantitiy_threshold_2_db",
+             report_params.meas_trigger_quantity_threshold_2_db,
+             "Measurement trigger quantity threshold 2 in dB used for measurement report trigger of event A5")
+      ->check(CLI::Range(0, 127));
+  add_option(app,
+             "--meas_trigger_quantity_offset_db",
+             report_params.meas_trigger_quantity_offset_db,
+             "Measurement trigger quantity offset in dB used for measurement report trigger of event A3/A6. Note the "
+             "actual value is field value * 0.5 dB")
+
       ->check(CLI::Range(-30, 30));
   add_option(app,
-             "--a3_hysteresis_db",
-             report_params.a3_hysteresis_db,
-             "A3 hysteresis in dB used for measurement report trigger. Note the actual value is field value * 0.5 dB")
+             "--hysteresis_db",
+             report_params.hysteresis_db,
+             "Hysteresis in dB used for measurement report trigger. Note the actual value is field value * 0.5 dB")
       ->check(CLI::Range(0, 30));
   add_option(app,
-             "--a3_time_to_trigger_ms",
-             report_params.a3_time_to_trigger_ms,
-             "Time in ms during which A3 condition must be met before measurement report trigger")
+             "--time_to_trigger_ms",
+             report_params.time_to_trigger_ms,
+             "Time in ms during which a condition must be met before measurement report trigger")
       ->check(CLI::IsMember({0, 40, 64, 80, 100, 128, 160, 256, 320, 480, 512, 640, 1024, 1280, 2560, 5120}));
 }
 

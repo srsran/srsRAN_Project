@@ -21,14 +21,48 @@ using namespace srsran;
 
 static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobility_config& config)
 {
-  // check that report config ids are unique
   std::map<unsigned, std::string> report_cfg_ids_to_report_type;
   for (const auto& report_cfg : config.report_configs) {
+    // check that report config ids are unique
     if (report_cfg_ids_to_report_type.find(report_cfg.report_cfg_id) != report_cfg_ids_to_report_type.end()) {
       fmt::print("Report config ids must be unique\n");
       return false;
     }
     report_cfg_ids_to_report_type.emplace(report_cfg.report_cfg_id, report_cfg.report_type);
+
+    // check that report configs are valid
+    if (report_cfg.report_type == "event_triggered") {
+      if (!report_cfg.event_triggered_report_type.has_value()) {
+        fmt::print("Invalid CU-CP configuration. If report type is set to \"event_triggered\" then "
+                   "\"event_triggered_report_type\" must be set\n");
+        return false;
+      }
+
+      if (report_cfg.event_triggered_report_type.value() == "a1" or
+          report_cfg.event_triggered_report_type.value() == "a2" or
+          report_cfg.event_triggered_report_type.value() == "a4") {
+        if (!report_cfg.meas_trigger_quantity.has_value() or
+            !report_cfg.meas_trigger_quantity_threshold_db.has_value() or !report_cfg.hysteresis_db.has_value() or
+            !report_cfg.time_to_trigger_ms.has_value()) {
+          fmt::print("Invalid event A1/A2/A4 measurement report configuration.\n");
+        }
+      }
+      if (report_cfg.event_triggered_report_type.value() == "a3" or
+          report_cfg.event_triggered_report_type.value() == "a6") {
+        if (!report_cfg.meas_trigger_quantity.has_value() or !report_cfg.meas_trigger_quantity_offset_db.has_value() or
+            !report_cfg.hysteresis_db.has_value() or !report_cfg.time_to_trigger_ms.has_value()) {
+          fmt::print("Invalid event A3/A6 measurement report configuration.\n");
+        }
+      }
+      if (report_cfg.event_triggered_report_type.value() == "a5") {
+        if (!report_cfg.meas_trigger_quantity.has_value() or
+            !report_cfg.meas_trigger_quantity_threshold_db.has_value() or
+            !report_cfg.meas_trigger_quantity_threshold_2_db.has_value() or !report_cfg.hysteresis_db.has_value() or
+            !report_cfg.time_to_trigger_ms.has_value()) {
+          fmt::print("Invalid event A5 measurement report configuration.\n");
+        }
+      }
+    }
   }
 
   std::map<nr_cell_identity, std::set<unsigned>> cell_to_report_cfg_id;

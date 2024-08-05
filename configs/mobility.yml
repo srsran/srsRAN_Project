@@ -30,8 +30,9 @@ cu_cp:
         report_interval_ms: 1024
       - report_cfg_id: 2
         report_type: event_triggered
-        a3_report_type: rsrp
-        a3_offset_db: 6
-        a3_hysteresis_db: 0
-        a3_time_to_trigger_ms: 100
+        event_triggered_report_type: a3
+        meas_trigger_quantity: rsrp
+        meas_trigger_quantity_offset_db: 6
+        hysteresis_db: 0
+        time_to_trigger_ms: 100
         report_interval_ms: 1024
