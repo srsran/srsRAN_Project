@@ -157,8 +157,8 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
           asn1_drb_to_be_setup_mod_item_container;
       asn1_drb_to_be_setup_mod_item_container.load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_SETUP_MOD_ITEM);
 
-      f1ap_drbs_to_be_setup_mod_item_to_asn1(
-          asn1_drb_to_be_setup_mod_item_container.value().drbs_to_be_setup_mod_item(), drb_to_be_setup_mod_item);
+      f1ap_drb_to_setup_to_asn1(asn1_drb_to_be_setup_mod_item_container.value().drbs_to_be_setup_mod_item(),
+                                drb_to_be_setup_mod_item);
 
       asn1_request->drbs_to_be_setup_mod_list.push_back(asn1_drb_to_be_setup_mod_item_container);
     }

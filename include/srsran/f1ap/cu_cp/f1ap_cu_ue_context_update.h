@@ -67,30 +67,6 @@ struct f1ap_scell_to_be_setup_mod_item {
   std::optional<f1ap_cell_ul_cfg> scell_ul_cfg;
 };
 
-/// \brief Used to activate notification control for a given DRB.
-enum class drb_notification_control { active = 0, not_active };
-
-struct f1ap_flows_mapped_to_drb_item {
-  qos_flow_id_t                   qos_flow_id = qos_flow_id_t::invalid;
-  cu_cp_qos_flow_level_qos_params qos_flow_level_qos_params;
-};
-
-struct f1ap_drb_info {
-  cu_cp_qos_flow_level_qos_params drb_qos;
-  s_nssai_t                       s_nssai;
-  /// \brief Sets whether notification control is active.
-  /// [TS 38.473 8.3.1.2] If the Notification Control IE is included in the DRB to Be Setup List IE and it is set to
-  /// active, the gNB-DU shall, if supported, monitor the QoS of the DRB and notify the gNB-CU if the QoS cannot be
-  /// fulfilled any longer or if the QoS can be fulfilled again. The Notification Control IE can only be applied to GBR
-  /// bearers.
-  std::optional<drb_notification_control>    notif_ctrl;
-  std::vector<f1ap_flows_mapped_to_drb_item> flows_mapped_to_drb_list;
-};
-
-struct f1ap_drbs_to_be_setup_mod_item : public f1ap_drb_to_setup {
-  f1ap_drb_info qos_info;
-};
-
 struct f1ap_rat_freq_prio_info {
   // choice
   std::optional<uint16_t> endc;
@@ -113,7 +89,7 @@ struct f1ap_ue_context_setup_request {
   byte_buffer                                        res_coordination_transfer_container;
   std::vector<f1ap_scell_to_be_setup_mod_item>       scell_to_be_setup_list; // max size = 32
   std::vector<f1ap_srb_to_setup>                     srbs_to_be_setup_list;  // max size = 8
-  std::vector<f1ap_drbs_to_be_setup_mod_item>        drbs_to_be_setup_list;  // max size = 64
+  std::vector<f1ap_drb_to_setup>                     drbs_to_be_setup_list;  // max size = 64
   std::optional<bool>                                inactivity_monitoring_request;
   std::optional<f1ap_rat_freq_prio_info>             rat_freq_prio_info;
   byte_buffer                                        rrc_container;
@@ -199,7 +175,7 @@ struct f1ap_ue_context_modification_request {
   std::vector<f1ap_scell_to_be_setup_mod_item>       scell_to_be_setup_mod_list;
   std::vector<f1ap_scell_to_be_remd_item>            scell_to_be_remd_list;
   std::vector<f1ap_srb_to_setup>                     srbs_to_be_setup_mod_list;
-  std::vector<f1ap_drbs_to_be_setup_mod_item>        drbs_to_be_setup_mod_list;
+  std::vector<f1ap_drb_to_setup>                     drbs_to_be_setup_mod_list;
   std::vector<f1ap_drb_to_modify>                    drbs_to_be_modified_list;
   std::vector<srb_id_t>                              srbs_to_be_released_list;
   std::vector<drb_id_t>                              drbs_to_be_released_list;

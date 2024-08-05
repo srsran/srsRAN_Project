@@ -18,7 +18,7 @@
 #include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/ran/qos_prio_level.h"
+#include "srsran/ran/qos/qos_prio_level.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/sdap/sdap_config.h"
 #include "srsran/security/security.h"
@@ -1100,16 +1100,17 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
       const auto& asn1_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
 
       dyn_5qi_descriptor_t dyn_5qi;
-      dyn_5qi.qos_prio_level                 = uint_to_qos_prio_level(asn1_dyn_5qi.qos_prio_level);
-      dyn_5qi.packet_delay_budget            = asn1_dyn_5qi.packet_delay_budget;
-      dyn_5qi.packet_error_rate.per_exponent = asn1_dyn_5qi.packet_error_rate.per_exponent;
-      dyn_5qi.packet_error_rate.per_scalar   = asn1_dyn_5qi.packet_error_rate.per_scalar;
+      dyn_5qi.qos_prio_level      = uint_to_qos_prio_level(asn1_dyn_5qi.qos_prio_level);
+      dyn_5qi.packet_delay_budget = asn1_dyn_5qi.packet_delay_budget;
+      dyn_5qi.per.exponent        = asn1_dyn_5qi.packet_error_rate.per_exponent;
+      dyn_5qi.per.scalar          = asn1_dyn_5qi.packet_error_rate.per_scalar;
 
       if (asn1_dyn_5qi.five_qi_present) {
         dyn_5qi.five_qi = uint_to_five_qi(asn1_dyn_5qi.five_qi);
       }
       if (asn1_dyn_5qi.delay_crit_present) {
-        dyn_5qi.delay_crit = asn1_dyn_5qi.delay_crit.to_string();
+        dyn_5qi.is_delay_critical =
+            asn1_dyn_5qi.delay_crit.value == asn1::e1ap::dyn_5qi_descriptor_s::delay_crit_opts::delay_crit;
       }
       if (asn1_dyn_5qi.averaging_win_present) {
         dyn_5qi.averaging_win = asn1_dyn_5qi.averaging_win;
@@ -1138,12 +1139,14 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
     }
 
     // Add ng ran alloc retention prio.
-    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level =
+    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention.prio_level_arp =
         asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.prio_level;
-    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap =
-        asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap.to_string();
-    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
-        asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability.to_string();
+    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention.may_trigger_preemption =
+        asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap.value ==
+        asn1::e1ap::pre_emption_cap_opts::may_trigger_pre_emption;
+    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention.is_preemptable =
+        asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability.value ==
+        asn1::e1ap::pre_emption_vulnerability_opts::pre_emptable;
 
     // Add gbr qos flow info.
     if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info_present) {

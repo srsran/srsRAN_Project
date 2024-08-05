@@ -33,10 +33,10 @@ srb_id_t make_srb_id(const Asn1Type& srb_item)
 }
 
 /// Convert 3GPP TS 38.473, DRBs-ToBeSetup-Item ASN.1 type into f1ap_drb_config_request.
-f1ap_drb_setup_request make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_item_s& drb_item);
+f1ap_drb_to_setup make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_item_s& drb_item);
 
 /// Convert 3GPP TS 38.473, DRBs-ToBeSetupMod-Item ASN.1 type into f1ap_drb_config_request.
-f1ap_drb_setup_request make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item);
+f1ap_drb_to_setup make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item);
 
 } // namespace srs_du
 } // namespace srsran

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "five_qi.h"
 #include "srsran/adt/optional.h"
-#include "srsran/ran/five_qi.h"
 
 namespace srsran {
 

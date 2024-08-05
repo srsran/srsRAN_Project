@@ -86,9 +86,9 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
 
   for (drb_id_t drb_id : drbs_to_addmod) {
     req.drbs_to_setup.emplace_back();
-    req.drbs_to_setup.back().drb_id  = drb_id;
-    req.drbs_to_setup.back().mode    = rlc_mode::am;
-    req.drbs_to_setup.back().five_qi = uint_to_five_qi(9);
+    req.drbs_to_setup.back().drb_id                                                             = drb_id;
+    req.drbs_to_setup.back().mode                                                               = rlc_mode::am;
+    req.drbs_to_setup.back().qos_info.drb_qos.qos_characteristics.non_dyn_5qi.emplace().five_qi = uint_to_five_qi(9);
     req.drbs_to_setup.back().uluptnl_info_list.resize(1);
     req.drbs_to_setup.back().uluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(0);
     req.drbs_to_setup.back().uluptnl_info_list[0].tp_address = transport_layer_address::create_from_string("127.0.0.1");

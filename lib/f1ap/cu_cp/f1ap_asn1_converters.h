@@ -129,17 +129,19 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
     auto& asn1_dyn_5qi               = asn1_qos_characteristics.set_dyn_5qi();
     asn1_dyn_5qi.qos_prio_level      = qos_prio_level_to_uint(qos_characteristics.dyn_5qi.value().qos_prio_level);
     asn1_dyn_5qi.packet_delay_budget = qos_characteristics.dyn_5qi.value().packet_delay_budget;
-    asn1_dyn_5qi.packet_error_rate.per_scalar   = qos_characteristics.dyn_5qi.value().packet_error_rate.per_scalar;
-    asn1_dyn_5qi.packet_error_rate.per_exponent = qos_characteristics.dyn_5qi.value().packet_error_rate.per_exponent;
+    asn1_dyn_5qi.packet_error_rate.per_scalar   = qos_characteristics.dyn_5qi.value().per.scalar;
+    asn1_dyn_5qi.packet_error_rate.per_exponent = qos_characteristics.dyn_5qi.value().per.exponent;
 
     if (qos_characteristics.dyn_5qi.value().five_qi.has_value()) {
       asn1_dyn_5qi.five_qi_present = true;
       asn1_dyn_5qi.five_qi         = five_qi_to_uint(qos_characteristics.dyn_5qi.value().five_qi.value());
     }
 
-    if (qos_characteristics.dyn_5qi.value().delay_crit.has_value()) {
+    if (qos_characteristics.dyn_5qi.value().is_delay_critical.has_value()) {
       asn1_dyn_5qi.delay_crit_present = true;
-      asn1::string_to_enum(asn1_dyn_5qi.delay_crit, qos_characteristics.dyn_5qi.value().delay_crit.value());
+      asn1_dyn_5qi.delay_crit.value   = qos_characteristics.dyn_5qi.value().is_delay_critical.value()
+                                            ? asn1::f1ap::dyn_5qi_descriptor_s::delay_crit_opts::delay_crit
+                                            : asn1::f1ap::dyn_5qi_descriptor_s::delay_crit_opts::non_delay_crit;
     }
 
     if (qos_characteristics.dyn_5qi.value().averaging_win.has_value()) {
@@ -217,12 +219,15 @@ inline asn1::f1ap::qos_info_c f1ap_qos_info_to_asn1(const f1ap_drb_info& qos_inf
   asn1_drb_info.drb_qos.qos_characteristics = qos_characteristics_to_f1ap_asn1(qos_info.drb_qos.qos_characteristics);
 
   // alloc and retention prio
-  asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level =
-      qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp;
-  asn1::string_to_enum(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap,
-                       qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap);
-  asn1::string_to_enum(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability,
-                       qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability);
+  asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level = qos_info.drb_qos.alloc_retention_prio.prio_level_arp;
+  asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap.value =
+      qos_info.drb_qos.alloc_retention_prio.may_trigger_preemption
+          ? asn1::f1ap::pre_emption_cap_opts::may_trigger_pre_emption
+          : asn1::f1ap::pre_emption_cap_opts::shall_not_trigger_pre_emption;
+  asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
+      qos_info.drb_qos.alloc_retention_prio.is_preemptable
+          ? asn1::f1ap::pre_emption_vulnerability_opts::pre_emptable
+          : asn1::f1ap::pre_emption_vulnerability_opts::not_pre_emptable;
 
   // assert valid conversion result
   srsran_assert(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap !=
@@ -235,15 +240,11 @@ inline asn1::f1ap::qos_info_c f1ap_qos_info_to_asn1(const f1ap_drb_info& qos_inf
 
   // gbr qos info
   if (qos_info.drb_qos.gbr_qos_info.has_value()) {
-    asn1_drb_info.drb_qos.gbr_qos_flow_info_present = true;
-    asn1_drb_info.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_dl =
-        qos_info.drb_qos.gbr_qos_info.value().max_flow_bit_rate_dl;
-    asn1_drb_info.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_ul =
-        qos_info.drb_qos.gbr_qos_info.value().max_flow_bit_rate_ul;
-    asn1_drb_info.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl =
-        qos_info.drb_qos.gbr_qos_info.value().guaranteed_flow_bit_rate_dl;
-    asn1_drb_info.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul =
-        qos_info.drb_qos.gbr_qos_info.value().guaranteed_flow_bit_rate_ul;
+    asn1_drb_info.drb_qos.gbr_qos_flow_info_present              = true;
+    asn1_drb_info.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_dl = qos_info.drb_qos.gbr_qos_info.value().max_br_dl;
+    asn1_drb_info.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_ul = qos_info.drb_qos.gbr_qos_info.value().max_br_ul;
+    asn1_drb_info.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl = qos_info.drb_qos.gbr_qos_info.value().gbr_dl;
+    asn1_drb_info.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul = qos_info.drb_qos.gbr_qos_info.value().gbr_ul;
 
     if (qos_info.drb_qos.gbr_qos_info.value().max_packet_loss_rate_dl.has_value()) {
       asn1_drb_info.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_dl_present = true;
@@ -259,10 +260,10 @@ inline asn1::f1ap::qos_info_c f1ap_qos_info_to_asn1(const f1ap_drb_info& qos_inf
   }
 
   // reflective qos attribute
-  if (qos_info.drb_qos.reflective_qos_attribute.has_value()) {
+  if (qos_info.drb_qos.reflective_qos_attribute_subject_to) {
     asn1_drb_info.drb_qos.reflective_qos_attribute_present = true;
-    asn1::bool_to_enum(asn1_drb_info.drb_qos.reflective_qos_attribute,
-                       qos_info.drb_qos.reflective_qos_attribute.value());
+    asn1_drb_info.drb_qos.reflective_qos_attribute.value =
+        asn1::f1ap::qos_flow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
   }
 
   // s nssai
@@ -389,9 +390,8 @@ inline void f1ap_srb_to_setup_to_asn1(template_asn1_item&      asn1_srbs_to_be_s
 /// \brief Convert extension fields of drb to be setup item to F1AP ASN.1.
 /// \param[out] ie_exts The ASN.1 struct to store the result.
 /// \param[in] drb_to_be_setup_item The drb to be setup item common type struct.
-inline void
-f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_item_ext_ies_container& ie_exts,
-                                               const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
+inline void f1ap_drb_to_setup_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_item_ext_ies_container& ie_exts,
+                                              const f1ap_drb_to_setup& drb_to_be_setup_mod_item)
 {
   ie_exts.dl_pdcp_sn_len = pdcp_sn_size_to_f1ap_asn1(drb_to_be_setup_mod_item.pdcp_sn_len);
 }
@@ -399,9 +399,8 @@ f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_item
 /// \brief Convert extension fields of drb to be setup mod item to F1AP ASN.1.
 /// \param[out] ie_exts The ASN.1 struct to store the result.
 /// \param[in] drb_to_be_setup_mod_item The drb to be setup mod item common type struct.
-inline void
-f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_mod_item_ext_ies_container& ie_exts,
-                                               const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
+inline void f1ap_drb_to_setup_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_mod_item_ext_ies_container& ie_exts,
+                                              const f1ap_drb_to_setup& drb_to_be_setup_mod_item)
 {
   ie_exts.dl_pdcp_sn_len_present = true;
   ie_exts.dl_pdcp_sn_len         = pdcp_sn_size_to_f1ap_asn1(drb_to_be_setup_mod_item.pdcp_sn_len);
@@ -415,8 +414,8 @@ f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_mod_
 /// \param[out] asn1_drbs_to_be_setup_mod_item The ASN.1 struct to store the result.
 /// \param[in] drbs_to_be_setup_mod_item The drbs to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
-inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&                   asn1_drb_to_be_setup_mod_item,
-                                                   const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
+inline void f1ap_drb_to_setup_to_asn1(template_asn1_item&      asn1_drb_to_be_setup_mod_item,
+                                      const f1ap_drb_to_setup& drb_to_be_setup_mod_item)
 {
   // drb id
   asn1_drb_to_be_setup_mod_item.drb_id = drb_id_to_uint(drb_to_be_setup_mod_item.drb_id);
@@ -435,7 +434,7 @@ inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&          
   asn1_drb_to_be_setup_mod_item.rlc_mode = rlc_mode_to_f1ap_asn1(drb_to_be_setup_mod_item.mode);
 
   // pdcp sn size
-  f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1_drb_to_be_setup_mod_item.ie_exts, drb_to_be_setup_mod_item);
+  f1ap_drb_to_setup_ext_ies_to_asn1(asn1_drb_to_be_setup_mod_item.ie_exts, drb_to_be_setup_mod_item);
   asn1_drb_to_be_setup_mod_item.ie_exts_present = true;
 }
 

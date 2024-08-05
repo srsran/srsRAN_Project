@@ -64,12 +64,6 @@ struct e1ap_cell_group_info_item {
   std::optional<std::string> rat_type;
 };
 
-struct e1ap_ng_ran_alloc_and_retention_prio {
-  uint8_t     prio_level;
-  std::string pre_emption_cap;
-  std::string pre_emption_vulnerability;
-};
-
 struct e1ap_gbr_qos_flow_info {
   uint64_t                max_flow_bit_rate_dl;
   uint64_t                max_flow_bit_rate_ul;
@@ -81,7 +75,7 @@ struct e1ap_gbr_qos_flow_info {
 
 struct e1ap_qos_flow_level_qos_params {
   qos_characteristics_t                 qos_characteristics;
-  e1ap_ng_ran_alloc_and_retention_prio  ng_ran_alloc_retention_prio;
+  alloc_and_retention_priority          ng_ran_alloc_retention;
   std::optional<e1ap_gbr_qos_flow_info> gbr_qos_flow_info;
   std::optional<bool>                   reflective_qos_attribute;
   std::optional<bool>                   add_qos_info;

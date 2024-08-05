@@ -135,7 +135,7 @@ void ue_configuration_procedure::update_ue_context()
   }
 
   // > Create new DU UE DRB objects.
-  for (const f1ap_drb_setup_request& drbtoadd : request.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
     if (drbtoadd.uluptnl_info_list.empty()) {
       proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
       continue;
@@ -153,28 +153,28 @@ void ue_configuration_procedure::update_ue_context()
     srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
 
     // Find the F1-U configuration for this DRB.
-    auto f1u_cfg_it = du_params.ran.qos.find(drbtoadd.five_qi);
-    srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for {}", drbtoadd.five_qi);
+    five_qi_t fiveqi     = drbtoadd.qos_info.drb_qos.qos_characteristics.get_five_qi();
+    auto      f1u_cfg_it = du_params.ran.qos.find(fiveqi);
+    srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for {}", fiveqi);
 
     // TODO: Adjust QoS characteristics passed while creating a DRB since one DRB can contain multiple QoS flow of
     //  varying 5QI.
 
     // Create DU DRB instance.
-    std::unique_ptr<du_ue_drb> drb =
-        create_drb(drb_creation_info{ue->ue_index,
-                                     ue->pcell_index,
-                                     drbtoadd.drb_id,
-                                     it->lcid,
-                                     it->rlc_cfg,
-                                     it->mac_cfg,
-                                     f1u_cfg_it->second.f1u,
-                                     drbtoadd.uluptnl_info_list,
-                                     ue_mng.get_f1u_teid_pool(),
-                                     du_params,
-                                     ue->get_rlc_rlf_notifier(),
-                                     get_5qi_to_qos_characteristics_mapping(drbtoadd.five_qi),
-                                     drbtoadd.gbr_flow_info,
-                                     drbtoadd.s_nssai});
+    std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
+                                                                  ue->pcell_index,
+                                                                  drbtoadd.drb_id,
+                                                                  it->lcid,
+                                                                  it->rlc_cfg,
+                                                                  it->mac_cfg,
+                                                                  f1u_cfg_it->second.f1u,
+                                                                  drbtoadd.uluptnl_info_list,
+                                                                  ue_mng.get_f1u_teid_pool(),
+                                                                  du_params,
+                                                                  ue->get_rlc_rlf_notifier(),
+                                                                  get_5qi_to_qos_characteristics_mapping(fiveqi),
+                                                                  drbtoadd.qos_info.drb_qos.gbr_qos_info,
+                                                                  drbtoadd.qos_info.s_nssai});
     if (drb == nullptr) {
       proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.", drbtoadd.drb_id);
       continue;
@@ -246,7 +246,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   resp.result = true;
 
   // > Handle DRBs that were setup or failed to be setup.
-  for (const f1ap_drb_setup_request& drb_req : request.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drb_req : request.drbs_to_setup) {
     if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
       resp.failed_drbs_setups.push_back({drb_req.drb_id, f1ap_cause_radio_network_t::no_radio_res_available});
       continue;

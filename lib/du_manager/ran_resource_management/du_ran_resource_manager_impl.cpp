@@ -110,21 +110,22 @@ static error_type<std::string> validate_drb_modification_request(const f1ap_drb_
   return {};
 }
 
-static error_type<std::string> validate_drb_setup_request(const f1ap_drb_setup_request&             drb,
+static error_type<std::string> validate_drb_setup_request(const f1ap_drb_to_setup&                  drb,
                                                           span<const rlc_bearer_config>             rlc_bearers,
                                                           const std::map<five_qi_t, du_qos_config>& qos_config)
 {
   // Validate QOS config.
-  auto qos_it = qos_config.find(drb.five_qi);
+  five_qi_t fiveqi = drb.qos_info.drb_qos.qos_characteristics.get_five_qi();
+  auto      qos_it = qos_config.find(fiveqi);
   if (qos_it == qos_config.end()) {
-    return make_unexpected(fmt::format("Failed to allocate {}. Cause: No {} 5QI configured", drb.drb_id, drb.five_qi));
+    return make_unexpected(fmt::format("Failed to allocate {}. Cause: No {} 5QI configured", drb.drb_id, fiveqi));
   }
   const du_qos_config& qos = qos_it->second;
   if (qos.rlc.mode != drb.mode) {
     return make_unexpected(
         fmt::format("RLC mode mismatch for {}. QoS config for {} configures {} but CU-CP requested {}",
                     drb.drb_id,
-                    drb.five_qi,
+                    fiveqi,
                     qos.rlc.mode,
                     drb.mode));
   }
@@ -198,7 +199,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   }
 
   // > Create new DRBs.
-  for (const f1ap_drb_setup_request& drb : upd_req.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drb : upd_req.drbs_to_setup) {
     auto res = validate_drb_setup_request(drb, ue_mcg.rlc_bearers, qos_config);
     if (not res.has_value()) {
       resp.failed_drbs.push_back(drb.drb_id);
@@ -214,7 +215,8 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
 
     // >> Get RLC config from 5QI
-    const du_qos_config& qos = qos_config.at(drb.five_qi);
+    five_qi_t            fiveqi = drb.qos_info.drb_qos.qos_characteristics.get_five_qi();
+    const du_qos_config& qos    = qos_config.at(fiveqi);
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
     ue_mcg.rlc_bearers.back().drb_id  = drb.drb_id;

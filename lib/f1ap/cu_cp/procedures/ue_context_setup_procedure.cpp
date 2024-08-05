@@ -306,8 +306,8 @@ static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
       asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_item_ies_o> asn1_drb_to_be_setup_item_container;
       asn1_drb_to_be_setup_item_container.load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_SETUP_ITEM);
 
-      f1ap_drbs_to_be_setup_mod_item_to_asn1(asn1_drb_to_be_setup_item_container.value().drbs_to_be_setup_item(),
-                                             drb_to_be_setup_item);
+      f1ap_drb_to_setup_to_asn1(asn1_drb_to_be_setup_item_container.value().drbs_to_be_setup_item(),
+                                drb_to_be_setup_item);
 
       asn1_request->drbs_to_be_setup_list.push_back(asn1_drb_to_be_setup_item_container);
     }

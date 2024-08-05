@@ -310,12 +310,14 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
     }
 
     // allocationAndRetentionPriority
-    qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp =
+    qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp =
         asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
-    qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
-        asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
-    qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
-        asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
+    qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_retention_prio.may_trigger_preemption =
+        asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap ==
+        asn1::ngap::pre_emption_cap_opts::may_trigger_pre_emption;
+    qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_retention_prio.is_preemptable =
+        asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability ==
+        asn1::ngap::pre_emption_vulnerability_opts::pre_emptable;
 
     // Optional Parameters
     if (asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info_present) {
@@ -328,8 +330,7 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
     }
 
     if (asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
-      qos_flow_setup_req_item.qos_flow_level_qos_params.reflective_qos_attribute =
-          asn1::enum_to_bool(asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute);
+      qos_flow_setup_req_item.qos_flow_level_qos_params.reflective_qos_attribute_subject_to = true;
     }
 
     if (asn1_flow_item.erab_id_present) {
@@ -611,12 +612,14 @@ inline bool fill_cu_cp_pdu_session_resource_modify_item_base(
         }
 
         // allocationAndRetentionPriority
-        qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp =
+        qos_flow_add_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp =
             asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
-        qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
-            asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
-        qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
-            asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
+        qos_flow_add_item.qos_flow_level_qos_params.alloc_retention_prio.may_trigger_preemption =
+            asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.value ==
+            asn1::ngap::pre_emption_cap_opts::may_trigger_pre_emption;
+        qos_flow_add_item.qos_flow_level_qos_params.alloc_retention_prio.is_preemptable =
+            asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.value ==
+            asn1::ngap::pre_emption_vulnerability_opts::pre_emptable;
       }
 
       modify_item.transfer.qos_flow_add_or_modify_request_list.emplace(qos_flow_add_item.qos_flow_id,

@@ -44,12 +44,8 @@ void srsran::srs_cu_cp::fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_it
     //  TODO: Add dynamic 5qi
   }
 
-  e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level =
-      request_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
-  e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap =
-      request_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap;
-  e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
-      request_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability;
+  e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention =
+      request_item.qos_flow_level_qos_params.alloc_retention_prio;
 }
 
 bool srsran::srs_cu_cp::verify_and_log_cell_group_config(const byte_buffer&          packed_config,
@@ -177,7 +173,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
   return true;
 }
 
-bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_item, // Request to setup DRB at DU.
+bool fill_f1ap_drb_setup_mod_item(f1ap_drb_to_setup& drb_setup_mod_item, // Request to setup DRB at DU.
                                   slotted_id_vector<qos_flow_id_t, cu_cp_associated_qos_flow>* response_flow_list,
                                   pdu_session_id_t                                             psi,
                                   drb_id_t                                                     drb_id,
@@ -203,8 +199,8 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
   drb_setup_mod_item.drb_id = drb_id;
 
   // QoS config.
-  drb_setup_mod_item.qos_info.drb_qos.qos_characteristics      = next_drb_config.qos_params.qos_characteristics;
-  drb_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio = next_drb_config.qos_params.alloc_and_retention_prio;
+  drb_setup_mod_item.qos_info.drb_qos.qos_characteristics  = next_drb_config.qos_params.qos_characteristics;
+  drb_setup_mod_item.qos_info.drb_qos.alloc_retention_prio = next_drb_config.qos_params.alloc_retention_prio;
 
   // S-NSSAI
   drb_setup_mod_item.qos_info.s_nssai = next_drb_config.s_nssai;
@@ -244,11 +240,10 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
     const auto& ngap_qos_flow = ngap_qos_flow_setup_items[e1ap_flow.qos_flow_id];
 
     // Add flow to F1AP DRB item
-    f1ap_flows_mapped_to_drb_item flow_mapped_to_drb;
-    flow_mapped_to_drb.qos_flow_id               = e1ap_flow.qos_flow_id;
-    flow_mapped_to_drb.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
-
-    drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(flow_mapped_to_drb);
+    flow_mapped_to_drb flow_map_item;
+    flow_map_item.qos_flow_id               = e1ap_flow.qos_flow_id;
+    flow_map_item.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
+    drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(flow_map_item);
 
     // Store flow QoS params in UP config.
     auto& next_config_flow_cfg      = next_drb_config.qos_flows.at(e1ap_flow.qos_flow_id);
@@ -261,7 +256,7 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
 bool srsran::srs_cu_cp::update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
     std::vector<f1ap_srb_to_setup>&                                                 srb_setup_mod_list,
-    std::vector<f1ap_drbs_to_be_setup_mod_item>&                                    drb_setup_mod_list,
+    std::vector<f1ap_drb_to_setup>&                                                 drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                  pdu_session_resource_setup_list,
@@ -363,7 +358,7 @@ bool srsran::srs_cu_cp::update_setup_list(
       next_cfg_pdu_session.drb_to_add.find(drb_id)->second.pdcp_cfg.ciphering_required            = ciphering_enabled;
 
       // Prepare DRB item for DU.
-      f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      f1ap_drb_to_setup drb_setup_mod_item;
       if (!fill_f1ap_drb_setup_mod_item(drb_setup_mod_item,
                                         &transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list,
                                         item.pdu_session_id,
@@ -392,7 +387,7 @@ bool srsran::srs_cu_cp::update_setup_list(
 
 bool srsran::srs_cu_cp::update_setup_list(
     std::vector<f1ap_srb_to_setup>&                                              srb_setup_mod_list,
-    std::vector<f1ap_drbs_to_be_setup_mod_item>&                                 drb_setup_mod_list,
+    std::vector<f1ap_drb_to_setup>&                                              drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                 pdu_session_resource_setup_list,
@@ -432,7 +427,7 @@ bool srsran::srs_cu_cp::update_setup_list(
       }
 
       // Prepare DRB item for DU.
-      f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      f1ap_drb_to_setup drb_setup_mod_item;
       if (!fill_f1ap_drb_setup_mod_item(drb_setup_mod_item,
                                         {},
                                         e1ap_item.pdu_session_id,
@@ -559,7 +554,7 @@ bool srsran::srs_cu_cp::update_modify_list(
       const auto& request_transfer = ngap_modify_list[psi].transfer;
 
       //  Prepare DRB creation at DU.
-      f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      f1ap_drb_to_setup drb_setup_mod_item;
       if (!fill_f1ap_drb_setup_mod_item(drb_setup_mod_item,
                                         nullptr,
                                         psi,

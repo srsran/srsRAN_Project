@@ -14,7 +14,7 @@
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/ran/bcd_helper.h"
-#include "srsran/ran/qos_prio_level.h"
+#include "srsran/ran/qos/qos_prio_level.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -35,15 +35,17 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
 
     asn1_dynamic_5qi.qos_prio_level                 = qos_prio_level_to_uint(dynamic_5qi.qos_prio_level);
     asn1_dynamic_5qi.packet_delay_budget            = dynamic_5qi.packet_delay_budget;
-    asn1_dynamic_5qi.packet_error_rate.per_scalar   = dynamic_5qi.packet_error_rate.per_scalar;
-    asn1_dynamic_5qi.packet_error_rate.per_exponent = dynamic_5qi.packet_error_rate.per_exponent;
+    asn1_dynamic_5qi.packet_error_rate.per_scalar   = dynamic_5qi.per.scalar;
+    asn1_dynamic_5qi.packet_error_rate.per_exponent = dynamic_5qi.per.exponent;
     if (dynamic_5qi.five_qi.has_value()) {
       asn1_dynamic_5qi.five_qi_present = true;
       asn1_dynamic_5qi.five_qi         = five_qi_to_uint(dynamic_5qi.five_qi.value());
     }
-    if (dynamic_5qi.delay_crit.has_value()) {
+    if (dynamic_5qi.is_delay_critical.has_value()) {
       asn1_dynamic_5qi.delay_crit_present = true;
-      asn1::string_to_enum(asn1_dynamic_5qi.delay_crit, dynamic_5qi.delay_crit.value());
+      asn1_dynamic_5qi.delay_crit.value   = dynamic_5qi.is_delay_critical.value()
+                                                ? asn1::e1ap::dyn_5qi_descriptor_s::delay_crit_opts::delay_crit
+                                                : asn1::e1ap::dyn_5qi_descriptor_s::delay_crit_opts::non_delay_crit;
     }
     if (dynamic_5qi.averaging_win.has_value()) {
       asn1_dynamic_5qi.averaging_win_present = true;
@@ -78,12 +80,15 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
 
   // ng ran alloc retention prio
   asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.prio_level =
-      qos_flow_level_params.ng_ran_alloc_retention_prio.prio_level;
-  asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap,
-                       qos_flow_level_params.ng_ran_alloc_retention_prio.pre_emption_cap);
-  asn1::string_to_enum(
-      asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability,
-      qos_flow_level_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability);
+      qos_flow_level_params.ng_ran_alloc_retention.prio_level_arp;
+  asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap.value =
+      qos_flow_level_params.ng_ran_alloc_retention.may_trigger_preemption
+          ? asn1::e1ap::pre_emption_cap_opts::may_trigger_pre_emption
+          : asn1::e1ap::pre_emption_cap_opts::shall_not_trigger_pre_emption;
+  asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
+      qos_flow_level_params.ng_ran_alloc_retention.is_preemptable
+          ? asn1::e1ap::pre_emption_vulnerability_opts::pre_emptable
+          : asn1::e1ap::pre_emption_vulnerability_opts::not_pre_emptable;
 
   // gbr qos flow info
   if (qos_flow_level_params.gbr_qos_flow_info.has_value()) {

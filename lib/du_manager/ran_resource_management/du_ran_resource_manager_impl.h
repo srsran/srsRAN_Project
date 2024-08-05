@@ -12,7 +12,7 @@
 
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
-#include "srsran/ran/five_qi.h"
+#include "srsran/ran/qos/five_qi.h"
 
 namespace srsran {
 namespace srs_du {

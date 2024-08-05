@@ -12,10 +12,10 @@
 
 #include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
 #include "cu_cp_unit_logger_config.h"
-#include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/s_nssai.h"
 #include <vector>
 

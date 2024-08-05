@@ -15,8 +15,8 @@
 #include "srsran/f1ap/common/ue_context_config.h"
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/five_qi.h"
-#include "srsran/ran/qos/qos_info.h"
+#include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 
@@ -37,15 +37,6 @@ struct f1ap_ue_context_creation_response {
   rnti_t crnti;
 };
 
-/// \brief DRB to be setup or modified in the UE context.
-struct f1ap_drb_setup_request : public f1ap_drb_to_setup {
-  five_qi_t five_qi;
-  uint8_t   arp_priority_level;
-  s_nssai_t s_nssai;
-  /// GBR flow information is present only for GBR QoS flows. See TS 38.473, clause 9.3.1.45.
-  std::optional<gbr_qos_info_t> gbr_flow_info;
-};
-
 /// \brief SCell to be setup in the UE context.
 struct f1ap_scell_to_setup {
   serv_cell_index_t serv_cell_index;
@@ -57,7 +48,7 @@ struct f1ap_ue_context_update_request {
   du_ue_index_t         ue_index;
   std::vector<srb_id_t> srbs_to_setup;
   /// List of new DRBs to setup.
-  std::vector<f1ap_drb_setup_request> drbs_to_setup;
+  std::vector<f1ap_drb_to_setup> drbs_to_setup;
   /// List of DRBs to modify.
   std::vector<f1ap_drb_to_modify> drbs_to_mod;
   /// List of DRBs to remove.

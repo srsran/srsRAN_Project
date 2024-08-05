@@ -63,9 +63,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
       non_dyn_5qi.five_qi                                                = uint_to_five_qi(9); // all with same FiveQI
       qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
 
-      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
-      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
-      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+      qos_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp = 8;
 
       item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
     }
@@ -106,11 +104,9 @@ srsran::srs_cu_cp::generate_pdu_session_resource_modification(ue_index_t ue_inde
   qos_item.qos_flow_id = uint_to_qos_flow_id(qfi);
   {
     non_dyn_5qi_descriptor_t non_dyn_5qi;
-    non_dyn_5qi.five_qi                                                                   = uint_to_five_qi(7);
-    qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi                    = non_dyn_5qi;
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+    non_dyn_5qi.five_qi                                                    = uint_to_five_qi(7);
+    qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi     = non_dyn_5qi;
+    qos_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp = 8;
   }
 
   cu_cp_pdu_session_res_modify_request_transfer transfer;

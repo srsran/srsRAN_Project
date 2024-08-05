@@ -32,27 +32,30 @@ static rlc_mode get_rlc_mode(const asn1::f1ap::rlc_mode_e& asn1type)
 }
 
 template <typename ASN1Type>
-static void fill_common_drb_config_request_fields(f1ap_drb_setup_request& drb_obj, const ASN1Type& drb_item)
+static void fill_common_drb_config_request_fields(f1ap_drb_to_setup& drb_obj, const ASN1Type& drb_item)
 {
   drb_obj.drb_id            = static_cast<drb_id_t>(drb_item.drb_id);
   drb_obj.uluptnl_info_list = make_ul_up_tnl_info_list(drb_item.ul_up_tnl_info_to_be_setup_list);
 
   // TODO: Handle Dynamic 5QI.
-  const auto& asn1_drbinfo   = drb_item.qos_info.choice_ext().value().drb_info();
-  drb_obj.five_qi            = uint_to_five_qi(asn1_drbinfo.drb_qos.qos_characteristics.non_dyn_5qi().five_qi);
-  drb_obj.arp_priority_level = asn1_drbinfo.drb_qos.ngra_nalloc_retention_prio.prio_level;
-  drb_obj.s_nssai.sst        = asn1_drbinfo.snssai.sst.to_number();
+  const auto& asn1_drbinfo = drb_item.qos_info.choice_ext().value().drb_info();
+  drb_obj.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.emplace();
+  auto& nondyn_5qi   = drb_obj.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.value();
+  nondyn_5qi.five_qi = uint_to_five_qi(asn1_drbinfo.drb_qos.qos_characteristics.non_dyn_5qi().five_qi);
+  drb_obj.qos_info.drb_qos.alloc_retention_prio.prio_level_arp =
+      asn1_drbinfo.drb_qos.ngra_nalloc_retention_prio.prio_level;
+  drb_obj.qos_info.s_nssai.sst = asn1_drbinfo.snssai.sst.to_number();
   if (asn1_drbinfo.snssai.sd_present) {
-    drb_obj.s_nssai.sd = drb_item.qos_info.choice_ext().value().drb_info().snssai.sd.to_number();
+    drb_obj.qos_info.s_nssai.sd = drb_item.qos_info.choice_ext().value().drb_info().snssai.sd.to_number();
   }
   // TODO: Do not populate gbr_flow_info for non-GBR flows.
   if (asn1_drbinfo.drb_qos.gbr_qos_flow_info_present) {
-    drb_obj.gbr_flow_info.emplace();
-    auto& gbr                      = drb_obj.gbr_flow_info.value();
-    gbr.max_flow_dl_bitrate        = asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_dl;
-    gbr.max_flow_ul_bitrate        = asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_ul;
-    gbr.guaranteed_flow_dl_bitrate = asn1_drbinfo.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl;
-    gbr.guaranteed_flow_ul_bitrate = asn1_drbinfo.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul;
+    drb_obj.qos_info.drb_qos.gbr_qos_info.emplace();
+    auto& gbr     = drb_obj.qos_info.drb_qos.gbr_qos_info.value();
+    gbr.max_br_dl = asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_dl;
+    gbr.max_br_ul = asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_ul;
+    gbr.gbr_dl    = asn1_drbinfo.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl;
+    gbr.gbr_ul    = asn1_drbinfo.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul;
     if (asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_dl_present) {
       gbr.max_packet_loss_rate_dl.emplace(asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_dl);
     }
@@ -62,9 +65,9 @@ static void fill_common_drb_config_request_fields(f1ap_drb_setup_request& drb_ob
   }
 }
 
-f1ap_drb_setup_request srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_item_s& drb_item)
+f1ap_drb_to_setup srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_item_s& drb_item)
 {
-  f1ap_drb_setup_request drb_obj;
+  f1ap_drb_to_setup drb_obj;
   fill_common_drb_config_request_fields(drb_obj, drb_item);
 
   drb_obj.mode = get_rlc_mode(drb_item.rlc_mode);
@@ -76,9 +79,9 @@ f1ap_drb_setup_request srsran::srs_du::make_drb_config_request(const asn1::f1ap:
   return drb_obj;
 }
 
-f1ap_drb_setup_request srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item)
+f1ap_drb_to_setup srsran::srs_du::make_drb_config_request(const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item)
 {
-  f1ap_drb_setup_request drb_obj;
+  f1ap_drb_to_setup drb_obj;
   fill_common_drb_config_request_fields(drb_obj, drb_item);
 
   drb_obj.mode = get_rlc_mode(drb_item.rlc_mode);

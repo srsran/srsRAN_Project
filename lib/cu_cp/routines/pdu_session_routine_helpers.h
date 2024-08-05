@@ -75,7 +75,7 @@ bool fill_rrc_reconfig_args(rrc_reconfiguration_procedure_request&              
 bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
     std::vector<f1ap_srb_to_setup>&                                                 srb_setup_mod_list,
-    std::vector<f1ap_drbs_to_be_setup_mod_item>&                                    drb_setup_mod_list,
+    std::vector<f1ap_drb_to_setup>&                                                 drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                  pdu_session_resource_setup_list,
@@ -85,7 +85,7 @@ bool update_setup_list(
     const srslog::basic_logger&  logger);
 
 bool update_setup_list(std::vector<f1ap_srb_to_setup>&                                              srb_setup_mod_list,
-                       std::vector<f1ap_drbs_to_be_setup_mod_item>&                                 drb_setup_mod_list,
+                       std::vector<f1ap_drb_to_setup>&                                              drb_setup_mod_list,
                        const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
                        const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                                    pdu_session_resource_setup_list,

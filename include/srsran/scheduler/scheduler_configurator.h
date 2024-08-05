@@ -19,7 +19,7 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
-#include "srsran/ran/qos/qos_info.h"
+#include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/s_nssai.h"
@@ -125,7 +125,7 @@ struct sched_drb_info {
   /// QoS characteristics associated with the logical channel.
   qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
-  std::optional<gbr_qos_info_t> gbr_qos_info;
+  std::optional<gbr_qos_flow_information> gbr_qos_info;
 };
 
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.

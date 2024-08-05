@@ -13,6 +13,9 @@
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/qos/qos_flow_id.h"
+#include "srsran/ran/qos/qos_parameters.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_mode.h"
 
@@ -30,6 +33,26 @@ struct f1ap_srb_failed_to_setup {
   std::optional<f1ap_cause_t> cause;
 };
 
+/// \brief Used to activate notification control for a given DRB.
+enum class drb_notification_control { active = 0, not_active };
+
+struct flow_mapped_to_drb {
+  qos_flow_id_t                 qos_flow_id = qos_flow_id_t::invalid;
+  qos_flow_level_qos_parameters qos_flow_level_qos_params;
+};
+
+struct f1ap_drb_info {
+  qos_flow_level_qos_parameters drb_qos;
+  s_nssai_t                     s_nssai;
+  /// \brief Sets whether notification control is active.
+  /// [TS 38.473 8.3.1.2] If the Notification Control IE is included in the DRB to Be Setup List IE and it is set to
+  /// active, the gNB-DU shall, if supported, monitor the QoS of the DRB and notify the gNB-CU if the QoS cannot be
+  /// fulfilled any longer or if the QoS can be fulfilled again. The Notification Control IE can only be applied to GBR
+  /// bearers.
+  std::optional<drb_notification_control> notif_ctrl;
+  std::vector<flow_mapped_to_drb>         flows_mapped_to_drb_list;
+};
+
 /// Parameters of a new DRB to be setup in the DU UE context.
 struct f1ap_drb_to_setup {
   /// DRB-Id of the new DRB.
@@ -41,6 +64,8 @@ struct f1ap_drb_to_setup {
   /// \brief PDCP SN length of the DRB.
   /// \remark (Implementation-defined) We use the same length for DL and UL.
   pdcp_sn_size pdcp_sn_len = pdcp_sn_size::invalid;
+  /// QoS Information of the DRB.
+  f1ap_drb_info qos_info;
 };
 
 /// New parameters to set for an existing DRB in the DU UE context.

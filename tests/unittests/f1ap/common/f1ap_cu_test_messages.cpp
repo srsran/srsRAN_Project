@@ -224,7 +224,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   msg.srbs_to_be_setup_mod_list.push_back(srbs_to_be_setup_mod_item);
 
   // drbs to be setup mod list
-  f1ap_drbs_to_be_setup_mod_item drbs_to_be_setup_mod_item;
+  f1ap_drb_to_setup drbs_to_be_setup_mod_item;
   drbs_to_be_setup_mod_item.drb_id = uint_to_drb_id(1);
   // qos info
 
@@ -239,22 +239,21 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   drbs_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
 
   // ng ran alloc retention prio
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp  = 1;
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_retention_prio.prio_level_arp         = 1;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_retention_prio.may_trigger_preemption = false;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_retention_prio.is_preemptable         = false;
 
   // gbr qos flow info
-  cu_cp_gbr_qos_info gbr_qos_info;
-  gbr_qos_info.max_flow_bit_rate_dl                       = 100000;
-  gbr_qos_info.max_flow_bit_rate_ul                       = 100000;
-  gbr_qos_info.guaranteed_flow_bit_rate_dl                = 100000;
-  gbr_qos_info.guaranteed_flow_bit_rate_ul                = 100000;
-  gbr_qos_info.max_packet_loss_rate_dl                    = 30;
-  gbr_qos_info.max_packet_loss_rate_ul                    = 30;
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.gbr_qos_info = gbr_qos_info;
+  auto& gbr_qos_info                   = drbs_to_be_setup_mod_item.qos_info.drb_qos.gbr_qos_info.emplace();
+  gbr_qos_info.max_br_dl               = 100000;
+  gbr_qos_info.max_br_ul               = 100000;
+  gbr_qos_info.gbr_dl                  = 100000;
+  gbr_qos_info.gbr_ul                  = 100000;
+  gbr_qos_info.max_packet_loss_rate_dl = 30;
+  gbr_qos_info.max_packet_loss_rate_ul = 30;
 
   // reflective qos attribute
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.reflective_qos_attribute = true;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.reflective_qos_attribute_subject_to = true;
 
   // s nssai
   drbs_to_be_setup_mod_item.qos_info.s_nssai.sst = 1;
@@ -264,20 +263,18 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   drbs_to_be_setup_mod_item.qos_info.notif_ctrl = drb_notification_control::active;
 
   // flows mapped to drb list
-  f1ap_flows_mapped_to_drb_item flows_mapped_to_drb_item;
+  flow_mapped_to_drb flows_mapped_to_drb_item;
   flows_mapped_to_drb_item.qos_flow_id = uint_to_qos_flow_id(1);
   // qos characteristics
   flows_mapped_to_drb_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
   // ng ran alloc retention prio
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp = 1;
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
-      "shall-not-trigger-pre-emption";
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
-      "not-pre-emptable";
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp         = 1;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_retention_prio.may_trigger_preemption = false;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_retention_prio.is_preemptable         = false;
   // gbr qos flow info
   flows_mapped_to_drb_item.qos_flow_level_qos_params.gbr_qos_info = gbr_qos_info;
   // reflective qos attribute
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.reflective_qos_attribute = true;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.reflective_qos_attribute_subject_to = true;
 
   drbs_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(flows_mapped_to_drb_item);
 

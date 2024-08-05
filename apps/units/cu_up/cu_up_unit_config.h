@@ -12,7 +12,7 @@
 
 #include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
-#include "srsran/ran/five_qi.h"
+#include "srsran/ran/qos/five_qi.h"
 
 namespace srsran {
 

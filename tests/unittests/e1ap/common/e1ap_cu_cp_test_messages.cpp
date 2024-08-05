@@ -114,11 +114,11 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   e1ap_qos_flow_qos_param_item qos_flow_info;
   qos_flow_info.qos_flow_id = uint_to_qos_flow_id(8);
   non_dyn_5qi_descriptor_t non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                                 = uint_to_five_qi(8);
-  qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi             = non_dyn_5qi;
-  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level      = 1;
-  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
-  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+  non_dyn_5qi.five_qi                                                                   = uint_to_five_qi(8);
+  qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi               = non_dyn_5qi;
+  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.prio_level_arp         = 1;
+  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.may_trigger_preemption = false;
+  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.is_preemptable         = false;
   drb_to_setup_item.qos_flow_info_to_be_setup.emplace(qos_flow_info.qos_flow_id, qos_flow_info);
 
   res_to_setup_item.drb_to_setup_list_ng_ran.emplace(drb_to_setup_item.drb_id, drb_to_setup_item);

@@ -217,7 +217,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
 
       // Fill UE context modification for DU
       {
-        f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
+        f1ap_drb_to_setup drb_setup_mod_item;
         drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
 
         // Add up tnl info
@@ -236,7 +236,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         // Fill QoS flows for UE context modification.
         for (const auto& flow : drb_up_context.qos_flows) {
           // Add mapped flows and extract required QoS info from original NGAP request
-          f1ap_flows_mapped_to_drb_item mapped_flow_item;
+          flow_mapped_to_drb mapped_flow_item;
           mapped_flow_item.qos_flow_id               = flow.first;
           mapped_flow_item.qos_flow_level_qos_params = drb_up_context.qos_params;
           drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(mapped_flow_item);

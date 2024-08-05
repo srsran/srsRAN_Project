@@ -269,13 +269,13 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
     for (const auto& drb : pdu_session.second.drb_to_add) {
       const up_drb_context& drb_context = drb.second;
 
-      f1ap_drbs_to_be_setup_mod_item drb_item;
+      f1ap_drb_to_setup drb_item;
       drb_item.drb_id           = drb_context.drb_id;
       drb_item.qos_info.drb_qos = drb_context.qos_params;
 
       // Add each QoS flow including QoS.
       for (const auto& flow : drb_context.qos_flows) {
-        f1ap_flows_mapped_to_drb_item flow_item;
+        flow_mapped_to_drb flow_item;
         flow_item.qos_flow_id               = flow.first;
         flow_item.qos_flow_level_qos_params = flow.second.qos_params;
         drb_item.qos_info.flows_mapped_to_drb_list.push_back(flow_item);

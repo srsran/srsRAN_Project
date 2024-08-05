@@ -223,10 +223,10 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   // Fill QoS (TODO: derive QoS params correctly)
   auto& qos_params = drb_ctx.qos_params;
   qos_params.qos_characteristics.non_dyn_5qi.emplace();
-  qos_params.qos_characteristics.non_dyn_5qi.value().five_qi    = five_qi;
-  qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
-  qos_params.alloc_and_retention_prio.pre_emption_cap           = "shall-not-trigger-pre-emption";
-  qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+  qos_params.qos_characteristics.non_dyn_5qi.value().five_qi = five_qi;
+  qos_params.alloc_retention_prio.prio_level_arp             = 8;
+  qos_params.alloc_retention_prio.may_trigger_preemption     = false;
+  qos_params.alloc_retention_prio.is_preemptable             = false;
 
   // Add flow
   up_qos_flow_context flow_ctx;

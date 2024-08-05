@@ -16,8 +16,8 @@
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/ran/bcd_helper.h"
-#include "srsran/ran/five_qi.h"
-#include "srsran/ran/qos_prio_level.h"
+#include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/qos/qos_prio_level.h"
 
 namespace srsran {
 namespace srs_cu_up {
