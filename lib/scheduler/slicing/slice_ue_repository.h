@@ -43,6 +43,9 @@ public:
     return contains(LCID_SRB0) or contains(LCID_SRB1) or contains(LCID_SRB2) or contains(LCID_SRB3);
   }
 
+  /// Fetches the bitmap of bearers belonging to this slice.
+  const bounded_bitset<MAX_NOF_RB_LCIDS>& get_bearers() const { return bearers; }
+
   /// Determines if bearer with LCID is part of this slice.
   bool contains(lcid_t lcid) const { return bearers.test(lcid); }
 
