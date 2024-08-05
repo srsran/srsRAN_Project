@@ -85,6 +85,13 @@ f1ap_message generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id, g
 f1ap_message generate_ue_context_release_complete(const f1ap_message& ue_ctxt_release_cmd);
 f1ap_message generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 
+/// \brief Generates dummy F1AP UE CONTEXT MODIFICATION REQUEST message.
+f1ap_message generate_ue_context_modification_request(gnb_du_ue_f1ap_id_t                    du_ue_id,
+                                                      gnb_cu_ue_f1ap_id_t                    cu_ue_id,
+                                                      const std::initializer_list<drb_id_t>& drbs_to_setup = {},
+                                                      const std::initializer_list<drb_id_t>& drbs_to_mod   = {},
+                                                      const std::initializer_list<drb_id_t>& drbs_to_rem   = {});
+
 /// \brief Generates dummy F1AP UE CONTEXT MODIFICATION RESPONSE message.
 f1ap_message
 generate_ue_context_modification_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id, rnti_t rnti);

@@ -256,7 +256,7 @@ async_task<void> du_ue_controller_impl::handle_drb_traffic_stop_request(span<con
     for (drb_id_t drb_id : drbs) {
       auto it = ue_drbs.find(drb_id);
       if (it == ue_drbs.end()) {
-        logger.warning("ue={}: Failed to stop DRB {} activity. Cause: DRB not found", ue_index, drb_id);
+        logger.warning("ue={}: Failed to stop {} activity. Cause: DRB not found", ue_index, drb_id);
         continue;
       }
       it->second->stop();

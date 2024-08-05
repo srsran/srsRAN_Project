@@ -286,7 +286,7 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
   return run_msg4_and_await_msg5(u, msg);
 }
 
-bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti)
+bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti, reestablishment_stage stop_at)
 {
   auto it = ues.find(rnti);
   if (it == ues.end()) {
@@ -302,12 +302,35 @@ bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti
   }
   const ue_sim_context& old_u = old_it->second;
 
+  // Generate DL RRC Message Transfer (containing RRC Reestablishment)
   f1ap_message msg = generate_dl_rrc_message_transfer(
       *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
   msg.pdu.init_msg().value.dl_rrc_msg_transfer()->old_gnb_du_ue_f1ap_id_present = true;
   msg.pdu.init_msg().value.dl_rrc_msg_transfer()->old_gnb_du_ue_f1ap_id         = (uint64_t)old_u.du_ue_id.value();
 
-  return run_msg4_and_await_msg5(u, msg);
+  // Send RRC Reestablishment and await response.
+  if (not run_msg4_and_await_msg5(u, msg)) {
+    return false;
+  }
+  if (stop_at == reestablishment_stage::reest_complete) {
+    return true;
+  }
+
+  // Generate UE Context Modification procedure for DRB Reestablishment.
+  msg = test_helpers::generate_ue_context_modification_request(*u.du_ue_id, *u.cu_ue_id, {}, {}, {drb_id_t::drb1});
+  cu_notifier.last_f1ap_msgs.clear();
+  du_hi->get_f1ap_message_handler().handle_message(msg);
+  bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  if (not ret) {
+    test_logger.error("rnti={}: F1AP UE Context Modification Request not sent back to the CU-CP", u.rnti);
+    return false;
+  }
+  if (not test_helpers::is_valid_ue_context_modification_response(cu_notifier.last_f1ap_msgs.back())) {
+    test_logger.error("rnti={}: F1AP UE Context Modification Response sent back to the CU-CP is not valid", u.rnti);
+    return false;
+  }
+
+  return true;
 }
 
 bool du_high_env_simulator::run_msg4_and_await_msg5(const ue_sim_context& u, const f1ap_message& msg)

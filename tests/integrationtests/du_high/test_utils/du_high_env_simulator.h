@@ -57,7 +57,13 @@ public:
   /// Transfer) until the CU receives the RRC Setup Complete (via UL RRC Message Transfer).
   bool run_rrc_setup(rnti_t rnti);
 
-  bool run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti);
+  /// Run the RRC Reestablishment procedure for the given RNTI from the moment the CU-CP sends an RRC Reestablishment
+  /// (via DL RRC Message Transfer) until the CU receives the RRC Reestablishment Complete (via UL RRC Message
+  /// Transfer).
+  enum class reestablishment_stage { reest_complete, reconf_complete };
+  [[nodiscard]] bool run_rrc_reestablishment(rnti_t                rnti,
+                                             rnti_t                old_rnti,
+                                             reestablishment_stage stop_at = reestablishment_stage::reconf_complete);
 
   bool run_ue_context_setup(rnti_t rnti);
 

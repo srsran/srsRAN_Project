@@ -348,6 +348,108 @@ f1ap_message srsran::test_helpers::generate_ue_context_release_complete(gnb_cu_u
   return ue_ctxt_rel_complete_msg;
 }
 
+static asn1::f1ap::ul_up_tnl_info_to_be_setup_list_l generate_ul_up_tnl_info_to_be_setup_list_l()
+{
+  asn1::f1ap::ul_up_tnl_info_to_be_setup_list_l list;
+
+  list.resize(1);
+  auto& gtp_tun = list[0].ul_up_tnl_info.set_gtp_tunnel();
+  auto  addr    = transport_layer_address::create_from_string("127.0.0.1");
+  gtp_tun.transport_layer_address.from_string(addr.to_bitstring());
+  gtp_tun.gtp_teid.from_number(1);
+
+  return list;
+}
+
+static asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid)
+{
+  using namespace asn1::f1ap;
+  drbs_to_be_setup_mod_item_s drb;
+  drb.drb_id = drb_id_to_uint(drbid);
+  drb.qos_info.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
+  auto& drb_info                                                 = drb.qos_info.choice_ext()->drb_info();
+  drb_info.drb_qos.qos_characteristics.set_non_dyn_5qi().five_qi = 8;
+  drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level         = 1;
+  drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap.value =
+      pre_emption_cap_opts::shall_not_trigger_pre_emption;
+  drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
+      pre_emption_vulnerability_opts::not_pre_emptable;
+  drb_info.drb_qos.reflective_qos_attribute_present = true;
+  drb_info.drb_qos.reflective_qos_attribute.value =
+      qos_flow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
+  drb_info.snssai.sst.from_string("01");
+  drb_info.snssai.sd.from_string("0027db");
+  drb.rlc_mode.value                  = rlc_mode_opts::rlc_am;
+  drb.ie_exts_present                 = true;
+  drb.ie_exts.dl_pdcp_sn_len_present  = true;
+  drb.ie_exts.dl_pdcp_sn_len          = pdcp_sn_len_opts::twelve_bits;
+  drb.ul_up_tnl_info_to_be_setup_list = generate_ul_up_tnl_info_to_be_setup_list_l();
+  return drb;
+}
+
+static asn1::f1ap::drbs_to_be_modified_item_s generate_to_modify_drb_am_mod_item(drb_id_t drbid)
+{
+  using namespace asn1::f1ap;
+
+  drbs_to_be_modified_item_s drb;
+  drb.drb_id                          = drb_id_to_uint(drbid);
+  drb.ie_exts_present                 = true;
+  drb.ie_exts.dl_pdcp_sn_len_present  = true;
+  drb.ie_exts.dl_pdcp_sn_len          = pdcp_sn_len_opts::twelve_bits;
+  drb.ul_up_tnl_info_to_be_setup_list = generate_ul_up_tnl_info_to_be_setup_list_l();
+  return drb;
+}
+
+f1ap_message
+srsran::test_helpers::generate_ue_context_modification_request(gnb_du_ue_f1ap_id_t                    du_ue_id,
+                                                               gnb_cu_ue_f1ap_id_t                    cu_ue_id,
+                                                               const std::initializer_list<drb_id_t>& drbs_to_setup,
+                                                               const std::initializer_list<drb_id_t>& drbs_to_mod,
+                                                               const std::initializer_list<drb_id_t>& drbs_to_rem)
+{
+  using namespace asn1::f1ap;
+  f1ap_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  ue_context_mod_request_s& dl_msg = msg.pdu.init_msg().value.ue_context_mod_request();
+  dl_msg->gnb_cu_ue_f1ap_id        = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
+  dl_msg->gnb_du_ue_f1ap_id        = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
+
+  dl_msg->drbs_to_be_setup_mod_list_present = drbs_to_setup.size() > 0;
+  dl_msg->drbs_to_be_setup_mod_list.resize(drbs_to_setup.size());
+  unsigned count = 0;
+  for (drb_id_t drbid : drbs_to_setup) {
+    dl_msg->drbs_to_be_setup_mod_list[count].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+    dl_msg->drbs_to_be_setup_mod_list[count]->drbs_to_be_setup_mod_item() = generate_drb_am_mod_item(drbid);
+    ++count;
+  }
+
+  dl_msg->drbs_to_be_released_list_present = drbs_to_rem.size() > 0;
+  dl_msg->drbs_to_be_released_list.resize(drbs_to_rem.size());
+  count = 0;
+  for (drb_id_t drbid : drbs_to_rem) {
+    dl_msg->drbs_to_be_released_list[count].load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_RELEASED_ITEM);
+    dl_msg->drbs_to_be_released_list[count]->drbs_to_be_released_item().drb_id = drb_id_to_uint(drbid);
+    ++count;
+  }
+
+  dl_msg->drbs_to_be_modified_list_present = drbs_to_mod.size() > 0;
+  dl_msg->drbs_to_be_modified_list.resize(drbs_to_mod.size());
+  count = 0;
+  for (drb_id_t drbid : drbs_to_mod) {
+    dl_msg->drbs_to_be_modified_list[count].load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_MODIFIED_ITEM);
+    dl_msg->drbs_to_be_modified_list[count]->drbs_to_be_modified_item() = generate_to_modify_drb_am_mod_item(drbid);
+    ++count;
+  }
+
+  dl_msg->rrc_container_present = true;
+  report_fatal_error_if_not(
+      dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))),
+      "Failed to allocate RRC container");
+
+  return msg;
+}
+
 f1ap_message srsran::test_helpers::generate_ue_context_modification_response(gnb_du_ue_f1ap_id_t du_ue_id,
                                                                              gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                              rnti_t              crnti)

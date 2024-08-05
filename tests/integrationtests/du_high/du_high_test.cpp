@@ -275,7 +275,7 @@ TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_old_u
   // Send DL RRC Message Transfer with old gNB-DU-UE-F1AP-ID.
   rnti_t rnti2 = to_rnti(0x4602);
   ASSERT_TRUE(add_ue(rnti2));
-  ASSERT_TRUE(run_rrc_reestablishment(rnti2, rnti));
+  ASSERT_TRUE(run_rrc_reestablishment(rnti2, rnti, reestablishment_stage::reest_complete));
 
   ASSERT_FALSE(this->run_until(
       [this, rnti]() {

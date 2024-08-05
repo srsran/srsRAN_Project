@@ -142,6 +142,14 @@ bool srsran::test_helpers::is_valid_ue_context_modification_request(const f1ap_m
   return true;
 }
 
+bool srsran::test_helpers::is_valid_ue_context_modification_response(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
+
 bool srsran::test_helpers::is_valid_ue_context_release_command(const f1ap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
