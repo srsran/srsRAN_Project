@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../coroutine.h"
+#include "srsran/support/async/coroutine.h"
 #include <utility>
 
 namespace srsran {

@@ -10,10 +10,9 @@
 
 #pragma once
 
-#include "srsran/support/detail/type_list.h"
+#include "srsran/support/async/detail/type_list.h"
 
 namespace srsran {
-
 namespace detail {
 
 /// Type to store arguments and return of callable type Sig.
@@ -65,5 +64,4 @@ template <typename T>
 auto callable_arguments() -> typename function_signature<decltype(&std::decay_t<T>::operator())>::arg_types;
 
 } // namespace detail
-
 } // namespace srsran
