@@ -281,7 +281,19 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
-  // TODO: Support modifications in the MAC.
+  for (const auto& drb : request.drbs_to_mod) {
+    if (ue->bearers.drbs().count(drb.drb_id) == 0) {
+      // The DRB failed to be modified. Carry on with other DRBs.
+      continue;
+    }
+    du_ue_drb& bearer = *ue->bearers.drbs().at(drb.drb_id);
+    mac_ue_reconf_req.bearers_to_addmod.emplace_back();
+    auto& lc_ch     = mac_ue_reconf_req.bearers_to_addmod.back();
+    lc_ch.lcid      = bearer.lcid;
+    lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
+    lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
+    // TODO: Support modifications in the MAC config.
+  }
 
   // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
   mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue);

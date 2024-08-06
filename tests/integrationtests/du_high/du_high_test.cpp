@@ -300,6 +300,20 @@ TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_drbs_
   rnti_t rnti2 = to_rnti(0x4602);
   ASSERT_TRUE(add_ue(rnti2));
   ASSERT_TRUE(run_rrc_reestablishment(rnti2, rnti1));
+
+  // Check that DRBs are active for the new C-RNTI.
+  const unsigned nof_pdcp_pdus = 10, pdcp_pdu_size = 128;
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    nru_dl_message f1u_pdu{
+        .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
+    cu_up_sim.bearers.at(std::make_pair(1, drb_id_t::drb1)).rx_notifier->on_new_pdu(f1u_pdu);
+  }
+  ASSERT_TRUE(this->run_until(
+      [this, rnti2]() {
+        return find_ue_pdsch_with_lcid(rnti2, LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants) !=
+               nullptr;
+      },
+      100));
 }
 
 TEST_F(du_high_tester,
@@ -316,4 +330,18 @@ TEST_F(du_high_tester,
   rnti_t rnti2 = to_rnti(0x4602);
   ASSERT_TRUE(add_ue(rnti2));
   ASSERT_TRUE(run_rrc_reestablishment(rnti2, rnti1));
+
+  // Check that DRBs are active for the new C-RNTI.
+  const unsigned nof_pdcp_pdus = 10, pdcp_pdu_size = 128;
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    nru_dl_message f1u_pdu{
+        .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
+    cu_up_sim.bearers.at(std::make_pair(1, drb_id_t::drb1)).rx_notifier->on_new_pdu(f1u_pdu);
+  }
+  ASSERT_TRUE(this->run_until(
+      [this, rnti2]() {
+        return find_ue_pdsch_with_lcid(rnti2, LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants) !=
+               nullptr;
+      },
+      100));
 }

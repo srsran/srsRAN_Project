@@ -281,9 +281,8 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
   // Send DL RRC Message which contains RRC Setup.
   f1ap_message msg = generate_dl_rrc_message_transfer(
       *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
-  du_hi->get_f1ap_message_handler().handle_message(msg);
 
-  return run_msg4_and_await_msg5(u, msg);
+  return send_dl_rrc_msg_and_await_ul_rrc_msg(u, msg, 0);
 }
 
 bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti, reestablishment_stage stop_at)
@@ -309,14 +308,14 @@ bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti
   msg.pdu.init_msg().value.dl_rrc_msg_transfer()->old_gnb_du_ue_f1ap_id         = (uint64_t)old_u.du_ue_id.value();
 
   // Send RRC Reestablishment and await response.
-  if (not run_msg4_and_await_msg5(u, msg)) {
+  if (not send_dl_rrc_msg_and_await_ul_rrc_msg(u, msg, 0)) {
     return false;
   }
   if (stop_at == reestablishment_stage::reest_complete) {
     return true;
   }
 
-  // Generate UE Context Modification procedure for DRB Reestablishment.
+  // Run F1AP UE Context Modification procedure.
   msg = test_helpers::generate_ue_context_modification_request(*u.du_ue_id, *u.cu_ue_id, {}, {drb_id_t::drb1}, {});
   cu_notifier.last_f1ap_msgs.clear();
   du_hi->get_f1ap_message_handler().handle_message(msg);
@@ -334,22 +333,32 @@ bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti
       cu_notifier.last_f1ap_msgs.back().pdu.successful_outcome().value.ue_context_mod_resp();
   EXPECT_FALSE(resp->drbs_failed_to_be_modified_list_present);
 
+  // CU-CP sends RRC Reconfiguration and awaits RRC Reconfiguration Complete.
+  msg = generate_dl_rrc_message_transfer(
+      *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  if (not send_dl_rrc_msg_and_await_ul_rrc_msg(u, msg, 1)) {
+    return false;
+  }
+
   return true;
 }
 
-bool du_high_env_simulator::run_msg4_and_await_msg5(const ue_sim_context& u, const f1ap_message& msg)
+bool du_high_env_simulator::send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u,
+                                                                 const f1ap_message&   dl_msg,
+                                                                 uint32_t              rlc_ul_sn)
 {
   const auto& phy_cell = phy.cells[u.pcell_index];
 
-  du_hi->get_f1ap_message_handler().handle_message(msg);
+  lcid_t dl_lcid = uint_to_lcid(dl_msg.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id);
+  lcid_t ul_lcid = dl_lcid == LCID_SRB0 ? LCID_SRB1 : dl_lcid;
 
-  lcid_t msg4_lcid = msg.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id == 0 ? LCID_SRB0 : LCID_SRB1;
+  du_hi->get_f1ap_message_handler().handle_message(dl_msg);
 
   // Wait for Msg4 to be sent to the PHY.
   bool ret = run_until([&]() {
     if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
       auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
-      return find_ue_pdsch_with_lcid(u.rnti, msg4_lcid, dl_res.ue_grants) != nullptr;
+      return find_ue_pdsch_with_lcid(u.rnti, dl_lcid, dl_res.ue_grants) != nullptr;
     }
     return false;
   });
@@ -359,18 +368,19 @@ bool du_high_env_simulator::run_msg4_and_await_msg5(const ue_sim_context& u, con
   }
 
   // Wait for Msg4 to be ACKed.
-  unsigned msg4_k1 = 4;
-  for (unsigned i = 0; i != msg4_k1; ++i) {
+  unsigned dl_msg_k1 = 4;
+  for (unsigned i = 0; i != dl_msg_k1; ++i) {
     run_slot();
   }
 
   // UE sends Msg5. Wait until F1AP forwards UL RRC Message to CU-CP.
   cu_notifier.last_f1ap_msgs.clear();
   du_hi->get_pdu_handler().handle_rx_data_indication(
-      test_helpers::create_pdu_with_sdu(next_slot, u.rnti, lcid_t::LCID_SRB1));
-  ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
-  if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), srb_id_t::srb1)) {
-    test_logger.error("rnti={}: F1AP UL RRC Message (containing Msg5) not sent or is invalid", u.rnti);
+      test_helpers::create_pdu_with_sdu(next_slot, u.rnti, ul_lcid, rlc_ul_sn));
+  ret                = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  srb_id_t ul_srb_id = int_to_srb_id(ul_lcid);
+  if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), ul_srb_id)) {
+    test_logger.error("rnti={}: F1AP UL RRC Message not sent or is invalid", u.rnti);
     return false;
   }
 

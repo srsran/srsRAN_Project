@@ -101,7 +101,8 @@ protected:
     std::array<srb_context, MAX_NOF_SRBS> srbs;
   };
 
-  bool run_msg4_and_await_msg5(const ue_sim_context& u, const f1ap_message& msg);
+  [[nodiscard]] bool
+  send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u, const f1ap_message& dl_msg, uint32_t rlc_ul_sn);
 
   std::unordered_map<rnti_t, ue_sim_context> ues;
 
