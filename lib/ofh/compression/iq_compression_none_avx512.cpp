@@ -70,19 +70,20 @@ void iq_compression_none_avx512::decompress(span<cbf16_t>                output,
   }
 
   // Quantizer object.
-  quantizer q(params.data_width);
+  quantizer q_out(params.data_width);
 
-  unsigned out_idx = 0;
-  for (const auto& c_prb : input) {
-    std::array<int16_t, NOF_SUBCARRIERS_PER_RB * 2> unpacked_iq_data;
+  std::array<int16_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB * 2> unpacked_iq_data;
+
+  unsigned idx = 0;
+  for (const compressed_prb& c_prb : input) {
     // Unpack resource block.
-    mm512::unpack_prb_big_endian(unpacked_iq_data, c_prb.get_packed_data(), params.data_width);
+    span<int16_t> unpacked_prb_span(&unpacked_iq_data[idx], NOF_SUBCARRIERS_PER_RB * 2);
+    mm512::unpack_prb_big_endian(unpacked_prb_span, c_prb.get_packed_data(), params.data_width);
 
-    span<cbf16_t> output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
-    span<int16_t> unpacked_span(unpacked_iq_data.data(), NOF_SUBCARRIERS_PER_RB * 2);
-
-    // Convert to complex samples.
-    q.to_brain_float(output_span, unpacked_span, 1);
-    out_idx += NOF_SUBCARRIERS_PER_RB;
+    idx += (NOF_SUBCARRIERS_PER_RB * 2);
   }
+
+  span<int16_t> unpacked_iq_int16_span(unpacked_iq_data.data(), output.size() * 2);
+  // Convert to complex brain float samples.
+  q_out.to_brain_float(output, unpacked_iq_int16_span, 1);
 }

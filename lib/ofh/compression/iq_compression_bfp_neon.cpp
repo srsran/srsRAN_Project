@@ -209,6 +209,7 @@ void iq_compression_bfp_neon::decompress(span<cbf16_t>                output,
     constexpr size_t neon_size_iqs = 8;
     constexpr size_t arr_size      = divide_ceil(NOF_SAMPLES_PER_PRB, neon_size_iqs) * neon_size_iqs;
     alignas(64) std::array<int16_t, arr_size> unpacked_iq_data;
+
     // Unpack resource block.
     neon::unpack_prb_big_endian(unpacked_iq_data, c_prb.get_packed_data(), params.data_width);
 
