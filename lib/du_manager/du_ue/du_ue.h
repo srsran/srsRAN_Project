@@ -96,9 +96,9 @@ public:
   /// \brief Radio access network resources currently allocated to the UE.
   ue_ran_resource_configurator resources;
 
-  /// \brief Determines whether this UE is running the RRC Reestablishment procedure.
-  // TODO: refactor.
-  bool reestablishment_pending = false;
+  /// \brief Determines whether this UE is running the RRC Reestablishment procedure and which context was retrieved
+  /// from the old UE.
+  std::unique_ptr<cell_group_config> reestablished_cfg_pending;
 };
 
 } // namespace srs_du

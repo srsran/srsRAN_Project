@@ -150,6 +150,22 @@ bool srsran::test_helpers::is_valid_ue_context_modification_response(const f1ap_
   return true;
 }
 
+bool srsran::test_helpers::is_valid_ue_context_modification_response(const f1ap_message& resp_msg,
+                                                                     const f1ap_message& req_msg)
+{
+  TRUE_OR_RETURN(is_valid_ue_context_modification_request(req_msg));
+  TRUE_OR_RETURN(is_valid_ue_context_modification_response(resp_msg));
+
+  const asn1::f1ap::ue_context_mod_request_s& mod_req  = req_msg.pdu.init_msg().value.ue_context_mod_request();
+  const asn1::f1ap::ue_context_mod_resp_s&    mod_resp = req_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  TRUE_OR_RETURN(mod_req->drbs_to_be_setup_mod_list.size() ==
+                 mod_resp->drbs_setup_mod_list.size() + mod_resp->drbs_failed_to_be_setup_mod_list.size());
+  TRUE_OR_RETURN(mod_req->drbs_to_be_modified_list.size() ==
+                 mod_resp->drbs_modified_list.size() + mod_resp->drbs_failed_to_be_modified_list.size());
+
+  return true;
+}
+
 bool srsran::test_helpers::is_valid_ue_context_release_command(const f1ap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);

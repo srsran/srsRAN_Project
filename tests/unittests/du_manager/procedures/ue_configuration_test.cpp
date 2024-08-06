@@ -380,7 +380,10 @@ TEST_F(ue_config_tester,
        when_reestablishment_is_signalled_then_bearers_are_marked_as_reestablishRLC_and_cell_config_are_sent)
 {
   // Mark UE as reestablishing.
-  test_ue->reestablishment_pending = true;
+  test_ue->reestablished_cfg_pending = std::make_unique<cell_group_config>();
+  test_ue->reestablished_cfg_pending->rlc_bearers.emplace_back();
+  test_ue->reestablished_cfg_pending->rlc_bearers.back().lcid   = LCID_MIN_DRB;
+  test_ue->reestablished_cfg_pending->rlc_bearers.back().drb_id = drb_id_t::drb1;
 
   // Run procedure to create SRB2 and DRB1.
   f1ap_ue_context_update_request req =

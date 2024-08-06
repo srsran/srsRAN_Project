@@ -284,7 +284,8 @@ public:
     dummy_resource_updater(dummy_ue_resource_configurator_factory& parent_, du_ue_index_t ue_index_);
     ~dummy_resource_updater();
     du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
-                                          const f1ap_ue_context_update_request& upd_req) override;
+                                          const f1ap_ue_context_update_request& upd_req,
+                                          const cell_group_config*              reestablished_context) override;
     const cell_group_config&       get() override;
 
     du_ue_index_t                           ue_index;
@@ -305,7 +306,8 @@ public:
 
 f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
                                                                      std::initializer_list<srb_id_t> srbs_to_addmod,
-                                                                     std::initializer_list<drb_id_t> drbs_to_addmod);
+                                                                     std::initializer_list<drb_id_t> drbs_to_add,
+                                                                     std::initializer_list<drb_id_t> drbs_to_mod = {});
 
 class du_manager_test_bench
 {

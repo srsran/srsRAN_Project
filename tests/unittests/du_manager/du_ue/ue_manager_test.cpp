@@ -35,7 +35,7 @@ protected:
     f1ap_dummy.next_ue_create_response.result = true;
     f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
   }
-  ~du_ue_manager_tester() { srslog::flush(); }
+  ~du_ue_manager_tester() override { srslog::flush(); }
 
   ul_ccch_indication_message create_ul_ccch_message(rnti_t rnti)
   {

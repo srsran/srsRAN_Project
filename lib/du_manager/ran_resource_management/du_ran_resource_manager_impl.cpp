@@ -57,9 +57,10 @@ du_ue_ran_resource_updater_impl::~du_ue_ran_resource_updater_impl()
 }
 
 du_ue_resource_update_response du_ue_ran_resource_updater_impl::update(du_cell_index_t pcell_index,
-                                                                       const f1ap_ue_context_update_request& upd_req)
+                                                                       const f1ap_ue_context_update_request& upd_req,
+                                                                       const cell_group_config* reestablished_context)
 {
-  return parent->update_context(ue_index, pcell_index, upd_req);
+  return parent->update_context(ue_index, pcell_index, upd_req, reestablished_context);
 }
 
 ///////////////////////////
@@ -69,7 +70,6 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
                                                            const std::map<srb_id_t, du_srb_config>&  srbs_,
                                                            const std::map<five_qi_t, du_qos_config>& qos_) :
   cell_cfg_list(cell_cfg_list_),
-  sched_cfg(scheduler_cfg),
   srb_config(srbs_),
   qos_config(qos_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
@@ -141,10 +141,25 @@ static error_type<std::string> validate_drb_setup_request(const f1ap_drb_to_setu
   return {};
 }
 
+static void reestablish_context(cell_group_config& new_ue_cfg, const cell_group_config& old_ue_cfg)
+{
+  for (const rlc_bearer_config& old_bearer : old_ue_cfg.rlc_bearers) {
+    auto it = std::find_if(
+        new_ue_cfg.rlc_bearers.begin(), new_ue_cfg.rlc_bearers.end(), [&old_bearer](const rlc_bearer_config& item) {
+          return item.drb_id == old_bearer.drb_id and (item.drb_id.has_value() or (item.lcid == old_bearer.lcid));
+        });
+    if (it == new_ue_cfg.rlc_bearers.end()) {
+      // Bearer not found in new context. Add it.
+      new_ue_cfg.rlc_bearers.push_back(old_bearer);
+    }
+  }
+}
+
 du_ue_resource_update_response
 du_ran_resource_manager_impl::update_context(du_ue_index_t                         ue_index,
                                              du_cell_index_t                       pcell_idx,
-                                             const f1ap_ue_context_update_request& upd_req)
+                                             const f1ap_ue_context_update_request& upd_req,
+                                             const cell_group_config*              reestablished_context)
 {
   srsran_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
   cell_group_config&             ue_mcg = ue_res_pool[ue_index].cg_cfg;
@@ -167,12 +182,22 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
   }
 
+  // > In case of RRC Reestablishment, retrieve old DRB context, to be considered in the config update.
+  if (reestablished_context != nullptr) {
+    reestablish_context(ue_mcg, *reestablished_context);
+  }
+
   // > Deallocate removed SRBs / DRBs.
   for (drb_id_t drb_id : upd_req.drbs_to_rem) {
     auto it = std::find_if(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [drb_id](const rlc_bearer_config& b) {
       return b.drb_id == drb_id;
     });
-    ue_mcg.rlc_bearers.erase(it);
+    if (it != ue_mcg.rlc_bearers.end()) {
+      ue_mcg.rlc_bearers.erase(it);
+      continue;
+    } else {
+      logger.warning("Failed to release {}. Cause: DRB not found", drb_id);
+    }
   }
 
   // > Allocate new SRBs.
@@ -237,6 +262,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
         break;
     }
   }
+
   // > Modify existing DRBs.
   for (const f1ap_drb_to_modify& drb : upd_req.drbs_to_mod) {
     auto res = validate_drb_modification_request(drb, ue_mcg.rlc_bearers);
@@ -244,9 +270,9 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       resp.failed_drbs.push_back(drb.drb_id);
       continue;
     }
-    // TODO: Support DRB modification.
   }
-  // >> Sort by LCID.
+
+  // > Sort bearers by LCID.
   std::sort(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [](const auto& lhs, const auto& rhs) {
     return lhs.lcid < rhs.lcid;
   });

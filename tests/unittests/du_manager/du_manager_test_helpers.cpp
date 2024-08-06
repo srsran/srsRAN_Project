@@ -42,7 +42,8 @@ dummy_ue_resource_configurator_factory::dummy_resource_updater::~dummy_resource_
 
 du_ue_resource_update_response
 dummy_ue_resource_configurator_factory::dummy_resource_updater::update(du_cell_index_t pcell_index,
-                                                                       const f1ap_ue_context_update_request& upd_req)
+                                                                       const f1ap_ue_context_update_request& upd_req,
+                                                                       const cell_group_config* reestablished_context)
 {
   parent.ue_resource_pool[ue_index] = parent.next_context_update_result;
   return du_ue_resource_update_response{};
@@ -72,7 +73,8 @@ dummy_ue_resource_configurator_factory::create_ue_resource_configurator(du_ue_in
 f1ap_ue_context_update_request
 srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
                                                       std::initializer_list<srb_id_t> srbs_to_addmod,
-                                                      std::initializer_list<drb_id_t> drbs_to_addmod)
+                                                      std::initializer_list<drb_id_t> drbs_to_add,
+                                                      std::initializer_list<drb_id_t> drbs_to_mod)
 {
   f1ap_ue_context_update_request req;
 
@@ -84,7 +86,7 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
     req.srbs_to_setup.back() = srb_id;
   }
 
-  for (drb_id_t drb_id : drbs_to_addmod) {
+  for (drb_id_t drb_id : drbs_to_add) {
     req.drbs_to_setup.emplace_back();
     req.drbs_to_setup.back().drb_id                                                             = drb_id;
     req.drbs_to_setup.back().mode                                                               = rlc_mode::am;
@@ -92,6 +94,14 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
     req.drbs_to_setup.back().uluptnl_info_list.resize(1);
     req.drbs_to_setup.back().uluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(0);
     req.drbs_to_setup.back().uluptnl_info_list[0].tp_address = transport_layer_address::create_from_string("127.0.0.1");
+  }
+
+  for (drb_id_t drb_id : drbs_to_mod) {
+    req.drbs_to_mod.emplace_back();
+    req.drbs_to_mod.back().drb_id = drb_id;
+    req.drbs_to_mod.back().uluptnl_info_list.resize(1);
+    req.drbs_to_mod.back().uluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(0);
+    req.drbs_to_mod.back().uluptnl_info_list[0].tp_address = transport_layer_address::create_from_string("127.0.0.1");
   }
 
   return req;

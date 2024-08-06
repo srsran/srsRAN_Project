@@ -37,10 +37,11 @@ public:
   /// \brief Interface used to update the UE Resources on Reconfiguration and return the resources back to the pool,
   /// on UE deletion.
   struct resource_updater {
-    virtual ~resource_updater()                                                                  = default;
+    virtual ~resource_updater()                                                                   = default;
     virtual du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
-                                                  const f1ap_ue_context_update_request& upd_req) = 0;
-    virtual const cell_group_config&       get()                                                 = 0;
+                                                  const f1ap_ue_context_update_request& upd_req,
+                                                  const cell_group_config*              reestablished_context) = 0;
+    virtual const cell_group_config&       get()                                                  = 0;
   };
 
   explicit ue_ran_resource_configurator(std::unique_ptr<resource_updater> ue_res_, std::string error = {}) :
@@ -54,10 +55,14 @@ public:
   ///
   /// \param pcell_index DU Cell Index of the UE's PCell.
   /// \param upd_req UE Context Update Request for a given UE.
+  /// \param reestablished_context Optional parameter to provide the previous context of the UE, in case of an
+  /// RRC Reestablishment.
   /// \return Outcome of the configuration.
-  du_ue_resource_update_response update(du_cell_index_t pcell_index, const f1ap_ue_context_update_request& upd_req)
+  du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
+                                        const f1ap_ue_context_update_request& upd_req,
+                                        const cell_group_config*              reestablished_context = nullptr)
   {
-    return ue_res_impl->update(pcell_index, upd_req);
+    return ue_res_impl->update(pcell_index, upd_req, reestablished_context);
   }
 
   /// \brief Checks whether the UE resources have been correctly allocated.

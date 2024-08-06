@@ -111,11 +111,13 @@ async_task<void> du_ue_manager::handle_ue_deactivation_request(du_ue_index_t ue_
 void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)
 {
   srsran_assert(ue_db.contains(new_ue_index), "Invalid UE index={}", new_ue_index);
-  srsran_assert(find_ue(old_ue_index) != nullptr, "Invalid UE index={}", old_ue_index);
+  auto old_ue_it = find_ue(old_ue_index);
+  srsran_assert(old_ue_it != nullptr, "Invalid UE index={}", old_ue_index);
   auto& new_ue = ue_db[new_ue_index];
 
-  // Reset the cellGroupConfig of the new UE context, so that previous changes are included in the next UEContextUpdate.
-  new_ue.reestablishment_pending = true;
+  // Retrieve the old UE context for the RRC connection reestablishment procedure, as defined in TS 48.473, 8.4.2.2 and
+  // TS 38.401.
+  new_ue.reestablished_cfg_pending = std::make_unique<cell_group_config>(old_ue_it->resources.value());
 
   // Delete the old UE context.
   schedule_async_task(old_ue_index, handle_ue_delete_request(f1ap_ue_delete_request{old_ue_index}));

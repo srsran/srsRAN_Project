@@ -44,7 +44,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   }
 
   prev_cell_group = ue->resources.value();
-  if (ue->resources.update(ue->pcell_index, request).release_required()) {
+  if (ue->resources.update(ue->pcell_index, request, ue->reestablished_cfg_pending.get()).release_required()) {
     proc_logger.log_proc_failure("Failed to allocate DU UE resources");
     CORO_EARLY_RETURN(make_ue_config_failure());
   }
@@ -181,7 +181,56 @@ void ue_configuration_procedure::update_ue_context()
     }
     ue->bearers.add_drb(std::move(drb));
   }
-  // TODO: Support DRB modifications.
+
+  // > Modify existing UE DRBs.
+  for (const f1ap_drb_to_modify& drbtomod : request.drbs_to_mod) {
+    if (drbtomod.uluptnl_info_list.empty()) {
+      proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtomod.drb_id);
+      continue;
+    }
+    // Find the RLC configuration for this DRB.
+    auto it = std::find_if(ue->resources->rlc_bearers.begin(),
+                           ue->resources->rlc_bearers.end(),
+                           [&drbtomod](const rlc_bearer_config& e) { return e.drb_id == drbtomod.drb_id; });
+    srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
+
+    auto drb_it = ue->bearers.drbs().find(drbtomod.drb_id);
+    if (drb_it == ue->bearers.drbs().end()) {
+      // It's a DRB modification during RRC Reestablishment. We need to create a new DRB instance.
+
+      // Find the F1-U configuration for this DRB.
+      // TODO: Retrieve old UE context for QoS. The way it is now, the old UE QoS has already been lost at this point.
+      auto f1u_cfg_it = std::find_if(du_params.ran.qos.begin(), du_params.ran.qos.end(), [&it](const auto& p) {
+        return it->rlc_cfg.mode == p.second.rlc.mode;
+      });
+      srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config");
+
+      // Create DU DRB instance.
+      std::unique_ptr<du_ue_drb> drb =
+          create_drb(drb_creation_info{ue->ue_index,
+                                       ue->pcell_index,
+                                       drbtomod.drb_id,
+                                       it->lcid,
+                                       it->rlc_cfg,
+                                       it->mac_cfg,
+                                       f1u_cfg_it->second.f1u,
+                                       drbtomod.uluptnl_info_list,
+                                       ue_mng.get_f1u_teid_pool(),
+                                       du_params,
+                                       ue->get_rlc_rlf_notifier(),
+                                       get_5qi_to_qos_characteristics_mapping(f1u_cfg_it->first),
+                                       std::nullopt,
+                                       {}});
+      if (drb == nullptr) {
+        proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.",
+                                     drbtomod.drb_id);
+        continue;
+      }
+      ue->bearers.add_drb(std::move(drb));
+    } else {
+      // TODO: Support DRB modifications.
+    }
+  }
 }
 
 void ue_configuration_procedure::clear_old_ue_context()
@@ -275,10 +324,10 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
-  if (ue->reestablishment_pending) {
+  if (ue->reestablished_cfg_pending != nullptr) {
     // In case of reestablishment, we send the full configuration to the UE but without an SRB1 and with SRB2 and DRBs
     // set to "RLCReestablish".
-    ue->reestablishment_pending = false;
+    ue->reestablished_cfg_pending = nullptr;
 
     calculate_cell_group_config_diff(asn1_cell_group, cell_group_config{}, *ue->resources);
     auto it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),

@@ -224,6 +224,9 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   }
 
   if (msg->old_gnb_du_ue_f1ap_id_present) {
+    // [TS38.473, 8.4.2.2] The DL RRC MESSAGE TRANSFER message shall include, if available, the old gNB-DU UE F1AP ID
+    // IE so that the gNB-DU can retrieve the existing UE context in RRC connection reestablishment procedure, as
+    // defined in TS 38.401 [4].
     // [TS38.473, 8.4.2.2] If the gNB-DU identifies the UE-associated logical F1-connection by the gNB-DU UE F1AP ID IE
     // in the DL RRC MESSAGE TRANSFER message and the old gNB-DU UE F1AP ID IE is included, it shall release the old
     // gNB-DU UE F1AP ID and the related configurations associated with the old gNB-DU UE F1AP ID.

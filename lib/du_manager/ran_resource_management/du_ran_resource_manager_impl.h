@@ -32,7 +32,8 @@ public:
   ~du_ue_ran_resource_updater_impl() override;
 
   du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
-                                        const f1ap_ue_context_update_request& upd_req) override;
+                                        const f1ap_ue_context_update_request& upd_req,
+                                        const cell_group_config*              reestablished_context) override;
 
   const cell_group_config& get() override { return *cell_grp; }
 
@@ -64,9 +65,13 @@ public:
   /// \param ue_index Id of the UE whose context is being updated.
   /// \param pcell_idx DU Cell Id of the UE's PCell.
   /// \param upd_req UE Context Update Request received by the F1AP-DU from the CU.
+  /// \param reestablished_context Optional parameter to provide the previous context of the UE, in case of an RRC
+  /// Reestablishment.
   /// \return Result of the context update.
-  du_ue_resource_update_response
-  update_context(du_ue_index_t ue_index, du_cell_index_t pcell_idx, const f1ap_ue_context_update_request& upd_req);
+  du_ue_resource_update_response update_context(du_ue_index_t                         ue_index,
+                                                du_cell_index_t                       pcell_idx,
+                                                const f1ap_ue_context_update_request& upd_req,
+                                                const cell_group_config*              reestablished_context);
 
   /// \brief Deallocates the RAN resources taken by the UE, so that they can be used by future UEs.
   ///
@@ -77,10 +82,8 @@ private:
   error_type<std::string>
        allocate_cell_resources(du_ue_index_t ue_index, du_cell_index_t cell_index, serv_cell_index_t serv_cell_index);
   void deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index);
-  void modify_rlc_for_ntn(cell_group_config& ue_mcg);
 
   span<const du_cell_config>                cell_cfg_list;
-  const scheduler_expert_config&            sched_cfg;
   const std::map<srb_id_t, du_srb_config>&  srb_config;
   const std::map<five_qi_t, du_qos_config>& qos_config;
   srslog::basic_logger&                     logger;

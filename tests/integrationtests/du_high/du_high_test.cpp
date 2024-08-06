@@ -288,6 +288,20 @@ TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_old_u
       100));
 }
 
+TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_drbs_are_reestablished)
+{
+  // Create UE1.
+  rnti_t rnti1 = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti1));
+  ASSERT_TRUE(run_rrc_setup(rnti1));
+  ASSERT_TRUE(run_ue_context_setup(rnti1));
+
+  // Run Reestablishment
+  rnti_t rnti2 = to_rnti(0x4602);
+  ASSERT_TRUE(add_ue(rnti2));
+  ASSERT_TRUE(run_rrc_reestablishment(rnti2, rnti1));
+}
+
 TEST_F(du_high_tester,
        when_dl_rrc_message_with_old_du_ue_id_received_but_same_cu_ue_f1ap_id_then_cu_ue_f1ap_id_is_reused)
 {
@@ -297,7 +311,7 @@ TEST_F(du_high_tester,
   ASSERT_TRUE(run_rrc_setup(rnti1));
   ASSERT_TRUE(run_ue_context_setup(rnti1));
 
-  // Send DL RRC Message Transfer with old gNB-DU-UE-F1AP-ID and same gNB-CU-UE-F1AP-ID.
+  // Run Reestablishment, keeping the same gNB-CU-UE-F1AP-ID.
   this->next_cu_ue_id--;
   rnti_t rnti2 = to_rnti(0x4602);
   ASSERT_TRUE(add_ue(rnti2));
