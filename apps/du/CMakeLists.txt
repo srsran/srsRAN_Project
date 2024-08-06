@@ -27,8 +27,7 @@ target_link_libraries(srsdu
         e2ap_asn1
         srsran_pcap
         srsran_support
-        srsran_version
-        srsran_build_info
+        srsran_versioning
         srsran_flexible_du_dynamic
         srsran_f1c_gateway
         srsran_cu_up # TODO: Delete

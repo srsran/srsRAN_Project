@@ -8,24 +8,22 @@
  *
  */
 
-#include "srsran/support/build_info/build_info.h"
+#include "srsran/support/versioning/build_info.h"
 #include "hashes.h"
 
-namespace srsran {
+using namespace srsran;
 
-const char* get_build_hash()
+const char* srsran::get_build_hash()
 {
   return build_hash;
 }
 
-const char* get_build_info()
+const char* srsran::get_build_info()
 {
   return build_info;
 }
 
-const char* get_build_mode()
+const char* srsran::get_build_mode()
 {
   return build_mode;
 }
-
-} // namespace srsran

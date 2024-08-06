@@ -11,7 +11,7 @@
 #pragma once
 
 #include "external/fmt/include/fmt/core.h"
-#include "srsran/support/build_info/build_info.h"
+#include "srsran/support/versioning/build_info.h"
 
 namespace srsran {
 namespace app_services {

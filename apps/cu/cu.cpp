@@ -18,7 +18,6 @@
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/backtrace.h"
-#include "srsran/support/build_info/build_info.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/error_handling.h"
@@ -29,7 +28,8 @@
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/sysinfo.h"
 #include "srsran/support/timers.h"
-#include "srsran/support/version/version.h"
+#include "srsran/support/versioning/build_info.h"
+#include "srsran/support/versioning/version.h"
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
 #include "apps/cu/cu_worker_manager.h"

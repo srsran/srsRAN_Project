@@ -192,7 +192,7 @@ full-code-format:
       mkdir -p build
       cd build || exit
       cmake -DASSERT_LEVEL=PARANOID -DMARCH=x86-64-v3 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False ..
-      make srsran_build_info # needed to generate hashes.h
+      make srsran_versioning # needed to generate hashes.h
     - |
       monitor_child_process() {
           while true; do

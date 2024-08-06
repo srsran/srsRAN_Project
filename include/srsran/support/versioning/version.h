@@ -12,7 +12,7 @@
 
 namespace srsran {
 
-/// \brief Returns the full version with major.minor.patch as string.
+/// Returns the full version with major.minor.patch as a string.
 const char* get_version();
 
 } // namespace srsran

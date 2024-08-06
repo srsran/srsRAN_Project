@@ -30,8 +30,7 @@ target_link_libraries(gnb
         srsran_gateway
         srsran_pcap
         srsran_support
-        srsran_version
-        srsran_build_info
+        srsran_versioning
         srsran_flexible_du_dynamic
         srsran_f1c_gateway
         srsran_e1_gateway

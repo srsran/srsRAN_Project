@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsran/support/version/version.h"
+#include "srsran/support/versioning/version.h"
 #include "version_info.h"
 
 using namespace srsran;

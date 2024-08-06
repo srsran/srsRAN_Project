@@ -6,7 +6,8 @@
 # the distribution.
 #
 
-add_library(srsran_build_info STATIC build_info.cpp)
-include_directories(${CMAKE_BINARY_DIR})
+configure_file(version_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/version_info.h)
+include_directories(${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+add_library(srsran_versioning STATIC build_info.cpp version.cpp)
 add_custom_target(gen_build_info COMMAND cmake -P ${CMAKE_BINARY_DIR}/build_info.cmake)
-add_dependencies(srsran_build_info gen_build_info)
+add_dependencies(srsran_versioning gen_build_info)

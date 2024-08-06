@@ -14,13 +14,13 @@
 
 namespace srsran {
 
-/// \brief Returns a formatted string containing the current commit hash.
+/// Returns a formatted string containing the current commit hash.
 const char* get_build_hash();
 
-/// \brief Returns a formatted string containing the current commit hash and branch name (if available).
+/// Returns a formatted string containing the current commit hash and branch name (if available).
 const char* get_build_info();
 
-/// \brief Returns the selected (CMake) build mode as string.
+/// Returns the selected (CMake) build mode as string.
 const char* get_build_mode();
 
 } // namespace srsran

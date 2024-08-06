@@ -15,21 +15,21 @@
 namespace srsran {
 
 #ifdef BUILD_TYPE_RELEASE
-static char build_mode[] = "Release";
+static const char build_mode[] = "Release";
 #else
 #ifdef BUILD_TYPE_DEBUG
-static char build_mode[] = "Debug";
+static const char build_mode[] = "Debug";
 #else
 #ifdef BUILD_TYPE_RELWITHDEBINFO
-static char build_mode[] = "RelWithDebInfo";
+static const char build_mode[] = "RelWithDebInfo";
 #else
-static char build_mode[] = "unknown";
+static const char build_mode[] = "unknown";
 #endif
 #endif
 #endif
 
-static char build_hash[] = "@GIT_COMMIT_HASH@";
+static const char build_hash[] = "@GIT_COMMIT_HASH@";
 
-static char build_info[] = "commit @GIT_COMMIT_HASH@ on branch @GIT_BRANCH@";
+static const char build_info[] = "commit @GIT_COMMIT_HASH@ on branch @GIT_BRANCH@";
 
 } // namespace srsran

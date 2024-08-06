@@ -20,8 +20,7 @@ install(TARGETS srscu
 target_link_libraries(srscu
         srsran_app_services
         srsran_support
-        srsran_version
-        srsran_build_info
+        srsran_versioning
         srsran_cu_cp_app_unit
         srsran_cu_up_app_unit
         srsran_ngap

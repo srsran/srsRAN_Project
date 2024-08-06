@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/signal_handling.h"
-#include "srsran/support/version/version.h"
+#include "srsran/support/versioning/build_info.h"
+#include "srsran/support/versioning/version.h"
 
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
 
