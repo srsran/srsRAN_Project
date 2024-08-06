@@ -96,15 +96,15 @@ void slice_scheduler::rem_ue(du_ue_index_t ue_idx)
 
 ran_slice_instance& slice_scheduler::get_slice(const logical_channel_config& lc_cfg)
 {
+  // Return default SRB slice if LCID belongs to a SRB.
+  if (lc_cfg.lcid < LCID_MIN_DRB) {
+    return slices[default_srb_ran_slice_id.value()].inst;
+  }
   auto it = std::find_if(slices.begin(), slices.end(), [&lc_cfg](const ran_slice_sched_context& slice) {
     return slice.inst.cfg.rrc_member == lc_cfg.rrm_policy;
   });
   if (it == slices.end() or lc_cfg.rrm_policy == rrm_policy_member{}) {
-    // Slice with the provided RRM policy member was not found. If logical channel is an SRB then return default SRB
-    // slice. Else, return default DRB slice.
-    if (lc_cfg.lcid < LCID_MIN_DRB) {
-      return slices[default_srb_ran_slice_id.value()].inst;
-    }
+    // Slice with the provided RRM policy member was not found. Return default DRB slice.
     return slices[default_drb_ran_slice_id.value()].inst;
   }
   return it->inst;
