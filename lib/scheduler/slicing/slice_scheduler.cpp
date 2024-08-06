@@ -64,7 +64,7 @@ void slice_scheduler::add_ue(const ue_configuration& ue_cfg)
   for (const logical_channel_config& lc_cfg : ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg);
     if (ues.contains(ue_cfg.ue_index)) {
-      sl_inst.add_logical_channel(ues[ue_cfg.ue_index], lc_cfg.lcid);
+      sl_inst.add_logical_channel(ues[ue_cfg.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
     }
   }
 }
@@ -81,7 +81,7 @@ void slice_scheduler::reconf_ue(const ue_configuration& next_ue_cfg, const ue_co
   for (const logical_channel_config& lc_cfg : next_ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg);
     if (ues.contains(next_ue_cfg.ue_index)) {
-      sl_inst.add_logical_channel(ues[next_ue_cfg.ue_index], lc_cfg.lcid);
+      sl_inst.add_logical_channel(ues[next_ue_cfg.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
     }
   }
 }
@@ -89,6 +89,7 @@ void slice_scheduler::reconf_ue(const ue_configuration& next_ue_cfg, const ue_co
 void slice_scheduler::rem_ue(du_ue_index_t ue_idx)
 {
   for (auto& slice : slices) {
+    // Remove all logical channels of UE.
     slice.inst.rem_logical_channel(ue_idx);
   }
 }

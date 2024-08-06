@@ -102,7 +102,7 @@ protected:
         ue_creation_command{ev.next_config(), ue_creation_req.starts_in_fallback, harq_timeout_handler}));
     slice_ues.emplace(ue_creation_req.ue_index, ues[ue_creation_req.ue_index]);
     for (const auto& lc_cfg : *ue_creation_req.cfg.lc_config_list) {
-      slice_ues[ue_creation_req.ue_index].add_logical_channel(lc_cfg.lcid);
+      slice_ues[ue_creation_req.ue_index].add_logical_channel(lc_cfg.lcid, lc_cfg.lc_group);
     }
     return ues[ue_creation_req.ue_index];
   }

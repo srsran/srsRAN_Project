@@ -53,7 +53,7 @@ public:
   const ue_cell& get_pcell() const { return u.get_pcell(); }
 
   /// Add LCID to the bearers of the UE belonging to this slice.
-  void add_logical_channel(lcid_t lcid);
+  void add_logical_channel(lcid_t lcid, lcg_id_t lcg_id);
 
   /// Remove LCID from the bearers of the UE belonging to this slice.
   void rem_logical_channel(lcid_t lcid);
@@ -80,6 +80,8 @@ private:
 
   const ue&                        u;
   bounded_bitset<MAX_NOF_RB_LCIDS> bearers;
+  /// LCG IDs of bearers belonging to this slice.
+  bounded_bitset<MAX_NOF_LCGS> lcg_ids;
 };
 
 /// Container that store all UEs belonging to a slice.
