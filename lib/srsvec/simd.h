@@ -417,19 +417,15 @@ inline simd_f_t srsran_simd_f_fma(simd_f_t acc, simd_f_t a, simd_f_t b)
 {
 #ifdef __AVX512F__
   return _mm512_fmadd_ps(a, b, acc);
-#else /* __AVX512F__ */
-#ifdef __AVX2__
+#elif defined(__FMA__)
   return _mm256_fmadd_ps(a, b, acc);
-#else /* __AVX2__ */
-#ifdef __SSE4_1__
-  return _mm_fmadd_ps(a, b, acc);
-#else /* __SSE4_1__ */
-#ifdef __ARM_NEON
+#elif defined(__AVX2__)
+  return _mm256_add_ps(_mm256_mul_ps(a, b), acc);
+#elif defined(__SSE4_1__)
+  return _mm_add_ps(_mm_mul_ps(a, b), acc);
+#elif defined(__ARM_NEON)
   return vmlaq_f32(acc, a, b);
-#endif /* __ARM_NEON */
-#endif /* __SSE4_1__ */
-#endif /* __AVX2__ */
-#endif /* __AVX512F__ */
+#endif
 }
 
 inline simd_f_t srsran_simd_f_zero()
