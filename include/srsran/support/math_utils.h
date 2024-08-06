@@ -15,6 +15,7 @@
 
 #include "srsran_assert.h"
 #include "srsran/adt/complex.h"
+#include <numeric>
 
 namespace srsran {
 
@@ -176,6 +177,13 @@ inline Integer reverse_byte(Integer byte)
       0b00111111, 0b10111111, 0b01111111, 0b11111111,
   };
   return reverse_lut[byte];
+}
+
+/// Calculates the least common multiplier (LCM) for a range of integers.
+template <typename Integer, typename It>
+Integer lcm(It begin, It end)
+{
+  return std::accumulate(begin, end, Integer(1), [](Integer a, Integer b) { return std::lcm<Integer>(a, b); });
 }
 
 } // namespace srsran

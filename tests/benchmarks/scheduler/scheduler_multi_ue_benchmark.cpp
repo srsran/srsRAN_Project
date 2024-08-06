@@ -14,7 +14,6 @@
 #include "srsran/adt/circular_array.h"
 #include "srsran/scheduler/scheduler_factory.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/math/lcm.h"
 #include <getopt.h>
 
 using namespace srsran;
