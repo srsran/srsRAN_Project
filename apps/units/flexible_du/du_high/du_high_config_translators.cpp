@@ -233,7 +233,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     // in one extra symbol to be used for PDSCH.
     if (base_cell.pdcch_cfg.common.max_coreset0_duration.has_value()) {
       param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration.value();
-    } else if (param.channel_bw_mhz > bs_channel_bandwidth_fr1::MHz50) {
+    } else if (param.channel_bw_mhz > bs_channel_bandwidth::MHz50) {
       param.max_coreset0_duration = 1;
     }
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(

@@ -1102,7 +1102,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
         unsigned          bw;
         ss >> bw;
         const std::string& error_message = "Error in the channel bandwidth property. Valid values "
-                                           "[5,10,15,20,25,30,40,50,60,70,80,90,100]";
+                                           "[5,10,15,20,25,30,40,50,60,70,80,90,100,200,400]";
         // Bandwidth cannot be less than 5MHz.
         if (bw < 5U) {
           return error_message;
@@ -1116,6 +1116,11 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
         // Check from [30-100] in steps of 10.
         if (bw < 101U) {
           return ((bw % 10) == 0) ? "" : error_message;
+        }
+
+        // Check from [200-400] in steps of 200.
+        if (bw < 401U) {
+          return ((bw % 200) == 0) ? "" : error_message;
         }
 
         return error_message;

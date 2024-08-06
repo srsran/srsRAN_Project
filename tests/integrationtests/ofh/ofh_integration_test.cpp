@@ -71,27 +71,27 @@ namespace {
 
 /// User-defined test parameters.
 struct test_parameters {
-  bool                     silent                              = false;
-  srslog::basic_levels     log_level                           = srslog::basic_levels::info;
-  std::string              log_filename                        = "stdout";
-  bool                     is_prach_control_plane_enabled      = true;
-  bool                     is_downlink_broadcast_enabled       = false;
-  bool                     ignore_ecpri_payload_size_field     = false;
-  std::string              data_compr_method                   = "bfp";
-  unsigned                 data_bitwidth                       = 9;
-  std::string              prach_compr_method                  = "bfp";
-  unsigned                 prach_bitwidth                      = 9;
-  bool                     is_downlink_static_comp_hdr_enabled = false;
-  bool                     is_uplink_static_comp_hdr_enabled   = false;
-  bool                     is_downlink_parallelized            = true;
-  units::bytes             mtu                                 = units::bytes(9000);
-  std::vector<unsigned>    prach_port_id                       = {4, 5};
-  std::vector<unsigned>    dl_port_id                          = {0, 1, 2, 3};
-  std::vector<unsigned>    ul_port_id                          = {0, 1};
-  bs_channel_bandwidth_fr1 bw                                  = srsran::bs_channel_bandwidth_fr1::MHz20;
-  subcarrier_spacing       scs                                 = subcarrier_spacing::kHz30;
-  std::string              tdd_pattern_str                     = "7d2u";
-  bool                     use_loopback_receiver               = false;
+  bool                  silent                              = false;
+  srslog::basic_levels  log_level                           = srslog::basic_levels::info;
+  std::string           log_filename                        = "stdout";
+  bool                  is_prach_control_plane_enabled      = true;
+  bool                  is_downlink_broadcast_enabled       = false;
+  bool                  ignore_ecpri_payload_size_field     = false;
+  std::string           data_compr_method                   = "bfp";
+  unsigned              data_bitwidth                       = 9;
+  std::string           prach_compr_method                  = "bfp";
+  unsigned              prach_bitwidth                      = 9;
+  bool                  is_downlink_static_comp_hdr_enabled = false;
+  bool                  is_uplink_static_comp_hdr_enabled   = false;
+  bool                  is_downlink_parallelized            = true;
+  units::bytes          mtu                                 = units::bytes(9000);
+  std::vector<unsigned> prach_port_id                       = {4, 5};
+  std::vector<unsigned> dl_port_id                          = {0, 1, 2, 3};
+  std::vector<unsigned> ul_port_id                          = {0, 1};
+  bs_channel_bandwidth  bw                                  = srsran::bs_channel_bandwidth::MHz20;
+  subcarrier_spacing    scs                                 = subcarrier_spacing::kHz30;
+  std::string           tdd_pattern_str                     = "7d2u";
+  bool                  use_loopback_receiver               = false;
 };
 
 /// Dummy Radio Unit error notifier.

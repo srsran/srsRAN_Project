@@ -178,7 +178,7 @@ struct sib_test_bench {
       cell_cfg.band     = init_bwp_scs == subcarrier_spacing::kHz15 ? nr_band::n50 : nr_band::n40;
     }
     cell_cfg.scs_common          = init_bwp_scs;
-    cell_cfg.channel_bw_mhz      = static_cast<bs_channel_bandwidth_fr1>(carrier_bw_mhz);
+    cell_cfg.channel_bw_mhz      = static_cast<bs_channel_bandwidth>(carrier_bw_mhz);
     cell_cfg.coreset0_index      = (pdcch_config_sib1 >> 4U) & 0b00001111U;
     cell_cfg.search_space0_index = pdcch_config_sib1 & 0b00001111U;
 
@@ -211,7 +211,7 @@ struct sib_test_bench {
     cell_cfg.dl_arfcn       = freq_arfcn;
     cell_cfg.scs_common     = init_bwp_scs;
     cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
-    cell_cfg.channel_bw_mhz = static_cast<bs_channel_bandwidth_fr1>(carrier_bw_mhz);
+    cell_cfg.channel_bw_mhz = static_cast<bs_channel_bandwidth>(carrier_bw_mhz);
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         cell_cfg.channel_bw_mhz,
@@ -467,7 +467,7 @@ void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs, ui
   srsran_assert(carrier_bw_mhz >= min_channel_bandwidth_to_MHz(min_ch_bw), "Invalid carrier BW");
 
   const auto nof_rbs_bpw =
-      band_helper::get_n_rbs_from_bw(static_cast<bs_channel_bandwidth_fr1>(carrier_bw_mhz),
+      band_helper::get_n_rbs_from_bw(static_cast<bs_channel_bandwidth>(carrier_bw_mhz),
                                      scs,
                                      band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(freq_arfcn)));
 

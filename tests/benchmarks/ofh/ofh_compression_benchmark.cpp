@@ -24,13 +24,13 @@ using namespace srsran;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static unsigned                 nof_repetitions = 10000;
-static bool                     silent          = false;
-static std::string              method          = "bfp";
-static std::string              impl_type       = "auto";
-static unsigned                 nof_ports       = 1;
-static bs_channel_bandwidth_fr1 bw              = srsran::bs_channel_bandwidth_fr1::MHz20;
-static subcarrier_spacing       scs             = subcarrier_spacing::kHz30;
+static unsigned             nof_repetitions = 10000;
+static bool                 silent          = false;
+static std::string          method          = "bfp";
+static std::string          impl_type       = "auto";
+static unsigned             nof_ports       = 1;
+static bs_channel_bandwidth bw              = srsran::bs_channel_bandwidth::MHz20;
+static subcarrier_spacing   scs             = subcarrier_spacing::kHz30;
 
 static void usage(const char* prog)
 {
@@ -47,44 +47,44 @@ static void usage(const char* prog)
 static bool validate_bw(unsigned bandwidth)
 {
   switch (bandwidth) {
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz5):
-      bw = bs_channel_bandwidth_fr1::MHz5;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz5):
+      bw = bs_channel_bandwidth::MHz5;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz10):
-      bw = bs_channel_bandwidth_fr1::MHz10;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz10):
+      bw = bs_channel_bandwidth::MHz10;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz15):
-      bw = bs_channel_bandwidth_fr1::MHz15;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz15):
+      bw = bs_channel_bandwidth::MHz15;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz20):
-      bw = bs_channel_bandwidth_fr1::MHz20;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz20):
+      bw = bs_channel_bandwidth::MHz20;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz25):
-      bw = bs_channel_bandwidth_fr1::MHz25;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz25):
+      bw = bs_channel_bandwidth::MHz25;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz30):
-      bw = bs_channel_bandwidth_fr1::MHz30;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz30):
+      bw = bs_channel_bandwidth::MHz30;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz40):
-      bw = bs_channel_bandwidth_fr1::MHz40;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz40):
+      bw = bs_channel_bandwidth::MHz40;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz50):
-      bw = bs_channel_bandwidth_fr1::MHz50;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz50):
+      bw = bs_channel_bandwidth::MHz50;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz60):
-      bw = bs_channel_bandwidth_fr1::MHz60;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz60):
+      bw = bs_channel_bandwidth::MHz60;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz70):
-      bw = bs_channel_bandwidth_fr1::MHz70;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz70):
+      bw = bs_channel_bandwidth::MHz70;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz80):
-      bw = bs_channel_bandwidth_fr1::MHz80;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz80):
+      bw = bs_channel_bandwidth::MHz80;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz90):
-      bw = bs_channel_bandwidth_fr1::MHz90;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz90):
+      bw = bs_channel_bandwidth::MHz90;
       break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz100):
-      bw = bs_channel_bandwidth_fr1::MHz100;
+    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth::MHz100):
+      bw = bs_channel_bandwidth::MHz100;
       break;
     default:
       return false;

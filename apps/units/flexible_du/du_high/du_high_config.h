@@ -521,7 +521,7 @@ struct du_high_unit_base_cell_config {
   /// NR band.
   std::optional<nr_band> band;
   /// Channel bandwidth in MHz.
-  bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+  bs_channel_bandwidth channel_bw_mhz = bs_channel_bandwidth::MHz20;
   /// Number of antennas in downlink.
   unsigned nof_antennas_dl = 1;
   /// Number of antennas in uplink.

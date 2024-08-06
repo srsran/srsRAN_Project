@@ -103,7 +103,7 @@ protected:
       builder_params.band     = nr_band::n41;
     }
     if (t_params.scs == srsran::subcarrier_spacing::kHz30) {
-      builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz20;
+      builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth::MHz20;
     }
 
     sched_cell_configuration_request_message req =

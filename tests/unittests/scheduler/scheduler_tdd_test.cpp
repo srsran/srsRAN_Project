@@ -39,7 +39,7 @@ protected:
       params.scs_common       = testparams.tdd_cfg.ref_scs;
       params.dl_arfcn         = 520002;
       params.band             = nr_band::n41;
-      params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
+      params.channel_bw_mhz   = bs_channel_bandwidth::MHz20;
       const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
           params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
       static const uint8_t                                   ss0_idx = 0;

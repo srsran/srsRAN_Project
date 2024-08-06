@@ -419,7 +419,7 @@ protected:
       builder_params.dl_arfcn       = 465000;
       builder_params.scs_common     = subcarrier_spacing::kHz30;
       builder_params.band           = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
-      builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz20;
+      builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth::MHz20;
 
       const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
           builder_params.channel_bw_mhz,

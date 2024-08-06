@@ -25,7 +25,7 @@ struct ru_ofh_unit_base_cell_config {
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  std::optional<bs_channel_bandwidth_fr1> ru_operating_bw;
+  std::optional<bs_channel_bandwidth> ru_operating_bw;
   /// T1a maximum parameter for downlink Control-Plane in microseconds.
   std::chrono::microseconds T1a_max_cp_dl{500};
   /// T1a minimum parameter for downlink Control-Plane in microseconds.

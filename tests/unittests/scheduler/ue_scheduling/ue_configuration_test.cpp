@@ -115,7 +115,7 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
   params.scs_common     = subcarrier_spacing::kHz30;
   params.dl_arfcn       = 520002;
   params.band           = nr_band::n41;
-  params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz50;
+  params.channel_bw_mhz = bs_channel_bandwidth::MHz50;
   msg                   = test_helpers::make_default_sched_cell_configuration_request(params);
   ue_create_msg         = test_helpers::create_default_sched_ue_creation_request(params);
 

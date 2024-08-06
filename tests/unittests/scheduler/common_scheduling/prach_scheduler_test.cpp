@@ -38,9 +38,8 @@ void PrintTo(const prach_test_params& value, ::std::ostream* os)
 static sched_cell_configuration_request_message
 make_custom_sched_cell_configuration_request(const prach_test_params test_params)
 {
-  cell_config_builder_params params = {.scs_common     = test_params.scs,
-                                       .channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz20,
-                                       .band           = test_params.band};
+  cell_config_builder_params params = {
+      .scs_common = test_params.scs, .channel_bw_mhz = srsran::bs_channel_bandwidth::MHz20, .band = test_params.band};
   // For TDD, set DL ARFCN according to the band.
   if (not band_helper::is_paired_spectrum(test_params.band)) {
     params.dl_arfcn = 520002;

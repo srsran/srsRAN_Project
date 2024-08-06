@@ -193,7 +193,7 @@ protected:
       cell_cfg.dl_arfcn       = 474000;
       cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
       cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
-      cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+      cell_cfg.channel_bw_mhz = bs_channel_bandwidth::MHz20;
 
       const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
           cell_cfg.channel_bw_mhz,
@@ -740,9 +740,9 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
 
   // Make custom cell configuration for TDD and FDD i.e. 10 Mhz for TDD and 5Mhz for FDD.
   auto builder_params           = create_custom_cell_cfg_builder_params(params.duplx_mode);
-  builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz5;
+  builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz5;
   if (params.duplx_mode == duplex_mode::TDD) {
-    builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz10;
+    builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth::MHz10;
   }
   builder_params.band = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
 

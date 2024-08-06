@@ -29,12 +29,12 @@ protected:
         params.scs_common     = subcarrier_spacing::kHz30;
         params.dl_arfcn       = 520002;
         params.band           = nr_band::n41;
-        params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+        params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
       } else {
         params.scs_common     = subcarrier_spacing::kHz15;
         params.dl_arfcn       = 365000;
         params.band           = nr_band::n3;
-        params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+        params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
       }
       const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
           params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));

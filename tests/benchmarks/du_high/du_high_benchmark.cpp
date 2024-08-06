@@ -1125,7 +1125,7 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
   params.dl_arfcn   = dplx_mode == duplex_mode::FDD ? 530000 : 520002;
   params.band       = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   params.channel_bw_mhz =
-      dplx_mode == duplex_mode::FDD ? srsran::bs_channel_bandwidth_fr1::MHz20 : bs_channel_bandwidth_fr1::MHz100;
+      dplx_mode == duplex_mode::FDD ? srsran::bs_channel_bandwidth::MHz20 : bs_channel_bandwidth::MHz100;
   const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
   static const uint8_t                                   ss0_idx = 0;

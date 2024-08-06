@@ -43,7 +43,7 @@ struct receiver_config {
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  bs_channel_bandwidth_fr1 ru_operating_bw;
+  bs_channel_bandwidth ru_operating_bw;
   /// Uplink compression parameters.
   ofh::ru_compression_params ul_compression_params;
   /// PRACH compression parameters.

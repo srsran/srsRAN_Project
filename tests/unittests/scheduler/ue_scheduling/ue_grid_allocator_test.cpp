@@ -36,7 +36,7 @@ protected:
       cfg_builder_params.scs_common =
           GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
       cfg_builder_params.band           = band_helper::get_band_from_dl_arfcn(cfg_builder_params.dl_arfcn);
-      cfg_builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+      cfg_builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
       auto* cfg = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(cfg_builder_params),
                                    metrics_ue_handler);
       srsran_assert(cfg != nullptr, "Cell configuration failed");

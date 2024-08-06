@@ -134,9 +134,9 @@ public:
   }
 
   sched_cell_configuration_request_message
-  create_custom_cell_config_request(duplex_mode              duplx_mode,
-                                    subcarrier_spacing       scs        = srsran::subcarrier_spacing::kHz30,
-                                    bs_channel_bandwidth_fr1 carrier_bw = srsran::bs_channel_bandwidth_fr1::MHz20) const
+  create_custom_cell_config_request(duplex_mode          duplx_mode,
+                                    subcarrier_spacing   scs        = srsran::subcarrier_spacing::kHz30,
+                                    bs_channel_bandwidth carrier_bw = srsran::bs_channel_bandwidth::MHz20) const
   {
     cell_config_builder_params cell_cfg{};
     if (duplx_mode == duplex_mode::TDD) {
@@ -312,7 +312,7 @@ TEST_F(paging_sched_special_case_tester, successfully_allocated_paging_grant_5mh
   const uint16_t drx_cycle_in_nof_rf = 128;
 
   auto sched_cell_cfg = create_custom_cell_config_request(
-      srsran::duplex_mode::FDD, subcarrier_spacing::kHz15, bs_channel_bandwidth_fr1::MHz5);
+      srsran::duplex_mode::FDD, subcarrier_spacing::kHz15, bs_channel_bandwidth::MHz5);
 
   // Shuffle between SearchSpace#0 and SearchSpace#1.
   const auto ss_id = to_search_space_id(get_random_uint(0, 1));

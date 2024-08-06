@@ -556,8 +556,9 @@ static bool validate_tdd_ul_dl_pattern_unit_config(const tdd_ul_dl_pattern_unit_
                                                    subcarrier_spacing                   common_scs)
 {
   // NOTE: TDD pattern is assumed to use common SCS as reference SCS.
-  if (common_scs > subcarrier_spacing::kHz60) {
-    fmt::print("Invalid TDD UL DL reference SCS={}kHz. Must be 15, 30 or 60 kHz for FR1.\n", scs_to_khz(common_scs));
+  if (common_scs > subcarrier_spacing::kHz120) {
+    fmt::print("Invalid TDD UL DL reference SCS={}kHz. Must be 15, 30 or 60 kHz for FR1 and 120 kHz for FR2.\n",
+               scs_to_khz(common_scs));
     return false;
   }
 
@@ -605,17 +606,36 @@ static bool validate_dl_arfcn_and_band(const du_high_unit_base_cell_config& conf
   // NOTE: Band n46 would be compatible with the 10MHz BW, but there is no sync raster that falls within the band
   // limits. Also, the Coreset#0 width in RBs given in Table 13-4A, TS 38.213, is larger than the band itself, which is
   // odd. Therefore, we limit the band to minimum 20MHz BW.
-  if (band == srsran::nr_band::n46 and config.channel_bw_mhz < bs_channel_bandwidth_fr1::MHz20) {
+  if (band == srsran::nr_band::n46 and config.channel_bw_mhz < bs_channel_bandwidth::MHz20) {
     fmt::print("Minimum supported bandwidth for n46 is 20MHz.\n");
     return false;
   }
 
-  if (bs_channel_bandwidth_to_MHz(config.channel_bw_mhz) <
-      min_channel_bandwidth_to_MHz(band_helper::get_min_channel_bw(band, config.common_scs))) {
+  // Check if the subcarier spacing is valid for the frequency range.
+  frequency_range fr = band_helper::get_freq_range(band);
+  if ((fr == frequency_range::FR1) && (config.common_scs > subcarrier_spacing::kHz60)) {
+    fmt::print("Frequency range 1 does not support the subcarrier spacing of {}.\n", to_string(config.common_scs));
+    return false;
+  }
+
+  if ((fr == frequency_range::FR2) && (config.common_scs < subcarrier_spacing::kHz60)) {
+    fmt::print("Frequency range 2 does not support the subcarrier spacing of {}.\n", to_string(config.common_scs));
+    return false;
+  }
+
+  // Obtain the minimum bandwidth for the subcarrier and band combination.
+  min_channel_bandwidth min_chan_bw = band_helper::get_min_channel_bw(band, config.common_scs);
+  if (min_chan_bw == min_channel_bandwidth::invalid) {
+    fmt::print("Invalid combination for band n{} and subcarrier spacing {}.\n", band, to_string(config.common_scs));
+    return false;
+  }
+
+  // Check that the configured bandwidth is greater than or equal to the minimum bandwidth
+  if (bs_channel_bandwidth_to_MHz(config.channel_bw_mhz) < min_channel_bandwidth_to_MHz(min_chan_bw)) {
     fmt::print("Minimum supported bandwidth for n{} with SCS {} is {}MHz.\n",
-               config.band,
+               band,
                to_string(config.common_scs),
-               min_channel_bandwidth_to_MHz(band_helper::get_min_channel_bw(band, config.common_scs)));
+               min_channel_bandwidth_to_MHz(min_chan_bw));
     return false;
   }
 
@@ -709,16 +729,30 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
   if (config.common_scs == srsran::subcarrier_spacing::kHz15 and
-      config.channel_bw_mhz > srsran::bs_channel_bandwidth_fr1::MHz50) {
+      config.channel_bw_mhz > srsran::bs_channel_bandwidth::MHz50) {
     fmt::print("Maximum Channel BW with SCS common 15kHz is 50MHz.\n");
     return false;
   }
   if (config.common_scs == srsran::subcarrier_spacing::kHz30 and
-      config.channel_bw_mhz < srsran::bs_channel_bandwidth_fr1::MHz10) {
+      config.channel_bw_mhz < srsran::bs_channel_bandwidth::MHz10) {
     fmt::print("Minimum supported Channel BW with SCS common 30kHz is 10MHz.\n");
     return false;
   }
-
+  if (config.common_scs == srsran::subcarrier_spacing::kHz30 and
+      config.channel_bw_mhz > srsran::bs_channel_bandwidth::MHz100) {
+    fmt::print("Maximum Channel BW with SCS common 30kHz is 100MHz.\n");
+    return false;
+  }
+  if (config.common_scs == srsran::subcarrier_spacing::kHz60 and
+      config.channel_bw_mhz > srsran::bs_channel_bandwidth::MHz200) {
+    fmt::print("Maximum Channel BW with SCS common 60kHz is 200MHz.\n");
+    return false;
+  }
+  if (config.common_scs == srsran::subcarrier_spacing::kHz120 and
+      config.channel_bw_mhz > srsran::bs_channel_bandwidth::MHz400) {
+    fmt::print("Maximum Channel BW with SCS common 120kHz is 400MHz.\n");
+    return false;
+  }
   if (!validate_dl_arfcn_and_band(config)) {
     return false;
   }

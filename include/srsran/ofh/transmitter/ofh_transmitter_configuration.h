@@ -32,7 +32,7 @@ struct transmitter_config {
   /// Radio sector identifier.
   unsigned sector;
   /// Channel bandwidth.
-  bs_channel_bandwidth_fr1 bw;
+  bs_channel_bandwidth bw;
   /// Subcarrier spacing.
   subcarrier_spacing scs;
   /// Cyclic prefix.
@@ -62,7 +62,7 @@ struct transmitter_config {
   /// MTU size.
   units::bytes mtu_size;
   /// RU working bandwidth.
-  bs_channel_bandwidth_fr1 ru_working_bw;
+  bs_channel_bandwidth ru_working_bw;
   /// Downlink compression parameters.
   ru_compression_params dl_compr_params;
   /// Uplink compression parameters.

@@ -80,10 +80,10 @@ bool is_band_40mhz_min_ch_bw_equivalent(nr_band band);
 /// for bands n41, n77, n78, n79.
 /// \param[in] bw Channel Bandwidth in MHz, which is required to validate some bands' ARFCN values.
 /// \return    If the DL ARFCN is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string> is_dl_arfcn_valid_given_band(nr_band                  band,
-                                                     uint32_t                 arfcn,
-                                                     subcarrier_spacing       scs,
-                                                     bs_channel_bandwidth_fr1 bw = bs_channel_bandwidth_fr1::MHz10);
+error_type<std::string> is_dl_arfcn_valid_given_band(nr_band              band,
+                                                     uint32_t             arfcn,
+                                                     subcarrier_spacing   scs,
+                                                     bs_channel_bandwidth bw = bs_channel_bandwidth::MHz10);
 
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
@@ -194,7 +194,7 @@ double get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
 /// \param[in] fr is frequency range FR1 or FR2.
 /// \return \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
-unsigned get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, frequency_range fr);
+unsigned get_n_rbs_from_bw(bs_channel_bandwidth bw, subcarrier_spacing scs, frequency_range fr);
 
 /// \brief Returns the minimum BS Channel Bandwidth for a given band and SCS from Table 5.3.5-1, TS 38.104, for FR1.
 ///
@@ -328,10 +328,10 @@ std::optional<unsigned> get_ssb_arfcn(unsigned              dl_arfcn,
 /// \param[in] ssb_scs SSB subcarrier spacing.
 /// \param[in] bw Channel Bandwidth in MHz, which is required to validate some bands' ARFCN values.
 /// \return If the ARFCN (GSCN) is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string> is_ssb_arfcn_valid_given_band(uint32_t                 ssb_arfcn,
-                                                      nr_band                  band,
-                                                      subcarrier_spacing       scs,
-                                                      bs_channel_bandwidth_fr1 bw = bs_channel_bandwidth_fr1::invalid);
+error_type<std::string> is_ssb_arfcn_valid_given_band(uint32_t             ssb_arfcn,
+                                                      nr_band              band,
+                                                      subcarrier_spacing   scs,
+                                                      bs_channel_bandwidth bw = bs_channel_bandwidth::invalid);
 
 } // namespace band_helper
 

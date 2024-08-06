@@ -42,7 +42,7 @@ static cell_config_builder_params test_builder_params(duplex_mode duplx_mode)
     builder_params.dl_arfcn       = 474000;
     builder_params.scs_common     = srsran::subcarrier_spacing::kHz30;
     builder_params.band           = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
-    builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+    builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         builder_params.channel_bw_mhz,
