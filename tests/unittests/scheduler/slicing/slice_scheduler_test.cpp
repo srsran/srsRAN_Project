@@ -157,6 +157,43 @@ TEST_F(default_slice_scheduler_test, when_grant_gets_allocated_then_number_of_av
   ASSERT_EQ(next_dl_slice->remaining_rbs(), rem_rbs - alloc_rbs);
 }
 
+TEST_F(default_slice_scheduler_test, returns_only_dl_pending_bytes_of_bearers_belonging_to_a_slice)
+{
+  constexpr static ran_slice_id_t default_srb_slice_id{0};
+  constexpr static ran_slice_id_t default_drb_slice_id{1};
+
+  constexpr static unsigned srb_pending_bytes{200};
+  constexpr static unsigned drb_pending_bytes{5000};
+
+  constexpr static du_ue_index_t ue_idx{to_du_ue_index(0)};
+
+  ASSERT_NE(this->add_ue(ue_idx), nullptr);
+  // Push buffer state indication for DRB.
+  dl_buffer_state_indication_message ind{};
+  ind.ue_index = ue_idx;
+  ind.lcid     = LCID_MIN_DRB;
+  ind.bs       = drb_pending_bytes;
+  this->ues[ue_idx].handle_dl_buffer_state_indication(ind);
+  // Push buffer state indication for SRB.
+  ind.lcid = LCID_SRB1;
+  ind.bs   = srb_pending_bytes;
+  this->ues[ue_idx].handle_dl_buffer_state_indication(ind);
+
+  slice_sched.slot_indication();
+
+  // Default SRB slice has very high priority.
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), default_srb_slice_id);
+  const slice_ue_repository& srb_slice_ues = next_dl_slice->get_slice_ues();
+  ASSERT_EQ(srb_slice_ues[ue_idx].pending_dl_newtx_bytes(), get_mac_sdu_required_bytes(srb_pending_bytes));
+
+  // Default DRB slice is next candidate.
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), default_drb_slice_id);
+  const slice_ue_repository& drb_slice_ues = next_dl_slice->get_slice_ues();
+  ASSERT_EQ(drb_slice_ues[ue_idx].pending_dl_newtx_bytes(), get_mac_sdu_required_bytes(drb_pending_bytes));
+}
+
 // rb_ratio_slice_scheduler_test
 
 class rb_ratio_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
