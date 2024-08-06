@@ -325,13 +325,13 @@ bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti
     test_logger.error("rnti={}: F1AP UE Context Modification Request not sent back to the CU-CP", u.rnti);
     return false;
   }
-  if (not test_helpers::is_valid_ue_context_modification_response(cu_notifier.last_f1ap_msgs.back())) {
+  if (not test_helpers::is_valid_ue_context_modification_response(
+          cu_notifier.last_f1ap_msgs.back(), msg, test_helpers::ue_context_mod_context::reestablistment)) {
     test_logger.error("rnti={}: F1AP UE Context Modification Response sent back to the CU-CP is not valid", u.rnti);
     return false;
   }
   const asn1::f1ap::ue_context_mod_resp_s& resp =
       cu_notifier.last_f1ap_msgs.back().pdu.successful_outcome().value.ue_context_mod_resp();
-  EXPECT_TRUE(resp->drbs_modified_list_present);
   EXPECT_FALSE(resp->drbs_failed_to_be_modified_list_present);
 
   return true;

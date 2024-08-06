@@ -320,6 +320,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     f1ap_drb_setupmod& drb_mod = resp.drbs_mod.back();
     drb_mod.drb_id             = drb_modified.drb_id;
     drb_mod.dluptnl_info_list  = drb_modified.dluptnl_info_list;
+    drb_mod.rlc_reestablished  = ue->reestablished_cfg_pending != nullptr;
   }
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.

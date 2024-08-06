@@ -123,6 +123,11 @@ asn1::f1ap::drbs_modified_list_l srsran::make_drbs_modified_list(span<const f1ap
   for (unsigned i = 0; i != drbs.size(); ++i) {
     list[i].load_info_obj(ASN1_F1AP_ID_DRBS_MODIFIED_ITEM);
     fill_drb_setup_mod_common(list[i]->drbs_modified_item(), drbs[i]);
+    if (drbs[i].rlc_reestablished) {
+      list[i]->drbs_modified_item().ie_exts_present                    = true;
+      list[i]->drbs_modified_item().ie_exts.rlc_status_present         = true;
+      list[i]->drbs_modified_item().ie_exts.rlc_status.reest_ind.value = asn1::f1ap::reest_ind_opts::reestablished;
+    }
   }
   return list;
 }

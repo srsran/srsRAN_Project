@@ -13,10 +13,10 @@
 #include "../tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
+using namespace asn1::f1ap;
 
 #define TRUE_OR_RETURN(cond)                                                                                           \
   if (not(cond))                                                                                                       \
@@ -142,26 +142,55 @@ bool srsran::test_helpers::is_valid_ue_context_modification_request(const f1ap_m
   return true;
 }
 
-bool srsran::test_helpers::is_valid_ue_context_modification_response(const f1ap_message& msg)
+bool srsran::test_helpers::is_valid_ue_context_modification_response(const f1ap_message&    msg,
+                                                                     ue_context_mod_context context)
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
   TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_F1AP_ID_UE_CONTEXT_MOD);
   TRUE_OR_RETURN(is_packable(msg));
+
+  const asn1::f1ap::ue_context_mod_resp_s& resp = msg.pdu.successful_outcome().value.ue_context_mod_resp();
+
+  TRUE_OR_RETURN(resp->drbs_setup_mod_list_present == (resp->drbs_setup_mod_list.size() > 0));
+  TRUE_OR_RETURN(resp->drbs_modified_list_present == (resp->drbs_modified_list.size() > 0));
+
+  // Reestablishment case.
+  if (context == ue_context_mod_context::reestablistment) {
+    // See ORAN-WG5.C.1 6.10.1, intra-DU Reestablishment, UE Context Modification Response
+    TRUE_OR_RETURN(not resp->drbs_setup_mod_list_present);
+    for (const auto& drb : resp->drbs_modified_list) {
+      TRUE_OR_RETURN(drb->drbs_modified_item().dl_up_tnl_info_to_be_setup_list.size() > 0);
+      TRUE_OR_RETURN(drb->drbs_modified_item().ie_exts_present and
+                     drb->drbs_modified_item().ie_exts.rlc_status_present and
+                     drb->drbs_modified_item().ie_exts.rlc_status.reest_ind.value == reest_ind_opts::reestablished);
+    }
+  }
+
   return true;
 }
 
-bool srsran::test_helpers::is_valid_ue_context_modification_response(const f1ap_message& resp_msg,
-                                                                     const f1ap_message& req_msg)
+bool srsran::test_helpers::is_valid_ue_context_modification_response(const f1ap_message&    resp_msg,
+                                                                     const f1ap_message&    req_msg,
+                                                                     ue_context_mod_context context)
 {
   TRUE_OR_RETURN(is_valid_ue_context_modification_request(req_msg));
-  TRUE_OR_RETURN(is_valid_ue_context_modification_response(resp_msg));
+  TRUE_OR_RETURN(is_valid_ue_context_modification_response(resp_msg, context));
 
   const asn1::f1ap::ue_context_mod_request_s& mod_req  = req_msg.pdu.init_msg().value.ue_context_mod_request();
-  const asn1::f1ap::ue_context_mod_resp_s&    mod_resp = req_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  const asn1::f1ap::ue_context_mod_resp_s&    mod_resp = resp_msg.pdu.successful_outcome().value.ue_context_mod_resp();
   TRUE_OR_RETURN(mod_req->drbs_to_be_setup_mod_list.size() ==
                  mod_resp->drbs_setup_mod_list.size() + mod_resp->drbs_failed_to_be_setup_mod_list.size());
   TRUE_OR_RETURN(mod_req->drbs_to_be_modified_list.size() ==
                  mod_resp->drbs_modified_list.size() + mod_resp->drbs_failed_to_be_modified_list.size());
+  for (const auto& drb : mod_resp->drbs_setup_mod_list) {
+    auto drb_req_it = std::find_if(
+        mod_req->drbs_to_be_setup_mod_list.begin(), mod_req->drbs_to_be_setup_mod_list.end(), [&drb](const auto& e) {
+          return drb->drbs_setup_mod_item().drb_id == e->drbs_to_be_setup_mod_item().drb_id;
+        });
+    TRUE_OR_RETURN(drb_req_it != mod_req->drbs_to_be_setup_mod_list.end());
+    TRUE_OR_RETURN(drb->drbs_setup_mod_item().dl_up_tnl_info_to_be_setup_list.size() ==
+                   drb_req_it->value().drbs_to_be_setup_mod_item().ul_up_tnl_info_to_be_setup_list.size());
+  }
 
   return true;
 }

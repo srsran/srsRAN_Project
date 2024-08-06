@@ -84,6 +84,8 @@ struct f1ap_drb_setupmod {
   std::optional<lcid_t> lcid;
   /// DL Transport layer info for the given DRB.
   std::vector<up_transport_layer_info> dluptnl_info_list;
+  /// Indicates whether the RLC has been reestablished.
+  bool rlc_reestablished = false;
 };
 
 /// Parameters of a failed DRB setup/modify in the DU UE context.
