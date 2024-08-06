@@ -11,7 +11,7 @@
 #pragma once
 
 #include "ue_configuration.h"
-#include "srsran/adt/detail/operations.h"
+#include "srsran/adt/noop_functor.h"
 #include "srsran/scheduler/config/scheduler_config.h"
 #include "srsran/srslog/logger.h"
 
@@ -44,9 +44,9 @@ public:
 private:
   du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
   // We use a unique_ptr with no deleter to automatically set the ptr to null on move.
-  std::unique_ptr<sched_config_manager, detail::noop_operation> parent;
-  std::unique_ptr<ue_configuration>                             next_ded_cfg;
-  std::optional<bool>                                           set_fallback_mode;
+  std::unique_ptr<sched_config_manager, noop_operation> parent;
+  std::unique_ptr<ue_configuration>                     next_ded_cfg;
+  std::optional<bool>                                   set_fallback_mode;
 };
 
 /// Event to delete a UE in the scheduler.
@@ -66,8 +66,8 @@ public:
   du_ue_index_t ue_index() const { return ue_idx; }
 
 private:
-  du_ue_index_t                                                 ue_idx = INVALID_DU_UE_INDEX;
-  std::unique_ptr<sched_config_manager, detail::noop_operation> parent;
+  du_ue_index_t                                         ue_idx = INVALID_DU_UE_INDEX;
+  std::unique_ptr<sched_config_manager, noop_operation> parent;
 };
 
 /// \brief Internal scheduler interface to create/update/delete UEs.

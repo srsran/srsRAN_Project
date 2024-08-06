@@ -3,17 +3,13 @@
 
 namespace srsran {
 
-namespace detail {
-
-// Do nothing operation functor.
+/// Do nothing operation functor.
 struct noop_operation {
   template <typename T>
   void operator()(T&& t) const
   {
-    // do nothing
+    // Do nothing.
   }
 };
-
-} // namespace detail
 
 } // namespace srsran
