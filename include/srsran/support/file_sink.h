@@ -35,7 +35,7 @@ public:
   /// Checks if the file is open.
   bool is_open() const { return binary_file.is_open(); }
 
-  /// Writes
+  /// Writes the given span into a file.
   void write(span<const T> data)
   {
     report_fatal_error_if_not(binary_file.is_open(), "File not opened.");
