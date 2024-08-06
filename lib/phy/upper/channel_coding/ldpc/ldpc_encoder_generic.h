@@ -46,7 +46,7 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   void high_rate_bg2_i3_7();
   /// Carries out the high-rate region encoding for BG2 and lifting size index in {0, 1, 2, 4, 5, 6}.
   void high_rate_bg2_other();
-  /// Carries out the extended region encoding when the lifting size is long.
+  /// Carries out the extended region encoding when the lifting size is large.
   void ext_region_inner(span<uint8_t> output_node, unsigned i_layer) const;
 
   /// Unpacked local copy of the message to encode.

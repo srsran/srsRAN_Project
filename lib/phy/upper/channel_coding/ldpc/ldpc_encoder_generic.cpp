@@ -118,7 +118,7 @@ void ldpc_encoder_generic::ext_region_inner(span<uint8_t> out_node, unsigned m) 
     // Get the view of the codeblock node.
     span<const uint8_t> codeblock_node = codeblock_view.subspan(k * lifting_size, lifting_size);
 
-    // The first time is copied and after-wards combined.
+    // The first time, the node is copied; afterwards combined.
     if (k == row[0]) {
       srsvec::circ_shift_backward(out_node, codeblock_node, node_shift);
     } else {

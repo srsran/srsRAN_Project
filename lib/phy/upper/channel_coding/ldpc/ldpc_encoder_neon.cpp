@@ -371,7 +371,7 @@ void ldpc_encoder_neon::ext_region_inner(span<uint8_t> out_node, unsigned m) con
     // Get the view of the codeblock node.
     span<const uint8_t> codeblock_node = codeblock.subspan(k * node_size_byte, lifting_size);
 
-    // The first time is copied and after-wards combined.
+    // The first time, the node is copied; afterwards combined.
     if (k == row[0]) {
       srsvec::circ_shift_backward(out_node, codeblock_node, node_shift);
     } else {
