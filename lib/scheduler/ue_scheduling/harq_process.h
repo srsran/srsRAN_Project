@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../slicing/ran_slice_id.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
@@ -255,6 +256,8 @@ struct dl_harq_sched_context {
   dci_dl_rnti_config_type dci_cfg_type;
   /// MCS suggested by the OLLA.
   std::optional<sch_mcs_index> olla_mcs;
+  /// RAN slice identifier of the slice to which PDSCH belongs to.
+  std::optional<ran_slice_id_t> slice_id;
 };
 
 class dl_harq_process : public detail::harq_process<true>
@@ -273,6 +276,8 @@ public:
       unsigned        tbs_bytes;
       /// Flag indicating whether the TB contains data from SRB or not.
       bool contains_srb_data;
+      /// RAN slice identifier.
+      std::optional<ran_slice_id_t> slice_id;
       /// \brief MCS originally suggested by the OLLA. It might differ from the actual MCS used.
       std::optional<sch_mcs_index> olla_mcs;
     };
@@ -364,6 +369,8 @@ struct ul_harq_sched_context {
   dci_ul_rnti_config_type dci_cfg_type;
   /// MCS suggested by the OLLA.
   std::optional<sch_mcs_index> olla_mcs;
+  /// RAN slice identifier of the slice to which PUSCH belongs to.
+  std::optional<ran_slice_id_t> slice_id;
 };
 
 class ul_harq_process : private detail::harq_process<false>
@@ -373,13 +380,14 @@ class ul_harq_process : private detail::harq_process<false>
 public:
   /// \brief Parameters relative to the last allocated PUSCH PDU for this HARQ process.
   struct alloc_params {
-    dci_ul_rnti_config_type      dci_cfg_type;
-    vrb_alloc                    rbs;
-    pusch_mcs_table              mcs_table;
-    sch_mcs_index                mcs;
-    unsigned                     tbs_bytes;
-    unsigned                     nof_symbols;
-    std::optional<sch_mcs_index> olla_mcs;
+    dci_ul_rnti_config_type       dci_cfg_type;
+    vrb_alloc                     rbs;
+    pusch_mcs_table               mcs_table;
+    sch_mcs_index                 mcs;
+    unsigned                      tbs_bytes;
+    unsigned                      nof_symbols;
+    std::optional<ran_slice_id_t> slice_id;
+    std::optional<sch_mcs_index>  olla_mcs;
   };
 
   using base_type::transport_block;

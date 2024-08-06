@@ -289,6 +289,7 @@ void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx,
       prev_tx_params.tb[tb_idx]->tbs_bytes         = cw.tb_size_bytes;
       prev_tx_params.tb[tb_idx]->olla_mcs          = ctx.olla_mcs;
       prev_tx_params.tb[tb_idx]->contains_srb_data = contains_srb_data;
+      prev_tx_params.tb[tb_idx]->slice_id          = ctx.slice_id;
     } else {
       srsran_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                     "DCI format and RNTI type cannot change during DL HARQ retxs");
@@ -363,6 +364,7 @@ void ul_harq_process::save_alloc_params(const ul_harq_sched_context& ctx, const 
     prev_tx_params.dci_cfg_type = ctx.dci_cfg_type;
     prev_tx_params.olla_mcs     = ctx.olla_mcs;
     prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
+    prev_tx_params.slice_id     = ctx.slice_id;
   } else {
     srsran_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during HARQ retxs");
