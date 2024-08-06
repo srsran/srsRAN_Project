@@ -15,7 +15,8 @@
 namespace srsran {
 
 namespace detail {
-// To allow ADL with custom begin/end
+
+// To allow ADL with custom begin/end.
 using std::begin;
 using std::end;
 
@@ -33,6 +34,6 @@ std::false_type is_iterable_impl(...);
 } // namespace detail
 
 template <typename T>
-using is_iterable = decltype(detail::is_iterable_impl<T>(0));
+constexpr bool is_iterable = decltype(detail::is_iterable_impl<T>(0))::value;
 
 } // namespace srsran
