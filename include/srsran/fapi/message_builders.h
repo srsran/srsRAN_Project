@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/bitmap_utils.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/fapi/messages.h"
@@ -22,6 +21,42 @@
 
 namespace srsran {
 namespace fapi {
+
+namespace detail {
+
+/// \brief Sets the value of a bit in the bitmap. When enable is true, it sets the bit, otherwise it clears the bit.
+/// \param[in] bitmap Bitmap to modify.
+/// \param[in] bit Bit to change.
+/// \param[in] enable Value to set. If true, sets the bit(1), otherwise clears it(0).
+/// \note Use this function with integer data types, otherwise it produces undefined behaviour.
+template <typename Integer>
+void set_bitmap_bit(Integer& bitmap, unsigned bit, bool enable)
+{
+  static_assert(std::is_integral<Integer>::value, "Integral required");
+  srsran_assert(sizeof(bitmap) * 8 > bit, "Requested bit ({}), exceeds the bitmap size({})", bit, sizeof(bitmap) * 8);
+
+  if (enable) {
+    bitmap |= (1U << bit);
+  } else {
+    bitmap &= ~(1U << bit);
+  }
+}
+
+/// \brief Checks the value of a bit in the bitmap and returns a true if the bit is set, otherwise false.
+/// \param[in] bitmap Bitmap to check.
+/// \param[in] bit Bit to check.
+/// \return True when the bit equals 1, otherwise false.
+/// \note Use this function with integer data types, otherwise it produces undefined behaviour.
+template <typename Integer>
+bool check_bitmap_bit(Integer bitmap, unsigned bit)
+{
+  static_assert(std::is_integral<Integer>::value, "Integral required");
+  srsran_assert(sizeof(bitmap) * 8 > bit, "Requested bit ({}), exceeds the bitmap size({})", bit, sizeof(bitmap) * 8);
+
+  return (bitmap & (1U << bit));
+}
+
+} // namespace detail
 
 // :TODO: Review the builders documentation so it matches the UCI builder.
 
@@ -516,9 +551,9 @@ public:
   {
     pdu.pdu_bitmap.set(dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT);
 
-    set_bitmap_bit<uint8_t>(
+    detail::set_bitmap_bit<uint8_t>(
         pdu.is_last_cb_present, dl_pdsch_pdu::LAST_CB_BITMAP_FIRST_TB_BIT, last_cb_present_first_tb);
-    set_bitmap_bit<uint8_t>(
+    detail::set_bitmap_bit<uint8_t>(
         pdu.is_last_cb_present, dl_pdsch_pdu::LAST_CB_BITMAP_SECOND_TB_BIT, last_cb_present_second_tb);
 
     pdu.is_inline_tb_crc = tb_crc;
@@ -556,12 +591,12 @@ public:
     pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes = tb_size_lbrm_bytes;
 
     // Fill the bitmap.
-    set_bitmap_bit<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required,
-                            dl_pdsch_maintenance_parameters_v3::TB_BITMAP_FIRST_TB_BIT,
-                            tb_crc_first_tb_required);
-    set_bitmap_bit<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required,
-                            dl_pdsch_maintenance_parameters_v3::TB_BITMAP_SECOND_TB_BIT,
-                            tb_crc_second_tb_required);
+    detail::set_bitmap_bit<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required,
+                                    dl_pdsch_maintenance_parameters_v3::TB_BITMAP_FIRST_TB_BIT,
+                                    tb_crc_first_tb_required);
+    detail::set_bitmap_bit<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required,
+                                    dl_pdsch_maintenance_parameters_v3::TB_BITMAP_SECOND_TB_BIT,
+                                    tb_crc_second_tb_required);
 
     return *this;
   }
