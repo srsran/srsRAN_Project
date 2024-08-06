@@ -194,6 +194,49 @@ TEST_F(default_slice_scheduler_test, returns_only_dl_pending_bytes_of_bearers_be
   ASSERT_EQ(drb_slice_ues[ue_idx].pending_dl_newtx_bytes(), get_mac_sdu_required_bytes(drb_pending_bytes));
 }
 
+TEST_F(default_slice_scheduler_test, returns_only_ul_pending_bytes_of_bearers_belonging_to_a_slice)
+{
+  // Estimate of the number of bytes required for the upper layer header.
+  constexpr static unsigned RLC_HEADER_SIZE_ESTIMATE = 3U;
+
+  constexpr static ran_slice_id_t default_srb_slice_id{0};
+  constexpr static ran_slice_id_t default_drb_slice_id{1};
+
+  constexpr static unsigned srb_pending_bytes{200};
+  constexpr static unsigned drb_pending_bytes{5000};
+
+  const lcg_id_t srb_lcg_id = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1).lc_group;
+  const lcg_id_t drb_lcg_id = config_helpers::create_default_logical_channel_config(lcid_t::LCID_MIN_DRB).lc_group;
+
+  constexpr static du_ue_index_t ue_idx{to_du_ue_index(0)};
+
+  ASSERT_NE(this->add_ue(ue_idx), nullptr);
+  // Push UL BSR for DRB.
+  ul_bsr_indication_message msg{
+      to_du_cell_index(0), ue_idx, to_rnti(0x4601 + (unsigned)ue_idx), bsr_format::SHORT_BSR, {}};
+  msg.reported_lcgs.push_back(ul_bsr_lcg_report{drb_lcg_id, drb_pending_bytes});
+  this->ues[ue_idx].handle_bsr_indication(msg);
+  // Push UL BSR for SRB.
+  msg.reported_lcgs.clear();
+  msg.reported_lcgs.push_back(ul_bsr_lcg_report{srb_lcg_id, srb_pending_bytes});
+  this->ues[ue_idx].handle_bsr_indication(msg);
+
+  slice_sched.slot_indication();
+
+  // Default SRB slice has very high priority.
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), default_srb_slice_id);
+  const slice_ue_repository& srb_slice_ues = next_dl_slice->get_slice_ues();
+  ASSERT_EQ(srb_slice_ues[ue_idx].pending_ul_newtx_bytes(), get_mac_sdu_required_bytes(srb_pending_bytes));
+
+  // Default DRB slice is next candidate.
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), default_drb_slice_id);
+  const slice_ue_repository& drb_slice_ues = next_dl_slice->get_slice_ues();
+  ASSERT_EQ(drb_slice_ues[ue_idx].pending_ul_newtx_bytes(),
+            RLC_HEADER_SIZE_ESTIMATE + get_mac_sdu_required_bytes(drb_pending_bytes));
+}
+
 // rb_ratio_slice_scheduler_test
 
 class rb_ratio_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
