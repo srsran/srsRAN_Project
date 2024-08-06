@@ -13,6 +13,7 @@
 #include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/prach/prach_helper.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/rlc/rlc_config.h"
 
 using namespace srsran;
@@ -406,6 +407,15 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
       valid_sr_period_slots.end()) {
     fmt::print("SR period of {}ms is not valid for {}kHz SCS.\n", pucch_cfg.sr_period_msec, scs_to_khz(scs_common));
+    return false;
+  }
+
+  if ((pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq + pucch_cfg.nof_ue_pucch_f2_res_harq) *
+              pucch_cfg.nof_cell_harq_pucch_sets +
+          pucch_cfg.nof_cell_sr_resources + pucch_cfg.nof_cell_csi_resources >
+      pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
+    fmt::print("With the given PUCCH parameters, the number of PUCCH resources per cell exceeds the limit={}.\n",
+               pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES);
     return false;
   }
 

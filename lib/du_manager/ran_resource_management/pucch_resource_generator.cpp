@@ -588,6 +588,7 @@ srsran::srs_du::generate_cell_pucch_res_list(unsigned                           
                                                 pucch_f2_resource_list,
                                                 has_f0 ? std::nullopt : std::optional<unsigned>{nof_css},
                                                 bwp_size_rbs);
+
   if (res_list.size() > pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
     srsran_assertion_failure("With the given parameters, the number of PUCCH resources generated for the "
                              "cell exceeds maximum supported limit of {}",

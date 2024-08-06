@@ -171,6 +171,13 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
     }
   }
 
+  // Verify that each PUCCH resource has a valid cell resource ID.
+  for (auto res_idx : pucch_cfg.pucch_res_list) {
+    VERIFY(res_idx.res_id.cell_res_id < pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES,
+           "PUCCH cell res. id={} exceeds the maximum supported PUCCH resource ID",
+           res_idx.res_id.cell_res_id);
+  }
+
   // Verify each resource format matches the corresponding parameters.
   for (auto res : pucch_cfg.pucch_res_list) {
     const bool format_match_format_params =

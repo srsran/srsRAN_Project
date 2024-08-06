@@ -173,8 +173,9 @@ pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnt
 
   // We assume each UE only has 1 SR Resource Config configured.
   const unsigned sr_pucch_res_id = pucch_cfg.sr_res_list[0].pucch_res_id.cell_res_id;
-  if (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != rnti_t::INVALID_RNTI and
-      slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti) {
+  if (sr_pucch_res_id >= slot_record.ues_using_pucch_res.size() or
+      (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != rnti_t::INVALID_RNTI and
+       slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti)) {
     return nullptr;
   }
 
@@ -224,7 +225,8 @@ bool pucch_resource_manager::release_sr_resource(slot_point slot_sr, rnti_t crnt
   // We assume each UE only has 1 SR Resource Config configured.
   const unsigned sr_pucch_res_id = pucch_cfg.sr_res_list[0].pucch_res_id.cell_res_id;
 
-  if (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti) {
+  if (sr_pucch_res_id >= slot_record.ues_using_pucch_res.size() or
+      slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti) {
     return false;
   }
 
@@ -247,7 +249,8 @@ bool pucch_resource_manager::release_csi_resource(slot_point                   s
   if (csi_pucch_res_idx < 0) {
     return false;
   }
-  if (slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti != crnti) {
+  if (static_cast<unsigned>(csi_pucch_res_idx) >= slot_record.ues_using_pucch_res.size() or
+      slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti != crnti) {
     return false;
   }
 
@@ -427,6 +430,11 @@ const pucch_resource* pucch_resource_manager::reserve_harq_res_by_res_indicator(
 
   // Get PUCCH resource ID from the PUCCH resource set.
   const unsigned pucch_res_id = ue_res_id_set_for_harq[res_indicator].cell_res_id;
+  // Extra safe check. Make sure cell_res_id is valid, even though this should be ensured by the UE config validator.
+  if (pucch_res_id >= res_counter.ues_using_pucch_res.size()) {
+    return nullptr;
+  }
+
   // Get the PUCCH resource tracker in the PUCCH resource manager.
   auto&       pucch_res_tracker = res_counter.ues_using_pucch_res[pucch_res_id];
   const auto& pucch_res_list    = pucch_cfg.pucch_res_list;
