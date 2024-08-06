@@ -78,7 +78,8 @@ protected:
       }
     }
 
-    ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), req.srbs_to_setup.size() + req.drbs_to_setup.size());
+    ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(),
+              req.srbs_to_setup.size() + req.drbs_to_setup.size() + req.drbs_to_mod.size());
     for (srb_id_t srb_id : req.srbs_to_setup) {
       auto srb_it = std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
                                  cell_group.rlc_bearer_to_add_mod_list.end(),
@@ -100,6 +101,20 @@ protected:
       }
     }
     for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
+      auto drb_it = std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
+                                 cell_group.rlc_bearer_to_add_mod_list.end(),
+                                 [&drb](const auto& b) {
+                                   return b.served_radio_bearer.type().value ==
+                                              asn1::rrc_nr::rlc_bearer_cfg_s::served_radio_bearer_c_::types::drb_id and
+                                          b.served_radio_bearer.drb_id() == drb_id_to_uint(drb.drb_id);
+                                 });
+      ASSERT_NE(drb_it, cell_group.rlc_bearer_to_add_mod_list.end());
+      ASSERT_FALSE(is_srb(uint_to_lcid(drb_it->lc_ch_id)));
+      ASSERT_TRUE(drb_it->mac_lc_ch_cfg_present);
+      ASSERT_TRUE(drb_it->rlc_cfg_present);
+      ASSERT_FALSE(drb_it->reestablish_rlc_present);
+    }
+    for (const f1ap_drb_to_modify& drb : req.drbs_to_mod) {
       auto drb_it = std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
                                  cell_group.rlc_bearer_to_add_mod_list.end(),
                                  [&drb](const auto& b) {
@@ -387,7 +402,7 @@ TEST_F(ue_config_tester,
 
   // Run procedure to create SRB2 and DRB1.
   f1ap_ue_context_update_request req =
-      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {}, {drb_id_t::drb1});
   f1ap_ue_context_update_response res = this->configure_ue(req);
   ASSERT_TRUE(res.result);
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, true, true));
