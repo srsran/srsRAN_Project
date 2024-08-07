@@ -16,6 +16,7 @@
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/manual_event.h"
+#include "srsran/support/memory_pool/unsync_fixed_size_memory_block_pool.h"
 
 namespace srsran {
 namespace srs_du {
@@ -81,7 +82,7 @@ public:
   async_task<void> handle_pdu_and_await_transmission(byte_buffer pdu) override;
 
 private:
-  static constexpr size_t MAX_CONCURRENT_PDU_EVENTS = 4;
+  using event_ptr = unsync_fixed_size_object_pool<manual_event_flag>::ptr;
 
   async_task<void>   handle_pdu_and_await(byte_buffer pdu, bool tx_or_delivery);
   manual_event_flag& wait_for_notification(uint32_t pdcp_sn, bool tx_or_delivery);
@@ -100,8 +101,9 @@ private:
   std::optional<uint32_t> last_pdcp_sn_delivered;
   // Pool of events for PDU transmission and delivery. Each entry is represented by the PDCP SN (negative if
   // the pool element is negative) and the event flag to wait for.
-  std::array<std::pair<int, manual_event_flag>, MAX_CONCURRENT_PDU_EVENTS> pending_delivery_event_pool;
-  std::array<std::pair<int, manual_event_flag>, MAX_CONCURRENT_PDU_EVENTS> pending_transmission_event_pool;
+  unsync_fixed_size_object_pool<manual_event_flag> event_pool;
+  std::vector<std::pair<uint32_t, event_ptr>>      pending_deliveries;
+  std::vector<std::pair<uint32_t, event_ptr>>      pending_transmissions;
 };
 
 } // namespace srs_du

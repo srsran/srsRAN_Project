@@ -109,6 +109,9 @@ async_task<void> f1c_srb0_du_bearer::handle_pdu_and_await_transmission(byte_buff
   return launch_no_op_task();
 }
 
+// Max number of concurrent PDCP SN deliveries/transmissions being awaited on.
+static constexpr size_t MAX_CONCURRENT_PDU_EVENTS = 8;
+
 f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_,
                                                  srb_id_t               srb_id_,
                                                  f1ap_message_notifier& f1ap_notifier_,
@@ -123,15 +126,9 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
   du_configurator(du_configurator_),
   ctrl_exec(ctrl_exec_),
   ue_exec(ue_exec_),
-  logger(srslog::fetch_basic_logger("DU-F1"))
+  logger(srslog::fetch_basic_logger("DU-F1")),
+  event_pool(MAX_CONCURRENT_PDU_EVENTS)
 {
-  // Mark all event entries as free.
-  for (auto& event : pending_delivery_event_pool) {
-    event.first = -1;
-  }
-  for (auto& event : pending_transmission_event_pool) {
-    event.first = -1;
-  }
 }
 
 void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
@@ -260,22 +257,24 @@ async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer pdu, 
 
 void f1c_other_srb_du_bearer::handle_notification(uint32_t highest_pdcp_sn, bool tx_or_delivery)
 {
-  std::optional<uint32_t>& last_sn    = tx_or_delivery ? last_pdcp_sn_transmitted : last_pdcp_sn_delivered;
-  auto&                    event_pool = tx_or_delivery ? pending_transmission_event_pool : pending_delivery_event_pool;
+  std::optional<uint32_t>& last_sn        = tx_or_delivery ? last_pdcp_sn_transmitted : last_pdcp_sn_delivered;
+  auto&                    pending_events = tx_or_delivery ? pending_transmissions : pending_deliveries;
 
   // Register the highest PDCP SN.
   last_sn = highest_pdcp_sn;
 
   // Trigger awaiters of delivery notifications.
-  for (auto& awaiter : event_pool) {
-    if (awaiter.first >= 0 and static_cast<uint32_t>(awaiter.first) <= highest_pdcp_sn) {
-      // Free up the event entry.
-      awaiter.first = -1;
-
-      // Trigger awaiter.
-      awaiter.second.set();
-    }
-  }
+  pending_events.erase(std::remove_if(pending_events.begin(),
+                                      pending_events.end(),
+                                      [highest_pdcp_sn](const auto& event_pair) {
+                                        if (event_pair.first <= highest_pdcp_sn) {
+                                          // Trigger awaiter and remove it from the list of pending events.
+                                          event_pair.second->set();
+                                          return true;
+                                        }
+                                        return false;
+                                      }),
+                       pending_events.end());
 }
 
 /// Create an always ready event.
@@ -291,8 +290,8 @@ manual_event_flag& always_ready_flag()
 
 manual_event_flag& f1c_other_srb_du_bearer::wait_for_notification(uint32_t pdcp_sn, bool tx_or_delivery)
 {
-  std::optional<uint32_t>& last_sn    = tx_or_delivery ? last_pdcp_sn_transmitted : last_pdcp_sn_delivered;
-  auto&                    event_pool = tx_or_delivery ? pending_transmission_event_pool : pending_delivery_event_pool;
+  std::optional<uint32_t>& last_sn        = tx_or_delivery ? last_pdcp_sn_transmitted : last_pdcp_sn_delivered;
+  auto&                    pending_events = tx_or_delivery ? pending_transmissions : pending_deliveries;
 
   // Check if the PDU has been already delivered.
   if (last_sn.has_value() and last_sn.value() >= pdcp_sn) {
@@ -301,23 +300,16 @@ manual_event_flag& f1c_other_srb_du_bearer::wait_for_notification(uint32_t pdcp_
   }
 
   // Allocate a notification event awaitable.
-  size_t idx = 0;
-  for (; idx != event_pool.size(); ++idx) {
-    if (event_pool[idx].first < 0) {
-      // This event entry is free.
-      break;
-    }
-  }
-  if (idx == event_pool.size()) {
-    logger.warning("Rx PDU {}: Ignoring SRB{} Rx PDU {} notification. Cause: Failed to allocate notification handler.",
+  auto event_slot = event_pool.create();
+  if (event_slot == nullptr) {
+    logger.warning("Rx PDU {}: Ignoring {} Rx PDU {} notification. Cause: Failed to allocate notification handler.",
                    ue_ctxt,
-                   srb_id_to_uint(srb_id),
+                   srb_id,
                    tx_or_delivery ? "Tx" : "delivery");
     return always_ready_flag();
   }
 
   // Allocation successful. Return awaitable event.
-  event_pool[idx].first = pdcp_sn;
-  event_pool[idx].second.reset();
-  return event_pool[idx].second;
+  pending_events.emplace_back(pdcp_sn, std::move(event_slot));
+  return *pending_events.back().second;
 }
