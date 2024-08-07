@@ -70,15 +70,15 @@ public:
   byte_buffer_chain last_tx_sdu = byte_buffer_chain::create().value();
 
   void             handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
-  async_task<void> handle_pdu_and_await_delivery(byte_buffer pdu) override
+  async_task<bool> handle_pdu_and_await_delivery(byte_buffer pdu, std::chrono::milliseconds timeout) override
   {
     last_rx_pdu = std::move(pdu);
-    return launch_no_op_task();
+    return launch_no_op_task(true);
   }
-  async_task<void> handle_pdu_and_await_transmission(byte_buffer pdu) override
+  async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds timeout) override
   {
     last_rx_pdu = std::move(pdu);
-    return launch_no_op_task();
+    return launch_no_op_task(true);
   }
   void handle_sdu(byte_buffer_chain sdu) override { last_tx_sdu = std::move(sdu); }
   void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes) override {}

@@ -91,22 +91,24 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
   }
 }
 
-async_task<void> f1c_srb0_du_bearer::handle_pdu_and_await_delivery(byte_buffer sdu)
+async_task<bool> f1c_srb0_du_bearer::handle_pdu_and_await_delivery(byte_buffer               sdu,
+                                                                   std::chrono::milliseconds time_to_wait)
 {
   // Forward task to lower layers.
   handle_pdu(std::move(sdu));
 
   // For SRB0, there is no delivery notification.
-  return launch_no_op_task();
+  return launch_no_op_task(true);
 }
 
-async_task<void> f1c_srb0_du_bearer::handle_pdu_and_await_transmission(byte_buffer pdu)
+async_task<bool> f1c_srb0_du_bearer::handle_pdu_and_await_transmission(byte_buffer               pdu,
+                                                                       std::chrono::milliseconds time_to_wait)
 {
   // Forward task to lower layers.
   handle_pdu(std::move(pdu));
 
   // For SRB0, there is no transmission notification.
-  return launch_no_op_task();
+  return launch_no_op_task(true);
 }
 
 // Max number of concurrent PDCP SN deliveries/transmissions being awaited on.
@@ -129,6 +131,10 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
   logger(srslog::fetch_basic_logger("DU-F1")),
   event_pool(MAX_CONCURRENT_PDU_EVENTS)
 {
+  // set up the always set event
+  event_source_type source{du_configurator.get_timer_factory()};
+  always_set_event.subscribe_to(source, std::chrono::milliseconds{0});
+  source.set(true);
 }
 
 void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
@@ -192,14 +198,16 @@ void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer pdu)
   }
 }
 
-async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await_transmission(byte_buffer pdu)
+async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await_transmission(byte_buffer               pdu,
+                                                                            std::chrono::milliseconds time_to_wait)
 {
-  return handle_pdu_and_await(std::move(pdu), true);
+  return handle_pdu_and_await(std::move(pdu), true, time_to_wait);
 }
 
-async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await_delivery(byte_buffer pdu)
+async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await_delivery(byte_buffer               pdu,
+                                                                        std::chrono::milliseconds time_to_wait)
 {
-  return handle_pdu_and_await(std::move(pdu), false);
+  return handle_pdu_and_await(std::move(pdu), false, time_to_wait);
 }
 
 void f1c_other_srb_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes)
@@ -218,7 +226,9 @@ void f1c_other_srb_du_bearer::handle_delivery_notification(uint32_t highest_pdcp
   }
 }
 
-async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer pdu, bool tx_or_delivery)
+async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer               pdu,
+                                                               bool                      tx_or_delivery,
+                                                               std::chrono::milliseconds time_to_wait)
 {
   // Extract PDCP SN.
   std::optional<uint32_t> pdcp_sn = get_pdcp_sn(pdu, pdcp_sn_size::size12bits, true, logger);
@@ -233,11 +243,15 @@ async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer pdu, 
                    ue_ctxt,
                    srb_id_to_uint(srb_id),
                    tx_or_delivery ? "Tx" : "delivery");
-    return launch_no_op_task();
+    return launch_no_op_task(false);
   }
 
-  return launch_async([this, pdcp_sn = pdcp_sn.value(), tx_or_delivery, sdu = std::move(pdu)](
-                          coro_context<async_task<void>>& ctx) mutable {
+  return launch_async([this,
+                       pdcp_sn = pdcp_sn.value(),
+                       tx_or_delivery,
+                       time_to_wait,
+                       result = event_result_type{},
+                       sdu    = std::move(pdu)](coro_context<async_task<bool>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT(execute_on_blocking(ue_exec));
@@ -246,12 +260,13 @@ async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer pdu, 
     sdu_notifier.on_new_sdu(std::move(sdu));
 
     // Await SDU delivery.
-    CORO_AWAIT(wait_for_notification(pdcp_sn, tx_or_delivery));
+    CORO_AWAIT_VALUE(result, wait_for_notification(pdcp_sn, tx_or_delivery, time_to_wait));
 
     // Return back to control executor.
     CORO_AWAIT(execute_on_blocking(ctrl_exec));
 
-    CORO_RETURN();
+    // True for success, false for timeout/cancel.
+    CORO_RETURN(result.index() == 0);
   });
 }
 
@@ -266,10 +281,10 @@ void f1c_other_srb_du_bearer::handle_notification(uint32_t highest_pdcp_sn, bool
   // Trigger awaiters of delivery notifications.
   pending_events.erase(std::remove_if(pending_events.begin(),
                                       pending_events.end(),
-                                      [highest_pdcp_sn](const auto& event_pair) {
-                                        if (event_pair.first <= highest_pdcp_sn) {
+                                      [highest_pdcp_sn](const auto& event) {
+                                        if (event->pdcp_sn <= highest_pdcp_sn) {
                                           // Trigger awaiter and remove it from the list of pending events.
-                                          event_pair.second->set();
+                                          event->source.set(true);
                                           return true;
                                         }
                                         return false;
@@ -277,18 +292,10 @@ void f1c_other_srb_du_bearer::handle_notification(uint32_t highest_pdcp_sn, bool
                        pending_events.end());
 }
 
-/// Create an always ready event.
-manual_event_flag& always_ready_flag()
-{
-  static manual_event_flag& flag = []() -> manual_event_flag& {
-    static manual_event_flag event_flag;
-    event_flag.set();
-    return event_flag;
-  }();
-  return flag;
-}
-
-manual_event_flag& f1c_other_srb_du_bearer::wait_for_notification(uint32_t pdcp_sn, bool tx_or_delivery)
+f1c_other_srb_du_bearer::event_observer_type&
+f1c_other_srb_du_bearer::wait_for_notification(uint32_t                  pdcp_sn,
+                                               bool                      tx_or_delivery,
+                                               std::chrono::milliseconds time_to_wait)
 {
   std::optional<uint32_t>& last_sn        = tx_or_delivery ? last_pdcp_sn_transmitted : last_pdcp_sn_delivered;
   auto&                    pending_events = tx_or_delivery ? pending_transmissions : pending_deliveries;
@@ -296,20 +303,20 @@ manual_event_flag& f1c_other_srb_du_bearer::wait_for_notification(uint32_t pdcp_
   // Check if the PDU has been already delivered.
   if (last_sn.has_value() and last_sn.value() >= pdcp_sn) {
     // SN already notified.
-    return always_ready_flag();
+    return always_set_event;
   }
 
   // Allocate a notification event awaitable.
-  auto event_slot = event_pool.create();
+  auto event_slot = event_pool.create(pdcp_sn, du_configurator.get_timer_factory(), time_to_wait);
   if (event_slot == nullptr) {
     logger.warning("Rx PDU {}: Ignoring {} Rx PDU {} notification. Cause: Failed to allocate notification handler.",
                    ue_ctxt,
                    srb_id,
                    tx_or_delivery ? "Tx" : "delivery");
-    return always_ready_flag();
+    return always_set_event;
   }
 
   // Allocation successful. Return awaitable event.
-  pending_events.emplace_back(pdcp_sn, std::move(event_slot));
-  return *pending_events.back().second;
+  pending_events.emplace_back(std::move(event_slot));
+  return pending_events.back()->observer;
 }

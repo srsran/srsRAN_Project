@@ -18,22 +18,19 @@
 using namespace srsran;
 using namespace srs_du;
 
+// Wait period for RRC container in UE CONTEXT RELEASE REQUEST to be delivered in the lower layers, before deleting
+// the UE context.
+const std::chrono::milliseconds rrc_container_delivery_timeout{120};
+
 f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
     const asn1::f1ap::ue_context_release_cmd_s& msg_,
     f1ap_du_ue_manager&                         ues) :
-  msg(msg_),
-  ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id))),
-  cu_msg_notifier(ue.f1ap_msg_notifier),
-  release_wait_timer(ue.du_handler.get_timer_factory().create_timer())
+  msg(msg_), ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id))), cu_msg_notifier(ue.f1ap_msg_notifier)
 {
 }
 
 void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
-  // Wait period before the UE context is deleted from the DU. This value should be large enough to ensure any
-  // pending RRC message (e.g. RRC Release) is sent to the UE.
-  static const std::chrono::milliseconds ue_release_timeout{120};
-
   CORO_BEGIN(ctx);
 
   logger.debug("{}: Started.", f1ap_log_prefix{ue.context, name()});
@@ -47,14 +44,16 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
   // If the UE CONTEXT RELEASE COMMAND message contains the RRC-Container IE, the gNB-DU shall send the RRC
   // container to the UE via the SRB indicated by the SRB ID IE.
   if (msg->rrc_container_present) {
-    CORO_AWAIT(handle_rrc_container());
+    CORO_AWAIT_VALUE(bool ret, handle_rrc_container());
+    if (ret) {
+      logger.debug("{}: RRC container delivered successfully.", f1ap_log_prefix{ue.context, name()});
+    } else {
+      logger.info(
+          "{}: RRC container not delivered within a time window of {}msec. Proceeding with the UE context release.",
+          f1ap_log_prefix{ue.context, name()},
+          rrc_container_delivery_timeout.count());
+    }
   }
-
-  // Wait for pending RRC messages to be flushed.
-  logger.debug("{}: Waiting for {} milliseconds to flush pending RRC messages.",
-               f1ap_log_prefix{ue.context, name()},
-               ue_release_timeout.count());
-  CORO_AWAIT(async_wait_for(release_wait_timer, ue_release_timeout));
 
   // Remove UE from DU manager.
   logger.debug("{}: Initiate UE release in lower layers.", f1ap_log_prefix{ue.context, name()});
@@ -68,7 +67,7 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
   CORO_RETURN();
 }
 
-async_task<void> f1ap_du_ue_context_release_procedure::handle_rrc_container()
+async_task<bool> f1ap_du_ue_context_release_procedure::handle_rrc_container()
 {
   f1c_bearer* srb = nullptr;
   if (msg->srb_id_present) {
@@ -77,17 +76,17 @@ async_task<void> f1ap_du_ue_context_release_procedure::handle_rrc_container()
     if (srb == nullptr) {
       logger.error("{}: Discarding RRC container. Cause: {} not found", f1ap_log_prefix{ue.context, name()}, srb_id);
       // Handle Error.
-      return launch_no_op_task();
+      return launch_no_op_task(false);
     }
 
   } else {
     logger.error("{}: Discarding RRC container. Cause: SRB-ID not defined", f1ap_log_prefix{ue.context, name()});
     // Handle Error.
-    return launch_no_op_task();
+    return launch_no_op_task(false);
   }
 
   // Forward F1AP PDU to lower layers, and await for PDU to be transmitted over-the-air.
-  return srb->handle_pdu_and_await_transmission(msg->rrc_container.copy());
+  return srb->handle_pdu_and_await_transmission(msg->rrc_container.copy(), rrc_container_delivery_timeout);
 }
 
 void f1ap_du_ue_context_release_procedure::send_ue_context_release_complete()

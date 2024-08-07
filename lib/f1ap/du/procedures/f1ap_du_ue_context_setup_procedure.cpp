@@ -20,6 +20,9 @@ using namespace srsran;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
+// Time waiting for RRC container delivery.
+constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
+
 f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     const asn1::f1ap::ue_context_setup_request_s& msg_,
     f1ap_du_ue_manager&                           ue_mng_,
@@ -92,7 +95,16 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   // > If the UE CONTEXT SETUP REQUEST message contains the RRC-Container IE, the gNB-DU shall send the corresponding
   // RRC message to the UE via SRB1.
   if (msg->rrc_container_present and not msg->rrc_container.empty()) {
-    CORO_AWAIT(handle_rrc_container());
+    CORO_AWAIT_VALUE(bool ret, handle_rrc_container());
+    if (ret) {
+      logger.debug("{}: RRC container sent successfully.", f1ap_log_prefix{ue->context, name()});
+    } else {
+      logger.error("{}: Failed to send RRC container after timeout of {}msec",
+                   f1ap_log_prefix{ue->context, name()},
+                   rrc_container_delivery_timeout.count());
+      send_ue_context_setup_failure();
+      CORO_EARLY_RETURN();
+    }
   }
 
   // Respond back to CU-CP with success.
@@ -101,14 +113,15 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   CORO_RETURN();
 }
 
-async_task<void> f1ap_du_ue_context_setup_procedure::handle_rrc_container()
+async_task<bool> f1ap_du_ue_context_setup_procedure::handle_rrc_container()
 {
   f1c_bearer* srb1 = ue->bearers.find_srb(srb_id_t::srb1);
-  if (srb1 != nullptr) {
-    return srb1->handle_pdu_and_await_transmission(msg->rrc_container.copy());
+  if (srb1 == nullptr) {
+    logger.error("{}: Failed to find SRB1 bearer to send RRC container.", f1ap_log_prefix{ue->context, name()});
+    return launch_no_op_task(false);
   }
-  logger.error("{}: Failed to find SRB1 bearer to send RRC container.", f1ap_log_prefix{ue->context, name()});
-  return launch_no_op_task();
+
+  return srb1->handle_pdu_and_await_transmission(msg->rrc_container.copy(), rrc_container_delivery_timeout);
 }
 
 async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::request_du_ue_config()

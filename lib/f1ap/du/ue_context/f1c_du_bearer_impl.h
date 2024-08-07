@@ -15,7 +15,7 @@
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/support/async/manual_event.h"
+#include "srsran/support/async/protocol_transaction_manager.h"
 #include "srsran/support/memory_pool/unsync_fixed_size_memory_block_pool.h"
 
 namespace srsran {
@@ -44,8 +44,8 @@ public:
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
   void             handle_pdu(byte_buffer pdu) override;
-  async_task<void> handle_pdu_and_await_delivery(byte_buffer sdu) override;
-  async_task<void> handle_pdu_and_await_transmission(byte_buffer pdu) override;
+  async_task<bool> handle_pdu_and_await_delivery(byte_buffer sdu, std::chrono::milliseconds time_to_wait) override;
+  async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds time_to_wait) override;
 
 private:
   f1ap_ue_context&          ue_ctxt;
@@ -78,15 +78,31 @@ public:
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
   void             handle_pdu(byte_buffer sdu) override;
-  async_task<void> handle_pdu_and_await_delivery(byte_buffer sdu) override;
-  async_task<void> handle_pdu_and_await_transmission(byte_buffer pdu) override;
+  async_task<bool> handle_pdu_and_await_delivery(byte_buffer pdu, std::chrono::milliseconds time_to_wait) override;
+  async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds time_to_wait) override;
 
 private:
-  using event_ptr = unsync_fixed_size_object_pool<manual_event_flag>::ptr;
+  using event_source_type   = protocol_transaction_event_source<bool>;
+  using event_observer_type = protocol_transaction_outcome_observer<bool>;
+  using event_result_type   = std::variant<bool, no_fail_response_path, protocol_transaction_failure>;
 
-  async_task<void>   handle_pdu_and_await(byte_buffer pdu, bool tx_or_delivery);
-  manual_event_flag& wait_for_notification(uint32_t pdcp_sn, bool tx_or_delivery);
-  void               handle_notification(uint32_t highest_pdcp_sn, bool tx_or_delivery);
+  struct event_context {
+    uint32_t            pdcp_sn;
+    event_source_type   source;
+    event_observer_type observer;
+
+    event_context(uint32_t pdcp_sn_, timer_factory timers, std::chrono::milliseconds time_to_wait) :
+      pdcp_sn(pdcp_sn_), source(timers)
+    {
+      observer.subscribe_to(source, time_to_wait);
+    }
+  };
+  using event_ptr = unsync_fixed_size_object_pool<event_context>::ptr;
+
+  async_task<bool> handle_pdu_and_await(byte_buffer pdu, bool tx_or_delivery, std::chrono::milliseconds time_to_wait);
+  event_observer_type&
+       wait_for_notification(uint32_t pdcp_sn, bool tx_or_delivery, std::chrono::milliseconds time_to_wait);
+  void handle_notification(uint32_t highest_pdcp_sn, bool tx_or_delivery);
 
   f1ap_ue_context&       ue_ctxt;
   srb_id_t               srb_id;
@@ -96,14 +112,15 @@ private:
   task_executor&         ctrl_exec;
   task_executor&         ue_exec;
   srslog::basic_logger&  logger;
+  event_observer_type    always_set_event;
 
   std::optional<uint32_t> last_pdcp_sn_transmitted;
   std::optional<uint32_t> last_pdcp_sn_delivered;
   // Pool of events for PDU transmission and delivery. Each entry is represented by the PDCP SN (negative if
   // the pool element is negative) and the event flag to wait for.
-  unsync_fixed_size_object_pool<manual_event_flag> event_pool;
-  std::vector<std::pair<uint32_t, event_ptr>>      pending_deliveries;
-  std::vector<std::pair<uint32_t, event_ptr>>      pending_transmissions;
+  unsync_fixed_size_object_pool<event_context> event_pool;
+  std::vector<event_ptr>                       pending_deliveries;
+  std::vector<event_ptr>                       pending_transmissions;
 };
 
 } // namespace srs_du
