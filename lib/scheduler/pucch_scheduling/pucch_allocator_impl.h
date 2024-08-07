@@ -166,6 +166,12 @@ private:
                           const ue_cell_configuration&  ue_cell_cfg,
                           unsigned                      csi_part1_bits);
 
+  // Update the grants data for the case in which multiplexing is not needed.
+  std::optional<unsigned> allocate_without_multiplexing(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                        pucch_uci_bits                new_bits,
+                                                        ue_grants&                    current_grants,
+                                                        const ue_cell_configuration&  ue_cell_cfg);
+
   // Implements the main steps of the multiplexing procedure as defined in TS 38.213, Section 9.2.5.
   std::optional<unsigned> multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
                                                        pucch_uci_bits                new_bits,
@@ -178,13 +184,6 @@ private:
                                                                  pucch_uci_bits               new_bits,
                                                                  ue_grants                    ue_current_grants,
                                                                  const ue_cell_configuration& ue_cell_cfg);
-
-  // Update the grants data for the case in which multiplexing is not needed.
-  pucch_grant_list update_grants_no_multiplexing(slot_point                   sl_tx,
-                                                 rnti_t                       crnti,
-                                                 pucch_grant_list             candidate_grants,
-                                                 const ue_cell_configuration& ue_cell_cfg,
-                                                 ue_grants                    ue_current_grants);
 
   // Execute the multiplexing algorithm as defined in TS 38.213, Section 9.2.5.
   pucch_grant_list multiplex_resources(slot_point                   sl_tx,
