@@ -474,19 +474,7 @@ alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gra
       msg.context.buffer_occupancy = u.pending_dl_newtx_bytes();
     }
 
-    bool contains_srb_data = false;
-    if (is_new_data) {
-      const auto* it    = std::find_if(msg.tb_list.back().lc_chs_to_sched.begin(),
-                                    msg.tb_list.back().lc_chs_to_sched.end(),
-                                    [](const dl_msg_lc_info& lc_info) {
-                                      return lc_info.lcid.is_sdu() and lc_info.lcid.to_lcid() < LCID_MIN_DRB;
-                                    });
-      contains_srb_data = it != msg.tb_list.back().lc_chs_to_sched.end();
-    } else {
-      contains_srb_data = h_dl.last_alloc_params().tb[0]->contains_srb_data;
-    }
-
-    h_dl.save_alloc_params(pdsch_sched_ctx, msg.pdsch_cfg, contains_srb_data);
+    h_dl.save_alloc_params(pdsch_sched_ctx, msg.pdsch_cfg);
 
     return {alloc_status::success, h_dl.last_alloc_params().tb[0]->tbs_bytes, crbs.length()};
   }
