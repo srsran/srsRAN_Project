@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/srsvec/detail/traits.h"
+#include "srsran/srsvec/type_traits.h"
 #include "srsran/srsvec/types.h"
 
 namespace srsran {
@@ -23,7 +23,7 @@ namespace srsvec {
 template <typename T>
 void zero(T&& x)
 {
-  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span.");
+  static_assert(is_span_compatible<T>::value, "Template type is not compatible with a span.");
   std::fill(x.begin(), x.end(), 0);
 }
 

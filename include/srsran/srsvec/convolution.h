@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "zero.h"
-#include "srsran/srsvec/detail/traits.h"
+#include "srsran/srsvec/type_traits.h"
 #include "srsran/srsvec/types.h"
+#include "srsran/srsvec/zero.h"
 #include <numeric>
 
 namespace srsran {
@@ -68,11 +68,11 @@ void multiply_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const floa
 template <typename V, typename T, typename U>
 void convolution_same(V&& out, const T& x_v, const U& y_v)
 {
-  static_assert((detail::is_arithmetic_span_compatible<T>::value || detail::is_complex_span_compatible<T>::value),
+  static_assert((is_arithmetic_span_compatible<T>::value || is_complex_span_compatible<T>::value),
                 "Template type is not compatible with a span of arithmetics or complex floats.");
-  static_assert((detail::is_arithmetic_span_compatible<U>::value || detail::is_complex_span_compatible<U>::value),
+  static_assert((is_arithmetic_span_compatible<U>::value || is_complex_span_compatible<U>::value),
                 "Template type is not compatible with a span of arithmetics or complex floats.");
-  static_assert((detail::is_arithmetic_span_compatible<V>::value || detail::is_complex_span_compatible<V>::value),
+  static_assert((is_arithmetic_span_compatible<V>::value || is_complex_span_compatible<V>::value),
                 "Template type is not compatible with a span of arithmetics or complex floats.");
   srsran_srsvec_assert_size(out, x_v);
 

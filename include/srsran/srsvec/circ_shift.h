@@ -30,8 +30,8 @@ namespace srsvec {
 template <typename T, typename U>
 void circ_shift_forward(T&& out, const U& in, unsigned shift)
 {
-  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span");
-  static_assert(detail::is_span_compatible<U>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<T>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<U>::value, "Template type is not compatible with a span");
   srsran_srsvec_assert_size(out, in);
 
   unsigned length = out.size();
@@ -52,8 +52,8 @@ void circ_shift_forward(T&& out, const U& in, unsigned shift)
 template <typename T, typename U>
 void circ_shift_backward(T&& out, const U& in, unsigned shift)
 {
-  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span");
-  static_assert(detail::is_span_compatible<U>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<T>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<U>::value, "Template type is not compatible with a span");
   srsran_srsvec_assert_size(out, in);
 
   unsigned length = out.size();

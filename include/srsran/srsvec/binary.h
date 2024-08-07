@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/srsvec/detail/traits.h"
+#include "srsran/srsvec/type_traits.h"
 #include "srsran/srsvec/types.h"
 
 namespace srsran {
@@ -19,12 +19,9 @@ namespace srsvec {
 template <typename T, typename U, typename V>
 void binary_xor(const T& x, const U& y, V&& z)
 {
-  static_assert(detail::is_integral_span_compatible<T>::value,
-                "Template type is not compatible with a span of integers");
-  static_assert(detail::is_integral_span_compatible<U>::value,
-                "Template type is not compatible with a span of integers");
-  static_assert(detail::is_integral_span_compatible<V>::value,
-                "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<T>::value, "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<U>::value, "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<V>::value, "Template type is not compatible with a span of integers");
   srsran_srsvec_assert_size(x, y);
   srsran_srsvec_assert_size(x, z);
 
@@ -36,12 +33,9 @@ void binary_xor(const T& x, const U& y, V&& z)
 template <typename T, typename U, typename V>
 void binary_and(const T& x, const U& y, V&& z)
 {
-  static_assert(detail::is_integral_span_compatible<T>::value,
-                "Template type is not compatible with a span of integers");
-  static_assert(detail::is_integral_span_compatible<U>::value,
-                "Template type is not compatible with a span of integers");
-  static_assert(detail::is_integral_span_compatible<V>::value,
-                "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<T>::value, "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<U>::value, "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<V>::value, "Template type is not compatible with a span of integers");
   srsran_srsvec_assert_size(x, y);
   srsran_srsvec_assert_size(x, z);
 
@@ -53,12 +47,9 @@ void binary_and(const T& x, const U& y, V&& z)
 template <typename T, typename U, typename V>
 void binary_or(const T& x, const U& y, V&& z)
 {
-  static_assert(detail::is_integral_span_compatible<T>::value,
-                "Template type is not compatible with a span of integers");
-  static_assert(detail::is_integral_span_compatible<U>::value,
-                "Template type is not compatible with a span of integers");
-  static_assert(detail::is_integral_span_compatible<V>::value,
-                "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<T>::value, "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<U>::value, "Template type is not compatible with a span of integers");
+  static_assert(is_integral_span_compatible<V>::value, "Template type is not compatible with a span of integers");
   srsran_srsvec_assert_size(x, y);
   srsran_srsvec_assert_size(x, z);
 

@@ -55,6 +55,8 @@ struct value_type_of_impl<T (&)[N]> {
 template <typename T>
 using value_type_of_t = typename value_type_of_impl<T>::type;
 
+} // namespace detail
+
 /// Checks if T is compatible with a span of integer types.
 template <typename T, typename = void>
 struct is_integral_span_compatible : std::false_type {
@@ -62,8 +64,8 @@ struct is_integral_span_compatible : std::false_type {
 
 template <typename T>
 struct is_integral_span_compatible<T,
-                                   std::enable_if_t<std::is_convertible<T, span<value_type_of_t<T>>>::value &&
-                                                    std::is_integral<value_type_of_t<T>>::value>> : std::true_type {
+                                   std::enable_if_t<std::is_convertible_v<T, span<detail::value_type_of_t<T>>> &&
+                                                    std::is_integral_v<detail::value_type_of_t<T>>>> : std::true_type {
 };
 
 /// Checks if T is compatible with a span of arithmetic types.
@@ -73,8 +75,9 @@ struct is_arithmetic_span_compatible : std::false_type {
 
 template <typename T>
 struct is_arithmetic_span_compatible<T,
-                                     std::enable_if_t<std::is_convertible<T, span<value_type_of_t<T>>>::value &&
-                                                      std::is_arithmetic<value_type_of_t<T>>::value>> : std::true_type {
+                                     std::enable_if_t<std::is_convertible_v<T, span<detail::value_type_of_t<T>>> &&
+                                                      std::is_arithmetic_v<detail::value_type_of_t<T>>>>
+  : std::true_type {
 };
 
 /// Checks if T is compatible with a span of complex floating points (which are not arithmetic types).
@@ -83,10 +86,9 @@ struct is_complex_span_compatible : std::false_type {
 };
 
 template <typename T>
-struct is_complex_span_compatible<
-    T,
-    std::enable_if_t<std::is_convertible<T, span<value_type_of_t<T>>>::value && is_complex<value_type_of_t<T>>::value>>
-  : std::true_type {
+struct is_complex_span_compatible<T,
+                                  std::enable_if_t<std::is_convertible_v<T, span<detail::value_type_of_t<T>>> &&
+                                                   is_complex<detail::value_type_of_t<T>>::value>> : std::true_type {
 };
 
 /// Checks if T is compatible with a span.
@@ -95,10 +97,9 @@ struct is_span_compatible : std::false_type {
 };
 
 template <typename T>
-struct is_span_compatible<T, std::enable_if_t<std::is_convertible<T, span<value_type_of_t<T>>>::value>>
+struct is_span_compatible<T, std::enable_if_t<std::is_convertible_v<T, span<detail::value_type_of_t<T>>>>>
   : std::true_type {
 };
 
-} // namespace detail
 } // namespace srsvec
 } // namespace srsran

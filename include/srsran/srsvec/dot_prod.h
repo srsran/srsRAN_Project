@@ -14,7 +14,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/srsvec/detail/traits.h"
+#include "srsran/srsvec/type_traits.h"
 #include "srsran/srsvec/types.h"
 #include "srsran/support/srsran_assert.h"
 #include <numeric>
@@ -38,10 +38,8 @@ namespace srsvec {
 template <typename T, typename U, typename V>
 inline V dot_prod(const T& x, const U& y, V init)
 {
-  static_assert(detail::is_arithmetic_span_compatible<T>::value,
-                "Template type is not compatible with a span of arithmetics");
-  static_assert(detail::is_arithmetic_span_compatible<U>::value,
-                "Template type is not compatible with a span of arithmetics");
+  static_assert(is_arithmetic_span_compatible<T>::value, "Template type is not compatible with a span of arithmetics");
+  static_assert(is_arithmetic_span_compatible<U>::value, "Template type is not compatible with a span of arithmetics");
   srsran_srsvec_assert_size(x, y);
   return std::inner_product(x.begin(), x.end(), y.begin(), init);
 }
