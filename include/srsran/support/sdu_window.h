@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <stddef.h>
 
 namespace srsran {
 
