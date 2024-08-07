@@ -10,39 +10,11 @@
 
 #include "du_ran_resource_manager_impl.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
-#include "srsran/mac/config/mac_config_helpers.h"
-#include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace srs_du;
-
-/// \brief Finds an unused LCID for DRBs given a list of UE configured RLC bearers.
-static lcid_t find_empty_lcid(const std::vector<rlc_bearer_config>& rlc_bearers)
-{
-  static_vector<lcid_t, MAX_NOF_DRBS> used_lcids;
-  for (const auto& bearer : rlc_bearers) {
-    if (bearer.drb_id.has_value()) {
-      used_lcids.push_back(bearer.lcid);
-    }
-  }
-  std::sort(used_lcids.begin(), used_lcids.end());
-  if (used_lcids.empty() or used_lcids[0] > LCID_MIN_DRB) {
-    return LCID_MIN_DRB;
-  }
-  auto it = std::adjacent_find(used_lcids.begin(), used_lcids.end(), [](lcid_t l, lcid_t r) { return l + 1 < r; });
-  if (it == used_lcids.end()) {
-    // no gaps found. Use the last value + 1.
-    --it;
-  }
-  // beginning of the gap + 1.
-  lcid_t lcid = uint_to_lcid(static_cast<unsigned>(*it) + 1U);
-  if (lcid > LCID_MAX_DRB) {
-    return INVALID_LCID;
-  }
-  return lcid;
-}
 
 du_ue_ran_resource_updater_impl::du_ue_ran_resource_updater_impl(du_ue_resource_config*        cell_grp_cfg_,
                                                                  du_ran_resource_manager_impl& parent_,
@@ -68,13 +40,12 @@ du_ue_ran_resource_updater_impl::update(du_cell_index_t                       pc
 
 du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
                                                            const scheduler_expert_config&            scheduler_cfg,
-                                                           const std::map<srb_id_t, du_srb_config>&  srbs_,
-                                                           const std::map<five_qi_t, du_qos_config>& qos_) :
+                                                           const std::map<srb_id_t, du_srb_config>&  srb_config,
+                                                           const std::map<five_qi_t, du_qos_config>& qos_config) :
   cell_cfg_list(cell_cfg_list_),
-  srb_config(srbs_),
-  qos_config(qos_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
-  pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot)
+  pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot),
+  bearer_res_mng(srb_config, qos_config, logger)
 {
 }
 
@@ -83,7 +54,7 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
 {
   if (ue_res_pool.contains(ue_index)) {
     return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr},
-                                        std::string("Double allocation of same not supported")};
+                                        std::string("Double allocation of same UE not supported")};
   }
   ue_res_pool.emplace(ue_index);
   auto& mcg = ue_res_pool[ue_index].cg_cfg;
@@ -96,66 +67,6 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
   }
 
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index)};
-}
-
-static error_type<std::string> validate_drb_modification_request(const f1ap_drb_to_modify&     drb,
-                                                                 span<const rlc_bearer_config> rlc_bearers)
-{
-  // Search for established DRB with matching DRB-Id.
-  auto prev_drb_it = std::find_if(rlc_bearers.begin(), rlc_bearers.end(), [&drb](const rlc_bearer_config& item) {
-    return item.drb_id.has_value() and item.drb_id.value() == drb.drb_id;
-  });
-  if (prev_drb_it == rlc_bearers.end()) {
-    return make_unexpected(fmt::format("Failed to modify {}. Cause: DRB not found", drb.drb_id));
-  }
-  return {};
-}
-
-static error_type<std::string> validate_drb_setup_request(const f1ap_drb_to_setup&                  drb,
-                                                          span<const rlc_bearer_config>             rlc_bearers,
-                                                          const std::map<five_qi_t, du_qos_config>& qos_config)
-{
-  // Validate QOS config.
-  five_qi_t fiveqi = drb.qos_info.drb_qos.qos_characteristics.get_five_qi();
-  auto      qos_it = qos_config.find(fiveqi);
-  if (qos_it == qos_config.end()) {
-    return make_unexpected(fmt::format("Failed to allocate {}. Cause: No {} 5QI configured", drb.drb_id, fiveqi));
-  }
-  const du_qos_config& qos = qos_it->second;
-  if (qos.rlc.mode != drb.mode) {
-    return make_unexpected(
-        fmt::format("RLC mode mismatch for {}. QoS config for {} configures {} but CU-CP requested {}",
-                    drb.drb_id,
-                    fiveqi,
-                    qos.rlc.mode,
-                    drb.mode));
-  }
-
-  // Search for established DRB with matching DRB-Id.
-  auto prev_drb_it = std::find_if(rlc_bearers.begin(), rlc_bearers.end(), [&drb](const rlc_bearer_config& item) {
-    return item.drb_id.has_value() and item.drb_id.value() == drb.drb_id;
-  });
-  if (prev_drb_it != rlc_bearers.end()) {
-    return make_unexpected(fmt::format("Failed to allocate {}. Cause: DRB already exists", drb.drb_id));
-  }
-
-  return {};
-}
-
-static void reestablish_context(du_ue_resource_config& new_ue_cfg, const du_ue_resource_config& old_ue_cfg)
-{
-  for (const rlc_bearer_config& old_bearer : old_ue_cfg.cell_group.rlc_bearers) {
-    auto it = std::find_if(new_ue_cfg.cell_group.rlc_bearers.begin(),
-                           new_ue_cfg.cell_group.rlc_bearers.end(),
-                           [&old_bearer](const rlc_bearer_config& item) {
-                             return item.drb_id == old_bearer.drb_id and
-                                    (item.drb_id.has_value() or (item.lcid == old_bearer.lcid));
-                           });
-    if (it == new_ue_cfg.cell_group.rlc_bearers.end()) {
-      // Bearer not found in new context. Add it.
-      new_ue_cfg.cell_group.rlc_bearers.push_back(old_bearer);
-    }
-  }
 }
 
 du_ue_resource_update_response
@@ -185,100 +96,15 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
   }
 
-  // > In case of RRC Reestablishment, retrieve old DRB context, to be considered in the config update.
-  if (reestablished_context != nullptr) {
-    reestablish_context(ue_mcg, *reestablished_context);
-  }
-
-  // > Deallocate removed SRBs / DRBs.
-  for (drb_id_t drb_id : upd_req.drbs_to_rem) {
-    auto it = std::find_if(ue_mcg.cell_group.rlc_bearers.begin(),
-                           ue_mcg.cell_group.rlc_bearers.end(),
-                           [drb_id](const rlc_bearer_config& b) { return b.drb_id == drb_id; });
-    if (it != ue_mcg.cell_group.rlc_bearers.end()) {
-      ue_mcg.cell_group.rlc_bearers.erase(it);
-      continue;
-    } else {
-      logger.warning("Failed to release {}. Cause: DRB not found", drb_id);
-    }
-  }
-
-  // > Allocate new SRBs.
-  for (srb_id_t srb_id : upd_req.srbs_to_setup) {
-    // >> New or Modified SRB.
-    lcid_t lcid = srb_id_to_lcid(srb_id);
-    if (std::any_of(ue_mcg.cell_group.rlc_bearers.begin(),
-                    ue_mcg.cell_group.rlc_bearers.end(),
-                    [lcid](const auto& item) { return item.lcid == lcid; })) {
-      // The SRB is already setup (e.g. SRB1 gets setup automatically).
-      continue;
-    }
-    ue_mcg.cell_group.rlc_bearers.emplace_back();
-    ue_mcg.cell_group.rlc_bearers.back().lcid = lcid;
-
-    auto srb_it = srb_config.find(srb_id);
-    if (srb_it != srb_config.end()) {
-      ue_mcg.cell_group.rlc_bearers.back().rlc_cfg = srb_it->second.rlc;
-      ue_mcg.cell_group.rlc_bearers.back().mac_cfg = srb_it->second.mac;
-    } else {
-      ue_mcg.cell_group.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-      ue_mcg.cell_group.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(lcid);
-    }
-  }
-
-  // > Create new DRBs.
-  for (const f1ap_drb_to_setup& drb : upd_req.drbs_to_setup) {
-    auto res = validate_drb_setup_request(drb, ue_mcg.cell_group.rlc_bearers, qos_config);
-    if (not res.has_value()) {
-      resp.failed_drbs.push_back(drb.drb_id);
-      continue;
-    }
-
-    // > Allocate LCID.
-    lcid_t lcid = find_empty_lcid(ue_mcg.cell_group.rlc_bearers);
-    if (lcid > LCID_MAX_DRB) {
-      logger.warning("Failed to allocate {}. Cause: No available LCIDs", drb.drb_id);
-      resp.failed_drbs.push_back(drb.drb_id);
-      continue;
-    }
-
-    // >> Get RLC config from 5QI
-    five_qi_t            fiveqi = drb.qos_info.drb_qos.qos_characteristics.get_five_qi();
-    const du_qos_config& qos    = qos_config.at(fiveqi);
-    ue_mcg.cell_group.rlc_bearers.emplace_back();
-    ue_mcg.cell_group.rlc_bearers.back().lcid    = lcid;
-    ue_mcg.cell_group.rlc_bearers.back().drb_id  = drb.drb_id;
-    ue_mcg.cell_group.rlc_bearers.back().rlc_cfg = qos.rlc;
-    ue_mcg.cell_group.rlc_bearers.back().mac_cfg = qos.mac;
-
-    // Update pdcp_sn_len in RLC config
-    auto& rlc_cfg = ue_mcg.cell_group.rlc_bearers.back().rlc_cfg;
-    switch (rlc_cfg.mode) {
-      case rlc_mode::am:
-        rlc_cfg.am.tx.pdcp_sn_len = drb.pdcp_sn_len;
-        break;
-      case rlc_mode::um_bidir:
-      case rlc_mode::um_unidir_dl:
-        rlc_cfg.um.tx.pdcp_sn_len = drb.pdcp_sn_len;
-        break;
-      default:
-        break;
-    }
-  }
-
-  // > Modify existing DRBs.
-  for (const f1ap_drb_to_modify& drb : upd_req.drbs_to_mod) {
-    auto res = validate_drb_modification_request(drb, ue_mcg.cell_group.rlc_bearers);
-    if (not res.has_value()) {
-      resp.failed_drbs.push_back(drb.drb_id);
-      continue;
-    }
-  }
-
-  // > Sort bearers by LCID.
-  std::sort(ue_mcg.cell_group.rlc_bearers.begin(),
-            ue_mcg.cell_group.rlc_bearers.end(),
-            [](const auto& lhs, const auto& rhs) { return lhs.lcid < rhs.lcid; });
+  // > Update UE SRBs and DRBs.
+  du_ue_bearer_resource_update_response bearer_resp =
+      bearer_res_mng.update(ue_mcg,
+                            du_ue_bearer_resource_update_request{
+                                upd_req.srbs_to_setup, upd_req.drbs_to_setup, upd_req.drbs_to_mod, upd_req.drbs_to_rem},
+                            reestablished_context);
+  resp.failed_drbs = std::move(bearer_resp.drbs_failed_to_setup);
+  resp.failed_drbs.insert(
+      resp.failed_drbs.end(), bearer_resp.drbs_failed_to_mod.begin(), bearer_resp.drbs_failed_to_mod.end());
 
   // > Allocate resources for new or modified cells.
   if (not ue_mcg.cell_group.cells.contains(0) or ue_mcg.cell_group.cells[0].serv_cell_cfg.cell_index != pcell_idx) {

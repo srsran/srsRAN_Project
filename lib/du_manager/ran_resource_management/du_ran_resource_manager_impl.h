@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "du_bearer_resource_manager.h"
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
 #include "srsran/ran/qos/five_qi.h"
@@ -83,10 +84,8 @@ private:
        allocate_cell_resources(du_ue_index_t ue_index, du_cell_index_t cell_index, serv_cell_index_t serv_cell_index);
   void deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index);
 
-  span<const du_cell_config>                cell_cfg_list;
-  const std::map<srb_id_t, du_srb_config>&  srb_config;
-  const std::map<five_qi_t, du_qos_config>& qos_config;
-  srslog::basic_logger&                     logger;
+  span<const du_cell_config> cell_cfg_list;
+  srslog::basic_logger&      logger;
 
   struct ue_res_item {
     du_ue_resource_config cg_cfg;
@@ -97,6 +96,9 @@ private:
 
   /// Allocator of UE PUCCH resources.
   du_pucch_resource_manager pucch_res_mng;
+
+  /// Allocator of UE bearer resources.
+  du_bearer_resource_manager bearer_res_mng;
 };
 
 } // namespace srs_du
