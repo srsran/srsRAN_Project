@@ -21,18 +21,17 @@ static constexpr size_t WHEEL_MASK  = WHEEL_SIZE - 1U;
 /// Maximum timeout duration supported for a given timer in ticks.
 static constexpr timer_duration MAX_TIMER_DURATION = timer_duration{std::numeric_limits<unsigned>::max() / 2};
 
-timer_manager::timer_frontend::timer_frontend(timer_manager& parent_, timer_id_t id_) : parent(parent_), id(id_) {}
-
 void timer_manager::timer_frontend::destroy()
 {
   cmd_id.fetch_add(1, std::memory_order::memory_order_relaxed);
   state = state_t::stopped;
   parent.push_timer_command(cmd_t{id, cmd_id.load(std::memory_order_relaxed), cmd_t::destroy});
-};
+}
 
 void timer_manager::timer_frontend::set(timer_duration dur)
 {
   srsran_assert(dur <= MAX_TIMER_DURATION, "Invalid timer duration ({}>{})", dur.count(), MAX_TIMER_DURATION.count());
+
   cmd_id.fetch_add(1, std::memory_order::memory_order_relaxed);
   duration = dur;
   if (state == state_t::running) {
@@ -63,21 +62,16 @@ void timer_manager::timer_frontend::stop()
   parent.push_timer_command(cmd_t{id, cmd_id.load(std::memory_order_relaxed), cmd_t::stop});
 }
 
-// /////////////////////
-
-constexpr timer_duration timer_manager::INVALID_DURATION;
-
 timer_manager::timer_manager(size_t capacity) : logger(srslog::fetch_basic_logger("ALL")), time_wheel(WHEEL_SIZE)
 {
   // Pre-reserve timers.
   while (timer_list.size() < capacity) {
-    timer_list.emplace_back();
-    timer_list.back().frontend = std::make_unique<timer_frontend>(*this, (timer_id_t)next_timer_id++);
+    timer_list.emplace_back().frontend = std::make_unique<timer_frontend>(*this, (timer_id_t)next_timer_id++);
   }
 
   // Push to free list in reverse order to keep ascending ids.
   for (auto i = timer_list.rbegin(), e = timer_list.rend(); i != e; ++i) {
-    free_list.push_back(i->frontend.get());
+    free_list.emplace_back(i->frontend.get());
   }
 }
 
@@ -91,10 +85,10 @@ void timer_manager::tick()
   }
 
   // Process new commands coming from the front-end.
-  for (std::variant<cmd_t, std::unique_ptr<timer_frontend>>& event : cmds_to_process) {
-    if (std::holds_alternative<std::unique_ptr<timer_frontend>>(event)) {
+  for (auto& event : cmds_to_process) {
+    if (auto* event_p = std::get_if<std::unique_ptr<timer_frontend>>(&event)) {
       // New timer was created in the frontend.
-      create_timer_handle(std::move(std::get<std::unique_ptr<timer_frontend>>(event)));
+      create_timer_handle(std::move(*event_p));
       continue;
     }
 
@@ -120,18 +114,19 @@ void timer_manager::tick()
   handle_postponed_timeouts();
 
   // Advance time.
-  cur_time++;
+  ++cur_time;
 
   // Process the timer runs which expire in this tick.
   auto& wheel_list = time_wheel[cur_time & WHEEL_MASK];
 
-  // > iterate intrusive linked list of running timers with same wheel index
+  // Iterate intrusive linked list of running timers with same wheel index.
   for (auto it = wheel_list.begin(); it != wheel_list.end();) {
     srsran_assert(it->frontend != nullptr, "invalid state of timer in timer wheel");
     timer_handle& timer = timer_list[static_cast<unsigned>(it->frontend->id)];
-    ++it; // we move iterator already, in case, the current timer gets removed from the linked list.
+    // We move iterator already, in case, the current timer gets removed from the linked list.
+    ++it;
 
-    // If the timer doesnt expire yet, continue the iteration in the same wheel bucket.
+    // If the timer doesn't expire yet, continue the iteration in the same wheel bucket.
     if (cur_time != timer.backend.timeout) {
       continue;
     }
@@ -149,7 +144,7 @@ void timer_manager::push_timer_command(cmd_t cmd)
 
 void timer_manager::create_timer_handle(std::unique_ptr<timer_frontend> timer)
 {
-  unsigned timer_idx = static_cast<unsigned>(timer->id);
+  auto timer_idx = static_cast<unsigned>(timer->id);
   srsran_assert(timer_idx >= timer_list.size() or timer_list[timer_idx].frontend == nullptr,
                 "Duplicate timer id detection");
   if (timer_idx >= timer_list.size()) {
@@ -166,7 +161,7 @@ void timer_manager::start_timer_backend(timer_handle& timer, unsigned duration)
   timer.backend.timeout = cur_time + std::max(duration, 1U);
   timer.backend.state   = state_t::running;
   time_wheel[timer.backend.timeout & WHEEL_MASK].push_front(&timer);
-  nof_timers_running++;
+  ++nof_timers_running;
 }
 
 bool timer_manager::trigger_timeout_handling(timer_handle& timer)
@@ -215,7 +210,7 @@ bool timer_manager::try_stop_timer_backend(timer_handle& timer, bool expiry_reas
     if (not success) {
       logger.warning("Failed to dispatch timeout handling for timer={}. Re-scheduling the handling to the next slot",
                      timer.frontend->id);
-      failed_to_trigger_timers.push_back(std::make_pair(timer.frontend->id, timer.backend.cmd_id));
+      failed_to_trigger_timers.emplace_back(timer.frontend->id, timer.backend.cmd_id);
     }
   }
   return true;
@@ -248,12 +243,13 @@ void timer_manager::stop_timer_backend(timer_handle& timer, bool expiry_reason)
 void timer_manager::destroy_timer_backend(timer_handle& timer)
 {
   srsran_assert(timer.backend.state != state_t::running, "Destroying timer that is running not allowed");
-  // clear frontend (it is already released by unique_timer).
+
+  // Clear frontend (it is already released by unique_timer).
   timer.frontend->state            = state_t::stopped;
   timer.frontend->duration         = timer_manager::INVALID_DURATION;
   timer.frontend->timeout_callback = {};
   timer.frontend->exec             = nullptr;
-  // clear backend.
+  // Clear backend.
   timer.backend.state   = state_t::stopped;
   timer.backend.timeout = 0;
   // Add timer handle in free list.
@@ -306,10 +302,4 @@ size_t timer_manager::nof_timers() const
 {
   std::lock_guard<std::mutex> lock(free_list_mutex);
   return timer_list.size() - free_list.size();
-}
-
-/// Returns the number of running timers handled by this instance.
-unsigned timer_manager::nof_running_timers() const
-{
-  return nof_timers_running;
 }
