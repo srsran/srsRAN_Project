@@ -1586,6 +1586,15 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_0_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
+    logger.debug("rnti={}: PUCCH PDU on F0 HARQ resource updated: slot={} p_ind={} prbs={} sym={} "
+                 "h_bits={} sr_bits={}",
+                 current_grants.rnti,
+                 pucch_slot_alloc.slot,
+                 current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
+                 existing_pdus.harq_pdu->resources.prbs,
+                 existing_pdus.harq_pdu->resources.symbols,
+                 new_bits.harq_ack_nof_bits,
+                 current_grants.pucch_grants.harq_resource.value().bits.sr_bits);
     existing_pdus.update_harq_pdu_bits(
         new_bits.harq_ack_nof_bits, current_grants.pucch_grants.harq_resource.value().bits.sr_bits, 0U, *pucch_res_cfg);
     // Update the current grant with the new UCI (HARQ) bits.
@@ -1597,14 +1606,36 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_0_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
+    logger.debug("rnti={}: PUCCH PDU on F1 HARQ resource updated: slot={} p_ind={} prbs={} sym={} cs={} occ={} "
+                 "h_bits={} sr_bits={}",
+                 current_grants.rnti,
+                 pucch_slot_alloc.slot,
+                 current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
+                 existing_pdus.harq_pdu->resources.prbs,
+                 existing_pdus.harq_pdu->resources.symbols,
+                 existing_pdus.harq_pdu->format_1.initial_cyclic_shift,
+                 existing_pdus.harq_pdu->format_1.time_domain_occ,
+                 new_bits.harq_ack_nof_bits,
+                 existing_pdus.harq_pdu->format_1.sr_bits);
     existing_pdus.update_harq_pdu_bits(new_bits.harq_ack_nof_bits, sr_nof_bits::no_sr, 0U, *pucch_res_cfg);
     // Update the current grants with the new UCI (HARQ) bits.
     current_grants.pucch_grants.harq_resource.value().bits.harq_ack_nof_bits = new_bits.harq_ack_nof_bits;
     if (existing_pdus.sr_pdu != nullptr) {
+      logger.debug("rnti={}: PUCCH PDU on SR F1 resource updated: slot={} prbs={} sym={} cs={} occ={} "
+                   "h_bits={} sr_bits={}",
+                   current_grants.rnti,
+                   pucch_slot_alloc.slot,
+                   existing_pdus.sr_pdu->resources.prbs,
+                   existing_pdus.sr_pdu->resources.symbols,
+                   existing_pdus.sr_pdu->format_1.initial_cyclic_shift,
+                   existing_pdus.sr_pdu->format_1.time_domain_occ,
+                   new_bits.harq_ack_nof_bits,
+                   existing_pdus.sr_pdu->format_1.sr_bits);
       existing_pdus.update_sr_pdu_bits(current_bits.sr_bits, new_bits.harq_ack_nof_bits);
       // Update the current grants with the new UCI (HARQ) bits.
       current_grants.pucch_grants.sr_resource.value().bits.harq_ack_nof_bits = new_bits.harq_ack_nof_bits;
     }
+
   }
   // If the HARQ PDU uses F2, there can be 1 HARQ PDU + an optional CSI (F2). In any case, we only need to update the
   // HARQ-ACK bits in the HARQ-ACK PDU.
@@ -1620,6 +1651,17 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_1_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
+    logger.debug("rnti={}: PUCCH PDU on F2 HARQ resource updated: slot={} p_ind={} format={} prbs={} sym={} h_bits={} "
+                 "sr_bits={} cs_bits={}",
+                 current_grants.rnti,
+                 pucch_slot_alloc.slot,
+                 current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
+                 existing_pdus.harq_pdu->format,
+                 existing_pdus.harq_pdu->resources.prbs,
+                 existing_pdus.harq_pdu->resources.symbols,
+                 new_bits.harq_ack_nof_bits,
+                 current_grants.pucch_grants.harq_resource.value().bits.sr_bits,
+                 current_grants.pucch_grants.harq_resource.value().bits.csi_part1_nof_bits);
     existing_pdus.update_harq_pdu_bits(new_bits.harq_ack_nof_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.sr_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.csi_part1_nof_bits,

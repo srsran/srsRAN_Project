@@ -749,6 +749,45 @@ TEST_F(test_pucch_allocator_ded_resources, when_converting_harq_f1_to_f2_during_
   ASSERT_EQ(1U, test_pucch_res_indicator.value());
 }
 
+TEST_F(test_pucch_allocator_ded_resources, with_f2_res_1_harq_bit_adding_adding_extra_bit_doesnt_change_res_indicator)
+{
+  // This makes PUCCH resource indicator 0 busy for PUCCH resource set 0.
+  add_ue_with_harq_grant();
+  add_csi_grant();
+
+  // At the end of the PUCCH allocation with Format 2, we expect the same PUCCH as for PUCCH format 1.
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  // PUCCH resource indicator 0 is used by the first UE that got allocated.
+  ASSERT_EQ(1U, test_pucch_res_indicator.value());
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  const auto first_alloc =
+      std::find_if(slot_grid.result.ul.pucchs.begin(),
+                   slot_grid.result.ul.pucchs.end(),
+                   [rnti = t_bench.get_main_ue().crnti](const auto& pdu) { return pdu.crnti == rnti; });
+  ASSERT_TRUE(first_alloc != slot_grid.result.ul.pucchs.end());
+
+  std::optional<unsigned> test_pucch_res_indicator_new = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_TRUE(test_pucch_res_indicator_new.has_value());
+  // PUCCH resource indicator after the second allocation should not have changed.
+  ASSERT_EQ(test_pucch_res_indicator.value(), test_pucch_res_indicator_new.has_value());
+
+  const auto second_alloc =
+      std::find_if(slot_grid.result.ul.pucchs.begin(),
+                   slot_grid.result.ul.pucchs.end(),
+                   [rnti = t_bench.get_main_ue().crnti](const auto& pdu) { return pdu.crnti == rnti; });
+  ASSERT_TRUE(second_alloc != slot_grid.result.ul.pucchs.end());
+  ASSERT_EQ(first_alloc->resources.prbs, second_alloc->resources.prbs);
+  ASSERT_EQ(first_alloc->resources.symbols, second_alloc->resources.symbols);
+  ASSERT_EQ(first_alloc->resources.second_hop_prbs, second_alloc->resources.second_hop_prbs);
+}
+
 ///////   Test allocation of common + dedicated resources.    ///////
 
 TEST_F(test_pucch_allocator_ded_resources, test_common_plus_ded_resource_without_existing_grants)
