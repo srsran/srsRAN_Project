@@ -45,12 +45,15 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
 
 void ue_cell::deactivate()
 {
-  // Stop UL HARQ retransmissions.
-  // Note: We do no stop DL retransmissions because we are still relying on DL to send a potential RRC Release.
+  // Stop HARQ retransmissions.
+  // Note: We assume that when this function is called, any RRC container (e.g. containing RRC Release) was already
+  // transmitted+ACKed (ensured by F1AP).
+  for (unsigned hid = 0; hid != harqs.nof_dl_harqs(); ++hid) {
+    harqs.dl_harq(hid).cancel_harq_retxs(0);
+  }
   for (unsigned hid = 0; hid != harqs.nof_ul_harqs(); ++hid) {
     harqs.ul_harq(hid).cancel_harq_retxs();
   }
-
   active = false;
 }
 

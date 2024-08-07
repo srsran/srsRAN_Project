@@ -31,6 +31,9 @@ public:
 
   dl_logical_channel_manager();
 
+  /// \brief Deactivate all bearers.
+  void deactivate();
+
   /// \brief Activate/Deactivate Bearer.
   void set_status(lcid_t lcid, bool active)
   {

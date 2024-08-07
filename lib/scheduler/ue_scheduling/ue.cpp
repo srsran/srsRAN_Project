@@ -62,16 +62,15 @@ void ue::slot_indication(slot_point sl_tx)
 
 void ue::deactivate()
 {
-  // Disable DL DRBs.
-  for (unsigned lcid = LCID_MIN_DRB; lcid <= LCID_MAX_DRB; lcid++) {
-    dl_lc_ch_mgr.set_status((lcid_t)lcid, false);
-  }
+  // Disable DL SRBs and DRBs.
+  // Note: We assume that when this function is called any pending RRC container (e.g. containing RRC Release) has
+  // already been Tx+ACKed or an upper layer timeout has triggered.
+  dl_lc_ch_mgr.deactivate();
 
   // Disable UL SRBs and DRBs.
   ul_lc_ch_mgr.deactivate();
 
-  // Stop UL HARQ retransmissions.
-  // Note: We do no stop DL retransmissions because we are still relying on DL to send a potential RRC Release.
+  // Cancel HARQ retransmissions in all UE cells.
   for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
     if (ue_du_cells[i] != nullptr) {
       ue_du_cells[i]->deactivate();

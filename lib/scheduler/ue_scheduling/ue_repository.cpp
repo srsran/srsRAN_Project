@@ -19,9 +19,8 @@ ue_repository::ue_repository() : logger(srslog::fetch_basic_logger("SCHED"))
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
 
-/// \brief This function checks whether it is safe to remove a UE. Currently we verify that:
-/// - The UE has no pending DL SRB data. This ensures that messages like RRC Release are sent before the UE removal.
-/// - The UE has no DL or UL HARQ awaiting an ACK.
+/// \brief This function checks whether it is safe to remove a UE. Currently we verify that the UE has no DL or UL
+/// HARQ awaiting an ACK.
 static bool is_ue_ready_for_removal(ue& u)
 {
   // Ensure that there no currently active HARQs.
