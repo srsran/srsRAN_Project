@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "cell_group_config.h"
+#include "du_ue_resource_config.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 

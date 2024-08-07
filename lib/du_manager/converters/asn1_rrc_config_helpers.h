@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../ran_resource_management/cell_group_config.h"
+#include "../ran_resource_management/du_ue_resource_config.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/asn1/rrc_nr/ho_prep_info.h"
 

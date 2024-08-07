@@ -285,18 +285,18 @@ public:
     ~dummy_resource_updater();
     du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                           const f1ap_ue_context_update_request& upd_req,
-                                          const cell_group_config*              reestablished_context) override;
-    const cell_group_config&       get() override;
+                                          const du_ue_resource_config*          reestablished_context) override;
+    const du_ue_resource_config&   get() override;
 
     du_ue_index_t                           ue_index;
     dummy_ue_resource_configurator_factory& parent;
   };
 
-  std::optional<du_ue_index_t>               last_ue_index;
-  std::optional<du_cell_index_t>             last_ue_pcell;
-  f1ap_ue_context_update_request             last_ue_ctx_upd;
-  std::map<du_ue_index_t, cell_group_config> ue_resource_pool;
-  cell_group_config                          next_context_update_result;
+  std::optional<du_ue_index_t>                   last_ue_index;
+  std::optional<du_cell_index_t>                 last_ue_pcell;
+  f1ap_ue_context_update_request                 last_ue_ctx_upd;
+  std::map<du_ue_index_t, du_ue_resource_config> ue_resource_pool;
+  du_ue_resource_config                          next_context_update_result;
 
   dummy_ue_resource_configurator_factory();
 

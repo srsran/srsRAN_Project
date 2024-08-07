@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "cell_group_config.h"
+#include "du_ue_resource_config.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 
 namespace srsran {
@@ -37,11 +37,12 @@ public:
   /// \brief Interface used to update the UE Resources on Reconfiguration and return the resources back to the pool,
   /// on UE deletion.
   struct resource_updater {
-    virtual ~resource_updater()                                                                   = default;
+    virtual ~resource_updater() = default;
+
     virtual du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                                   const f1ap_ue_context_update_request& upd_req,
-                                                  const cell_group_config*              reestablished_context) = 0;
-    virtual const cell_group_config&       get()                                                  = 0;
+                                                  const du_ue_resource_config*          reestablished_context) = 0;
+    virtual const du_ue_resource_config&   get()                                                      = 0;
   };
 
   explicit ue_ran_resource_configurator(std::unique_ptr<resource_updater> ue_res_, std::string error = {}) :
@@ -60,7 +61,7 @@ public:
   /// \return Outcome of the configuration.
   du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                         const f1ap_ue_context_update_request& upd_req,
-                                        const cell_group_config*              reestablished_context = nullptr)
+                                        const du_ue_resource_config*          reestablished_context = nullptr)
   {
     return ue_res_impl->update(pcell_index, upd_req, reestablished_context);
   }
@@ -71,13 +72,13 @@ public:
   /// \brief Returns the configurator error, which non-empty string only if the procedure failed.
   std::string get_error() const { return empty() ? configurator_error : std::string{}; }
 
-  const cell_group_config& value() const { return *cached_res; }
-  const cell_group_config& operator*() const { return *cached_res; }
-  const cell_group_config* operator->() const { return cached_res; }
+  const du_ue_resource_config& value() const { return *cached_res; }
+  const du_ue_resource_config& operator*() const { return *cached_res; }
+  const du_ue_resource_config* operator->() const { return cached_res; }
 
 private:
   std::unique_ptr<resource_updater> ue_res_impl;
-  const cell_group_config*          cached_res;
+  const du_ue_resource_config*      cached_res;
   std::string                       configurator_error;
 };
 

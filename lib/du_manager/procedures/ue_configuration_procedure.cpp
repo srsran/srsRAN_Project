@@ -43,7 +43,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
     CORO_EARLY_RETURN(make_empty_ue_config_response());
   }
 
-  prev_cell_group = ue->resources.value();
+  prev_ue_res_cfg = ue->resources.value();
   if (ue->resources.update(ue->pcell_index, request, ue->reestablished_cfg_pending.get()).release_required()) {
     proc_logger.log_proc_failure("Failed to allocate DU UE resources");
     CORO_EARLY_RETURN(make_ue_config_failure());
@@ -75,7 +75,7 @@ async_task<void> ue_configuration_procedure::stop_drbs_to_rem()
 void ue_configuration_procedure::update_ue_context()
 {
   // > Create DU UE SRB objects.
-  for (const auto& bearer : ue->resources->rlc_bearers) {
+  for (const auto& bearer : ue->resources->cell_group.rlc_bearers) {
     if (bearer.drb_id.has_value()) {
       continue;
     }
@@ -124,8 +124,8 @@ void ue_configuration_procedure::update_ue_context()
       proc_logger.log_proc_warning("Failed to release {}. Cause: DRB does not exist", drb_to_rem);
       continue;
     }
-    srsran_assert(std::any_of(prev_cell_group.rlc_bearers.begin(),
-                              prev_cell_group.rlc_bearers.end(),
+    srsran_assert(std::any_of(prev_ue_res_cfg.cell_group.rlc_bearers.begin(),
+                              prev_ue_res_cfg.cell_group.rlc_bearers.end(),
                               [&drb_to_rem](const rlc_bearer_config& e) { return e.drb_id == drb_to_rem; }),
                   "The bearer to be deleted must already exist");
 
@@ -145,10 +145,11 @@ void ue_configuration_procedure::update_ue_context()
     }
 
     // Find the RLC configuration for this DRB.
-    auto it = std::find_if(ue->resources->rlc_bearers.begin(),
-                           ue->resources->rlc_bearers.end(),
+    auto it = std::find_if(ue->resources->cell_group.rlc_bearers.begin(),
+                           ue->resources->cell_group.rlc_bearers.end(),
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
-    srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
+    srsran_assert(it != ue->resources->cell_group.rlc_bearers.end(),
+                  "The bearer config should be created at this point");
 
     // Find the F1-U configuration for this DRB.
     five_qi_t fiveqi     = drbtoadd.qos_info.drb_qos.qos_characteristics.get_five_qi();
@@ -187,10 +188,11 @@ void ue_configuration_procedure::update_ue_context()
       continue;
     }
     // Find the RLC configuration for this DRB.
-    auto it = std::find_if(ue->resources->rlc_bearers.begin(),
-                           ue->resources->rlc_bearers.end(),
+    auto it = std::find_if(ue->resources->cell_group.rlc_bearers.begin(),
+                           ue->resources->cell_group.rlc_bearers.end(),
                            [&drbtomod](const rlc_bearer_config& e) { return e.drb_id == drbtomod.drb_id; });
-    srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
+    srsran_assert(it != ue->resources->cell_group.rlc_bearers.end(),
+                  "The bearer config should be created at this point");
 
     auto drb_it = ue->bearers.drbs().find(drbtomod.drb_id);
     if (drb_it == ue->bearers.drbs().end()) {
@@ -251,8 +253,8 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
   mac_ue_reconf_req.ue_index           = request.ue_index;
   mac_ue_reconf_req.crnti              = ue->rnti;
   mac_ue_reconf_req.pcell_index        = ue->pcell_index;
-  mac_ue_reconf_req.mac_cell_group_cfg = ue->resources->mcg_cfg;
-  mac_ue_reconf_req.phy_cell_group_cfg = ue->resources->pcg_cfg;
+  mac_ue_reconf_req.mac_cell_group_cfg = ue->resources->cell_group.mcg_cfg;
+  mac_ue_reconf_req.phy_cell_group_cfg = ue->resources->cell_group.pcg_cfg;
 
   for (const srb_id_t srbid : srbs_added) {
     du_ue_srb& bearer = ue->bearers.srbs()[srbid];
@@ -340,7 +342,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     // set to "RLCReestablish".
     ue->reestablished_cfg_pending = nullptr;
 
-    calculate_cell_group_config_diff(asn1_cell_group, cell_group_config{}, *ue->resources);
+    calculate_cell_group_config_diff(asn1_cell_group, cell_group_config{}, ue->resources->cell_group);
     auto it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
                            asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
                            [](const auto& b) { return b.lc_ch_id == LCID_SRB1; });
@@ -354,17 +356,17 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     }
   } else if (request.full_config_required) {
     // The CU requested a full configuration of the UE cellGroupConfig.
-    calculate_cell_group_config_diff(asn1_cell_group, {}, *ue->resources);
+    calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources->cell_group);
     resp.full_config_present = true;
 
   } else if (not request.source_cell_group_cfg.empty()) {
     // In case of source cell group configuration is passed, a delta configuration should be generated with it.
     // TODO: Apply diff using sourceCellGroup. For now, we use fullConfig.
-    calculate_cell_group_config_diff(asn1_cell_group, {}, *ue->resources);
+    calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources->cell_group);
     resp.full_config_present = true;
 
   } else {
-    calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
+    calculate_cell_group_config_diff(asn1_cell_group, prev_ue_res_cfg.cell_group, ue->resources->cell_group);
   }
 
   // Include reconfiguration with sync if HandoverPreparationInformation is included.
@@ -378,8 +380,12 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
         return make_ue_config_failure();
       }
     }
-    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present = calculate_reconfig_with_sync_diff(
-        asn1_cell_group.sp_cell_cfg.recfg_with_sync, du_params.ran.cells[0], *ue->resources, ho_prep_info, ue->rnti);
+    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present =
+        calculate_reconfig_with_sync_diff(asn1_cell_group.sp_cell_cfg.recfg_with_sync,
+                                          du_params.ran.cells[0],
+                                          ue->resources->cell_group,
+                                          ho_prep_info,
+                                          ue->rnti);
     if (not asn1_cell_group.sp_cell_cfg.recfg_with_sync_present) {
       proc_logger.log_proc_failure("Failed to calculate ReconfigWithSync");
       return make_ue_config_failure();

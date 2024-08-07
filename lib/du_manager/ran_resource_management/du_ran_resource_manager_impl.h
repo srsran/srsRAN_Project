@@ -22,7 +22,7 @@ class du_ran_resource_manager_impl;
 class du_ue_ran_resource_updater_impl final : public ue_ran_resource_configurator::resource_updater
 {
 public:
-  du_ue_ran_resource_updater_impl(cell_group_config*            cell_cfg_,
+  du_ue_ran_resource_updater_impl(du_ue_resource_config*        cell_cfg_,
                                   du_ran_resource_manager_impl& parent_,
                                   du_ue_index_t                 ue_index_);
   du_ue_ran_resource_updater_impl(const du_ue_ran_resource_updater_impl&)            = delete;
@@ -33,12 +33,12 @@ public:
 
   du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                         const f1ap_ue_context_update_request& upd_req,
-                                        const cell_group_config*              reestablished_context) override;
+                                        const du_ue_resource_config*          reestablished_context) override;
 
-  const cell_group_config& get() override { return *cell_grp; }
+  const du_ue_resource_config& get() override { return *cell_grp; }
 
 private:
-  cell_group_config*            cell_grp;
+  du_ue_resource_config*        cell_grp;
   du_ran_resource_manager_impl* parent;
   du_ue_index_t                 ue_index;
 };
@@ -71,7 +71,7 @@ public:
   du_ue_resource_update_response update_context(du_ue_index_t                         ue_index,
                                                 du_cell_index_t                       pcell_idx,
                                                 const f1ap_ue_context_update_request& upd_req,
-                                                const cell_group_config*              reestablished_context);
+                                                const du_ue_resource_config*          reestablished_context);
 
   /// \brief Deallocates the RAN resources taken by the UE, so that they can be used by future UEs.
   ///
@@ -89,7 +89,7 @@ private:
   srslog::basic_logger&                     logger;
 
   struct ue_res_item {
-    cell_group_config cg_cfg;
+    du_ue_resource_config cg_cfg;
   };
 
   /// Current UE Resource Allocations.

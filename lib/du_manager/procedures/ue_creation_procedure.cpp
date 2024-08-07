@@ -148,8 +148,9 @@ bool ue_creation_procedure::setup_du_ue_resources()
 
   // Create DU UE SRB0 and SRB1.
   ue_ctx->bearers.add_srb(srb_id_t::srb0, make_default_srb0_rlc_config());
-  ue_ctx->bearers.add_srb(
-      srb_id_t::srb1, ue_ctx->resources->rlc_bearers[0].rlc_cfg, ue_ctx->resources->rlc_bearers[0].mac_cfg);
+  ue_ctx->bearers.add_srb(srb_id_t::srb1,
+                          ue_ctx->resources->cell_group.rlc_bearers[0].rlc_cfg,
+                          ue_ctx->resources->cell_group.rlc_bearers[0].mac_cfg);
 
   return true;
 }
@@ -184,8 +185,8 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   mac_ue_create_msg.ue_index           = ue_ctx->ue_index;
   mac_ue_create_msg.crnti              = req.tc_rnti;
   mac_ue_create_msg.cell_index         = req.pcell_index;
-  mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->resources->mcg_cfg;
-  mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
+  mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->resources->cell_group.mcg_cfg;
+  mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->cell_group.pcg_cfg;
   mac_ue_create_msg.rlf_notifier       = &ue_ctx->get_mac_rlf_notifier();
   for (du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
     mac_ue_create_msg.bearers.emplace_back();
@@ -231,7 +232,7 @@ f1ap_ue_creation_response ue_creation_procedure::create_f1ap_ue()
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.
   cell_group_cfg_s cell_group;
-  calculate_cell_group_config_diff(cell_group, {}, *ue_ctx->resources);
+  calculate_cell_group_config_diff(cell_group, {}, ue_ctx->resources->cell_group);
 
   {
     asn1::bit_ref     bref{f1ap_msg.du_cu_rrc_container};

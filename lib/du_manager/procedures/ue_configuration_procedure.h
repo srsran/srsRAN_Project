@@ -51,7 +51,8 @@ private:
   du_ue*                ue     = nullptr;
   ue_procedure_logger   proc_logger;
 
-  cell_group_config prev_cell_group;
+  // Snapshot of the UE resources at the start of the UE configuration procedure.
+  du_ue_resource_config prev_ue_res_cfg;
 
   // SRBs that were actually added during the configuration.
   static_vector<srb_id_t, MAX_NOF_SRBS> srbs_added;

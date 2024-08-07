@@ -44,7 +44,7 @@ static lcid_t find_empty_lcid(const std::vector<rlc_bearer_config>& rlc_bearers)
   return lcid;
 }
 
-du_ue_ran_resource_updater_impl::du_ue_ran_resource_updater_impl(cell_group_config*            cell_grp_cfg_,
+du_ue_ran_resource_updater_impl::du_ue_ran_resource_updater_impl(du_ue_resource_config*        cell_grp_cfg_,
                                                                  du_ran_resource_manager_impl& parent_,
                                                                  du_ue_index_t                 ue_index_) :
   cell_grp(cell_grp_cfg_), parent(&parent_), ue_index(ue_index_)
@@ -56,9 +56,10 @@ du_ue_ran_resource_updater_impl::~du_ue_ran_resource_updater_impl()
   parent->deallocate_context(ue_index);
 }
 
-du_ue_resource_update_response du_ue_ran_resource_updater_impl::update(du_cell_index_t pcell_index,
-                                                                       const f1ap_ue_context_update_request& upd_req,
-                                                                       const cell_group_config* reestablished_context)
+du_ue_resource_update_response
+du_ue_ran_resource_updater_impl::update(du_cell_index_t                       pcell_index,
+                                        const f1ap_ue_context_update_request& upd_req,
+                                        const du_ue_resource_config*          reestablished_context)
 {
   return parent->update_context(ue_index, pcell_index, upd_req, reestablished_context);
 }
@@ -141,16 +142,18 @@ static error_type<std::string> validate_drb_setup_request(const f1ap_drb_to_setu
   return {};
 }
 
-static void reestablish_context(cell_group_config& new_ue_cfg, const cell_group_config& old_ue_cfg)
+static void reestablish_context(du_ue_resource_config& new_ue_cfg, const du_ue_resource_config& old_ue_cfg)
 {
-  for (const rlc_bearer_config& old_bearer : old_ue_cfg.rlc_bearers) {
-    auto it = std::find_if(
-        new_ue_cfg.rlc_bearers.begin(), new_ue_cfg.rlc_bearers.end(), [&old_bearer](const rlc_bearer_config& item) {
-          return item.drb_id == old_bearer.drb_id and (item.drb_id.has_value() or (item.lcid == old_bearer.lcid));
-        });
-    if (it == new_ue_cfg.rlc_bearers.end()) {
+  for (const rlc_bearer_config& old_bearer : old_ue_cfg.cell_group.rlc_bearers) {
+    auto it = std::find_if(new_ue_cfg.cell_group.rlc_bearers.begin(),
+                           new_ue_cfg.cell_group.rlc_bearers.end(),
+                           [&old_bearer](const rlc_bearer_config& item) {
+                             return item.drb_id == old_bearer.drb_id and
+                                    (item.drb_id.has_value() or (item.lcid == old_bearer.lcid));
+                           });
+    if (it == new_ue_cfg.cell_group.rlc_bearers.end()) {
       // Bearer not found in new context. Add it.
-      new_ue_cfg.rlc_bearers.push_back(old_bearer);
+      new_ue_cfg.cell_group.rlc_bearers.push_back(old_bearer);
     }
   }
 }
@@ -159,14 +162,14 @@ du_ue_resource_update_response
 du_ran_resource_manager_impl::update_context(du_ue_index_t                         ue_index,
                                              du_cell_index_t                       pcell_idx,
                                              const f1ap_ue_context_update_request& upd_req,
-                                             const cell_group_config*              reestablished_context)
+                                             const du_ue_resource_config*          reestablished_context)
 {
   srsran_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
-  cell_group_config&             ue_mcg = ue_res_pool[ue_index].cg_cfg;
+  du_ue_resource_config&         ue_mcg = ue_res_pool[ue_index].cg_cfg;
   du_ue_resource_update_response resp;
 
   // > Deallocate resources for previously configured cells that have now been removed or changed.
-  if (ue_mcg.cells.contains(0) and ue_mcg.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
+  if (ue_mcg.cell_group.cells.contains(0) and ue_mcg.cell_group.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
     // >> PCell changed. Deallocate PCell resources.
     deallocate_cell_resources(ue_index, SERVING_CELL_PCELL_IDX);
   }
@@ -176,8 +179,8 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   }
   for (const f1ap_scell_to_setup& scell : upd_req.scells_to_setup) {
     // >> If SCells to be modified changed DU Cell Index.
-    if (ue_mcg.cells.contains(scell.serv_cell_index) and
-        ue_mcg.cells[scell.serv_cell_index].serv_cell_cfg.cell_index != scell.cell_index) {
+    if (ue_mcg.cell_group.cells.contains(scell.serv_cell_index) and
+        ue_mcg.cell_group.cells[scell.serv_cell_index].serv_cell_cfg.cell_index != scell.cell_index) {
       deallocate_cell_resources(ue_index, scell.serv_cell_index);
     }
   }
@@ -189,11 +192,11 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
 
   // > Deallocate removed SRBs / DRBs.
   for (drb_id_t drb_id : upd_req.drbs_to_rem) {
-    auto it = std::find_if(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [drb_id](const rlc_bearer_config& b) {
-      return b.drb_id == drb_id;
-    });
-    if (it != ue_mcg.rlc_bearers.end()) {
-      ue_mcg.rlc_bearers.erase(it);
+    auto it = std::find_if(ue_mcg.cell_group.rlc_bearers.begin(),
+                           ue_mcg.cell_group.rlc_bearers.end(),
+                           [drb_id](const rlc_bearer_config& b) { return b.drb_id == drb_id; });
+    if (it != ue_mcg.cell_group.rlc_bearers.end()) {
+      ue_mcg.cell_group.rlc_bearers.erase(it);
       continue;
     } else {
       logger.warning("Failed to release {}. Cause: DRB not found", drb_id);
@@ -204,35 +207,35 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   for (srb_id_t srb_id : upd_req.srbs_to_setup) {
     // >> New or Modified SRB.
     lcid_t lcid = srb_id_to_lcid(srb_id);
-    if (std::any_of(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [lcid](const auto& item) {
-          return item.lcid == lcid;
-        })) {
+    if (std::any_of(ue_mcg.cell_group.rlc_bearers.begin(),
+                    ue_mcg.cell_group.rlc_bearers.end(),
+                    [lcid](const auto& item) { return item.lcid == lcid; })) {
       // The SRB is already setup (e.g. SRB1 gets setup automatically).
       continue;
     }
-    ue_mcg.rlc_bearers.emplace_back();
-    ue_mcg.rlc_bearers.back().lcid = lcid;
+    ue_mcg.cell_group.rlc_bearers.emplace_back();
+    ue_mcg.cell_group.rlc_bearers.back().lcid = lcid;
 
     auto srb_it = srb_config.find(srb_id);
     if (srb_it != srb_config.end()) {
-      ue_mcg.rlc_bearers.back().rlc_cfg = srb_it->second.rlc;
-      ue_mcg.rlc_bearers.back().mac_cfg = srb_it->second.mac;
+      ue_mcg.cell_group.rlc_bearers.back().rlc_cfg = srb_it->second.rlc;
+      ue_mcg.cell_group.rlc_bearers.back().mac_cfg = srb_it->second.mac;
     } else {
-      ue_mcg.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-      ue_mcg.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(lcid);
+      ue_mcg.cell_group.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+      ue_mcg.cell_group.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(lcid);
     }
   }
 
   // > Create new DRBs.
   for (const f1ap_drb_to_setup& drb : upd_req.drbs_to_setup) {
-    auto res = validate_drb_setup_request(drb, ue_mcg.rlc_bearers, qos_config);
+    auto res = validate_drb_setup_request(drb, ue_mcg.cell_group.rlc_bearers, qos_config);
     if (not res.has_value()) {
       resp.failed_drbs.push_back(drb.drb_id);
       continue;
     }
 
     // > Allocate LCID.
-    lcid_t lcid = find_empty_lcid(ue_mcg.rlc_bearers);
+    lcid_t lcid = find_empty_lcid(ue_mcg.cell_group.rlc_bearers);
     if (lcid > LCID_MAX_DRB) {
       logger.warning("Failed to allocate {}. Cause: No available LCIDs", drb.drb_id);
       resp.failed_drbs.push_back(drb.drb_id);
@@ -242,14 +245,14 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     // >> Get RLC config from 5QI
     five_qi_t            fiveqi = drb.qos_info.drb_qos.qos_characteristics.get_five_qi();
     const du_qos_config& qos    = qos_config.at(fiveqi);
-    ue_mcg.rlc_bearers.emplace_back();
-    ue_mcg.rlc_bearers.back().lcid    = lcid;
-    ue_mcg.rlc_bearers.back().drb_id  = drb.drb_id;
-    ue_mcg.rlc_bearers.back().rlc_cfg = qos.rlc;
-    ue_mcg.rlc_bearers.back().mac_cfg = qos.mac;
+    ue_mcg.cell_group.rlc_bearers.emplace_back();
+    ue_mcg.cell_group.rlc_bearers.back().lcid    = lcid;
+    ue_mcg.cell_group.rlc_bearers.back().drb_id  = drb.drb_id;
+    ue_mcg.cell_group.rlc_bearers.back().rlc_cfg = qos.rlc;
+    ue_mcg.cell_group.rlc_bearers.back().mac_cfg = qos.mac;
 
     // Update pdcp_sn_len in RLC config
-    auto& rlc_cfg = ue_mcg.rlc_bearers.back().rlc_cfg;
+    auto& rlc_cfg = ue_mcg.cell_group.rlc_bearers.back().rlc_cfg;
     switch (rlc_cfg.mode) {
       case rlc_mode::am:
         rlc_cfg.am.tx.pdcp_sn_len = drb.pdcp_sn_len;
@@ -265,7 +268,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
 
   // > Modify existing DRBs.
   for (const f1ap_drb_to_modify& drb : upd_req.drbs_to_mod) {
-    auto res = validate_drb_modification_request(drb, ue_mcg.rlc_bearers);
+    auto res = validate_drb_modification_request(drb, ue_mcg.cell_group.rlc_bearers);
     if (not res.has_value()) {
       resp.failed_drbs.push_back(drb.drb_id);
       continue;
@@ -273,12 +276,12 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   }
 
   // > Sort bearers by LCID.
-  std::sort(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [](const auto& lhs, const auto& rhs) {
-    return lhs.lcid < rhs.lcid;
-  });
+  std::sort(ue_mcg.cell_group.rlc_bearers.begin(),
+            ue_mcg.cell_group.rlc_bearers.end(),
+            [](const auto& lhs, const auto& rhs) { return lhs.lcid < rhs.lcid; });
 
   // > Allocate resources for new or modified cells.
-  if (not ue_mcg.cells.contains(0) or ue_mcg.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
+  if (not ue_mcg.cell_group.cells.contains(0) or ue_mcg.cell_group.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
     // >> PCell changed. Allocate new PCell resources.
     error_type<std::string> outcome = allocate_cell_resources(ue_index, pcell_idx, SERVING_CELL_PCELL_IDX);
     if (not outcome.has_value()) {
@@ -299,9 +302,9 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
 void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
 {
   srsran_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
-  cell_group_config& ue_mcg = ue_res_pool[ue_index].cg_cfg;
+  du_ue_resource_config& ue_mcg = ue_res_pool[ue_index].cg_cfg;
 
-  for (const auto& sc : ue_mcg.cells) {
+  for (const auto& sc : ue_mcg.cell_group.cells) {
     deallocate_cell_resources(ue_index, sc.serv_cell_idx);
   }
   ue_res_pool.erase(ue_index);
@@ -311,33 +314,33 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
                                                                               du_cell_index_t   cell_index,
                                                                               serv_cell_index_t serv_cell_index)
 {
-  cell_group_config& ue_res = ue_res_pool[ue_index].cg_cfg;
+  du_ue_resource_config& ue_res = ue_res_pool[ue_index].cg_cfg;
 
   const du_cell_config& cell_cfg_cmn = cell_cfg_list[cell_index];
 
   if (serv_cell_index == SERVING_CELL_PCELL_IDX) {
     // It is a PCell.
-    srsran_assert(not ue_res.cells.contains(SERVING_CELL_PCELL_IDX), "Reallocation of PCell detected");
-    ue_res.cells.emplace(SERVING_CELL_PCELL_IDX);
-    ue_res.cells[0].serv_cell_idx            = SERVING_CELL_PCELL_IDX;
-    ue_res.cells[0].serv_cell_cfg            = cell_cfg_cmn.ue_ded_serv_cell_cfg;
-    ue_res.cells[0].serv_cell_cfg.cell_index = cell_index;
-    ue_res.mcg_cfg = config_helpers::make_initial_mac_cell_group_config(cell_cfg_cmn.mcg_params);
+    srsran_assert(not ue_res.cell_group.cells.contains(SERVING_CELL_PCELL_IDX), "Reallocation of PCell detected");
+    ue_res.cell_group.cells.emplace(SERVING_CELL_PCELL_IDX);
+    ue_res.cell_group.cells[0].serv_cell_idx            = SERVING_CELL_PCELL_IDX;
+    ue_res.cell_group.cells[0].serv_cell_cfg            = cell_cfg_cmn.ue_ded_serv_cell_cfg;
+    ue_res.cell_group.cells[0].serv_cell_cfg.cell_index = cell_index;
+    ue_res.cell_group.mcg_cfg = config_helpers::make_initial_mac_cell_group_config(cell_cfg_cmn.mcg_params);
     // TODO: Move to helper.
     if (cell_cfg_cmn.pcg_params.p_nr_fr1.has_value()) {
-      ue_res.pcg_cfg.p_nr_fr1 = cell_cfg_cmn.pcg_params.p_nr_fr1->to_int();
+      ue_res.cell_group.pcg_cfg.p_nr_fr1 = cell_cfg_cmn.pcg_params.p_nr_fr1->to_int();
     }
-    ue_res.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
+    ue_res.cell_group.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
-    if (not pucch_res_mng.alloc_resources(ue_res)) {
+    if (not pucch_res_mng.alloc_resources(ue_res.cell_group)) {
       return make_unexpected(fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", cell_index));
     }
   } else {
-    srsran_assert(not ue_res.cells.contains(serv_cell_index), "Reallocation of SCell detected");
-    ue_res.cells.emplace(serv_cell_index);
-    ue_res.cells[serv_cell_index].serv_cell_idx            = serv_cell_index;
-    ue_res.cells[serv_cell_index].serv_cell_cfg            = cell_cfg_cmn.ue_ded_serv_cell_cfg;
-    ue_res.cells[serv_cell_index].serv_cell_cfg.cell_index = cell_index;
+    srsran_assert(not ue_res.cell_group.cells.contains(serv_cell_index), "Reallocation of SCell detected");
+    ue_res.cell_group.cells.emplace(serv_cell_index);
+    ue_res.cell_group.cells[serv_cell_index].serv_cell_idx            = serv_cell_index;
+    ue_res.cell_group.cells[serv_cell_index].serv_cell_cfg            = cell_cfg_cmn.ue_ded_serv_cell_cfg;
+    ue_res.cell_group.cells[serv_cell_index].serv_cell_cfg.cell_index = cell_index;
     // TODO: Allocate SCell params.
   }
   return {};
@@ -345,16 +348,17 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
 
 void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index)
 {
-  cell_group_config& ue_res = ue_res_pool[ue_index].cg_cfg;
+  du_ue_resource_config& ue_res = ue_res_pool[ue_index].cg_cfg;
 
   // Return resources back to free lists.
   if (serv_cell_index == SERVING_CELL_PCELL_IDX) {
-    srsran_assert(not ue_res.cells.empty() and ue_res.cells[0].serv_cell_cfg.cell_index != INVALID_DU_CELL_INDEX,
+    srsran_assert(not ue_res.cell_group.cells.empty() and
+                      ue_res.cell_group.cells[0].serv_cell_cfg.cell_index != INVALID_DU_CELL_INDEX,
                   "Double deallocation of same UE cell resources detected");
-    pucch_res_mng.dealloc_resources(ue_res);
-    ue_res.cells[0].serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
+    pucch_res_mng.dealloc_resources(ue_res.cell_group);
+    ue_res.cell_group.cells[0].serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.
-    ue_res.cells.erase(serv_cell_index);
+    ue_res.cell_group.cells.erase(serv_cell_index);
   }
 }
