@@ -192,7 +192,13 @@ public:
       // Convert value to cf and compare with the expected value.
       cf_t  value = to_cf(value_cbf16);
       float err   = std::abs(entry.value - value);
-      TESTASSERT(err < max_error, "Mismatched value {} but expected {}", value, entry.value);
+      TESTASSERT(err < max_error,
+                 "Mismatched value {} but expected {}. port={} symbol={} subcarrier={}.",
+                 value,
+                 entry.value,
+                 entry.port,
+                 entry.symbol,
+                 entry.subcarrier);
     }
   }
 
