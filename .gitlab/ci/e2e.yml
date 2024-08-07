@@ -447,6 +447,7 @@ cudu amari 32UE:
 uesim 32UE beta:
   stage: zmq
   extends: .e2e-run
+  timeout: 8h
   variables:
     GROUP: uesim
     TESTBED: zmq_uesim
