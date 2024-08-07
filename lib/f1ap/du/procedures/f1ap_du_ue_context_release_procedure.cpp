@@ -18,8 +18,9 @@
 using namespace srsran;
 using namespace srs_du;
 
-// Wait period for RRC container in UE CONTEXT RELEASE REQUEST to be delivered in the lower layers, before deleting
-// the UE context.
+// Wait period for RRC container in UE CONTEXT RELEASE REQUEST to be delivered in the lower layers.
+// Note: This timeout should account for the delay for the UE to receive the RRC container, which is non-deterministic,
+// and the timeout of 60msec specified in TS 38.331, 5.3.8.3 for the UE to ACK the RRC container.
 const std::chrono::milliseconds rrc_container_delivery_timeout{120};
 
 f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
@@ -49,7 +50,7 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
       logger.debug("{}: RRC container delivered successfully.", f1ap_log_prefix{ue.context, name()});
     } else {
       logger.info(
-          "{}: RRC container not delivered within a time window of {}msec. Proceeding with the UE context release.",
+          "{}: RRC container not ACKed within a time window of {}msec. Proceeding with the UE context release...",
           f1ap_log_prefix{ue.context, name()},
           rrc_container_delivery_timeout.count());
     }
@@ -86,7 +87,7 @@ async_task<bool> f1ap_du_ue_context_release_procedure::handle_rrc_container()
   }
 
   // Forward F1AP PDU to lower layers, and await for PDU to be transmitted over-the-air.
-  return srb->handle_pdu_and_await_transmission(msg->rrc_container.copy(), rrc_container_delivery_timeout);
+  return srb->handle_pdu_and_await_delivery(msg->rrc_container.copy(), rrc_container_delivery_timeout);
 }
 
 void f1ap_du_ue_context_release_procedure::send_ue_context_release_complete()
