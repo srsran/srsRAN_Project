@@ -112,22 +112,27 @@ static void update_du_metrics(std::vector<app_services::metrics_config>& flexibl
                               std::vector<app_services::metrics_config>  local_du_cfg,
                               bool                                       is_e2_enabled)
 {
-  // Empty config, copy the local.
+  // First call, copy everything.
   if (flexible_du_cfg.empty()) {
     flexible_du_cfg = std::move(local_du_cfg);
-  }
-
-  if (!is_e2_enabled) {
     return;
   }
 
-  // When E2 is enabled grab the E2 consumers from the local DU and add them to the flexible DU.
+  // Safe check that all the DUs provides the same amount of metrics.
   srsran_assert(flexible_du_cfg.size() == local_du_cfg.size(),
                 "Flexible DU metrics size '{}' does not match DU metrics size '{}'",
                 flexible_du_cfg.size(),
                 local_du_cfg.size());
+
+  // Iterate the metrics configs of each DU. Each DU should ha
   for (unsigned i = 0, e = local_du_cfg.size(); i != e; ++i) {
-    flexible_du_cfg.push_back(std::move(local_du_cfg.back()));
+    // Store the metrics producers for each DU.
+    flexible_du_cfg[i].producers.push_back(std::move(local_du_cfg[i].producers.back()));
+
+    // Move E2 consumers for each DU to the common output config. E2 Consumers occupy the last position.
+    if (is_e2_enabled) {
+      flexible_du_cfg[i].consumers.push_back(std::move(local_du_cfg[i].consumers.back()));
+    }
   }
 }
 
