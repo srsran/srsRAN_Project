@@ -1652,7 +1652,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
     logger.debug("rnti={}: PUCCH PDU on F2 HARQ resource updated: slot={} p_ind={} format={} prbs={} sym={} h_bits={} "
-                 "sr_bits={} cs_bits={}",
+                 "sr_bits={} csi1_bits={}",
                  current_grants.rnti,
                  pucch_slot_alloc.slot,
                  current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
@@ -2025,14 +2025,15 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
   // If there was a CSI grant, re-use the previous one and update the UCI bits with SR.
   if (grants_to_tx.csi_resource.has_value() and existing_pucchs.pucch_grants.csi_resource.has_value() and
       existing_pdus.csi_pdu != nullptr) {
-    logger.debug("rnti={}: PUCCH PDU allocated on CSI resource: slot={} prbs={} sym={} h_bits={} sr_bits={} cs_bits={}",
-                 crnti,
-                 pucch_slot_alloc.slot,
-                 existing_pdus.csi_pdu->resources.prbs,
-                 existing_pdus.csi_pdu->resources.symbols,
-                 existing_pdus.csi_pdu->format_2.harq_ack_nof_bits,
-                 grants_to_tx.csi_resource.value().bits.sr_bits,
-                 grants_to_tx.csi_resource.value().bits.csi_part1_nof_bits);
+    logger.debug(
+        "rnti={}: PUCCH PDU allocated on CSI resource: slot={} prbs={} sym={} h_bits={} sr_bits={} csi1_bits={}",
+        crnti,
+        pucch_slot_alloc.slot,
+        existing_pdus.csi_pdu->resources.prbs,
+        existing_pdus.csi_pdu->resources.symbols,
+        existing_pdus.csi_pdu->format_2.harq_ack_nof_bits,
+        grants_to_tx.csi_resource.value().bits.sr_bits,
+        grants_to_tx.csi_resource.value().bits.csi_part1_nof_bits);
     existing_pdus.update_csi_pdu_bits(grants_to_tx.csi_resource.value().bits.csi_part1_nof_bits,
                                       grants_to_tx.csi_resource.value().bits.sr_bits);
     csi_grant_alloc_completed = true;
@@ -2081,14 +2082,15 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                              0U,
                              grants_to_tx.csi_resource.value().bits.sr_bits,
                              grants_to_tx.csi_resource.value().bits.csi_part1_nof_bits);
-    logger.debug("rnti={}: PUCCH PDU allocated on CSI resource: slot={} prbs={} sym={} h_bits={} sr_bits={} cs_bits={}",
-                 crnti,
-                 pucch_slot_alloc.slot,
-                 grant->resources.prbs,
-                 grant->resources.symbols,
-                 grant->format_2.harq_ack_nof_bits,
-                 grant->format_2.sr_bits,
-                 grant->format_2.csi_part1_bits);
+    logger.debug(
+        "rnti={}: PUCCH PDU allocated on CSI resource: slot={} prbs={} sym={} h_bits={} sr_bits={} csi1_bits={}",
+        crnti,
+        pucch_slot_alloc.slot,
+        grant->resources.prbs,
+        grant->resources.symbols,
+        grant->format_2.harq_ack_nof_bits,
+        grant->format_2.sr_bits,
+        grant->format_2.csi_part1_bits);
   }
   if (grants_to_tx.sr_resource.has_value() and not sr_grant_alloc_completed) {
     pucch_info* grant = existing_pdus.get_next_grant(pucch_pdus);
@@ -2175,7 +2177,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
     } else {
       logger.debug(
           "rnti={}: PUCCH PDU allocated on F2 HARQ resource: slot={} p_ind={} format={} prbs={} sym={} h_bits={} "
-          "sr_bits={} cs_bits={}",
+          "sr_bits={} csi1_bits={}",
           crnti,
           pucch_slot_alloc.slot,
           grants_to_tx.harq_resource.value().harq_id.pucch_res_ind,
