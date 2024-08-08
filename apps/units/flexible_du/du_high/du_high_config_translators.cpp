@@ -12,6 +12,7 @@
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
+#include "srsran/du/du_qos_config_helpers.h"
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/ran/duplex_mode.h"
