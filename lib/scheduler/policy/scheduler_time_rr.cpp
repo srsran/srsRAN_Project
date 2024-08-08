@@ -305,7 +305,7 @@ static alloc_result alloc_dl_ue(const slice_ue&              u,
 
     // Iterate through allocation parameter candidates.
     for (const dl_harq_process* h_dl : harq_candidates) {
-      ue_pdsch_grant grant{&u, ue_cc.cell_index, h_dl->id, slice_id};
+      ue_pdsch_grant grant{&u, ue_cc.cell_index, h_dl->id};
       if (not is_retx) {
         grant.recommended_nof_bytes = u.pending_dl_newtx_bytes();
         grant.max_nof_rbs           = dl_new_tx_max_nof_rbs_per_ue_per_slot;
@@ -357,7 +357,7 @@ static alloc_result alloc_ul_ue(const slice_ue&         u,
 
     // Iterate through allocation parameter candidates.
     for (const ul_harq_process* h_ul : harq_candidates) {
-      ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id, slice_id};
+      ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id};
       if (not is_retx) {
         grant.recommended_nof_bytes = pending_newtx_bytes;
         grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
