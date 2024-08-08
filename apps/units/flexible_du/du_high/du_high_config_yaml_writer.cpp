@@ -406,23 +406,23 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
 {
   YAML::Node node;
 
-  node["p0_nominal"]                   = config.p0_nominal;
-  node["pucch_resource_common"]        = config.pucch_resource_common;
-  node["use_format_0"]                 = config.use_format_0;
-  node["sr_period_ms"]                 = config.sr_period_msec;
-  node["f0_or_f1_nof_ue_res_harq"]     = config.nof_ue_pucch_res_harq_per_set;
-  node["f0_or_f1_nof_cell_res_sr"]     = config.nof_cell_sr_resources;
-  node["f0_intraslot_freq_hop"]        = config.f0_intraslot_freq_hopping;
-  node["f1_enable_occ"]                = config.f1_enable_occ;
-  node["f1_nof_cyclic_shifts"]         = config.nof_cyclic_shift;
-  node["f1_intraslot_freq_hop"]        = config.f1_intraslot_freq_hopping;
-  node["nof_cell_harq_pucch_res_sets"] = config.nof_cell_harq_pucch_sets;
-  node["f2_nof_cell_res_csi"]          = config.nof_cell_csi_resources;
-  node["f2_max_nof_rbs"]               = config.f2_max_nof_rbs;
-  node["f2_max_code_rate"]             = to_string(config.max_code_rate);
-  node["f2_intraslot_freq_hop"]        = config.f2_intraslot_freq_hopping;
-  node["min_k1"]                       = config.min_k1;
-  node["max_consecutive_kos"]          = config.max_consecutive_kos;
+  node["p0_nominal"]                    = config.p0_nominal;
+  node["pucch_resource_common"]         = config.pucch_resource_common;
+  node["use_format_0"]                  = config.use_format_0;
+  node["sr_period_ms"]                  = config.sr_period_msec;
+  node["nof_ue_pucch_res_harq_per_set"] = config.nof_ue_pucch_res_harq_per_set;
+  node["f0_or_f1_nof_cell_res_sr"]      = config.nof_cell_sr_resources;
+  node["f0_intraslot_freq_hop"]         = config.f0_intraslot_freq_hopping;
+  node["f1_enable_occ"]                 = config.f1_enable_occ;
+  node["f1_nof_cyclic_shifts"]          = config.nof_cyclic_shift;
+  node["f1_intraslot_freq_hop"]         = config.f1_intraslot_freq_hopping;
+  node["nof_cell_harq_pucch_res_sets"]  = config.nof_cell_harq_pucch_sets;
+  node["f2_nof_cell_res_csi"]           = config.nof_cell_csi_resources;
+  node["f2_max_nof_rbs"]                = config.f2_max_nof_rbs;
+  node["f2_max_code_rate"]              = to_string(config.max_code_rate);
+  node["f2_intraslot_freq_hop"]         = config.f2_intraslot_freq_hopping;
+  node["min_k1"]                        = config.min_k1;
+  node["max_consecutive_kos"]           = config.max_consecutive_kos;
   if (config.max_payload_bits.has_value()) {
     node["f2_max_payload"] = config.max_payload_bits.value();
   }

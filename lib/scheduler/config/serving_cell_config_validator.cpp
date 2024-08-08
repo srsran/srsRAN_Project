@@ -157,10 +157,10 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   VERIFY(pucch_cfg.pucch_res_set.size() >= 2, "At least 2 PUCCH resource sets need to be configured in PUCCH-Config");
   VERIFY(pucch_cfg.pucch_res_set[0].pucch_res_set_id == pucch_res_set_idx::set_0 and
              pucch_cfg.pucch_res_set[1].pucch_res_set_id == pucch_res_set_idx::set_1,
-         "PUCCH resouce sets 0 and 1 are expected to have PUCCH-ResourceSetId 0 and 1, respectively");
+         "PUCCH resource sets 0 and 1 are expected to have PUCCH-ResourceSetId 0 and 1, respectively");
   VERIFY((not pucch_cfg.pucch_res_set[0].pucch_res_id_list.empty()) and
              (not pucch_cfg.pucch_res_set[1].pucch_res_id_list.empty()),
-         "PUCCH resouce sets 0 and 1 are expected to have a non-empty set of PUCCH resource id");
+         "PUCCH resource sets 0 and 1 are expected to have a non-empty set of PUCCH resource id");
   for (size_t pucch_res_set_idx = 0; pucch_res_set_idx != 2; ++pucch_res_set_idx) {
     for (auto res_idx : pucch_cfg.pucch_res_set[pucch_res_set_idx].pucch_res_id_list) {
       const auto* pucch_res_it = get_pucch_resource_with_id(res_idx.cell_res_id);
@@ -170,6 +170,10 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
              pucch_res_set_idx);
     }
   }
+
+  // Verify that the size of PUCCH resource set 1 is not smaller than the size of PUCCH resource set 0.
+  VERIFY(pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() <= pucch_cfg.pucch_res_set[1].pucch_res_id_list.size(),
+         "PUCCH resource set 1's size should be greater or equal to PUCCH resource set 0's size");
 
   // Verify that each PUCCH resource has a valid cell resource ID.
   for (auto res_idx : pucch_cfg.pucch_res_list) {
