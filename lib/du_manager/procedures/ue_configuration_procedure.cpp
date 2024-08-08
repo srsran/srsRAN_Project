@@ -44,7 +44,8 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   }
 
   prev_ue_res_cfg = ue->resources.value();
-  if (ue->resources.update(ue->pcell_index, request, ue->reestablished_cfg_pending.get()).release_required()) {
+  ue_res_cfg_resp = ue->resources.update(ue->pcell_index, request, ue->reestablished_cfg_pending.get());
+  if (ue_res_cfg_resp.release_required()) {
     proc_logger.log_proc_failure("Failed to allocate DU UE resources");
     CORO_EARLY_RETURN(make_ue_config_failure());
   }
@@ -81,7 +82,7 @@ void ue_configuration_procedure::update_ue_context()
     }
     srb_id_t srbid = to_srb_id(bearer.lcid);
     if (ue->bearers.srbs().contains(srbid)) {
-      // >> In case the SRB already exists, we ignore the request for its configuration.
+      // >> In case the SRB already exists, we ignore the request for its reconfiguration.
       continue;
     }
     srbs_added.push_back(srbid);
@@ -121,43 +122,38 @@ void ue_configuration_procedure::update_ue_context()
   // Note: This DRB pointer will remain valid and accessible from other layers until we update the latter.
   for (const drb_id_t& drb_to_rem : request.drbs_to_rem) {
     if (ue->bearers.drbs().count(drb_to_rem) == 0) {
-      proc_logger.log_proc_warning("Failed to release {}. Cause: DRB does not exist", drb_to_rem);
+      proc_logger.log_proc_warning("Failed to release {}. Cause: DRB entity does not exist", drb_to_rem);
       continue;
     }
-    srsran_assert(std::any_of(prev_ue_res_cfg.cell_group.rlc_bearers.begin(),
-                              prev_ue_res_cfg.cell_group.rlc_bearers.end(),
-                              [&drb_to_rem](const rlc_bearer_config& e) { return e.drb_id == drb_to_rem; }),
-                  "The bearer to be deleted must already exist");
-
     drbs_to_rem.push_back(ue->bearers.remove_drb(drb_to_rem));
   }
 
   // > Create new DU UE DRB objects.
   for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
-    if (drbtoadd.uluptnl_info_list.empty()) {
-      proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
+    if (std::find(ue_res_cfg_resp.failed_drbs.begin(), ue_res_cfg_resp.failed_drbs.end(), drbtoadd.drb_id) !=
+        ue_res_cfg_resp.failed_drbs.end()) {
+      // >> In case it was not possible to setup DRB in the UE resources, we continue to the next DRB.
       continue;
     }
     if (ue->bearers.drbs().count(drbtoadd.drb_id) > 0) {
       proc_logger.log_proc_warning("Failed to setup {}. Cause: DRB setup for an already existing DRB.",
                                    drbtoadd.drb_id);
+      ue_res_cfg_resp.failed_drbs.push_back(drbtoadd.drb_id);
       continue;
     }
 
-    // Find the RLC configuration for this DRB.
+    // Find the configurations for this DRB.
     auto it = std::find_if(ue->resources->cell_group.rlc_bearers.begin(),
                            ue->resources->cell_group.rlc_bearers.end(),
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
-    srsran_assert(it != ue->resources->cell_group.rlc_bearers.end(),
-                  "The bearer config should be created at this point");
-
-    // Find the F1-U configuration for this DRB.
-    five_qi_t fiveqi     = drbtoadd.qos_info.drb_qos.qos_characteristics.get_five_qi();
-    auto      f1u_cfg_it = du_params.ran.qos.find(fiveqi);
-    srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for {}", fiveqi);
-
-    // TODO: Adjust QoS characteristics passed while creating a DRB since one DRB can contain multiple QoS flow of
-    //  varying 5QI.
+    srsran_sanity_check(it != ue->resources->cell_group.rlc_bearers.end(),
+                        "The bearer config should be created at this point");
+    auto drb_qos_it =
+        std::find_if(ue->resources->drbs.begin(),
+                     ue->resources->drbs.end(),
+                     [&drbtoadd](const drb_upper_layer_config& drb) { return drb.drb_id == drbtoadd.drb_id; });
+    srsran_sanity_check(drb_qos_it != ue->resources->drbs.end(), "The bearer config should be created at this point");
+    five_qi_t fiveqi = drb_qos_it->qos.qos_characteristics.get_five_qi();
 
     // Create DU DRB instance.
     std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
@@ -166,15 +162,16 @@ void ue_configuration_procedure::update_ue_context()
                                                                   it->lcid,
                                                                   it->rlc_cfg,
                                                                   it->mac_cfg,
-                                                                  f1u_cfg_it->second.f1u,
+                                                                  drb_qos_it->f1u,
                                                                   drbtoadd.uluptnl_info_list,
                                                                   ue_mng.get_f1u_teid_pool(),
                                                                   du_params,
                                                                   ue->get_rlc_rlf_notifier(),
                                                                   get_5qi_to_qos_characteristics_mapping(fiveqi),
-                                                                  drbtoadd.qos_info.drb_qos.gbr_qos_info,
-                                                                  drbtoadd.qos_info.s_nssai});
+                                                                  drb_qos_it->qos.gbr_qos_info,
+                                                                  drb_qos_it->s_nssai});
     if (drb == nullptr) {
+      ue_res_cfg_resp.failed_drbs.push_back(drbtoadd.drb_id);
       proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.", drbtoadd.drb_id);
       continue;
     }
@@ -183,52 +180,52 @@ void ue_configuration_procedure::update_ue_context()
 
   // > Modify existing UE DRBs.
   for (const f1ap_drb_to_modify& drbtomod : request.drbs_to_mod) {
-    if (drbtomod.uluptnl_info_list.empty()) {
-      proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtomod.drb_id);
+    if (std::find(ue_res_cfg_resp.failed_drbs.begin(), ue_res_cfg_resp.failed_drbs.end(), drbtomod.drb_id) !=
+        ue_res_cfg_resp.failed_drbs.end()) {
+      // >> Failed to modify DRB, continue to next DRB.
       continue;
     }
+
     // Find the RLC configuration for this DRB.
     auto it = std::find_if(ue->resources->cell_group.rlc_bearers.begin(),
                            ue->resources->cell_group.rlc_bearers.end(),
                            [&drbtomod](const rlc_bearer_config& e) { return e.drb_id == drbtomod.drb_id; });
     srsran_assert(it != ue->resources->cell_group.rlc_bearers.end(),
                   "The bearer config should be created at this point");
+    auto drb_qos_it = std::find_if(ue->resources->drbs.begin(),
+                                   ue->resources->drbs.end(),
+                                   [&drbtomod](const auto& drb) { return drb.drb_id == drbtomod.drb_id; });
 
     auto drb_it = ue->bearers.drbs().find(drbtomod.drb_id);
     if (drb_it == ue->bearers.drbs().end()) {
-      // It's a DRB modification during RRC Reestablishment. We need to create a new DRB instance.
+      // >> It's a DRB modification after RRC Reestablishment. We need to create a new DRB instance.
 
-      // Find the F1-U configuration for this DRB.
-      // TODO: Retrieve old UE context for QoS. The way it is now, the old UE QoS has already been lost at this point.
-      auto f1u_cfg_it = std::find_if(du_params.ran.qos.begin(), du_params.ran.qos.end(), [&it](const auto& p) {
-        return it->rlc_cfg.mode == p.second.rlc.mode;
-      });
-      srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config");
+      five_qi_t fiveqi = drb_qos_it->qos.qos_characteristics.get_five_qi();
 
       // Create DU DRB instance.
-      std::unique_ptr<du_ue_drb> drb =
-          create_drb(drb_creation_info{ue->ue_index,
-                                       ue->pcell_index,
-                                       drbtomod.drb_id,
-                                       it->lcid,
-                                       it->rlc_cfg,
-                                       it->mac_cfg,
-                                       f1u_cfg_it->second.f1u,
-                                       drbtomod.uluptnl_info_list,
-                                       ue_mng.get_f1u_teid_pool(),
-                                       du_params,
-                                       ue->get_rlc_rlf_notifier(),
-                                       get_5qi_to_qos_characteristics_mapping(f1u_cfg_it->first),
-                                       std::nullopt,
-                                       {}});
+      std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
+                                                                    ue->pcell_index,
+                                                                    drbtomod.drb_id,
+                                                                    it->lcid,
+                                                                    it->rlc_cfg,
+                                                                    it->mac_cfg,
+                                                                    drb_qos_it->f1u,
+                                                                    drbtomod.uluptnl_info_list,
+                                                                    ue_mng.get_f1u_teid_pool(),
+                                                                    du_params,
+                                                                    ue->get_rlc_rlf_notifier(),
+                                                                    get_5qi_to_qos_characteristics_mapping(fiveqi),
+                                                                    drb_qos_it->qos.gbr_qos_info,
+                                                                    drb_qos_it->s_nssai});
       if (drb == nullptr) {
         proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.",
                                      drbtomod.drb_id);
+        ue_res_cfg_resp.failed_drbs.push_back(drbtomod.drb_id);
         continue;
       }
       ue->bearers.add_drb(std::move(drb));
     } else {
-      // TODO: Support DRB modifications.
+      // TODO: Support existing DRB entity modifications.
     }
   }
 }
@@ -282,7 +279,8 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
   for (const auto& drb : request.drbs_to_mod) {
-    if (ue->bearers.drbs().count(drb.drb_id) == 0) {
+    if (std::find(ue_res_cfg_resp.failed_drbs.begin(), ue_res_cfg_resp.failed_drbs.end(), drb.drb_id) !=
+        ue_res_cfg_resp.failed_drbs.end()) {
       // The DRB failed to be modified. Carry on with other DRBs.
       continue;
     }
@@ -292,7 +290,6 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     lc_ch.lcid      = bearer.lcid;
     lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
-    // TODO: Support modifications in the MAC config.
   }
 
   // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.

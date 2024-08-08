@@ -74,6 +74,11 @@ static error_type<std::string> validate_drb_setup_request(const f1ap_drb_to_setu
                     drb.mode));
   }
 
+  // Validate UL UP TNL INFO.
+  if (drb.uluptnl_info_list.empty()) {
+    return make_unexpected("No UL UP TNL Info List provided");
+  }
+
   // Search for established DRB with matching DRB-Id.
   auto prev_drb_it = find_by_drb_id(drb.drb_id, rlc_bearers);
   if (prev_drb_it != rlc_bearers.end()) {
@@ -91,6 +96,12 @@ static error_type<std::string> validate_drb_modification_request(const f1ap_drb_
   if (prev_drb_it == rlc_bearers.end()) {
     return make_unexpected("DRB-Id not found");
   }
+
+  // Validate UL UP TNL INFO.
+  if (drb.uluptnl_info_list.empty()) {
+    return make_unexpected("No UL UP TNL Info List provided");
+  }
+
   return {};
 }
 
@@ -222,6 +233,7 @@ std::vector<drb_id_t> du_bearer_resource_manager::setup_drbs(du_ue_resource_conf
     drb_qos.pdcp_sn_len             = drb_to_setup.pdcp_sn_len;
     drb_qos.s_nssai                 = drb_to_setup.qos_info.s_nssai;
     drb_qos.qos                     = drb_to_setup.qos_info.drb_qos;
+    drb_qos.f1u                     = qos.f1u;
 
     // Create new L2 DRB.
     rlc_bearer_config& ran_bearer = ue_cfg.cell_group.rlc_bearers.emplace_back();

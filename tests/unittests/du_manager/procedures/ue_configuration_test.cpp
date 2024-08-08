@@ -33,25 +33,33 @@ protected:
     test_ue = &create_ue(to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX)));
   }
 
-  void start_procedure(const f1ap_ue_context_update_request& req)
+  void start_procedure(const f1ap_ue_context_update_request& req, const std::vector<drb_id_t>& failed_drbs = {})
   {
+    auto& next_cfg = this->cell_res_alloc.next_context_update_result;
     for (srb_id_t srb_id : req.srbs_to_setup) {
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.emplace_back();
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().lcid = srb_id_to_lcid(srb_id);
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().rlc_cfg =
-          make_default_srb_rlc_config();
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().mac_cfg =
-          make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
+      next_cfg.cell_group.rlc_bearers.emplace_back();
+      next_cfg.cell_group.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
+      next_cfg.cell_group.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+      next_cfg.cell_group.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
     }
     for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.emplace_back();
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().lcid =
-          uint_to_lcid(3 + (unsigned)drb.drb_id);
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().drb_id = drb.drb_id;
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().rlc_cfg =
-          make_default_srb_rlc_config();
-      this->cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().mac_cfg =
-          make_default_drb_mac_lc_config();
+      if (std::find(failed_drbs.begin(), failed_drbs.end(), drb.drb_id) != failed_drbs.end()) {
+        // This DRB config will fail.
+        this->cell_res_alloc.next_config_resp.failed_drbs.push_back(drb.drb_id);
+        continue;
+      }
+      next_cfg.cell_group.rlc_bearers.emplace_back();
+      next_cfg.cell_group.rlc_bearers.back().lcid    = uint_to_lcid(3 + (unsigned)drb.drb_id);
+      next_cfg.cell_group.rlc_bearers.back().drb_id  = drb.drb_id;
+      next_cfg.cell_group.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+      next_cfg.cell_group.rlc_bearers.back().mac_cfg = make_default_drb_mac_lc_config();
+      auto& next_drb                                 = next_cfg.drbs.emplace_back();
+      next_drb.drb_id                                = drb.drb_id;
+      next_drb.pdcp_sn_len                           = drb.pdcp_sn_len;
+      next_drb.s_nssai                               = drb.qos_info.s_nssai;
+      next_drb.qos                                   = drb.qos_info.drb_qos;
+      next_drb.f1u.t_notify                          = 100;
+      next_drb.f1u.warn_on_drop                      = false;
     }
 
     proc = launch_async<ue_configuration_procedure>(req, ue_mng, params);
@@ -313,8 +321,7 @@ TEST_F(ue_config_tester, when_config_is_invalid_of_drb_to_create_then_drb_is_inc
   // Start Procedure.
   f1ap_ue_context_update_request req =
       create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
-  req.drbs_to_setup[0].uluptnl_info_list.clear();
-  start_procedure(req);
+  start_procedure(req, {drb_id_t::drb1});
 
   // Check MAC received request to update UE configuration without the DRB that could not be created.
   ASSERT_TRUE(this->mac.last_ue_reconf_msg.has_value());
@@ -400,9 +407,12 @@ TEST_F(ue_config_tester,
 {
   // Mark UE as reestablishing.
   test_ue->reestablished_cfg_pending = std::make_unique<du_ue_resource_config>();
-  test_ue->reestablished_cfg_pending->cell_group.rlc_bearers.emplace_back();
-  test_ue->reestablished_cfg_pending->cell_group.rlc_bearers.back().lcid   = LCID_MIN_DRB;
-  test_ue->reestablished_cfg_pending->cell_group.rlc_bearers.back().drb_id = drb_id_t::drb1;
+  auto& old_bearer                   = test_ue->reestablished_cfg_pending->cell_group.rlc_bearers.emplace_back();
+  old_bearer.lcid                    = LCID_MIN_DRB;
+  old_bearer.drb_id                  = drb_id_t::drb1;
+  auto& old_drb                      = test_ue->reestablished_cfg_pending->drbs.emplace_back();
+  old_drb.drb_id                     = drb_id_t::drb1;
+  old_drb.qos.qos_characteristics.non_dyn_5qi.emplace().five_qi = uint_to_five_qi(9);
 
   // Run procedure to create SRB2 and DRB1.
   f1ap_ue_context_update_request req =

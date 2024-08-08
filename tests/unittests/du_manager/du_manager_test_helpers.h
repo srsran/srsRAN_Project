@@ -297,6 +297,7 @@ public:
   f1ap_ue_context_update_request                 last_ue_ctx_upd;
   std::map<du_ue_index_t, du_ue_resource_config> ue_resource_pool;
   du_ue_resource_config                          next_context_update_result;
+  du_ue_resource_update_response                 next_config_resp;
 
   dummy_ue_resource_configurator_factory();
 

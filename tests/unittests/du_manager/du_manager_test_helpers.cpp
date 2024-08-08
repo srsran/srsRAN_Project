@@ -48,7 +48,7 @@ du_ue_resource_update_response dummy_ue_resource_configurator_factory::dummy_res
     const du_ue_resource_config*          reestablished_context)
 {
   parent.ue_resource_pool[ue_index] = parent.next_context_update_result;
-  return du_ue_resource_update_response{};
+  return parent.next_config_resp;
 }
 
 const du_ue_resource_config& dummy_ue_resource_configurator_factory::dummy_resource_updater::get()

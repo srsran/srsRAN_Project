@@ -21,7 +21,6 @@ struct du_ue_resource_update_response {
   /// \brief Defines whether the UE release is required due to an error during the update procedure.
   /// If \c procedure_error doesn't contain any error string, then the UE resource update was successful.
   error_type<std::string>        procedure_error = {};
-  std::vector<srb_id_t>          failed_srbs;
   std::vector<drb_id_t>          failed_drbs;
   std::vector<serv_cell_index_t> failed_scells;
 

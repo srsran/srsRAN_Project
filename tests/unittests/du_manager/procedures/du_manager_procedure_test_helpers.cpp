@@ -83,12 +83,17 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
         make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
   }
   for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
-    cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.emplace_back();
-    cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().drb_id = drb.drb_id;
-    cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().lcid =
-        uint_to_lcid(3 + (unsigned)drb.drb_id);
-    cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-    cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().mac_cfg = make_default_drb_mac_lc_config();
+    auto& rlc_drb                   = cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.emplace_back();
+    rlc_drb.drb_id                  = drb.drb_id;
+    rlc_drb.lcid                    = uint_to_lcid(3 + (unsigned)drb.drb_id);
+    rlc_drb.rlc_cfg                 = make_default_srb_rlc_config();
+    rlc_drb.mac_cfg                 = make_default_drb_mac_lc_config();
+    drb_upper_layer_config& qos_drb = cell_res_alloc.next_context_update_result.drbs.emplace_back();
+    qos_drb.drb_id                  = drb.drb_id;
+    qos_drb.pdcp_sn_len             = drb.pdcp_sn_len;
+    qos_drb.s_nssai                 = drb.qos_info.s_nssai;
+    qos_drb.qos                     = drb.qos_info.drb_qos;
+    qos_drb.f1u                     = {};
   }
   for (const f1ap_drb_to_modify& drb : req.drbs_to_mod) {
     cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.emplace_back();
@@ -97,6 +102,11 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
         uint_to_lcid(3 + (unsigned)drb.drb_id);
     cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
     cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.back().mac_cfg = make_default_drb_mac_lc_config();
+    drb_upper_layer_config&      qos_drb    = cell_res_alloc.next_context_update_result.drbs.emplace_back();
+    const du_ue_resource_config& old_ue_cfg = *ue_mng.find_ue(req.ue_index)->reestablished_cfg_pending;
+    auto                         old_drb_it = std::find_if(
+        old_ue_cfg.drbs.begin(), old_ue_cfg.drbs.end(), [&drb](const auto& d) { return d.drb_id == drb.drb_id; });
+    qos_drb = *old_drb_it;
   }
   for (drb_id_t drb_id : req.drbs_to_rem) {
     auto it = std::find_if(cell_res_alloc.next_context_update_result.cell_group.rlc_bearers.begin(),
