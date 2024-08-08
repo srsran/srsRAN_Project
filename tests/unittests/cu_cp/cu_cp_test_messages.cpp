@@ -60,8 +60,8 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
       qos_item.qos_flow_id = uint_to_qos_flow_id(i + k + 1);
 
       non_dyn_5qi_descriptor_t non_dyn_5qi;
-      non_dyn_5qi.five_qi                                                = uint_to_five_qi(9); // all with same FiveQI
-      qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+      non_dyn_5qi.five_qi                                    = uint_to_five_qi(9); // all with same FiveQI
+      qos_item.qos_flow_level_qos_params.qos_characteristics = non_dyn_5qi;
 
       qos_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp = 8;
 
@@ -105,7 +105,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_modification(ue_index_t ue_inde
   {
     non_dyn_5qi_descriptor_t non_dyn_5qi;
     non_dyn_5qi.five_qi                                                    = uint_to_five_qi(7);
-    qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi     = non_dyn_5qi;
+    qos_item.qos_flow_level_qos_params.qos_characteristics                 = non_dyn_5qi;
     qos_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp = 8;
   }
 

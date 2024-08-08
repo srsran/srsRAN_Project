@@ -125,57 +125,56 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
 {
   asn1::f1ap::qos_characteristics_c asn1_qos_characteristics;
 
-  if (qos_characteristics.dyn_5qi.has_value()) {
-    auto& asn1_dyn_5qi               = asn1_qos_characteristics.set_dyn_5qi();
-    asn1_dyn_5qi.qos_prio_level      = qos_prio_level_to_uint(qos_characteristics.dyn_5qi.value().qos_prio_level);
-    asn1_dyn_5qi.packet_delay_budget = qos_characteristics.dyn_5qi.value().packet_delay_budget;
-    asn1_dyn_5qi.packet_error_rate.per_scalar   = qos_characteristics.dyn_5qi.value().per.scalar;
-    asn1_dyn_5qi.packet_error_rate.per_exponent = qos_characteristics.dyn_5qi.value().per.exponent;
+  if (qos_characteristics.is_dyn_5qi()) {
+    auto&                       asn1_dyn_5qi    = asn1_qos_characteristics.set_dyn_5qi();
+    const dyn_5qi_descriptor_t& dyn_5qi         = qos_characteristics.get_dyn_5qi();
+    asn1_dyn_5qi.qos_prio_level                 = qos_prio_level_to_uint(dyn_5qi.qos_prio_level);
+    asn1_dyn_5qi.packet_delay_budget            = dyn_5qi.packet_delay_budget;
+    asn1_dyn_5qi.packet_error_rate.per_scalar   = dyn_5qi.per.scalar;
+    asn1_dyn_5qi.packet_error_rate.per_exponent = dyn_5qi.per.exponent;
 
-    if (qos_characteristics.dyn_5qi.value().five_qi.has_value()) {
+    if (dyn_5qi.five_qi.has_value()) {
       asn1_dyn_5qi.five_qi_present = true;
-      asn1_dyn_5qi.five_qi         = five_qi_to_uint(qos_characteristics.dyn_5qi.value().five_qi.value());
+      asn1_dyn_5qi.five_qi         = five_qi_to_uint(dyn_5qi.five_qi.value());
     }
 
-    if (qos_characteristics.dyn_5qi.value().is_delay_critical.has_value()) {
+    if (dyn_5qi.is_delay_critical.has_value()) {
       asn1_dyn_5qi.delay_crit_present = true;
-      asn1_dyn_5qi.delay_crit.value   = qos_characteristics.dyn_5qi.value().is_delay_critical.value()
+      asn1_dyn_5qi.delay_crit.value   = dyn_5qi.is_delay_critical.value()
                                             ? asn1::f1ap::dyn_5qi_descriptor_s::delay_crit_opts::delay_crit
                                             : asn1::f1ap::dyn_5qi_descriptor_s::delay_crit_opts::non_delay_crit;
     }
 
-    if (qos_characteristics.dyn_5qi.value().averaging_win.has_value()) {
+    if (dyn_5qi.averaging_win.has_value()) {
       asn1_dyn_5qi.averaging_win_present = true;
-      asn1_dyn_5qi.averaging_win         = qos_characteristics.dyn_5qi.value().averaging_win.value();
+      asn1_dyn_5qi.averaging_win         = dyn_5qi.averaging_win.value();
     }
 
-    if (qos_characteristics.dyn_5qi.value().max_data_burst_volume.has_value()) {
+    if (dyn_5qi.max_data_burst_volume.has_value()) {
       asn1_dyn_5qi.max_data_burst_volume_present = true;
-      asn1_dyn_5qi.max_data_burst_volume         = qos_characteristics.dyn_5qi.value().max_data_burst_volume.value();
+      asn1_dyn_5qi.max_data_burst_volume         = dyn_5qi.max_data_burst_volume.value();
     }
 
-  } else if (qos_characteristics.non_dyn_5qi.has_value()) {
-    auto& asn1_non_dyn_5qi = asn1_qos_characteristics.set_non_dyn_5qi();
-
-    asn1_non_dyn_5qi.five_qi = five_qi_to_uint(qos_characteristics.non_dyn_5qi.value().five_qi);
-
-    if (qos_characteristics.non_dyn_5qi.value().qos_prio_level.has_value()) {
-      asn1_non_dyn_5qi.qos_prio_level_present = true;
-      asn1_non_dyn_5qi.qos_prio_level =
-          qos_prio_level_to_uint(qos_characteristics.non_dyn_5qi.value().qos_prio_level.value());
-    }
-
-    if (qos_characteristics.non_dyn_5qi.value().averaging_win.has_value()) {
-      asn1_non_dyn_5qi.averaging_win_present = true;
-      asn1_non_dyn_5qi.averaging_win         = qos_characteristics.non_dyn_5qi.value().averaging_win.value();
-    }
-
-    if (qos_characteristics.non_dyn_5qi.value().max_data_burst_volume.has_value()) {
-      asn1_non_dyn_5qi.max_data_burst_volume_present = true;
-      asn1_non_dyn_5qi.max_data_burst_volume = qos_characteristics.non_dyn_5qi.value().max_data_burst_volume.value();
-    }
   } else {
-    report_fatal_error("Invalid QoS characteristics. Either dynamic or non-dynamic 5qi must be set");
+    auto&                           asn1_non_dyn_5qi = asn1_qos_characteristics.set_non_dyn_5qi();
+    const non_dyn_5qi_descriptor_t& non_dyn_5qi      = qos_characteristics.get_nondyn_5qi();
+
+    asn1_non_dyn_5qi.five_qi = five_qi_to_uint(non_dyn_5qi.five_qi);
+
+    if (non_dyn_5qi.qos_prio_level.has_value()) {
+      asn1_non_dyn_5qi.qos_prio_level_present = true;
+      asn1_non_dyn_5qi.qos_prio_level         = qos_prio_level_to_uint(non_dyn_5qi.qos_prio_level.value());
+    }
+
+    if (non_dyn_5qi.averaging_win.has_value()) {
+      asn1_non_dyn_5qi.averaging_win_present = true;
+      asn1_non_dyn_5qi.averaging_win         = non_dyn_5qi.averaging_win.value();
+    }
+
+    if (non_dyn_5qi.max_data_burst_volume.has_value()) {
+      asn1_non_dyn_5qi.max_data_burst_volume_present = true;
+      asn1_non_dyn_5qi.max_data_burst_volume         = non_dyn_5qi.max_data_burst_volume.value();
+    }
   }
 
   return asn1_qos_characteristics;

@@ -232,11 +232,11 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   // qos flow level qos params
   // qos characteristics
   non_dyn_5qi_descriptor_t non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                        = uint_to_five_qi(8);
-  non_dyn_5qi.qos_prio_level                                                 = uint_to_qos_prio_level(1);
-  non_dyn_5qi.averaging_win                                                  = 3;
-  non_dyn_5qi.max_data_burst_volume                                          = 1000;
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+  non_dyn_5qi.five_qi                                            = uint_to_five_qi(8);
+  non_dyn_5qi.qos_prio_level                                     = uint_to_qos_prio_level(1);
+  non_dyn_5qi.averaging_win                                      = 3;
+  non_dyn_5qi.max_data_burst_volume                              = 1000;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics = non_dyn_5qi;
 
   // ng ran alloc retention prio
   drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_retention_prio.prio_level_arp         = 1;
@@ -266,7 +266,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   flow_mapped_to_drb flows_mapped_to_drb_item;
   flows_mapped_to_drb_item.qos_flow_id = uint_to_qos_flow_id(1);
   // qos characteristics
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.qos_characteristics = non_dyn_5qi;
   // ng ran alloc retention prio
   flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp         = 1;
   flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_retention_prio.may_trigger_preemption = false;

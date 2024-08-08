@@ -145,13 +145,11 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
 
   for (const auto& drb : drbs_to_add) {
     f1ap_drb_to_setup drb_item;
-    drb_item.drb_id = drb;
-    drb_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.emplace();
-    drb_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.value().five_qi = five_qi_t::min;
-    drb_item.qos_info.drb_qos.alloc_retention_prio.prio_level_arp             = 1;
-    drb_item.qos_info.s_nssai.sst                                             = 1;
-    drb_item.mode                                                             = rlc_mode::am;
-    drb_item.pdcp_sn_len                                                      = pdcp_sn_size::size12bits;
+    drb_item.drb_id                                               = drb;
+    drb_item.qos_info.drb_qos.alloc_retention_prio.prio_level_arp = 1;
+    drb_item.qos_info.s_nssai.sst                                 = 1;
+    drb_item.mode                                                 = rlc_mode::am;
+    drb_item.pdcp_sn_len                                          = pdcp_sn_size::size12bits;
 
     req.drbs_to_be_setup_list.push_back(drb_item);
   }

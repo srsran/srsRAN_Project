@@ -295,7 +295,7 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
       }
       // TODO: Add optional values
 
-      qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
+      qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics = dyn_5qi;
 
       // TODO: Add optional values
 
@@ -304,7 +304,7 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
       non_dyn_5qi_descriptor_t non_dyn_5qi = {};
       non_dyn_5qi.five_qi =
           uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi);
-      qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+      qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics = non_dyn_5qi;
 
       // TODO: Add optional values
     }
@@ -597,7 +597,7 @@ inline bool fill_cu_cp_pdu_session_resource_modify_item_base(
           }
           // TODO: Add optional values
 
-          qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
+          qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics = dyn_5qi;
 
           // TODO: Add optional values
 
@@ -606,7 +606,7 @@ inline bool fill_cu_cp_pdu_session_resource_modify_item_base(
           non_dyn_5qi_descriptor_t non_dyn_5qi = {};
           non_dyn_5qi.five_qi =
               uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi);
-          qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+          qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics = non_dyn_5qi;
 
           // TODO: Add optional values
         }

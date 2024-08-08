@@ -221,12 +221,13 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   drb_ctx.default_drb    = full_context.drb_map.empty() ? true : false; // make first DRB the default
 
   // Fill QoS (TODO: derive QoS params correctly)
-  auto& qos_params = drb_ctx.qos_params;
-  qos_params.qos_characteristics.non_dyn_5qi.emplace();
-  qos_params.qos_characteristics.non_dyn_5qi.value().five_qi = five_qi;
-  qos_params.alloc_retention_prio.prio_level_arp             = 8;
-  qos_params.alloc_retention_prio.may_trigger_preemption     = false;
-  qos_params.alloc_retention_prio.is_preemptable             = false;
+  auto& qos_params                                       = drb_ctx.qos_params;
+  qos_params.qos_characteristics                         = non_dyn_5qi_descriptor_t{};
+  auto& non_dyn_5qi                                      = qos_params.qos_characteristics.get_nondyn_5qi();
+  non_dyn_5qi.five_qi                                    = five_qi;
+  qos_params.alloc_retention_prio.prio_level_arp         = 8;
+  qos_params.alloc_retention_prio.may_trigger_preemption = false;
+  qos_params.alloc_retention_prio.is_preemptable         = false;
 
   // Add flow
   up_qos_flow_context flow_ctx;
@@ -268,7 +269,7 @@ up_config_update srsran::srs_cu_cp::calculate_update(
       logger.debug("Allocated {} to {} with {}",
                    flow_item.qos_flow_id,
                    drb_id,
-                   new_ctxt.drb_to_add.at(drb_id).qos_params.qos_characteristics.get_five_qi());
+                   new_ctxt.drb_to_add.at(drb_id).qos_params.qos_characteristics.get_5qi());
     }
     config.pdu_sessions_to_setup_list.emplace(new_ctxt.id, new_ctxt);
   }
@@ -284,17 +285,9 @@ five_qi_t srsran::srs_cu_cp::get_five_qi(const cu_cp_qos_flow_add_or_mod_item& q
   five_qi_t   five_qi    = five_qi_t::invalid;
   const auto& qos_params = qos_flow.qos_flow_level_qos_params;
 
-  if (qos_params.qos_characteristics.dyn_5qi.has_value()) {
-    if (qos_params.qos_characteristics.dyn_5qi.value().five_qi.has_value()) {
-      five_qi = qos_params.qos_characteristics.dyn_5qi.value().five_qi.value();
-    } else {
-      logger.warning("Dynamic 5QI without 5QI not supported");
-      return five_qi_t::invalid;
-    }
-  } else if (qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
-    five_qi = qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
-  } else {
-    logger.warning("Invalid QoS characteristics. Either dynamic or non-dynamic 5QI must be set");
+  five_qi = qos_params.qos_characteristics.get_5qi();
+  if (five_qi == five_qi_t::invalid) {
+    logger.warning("Dynamic 5QI without 5QI not supported");
     return five_qi_t::invalid;
   }
 

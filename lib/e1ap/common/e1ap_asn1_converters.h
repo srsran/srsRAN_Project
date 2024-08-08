@@ -1119,7 +1119,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
         dyn_5qi.max_data_burst_volume = asn1_dyn_5qi.max_data_burst_volume;
       }
 
-      flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
+      flow_map_item.qos_flow_level_qos_params.qos_characteristics = dyn_5qi;
     } else {
       const auto& asn1_non_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
 
@@ -1135,7 +1135,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
         non_dyn_5qi.max_data_burst_volume = asn1_non_dyn_5qi.max_data_burst_volume;
       }
 
-      flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+      flow_map_item.qos_flow_level_qos_params.qos_characteristics = non_dyn_5qi;
     }
 
     // Add ng ran alloc retention prio.

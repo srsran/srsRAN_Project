@@ -439,24 +439,22 @@ ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_setup_reques
 
       // Add QoS Flow Setup Request List
       for (const auto& qos_flow_test_item : qos_flows) {
-        {
-          qos_flow_setup_request_item_s qos_flow_setup_req_item;
-          qos_flow_setup_req_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_test_item.qos_flow_id);
+        qos_flow_setup_request_item_s qos_flow_setup_req_item;
+        qos_flow_setup_req_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_test_item.qos_flow_id);
 
-          // Add QoS Characteristics
-          qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn5qi();
-          qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi =
-              qos_flow_test_item.five_qi;
+        // Add QoS Characteristics
+        qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn5qi();
+        qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi =
+            qos_flow_test_item.five_qi;
 
-          // Add Allocation and Retention Priority
-          qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp = 8;
-          qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
-              pre_emption_cap_opts::shall_not_trigger_pre_emption;
-          qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
-              pre_emption_vulnerability_opts::not_pre_emptable;
+        // Add Allocation and Retention Priority
+        qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp = 8;
+        qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
+            pre_emption_cap_opts::shall_not_trigger_pre_emption;
+        qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
+            pre_emption_vulnerability_opts::not_pre_emptable;
 
-          asn1_setup_req_transfer->qos_flow_setup_request_list.push_back(qos_flow_setup_req_item);
-        }
+        asn1_setup_req_transfer->qos_flow_setup_request_list.push_back(qos_flow_setup_req_item);
       }
     }
     pdu_session_res_item.pdu_session_res_setup_request_transfer = pack_into_pdu(asn1_setup_req_transfer);

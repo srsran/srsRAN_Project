@@ -32,17 +32,8 @@ void srsran::srs_cu_cp::fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_it
 {
   e1ap_qos_item.qos_flow_id = request_item.qos_flow_id;
 
-  if (request_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
-    non_dyn_5qi_descriptor_t non_dyn_5qi;
-    non_dyn_5qi.five_qi = request_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
-
-    // TODO: Add optional values
-
-    e1ap_qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
-  } else {
-    // logger.warning("qos_flow_id={}: dynamic 5QI not fully supported.", e1ap_qos_item.qos_flow_id);
-    //  TODO: Add dynamic 5qi
-  }
+  e1ap_qos_item.qos_flow_level_qos_params.qos_characteristics =
+      request_item.qos_flow_level_qos_params.qos_characteristics;
 
   e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention =
       request_item.qos_flow_level_qos_params.alloc_retention_prio;
