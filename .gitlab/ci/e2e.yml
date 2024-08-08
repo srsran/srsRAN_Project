@@ -23,7 +23,6 @@ variables:
       - "rf_b200"
       - "rf_hp"
       - "android_b200"
-      - "android_n300"
       - "android_x300"
       - "viavi"
       - "none"
@@ -574,13 +573,6 @@ validate b200 config:
   variables:
     MARKERS: "rf_b200"
 
-validate n300 config:
-  extends: .rf
-  variables:
-    MARKERS: "rf_n300"
-    TESTBED: "android_n300"
-  allow_failure: true
-
 ################################################################################
 # Android
 ###############################################################################
@@ -612,12 +604,6 @@ android x300:
     - job: "basic relwithdeb"
       artifacts: true
     - *retina-needs
-
-android n300:
-  extends: android x300
-  variables:
-    TESTBED: "android_n300"
-  allow_failure: true
 
 ################################################################################
 # VIAVI

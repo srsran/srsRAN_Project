@@ -26,7 +26,6 @@ variables:
       - amd64-avx2-avx512
       - arm64
       - on-prem-amd64
-      - on-prem-amd64-avx2-avx512
       - on-prem-arm64
       - aws-spot-amd64
       - aws-spot-arm64
