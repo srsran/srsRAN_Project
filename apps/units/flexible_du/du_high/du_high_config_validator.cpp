@@ -412,8 +412,8 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
-  if ((pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq + pucch_cfg.nof_ue_pucch_f2_res_harq) *
-              pucch_cfg.nof_cell_harq_pucch_sets +
+  // We need to count pucch_cfg.nof_ue_pucch_res_harq_per_set twice, as we have 2 sets of PUCCH resources for HARQ-ACK.
+  if (pucch_cfg.nof_ue_pucch_res_harq_per_set * 2U * pucch_cfg.nof_cell_harq_pucch_sets +
           pucch_cfg.nof_cell_sr_resources + pucch_cfg.nof_cell_csi_resources >
       pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
     fmt::print("With the given PUCCH parameters, the number of PUCCH resources per cell exceeds the limit={}.\n",

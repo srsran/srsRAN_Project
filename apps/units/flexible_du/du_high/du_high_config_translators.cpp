@@ -508,8 +508,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     // Parameters for PUCCH-Config builder (these parameters will be used later on to generate the PUCCH resources).
     pucch_builder_params&            du_pucch_cfg   = out_cell.pucch_cfg;
     const du_high_unit_pucch_config& user_pucch_cfg = base_cell.pucch_cfg;
-    du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq     = user_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq;
-    du_pucch_cfg.nof_ue_pucch_f2_res_harq           = user_pucch_cfg.nof_ue_pucch_f2_res_harq;
+    du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq     = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
+    du_pucch_cfg.nof_ue_pucch_f2_res_harq           = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
     du_pucch_cfg.nof_cell_harq_pucch_res_sets       = user_pucch_cfg.nof_cell_harq_pucch_sets;
     du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
     du_pucch_cfg.nof_csi_resources                  = user_pucch_cfg.nof_cell_csi_resources;

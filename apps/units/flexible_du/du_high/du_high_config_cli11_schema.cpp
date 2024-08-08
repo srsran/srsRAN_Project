@@ -782,9 +782,9 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
       ->capture_default_str();
   add_option(app,
-             "--f1_nof_ue_res_harq",
-             pucch_params.nof_ue_pucch_f0_or_f1_res_harq,
-             "Number of PUCCH F0/F1 resources available per UE for HARQ")
+             "--nof_ue_res_harq_per_set",
+             pucch_params.nof_ue_pucch_res_harq_per_set,
+             "Number of PUCCH resources available per UE for HARQ for each PUCCH resource set")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   add_option(app,
@@ -817,12 +817,6 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              "higher the number of sets, the lower the chances UEs have to share the same PUCCH resources.")
       ->capture_default_str()
       ->check(CLI::Range(1, 10));
-  add_option(app,
-             "--f2_nof_ue_res_harq",
-             pucch_params.nof_ue_pucch_f2_res_harq,
-             "Number of PUCCH F2 resources available per UE for HARQ")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 8));
   add_option(app,
              "--f2_nof_cell_res_csi",
              pucch_params.nof_cell_csi_resources,
