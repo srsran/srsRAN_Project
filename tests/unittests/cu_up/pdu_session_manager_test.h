@@ -156,9 +156,9 @@ generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qo
 
   e1ap_qos_flow_qos_param_item qos_flow_info;
   qos_flow_info.qos_flow_id = qfi;
-  non_dyn_5qi_descriptor_t non_dyn_5qi;
+  non_dyn_5qi_descriptor non_dyn_5qi;
   non_dyn_5qi.five_qi                                                           = five_qi;
-  qos_flow_info.qos_flow_level_qos_params.qos_characteristics                   = non_dyn_5qi;
+  qos_flow_info.qos_flow_level_qos_params.qos_desc                              = non_dyn_5qi;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.prio_level_arp = 1;
   drb_to_setup_item.qos_flow_info_to_be_setup.emplace(qos_flow_info.qos_flow_id, qos_flow_info);
 
@@ -220,9 +220,9 @@ generate_pdu_session_res_to_modify_item_to_setup_drb(pdu_session_id_t           
   for (const auto& qfi : qfi_list) {
     e1ap_qos_flow_qos_param_item qos_flow_info;
     qos_flow_info.qos_flow_id = qfi;
-    non_dyn_5qi_descriptor_t non_dyn_5qi;
+    non_dyn_5qi_descriptor non_dyn_5qi;
     non_dyn_5qi.five_qi                                                           = five_qi;
-    qos_flow_info.qos_flow_level_qos_params.qos_characteristics                   = non_dyn_5qi;
+    qos_flow_info.qos_flow_level_qos_params.qos_desc                              = non_dyn_5qi;
     qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.prio_level_arp = 1;
     drb_to_setup_item.qos_flow_info_to_be_setup.emplace(qos_flow_info.qos_flow_id, qos_flow_info);
   }

@@ -107,7 +107,7 @@ struct du_ue_drb {
   /// Single Network Slice Selection Assistance Information (S-NSSAI).
   s_nssai_t s_nssai;
   /// QoS characteristics to be met by the DRB.
-  qos_characteristics qos_info;
+  standardized_qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
   std::optional<gbr_qos_flow_information> gbr_qos_info;
 
@@ -128,7 +128,7 @@ struct drb_creation_info {
   gtpu_teid_pool&                         teid_pool;
   const du_manager_params&                du_params;
   rlc_tx_upper_layer_control_notifier&    rlc_rlf_notifier;
-  const qos_characteristics&              qos_info;
+  const standardized_qos_characteristics& qos_info;
   std::optional<gbr_qos_flow_information> gbr_qos_info;
   s_nssai_t                               s_nssai;
 };

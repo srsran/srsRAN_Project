@@ -1099,7 +1099,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
         asn1::e1ap::qos_characteristics_c::types_opts::dyn_5qi) {
       const auto& asn1_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
 
-      dyn_5qi_descriptor_t dyn_5qi;
+      dyn_5qi_descriptor dyn_5qi;
       dyn_5qi.qos_prio_level      = uint_to_qos_prio_level(asn1_dyn_5qi.qos_prio_level);
       dyn_5qi.packet_delay_budget = asn1_dyn_5qi.packet_delay_budget;
       dyn_5qi.per.exponent        = asn1_dyn_5qi.packet_error_rate.per_exponent;
@@ -1119,11 +1119,11 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
         dyn_5qi.max_data_burst_volume = asn1_dyn_5qi.max_data_burst_volume;
       }
 
-      flow_map_item.qos_flow_level_qos_params.qos_characteristics = dyn_5qi;
+      flow_map_item.qos_flow_level_qos_params.qos_desc = dyn_5qi;
     } else {
       const auto& asn1_non_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
 
-      non_dyn_5qi_descriptor_t non_dyn_5qi;
+      non_dyn_5qi_descriptor non_dyn_5qi;
       non_dyn_5qi.five_qi = uint_to_five_qi(asn1_non_dyn_5qi.five_qi);
       if (asn1_non_dyn_5qi.qos_prio_level_present) {
         non_dyn_5qi.qos_prio_level = uint_to_qos_prio_level(asn1_non_dyn_5qi.qos_prio_level);
@@ -1135,7 +1135,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
         non_dyn_5qi.max_data_burst_volume = asn1_non_dyn_5qi.max_data_burst_volume;
       }
 
-      flow_map_item.qos_flow_level_qos_params.qos_characteristics = non_dyn_5qi;
+      flow_map_item.qos_flow_level_qos_params.qos_desc = non_dyn_5qi;
     }
 
     // Add ng ran alloc retention prio.

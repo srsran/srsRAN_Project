@@ -20,8 +20,8 @@ namespace srsran {
 /// non-GBR. See TS 23.501, clause 5.7.3.2 Resource Type.
 enum class qos_flow_resource_type { gbr, non_gbr, delay_critical_gbr };
 
-/// \brief Represents 5G QoS characteristics associated with 5QI.
-struct qos_characteristics {
+/// \brief Represents 5G QoS characteristics associated with a standardized 5QI, as per TS 23.501 5.7.4-1.
+struct standardized_qos_characteristics {
   qos_flow_resource_type res_type;
   /// The Priority Level associated with 5G QoS characteristics indicates a priority in scheduling resources among QoS
   /// Flows. The lowest Priority Level value corresponds to the highest priority. See TS 23.501, clause 5.7.3.3.
@@ -45,6 +45,6 @@ struct qos_characteristics {
 /// \param[in] nof_layers Number of layers.
 /// \return The standardized 5QI to QoS characteristics mapping from TS 23.501, table 5.7.4-1. Returns nullptr if the
 /// 5QI is not present in the table.
-const qos_characteristics* get_5qi_to_qos_characteristics_mapping(five_qi_t five_qi);
+const standardized_qos_characteristics* get_5qi_to_qos_characteristics_mapping(five_qi_t five_qi);
 
 } // namespace srsran

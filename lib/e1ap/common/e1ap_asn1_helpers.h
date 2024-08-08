@@ -55,19 +55,18 @@ inline void fill_e1ap_cu_up_e1_setup_request(cu_up_e1_setup_request&            
       for (const auto& asn1_qos_support_item : asn1_plmn_item.qos_params_support_list.ng_ran_qos_support_list) {
         ng_ran_qos_support_item_t qos_support_item;
 
-        qos_support_item.non_dyn_5qi_descriptor.five_qi =
+        qos_support_item.non_dyn_5qi_desc.five_qi =
             uint_to_five_qi(asn1_qos_support_item.non_dyn_5qi_descriptor.five_qi);
 
         if (asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level_present) {
-          qos_support_item.non_dyn_5qi_descriptor.qos_prio_level =
+          qos_support_item.non_dyn_5qi_desc.qos_prio_level =
               uint_to_qos_prio_level(asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level);
         }
         if (asn1_qos_support_item.non_dyn_5qi_descriptor.averaging_win_present) {
-          qos_support_item.non_dyn_5qi_descriptor.averaging_win =
-              asn1_qos_support_item.non_dyn_5qi_descriptor.averaging_win;
+          qos_support_item.non_dyn_5qi_desc.averaging_win = asn1_qos_support_item.non_dyn_5qi_descriptor.averaging_win;
         }
         if (asn1_qos_support_item.non_dyn_5qi_descriptor.max_data_burst_volume_present) {
-          qos_support_item.non_dyn_5qi_descriptor.max_data_burst_volume =
+          qos_support_item.non_dyn_5qi_desc.max_data_burst_volume =
               asn1_qos_support_item.non_dyn_5qi_descriptor.max_data_burst_volume;
         }
 

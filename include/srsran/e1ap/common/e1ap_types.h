@@ -74,7 +74,7 @@ struct e1ap_gbr_qos_flow_info {
 };
 
 struct e1ap_qos_flow_level_qos_params {
-  qos_characteristics_t                 qos_characteristics;
+  qos_characteristics                   qos_desc;
   alloc_and_retention_priority          ng_ran_alloc_retention;
   std::optional<e1ap_gbr_qos_flow_info> gbr_qos_flow_info;
   std::optional<bool>                   reflective_qos_attribute;

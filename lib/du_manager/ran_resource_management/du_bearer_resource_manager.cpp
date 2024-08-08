@@ -59,7 +59,7 @@ static error_type<std::string> validate_drb_setup_request(const f1ap_drb_to_setu
                                                           const std::map<five_qi_t, du_qos_config>& qos_config)
 {
   // Validate QOS config.
-  five_qi_t fiveqi = drb.qos_info.drb_qos.qos_characteristics.get_5qi();
+  five_qi_t fiveqi = drb.qos_info.drb_qos.qos_desc.get_5qi();
   auto      qos_it = qos_config.find(fiveqi);
   if (qos_it == qos_config.end()) {
     return make_unexpected(fmt::format("No {} 5QI configured", fiveqi));
@@ -224,7 +224,7 @@ std::vector<drb_id_t> du_bearer_resource_manager::setup_drbs(du_ue_resource_conf
     }
 
     // Get QoS Config from 5QI
-    five_qi_t            fiveqi = drb_to_setup.qos_info.drb_qos.qos_characteristics.get_5qi();
+    five_qi_t            fiveqi = drb_to_setup.qos_info.drb_qos.qos_desc.get_5qi();
     const du_qos_config& qos    = qos_config.at(fiveqi);
 
     // Create new DRB QoS Flow.

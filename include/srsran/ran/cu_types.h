@@ -67,7 +67,7 @@ struct nr_cgi_support_item_t {
 };
 
 struct ng_ran_qos_support_item_t {
-  non_dyn_5qi_descriptor_t non_dyn_5qi_descriptor;
+  non_dyn_5qi_descriptor non_dyn_5qi_desc;
 };
 
 struct supported_plmns_item_t {

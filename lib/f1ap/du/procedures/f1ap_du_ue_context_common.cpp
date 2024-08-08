@@ -47,8 +47,8 @@ static void fill_common_drb_config_request_fields(f1ap_drb_to_setup& drb_obj, co
     asn1_drb_info = &drb_item.qos_info.choice_ext().value().drb_info();
   }
   if (asn1_drb_info != nullptr) {
-    drb_obj.qos_info.drb_qos.qos_characteristics = non_dyn_5qi_descriptor_t{};
-    non_dyn_5qi_descriptor_t& nondyn_5qi         = drb_obj.qos_info.drb_qos.qos_characteristics.get_nondyn_5qi();
+    drb_obj.qos_info.drb_qos.qos_desc  = non_dyn_5qi_descriptor{};
+    non_dyn_5qi_descriptor& nondyn_5qi = drb_obj.qos_info.drb_qos.qos_desc.get_nondyn_5qi();
     nondyn_5qi.five_qi = uint_to_five_qi(asn1_drb_info->drb_qos.qos_characteristics.non_dyn_5qi().five_qi);
     drb_obj.qos_info.drb_qos.alloc_retention_prio.prio_level_arp =
         asn1_drb_info->drb_qos.ngra_nalloc_retention_prio.prio_level;

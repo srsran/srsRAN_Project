@@ -412,7 +412,7 @@ TEST_F(ue_config_tester,
   old_bearer.drb_id                  = drb_id_t::drb1;
   auto& old_drb                      = test_ue->reestablished_cfg_pending->drbs.emplace_back();
   old_drb.drb_id                     = drb_id_t::drb1;
-  old_drb.qos.qos_characteristics.get_nondyn_5qi().five_qi = uint_to_five_qi(9);
+  old_drb.qos.qos_desc.get_nondyn_5qi().five_qi = uint_to_five_qi(9);
 
   // Run procedure to create SRB2 and DRB1.
   f1ap_ue_context_update_request req =

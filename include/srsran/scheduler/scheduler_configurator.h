@@ -123,7 +123,7 @@ struct sched_drb_info {
   /// Single Network Slice Selection Assistance Information (S-NSSAI).
   s_nssai_t s_nssai;
   /// QoS characteristics associated with the logical channel.
-  qos_characteristics qos_info;
+  standardized_qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
   std::optional<gbr_qos_flow_information> gbr_qos_info;
 };

@@ -19,7 +19,7 @@
 
 namespace srsran {
 
-struct dyn_5qi_descriptor_t {
+struct dyn_5qi_descriptor {
   qos_prio_level_t         qos_prio_level;
   uint16_t                 packet_delay_budget;
   packet_error_rate_t      per;
@@ -31,7 +31,7 @@ struct dyn_5qi_descriptor_t {
   std::optional<uint16_t> max_data_burst_volume;
 };
 
-struct non_dyn_5qi_descriptor_t {
+struct non_dyn_5qi_descriptor {
   /// Standardized 5QI. Must contain one of the 5QIs in TS23.501, Table 5.7.4-1. The default is a non-GBR 5QI.
   five_qi_t five_qi = uint_to_five_qi(9);
   /// Priority level, in case the default priority level specified in TS23.501, Table 5.7.4-1 is not used.
@@ -39,17 +39,19 @@ struct non_dyn_5qi_descriptor_t {
   /// Averaging Window, in case the default value specified in TS23.501, Table 5.7.4-1 is not used.
   std::optional<uint16_t> averaging_win;
   /// \brief Maximum Data Burst Volume, in case the default value specified in TS23.501, Table 5.7.4-1 is not used.
-  // This value should only be used in delay-critical GBR DRBs.
+  /// This value should only be used in delay-critical GBR DRBs.
   std::optional<uint16_t> max_data_burst_volume;
 };
 
-struct qos_characteristics_t {
-  qos_characteristics_t() : choice(non_dyn_5qi_descriptor_t{}) {}
-  qos_characteristics_t(const non_dyn_5qi_descriptor_t& val) : choice(val) {}
-  qos_characteristics_t(const dyn_5qi_descriptor_t& val) : choice(val) {}
+/// QoS Parameters of either a dynamic or non-dynamic 5QI.
+struct qos_characteristics {
+  qos_characteristics() : choice(non_dyn_5qi_descriptor{}) {}
+  qos_characteristics(const non_dyn_5qi_descriptor& val) : choice(val) {}
+  qos_characteristics(const dyn_5qi_descriptor& val) : choice(val) {}
 
-  bool is_dyn_5qi() const { return std::holds_alternative<dyn_5qi_descriptor_t>(choice); }
+  bool is_dyn_5qi() const { return std::holds_alternative<dyn_5qi_descriptor>(choice); }
 
+  /// Retrieves the 5QI associated with the QoS characteristics.
   five_qi_t get_5qi() const
   {
     if (is_dyn_5qi()) {
@@ -58,13 +60,13 @@ struct qos_characteristics_t {
     return get_nondyn_5qi().five_qi;
   }
 
-  dyn_5qi_descriptor_t&           get_dyn_5qi() { return std::get<dyn_5qi_descriptor_t>(choice); }
-  const dyn_5qi_descriptor_t&     get_dyn_5qi() const { return std::get<dyn_5qi_descriptor_t>(choice); }
-  non_dyn_5qi_descriptor_t&       get_nondyn_5qi() { return std::get<non_dyn_5qi_descriptor_t>(choice); }
-  const non_dyn_5qi_descriptor_t& get_nondyn_5qi() const { return std::get<non_dyn_5qi_descriptor_t>(choice); }
+  dyn_5qi_descriptor&           get_dyn_5qi() { return std::get<dyn_5qi_descriptor>(choice); }
+  const dyn_5qi_descriptor&     get_dyn_5qi() const { return std::get<dyn_5qi_descriptor>(choice); }
+  non_dyn_5qi_descriptor&       get_nondyn_5qi() { return std::get<non_dyn_5qi_descriptor>(choice); }
+  const non_dyn_5qi_descriptor& get_nondyn_5qi() const { return std::get<non_dyn_5qi_descriptor>(choice); }
 
 private:
-  std::variant<non_dyn_5qi_descriptor_t, dyn_5qi_descriptor_t> choice;
+  std::variant<non_dyn_5qi_descriptor, dyn_5qi_descriptor> choice;
 };
 
 /// \brief QoS parameters for a GBR QoS flow or GBR bearer for downlink and uplink. See TS 38.473, clause 9.3.1.46.
@@ -93,7 +95,8 @@ struct alloc_and_retention_priority {
 };
 
 struct qos_flow_level_qos_parameters {
-  qos_characteristics_t        qos_characteristics;
+  /// QoS Descriptor of a dynamic or non-dynamic 5QI.
+  qos_characteristics          qos_desc;
   alloc_and_retention_priority alloc_retention_prio;
   /// This parameter applies to GBR flows only. See TS 38.473, clause 9.3.1.45.
   std::optional<gbr_qos_flow_information> gbr_qos_info;

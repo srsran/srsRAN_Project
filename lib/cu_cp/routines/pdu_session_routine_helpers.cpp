@@ -32,8 +32,7 @@ void srsran::srs_cu_cp::fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_it
 {
   e1ap_qos_item.qos_flow_id = request_item.qos_flow_id;
 
-  e1ap_qos_item.qos_flow_level_qos_params.qos_characteristics =
-      request_item.qos_flow_level_qos_params.qos_characteristics;
+  e1ap_qos_item.qos_flow_level_qos_params.qos_desc = request_item.qos_flow_level_qos_params.qos_desc;
 
   e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention =
       request_item.qos_flow_level_qos_params.alloc_retention_prio;
@@ -190,7 +189,7 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drb_to_setup& drb_setup_mod_item, // Requ
   drb_setup_mod_item.drb_id = drb_id;
 
   // QoS config.
-  drb_setup_mod_item.qos_info.drb_qos.qos_characteristics  = next_drb_config.qos_params.qos_characteristics;
+  drb_setup_mod_item.qos_info.drb_qos.qos_desc             = next_drb_config.qos_params.qos_desc;
   drb_setup_mod_item.qos_info.drb_qos.alloc_retention_prio = next_drb_config.qos_params.alloc_retention_prio;
 
   // S-NSSAI

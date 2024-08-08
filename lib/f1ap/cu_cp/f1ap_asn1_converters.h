@@ -121,13 +121,13 @@ inline asn1::f1ap::rlc_mode_e rlc_mode_to_f1ap_asn1(const srsran::rlc_mode& rlc_
 /// \param qos_characteristics The common type QoS characteristics.
 /// \return The ASN.1 QoS characteristics.
 inline asn1::f1ap::qos_characteristics_c
-qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristics)
+qos_characteristics_to_f1ap_asn1(const qos_characteristics& qos_characteristics)
 {
   asn1::f1ap::qos_characteristics_c asn1_qos_characteristics;
 
   if (qos_characteristics.is_dyn_5qi()) {
-    auto&                       asn1_dyn_5qi    = asn1_qos_characteristics.set_dyn_5qi();
-    const dyn_5qi_descriptor_t& dyn_5qi         = qos_characteristics.get_dyn_5qi();
+    auto&                     asn1_dyn_5qi      = asn1_qos_characteristics.set_dyn_5qi();
+    const dyn_5qi_descriptor& dyn_5qi           = qos_characteristics.get_dyn_5qi();
     asn1_dyn_5qi.qos_prio_level                 = qos_prio_level_to_uint(dyn_5qi.qos_prio_level);
     asn1_dyn_5qi.packet_delay_budget            = dyn_5qi.packet_delay_budget;
     asn1_dyn_5qi.packet_error_rate.per_scalar   = dyn_5qi.per.scalar;
@@ -156,8 +156,8 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
     }
 
   } else {
-    auto&                           asn1_non_dyn_5qi = asn1_qos_characteristics.set_non_dyn_5qi();
-    const non_dyn_5qi_descriptor_t& non_dyn_5qi      = qos_characteristics.get_nondyn_5qi();
+    auto&                         asn1_non_dyn_5qi = asn1_qos_characteristics.set_non_dyn_5qi();
+    const non_dyn_5qi_descriptor& non_dyn_5qi      = qos_characteristics.get_nondyn_5qi();
 
     asn1_non_dyn_5qi.five_qi = five_qi_to_uint(non_dyn_5qi.five_qi);
 
@@ -215,7 +215,7 @@ inline asn1::f1ap::qos_info_c f1ap_qos_info_to_asn1(const f1ap_drb_info& qos_inf
 
   // drb qos
   // qos characteristics
-  asn1_drb_info.drb_qos.qos_characteristics = qos_characteristics_to_f1ap_asn1(qos_info.drb_qos.qos_characteristics);
+  asn1_drb_info.drb_qos.qos_characteristics = qos_characteristics_to_f1ap_asn1(qos_info.drb_qos.qos_desc);
 
   // alloc and retention prio
   asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level = qos_info.drb_qos.alloc_retention_prio.prio_level_arp;

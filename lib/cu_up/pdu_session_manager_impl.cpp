@@ -189,8 +189,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   if (drb_to_setup.qos_flow_info_to_be_setup.empty()) {
     return drb_result;
   }
-  five_qi_t five_qi =
-      drb_to_setup.qos_flow_info_to_be_setup.begin()->qos_flow_level_qos_params.qos_characteristics.get_5qi();
+  five_qi_t five_qi = drb_to_setup.qos_flow_info_to_be_setup.begin()->qos_flow_level_qos_params.qos_desc.get_5qi();
   if (qos_cfg.find(five_qi) == qos_cfg.end()) {
     drb_result.cause = e1ap_cause_radio_network_t::not_supported_5qi_value;
     return drb_result;
@@ -210,7 +209,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     flow_result.qos_flow_id           = qos_flow_info.qos_flow_id;
 
     if (!new_session.sdap->is_mapped(qos_flow_info.qos_flow_id) &&
-        qos_flow_info.qos_flow_level_qos_params.qos_characteristics.get_5qi() == five_qi) {
+        qos_flow_info.qos_flow_level_qos_params.qos_desc.get_5qi() == five_qi) {
       // create QoS flow context
       const auto& qos_flow                     = qos_flow_info;
       new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);

@@ -153,7 +153,7 @@ void ue_configuration_procedure::update_ue_context()
                      ue->resources->drbs.end(),
                      [&drbtoadd](const drb_upper_layer_config& drb) { return drb.drb_id == drbtoadd.drb_id; });
     srsran_sanity_check(drb_qos_it != ue->resources->drbs.end(), "The bearer config should be created at this point");
-    five_qi_t fiveqi = drb_qos_it->qos.qos_characteristics.get_5qi();
+    five_qi_t fiveqi = drb_qos_it->qos.qos_desc.get_5qi();
 
     // Create DU DRB instance.
     std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
@@ -200,7 +200,7 @@ void ue_configuration_procedure::update_ue_context()
     if (drb_it == ue->bearers.drbs().end()) {
       // >> It's a DRB modification after RRC Reestablishment. We need to create a new DRB instance.
 
-      five_qi_t fiveqi = drb_qos_it->qos.qos_characteristics.get_5qi();
+      five_qi_t fiveqi = drb_qos_it->qos.qos_desc.get_5qi();
 
       // Create DU DRB instance.
       std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,

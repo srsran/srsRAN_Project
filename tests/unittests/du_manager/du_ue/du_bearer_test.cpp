@@ -74,7 +74,7 @@ protected:
                                         teid_pool,
                                         du_mng->params,
                                         rlf_notifier,
-                                        qos_characteristics{},
+                                        standardized_qos_characteristics{},
                                         std::nullopt,
                                         dummy_slice_info});
   }

@@ -28,8 +28,8 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
   auto& qos_flow_level_params = qos_flow_info_item.qos_flow_level_qos_params;
 
   // dynamic 5qi
-  if (qos_flow_level_params.qos_characteristics.is_dyn_5qi()) {
-    auto& dynamic_5qi = qos_flow_level_params.qos_characteristics.get_dyn_5qi();
+  if (qos_flow_level_params.qos_desc.is_dyn_5qi()) {
+    auto& dynamic_5qi = qos_flow_level_params.qos_desc.get_dyn_5qi();
     asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.set_dyn_5qi();
     auto& asn1_dynamic_5qi = asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
 
@@ -56,7 +56,7 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
       asn1_dynamic_5qi.max_data_burst_volume         = dynamic_5qi.max_data_burst_volume.value();
     }
   } else /* non dynamic 5qi */ {
-    auto& non_dynamic_5qi = qos_flow_level_params.qos_characteristics.get_nondyn_5qi();
+    auto& non_dynamic_5qi = qos_flow_level_params.qos_desc.get_nondyn_5qi();
     asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn_5qi();
     auto& asn1_non_dynamic_5qi = asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
 

@@ -113,9 +113,9 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
 
   e1ap_qos_flow_qos_param_item qos_flow_info;
   qos_flow_info.qos_flow_id = uint_to_qos_flow_id(8);
-  non_dyn_5qi_descriptor_t non_dyn_5qi;
+  non_dyn_5qi_descriptor non_dyn_5qi;
   non_dyn_5qi.five_qi                                                                   = uint_to_five_qi(8);
-  qos_flow_info.qos_flow_level_qos_params.qos_characteristics                           = non_dyn_5qi;
+  qos_flow_info.qos_flow_level_qos_params.qos_desc                                      = non_dyn_5qi;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.prio_level_arp         = 1;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.may_trigger_preemption = false;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.is_preemptable         = false;
