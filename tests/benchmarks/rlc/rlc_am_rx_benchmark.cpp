@@ -124,14 +124,15 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
 {
   // Set Tx config
   rlc_tx_am_config config;
-  config.sn_field_length = rlc_am_sn_size::size18bits;
-  config.pdcp_sn_len     = pdcp_sn_size::size18bits;
-  config.t_poll_retx     = 45;
-  config.max_retx_thresh = 4;
-  config.poll_pdu        = 4;
-  config.poll_byte       = 25;
-  config.queue_size      = 4096;
-  config.max_window      = 0;
+  config.sn_field_length  = rlc_am_sn_size::size18bits;
+  config.pdcp_sn_len      = pdcp_sn_size::size18bits;
+  config.t_poll_retx      = 45;
+  config.max_retx_thresh  = 4;
+  config.poll_pdu         = 4;
+  config.poll_byte        = 25;
+  config.queue_size       = 4096;
+  config.queue_size_bytes = 4096 * 1507;
+  config.max_window       = 0;
 
   // Create test frame
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);

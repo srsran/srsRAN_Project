@@ -44,7 +44,6 @@ public:
   {
     // store in list
     transmitted_pdcp_sn_list.push_back(max_tx_pdcp_sn);
-    transmitted_pdcp_sn_list.push_back(queue_free_bytes);
   }
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override {}
   void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override {}
@@ -84,9 +83,10 @@ protected:
     config.rx.t_reassembly    = 5;
 
     // Set Tx config
-    config.tx.sn_field_length = sn_size;
-    config.tx.pdcp_sn_len     = pdcp_sn_size::size12bits;
-    config.tx.queue_size      = 4096;
+    config.tx.sn_field_length  = sn_size;
+    config.tx.pdcp_sn_len      = pdcp_sn_size::size12bits;
+    config.tx.queue_size       = 4096;
+    config.tx.queue_size_bytes = 4096 * 1500;
 
     // Create RLC entities
     rlc1 = std::make_unique<rlc_um_entity>(gnb_du_id_t::min,
