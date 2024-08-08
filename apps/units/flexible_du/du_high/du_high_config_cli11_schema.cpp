@@ -1334,7 +1334,9 @@ static void configure_cli11_rlc_am_args(CLI::App& app, du_high_unit_rlc_am_confi
              rlc_am_params.tx.max_window,
              "Non-standard parameter that limits the tx window size. Can be used for limiting memory usage with "
              "large windows. 0 means no limits other than the SN size (i.e. 2^[sn_size-1]).");
-  add_option(*rlc_tx_am_subcmd, "--queue-size", rlc_am_params.tx.queue_size, "RLC AM TX SDU queue size")
+  add_option(*rlc_tx_am_subcmd, "--queue-size", rlc_am_params.tx.queue_size, "RLC AM TX SDU queue size in PDUs")
+      ->capture_default_str();
+  add_option(*rlc_tx_am_subcmd, "--queue-bytes", rlc_am_params.tx.queue_bytes, "RLC AM TX SDU queue size in bytes")
       ->capture_default_str();
   CLI::App* rlc_rx_am_subcmd = add_subcommand(app, "rx", "AM RX parameters");
   add_option(*rlc_rx_am_subcmd, "--sn", rlc_am_params.rx.sn_field_length, "RLC AM RX SN")->capture_default_str();
@@ -1486,7 +1488,9 @@ static void configure_cli11_rlc_um_args(CLI::App& app, du_high_unit_rlc_um_confi
 {
   CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
   rlc_tx_um_subcmd->add_option("--sn", rlc_um_params.tx.sn_field_length, "RLC UM TX SN")->capture_default_str();
-  rlc_tx_um_subcmd->add_option("--queue-size", rlc_um_params.tx.queue_size, "RLC UM TX SDU queue size")
+  rlc_tx_um_subcmd->add_option("--queue-size", rlc_um_params.tx.queue_size, "RLC UM TX SDU queue limit in PDUs")
+      ->capture_default_str();
+  rlc_tx_um_subcmd->add_option("--queue-bytes", rlc_um_params.tx.queue_size_bytes, "RLC UM TX SDU queue limit in bytes")
       ->capture_default_str();
   CLI::App* rlc_rx_um_subcmd = app.add_subcommand("rx", "UM TX parameters");
   rlc_rx_um_subcmd->add_option("--sn", rlc_um_params.rx.sn_field_length, "RLC UM RX SN")->capture_default_str();

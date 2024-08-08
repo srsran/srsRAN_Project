@@ -15,8 +15,6 @@
 
 using namespace srsran;
 
-const uint32_t queue_bytes_limit = 6172672;
-
 rlc_tx_um_entity::rlc_tx_um_entity(gnb_du_id_t                          du_id,
                                    du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id_,
@@ -43,7 +41,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(gnb_du_id_t                          du_id,
                 ue_executor_,
                 timers),
   cfg(config),
-  sdu_queue(cfg.queue_size, queue_bytes_limit, logger),
+  sdu_queue(cfg.queue_size, cfg.queue_size_bytes, logger),
   mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
   head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),
@@ -146,7 +144,7 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 
     // Notify the upper layer about the beginning of the transfer of the current SDU
     if (sdu.pdcp_sn.has_value()) {
-      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), queue_state.n_bytes);
+      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), cfg.queue_size_bytes - queue_state.n_bytes);
     }
   }
 

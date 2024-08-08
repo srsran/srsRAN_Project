@@ -639,12 +639,13 @@ static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config&
   if (!from_number(out_rlc.tx.sn_field_length, in_cfg.tx.sn_field_length)) {
     report_error("Invalid RLC AM TX SN: SN={}\n", in_cfg.tx.sn_field_length);
   }
-  out_rlc.tx.t_poll_retx     = in_cfg.tx.t_poll_retx;
-  out_rlc.tx.max_retx_thresh = in_cfg.tx.max_retx_thresh;
-  out_rlc.tx.poll_pdu        = in_cfg.tx.poll_pdu;
-  out_rlc.tx.poll_byte       = in_cfg.tx.poll_byte;
-  out_rlc.tx.max_window      = in_cfg.tx.max_window;
-  out_rlc.tx.queue_size      = in_cfg.tx.queue_size;
+  out_rlc.tx.t_poll_retx      = in_cfg.tx.t_poll_retx;
+  out_rlc.tx.max_retx_thresh  = in_cfg.tx.max_retx_thresh;
+  out_rlc.tx.poll_pdu         = in_cfg.tx.poll_pdu;
+  out_rlc.tx.poll_byte        = in_cfg.tx.poll_byte;
+  out_rlc.tx.max_window       = in_cfg.tx.max_window;
+  out_rlc.tx.queue_size       = in_cfg.tx.queue_size;
+  out_rlc.tx.queue_size_bytes = in_cfg.tx.queue_bytes;
   //< RX SN
   if (!from_number(out_rlc.rx.sn_field_length, in_cfg.rx.sn_field_length)) {
     report_error("Invalid RLC AM RX SN: SN={}\n", in_cfg.rx.sn_field_length);
@@ -719,7 +720,8 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const du_high_
       if (!from_number(out_rlc.um.tx.sn_field_length, qos.rlc.um.tx.sn_field_length)) {
         report_error("Invalid RLC UM TX SN: {}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
       }
-      out_rlc.um.tx.queue_size = qos.rlc.um.tx.queue_size;
+      out_rlc.um.tx.queue_size       = qos.rlc.um.tx.queue_size;
+      out_rlc.um.tx.queue_size_bytes = qos.rlc.um.tx.queue_size_bytes;
     } else if (out_rlc.mode == rlc_mode::am) {
       // AM Config
       out_rlc.am = generate_du_rlc_am_config(qos.rlc.am);
