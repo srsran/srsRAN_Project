@@ -751,34 +751,40 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const du_high_u
   srb_cfg.insert(std::make_pair(srb_id_t::srb1, du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb1].rlc;
+    auto& out_mac = srb_cfg[srb_id_t::srb1].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb1).mac);
   } else {
     srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
+    srb_cfg.at(srb_id_t::srb1).mac = make_default_srb_mac_lc_config(LCID_SRB1);
   }
-  srb_cfg.at(srb_id_t::srb1).mac = make_default_srb_mac_lc_config(LCID_SRB1);
 
   // SRB2
   srb_cfg.insert(std::make_pair(srb_id_t::srb2, du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb2) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb2].rlc;
+    auto& out_mac = srb_cfg[srb_id_t::srb2].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
+    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb2).mac);
   } else {
     srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
+    srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB2);
   }
-  srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB2);
 
   // SRB3
   srb_cfg.insert(std::make_pair(srb_id_t::srb3, du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb3) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb3].rlc;
+    auto& out_mac = srb_cfg[srb_id_t::srb3].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
+    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb3).mac);
   } else {
     srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
+    srb_cfg.at(srb_id_t::srb3).mac = make_default_srb_mac_lc_config(LCID_SRB3);
   }
-  srb_cfg.at(srb_id_t::srb3).mac = make_default_srb_mac_lc_config(LCID_SRB3);
 
   if (config.ntn_cfg.has_value()) {
     ntn_augment_rlc_parameters(config.ntn_cfg.value(), srb_cfg);
