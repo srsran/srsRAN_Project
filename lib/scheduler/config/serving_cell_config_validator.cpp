@@ -177,13 +177,6 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   VERIFY(pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() <= pucch_cfg.pucch_res_set[1].pucch_res_id_list.size(),
          "PUCCH resource set 1's size should be greater or equal to PUCCH resource set 0's size");
 
-  // Verify that each PUCCH resource has a valid cell resource ID.
-  for (auto res_idx : pucch_cfg.pucch_res_list) {
-    VERIFY(res_idx.res_id.cell_res_id < pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES,
-           "PUCCH cell res. id={} exceeds the maximum supported PUCCH resource ID",
-           res_idx.res_id.cell_res_id);
-  }
-
   // Verify each resource format matches the corresponding parameters.
   for (auto res : pucch_cfg.pucch_res_list) {
     const bool format_match_format_params =
@@ -206,6 +199,23 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   }
   VERIFY(not(has_format_0 and has_format_1),
          "Only PUCCH Format 0 or Format 1 can be configured in a UE configuration, not both.");
+
+  // Verify that each PUCCH resource has a valid cell resource ID.
+  for (auto res_idx : pucch_cfg.pucch_res_list) {
+    if (has_format_0) {
+      // For Format 0, we use a special cell resources ID to indicate that the resource does not exist in the cell
+      // resource list, but only exists in the UE dedicated configuration.
+      unsigned cell_res_id_special_res = std::numeric_limits<unsigned>::max();
+      VERIFY(res_idx.res_id.cell_res_id < pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES or
+                 res_idx.res_id.cell_res_id == cell_res_id_special_res,
+             "PUCCH cell res. id={} exceeds the maximum supported PUCCH resource ID",
+             res_idx.res_id.cell_res_id);
+    } else {
+      VERIFY(res_idx.res_id.cell_res_id < pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES,
+             "PUCCH cell res. id={} exceeds the maximum supported PUCCH resource ID",
+             res_idx.res_id.cell_res_id);
+    }
+  }
 
   // NOTE: No need to check this for Format 0, as this struct doesn't exist for F0.
   if (has_format_1) {
