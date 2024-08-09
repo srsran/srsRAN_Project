@@ -142,8 +142,9 @@ bool srsran::configure_cgroups(const os_sched_affinity_bitmask& isol_cpus)
         return false;
       }
 
-      ::pid_t pid = {};
-      if (std::from_chars(pid_buffer, pid_buffer + ::strlen(pid_buffer), pid).ec != std::errc()) {
+      char*   end = nullptr;
+      ::pid_t pid = std::strtol(pid_buffer, &end, 10);
+      if (&pid_buffer[0] == end) {
         fmt::print("Unable to parse PID\n");
         return false;
       }

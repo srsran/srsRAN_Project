@@ -168,8 +168,8 @@ struct formatter<trace_event_extended> : public basic_fmt_parser {
 template <>
 struct formatter<instant_trace_event_extended> : public basic_fmt_parser {
   template <typename FormatContext>
-  auto format(const instant_trace_event_extended& event,
-              FormatContext&                      ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const instant_trace_event_extended& event, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
   {
     static const char* scope_str[] = {"g", "p", "t"};
 
