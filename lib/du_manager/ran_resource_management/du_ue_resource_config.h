@@ -35,7 +35,13 @@ struct drb_upper_layer_config {
   pdcp_sn_size                  pdcp_sn_len = pdcp_sn_size::invalid;
   s_nssai_t                     s_nssai;
   qos_flow_level_qos_parameters qos;
-  srs_du::f1u_config            f1u;
+  f1u_config                    f1u;
+
+  bool operator==(const drb_upper_layer_config& other) const
+  {
+    return drb_id == other.drb_id and pdcp_sn_len == other.pdcp_sn_len and s_nssai == other.s_nssai and
+           qos == other.qos and f1u == other.f1u;
+  }
 };
 
 /// Snapshot of the DU resources taken by a UE at a given instant.

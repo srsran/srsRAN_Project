@@ -29,6 +29,13 @@ struct dyn_5qi_descriptor {
   std::optional<uint16_t> averaging_win;
   /// This parameter should be present if the GBR QoS Flow information is set.
   std::optional<uint16_t> max_data_burst_volume;
+
+  bool operator==(const dyn_5qi_descriptor& other) const
+  {
+    return qos_prio_level == other.qos_prio_level and packet_delay_budget == other.packet_delay_budget and
+           per == other.per and five_qi == other.five_qi and is_delay_critical == other.is_delay_critical and
+           averaging_win == other.averaging_win and max_data_burst_volume == other.max_data_burst_volume;
+  }
 };
 
 struct non_dyn_5qi_descriptor {
@@ -41,6 +48,12 @@ struct non_dyn_5qi_descriptor {
   /// \brief Maximum Data Burst Volume, in case the default value specified in TS23.501, Table 5.7.4-1 is not used.
   /// This value should only be used in delay-critical GBR DRBs.
   std::optional<uint16_t> max_data_burst_volume;
+
+  bool operator==(const non_dyn_5qi_descriptor& other) const
+  {
+    return five_qi == other.five_qi and qos_prio_level == other.qos_prio_level and
+           averaging_win == other.averaging_win and max_data_burst_volume == other.max_data_burst_volume;
+  }
 };
 
 /// QoS Parameters of either a dynamic or non-dynamic 5QI.
@@ -65,6 +78,8 @@ struct qos_characteristics {
   non_dyn_5qi_descriptor&       get_nondyn_5qi() { return std::get<non_dyn_5qi_descriptor>(choice); }
   const non_dyn_5qi_descriptor& get_nondyn_5qi() const { return std::get<non_dyn_5qi_descriptor>(choice); }
 
+  bool operator==(const qos_characteristics& other) const { return choice == other.choice; }
+
 private:
   std::variant<non_dyn_5qi_descriptor, dyn_5qi_descriptor> choice;
 };
@@ -85,6 +100,13 @@ struct gbr_qos_flow_information {
   /// Indicates the maximum rate for lost packets that can be tolerated in the UL. Expressed in ratio of lost packets
   /// per number of packets sent, expressed in tenth of percent.Values {0,...,1000}.
   std::optional<uint16_t> max_packet_loss_rate_ul;
+
+  bool operator==(const gbr_qos_flow_information& other) const
+  {
+    return max_br_dl == other.max_br_dl and max_br_ul == other.max_br_ul and gbr_dl == other.gbr_dl and
+           max_packet_loss_rate_dl == other.max_packet_loss_rate_dl and
+           max_packet_loss_rate_ul == other.max_packet_loss_rate_ul;
+  }
 };
 
 struct alloc_and_retention_priority {
@@ -92,6 +114,12 @@ struct alloc_and_retention_priority {
   uint8_t prio_level_arp         = 15;
   bool    may_trigger_preemption = false;
   bool    is_preemptable         = false;
+
+  bool operator==(const alloc_and_retention_priority& other) const
+  {
+    return prio_level_arp == other.prio_level_arp and may_trigger_preemption == other.may_trigger_preemption and
+           is_preemptable == other.is_preemptable;
+  }
 };
 
 struct qos_flow_level_qos_parameters {
@@ -103,6 +131,13 @@ struct qos_flow_level_qos_parameters {
   bool                                    add_qos_flow_info = false;
   /// This parameter applies to non-GBR flows only. See TS 23.501.
   bool reflective_qos_attribute_subject_to = false;
+
+  bool operator==(const qos_flow_level_qos_parameters& other) const
+  {
+    return qos_desc == other.qos_desc and alloc_retention_prio == other.alloc_retention_prio and
+           gbr_qos_info == other.gbr_qos_info and add_qos_flow_info == other.add_qos_flow_info and
+           reflective_qos_attribute_subject_to == other.reflective_qos_attribute_subject_to;
+  }
 };
 
 } // namespace srsran

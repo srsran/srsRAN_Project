@@ -37,6 +37,11 @@ struct packet_error_rate_t {
   }
 
   double to_double() const { return static_cast<double>(scalar) * std::pow(10, -static_cast<int>(exponent)); }
+
+  bool operator==(const packet_error_rate_t& other) const
+  {
+    return scalar == other.scalar and exponent == other.exponent;
+  }
 };
 
 } // namespace srsran
