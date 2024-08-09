@@ -717,7 +717,8 @@ struct rlc_rx_tm_config {
 /// This includes only implementation-specific parameters that are not specified by 3GPP
 struct rlc_tx_tm_config {
   // Implementation-specific parameters that are not specified by 3GPP
-  uint32_t queue_size; ///< SDU queue size
+  uint32_t queue_size;       ///< SDU queue size
+  uint32_t queue_size_bytes; ///< SDU queue size limit in bytes
 };
 
 /// \brief Configurable parameters for RLC TM

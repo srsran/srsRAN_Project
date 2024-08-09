@@ -12,8 +12,6 @@
 
 using namespace srsran;
 
-const uint32_t queue_bytes_limit = 6172672;
-
 rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                                    du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id_,
@@ -40,7 +38,7 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                 ue_executor_,
                 timers),
   cfg(config),
-  sdu_queue(cfg.queue_size, queue_bytes_limit, logger),
+  sdu_queue(cfg.queue_size, cfg.queue_size_bytes, logger),
   pcap_context(ue_index, rb_id_, /* is_uplink */ false)
 {
   metrics_low.metrics_set_mode(rlc_mode::tm);
