@@ -38,6 +38,12 @@ namespace config_helpers {
 ///               PDCP SDUs have been transmitted (RLC UM/AM) or delivered (RLC AM). Small values increase the number of
 ///               F1-U messages. Large values may trigger unnecessary discard notifications due to expiration of the
 ///               PDCP discard timer.
+
+///  Default value for RLC SDU queue limit in bytes are chosen such that it allows for 4096 PDCP pdus of 1500 of payload
+///  and 7 bytes of PDCP overhead. The SDU limit should be much larger then this, so that the limit is the number of
+///  bytes in the queue, not the number of SDUs, even in the case of small PDUs
+const uint32_t                            default_rlc_queue_size_sdus  = 16384;
+const uint32_t                            default_rlc_queue_size_bytes = 4096 * (1500 + 7);
 inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool warn_on_drop, int rlc_metrics_report)
 {
   std::map<five_qi_t, du_qos_config> qos_list = {};
@@ -49,12 +55,12 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.t_reassembly     = 50;
-    cfg.rlc.um.tx.queue_size       = 16384;
-    cfg.rlc.um.tx.queue_size_bytes = 6172672;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
     cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify              = 10;
-    cfg.f1u.rlc_queue_bytes_limit = 6172672;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     // MAC
     cfg.mac          = make_default_drb_mac_lc_config();
     cfg.mac.priority = 4;
@@ -70,12 +76,12 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.t_reassembly     = 50;
-    cfg.rlc.um.tx.queue_size       = 16384;
-    cfg.rlc.um.tx.queue_size_bytes = 6172672;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
     cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify              = 10;
-    cfg.f1u.rlc_queue_bytes_limit = 6172672;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     // MAC
     cfg.mac          = make_default_drb_mac_lc_config();
     cfg.mac.priority = 4;
@@ -94,8 +100,8 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.am.tx.poll_byte         = 125;
     cfg.rlc.am.tx.max_retx_thresh   = 4;
     cfg.rlc.am.tx.max_window        = 0;
-    cfg.rlc.am.tx.queue_size        = 16384;
-    cfg.rlc.am.tx.queue_size_bytes  = 6172672;
+    cfg.rlc.am.tx.queue_size        = default_rlc_queue_size_sdus;
+    cfg.rlc.am.tx.queue_size_bytes  = default_rlc_queue_size_bytes;
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
     cfg.rlc.am.rx.t_reassembly      = 80;
     cfg.rlc.am.rx.t_status_prohibit = 10;
@@ -103,7 +109,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify              = 10;
-    cfg.f1u.rlc_queue_bytes_limit = 6172672;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     // MAC
     cfg.mac = make_default_drb_mac_lc_config();
 
@@ -117,12 +123,12 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.t_reassembly     = 100;
-    cfg.rlc.um.tx.queue_size       = 16384;
-    cfg.rlc.um.tx.queue_size_bytes = 6172672;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
     cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify              = 10;
-    cfg.f1u.rlc_queue_bytes_limit = 6172672;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     cfg.f1u.warn_on_drop          = warn_on_drop;
     // MAC
     cfg.mac          = make_default_drb_mac_lc_config();
@@ -142,8 +148,8 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.am.tx.poll_byte         = -1;
     cfg.rlc.am.tx.max_retx_thresh   = 32;
     cfg.rlc.am.tx.max_window        = 0;
-    cfg.rlc.am.tx.queue_size        = 16384;
-    cfg.rlc.am.tx.queue_size_bytes  = 6172672;
+    cfg.rlc.am.tx.queue_size        = default_rlc_queue_size_sdus;
+    cfg.rlc.am.tx.queue_size_bytes  = default_rlc_queue_size_bytes;
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
     cfg.rlc.am.rx.t_reassembly      = 20;
     cfg.rlc.am.rx.t_status_prohibit = 10;
@@ -151,7 +157,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify              = 10;
-    cfg.f1u.rlc_queue_bytes_limit = 6172672;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     cfg.f1u.warn_on_drop          = warn_on_drop;
     // MAC
     cfg.mac = make_default_drb_mac_lc_config();
