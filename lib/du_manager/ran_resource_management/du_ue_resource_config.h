@@ -24,20 +24,30 @@ namespace srs_du {
 
 /// This struct stores the accumulated CellGroupConfig.
 struct cell_group_config {
-  std::vector<rlc_bearer_config>        rlc_bearers;
   mac_cell_group_config                 mcg_cfg;
   physical_cell_group_config            pcg_cfg;
   slotted_vector<cell_config_dedicated> cells;
 };
 
-struct drb_upper_layer_config {
+/// Parameters of an SRB of the DU UE context.
+struct du_ue_srb_config {
+  srb_id_t      srb_id;
+  rlc_config    rlc_cfg;
+  mac_lc_config mac_cfg;
+};
+
+/// Parameters of a DRB of the DU UE context.
+struct du_ue_drb_config {
   drb_id_t                      drb_id;
+  lcid_t                        lcid;
   pdcp_sn_size                  pdcp_sn_len = pdcp_sn_size::invalid;
   s_nssai_t                     s_nssai;
   qos_flow_level_qos_parameters qos;
   f1u_config                    f1u;
+  rlc_config                    rlc_cfg;
+  mac_lc_config                 mac_cfg;
 
-  bool operator==(const drb_upper_layer_config& other) const
+  bool operator==(const du_ue_drb_config& other) const
   {
     return drb_id == other.drb_id and pdcp_sn_len == other.pdcp_sn_len and s_nssai == other.s_nssai and
            qos == other.qos and f1u == other.f1u;
@@ -46,8 +56,9 @@ struct drb_upper_layer_config {
 
 /// Snapshot of the DU resources taken by a UE at a given instant.
 struct du_ue_resource_config {
+  slotted_id_table<srb_id_t, du_ue_srb_config, MAX_NOF_SRBS> srbs;
   /// Upper layer configuration of UE DRBs
-  std::vector<drb_upper_layer_config> drbs;
+  slotted_id_vector<drb_id_t, du_ue_drb_config> drbs;
   /// CellGroupConfiguration of the RAN resources allocated to a UE.
   cell_group_config cell_group;
 };

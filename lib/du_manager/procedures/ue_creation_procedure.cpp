@@ -168,15 +168,14 @@ void ue_creation_procedure::create_rlc_srbs()
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
-  srb1.rlc_bearer =
-      create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
-                                                         ue_ctx->ue_index,
-                                                         ue_ctx->pcell_index,
-                                                         srb1,
-                                                         ue_ctx->resources->cell_group.rlc_bearers[0].rlc_cfg,
-                                                         du_params.services,
-                                                         ue_ctx->get_rlc_rlf_notifier(),
-                                                         du_params.rlc.pcap_writer));
+  srb1.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                                                       ue_ctx->ue_index,
+                                                                       ue_ctx->pcell_index,
+                                                                       srb1,
+                                                                       ue_ctx->resources->srbs[srb_id_t::srb1].rlc_cfg,
+                                                                       du_params.services,
+                                                                       ue_ctx->get_rlc_rlf_notifier(),
+                                                                       du_params.rlc.pcap_writer));
 }
 
 async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
@@ -233,7 +232,7 @@ f1ap_ue_creation_response ue_creation_procedure::create_f1ap_ue()
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.
   cell_group_cfg_s cell_group;
-  calculate_cell_group_config_diff(cell_group, {}, ue_ctx->resources->cell_group);
+  calculate_cell_group_config_diff(cell_group, {}, ue_ctx->resources.value());
 
   {
     asn1::bit_ref     bref{f1ap_msg.du_cu_rrc_container};

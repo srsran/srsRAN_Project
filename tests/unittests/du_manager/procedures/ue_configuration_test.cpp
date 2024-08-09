@@ -37,10 +37,11 @@ protected:
   {
     auto& next_cfg = this->cell_res_alloc.next_context_update_result;
     for (srb_id_t srb_id : req.srbs_to_setup) {
-      next_cfg.cell_group.rlc_bearers.emplace_back();
-      next_cfg.cell_group.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
-      next_cfg.cell_group.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-      next_cfg.cell_group.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
+      next_cfg.srbs.emplace(srb_id);
+      auto& new_srb   = next_cfg.srbs[srb_id];
+      new_srb.srb_id  = srb_id;
+      new_srb.rlc_cfg = make_default_srb_rlc_config();
+      new_srb.mac_cfg = make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
     }
     for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
       if (std::find(failed_drbs.begin(), failed_drbs.end(), drb.drb_id) != failed_drbs.end()) {
@@ -48,18 +49,16 @@ protected:
         this->cell_res_alloc.next_config_resp.failed_drbs.push_back(drb.drb_id);
         continue;
       }
-      next_cfg.cell_group.rlc_bearers.emplace_back();
-      next_cfg.cell_group.rlc_bearers.back().lcid    = uint_to_lcid(3 + (unsigned)drb.drb_id);
-      next_cfg.cell_group.rlc_bearers.back().drb_id  = drb.drb_id;
-      next_cfg.cell_group.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-      next_cfg.cell_group.rlc_bearers.back().mac_cfg = make_default_drb_mac_lc_config();
-      auto& next_drb                                 = next_cfg.drbs.emplace_back();
-      next_drb.drb_id                                = drb.drb_id;
-      next_drb.pdcp_sn_len                           = drb.pdcp_sn_len;
-      next_drb.s_nssai                               = drb.qos_info.s_nssai;
-      next_drb.qos                                   = drb.qos_info.drb_qos;
-      next_drb.f1u.t_notify                          = 100;
-      next_drb.f1u.warn_on_drop                      = false;
+      auto& new_drb            = next_cfg.drbs.emplace(drb.drb_id);
+      new_drb.drb_id           = drb.drb_id;
+      new_drb.lcid             = uint_to_lcid(3 + (unsigned)drb.drb_id);
+      new_drb.rlc_cfg          = make_default_srb_rlc_config();
+      new_drb.mac_cfg          = make_default_drb_mac_lc_config();
+      new_drb.pdcp_sn_len      = drb.pdcp_sn_len;
+      new_drb.s_nssai          = drb.qos_info.s_nssai;
+      new_drb.qos              = drb.qos_info.drb_qos;
+      new_drb.f1u.t_notify     = 100;
+      new_drb.f1u.warn_on_drop = false;
     }
 
     proc = launch_async<ue_configuration_procedure>(req, ue_mng, params);
@@ -406,13 +405,13 @@ TEST_F(ue_config_tester,
        when_reestablishment_is_signalled_then_bearers_are_marked_as_reestablishRLC_and_cell_config_are_sent)
 {
   // Mark UE as reestablishing.
-  test_ue->reestablished_cfg_pending = std::make_unique<du_ue_resource_config>();
-  auto& old_bearer                   = test_ue->reestablished_cfg_pending->cell_group.rlc_bearers.emplace_back();
-  old_bearer.lcid                    = LCID_MIN_DRB;
-  old_bearer.drb_id                  = drb_id_t::drb1;
-  auto& old_drb                      = test_ue->reestablished_cfg_pending->drbs.emplace_back();
-  old_drb.drb_id                     = drb_id_t::drb1;
-  old_drb.qos.qos_desc.get_nondyn_5qi().five_qi = uint_to_five_qi(9);
+  test_ue->reestablished_cfg_pending               = std::make_unique<du_ue_resource_config>();
+  du_ue_drb_config& old_bearer                     = test_ue->reestablished_cfg_pending->drbs.emplace(drb_id_t::drb1);
+  old_bearer.drb_id                                = drb_id_t::drb1;
+  old_bearer.lcid                                  = LCID_MIN_DRB;
+  old_bearer.rlc_cfg                               = make_default_srb_rlc_config();
+  old_bearer.mac_cfg                               = make_default_drb_mac_lc_config();
+  old_bearer.qos.qos_desc.get_nondyn_5qi().five_qi = uint_to_five_qi(9);
 
   // Run procedure to create SRB2 and DRB1.
   f1ap_ue_context_update_request req =
@@ -441,5 +440,6 @@ TEST_F(ue_config_tester,
   ASSERT_EQ(this->f1ap.last_ue_config->f1c_bearers_to_add[0].srb_id, srb_id_t::srb2);
 
   ASSERT_TRUE(res.result);
+  req.srbs_to_setup.erase(req.srbs_to_setup.begin()); // Remove SRB1 for the checks.
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, false, true));
 }

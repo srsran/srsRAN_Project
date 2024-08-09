@@ -21,10 +21,11 @@ using namespace srs_du;
 
 dummy_ue_resource_configurator_factory::dummy_ue_resource_configurator_factory()
 {
-  next_context_update_result.cell_group.rlc_bearers.resize(1);
-  next_context_update_result.cell_group.rlc_bearers[0].lcid    = LCID_SRB1;
-  next_context_update_result.cell_group.rlc_bearers[0].rlc_cfg = make_default_srb_rlc_config();
-  next_context_update_result.cell_group.rlc_bearers[0].mac_cfg = make_default_srb_mac_lc_config(LCID_SRB1);
+  next_context_update_result.srbs.emplace(srb_id_t::srb1);
+  auto& new_srb   = next_context_update_result.srbs[srb_id_t::srb1];
+  new_srb.srb_id  = srb_id_t::srb1;
+  new_srb.rlc_cfg = make_default_srb_rlc_config();
+  new_srb.mac_cfg = make_default_srb_mac_lc_config(LCID_SRB1);
   next_context_update_result.cell_group.cells.emplace(0,
                                                       config_helpers::create_default_initial_ue_spcell_cell_config());
   next_context_update_result.cell_group.mcg_cfg = config_helpers::make_initial_mac_cell_group_config();

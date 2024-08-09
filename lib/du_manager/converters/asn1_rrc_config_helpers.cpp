@@ -2996,37 +2996,62 @@ static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cf
   return out.sched_request_cfg_present || out.bsr_cfg_present || out.tag_cfg_present || out.phr_cfg_present;
 }
 
-void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
-                                                      const cell_group_config&        src,
-                                                      const cell_group_config&        dest)
+static static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> fill_rlc_bearers(const du_ue_resource_config& res)
 {
+  static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> list;
+  for (const auto& srb : res.srbs) {
+    if (srb.srb_id == srb_id_t::srb0) {
+      continue;
+    }
+    rlc_bearer_config& bearer = list.emplace_back();
+    bearer.lcid               = srb_id_to_lcid(srb.srb_id);
+    bearer.rlc_cfg            = srb.rlc_cfg;
+    bearer.mac_cfg            = srb.mac_cfg;
+  }
+  for (const auto& drb : res.drbs) {
+    rlc_bearer_config& bearer = list.emplace_back();
+    bearer.lcid               = drb.lcid;
+    bearer.drb_id             = drb.drb_id;
+    bearer.rlc_cfg            = drb.rlc_cfg;
+    bearer.mac_cfg            = drb.mac_cfg;
+  }
+  return list;
+}
+
+void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
+                                                      const du_ue_resource_config&    src,
+                                                      const du_ue_resource_config&    dest)
+{
+  static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> src_bearers  = fill_rlc_bearers(src);
+  static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> dest_bearers = fill_rlc_bearers(dest);
+
   calculate_addmodremlist_diff(
       out.rlc_bearer_to_add_mod_list,
       out.rlc_bearer_to_release_list,
-      src.rlc_bearers,
-      dest.rlc_bearers,
+      src_bearers,
+      dest_bearers,
       [](const rlc_bearer_config& b) { return make_asn1_rrc_rlc_bearer(b); },
       [](const rlc_bearer_config& b) { return (uint8_t)b.lcid; });
 
-  if (dest.cells.contains(0)) {
-    out.sp_cell_cfg.sp_cell_cfg_ded_present =
-        calculate_serving_cell_config_diff(out.sp_cell_cfg.sp_cell_cfg_ded,
-                                           src.cells.contains(0) ? src.cells[0].serv_cell_cfg : serving_cell_config{},
-                                           dest.cells[0].serv_cell_cfg);
+  if (dest.cell_group.cells.contains(0)) {
+    out.sp_cell_cfg.sp_cell_cfg_ded_present = calculate_serving_cell_config_diff(
+        out.sp_cell_cfg.sp_cell_cfg_ded,
+        src.cell_group.cells.contains(0) ? src.cell_group.cells[0].serv_cell_cfg : serving_cell_config{},
+        dest.cell_group.cells[0].serv_cell_cfg);
 
     out.sp_cell_cfg_present = out.sp_cell_cfg.sp_cell_cfg_ded_present;
   }
 
   out.mac_cell_group_cfg_present =
-      calculate_mac_cell_group_config_diff(out.mac_cell_group_cfg, src.mcg_cfg, dest.mcg_cfg);
+      calculate_mac_cell_group_config_diff(out.mac_cell_group_cfg, src.cell_group.mcg_cfg, dest.cell_group.mcg_cfg);
 
   out.phys_cell_group_cfg_present = true;
-  if (dest.pcg_cfg.p_nr_fr1.has_value()) {
+  if (dest.cell_group.pcg_cfg.p_nr_fr1.has_value()) {
     out.phys_cell_group_cfg.p_nr_fr1_present = true;
-    out.phys_cell_group_cfg.p_nr_fr1         = dest.pcg_cfg.p_nr_fr1.value();
+    out.phys_cell_group_cfg.p_nr_fr1         = dest.cell_group.pcg_cfg.p_nr_fr1.value();
   }
   out.phys_cell_group_cfg.pdsch_harq_ack_codebook.value =
-      dest.pcg_cfg.pdsch_harq_codebook == pdsch_harq_ack_codebook::dynamic
+      dest.cell_group.pcg_cfg.pdsch_harq_codebook == pdsch_harq_ack_codebook::dynamic
           ? phys_cell_group_cfg_s::pdsch_harq_ack_codebook_opts::dyn
           : asn1::rrc_nr::phys_cell_group_cfg_s::pdsch_harq_ack_codebook_opts::semi_static;
 }
@@ -3065,7 +3090,7 @@ static ssb_mtc_s make_ssb_mtc(const du_cell_config& du_cell_cfg)
 
 bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync_s&    out,
                                                        const du_cell_config&               du_cell_cfg,
-                                                       const cell_group_config&            dest,
+                                                       const du_ue_resource_config&        dest,
                                                        const asn1::rrc_nr::ho_prep_info_s& ho_prep_info,
                                                        rnti_t                              rnti)
 {

@@ -175,7 +175,8 @@ TEST_P(du_ran_resource_manager_tester, when_ue_resource_config_is_created_then_p
   ASSERT_FALSE(ue_res.empty());
   ASSERT_EQ(ue_res->cell_group.cells.size(), 1);
   ASSERT_TRUE(ue_res->cell_group.cells.contains(0));
-  ASSERT_TRUE(ue_res->cell_group.rlc_bearers.empty());
+  ASSERT_TRUE(ue_res->srbs.empty());
+  ASSERT_TRUE(ue_res->drbs.empty());
   ASSERT_EQ(ue_res->cell_group.cells[0].serv_cell_cfg.cell_index, to_du_cell_index(0));
   ASSERT_EQ(ue_res->cell_group.cells[0].serv_cell_idx, SERVING_CELL_PCELL_IDX);
   ASSERT_FALSE(ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list.empty());
@@ -189,9 +190,9 @@ TEST_P(du_ran_resource_manager_tester, when_srb1_is_added_then_ue_resource_confi
   auto                          resp    = ue_res.update(to_du_cell_index(0), srb1_creation_req(ue_idx1));
 
   ASSERT_FALSE(resp.failed());
-  ASSERT_EQ(ue_res->cell_group.rlc_bearers.size(), 1);
-  ASSERT_EQ(ue_res->cell_group.rlc_bearers[0].lcid, srsran::LCID_SRB1);
-  ASSERT_EQ(ue_res->cell_group.rlc_bearers[0].rlc_cfg.mode, rlc_mode::am);
+  ASSERT_EQ(ue_res->srbs.size(), 1);
+  ASSERT_TRUE(ue_res->srbs.contains(srb_id_t::srb1));
+  ASSERT_EQ(ue_res->srbs[srb_id_t::srb1].rlc_cfg.mode, rlc_mode::am);
 }
 
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)

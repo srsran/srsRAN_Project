@@ -86,28 +86,30 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
   sched_cfg.sched_request_config_list = ue_res_cfg.cell_group.mcg_cfg.scheduling_request_config;
   // Add SRB and DRB logical channels.
   sched_cfg.lc_config_list.emplace();
-  for (const auto& bearer : ue_res_cfg.cell_group.rlc_bearers) {
+  for (const auto& srb : ue_res_cfg.srbs) {
+    auto& sched_lc_ch = sched_cfg.lc_config_list->emplace_back(
+        config_helpers::create_default_logical_channel_config(srb_id_to_lcid(srb.srb_id)));
+    sched_lc_ch.priority                  = srb.mac_cfg.priority;
+    sched_lc_ch.lc_group                  = srb.mac_cfg.lcg_id;
+    sched_lc_ch.lc_sr_mask                = srb.mac_cfg.lc_sr_mask;
+    sched_lc_ch.lc_sr_delay_timer_applied = srb.mac_cfg.lc_sr_delay_applied;
+    sched_lc_ch.sr_id.emplace(srb.mac_cfg.sr_id);
+  }
+  for (const auto& drb : ue_res_cfg.drbs) {
     auto& sched_lc_ch =
-        sched_cfg.lc_config_list->emplace_back(config_helpers::create_default_logical_channel_config(bearer.lcid));
-    sched_lc_ch.priority                  = bearer.mac_cfg.priority;
-    sched_lc_ch.lc_group                  = bearer.mac_cfg.lcg_id;
-    sched_lc_ch.lc_sr_mask                = bearer.mac_cfg.lc_sr_mask;
-    sched_lc_ch.lc_sr_delay_timer_applied = bearer.mac_cfg.lc_sr_delay_applied;
-    sched_lc_ch.sr_id.emplace(bearer.mac_cfg.sr_id);
-    if (bearer.drb_id.has_value()) {
-      // DRB case
-      auto& drb_cfg = *std::find_if(ue_res_cfg.drbs.begin(), ue_res_cfg.drbs.end(), [&bearer](const auto& drb) {
-        return drb.drb_id == bearer.drb_id.value();
-      });
-      sched_lc_ch.rrm_policy.s_nssai = drb_cfg.s_nssai;
-      sched_lc_ch.rrm_policy.plmn_id = ue_ctx.nr_cgi.plmn_id;
-
-      sched_cfg.drb_info_list.emplace_back(
-          sched_drb_info{.lcid         = bearer.lcid,
-                         .s_nssai      = drb_cfg.s_nssai,
-                         .qos_info     = *get_5qi_to_qos_characteristics_mapping(drb_cfg.qos.qos_desc.get_5qi()),
-                         .gbr_qos_info = drb_cfg.qos.gbr_qos_info});
-    }
+        sched_cfg.lc_config_list->emplace_back(config_helpers::create_default_logical_channel_config(drb.lcid));
+    sched_lc_ch.priority                  = drb.mac_cfg.priority;
+    sched_lc_ch.lc_group                  = drb.mac_cfg.lcg_id;
+    sched_lc_ch.lc_sr_mask                = drb.mac_cfg.lc_sr_mask;
+    sched_lc_ch.lc_sr_delay_timer_applied = drb.mac_cfg.lc_sr_delay_applied;
+    sched_lc_ch.sr_id.emplace(drb.mac_cfg.sr_id);
+    sched_lc_ch.rrm_policy.s_nssai = drb.s_nssai;
+    sched_lc_ch.rrm_policy.plmn_id = ue_ctx.nr_cgi.plmn_id;
+    sched_cfg.drb_info_list.emplace_back(
+        sched_drb_info{.lcid         = drb.lcid,
+                       .s_nssai      = drb.s_nssai,
+                       .qos_info     = *get_5qi_to_qos_characteristics_mapping(drb.qos.qos_desc.get_5qi()),
+                       .gbr_qos_info = drb.qos.gbr_qos_info});
   }
 
   return sched_cfg;

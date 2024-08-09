@@ -76,11 +76,8 @@ async_task<void> ue_configuration_procedure::stop_drbs_to_rem()
 void ue_configuration_procedure::update_ue_context()
 {
   // > Create DU UE SRB objects.
-  for (const auto& bearer : ue->resources->cell_group.rlc_bearers) {
-    if (bearer.drb_id.has_value()) {
-      continue;
-    }
-    srb_id_t srbid = to_srb_id(bearer.lcid);
+  for (const auto& srb_cfg : ue->resources->srbs) {
+    srb_id_t srbid = srb_cfg.srb_id;
     if (ue->bearers.srbs().contains(srbid)) {
       // >> In case the SRB already exists, we ignore the request for its reconfiguration.
       continue;
@@ -95,7 +92,7 @@ void ue_configuration_procedure::update_ue_context()
                                                                         ue->ue_index,
                                                                         ue->pcell_index,
                                                                         srb,
-                                                                        bearer.rlc_cfg,
+                                                                        srb_cfg.rlc_cfg,
                                                                         du_params.services,
                                                                         ue->get_rlc_rlf_notifier(),
                                                                         du_params.rlc.pcap_writer));
@@ -144,24 +141,15 @@ void ue_configuration_procedure::update_ue_context()
     }
 
     // Find the configurations for this DRB.
-    auto it = std::find_if(ue->resources->cell_group.rlc_bearers.begin(),
-                           ue->resources->cell_group.rlc_bearers.end(),
-                           [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
-    srsran_sanity_check(it != ue->resources->cell_group.rlc_bearers.end(),
-                        "The bearer config should be created at this point");
-    auto drb_qos_it =
-        std::find_if(ue->resources->drbs.begin(),
-                     ue->resources->drbs.end(),
-                     [&drbtoadd](const drb_upper_layer_config& drb) { return drb.drb_id == drbtoadd.drb_id; });
-    srsran_sanity_check(drb_qos_it != ue->resources->drbs.end(), "The bearer config should be created at this point");
+    const du_ue_drb_config& drb_cfg = ue->resources->drbs[drbtoadd.drb_id];
 
     // Create DU DRB instance.
     std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
                                                                   ue->pcell_index,
                                                                   drbtoadd.drb_id,
-                                                                  it->lcid,
-                                                                  it->rlc_cfg,
-                                                                  drb_qos_it->f1u,
+                                                                  drb_cfg.lcid,
+                                                                  drb_cfg.rlc_cfg,
+                                                                  drb_cfg.f1u,
                                                                   drbtoadd.uluptnl_info_list,
                                                                   ue_mng.get_f1u_teid_pool(),
                                                                   du_params,
@@ -183,14 +171,7 @@ void ue_configuration_procedure::update_ue_context()
     }
 
     // Find the RLC configuration for this DRB.
-    auto it = std::find_if(ue->resources->cell_group.rlc_bearers.begin(),
-                           ue->resources->cell_group.rlc_bearers.end(),
-                           [&drbtomod](const rlc_bearer_config& e) { return e.drb_id == drbtomod.drb_id; });
-    srsran_assert(it != ue->resources->cell_group.rlc_bearers.end(),
-                  "The bearer config should be created at this point");
-    auto drb_qos_it = std::find_if(ue->resources->drbs.begin(),
-                                   ue->resources->drbs.end(),
-                                   [&drbtomod](const auto& drb) { return drb.drb_id == drbtomod.drb_id; });
+    const du_ue_drb_config& drb_cfg = ue->resources->drbs[drbtomod.drb_id];
 
     auto drb_it = ue->bearers.drbs().find(drbtomod.drb_id);
     if (drb_it == ue->bearers.drbs().end()) {
@@ -200,9 +181,9 @@ void ue_configuration_procedure::update_ue_context()
       std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
                                                                     ue->pcell_index,
                                                                     drbtomod.drb_id,
-                                                                    it->lcid,
-                                                                    it->rlc_cfg,
-                                                                    drb_qos_it->f1u,
+                                                                    drb_cfg.lcid,
+                                                                    drb_cfg.rlc_cfg,
+                                                                    drb_cfg.f1u,
                                                                     drbtomod.uluptnl_info_list,
                                                                     ue_mng.get_f1u_teid_pool(),
                                                                     du_params,
@@ -329,7 +310,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     // set to "RLCReestablish".
     ue->reestablished_cfg_pending = nullptr;
 
-    calculate_cell_group_config_diff(asn1_cell_group, cell_group_config{}, ue->resources->cell_group);
+    calculate_cell_group_config_diff(asn1_cell_group, du_ue_resource_config{}, ue->resources.value());
     auto it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
                            asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
                            [](const auto& b) { return b.lc_ch_id == LCID_SRB1; });
@@ -343,17 +324,17 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     }
   } else if (request.full_config_required) {
     // The CU requested a full configuration of the UE cellGroupConfig.
-    calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources->cell_group);
+    calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources.value());
     resp.full_config_present = true;
 
   } else if (not request.source_cell_group_cfg.empty()) {
     // In case of source cell group configuration is passed, a delta configuration should be generated with it.
     // TODO: Apply diff using sourceCellGroup. For now, we use fullConfig.
-    calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources->cell_group);
+    calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources.value());
     resp.full_config_present = true;
 
   } else {
-    calculate_cell_group_config_diff(asn1_cell_group, prev_ue_res_cfg.cell_group, ue->resources->cell_group);
+    calculate_cell_group_config_diff(asn1_cell_group, prev_ue_res_cfg, ue->resources.value());
   }
 
   // Include reconfiguration with sync if HandoverPreparationInformation is included.
@@ -370,7 +351,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     asn1_cell_group.sp_cell_cfg.recfg_with_sync_present =
         calculate_reconfig_with_sync_diff(asn1_cell_group.sp_cell_cfg.recfg_with_sync,
                                           du_params.ran.cells[0],
-                                          ue->resources->cell_group,
+                                          ue->resources.value(),
                                           ho_prep_info,
                                           ue->rnti);
     if (not asn1_cell_group.sp_cell_cfg.recfg_with_sync_present) {
