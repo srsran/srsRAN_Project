@@ -62,7 +62,7 @@ public:
                       rrc_ue_setup_proc_notifier& rrc_ue_notifier_,
                       rrc_ue_srb_handler&         srb_notifier_,
                       rrc_ue_nas_notifier&        nas_notifier_,
-                      rrc_ue_event_manager&       ev_mng_,
+                      rrc_ue_event_manager&       event_mng_,
                       rrc_ue_logger&              logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);

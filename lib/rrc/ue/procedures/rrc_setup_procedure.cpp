@@ -10,6 +10,7 @@
 
 #include "rrc_setup_procedure.h"
 #include "../rrc_asn1_helpers.h"
+#include "ue/rrc_asn1_converters.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include <variant>
 
