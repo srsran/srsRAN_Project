@@ -45,7 +45,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   prev_ue_res_cfg = ue->resources.value();
   ue_res_cfg_resp = ue->resources.update(ue->pcell_index, request, ue->reestablished_cfg_pending.get());
-  if (ue_res_cfg_resp.release_required()) {
+  if (ue_res_cfg_resp.failed()) {
     proc_logger.log_proc_failure("Failed to allocate DU UE resources");
     CORO_EARLY_RETURN(make_ue_config_failure());
   }
@@ -88,13 +88,14 @@ void ue_configuration_procedure::update_ue_context()
     srbs_added.push_back(srbid);
 
     // >> Create SRB bearer.
-    du_ue_srb& srb = ue->bearers.add_srb(srbid, bearer.rlc_cfg);
+    du_ue_srb& srb = ue->bearers.add_srb(srbid);
 
     // >> Create RLC SRB entity.
     srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
                                                                         ue->ue_index,
                                                                         ue->pcell_index,
                                                                         srb,
+                                                                        bearer.rlc_cfg,
                                                                         du_params.services,
                                                                         ue->get_rlc_rlf_notifier(),
                                                                         du_params.rlc.pcap_writer));
@@ -153,7 +154,6 @@ void ue_configuration_procedure::update_ue_context()
                      ue->resources->drbs.end(),
                      [&drbtoadd](const drb_upper_layer_config& drb) { return drb.drb_id == drbtoadd.drb_id; });
     srsran_sanity_check(drb_qos_it != ue->resources->drbs.end(), "The bearer config should be created at this point");
-    five_qi_t fiveqi = drb_qos_it->qos.qos_desc.get_5qi();
 
     // Create DU DRB instance.
     std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
@@ -161,15 +161,11 @@ void ue_configuration_procedure::update_ue_context()
                                                                   drbtoadd.drb_id,
                                                                   it->lcid,
                                                                   it->rlc_cfg,
-                                                                  it->mac_cfg,
                                                                   drb_qos_it->f1u,
                                                                   drbtoadd.uluptnl_info_list,
                                                                   ue_mng.get_f1u_teid_pool(),
                                                                   du_params,
-                                                                  ue->get_rlc_rlf_notifier(),
-                                                                  *get_5qi_to_qos_characteristics_mapping(fiveqi),
-                                                                  drb_qos_it->qos.gbr_qos_info,
-                                                                  drb_qos_it->s_nssai});
+                                                                  ue->get_rlc_rlf_notifier()});
     if (drb == nullptr) {
       ue_res_cfg_resp.failed_drbs.push_back(drbtoadd.drb_id);
       proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.", drbtoadd.drb_id);
@@ -200,23 +196,17 @@ void ue_configuration_procedure::update_ue_context()
     if (drb_it == ue->bearers.drbs().end()) {
       // >> It's a DRB modification after RRC Reestablishment. We need to create a new DRB instance.
 
-      five_qi_t fiveqi = drb_qos_it->qos.qos_desc.get_5qi();
-
       // Create DU DRB instance.
       std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
                                                                     ue->pcell_index,
                                                                     drbtomod.drb_id,
                                                                     it->lcid,
                                                                     it->rlc_cfg,
-                                                                    it->mac_cfg,
                                                                     drb_qos_it->f1u,
                                                                     drbtomod.uluptnl_info_list,
                                                                     ue_mng.get_f1u_teid_pool(),
                                                                     du_params,
-                                                                    ue->get_rlc_rlf_notifier(),
-                                                                    *get_5qi_to_qos_characteristics_mapping(fiveqi),
-                                                                    drb_qos_it->qos.gbr_qos_info,
-                                                                    drb_qos_it->s_nssai});
+                                                                    ue->get_rlc_rlf_notifier()});
       if (drb == nullptr) {
         proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.",
                                      drbtomod.drb_id);
@@ -293,7 +283,7 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
   }
 
   // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
-  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue);
+  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue, *ue->resources);
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }

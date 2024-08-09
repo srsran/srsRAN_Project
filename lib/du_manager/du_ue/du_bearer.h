@@ -79,8 +79,6 @@ struct du_drb_connector {
 /// layers.
 struct du_ue_srb {
   srb_id_t                    srb_id;
-  rlc_config                  rlc_cfg;
-  mac_lc_config               mac_cfg;
   std::unique_ptr<rlc_entity> rlc_bearer;
   du_srb_connector            connector;
 
@@ -97,19 +95,10 @@ struct du_ue_drb {
   lcid_t                                 lcid;
   std::vector<up_transport_layer_info>   uluptnl_info_list;
   std::vector<up_transport_layer_info>   dluptnl_info_list;
-  rlc_config                             rlc_cfg;
-  mac_lc_config                          mac_cfg;
-  f1u_config                             f1u_cfg;
   std::unique_ptr<f1u_du_gateway_bearer> f1u_gw_bearer;
   std::unique_ptr<f1u_bearer>            drb_f1u;
   std::unique_ptr<rlc_entity>            rlc_bearer;
   du_drb_connector                       connector;
-  /// Single Network Slice Selection Assistance Information (S-NSSAI).
-  s_nssai_t s_nssai;
-  /// QoS characteristics to be met by the DRB.
-  standardized_qos_characteristics qos_info;
-  /// QoS information present only for GBR QoS flows.
-  std::optional<gbr_qos_flow_information> gbr_qos_info;
 
   /// \brief Stops DRB by disconnecting MAC, RLC and F1-U notifiers and stopping the RLC timers.
   void stop();
@@ -117,20 +106,16 @@ struct du_ue_drb {
 
 /// Holds information needed to create a DRB in the DU.
 struct drb_creation_info {
-  du_ue_index_t                           ue_index;
-  du_cell_index_t                         pcell_index;
-  drb_id_t                                drb_id;
-  lcid_t                                  lcid;
-  const rlc_config&                       rlc_cfg;
-  const mac_lc_config&                    mac_cfg;
-  const f1u_config&                       f1u_cfg;
-  span<const up_transport_layer_info>     uluptnl_info_list;
-  gtpu_teid_pool&                         teid_pool;
-  const du_manager_params&                du_params;
-  rlc_tx_upper_layer_control_notifier&    rlc_rlf_notifier;
-  const standardized_qos_characteristics& qos_info;
-  std::optional<gbr_qos_flow_information> gbr_qos_info;
-  s_nssai_t                               s_nssai;
+  du_ue_index_t                        ue_index;
+  du_cell_index_t                      pcell_index;
+  drb_id_t                             drb_id;
+  lcid_t                               lcid;
+  const rlc_config&                    rlc_cfg;
+  const f1u_config&                    f1u_cfg;
+  span<const up_transport_layer_info>  uluptnl_info_list;
+  gtpu_teid_pool&                      teid_pool;
+  const du_manager_params&             du_params;
+  rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier;
 };
 
 /// \brief Creates a DRB instance for the whole DU.

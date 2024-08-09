@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "five_qi_qos_mapping.h"
 #include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/ran/qos/packet_error_rate.h"
 #include "srsran/ran/qos/qos_prio_level.h"
 #include <optional>

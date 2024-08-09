@@ -188,7 +188,7 @@ TEST_P(du_ran_resource_manager_tester, when_srb1_is_added_then_ue_resource_confi
   ue_ran_resource_configurator& ue_res  = create_ue(ue_idx1);
   auto                          resp    = ue_res.update(to_du_cell_index(0), srb1_creation_req(ue_idx1));
 
-  ASSERT_FALSE(resp.release_required());
+  ASSERT_FALSE(resp.failed());
   ASSERT_EQ(ue_res->cell_group.rlc_bearers.size(), 1);
   ASSERT_EQ(ue_res->cell_group.rlc_bearers[0].lcid, srsran::LCID_SRB1);
   ASSERT_EQ(ue_res->cell_group.rlc_bearers[0].rlc_cfg.mode, rlc_mode::am);

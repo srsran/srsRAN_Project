@@ -13,16 +13,11 @@
 using namespace srsran;
 using namespace srs_du;
 
-du_ue_srb&
-du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg, std::optional<const mac_lc_config> mac_cfg)
+du_ue_srb& du_ue_bearer_manager::add_srb(srb_id_t srb_id)
 {
   srsran_assert(not srbs().contains(srb_id), "SRB-Id={} already exists", srb_id);
   srbs_.emplace(srb_id);
-  srbs_[srb_id].srb_id  = srb_id;
-  srbs_[srb_id].rlc_cfg = rlc_cfg;
-  if (mac_cfg.has_value()) {
-    srbs_[srb_id].mac_cfg = *mac_cfg;
-  }
+  srbs_[srb_id].srb_id = srb_id;
   return srbs_[srb_id];
 }
 

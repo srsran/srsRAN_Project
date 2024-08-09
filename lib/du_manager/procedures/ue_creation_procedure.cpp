@@ -140,17 +140,15 @@ bool ue_creation_procedure::setup_du_ue_resources()
   f1_req.srbs_to_setup.resize(1);
   f1_req.srbs_to_setup[0]             = srb_id_t::srb1;
   du_ue_resource_update_response resp = ue_ctx->resources.update(req.pcell_index, f1_req);
-  if (resp.release_required()) {
+  if (resp.failed()) {
     proc_logger.log_proc_failure("Unable to setup DU UE PCell and SRB resources. Cause: {}",
                                  resp.procedure_error.error().data());
     return false;
   }
 
   // Create DU UE SRB0 and SRB1.
-  ue_ctx->bearers.add_srb(srb_id_t::srb0, make_default_srb0_rlc_config());
-  ue_ctx->bearers.add_srb(srb_id_t::srb1,
-                          ue_ctx->resources->cell_group.rlc_bearers[0].rlc_cfg,
-                          ue_ctx->resources->cell_group.rlc_bearers[0].mac_cfg);
+  ue_ctx->bearers.add_srb(srb_id_t::srb0);
+  ue_ctx->bearers.add_srb(srb_id_t::srb1);
 
   return true;
 }
@@ -163,19 +161,22 @@ void ue_creation_procedure::create_rlc_srbs()
                                                                        ue_ctx->ue_index,
                                                                        ue_ctx->pcell_index,
                                                                        srb0,
+                                                                       make_default_srb0_rlc_config(),
                                                                        du_params.services,
                                                                        ue_ctx->get_rlc_rlf_notifier(),
                                                                        du_params.rlc.pcap_writer));
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
-  srb1.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
-                                                                       ue_ctx->ue_index,
-                                                                       ue_ctx->pcell_index,
-                                                                       srb1,
-                                                                       du_params.services,
-                                                                       ue_ctx->get_rlc_rlf_notifier(),
-                                                                       du_params.rlc.pcap_writer));
+  srb1.rlc_bearer =
+      create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                                         ue_ctx->ue_index,
+                                                         ue_ctx->pcell_index,
+                                                         srb1,
+                                                         ue_ctx->resources->cell_group.rlc_bearers[0].rlc_cfg,
+                                                         du_params.services,
+                                                         ue_ctx->get_rlc_rlf_notifier(),
+                                                         du_params.rlc.pcap_writer));
 }
 
 async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
@@ -205,7 +206,7 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   mac_ue_create_msg.ul_ccch_msg = not req.ul_ccch_msg.empty() ? &req.ul_ccch_msg : nullptr;
 
   // Create Scheduler UE Config Request that will be embedded in the mac UE creation request.
-  mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx);
+  mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx, *ue_ctx->resources);
 
   // Request MAC to create new UE.
   return du_params.mac.ue_cfg.handle_ue_create_request(mac_ue_create_msg);

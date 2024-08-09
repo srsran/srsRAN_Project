@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/s_nssai.h"
 
 namespace srsran {
@@ -17,7 +18,7 @@ namespace srsran {
 /// Identifier of a RRM Policy Member.
 /// \remark See O-RAN.WG3.E2SM-RC-R003-v3.00 Section 8.4.3.6
 struct rrm_policy_member {
-  std::string plmn_id;
+  plmn_identity plmn_id = plmn_identity::test_value();
   /// Single Network Slice Selection Assistance Information (S-NSSAI).
   s_nssai_t s_nssai;
 
