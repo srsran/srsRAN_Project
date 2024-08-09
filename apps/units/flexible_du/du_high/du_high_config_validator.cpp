@@ -9,12 +9,14 @@
  */
 
 #include "du_high_config_validator.h"
+
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/rlc/rlc_config.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -1048,11 +1050,45 @@ static bool validate_rlc_unit_config(five_qi_t five_qi, const du_high_unit_rlc_c
   return true;
 }
 
-/// Validates the given QoS configuration. Returns true on success, otherwise false.
-static bool validate_qos_config(span<const du_high_unit_qos_config> config)
+static bool validate_mac_lc_unit_config(five_qi_t                         five_qi,
+                                        const du_high_unit_mac_lc_config& config,
+                                        unsigned                          max_srb_lc_priority,
+                                        span<uint8_t>                     srb_lcg_ids)
 {
+  // [Implementation-defined] Ensure that SRBs have higher LC priority than DRBs.
+  if (config.priority <= max_srb_lc_priority) {
+    fmt::print("MAC LC priority configured for {} cannot be less than the maximum LC priority of SRBs={}.\n",
+               five_qi,
+               max_srb_lc_priority);
+    return false;
+  }
+
+  // [Implementation-defined] Ensure that DRBs are not configured with same LCG IDs as SRBs.
+  if (srb_lcg_ids.end() != std::find(srb_lcg_ids.begin(), srb_lcg_ids.end(), config.lc_group_id)) {
+    fmt::print(
+        "MAC LCG ID={} configured for {} cannot be same as the one assigned to a SRB.\n", config.lc_group_id, five_qi);
+    return false;
+  }
+
+  return true;
+}
+
+/// Validates the given QoS configuration. Returns true on success, otherwise false.
+static bool validate_qos_config(span<const du_high_unit_qos_config>                config,
+                                const std::map<srb_id_t, du_high_unit_srb_config>& srb_cfg)
+{
+  uint8_t              max_srb_lc_priority = 0;
+  std::vector<uint8_t> srb_lcg_ids;
+  for (const auto& it : srb_cfg) {
+    max_srb_lc_priority = std::max(it.second.mac.priority, max_srb_lc_priority);
+    srb_lcg_ids.push_back(it.second.mac.lc_group_id);
+  }
+
   for (const auto& qos : config) {
     if (!validate_rlc_unit_config(qos.five_qi, qos.rlc)) {
+      return false;
+    }
+    if (!validate_mac_lc_unit_config(qos.five_qi, qos.mac, max_srb_lc_priority, srb_lcg_ids)) {
       return false;
     }
   }
@@ -1077,7 +1113,7 @@ bool srsran::validate_du_high_config(const du_high_unit_config& config, const os
     return false;
   }
 
-  if (!validate_qos_config(config.qos_cfg)) {
+  if (!validate_qos_config(config.qos_cfg, config.srb_cfg)) {
     return false;
   }
 
