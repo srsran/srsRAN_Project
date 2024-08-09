@@ -689,9 +689,9 @@ struct du_high_unit_rlc_tx_am_config {
   uint32_t max_retx_thresh; ///< Max retx threshold
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
   int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
-  uint32_t max_window  = 0; ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
-  uint32_t queue_size  = 4096;        ///< RLC SDU queue size
-  uint32_t queue_bytes = 4096 * 1507; ///< RLC SDU queue size in bytes
+  uint32_t max_window = 0;  ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
+  uint32_t queue_size = 4096;              ///< RLC SDU queue size
+  uint32_t queue_size_bytes = 4096 * 1507; ///< RLC SDU queue size in bytes
 };
 
 /// RLC UM RX configuration

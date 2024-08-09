@@ -22,8 +22,6 @@
 namespace srsran {
 namespace srs_du {
 
-const uint32_t queue_bytes_limit = 6172672;
-
 class f1u_bearer_impl final : public f1u_bearer,
                               public f1u_tx_sdu_handler,
                               public f1u_tx_delivery_handler,
@@ -76,7 +74,7 @@ private:
   unique_timer ul_notif_timer;
 
   /// Holds the most recent information of the available space in the RLC SDU queue
-  std::atomic<uint32_t> desired_buffer_size_for_data_radio_bearer{queue_bytes_limit};
+  std::atomic<uint32_t> desired_buffer_size_for_data_radio_bearer;
   /// Holds the most recent highest transmitted PDCP SN that is frequently updated by lower layers (i.e. by RLC AM/UM)
   std::atomic<uint32_t> highest_transmitted_pdcp_sn{unset_pdcp_sn};
   /// Holds the most recent highest delivered PDCP SN that is frequently updated by lower layers (i.e. by RLC AM)
@@ -89,7 +87,7 @@ private:
 
   /// Holds the latest information of the available space in the RLC SDU queue that was reported to the upper layers
   /// (i.e. torward CU-UP)
-  uint32_t notif_desired_buffer_size_for_data_radio_bearer = queue_bytes_limit;
+  uint32_t notif_desired_buffer_size_for_data_radio_bearer;
   /// Holds the last highest transmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
   uint32_t notif_highest_transmitted_pdcp_sn = unset_pdcp_sn;
   /// Holds the last highest delivered PDCP SN that was reported to upper layers (i.e. towards CU-UP)

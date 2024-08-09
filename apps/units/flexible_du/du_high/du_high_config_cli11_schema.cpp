@@ -1336,7 +1336,7 @@ static void configure_cli11_rlc_am_args(CLI::App& app, du_high_unit_rlc_am_confi
              "large windows. 0 means no limits other than the SN size (i.e. 2^[sn_size-1]).");
   add_option(*rlc_tx_am_subcmd, "--queue-size", rlc_am_params.tx.queue_size, "RLC AM TX SDU queue size in PDUs")
       ->capture_default_str();
-  add_option(*rlc_tx_am_subcmd, "--queue-bytes", rlc_am_params.tx.queue_bytes, "RLC AM TX SDU queue size in bytes")
+  add_option(*rlc_tx_am_subcmd, "--queue-bytes", rlc_am_params.tx.queue_size_bytes, "RLC AM TX SDU queue size in bytes")
       ->capture_default_str();
   CLI::App* rlc_rx_am_subcmd = add_subcommand(app, "rx", "AM RX parameters");
   add_option(*rlc_rx_am_subcmd, "--sn", rlc_am_params.rx.sn_field_length, "RLC AM RX SN")->capture_default_str();

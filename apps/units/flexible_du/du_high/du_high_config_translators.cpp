@@ -646,7 +646,7 @@ static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config&
   out_rlc.tx.poll_byte        = in_cfg.tx.poll_byte;
   out_rlc.tx.max_window       = in_cfg.tx.max_window;
   out_rlc.tx.queue_size       = in_cfg.tx.queue_size;
-  out_rlc.tx.queue_size_bytes = in_cfg.tx.queue_bytes;
+  out_rlc.tx.queue_size_bytes = in_cfg.tx.queue_size_bytes;
   //< RX SN
   if (!from_number(out_rlc.rx.sn_field_length, in_cfg.rx.sn_field_length)) {
     report_error("Invalid RLC AM RX SN: SN={}\n", in_cfg.rx.sn_field_length);
@@ -732,7 +732,9 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const du_high_
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
     //< t-Notify
-    out_f1u.t_notify     = qos.f1u_du.t_notify;
+    out_f1u.t_notify = qos.f1u_du.t_notify;
+    out_f1u.rlc_queue_bytes_limit =
+        qos.rlc.mode == "am" ? qos.rlc.am.tx.queue_size_bytes : qos.rlc.um.tx.queue_size_bytes;
     out_f1u.warn_on_drop = config.warn_on_drop;
 
     // Convert MAC config

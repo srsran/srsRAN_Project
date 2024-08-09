@@ -28,7 +28,10 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
   ue_executor(ue_executor_),
-  ul_notif_timer(timers.create_timer())
+  ul_notif_timer(timers.create_timer()),
+  desired_buffer_size_for_data_radio_bearer(cfg.rlc_queue_bytes_limit),
+  notif_desired_buffer_size_for_data_radio_bearer(
+      0) // make sure that we send an initial buffer report, even if there is no data
 {
   ul_notif_timer.set(std::chrono::milliseconds(cfg.t_notify), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
   ul_notif_timer.run();

@@ -14,17 +14,16 @@
 #include "fmt/format.h"
 #include <cstdint>
 
-namespace srsran {
-namespace srs_du {
+namespace srsran::srs_du {
 
 /// \brief Configurable parameters of the F1-U bearer in the DU
 struct f1u_config {
-  uint32_t t_notify;            ///< Timer used for periodic transmission of uplink notifications
-  bool     warn_on_drop = true; ///< Log a warning instead of an info message whenever a PDU is dropped
+  uint32_t t_notify;              ///< Timer used for periodic transmission of uplink notifications
+  uint32_t rlc_queue_bytes_limit; ///< RLC queue limit in bytes. Used for initial report of buffer space to the CU-UP.
+  bool     warn_on_drop = true;   ///< Log a warning instead of an info message whenever a PDU is dropped
 };
 
-} // namespace srs_du
-} // namespace srsran
+} // namespace srsran::srs_du
 
 namespace fmt {
 
