@@ -1355,10 +1355,10 @@ static void configure_cli11_mac_args(CLI::App& app, du_high_unit_mac_lc_config& 
              mac_params.priority,
              "Logical Channel priority. An increasing priority value indicates a lower priority level")
       ->capture_default_str()
-      ->check(CLI::Range(4, 16));
+      ->check(CLI::Range(1, 16));
   add_option(app, "--lc_group_id", mac_params.lc_group_id, "Logical Channel Group id")
       ->capture_default_str()
-      ->check(CLI::Range(1, 7));
+      ->check(CLI::Range(0, 7));
   add_option(
       app, "--bucket_size_duration_ms", mac_params.bucket_size_duration_ms, "Bucket size duration in milliseconds")
       ->capture_default_str()
