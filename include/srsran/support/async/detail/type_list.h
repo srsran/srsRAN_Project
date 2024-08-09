@@ -30,7 +30,8 @@ struct get_type_from_index_helper<I, I, T, Types...> {
 
 /// List of types.
 template <typename... Args>
-struct type_list {};
+struct type_list {
+};
 
 /// Get size of type_list.
 template <typename... Args>

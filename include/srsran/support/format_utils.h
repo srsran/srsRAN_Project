@@ -16,7 +16,7 @@
 
 namespace srsran {
 
-/// \brief Converts fmt memoryy buffer to c_str() without the need for conversion to intermediate std::string.
+/// Converts fmt memory buffer to c_str() without the need for conversion to intermediate std::string.
 template <size_t N>
 const char* to_c_str(fmt::basic_memory_buffer<char, N>& mem_buffer)
 {
@@ -39,17 +39,17 @@ public:
   /// Default constructor.
   delimited_formatter()
   {
-    static const fmt::string_view DEFAULT_FORMAT    = "{}";
-    static const fmt::string_view DEFAULT_DELIMITER = " ";
+    static constexpr std::string_view DEFAULT_FORMAT    = "{}";
+    static constexpr std::string_view DEFAULT_DELIMITER = " ";
     format_buffer.append(DEFAULT_FORMAT.begin(), DEFAULT_FORMAT.end());
     delimiter_buffer.append(DEFAULT_DELIMITER.begin(), DEFAULT_DELIMITER.end());
   }
 
   /// Constructor that sets the default delimiter according to the string \c default_delimiter.
-  explicit delimited_formatter(const std::string& default_delimiter)
+  explicit delimited_formatter(std::string_view default_delimiter)
   {
-    static const fmt::string_view DEFAULT_FORMAT    = "{}";
-    static const fmt::string_view DEFAULT_DELIMITER = default_delimiter;
+    static constexpr std::string_view DEFAULT_FORMAT    = "{}";
+    std::string_view                  DEFAULT_DELIMITER = default_delimiter;
     format_buffer.append(DEFAULT_FORMAT.begin(), DEFAULT_FORMAT.end());
     delimiter_buffer.append(DEFAULT_DELIMITER.begin(), DEFAULT_DELIMITER.end());
   }
@@ -69,8 +69,8 @@ public:
     // Set the first field indicator.
     first = true;
 
-    static const fmt::string_view PREAMBLE_FORMAT   = "{:";
-    static const fmt::string_view NEWLINE_DELIMITER = "\n  ";
+    static constexpr std::string_view PREAMBLE_FORMAT   = "{:";
+    static constexpr std::string_view NEWLINE_DELIMITER = "\n  ";
 
     // Skip if context is empty and use default format.
     if (context.begin() == context.end()) {
@@ -195,11 +195,11 @@ private:
 
       if (temp_buffer.size() > 0) {
         // Prepend delimiter to the formatted output.
-        fmt::format_to(context.out(), "{}", fmt::string_view(delimiter_buffer.data(), delimiter_buffer.size()));
+        fmt::format_to(context.out(), "{}", std::string_view(delimiter_buffer.data(), delimiter_buffer.size()));
       }
 
       // Append the formatted string to the context iterator.
-      fmt::format_to(context.out(), "{}", fmt::string_view(temp_buffer.data(), temp_buffer.size()));
+      fmt::format_to(context.out(), "{}", std::string_view(temp_buffer.data(), temp_buffer.size()));
 
       return;
     }
@@ -216,21 +216,21 @@ private:
       // Buffer to hold the formatted string.
       fmt::memory_buffer temp_buffer;
       fmt::format_to(
-          temp_buffer, fmt::string_view(format_buffer.data(), format_buffer.size()), std::forward<Args>(args)...);
+          temp_buffer, std::string_view(format_buffer.data(), format_buffer.size()), std::forward<Args>(args)...);
 
       if (temp_buffer.size() > 0) {
         // Prepend delimiter to the formatted output.
-        fmt::format_to(context.out(), "{}", fmt::string_view(delimiter_buffer.data(), delimiter_buffer.size()));
+        fmt::format_to(context.out(), "{}", std::string_view(delimiter_buffer.data(), delimiter_buffer.size()));
       }
 
       // Append the formatted string to the context iterator.
-      fmt::format_to(context.out(), "{}", fmt::string_view(temp_buffer.data(), temp_buffer.size()));
+      fmt::format_to(context.out(), "{}", std::string_view(temp_buffer.data(), temp_buffer.size()));
 
       return;
     }
     // Format without prepending delimiter.
     fmt::format_to(
-        context.out(), fmt::string_view(format_buffer.data(), format_buffer.size()), std::forward<Args>(args)...);
+        context.out(), std::string_view(format_buffer.data(), format_buffer.size()), std::forward<Args>(args)...);
     first = false;
   }
 

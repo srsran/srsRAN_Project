@@ -27,7 +27,7 @@ static const char* housekeeping_cgroup_path = "/sys/fs/cgroup/srs_housekeeping";
 static bool exec_system_command(const std::string& command, const std::string& cleanup_path = "")
 {
   if (::system(command.c_str()) < 0) {
-    fmt::print("{} command failed. error=\"{}\"\n", command, ::strerror(errno));
+    fmt::print("{} command failed. error='{}'\n", command, ::strerror(errno));
     if (!cleanup_path.empty()) {
       ::rmdir(cleanup_path.c_str());
     }
@@ -44,7 +44,7 @@ static void move_to_cgroup(std::string_view cgroup_path)
 
   std::ofstream output(path);
   if (output.fail()) {
-    fmt::print("Could not open {} for writing. error=\"{}\"\n", path, ::strerror(errno));
+    fmt::print("Could not open '{}' for writing. error='{}'\n", path, ::strerror(errno));
   }
   output.write("0\n", 2);
 }
@@ -56,7 +56,7 @@ static bool move_procs_between_cgroups(const std::string& dst_path, const std::s
 
   std::ifstream source_file(src_path);
   if (source_file.fail()) {
-    fmt::print("Could not open {} directory. error=\"{}\"\n", src_path, ::strerror(errno));
+    fmt::print("Could not open '{}' directory. error='{}'\n", src_path, ::strerror(errno));
     return false;
   }
 
@@ -64,7 +64,7 @@ static bool move_procs_between_cgroups(const std::string& dst_path, const std::s
   while (std::getline(source_file, pid_str)) {
     std::ofstream destination_file(dst_path);
     if (destination_file.fail()) {
-      fmt::print("Could not open {} directory. error=\"{}\"\n", dst_path, ::strerror(errno));
+      fmt::print("Could not open '{}' directory. error='{}'\n", dst_path, ::strerror(errno));
       return false;
     }
 
@@ -105,7 +105,7 @@ bool srsran::configure_cgroups(const os_sched_affinity_bitmask& isol_cpus)
   static const char* cgroup_path = "/sys/fs/cgroup";
   struct ::stat      info;
   if (::stat(cgroup_path, &info) < 0) {
-    fmt::print("Could not find {}, make sure cgroups-v2 is mounted. error=\"{}\"\n", cgroup_path, ::strerror(errno));
+    fmt::print("Could not find '{}', make sure cgroups-v2 is mounted. error='{}'\n", cgroup_path, ::strerror(errno));
     return false;
   }
 
@@ -116,7 +116,7 @@ bool srsran::configure_cgroups(const os_sched_affinity_bitmask& isol_cpus)
   if (!os_cpus.empty()) {
     std::string housekeeping = fmt::format("{}{}", cgroup_path, "/srs_housekeeping");
     if ((::mkdir(housekeeping.c_str(), 0755)) < 0 && errno != EEXIST) {
-      fmt::print("Could not create {} directory. error=\"{}\"\n", housekeeping, ::strerror(errno));
+      fmt::print("Could not create '{}' directory. error='{}'\n", housekeeping, ::strerror(errno));
       return false;
     }
 
@@ -128,7 +128,7 @@ bool srsran::configure_cgroups(const os_sched_affinity_bitmask& isol_cpus)
     std::string procs_filename = fmt::format("{}{}", housekeeping, "/cgroup.procs");
     std::FILE*  file           = ::popen("ps -eLo lwp=", "r");
     if (!file) {
-      fmt::print("Couldn't move system processes to a dedicated cgroup\n");
+      fmt::print("Could not move system processes to a dedicated cgroup\n");
       return false;
     }
 
@@ -138,7 +138,7 @@ bool srsran::configure_cgroups(const os_sched_affinity_bitmask& isol_cpus)
     while (::fgets(pid_buffer, len, file)) {
       std::ofstream output(procs_filename);
       if (output.fail()) {
-        fmt::print("Could not open {} directory. error=\"{}\"\n", procs_filename, ::strerror(errno));
+        fmt::print("Could not open '{}' directory. error='{}'\n", procs_filename, ::strerror(errno));
         return false;
       }
 
@@ -154,7 +154,7 @@ bool srsran::configure_cgroups(const os_sched_affinity_bitmask& isol_cpus)
   // Create cgroup with isolated CPUs dedicated for the gNB app.
   std::string isol_cgroup_path = fmt::format("{}{}", cgroup_path, "/srs_isolated");
   if ((::mkdir(isol_cgroup_path.c_str(), 0755)) < 0 && errno != EEXIST) {
-    fmt::print("Could not create {} directory. error=\"{}\"\n", isol_cgroup_path, ::strerror(errno));
+    fmt::print("Could not create '{}' directory. error='{}'\n", isol_cgroup_path, ::strerror(errno));
     return false;
   }
 
@@ -163,7 +163,7 @@ bool srsran::configure_cgroups(const os_sched_affinity_bitmask& isol_cpus)
     return false;
   }
 
-  // Finally move itself to isolcated cgroup.
+  // Finally move itself to isolated cgroup.
   move_to_cgroup(isol_cgroup_path);
 
   return true;
@@ -186,7 +186,7 @@ void srsran::cleanup_cgroups()
     move_procs_between_cgroups(root_cgroup_path, fmt::format("{}{}", housekeeping_cgroup_path, "/cgroup.procs"));
     // Remove previously created cgroups.
     if (::rmdir(housekeeping_cgroup_path) < 0) {
-      fmt::print("Could not delete {}. error=\"{}\"\n", housekeeping_cgroup_path, ::strerror(errno));
+      fmt::print("Could not delete '{}'. error='{}'\n", housekeeping_cgroup_path, ::strerror(errno));
     }
     cgroup_changed = true;
   }
@@ -195,7 +195,7 @@ void srsran::cleanup_cgroups()
     // Move all processes to the parent cgroup.
     move_procs_between_cgroups(root_cgroup_path, fmt::format("{}{}", isolated_cgroup_path, "/cgroup.procs"));
     if (::rmdir(isolated_cgroup_path)) {
-      fmt::print("Could not delete {}. error=\"{}\"\n", isolated_cgroup_path, ::strerror(errno));
+      fmt::print("Could not delete '{}'. error='{}'\n", isolated_cgroup_path, ::strerror(errno));
     }
     cgroup_changed = true;
   }
@@ -238,14 +238,14 @@ bool srsran::check_cpu_governor(srslog::basic_logger& logger)
 
     std::ifstream input(filename);
     if (input.fail()) {
-      logger.warning("Could not check scaling governor. filename={} error=\"{}\"", filename, ::strerror(errno));
+      logger.warning("Could not check scaling governor. filename={} error={}", filename, ::strerror(errno));
       return false;
     }
 
     std::string gov;
     std::getline(input, gov);
     if (input.fail()) {
-      logger.warning("Could not check scaling governor. filename={} error=\"{}\"", filename, ::strerror(errno));
+      logger.warning("Could not check scaling governor. filename={} error={}", filename, ::strerror(errno));
       return false;
     }
 
@@ -268,14 +268,14 @@ bool srsran::check_drm_kms_polling(srslog::basic_logger& logger)
 
   std::ifstream input(filename);
   if (input.fail()) {
-    logger.warning("Could not check DRM KMS polling. filename={} error=\"{}\"", filename, ::strerror(errno));
+    logger.warning("Could not check DRM KMS polling. filename={} error={}", filename, ::strerror(errno));
     return false;
   }
 
   std::string polling;
   std::getline(input, polling);
   if (input.fail()) {
-    logger.warning("Could not check DRM KMS polling. filename={} error=\"{}\"", filename, ::strerror(errno));
+    logger.warning("Could not check DRM KMS polling. filename={} error={}", filename, ::strerror(errno));
     return false;
   }
 

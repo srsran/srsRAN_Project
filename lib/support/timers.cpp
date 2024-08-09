@@ -126,7 +126,7 @@ void timer_manager::tick()
     // We move iterator already, in case, the current timer gets removed from the linked list.
     ++it;
 
-    // If the timer doesn't expire yet, continue the iteration in the same wheel bucket.
+    // If the timer does not expire yet, continue the iteration in the same wheel bucket.
     if (cur_time != timer.backend.timeout) {
       continue;
     }

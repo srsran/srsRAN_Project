@@ -52,9 +52,9 @@ public:
   };
 
   manual_event_common()                                             = default;
+  ~manual_event_common()                                            = default;
   manual_event_common(const manual_event_common& event_)            = delete;
   manual_event_common& operator=(const manual_event_common& event_) = delete;
-  ~manual_event_common()                                            = default;
 
   /// Resets event state.
   void reset()
