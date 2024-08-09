@@ -73,7 +73,7 @@ struct pucch_builder_params {
   /// UE specific parameters. Use to set the number of resources per UE for HARQ-ACK reporting (not including SR/CSI
   /// dedicated resources). NOTE: by default, each UE is assigned 1 SR and 1 CSI resource.
   /// \remark Format 0 and Format 1 resources are mutually exclusive.
-  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_or_f1_res_harq = 3;
+  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_or_f1_res_harq = 7;
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_res_harq       = 6;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
   /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will

@@ -193,6 +193,7 @@ test_bench::test_bench(const test_bench_params& params,
 
   if (use_format_0) {
     pucch_builder_params pucch_params{};
+    pucch_params.nof_ue_pucch_f0_or_f1_res_harq = 3;
     pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
     pucch_builder.setup(
         cell_cfg.ul_cfg_common.init_ul_bwp, params.is_tdd ? cell_cfg.tdd_cfg_common : std::nullopt, pucch_params);
