@@ -412,7 +412,8 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
-  // We need to count pucch_cfg.nof_ue_pucch_res_harq_per_set twice, as we have 2 sets of PUCCH resources for HARQ-ACK.
+  // We need to count pucch_cfg.nof_ue_pucch_res_harq_per_set twice, as we have 2 sets of PUCCH resources for HARQ-ACK
+  // (PUCCH Resource Set Id 0 with Format 0/1 and PUCCH Resource Set Id 1 with Format 2).
   if (pucch_cfg.nof_ue_pucch_res_harq_per_set * 2U * pucch_cfg.nof_cell_harq_pucch_sets +
           pucch_cfg.nof_cell_sr_resources + pucch_cfg.nof_cell_csi_resources >
       pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
