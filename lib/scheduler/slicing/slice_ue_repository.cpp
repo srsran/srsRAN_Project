@@ -29,7 +29,7 @@ void slice_ue::rem_logical_channel(lcid_t lcid)
   lcg_id_t lcg_id_to_rem = get_lcg_id_for_bearer(lcid);
   srsran_assert(lcg_id_to_rem < MAX_NOF_LCGS, "Unable to fetch LCG ID for bearer with LCID={}", lcid);
   // Check whether there are bearers with same LCG ID. If not, remove LCG ID from slice.
-  for (unsigned lcid_idx = 0; lcid_idx < bearers.size(); ++lcid_idx) {
+  for (unsigned lcid_idx = 0, e = bearers.size(); lcid_idx != e; ++lcid_idx) {
     if (bearers.test(uint_to_lcid(lcid_idx))) {
       lcg_id_t other_lcg_id = get_lcg_id_for_bearer(uint_to_lcid(lcid_idx));
       if (lcg_id_to_rem == other_lcg_id) {
@@ -42,7 +42,7 @@ void slice_ue::rem_logical_channel(lcid_t lcid)
 
 bool slice_ue::has_pending_dl_newtx_bytes() const
 {
-  for (unsigned lcid = 0; lcid < bearers.size(); ++lcid) {
+  for (unsigned lcid = 0, e = bearers.size(); lcid != e; ++lcid) {
     if (bearers.test(lcid) and u.has_pending_dl_newtx_bytes(uint_to_lcid(lcid))) {
       return true;
     }
@@ -53,7 +53,7 @@ bool slice_ue::has_pending_dl_newtx_bytes() const
 unsigned slice_ue::pending_dl_newtx_bytes() const
 {
   unsigned pending_bytes = 0;
-  for (unsigned lcid = 0; lcid < bearers.size(); ++lcid) {
+  for (unsigned lcid = 0, e = bearers.size(); lcid != e; ++lcid) {
     if (bearers.test(lcid)) {
       pending_bytes += u.pending_dl_newtx_bytes(uint_to_lcid(lcid));
     }
@@ -66,13 +66,13 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
   constexpr static unsigned SR_GRANT_BYTES = 512;
 
   unsigned pending_bytes = 0;
-  for (unsigned lcg_id = 0; lcg_id < lcg_ids.size(); ++lcg_id) {
+  for (unsigned lcg_id = 0, e = lcg_ids.size(); lcg_id != e; ++lcg_id) {
     if (lcg_ids.test(lcg_id)) {
       pending_bytes += u.pending_ul_newtx_bytes(uint_to_lcg_id(lcg_id));
     }
   }
   // Subtract the bytes already allocated in UL HARQs.
-  for (unsigned cell_idx = 0; cell_idx < nof_cells(); ++cell_idx) {
+  for (unsigned cell_idx = 0, e = nof_cells(); cell_idx != e; ++cell_idx) {
     const ue_cell& ue_cc = get_cell(to_ue_cell_index(cell_idx));
     if (pending_bytes == 0) {
       break;
