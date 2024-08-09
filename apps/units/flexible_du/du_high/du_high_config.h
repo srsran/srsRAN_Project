@@ -215,7 +215,7 @@ struct du_high_unit_pucch_config {
   /// \c PUCCH-Config parameters.
   /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
   bool use_format_0 = false;
-  /// Number of PUCCH resources per UE for HARQ-ACK reporting.
+  /// Number of PUCCH resources per UE (per PUCCH resource set) for HARQ-ACK reporting.
   /// Values {3,...,8} if \c use_format_0 is set. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
   /// resources.

@@ -215,7 +215,8 @@ void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f0_or_f1_type& 
   srsran_assert(pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1,
                 "Expected PUCCH Format is F0 or F1");
   if (pucch.format == pucch_format::FORMAT_0) {
-    // In case of Format 0, the number of PUCCHs is always 1, even if there are SR + HARQ bits.
+    // In case of Format 0, unlike with Format 0, the GNB only schedules 1 PUCCH per slot; this PUCCH (and the
+    // corresponding UCI indication) can have HARQ-ACK bits or SR bits, or both.
     if (pucch.format_0.sr_bits != sr_nof_bits::no_sr) {
       // In test mode, SRs are never detected, and instead BSR is injected.
       pucch_ind.sr_info.emplace();
