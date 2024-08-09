@@ -94,7 +94,7 @@ bool bit_decoder::advance_bits(uint32_t n_bits)
   return true;
 }
 
-template <class T>
+template <typename T>
 bool bit_decoder::unpack(T& val, uint32_t n_bits)
 {
   srsran_assert(n_bits <= sizeof(T) * 8U, "unpack_bits() only supports up to {} bits", sizeof(T) * 8U);

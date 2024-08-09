@@ -233,7 +233,7 @@ bool srsran::check_cpu_governor(srslog::basic_logger& logger)
 {
   static const char* filename_base = "/sys/devices/system/cpu/cpu";
 
-  for (unsigned int i = 0, e = std::thread::hardware_concurrency(); i != e; ++i) {
+  for (unsigned i = 0, e = std::thread::hardware_concurrency(); i != e; ++i) {
     std::string filename = fmt::format("{}{}{}", filename_base, i, "/cpufreq/scaling_governor");
 
     std::ifstream input(filename);
