@@ -38,29 +38,36 @@ static void fill_common_drb_config_request_fields(f1ap_drb_to_setup& drb_obj, co
   drb_obj.uluptnl_info_list = make_ul_up_tnl_info_list(drb_item.ul_up_tnl_info_to_be_setup_list);
 
   // TODO: Handle Dynamic 5QI.
-  const auto& asn1_drbinfo = drb_item.qos_info.choice_ext().value().drb_info();
-  drb_obj.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.emplace();
-  auto& nondyn_5qi   = drb_obj.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.value();
-  nondyn_5qi.five_qi = uint_to_five_qi(asn1_drbinfo.drb_qos.qos_characteristics.non_dyn_5qi().five_qi);
-  drb_obj.qos_info.drb_qos.alloc_retention_prio.prio_level_arp =
-      asn1_drbinfo.drb_qos.ngra_nalloc_retention_prio.prio_level;
-  drb_obj.qos_info.s_nssai.sst = asn1_drbinfo.snssai.sst.to_number();
-  if (asn1_drbinfo.snssai.sd_present) {
-    drb_obj.qos_info.s_nssai.sd = drb_item.qos_info.choice_ext().value().drb_info().snssai.sd.to_number();
-  }
-  // TODO: Do not populate gbr_flow_info for non-GBR flows.
-  if (asn1_drbinfo.drb_qos.gbr_qos_flow_info_present) {
-    drb_obj.qos_info.drb_qos.gbr_qos_info.emplace();
-    auto& gbr     = drb_obj.qos_info.drb_qos.gbr_qos_info.value();
-    gbr.max_br_dl = asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_dl;
-    gbr.max_br_ul = asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_ul;
-    gbr.gbr_dl    = asn1_drbinfo.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl;
-    gbr.gbr_ul    = asn1_drbinfo.drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul;
-    if (asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_dl_present) {
-      gbr.max_packet_loss_rate_dl.emplace(asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_dl);
+  const asn1::f1ap::drb_info_s* asn1_drb_info = nullptr;
+  if constexpr (std::is_same_v<ASN1Type, asn1::f1ap::drbs_to_be_modified_item_s>) {
+    if (drb_item.qos_info_present) {
+      asn1_drb_info = &drb_item.qos_info.choice_ext().value().drb_info();
     }
-    if (asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_ul_present) {
-      gbr.max_packet_loss_rate_dl.emplace(asn1_drbinfo.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_ul);
+  } else {
+    asn1_drb_info = &drb_item.qos_info.choice_ext().value().drb_info();
+  }
+  if (asn1_drb_info != nullptr) {
+    auto& nondyn_5qi   = drb_obj.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.emplace();
+    nondyn_5qi.five_qi = uint_to_five_qi(asn1_drb_info->drb_qos.qos_characteristics.non_dyn_5qi().five_qi);
+    drb_obj.qos_info.drb_qos.alloc_retention_prio.prio_level_arp =
+        asn1_drb_info->drb_qos.ngra_nalloc_retention_prio.prio_level;
+    drb_obj.qos_info.s_nssai.sst = asn1_drb_info->snssai.sst.to_number();
+    if (asn1_drb_info->snssai.sd_present) {
+      drb_obj.qos_info.s_nssai.sd = asn1_drb_info->snssai.sd.to_number();
+    }
+    // TODO: Do not populate gbr_flow_info for non-GBR flows.
+    if (asn1_drb_info->drb_qos.gbr_qos_flow_info_present) {
+      auto& gbr     = drb_obj.qos_info.drb_qos.gbr_qos_info.emplace();
+      gbr.max_br_dl = asn1_drb_info->drb_qos.gbr_qos_flow_info.max_flow_bit_rate_dl;
+      gbr.max_br_ul = asn1_drb_info->drb_qos.gbr_qos_flow_info.max_flow_bit_rate_ul;
+      gbr.gbr_dl    = asn1_drb_info->drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl;
+      gbr.gbr_ul    = asn1_drb_info->drb_qos.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul;
+      if (asn1_drb_info->drb_qos.gbr_qos_flow_info.max_packet_loss_rate_dl_present) {
+        gbr.max_packet_loss_rate_dl.emplace(asn1_drb_info->drb_qos.gbr_qos_flow_info.max_packet_loss_rate_dl);
+      }
+      if (asn1_drb_info->drb_qos.gbr_qos_flow_info.max_packet_loss_rate_ul_present) {
+        gbr.max_packet_loss_rate_dl.emplace(asn1_drb_info->drb_qos.gbr_qos_flow_info.max_packet_loss_rate_ul);
+      }
     }
   }
 }
