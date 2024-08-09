@@ -66,12 +66,10 @@ public:
 
 private:
   FILE* fptr;
-
-  // Task worker to process events.
+  /// Task worker to process events.
   general_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep> trace_worker;
-
-  bool              first_entry = true;
-  std::atomic<bool> warn_logged{false};
+  bool                                                                                             first_entry = true;
+  std::atomic<bool>                                                                                warn_logged{false};
 };
 
 struct trace_event_extended : public trace_event {
@@ -170,8 +168,8 @@ struct formatter<trace_event_extended> : public basic_fmt_parser {
 template <>
 struct formatter<instant_trace_event_extended> : public basic_fmt_parser {
   template <typename FormatContext>
-  auto format(const instant_trace_event_extended& event, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(const instant_trace_event_extended& event,
+              FormatContext&                      ctx) -> decltype(std::declval<FormatContext>().out())
   {
     static const char* scope_str[] = {"g", "p", "t"};
 

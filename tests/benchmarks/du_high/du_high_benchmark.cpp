@@ -1237,7 +1237,7 @@ static void configure_main_thread(span<const unsigned> du_cell_cores)
 
   // Set main test thread to use same cores as du_cell.
   if (not du_cell_cores.empty()) {
-    cpu_set_t cpuset;
+    ::cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     for (unsigned i : du_cell_cores) {
       CPU_SET(i, &cpuset);
