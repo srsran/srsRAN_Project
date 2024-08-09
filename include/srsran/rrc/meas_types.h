@@ -122,7 +122,9 @@ inline bool operator==(const rrc_ssb_mtc2& lhs, const rrc_ssb_mtc2& rhs)
 };
 
 struct rrc_ssb_to_measure {
-  enum class bitmap_type_t : uint8_t { short_bitmap, medium_bitmap, long_bitmap };
+  enum class bitmap_type_t : uint8_t { /* uint8_t */ short_bitmap,
+                                       /* uint8_t */ medium_bitmap,
+                                       /* uint64_t */ long_bitmap };
 
   bitmap_type_t type;
   uint64_t      bitmap;
