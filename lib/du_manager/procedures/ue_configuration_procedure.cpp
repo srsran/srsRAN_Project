@@ -75,21 +75,19 @@ async_task<void> ue_configuration_procedure::stop_drbs_to_rem()
 void ue_configuration_procedure::update_ue_context()
 {
   // > Create DU UE SRB objects.
-  for (srb_id_t srbid : request.srbs_to_setup) {
+  for (const auto& bearer : ue->resources->rlc_bearers) {
+    if (bearer.drb_id.has_value()) {
+      continue;
+    }
+    srb_id_t srbid = to_srb_id(bearer.lcid);
     if (ue->bearers.srbs().contains(srbid)) {
       // >> In case the SRB already exists, we ignore the request for its configuration.
       continue;
     }
     srbs_added.push_back(srbid);
 
-    lcid_t lcid = srb_id_to_lcid(srbid);
-    auto   it   = std::find_if(ue->resources->rlc_bearers.begin(),
-                           ue->resources->rlc_bearers.end(),
-                           [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
-    srsran_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
-
     // >> Create SRB bearer.
-    du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
+    du_ue_srb& srb = ue->bearers.add_srb(srbid, bearer.rlc_cfg);
 
     // >> Create RLC SRB entity.
     srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
