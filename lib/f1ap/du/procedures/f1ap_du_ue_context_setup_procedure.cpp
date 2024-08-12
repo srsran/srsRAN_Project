@@ -9,8 +9,8 @@
  */
 
 #include "f1ap_du_ue_context_setup_procedure.h"
+#include "../../common/asn1_helpers.h"
 #include "../ue_context/f1ap_du_ue_manager.h"
-#include "f1ap_du_ue_context_common.h"
 #include "proc_logger.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -139,12 +139,12 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
 
   // > Pass SRBs to setup.
   for (const auto& srb : msg->srbs_to_be_setup_list) {
-    du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_item()));
+    du_request.srbs_to_setup.push_back(int_to_srb_id(srb.value().srbs_to_be_setup_item().srb_id));
   }
 
   // > Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list) {
-    du_request.drbs_to_setup.push_back(make_drb_config_request(drb.value().drbs_to_be_setup_item()));
+    du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
   }
 
   if (msg->cu_to_du_rrc_info.ie_exts_present) {

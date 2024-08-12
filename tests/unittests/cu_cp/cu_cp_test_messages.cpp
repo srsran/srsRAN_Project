@@ -167,16 +167,3 @@ srsran::srs_cu_cp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_
 
   return resp;
 };
-
-f1ap_ue_context_modification_response
-srsran::srs_cu_cp::generate_f1ap_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
-                                                                  gnb_du_ue_f1ap_id_t du_ue_f1ap_id)
-{
-  f1ap_ue_context_modification_response resp;
-
-  f1ap_message asn1_res = generate_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
-
-  fill_f1ap_ue_context_modification_response(resp, asn1_res.pdu.successful_outcome().value.ue_context_mod_resp());
-
-  return resp;
-};

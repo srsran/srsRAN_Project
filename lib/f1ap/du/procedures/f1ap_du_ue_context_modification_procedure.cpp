@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_du_ue_context_modification_procedure.h"
-#include "f1ap_du_ue_context_common.h"
+#include "../../common/asn1_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 
@@ -68,12 +68,12 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
 
   // >> Pass SRBs to setup/modify.
   for (const auto& srb : msg->srbs_to_be_setup_mod_list) {
-    du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_mod_item()));
+    du_request.srbs_to_setup.push_back(int_to_srb_id(srb.value().srbs_to_be_setup_mod_item().srb_id));
   }
 
   // >> Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_mod_list) {
-    du_request.drbs_to_setup.push_back(make_drb_config_request(drb.value().drbs_to_be_setup_mod_item()));
+    du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_mod_item()));
   }
 
   // >> Pass DRBs to modify.
@@ -119,14 +119,9 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->associated_scell_list_present         = false;
 
   // > SRBs-SetupMod-List.
+  resp->srbs_setup_mod_list         = make_srb_setupmod_list(du_request.srbs_to_setup);
   resp->srbs_setup_mod_list_present = not du_request.srbs_to_setup.empty();
-  resp->srbs_setup_mod_list.resize(du_request.srbs_to_setup.size());
-  for (unsigned i = 0; i != du_request.srbs_to_setup.size(); ++i) {
-    resp->srbs_setup_mod_list[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_MOD_ITEM);
-    srbs_setup_mod_item_s& srb = resp->srbs_setup_mod_list[i].value().srbs_setup_mod_item();
-    srb.srb_id                 = srb_id_to_uint(du_request.srbs_to_setup[i]);
-    srb.lcid                   = srb_id_to_lcid(du_request.srbs_to_setup[i]);
-  }
+
   resp->srbs_failed_to_be_setup_mod_list_present = false;
   resp->srbs_modified_list_present               = false;
   resp->full_cfg_present                         = false;
