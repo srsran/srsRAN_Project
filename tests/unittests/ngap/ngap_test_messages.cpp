@@ -935,6 +935,24 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
   return ngap_msg;
 }
 
+ngap_message srsran::srs_cu_cp::generate_handover_preparation_failure(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_unsuccessful_outcome();
+  ngap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_HO_PREP);
+
+  auto& ho_prep_fail = ngap_msg.pdu.unsuccessful_outcome().value.ho_prep_fail();
+
+  ho_prep_fail->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  ho_prep_fail->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
+
+  // cause
+  ho_prep_fail->cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::options::unspecified;
+
+  return ngap_msg;
+}
+
 ngap_message srsran::srs_cu_cp::generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
 {
   ngap_message ngap_msg;

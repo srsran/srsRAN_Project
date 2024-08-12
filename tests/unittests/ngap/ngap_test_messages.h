@@ -211,6 +211,9 @@ ngap_message generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_
 /// \brief Generate a valid dummy Handover Request message.
 ngap_message generate_valid_handover_request(amf_ue_id_t amf_ue_id);
 
+/// \brief Generate a valid dummy Handover Preparation Failure message.
+ngap_message generate_handover_preparation_failure(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
 /// \brief Generate a valid dummy Handover Command message.
 ngap_message generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 

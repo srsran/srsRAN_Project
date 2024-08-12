@@ -136,6 +136,13 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool send_handover_preparation_failure()
+  {
+    // Inject Handover Preparation Failure
+    get_amf().push_tx_pdu(generate_handover_preparation_failure(ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value()));
+    return true;
+  }
+
   [[nodiscard]] bool timeout_handover_command_and_await_handover_cancel()
   {
     // Fail Handover Preparation (AMF doesn't respond) and await Handover Cancel
@@ -191,6 +198,22 @@ TEST_F(cu_cp_inter_cu_handover_test, when_handover_request_received_then_handove
 
   // Inject RRC Reconfiguration Complete and await Handover Notify
   ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify());
+}
+
+TEST_F(cu_cp_inter_cu_handover_test, when_handover_preparation_failure_is_received_then_handover_fails)
+{
+  // Attach UE
+  ASSERT_TRUE(attach_ue());
+
+  // Inject RRC Measurement Report and await Handover Required
+  ASSERT_TRUE(send_rrc_measurement_report_and_await_handover_required());
+
+  // Inject Handover Preparation Failure
+  ASSERT_TRUE(send_handover_preparation_failure());
+
+  // STATUS: Handover Preparation failed and no further messages are sent to the AMF
+  report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                            "there are still NGAP messages to pop from AMF");
 }
 
 TEST_F(cu_cp_inter_cu_handover_test, when_handover_command_times_out_then_handover_cancel_is_sent)
