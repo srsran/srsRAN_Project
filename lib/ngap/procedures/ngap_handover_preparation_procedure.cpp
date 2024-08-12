@@ -81,6 +81,11 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
+  if (transaction_sink.failed()) {
+    logger.log_warning("\"{}\" failed. Cause: Received Handover Preparation Failure", name());
+    CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
+  }
+
   if (transaction_sink.successful()) {
     // Unpack transparent container to get RRC Handover Command
     rrc_ho_cmd_pdu = get_rrc_handover_command();
