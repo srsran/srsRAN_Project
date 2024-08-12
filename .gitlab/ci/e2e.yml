@@ -237,7 +237,7 @@ smoke zmq:
     MARKERS: "smoke"
     PYTEST_ARGS: "-x"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
-    E2E_LOG_LEVEL: "debug"
+    E2E_LOG_LEVEL: "info"
   needs:
     - job: "smoke relwithdeb cached"
       artifacts: true
