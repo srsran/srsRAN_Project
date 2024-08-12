@@ -110,9 +110,6 @@ tox python in builder:
     expire_in: 8 hours
   parallel:
     matrix:
-      - &uhd_2004_matrix
-        os_version: "20.04"
-        uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"] # uhd 3.15.0.0 default
       - &uhd_2204_matrix
         os_version: "22.04"
         uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
@@ -131,7 +128,7 @@ ubuntu-uhd-builder no isa:
     target_arch: x86-64 # x86-64-vX not supported in compilers' versions
   parallel:
     matrix:
-      - *uhd_2004_matrix
+      - *uhd_2204_matrix
 
 ubuntu-uhd-builder avx2:
   extends: .ubuntu-uhd-builder
@@ -223,9 +220,9 @@ ubuntu-uhd-builder arm64:
     expire_in: 8 hours
   parallel:
     matrix:
-      - &dpdk_2004_matrix
-        os_version: "20.04"
-        dpdk_version: ["21.08", "22.11.3", "23.11"]
+      - &dpdk_2204_no_isa_matrix
+        os_version: "22.04"
+        dpdk_version: ["22.11.3", "23.11"]
       - &dpdk_2204_matrix
         os_version: "22.04"
         dpdk_version: ["21.08", "22.11.3", "23.11"]
@@ -245,7 +242,7 @@ ubuntu-dpdk-builder no isa:
     target_arch: x86-64
   parallel:
     matrix:
-      - *dpdk_2004_matrix
+      - *dpdk_2204_no_isa_matrix
 
 ubuntu-dpdk-builder avx2:
   extends: .ubuntu-dpdk-builder
@@ -389,88 +386,6 @@ alternative-tag [codechecker]:
     - image-build-publish [codechecker]
 
 ################################################################################
-# Ubuntu 20.04
-################################################################################
-image-build-publish [ubuntu, 20.04, amd64]:
-  extends:
-    - .image-build-publish
-  variables:
-    OS_FAMILY: debian
-    OS_NAME: ubuntu
-    OS_VERSION: "20.04"
-    PLATFORM: amd64
-  needs:
-    - builder version
-    - job: ubuntu-uhd-builder no isa
-      parallel:
-        matrix:
-          - os_version: "20.04"
-            uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
-    - job: ubuntu-dpdk-builder no isa
-      parallel:
-        matrix:
-          - os_version: "20.04"
-            dpdk_version: ["21.08", "22.11.3", "23.11"]
-
-alternative-tag [ubuntu, 20.04, amd64]:
-  extends:
-    - .alternative-tag
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "20.04"
-    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
-  needs:
-    - builder version
-    - image-build-publish [ubuntu, 20.04, amd64]
-
-image-build-publish [ubuntu, 20.04, arm64]:
-  extends:
-    - .image-build-publish
-  variables:
-    OS_FAMILY: debian
-    OS_NAME: ubuntu
-    OS_VERSION: "20.04"
-    PLATFORM: arm64
-  needs:
-    - builder version
-    - job: ubuntu-uhd-builder arm64
-      parallel:
-        matrix:
-          - os_version: "20.04"
-            uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
-    - job: ubuntu-dpdk-builder arm64
-      parallel:
-        matrix:
-          - os_version: "20.04"
-            dpdk_version: ["21.08", "22.11.3", "23.11"]
-
-alternative-tag [ubuntu, 20.04, arm64]:
-  extends:
-    - .alternative-tag
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "20.04"
-    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
-  needs:
-    - builder version
-    - image-build-publish [ubuntu, 20.04, arm64]
-
-manifest [ubuntu, 20.04]:
-  extends: .manifest
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "20.04"
-  needs:
-    - builder version
-    - job: alternative-tag [ubuntu, 20.04, amd64]
-      optional: false
-    - job: alternative-tag [ubuntu, 20.04, arm64]
-      optional: false
-  parallel:
-    matrix:
-      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
-
-################################################################################
 # Ubuntu 22.04
 ################################################################################
 image-build-publish [ubuntu, 22.04, amd64]:
@@ -488,6 +403,11 @@ image-build-publish [ubuntu, 22.04, amd64]:
         matrix:
           - os_version: "22.04"
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
+    - job: ubuntu-dpdk-builder no isa
+      parallel:
+        matrix:
+          - os_version: "22.04"
+            dpdk_version: ["22.11.3", "23.11"]
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
