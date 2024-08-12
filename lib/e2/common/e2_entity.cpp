@@ -37,7 +37,7 @@ e2_entity::e2_entity(e2ap_configuration&           cfg_,
 e2_entity::e2_entity(e2ap_configuration&                                              cfg_,
                      e2_connection_client*                                            e2_client_,
                      std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
-                     srs_du::f1ap_ue_id_translator&                                   f1ap_ue_id_translator_,
+                     srs_du::f1ap_ue_id_translator*                                   f1ap_ue_id_translator_,
                      srs_du::du_configurator*                                         du_configurator_,
                      timer_factory                                                    timers_,
                      task_executor&                                                   task_exec_) :
@@ -51,7 +51,7 @@ e2_entity::e2_entity(e2ap_configuration&                                        
     std::variant<std::unique_ptr<e2sm_kpm_du_meas_provider_impl>, std::unique_ptr<e2sm_kpm_cu_meas_provider_impl>>
         e2sm_kpm_meas_provider;
     if (std::holds_alternative<e2_du_metrics_interface*>(e2_metrics_)) {
-      e2sm_kpm_meas_provider = std::make_unique<e2sm_kpm_du_meas_provider_impl>(f1ap_ue_id_translator_);
+      e2sm_kpm_meas_provider = std::make_unique<e2sm_kpm_du_meas_provider_impl>(*f1ap_ue_id_translator_);
     } else {
       e2sm_kpm_meas_provider = std::make_unique<e2sm_kpm_cu_meas_provider_impl>();
     }

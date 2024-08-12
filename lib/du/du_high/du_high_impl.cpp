@@ -15,8 +15,6 @@
 #include "adapters/f1ap_test_mode_adapter.h"
 #include "du_high_executor_strategies.h"
 #include "srsran/du/du_high/du_manager/du_manager_factory.h"
-#include "srsran/e2/e2.h"
-#include "srsran/e2/e2_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/support/executors/task_redispatcher.h"
 #include "srsran/support/timers.h"
@@ -140,13 +138,13 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
 
   if (cfg.e2_client) {
     // todo: subscribe e2_metric_manager to a metric hub (currently not present)
-    e2ap_entity = create_e2_entity(cfg.e2ap_config,
-                                   cfg.e2_client,
-                                   cfg.e2_du_metric_iface,
-                                   *f1ap,
-                                   &(get_du_configurator()),
-                                   timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
-                                   cfg.exec_mapper->du_e2_executor());
+    e2ap_entity = create_e2_du_entity(cfg.e2ap_config,
+                                      cfg.e2_client,
+                                      cfg.e2_du_metric_iface,
+                                      &(*f1ap),
+                                      &(get_du_configurator()),
+                                      timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
+                                      cfg.exec_mapper->du_e2_executor());
   }
 }
 

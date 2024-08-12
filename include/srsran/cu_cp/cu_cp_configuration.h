@@ -13,6 +13,9 @@
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
+#include "srsran/e2/e2_connection_client.h"
+#include "srsran/e2/e2_cu.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/support/async/async_task.h"
@@ -139,6 +142,12 @@ struct cu_cp_configuration {
   plugin_params plugin;
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
+  /// E2AP configuration.
+  e2ap_configuration e2ap_config;
+  /// E2 connection client.
+  e2_connection_client* e2_client = nullptr;
+  /// E2 CU metrics interface.
+  e2_cu_metrics_interface* e2_cu_metric_iface = nullptr;
 };
 
 } // namespace srs_cu_cp

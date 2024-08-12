@@ -101,6 +101,15 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   statistics_report_timer.set(cfg.metrics.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
+
+  if (cfg.e2_client) {
+    // todo: subscribe e2_metric_manager to a metric hub (currently not present)
+    e2ap_entity = create_e2_cu_entity(cfg.e2ap_config,
+                                      cfg.e2_client,
+                                      cfg.e2_cu_metric_iface,
+                                      timer_factory{*cfg.services.timers, *cfg.services.cu_cp_executor},
+                                      *cfg.services.cu_cp_executor);
+  }
 }
 
 cu_cp_impl::~cu_cp_impl()

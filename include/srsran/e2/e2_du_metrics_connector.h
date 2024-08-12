@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/e2/e2.h"
+#include "srsran/e2/e2_du.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include <deque>
 
