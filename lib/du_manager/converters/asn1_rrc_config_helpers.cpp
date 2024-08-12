@@ -17,10 +17,202 @@ using namespace srsran;
 using namespace srsran::srs_du;
 using namespace asn1::rrc_nr;
 
-static asn1::rrc_nr::subcarrier_spacing_e get_asn1_scs(subcarrier_spacing scs)
+namespace {
+
+asn1::rrc_nr::subcarrier_spacing_e get_asn1_scs(subcarrier_spacing scs)
 {
   return asn1::rrc_nr::subcarrier_spacing_e{static_cast<asn1::rrc_nr::subcarrier_spacing_opts::options>(scs)};
 }
+
+/// Helper type used to generate ASN.1 diff
+struct rlc_bearer_config {
+  lcid_t                  lcid;
+  std::optional<drb_id_t> drb_id;
+  const rlc_config*       rlc_cfg;
+  const mac_lc_config*    mac_cfg;
+
+  bool operator==(const rlc_bearer_config& rhs) const
+  {
+    // TODO: Remaining fields
+    return lcid == rhs.lcid and drb_id == rhs.drb_id and rlc_cfg->mode == rhs.rlc_cfg->mode and
+           *mac_cfg == *rhs.mac_cfg;
+  }
+};
+
+rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
+{
+  rlc_bearer_cfg_s out;
+
+  out.lc_ch_id = cfg.lcid;
+
+  out.served_radio_bearer_present = true;
+  if (is_srb(cfg.lcid)) {
+    out.served_radio_bearer.set_srb_id() = srb_id_to_uint(to_srb_id(cfg.lcid));
+  } else {
+    out.served_radio_bearer.set_drb_id() = drb_id_to_uint(*cfg.drb_id);
+  }
+
+  out.rlc_cfg_present = true;
+  switch (cfg.rlc_cfg->mode) {
+    case rlc_mode::am: {
+      rlc_cfg_c::am_s_& am              = out.rlc_cfg.set_am();
+      am.ul_am_rlc.sn_field_len_present = true;
+      asn1::number_to_enum(am.ul_am_rlc.sn_field_len, to_number(cfg.rlc_cfg->am.tx.sn_field_length));
+      asn1::number_to_enum(am.ul_am_rlc.t_poll_retx, cfg.rlc_cfg->am.tx.t_poll_retx);
+      asn1::number_to_enum(am.ul_am_rlc.poll_pdu, cfg.rlc_cfg->am.tx.poll_pdu);
+      asn1::number_to_enum(am.ul_am_rlc.poll_byte, cfg.rlc_cfg->am.tx.poll_byte);
+      asn1::number_to_enum(am.ul_am_rlc.max_retx_thres, cfg.rlc_cfg->am.tx.max_retx_thresh);
+
+      am.dl_am_rlc.sn_field_len_present = true;
+      asn1::number_to_enum(am.dl_am_rlc.sn_field_len, to_number(cfg.rlc_cfg->am.rx.sn_field_length));
+      asn1::number_to_enum(am.dl_am_rlc.t_reassembly, cfg.rlc_cfg->am.rx.t_reassembly);
+      asn1::number_to_enum(am.dl_am_rlc.t_status_prohibit, cfg.rlc_cfg->am.rx.t_status_prohibit);
+    } break;
+    case rlc_mode::um_bidir: {
+      auto& um                          = out.rlc_cfg.set_um_bi_dir();
+      um.ul_um_rlc.sn_field_len_present = true;
+      asn1::number_to_enum(um.ul_um_rlc.sn_field_len, to_number(cfg.rlc_cfg->um.tx.sn_field_length));
+      um.dl_um_rlc.sn_field_len_present = true;
+      asn1::number_to_enum(um.dl_um_rlc.sn_field_len, to_number(cfg.rlc_cfg->um.rx.sn_field_length));
+      asn1::number_to_enum(um.dl_um_rlc.t_reassembly, cfg.rlc_cfg->um.rx.t_reassembly);
+    } break;
+    case rlc_mode::um_unidir_dl: {
+      auto& um                          = out.rlc_cfg.set_um_uni_dir_dl();
+      um.dl_um_rlc.sn_field_len_present = true;
+      asn1::number_to_enum(um.dl_um_rlc.sn_field_len, to_number(cfg.rlc_cfg->um.rx.sn_field_length));
+      asn1::number_to_enum(um.dl_um_rlc.t_reassembly, um.dl_um_rlc.t_reassembly);
+    } break;
+    case rlc_mode::um_unidir_ul: {
+      auto& um                          = out.rlc_cfg.set_um_uni_dir_ul();
+      um.ul_um_rlc.sn_field_len_present = true;
+      asn1::number_to_enum(um.ul_um_rlc.sn_field_len, to_number(cfg.rlc_cfg->um.tx.sn_field_length));
+    } break;
+    default:
+      report_fatal_error("Invalid RLC bearer configuration type");
+  }
+
+  out.mac_lc_ch_cfg_present                    = true;
+  out.mac_lc_ch_cfg.ul_specific_params_present = true;
+  out.mac_lc_ch_cfg.ul_specific_params.prio    = cfg.mac_cfg->priority;
+  switch (cfg.mac_cfg->pbr) {
+    case prioritized_bit_rate::kBps0:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps0;
+      break;
+    case prioritized_bit_rate::kBps8:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps8;
+      break;
+    case prioritized_bit_rate::kBps16:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps16;
+      break;
+    case prioritized_bit_rate::kBps32:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps32;
+      break;
+    case prioritized_bit_rate::kBps64:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps64;
+      break;
+    case prioritized_bit_rate::kBps128:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps128;
+      break;
+    case prioritized_bit_rate::kBps256:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps256;
+      break;
+    case prioritized_bit_rate::kBps512:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps512;
+      break;
+    case prioritized_bit_rate::kBps1024:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps1024;
+      break;
+    case prioritized_bit_rate::kBps2048:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps2048;
+      break;
+    case prioritized_bit_rate::kBps4096:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps4096;
+      break;
+    case prioritized_bit_rate::kBps8192:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps8192;
+      break;
+    case prioritized_bit_rate::kBps16384:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps16384;
+      break;
+    case prioritized_bit_rate::kBps32768:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps32768;
+      break;
+    case prioritized_bit_rate::kBps65536:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps65536;
+      break;
+    case prioritized_bit_rate::infinity:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::infinity;
+      break;
+    default:
+      report_fatal_error("Invalid Prioritised Bit Rate {}", cfg.mac_cfg->pbr);
+  }
+  switch (cfg.mac_cfg->bsd) {
+    case bucket_size_duration::ms5:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms5;
+      break;
+    case bucket_size_duration::ms10:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms10;
+      break;
+    case bucket_size_duration::ms20:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms20;
+      break;
+    case bucket_size_duration::ms50:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms50;
+      break;
+    case bucket_size_duration::ms100:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms100;
+      break;
+    case bucket_size_duration::ms150:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms150;
+      break;
+    case bucket_size_duration::ms300:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms300;
+      break;
+    case bucket_size_duration::ms500:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms500;
+      break;
+    case bucket_size_duration::ms1000:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms1000;
+      break;
+    default:
+      report_fatal_error("Invalid Bucket size duration {}", cfg.mac_cfg->bsd);
+  }
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group_present          = true;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = cfg.mac_cfg->lcg_id;
+  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id_present     = true;
+  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id             = cfg.mac_cfg->sr_id;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_mask                = cfg.mac_cfg->lc_sr_mask;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_delay_timer_applied = cfg.mac_cfg->lc_sr_delay_applied;
+
+  return out;
+}
+
+} // namespace
 
 asn1::rrc_nr::coreset_s srsran::srs_du::make_asn1_rrc_coreset(const coreset_configuration& cfg)
 {
@@ -139,179 +331,6 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
             : search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_neg1_and_neg1_neg1;
   }
   return ss;
-}
-
-static rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
-{
-  rlc_bearer_cfg_s out;
-
-  out.lc_ch_id = cfg.lcid;
-
-  out.served_radio_bearer_present = true;
-  if (is_srb(cfg.lcid)) {
-    out.served_radio_bearer.set_srb_id() = srb_id_to_uint(to_srb_id(cfg.lcid));
-  } else {
-    out.served_radio_bearer.set_drb_id() = drb_id_to_uint(*cfg.drb_id);
-  }
-
-  out.rlc_cfg_present = true;
-  switch (cfg.rlc_cfg.mode) {
-    case rlc_mode::am: {
-      rlc_cfg_c::am_s_& am              = out.rlc_cfg.set_am();
-      am.ul_am_rlc.sn_field_len_present = true;
-      asn1::number_to_enum(am.ul_am_rlc.sn_field_len, to_number(cfg.rlc_cfg.am.tx.sn_field_length));
-      asn1::number_to_enum(am.ul_am_rlc.t_poll_retx, cfg.rlc_cfg.am.tx.t_poll_retx);
-      asn1::number_to_enum(am.ul_am_rlc.poll_pdu, cfg.rlc_cfg.am.tx.poll_pdu);
-      asn1::number_to_enum(am.ul_am_rlc.poll_byte, cfg.rlc_cfg.am.tx.poll_byte);
-      asn1::number_to_enum(am.ul_am_rlc.max_retx_thres, cfg.rlc_cfg.am.tx.max_retx_thresh);
-
-      am.dl_am_rlc.sn_field_len_present = true;
-      asn1::number_to_enum(am.dl_am_rlc.sn_field_len, to_number(cfg.rlc_cfg.am.rx.sn_field_length));
-      asn1::number_to_enum(am.dl_am_rlc.t_reassembly, cfg.rlc_cfg.am.rx.t_reassembly);
-      asn1::number_to_enum(am.dl_am_rlc.t_status_prohibit, cfg.rlc_cfg.am.rx.t_status_prohibit);
-    } break;
-    case rlc_mode::um_bidir: {
-      auto& um                          = out.rlc_cfg.set_um_bi_dir();
-      um.ul_um_rlc.sn_field_len_present = true;
-      asn1::number_to_enum(um.ul_um_rlc.sn_field_len, to_number(cfg.rlc_cfg.um.tx.sn_field_length));
-      um.dl_um_rlc.sn_field_len_present = true;
-      asn1::number_to_enum(um.dl_um_rlc.sn_field_len, to_number(cfg.rlc_cfg.um.rx.sn_field_length));
-      asn1::number_to_enum(um.dl_um_rlc.t_reassembly, cfg.rlc_cfg.um.rx.t_reassembly);
-    } break;
-    case rlc_mode::um_unidir_dl: {
-      auto& um                          = out.rlc_cfg.set_um_uni_dir_dl();
-      um.dl_um_rlc.sn_field_len_present = true;
-      asn1::number_to_enum(um.dl_um_rlc.sn_field_len, to_number(cfg.rlc_cfg.um.rx.sn_field_length));
-      asn1::number_to_enum(um.dl_um_rlc.t_reassembly, um.dl_um_rlc.t_reassembly);
-    } break;
-    case rlc_mode::um_unidir_ul: {
-      auto& um                          = out.rlc_cfg.set_um_uni_dir_ul();
-      um.ul_um_rlc.sn_field_len_present = true;
-      asn1::number_to_enum(um.ul_um_rlc.sn_field_len, to_number(cfg.rlc_cfg.um.tx.sn_field_length));
-    } break;
-    default:
-      report_fatal_error("Invalid RLC bearer configuration type");
-  }
-
-  out.mac_lc_ch_cfg_present                    = true;
-  out.mac_lc_ch_cfg.ul_specific_params_present = true;
-  out.mac_lc_ch_cfg.ul_specific_params.prio    = cfg.mac_cfg.priority;
-  switch (cfg.mac_cfg.pbr) {
-    case prioritized_bit_rate::kBps0:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps0;
-      break;
-    case prioritized_bit_rate::kBps8:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps8;
-      break;
-    case prioritized_bit_rate::kBps16:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps16;
-      break;
-    case prioritized_bit_rate::kBps32:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps32;
-      break;
-    case prioritized_bit_rate::kBps64:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps64;
-      break;
-    case prioritized_bit_rate::kBps128:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps128;
-      break;
-    case prioritized_bit_rate::kBps256:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps256;
-      break;
-    case prioritized_bit_rate::kBps512:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps512;
-      break;
-    case prioritized_bit_rate::kBps1024:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps1024;
-      break;
-    case prioritized_bit_rate::kBps2048:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps2048;
-      break;
-    case prioritized_bit_rate::kBps4096:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps4096;
-      break;
-    case prioritized_bit_rate::kBps8192:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps8192;
-      break;
-    case prioritized_bit_rate::kBps16384:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps16384;
-      break;
-    case prioritized_bit_rate::kBps32768:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps32768;
-      break;
-    case prioritized_bit_rate::kBps65536:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps65536;
-      break;
-    case prioritized_bit_rate::infinity:
-      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::infinity;
-      break;
-    default:
-      report_fatal_error("Invalid Prioritised Bit Rate {}", cfg.mac_cfg.pbr);
-  }
-  switch (cfg.mac_cfg.bsd) {
-    case bucket_size_duration::ms5:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms5;
-      break;
-    case bucket_size_duration::ms10:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms10;
-      break;
-    case bucket_size_duration::ms20:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms20;
-      break;
-    case bucket_size_duration::ms50:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms50;
-      break;
-    case bucket_size_duration::ms100:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms100;
-      break;
-    case bucket_size_duration::ms150:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms150;
-      break;
-    case bucket_size_duration::ms300:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms300;
-      break;
-    case bucket_size_duration::ms500:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms500;
-      break;
-    case bucket_size_duration::ms1000:
-      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms1000;
-      break;
-    default:
-      report_fatal_error("Invalid Bucket size duration {}", cfg.mac_cfg.bsd);
-  }
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group_present          = true;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = cfg.mac_cfg.lcg_id;
-  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id_present     = true;
-  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id             = cfg.mac_cfg.sr_id;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_mask                = cfg.mac_cfg.lc_sr_mask;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_delay_timer_applied = cfg.mac_cfg.lc_sr_delay_applied;
-
-  return out;
 }
 
 asn1::dyn_array<scs_specific_carrier_s>
@@ -3005,15 +3024,15 @@ static static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> fill_rlc_bearers(const
     }
     rlc_bearer_config& bearer = list.emplace_back();
     bearer.lcid               = srb_id_to_lcid(srb.srb_id);
-    bearer.rlc_cfg            = srb.rlc_cfg;
-    bearer.mac_cfg            = srb.mac_cfg;
+    bearer.rlc_cfg            = &srb.rlc_cfg;
+    bearer.mac_cfg            = &srb.mac_cfg;
   }
   for (const auto& drb : res.drbs) {
     rlc_bearer_config& bearer = list.emplace_back();
     bearer.lcid               = drb.lcid;
     bearer.drb_id             = drb.drb_id;
-    bearer.rlc_cfg            = drb.rlc_cfg;
-    bearer.mac_cfg            = drb.mac_cfg;
+    bearer.rlc_cfg            = &drb.rlc_cfg;
+    bearer.mac_cfg            = &drb.mac_cfg;
   }
   return list;
 }

@@ -75,6 +75,11 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
 
   // Prepare DU resource allocator response.
   cell_res_alloc.next_context_update_result = cell_res_alloc.ue_resource_pool[req.ue_index];
+  auto& u                                   = *ue_mng.find_ue(req.ue_index);
+  if (u.reestablished_cfg_pending != nullptr) {
+    cell_res_alloc.next_context_update_result.srbs = u.reestablished_cfg_pending->srbs;
+    cell_res_alloc.next_context_update_result.drbs = u.reestablished_cfg_pending->drbs;
+  }
   for (srb_id_t srb_id : req.srbs_to_setup) {
     cell_res_alloc.next_context_update_result.srbs.emplace(srb_id);
     auto& new_srb   = cell_res_alloc.next_context_update_result.srbs[srb_id];
@@ -94,10 +99,8 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
     new_drb.f1u         = {};
   }
   for (const f1ap_drb_to_modify& drb : req.drbs_to_mod) {
-    auto&                        mod_drb    = cell_res_alloc.next_context_update_result.drbs.emplace(drb.drb_id);
-    const du_ue_resource_config& old_ue_cfg = *ue_mng.find_ue(req.ue_index)->reestablished_cfg_pending;
-    auto&                        old_drb    = old_ue_cfg.drbs[drb.drb_id];
-    mod_drb                                 = old_drb;
+    srsran_assert(cell_res_alloc.next_context_update_result.drbs.contains(drb.drb_id),
+                  "reestablishment context should have created DRB");
   }
   for (drb_id_t drb_id : req.drbs_to_rem) {
     if (cell_res_alloc.next_context_update_result.drbs.contains(drb_id)) {

@@ -22,19 +22,6 @@
 namespace srsran {
 namespace srs_du {
 
-struct rlc_bearer_config {
-  lcid_t                  lcid;
-  std::optional<drb_id_t> drb_id;
-  rlc_config              rlc_cfg;
-  mac_lc_config           mac_cfg;
-
-  bool operator==(const rlc_bearer_config& rhs) const
-  {
-    // TODO: Remaining fields
-    return lcid == rhs.lcid and drb_id == rhs.drb_id and rlc_cfg.mode == rhs.rlc_cfg.mode and mac_cfg == rhs.mac_cfg;
-  }
-};
-
 /// \brief Create configuration for RLC SRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
                                                              du_ue_index_t                            ue_index,
