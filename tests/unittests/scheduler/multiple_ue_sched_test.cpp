@@ -1268,6 +1268,38 @@ TEST_F(single_ue_sched_tester, srb0_retransmission_not_scheduled_if_csi_rs_is_pr
   }
 }
 
+TEST_F(single_ue_sched_tester, test_ue_scheduling_with_empty_spcell_cfg)
+{
+  setup_sched(create_expert_config(10), create_custom_cell_config_request(srsran::duplex_mode::TDD));
+  // Add UE.
+  const auto& cell_cfg_params        = create_custom_cell_cfg_builder_params(srsran::duplex_mode::TDD);
+  auto        ue_creation_req        = test_helpers::create_empty_spcell_cfg_sched_ue_creation_request(cell_cfg_params);
+  ue_creation_req.starts_in_fallback = true;
+
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(allocate_rnti());
+  bench->sch.handle_ue_creation_request(ue_creation_req);
+  bench->ues[ue_creation_req.ue_index] = sched_test_ue{ue_creation_req.crnti, {}, {}, ue_creation_req};
+
+  run_slot();
+
+  // Push DL buffer status indication.
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), 100, LCID_SRB0);
+
+  bool successfully_scheduled_srb0_bytes = false;
+  for (unsigned i = 0; i != 20; ++i) {
+    run_slot();
+    auto&       test_ue = get_ue(to_du_ue_index(0));
+    const auto* grant   = find_ue_pdsch(test_ue);
+    if (grant != nullptr) {
+      successfully_scheduled_srb0_bytes = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(successfully_scheduled_srb0_bytes)
+      << fmt::format("SRB0 not scheduled for UE with empty SpCell configuration");
+}
+
 // Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
 // This prevents valgrind from complaining about uninitialized variables.
 // See https://github.com/google/googletest/issues/3805.

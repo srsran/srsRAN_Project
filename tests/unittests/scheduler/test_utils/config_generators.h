@@ -108,6 +108,32 @@ create_default_sched_ue_creation_request(const cell_config_builder_params&    pa
   return msg;
 }
 
+inline sched_ue_creation_request_message
+create_empty_spcell_cfg_sched_ue_creation_request(const cell_config_builder_params& params = {})
+{
+  sched_ue_creation_request_message msg{};
+
+  msg.ue_index = to_du_ue_index(0);
+  msg.crnti    = to_rnti(0x4601);
+
+  cell_config_dedicated cfg;
+  cfg.serv_cell_idx              = to_serv_cell_index(0);
+  serving_cell_config& serv_cell = cfg.serv_cell_cfg;
+
+  serv_cell.cell_index = to_du_cell_index(0);
+  // > TAG-ID.
+  serv_cell.tag_id = static_cast<tag_id_t>(0);
+
+  msg.cfg.cells.emplace();
+  msg.cfg.cells->push_back(cfg);
+
+  msg.cfg.lc_config_list.emplace();
+  msg.cfg.lc_config_list->resize(1);
+  (*msg.cfg.lc_config_list)[0] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
+
+  return msg;
+}
+
 inline rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti, unsigned rapid = 0)
 {
   rach_indication_message msg{};
