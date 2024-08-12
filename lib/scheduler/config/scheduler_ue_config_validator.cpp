@@ -28,7 +28,9 @@ srsran::config_validators::validate_sched_ue_creation_request_message(const sche
 
     HANDLE_ERROR(validate_pdsch_cfg(cell.serv_cell_cfg));
 
-    HANDLE_ERROR(validate_pucch_cfg(cell.serv_cell_cfg, cell_cfg.dl_carrier.nof_ant));
+    if (cell.serv_cell_cfg.ul_config.has_value() and cell.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value()) {
+      HANDLE_ERROR(validate_pucch_cfg(cell.serv_cell_cfg, cell_cfg.dl_carrier.nof_ant));
+    }
 
     HANDLE_ERROR(validate_csi_meas_cfg(cell.serv_cell_cfg, cell_cfg.tdd_cfg_common));
 
