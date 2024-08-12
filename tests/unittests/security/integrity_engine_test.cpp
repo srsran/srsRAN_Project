@@ -130,6 +130,16 @@ TEST_P(fxt_nia1, integrity_engine_generic_nia1)
     EXPECT_EQ(result.buf.value(), prot_buf);
     EXPECT_EQ(result.count, param.count_i);
   }
+
+  // Verify integrity
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(message.begin(), message.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), message);
+    EXPECT_EQ(result.count, param.count_i);
+  }
 }
 
 #ifdef MBEDTLS_CMAC_C
@@ -155,6 +165,16 @@ TEST_P(fxt_nia2, integrity_engine_nia2_cmac)
     logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
     logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
     EXPECT_EQ(result.buf.value(), prot_buf);
+    EXPECT_EQ(result.count, param.count_i);
+  }
+
+  // Verify integrity
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(message.begin(), message.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), message);
     EXPECT_EQ(result.count, param.count_i);
   }
 }
@@ -184,6 +204,16 @@ TEST_P(fxt_nia2, integrity_engine_nia2_non_cmac)
     EXPECT_EQ(result.buf.value(), prot_buf);
     EXPECT_EQ(result.count, param.count_i);
   }
+
+  // Verify integrity
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(message.begin(), message.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), message);
+    EXPECT_EQ(result.count, param.count_i);
+  }
 }
 
 TEST_P(fxt_nia2, integrity_engine_generic_nia2)
@@ -211,6 +241,16 @@ TEST_P(fxt_nia2, integrity_engine_generic_nia2)
     EXPECT_EQ(result.buf.value(), prot_buf);
     EXPECT_EQ(result.count, param.count_i);
   }
+
+  // Verify integrity
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(message.begin(), message.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), message);
+    EXPECT_EQ(result.count, param.count_i);
+  }
 }
 
 TEST_P(fxt_nia3, integrity_engine_generic_nia3)
@@ -236,6 +276,16 @@ TEST_P(fxt_nia3, integrity_engine_generic_nia3)
     logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
     logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
     EXPECT_EQ(result.buf.value(), prot_buf);
+    EXPECT_EQ(result.count, param.count_i);
+  }
+
+  // Verify integrity
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(message.begin(), message.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), message);
     EXPECT_EQ(result.count, param.count_i);
   }
 }
