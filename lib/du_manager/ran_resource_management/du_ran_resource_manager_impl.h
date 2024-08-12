@@ -56,8 +56,8 @@ public:
   du_ran_resource_manager_impl& operator=(du_ran_resource_manager_impl&&)      = delete;
   du_ran_resource_manager_impl& operator=(const du_ran_resource_manager_impl&) = delete;
 
-  ue_ran_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
-                                                               du_cell_index_t pcell_index) override;
+  expected<ue_ran_resource_configurator, std::string>
+  create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index) override;
 
   /// \brief Updates a UE's cell configuration context based on the F1 UE Context Update request.
   ///

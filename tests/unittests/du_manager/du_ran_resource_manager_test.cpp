@@ -40,10 +40,14 @@ protected:
     }
   }
 
-  ue_ran_resource_configurator& create_ue(du_ue_index_t ue_index)
+  ue_ran_resource_configurator* create_ue(du_ue_index_t ue_index)
   {
-    ues.emplace(ue_index, res_mng->create_ue_resource_configurator(ue_index, to_du_cell_index(0)));
-    return ues[ue_index];
+    auto result = res_mng->create_ue_resource_configurator(ue_index, to_du_cell_index(0));
+    if (not result.has_value()) {
+      return nullptr;
+    }
+    ues.emplace(ue_index, std::move(result.value()));
+    return &ues[ue_index];
   }
 
   static f1ap_ue_context_update_request srb1_creation_req(du_ue_index_t ue_index)
@@ -169,29 +173,31 @@ protected:
 TEST_P(du_ran_resource_manager_tester, when_ue_resource_config_is_created_then_pcell_is_configured)
 {
   const du_ue_index_t                 ue_idx1 = to_du_ue_index(0);
-  const ue_ran_resource_configurator& ue_res  = create_ue(ue_idx1);
+  const ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
 
-  ASSERT_FALSE(ue_res.empty());
-  ASSERT_EQ(ue_res->cell_group.cells.size(), 1);
-  ASSERT_TRUE(ue_res->cell_group.cells.contains(0));
-  ASSERT_TRUE(ue_res->srbs.empty());
-  ASSERT_TRUE(ue_res->drbs.empty());
-  ASSERT_EQ(ue_res->cell_group.cells[0].serv_cell_cfg.cell_index, to_du_cell_index(0));
-  ASSERT_EQ(ue_res->cell_group.cells[0].serv_cell_idx, SERVING_CELL_PCELL_IDX);
-  ASSERT_FALSE(ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list.empty());
-  ASSERT_FALSE(ue_res->cell_group.mcg_cfg.scheduling_request_config.empty());
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->resource_alloc_failed());
+  ASSERT_EQ(ue_res->value().cell_group.cells.size(), 1);
+  ASSERT_TRUE(ue_res->value().cell_group.cells.contains(0));
+  ASSERT_TRUE(ue_res->value().srbs.empty());
+  ASSERT_TRUE(ue_res->value().drbs.empty());
+  ASSERT_EQ(ue_res->value().cell_group.cells[0].serv_cell_cfg.cell_index, to_du_cell_index(0));
+  ASSERT_EQ(ue_res->value().cell_group.cells[0].serv_cell_idx, SERVING_CELL_PCELL_IDX);
+  ASSERT_FALSE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list.empty());
+  ASSERT_FALSE(ue_res->value().cell_group.mcg_cfg.scheduling_request_config.empty());
 }
 
 TEST_P(du_ran_resource_manager_tester, when_srb1_is_added_then_ue_resource_config_is_updated)
 {
   const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
-  ue_ran_resource_configurator& ue_res  = create_ue(ue_idx1);
-  auto                          resp    = ue_res.update(to_du_cell_index(0), srb1_creation_req(ue_idx1));
+  ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
+  ASSERT_NE(ue_res, nullptr);
+  auto resp = ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1));
 
   ASSERT_FALSE(resp.failed());
-  ASSERT_EQ(ue_res->srbs.size(), 1);
-  ASSERT_TRUE(ue_res->srbs.contains(srb_id_t::srb1));
-  ASSERT_EQ(ue_res->srbs[srb_id_t::srb1].rlc_cfg.mode, rlc_mode::am);
+  ASSERT_EQ(ue_res->value().srbs.size(), 1);
+  ASSERT_TRUE(ue_res->value().srbs.contains(srb_id_t::srb1));
+  ASSERT_EQ(ue_res->value().srbs[srb_id_t::srb1].rlc_cfg.mode, rlc_mode::am);
 }
 
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)
@@ -204,9 +210,11 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
   // > Created UEs have unique (PUCCH resource, SR offset) pairs.
   std::set<std::pair<unsigned, unsigned>> sr_offsets;
   for (unsigned i = 0; i != nof_avail_sr_offsets; ++i) {
-    const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
-    ASSERT_FALSE(ue_res.empty());
-    const auto& sr_res_list = ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+    const ue_ran_resource_configurator* ue_res = create_ue(next_ue_index);
+    ASSERT_NE(ue_res, nullptr);
+    ASSERT_FALSE(ue_res->resource_alloc_failed());
+    const auto& sr_res_list =
+        ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
     ASSERT_FALSE(sr_res_list.empty());
     ASSERT_EQ(sr_periodicity_to_slot(sr_res_list[0].period), sr_period);
     if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value()) {
@@ -219,7 +227,7 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
     sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id.cell_res_id, sr_res_list[0].offset));
 
     // Check if PUCCH config is correctly updated.
-    const serving_cell_config serving_cell_cfg = ue_res->cell_group.cells[0].serv_cell_cfg;
+    const serving_cell_config serving_cell_cfg = ue_res->value().cell_group.cells[0].serv_cell_cfg;
     std::optional<unsigned>   csi_pucch_res{};
     const bool                has_csi_cfg = serving_cell_cfg.csi_meas_cfg.has_value() and
                              not serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
@@ -231,16 +239,21 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
                                 .pucch_csi_res_list.front()
                                 .pucch_res_id.cell_res_id);
     }
-    ASSERT_TRUE(verify_pucch_cfg(ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(),
-                                 csi_pucch_res));
+    ASSERT_TRUE(verify_pucch_cfg(
+        ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(), csi_pucch_res));
 
     next_ue_index = to_du_ue_index((unsigned)next_ue_index + 1);
   }
 
   {
     // > No more SR offsets available. UE Resource Allocation fails.
-    const ue_ran_resource_configurator& empty_ue_res = create_ue(next_ue_index);
-    ASSERT_TRUE(empty_ue_res.empty());
+    const ue_ran_resource_configurator* ue_res_no_resources = create_ue(next_ue_index);
+    ASSERT_NE(ue_res_no_resources, nullptr);
+    ASSERT_TRUE(ue_res_no_resources->resource_alloc_failed());
+    ASSERT_FALSE(
+        ue_res_no_resources->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value());
+    ASSERT_TRUE(
+        ue_res_no_resources->value().cell_group.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list.empty());
     ues.erase(next_ue_index);
   }
 
@@ -254,14 +267,16 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
       ues[ue_idx_to_rem]->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset;
   ues.erase(ue_idx_to_rem);
   next_ue_index                              = to_du_ue_index((unsigned)next_ue_index + 1);
-  const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
-  ASSERT_FALSE(ue_res.empty());
+  const ue_ran_resource_configurator* ue_res = create_ue(next_ue_index);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->resource_alloc_failed());
   ASSERT_EQ(rem_pucch_resource,
-            ue_res->cell_group.cells[0]
+            ue_res->value()
+                .cell_group.cells[0]
                 .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0]
                 .pucch_res_id.cell_res_id);
   ASSERT_EQ(rem_sr_offset,
-            ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
+            ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
 }
 
 INSTANTIATE_TEST_SUITE_P(du_ran_resource_manager_tester,
@@ -446,11 +461,13 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
   std::set<std::pair<unsigned, unsigned>> sr_offsets;
   std::set<std::pair<unsigned, unsigned>> csi_offsets;
   for (unsigned i = 0; i != std::get<0>(avail_res); ++i) {
-    const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
-    ASSERT_FALSE(ue_res.empty());
+    const ue_ran_resource_configurator* ue_res = create_ue(next_ue_index);
+    ASSERT_NE(ue_res, nullptr);
+    ASSERT_FALSE(ue_res->resource_alloc_failed());
 
     // Check if the SR has been assigned to the UE.
-    const auto& sr_res_list = ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+    const auto& sr_res_list =
+        ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
     ASSERT_FALSE(sr_res_list.empty());
     ASSERT_EQ(sr_periodicity_to_slot(sr_res_list[0].period), sr_period);
     // Make sure the SR is in a fully-UL slot.
@@ -464,8 +481,8 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
     sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id.cell_res_id, sr_res_list[0].offset));
 
     // Check if the CSI has been assigned to the UE.
-    ASSERT_TRUE(has_ue_csi_cfg(ue_res->cell_group.cells[0].serv_cell_cfg));
-    const auto& ue_csi_cfg = get_ue_csi_cfg(ue_res->cell_group.cells[0].serv_cell_cfg);
+    ASSERT_TRUE(has_ue_csi_cfg(ue_res->value().cell_group.cells[0].serv_cell_cfg));
+    const auto& ue_csi_cfg = get_ue_csi_cfg(ue_res->value().cell_group.cells[0].serv_cell_cfg);
     ASSERT_FALSE(ue_csi_cfg.pucch_csi_res_list.empty());
     const unsigned ue_csi_pucch_res_id = ue_csi_cfg.pucch_csi_res_list.front().pucch_res_id.cell_res_id;
     const unsigned ue_csi_pucch_offset = ue_csi_cfg.report_slot_offset;
@@ -484,12 +501,12 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
     const interval<unsigned, true> expected_f1 =
         get_expected_pucch_res_id_interval(static_cast<unsigned>(next_ue_index), srsran::pucch_format::FORMAT_1);
     const interval<unsigned, true> actual_f1 = get_pucch_res_id_interval(
-        ue_res->cell_group.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value(),
+        ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value(),
         srsran::pucch_format::FORMAT_1);
     const interval<unsigned, true> expected_f2 =
         get_expected_pucch_res_id_interval(static_cast<unsigned>(next_ue_index), srsran::pucch_format::FORMAT_2);
     const interval<unsigned, true> actual_f2 = get_pucch_res_id_interval(
-        ue_res->cell_group.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value(),
+        ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value(),
         srsran::pucch_format::FORMAT_2);
 
     ASSERT_TRUE(expected_f1.start() == actual_f1.start() and expected_f1.stop() == actual_f1.stop());
@@ -500,8 +517,9 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
 
   {
     // > No more SR offsets available. UE Resource Allocation fails.
-    const ue_ran_resource_configurator& empty_ue_res = create_ue(next_ue_index);
-    ASSERT_TRUE(empty_ue_res.empty());
+    const ue_ran_resource_configurator* empty_ue_res = create_ue(next_ue_index);
+    ASSERT_NE(empty_ue_res, nullptr);
+    ASSERT_TRUE(empty_ue_res->resource_alloc_failed());
     ues.erase(next_ue_index);
   }
 
@@ -521,27 +539,31 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
 
   ues.erase(ue_idx_to_rem);
   next_ue_index                              = to_du_ue_index((unsigned)next_ue_index + 1);
-  const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
-  ASSERT_FALSE(ue_res.empty());
+  const ue_ran_resource_configurator* ue_res = create_ue(next_ue_index);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->resource_alloc_failed());
 
   // If the resources and offset were limited by the SR, then check if a new SR can be allocated.
   const bool nof_ue_limited_by_sr_resources = std::get<1>(avail_res);
   if (nof_ue_limited_by_sr_resources) {
     ASSERT_EQ(rem_sr_pucch_resource,
-              ue_res->cell_group.cells[0]
+              ue_res->value()
+                  .cell_group.cells[0]
                   .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0]
                   .pucch_res_id.cell_res_id);
-    ASSERT_EQ(rem_sr_offset,
-              ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
+    ASSERT_EQ(
+        rem_sr_offset,
+        ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
   }
 
   // If the resources and offset were limited by the CSI, then check if a new CSI can be allocated.
   const bool nof_ue_limited_by_csi_resources = std::get<2>(avail_res);
   if (nof_ue_limited_by_csi_resources) {
-    ASSERT_EQ(
-        rem_csi_pucch_resource_id,
-        get_ue_csi_cfg(ue_res->cell_group.cells[0].serv_cell_cfg).pucch_csi_res_list.front().pucch_res_id.cell_res_id);
-    ASSERT_EQ(rem_csi_offset, get_ue_csi_cfg(ue_res->cell_group.cells[0].serv_cell_cfg).report_slot_offset);
+    ASSERT_EQ(rem_csi_pucch_resource_id,
+              get_ue_csi_cfg(ue_res->value().cell_group.cells[0].serv_cell_cfg)
+                  .pucch_csi_res_list.front()
+                  .pucch_res_id.cell_res_id);
+    ASSERT_EQ(rem_csi_offset, get_ue_csi_cfg(ue_res->value().cell_group.cells[0].serv_cell_cfg).report_slot_offset);
   }
 }
 
@@ -612,23 +634,26 @@ TEST_P(du_ran_res_mng_pucch_cnt_tester, test_du_pucch_cnt)
   std::set<std::pair<unsigned, unsigned>> sr_offsets;
   std::set<std::pair<unsigned, unsigned>> csi_offsets;
   for (unsigned i = 0; i != 1000; ++i) {
-    const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
-    if (ue_res.empty()) {
+    const ue_ran_resource_configurator* ue_res = create_ue(next_ue_index);
+    if (ue_res == nullptr) {
+      break;
+    }
+    if (ue_res->resource_alloc_failed()) {
       ues.erase(next_ue_index);
       break;
     }
-    ASSERT_FALSE(ue_res.empty());
 
     // Check if the SR has been assigned to the UE.
-    const auto& sr_res_list = ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+    const auto& sr_res_list =
+        ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
     ASSERT_FALSE(sr_res_list.empty());
     ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id.cell_res_id, sr_res_list[0].offset)), 0);
     sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id.cell_res_id, sr_res_list[0].offset));
     unsigned sr_offset = sr_res_list[0].offset;
 
     // Check if the CSI has been assigned to the UE.
-    ASSERT_TRUE(has_ue_csi_cfg(ue_res->cell_group.cells[0].serv_cell_cfg));
-    const auto& ue_csi_cfg = get_ue_csi_cfg(ue_res->cell_group.cells[0].serv_cell_cfg);
+    ASSERT_TRUE(has_ue_csi_cfg(ue_res->value().cell_group.cells[0].serv_cell_cfg));
+    const auto& ue_csi_cfg = get_ue_csi_cfg(ue_res->value().cell_group.cells[0].serv_cell_cfg);
     ASSERT_FALSE(ue_csi_cfg.pucch_csi_res_list.empty());
     const unsigned csi_pucch_res_id = ue_csi_cfg.pucch_csi_res_list.front().pucch_res_id.cell_res_id;
     const unsigned csi_offset       = ue_csi_cfg.report_slot_offset;
@@ -664,8 +689,9 @@ TEST_P(du_ran_res_mng_pucch_cnt_tester, test_du_pucch_cnt)
 
   // Attempt a new allocation and verify it is successful.
   next_ue_index                              = to_du_ue_index((unsigned)next_ue_index + 1);
-  const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
-  ASSERT_FALSE(ue_res.empty());
+  const ue_ran_resource_configurator* ue_res = create_ue(next_ue_index);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->resource_alloc_failed());
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -706,15 +732,18 @@ TEST_P(du_ran_res_mng_pucch_cnt_sr_only_tester, test_du_pucch_cnt_sr_only)
   // > Created UEs have unique (PUCCH resource, SR offset) pairs.
   std::set<std::pair<unsigned, unsigned>> sr_offsets;
   for (unsigned i = 0; i != 1000; ++i) {
-    const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
-    if (ue_res.empty()) {
+    const ue_ran_resource_configurator* ue_res = create_ue(next_ue_index);
+    if (ue_res == nullptr) {
+      break;
+    }
+    if (ue_res->resource_alloc_failed()) {
       ues.erase(next_ue_index);
       break;
     }
-    ASSERT_FALSE(ue_res.empty());
 
     // Check if the SR has been assigned to the UE.
-    const auto& sr_res_list = ue_res->cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+    const auto& sr_res_list =
+        ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
     ASSERT_FALSE(sr_res_list.empty());
     ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id.cell_res_id, sr_res_list[0].offset)), 0);
     sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id.cell_res_id, sr_res_list[0].offset));
@@ -737,8 +766,9 @@ TEST_P(du_ran_res_mng_pucch_cnt_sr_only_tester, test_du_pucch_cnt_sr_only)
 
   // Attempt a new allocation and verify it is successful.
   next_ue_index                              = to_du_ue_index((unsigned)next_ue_index + 1);
-  const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
-  ASSERT_FALSE(ue_res.empty());
+  const ue_ran_resource_configurator* ue_res = create_ue(next_ue_index);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->resource_alloc_failed());
 }
 
 INSTANTIATE_TEST_SUITE_P(

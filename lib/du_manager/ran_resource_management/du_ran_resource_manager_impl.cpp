@@ -49,24 +49,21 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
 {
 }
 
-ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t   ue_index,
-                                                                                           du_cell_index_t pcell_index)
+expected<ue_ran_resource_configurator, std::string>
+du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index)
 {
   if (ue_res_pool.contains(ue_index)) {
-    return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr},
-                                        std::string("Double allocation of same UE not supported")};
+    return make_unexpected(std::string("Double allocation of same UE not supported"));
   }
   ue_res_pool.emplace(ue_index);
   auto& mcg = ue_res_pool[ue_index].cg_cfg;
 
   // UE initialized PCell.
+  // Note: In case of lack of RAN resource availability, the return will be error type.
   error_type<std::string> err = allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX);
-  if (not err.has_value()) {
-    ue_res_pool.erase(ue_index);
-    return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}, err.error()};
-  }
 
-  return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index)};
+  return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index),
+                                      err.has_value() ? std::string{} : err.error()};
 }
 
 du_ue_resource_update_response

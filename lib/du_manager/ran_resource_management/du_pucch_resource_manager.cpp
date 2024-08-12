@@ -221,6 +221,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 
   // Verify where there are SR and CSI resources to allocate a new UE.
   if (free_sr_list.empty() or (default_csi_report_cfg.has_value() and free_csi_list.empty())) {
+    disable_pucch_cfg(cell_grp_cfg);
     return false;
   }
 
@@ -269,6 +270,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   }
 
   if (!sr_res_offset.has_value()) {
+    disable_pucch_cfg(cell_grp_cfg);
     return false;
   }
 
@@ -320,6 +322,9 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 
 void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cfg)
 {
+  if (not cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value()) {
+    return;
+  }
   auto& sr_to_deallocate = cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list.front();
   cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_res_offset_free_list.emplace_back(
       pucch_res_idx_to_sr_du_res_idx(sr_to_deallocate.pucch_res_id.cell_res_id), sr_to_deallocate.offset);
@@ -448,4 +453,14 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
                           user_defined_pucch_cfg.nof_sr_resources +
                           user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
                               user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets);
+}
+
+void du_pucch_resource_manager::disable_pucch_cfg(srsran::srs_du::cell_group_config& cell_grp_cfg)
+{
+  auto& serv_cell = cell_grp_cfg.cells[0].serv_cell_cfg;
+
+  serv_cell.ul_config->init_ul_bwp.pucch_cfg.reset();
+  if (serv_cell.csi_meas_cfg.has_value()) {
+    serv_cell.csi_meas_cfg.value().csi_report_cfg_list.clear();
+  }
 }

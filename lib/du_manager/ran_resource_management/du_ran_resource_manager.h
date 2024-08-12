@@ -45,9 +45,7 @@ public:
   };
 
   explicit ue_ran_resource_configurator(std::unique_ptr<resource_updater> ue_res_, std::string error = {}) :
-    ue_res_impl(std::move(ue_res_)),
-    cached_res(ue_res_impl != nullptr ? &ue_res_impl->get() : nullptr),
-    configurator_error(ue_res_impl != nullptr ? std::string{} : error)
+    ue_res_impl(std::move(ue_res_)), cached_res(&ue_res_impl->get()), configurator_error(std::move(error))
   {
   }
 
@@ -65,11 +63,11 @@ public:
     return ue_res_impl->update(pcell_index, upd_req, reestablished_context);
   }
 
-  /// \brief Checks whether the UE resources have been correctly allocated.
-  bool empty() const { return ue_res_impl == nullptr; }
+  /// \brief Checks whether the allocation of resources to the UE failed, due to lack of resources.
+  bool resource_alloc_failed() const { return not configurator_error.empty(); }
 
   /// \brief Returns the configurator error, which non-empty string only if the procedure failed.
-  std::string get_error() const { return empty() ? configurator_error : std::string{}; }
+  std::string get_error() const { return configurator_error; }
 
   const du_ue_resource_config& value() const { return *cached_res; }
   const du_ue_resource_config& operator*() const { return *cached_res; }
@@ -88,8 +86,9 @@ public:
   virtual ~du_ran_resource_manager() = default;
 
   /// \brief Create a new UE resource allocation config object.
-  virtual ue_ran_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
-                                                                       du_cell_index_t pcell_index) = 0;
+  /// \return UE Resource configuration if correctly created. Unexpected if no space in the manager was found.
+  virtual expected<ue_ran_resource_configurator, std::string>
+  create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index) = 0;
 };
 
 } // namespace srs_du

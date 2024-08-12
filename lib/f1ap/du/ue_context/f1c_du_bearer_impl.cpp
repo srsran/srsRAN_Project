@@ -59,8 +59,10 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
           logger.error("UL {} SRB0 Tx PDU: Discarding Tx PDU. Cause: Failed to append SDU to RRC container.", ue_ctxt);
           return;
         }
-        init_msg->du_to_cu_rrc_container_present           = true;
-        init_msg->du_to_cu_rrc_container                   = std::move(du_cu_rrc_container);
+        init_msg->du_to_cu_rrc_container_present = not du_cu_rrc_container.empty();
+        if (init_msg->du_to_cu_rrc_container_present) {
+          init_msg->du_to_cu_rrc_container = std::move(du_cu_rrc_container);
+        }
         init_msg->sul_access_ind_present                   = false;
         init_msg->transaction_id                           = transaction.id();
         init_msg->ran_ue_id_present                        = false;

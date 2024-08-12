@@ -78,6 +78,9 @@ private:
 
   [[nodiscard]] bool csi_offset_collides_with_sr(unsigned sr_offset, unsigned csi_offset) const;
 
+  /// Called when PUCCH allocation fails for a given UE.
+  void disable_pucch_cfg(cell_group_config& cell_grp_cfg);
+
   // Parameters for PUCCH configuration passed by the user.
   const pucch_builder_params             user_defined_pucch_cfg;
   const std::vector<pucch_resource>      default_pucch_res_list;

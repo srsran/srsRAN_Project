@@ -57,12 +57,12 @@ const du_ue_resource_config& dummy_ue_resource_configurator_factory::dummy_resou
   return parent.ue_resource_pool[ue_index];
 }
 
-ue_ran_resource_configurator
+expected<ue_ran_resource_configurator, std::string>
 dummy_ue_resource_configurator_factory::create_ue_resource_configurator(du_ue_index_t   ue_index,
                                                                         du_cell_index_t pcell_index)
 {
   if (ue_resource_pool.count(ue_index) > 0) {
-    return ue_ran_resource_configurator{nullptr};
+    return make_unexpected(std::string("Duplicate UE index"));
   }
   last_ue_index = ue_index;
   last_ue_pcell = pcell_index;
