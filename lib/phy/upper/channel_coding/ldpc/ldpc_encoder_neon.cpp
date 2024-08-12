@@ -154,12 +154,12 @@ static void fast_xor(span<Type> out, span<const Type> in0, span<const Type> in1)
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_NEON_PH>
 void ldpc_encoder_neon::systematic_bits_inner()
 {
-  neon::neon_const_span codeblock(codeblock_buffer, codeblock_used_size);
+  static constexpr unsigned node_size_byte = NODE_SIZE_NEON_PH * NEON_SIZE_BYTE;
+  neon::neon_const_span     codeblock(codeblock_buffer, codeblock_used_size);
+  neon::neon_span           auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
-  neon::neon_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
-
-  std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk;
-  span<int8_t>                             blk = span<int8_t>(tmp_blk).first(2 * lifting_size);
+  std::array<int8_t, node_size_byte> tmp_blk = {};
+  span<int8_t>                       blk     = span<int8_t>(tmp_blk);
 
   for (unsigned m = 0; m != bg_hr_parity_nodes; ++m) {
     const ldpc::BG_adjacency_row_t& row = current_graph->get_adjacency_row(m);
@@ -177,15 +177,14 @@ void ldpc_encoder_neon::systematic_bits_inner()
       unsigned i_aux = m * NODE_SIZE_NEON_PH;
       unsigned i_blk = k * NODE_SIZE_NEON_PH;
 
-      srsvec::copy(blk.first(lifting_size), codeblock.plain_span(i_blk, lifting_size));
-      srsvec::copy(blk.last(lifting_size), codeblock.plain_span(i_blk, lifting_size));
-
-      span<int8_t> plain_auxiliary = auxiliary.plain_span(i_aux, lifting_size);
+      span<int8_t> plain_auxiliary = auxiliary.plain_span(i_aux, node_size_byte);
 
       if (k == row[0]) {
-        srsvec::copy(plain_auxiliary, blk.subspan(node_shift, lifting_size));
+        srsvec::circ_shift_backward(
+            plain_auxiliary.first(lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
       } else {
-        fast_xor<int8_t>(plain_auxiliary, blk.subspan(node_shift, lifting_size), plain_auxiliary);
+        srsvec::circ_shift_backward(blk.first(lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
+        fast_xor<int8_t>(plain_auxiliary, blk, plain_auxiliary);
       }
     }
   }
