@@ -308,8 +308,24 @@ endif (ENABLE_DPDK)
 ########################################################################
 # Instruction Set Architecture setup
 ########################################################################
-set(MARCH "native" CACHE STRING "Compiler march flag. Default value is 'native'")
-set(MTUNE "generic" CACHE STRING "Compiler mtune flag. Default value is 'generic'")
+set(MTUNE "generic" CACHE STRING "Compiler -mtune flag. Default value is 'generic'")
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+    set(MARCH "armv8-a" CACHE STRING "Compiler -march flag. Default value is 'armv8-a' for aarch64.")
+    message(STATUS "Detected aarch64 processor")
+else (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+    set(MARCH "native" CACHE STRING "Compiler -march flag. Default value is 'native' for x86-64.")
+endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+
+add_cxx_compiler_flag_if_available("-march=${MARCH}" HAVE_MARCH)
+if (NOT HAVE_MARCH)
+    message(WARNING "The compiler does not support -march=${MARCH}, try setting a different value.")
+endif (NOT HAVE_MARCH)
+
+add_cxx_compiler_flag_if_available("-mtune=${MTUNE}" HAVE_MTUNE)
+if (NOT HAVE_MTUNE)
+    message(WARNING "The compiler does not support -mtune=${MTUNE}, try setting a different value.")
+endif (NOT HAVE_MTUNE)
+
 message(STATUS "ARCH value is ${MARCH}")
 message(STATUS "TUNE value is ${MTUNE}")
 
