@@ -430,7 +430,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_a
     const cell_slot_resource_allocator& pdcch_alloc              = res_alloc[offset_to_sched_ref_slot];
     const cell_slot_resource_allocator& pdsch_alloc              = res_alloc[offset_to_sched_ref_slot];
 
-    if ((not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) or (not cell_cfg.is_dl_enabled(pdsch_alloc.slot))) {
+    if ((not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) or (not cell_cfg.is_dl_enabled(pdsch_alloc.slot))) {
       continue;
     }
 
