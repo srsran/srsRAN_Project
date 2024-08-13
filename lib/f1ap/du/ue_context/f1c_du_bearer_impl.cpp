@@ -15,6 +15,7 @@
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/support/async/async_no_op_task.h"
+#include "srsran/support/async/async_timer.h"
 #include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
@@ -26,6 +27,7 @@ f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
                                        f1ap_message_notifier&     f1ap_notifier_,
                                        f1c_rx_sdu_notifier&       f1c_rx_sdu_notifier_,
                                        f1ap_event_manager&        ev_manager_,
+                                       f1ap_du_configurator&      du_configurator_,
                                        task_executor&             ctrl_exec_,
                                        task_executor&             ue_exec_) :
   ue_ctxt(ue_ctxt_),
@@ -34,6 +36,7 @@ f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
   f1ap_notifier(f1ap_notifier_),
   sdu_notifier(f1c_rx_sdu_notifier_),
   ev_manager(ev_manager_),
+  du_configurator(du_configurator_),
   ctrl_exec(ctrl_exec_),
   ue_exec(ue_exec_),
   logger(srslog::fetch_basic_logger("DU-F1"))
@@ -99,8 +102,12 @@ async_task<bool> f1c_srb0_du_bearer::handle_pdu_and_await_delivery(byte_buffer  
   // Forward task to lower layers.
   handle_pdu(std::move(sdu));
 
-  // For SRB0, there is no delivery notification.
-  return launch_no_op_task(true);
+  // For SRB0, there is no delivery notification mechanism, so we just let the timeout trigger.
+  return launch_async([this, time_to_wait](coro_context<async_task<bool>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(async_wait_for(du_configurator.get_timer_factory().create_timer(), time_to_wait));
+    CORO_RETURN(false);
+  });
 }
 
 async_task<bool> f1c_srb0_du_bearer::handle_pdu_and_await_transmission(byte_buffer               pdu,

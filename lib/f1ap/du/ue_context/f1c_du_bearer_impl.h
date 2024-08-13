@@ -32,6 +32,7 @@ public:
                      f1ap_message_notifier&     f1ap_notifier_,
                      f1c_rx_sdu_notifier&       f1c_rx_sdu_notifier_,
                      f1ap_event_manager&        ev_manager_,
+                     f1ap_du_configurator&      du_configurator_,
                      task_executor&             ctrl_exec_,
                      task_executor&             ue_exec_);
 
@@ -54,6 +55,7 @@ private:
   f1ap_message_notifier&    f1ap_notifier;
   f1c_rx_sdu_notifier&      sdu_notifier;
   f1ap_event_manager&       ev_manager;
+  f1ap_du_configurator&     du_configurator;
   task_executor&            ctrl_exec;
   task_executor&            ue_exec;
   srslog::basic_logger&     logger;
