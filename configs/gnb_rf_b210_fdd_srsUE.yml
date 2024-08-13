@@ -12,7 +12,7 @@ amf:
 ru_sdr:
   device_driver: uhd                                              
   device_args: type=b200                                          
-  sync: external                                                 
+  clock: external
   srate: 23.04                                                   
   tx_gain: 80                                                    
   rx_gain: 40                                                    
