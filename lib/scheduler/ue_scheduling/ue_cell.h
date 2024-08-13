@@ -25,9 +25,9 @@ namespace srsran {
 struct ul_crc_pdu_indication;
 
 struct grant_prbs_mcs {
-  /// MCS to use for the UE's PUSCH.
+  /// MCS to use for the UE's PxSCH.
   sch_mcs_index mcs;
-  /// Number of PRBs to be allocated for the UE's PUSCH.
+  /// Number of PRBs to be allocated for the UE's PxSCH.
   unsigned n_prbs;
 };
 
