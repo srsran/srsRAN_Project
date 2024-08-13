@@ -991,7 +991,28 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
     grant_prbs_mcs mcs_prbs_estimate = ue_pcell.required_dl_prbs(pdsch_td_cfg, pending_bytes, dci_type);
 
     if (mcs_prbs_estimate.n_prbs == 0) {
-      return {};
+      // This is a case where CSI detected by PHY is a false positive, which is decoded as CQI=0. Since these false
+      // positives cannot be avoided completely, we need to schedule the UE even with CQI==0 in the case of the fallback
+      // scheduler, so that it gets a config that it can use to report a CQI > 0.
+      sch_mcs_index mcs_idx = 0;
+      sch_prbs_tbs  prbs_tbs{};
+
+      // Try to find least MCS to fit SRB1 message.
+      while (mcs_idx < expert_cfg.max_msg4_mcs) {
+        const sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs_idx);
+        prbs_tbs                             = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
+                                                           static_cast<unsigned>(pdsch_cfg.symbols.length()),
+                                                           calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
+                                                           pdsch_cfg.nof_oh_prb,
+                                                           mcs_config,
+                                                           pdsch_cfg.nof_layers});
+        if (unused_crbs.length() >= prbs_tbs.nof_prbs) {
+          break;
+        }
+        ++mcs_idx;
+      }
+      mcs_prbs_estimate.n_prbs = prbs_tbs.nof_prbs;
+      mcs_prbs_estimate.mcs    = mcs_idx;
     }
 
     // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
@@ -1005,6 +1026,10 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
 
     ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs_estimate.n_prbs, 0);
     if (ue_grant_crbs.empty() or (set_min_nof_prbs and ue_grant_crbs.length() < min_nof_prbs_partial_slots)) {
+      logger.debug("ue={} rnti={}: Postponed SRB1 PDU scheduling for slot={}. Cause: No space in PDSCH.",
+                   u.ue_index,
+                   u.crnti,
+                   pdsch_alloc.slot);
       return {};
     }
 
