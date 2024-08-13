@@ -112,6 +112,11 @@ public:
 
   const serving_cell_config& cfg_dedicated() const { return cell_cfg_ded; }
 
+  /// Returns whether UE dedicated configuration is considered complete or not for scheduling the UE as a non-fallback
+  /// UE.
+  /// \remark UE can be scheduled in fallback scheduler even if UE does not have a complete UE dedicated configuration.
+  bool is_cfg_dedicated_complete() const;
+
   bool has_bwp_id(bwp_id_t bwp_id) const { return bwp_table[bwp_id].dl_common != nullptr; }
 
   /// Get BWP information given a BWP-Id.
@@ -228,6 +233,10 @@ public:
 
   /// Update the UE dedicated configuration given a configuration request coming from outside the scheduler.
   void update(const cell_common_configuration_list& common_cells, const sched_ue_config_request& cfg_req);
+
+  /// Returns whether UE configuration is considered complete or not for scheduling the UE as a non-fallback UE.
+  /// \remark UE can be scheduled in fallback scheduler even if UE does not have a complete configuration.
+  bool is_ue_cfg_complete() const;
 
 private:
   // List of configured logical channels

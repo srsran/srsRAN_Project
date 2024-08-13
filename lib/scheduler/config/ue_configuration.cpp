@@ -741,6 +741,13 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
   }
 }
 
+bool ue_cell_configuration::is_cfg_dedicated_complete() const
+{
+  return (cell_cfg_ded.init_dl_bwp.pdcch_cfg.has_value() and
+          not cell_cfg_ded.init_dl_bwp.pdcch_cfg->search_spaces.empty()) and
+         (cell_cfg_ded.ul_config.has_value() and cell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg.has_value());
+}
+
 ue_configuration::ue_configuration(du_ue_index_t ue_index_, rnti_t crnti_) : ue_index(ue_index_), crnti(crnti_) {}
 
 ue_configuration::ue_configuration(du_ue_index_t                         ue_index_,
@@ -819,4 +826,15 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
       du_cells[ue_cell_to_du_cell_index[i]]->set_rrm_config(*cfg_req.res_alloc_cfg);
     }
   }
+}
+
+bool ue_configuration::is_ue_cfg_complete() const
+{
+  // [Implementation-defined] UE with only SRB0 configured is considered to not have complete UE configuration yet.
+  if ((lc_list.size() == 1 and lc_list.back().lcid == LCID_SRB0)) {
+    return false;
+  }
+  return std::any_of(du_cells.begin(), du_cells.end(), [](const auto& ue_cell_cfg) {
+    return ue_cell_cfg->is_cfg_dedicated_complete();
+  });
 }

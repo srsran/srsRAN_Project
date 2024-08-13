@@ -61,10 +61,8 @@ void slice_scheduler::slot_indication()
 
 void slice_scheduler::add_ue(const ue_configuration& ue_cfg)
 {
-  // [Implementation-defined] UE does not have complete dedicated configuration. Hence, UE won't be added to the slice.
-  if ((ue_cfg.logical_channels().size() == 1 and ue_cfg.logical_channels().back().lcid == LCID_SRB0) or
-      not ue_cfg.pcell_cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg.has_value() or
-      ue_cfg.pcell_cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.empty()) {
+  // [Implementation-defined] UE does not have complete configuration. Hence, UE won't be added to the slice.
+  if (not ue_cfg.is_ue_cfg_complete()) {
     return;
   }
   for (const logical_channel_config& lc_cfg : ue_cfg.logical_channels()) {
