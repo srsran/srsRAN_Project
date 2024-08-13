@@ -17,7 +17,9 @@
 
 using namespace srsran;
 
-cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies)
+cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config&     cu_cp_unit_cfg,
+                               cu_cp_build_dependencies&    dependencies,
+                               e2_metric_connector_manager& e2_metric_connectors)
 {
   srsran_assert(dependencies.cu_cp_executor, "Invalid CU-CP executor");
   srsran_assert(dependencies.cu_cp_e2_exec, "Invalid E2 executor");

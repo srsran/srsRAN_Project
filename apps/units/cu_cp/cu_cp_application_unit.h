@@ -24,7 +24,7 @@ public:
   virtual ~cu_cp_application_unit() = default;
 
   /// Creates a CU-CP unit with the given dependencies.
-  virtual cu_cp_unit create_cu_cp(cu_cp_build_dependencies& dependencies) = 0;
+  virtual cu_cp_unit create_cu_cp(cu_cp_build_dependencies& dependencies, e2_metric_connector_manager& e2_metric_connectors) = 0;
 
   /// Returns the CU-CP configuration of this CU-CP application unit.
   virtual cu_cp_unit_config&       get_cu_cp_unit_config()       = 0;

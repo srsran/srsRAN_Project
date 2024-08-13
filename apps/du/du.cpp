@@ -291,7 +291,7 @@ int main(int argc, char** argv)
   e2_metric_connector_manager e2_metric_connectors(du_app_unit->get_du_high_unit_config().cells_cfg.size());
 
   // E2AP configuration.
-  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg, E2_DU_PPID);
+  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg.e2_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};

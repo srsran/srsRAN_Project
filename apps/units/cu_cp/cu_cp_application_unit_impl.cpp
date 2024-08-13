@@ -45,9 +45,9 @@ void cu_cp_application_unit_impl::on_loggers_registration()
   register_cu_cp_loggers(unit_cfg.loggers);
 }
 
-cu_cp_unit cu_cp_application_unit_impl::create_cu_cp(cu_cp_build_dependencies& dependencies)
+cu_cp_unit cu_cp_application_unit_impl::create_cu_cp(cu_cp_build_dependencies& dependencies, e2_metric_connector_manager& e2_metric_connectors)
 {
-  return build_cu_cp(unit_cfg, dependencies);
+  return build_cu_cp(unit_cfg, dependencies, e2_metric_connectors);
 }
 
 void cu_cp_application_unit_impl::dump_config(YAML::Node& node) const

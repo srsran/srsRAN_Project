@@ -41,7 +41,7 @@ struct worker_manager_config;
 subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
 
 /// Converts and returns the given gnb application configuration to a E2AP Network Gateway configuration.
-srsran::sctp_network_connector_config generate_e2ap_nw_config(const gnb_appconfig& config, int ppid);
+srsran::sctp_network_connector_config generate_e2ap_nw_config(const e2_appconfig& config, int ppid);
 
 /// Fills the gNB worker manager parameters of the given worker manager configuration.
 void fill_gnb_worker_manager_config(worker_manager_config& config, const gnb_appconfig& unit_cfg);

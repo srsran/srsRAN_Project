@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/services/application_command.h"
+#include "apps/services/e2_metric_connector_manager.h"
 #include "srsran/cu_cp/cu_cp.h"
 
 namespace srsran {
@@ -24,13 +25,18 @@ namespace srs_cu_cp {
 class n2_connection_client;
 }
 
+class e2_metric_connector_manager;
+class e2_connection_client;
+class e2_gateway_remote_connector;
+
 /// CU-CP build dependencies.
 struct cu_cp_build_dependencies {
-  task_executor* cu_cp_executor = nullptr;
-  task_executor* cu_cp_e2_exec  = nullptr;
-  timer_manager* timers         = nullptr;
-  dlt_pcap*      ngap_pcap      = nullptr;
-  io_broker*     broker         = nullptr;
+  task_executor*               cu_cp_executor = nullptr;
+  task_executor*               cu_cp_e2_exec  = nullptr;
+  timer_manager*               timers         = nullptr;
+  dlt_pcap*                    ngap_pcap      = nullptr;
+  io_broker*                   broker         = nullptr;
+  e2_gateway_remote_connector* e2_gw          = nullptr;
 };
 
 /// Wraps the CU-CP and its supported application commands.
@@ -40,6 +46,8 @@ struct cu_cp_unit {
 };
 
 /// Builds a CU-CP object with the given configuration.
-cu_cp_unit build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies);
+cu_cp_unit build_cu_cp(const cu_cp_unit_config&     cu_cp_unit_cfg,
+                       cu_cp_build_dependencies&    dependencies,
+                       e2_metric_connector_manager& e2_metric_connectors);
 
 } // namespace srsran

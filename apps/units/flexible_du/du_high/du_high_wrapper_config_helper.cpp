@@ -95,7 +95,7 @@ build_scheduler_du_metrics(std::pair<std::vector<app_services::metrics_config>,
   }
 
   // Connect E2 agent to DU Scheduler UE metrics.
-  if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
+  if (du_high_unit_cfg.e2_cfg.enable_unit_e2) {
     sched_metrics_cfg.consumers.push_back(std::make_unique<scheduler_cell_metrics_consumer_e2>(e2_notifier));
   }
 
@@ -111,7 +111,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   rlc_metrics_notifier* out = nullptr;
 
   // RLC metrics.
-  if (!du_high_unit_cfg.metrics.rlc.json_enabled && !du_high_unit_cfg.e2_cfg.enable_du_e2 &&
+  if (!du_high_unit_cfg.metrics.rlc.json_enabled && !du_high_unit_cfg.e2_cfg.enable_unit_e2 &&
       du_high_unit_cfg.loggers.metrics_level != srslog::basic_levels::debug) {
     return out;
   }
@@ -137,7 +137,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
     rlc_metrics_cfg.consumers.push_back(std::make_unique<rlc_metrics_consumer_json>(rlc_json_channel));
   }
 
-  if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
+  if (du_high_unit_cfg.e2_cfg.enable_unit_e2) {
     rlc_metrics_cfg.consumers.push_back(std::make_unique<rlc_metrics_consumer_e2>(e2_notifier));
   }
 
@@ -178,7 +178,7 @@ srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
   du_hi_cfg.mac_p                     = &mac_p;
   du_hi_cfg.rlc_p                     = &rlc_p;
 
-  if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
+  if (du_high_unit_cfg.e2_cfg.enable_unit_e2) {
     // Connect E2 agent to RLC metric source.
     du_hi_cfg.e2_client          = &e2_client_handler;
     du_hi_cfg.e2ap_config        = generate_e2_config(du_high_unit_cfg);

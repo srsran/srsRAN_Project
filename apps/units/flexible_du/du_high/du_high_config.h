@@ -12,6 +12,7 @@
 
 #include "apps/services/os_sched_affinity_manager.h"
 #include "srsran/adt/optional.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
@@ -808,32 +809,6 @@ struct du_high_unit_qos_config {
   du_high_unit_mac_lc_config mac;
 };
 
-/// E2 Agent configuration.
-struct du_high_unit_e2_config {
-  /// Whether to enable DU E2 agent.
-  bool enable_du_e2 = false;
-  /// RIC IP address.
-  std::string ip_addr = "127.0.0.1";
-  /// RIC port.
-  uint16_t port = 36421;
-  /// Local IP address to bind for RIC connection.
-  std::string bind_addr = "127.0.0.1";
-  /// SCTP initial RTO value for RIC connection.
-  int sctp_rto_initial = 120;
-  /// SCTP RTO min for RIC connection.
-  int sctp_rto_min = 120;
-  /// SCTP RTO max for RIC connection.
-  int sctp_rto_max = 500;
-  /// SCTP init max attempts for RIC connection.
-  int sctp_init_max_attempts = 3;
-  /// SCTP max init timeout for RIC connection.
-  int sctp_max_init_timeo = 500;
-  /// Whether to enable KPM service module.
-  bool e2sm_kpm_enabled = false;
-  /// Whether to enable RC service module.
-  bool e2sm_rc_enabled = false;
-};
-
 /// DU high configuration.
 struct du_high_unit_config {
   bool warn_on_drop = false;
@@ -862,7 +837,7 @@ struct du_high_unit_config {
   /// SRB configuration.
   std::map<srb_id_t, du_high_unit_srb_config> srb_cfg;
   /// E2 configuration.
-  du_high_unit_e2_config e2_cfg;
+  unit_e2_config e2_cfg;
 
   /// Returns true if testmode is enabled, false otherwise.
   bool is_testmode_enabled() const { return test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI; }

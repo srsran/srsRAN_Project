@@ -1628,9 +1628,9 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(mac_subcmd);
 }
 
-static void configure_cli11_e2_args(CLI::App& app, du_high_unit_e2_config& e2_params)
+static void configure_cli11_e2_args(CLI::App& app, unit_e2_config& e2_params)
 {
-  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent")->capture_default_str();
+  add_option(app, "--enable_du_e2", e2_params.enable_unit_e2, "Enable DU E2 agent")->capture_default_str();
   add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
   add_option(app, "--port", e2_params.port, "RIC port")->check(CLI::Range(20000, 40000))->capture_default_str();
   add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
@@ -1761,7 +1761,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   configure_cli11_test_mode_args(*test_mode_subcmd, parsed_cfg.config.test_mode_cfg);
 
   // E2 section.
-  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
+  CLI::App* e2_subcmd = add_subcommand(app, "e2_du", "E2 parameters")->configurable();
   configure_cli11_e2_args(*e2_subcmd, parsed_cfg.config.e2_cfg);
 }
 

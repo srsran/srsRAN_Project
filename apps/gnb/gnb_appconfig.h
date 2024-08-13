@@ -13,26 +13,12 @@
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/os_sched_affinity_manager.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/support/executors/unique_thread.h"
 #include <string>
 
 namespace srsran {
-
-/// E2 Agent configuration
-struct e2_appconfig {
-  bool        enable_du_e2           = false;       ///< Whether to enable DU E2 agent
-  std::string ip_addr                = "127.0.0.1"; ///< RIC IP address
-  uint16_t    port                   = 36421;       ///< RIC port
-  std::string bind_addr              = "127.0.0.1"; ///< Local IP address to bind for RIC connection
-  int         sctp_rto_initial       = 120;         ///< SCTP initial RTO value for RIC connection
-  int         sctp_rto_min           = 120;         ///< SCTP RTO min for RIC connection
-  int         sctp_rto_max           = 500;         ///< SCTP RTO max for RIC connection
-  int         sctp_init_max_attempts = 3;           ///< SCTP init max attempts for RIC connection
-  int         sctp_max_init_timeo    = 500;         ///< SCTP max init timeout for RIC connection
-  bool        e2sm_kpm_enabled       = false;       ///< Whether to enable KPM service module
-  bool        e2sm_rc_enabled        = false;       ///< Whether to enable RC service module
-};
 
 struct cu_up_appconfig {
   unsigned gtpu_queue_size          = 2048;

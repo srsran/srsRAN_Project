@@ -406,9 +406,16 @@ int main(int argc, char** argv)
   cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
   cu_cp_dependencies.broker         = epoll_broker.get();
 
+  // E2AP configuration.
+  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg.e2_cfg, E2_DU_PPID);
+  srsran::sctp_network_connector_config e2_cu_nw_config = generate_e2ap_nw_config(gnb_cfg.e2_cfg, E2_CP_PPID);
+  
+  // Create E2AP GW remote connector.
+  e2_gateway_remote_connector e2_gw_du{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
+  e2_gateway_remote_connector e2_gw_cu{*epoll_broker, e2_cu_nw_config, *cu_cp_dlt_pcaps.e2ap};
+  cu_cp_dependencies.e2_gw = &e2_gw_cu;
   // create CU-CP.
-  auto cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
-
+  auto cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies, e2_metric_connectors);
   srs_cu_cp::cu_cp& cu_cp_obj = *cu_cp_obj_and_cmds.unit;
 
   // Create and start CU-UP
@@ -422,12 +429,6 @@ int main(int argc, char** argv)
 
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
 
-  // E2AP configuration.
-  sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
-
-  // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
-
   // Instantiate one DU.
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
   du_unit_dependencies                      du_dependencies;
@@ -437,10 +438,11 @@ int main(int argc, char** argv)
   du_dependencies.timer_mng            = &app_timers;
   du_dependencies.mac_p                = du_pcaps.mac.get();
   du_dependencies.rlc_p                = du_pcaps.rlc.get();
-  du_dependencies.e2_client_handler    = &e2_gw;
+  du_dependencies.e2_client_handler    = &e2_gw_du;
   du_dependencies.e2_metric_connectors = &e2_metric_connectors;
   du_dependencies.json_sink            = &json_sink;
   du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
+
 
   auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
 
@@ -501,7 +503,8 @@ int main(int argc, char** argv)
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
     gnb_logger.info("Closing E2 network connections...");
-    e2_gw.close();
+    e2_gw_du.close();
+    e2_gw_cu.close();
     gnb_logger.info("E2 Network connections closed successfully");
   }
 

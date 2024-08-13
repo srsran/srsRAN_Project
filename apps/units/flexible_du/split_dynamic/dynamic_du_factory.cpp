@@ -187,7 +187,7 @@ du_unit srsran::create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, cons
                                                          *dependencies.json_sink,
                                                          *dependencies.metrics_notifier);
 
-    update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_du_e2);
+    update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_unit_e2);
 
     // Use the commands of the first cell.
     if (i == 0) {
