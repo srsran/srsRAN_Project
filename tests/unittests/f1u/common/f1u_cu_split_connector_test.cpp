@@ -277,7 +277,7 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_without_dl_teid_attached)
   io_tx_executor.run_pending_tasks();
 
   // No PDU expected
-  expected<byte_buffer> du_rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+  expected<byte_buffer> du_rx_pdu = server_data_notifier.get_rx_pdu_blocking(std::chrono::milliseconds(200));
   ASSERT_FALSE(du_rx_pdu.has_value());
 }
 
@@ -391,7 +391,7 @@ TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
   io_tx_executor.run_pending_tasks();
 
   // No PDU expected
-  expected<byte_buffer> du_rx_pdu2 = server_data_notifier.get_rx_pdu_blocking();
+  expected<byte_buffer> du_rx_pdu2 = server_data_notifier.get_rx_pdu_blocking(std::chrono::milliseconds(200));
   ASSERT_FALSE(du_rx_pdu2.has_value());
 
   // Destructor of cu_bearer tries to disconnect tunnel again, hence we see a warning.

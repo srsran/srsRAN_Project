@@ -152,7 +152,8 @@ TEST_F(udp_pool_network_gateway_tester, when_config_valid_then_trx_succeeds)
   }
 
   send_to_server(server_address_v4, server_port.value());
-  expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+  // No PDU expected
+  expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking(std::chrono::milliseconds(200));
   ASSERT_FALSE(rx_pdu.has_value()); // should not have been received
 }
 

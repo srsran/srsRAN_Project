@@ -318,7 +318,7 @@ TEST_F(f1u_du_split_connector_test, disconnect_stops_tx)
   io_tx_executor.run_pending_tasks();
 
   // No PDU expected
-  expected<byte_buffer> cu_rx_pdu2 = server_data_notifier.get_rx_pdu_blocking();
+  expected<byte_buffer> cu_rx_pdu2 = server_data_notifier.get_rx_pdu_blocking(std::chrono::milliseconds(200));
   ASSERT_FALSE(cu_rx_pdu2.has_value());
 
   // Destructor of du_bearer tries to disconnect tunnel again, hence we see a warning.
