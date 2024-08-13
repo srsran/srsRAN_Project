@@ -172,6 +172,9 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
       builder_params.pci = (pci_t)i;
       cfg.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
       cfg.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
+      if (params.pucch_cfg.has_value()) {
+        cfg.cells.back().pucch_cfg = params.pucch_cfg.value();
+      }
     }
 
     cfg.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
@@ -285,6 +288,23 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
       *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
 
   return send_dl_rrc_msg_and_await_ul_rrc_msg(u, msg, 0);
+}
+
+bool du_high_env_simulator::run_rrc_reject(rnti_t rnti)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    test_logger.error("rnti={}: Failed to run RRC Setup procedure. Cause: UE not found", rnti);
+    return false;
+  }
+  const ue_sim_context& u = it->second;
+
+  // Send DL RRC Message which contains dummy RRC Reject.
+  f1ap_message msg = generate_dl_rrc_message_transfer(
+      *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
+
+  // No need to wait for reply.
+  return true;
 }
 
 bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti, reestablishment_stage stop_at)

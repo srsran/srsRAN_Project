@@ -42,7 +42,8 @@ bool is_ue_context_release_complete_valid(const f1ap_message& msg,
 
 /// Parameters to set the DU-high environment simulator.
 struct du_high_env_sim_params {
-  unsigned nof_cells = 1;
+  unsigned                            nof_cells = 1;
+  std::optional<pucch_builder_params> pucch_cfg;
 };
 
 class du_high_env_simulator
@@ -56,6 +57,9 @@ public:
   /// Run the RRC setup procedure for the given RNTI from the moment the CU-CP sends an RRC Setup (via DL RRC Message
   /// Transfer) until the CU receives the RRC Setup Complete (via UL RRC Message Transfer).
   bool run_rrc_setup(rnti_t rnti);
+
+  /// Run the RRC reject procedure for a given RNTI.
+  bool run_rrc_reject(rnti_t rnti);
 
   /// Run the RRC Reestablishment procedure for the given RNTI from the moment the CU-CP sends an RRC Reestablishment
   /// (via DL RRC Message Transfer) until the CU receives the RRC Reestablishment Complete (via UL RRC Message

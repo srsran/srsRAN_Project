@@ -32,6 +32,8 @@ bool is_valid_dl_rrc_message_transfer(const f1ap_message& msg);
 
 const byte_buffer& get_rrc_container(const f1ap_message& msg);
 
+byte_buffer get_du_to_cu_container(const f1ap_message& msg);
+
 bool is_valid_dl_rrc_message_transfer_with_msg4(const f1ap_message& msg);
 
 bool is_ul_rrc_msg_transfer_valid(const f1ap_message& msg, srb_id_t srb_id);

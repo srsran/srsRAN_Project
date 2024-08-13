@@ -64,6 +64,16 @@ const byte_buffer& srsran::test_helpers::get_rrc_container(const f1ap_message& m
   return msg.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container;
 }
 
+byte_buffer srsran::test_helpers::get_du_to_cu_container(const f1ap_message& msg)
+{
+  if (msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER) {
+    return msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present
+               ? msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container.copy()
+               : byte_buffer{};
+  }
+  return byte_buffer{};
+}
+
 bool srsran::test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(const f1ap_message& msg)
 {
   TRUE_OR_RETURN(is_valid_dl_rrc_message_transfer(msg));
