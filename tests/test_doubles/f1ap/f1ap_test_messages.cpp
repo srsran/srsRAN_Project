@@ -320,6 +320,30 @@ f1ap_message srsran::test_helpers::generate_ue_context_release_request(gnb_cu_ue
   return msg;
 }
 
+f1ap_message srsran::test_helpers::generate_ue_context_release_command(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                       gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                       srb_id_t            srb_id,
+                                                                       byte_buffer         rrc_container)
+{
+  f1ap_message msg;
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
+
+  auto& release_cmd              = msg.pdu.init_msg().value.ue_context_release_cmd();
+  release_cmd->gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
+  release_cmd->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
+  release_cmd->cause.set_radio_network();
+  release_cmd->cause.radio_network().value = cause_radio_network_e::unspecified;
+  if (not rrc_container.empty()) {
+    release_cmd->srb_id_present        = true;
+    release_cmd->srb_id                = srb_id_to_uint(srb_id);
+    release_cmd->rrc_container_present = true;
+    release_cmd->rrc_container         = std::move(rrc_container);
+  }
+
+  return msg;
+}
+
 f1ap_message srsran::test_helpers::generate_ue_context_release_complete(const f1ap_message& ue_ctxt_release_cmd)
 {
   srsran_assert(ue_ctxt_release_cmd.pdu.type().value == f1ap_pdu_c::types_opts::init_msg, "Invalid argument message");

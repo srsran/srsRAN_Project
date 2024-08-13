@@ -81,7 +81,14 @@ f1ap_message create_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
 /// \brief Generates dummy F1AP UE CONTEXT RELEASE REQUEST message.
 f1ap_message generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 
-/// \brief Generates dummy F1AP UE CONTEXT RELEASE COMPLETE message.
+/// \brief Generates dummy F1AP UE CONTEXT RELEASE COMMAND message, sent by the CU to the DU.
+f1ap_message
+generate_ue_context_release_command(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                    gnb_du_ue_f1ap_id_t du_ue_id,
+                                    srb_id_t            srb_id        = srb_id_t::srb1,
+                                    byte_buffer         rrc_container = byte_buffer::create({0x1, 0x2, 0x3}).value());
+
+/// \brief Generates dummy F1AP UE CONTEXT RELEASE COMPLETE message, sent by the DU to the CU.
 f1ap_message generate_ue_context_release_complete(const f1ap_message& ue_ctxt_release_cmd);
 f1ap_message generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 

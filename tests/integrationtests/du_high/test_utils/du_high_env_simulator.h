@@ -105,6 +105,8 @@ protected:
     std::array<srb_context, MAX_NOF_SRBS> srbs;
   };
 
+  [[nodiscard]] bool await_dl_msg_sched(const ue_sim_context& u, lcid_t lcid);
+
   [[nodiscard]] bool
   send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u, const f1ap_message& dl_msg, uint32_t rlc_ul_sn);
 

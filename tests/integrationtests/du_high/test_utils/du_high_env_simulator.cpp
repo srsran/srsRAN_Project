@@ -299,12 +299,12 @@ bool du_high_env_simulator::run_rrc_reject(rnti_t rnti)
   }
   const ue_sim_context& u = it->second;
 
-  // Send DL RRC Message which contains dummy RRC Reject.
-  f1ap_message msg = generate_dl_rrc_message_transfer(
-      *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  // Send UE Context Release Command which contains dummy RRC Reject.
+  f1ap_message msg = test_helpers::generate_ue_context_release_command(*u.cu_ue_id, *u.du_ue_id, srb_id_t::srb0);
+  du_hi->get_f1ap_message_handler().handle_message(msg);
 
-  // No need to wait for reply.
-  return true;
+  // Await Msg4 scheduling.
+  return await_dl_msg_sched(u, lcid_t::LCID_SRB0);
 }
 
 bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti, reestablishment_stage stop_at)
@@ -365,22 +365,14 @@ bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti
   return true;
 }
 
-bool du_high_env_simulator::send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u,
-                                                                 const f1ap_message&   dl_msg,
-                                                                 uint32_t              rlc_ul_sn)
+bool du_high_env_simulator::await_dl_msg_sched(const ue_sim_context& u, lcid_t lcid)
 {
   const auto& phy_cell = phy.cells[u.pcell_index];
 
-  lcid_t dl_lcid = uint_to_lcid(dl_msg.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id);
-  lcid_t ul_lcid = dl_lcid == LCID_SRB0 ? LCID_SRB1 : dl_lcid;
-
-  du_hi->get_f1ap_message_handler().handle_message(dl_msg);
-
-  // Wait for Msg4 to be sent to the PHY.
   bool ret = run_until([&]() {
     if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
       auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
-      return find_ue_pdsch_with_lcid(u.rnti, dl_lcid, dl_res.ue_grants) != nullptr;
+      return find_ue_pdsch_with_lcid(u.rnti, lcid, dl_res.ue_grants) != nullptr;
     }
     return false;
   });
@@ -388,18 +380,34 @@ bool du_high_env_simulator::send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_co
     test_logger.error("rnti={}: Msg4 not sent to the PHY", u.rnti);
     return false;
   }
+  return true;
+}
 
-  // Wait for Msg4 to be ACKed.
+bool du_high_env_simulator::send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u,
+                                                                 const f1ap_message&   dl_msg,
+                                                                 uint32_t              rlc_ul_sn)
+{
+  lcid_t dl_lcid = uint_to_lcid(dl_msg.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id);
+  lcid_t ul_lcid = dl_lcid == LCID_SRB0 ? LCID_SRB1 : dl_lcid;
+
+  du_hi->get_f1ap_message_handler().handle_message(dl_msg);
+
+  // Wait for DL message to be sent to the PHY.
+  if (not await_dl_msg_sched(u, dl_lcid)) {
+    return false;
+  }
+
+  // Wait for DL message to be ACKed.
   unsigned dl_msg_k1 = 4;
   for (unsigned i = 0; i != dl_msg_k1; ++i) {
     run_slot();
   }
 
-  // UE sends Msg5. Wait until F1AP forwards UL RRC Message to CU-CP.
+  // UE sends UL message. Wait until F1AP forwards UL RRC Message to CU-CP.
   cu_notifier.last_f1ap_msgs.clear();
   du_hi->get_pdu_handler().handle_rx_data_indication(
       test_helpers::create_pdu_with_sdu(next_slot, u.rnti, ul_lcid, rlc_ul_sn));
-  ret                = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  bool     ret       = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
   srb_id_t ul_srb_id = int_to_srb_id(ul_lcid);
   if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), ul_srb_id)) {
     test_logger.error("rnti={}: F1AP UL RRC Message not sent or is invalid", u.rnti);

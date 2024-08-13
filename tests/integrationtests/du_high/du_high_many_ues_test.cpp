@@ -43,20 +43,24 @@ TEST_F(du_high_many_ues_tester, when_du_runs_out_of_resources_then_ues_start_bei
 {
   unsigned ue_count = 0;
   for (; ue_count != MAX_NOF_DU_UES; ++ue_count) {
-    ASSERT_TRUE(this->add_ue(to_rnti(next_rnti)));
+    rnti_t rnti = to_rnti(next_rnti++);
+    ASSERT_TRUE(this->add_ue(rnti));
 
     byte_buffer container = test_helpers::get_du_to_cu_container(cu_notifier.last_f1ap_msgs.back());
     if (container.empty()) {
+      // When DU-to-CU container is empty, it means that the DU could not allocate resources for the UE.
+
+      ASSERT_TRUE(this->run_rrc_reject(rnti)) << "RRC Reject not scheduled";
+
       break;
     }
 
-    next_rnti++;
+    ASSERT_TRUE(this->run_rrc_setup(rnti));
   }
 
   ASSERT_GT(ue_count, 30) << "The number of UEs accepted by DU was too low";
   ASSERT_LT(ue_count, MAX_NOF_DU_UES) << "The DU is accepting UEs past its number of PUCCH resources";
 
-  next_rnti++;
   ASSERT_TRUE(this->add_ue(to_rnti(next_rnti)));
   byte_buffer container = test_helpers::get_du_to_cu_container(cu_notifier.last_f1ap_msgs.back());
   ASSERT_TRUE(container.empty()) << "No more UEs are accepted after the DU runs out of resources";
