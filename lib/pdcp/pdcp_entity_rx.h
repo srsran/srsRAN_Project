@@ -98,8 +98,8 @@ public:
    * Testing Helpers
    */
   void          set_state(pdcp_rx_state st_) { st = st_; }
-  pdcp_rx_state get_state() { return st; }
-  bool          is_reordering_timer_running() { return reordering_timer.is_running(); }
+  pdcp_rx_state get_state() const { return st; }
+  bool          is_reordering_timer_running() const { return reordering_timer.is_running(); }
 
 private:
   pdcp_bearer_logger   logger;
