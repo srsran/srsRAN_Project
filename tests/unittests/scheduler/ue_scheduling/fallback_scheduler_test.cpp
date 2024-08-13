@@ -410,6 +410,46 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources)
   ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB0));
 }
 
+TEST_P(fallback_scheduler_tester, successfully_allocated_resources_for_srb1_pdu_even_if_cqi_is_zero)
+{
+  setup_sched(create_expert_config(3), create_custom_cell_config_request(params.k0));
+  // Add UE.
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  add_ue(to_rnti(0x4601), ue_idx);
+  auto& test_ue = get_ue(ue_idx);
+  // UE reports CQI 0.
+  csi_report_data csi_report{};
+  csi_report.first_tb_wideband_cqi.emplace(0);
+  test_ue.get_pcell().handle_csi_report(csi_report);
+  // Notify about SRB1 message in DL of size 320 bytes.
+  const unsigned mac_srb1_sdu_size = 320;
+  push_buffer_state_to_dl_ue(ue_idx, current_slot, mac_srb1_sdu_size, false);
+
+  bool is_ue_allocated_pdcch{false};
+  bool is_ue_allocated_pdsch{false};
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
+    run_slot();
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    if (pdcch_it != nullptr) {
+      is_ue_allocated_pdcch = true;
+    }
+    if (is_ue_allocated_pdcch) {
+      const dl_msg_alloc* pdsch_it = get_ue_allocated_pdsch(test_ue);
+      if (pdsch_it != nullptr) {
+        for (const auto& lc_info : pdsch_it->tb_list.back().lc_chs_to_sched) {
+          if (lc_info.lcid.is_sdu() and lc_info.lcid == LCID_SRB1) {
+            is_ue_allocated_pdsch = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+  ASSERT_TRUE(is_ue_allocated_pdcch);
+  ASSERT_TRUE(is_ue_allocated_pdsch);
+  ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB1));
+}
+
 TEST_P(fallback_scheduler_tester, failed_allocating_resources)
 {
   setup_sched(create_expert_config(3), create_custom_cell_config_request(params.k0));
