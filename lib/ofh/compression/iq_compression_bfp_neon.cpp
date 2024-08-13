@@ -13,6 +13,7 @@
 #include "packing_utils_neon.h"
 #include "quantizer.h"
 #include "srsran/ofh/compression/compression_properties.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -81,7 +82,7 @@ void iq_compression_bfp_neon::compress(span<uint8_t>                buffer,
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(iq_data.data()), iq_data.size() * 2U);
   span<int16_t>      input_quantized_span(input_quantized.data(), float_samples_span.size());
 
   // Performs conversion of input brain float values to signed 16-bit integers.

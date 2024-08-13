@@ -11,6 +11,7 @@
 #pragma once
 
 #include "neon_helpers.h"
+#include "srsran/adt/span.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
