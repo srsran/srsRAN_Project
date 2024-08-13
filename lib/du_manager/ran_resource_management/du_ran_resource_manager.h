@@ -18,7 +18,7 @@ namespace srs_du {
 
 /// \brief Outcome report of an DU UE Resource allocation request.
 struct du_ue_resource_update_response {
-  /// \brief Defines whether the UE release is required due to an error during the update procedure.
+  /// \brief Defines whether the UE resource allocation failed during the config update procedure.
   /// If \c procedure_error doesn't contain any error string, then the UE resource update was successful.
   error_type<std::string>        procedure_error = {};
   std::vector<drb_id_t>          failed_drbs;

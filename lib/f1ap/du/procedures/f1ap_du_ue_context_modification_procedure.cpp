@@ -86,6 +86,11 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
   for (const auto& drb : msg->drbs_to_be_released_list) {
     du_request.drbs_to_rem.push_back(get_drb_id(drb.value().drbs_to_be_released_item()));
   }
+
+  if (msg->cu_to_du_rrc_info_present) {
+    // >> Pass UE capabilities.
+    du_request.ue_cap_rat_list = msg->cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
+  }
 }
 
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_response()
