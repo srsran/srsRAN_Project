@@ -203,9 +203,10 @@ du_high_env_simulator::~du_high_env_simulator()
   workers.stop();
 }
 
-bool du_high_env_simulator::run_until(unique_function<bool()> condition, unsigned max_slot_count)
+bool du_high_env_simulator::run_until(unique_function<bool()> condition, std::optional<unsigned> max_slot_count)
 {
-  for (unsigned count = 0; count != max_slot_count; ++count) {
+  unsigned max_count = max_slot_count.has_value() ? max_slot_count.value() : 1000;
+  for (unsigned count = 0; count != max_count; ++count) {
     if (condition()) {
       return true;
     }
@@ -292,19 +293,7 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
 
 bool du_high_env_simulator::run_rrc_reject(rnti_t rnti)
 {
-  auto it = ues.find(rnti);
-  if (it == ues.end()) {
-    test_logger.error("rnti={}: Failed to run RRC Setup procedure. Cause: UE not found", rnti);
-    return false;
-  }
-  const ue_sim_context& u = it->second;
-
-  // Send UE Context Release Command which contains dummy RRC Reject.
-  f1ap_message msg = test_helpers::generate_ue_context_release_command(*u.cu_ue_id, *u.du_ue_id, srb_id_t::srb0);
-  du_hi->get_f1ap_message_handler().handle_message(msg);
-
-  // Await Msg4 scheduling.
-  return await_dl_msg_sched(u, lcid_t::LCID_SRB0);
+  return run_ue_context_release(rnti, srb_id_t::srb0);
 }
 
 bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti, reestablishment_stage stop_at)
@@ -365,17 +354,21 @@ bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti
   return true;
 }
 
-bool du_high_env_simulator::await_dl_msg_sched(const ue_sim_context& u, lcid_t lcid)
+bool du_high_env_simulator::await_dl_msg_sched(const ue_sim_context&   u,
+                                               lcid_t                  lcid,
+                                               std::optional<unsigned> max_slot_count)
 {
   const auto& phy_cell = phy.cells[u.pcell_index];
 
-  bool ret = run_until([&]() {
-    if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
-      auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
-      return find_ue_pdsch_with_lcid(u.rnti, lcid, dl_res.ue_grants) != nullptr;
-    }
-    return false;
-  });
+  bool ret = run_until(
+      [&]() {
+        if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
+          auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
+          return find_ue_pdsch_with_lcid(u.rnti, lcid, dl_res.ue_grants) != nullptr;
+        }
+        return false;
+      },
+      max_slot_count);
   if (not ret) {
     test_logger.error("rnti={}: Msg4 not sent to the PHY", u.rnti);
     return false;
@@ -480,6 +473,41 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
                       srb1_pdu_size);
     return false;
   }
+
+  return true;
+}
+
+bool du_high_env_simulator::run_ue_context_release(rnti_t rnti, srb_id_t srb_id)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    return false;
+  }
+  auto& u = it->second;
+
+  // Send UE Context Release Command which contains dummy RRC Release.
+  cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message msg = test_helpers::generate_ue_context_release_command(*u.cu_ue_id, *u.du_ue_id, srb_id);
+  du_hi->get_f1ap_message_handler().handle_message(msg);
+
+  // Await for RRC container to be scheduled in the MAC.
+  lcid_t lcid = srb_id_to_lcid(srb_id);
+  if (not await_dl_msg_sched(u, lcid, 120)) {
+    return false;
+  }
+
+  // Wait for UE Context Release Complete.
+  bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  if (not ret) {
+    test_logger.error("Did not receive UE context release complete");
+    return false;
+  }
+  if (not is_ue_context_release_complete_valid(cu_notifier.last_f1ap_msgs.back(), *u.du_ue_id, *u.cu_ue_id)) {
+    test_logger.error("UE context release complete message is not valid");
+    return false;
+  }
+
+  ues.erase(rnti);
 
   return true;
 }

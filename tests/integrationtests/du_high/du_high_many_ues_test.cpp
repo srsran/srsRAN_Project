@@ -61,7 +61,14 @@ TEST_F(du_high_many_ues_tester, when_du_runs_out_of_resources_then_ues_start_bei
   ASSERT_GT(ue_count, 30) << "The number of UEs accepted by DU was too low";
   ASSERT_LT(ue_count, MAX_NOF_DU_UES) << "The DU is accepting UEs past its number of PUCCH resources";
 
-  ASSERT_TRUE(this->add_ue(to_rnti(next_rnti)));
+  // If we try to add more UEs, they also fail.
+  ASSERT_TRUE(this->add_ue(to_rnti(next_rnti++)));
   byte_buffer container = test_helpers::get_du_to_cu_container(cu_notifier.last_f1ap_msgs.back());
   ASSERT_TRUE(container.empty()) << "No more UEs are accepted after the DU runs out of resources";
+
+  // Once we remove a UE, we have space again for another UE.
+  ASSERT_TRUE(this->run_ue_context_release(to_rnti(0x4601)));
+  ASSERT_TRUE(this->add_ue(to_rnti(next_rnti++)));
+  container = test_helpers::get_du_to_cu_container(cu_notifier.last_f1ap_msgs.back());
+  ASSERT_FALSE(container.empty()) << "The resources of the released UE were not correctly cleaned up";
 }

@@ -71,9 +71,11 @@ public:
 
   bool run_ue_context_setup(rnti_t rnti);
 
+  bool run_ue_context_release(rnti_t rnti, srb_id_t srb_id = srb_id_t::srb1);
+
   void run_slot();
 
-  bool run_until(unique_function<bool()> condition, unsigned max_slot_count = 1000);
+  bool run_until(unique_function<bool()> condition, std::optional<unsigned> max_slot_count = std::nullopt);
 
   virtual void handle_slot_results(du_cell_index_t cell_index);
 
@@ -105,7 +107,8 @@ protected:
     std::array<srb_context, MAX_NOF_SRBS> srbs;
   };
 
-  [[nodiscard]] bool await_dl_msg_sched(const ue_sim_context& u, lcid_t lcid);
+  [[nodiscard]] bool
+  await_dl_msg_sched(const ue_sim_context& u, lcid_t lcid, std::optional<unsigned> max_slot_count = std::nullopt);
 
   [[nodiscard]] bool
   send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u, const f1ap_message& dl_msg, uint32_t rlc_ul_sn);
