@@ -844,7 +844,11 @@ srsran::srs_cu_cp::event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigge
     asn1_event_a3.report_on_leave = event_id.report_on_leave;
     asn1_event_a3.hysteresis      = event_id.hysteresis;
     asn1::number_to_enum(asn1_event_a3.time_to_trigger, event_id.time_to_trigger);
-    asn1_event_a3.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
+    if (event_id.use_allowed_cell_list.has_value()) {
+      asn1_event_a3.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
+    } else {
+      asn1_event_a3.use_allowed_cell_list = false;
+    }
   }
 
   // event a4
@@ -854,7 +858,11 @@ srsran::srs_cu_cp::event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigge
     asn1_event_a4.report_on_leave = event_id.report_on_leave;
     asn1_event_a4.hysteresis      = event_id.hysteresis;
     asn1::number_to_enum(asn1_event_a4.time_to_trigger, event_id.time_to_trigger);
-    asn1_event_a4.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
+    if (event_id.use_allowed_cell_list.has_value()) {
+      asn1_event_a4.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
+    } else {
+      asn1_event_a4.use_allowed_cell_list = false;
+    }
   }
 
   // event a5
@@ -865,7 +873,11 @@ srsran::srs_cu_cp::event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigge
     asn1_event_a5.report_on_leave = event_id.report_on_leave;
     asn1_event_a5.hysteresis      = event_id.hysteresis;
     asn1::number_to_enum(asn1_event_a5.time_to_trigger, event_id.time_to_trigger);
-    asn1_event_a5.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
+    if (event_id.use_allowed_cell_list.has_value()) {
+      asn1_event_a5.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
+    } else {
+      asn1_event_a5.use_allowed_cell_list = false;
+    }
   }
 
   // event a6
@@ -875,7 +887,11 @@ srsran::srs_cu_cp::event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigge
     asn1_event_a6.report_on_leave = event_id.report_on_leave;
     asn1_event_a6.hysteresis      = event_id.hysteresis;
     asn1::number_to_enum(asn1_event_a6.time_to_trigger, event_id.time_to_trigger);
-    asn1_event_a6.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
+    if (event_id.use_allowed_cell_list.has_value()) {
+      asn1_event_a6.use_allowed_cell_list = event_id.use_allowed_cell_list.value();
+    } else {
+      asn1_event_a6.use_allowed_cell_list = false;
+    }
   }
 
   // rs type

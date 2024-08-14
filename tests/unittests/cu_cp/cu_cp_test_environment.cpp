@@ -159,10 +159,12 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         rrc_event_trigger_cfg event_trigger_cfg = {};
 
         rrc_event_id event_a3;
+        event_a3.id = rrc_event_id::event_id_t::a3;
         event_a3.meas_trigger_quant_thres_or_offset.emplace();
         event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
         event_a3.hysteresis                                                = 0;
         event_a3.time_to_trigger                                           = 100;
+        event_a3.use_allowed_cell_list                                     = false;
 
         event_trigger_cfg.event_id = event_a3;
 
