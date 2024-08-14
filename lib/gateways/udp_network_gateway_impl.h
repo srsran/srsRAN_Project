@@ -48,8 +48,8 @@ private:
   bool                    create_and_bind() override;
   void                    receive() override;
   int                     get_socket_fd() override;
-  std::optional<uint16_t> get_bind_port() override;
-  bool                    get_bind_address(std::string& ip_address) override;
+  std::optional<uint16_t> get_bind_port() const override;
+  bool                    get_bind_address(std::string& ip_address) const override;
 
   // socket helpers
   bool set_non_blocking();

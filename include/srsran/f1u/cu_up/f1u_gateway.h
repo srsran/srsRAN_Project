@@ -72,7 +72,7 @@ public:
   f1u_cu_up_udp_gateway(f1u_cu_up_udp_gateway&&)                 = default;
   f1u_cu_up_udp_gateway& operator=(f1u_cu_up_udp_gateway&&)      = default;
 
-  virtual std::optional<uint16_t> get_bind_port() = 0;
+  virtual std::optional<uint16_t> get_bind_port() const = 0;
 };
 
 } // namespace srsran

@@ -255,7 +255,7 @@ int udp_network_gateway_impl::get_socket_fd()
   return sock_fd.value();
 }
 
-std::optional<uint16_t> udp_network_gateway_impl::get_bind_port()
+std::optional<uint16_t> udp_network_gateway_impl::get_bind_port() const
 {
   if (not sock_fd.is_open()) {
     logger.error("Socket of UDP network gateway not initialized.");
@@ -288,7 +288,7 @@ std::optional<uint16_t> udp_network_gateway_impl::get_bind_port()
   return gw_bind_port;
 }
 
-bool udp_network_gateway_impl::get_bind_address(std::string& ip_address)
+bool udp_network_gateway_impl::get_bind_address(std::string& ip_address) const
 {
   ip_address = "no address";
 

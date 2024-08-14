@@ -123,6 +123,11 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   f1u_du_gateway&     f1u_gw    = drb_info.du_params.f1u.f1u_gw;
   gtpu_teid_pool&     teid_pool = drb_info.teid_pool;
 
+  // > Get DL UP TNL bind address.
+  expected<std::string> f1u_bind_string = f1u_gw.get_du_bind_address(drb_info.du_params.ran.gnb_du_id);
+  assert(f1u_bind_string.has_value());
+  transport_layer_address f1u_bind_addr = transport_layer_address::create_from_string(f1u_bind_string.value());
+
   // > Setup DL UP TNL info.
   expected<gtpu_teid_t> dl_teid = teid_pool.request_teid();
   if (not dl_teid.has_value()) {
@@ -130,8 +135,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
     return nullptr;
   }
   // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
-  std::array<up_transport_layer_info, 1> dluptnl_info_list = {
-      up_transport_layer_info{drb_info.du_params.ran.du_bind_addr, dl_teid.value()}};
+  std::array<up_transport_layer_info, 1> dluptnl_info_list = {up_transport_layer_info{f1u_bind_addr, dl_teid.value()}};
 
   // > Create DRB instance.
   std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();

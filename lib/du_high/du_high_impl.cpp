@@ -123,12 +123,8 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                              adapters->f1ap_paging_notifier,
                              cfg.test_cfg);
 
-  expected<std::string> f1u_bind_string = config_.f1u_gw->get_du_bind_address(cfg.ran.gnb_du_id);
-  assert(f1u_bind_string.has_value());
-  transport_layer_address f1u_bind_addr = transport_layer_address::create_from_string(f1u_bind_string.value());
-
   du_manager = create_du_manager(du_manager_params{
-      {cfg.ran.gnb_du_name, cfg.ran.gnb_du_id, 1, f1u_bind_addr, cfg.ran.cells, cfg.ran.srbs, cfg.ran.qos},
+      {cfg.ran.gnb_du_name, cfg.ran.gnb_du_id, 1, cfg.ran.cells, cfg.ran.srbs, cfg.ran.qos},
       {timers, cfg.exec_mapper->du_control_executor(), cfg.exec_mapper->ue_mapper(), cfg.exec_mapper->cell_mapper()},
       {*f1ap, *f1ap},
       {*config_.f1u_gw},

@@ -207,7 +207,7 @@ public:
     f1u_bearers.erase(bearer_it);
   }
 
-  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) override { return std::string("127.0.0.1"); }
+  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) const override { return std::string("127.0.0.1"); }
 
   std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>> f1u_bearers;
 };

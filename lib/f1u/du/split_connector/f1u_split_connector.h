@@ -184,7 +184,7 @@ public:
 
   f1u_du_gateway* get_f1u_du_gateway() { return this; }
 
-  std::optional<uint16_t> get_bind_port() override { return udp_session->get_bind_port(); }
+  std::optional<uint16_t> get_bind_port() const override { return udp_session->get_bind_port(); }
 
   std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
                                                           drb_id_t                                   drb_id,
@@ -197,7 +197,7 @@ public:
 
   void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) override;
 
-  expected<std::string> get_du_bind_address(gnb_du_id_t gnb_du_id) override;
+  expected<std::string> get_du_bind_address(gnb_du_id_t gnb_du_id) const override;
 
 private:
   srslog::basic_logger& logger_du;

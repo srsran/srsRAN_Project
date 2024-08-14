@@ -372,7 +372,7 @@ public:
 
   void remove_du_bearer(const up_transport_layer_info& dl_tnl) override {}
 
-  expected<std::string> get_du_bind_address(gnb_du_id_t gnb_du_id) override { return std::string("127.0.0.1"); }
+  expected<std::string> get_du_bind_address(gnb_du_id_t gnb_du_id) const override { return std::string("127.0.0.1"); }
 };
 
 /// \brief Instantiation of the DU-high workers and executors for the benchmark.
