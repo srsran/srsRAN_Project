@@ -273,8 +273,6 @@ inline e2_message generate_ric_control_request(srslog::basic_logger& logger,
 class dummy_e2_du_metrics : public e2_du_metrics_interface
 {
 public:
-  void get_metrics(scheduler_ue_metrics& ue_metrics) override {}
-
   void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) override
   {
     e2_meas_provider = std::move(meas_provider);

@@ -28,9 +28,6 @@ class e2_du_metrics_interface
 {
 public:
   virtual ~e2_du_metrics_interface() = default;
-  /// @brief Get the metrics from the scheduler.
-  /// @param ue_metrics
-  virtual void get_metrics(scheduler_ue_metrics& ue_metrics) = 0;
 
   /// \brief connects e2_du_metric_provider
   /// \param[in] meas_provider pointer to the e2_du_metric_provider
