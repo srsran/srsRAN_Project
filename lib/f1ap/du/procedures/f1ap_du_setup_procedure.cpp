@@ -120,23 +120,28 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
     f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg.nr_cgi.nci.value());
     f1ap_cell.served_cell_info.five_gs_tac_present = true;
     f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg.tac);
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+        MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz), cell_cfg.scs_common, frequency_range::FR1);
+    const double absolute_freq_point_a = band_helper::get_abs_freq_point_a_from_f_ref(
+        band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn_f_ref), nof_crbs, cell_cfg.scs_common);
     if (cell_cfg.duplx_mode == duplex_mode::TDD) {
       tdd_info_s& tdd           = f1ap_cell.served_cell_info.nr_mode_info.set_tdd();
-      tdd.nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn_f_ref;
+      tdd.nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(absolute_freq_point_a);
       tdd.nr_freq_info.freq_band_list_nr.resize(1);
       tdd.nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
 
       tdd.tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(cell_cfg.scs_common);
-      unsigned nof_crbs      = band_helper::get_n_rbs_from_bw(
-          MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz), cell_cfg.scs_common, frequency_range::FR1);
+
       bool res = asn1::number_to_enum(tdd.tx_bw.nr_nrb, nof_crbs);
       srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
     } else {
       fdd_info_s& fdd              = f1ap_cell.served_cell_info.nr_mode_info.set_fdd();
-      fdd.dl_nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn_f_ref;
+      fdd.dl_nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(absolute_freq_point_a);
       fdd.dl_nr_freq_info.freq_band_list_nr.resize(1);
       fdd.dl_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
-      fdd.ul_nr_freq_info.nr_arfcn                              = cell_cfg.ul_carrier->arfcn_f_ref;
+      const double ul_absolute_freq_point_a                     = band_helper::get_abs_freq_point_a_from_f_ref(
+          band_helper::nr_arfcn_to_freq(cell_cfg.ul_carrier->arfcn_f_ref), nof_crbs, cell_cfg.scs_common);
+      fdd.ul_nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(ul_absolute_freq_point_a);
       fdd.ul_nr_freq_info.freq_band_list_nr.resize(1);
       fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.ul_carrier->band);
 
