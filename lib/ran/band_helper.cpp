@@ -718,18 +718,18 @@ static error_type<std::string> validate_band_n90(uint32_t arfcn, subcarrier_spac
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
+nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn_f_ref)
 {
   // As per Table 5.4.2.3-1, TS 38.104, v17.8.0, band n28 has an additional ARFCN value outside the interval of step 20.
   const uint32_t arfcn_n28 = 155608U;
-  if (arfcn == arfcn_n28) {
+  if (arfcn_f_ref == arfcn_n28) {
     return nr_band::n28;
   }
 
   for (const nr_band_raster& band : nr_band_table) {
     // Check given ARFCN is between the first and last possible ARFCN.
-    if (arfcn >= band.dl_nref_first and arfcn <= band.dl_nref_last and
-        ((arfcn - band.dl_nref_first) % band.dl_nref_step) == 0) {
+    if (arfcn_f_ref >= band.dl_nref_first and arfcn_f_ref <= band.dl_nref_last and
+        ((arfcn_f_ref - band.dl_nref_first) % band.dl_nref_step) == 0) {
       return band.band;
     }
   }
@@ -737,29 +737,29 @@ nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 }
 
 error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band              band,
-                                                                          uint32_t             arfcn,
+                                                                          uint32_t             arfcn_f_ref,
                                                                           subcarrier_spacing   scs,
                                                                           bs_channel_bandwidth bw)
 {
   // Validates first the bands with non-standard ARFCN values.
   if (band == nr_band::n28) {
-    return validate_band_n28(arfcn, bw);
+    return validate_band_n28(arfcn_f_ref, bw);
   }
 
   if (band == nr_band::n46) {
-    return validate_band_n46(arfcn, bw);
+    return validate_band_n46(arfcn_f_ref, bw);
   }
 
   if (band == nr_band::n90) {
-    return validate_band_n90(arfcn, scs);
+    return validate_band_n90(arfcn_f_ref, scs);
   }
 
   if (band == nr_band::n96) {
-    return validate_band_n96(arfcn, bw);
+    return validate_band_n96(arfcn_f_ref, bw);
   }
 
   if (band == nr_band::n102) {
-    return validate_band_n102(arfcn, bw);
+    return validate_band_n102(arfcn_f_ref, bw);
   }
 
   // NOTE: This function restricts the choice of ARFCN for bands n41, n77, n78, and n79. As per Section 5.4.2.3,
@@ -782,8 +782,8 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
 
   for (const nr_band_raster& raster_band : nr_band_table) {
     if (raster_band.band == band and raster_band.delta_f_rast == band_delta_freq_raster) {
-      if (arfcn >= raster_band.dl_nref_first and arfcn <= raster_band.dl_nref_last and
-          ((arfcn - raster_band.dl_nref_first) % raster_band.dl_nref_step) == 0) {
+      if (arfcn_f_ref >= raster_band.dl_nref_first and arfcn_f_ref <= raster_band.dl_nref_last and
+          ((arfcn_f_ref - raster_band.dl_nref_first) % raster_band.dl_nref_step) == 0) {
         return {};
       }
       return make_unexpected(
@@ -967,9 +967,9 @@ double srsran::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_p
   return center_freq - static_cast<double>(nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ * NRE);
 }
 
-uint32_t srsran::band_helper::get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn)
+uint32_t srsran::band_helper::get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn_f_ref)
 {
-  return freq_to_nr_arfcn(get_abs_freq_point_a_from_center_freq(nof_prb, nr_arfcn_to_freq(arfcn)));
+  return freq_to_nr_arfcn(get_abs_freq_point_a_from_center_freq(nof_prb, nr_arfcn_to_freq(arfcn_f_ref)));
 }
 
 double srsran::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_point_a_arfcn)
@@ -1254,7 +1254,7 @@ srsran::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
 
   std::optional<ssb_coreset0_freq_location> result;
 
-  // Get f_ref, point_A from dl_arfcn, band and bandwidth.
+  // Get f_ref, point_A from dl_f_ref_arfcn, band and bandwidth.
   ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
 
   // Iterate over different SSB candidates and select the valid CORESET#0 index with the narrowest bandwidth.
@@ -1320,7 +1320,7 @@ srsran::band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(unsigned      
 
   std::optional<ssb_coreset0_freq_location> result;
 
-  // Get f_ref, point_A from dl_arfcn, band and bandwidth.
+  // Get f_ref, point_A from dl_f_ref_arfcn, band and bandwidth.
   ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
 
   // Get the maximum Coreset0 index that can be used for the Tables 13-[1-6], TS 38.213.
@@ -1482,7 +1482,7 @@ std::optional<unsigned> srsran::band_helper::get_ssb_arfcn(unsigned             
   srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
                 "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
 
-  // Get f_ref, point_A from dl_arfcn, band and bandwidth.
+  // Get f_ref, point_A from dl_f_ref_arfcn, band and bandwidth.
   ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
   ssb_freq_location           ssb = du_cfg.get_next_ssb_location();
   while (ssb.is_valid) {

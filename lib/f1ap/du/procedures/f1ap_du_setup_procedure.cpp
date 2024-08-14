@@ -122,7 +122,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
     f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg.tac);
     if (cell_cfg.duplx_mode == duplex_mode::TDD) {
       tdd_info_s& tdd           = f1ap_cell.served_cell_info.nr_mode_info.set_tdd();
-      tdd.nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn;
+      tdd.nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn_f_ref;
       tdd.nr_freq_info.freq_band_list_nr.resize(1);
       tdd.nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
 
@@ -133,10 +133,10 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
       srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
     } else {
       fdd_info_s& fdd              = f1ap_cell.served_cell_info.nr_mode_info.set_fdd();
-      fdd.dl_nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn;
+      fdd.dl_nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn_f_ref;
       fdd.dl_nr_freq_info.freq_band_list_nr.resize(1);
       fdd.dl_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
-      fdd.ul_nr_freq_info.nr_arfcn                              = cell_cfg.ul_carrier->arfcn;
+      fdd.ul_nr_freq_info.nr_arfcn                              = cell_cfg.ul_carrier->arfcn_f_ref;
       fdd.ul_nr_freq_info.freq_band_list_nr.resize(1);
       fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.ul_carrier->band);
 

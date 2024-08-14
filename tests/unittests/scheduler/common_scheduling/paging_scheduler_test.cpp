@@ -141,9 +141,9 @@ public:
     cell_config_builder_params cell_cfg{};
     if (duplx_mode == duplex_mode::TDD) {
       // Band 40.
-      cell_cfg.dl_arfcn       = 465000;
+      cell_cfg.dl_f_ref_arfcn = 465000;
       cell_cfg.scs_common     = scs;
-      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
       cell_cfg.channel_bw_mhz = carrier_bw;
     }
     return test_helpers::make_default_sched_cell_configuration_request(cell_cfg);

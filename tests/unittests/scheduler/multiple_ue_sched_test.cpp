@@ -190,9 +190,9 @@ protected:
     cell_config_builder_params cell_cfg{};
     if (mode == duplex_mode::TDD) {
       // Band 40.
-      cell_cfg.dl_arfcn       = 474000;
+      cell_cfg.dl_f_ref_arfcn = 474000;
       cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
-      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
       cell_cfg.channel_bw_mhz = bs_channel_bandwidth::MHz20;
 
       const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
@@ -201,7 +201,7 @@ protected:
           cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
 
       std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-          band_helper::get_ssb_coreset0_freq_location(cell_cfg.dl_arfcn,
+          band_helper::get_ssb_coreset0_freq_location(cell_cfg.dl_f_ref_arfcn,
                                                       *cell_cfg.band,
                                                       nof_crbs,
                                                       cell_cfg.scs_common,
@@ -744,7 +744,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
   if (params.duplx_mode == duplex_mode::TDD) {
     builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth::MHz10;
   }
-  builder_params.band = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
+  builder_params.band = band_helper::get_band_from_dl_arfcn(builder_params.dl_f_ref_arfcn);
 
   const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
       builder_params.channel_bw_mhz,
@@ -753,7 +753,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
                                       : frequency_range::FR1);
 
   std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-      band_helper::get_ssb_coreset0_freq_location(builder_params.dl_arfcn,
+      band_helper::get_ssb_coreset0_freq_location(builder_params.dl_f_ref_arfcn,
                                                   *builder_params.band,
                                                   nof_crbs,
                                                   builder_params.scs_common,

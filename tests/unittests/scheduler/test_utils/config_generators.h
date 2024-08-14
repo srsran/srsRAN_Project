@@ -269,7 +269,8 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
   // the active DL BWP of a corresponding serving cell.
   // Inactive for format1_0."
   // Note2: Only k1 >= 4 supported.
-  nr_band band = params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  nr_band band =
+      params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_f_ref_arfcn);
   if (band_helper::get_duplex_mode(band) == duplex_mode::FDD) {
     pucch_cfg.dl_data_to_ul_ack = {params.min_k1};
   } else {

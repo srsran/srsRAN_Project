@@ -242,7 +242,7 @@ void benchmark_tdd(benchmarker& bm, const bench_params& params)
   sched_cfg.ue.max_pdcch_alloc_attempts_per_slot = params.max_dl_grants_per_slot;
 
   cell_config_builder_params builder_params{};
-  builder_params.dl_arfcn             = 520002;
+  builder_params.dl_f_ref_arfcn       = 520002;
   builder_params.band                 = nr_band::n41;
   builder_params.channel_bw_mhz       = bs_channel_bandwidth::MHz100;
   builder_params.scs_common           = subcarrier_spacing::kHz30;

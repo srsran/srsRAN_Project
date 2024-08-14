@@ -39,9 +39,9 @@ static cell_config_builder_params test_builder_params(duplex_mode duplx_mode)
   cell_config_builder_params builder_params{};
   if (duplx_mode == duplex_mode::TDD) {
     // Band 40.
-    builder_params.dl_arfcn       = 474000;
+    builder_params.dl_f_ref_arfcn = 474000;
     builder_params.scs_common     = srsran::subcarrier_spacing::kHz30;
-    builder_params.band           = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
+    builder_params.band           = band_helper::get_band_from_dl_arfcn(builder_params.dl_f_ref_arfcn);
     builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
@@ -51,7 +51,7 @@ static cell_config_builder_params test_builder_params(duplex_mode duplx_mode)
                                         : frequency_range::FR1);
 
     std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-        band_helper::get_ssb_coreset0_freq_location(builder_params.dl_arfcn,
+        band_helper::get_ssb_coreset0_freq_location(builder_params.dl_f_ref_arfcn,
                                                     *builder_params.band,
                                                     nof_crbs,
                                                     builder_params.scs_common,
@@ -62,7 +62,7 @@ static cell_config_builder_params test_builder_params(duplex_mode duplx_mode)
     builder_params.k_ssb             = ssb_freq_loc->k_ssb;
     builder_params.coreset0_index    = ssb_freq_loc->coreset0_idx;
   } else {
-    builder_params.band = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
+    builder_params.band = band_helper::get_band_from_dl_arfcn(builder_params.dl_f_ref_arfcn);
   }
 
   return builder_params;

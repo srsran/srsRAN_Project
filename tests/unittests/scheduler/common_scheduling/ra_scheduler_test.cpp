@@ -99,7 +99,7 @@ protected:
     cell_config_builder_params builder_params{};
     builder_params.scs_common = t_params.scs;
     if (dplx_mode == srsran::duplex_mode::TDD) {
-      builder_params.dl_arfcn = 520000;
+      builder_params.dl_f_ref_arfcn = 520000;
       builder_params.band     = nr_band::n41;
     }
     if (t_params.scs == srsran::subcarrier_spacing::kHz30) {

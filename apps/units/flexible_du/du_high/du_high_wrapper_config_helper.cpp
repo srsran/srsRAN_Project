@@ -33,11 +33,11 @@ void srsran::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
                cell.dl_carrier.carrier_bw_mhz,
                cell.dl_carrier.nof_ant,
                cell.ul_carrier.nof_ant,
-               cell.dl_carrier.arfcn,
+               cell.dl_carrier.arfcn_f_ref,
                srsran::nr_band_to_uint(cell.dl_carrier.band),
-               srsran::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn) / 1e6,
+               srsran::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn_f_ref) / 1e6,
                cell.dl_cfg_common.freq_info_dl.absolute_frequency_ssb,
-               srsran::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn) / 1e6);
+               srsran::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn_f_ref) / 1e6);
   }
 
   fmt::print("\n");

@@ -1081,7 +1081,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
              "(NCI). If not specified, a unique value for the DU is automatically derived")
       ->capture_default_str()
       ->check(CLI::Range(0U, (1U << 14) - 1U));
-  add_option(app, "--dl_arfcn", cell_params.dl_arfcn, "Downlink ARFCN")->capture_default_str();
+  add_option(app, "--dl_arfcn", cell_params.dl_f_ref_arfcn, "Downlink ARFCN")->capture_default_str();
   add_auto_enum_option(app, "--band", cell_params.band, "NR band");
   add_option_function<std::string>(
       app,
@@ -1706,7 +1706,7 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
 {
   // If NR band is not set, derive a valid one from the DL-ARFCN.
   if (not cell_cfg.band.has_value()) {
-    cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+    cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
   }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.

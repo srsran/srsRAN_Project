@@ -55,7 +55,7 @@ static fapi::carrier_config generate_carrier_config_tlv(const du_cell_config& du
   unsigned grid_size_bw_prb = band_helper::get_n_rbs_from_bw(
       MHz_to_bs_channel_bandwidth(du_cell.dl_carrier.carrier_bw_mhz),
       du_cell.scs_common,
-      band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(du_cell.dl_carrier.arfcn)));
+      band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(du_cell.dl_carrier.arfcn_f_ref)));
 
   fapi::carrier_config fapi_config = {};
 

@@ -198,14 +198,14 @@ static bool validate_srb_unit_config(const std::map<srb_id_t, du_high_unit_srb_c
 static bool validate_pdcch_unit_config(const du_high_unit_base_cell_config base_cell)
 {
   const auto band =
-      base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
+      base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_f_ref_arfcn);
   const unsigned nof_crbs =
       band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, base_cell.common_scs, band_helper::get_freq_range(band));
   if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
     const uint8_t  ss0_idx               = base_cell.pdcch_cfg.common.ss0_index;
     const unsigned cs0_idx               = base_cell.pdcch_cfg.common.coreset0_index.value();
     const auto     ssb_coreset0_freq_loc = band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(
-        base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx);
+        base_cell.dl_f_ref_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx);
     if (not ssb_coreset0_freq_loc.has_value()) {
       fmt::print("Unable to derive a valid SSB pointA and k_SSB for CORESET#0 index={}, SearchSpace#0 index={} and "
                  "cell bandwidth={}Mhz\n",
@@ -600,7 +600,8 @@ static bool validate_tdd_ul_dl_unit_config(const du_high_unit_tdd_ul_dl_config& 
 
 static bool validate_dl_arfcn_and_band(const du_high_unit_base_cell_config& config)
 {
-  nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
+  nr_band band =
+      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn);
 
   // Check if the band is supported with given SCS or band.
   // NOTE: Band n46 would be compatible with the 10MHz BW, but there is no sync raster that falls within the band
@@ -642,14 +643,14 @@ static bool validate_dl_arfcn_and_band(const du_high_unit_base_cell_config& conf
   // Check whether the DL-ARFCN is within the band and follows the Raster step.
   if (config.band.has_value()) {
     error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(
-        *config.band, config.dl_arfcn, config.common_scs, config.channel_bw_mhz);
+        *config.band, config.dl_f_ref_arfcn, config.common_scs, config.channel_bw_mhz);
     if (not ret.has_value()) {
-      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_arfcn, band, ret.error());
+      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
       return false;
     }
   } else {
     if (band == nr_band::invalid) {
-      fmt::print("Invalid DL ARFCN={}. Cause: Could not find a valid band.\n", config.dl_arfcn);
+      fmt::print("Invalid DL ARFCN={}. Cause: Could not find a valid band.\n", config.dl_f_ref_arfcn);
       return false;
     }
   }
@@ -757,8 +758,8 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  const auto ssb_scs =
-      band_helper::get_most_suitable_ssb_scs(band_helper::get_band_from_dl_arfcn(config.dl_arfcn), config.common_scs);
+  const auto ssb_scs = band_helper::get_most_suitable_ssb_scs(
+      band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn), config.common_scs);
   if (ssb_scs != config.common_scs) {
     fmt::print("Common SCS {}kHz is not equal to SSB SCS {}kHz. Different SCS for common and SSB is not supported.\n",
                scs_to_khz(config.common_scs),
@@ -766,7 +767,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
   const nr_band band =
-      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
+      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn);
   const unsigned nof_crbs =
       band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
 
@@ -838,11 +839,11 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
       const auto& cell2 = *it2;
 
       // Check if both cells are on the same frequency.
-      if (cell1.cell.dl_arfcn == cell2.cell.dl_arfcn) {
+      if (cell1.cell.dl_f_ref_arfcn == cell2.cell.dl_f_ref_arfcn) {
         // Two cells on the same frequency should not have the same physical cell identifier.
         if (cell1.cell.pci == cell2.cell.pci) {
           fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).\n",
-                     cell1.cell.dl_arfcn,
+                     cell1.cell.dl_f_ref_arfcn,
                      cell1.cell.pci);
         }
         if (cell1.cell.sector_id.has_value() and cell1.cell.sector_id == cell2.cell.sector_id and
@@ -860,7 +861,7 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
                      "sequence index (i.e., {}).\n",
                      cell1.cell.pci,
                      cell2.cell.pci,
-                     cell1.cell.dl_arfcn,
+                     cell1.cell.dl_f_ref_arfcn,
                      cell1.cell.prach_cfg.prach_root_sequence_index);
         }
       }

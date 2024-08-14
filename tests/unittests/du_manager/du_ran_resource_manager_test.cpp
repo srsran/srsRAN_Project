@@ -156,10 +156,9 @@ class du_ran_resource_manager_tester : public du_ran_resource_manager_tester_bas
                                        public ::testing::TestWithParam<params>
 {
 protected:
-  explicit du_ran_resource_manager_tester(cell_config_builder_params params_ = {.dl_arfcn = GetParam().duplx_mode ==
-                                                                                                    duplex_mode::FDD
-                                                                                                ? 365000U
-                                                                                                : 520002U}) :
+  explicit du_ran_resource_manager_tester(
+      cell_config_builder_params params_ = {.dl_f_ref_arfcn = GetParam().duplx_mode == duplex_mode::FDD ? 365000U
+                                                                                                        : 520002U}) :
     du_ran_resource_manager_tester_base(params_, config_helpers::make_default_du_cell_config(params_))
   {
     srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
@@ -607,7 +606,7 @@ class du_ran_res_mng_pucch_cnt_tester : public du_ran_resource_manager_tester_ba
                                         public ::testing::TestWithParam<pucch_cnt_builder_params>
 {
 protected:
-  explicit du_ran_res_mng_pucch_cnt_tester(cell_config_builder_params params_ = {.dl_arfcn = 520002U}) :
+  explicit du_ran_res_mng_pucch_cnt_tester(cell_config_builder_params params_ = {.dl_f_ref_arfcn = 520002U}) :
     du_ran_resource_manager_tester_base(params_,
                                         make_custom_du_cell_config_for_pucch_cnt(GetParam(), params_),
                                         GetParam().max_allowed_pucch_grants)
@@ -713,7 +712,7 @@ class du_ran_res_mng_pucch_cnt_sr_only_tester : public du_ran_resource_manager_t
                                                 public ::testing::TestWithParam<pucch_cnt_builder_params>
 {
 protected:
-  explicit du_ran_res_mng_pucch_cnt_sr_only_tester(cell_config_builder_params params_ = {.dl_arfcn       = 520002U,
+  explicit du_ran_res_mng_pucch_cnt_sr_only_tester(cell_config_builder_params params_ = {.dl_f_ref_arfcn = 520002U,
                                                                                          .csi_rs_enabled = false}) :
     du_ran_resource_manager_tester_base(params_,
                                         make_custom_du_cell_config_for_pucch_cnt(GetParam(), params_),

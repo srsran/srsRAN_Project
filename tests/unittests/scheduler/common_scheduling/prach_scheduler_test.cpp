@@ -42,7 +42,7 @@ make_custom_sched_cell_configuration_request(const prach_test_params test_params
       .scs_common = test_params.scs, .channel_bw_mhz = srsran::bs_channel_bandwidth::MHz20, .band = test_params.band};
   // For TDD, set DL ARFCN according to the band.
   if (not band_helper::is_paired_spectrum(test_params.band)) {
-    params.dl_arfcn = 520002;
+    params.dl_f_ref_arfcn = 520002;
   }
   sched_cell_configuration_request_message sched_req =
       test_helpers::make_default_sched_cell_configuration_request(params);

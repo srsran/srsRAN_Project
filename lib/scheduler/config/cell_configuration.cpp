@@ -41,7 +41,7 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   ssb_case(band_helper::get_ssb_pattern(msg.dl_carrier.band, msg.ssb_config.scs)),
   paired_spectrum(band_helper::is_paired_spectrum(msg.dl_carrier.band)),
   band(msg.dl_carrier.band),
-  L_max(ssb_get_L_max(msg.ssb_config.scs, msg.dl_carrier.arfcn, msg.dl_carrier.band)),
+  L_max(ssb_get_L_max(msg.ssb_config.scs, msg.dl_carrier.arfcn_f_ref, msg.dl_carrier.band)),
   ntn_cs_koffset(msg.ntn_cs_koffset)
 {
   if (tdd_cfg_common.has_value()) {

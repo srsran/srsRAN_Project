@@ -134,7 +134,7 @@ test_bench::test_bench(const test_bench_params& params,
   cell_config_builder_params cfg_params{};
   cfg_params.csi_rs_enabled                = true;
   cfg_params.scs_common                    = params.is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15;
-  cfg_params.dl_arfcn                      = params.is_tdd ? 520000U : 365000U;
+  cfg_params.dl_f_ref_arfcn                = params.is_tdd ? 520000U : 365000U;
   sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request(cfg_params);
   ue_req.ue_index                          = main_ue_idx;
 

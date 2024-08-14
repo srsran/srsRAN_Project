@@ -220,7 +220,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     param.pci                                      = base_cell.pci;
     param.scs_common                               = base_cell.common_scs;
     param.channel_bw_mhz                           = base_cell.channel_bw_mhz;
-    param.dl_arfcn                                 = base_cell.dl_arfcn;
+    param.dl_f_ref_arfcn                           = base_cell.dl_f_ref_arfcn;
     param.band                                     = *base_cell.band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled      = base_cell.csi_cfg.csi_rs_enabled;
@@ -242,7 +242,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
       ssb_freq_loc =
-          band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(base_cell.dl_arfcn,
+          band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(base_cell.dl_f_ref_arfcn,
                                                                     *param.band,
                                                                     nof_crbs,
                                                                     base_cell.common_scs,
@@ -250,7 +250,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
                                                                     param.search_space0_index,
                                                                     base_cell.pdcch_cfg.common.coreset0_index.value());
     } else {
-      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
+      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_f_ref_arfcn,
                                                                  *param.band,
                                                                  nof_crbs,
                                                                  base_cell.common_scs,
@@ -618,7 +618,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
         "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
         base_cell.pci,
         *param.band,
-        base_cell.dl_arfcn,
+        base_cell.dl_f_ref_arfcn,
         nof_crbs,
         to_string(base_cell.common_scs),
         to_string(out_cfg.back().ssb_cfg.scs),
