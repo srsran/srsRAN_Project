@@ -35,7 +35,10 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, const ue_r
   // Configured RRM policy members.
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     slices.emplace_back(id_count, cell_cfg, rrm);
-    slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
+    // Set policy scheduler based on slice configuration.
+    scheduler_ue_expert_config slice_scheduler_ue_expert_cfg{cell_cfg.expert_cfg.ue};
+    slice_scheduler_ue_expert_cfg.strategy_cfg = rrm.policy_sched_cfg;
+    slices.back().policy                       = create_scheduler_strategy(slice_scheduler_ue_expert_cfg);
     ++id_count;
   }
 }
