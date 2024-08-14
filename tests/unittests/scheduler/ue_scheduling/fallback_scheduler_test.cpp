@@ -699,7 +699,8 @@ class fallback_scheduler_head_scheduling : public base_fallback_tester,
 protected:
   const unsigned MAX_NOF_SLOTS_GRID_IS_BUSY = 4;
   const unsigned MAX_TEST_RUN_SLOTS         = 2100;
-  const unsigned MAC_SRB0_SDU_SIZE          = 128;
+  // NOTE: Ensure that the SDU size is small enough so that there is no segmentation when tested for SRB1.
+  const unsigned MAC_SRB_SDU_SIZE = 101;
 
   fallback_scheduler_head_scheduling() : base_fallback_tester(GetParam().duplx_mode)
   {
@@ -814,7 +815,7 @@ TEST_P(fallback_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocat
 
     // Allocate buffer and occupy the grid to test the scheduler in advance scheduling.
     if (current_slot == slot_update_srb_traffic) {
-      push_buffer_state_to_dl_ue(to_du_ue_index(du_idx), current_slot, MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
+      push_buffer_state_to_dl_ue(to_du_ue_index(du_idx), current_slot, MAC_SRB_SDU_SIZE, GetParam().is_srb0);
 
       // Mark resource grid as occupied.
       fill_resource_grid(current_slot,
@@ -868,7 +869,7 @@ protected:
     void slot_indication(slot_point sl)
     {
       switch (state) {
-          // Wait until the slot to update the SRB0 traffic.
+          // Wait until the slot to update the SRB0/SRB1 traffic.
         case ue_state::idle: {
           if (sl == slot_update_srb_traffic and nof_packet_to_tx > 0) {
             // Notify about SRB0/SRB1 message in DL.
@@ -978,7 +979,8 @@ protected:
   const unsigned SRB_PACKETS_TOT_TX = 20;
   const unsigned MAX_UES            = 1;
   const unsigned MAX_TEST_RUN_SLOTS = 2100;
-  const unsigned MAC_SRB0_SDU_SIZE  = 128;
+  // NOTE: Ensure that the SDU size is small enough so that there is no segmentation when tested for SRB1.
+  const unsigned MAC_SRB0_SDU_SIZE = 101;
 
   std::vector<ue_retx_tester> ues_testers;
 };

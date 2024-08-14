@@ -12,6 +12,7 @@
 #include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/mcs_calculator.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
@@ -987,33 +988,28 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
     // Find available symbol x RB resources.
     const unsigned pending_bytes = get_srb1_pending_tot_bytes(u.ue_index);
 
-    // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
-    grant_prbs_mcs mcs_prbs_estimate = ue_pcell.required_dl_prbs(pdsch_td_cfg, pending_bytes, dci_type);
-
-    if (mcs_prbs_estimate.n_prbs == 0) {
-      // This is a case where CSI detected by PHY is a false positive, which is decoded as CQI=0. Since these false
-      // positives cannot be avoided completely, we need to schedule the UE even with CQI==0 in the case of the fallback
-      // scheduler, so that it gets a config that it can use to report a CQI > 0.
-      sch_mcs_index mcs_idx = 0;
-      sch_prbs_tbs  prbs_tbs{};
-
-      // Try to find least MCS to fit SRB1 message.
-      while (mcs_idx < expert_cfg.max_msg4_mcs) {
-        const sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs_idx);
-        prbs_tbs                             = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
-                                                           static_cast<unsigned>(pdsch_cfg.symbols.length()),
-                                                           calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
-                                                           pdsch_cfg.nof_oh_prb,
-                                                           mcs_config,
-                                                           pdsch_cfg.nof_layers});
-        if (unused_crbs.length() >= prbs_tbs.nof_prbs) {
-          break;
-        }
-        ++mcs_idx;
-      }
-      mcs_prbs_estimate.n_prbs = prbs_tbs.nof_prbs;
-      mcs_prbs_estimate.mcs    = mcs_idx;
+    // Fallback scheduler should always work with initial CQI and not rely on CSI reported by UE since UE may not have
+    // received the configuration to report CSI.
+    std::optional<sch_mcs_index> mcs_idx = map_cqi_to_mcs(expert_cfg.initial_cqi, pdsch_cfg.mcs_table);
+    if (not mcs_idx.has_value()) {
+      logger.warning("ue={} rnti={}: Failed to schedule SRB1 PDU for slot={}. Cause: No valid MCS found for CQI={}.",
+                     u.ue_index,
+                     u.crnti,
+                     pdsch_alloc.slot,
+                     expert_cfg.initial_cqi);
+      return {};
     }
+    const sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, *mcs_idx);
+    sch_prbs_tbs              prbs_tbs   = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
+                                                                    static_cast<unsigned>(pdsch_cfg.symbols.length()),
+                                                                    calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
+                                                                    pdsch_cfg.nof_oh_prb,
+                                                                    mcs_config,
+                                                                    pdsch_cfg.nof_layers});
+    if (prbs_tbs.nof_prbs == 0) {
+      return {};
+    }
+    grant_prbs_mcs mcs_prbs_estimate{.mcs = *mcs_idx, .n_prbs = prbs_tbs.nof_prbs};
 
     // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
     // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
@@ -1056,9 +1052,14 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
     // If ConRes CE is pending then ensure that there is enough RBs/TBS such that ConRes CE is not segmented.
     if (u.is_conres_ce_pending()) {
       const unsigned only_conres_ce_pending_bytes = u.pending_conres_ce_bytes();
-      grant_prbs_mcs only_conres_mcs_prbs_estimate =
-          ue_pcell.required_dl_prbs(pdsch_td_cfg, only_conres_ce_pending_bytes, dci_dl_rnti_config_type::tc_rnti_f1_0);
-      if ((mcs_prbs_estimate.n_prbs < only_conres_mcs_prbs_estimate.n_prbs) or
+      sch_prbs_tbs   only_conres_prbs_tbs =
+          get_nof_prbs(prbs_calculator_sch_config{only_conres_ce_pending_bytes,
+                                                  static_cast<unsigned>(pdsch_cfg.symbols.length()),
+                                                  calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
+                                                  pdsch_cfg.nof_oh_prb,
+                                                  mcs_config,
+                                                  pdsch_cfg.nof_layers});
+      if ((mcs_prbs_estimate.n_prbs < only_conres_prbs_tbs.nof_prbs) or
           (mcs_tbs->tbs < (only_conres_ce_pending_bytes + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE))) {
         logger.debug("ue={} rnti={}: Postponed SRB1 PDU scheduling for slot={}. Cause: Grant is too small to fit even "
                      "ConRes CE.",
