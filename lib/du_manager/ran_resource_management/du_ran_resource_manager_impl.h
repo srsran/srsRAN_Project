@@ -13,6 +13,7 @@
 #include "du_bearer_resource_manager.h"
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
+#include "ue_capability_manager.h"
 #include "srsran/ran/qos/five_qi.h"
 
 namespace srsran {
@@ -99,6 +100,9 @@ private:
 
   /// Allocator of UE bearer resources.
   du_bearer_resource_manager bearer_res_mng;
+
+  /// Processor of UE capabilities.
+  ue_capability_manager ue_cap_manager;
 };
 
 } // namespace srs_du

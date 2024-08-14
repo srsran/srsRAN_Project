@@ -45,7 +45,8 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   cell_cfg_list(cell_cfg_list_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
   pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot),
-  bearer_res_mng(srb_config, qos_config, logger)
+  bearer_res_mng(srb_config, qos_config, logger),
+  ue_cap_manager(scheduler_cfg, logger)
 {
 }
 
@@ -118,6 +119,9 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       resp.failed_scells.push_back(sc.serv_cell_index);
     }
   }
+
+  // Process UE NR capabilities.
+  ue_cap_manager.update(ue_mcg, upd_req.ue_cap_rat_list);
 
   return resp;
 }
