@@ -311,8 +311,7 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
         return rg_factory->create(nof_tx_ports, MAX_NSYMB_PER_SLOT, dl_bw_rb * NRE);
       });
 
-  return create_asynchronous_resource_grid_pool(
-      config.dl_rg_expire_timeout_slots, *config.dl_executors.front(), std::move(grids));
+  return create_asynchronous_resource_grid_pool(*config.dl_executors.front(), std::move(grids));
 }
 
 static std::unique_ptr<resource_grid_pool>

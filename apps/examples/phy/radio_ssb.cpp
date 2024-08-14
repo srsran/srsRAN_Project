@@ -258,9 +258,9 @@ static const auto profiles = to_array<configuration_profile>({
 /// Global instances.
 static std::mutex                             stop_execution_mutex;
 static std::atomic<bool>                      stop               = {false};
+static std::unique_ptr<upper_phy_ssb_example> upper_phy          = nullptr;
 static std::unique_ptr<lower_phy>             lower_phy_instance = nullptr;
 static std::unique_ptr<radio_session>         radio              = nullptr;
-static std::unique_ptr<upper_phy_ssb_example> upper_phy          = nullptr;
 
 static void stop_execution()
 {

@@ -14,7 +14,9 @@
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_block.h"
@@ -31,28 +33,39 @@ public:
   /// Information related to the resource grid stored in the uplink context.
   struct uplink_context_resource_grid_info {
     resource_grid_context context;
-    resource_grid*        grid = nullptr;
+    shared_resource_grid  grid;
   };
 
   /// Default constructor.
   uplink_context() = default;
 
-  /// Constructs an uplink slot context with the given resource grid and resource grid context.
-  uplink_context(unsigned symbol_, const resource_grid_context& context_, resource_grid& grid_) :
-    symbol(symbol_), grid({context_, &grid_})
+  uplink_context copy() const
   {
+    uplink_context context;
+    context.symbol       = symbol;
+    context.grid.context = grid.context;
+    context.grid.grid    = grid.grid.copy();
+    context.re_written   = re_written;
+    return context;
+  }
+
+  /// Constructs an uplink slot context with the given resource grid and resource grid context.
+  uplink_context(unsigned symbol_, const resource_grid_context& context_, const shared_resource_grid& grid_) :
+    symbol(symbol_), grid({context_, grid_.copy()})
+  {
+    const resource_grid_reader& reader = grid.grid->get_reader();
+
     re_written = static_vector<bounded_bitset<MAX_NOF_PRBS * NRE>, MAX_NOF_SUPPORTED_EAXC>(
-        grid_.get_writer().get_nof_ports(),
-        bounded_bitset<MAX_NOF_PRBS * NRE>(size_t(grid_.get_writer().get_nof_subc())));
+        reader.get_nof_ports(), bounded_bitset<MAX_NOF_PRBS * NRE>(size_t(reader.get_nof_subc())));
   }
 
   /// Returns true if this context is empty, otherwise false.
-  bool empty() const { return grid.grid == nullptr; }
+  bool empty() const { return !grid.grid.is_valid(); }
 
   /// Returns the number of PRBs of the context grid or zero if no grid was configured for this context.
   unsigned get_grid_nof_prbs() const
   {
-    return (grid.grid) ? (grid.grid->get_writer().get_nof_subc() / NOF_SUBCARRIERS_PER_RB) : 0U;
+    return (grid.grid) ? (grid.grid.get_reader().get_nof_subc() / NOF_SUBCARRIERS_PER_RB) : 0U;
   }
 
   /// Returns the resource grid context.
@@ -66,9 +79,10 @@ public:
   void write_grid(unsigned port, unsigned start_re, span<const cbf16_t> re_iq_buffer)
   {
     srsran_assert(grid.grid, "Invalid resource grid");
+    resource_grid_writer& writer = grid.grid->get_writer();
 
     // Skip writing if the given port does not fit in the grid.
-    if (port >= grid.grid->get_writer().get_nof_ports()) {
+    if (port >= writer.get_nof_ports()) {
       return;
     }
     span<cbf16_t> grid_view = grid.grid->get_writer().get_view(port, symbol).subspan(start_re, re_iq_buffer.size());
@@ -88,11 +102,14 @@ public:
       return make_unexpected(default_error_t{});
     }
 
-    return {grid};
+    return uplink_context_resource_grid_info{grid.context, grid.grid.copy()};
   }
 
   /// Returns the context grid information.
   const uplink_context_resource_grid_info& get_uplink_context_resource_grid_info() const { return grid; }
+
+  /// Gets the context grid information and clears it.
+  uplink_context_resource_grid_info pop_uplink_context_resource_grid_info() { return std::move(grid); }
 
 private:
   /// Returns true when all the REs for the current symbol have been written.
@@ -142,7 +159,8 @@ public:
   explicit uplink_context_repository(unsigned size_) : buffer(size_) {}
 
   /// Adds the given entry to the repository at slot.
-  void add(const resource_grid_context& context, resource_grid& grid, const ofdm_symbol_range& symbol_range)
+  void
+  add(const resource_grid_context& context, const shared_resource_grid& grid, const ofdm_symbol_range& symbol_range)
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -163,7 +181,7 @@ public:
   uplink_context get(slot_point slot, unsigned symbol) const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    return entry(slot, symbol);
+    return entry(slot, symbol).copy();
   }
 
   /// \brief Tries to pop a complete resource grid for the given slot and symbol.
@@ -174,7 +192,7 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
 
-    const auto result = entry(slot, symbol).try_getting_complete_resource_grid();
+    auto result = entry(slot, symbol).try_getting_complete_resource_grid();
 
     // Symbol is complete or exists. Clear the context.
     if (result.has_value()) {
@@ -189,19 +207,16 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
 
-    const auto& result = entry(slot, symbol);
+    auto& result = entry(slot, symbol);
 
     // Symbol does not exists. Do nothing.
     if (result.empty()) {
       return make_unexpected(default_error_t{});
     }
 
-    const auto info = result.get_uplink_context_resource_grid_info();
-
-    // Clear the symbol.
-    entry(slot, symbol) = {};
-
-    return {info};
+    // Pop and clear the slot/symbol information.
+    uplink_context::uplink_context_resource_grid_info info = result.pop_uplink_context_resource_grid_info();
+    return info;
   }
 
   /// Clears the repository entry for the given slot and symbol.

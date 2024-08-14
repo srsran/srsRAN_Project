@@ -16,6 +16,7 @@
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/copy.h"
@@ -50,7 +51,7 @@ public:
   };
 
   /// Constructs a resource spy.
-  resource_grid_writer_spy(unsigned max_ports_, unsigned max_symb_, unsigned max_prb_) :
+  resource_grid_writer_spy(unsigned max_ports_ = 0, unsigned max_symb_ = 0, unsigned max_prb_ = 0) :
     max_ports(max_ports_), max_symb(max_symb_), max_prb(max_prb_), data({max_prb * NRE, max_symb, max_ports})
   {
   }
@@ -197,6 +198,8 @@ public:
 
   /// Get the number of times a \c put method has been called.
   unsigned get_count() const { return count; }
+
+  bool has_grid_been_written() const { return count != 0; }
 
   /// Clears any possible state.
   void reset()
@@ -392,20 +395,12 @@ private:
 class resource_grid_spy : public resource_grid, private resource_grid_mapper
 {
 public:
-  resource_grid_spy(unsigned max_ports = 0, unsigned max_symb = 0, unsigned max_prb = 0) :
-    reader(max_ports, max_symb, max_prb), writer(max_ports, max_symb, max_prb)
+  resource_grid_spy(resource_grid_reader& reader_, resource_grid_writer& writer_) : reader(reader_), writer(writer_)
   {
     // Do nothing.
   }
 
-  void set_all_zero() override
-  {
-    ++set_all_zero_count;
-
-    // Reset the reader and writer.
-    reader.reset();
-    writer.reset();
-  }
+  void set_all_zero() override { ++set_all_zero_count; }
 
   void set_empty(bool empty_) { empty = empty_; }
 
@@ -417,15 +412,10 @@ public:
   bool has_set_all_zero_method_been_called() const { return set_all_zero_count > 0; }
 
   /// Returns the global number of calls to any method.
-  unsigned get_total_count() const { return set_all_zero_count + reader.get_count() + writer.get_count(); }
+  unsigned get_all_zero_count() const { return set_all_zero_count; }
 
   /// Resets all counters.
-  void clear()
-  {
-    set_all_zero_count = 0;
-    reader.reset();
-    writer.reset();
-  }
+  void clear() { set_all_zero_count = 0; }
 
   resource_grid_mapper& get_mapper() override { return *this; }
 
@@ -446,10 +436,47 @@ public:
   }
 
 private:
-  resource_grid_reader_spy reader;
-  resource_grid_writer_spy writer;
-  bool                     empty              = true;
-  unsigned                 set_all_zero_count = 0;
+  resource_grid_reader& reader;
+  resource_grid_writer& writer;
+  bool                  empty              = true;
+  unsigned              set_all_zero_count = 0;
+};
+
+class shared_resource_grid_spy : private shared_resource_grid::pool_interface
+{
+private:
+  static constexpr unsigned identifier = 0;
+  resource_grid&            grid;
+  std::atomic<unsigned>     ref_count = {};
+
+  resource_grid& get(unsigned identifier_) override
+  {
+    srsran_assert(ref_count > 0, "The grid must be reserved.");
+    srsran_assert(identifier == identifier_, "Identifier miss-match.");
+    return grid;
+  }
+
+  void notify_release_scope(unsigned identifier_) override
+  {
+    srsran_assert(ref_count == 0, "The grid must be reserved.");
+    srsran_assert(identifier == identifier_, "Identifier miss-match.");
+  }
+
+public:
+  explicit shared_resource_grid_spy(resource_grid& grid_) : grid(grid_) {}
+
+  ~shared_resource_grid_spy()
+  {
+    report_fatal_error_if_not(ref_count == 0, "A grid is still active in {} scopes.", ref_count);
+  }
+
+  shared_resource_grid get_grid()
+  {
+    unsigned expected_available_ref_count = 0;
+    bool     available                    = ref_count.compare_exchange_strong(expected_available_ref_count, 1);
+    srsran_assert(available, "The grid must NOT be reserved.");
+    return {*this, ref_count, 0};
+  }
 };
 
 /// \brief Describes a resource grid dummy used for testing classes that handle resource grids but do not use the

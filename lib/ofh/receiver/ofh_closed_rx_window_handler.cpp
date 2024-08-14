@@ -43,16 +43,17 @@ void closed_rx_window_handler::on_new_symbol(slot_symbol_point symbol_point)
 
 void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_point)
 {
-  const auto& context = uplink_repo->pop_resource_grid_symbol(symbol_point.get_slot(), symbol_point.get_symbol_index());
+  expected<uplink_context::uplink_context_resource_grid_info> context =
+      uplink_repo->pop_resource_grid_symbol(symbol_point.get_slot(), symbol_point.get_symbol_index());
 
   if (!context.has_value()) {
     return;
   }
 
-  const auto               ctx_value            = context.value();
-  uplane_rx_symbol_context notification_context = {
-      ctx_value.context.slot, symbol_point.get_symbol_index(), ctx_value.context.sector};
-  notifier->on_new_uplink_symbol(notification_context, ctx_value.grid->get_reader());
+  uplink_context::uplink_context_resource_grid_info& ctx_value            = context.value();
+  uplane_rx_symbol_context                           notification_context = {
+                                ctx_value.context.slot, symbol_point.get_symbol_index(), ctx_value.context.sector};
+  notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid));
 
   if (log_unreceived_messages) {
     logger.warning("Missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",

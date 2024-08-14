@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ru/ru_downlink_plane.h"
 
 namespace srsran {
@@ -25,7 +26,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) override;
+  void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
 private:
   std::vector<lower_phy_rg_handler*> handler;

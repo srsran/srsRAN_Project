@@ -12,20 +12,21 @@
 
 #include "resource_grid.h"
 #include "resource_grid_context.h"
+#include "shared_resource_grid.h"
 #include <vector>
 
 namespace srsran {
 
-/// Describes a resource grid pool interface
+/// Resource grid pool interface.
 class resource_grid_pool
 {
 public:
-  /// Default destructor
+  /// Default destructor.
   virtual ~resource_grid_pool() = default;
 
-  /// Get a resource grid for the given context
-  /// \param [in] context Provides the given context
-  virtual resource_grid& get_resource_grid(const resource_grid_context& context) = 0;
+  /// \brief Allocates a unique resource grid.
+  /// \param [in] context Allocation context.
+  virtual shared_resource_grid allocate_resource_grid(const resource_grid_context& context) = 0;
 };
 
 } // namespace srsran

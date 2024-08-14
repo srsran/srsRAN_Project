@@ -68,14 +68,43 @@ public:
   bool is_valid(const srs_estimator_configuration& config) const override { return true; }
 };
 
-class resource_grid_pool_dummy : public resource_grid_pool
+class resource_grid_pool_dummy : public resource_grid_pool, private shared_resource_grid::pool_interface
 {
-  resource_grid& grid;
-
 public:
-  explicit resource_grid_pool_dummy(resource_grid& grid_) : grid(grid_) {}
+  explicit resource_grid_pool_dummy() {}
 
-  resource_grid& get_resource_grid(const srsran::resource_grid_context& context) override { return grid; }
+  shared_resource_grid allocate_resource_grid(const resource_grid_context& context) override
+  {
+    unsigned expected_available_ref_count = 0;
+    bool     available                    = ref_count.compare_exchange_strong(expected_available_ref_count, 1);
+    srsran_assert(available, "The grid must NOT be reserved.");
+    return {*this, ref_count, 0};
+  }
+
+  unsigned get_getter_count() const { return getter_count; }
+
+  bool is_available() const { return ref_count == 0; }
+
+private:
+  resource_grid& get(unsigned identifier_) override
+  {
+    srsran_assert(identifier == identifier_, "Identifier unmatched.");
+    srsran_assert(ref_count != 0, "Reference counter must NOT be zero.");
+    ++getter_count;
+    return grid;
+  }
+
+  void notify_release_scope(unsigned identifier_) override
+  {
+    srsran_assert(identifier == identifier_, "Identifier unmatched.");
+    srsran_assert(ref_count == 0, "Reference counter must be zero.");
+  }
+
+  static constexpr unsigned identifier   = 0;
+  std::atomic<unsigned>     ref_count    = {};
+  unsigned                  getter_count = 0;
+
+  resource_grid_dummy grid;
 };
 
 class downlink_processor_pool_dummy : public downlink_processor_pool
@@ -102,7 +131,6 @@ public:
 class fapi_to_phy_translator_fixture : public ::testing::Test
 {
 protected:
-  resource_grid_spy                   grid;
   downlink_processor_pool_dummy       dl_processor_pool;
   resource_grid_pool_dummy            rg_pool;
   uplink_request_processor_dummy      ul_request_processor;
@@ -132,8 +160,7 @@ protected:
   fapi_to_phy_translator translator;
 
 public:
-  fapi_to_phy_translator_fixture() :
-    grid(0, 0, 0), rg_pool(grid), pdu_repo(2), worker(1), translator(config, std::move(dependencies))
+  fapi_to_phy_translator_fixture() : pdu_repo(2), worker(1), translator(config, std::move(dependencies))
   {
     translator.set_slot_error_message_notifier(error_notifier_spy);
     translator.handle_new_slot(slot);
@@ -143,14 +170,14 @@ public:
 TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_not_configured_on_new_slot)
 {
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_TRUE(rg_pool.is_available());
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
 
 TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_dl_tti_request)
 {
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
   msg.sfn                     = slot.sfn();
@@ -169,7 +196,7 @@ TEST_F(fapi_to_phy_translator_fixture,
        when_is_last_message_in_slot_flag_is_enabled_controller_is_released_at_the_dl_tti_handling)
 {
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
   msg.sfn                     = slot.sfn();
@@ -182,7 +209,7 @@ TEST_F(fapi_to_phy_translator_fixture,
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
 
   // Assert that the resource grid has not been set to zero.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
 }
@@ -193,7 +220,7 @@ TEST_F(fapi_to_phy_translator_fixture, dl_ssb_pdu_is_processed)
   slot_point                   msg_slot(scs, msg.sfn, msg.slot);
 
   ASSERT_FALSE(dl_processor_pool.processor(msg_slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   translator.handle_new_slot(msg_slot);
   // Process SSB PDU.
@@ -203,7 +230,7 @@ TEST_F(fapi_to_phy_translator_fixture, dl_ssb_pdu_is_processed)
   ASSERT_TRUE(dl_processor_pool.processor(msg_slot).has_configure_resource_grid_method_been_called());
   ASSERT_TRUE(dl_processor_pool.processor(msg_slot).has_process_ssb_method_been_called());
   // Assert that the resource grid has NOT been set to zero.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   translator.handle_new_slot(msg_slot + 1);
   ++msg.slot;
@@ -220,7 +247,7 @@ TEST_F(fapi_to_phy_translator_fixture, dl_ssb_pdu_within_allowed_delay_is_proces
   slot_point                          msg_slot(scs, msg.sfn, msg.slot);
 
   ASSERT_FALSE(dl_processor_pool.processor(msg_slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   translator.handle_new_slot(msg_slot);
 
@@ -236,14 +263,14 @@ TEST_F(fapi_to_phy_translator_fixture, dl_ssb_pdu_within_allowed_delay_is_proces
   ASSERT_TRUE(dl_processor_pool.processor(msg_slot).has_configure_resource_grid_method_been_called());
   ASSERT_TRUE(dl_processor_pool.processor(msg_slot).has_process_ssb_method_been_called());
   // Assert that the resource grid has NOT been set to zero.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
 
 TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_sends_previous_slot)
 {
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
   msg.sfn                     = slot.sfn();
@@ -261,7 +288,7 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_sends_previous
   // Assert that the downlink processor is configured.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   // Assert that the resource grid has NOT been set to zero.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   // Send another DL_TTI.request and check that the previous one has been sent.
   ++msg.slot;
@@ -306,7 +333,7 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_from_a_slot_de
 TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message_for_the_next_slot_is_received)
 {
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
   msg.sfn                     = slot.sfn();
@@ -319,7 +346,7 @@ TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message
   // Assert that the downlink processor is configured.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   // Assert that the resource grid has NOT been set to zero.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+  ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   // Increase the slots.
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());

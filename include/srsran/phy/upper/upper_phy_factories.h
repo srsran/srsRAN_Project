@@ -288,8 +288,6 @@ struct upper_phy_config {
   /// Number of downlink resource grids. Downlink resource grids minimum reuse time is \c dl_rg_expire_timeout_slots
   /// slots.
   unsigned nof_dl_rg;
-  /// Downlink resource grid timeout expiration in number of slots.
-  unsigned dl_rg_expire_timeout_slots;
   /// Number of uplink resource grids. They are reused after \c nof_ul_rg slots.
   unsigned nof_ul_rg;
   /// Number of PRACH buffer.

@@ -27,7 +27,6 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
     task_executor&                        executor_,
     srslog::basic_logger&                 logger_) :
   gateway(gateway_),
-  current_grid(nullptr),
   pdcch_proc(std::move(pdcch_proc_)),
   pdsch_proc(std::move(pdsch_proc_)),
   ssb_proc(std::move(ssb_proc_)),
@@ -63,8 +62,8 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
     trace_point process_pdcch_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
-    if (current_grid != nullptr) {
-      resource_grid_mapper& mapper = current_grid->get_mapper();
+    if (current_grid) {
+      resource_grid_mapper& mapper = current_grid.get().get_mapper();
       pdcch_proc->process(mapper, pdu);
     }
 
@@ -106,7 +105,7 @@ void downlink_processor_single_executor_impl::process_pdsch(
     trace_point process_pdsch_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
-    if (current_grid != nullptr) {
+    if (current_grid) {
       resource_grid_mapper& mapper = current_grid->get_mapper();
       pdsch_proc->process(mapper, pdsch_notifier, data, pdu);
 
@@ -150,7 +149,7 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
     trace_point process_ssb_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
-    if (current_grid != nullptr) {
+    if (current_grid) {
       ssb_proc->process(current_grid->get_writer(), pdu);
     }
 
@@ -192,7 +191,7 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
     trace_point process_nzp_csi_rs_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
-    if (current_grid != nullptr) {
+    if (current_grid) {
       resource_grid_mapper& mapper = current_grid->get_mapper();
       csi_rs_proc->map(mapper, config);
     }
@@ -213,7 +212,7 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
 }
 
 bool downlink_processor_single_executor_impl::configure_resource_grid(const resource_grid_context& context,
-                                                                      resource_grid&               grid)
+                                                                      shared_resource_grid         grid)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
@@ -222,9 +221,9 @@ bool downlink_processor_single_executor_impl::configure_resource_grid(const reso
     return false;
   }
 
-  report_fatal_error_if_not(current_grid == nullptr, "A previously configured resource grid is still in use.");
+  report_fatal_error_if_not(!current_grid, "A previously configured resource grid is still in use.");
 
-  current_grid = &grid;
+  current_grid = std::move(grid);
   rg_context   = context;
 
   // update internal state to allow processing PDUs and increase the pending task counter.
@@ -256,9 +255,9 @@ void downlink_processor_single_executor_impl::send_resource_grid()
   l1_tracer << instant_trace_event("send_resource_grid", instant_trace_event::cpu_scope::global);
 
   // Send the resource grid if available.
-  if (current_grid != nullptr) {
-    gateway.send(rg_context, current_grid->get_reader());
-    current_grid = nullptr;
+  if (current_grid.is_valid()) {
+    shared_resource_grid grid2 = std::move(current_grid);
+    gateway.send(rg_context, std::move(grid2));
   }
 
   // Update internal state.

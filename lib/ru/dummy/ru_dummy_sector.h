@@ -16,6 +16,7 @@
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ru/ru_downlink_plane.h"
@@ -63,16 +64,17 @@ public:
   }
 
   // See ru_downlink_plane_handler interface for documentation.
-  void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) override
+  void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
     std::lock_guard<std::mutex> lock(dl_request_mutex);
-    resource_grid_context       prev_context = std::exchange(dl_request[context.slot.system_slot()], context);
+    request_information         info = {context, grid.copy()};
+    std::swap(info, dl_request[context.slot.system_slot()]);
 
     // If the previous slot is valid, it is a late.
-    if (prev_context.slot.valid()) {
+    if (info.context.slot.valid()) {
       logger.warning("Real-time failure in RU: received late DL request from slot {} in sector {}.",
-                     prev_context.slot,
-                     prev_context.sector);
+                     info.context.slot,
+                     info.context.sector);
     }
   }
 
@@ -80,31 +82,32 @@ public:
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
   {
     std::lock_guard<std::mutex> lock(prach_request_mutex);
-    prach_buffer_context        prev_context = std::exchange(prach_request[context.slot.system_slot()], context);
+    prach_buffer_context        info = std::exchange(prach_request[context.slot.system_slot()], context);
 
     // Detect if there is an unhandled request from a different slot.
-    if (prev_context.slot.valid()) {
+    if (info.slot.valid()) {
       logger.warning(context.slot.sfn(),
                      context.slot.slot_index(),
                      "Real-time failure in RU: received late PRACH request from slot {} in sector {}.",
-                     prev_context.slot,
-                     prev_context.sector);
+                     info.slot,
+                     info.sector);
     }
   }
 
   // See ru_uplink_plane_handler interface for documentation.
-  void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) override
+  void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
     std::lock_guard<std::mutex> lock(ul_request_mutex);
-    resource_grid_context       prev_context = std::exchange(ul_request[context.slot.system_slot()], context);
+    request_information         info = {context, grid.copy()};
+    std::swap(info, ul_request[context.slot.system_slot()]);
 
     // Detect if there is an unhandled request from a different slot.
-    if (prev_context.slot.valid()) {
+    if (info.context.slot.valid()) {
       logger.warning(context.slot.sfn(),
                      context.slot.slot_index(),
                      "Real-time failure in RU: received late UL request from slot {} in sector {}.",
-                     prev_context.slot,
-                     prev_context.sector);
+                     info.context.slot,
+                     info.context.sector);
     }
   }
 
@@ -114,40 +117,40 @@ public:
     // Process DL request for this slot.
     slot_point current_dl_slot = slot + dl_data_margin;
 
-    resource_grid_context context = {slot_point(), 0};
+    request_information dl_info = {};
     {
       std::lock_guard<std::mutex> lock(dl_request_mutex);
-      context = std::exchange(dl_request[current_dl_slot.system_slot()], context);
+      std::swap(dl_info, dl_request[current_dl_slot.system_slot()]);
     }
 
     // Notify with a warning message if the DL previous saved context do not match with the current slot.
-    if (context.slot.valid() && (context.slot != current_dl_slot)) {
+    if (dl_info.context.slot.valid() && (dl_info.context.slot != current_dl_slot)) {
       logger.warning(current_dl_slot.sfn(),
                      current_dl_slot.slot_index(),
                      "Real-time failure in RU: detected late DL request from slot {} in sector {}.",
-                     context.slot,
-                     context.sector);
+                     dl_info.context.slot,
+                     dl_info.context.sector);
     }
 
     // Process UL request for this slot.
-    resource_grid_context ul_context = {slot_point(), 0};
+    request_information ul_info = {};
     {
       std::lock_guard<std::mutex> lock(ul_request_mutex);
-      ul_context = std::exchange(ul_request[slot.system_slot()], ul_context);
+      std::swap(ul_info, ul_request[slot.system_slot()]);
     }
 
     // Check if the UL context from the request list is valid.
-    if (ul_context.slot.valid()) {
-      if (ul_context.slot == slot) {
+    if (ul_info.context.slot.valid()) {
+      if (ul_info.context.slot == slot) {
         // Prepare receive symbol context.
         ru_uplink_rx_symbol_context rx_context;
-        rx_context.slot   = ul_context.slot;
-        rx_context.sector = ul_context.sector;
+        rx_context.slot   = ul_info.context.slot;
+        rx_context.sector = ul_info.context.sector;
 
         // Notify received resource grid for each symbol.
         for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
           rx_context.symbol_id = i_symbol;
-          symbol_notifier.on_new_uplink_symbol(rx_context, rx_symbols_resource_grid);
+          symbol_notifier.on_new_uplink_symbol(rx_context, std::move(ul_info.grid));
         }
 
       } else {
@@ -155,8 +158,8 @@ public:
         logger.warning(slot.sfn(),
                        slot.slot_index(),
                        "Real-time failure in RU: detected late UL request from slot {} in sector {}.",
-                       ul_context.slot,
-                       ul_context.sector);
+                       ul_info.context.slot,
+                       ul_info.context.sector);
       }
     }
 
@@ -187,6 +190,11 @@ private:
   /// Maximum number of requests stored in the ring buffers.
   static constexpr unsigned max_nof_request = 40;
 
+  struct request_information {
+    resource_grid_context context;
+    shared_resource_grid  grid;
+  };
+
   /// Logger.
   srslog::basic_logger& logger;
   /// Receive symbol notifier.
@@ -198,7 +206,7 @@ private:
   /// Downlink request margin.
   unsigned dl_data_margin;
   /// Buffer containing the UL requests slots.
-  circular_array<resource_grid_context, max_nof_request> ul_request;
+  circular_array<request_information, max_nof_request> ul_request;
   /// Protects the circular buffer containing the UL requests.
   std::mutex ul_request_mutex;
   /// Buffer containing the PRACH requests slots.
@@ -206,7 +214,7 @@ private:
   /// Protects the circular buffer containing the PRACH requests.
   std::mutex prach_request_mutex;
   /// Circular buffer containing the DL requests indexed by system slot.
-  circular_array<resource_grid_context, max_nof_request> dl_request;
+  circular_array<request_information, max_nof_request> dl_request;
   /// Protects the circular buffer containing the DL requests.
   std::mutex dl_request_mutex;
 };

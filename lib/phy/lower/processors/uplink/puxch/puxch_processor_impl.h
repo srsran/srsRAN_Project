@@ -17,6 +17,7 @@
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_notifier.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_request_handler.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
@@ -56,15 +57,15 @@ private:
                       const lower_phy_rx_symbol_context&    context) override;
 
   // See interface for documentation.
-  void handle_request(resource_grid& grid, const resource_grid_context& context) override;
+  void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) override;
 
-  unsigned                                  nof_symbols_per_slot;
-  unsigned                                  nof_rx_ports;
-  puxch_processor_notifier*                 notifier = nullptr;
-  std::unique_ptr<ofdm_symbol_demodulator>  demodulator;
-  slot_point                                current_slot;
-  resource_grid*                            current_grid = nullptr;
-  resource_grid_request_pool<resource_grid> requests;
+  unsigned                                 nof_symbols_per_slot;
+  unsigned                                 nof_rx_ports;
+  puxch_processor_notifier*                notifier = nullptr;
+  std::unique_ptr<ofdm_symbol_demodulator> demodulator;
+  slot_point                               current_slot;
+  shared_resource_grid                     current_grid;
+  resource_grid_request_pool               requests;
 };
 
 } // namespace srsran

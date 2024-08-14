@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/conversion.h"
 #include "srsran/support/error_handling.h"
@@ -53,7 +54,7 @@ public:
     }
   }
 
-  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
+  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override
   {
     // Handle Rx symbol.
     handler->handle_rx_symbol(context, grid);
@@ -68,7 +69,7 @@ public:
           // Save the resource grid.
           for (unsigned i_port = start_port; i_port != end_port; ++i_port) {
             for (unsigned symbol_idx = 0; symbol_idx != nof_symbols; ++symbol_idx) {
-              grid.get(temp_buffer, i_port, symbol_idx, 0);
+              grid.get_reader().get(temp_buffer, i_port, symbol_idx, 0);
               file.write(reinterpret_cast<const char*>(temp_buffer.data()), temp_buffer.size() * sizeof(cf_t));
             }
           }

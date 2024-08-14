@@ -168,8 +168,8 @@ template <concurrent_queue_policy QueuePolicy>
 std::function<void()> task_worker_pool<QueuePolicy>::create_pop_loop_task()
 {
   return [this]() {
-    unique_task job;
     while (true) {
+      unique_task job;
       if (not this->queue.pop_blocking(job)) {
         break;
       }

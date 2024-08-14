@@ -16,6 +16,7 @@ class resource_grid;
 class prach_buffer;
 struct prach_buffer_context;
 struct resource_grid_context;
+class shared_resource_grid;
 
 /// \brief Describes the lower physical layer request handler.
 ///
@@ -44,7 +45,7 @@ public:
   ///
   /// \param[in] context Resource grid context.
   /// \param[in] grid    Resource grid to store the processed slot.
-  virtual void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) = 0;
+  virtual void request_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) = 0;
 };
 
 } // namespace srsran

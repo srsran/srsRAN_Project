@@ -78,7 +78,7 @@ public:
   }
 
   unsigned get_nof_ports() const override { return 1; };
-  unsigned get_nof_subc() const override { return 51 * NOF_SUBCARRIERS_PER_RB; };
+  unsigned get_nof_subc() const override { return grid_data.size(); };
   unsigned get_nof_symbols() const override { return MAX_NSYMB_PER_SLOT; };
 
   span<const cf_t> put(unsigned                                               port,
@@ -139,24 +139,6 @@ public:
     }
     return nof_prbs_written;
   }
-};
-
-class resource_grid_dummy_with_spy_writer : public resource_grid
-{
-  resource_grid_writer_bool_spy& writer;
-  resource_grid_reader_spy       reader;
-  resource_grid_mapper_dummy     mapper;
-
-public:
-  explicit resource_grid_dummy_with_spy_writer(resource_grid_writer_bool_spy& writer_) :
-    writer(writer_), reader(1, 14, 51)
-  {
-  }
-
-  void                        set_all_zero() override {}
-  resource_grid_writer&       get_writer() override { return writer; }
-  const resource_grid_reader& get_reader() const override { return reader; }
-  resource_grid_mapper&       get_mapper() override { return mapper; }
 };
 
 } // namespace testing

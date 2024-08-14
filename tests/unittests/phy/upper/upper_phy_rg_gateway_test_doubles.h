@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 
 namespace srsran {
@@ -20,7 +21,7 @@ class upper_phy_rg_gateway_fto : public upper_phy_rg_gateway
 {
 public:
   bool sent = false;
-  void send(const resource_grid_context& context, const resource_grid_reader& grid) override { sent = true; }
+  void send(const resource_grid_context& context, const shared_resource_grid& grid) override { sent = true; }
   void clear_sent() { sent = false; }
 };
 

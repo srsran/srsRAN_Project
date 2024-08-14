@@ -11,6 +11,7 @@
 #include "upper_phy_rx_symbol_handler_impl.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
@@ -34,7 +35,7 @@ upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(
 }
 
 void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbol_context& context,
-                                                        const resource_grid_reader&        grid)
+                                                        const shared_resource_grid&        grid)
 {
   // Run PUSCH buffer housekeeping when a new slot starts.
   if (context.symbol == 0) {
@@ -74,7 +75,7 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer
 
 void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pusch_pdu& pdu,
                                                      uplink_processor&                  ul_processor,
-                                                     const resource_grid_reader&        grid,
+                                                     const shared_resource_grid&        grid,
                                                      slot_point                         slot)
 {
   const pusch_processor::pdu_t& proc_pdu = pdu.pdu;

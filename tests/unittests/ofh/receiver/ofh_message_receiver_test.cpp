@@ -16,6 +16,7 @@
 #include "../compression/ofh_iq_decompressor_test_doubles.h"
 #include "srsran/ofh/ethernet/ethernet_unique_buffer.h"
 #include "srsran/ofh/ofh_factories.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -28,7 +29,7 @@ namespace {
 class dummy_uplane_rx_symbol_notifier : public uplane_rx_symbol_notifier
 {
 public:
-  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, const resource_grid_reader& grid) override {}
+  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid) override {}
   void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
 };
 

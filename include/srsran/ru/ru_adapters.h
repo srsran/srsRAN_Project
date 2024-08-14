@@ -15,6 +15,7 @@
 #include "ru_timing_notifier.h"
 #include "ru_uplink_plane.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/upper_phy_error_handler.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
@@ -28,7 +29,7 @@ class upper_ru_dl_rg_adapter : public upper_phy_rg_gateway
 {
 public:
   // See interface for documentation.
-  void send(const resource_grid_context& context, const resource_grid_reader& grid) override
+  void send(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
     srsran_assert(dl_handler, "Adapter is not connected.");
     dl_handler->handle_dl_data(context, grid);
@@ -53,7 +54,7 @@ public:
   }
 
   // See interface for documentation.
-  void on_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) override
+  void on_uplink_slot_request(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
     srsran_assert(ul_handler, "Adapter is not connected");
     ul_handler->handle_new_uplink_slot(context, grid);
@@ -73,7 +74,7 @@ public:
   explicit upper_ru_ul_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
 
   // See interface for documentation.
-  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const resource_grid_reader& grid) override
+  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid) override
   {
     srsran_assert(context.sector < handlers.size(), "Unsupported sector {}", context.sector);
     handlers[context.sector]->handle_rx_symbol({context.sector, context.slot, context.symbol_id}, grid);

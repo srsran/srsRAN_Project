@@ -125,7 +125,6 @@ static void generate_du_low_config(du_low_config&              out_config,
     upper_phy_cell.ldpc_decoder_iterations    = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
     upper_phy_cell.ldpc_decoder_early_stop    = du_low.expert_phy_cfg.pusch_decoder_early_stop;
     upper_phy_cell.nof_dl_rg                  = dl_pipeline_depth + 2;
-    upper_phy_cell.dl_rg_expire_timeout_slots = dl_pipeline_depth;
     upper_phy_cell.nof_dl_processors          = dl_pipeline_depth;
     upper_phy_cell.nof_ul_rg                  = ul_pipeline_depth;
     upper_phy_cell.max_ul_thread_concurrency  = du_low.expert_execution_cfg.threads.nof_ul_threads + 1;

@@ -8,7 +8,6 @@
  *
  */
 
-#include "../../../lib/phy/support/resource_grid_impl.h"
 #include "helpers.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/circular_map.h"
@@ -17,6 +16,9 @@
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/phy/support/shared_resource_grid.h"
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_downlink_plane.h"
 #include "srsran/ru/ru_error_notifier.h"
@@ -404,7 +406,10 @@ class dummy_rx_symbol_notifier : public ru_uplink_plane_rx_symbol_notifier
 {
 public:
   // See interface for documentation.
-  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const resource_grid_reader& grid) override {}
+  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid) override
+  {
+    srsran_assert(grid, "Invalid grid.");
+  }
 
   // See interface for documentation.
   void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
@@ -656,13 +661,19 @@ public:
   {
     std::uniform_real_distribution<float> dist(-1.0, +1.0);
 
+    std::shared_ptr<channel_precoder_factory> precoder_factory = create_channel_precoder_factory("auto");
+    report_fatal_error_if_not(precoder_factory, "Invalid factory");
+
+    std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoder_factory);
+    report_fatal_error_if_not(rg_factory, "Invalid factory");
+
     // Create resource grids according to TDD pattern.
+    std::vector<std::unique_ptr<resource_grid>> dl_resource_grids;
     for (unsigned rg_id = 0; rg_id != tdd_pattern.nof_dl_slots; rg_id++) {
       // Downlink.
-      dl_resource_grids.push_back(std::make_unique<resource_grid_impl>(
-          nof_antennas_dl, get_nsymb_per_slot(cyclic_prefix::NORMAL), nof_prb * NOF_SUBCARRIERS_PER_RB, nullptr));
-      resource_grid_impl&   grid      = *dl_resource_grids.back();
-      resource_grid_writer& rg_writer = grid.get_writer();
+      dl_resource_grids.push_back(
+          rg_factory->create(nof_antennas_dl, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
+      resource_grid_writer& rg_writer = dl_resource_grids.back()->get_writer();
 
       // Pre-generate random downlink data.
       for (unsigned sym = 0; sym != get_nsymb_per_slot(cyclic_prefix::NORMAL); ++sym) {
@@ -673,11 +684,15 @@ public:
         }
       }
     }
+    dl_rg_pool = create_generic_resource_grid_pool(std::move(dl_resource_grids));
+
     // Uplink.
+    std::vector<std::unique_ptr<resource_grid>> ul_resource_grids;
     for (unsigned rg_id = 0; rg_id != tdd_pattern.nof_ul_slots; rg_id++) {
-      ul_resource_grids.push_back(std::make_unique<resource_grid_impl>(
-          nof_antennas_ul, get_nsymb_per_slot(cyclic_prefix::NORMAL), nof_prb * NOF_SUBCARRIERS_PER_RB, nullptr));
+      ul_resource_grids.push_back(
+          rg_factory->create(nof_antennas_ul, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
     }
+    ul_rg_pool = create_generic_resource_grid_pool(std::move(ul_resource_grids));
   }
 
   /// Starts the DU emulator.
@@ -707,9 +722,12 @@ private:
 
       // Push downlink data.
       if (is_dl_slot) {
-        resource_grid_impl&   grid = *dl_resource_grids[slot_id];
         resource_grid_context context{slot, 0};
-        dl_handler.handle_dl_data(context, grid.get_reader());
+
+        shared_resource_grid dl_grid = dl_rg_pool->allocate_resource_grid(context);
+        srsran_assert(dl_grid, "Failed to get grid.");
+
+        dl_handler.handle_dl_data(context, std::move(dl_grid));
         logger.info("DU emulator pushed DL data in slot {}", slot);
       }
 
@@ -717,7 +735,11 @@ private:
       if (is_ul_slot) {
         slot_id = tdd_pattern.dl_ul_tx_period_nof_slots - slot_id - 1;
         resource_grid_context context{slot, 0};
-        ul_handler.handle_new_uplink_slot(context, *ul_resource_grids[slot_id]);
+
+        shared_resource_grid ul_grid = ul_rg_pool->allocate_resource_grid(context);
+        srsran_assert(ul_grid, "Failed to get grid.");
+
+        ul_handler.handle_new_uplink_slot(context, std::move(ul_grid));
       }
 
       // Sleep until the end of the slot.
@@ -732,12 +754,12 @@ private:
     test_finished.store(true, std::memory_order_relaxed);
   }
 
-  srslog::basic_logger&                            logger;
-  std::vector<std::unique_ptr<resource_grid_impl>> dl_resource_grids;
-  std::vector<std::unique_ptr<resource_grid_impl>> ul_resource_grids;
-  task_executor&                                   executor;
-  ru_downlink_plane_handler&                       dl_handler;
-  ru_uplink_plane_handler&                         ul_handler;
+  srslog::basic_logger&               logger;
+  std::unique_ptr<resource_grid_pool> dl_rg_pool;
+  std::unique_ptr<resource_grid_pool> ul_rg_pool;
+  task_executor&                      executor;
+  ru_downlink_plane_handler&          dl_handler;
+  ru_uplink_plane_handler&            ul_handler;
 
   const unsigned            nof_prb;
   std::chrono::microseconds slot_duration_us;

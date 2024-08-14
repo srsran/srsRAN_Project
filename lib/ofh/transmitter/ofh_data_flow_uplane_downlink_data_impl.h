@@ -95,12 +95,12 @@ public:
 
   // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
-                                      const resource_grid_reader&                   grid) override;
+                                      const shared_resource_grid&                   grid) override;
 
 private:
   /// Enqueues an User-Plane message burst.
   void enqueue_section_type_1_message_symbol_burst(const data_flow_uplane_resource_grid_context& context,
-                                                   const resource_grid_reader&                   grid);
+                                                   const shared_resource_grid&                   grid);
 
   /// Enqueues an User-Plane message symbol with the given context and grid.
   unsigned enqueue_section_type_1_message_symbol(span<const cbf16_t>          iq_symbol_data,
