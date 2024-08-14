@@ -45,8 +45,7 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   cell_cfg_list(cell_cfg_list_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
   pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot),
-  bearer_res_mng(srb_config, qos_config, logger),
-  ue_cap_manager(scheduler_cfg, logger)
+  bearer_res_mng(srb_config, qos_config, logger)
 {
 }
 
@@ -56,7 +55,7 @@ du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_i
   if (ue_res_pool.contains(ue_index)) {
     return make_unexpected(std::string("Double allocation of same UE not supported"));
   }
-  ue_res_pool.emplace(ue_index);
+  ue_res_pool.emplace(ue_index, *this);
   auto& mcg = ue_res_pool[ue_index].cg_cfg;
 
   // UE initialized PCell.
@@ -74,7 +73,8 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
                                              const du_ue_resource_config*          reestablished_context)
 {
   srsran_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
-  du_ue_resource_config&         ue_mcg = ue_res_pool[ue_index].cg_cfg;
+  ue_resource_context&           u      = ue_res_pool[ue_index];
+  du_ue_resource_config&         ue_mcg = u.cg_cfg;
   du_ue_resource_update_response resp;
 
   // > Deallocate resources for previously configured cells that have now been removed or changed.
@@ -94,16 +94,6 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
   }
 
-  // > Update UE SRBs and DRBs.
-  du_ue_bearer_resource_update_response bearer_resp =
-      bearer_res_mng.update(ue_mcg,
-                            du_ue_bearer_resource_update_request{
-                                upd_req.srbs_to_setup, upd_req.drbs_to_setup, upd_req.drbs_to_mod, upd_req.drbs_to_rem},
-                            reestablished_context);
-  resp.failed_drbs = std::move(bearer_resp.drbs_failed_to_setup);
-  resp.failed_drbs.insert(
-      resp.failed_drbs.end(), bearer_resp.drbs_failed_to_mod.begin(), bearer_resp.drbs_failed_to_mod.end());
-
   // > Allocate resources for new or modified cells.
   if (not ue_mcg.cell_group.cells.contains(0) or ue_mcg.cell_group.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
     // >> PCell changed. Allocate new PCell resources.
@@ -120,8 +110,18 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
   }
 
-  // Process UE NR capabilities.
-  ue_cap_manager.update(ue_mcg, upd_req.ue_cap_rat_list);
+  // > Process UE NR capabilities and update UE dedicated configuration.
+  u.ue_cap_manager.update(ue_mcg, upd_req.ue_cap_rat_list);
+
+  // > Update UE SRBs and DRBs.
+  du_ue_bearer_resource_update_response bearer_resp =
+      bearer_res_mng.update(ue_mcg,
+                            du_ue_bearer_resource_update_request{
+                                upd_req.srbs_to_setup, upd_req.drbs_to_setup, upd_req.drbs_to_mod, upd_req.drbs_to_rem},
+                            reestablished_context);
+  resp.failed_drbs = std::move(bearer_resp.drbs_failed_to_setup);
+  resp.failed_drbs.insert(
+      resp.failed_drbs.end(), bearer_resp.drbs_failed_to_mod.begin(), bearer_resp.drbs_failed_to_mod.end());
 
   return resp;
 }
@@ -190,4 +190,9 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
     // TODO: Remove of SCell params.
     ue_res.cell_group.cells.erase(serv_cell_index);
   }
+}
+
+du_ran_resource_manager_impl::ue_resource_context::ue_resource_context(const du_ran_resource_manager_impl& parent) :
+  ue_cap_manager(parent.cell_cfg_list, parent.logger)
+{
 }

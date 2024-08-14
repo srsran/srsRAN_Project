@@ -88,21 +88,23 @@ private:
   span<const du_cell_config> cell_cfg_list;
   srslog::basic_logger&      logger;
 
-  struct ue_res_item {
+  struct ue_resource_context {
     du_ue_resource_config cg_cfg;
+
+    /// Processor of UE capabilities.
+    ue_capability_manager ue_cap_manager;
+
+    ue_resource_context(const du_ran_resource_manager_impl& parent_);
   };
 
   /// Current UE Resource Allocations.
-  slotted_array<ue_res_item, MAX_NOF_DU_UES, false> ue_res_pool;
+  slotted_array<ue_resource_context, MAX_NOF_DU_UES, false> ue_res_pool;
 
   /// Allocator of UE PUCCH resources.
   du_pucch_resource_manager pucch_res_mng;
 
   /// Allocator of UE bearer resources.
   du_bearer_resource_manager bearer_res_mng;
-
-  /// Processor of UE capabilities.
-  ue_capability_manager ue_cap_manager;
 };
 
 } // namespace srs_du

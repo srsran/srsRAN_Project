@@ -15,19 +15,6 @@
 using namespace srsran;
 using namespace srs_du;
 
-template <typename Vec>
-static auto find_by_srb_id(srb_id_t srb_id, Vec&& bearers)
-{
-  return std::find_if(
-      bearers.begin(), bearers.end(), [srb_id](const auto& b) { return b.lcid == srb_id_to_lcid(srb_id); });
-}
-
-template <typename Vec>
-static auto find_by_drb_id(drb_id_t drb_id, Vec&& bearers)
-{
-  return std::find_if(bearers.begin(), bearers.end(), [drb_id](const auto& b) { return b.drb_id == drb_id; });
-}
-
 /// \brief Finds an unused LCID for DRBs given a list of UE configured RLC bearers.
 static lcid_t find_empty_lcid(const slotted_id_vector<drb_id_t, du_ue_drb_config>& drbs)
 {

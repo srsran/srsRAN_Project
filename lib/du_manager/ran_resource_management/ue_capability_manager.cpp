@@ -39,54 +39,75 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
   return ue_caps;
 }
 
-ue_capability_manager::ue_capability_manager(const scheduler_expert_config& scheduler_cfg_,
-                                             srslog::basic_logger&          logger_) :
-  scheduler_cfg(scheduler_cfg_), logger(logger_)
+// Configure dedicated UE configuration to set MCS ant CQI tables.
+static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table mcs_table)
 {
-  (void)scheduler_cfg;
+  cqi_table_t cqi_table;
+  // Set CQI table according to the MCS table used for PDSCH.
+  switch (mcs_table) {
+    case pdsch_mcs_table::qam64:
+      cqi_table = cqi_table_t::table1;
+      break;
+    case pdsch_mcs_table::qam256:
+      cqi_table = cqi_table_t::table2;
+      break;
+    case pdsch_mcs_table::qam64LowSe:
+      cqi_table = cqi_table_t::table3;
+      break;
+    default:
+      report_error("Invalid MCS table={}\n", mcs_table);
+  }
+
+  // Set MCS index table for PDSCH. See TS 38.214, Table 5.1.3.1-[1-3].
+  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
+    cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = mcs_table;
+  }
+
+  if (cell_cfg.csi_meas_cfg.has_value()) {
+    for (auto& csi_report_cfg : cell_cfg.csi_meas_cfg.value().csi_report_cfg_list) {
+      // Set CQI table. See TS 38.214, Table 5.2.2.1-[1-4].
+      csi_report_cfg.cqi_table = cqi_table;
+    }
+  }
+}
+
+// Configure dedicated UE configuration to set PUSCH MCS.
+static void set_pusch_mcs_table(serving_cell_config& cell_cfg, pusch_mcs_table mcs_table)
+{
+  // Set MCS index table for PDSCH. See TS 38.214, Table 5.1.3.1-[1-3].
+  if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->init_ul_bwp.pusch_cfg.has_value()) {
+    cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = mcs_table;
+  }
+}
+
+ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_, srslog::basic_logger& logger_) :
+  base_cell_cfg_list(cell_cfg_list_), logger(logger_)
+{
 }
 
 void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const byte_buffer& ue_cap_rat_list)
 {
-  if (not decode_ue_capability_list(ue_cap_rat_list)) {
-    // No updates.
-    return;
-  }
-  if (not ue_caps.has_value()) {
-    // No UE capabilities decoded.
-    return;
-  }
+  // Decode new UE capabilities, if present.
+  decode_ue_capability_list(ue_cap_rat_list);
 
-  serving_cell_config& pcell_cfg = ue_res_cfg.cell_group.cells[0].serv_cell_cfg;
+  du_cell_index_t      cell_idx  = to_du_cell_index(0);
+  serving_cell_config& pcell_cfg = ue_res_cfg.cell_group.cells[cell_idx].serv_cell_cfg;
 
   // Enable 256QAM for PDSCH, if supported.
-  if (ue_caps->pdsch_qam256_supported) {
-    // Set MCS index table 2 for PDSCH. See TS 38.214, Table 5.1.3.1-2.
-    if (pcell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-      pcell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = pdsch_mcs_table::qam256;
-    }
-
-    if (pcell_cfg.csi_meas_cfg.has_value()) {
-      for (auto& csi_report_cfg : pcell_cfg.csi_meas_cfg.value().csi_report_cfg_list) {
-        if (ue_caps->pdsch_qam256_supported) {
-          // Enable CQI table 2. See TS 38.214, Table 5.2.2.1-3.
-          csi_report_cfg.cqi_table = cqi_table_t::table2;
-        }
-      }
-    }
-  }
+  set_pdsch_mcs_table(pcell_cfg, select_pdsch_mcs_table(cell_idx));
 
   // Enable 256QAM for PUSCH, if supported.
-  if (ue_caps->pusch_qam256_supported) {
-    if (pcell_cfg.ul_config.has_value() and pcell_cfg.ul_config->init_ul_bwp.pusch_cfg.has_value()) {
-      pcell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = pusch_mcs_table::qam256;
-    }
-  }
+  set_pusch_mcs_table(pcell_cfg, select_pusch_mcs_table(cell_idx));
 }
 
 bool ue_capability_manager::decode_ue_capability_list(const byte_buffer& ue_cap_rat_list)
 {
   using namespace asn1::rrc_nr;
+
+  if (ue_cap_rat_list.empty()) {
+    // No update.
+    return false;
+  }
 
   ue_cap_rat_container_list_l asn1_cap_list;
   {
@@ -112,4 +133,35 @@ bool ue_capability_manager::decode_ue_capability_list(const byte_buffer& ue_cap_
   }
 
   return false;
+}
+
+pdsch_mcs_table ue_capability_manager::select_pdsch_mcs_table(du_cell_index_t cell_idx) const
+{
+  const auto& init_dl_bwp = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.init_dl_bwp;
+
+  if (not init_dl_bwp.pdsch_cfg.has_value() or not ue_caps.has_value()) {
+    // No PDSCH config or no UE capabilities decoded yet. Default to QAM64.
+    return pdsch_mcs_table::qam64;
+  }
+  if (init_dl_bwp.pdsch_cfg->mcs_table == pdsch_mcs_table::qam256 and not ue_caps->pdsch_qam256_supported) {
+    // In case the preferred MCS table is 256QAM, but the UE does not support it, we default to QAM64.
+    return pdsch_mcs_table::qam64;
+  }
+  return init_dl_bwp.pdsch_cfg->mcs_table;
+}
+
+pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t cell_idx) const
+{
+  const auto& base_ul_cfg = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
+
+  if (not base_ul_cfg.has_value() or not base_ul_cfg->init_ul_bwp.pusch_cfg.has_value() or not ue_caps.has_value()) {
+    // No PUSCH config or no UE capabilities decoded yet. Default to QAM64.
+    return pusch_mcs_table::qam64;
+  }
+  if (base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table == pusch_mcs_table::qam256 and
+      not ue_caps->pusch_qam256_supported) {
+    // In case the preferred MCS table is 256QAM, but the UE does not support it, we default to QAM64.
+    return pusch_mcs_table::qam64;
+  }
+  return base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table;
 }

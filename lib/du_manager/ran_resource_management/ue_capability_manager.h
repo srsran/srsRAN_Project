@@ -28,15 +28,18 @@ expected<ue_capability_summary, std::string> decode_ue_nr_cap_container(const by
 class ue_capability_manager
 {
 public:
-  explicit ue_capability_manager(const scheduler_expert_config& scheduler_cfg, srslog::basic_logger& logger_);
+  explicit ue_capability_manager(span<const du_cell_config> cell_cfg_list, srslog::basic_logger& logger_);
 
   void update(du_ue_resource_config& ue_res_cfg, const byte_buffer& ue_cap_rat_list);
 
 private:
   bool decode_ue_capability_list(const byte_buffer& ue_cap_rat_list);
 
-  const scheduler_expert_config& scheduler_cfg;
-  srslog::basic_logger&          logger;
+  pdsch_mcs_table select_pdsch_mcs_table(du_cell_index_t cell_idx) const;
+  pusch_mcs_table select_pusch_mcs_table(du_cell_index_t cell_idx) const;
+
+  span<const du_cell_config> base_cell_cfg_list;
+  srslog::basic_logger&      logger;
 
   std::optional<ue_capability_summary> ue_caps;
 };
