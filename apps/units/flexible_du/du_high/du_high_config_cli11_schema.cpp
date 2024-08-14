@@ -547,8 +547,7 @@ static void configure_cli11_pf_scheduler_expert_args(CLI::App& app, time_pf_sche
       ->capture_default_str();
 }
 
-static void configure_cli11_policy_scheduler_expert_args(CLI::App&                             app,
-                                                         du_high_unit_scheduler_expert_config& expert_params)
+static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)
 {
   static time_pf_scheduler_expert_config pf_sched_expert_cfg;
   CLI::App*                              pf_sched_cfg_subcmd =
@@ -557,7 +556,7 @@ static void configure_cli11_policy_scheduler_expert_args(CLI::App&              
   auto pf_sched_verify_callback = [&]() {
     CLI::App* pf_sched_sub_cmd = app.get_subcommand("pf_sched");
     if (pf_sched_sub_cmd->count() != 0) {
-      expert_params.policy_sched_expert_cfg = pf_sched_expert_cfg;
+      expert_params = pf_sched_expert_cfg;
     }
   };
   pf_sched_cfg_subcmd->parse_complete_callback(pf_sched_verify_callback);
@@ -567,7 +566,7 @@ static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_sc
 {
   CLI::App* policy_sched_cfg_subcmd =
       add_subcommand(app, "policy_sched_cfg", "Policy scheduler expert configuration")->configurable();
-  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params);
+  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common_config& ul_common_params)
@@ -1055,6 +1054,11 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
              "Maximum percentage of PRBs to be allocated to the slice")
       ->capture_default_str()
       ->check(CLI::Range(1U, 100U));
+
+  // Policy scheduler configuration.
+  CLI::App* policy_sched_cfg_subcmd =
+      add_subcommand(app, "policy_sched_cfg", "Policy scheduler configuration for the slice")->configurable();
+  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, slice_sched_params.slice_policy_sched_cfg);
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_config& slice_params)

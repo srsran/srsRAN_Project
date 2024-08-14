@@ -498,6 +498,8 @@ struct du_high_unit_cell_slice_sched_config {
   unsigned min_prb_policy_ratio = 0;
   /// Sets the maximum percentage of PRBs to be allocated to this group.
   unsigned max_prb_policy_ratio = 100;
+  /// Policy scheduler parameters for the slice.
+  policy_scheduler_expert_config slice_policy_sched_cfg = time_rr_scheduler_expert_config{};
 };
 
 /// Slice configuration for a cell.
