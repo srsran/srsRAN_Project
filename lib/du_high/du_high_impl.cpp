@@ -111,9 +111,9 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                                     cfg.exec_mapper->cell_mapper(),
                                     cfg.exec_mapper->du_control_executor(),
                                     *cfg.phy_adapter,
-                                    cfg.mac_cfg,
+                                    cfg.ran.mac_cfg,
                                     *cfg.mac_p,
-                                    cfg.sched_cfg,
+                                    cfg.ran.sched_cfg,
                                     cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier},
                          cfg.test_cfg);
   f1ap = create_du_high_f1ap(*cfg.f1c_client,
@@ -123,17 +123,17 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                              adapters->f1ap_paging_notifier,
                              cfg.test_cfg);
 
-  expected<std::string> f1u_bind_string = config_.f1u_gw->get_du_bind_address(cfg.gnb_du_id);
+  expected<std::string> f1u_bind_string = config_.f1u_gw->get_du_bind_address(cfg.ran.gnb_du_id);
   assert(f1u_bind_string.has_value());
   transport_layer_address f1u_bind_addr = transport_layer_address::create_from_string(f1u_bind_string.value());
 
   du_manager = create_du_manager(du_manager_params{
-      {cfg.gnb_du_name, cfg.gnb_du_id, 1, f1u_bind_addr, cfg.cells, cfg.srbs, cfg.qos},
+      {cfg.ran.gnb_du_name, cfg.ran.gnb_du_id, 1, f1u_bind_addr, cfg.ran.cells, cfg.ran.srbs, cfg.ran.qos},
       {timers, cfg.exec_mapper->du_control_executor(), cfg.exec_mapper->ue_mapper(), cfg.exec_mapper->cell_mapper()},
       {*f1ap, *f1ap},
       {*config_.f1u_gw},
       {mac->get_ue_control_info_handler(), *f1ap, *f1ap, *cfg.rlc_p, cfg.rlc_metrics_notif},
-      {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.sched_cfg}});
+      {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.ran.sched_cfg}});
 
   // Connect Layer<->DU manager adapters.
   adapters->connect(*du_manager, *mac);

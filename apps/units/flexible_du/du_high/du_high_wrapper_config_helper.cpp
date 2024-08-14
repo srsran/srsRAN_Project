@@ -145,22 +145,22 @@ srsran::fill_du_high_wrapper_config(du_high_wrapper_config&         out_cfg,
 {
   // DU-high configuration.
   srs_du::du_high_configuration& du_hi_cfg = out_cfg.du_hi;
-  du_hi_cfg.cells                          = generate_du_cell_config(du_high_unit_cfg);
-  du_hi_cfg.exec_mapper                    = &execution_mapper;
-  du_hi_cfg.f1c_client                     = &f1c_client_handler;
-  du_hi_cfg.f1u_gw                         = &f1u_gw;
-  du_hi_cfg.phy_adapter                    = nullptr;
-  du_hi_cfg.timers                         = &timer_mng;
-  du_hi_cfg.srbs                           = generate_du_srb_config(du_high_unit_cfg);
-  du_hi_cfg.qos                            = generate_du_qos_config(du_high_unit_cfg);
-  du_hi_cfg.mac_p                          = &mac_p;
-  du_hi_cfg.rlc_p                          = &rlc_p;
-  du_hi_cfg.gnb_du_id   = static_cast<gnb_du_id_t>((static_cast<unsigned>(du_high_unit_cfg.gnb_du_id) + du_idx));
-  du_hi_cfg.gnb_du_name = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
-  du_hi_cfg.mac_cfg     = generate_mac_expert_config(du_high_unit_cfg);
+  du_hi_cfg.ran.gnb_du_id   = static_cast<gnb_du_id_t>((static_cast<unsigned>(du_high_unit_cfg.gnb_du_id) + du_idx));
+  du_hi_cfg.ran.gnb_du_name = fmt::format("srsdu{}", du_hi_cfg.ran.gnb_du_id);
+  du_hi_cfg.ran.cells       = generate_du_cell_config(du_high_unit_cfg);
+  du_hi_cfg.ran.srbs        = generate_du_srb_config(du_high_unit_cfg);
+  du_hi_cfg.ran.qos         = generate_du_qos_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg     = generate_mac_expert_config(du_high_unit_cfg);
   // Assign different initial C-RNTIs to different DUs.
-  du_hi_cfg.mac_cfg.initial_crnti = to_rnti(0x4601 + (0x1000 * du_idx));
-  du_hi_cfg.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601 + (0x1000 * du_idx));
+  du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
+  du_hi_cfg.exec_mapper               = &execution_mapper;
+  du_hi_cfg.f1c_client                = &f1c_client_handler;
+  du_hi_cfg.f1u_gw                    = &f1u_gw;
+  du_hi_cfg.phy_adapter               = nullptr;
+  du_hi_cfg.timers                    = &timer_mng;
+  du_hi_cfg.mac_p                     = &mac_p;
+  du_hi_cfg.rlc_p                     = &rlc_p;
 
   if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
     // Connect E2 agent to RLC metric source.

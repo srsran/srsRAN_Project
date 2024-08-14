@@ -156,32 +156,29 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     init_loggers();
 
     du_high_configuration cfg{};
-    cfg.exec_mapper                      = &workers.exec_mapper;
-    cfg.f1c_client                       = &cu_notifier;
-    cfg.f1u_gw                           = &cu_up_sim;
-    cfg.phy_adapter                      = &phy;
-    cfg.timers                           = &timers;
-    cfg.gnb_du_id                        = gnb_du_id_t::min;
-    cfg.gnb_du_name                      = "srsdu";
-    cfg.du_bind_addr                     = transport_layer_address::create_from_string("127.0.0.1");
-    cfg.sched_cfg.log_broadcast_messages = false;
+    cfg.exec_mapper                          = &workers.exec_mapper;
+    cfg.f1c_client                           = &cu_notifier;
+    cfg.f1u_gw                               = &cu_up_sim;
+    cfg.phy_adapter                          = &phy;
+    cfg.timers                               = &timers;
+    cfg.ran.sched_cfg.log_broadcast_messages = false;
 
-    cfg.cells.reserve(params.nof_cells);
+    cfg.ran.cells.reserve(params.nof_cells);
     cell_config_builder_params builder_params;
     for (unsigned i = 0; i < params.nof_cells; ++i) {
       builder_params.pci = (pci_t)i;
-      cfg.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
-      cfg.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
+      cfg.ran.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
+      cfg.ran.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
       if (params.pucch_cfg.has_value()) {
-        cfg.cells.back().pucch_cfg = params.pucch_cfg.value();
+        cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
       }
     }
 
-    cfg.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
-    cfg.sched_cfg = config_helpers::make_default_scheduler_expert_config();
-    cfg.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.mac_p     = &mac_pcap;
-    cfg.rlc_p     = &rlc_pcap;
+    cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
+    cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
+    cfg.ran.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
+    cfg.mac_p         = &mac_pcap;
+    cfg.rlc_p         = &rlc_pcap;
 
     return cfg;
   }()),
@@ -515,13 +512,13 @@ bool du_high_env_simulator::run_ue_context_release(rnti_t rnti, srb_id_t srb_id)
 void du_high_env_simulator::run_slot()
 {
   // Dispatch a slot indication to all cells in the L2 (fork work across cells).
-  for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
+  for (unsigned i = 0; i != du_high_cfg.ran.cells.size(); ++i) {
     du_hi->get_slot_handler(to_du_cell_index(i)).handle_slot_indication(next_slot);
   }
 
   // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (join cell results, in this
   // case, with the join point being the test main thread).
-  for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
+  for (unsigned i = 0; i != du_high_cfg.ran.cells.size(); ++i) {
     const unsigned MAX_COUNT = 100000;
     for (unsigned count = 0; count < MAX_COUNT and phy.cells[i].last_slot_res != next_slot; ++count) {
       // Process tasks dispatched to the test main thread (e.g. L2 slot result)

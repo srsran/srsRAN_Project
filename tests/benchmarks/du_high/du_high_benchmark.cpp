@@ -609,36 +609,35 @@ public:
     report_fatal_error_if_not(bsr_mac_subpdu.append(lbsr_buff_sz), "Failed to allocate PDU");
 
     // Instantiate a DU-high object.
-    cfg.gnb_du_id    = (gnb_du_id_t)1;
-    cfg.gnb_du_name  = fmt::format("srsgnb{}", cfg.gnb_du_id);
-    cfg.du_bind_addr = transport_layer_address::create_from_string(fmt::format("127.0.0.{}", cfg.gnb_du_id));
-    cfg.exec_mapper  = &workers.du_high_exec_mapper;
-    cfg.f1c_client   = &sim_cu_cp;
-    cfg.f1u_gw       = &sim_cu_up;
-    cfg.phy_adapter  = &sim_phy;
-    cfg.timers       = &timers;
-    cfg.cells        = {config_helpers::make_default_du_cell_config(params)};
-    cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
-    cfg.sched_cfg.ue.strategy_cfg  = strategy_cfg;
-    cfg.sched_cfg.ue.pdsch_nof_rbs = {1, max_nof_rbs_per_dl_grant};
-    cfg.mac_cfg                    = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.qos                        = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
-    cfg.mac_p                      = &mac_pcap;
-    cfg.rlc_p                      = &rlc_pcap;
-    cfg.sched_ue_metrics_notifier  = &metrics_handler;
+    cfg.ran.gnb_du_id                  = (gnb_du_id_t)1;
+    cfg.ran.gnb_du_name                = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
+    cfg.exec_mapper                    = &workers.du_high_exec_mapper;
+    cfg.f1c_client                     = &sim_cu_cp;
+    cfg.f1u_gw                         = &sim_cu_up;
+    cfg.phy_adapter                    = &sim_phy;
+    cfg.timers                         = &timers;
+    cfg.ran.cells                      = {config_helpers::make_default_du_cell_config(params)};
+    cfg.ran.sched_cfg                  = config_helpers::make_default_scheduler_expert_config();
+    cfg.ran.sched_cfg.ue.strategy_cfg  = strategy_cfg;
+    cfg.ran.sched_cfg.ue.pdsch_nof_rbs = {1, max_nof_rbs_per_dl_grant};
+    cfg.ran.mac_cfg                    = mac_expert_config{.configs = {{10000, 10000, 10000}}};
+    cfg.ran.qos                        = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
+    cfg.mac_p                          = &mac_pcap;
+    cfg.rlc_p                          = &rlc_pcap;
+    cfg.sched_ue_metrics_notifier      = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
-    cfg.cells[0].pucch_cfg.nof_sr_resources               = 30;
-    cfg.cells[0].pucch_cfg.nof_csi_resources              = 30;
-    cfg.cells[0].pucch_cfg.nof_ue_pucch_f2_res_harq       = 8;
-    cfg.cells[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = 8;
-    cfg.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets   = 4;
-    auto& f1_params                         = cfg.cells[0].pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
-    f1_params.nof_cyc_shifts                = srsran::nof_cyclic_shifts::six;
-    f1_params.occ_supported                 = true;
-    cfg.sched_cfg.ue.max_pucchs_per_slot    = 61;
-    cfg.sched_cfg.ue.max_puschs_per_slot    = 61;
-    cfg.sched_cfg.ue.max_ul_grants_per_slot = 64;
+    cfg.ran.cells[0].pucch_cfg.nof_sr_resources               = 30;
+    cfg.ran.cells[0].pucch_cfg.nof_csi_resources              = 30;
+    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f2_res_harq       = 8;
+    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = 8;
+    cfg.ran.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets   = 4;
+    auto& f1_params                             = cfg.ran.cells[0].pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
+    f1_params.nof_cyc_shifts                    = srsran::nof_cyclic_shifts::six;
+    f1_params.occ_supported                     = true;
+    cfg.ran.sched_cfg.ue.max_pucchs_per_slot    = 61;
+    cfg.ran.sched_cfg.ue.max_puschs_per_slot    = 61;
+    cfg.ran.sched_cfg.ue.max_ul_grants_per_slot = 64;
 
     du_hi = std::make_unique<du_high_impl>(cfg);
 
@@ -755,8 +754,8 @@ public:
 
     // Wait until it's a full UL slot to send Msg3.
     auto next_ul_slot = [this]() {
-      return not cfg.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.has_value() or
-             not is_tdd_full_ul_slot(cfg.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.value(),
+      return not cfg.ran.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.has_value() or
+             not is_tdd_full_ul_slot(cfg.ran.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.value(),
                                      slot_point(next_sl_tx - tx_rx_delay - 1).slot_index());
     };
     report_fatal_error_if_not(run_slot_until(next_ul_slot), "No slot for Msg3 was detected");
@@ -1212,10 +1211,10 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
              bench.sim_phy.metrics.slot_count,
              bench.sim_phy.metrics.nof_dl_grants,
              bench.sim_phy.metrics.nof_dl_grants / (double)bench.sim_phy.metrics.slot_dl_count,
-             bench.sim_phy.metrics.dl_mbps(bench.cfg.cells[0].scs_common),
+             bench.sim_phy.metrics.dl_mbps(bench.cfg.ran.cells[0].scs_common),
              bench.sim_phy.metrics.nof_ul_grants,
              bench.sim_phy.metrics.nof_ul_grants / (double)bench.sim_phy.metrics.slot_ul_count,
-             bench.sim_phy.metrics.ul_mbps(bench.cfg.cells[0].scs_common));
+             bench.sim_phy.metrics.ul_mbps(bench.cfg.ran.cells[0].scs_common));
 }
 
 /// \brief Configure main thread priority and affinity to avoid interference from other processes (including stressors).

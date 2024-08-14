@@ -29,29 +29,33 @@ namespace srs_du {
 
 class f1u_du_gateway;
 
-/// Configuration passed to DU-High.
-struct du_high_configuration {
-  du_high_executor_mapper*           exec_mapper               = nullptr;
-  f1c_connection_client*             f1c_client                = nullptr;
-  f1u_du_gateway*                    f1u_gw                    = nullptr;
-  mac_result_notifier*               phy_adapter               = nullptr;
-  timer_manager*                     timers                    = nullptr;
-  scheduler_metrics_notifier*        sched_ue_metrics_notifier = nullptr;
-  rlc_metrics_notifier*              rlc_metrics_notif         = nullptr;
-  e2_connection_client*              e2_client                 = nullptr;
-  e2_du_metrics_interface*           e2_du_metric_iface        = nullptr;
-  std::string                        gnb_du_name;
-  gnb_du_id_t                        gnb_du_id;
-  transport_layer_address            du_bind_addr;
+/// RAN-specific parameters of the DU-high.
+struct du_high_ran_config {
+  std::string                        gnb_du_name = "srsdu";
+  gnb_du_id_t                        gnb_du_id   = gnb_du_id_t::min;
   std::vector<du_cell_config>        cells;
   std::map<srb_id_t, du_srb_config>  srbs;
-  std::map<five_qi_t, du_qos_config> qos; // 5QI as key
+  std::map<five_qi_t, du_qos_config> qos;
   mac_expert_config                  mac_cfg;
   scheduler_expert_config            sched_cfg;
-  mac_pcap*                          mac_p = nullptr;
-  rlc_pcap*                          rlc_p = nullptr;
-  du_test_config                     test_cfg;
-  e2ap_configuration                 e2ap_config;
+};
+
+/// Configuration passed to DU-High.
+struct du_high_configuration {
+  du_high_ran_config          ran;
+  du_high_executor_mapper*    exec_mapper               = nullptr;
+  f1c_connection_client*      f1c_client                = nullptr;
+  f1u_du_gateway*             f1u_gw                    = nullptr;
+  mac_result_notifier*        phy_adapter               = nullptr;
+  timer_manager*              timers                    = nullptr;
+  scheduler_metrics_notifier* sched_ue_metrics_notifier = nullptr;
+  rlc_metrics_notifier*       rlc_metrics_notif         = nullptr;
+  e2_connection_client*       e2_client                 = nullptr;
+  e2_du_metrics_interface*    e2_du_metric_iface        = nullptr;
+  mac_pcap*                   mac_p                     = nullptr;
+  rlc_pcap*                   rlc_p                     = nullptr;
+  du_test_config              test_cfg;
+  e2ap_configuration          e2ap_config;
 };
 
 } // namespace srs_du

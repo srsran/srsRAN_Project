@@ -20,7 +20,7 @@ std::unique_ptr<du_wrapper> srsran::make_du_wrapper(const du_wrapper_config& du_
   du_wrapper_impl_dependencies dependencies;
 
   // Create DU low.
-  dependencies.du_lo = make_du_low_wrapper(du_cfg.du_low_cfg, du_cfg.du_high_cfg.du_hi.cells);
+  dependencies.du_lo = make_du_low_wrapper(du_cfg.du_low_cfg, du_cfg.du_high_cfg.du_hi.ran.cells);
 
   // Create DU high wrapper.
   du_high_wrapper_dependencies high_wrapper_dependencies;
