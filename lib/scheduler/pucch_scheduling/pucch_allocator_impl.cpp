@@ -228,11 +228,12 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_res(cell
   if (new_ue_grant_added) {
     pucch_grants.emplace_back(ue_grants{.rnti = rnti});
   }
+  ue_grants& current_grants = new_ue_grant_added ? pucch_grants.back() : *ue_grants_it;
 
   // Find a couple of PUCCH resources (1 common, 1 dedicated) that are (i) are available and that (ii) have the same
   // PUCCH resource indicator.
   std::optional<pucch_common_params> pucch_common_info =
-      find_common_and_ded_harq_res_available(pucch_slot_alloc, *ue_grants_it, rnti, ue_cell_cfg, dci_info.ctx);
+      find_common_and_ded_harq_res_available(pucch_slot_alloc, current_grants, rnti, ue_cell_cfg, dci_info.ctx);
 
   if (pucch_common_info.has_value()) {
     compute_pucch_common_params_and_alloc(pucch_slot_alloc, rnti, pucch_common_info.value());
