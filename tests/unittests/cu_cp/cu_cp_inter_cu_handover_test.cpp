@@ -12,6 +12,7 @@
 #include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
+#include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
@@ -161,6 +162,28 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool send_handover_command_and_await_ue_context_modification_request()
+  {
+    // Inject Handover Command and wait for UE Context Modification Request (containing RRC Reconfiguration)
+    get_amf().push_tx_pdu(generate_valid_handover_command(ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value()));
+    report_fatal_error_if_not(
+        this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+        "Failed to receive F1AP UE Context Modification Request (containing RRC Reconfiguration)");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
+                              "Invalid UE Context Modification Request");
+
+    // Make sure RRC Reconfiguration is valid
+    const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+    report_fatal_error_if_not(
+        test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container),
+                                                   false,
+                                                   std::vector<srb_id_t>{srb_id_t::srb1, srb_id_t::srb2},
+                                                   std::vector<drb_id_t>{drb_id_t::drb1}),
+        "Invalid RRC Reconfiguration");
+
+    return true;
+  }
+
   unsigned du_idx    = 0;
   unsigned cu_up_idx = 0;
 
@@ -182,24 +205,9 @@ public:
   e1ap_message e1ap_pdu;
 };
 
-TEST_F(cu_cp_inter_cu_handover_test, when_handover_request_received_then_handover_notify_is_sent)
-{
-  // Inject Handover Request and await Bearer Context Setup Request
-  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request());
-
-  // Inject Bearer Context Setup Response and await UE Context Setup Request
-  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
-
-  // Inject UE Context Setup Response and await Bearer Context Modification Request
-  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
-
-  // Inject Bearer Context Modification Response and await Handover Request Ack
-  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
-
-  // Inject RRC Reconfiguration Complete and await Handover Notify
-  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify());
-}
-
+///////////////////////////////////////////////////////////////////////////////
+//                             Source CU-CP
+///////////////////////////////////////////////////////////////////////////////
 TEST_F(cu_cp_inter_cu_handover_test, when_handover_preparation_failure_is_received_then_handover_fails)
 {
   // Attach UE
@@ -229,4 +237,37 @@ TEST_F(cu_cp_inter_cu_handover_test, when_handover_command_times_out_then_handov
 
   // Inject Handover Cancel Ack
   ASSERT_TRUE(send_handover_cancel_ack());
+}
+
+TEST_F(cu_cp_inter_cu_handover_test, when_handover_command_received_then_rrc_reconfiguration_is_sent)
+{
+  // Attach UE
+  ASSERT_TRUE(attach_ue());
+
+  // Inject RRC Measurement Report and await Handover Required
+  ASSERT_TRUE(send_rrc_measurement_report_and_await_handover_required());
+
+  // timeout Handover Command and await RRC Reconfiguration
+  ASSERT_TRUE(send_handover_command_and_await_ue_context_modification_request());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                             Target CU-CP
+///////////////////////////////////////////////////////////////////////////////
+TEST_F(cu_cp_inter_cu_handover_test, when_handover_request_received_then_handover_notify_is_sent)
+{
+  // Inject Handover Request and await Bearer Context Setup Request
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request());
+
+  // Inject Bearer Context Setup Response and await UE Context Setup Request
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+
+  // Inject UE Context Setup Response and await Bearer Context Modification Request
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Response and await Handover Request Ack
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+
+  // Inject RRC Reconfiguration Complete and await Handover Notify
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify());
 }
