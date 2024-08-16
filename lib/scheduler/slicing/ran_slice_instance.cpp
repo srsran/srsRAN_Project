@@ -23,16 +23,6 @@ void ran_slice_instance::slot_indication(const ue_repository& cell_ues)
 {
   pdsch_rb_count = 0;
   pusch_rb_count = 0;
-  // Remove UEs from slice UEs list if it's removed from UE repository.
-  auto* ue_to_rem_it = slice_ues_to_rem.begin();
-  while (ue_to_rem_it != slice_ues_to_rem.end()) {
-    if (not cell_ues.contains(*ue_to_rem_it)) {
-      slice_ues.erase(*ue_to_rem_it);
-      ue_to_rem_it = slice_ues_to_rem.erase(ue_to_rem_it);
-      continue;
-    }
-    ++ue_to_rem_it;
-  }
 }
 
 void ran_slice_instance::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
@@ -40,20 +30,21 @@ void ran_slice_instance::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
   if (not slice_ues.contains(ue_idx)) {
     return;
   }
-  if (lcid < MAX_NOF_RB_LCIDS) {
-    slice_ues[ue_idx].rem_logical_channel(lcid);
-    if (not slice_ues[ue_idx].has_bearers_in_slice()) {
-      slice_ues_to_rem.push_back(ue_idx);
-    }
+
+  slice_ues[ue_idx].rem_logical_channel(lcid);
+
+  if (not slice_ues[ue_idx].has_bearers_in_slice()) {
+    // If no more bearers active for this UE, remove it from the slice.
+    slice_ues.erase(ue_idx);
+  }
+}
+
+void ran_slice_instance::rem_ue(du_ue_index_t ue_idx)
+{
+  if (not slice_ues.contains(ue_idx)) {
     return;
   }
-  // Disable all DRBs.
-  for (unsigned lcid_to_rem = LCID_MIN_DRB; lcid_to_rem < MAX_NOF_RB_LCIDS; ++lcid_to_rem) {
-    if (slice_ues[ue_idx].contains(uint_to_lcid(lcid_to_rem))) {
-      slice_ues[ue_idx].rem_logical_channel(uint_to_lcid(lcid_to_rem));
-    }
-  }
-  slice_ues_to_rem.push_back(ue_idx);
+  slice_ues.erase(ue_idx);
 }
 
 const slice_ue_repository& ran_slice_instance::get_ues()
@@ -63,6 +54,10 @@ const slice_ue_repository& ran_slice_instance::get_ues()
 
 void ran_slice_instance::add_logical_channel(const ue& u, lcid_t lcid, lcg_id_t lcg_id)
 {
+  if (lcid == LCID_SRB0) {
+    // SRB0 is not handled by slice scheduler.
+    return;
+  }
   if (not slice_ues.contains(u.ue_index)) {
     slice_ues.emplace(u.ue_index, u);
   }

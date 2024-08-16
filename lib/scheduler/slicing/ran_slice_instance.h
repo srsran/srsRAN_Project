@@ -49,9 +49,12 @@ public:
   /// Add a new UE to list of UEs (if not exists) and a new (UE, LCID) to the list of bearers managed by this slice.
   void add_logical_channel(const ue& u, lcid_t lcid, lcg_id_t lcg_id);
 
-  /// Remove a UE and all associated LCIDs or only a (UE, LCID) from the list of bearers managed by this slice.
+  /// Remove a (UE, LCID) from the list of bearers managed by this slice.
   /// \remark UE is removed if all LCIDs of a UE are removed.
-  void rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid = MAX_NOF_RB_LCIDS);
+  void rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid);
+
+  /// Remove UE all associated LCIDs.
+  void rem_ue(du_ue_index_t ue_idx);
 
   /// Returns UEs belonging to this slice.
   const slice_ue_repository& get_ues();
@@ -66,8 +69,7 @@ public:
   unsigned pusch_rb_count = 0;
 
 private:
-  slice_ue_repository                          slice_ues;
-  static_vector<du_ue_index_t, MAX_NOF_DU_UES> slice_ues_to_rem;
+  slice_ue_repository slice_ues;
 };
 
 } // namespace srsran
