@@ -87,8 +87,13 @@ ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg
 
 void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const byte_buffer& ue_cap_rat_list)
 {
-  // Decode new UE capabilities, if present.
-  decode_ue_capability_list(ue_cap_rat_list);
+  // Decode new UE capabilities.
+  if (not decode_ue_capability_list(ue_cap_rat_list) and not first_update) {
+    // No changes detected in the UE capabilities, and update(...) was called before. In this case, we can do not need
+    // to apply any extra changes to the ue_res_cfg that weren't already applied.
+    return;
+  }
+  first_update = false;
 
   du_cell_index_t      cell_idx  = to_du_cell_index(0);
   serving_cell_config& pcell_cfg = ue_res_cfg.cell_group.cells[cell_idx].serv_cell_cfg;
