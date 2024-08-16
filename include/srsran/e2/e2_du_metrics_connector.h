@@ -24,7 +24,7 @@ class e2_du_metrics_connector : public e2_du_metrics_notifier, public e2_du_metr
 {
 public:
   e2_du_metrics_connector();
-  ~e2_du_metrics_connector() = default;
+  ~e2_du_metrics_connector(){};
 
   void report_metrics(const scheduler_cell_metrics& metrics) override;
 
@@ -33,7 +33,6 @@ public:
   void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) override;
 
 private:
-  std::deque<scheduler_ue_metrics>        ue_metrics_queue;
   std::unique_ptr<e2_du_metrics_notifier> e2_meas_provider;
 };
 } // namespace srsran

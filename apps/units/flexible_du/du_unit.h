@@ -28,7 +28,11 @@ class f1c_connection_client;
 } // namespace srs_du
 
 class e2_connection_client;
+template <typename ConnectorType, typename NotifierType, typename InterfaceType>
 class e2_metric_connector_manager;
+class e2_du_metrics_connector;
+class e2_du_metrics_notifier;
+class e2_du_metrics_interface;
 class mac_pcap;
 class rlc_pcap;
 class timer_manager;
@@ -39,6 +43,8 @@ struct du_unit {
   std::unique_ptr<srs_du::du>                                     unit;
   std::vector<std::unique_ptr<app_services::application_command>> commands;
   std::vector<app_services::metrics_config>                       metrics;
+  std::unique_ptr<e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>
+    e2_metric_connectors;
 };
 
 /// DU unit dependencies.
@@ -50,7 +56,6 @@ struct du_unit_dependencies {
   mac_pcap*                       mac_p                = nullptr;
   rlc_pcap*                       rlc_p                = nullptr;
   e2_connection_client*           e2_client_handler    = nullptr;
-  e2_metric_connector_manager*    e2_metric_connectors = nullptr;
   srslog::sink*                   json_sink            = nullptr;
   app_services::metrics_notifier* metrics_notifier     = nullptr;
 };

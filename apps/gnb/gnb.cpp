@@ -358,7 +358,6 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-  e2_metric_connector_manager e2_metric_connectors(du_app_unit->get_du_high_unit_config().cells_cfg.size());
 
   // Load CU-CP plugins if enabled
   std::optional<dynlink_manager> ng_handover_plugin =
@@ -415,7 +414,7 @@ int main(int argc, char** argv)
   e2_gateway_remote_connector e2_gw_cu{*epoll_broker, e2_cu_nw_config, *cu_cp_dlt_pcaps.e2ap};
   cu_cp_dependencies.e2_gw = &e2_gw_cu;
   // create CU-CP.
-  auto cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies, e2_metric_connectors);
+  auto cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
   srs_cu_cp::cu_cp& cu_cp_obj = *cu_cp_obj_and_cmds.unit;
 
   // Create and start CU-UP
@@ -439,7 +438,6 @@ int main(int argc, char** argv)
   du_dependencies.mac_p                = du_pcaps.mac.get();
   du_dependencies.rlc_p                = du_pcaps.rlc.get();
   du_dependencies.e2_client_handler    = &e2_gw_du;
-  du_dependencies.e2_metric_connectors = &e2_metric_connectors;
   du_dependencies.json_sink            = &json_sink;
   du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
 

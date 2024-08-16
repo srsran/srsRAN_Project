@@ -315,15 +315,13 @@ int main(int argc, char** argv)
   cu_cp_dependencies.timers         = cu_timers;
   cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
   cu_cp_dependencies.broker         = epoll_broker.get();
-
-  e2_metric_connector_manager e2_metric_connectors(1);
   // E2AP configuration.
   srsran::sctp_network_connector_config e2_cu_nw_config = generate_e2ap_nw_config(cu_cfg.e2_cfg, E2_CP_PPID);
   // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw_cu{*epoll_broker, e2_cu_nw_config, *cu_cp_dlt_pcaps.e2ap};
   cu_cp_dependencies.e2_gw = &e2_gw_cu;
   // create CU-CP.
-  auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies, e2_metric_connectors);
+  auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
   srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
 
   // Create console helper object for commands and metrics printing.

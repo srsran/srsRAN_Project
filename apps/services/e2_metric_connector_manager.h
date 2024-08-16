@@ -10,19 +10,43 @@
 
 #pragma once
 
-#include "srsran/e2/e2_du_metrics_connector.h"
+#include <cassert>
+#include <memory>
+#include <vector>
 
 namespace srsran {
 
 /// Manages the E2 metric connectors of the app.
+template <typename ConnectorType, typename NotifierType, typename InterfaceType>
 class e2_metric_connector_manager
 {
 public:
-  explicit e2_metric_connector_manager(unsigned nof_cells);
+  e2_metric_connector_manager(unsigned nof_cells)
+  {
+    for (unsigned i = 0, e = nof_cells; i != e; ++i) {
+      e2_metric_connectors.push_back(std::make_unique<ConnectorType>());
+    }
+  }
+  ~e2_metric_connector_manager(){};
 
-  std::vector<std::unique_ptr<e2_du_metrics_connector>> e2_du_metric_connectors;
-  e2_du_metrics_notifier&                               get_e2_du_metric_notifier(unsigned du_index);
-  e2_du_metrics_interface&                              get_e2_du_metrics_interface(unsigned du_index);
+  e2_metric_connector_manager(e2_metric_connector_manager&& other) noexcept :
+    e2_metric_connectors(std::move(other.e2_metric_connectors))
+  {
+  }
+
+  NotifierType& get_e2_metric_notifier(unsigned index)
+  {
+    assert(index < e2_metric_connectors.size() && "Invalid index");
+    return *(e2_metric_connectors[index]);
+  }
+  InterfaceType& get_e2_metrics_interface(unsigned index)
+  {
+    assert(index < e2_metric_connectors.size() && "Invalid index");
+    return *(e2_metric_connectors[index]);
+  }
+
+private:
+  std::vector<std::shared_ptr<ConnectorType>> e2_metric_connectors;
 };
 
 } // namespace srsran

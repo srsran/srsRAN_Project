@@ -34,7 +34,7 @@ public:
   void on_loggers_registration() override;
 
   // See interface for documentation.
-  cu_cp_unit create_cu_cp(cu_cp_build_dependencies& dependencies, e2_metric_connector_manager& e2_metric_connectors) override;
+  cu_cp_unit create_cu_cp(cu_cp_build_dependencies& dependencies) override;
 
   // See interface for documentation.
   cu_cp_unit_config&       get_cu_cp_unit_config() override { return unit_cfg; }

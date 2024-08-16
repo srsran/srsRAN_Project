@@ -25,6 +25,7 @@
 #include "dynamic_du_unit_config.h"
 #include "srsran/du/du_wrapper.h"
 #include "srsran/du/du_wrapper_factory.h"
+#include "srsran/e2/e2_du_metrics_connector.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/ru/ru_dummy_factory.h"
 
@@ -135,6 +136,9 @@ static void update_du_metrics(std::vector<app_services::metrics_config>& flexibl
 du_unit srsran::create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, const du_unit_dependencies& dependencies)
 {
   du_unit du_cmd_wrapper;
+  du_cmd_wrapper.e2_metric_connectors = std::make_unique<
+      e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>(
+      dyn_du_cfg.du_high_cfg.config.cells_cfg.size());
 
   const du_high_unit_config& du_hi    = dyn_du_cfg.du_high_cfg.config;
   const du_low_unit_config&  du_lo    = dyn_du_cfg.du_low_cfg;
@@ -173,6 +177,7 @@ du_unit srsran::create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, cons
                                                 i,
                                                 du_low_hal_cfg);
 
+
     auto cell_services_cfg = fill_du_high_wrapper_config(du_cfg.du_high_cfg,
                                                          tmp_cfg,
                                                          i,
@@ -183,7 +188,7 @@ du_unit srsran::create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, cons
                                                          *dependencies.mac_p,
                                                          *dependencies.rlc_p,
                                                          *dependencies.e2_client_handler,
-                                                         *dependencies.e2_metric_connectors,
+                                                         *(du_cmd_wrapper.e2_metric_connectors),
                                                          *dependencies.json_sink,
                                                          *dependencies.metrics_notifier);
 

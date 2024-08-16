@@ -13,6 +13,7 @@
 #include "apps/services/application_command.h"
 #include "apps/services/e2_metric_connector_manager.h"
 #include "srsran/cu_cp/cu_cp.h"
+#include "srsran/e2/e2_cu_metrics_connector.h"
 
 namespace srsran {
 
@@ -25,7 +26,9 @@ namespace srs_cu_cp {
 class n2_connection_client;
 }
 
+template <typename ConnectorType, typename NotifierType, typename InterfaceType>
 class e2_metric_connector_manager;
+
 class e2_connection_client;
 class e2_gateway_remote_connector;
 
@@ -46,8 +49,7 @@ struct cu_cp_unit {
 };
 
 /// Builds a CU-CP object with the given configuration.
-cu_cp_unit build_cu_cp(const cu_cp_unit_config&     cu_cp_unit_cfg,
-                       cu_cp_build_dependencies&    dependencies,
-                       e2_metric_connector_manager& e2_metric_connectors);
+cu_cp_unit build_cu_cp(const cu_cp_unit_config&  cu_cp_unit_cfg,
+                       cu_cp_build_dependencies& dependencies);
 
 } // namespace srsran
