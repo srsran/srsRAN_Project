@@ -309,11 +309,9 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
 
 async_task<bool> rrc_ue_impl::handle_security_mode_complete_expected(uint8_t transaction_id)
 {
-  // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
-  const std::chrono::milliseconds timeout_ms{1000};
-
   return launch_async(
-      [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+      [this, timeout_ms = context.cfg.rrc_procedure_timeout_ms, transaction_id, transaction = rrc_transaction{}](
+          coro_context<async_task<bool>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         logger.log_debug("Awaiting RRC Security Mode Complete (timeout={}ms)", timeout_ms.count());
@@ -413,11 +411,9 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
 
 async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id)
 {
-  // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
-  const std::chrono::milliseconds timeout_ms{1000};
-
   return launch_async(
-      [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+      [this, timeout_ms = context.cfg.rrc_procedure_timeout_ms, transaction_id, transaction = rrc_transaction{}](
+          coro_context<async_task<bool>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         logger.log_debug("Awaiting RRC Reconfiguration Complete (timeout={}ms)", timeout_ms.count());
