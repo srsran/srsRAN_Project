@@ -131,6 +131,7 @@ void detail::harq_process<IsDownlink>::cancel_harq_retxs(unsigned tb_idx)
     return;
   }
   tb_array[tb_idx].max_nof_harq_retxs = tb_array[tb_idx].nof_retxs;
+  tb_array[tb_idx].cancelled          = true;
 }
 
 template <bool IsDownlink>
@@ -162,6 +163,7 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx,
   tb_array[tb_idx].nof_retxs          = 0;
   tb_array[tb_idx].harq_bit_idx       = harq_bit_idx;
   tb_array[tb_idx].ack_on_timeout     = false;
+  tb_array[tb_idx].cancelled          = false;
 }
 
 template <bool IsDownlink>
@@ -253,11 +255,18 @@ dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, std::
 
     base_type::ack_info_common(tb_idx, chosen_ack == mac_harq_ack_report_status::ack);
     if (chosen_ack != mac_harq_ack_report_status::ack and empty(tb_idx)) {
-      logger.info(id,
-                  "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                  tb_idx,
-                  prev_tx_params.tb[tb_idx]->tbs_bytes,
-                  max_nof_harq_retxs(tb_idx));
+      if (this->tb_array[0].cancelled) {
+        logger.debug(id,
+                     "Discarding HARQ process tb={} with tbs={}. Cause: HARQ process was cancelled",
+                     tb_idx,
+                     prev_tx_params.tb[tb_idx]->tbs_bytes);
+      } else {
+        logger.info(id,
+                    "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                    tb_idx,
+                    prev_tx_params.tb[tb_idx]->tbs_bytes,
+                    max_nof_harq_retxs(tb_idx));
+      }
     }
     return chosen_ack == mac_harq_ack_report_status::ack ? status_update::acked : status_update::nacked;
   }
@@ -313,7 +322,6 @@ void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
   // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_tx_tb_common(0, max_harq_retxs, 0);
   prev_tx_params = {};
-  harq_cancelled = false;
 }
 
 void ul_harq_process::new_retx(slot_point pusch_slot)
@@ -330,8 +338,8 @@ int ul_harq_process::crc_info(bool ack)
       return (int)prev_tx_params.tbs_bytes;
     }
     if (empty()) {
-      if (harq_cancelled) {
-        logger.info(id, "Discarding HARQ with tbs={}. Cause: HARQ process was cancelled", prev_tx_params.tbs_bytes);
+      if (this->tb_array[0].cancelled) {
+        logger.debug(id, "Discarding HARQ with tbs={}. Cause: HARQ process was cancelled", prev_tx_params.tbs_bytes);
       } else {
         logger.info(id,
                     "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
@@ -367,7 +375,6 @@ void ul_harq_process::save_alloc_params(const ul_harq_sched_context& ctx, const 
 
 void ul_harq_process::cancel_harq_retxs()
 {
-  harq_cancelled = true;
   base_type::cancel_harq_retxs(0);
 }
 

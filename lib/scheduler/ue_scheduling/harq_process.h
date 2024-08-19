@@ -149,6 +149,9 @@ public:
     /// Whether to set the HARQ as ACKed or NACKed when the timeout expires.
     bool ack_on_timeout = false;
 
+    /// Whether the HARQ retransmissions were cancelled (e.g. due to UE changing state).
+    bool cancelled = false;
+
     bool empty() const { return state == state_t::empty; }
   };
 
@@ -438,7 +441,6 @@ public:
 private:
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
-  bool         harq_cancelled = false;
 };
 
 /// \brief Helper function to fill HARQ allocation grant parameters.
