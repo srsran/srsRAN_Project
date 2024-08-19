@@ -1761,7 +1761,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   configure_cli11_test_mode_args(*test_mode_subcmd, parsed_cfg.config.test_mode_cfg);
 
   // E2 section.
-  CLI::App* e2_subcmd = add_subcommand(app, "e2_du", "E2 parameters")->configurable();
+  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
   configure_cli11_e2_args(*e2_subcmd, parsed_cfg.config.e2_cfg);
 }
 

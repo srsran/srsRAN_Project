@@ -128,6 +128,9 @@ bool cu_cp_impl::start()
       })) {
     report_fatal_error("Failed to initiate CU-CP setup");
   }
+  if (e2ap_entity) {
+    e2ap_entity->start();
+  }
 
   // Block waiting for CU-CP setup to complete.
   return fut.get();
@@ -138,6 +141,9 @@ void cu_cp_impl::stop()
   bool already_stopped = stopped.exchange(true);
   if (already_stopped) {
     return;
+  }
+  if (e2ap_entity) {
+    e2ap_entity->stop();
   }
   logger.info("Stopping CU-CP...");
 

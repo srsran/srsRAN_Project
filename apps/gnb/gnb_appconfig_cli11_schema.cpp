@@ -42,6 +42,7 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
 static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
 {
   add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent")->capture_default_str();
+  add_option(app, "--enable_cu_e2", e2_params.enable_cu_e2, "Enable DU E2 agent")->capture_default_str();
   add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
   add_option(app, "--port", e2_params.port, "RIC port")->check(CLI::Range(20000, 40000))->capture_default_str();
   add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")

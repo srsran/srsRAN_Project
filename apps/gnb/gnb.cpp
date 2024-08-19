@@ -500,8 +500,12 @@ int main(int argc, char** argv)
   cu_cp_obj.stop();
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
-    gnb_logger.info("Closing E2 network connections...");
+    gnb_logger.info("Closing E2 DU network connections...");
     e2_gw_du.close();
+    gnb_logger.info("E2 Network connections closed successfully");
+  }
+  if (gnb_cfg.e2_cfg.enable_cu_e2) {
+    gnb_logger.info("Closing E2 CU network connections...");
     e2_gw_cu.close();
     gnb_logger.info("E2 Network connections closed successfully");
   }

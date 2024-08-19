@@ -39,13 +39,15 @@ struct cu_cp_build_dependencies {
   timer_manager*               timers         = nullptr;
   dlt_pcap*                    ngap_pcap      = nullptr;
   io_broker*                   broker         = nullptr;
-  e2_gateway_remote_connector* e2_gw          = nullptr;
+  e2_connection_client*        e2_gw          = nullptr;
 };
 
 /// Wraps the CU-CP and its supported application commands.
 struct cu_cp_unit {
   std::unique_ptr<srs_cu_cp::cu_cp>                               unit;
   std::vector<std::unique_ptr<app_services::application_command>> commands;
+  std::unique_ptr<e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>>
+      e2_metric_connector;
 };
 
 /// Builds a CU-CP object with the given configuration.

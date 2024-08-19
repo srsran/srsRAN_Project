@@ -20,6 +20,7 @@ namespace srsran {
 /// E2 Agent configuration
 struct e2_appconfig {
   bool        enable_du_e2           = false;       ///< Whether to enable DU E2 agent
+  bool        enable_cu_e2           = false;       ///< Whether to enable CU E2 agent
   std::string ip_addr                = "127.0.0.1"; ///< RIC IP address
   uint16_t    port                   = 36421;       ///< RIC port
   std::string bind_addr              = "127.0.0.1"; ///< Local IP address to bind for RIC connection
