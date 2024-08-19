@@ -42,7 +42,7 @@ public:
   static void log_build_info(srslog::basic_logger& logger)
   {
     // Log build info
-    logger.info("Built in {} mode using {})", get_build_mode(), get_build_info());
+    logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
   }
 };
 
