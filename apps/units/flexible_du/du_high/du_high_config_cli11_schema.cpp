@@ -60,6 +60,7 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
   app_services::add_log_option(app, log_params.rlc_level, "--rlc_level", "RLC log level");
   app_services::add_log_option(app, log_params.f1ap_level, "--f1ap_level", "F1AP log level");
   app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
+  app_services::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
   app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
 
   auto metric_level_check = [](const std::string& value) -> std::string {

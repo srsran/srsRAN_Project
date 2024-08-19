@@ -46,6 +46,7 @@ struct du_high_unit_logger_config {
   srslog::basic_levels rlc_level     = srslog::basic_levels::warning;
   srslog::basic_levels f1ap_level    = srslog::basic_levels::warning;
   srslog::basic_levels f1u_level     = srslog::basic_levels::warning;
+  srslog::basic_levels gtpu_level    = srslog::basic_levels::warning;
   srslog::basic_levels metrics_level = srslog::basic_levels::none;
 
   /// Maximum number of bytes to write when dumping hex arrays.

@@ -44,6 +44,7 @@ static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_
   node["rlc_level"]         = srslog::basic_level_to_string(config.rlc_level);
   node["f1ap_level"]        = srslog::basic_level_to_string(config.f1ap_level);
   node["f1u_level"]         = srslog::basic_level_to_string(config.f1u_level);
+  node["gtpu_level"]        = srslog::basic_level_to_string(config.gtpu_level);
   node["du_level"]          = srslog::basic_level_to_string(config.du_level);
   node["hex_max_size"]      = config.hex_max_size;
   node["broadcast_enabled"] = config.broadcast_enabled;
