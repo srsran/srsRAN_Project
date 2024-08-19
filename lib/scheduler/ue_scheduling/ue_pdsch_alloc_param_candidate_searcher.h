@@ -223,7 +223,7 @@ private:
     }
 
     // Check whether PDSCH Time Domain resource index is valid.
-    if (current.time_res >= (*current.ss_it)->pusch_time_domain_list.size()) {
+    if (current.time_res >= (*current.ss_it)->pdsch_time_domain_list.size()) {
       return false;
     }
 
