@@ -519,15 +519,52 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_a
   }
 
   // No resource found in UE's carriers and Search spaces.
-  slot_point pdcch_slot = res_alloc[0].slot;
   logger.debug("rnti={}: Skipped {} allocation in slots:[{},{}). Cause: no PDCCH/PDSCH/PUCCH resources available",
                u.crnti,
                not is_srb0.has_value() ? "ConRes CE"
                : *is_srb0              ? "SRB0 PDU"
                                        : "SRB1 PDU",
-               pdcch_slot,
-               pdcch_slot + max_dl_slots_ahead_sched + 1);
+               starting_slot,
+               sched_ref_slot + max_dl_slots_ahead_sched + 1);
   return dl_sched_outcome::next_ue;
+}
+
+static std::pair<std::optional<unsigned>, std::optional<uint8_t>>
+allocate_common_pucch(ue&                         u,
+                      cell_resource_allocator&    res_alloc,
+                      pucch_allocator&            pucch_alloc,
+                      const pdcch_dl_information& pdcch_info,
+                      span<const uint8_t>         k1_values,
+                      slot_point                  pdsch_slot,
+                      slot_point                  min_ack_slot,
+                      bool                        common_and_ded_alloc)
+{
+  const uint8_t  min_k1      = min_ack_slot - pdsch_slot;
+  const unsigned pdsch_delay = pdsch_slot - res_alloc.slot_tx();
+
+  std::optional<uint8_t> last_valid_k1;
+  for (uint8_t k1_candidate : k1_values) {
+    if (k1_candidate <= min_k1) {
+      // Skip k1 values that would result in a PUCCH transmission in a slot that is older than the most recent ACK slot.
+      continue;
+    }
+    slot_point uci_slot = pdsch_slot + k1_candidate;
+    if (not res_alloc.cfg.is_fully_ul_enabled(uci_slot)) {
+      // If it is not UL-enabled slot.
+      continue;
+    }
+    last_valid_k1 = k1_candidate;
+
+    std::optional<unsigned> pucch_res_indicator =
+        common_and_ded_alloc
+            ? pucch_alloc.alloc_common_and_ded_harq_res(
+                  res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate, pdcch_info)
+            : pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_delay, k1_candidate, pdcch_info);
+    if (pucch_res_indicator.has_value()) {
+      return std::make_pair(*pucch_res_indicator, k1_candidate);
+    }
+  }
+  return std::make_pair(std::nullopt, last_valid_k1);
 }
 
 ue_fallback_scheduler::sched_srb_results
@@ -647,28 +684,15 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                      u,
   }
 
   // Allocate PUCCH resources.
-  unsigned k1 = dci_1_0_k1_values.front();
-  // Minimum k1 value supported is 4.
-  std::optional<unsigned> pucch_res_indicator;
-  for (const auto k1_candidate : dci_1_0_k1_values) {
-    // Skip k1 values that would result in a PUCCH transmission in a slot that is older than the most recent ACK slot.
-    if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
-      continue;
-    }
-    pucch_res_indicator =
-        is_retx ? pucch_alloc.alloc_common_and_ded_harq_res(
-                      res_alloc, u.crnti, u.get_pcell().cfg(), slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch)
-                : pucch_alloc.alloc_common_pucch_harq_ack_ue(
-                      res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
-    if (pucch_res_indicator.has_value()) {
-      k1 = k1_candidate;
-      break;
-    }
-  }
+  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(
+      u, res_alloc, pucch_alloc, *pdcch, dci_1_0_k1_values, pdsch_alloc.slot, most_recent_ack_slot, is_retx);
   if (not pucch_res_indicator.has_value()) {
-    logger.debug("rnti={}: Failed to allocate PDSCH for ConRes CE for slot={}. Cause: No space in PUCCH",
-                 u.crnti,
-                 pdsch_alloc.slot);
+    if (chosen_k1.has_value()) {
+      // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
+      logger.debug("rnti={}: Failed to allocate PDSCH for ConRes CE for slot={}. Cause: No space in PUCCH",
+                   u.crnti,
+                   pdsch_alloc.slot);
+    }
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
     return {};
   }
@@ -684,7 +708,7 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                      u,
                     pdsch_alloc.result.dl.ue_grants.emplace_back(),
                     pucch_res_indicator.value(),
                     pdsch_time_res,
-                    k1,
+                    chosen_k1.value(),
                     mcs_idx,
                     ue_grant_crbs,
                     pdsch_cfg,
@@ -860,27 +884,15 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
   }
 
   // Allocate PUCCH resources.
-  unsigned k1 = dci_1_0_k1_values.front();
-  // Minimum k1 value supported is 4.
-  std::optional<unsigned> pucch_res_indicator;
-  for (const auto k1_candidate : dci_1_0_k1_values) {
-    // Skip k1 values that would result in a PUCCH transmission in a slot that is older than the most recent ACK slot.
-    if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
-      continue;
-    }
-    pucch_res_indicator =
-        is_retx ? pucch_alloc.alloc_common_and_ded_harq_res(
-                      res_alloc, u.crnti, u.get_pcell().cfg(), slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch)
-                : pucch_alloc.alloc_common_pucch_harq_ack_ue(
-                      res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
-    if (pucch_res_indicator.has_value()) {
-      k1 = k1_candidate;
-      break;
-    }
-  }
+  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(
+      u, res_alloc, pucch_alloc, *pdcch, dci_1_0_k1_values, pdsch_alloc.slot, most_recent_ack_slot, is_retx);
   if (not pucch_res_indicator.has_value()) {
-    logger.debug(
-        "rnti={}: Failed to allocate PDSCH for SRB0 for slot={}. Cause: No space in PUCCH", u.crnti, pdsch_alloc.slot);
+    if (chosen_k1.has_value()) {
+      // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
+      logger.debug("rnti={}: Failed to allocate PDSCH for SRB0 for slot={}. Cause: No space in PUCCH",
+                   u.crnti,
+                   pdsch_alloc.slot);
+    }
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
     return {};
   }
@@ -900,7 +912,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
                     pdsch_alloc.result.dl.ue_grants.emplace_back(),
                     pucch_res_indicator.value(),
                     pdsch_time_res,
-                    k1,
+                    chosen_k1.value(),
                     mcs_idx,
                     ue_grant_crbs,
                     pdsch_cfg,
@@ -1084,29 +1096,21 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
   }
 
   // Allocate PUCCH resources.
-  unsigned k1 = dci_1_0_k1_values.front();
-  // Minimum k1 value supported is 4.
-  std::optional<unsigned> pucch_res_indicator;
-  const bool              allocate_common_and_ded_pucch = dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx;
-  for (const auto k1_candidate : dci_1_0_k1_values) {
-    // Skip the k1 values that would result in a PUCCH allocation that would overlap with the most recent ACK slot.
-    if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
-      continue;
-    }
-    pucch_res_indicator =
-        allocate_common_and_ded_pucch
-            ? pucch_alloc.alloc_common_and_ded_harq_res(
-                  res_alloc, u.crnti, u.get_pcell().cfg(), slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch)
-            : pucch_alloc.alloc_common_pucch_harq_ack_ue(
-                  res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
-    if (pucch_res_indicator.has_value()) {
-      k1 = k1_candidate;
-      break;
-    }
-  }
+  const bool alloc_common_and_ded_pucch = dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx;
+  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(u,
+                                                                res_alloc,
+                                                                pucch_alloc,
+                                                                *pdcch,
+                                                                dci_1_0_k1_values,
+                                                                pdsch_alloc.slot,
+                                                                most_recent_ack_slot,
+                                                                alloc_common_and_ded_pucch);
   if (not pucch_res_indicator.has_value()) {
-    logger.debug(
-        "rnti={}: Failed to allocate PDSCH for SRB1 for slot={}. Cause: No space in PUCCH", u.crnti, pdsch_alloc.slot);
+    if (chosen_k1.has_value()) {
+      logger.debug("rnti={}: Failed to allocate PDSCH for SRB1 for slot={}. Cause: No space in PUCCH",
+                   u.crnti,
+                   pdsch_alloc.slot);
+    }
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
     return {};
   }
@@ -1122,7 +1126,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
                                                         pdsch_alloc.result.dl.ue_grants.emplace_back(),
                                                         pucch_res_indicator.value(),
                                                         pdsch_time_res,
-                                                        k1,
+                                                        chosen_k1.value(),
                                                         final_mcs_tbs.mcs,
                                                         ue_grant_crbs,
                                                         pdsch_cfg,
