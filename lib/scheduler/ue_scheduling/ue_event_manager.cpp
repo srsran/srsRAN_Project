@@ -146,8 +146,12 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
     for (unsigned i = 0, e = added_ue.nof_cells(); i != e; ++i) {
       // Update UCI scheduler with new UE UCI resources.
       du_cells[pcell_index].uci_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
-      // Add UE to a slice.
-      du_cells[pcell_index].slice_sched->add_ue(*added_ue.ue_cfg_dedicated());
+
+      // Add UE to slice scheduler, if it does not start in fallback mode.
+      // Note: The UE is only added to the slice scheduler when outside of fallback mode.
+      if (not ev.get_fallback_command().has_value() or not ev.get_fallback_command().value()) {
+        du_cells[pcell_index].slice_sched->add_ue(*added_ue.ue_cfg_dedicated());
+      }
     }
 
     // Log Event.
@@ -178,8 +182,10 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
       } else {
         // UE carrier is being reconfigured.
         du_cells[ue_cc.cell_index].uci_sched->reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
-        // Reconfigure UE in slice scheduler.
-        du_cells[ue_cc.cell_index].slice_sched->reconf_ue(ev.next_config(), *u.ue_cfg_dedicated());
+        if (not ue_cc.is_in_fallback_mode()) {
+          // Reconfigure UE in slice scheduler.
+          du_cells[ue_cc.cell_index].slice_sched->reconf_ue(ev.next_config());
+        }
       }
     }
     for (unsigned i = 0, e = ev.next_config().nof_cells(); i != e; ++i) {
@@ -188,8 +194,10 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
       if (ue_cc == nullptr) {
         // New UE carrier is being added.
         du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].uci_sched->add_ue(new_ue_cc_cfg);
-        // Add UE to a slice.
-        du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].slice_sched->add_ue(ev.next_config());
+        if (not ue_cc->is_in_fallback_mode()) {
+          // Add UE to a slice.
+          du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].slice_sched->reconf_ue(ev.next_config());
+        }
       }
     }
 
@@ -236,11 +244,16 @@ void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
       logger.warning("Received config application confirmation for ue={} that does not exist", ue_idx);
       return;
     }
-    ue& u = ue_db[ue_idx];
+    ue&   u     = ue_db[ue_idx];
+    auto& pcell = du_cells[u.get_pcell().cell_index];
 
     // Log UE config applied event.
-    du_cells[u.get_pcell().cell_index].ev_logger->enqueue(
-        scheduler_event_logger::ue_cfg_applied_event{ue_idx, u.crnti});
+    pcell.ev_logger->enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, u.crnti});
+
+    if (u.get_pcell().is_in_fallback_mode()) {
+      // Add UE to slice scheduler, once it leaves fallback mode.
+      pcell.slice_sched->reconf_ue(*u.ue_cfg_dedicated());
+    }
 
     // Remove UE from fallback mode.
     u.get_pcell().set_fallback_state(false);

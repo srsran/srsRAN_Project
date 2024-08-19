@@ -181,9 +181,12 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
   dl_newtx_h           = nullptr;
   dl_prio              = 0;
   const ue_cell* ue_cc = u.find_cell(cell_index);
-  if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
+  if (ue_cc == nullptr) {
     return;
   }
+  srsran_assert(ue_cc->is_active() and not ue_cc->is_in_fallback_mode(),
+                "policy scheduler called for UE={} in fallback",
+                ue_cc->ue_index);
 
   static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
   // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
@@ -260,9 +263,12 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
   ul_prio              = 0;
   sr_ind_received      = false;
   const ue_cell* ue_cc = u.find_cell(cell_index);
-  if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
+  if (ue_cc == nullptr) {
     return;
   }
+  srsran_assert(ue_cc->is_active() and not ue_cc->is_in_fallback_mode(),
+                "policy scheduler called for UE={} in fallback",
+                ue_cc->ue_index);
 
   static_vector<const ul_harq_process*, MAX_NOF_HARQS> ul_harq_candidates;
   // Create list of UL HARQ processes with pending retx, sorted from oldest to newest.

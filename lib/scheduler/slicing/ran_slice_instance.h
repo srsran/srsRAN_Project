@@ -24,7 +24,7 @@ class ran_slice_instance
 public:
   ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
 
-  void slot_indication(const ue_repository& cell_ues);
+  void slot_indication();
 
   bool active() const { return not slice_ues.empty(); }
 

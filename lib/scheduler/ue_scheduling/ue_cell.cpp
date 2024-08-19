@@ -74,6 +74,21 @@ void ue_cell::set_fallback_state(bool set_fallback)
     return;
   }
   in_fallback_mode = set_fallback;
+
+  // Cancel pending HARQs retxs of different state.
+  for (unsigned i = 0; i != harqs.nof_dl_harqs(); ++i) {
+    dl_harq_process& h = harqs.dl_harq(to_harq_id(i));
+    if (not h.empty() and h.last_alloc_params().is_fallback != in_fallback_mode) {
+      h.cancel_harq_retxs(0);
+    }
+  }
+  for (unsigned i = 0; i != harqs.nof_ul_harqs(); ++i) {
+    ul_harq_process& h = harqs.ul_harq(to_harq_id(i));
+    if (not h.empty()) {
+      h.cancel_harq_retxs();
+    }
+  }
+
   logger.debug("ue={} rnti={}: {} fallback mode", ue_index, rnti(), in_fallback_mode ? "Entering" : "Leaving");
 }
 

@@ -49,7 +49,7 @@ void slice_scheduler::slot_indication()
 
   // Update the context of each slice.
   for (auto& slice : slices) {
-    slice.inst.slot_indication(ues);
+    slice.inst.slot_indication();
   }
 
   // Recompute the priority queues.
@@ -64,33 +64,32 @@ void slice_scheduler::slot_indication()
 
 void slice_scheduler::add_ue(const ue_configuration& ue_cfg)
 {
+  if (not ues.contains(ue_cfg.ue_index)) {
+    // UE should be added to the repository at this stage.
+    logger.warning("ue={}: Not adding UE to slice scheduler. Cause: No UE context found", ue_cfg.ue_index);
+    return;
+  }
+
+  // Add UE and new bearers.
   // [Implementation-defined] UE does not have complete configuration. Hence, UE won't be added to any slice.
   if (not ue_cfg.is_ue_cfg_complete()) {
     return;
   }
-  if (not ues.contains(ue_cfg.ue_index)) {
-    // UE is not added to the UE repository.
-    logger.warning("ue={}: Not adding UE to slice scheduler. Cause: No UE context found", ue_cfg.ue_index);
-    return;
-  }
+  auto& u = ues[ue_cfg.ue_index];
+
   for (const logical_channel_config& lc_cfg : ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg);
-    sl_inst.add_logical_channel(ues[ue_cfg.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
+    sl_inst.add_logical_channel(u, lc_cfg.lcid, lc_cfg.lc_group);
   }
 }
 
-void slice_scheduler::reconf_ue(const ue_configuration& next_ue_cfg, const ue_configuration& prev_ue_cfg)
+void slice_scheduler::reconf_ue(const ue_configuration& ue_cfg)
 {
-  if (next_ue_cfg.logical_channels() == prev_ue_cfg.logical_channels()) {
-    // No changes detected.
-    return;
-  }
+  // Remove UE and previously associated bearers from all slices.
+  rem_ue(ue_cfg.ue_index);
 
-  // Remove UE and associated bearer from previous slices.
-  rem_ue(prev_ue_cfg.ue_index);
-
-  // Add UE and new bearers.
-  add_ue(next_ue_cfg);
+  // Re-add UE but with new bearers.
+  add_ue(ue_cfg);
 }
 
 void slice_scheduler::rem_ue(du_ue_index_t ue_idx)

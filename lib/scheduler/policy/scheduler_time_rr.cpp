@@ -127,23 +127,19 @@ static static_vector<const dl_harq_process*, MAX_NOF_HARQS> get_ue_dl_harq_candi
   static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
 
   const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
-  if (ue_cc.is_in_fallback_mode()) {
-    return dl_harq_candidates;
-  }
   if (is_retx) {
     // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
     for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
       const dl_harq_process& h = ue_cc.harqs.dl_harq(i);
-      if (h.has_pending_retx() and not h.last_alloc_params().is_fallback and
-          h.last_alloc_params().tb[0]->slice_id == slice_id) {
+      if (h.has_pending_retx() and h.last_alloc_params().tb[0]->slice_id == slice_id) {
         dl_harq_candidates.push_back(&h);
       }
     }
     std::sort(dl_harq_candidates.begin(),
               dl_harq_candidates.end(),
               [](const dl_harq_process* lhs, const dl_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
-  } else if (ue_cc.is_active()) {
-    // If there are no pending new Tx bytes or UE in fallback, return.
+  } else {
+    // If there are no pending new Tx bytes, return.
     if (not ue_ref.has_pending_dl_newtx_bytes()) {
       return dl_harq_candidates;
     }
@@ -184,9 +180,6 @@ static static_vector<const ul_harq_process*, MAX_NOF_HARQS> get_ue_ul_harq_candi
   static_vector<const ul_harq_process*, MAX_NOF_HARQS> ul_harq_candidates;
 
   const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
-  if (ue_cc.is_in_fallback_mode()) {
-    return ul_harq_candidates;
-  }
   if (is_retx) {
     // Create list of UL HARQ processes with pending retx, sorted from oldest to newest.
     for (unsigned i = 0; i != ue_cc.harqs.nof_ul_harqs(); ++i) {
@@ -198,7 +191,7 @@ static static_vector<const ul_harq_process*, MAX_NOF_HARQS> get_ue_ul_harq_candi
     std::sort(ul_harq_candidates.begin(),
               ul_harq_candidates.end(),
               [](const ul_harq_process* lhs, const ul_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
-  } else if (ue_cc.is_active()) {
+  } else {
     // If there are no pending new Tx bytes, return.
     if (ue_ref.pending_ul_newtx_bytes() == 0) {
       return ul_harq_candidates;
@@ -284,11 +277,9 @@ static alloc_result alloc_dl_ue(const slice_ue&              u,
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
-
-    if (ue_cc.is_in_fallback_mode()) {
-      // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
-      return {alloc_status::skip_ue};
-    }
+    srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
+                  "policy scheduler called for UE={} in fallback",
+                  ue_cc.ue_index);
 
     // UE is already allocated in the PDCCH for this slot (e.g. we should skip a newTx if a reTx has already been
     // allocated for this UE).
@@ -343,10 +334,9 @@ static alloc_result alloc_ul_ue(const slice_ue&         u,
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
-    if (ue_cc.is_in_fallback_mode()) {
-      // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
-      return {alloc_status::skip_ue};
-    }
+    srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
+                  "policy scheduler called for UE={} in fallback",
+                  ue_cc.ue_index);
 
     // Get UL HARQ candidates.
     const auto harq_candidates = get_ue_ul_harq_candidates(u, to_ue_cell_index(i), is_retx, slice_id, logger);

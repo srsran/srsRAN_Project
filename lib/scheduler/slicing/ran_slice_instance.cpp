@@ -19,7 +19,7 @@ ran_slice_instance::ran_slice_instance(ran_slice_id_t                 id_,
 {
 }
 
-void ran_slice_instance::slot_indication(const ue_repository& cell_ues)
+void ran_slice_instance::slot_indication()
 {
   pdsch_rb_count = 0;
   pusch_rb_count = 0;
