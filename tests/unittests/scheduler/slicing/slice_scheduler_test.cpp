@@ -46,7 +46,7 @@ protected:
   {
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
     ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_cfg, req.starts_in_fallback, harq_timeout_handler}));
-    slice_sched.add_ue(*ue_cfg);
+    slice_sched.add_ue(req.ue_index);
     return ue_cfg;
   }
 

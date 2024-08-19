@@ -31,9 +31,10 @@ public:
   void slot_indication();
 
   /// Update the state of the slice with the provided UE configs.
-  void add_ue(const ue_configuration& next_ue_cfg);
-  void reconf_ue(const ue_configuration& next_ue_cfg);
+  void add_ue(du_ue_index_t ue_idx);
+  void reconf_ue(du_ue_index_t ue_idx);
   void rem_ue(du_ue_index_t ue_idx);
+  void config_applied(du_ue_index_t ue_idx);
 
   /// Get next RAN slice for PDSCH scheduling.
   std::optional<dl_ran_slice_candidate> get_next_dl_candidate();

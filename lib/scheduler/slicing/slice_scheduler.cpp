@@ -62,41 +62,70 @@ void slice_scheduler::slot_indication()
   }
 }
 
-void slice_scheduler::add_ue(const ue_configuration& ue_cfg)
+void slice_scheduler::add_ue(du_ue_index_t ue_idx)
 {
-  if (not ues.contains(ue_cfg.ue_index)) {
+  if (not ues.contains(ue_idx)) {
     // UE should be added to the repository at this stage.
-    logger.warning("ue={}: Not adding UE to slice scheduler. Cause: No UE context found", ue_cfg.ue_index);
+    logger.warning("ue={}: Not adding UE to slice scheduler. Cause: No UE context found", ue_idx);
+    return;
+  }
+  auto&                   u      = ues[ue_idx];
+  const ue_configuration& ue_cfg = *u.ue_cfg_dedicated();
+
+  // If UE does not have complete configuration, we won't be added to any slice.
+  if (not ue_cfg.is_ue_cfg_complete()) {
+    return;
+  }
+
+  // If UE is in fallback mode, we do not add it to the slice scheduler.
+  const ue_cell* ue_cc = u.find_cell(cell_cfg.cell_index);
+  if (ue_cc == nullptr) {
+    logger.warning("ue={}: Not adding UE to slice scheduler. Cause: No UE context found in cell {}",
+                   ue_cfg.ue_index,
+                   cell_cfg.cell_index);
+    return;
+  }
+  if (ue_cc->is_in_fallback_mode()) {
+    // Do not include yet the UE in the slice scheduler.
     return;
   }
 
   // Add UE and new bearers.
-  // [Implementation-defined] UE does not have complete configuration. Hence, UE won't be added to any slice.
-  if (not ue_cfg.is_ue_cfg_complete()) {
-    return;
-  }
-  auto& u = ues[ue_cfg.ue_index];
-
   for (const logical_channel_config& lc_cfg : ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg);
     sl_inst.add_logical_channel(u, lc_cfg.lcid, lc_cfg.lc_group);
   }
 }
 
-void slice_scheduler::reconf_ue(const ue_configuration& ue_cfg)
+void slice_scheduler::reconf_ue(du_ue_index_t ue_idx)
 {
   // Remove UE and previously associated bearers from all slices.
-  rem_ue(ue_cfg.ue_index);
+  rem_ue(ue_idx);
 
   // Re-add UE but with new bearers.
-  add_ue(ue_cfg);
+  add_ue(ue_idx);
 }
 
 void slice_scheduler::rem_ue(du_ue_index_t ue_idx)
 {
+  // Remove all logical channels of UE.
+  // Note: We take the conservative approach of traversing all slices, because the current UE config might not match
+  // the UE repositories inside each slice instance (e.g. in case of fallback or during reconfig).
   for (auto& slice : slices) {
-    // Remove all logical channels of UE.
     slice.inst.rem_ue(ue_idx);
+  }
+}
+
+void slice_scheduler::config_applied(du_ue_index_t ue_idx)
+{
+  auto&          u     = ues[ue_idx];
+  const ue_cell* ue_cc = u.find_cell(cell_cfg.cell_index);
+  srsran_assert(not ue_cc->is_in_fallback_mode(), "This function is only called when UE is not in fallback");
+
+  // Add UE to slices.
+  for (const logical_channel_config& lc_cfg : u.ue_cfg_dedicated()->logical_channels()) {
+    ran_slice_instance& sl_inst = get_slice(lc_cfg);
+    sl_inst.add_logical_channel(u, lc_cfg.lcid, lc_cfg.lc_group);
   }
 }
 

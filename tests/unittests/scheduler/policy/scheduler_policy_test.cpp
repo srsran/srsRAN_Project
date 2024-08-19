@@ -121,7 +121,7 @@ protected:
         std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
     ues.add_ue(std::make_unique<ue>(
         ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
-    slice_sched.add_ue(*ues[ue_req.ue_index].ue_cfg_dedicated());
+    slice_sched.add_ue(ue_req.ue_index);
     return ues[ue_req.ue_index];
   }
 
