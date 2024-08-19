@@ -20,8 +20,13 @@ namespace srs_du {
 
 /// Flat structure summarizing the decoded ASN.1 UE capabilities.
 struct ue_capability_summary {
-  bool pdsch_qam256_supported = false;
-  bool pusch_qam256_supported = false;
+  struct supported_band {
+    nr_band band;
+    bool    pusch_qam256_supported = false;
+  };
+
+  bool                        pdsch_qam256_supported = false;
+  std::vector<supported_band> bands;
 };
 
 /// Helper function to extract a summary of the UE capabilities based on a packed ASN.1 container.

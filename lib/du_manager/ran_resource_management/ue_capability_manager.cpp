@@ -32,8 +32,8 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
     ue_caps.pdsch_qam256_supported = ue_cap.phy_params.phy_params_fr1.pdsch_256_qam_fr1_present;
   }
   for (const auto& band : ue_cap.rf_params.supported_band_list_nr) {
-    // TODO: save per-band capabilities.
-    ue_caps.pusch_qam256_supported |= band.pusch_256_qam_present;
+    auto& band_cap                  = ue_caps.bands.emplace_back();
+    band_cap.pusch_qam256_supported = band.pusch_256_qam_present;
   }
 
   return ue_caps;
@@ -161,10 +161,13 @@ pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t ce
     // No PUSCH config or no UE capabilities decoded yet. Default to QAM64.
     return pusch_mcs_table::qam64;
   }
-  if (base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table == pusch_mcs_table::qam256 and
-      not ue_caps->pusch_qam256_supported) {
+
+  if (base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table == pusch_mcs_table::qam256) {
     // In case the preferred MCS table is 256QAM, but the UE does not support it, we default to QAM64.
-    return pusch_mcs_table::qam64;
+    if (std::none_of(
+            ue_caps->bands.begin(), ue_caps->bands.end(), [](const auto& b) { return b.pusch_qam256_supported; })) {
+      return pusch_mcs_table::qam64;
+    }
   }
   return base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table;
 }
