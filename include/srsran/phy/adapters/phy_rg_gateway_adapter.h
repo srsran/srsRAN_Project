@@ -27,7 +27,7 @@ public:
   void connect(lower_phy_rg_handler* handler) { rg_handler = handler; }
 
   // See interface for documentation.
-  void send(const resource_grid_context& context, const shared_resource_grid& grid) override
+  void send(const resource_grid_context& context, shared_resource_grid grid) override
   {
     report_fatal_error_if_not(rg_handler, "Adapter is not connected.");
     rg_handler->handle_resource_grid(context, grid);

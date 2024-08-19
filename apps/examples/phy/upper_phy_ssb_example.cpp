@@ -122,7 +122,7 @@ public:
       rx_symb_context.slot    = context.slot;
       shared_resource_grid rg = ul_rg_pool->allocate_resource_grid(rx_symb_context);
       srsran_assert(rg, "Failed to fetch a resource grid.");
-      rx_symb_req_notifier->on_uplink_slot_request(rx_symb_context, std::move(rg));
+      rx_symb_req_notifier->on_uplink_slot_request(rx_symb_context, rg);
     }
 
     // Request PRACH capture if PRACH processing is enabled.

@@ -534,7 +534,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   }
 
   // Request to capture uplink slot.
-  ul_request_processor.process_uplink_slot_request(rg_context, std::move(ul_rg));
+  ul_request_processor.process_uplink_slot_request(rg_context, ul_rg);
   l1_tracer << trace_event("ul_tti_request", tp);
 }
 

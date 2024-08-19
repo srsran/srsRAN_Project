@@ -727,7 +727,7 @@ private:
         shared_resource_grid dl_grid = dl_rg_pool->allocate_resource_grid(context);
         srsran_assert(dl_grid, "Failed to get grid.");
 
-        dl_handler.handle_dl_data(context, std::move(dl_grid));
+        dl_handler.handle_dl_data(context, dl_grid);
         logger.info("DU emulator pushed DL data in slot {}", slot);
       }
 
@@ -739,7 +739,7 @@ private:
         shared_resource_grid ul_grid = ul_rg_pool->allocate_resource_grid(context);
         srsran_assert(ul_grid, "Failed to get grid.");
 
-        ul_handler.handle_new_uplink_slot(context, std::move(ul_grid));
+        ul_handler.handle_new_uplink_slot(context, ul_grid);
       }
 
       // Sleep until the end of the slot.

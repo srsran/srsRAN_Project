@@ -37,7 +37,7 @@ public:
   {
     report_fatal_error_if_not(rx_symbol_request_handler, "Adapter is not connected.");
 
-    rx_symbol_request_handler->request_uplink_slot(context, std::move(grid));
+    rx_symbol_request_handler->request_uplink_slot(context, grid);
   }
 };
 

@@ -21,7 +21,7 @@ class upper_phy_rg_gateway_fto : public upper_phy_rg_gateway
 {
 public:
   bool sent = false;
-  void send(const resource_grid_context& context, const shared_resource_grid& grid) override { sent = true; }
+  void send(const resource_grid_context& context, shared_resource_grid grid) override { sent = true; }
   void clear_sent() { sent = false; }
 };
 

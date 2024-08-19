@@ -86,7 +86,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(
     const shared_resource_grid&                   grid)
 {
   trace_point tp = ofh_tracer.now();
-  enqueue_section_type_1_message_symbol_burst(context, std::move(grid));
+  enqueue_section_type_1_message_symbol_burst(context, grid);
 
   ofh_tracer << trace_event(formatted_trace_names[context.eaxc].c_str(), tp);
 }

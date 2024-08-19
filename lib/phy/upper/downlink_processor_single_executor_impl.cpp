@@ -256,8 +256,7 @@ void downlink_processor_single_executor_impl::send_resource_grid()
 
   // Send the resource grid if available.
   if (current_grid.is_valid()) {
-    shared_resource_grid grid2 = std::move(current_grid);
-    gateway.send(rg_context, std::move(grid2));
+    gateway.send(rg_context, std::move(current_grid));
   }
 
   // Update internal state.

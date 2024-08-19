@@ -29,7 +29,7 @@ class upper_ru_dl_rg_adapter : public upper_phy_rg_gateway
 {
 public:
   // See interface for documentation.
-  void send(const resource_grid_context& context, const shared_resource_grid& grid) override
+  void send(const resource_grid_context& context, shared_resource_grid grid) override
   {
     srsran_assert(dl_handler, "Adapter is not connected.");
     dl_handler->handle_dl_data(context, grid);
