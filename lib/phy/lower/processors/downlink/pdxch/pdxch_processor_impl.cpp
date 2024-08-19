@@ -35,42 +35,42 @@ bool pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&       
 {
   srsran_assert(notifier != nullptr, "Notifier has not been connected.");
 
-  // Check if the slot has changed.
+  // Update the current resource grid if the slot has changed.
   if (context.slot != current_slot) {
     // Update slot.
     current_slot = context.slot;
 
+    // Release current grid.
+    current_grid.release();
+
     // Exchange an empty request with the current slot with a stored request.
     auto request = requests.exchange({context.slot, shared_resource_grid()});
 
-    // Handle the returned request.
+    // If the request resource grid pointer is invalid, the request is empty.
     if (!request.grid) {
-      // If the request resource grid pointer is invalid, the request is empty.
-      current_grid.release();
       return false;
     }
 
+    // If the slot of the request does not match the current slot, then notify a late event.
     if (current_slot != request.slot) {
-      // If the slot of the request does not match the current slot, then notify a late event.
       resource_grid_context late_context;
       late_context.slot   = request.slot;
       late_context.sector = context.sector;
       notifier->on_pdxch_request_late(late_context);
-      current_grid.release();
       return false;
     }
 
-    // If the request is valid, then select request grid.
+    // Discard the resource grid if there is nothing to transmit.
+    if (request.grid.get_reader().is_empty()) {
+      return false;
+    }
+
+    // Update the current grid with the new resource grid.
     current_grid = std::move(request.grid);
   }
 
   // Skip processing if the resource grid is invalid.
   if (!current_grid) {
-    return false;
-  }
-
-  // Skip processing if the resource grid is empty.
-  if (current_grid.get_reader().is_empty()) {
     return false;
   }
 
