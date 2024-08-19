@@ -78,6 +78,7 @@ private:
   float bytes_to_kbits(float value);
 
   // Measurement getter functions.
+  metric_meas_getter_func_t get_pdcp_reordering_delay_ul;
 
   srslog::basic_logger& logger;
 
