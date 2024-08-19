@@ -145,7 +145,8 @@ inline void pack_prb_big_endian(span<uint8_t> comp_prb_buffer, __m512i reg, unsi
 inline void avx512_unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
 {
   // Load input, 27 bytes (fits in one AVX512 register).
-  __m512i packed_data_epi8 = _mm512_mask_loadu_epi8(_mm512_set1_epi64(0), 0x1fffffff, packed_data.data());
+  static constexpr __mmask64 mask             = (1UL << 27) - 1UL;
+  __m512i                    packed_data_epi8 = _mm512_maskz_loadu_epi8(mask, packed_data.data());
 
   // Duplicate input words (it is required since below in the code every byte will be used twice:
   // to provide MSB bits of the current IQ sample and LSB bits of the previous IQ sample).

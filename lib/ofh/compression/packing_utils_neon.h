@@ -143,9 +143,13 @@ inline void pack_prb_big_endian(span<uint8_t> comp_prb_buffer, int16x8x3_t regs,
 inline void unpack_prb_9b_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
 {
   // Load input (we need two NEON register to load 27 bytes).
+  // The first 16 bytes are loaded directly.
   uint8x16x2_t packed_vec_u8x2;
   packed_vec_u8x2.val[0] = vld1q_u8(packed_data.data());
-  packed_vec_u8x2.val[1] = vld1q_u8(packed_data.data() + 16);
+  // Load from 11th byte, which gives us the last 11 bytes plus 5 extra bytes without exceeding a read of 27 bytes.
+  packed_vec_u8x2.val[1] = vld1q_u8(packed_data.data() + 11);
+  // Discard the first 5 bytes.
+  packed_vec_u8x2.val[1] = vextq_u8(packed_vec_u8x2.val[1], vdupq_n_u8(0), 5);
 
   // Duplicate input words (it is required since below in the code every byte will be used twice:
   // to provide MSB bits of the current IQ sample and LSB bits of the previous IQ sample).
