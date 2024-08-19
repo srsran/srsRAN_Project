@@ -25,7 +25,7 @@ class slice_scheduler
   constexpr static priority_type skip_prio = 0;
 
 public:
-  slice_scheduler(const cell_configuration& cell_cfg_, const ue_repository& ues_);
+  slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_);
 
   /// Reset the state of the slices.
   void slot_indication();
@@ -109,13 +109,18 @@ private:
 
   ran_slice_instance& get_slice(const logical_channel_config& lc_cfg);
 
+  // Fetch UE if it is in a state to be added/reconfigured.
+  ue* fetch_ue_to_update(du_ue_index_t ue_idx);
+
+  void add_impl(const ue& u);
+
   template <bool IsDownlink>
   std::optional<std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>> get_next_candidate();
 
   const cell_configuration& cell_cfg;
   srslog::basic_logger&     logger;
 
-  const ue_repository& ues;
+  ue_repository& ues;
 
   std::vector<ran_slice_sched_context> slices;
 
