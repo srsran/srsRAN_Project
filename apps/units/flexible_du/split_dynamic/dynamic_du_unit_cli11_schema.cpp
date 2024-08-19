@@ -148,7 +148,7 @@ void srsran::autoderive_dynamic_du_parameters_after_parsing(CLI::App& app, dynam
   }
 
   // Auto derive DU low parameters.
-  const auto& cell             = parsed_cfg.du_high_cfg.config.cells_cfg.front().cell;
+  const auto& cell = parsed_cfg.du_high_cfg.config.cells_cfg.front().cell;
   nr_band     band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_f_ref_arfcn);
   bool        is_zmq_rf_driver = false;
   if (std::holds_alternative<ru_sdr_unit_config>(parsed_cfg.ru_cfg)) {

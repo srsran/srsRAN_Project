@@ -1121,7 +1121,7 @@ public:
 static cell_config_builder_params generate_custom_cell_config_builder_params(duplex_mode dplx_mode)
 {
   cell_config_builder_params params{};
-  params.scs_common = dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
+  params.scs_common     = dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
   params.dl_f_ref_arfcn = dplx_mode == duplex_mode::FDD ? 530000 : 520002;
   params.band           = band_helper::get_band_from_dl_arfcn(params.dl_f_ref_arfcn);
   params.channel_bw_mhz =

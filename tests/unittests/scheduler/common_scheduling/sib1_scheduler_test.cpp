@@ -175,7 +175,7 @@ struct sib_test_bench {
     } else {
       // Random ARFCN that must be in FR1 and > 3GHz.
       cell_cfg.dl_f_ref_arfcn = init_bwp_scs == subcarrier_spacing::kHz15 ? 286400 : 465000;
-      cell_cfg.band     = init_bwp_scs == subcarrier_spacing::kHz15 ? nr_band::n50 : nr_band::n40;
+      cell_cfg.band           = init_bwp_scs == subcarrier_spacing::kHz15 ? nr_band::n50 : nr_band::n40;
     }
     cell_cfg.scs_common          = init_bwp_scs;
     cell_cfg.channel_bw_mhz      = static_cast<bs_channel_bandwidth>(carrier_bw_mhz);
