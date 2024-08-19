@@ -17,6 +17,7 @@
 #include "srsran/du_high/du_high.h"
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/scheduler/config/cell_config_builder_params.h"
 
 namespace srsran {
 namespace srs_du {
@@ -42,8 +43,9 @@ bool is_ue_context_release_complete_valid(const f1ap_message& msg,
 
 /// Parameters to set the DU-high environment simulator.
 struct du_high_env_sim_params {
-  unsigned                            nof_cells = 1;
-  std::optional<pucch_builder_params> pucch_cfg;
+  unsigned                                  nof_cells = 1;
+  std::optional<cell_config_builder_params> builder_params;
+  std::optional<pucch_builder_params>       pucch_cfg;
 };
 
 class du_high_env_simulator

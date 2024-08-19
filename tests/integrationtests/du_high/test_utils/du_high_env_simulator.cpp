@@ -164,7 +164,8 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     cfg.ran.sched_cfg.log_broadcast_messages = false;
 
     cfg.ran.cells.reserve(params.nof_cells);
-    cell_config_builder_params builder_params;
+    auto builder_params =
+        params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
     for (unsigned i = 0; i < params.nof_cells; ++i) {
       builder_params.pci = (pci_t)i;
       cfg.ran.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
@@ -183,7 +184,9 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     return cfg;
   }()),
   du_hi(make_du_high(du_high_cfg)),
-  next_slot(0, test_rgen::uniform_int<unsigned>(0, 10239))
+  next_slot(to_numerology_value(du_high_cfg.ran.cells[0].scs_common),
+            test_rgen::uniform_int<unsigned>(0, 10239) *
+                get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common))
 {
   // Start DU and try to connect to CU.
   du_hi->start();
