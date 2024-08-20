@@ -57,6 +57,7 @@ protected:
       new_drb.pdcp_sn_len      = drb.pdcp_sn_len;
       new_drb.s_nssai          = drb.qos_info.s_nssai;
       new_drb.qos              = drb.qos_info.drb_qos;
+      new_drb.f1u.is_am_bearer = new_drb.rlc_cfg.mode == rlc_mode::am;
       new_drb.f1u.t_notify     = 100;
       new_drb.f1u.warn_on_drop = false;
     }

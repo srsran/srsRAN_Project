@@ -69,6 +69,7 @@ protected:
     logger.info("Creating F1-U bearer");
     tester              = std::make_unique<f1u_du_test_frame>();
     f1u_config config   = {};
+    config.is_am_bearer = true;
     config.t_notify     = f1u_ul_notif_time_ms;
     config.warn_on_drop = true;
     drb_id_t drb_id     = drb_id_t::drb1;
@@ -286,7 +287,18 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_transmit_notification)
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu.value(), tx_pdcp_pdu2);
-  EXPECT_FALSE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  EXPECT_TRUE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  {
+    nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
+    EXPECT_FALSE(status.final_frame_ind);
+    EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
+    EXPECT_FALSE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_FALSE(status.cause_value.has_value());
+    EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());
+    ASSERT_TRUE(status.highest_transmitted_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_transmitted_pdcp_sn.value(), highest_pdcp_sn + 1);
+  }
   EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
 
   tester->tx_msg_list.pop_front();
@@ -343,7 +355,18 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu.value(), tx_pdcp_pdu2);
-  EXPECT_FALSE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  EXPECT_TRUE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  {
+    nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
+    EXPECT_FALSE(status.final_frame_ind);
+    EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
+    ASSERT_TRUE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_delivered_pdcp_sn.value(), highest_pdcp_sn + 1);
+    EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.cause_value.has_value());
+    EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.highest_transmitted_pdcp_sn.has_value());
+  }
   EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
 
   tester->tx_msg_list.pop_front();
@@ -369,7 +392,8 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
     nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
     EXPECT_FALSE(status.final_frame_ind);
     EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
-    EXPECT_FALSE(status.highest_delivered_pdcp_sn.has_value());
+    ASSERT_TRUE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_delivered_pdcp_sn.value(), highest_pdcp_sn + 1);
     EXPECT_FALSE(status.cause_value.has_value());
     EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
     EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());

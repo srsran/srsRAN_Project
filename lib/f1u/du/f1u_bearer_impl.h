@@ -88,10 +88,6 @@ private:
   /// Holds the latest information of the available space in the RLC SDU queue that was reported to the upper layers
   /// (i.e. torward CU-UP)
   uint32_t notif_desired_buffer_size_for_data_radio_bearer;
-  /// Holds the last highest transmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
-  uint32_t notif_highest_transmitted_pdcp_sn = unset_pdcp_sn;
-  /// Holds the last highest delivered PDCP SN that was reported to upper layers (i.e. towards CU-UP)
-  uint32_t notif_highest_delivered_pdcp_sn = unset_pdcp_sn;
   /// Holds the last highest retransmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
   uint32_t notif_highest_retransmitted_pdcp_sn = unset_pdcp_sn;
   /// Holds the last highest delivered retransmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
