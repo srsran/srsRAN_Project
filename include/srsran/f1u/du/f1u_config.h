@@ -18,15 +18,14 @@ namespace srsran::srs_du {
 
 /// \brief Configurable parameters of the F1-U bearer in the DU
 struct f1u_config {
-  bool     is_am_bearer;          ///< Indicates whether this is a RLC AM bearer, i.e. SDU delivery is notified.
   uint32_t t_notify;              ///< Timer used for periodic transmission of uplink notifications
   uint32_t rlc_queue_bytes_limit; ///< RLC queue limit in bytes. Used for initial report of buffer space to the CU-UP.
   bool     warn_on_drop = true;   ///< Log a warning instead of an info message whenever a PDU is dropped
 
   bool operator==(const f1u_config& other) const
   {
-    return is_am_bearer == other.is_am_bearer and t_notify == other.t_notify and
-           rlc_queue_bytes_limit == other.rlc_queue_bytes_limit and warn_on_drop == other.warn_on_drop;
+    return t_notify == other.t_notify and rlc_queue_bytes_limit == other.rlc_queue_bytes_limit and
+           warn_on_drop == other.warn_on_drop;
   }
 };
 
@@ -47,8 +46,7 @@ struct formatter<srsran::srs_du::f1u_config> {
   auto format(srsran::srs_du::f1u_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "is_am_bearer={} t_notify={} rlc_queue_bytes_limit={} warn_on_drop={}",
-                     cfg.is_am_bearer,
+                     "t_notify={} rlc_queue_bytes_limit={} warn_on_drop={}",
                      cfg.t_notify,
                      cfg.rlc_queue_bytes_limit,
                      cfg.warn_on_drop);

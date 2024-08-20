@@ -160,6 +160,12 @@ bool f1u_bearer_impl::fill_highest_delivered_pdcp_sn(nru_dl_data_delivery_status
   uint32_t cur_highest_delivered_pdcp_sn = highest_delivered_pdcp_sn.load(std::memory_order_relaxed);
   // TS 38.425 Sec. 5.4.2.1
   // (...)
+  // When the corresponding node decides to trigger the Feedback for Downlink Data Delivery procedure it shall report
+  // as specified in section 5.2:
+  // a) in case of RLC AM, the highest NR PDCP PDU sequence number successfully delivered in sequence to the UE among
+  // those NR PDCP PDUs received from the node hosting the NR PDCP entity i.e. excludes those retransmission NR PDCP
+  // PDUs;
+  // (...)
   // In case the DL DATA DELIVERY STATUS frame is sent before any NR PDCP PDU is transferred to lower layers, the
   // information on the highest NR PDCP PDU sequence number successfully delivered in sequence to the UE and the highest
   // NR PDCP PDU sequence number transmitted to the lower layers may not be provided.
@@ -205,17 +211,7 @@ void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
 
   status_changed |= fill_desired_buffer_size_of_data_radio_bearer(status);
   status_changed |= fill_highest_transmitted_pdcp_sn(status);
-  if (cfg.is_am_bearer) {
-    // TS 38.425 Sec. 5.4.2.1
-    // (...)
-    // When the corresponding node decides to trigger the Feedback for Downlink Data Delivery procedure it shall report
-    // as specified in section 5.2:
-    // a) in case of RLC AM, the highest NR PDCP PDU sequence number successfully delivered in sequence to the UE among
-    // those NR PDCP PDUs received from the node hosting the NR PDCP entity i.e. excludes those retransmission NR PDCP
-    // PDUs;
-    // (...)
-    status_changed |= fill_highest_delivered_pdcp_sn(status);
-  }
+  status_changed |= fill_highest_delivered_pdcp_sn(status);
   status_changed |= fill_highest_retransmitted_pdcp_sn(status);
   status_changed |= fill_highest_delivered_retransmitted_pdcp_sn(status);
 

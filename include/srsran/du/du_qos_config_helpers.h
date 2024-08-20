@@ -59,7 +59,6 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
     cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
-    cfg.f1u.is_am_bearer          = cfg.rlc.mode == rlc_mode::am;
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     // MAC
@@ -81,7 +80,6 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
     cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
-    cfg.f1u.is_am_bearer          = cfg.rlc.mode == rlc_mode::am;
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     // MAC
@@ -110,7 +108,6 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.am.rx.max_sn_per_status = {};
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
-    cfg.f1u.is_am_bearer          = cfg.rlc.mode == rlc_mode::am;
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     // MAC
@@ -130,7 +127,6 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
     cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
-    cfg.f1u.is_am_bearer          = cfg.rlc.mode == rlc_mode::am;
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     cfg.f1u.warn_on_drop          = warn_on_drop;
@@ -160,7 +156,6 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
     cfg.rlc.am.rx.max_sn_per_status = {};
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
-    cfg.f1u.is_am_bearer          = cfg.rlc.mode == rlc_mode::am;
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     cfg.f1u.warn_on_drop          = warn_on_drop;

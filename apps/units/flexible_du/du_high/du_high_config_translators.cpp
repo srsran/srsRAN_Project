@@ -737,7 +737,6 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const du_high_
 
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
-    out_f1u.is_am_bearer = qos.rlc.mode == "am";
     //< t-Notify
     out_f1u.t_notify = qos.f1u_du.t_notify;
     out_f1u.rlc_queue_bytes_limit =
