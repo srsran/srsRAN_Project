@@ -130,6 +130,13 @@ void detail::harq_process<IsDownlink>::cancel_harq_retxs(unsigned tb_idx)
   if (empty(tb_idx)) {
     return;
   }
+  if (has_pending_retx(tb_idx)) {
+    // If a retx is pending, do not allow it to take place.
+    tb_array[tb_idx].state = transport_block::state_t::empty;
+    return;
+  }
+  // If the HARQ is still waiting for an ACK to arrive, just mark it as max retxs have been exceeded. The ack_info
+  // function will automatically update the HARQ state.
   tb_array[tb_idx].max_nof_harq_retxs = tb_array[tb_idx].nof_retxs;
   tb_array[tb_idx].cancelled          = true;
 }
@@ -253,9 +260,13 @@ dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, std::
   if (pucch_ack_to_receive <= 1) {
     // Case: This is the last HARQ-ACK that is expected for this HARQ process.
 
-    base_type::ack_info_common(tb_idx, chosen_ack == mac_harq_ack_report_status::ack);
-    if (chosen_ack != mac_harq_ack_report_status::ack and empty(tb_idx)) {
-      if (this->tb_array[0].cancelled) {
+    bool is_ack = chosen_ack == mac_harq_ack_report_status::ack;
+    base_type::ack_info_common(tb_idx, is_ack);
+    if (is_ack) {
+      return status_update::acked;
+    }
+    if (empty(tb_idx)) {
+      if (this->tb_array[tb_idx].cancelled) {
         logger.debug(id,
                      "Discarding HARQ process tb={} with tbs={}. Cause: HARQ process was cancelled",
                      tb_idx,
@@ -268,7 +279,7 @@ dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, std::
                     max_nof_harq_retxs(tb_idx));
       }
     }
-    return chosen_ack == mac_harq_ack_report_status::ack ? status_update::acked : status_update::nacked;
+    return status_update::nacked;
   }
 
   // Case: This is not the last PUCCH HARQ-ACK that is expected for this HARQ process.
