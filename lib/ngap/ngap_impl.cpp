@@ -442,6 +442,9 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
     return;
   }
 
+  // Store serving PLMN
+  ue_ctxt.serving_guami = init_ctxt_setup_req.guami;
+
   // Store UE Aggregate Maximum Bitrate
   if (init_ctxt_setup_req.ue_aggr_max_bit_rate.has_value()) {
     ue_ctxt.aggregate_maximum_bit_rate_dl = init_ctxt_setup_req.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_dl;
@@ -504,7 +507,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   // Convert to common type
   cu_cp_pdu_session_resource_setup_request msg;
   msg.ue_index     = ue_ctxt.ue_ids.ue_index;
-  msg.serving_plmn = context.plmn;
+  msg.serving_plmn = ue_ctxt.serving_guami.plmn;
   if (!fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req)) {
     ue_ctxt.logger.log_warning("Conversion of PduSessionResourceSetupRequest failed");
     send_error_indication(*tx_pdu_notifier, logger, ue_ctxt.ue_ids.ran_ue_id, ue_ctxt.ue_ids.amf_ue_id, {});
@@ -943,7 +946,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
   ue_ctxt.logger.log_info("Starting HO preparation");
 
   return launch_async<ngap_handover_preparation_procedure>(msg,
-                                                           context,
+                                                           ue_ctxt.serving_guami.plmn,
                                                            ue_ctxt.ue_ids,
                                                            *tx_pdu_notifier,
                                                            ue->get_rrc_ue_control_notifier(),
