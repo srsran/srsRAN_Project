@@ -723,9 +723,13 @@ private:
       // Push downlink data.
       if (is_dl_slot) {
         resource_grid_context context{slot, 0};
-
-        shared_resource_grid dl_grid = dl_rg_pool->allocate_resource_grid(context);
-        srsran_assert(dl_grid, "Failed to get grid.");
+        shared_resource_grid  dl_grid;
+        while (!dl_grid) {
+          dl_grid = dl_rg_pool->allocate_resource_grid(context);
+          if (!dl_grid) {
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
+          }
+        }
 
         dl_handler.handle_dl_data(context, dl_grid);
         logger.info("DU emulator pushed DL data in slot {}", slot);
@@ -735,9 +739,13 @@ private:
       if (is_ul_slot) {
         slot_id = tdd_pattern.dl_ul_tx_period_nof_slots - slot_id - 1;
         resource_grid_context context{slot, 0};
-
-        shared_resource_grid ul_grid = ul_rg_pool->allocate_resource_grid(context);
-        srsran_assert(ul_grid, "Failed to get grid.");
+        shared_resource_grid  ul_grid;
+        while (!ul_grid) {
+          ul_grid = ul_rg_pool->allocate_resource_grid(context);
+          if (!ul_grid) {
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
+          }
+        }
 
         ul_handler.handle_new_uplink_slot(context, ul_grid);
       }
