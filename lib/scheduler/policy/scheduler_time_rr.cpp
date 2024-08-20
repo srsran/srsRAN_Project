@@ -14,10 +14,14 @@
 
 using namespace srsran;
 
+namespace {
+
 struct scheduler_alloc_limits {
   unsigned max_nof_ues_with_new_tx;
   unsigned nof_ues_to_be_scheduled_per_slot;
 };
+
+} // namespace
 
 // [Implementation-defined] The following lookup of nof. UEs to be scheduled per slot is based on simple heuristic
 // and to ensure multiple UEs are scheduled per slot rather than single UE hogging all the resource in a slot under
@@ -29,6 +33,28 @@ static const std::vector<scheduler_alloc_limits> scheduler_alloc_limits_lookup =
     {32, 6},
     {MAX_NOF_DU_UES, 8},
 };
+
+static unsigned get_max_ues_to_be_sched(const slice_ue_repository& ues, bool is_dl)
+{
+  unsigned nof_ue_with_new_tx = 0;
+  unsigned lookup_idx         = 0;
+  for (const auto& u : ues) {
+    if ((is_dl and u.has_pending_dl_newtx_bytes()) or (not is_dl and u.pending_ul_newtx_bytes() > 0)) {
+      // count UEs with pending data.
+      ++nof_ue_with_new_tx;
+
+      // check if we surpassed a limit of the lookup table.
+      if (nof_ue_with_new_tx > scheduler_alloc_limits_lookup[lookup_idx].max_nof_ues_with_new_tx) {
+        lookup_idx++;
+        if (lookup_idx == scheduler_alloc_limits_lookup.size() - 1) {
+          // no need to continue the search as we reached the maximum position of the lookup.
+          break;
+        }
+      }
+    }
+  }
+  return scheduler_alloc_limits_lookup[lookup_idx].nof_ues_to_be_scheduled_per_slot;
+}
 
 /// \brief Computes maximum nof. RBs to allocate per UE per slot for newTx.
 /// \param[in] ues Map of UEs belonging to a slice.
@@ -47,13 +73,13 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&  
     return 0;
   }
 
-  unsigned nof_ue_with_new_tx               = 0;
-  unsigned nof_ues_to_be_scheduled_per_slot = 0;
+  unsigned nof_ues_to_be_scheduled_per_slot = get_max_ues_to_be_sched(ues, is_dl);
 
-  for (const auto& u : ues) {
-    if ((is_dl and u.has_pending_dl_newtx_bytes()) or (not is_dl and u.pending_ul_newtx_bytes() > 0)) {
-      ++nof_ue_with_new_tx;
-    }
+  // > Apply limits if passed to scheduler.
+  if (is_dl) {
+    nof_ues_to_be_scheduled_per_slot = std::min(expert_cfg.max_pdschs_per_slot, nof_ues_to_be_scheduled_per_slot);
+  } else {
+    nof_ues_to_be_scheduled_per_slot = std::min(expert_cfg.max_puschs_per_slot, nof_ues_to_be_scheduled_per_slot);
   }
 
   // NOTE: All UEs use the same dedicated SearchSpace configuration.
@@ -73,21 +99,6 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&  
                                                      *ss_info->coreset);
   } else {
     bwp_crb_limits = ss_info->ul_crb_lims;
-  }
-
-  // > Fetch nof. UEs to be scheduled per slot based on the lookup.
-  for (const auto& lims : scheduler_alloc_limits_lookup) {
-    if (nof_ue_with_new_tx <= lims.max_nof_ues_with_new_tx) {
-      nof_ues_to_be_scheduled_per_slot = lims.nof_ues_to_be_scheduled_per_slot;
-      break;
-    }
-  }
-
-  // > Apply limits if passed to scheduler.
-  if (is_dl) {
-    nof_ues_to_be_scheduled_per_slot = std::min(expert_cfg.max_pdschs_per_slot, nof_ues_to_be_scheduled_per_slot);
-  } else {
-    nof_ues_to_be_scheduled_per_slot = std::min(expert_cfg.max_puschs_per_slot, nof_ues_to_be_scheduled_per_slot);
   }
 
   // > Compute maximum nof. PDCCH candidates allowed for each direction.
@@ -225,13 +236,13 @@ static static_vector<const ul_harq_process*, MAX_NOF_HARQS> get_ue_ul_harq_candi
 /// \param[in] ue_db Map of UEs belonging to a slice.
 /// \param[in] next_ue_index UE index with the highest priority to be allocated.
 /// \param[in] alloc_ue callable with signature "bool(ue&)" that returns true if UE allocation was successful.
-/// \return Index of next UE to allocate.
+/// \return Index of next UE to allocate and the allocation status.
 template <typename AllocUEFunc>
-du_ue_index_t
+static std::pair<du_ue_index_t, alloc_status>
 round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index, const AllocUEFunc& alloc_ue)
 {
   if (ue_db.empty()) {
-    return next_ue_index;
+    return std::make_pair(next_ue_index, alloc_status::skip_slot);
   }
   auto it          = ue_db.lower_bound(next_ue_index);
   bool first_alloc = true;
@@ -244,7 +255,7 @@ round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index,
     const alloc_result result = alloc_ue(u);
     if (result.status == alloc_status::skip_slot) {
       // Grid allocator directed policy to stop allocations for this slot.
-      break;
+      return std::make_pair(next_ue_index, result.status);
     }
 
     if (result.status == alloc_status::success and first_alloc) {
@@ -256,7 +267,7 @@ round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index,
       first_alloc   = false;
     }
   }
-  return next_ue_index;
+  return std::make_pair(next_ue_index, alloc_status::success);
 }
 
 /// Allocate UE PDSCH grant.
@@ -389,7 +400,11 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   auto retx_ue_function = [this, &res_grid, &pdsch_alloc, slice_id](const slice_ue& u) {
     return alloc_dl_ue(u, res_grid, pdsch_alloc, true, logger, slice_id);
   };
-  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
+  auto result      = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
+  next_dl_ue_index = result.first;
+  if (result.second == alloc_status::skip_slot) {
+    return;
+  }
 
   const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg, max_rbs);
@@ -399,7 +414,11 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
         [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot, slice_id](const slice_ue& u) {
           return alloc_dl_ue(u, res_grid, pdsch_alloc, false, logger, slice_id, dl_new_tx_max_nof_rbs_per_ue_per_slot);
         };
-    next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, drb_newtx_ue_function);
+    result           = round_robin_apply(ues, next_dl_ue_index, drb_newtx_ue_function);
+    next_dl_ue_index = result.first;
+    if (result.second == alloc_status::skip_slot) {
+      return;
+    }
   }
 }
 
@@ -416,19 +435,28 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
     return;
   }
 
+  // Prioritize UEs with pending SRs.
   const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, max_rbs);
   // First, schedule UEs with pending SR.
   auto sr_ue_function = [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot, slice_id](const slice_ue& u) {
     return alloc_ul_ue(u, pusch_alloc, false, true, logger, slice_id, ul_new_tx_max_nof_rbs_per_ue_per_slot);
   };
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
+  auto result      = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
+  next_ul_ue_index = result.first;
+  if (result.second == alloc_status::skip_slot) {
+    return;
+  }
 
   // Second, schedule UEs with re-transmissions.
   auto data_retx_ue_function = [this, &pusch_alloc, slice_id](const slice_ue& u) {
     return alloc_ul_ue(u, pusch_alloc, true, false, logger, slice_id);
   };
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
+  result           = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
+  next_ul_ue_index = result.first;
+  if (result.second == alloc_status::skip_slot) {
+    return;
+  }
 
   // Then, schedule UEs with new transmissions.
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
@@ -436,6 +464,10 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
         [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot, slice_id](const slice_ue& u) {
           return alloc_ul_ue(u, pusch_alloc, false, false, logger, slice_id, ul_new_tx_max_nof_rbs_per_ue_per_slot);
         };
-    next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
+    result           = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
+    next_ul_ue_index = result.first;
+    if (result.second == alloc_status::skip_slot) {
+      return;
+    }
   }
 }
