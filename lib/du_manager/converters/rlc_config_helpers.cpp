@@ -72,5 +72,8 @@ srsran::srs_du::make_rlc_entity_creation_message(gnb_du_id_t                    
       msg, gnb_du_id, ue_index, pcell_index, bearer, rlc_cfg, du_services, rlc_rlf_notifier, pcap_writer);
   msg.rb_id             = bearer.drb_id;
   msg.rlc_metrics_notif = rlc_metrics_notifier_;
+  if (msg.rlc_metrics_notif == nullptr) {
+    msg.config.metrics_period = timer_duration{0};
+  }
   return msg;
 }
