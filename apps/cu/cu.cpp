@@ -201,9 +201,8 @@ int main(int argc, char** argv)
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &cu_cp_config]() {
     // Create the PLMN and TAC list from the cells.
-    std::vector<std::string> plmns;
-    std::vector<unsigned>    tacs;
-    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(plmns), std::move(tacs));
+    std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(supported_tas));
   });
 
   // Parse arguments.

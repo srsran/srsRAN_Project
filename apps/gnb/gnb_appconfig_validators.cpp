@@ -46,18 +46,21 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
 
 bool srsran::validate_plmn_and_tacs(const du_high_unit_config& du_hi_cfg, const cu_cp_unit_config& cu_cp_cfg)
 {
+  bool ret_val = false;
   for (const auto& cell : du_hi_cfg.cells_cfg) {
-    if (std::find(cu_cp_cfg.plmns.cbegin(), cu_cp_cfg.plmns.cend(), cell.cell.plmn) == cu_cp_cfg.plmns.cend()) {
-      fmt::print("Could not find cell PLMN '{}' in the CU-CP PLMN list", cell.cell.plmn);
-
-      return false;
+    for (const auto& supported_ta : cu_cp_cfg.supported_tas) {
+      if (supported_ta.tac == cell.cell.tac && supported_ta.plmn == cell.cell.plmn) {
+        ret_val = true;
+      }
     }
 
-    if (std::find(cu_cp_cfg.tacs.cbegin(), cu_cp_cfg.tacs.cend(), cell.cell.tac) == cu_cp_cfg.tacs.cend()) {
-      fmt::print("Could not find cell TAC '{}' in the CU-CP TAC list", cell.cell.tac);
+    if (!ret_val) {
+      fmt::print("Could not find cell PLMN '{}' and cell TAC '{}' in the CU-CP supported tracking areas list\n",
+                 cell.cell.plmn,
+                 cell.cell.tac);
       return false;
     }
   }
 
-  return true;
+  return ret_val;
 }

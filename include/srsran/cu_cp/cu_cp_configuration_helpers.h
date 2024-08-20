@@ -149,7 +149,8 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
   // Slices
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;
-  cfg.node.supported_slices.push_back(slice_cfg);
+  cfg.node.supported_tas.push_back(
+      srsran::srs_cu_cp::supported_tracking_area{7, plmn_identity::test_value(), {slice_cfg}});
   // DRBs
   cfg.bearers.drb_config = config_helpers::make_default_cu_cp_qos_config_list();
   // Security.
@@ -189,6 +190,17 @@ inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
   }
 
   return true;
+}
+
+inline std::vector<plmn_identity>
+get_supported_plmns(const std::vector<srs_cu_cp::supported_tracking_area>& supported_tas)
+{
+  std::vector<plmn_identity> plmns;
+  plmns.reserve(supported_tas.size());
+  for (const auto& ta : supported_tas) {
+    plmns.push_back(ta.plmn);
+  }
+  return plmns;
 }
 
 } // namespace config_helpers

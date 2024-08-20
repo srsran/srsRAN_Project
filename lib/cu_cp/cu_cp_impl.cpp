@@ -49,8 +49,7 @@ ngap_configuration create_ngap_cfg(const cu_cp_configuration& cfg)
   ngap_configuration ngap_cfg;
   ngap_cfg.gnb_id                    = cfg.node.gnb_id;
   ngap_cfg.ran_node_name             = cfg.node.ran_node_name;
-  ngap_cfg.plmn                      = cfg.node.plmn;
-  ngap_cfg.tac                       = cfg.node.tac;
+  ngap_cfg.supported_tas             = cfg.node.supported_tas;
   ngap_cfg.pdu_session_setup_timeout = cfg.ue.pdu_session_setup_timeout;
   return ngap_cfg;
 }

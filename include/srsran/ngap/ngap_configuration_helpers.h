@@ -24,8 +24,7 @@ inline srs_cu_cp::ngap_configuration make_default_ngap_config()
   srs_cu_cp::ngap_configuration cfg{};
   cfg.gnb_id        = {411, 22};
   cfg.ran_node_name = "srsgnb01";
-  cfg.plmn          = plmn_identity::test_value();
-  cfg.tac           = 7;
+  cfg.supported_tas = {{7, plmn_identity::test_value(), {}}};
 
   return cfg;
 }

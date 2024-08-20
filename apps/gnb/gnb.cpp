@@ -233,12 +233,11 @@ int main(int argc, char** argv)
     autoderive_slicing_args(du_unit_cfg, cu_cp_config);
     autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
 
-    // Create the PLMN and TAC list from the cells.
-    std::vector<std::string> plmns;
-    std::vector<unsigned>    tacs;
+    // Create the supported tracking areas list from the cells.
+    std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+    supported_tas.reserve(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
     for (const auto& cell : du_unit_cfg.du_high_cfg.config.cells_cfg) {
-      plmns.push_back(cell.cell.plmn);
-      tacs.push_back(cell.cell.tac);
+      supported_tas.push_back({cell.cell.tac, cell.cell.plmn, {}});
     }
 
     // If test mode is enabled, we auto-enable "no_core" option
@@ -246,7 +245,7 @@ int main(int argc, char** argv)
       cu_cp_config.amf_cfg.no_core = true;
     }
 
-    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(plmns), std::move(tacs));
+    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(supported_tas));
   });
 
   // Parse arguments.

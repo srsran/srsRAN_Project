@@ -108,7 +108,8 @@ du_processor_test::du_processor_test() :
     return cucfg;
   }()),
   common_task_sched(std::make_unique<dummy_task_sched>()),
-  du_cfg_mgr{cu_cp_cfg.node.gnb_id, cu_cp_cfg.node.plmn}
+
+  du_cfg_mgr{cu_cp_cfg.node.gnb_id, config_helpers::get_supported_plmns(cu_cp_cfg.node.supported_tas)}
 {
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);

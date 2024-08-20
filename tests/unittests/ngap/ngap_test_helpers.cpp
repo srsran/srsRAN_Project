@@ -36,8 +36,7 @@ ngap_test::ngap_test() :
   ngap_configuration ngap_cfg{};
   ngap_cfg.gnb_id                    = cu_cp_cfg.node.gnb_id;
   ngap_cfg.ran_node_name             = cu_cp_cfg.node.ran_node_name;
-  ngap_cfg.plmn                      = cu_cp_cfg.node.plmn;
-  ngap_cfg.tac                       = cu_cp_cfg.node.tac;
+  ngap_cfg.supported_tas             = cu_cp_cfg.node.supported_tas;
   ngap_cfg.pdu_session_setup_timeout = cu_cp_cfg.ue.pdu_session_setup_timeout;
   ngap = create_ngap(ngap_cfg, cu_cp_notifier, cu_cp_paging_notifier, n2_gw, timers, ctrl_worker);
 

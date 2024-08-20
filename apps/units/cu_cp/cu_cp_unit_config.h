@@ -21,6 +21,19 @@
 
 namespace srsran {
 
+struct cu_cp_unit_supported_ta_item {
+  unsigned    tac;
+  std::string plmn;
+  /// Supported Slices by the RAN node.
+  std::vector<s_nssai_t> tai_slice_support_list;
+};
+
+/// All tracking area related configuration parameters.
+struct cu_cp_unit_ta_config {
+  /// List of all tracking areas supported by the CU-CP.
+  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+};
+
 /// Report configuration, for now only supporting the A3 event.
 struct cu_cp_unit_report_config {
   unsigned    report_cfg_id;
@@ -231,10 +244,6 @@ struct cu_cp_unit_config {
   std::string ran_node_name = "cu_cp_01";
   /// gNB identifier.
   gnb_id_t gnb_id = {411, 22};
-  /// List of accepted PLMNs.
-  std::vector<std::string> plmns;
-  /// List of accepted TACs.
-  std::vector<unsigned> tacs;
   /// Maximum number of DUs.
   uint16_t max_nof_dus = 6;
   /// Maximum number of CU-UPs.
@@ -253,6 +262,8 @@ struct cu_cp_unit_config {
   cu_cp_unit_metrics_config metrics;
   /// AMF configuration.
   cu_cp_unit_amf_config amf_cfg;
+  /// List of all tracking areas supported by the CU-CP.
+  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
   /// Mobility configuration.
   cu_cp_unit_mobility_config mobility_config;
   /// RRC configuration.

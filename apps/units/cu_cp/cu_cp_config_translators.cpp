@@ -11,6 +11,7 @@
 #include "cu_cp_config_translators.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rlc/rlc_config.h"
 #include <sstream>
 
@@ -324,13 +325,15 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.admission.max_nof_cu_ups       = cu_cfg.max_nof_cu_ups;
   out_cfg.admission.max_nof_ues          = cu_cfg.max_nof_ues;
 
-  srsran_assert(!cu_cfg.plmns.empty(), "PLMN list is empty");
-  srsran_assert(!cu_cfg.tacs.empty(), "PLMN list is empty");
-  out_cfg.node.gnb_id           = cu_cfg.gnb_id;
-  out_cfg.node.ran_node_name    = cu_cfg.ran_node_name;
-  out_cfg.node.plmn             = plmn_identity::parse(cu_cfg.plmns.front()).value();
-  out_cfg.node.tac              = cu_cfg.tacs.front();
-  out_cfg.node.supported_slices = cu_cfg.slice_cfg;
+  out_cfg.node.gnb_id        = cu_cfg.gnb_id;
+  out_cfg.node.ran_node_name = cu_cfg.ran_node_name;
+
+  srsran_assert(!cu_cfg.supported_tas.empty(), "Supported tracking area list is empty");
+  for (const auto& supported_ta : cu_cfg.supported_tas) {
+    expected<plmn_identity> plmn = plmn_identity::parse(supported_ta.plmn);
+    srsran_assert(plmn.has_value(), "Invalid PLMN: {}", supported_ta.plmn);
+    out_cfg.node.supported_tas.push_back({supported_ta.tac, plmn.value(), supported_ta.tai_slice_support_list});
+  }
 
   out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc.rrc_procedure_timeout_ms       = std::chrono::milliseconds{cu_cfg.rrc_config.rrc_procedure_timeout_ms};

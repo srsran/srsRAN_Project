@@ -12,6 +12,8 @@
 #include "du_processor_config.h"
 #include "du_processor_factory.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rrc/rrc_config.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include <thread>
@@ -20,7 +22,9 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.node.gnb_id, cfg.cu_cp.node.plmn)
+  cfg(cfg_),
+  logger(cfg.logger),
+  du_cfg_mng(cfg.cu_cp.node.gnb_id, config_helpers::get_supported_plmns(cfg.cu_cp.node.supported_tas))
 {
 }
 

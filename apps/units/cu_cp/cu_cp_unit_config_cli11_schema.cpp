@@ -46,6 +46,46 @@ static void configure_cli11_pcap_args(CLI::App& app, cu_cp_unit_pcap_config& pca
   add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
 }
 
+static void configure_cli11_tai_slice_support_args(CLI::App& app, s_nssai_t& config)
+{
+  add_option(app, "--sst", config.sst, "Slice Service Type")->capture_default_str()->check(CLI::Range(0, 255));
+  add_option(app, "--sd", config.sd, "Service Differentiator")->capture_default_str()->check(CLI::Range(0, 0xffffff));
+}
+
+static void configure_cli11_supported_ta_args(CLI::App& app, cu_cp_unit_supported_ta_item& config)
+{
+  add_option(app, "--tac", config.tac, "TAC to be configured")->check([](const std::string& value) {
+    std::stringstream ss(value);
+    unsigned          tac;
+    ss >> tac;
+
+    // Values 0 and 0xfffffe are reserved.
+    if (tac == 0U || tac == 0xfffffeU) {
+      return "TAC values 0 or 0xfffffe are reserved";
+    }
+
+    return (tac <= 0xffffffU) ? "" : "TAC value out of range";
+  });
+  add_option(app, "--plmn", config.plmn, "PLMN to be configured");
+
+  // TAI slice support list.
+  app.add_option_function<std::vector<std::string>>(
+      "--tai_slice_support_list",
+      [&config](const std::vector<std::string>& values) {
+        config.tai_slice_support_list.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("TAI slice support list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_tai_slice_support_args(subapp, config.tai_slice_support_list[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the list of TAI slices supported by the CU-CP");
+}
+
 static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config& report_params)
 {
   add_option(app, "--report_cfg_id", report_params.report_cfg_id, "Report configuration id to be configured")
@@ -263,27 +303,30 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));
 
-  add_option(app, "--plmns", cu_cp_params.plmns, "List of allowed PLMNs");
-  add_option(app, "--tacs", cu_cp_params.tacs, "List of allowed TACs")->check([](const std::string& value) {
-    std::stringstream ss(value);
-    unsigned          tac;
-    ss >> tac;
-
-    // Values 0 and 0xfffffe are reserved.
-    if (tac == 0U || tac == 0xfffffeU) {
-      return "TAC values 0 or 0xfffffe are reserved";
-    }
-
-    return (tac <= 0xffffffU) ? "" : "TAC value out of range";
-  });
-  ;
-
   add_option(app,
              "--pdu_session_setup_timeout",
              cu_cp_params.pdu_session_setup_timeout,
              "Timeout for the setup of a PDU session after an InitialUeMessage was sent to the core, in "
              "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
       ->capture_default_str();
+
+  // Tracking areas section.
+  auto ta_lambda = [&cu_cp_params](const std::vector<std::string>& values) {
+    // Prepare the supported TAs list.
+    cu_cp_params.supported_tas.resize(values.size());
+
+    // Format every TA setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("Supported tracking areas", "TA config, item #" + std::to_string(i));
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::capture);
+      configure_cli11_supported_ta_args(subapp, cu_cp_params.supported_tas[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  add_option_cell(
+      app, "--supported_tracking_areas", ta_lambda, "Configures the list of tracking areas supported by the CU-CP");
 
   CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");
   configure_cli11_mobility_args(*mobility_subcmd, cu_cp_params.mobility_config);
@@ -408,14 +451,6 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
-{
-  add_option(app, "--sst", slice_params.sst, "Slice Service Type")->capture_default_str()->check(CLI::Range(0, 255));
-  add_option(app, "--sd", slice_params.sd, "Service Differentiator")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 0xffffff));
-}
-
 static void configure_cli11_amf_args(CLI::App& app, cu_cp_unit_amf_config& amf_params)
 {
   add_option(app, "--addr", amf_params.ip_addr, "AMF IP address");
@@ -484,55 +519,24 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
     }
   };
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
-
-  // Slicing section.
-  auto slicing_lambda = [&unit_cfg](const std::vector<std::string>& values) {
-    // Prepare the slices.
-    unit_cfg.slice_cfg.resize(values.size());
-
-    // Format every slicing setting.
-    for (unsigned i = 0, e = values.size(); i != e; ++i) {
-      CLI::App subapp("Slicing parameters", "Slicing config, item #" + std::to_string(i));
-      subapp.config_formatter(create_yaml_config_parser());
-      subapp.allow_config_extras(CLI::config_extras_mode::capture);
-      configure_cli11_slicing_args(subapp, unit_cfg.slice_cfg[i]);
-      std::istringstream ss(values[i]);
-      subapp.parse_from_stream(ss);
-    }
-  };
-  add_option_cell(app, "--slicing", slicing_lambda, "Network slicing configuration");
 }
 
-static std::vector<std::string> auto_generate_plmns()
+static std::vector<cu_cp_unit_supported_ta_item> auto_generate_supported_tas()
 {
-  std::vector<std::string> vec = {"00101"};
+  std::vector<cu_cp_unit_supported_ta_item> vec = {{7, "00101", {}}};
   return vec;
 }
 
-static std::vector<unsigned> auto_generate_tacs()
-{
-  std::vector<unsigned> out_cfg = {7};
-
-  return out_cfg;
-}
-
-void srsran::autoderive_cu_cp_parameters_after_parsing(CLI::App&                app,
-                                                       cu_cp_unit_config&       unit_cfg,
-                                                       std::vector<std::string> plmns,
-                                                       std::vector<unsigned>    tacs)
+void srsran::autoderive_cu_cp_parameters_after_parsing(CLI::App&                                 app,
+                                                       cu_cp_unit_config&                        unit_cfg,
+                                                       std::vector<cu_cp_unit_supported_ta_item> supported_tas)
 {
   auto cu_cp_app = app.get_subcommand_ptr("cu_cp");
-  // No PLMNs defined in the cu_cp section. Use the given ones.
-  if (cu_cp_app->count_all() == 0 || cu_cp_app->count("--plmns") == 0) {
-    srsran_assert(unit_cfg.plmns.empty(), "PLMN list is not empty");
+  // No supported tracking areas defined in the cu_cp section. Use the given ones.
+  if (cu_cp_app->count_all() == 0 || cu_cp_app->count("--supported_tracking_areas") == 0) {
+    srsran_assert(unit_cfg.supported_tas.empty(), "Supported tracking area list is not empty");
 
-    unit_cfg.plmns = plmns.empty() ? auto_generate_plmns() : std::move(plmns);
-  }
-
-  if (cu_cp_app->count_all() == 0 || cu_cp_app->count("--tacs") == 0) {
-    srsran_assert(unit_cfg.tacs.empty(), "TAC list is not empty");
-
-    unit_cfg.tacs = tacs.empty() ? auto_generate_tacs() : std::move(tacs);
+    unit_cfg.supported_tas = supported_tas.empty() ? auto_generate_supported_tas() : std::move(supported_tas);
   }
 
   for (auto& cell : unit_cfg.mobility_config.cells) {
