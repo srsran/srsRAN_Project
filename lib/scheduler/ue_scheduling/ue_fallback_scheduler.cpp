@@ -529,6 +529,18 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_a
   return dl_sched_outcome::next_ue;
 }
 
+// Helper to determine DCI type to use in PDSCH.
+static dci_dl_rnti_config_type get_dci_type(const ue& u, const dl_harq_process& h_dl)
+{
+  if (h_dl.has_pending_retx()) {
+    return h_dl.last_alloc_params().dci_cfg_type;
+  } else if (u.is_conres_ce_pending()) {
+    return dci_dl_rnti_config_type::tc_rnti_f1_0;
+  }
+  return dci_dl_rnti_config_type::c_rnti_f1_0;
+}
+
+// Helper to allocate common (and optionally dedicated) PUCCH.
 static std::pair<std::optional<unsigned>, std::optional<uint8_t>>
 allocate_common_pucch(ue&                         u,
                       cell_resource_allocator&    res_alloc,
@@ -539,12 +551,11 @@ allocate_common_pucch(ue&                         u,
                       slot_point                  min_ack_slot,
                       bool                        common_and_ded_alloc)
 {
-  const uint8_t  min_k1      = min_ack_slot - pdsch_slot;
   const unsigned pdsch_delay = pdsch_slot - res_alloc.slot_tx();
 
   std::optional<uint8_t> last_valid_k1;
   for (uint8_t k1_candidate : k1_values) {
-    if (k1_candidate <= min_k1) {
+    if (pdsch_slot + k1_candidate <= min_ack_slot) {
       // Skip k1 values that would result in a PUCCH transmission in a slot that is older than the most recent ACK slot.
       continue;
     }
@@ -588,8 +599,7 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                      u,
     return {};
   }
 
-  dci_dl_rnti_config_type dci_type =
-      is_retx ? h_dl_retx->last_alloc_params().dci_cfg_type : dci_dl_rnti_config_type::tc_rnti_f1_0;
+  dci_dl_rnti_config_type dci_type = get_dci_type(u, *h_dl);
   srsran_assert(dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0,
                 "Only DCI 1_0 with TC-RNTI is supported for ConRes CE scheduling");
 
@@ -742,14 +752,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
     return {};
   }
 
-  dci_dl_rnti_config_type dci_type = dci_dl_rnti_config_type::c_rnti_f1_0;
-  if (is_retx) {
-    dci_type = h_dl->last_alloc_params().dci_cfg_type;
-  } else if (u.is_conres_ce_pending()) {
-    dci_type = dci_dl_rnti_config_type::tc_rnti_f1_0;
-  }
-  srsran_assert(dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 or dci_type == dci_dl_rnti_config_type::c_rnti_f1_0,
-                "Only DCI 1_0 with TC-RNTI or C-RNTI is supported for SRB0 scheduling");
+  dci_dl_rnti_config_type dci_type = get_dci_type(u, *h_dl);
 
   pdsch_config_params pdsch_cfg = dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0
                                       ? get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg)
@@ -945,14 +948,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
     return {};
   }
 
-  dci_dl_rnti_config_type dci_type = dci_dl_rnti_config_type::c_rnti_f1_0;
-  if (is_retx) {
-    dci_type = h_dl->last_alloc_params().dci_cfg_type;
-  } else if (u.is_conres_ce_pending()) {
-    dci_type = dci_dl_rnti_config_type::tc_rnti_f1_0;
-  }
-  srsran_assert(dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 or dci_type == dci_dl_rnti_config_type::c_rnti_f1_0,
-                "Only DCI 1_0 with TC-RNTI or C-RNTI is supported for SRB1 scheduling");
+  dci_dl_rnti_config_type dci_type = get_dci_type(u, *h_dl);
 
   pdsch_config_params pdsch_cfg = dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0
                                       ? get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg)

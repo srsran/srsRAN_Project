@@ -15,7 +15,6 @@
 #include "../support/slot_event_list.h"
 #include "ue_repository.h"
 #include "srsran/scheduler/scheduler_configurator.h"
-#include <list>
 #include <queue>
 
 namespace srsran {
