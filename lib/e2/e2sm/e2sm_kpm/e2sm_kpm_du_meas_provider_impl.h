@@ -102,6 +102,7 @@ private:
 
   srslog::basic_logger&                              logger;
   srs_du::f1ap_ue_id_translator&                     f1ap_ue_id_provider;
+  unsigned                                           nof_cell_prbs;
   std::vector<scheduler_ue_metrics>                  last_ue_metrics;
   std::map<uint16_t, std::deque<rlc_metrics>>        ue_aggr_rlc_metrics;
   const size_t                                       max_rlc_metrics = 30;

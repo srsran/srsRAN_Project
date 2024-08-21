@@ -31,6 +31,7 @@ void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
   ues[ue_index].nof_prbs            = num_prbs;
   ues[ue_index].num_slots_per_frame = num_slots_per_frame;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
+  nof_prbs = num_prbs;
 }
 
 void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
@@ -196,6 +197,7 @@ void cell_metrics_handler::report_metrics()
   next_report.nof_error_indications    = error_indication_counter;
   next_report.average_decision_latency = decision_latency_sum / report_period_slots;
   next_report.latency_histogram        = decision_latency_hist;
+  next_report.nof_prbs                 = nof_prbs;
 
   // Reset cell-wide metric counters.
   error_indication_counter = 0;
@@ -293,9 +295,8 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.dl_mcs        = sch_mcs_index{mcs};
   mcs               = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
   ret.ul_mcs        = sch_mcs_index{mcs};
-  ret.nof_prbs      = nof_prbs;
-  ret.dl_prbs_used  = data.nof_dl_cws > 0 ? static_cast<double>(data.dl_prbs_used / data.nof_dl_cws) : 0;
-  ret.ul_prbs_used  = data.nof_puschs > 0 ? static_cast<double>(data.ul_prbs_used / data.nof_puschs) : 0;
+  ret.dl_prbs_used  = static_cast<double>(data.dl_prbs_used / (metric_report_period.count()));
+  ret.ul_prbs_used  = static_cast<double>(data.ul_prbs_used / (metric_report_period.count()));
   ret.dl_brate_kbps = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
   ret.ul_brate_kbps = static_cast<double>(data.sum_ul_tb_bytes * 8U) / metric_report_period.count();
   ret.dl_nof_ok     = data.count_uci_harq_acks;

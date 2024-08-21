@@ -85,6 +85,9 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
   slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
   std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;
 
+  /// Number of the cell PRBs.
+  unsigned nof_prbs = 0;
+
   /// Counter of number of slots elapsed since the last report.
   unsigned slot_counter = 0;
 

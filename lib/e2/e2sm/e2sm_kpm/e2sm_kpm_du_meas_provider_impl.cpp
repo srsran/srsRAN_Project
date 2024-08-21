@@ -122,6 +122,7 @@ bool e2sm_kpm_du_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<con
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const scheduler_cell_metrics& cell_metrics)
 {
   last_ue_metrics.clear();
+  nof_cell_prbs = cell_metrics.nof_prbs;
   for (auto& ue_metric : cell_metrics.ue_metrics) {
     last_ue_metrics.push_back(ue_metric);
   }
@@ -310,14 +311,18 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_in
   if (last_ue_metrics.size() == 0) {
     return meas_collected;
   }
-  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: RRU.PrbAvailDl supports only NO_LABEL label.");
     return meas_collected;
   }
+  int total_dl_prbs_used = std::accumulate(
+      last_ue_metrics.begin(), last_ue_metrics.end(), 0, [](size_t sum, const scheduler_ue_metrics& metric) {
+        return sum + metric.dl_prbs_used;
+      });
+
   meas_record_item_c meas_record_item;
-  meas_record_item.set_integer() = (ue_metrics.nof_prbs - (int)ue_metrics.dl_prbs_used);
+  meas_record_item.set_integer() = (nof_cell_prbs - total_dl_prbs_used);
   items.push_back(meas_record_item);
   meas_collected = true;
 
@@ -333,14 +338,18 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_in
   if (last_ue_metrics.size() == 0) {
     return meas_collected;
   }
-  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: RRU.PrbAvailUl supports only NO_LABEL label.");
     return meas_collected;
   }
+  int total_ul_prbs_used = std::accumulate(
+      last_ue_metrics.begin(), last_ue_metrics.end(), 0, [](size_t sum, const scheduler_ue_metrics& metric) {
+        return sum + metric.ul_prbs_used;
+      });
+
   meas_record_item_c meas_record_item;
-  meas_record_item.set_integer() = (ue_metrics.nof_prbs - (int)ue_metrics.ul_prbs_used);
+  meas_record_item.set_integer() = (nof_cell_prbs - total_ul_prbs_used);
   items.push_back(meas_record_item);
   meas_collected = true;
 
@@ -356,14 +365,17 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(const asn1::e2sm::label
   if (last_ue_metrics.size() == 0) {
     return meas_collected;
   }
-  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: RRU.PrbTotDl supports only NO_LABEL label.");
     return meas_collected;
   }
+  int total_dl_prbs_used = std::accumulate(
+      last_ue_metrics.begin(), last_ue_metrics.end(), 0, [](size_t sum, const scheduler_ue_metrics& metric) {
+        return sum + metric.dl_prbs_used;
+      });
   meas_record_item_c meas_record_item;
-  meas_record_item.set_integer() = (double)ue_metrics.dl_prbs_used * 100 / ue_metrics.nof_prbs;
+  meas_record_item.set_integer() = (double)total_dl_prbs_used * 100 / nof_cell_prbs;
   items.push_back(meas_record_item);
   meas_collected = true;
 
@@ -379,14 +391,17 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(const asn1::e2sm::label
   if (last_ue_metrics.size() == 0) {
     return meas_collected;
   }
-  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: RRU.PrbTotUl supports only NO_LABEL label.");
     return meas_collected;
   }
+  int total_ul_prbs_used = std::accumulate(
+      last_ue_metrics.begin(), last_ue_metrics.end(), 0, [](size_t sum, const scheduler_ue_metrics& metric) {
+        return sum + metric.ul_prbs_used;
+      });
   meas_record_item_c meas_record_item;
-  meas_record_item.set_integer() = (double)ue_metrics.ul_prbs_used * 100 / ue_metrics.nof_prbs;
+  meas_record_item.set_integer() = (double)total_ul_prbs_used * 100 / nof_cell_prbs;
   items.push_back(meas_record_item);
   meas_collected = true;
 
