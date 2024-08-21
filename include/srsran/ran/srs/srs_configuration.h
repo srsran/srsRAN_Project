@@ -16,6 +16,23 @@
 
 namespace srsran {
 
+/// Transmission comb size, as per \c transmissionComb, in \c SRS-Config, TS 38.331, or \f$K_{TC}\f$, as per
+/// Section 6.4.1.4.1, TS 38.211. Values {2, 4}.
+enum class tx_comb_size : uint8_t { n2 = 2, n4 = 4 };
+
+/// \brief \c groupOrSequenceHopping, parameter for configuring group or sequence hopping.
+/// \remark See TS 38.211, clause 6.4.1.4.2, or TS 38.331, "SRS-Resource".
+enum class srs_group_or_sequence_hopping { neither, groupHopping, sequenceHopping };
+
+/// \brief \c resourceType, as per TS 38.331, "SRS-Resource".
+enum class srs_resource_type { aperiodic, semi_persistent, periodic };
+
+enum srs_nof_symbols : uint8_t {
+  n1 = 1,
+  n2 = 2,
+  n4 = 4,
+};
+
 /// Used to configure Sounding Reference Signal transmissions or to configure Sounding Reference Signal
 /// measurements for CLI.
 /// \remark See TS 38.331, "SRS-Config".
@@ -130,33 +147,38 @@ struct srs_config {
     bool operator!=(const srs_resource_set& rhs) const { return !(rhs == *this); }
   };
 
-  /// \brief Periodicity and slot offset for a SRS resource.
+  /// \brief Periodicity and slot offset for a SRS resource, as per \c SRS-PeriodicityAndOffset, TS 38.331,
+  /// \c SRS-resource.
   struct srs_periodicity_and_offset {
-    enum class type_t {
-      sl1,
-      sl2,
-      sl4,
-      sl5,
-      sl8,
-      sl10,
-      sl16,
-      sl20,
-      sl32,
-      sl40,
-      sl64,
-      sl80,
-      sl160,
-      sl320,
-      sl640,
-      sl1280,
-      sl2560
+    enum class periodicity : uint16_t {
+      sl1    = 1,
+      sl2    = 2,
+      sl4    = 4,
+      sl5    = 5,
+      sl8    = 6,
+      sl10   = 10,
+      sl16   = 16,
+      sl20   = 20,
+      sl32   = 32,
+      sl40   = 40,
+      sl64   = 64,
+      sl80   = 80,
+      sl160  = 160,
+      sl320  = 320,
+      sl640  = 640,
+      sl1280 = 1280,
+      sl2560 = 2560
     };
 
-    type_t type;
-    /// If type is slX, then valid values are {0,..,X-1}.
-    uint16_t value;
+    /// SRS period, in slots.
+    periodicity period;
+    /// Offset, Values {0,..,period_slots-1}.
+    uint16_t offset;
 
-    bool operator==(const srs_periodicity_and_offset& rhs) const { return type == rhs.type && value == rhs.value; }
+    bool operator==(const srs_periodicity_and_offset& rhs) const
+    {
+      return period == rhs.period && offset == rhs.offset;
+    }
     bool operator!=(const srs_periodicity_and_offset& rhs) const { return !(rhs == *this); }
   };
 
@@ -169,30 +191,28 @@ struct srs_config {
 
     /// \brief OFDM symbol location of the SRS resource.
     struct resource_mapping {
-      /// \brief Number of OFDM symbols.
-      enum class nof_symbols { n1, n2, n4 };
-      enum class repetition_factor { n1, n2, n4 };
-
-      /// Values {0,...,5}. Value 0 refers to the last symbol, value 1 refers to the second last symbol.
-      uint8_t           start_pos;
-      nof_symbols       nof_symb;
-      repetition_factor re_factor;
+      /// Values {0,..,5}. Value 0 refers to the last symbol, value 1 refers to the second last symbol.
+      uint8_t         start_pos;
+      srs_nof_symbols nof_symb;
+      /// \c repetitionFactor, as per 3GPP TS 38.331, "SRS-Resource".
+      /// \remark \ref The condition rept_factor <= \ref nof_symb must be verified, as per TS 38.211, Section 6.4.1.4.3.
+      srs_nof_symbols rept_factor;
 
       bool operator==(const resource_mapping& rhs) const
       {
-        return start_pos == rhs.start_pos && nof_symb == rhs.nof_symb && re_factor == rhs.re_factor;
+        return start_pos == rhs.start_pos && nof_symb == rhs.nof_symb && rept_factor == rhs.rept_factor;
       }
       bool operator!=(const resource_mapping& rhs) const { return !(rhs == *this); }
     };
 
     /// \brief Includes parameters capturing SRS frequency hopping.
-    /// \remark See TS 38.214, clause 6.2.1.
+    /// \remark See 3GPP TS 38.331, "SRS-Resource".
     struct frequency_hopping {
-      /// Values {0,...,63}.
+      /// Values {0,..,63}.
       uint8_t c_srs;
-      /// Values {0,...,3}.
+      /// Values {0,..,3}.
       uint8_t b_srs;
-      /// Values {0,...,3}.
+      /// Values {0,..,3}.
       uint8_t b_hop;
 
       bool operator==(const frequency_hopping& rhs) const
@@ -201,12 +221,6 @@ struct srs_config {
       }
       bool operator!=(const frequency_hopping& rhs) const { return !(rhs == *this); }
     };
-
-    /// \brief Parameter(s) for configuring group or sequence hopping.
-    /// \remark See TS 38.211, clause 6.4.1.4.2
-    enum class group_or_sequence_hopping { neither, groupHopping, sequenceHopping };
-
-    enum resource_type { aperiodic, semi_persistent, periodic };
 
     /// \brief Configuration of the spatial relation between a reference RS and the target SRS.
     struct srs_spatial_relation_info {
@@ -233,41 +247,51 @@ struct srs_config {
     nof_srs_ports   nof_ports;
     ptrs_port_index ptrs_port{ptrs_port_index::not_set};
 
-    /// Values {2,4,8}. See 3GPP TS 38.331, "SRS-Resource".
-    uint8_t trans_comb_value;
-    /// Values {0,...,trans_comb_value-1}. See 3GPP TS 38.331, "SRS-Resource".
-    uint8_t trans_comb_offset;
-    /// For Transmission Comb value:
-    ///  2 => Cyclic shift configuration. Values {0,...,7}.
-    ///  4 => Cyclic shift configuration. Values {0,...,11}.
-    /// See TS 38.214, clause 6.2.1.
-    uint8_t          trans_comb_cyclic_shift;
+    struct tx_comb_params {
+      tx_comb_size size;
+      /// Values {0,...,tx_comb_size-1}. See 3GPP TS 38.331, "SRS-Resource".
+      uint8_t tx_comb_offset;
+      /// For Transmission Comb size:
+      ///  2 => Cyclic shift configuration. Values {0,...,7}.
+      ///  4 => Cyclic shift configuration. Values {0,...,11}.
+      /// See 3GPP TS 38.331, "SRS-Resource".
+      uint8_t tx_comb_cyclic_shift;
+
+      bool operator==(const tx_comb_params& rhs) const
+      {
+        return size == rhs.size and tx_comb_offset == rhs.tx_comb_offset and
+               tx_comb_cyclic_shift == rhs.tx_comb_cyclic_shift;
+      }
+      bool operator!=(const tx_comb_params& rhs) const { return !(rhs == *this); }
+    };
+
+    /// \c transmissionComb, as per TS 38.331, "SRS-Resource".
+    tx_comb_params tx_comb;
+    /// \c resourceMapping, as per TS 38.331, "SRS-Resource".
     resource_mapping res_mapping;
+    /// \c freqDomainPosition, as per TS 38.331, "SRS-Resource", or \f$n_{RRC}\f$, as per TS 38.211, Section 6.4.1.4.3.
     /// Values {0,...,67}.
     uint8_t freq_domain_pos;
+    /// \c freqDomainShift, as per TS 38.331, "SRS-Resource", or \f$n_{shift}\f$, as per TS 38.211, Section 6.4.1.4.3.
     /// Values {0,...,268}.
     uint16_t                  freq_domain_shift;
     frequency_hopping         freq_hop;
-    group_or_sequence_hopping grp_or_seq_hop;
-    resource_type             res_type;
-    /// Set/Valid only if resource type is semi-persistent.
-    srs_periodicity_and_offset semi_pers_res_type_periodicity_and_offset;
-    /// Set/Valid only if resource type is periodic.
-    srs_periodicity_and_offset per_res_type_periodicity_and_offset;
+    srs_group_or_sequence_hopping grp_or_seq_hop;
+    srs_resource_type         res_type;
+    /// Set/Valid only if resource type is "semi-persistent" or "periodic".
+    std::optional<srs_periodicity_and_offset> periodicity_and_offset;
     /// Sequence ID used to initialize pseudo random group and sequence hopping. Values {0,...,1023}.
     uint16_t                                 sequence_id;
     std::optional<srs_spatial_relation_info> spatial_relation_info;
 
     bool operator==(const srs_resource& rhs) const
     {
-      return id == rhs.id && nof_ports == rhs.nof_ports && ptrs_port == rhs.ptrs_port &&
-             trans_comb_value == rhs.trans_comb_value && trans_comb_offset == rhs.trans_comb_offset &&
-             trans_comb_cyclic_shift == rhs.trans_comb_cyclic_shift && res_mapping == rhs.res_mapping &&
-             freq_domain_pos == rhs.freq_domain_pos && freq_domain_shift == rhs.freq_domain_shift &&
-             freq_hop == rhs.freq_hop && grp_or_seq_hop == rhs.grp_or_seq_hop && res_type == rhs.res_type &&
-             semi_pers_res_type_periodicity_and_offset == rhs.semi_pers_res_type_periodicity_and_offset &&
-             per_res_type_periodicity_and_offset == rhs.per_res_type_periodicity_and_offset &&
-             sequence_id == rhs.sequence_id && spatial_relation_info == rhs.spatial_relation_info;
+      return id == rhs.id && nof_ports == rhs.nof_ports && ptrs_port == rhs.ptrs_port && tx_comb == rhs.tx_comb &&
+             res_mapping == rhs.res_mapping && freq_domain_pos == rhs.freq_domain_pos &&
+             freq_domain_shift == rhs.freq_domain_shift && freq_hop == rhs.freq_hop &&
+             grp_or_seq_hop == rhs.grp_or_seq_hop && res_type == rhs.res_type &&
+             periodicity_and_offset == rhs.periodicity_and_offset && sequence_id == rhs.sequence_id &&
+             spatial_relation_info == rhs.spatial_relation_info;
     }
     bool operator!=(const srs_resource& rhs) const { return !(rhs == *this); }
   };

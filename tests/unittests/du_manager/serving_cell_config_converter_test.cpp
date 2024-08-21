@@ -89,22 +89,20 @@ srs_config make_initial_srs_config()
       .srs_res_set_usage  = srs_config::srs_resource_set::usage::codebook,
       .srs_pwr_ctrl_alpha = alpha::alpha1,
       .p0                 = -80});
+  srs_config::srs_resource::tx_comb_params tx_comb{
+      .size = tx_comb_size::n2, .tx_comb_offset = 0, .tx_comb_cyclic_shift = 0};
   cfg.srs_res.push_back(srs_config::srs_resource{
-      .id                      = static_cast<srs_config::srs_res_id>(0),
-      .nof_ports               = srs_config::srs_resource::nof_srs_ports::port1,
-      .trans_comb_value        = 2,
-      .trans_comb_offset       = 0,
-      .trans_comb_cyclic_shift = 0,
-      .res_mapping =
-          srs_config::srs_resource::resource_mapping{
-              .start_pos = 2,
-              .nof_symb  = srs_config::srs_resource::resource_mapping::nof_symbols::n1,
-              .re_factor = srs_config::srs_resource::resource_mapping::repetition_factor::n1},
+      .id                    = static_cast<srs_config::srs_res_id>(0),
+      .nof_ports             = srs_config::srs_resource::nof_srs_ports::port1,
+      .tx_comb               = tx_comb,
+      .res_mapping           = srs_config::srs_resource::resource_mapping{.start_pos   = 2,
+                                                                          .nof_symb    = srs_nof_symbols::n1,
+                                                                          .rept_factor = srs_nof_symbols::n1},
       .freq_domain_pos       = 0,
       .freq_domain_shift     = 0,
       .freq_hop              = srs_config::srs_resource::frequency_hopping{.c_srs = 0, .b_srs = 0, .b_hop = 0},
-      .grp_or_seq_hop        = srs_config::srs_resource::group_or_sequence_hopping::neither,
-      .res_type              = srs_config::srs_resource::aperiodic,
+      .grp_or_seq_hop        = srs_group_or_sequence_hopping::neither,
+      .res_type              = srs_resource_type::aperiodic,
       .sequence_id           = 40,
       .spatial_relation_info = srs_config::srs_resource::srs_spatial_relation_info{
           .reference_signal = static_cast<nzp_csi_rs_res_id_t>(0)}});
@@ -745,29 +743,28 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
   // Release.
   dest_pusch_cfg.srs_res_set.erase(dest_pusch_cfg.srs_res_set.begin());
 
+  srs_config::srs_resource::tx_comb_params tx_comb = {
+      .size = srsran::tx_comb_size::n4, .tx_comb_offset = 0, .tx_comb_cyclic_shift = 0};
   dest_pusch_cfg.srs_res.push_back(srs_config::srs_resource{
-      .id                      = static_cast<srs_config::srs_res_id>(1),
-      .nof_ports               = srs_config::srs_resource::nof_srs_ports::port1,
-      .trans_comb_value        = 4,
-      .trans_comb_offset       = 0,
-      .trans_comb_cyclic_shift = 0,
-      .res_mapping =
-          srs_config::srs_resource::resource_mapping{
-              .start_pos = 50,
-              .nof_symb  = srs_config::srs_resource::resource_mapping::nof_symbols::n1,
-              .re_factor = srs_config::srs_resource::resource_mapping::repetition_factor::n1},
-      .freq_domain_pos   = 0,
-      .freq_domain_shift = 0,
-      .freq_hop          = srs_config::srs_resource::frequency_hopping{.c_srs = 0, .b_srs = 0, .b_hop = 0},
-      .grp_or_seq_hop    = srs_config::srs_resource::group_or_sequence_hopping::groupHopping,
-      .res_type          = srs_config::srs_resource::semi_persistent,
-      .semi_pers_res_type_periodicity_and_offset =
-          srs_config::srs_periodicity_and_offset{.type  = srsran::srs_config::srs_periodicity_and_offset::type_t::sl10,
-                                                 .value = 30},
+      .id                    = static_cast<srs_config::srs_res_id>(1),
+      .nof_ports             = srs_config::srs_resource::nof_srs_ports::port1,
+      .tx_comb               = tx_comb,
+      .res_mapping           = srs_config::srs_resource::resource_mapping{.start_pos   = 50,
+                                                                          .nof_symb    = srs_nof_symbols::n1,
+                                                                          .rept_factor = srs_nof_symbols::n1},
+      .freq_domain_pos       = 0,
+      .freq_domain_shift     = 0,
+      .freq_hop              = srs_config::srs_resource::frequency_hopping{.c_srs = 0, .b_srs = 0, .b_hop = 0},
+      .grp_or_seq_hop        = srs_group_or_sequence_hopping::groupHopping,
+      .res_type              = srs_resource_type::semi_persistent,
       .sequence_id           = 41,
       .spatial_relation_info = srs_config::srs_resource::srs_spatial_relation_info{
           .reference_signal = srs_config::srs_resource::srs_spatial_relation_info::srs_ref_signal{
               .res_id = static_cast<srs_config::srs_res_id>(1), .ul_bwp = static_cast<bwp_id_t>(1)}}});
+
+  dest_pusch_cfg.srs_res.back().periodicity_and_offset.emplace(srs_config::srs_periodicity_and_offset{
+      .period = srsran::srs_config::srs_periodicity_and_offset::periodicity::sl10, .offset = 30});
+
   // Release.
   dest_pusch_cfg.srs_res.erase(dest_pusch_cfg.srs_res.begin());
 
