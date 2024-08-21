@@ -13,6 +13,18 @@
 using namespace srsran;
 using namespace harq_utils;
 
+namespace {
+
+class noop_harq_timeout_notifier : public harq_timeout_notifier
+{
+public:
+  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
+  { /* do nothing */
+  }
+};
+
+} // namespace
+
 template <bool IsDl>
 cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
                                                  unsigned               max_ack_wait_timeout,
@@ -30,10 +42,11 @@ cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
   ues.resize(max_ues);
   for (unsigned i = 0; i != max_ues; i++) {
     ues[i].free_harq_ids.reserve(MAX_NOF_HARQS);
-    ues[i].harqs.resize(MAX_NOF_HARQS, INVALID_HARQ_REF_INDEX);
+    ues[i].harqs.reserve(MAX_NOF_HARQS);
   }
 
-  const unsigned RING_SIZE = 40; // TODO: use function to define this value.
+  const unsigned RING_SIZE = 320; // TODO: use function to define this value. It must account the timeout arg and k
+                                  // values
   harq_timeout_wheel.resize(RING_SIZE);
 }
 
@@ -42,8 +55,8 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
 {
   // Handle HARQs that timed out.
   auto& harqs_timing_out = harq_timeout_wheel[sl_tx.to_uint() % harq_timeout_wheel.size()];
-  for (harq_type& h : harqs_timing_out) {
-    handle_harq_ack_timeout(h, sl_tx);
+  while (not harqs_timing_out.empty()) {
+    handle_harq_ack_timeout(harqs_timing_out.front(), sl_tx);
   }
 }
 
@@ -206,12 +219,35 @@ void cell_harq_repository<IsDl>::set_pending_retx(harq_type& h)
 }
 
 template <bool IsDl>
+void cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack)
+{
+  srsran_assert(h.status == harq_state_t::pending_retx, "Attempt of retx in an HARQ that has no pending retx");
+
+  // Remove HARQ from pending Retx list.
+  harq_pending_retx_list.pop(&h);
+
+  h.status          = harq_state_t::waiting_ack;
+  h.slot_tx         = sl_tx;
+  h.slot_ack        = sl_ack;
+  h.ndi             = !h.ndi;
+  h.ack_on_timeout  = false;
+  h.retxs_cancelled = false;
+  h.nof_retxs++;
+
+  // Add HARQ to the timeout list.
+  h.slot_ack_timeout = sl_ack + max_ack_wait_in_slots;
+  harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
+}
+
+template <bool IsDl>
 void cell_harq_repository<IsDl>::reserve_ue_harqs(du_ue_index_t ue_idx, unsigned nof_harqs)
 {
+  ues[ue_idx].harqs.resize(nof_harqs);
   ues[ue_idx].free_harq_ids.resize(nof_harqs);
   for (unsigned count = 0; count != nof_harqs; count++) {
     harq_id_t h_id                   = to_harq_id(nof_harqs - count - 1);
     ues[ue_idx].free_harq_ids[count] = h_id;
+    ues[ue_idx].harqs[count]         = INVALID_HARQ_REF_INDEX;
   }
 }
 
@@ -259,7 +295,7 @@ template struct harq_utils::cell_harq_repository<false>;
 cell_harq_manager::cell_harq_manager(unsigned                               max_ues,
                                      std::unique_ptr<harq_timeout_notifier> notifier,
                                      unsigned                               max_ack_wait_timeout) :
-  timeout_notifier(std::move(notifier)),
+  timeout_notifier(notifier != nullptr ? std::move(notifier) : std::make_unique<noop_harq_timeout_notifier>()),
   logger(srslog::fetch_basic_logger("SCHED")),
   dl(max_ues, max_ack_wait_timeout, *timeout_notifier, logger),
   ul(max_ues, max_ack_wait_timeout, *timeout_notifier, logger)
@@ -275,14 +311,15 @@ void cell_harq_manager::slot_indication(slot_point sl_tx)
 
 bool cell_harq_manager::contains(du_ue_index_t ue_idx) const
 {
-  return dl.ues[ue_idx].free_harq_ids.size() != 0;
+  return ue_idx < dl.ues.size() and dl.ues[ue_idx].free_harq_ids.size() != 0;
 }
 
 unique_ue_harq_entity
 cell_harq_manager::add_ue(du_ue_index_t ue_idx, rnti_t crnti, unsigned nof_dl_harq_procs, unsigned nof_ul_harq_procs)
 {
-  srsran_assert(nof_dl_harq_procs > 0, "Invalid number of HARQs");
-  srsran_assert(nof_ul_harq_procs > 0, "Invalid number of HARQs");
+  srsran_sanity_check(nof_dl_harq_procs > 0, "Invalid number of HARQs");
+  srsran_sanity_check(nof_ul_harq_procs > 0, "Invalid number of HARQs");
+  srsran_sanity_check(ue_idx < dl.ues.size(), "Invalid ue_index");
   srsran_assert(not contains(ue_idx), "Creating UE with duplicate ue_index");
   dl.reserve_ue_harqs(ue_idx, nof_dl_harq_procs);
   ul.reserve_ue_harqs(ue_idx, nof_ul_harq_procs);
@@ -328,6 +365,23 @@ cell_harq_manager::new_ul_tx(du_ue_index_t ue_idx, slot_point pusch_slot, unsign
   h->prev_tx_params = {};
 
   return h;
+}
+
+void cell_harq_manager::new_dl_retx(harq_utils::dl_harq_process_impl& h,
+                                    slot_point                        pdsch_slot,
+                                    unsigned                          k1,
+                                    uint8_t                           harq_bit_idx)
+{
+  dl.handle_new_retx(h, pdsch_slot, pdsch_slot + k1);
+  h.harq_bit_idx         = harq_bit_idx;
+  h.pucch_ack_to_receive = 0;
+  h.chosen_ack           = mac_harq_ack_report_status::dtx;
+  h.last_pucch_snr       = std::nullopt;
+}
+
+void cell_harq_manager::new_ul_retx(harq_utils::ul_harq_process_impl& h, slot_point pusch_slot)
+{
+  ul.handle_new_retx(h, pusch_slot, pusch_slot);
 }
 
 dl_harq_process_impl::status_update cell_harq_manager::dl_ack_info(harq_utils::dl_harq_process_impl& h,
@@ -384,10 +438,20 @@ int cell_harq_manager::ul_crc_info(harq_utils::ul_harq_process_impl& h, bool ack
   return ack ? (int)h.prev_tx_params.tbs_bytes : 0;
 }
 
+void dl_harq_process_view::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
+{
+  cell_harq_mng->new_dl_retx(cell_harq_mng->dl.harqs[harq_ref_idx], pdsch_slot, k1, harq_bit_idx);
+}
+
 dl_harq_process_view::status_update dl_harq_process_view::dl_ack_info(mac_harq_ack_report_status ack,
                                                                       std::optional<float>       pucch_snr)
 {
   return cell_harq_mng->dl_ack_info(cell_harq_mng->dl.harqs[harq_ref_idx], ack, pucch_snr);
+}
+
+void ul_harq_process_view::new_retx(slot_point pusch_slot)
+{
+  cell_harq_mng->new_ul_retx(cell_harq_mng->ul.harqs[harq_ref_idx], pusch_slot);
 }
 
 int ul_harq_process_view::ul_crc_info(bool ack)

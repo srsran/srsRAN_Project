@@ -36,14 +36,6 @@ public:
   virtual void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) = 0;
 };
 
-class noop_harq_timeout_notifier : public harq_timeout_notifier
-{
-public:
-  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
-  { /* do nothing */
-  }
-};
-
 namespace harq_utils {
 
 const static unsigned INVALID_HARQ_REF_INDEX = std::numeric_limits<unsigned>::max();
@@ -153,6 +145,7 @@ struct cell_harq_repository {
   void       dealloc_harq(harq_type& h);
   void       handle_ack(harq_type& h, bool ack);
   void       set_pending_retx(harq_type& h);
+  void       handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack);
   void       reserve_ue_harqs(du_ue_index_t ue_idx, unsigned nof_harqs);
   void       destroy_ue_harqs(du_ue_index_t ue_idx);
   void       cancel_retxs(harq_type& h);
@@ -168,8 +161,8 @@ public:
   /// (implementation-defined).
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
-  cell_harq_manager(unsigned                               max_ues  = MAX_NOF_DU_UES,
-                    std::unique_ptr<harq_timeout_notifier> notifier = std::make_unique<noop_harq_timeout_notifier>(),
+  cell_harq_manager(unsigned                               max_ues              = MAX_NOF_DU_UES,
+                    std::unique_ptr<harq_timeout_notifier> notifier             = nullptr,
                     unsigned                               max_ack_wait_timeout = DEFAULT_ACK_TIMEOUT_SLOTS);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
@@ -203,7 +196,7 @@ private:
 
   void destroy_ue(du_ue_index_t ue_idx);
 
-  /// \brief Called on every DL new Tx to allocate an UL HARQ process.
+  /// \brief Called on every DL new Tx to allocate an DL HARQ process.
   harq_utils::dl_harq_process_impl* new_dl_tx(du_ue_index_t ue_idx,
                                               slot_point    pdsch_slot,
                                               unsigned      k1,
@@ -212,6 +205,12 @@ private:
 
   /// \brief Called on every UL new Tx to allocate an UL HARQ process.
   harq_utils::ul_harq_process_impl* new_ul_tx(du_ue_index_t ue_idx, slot_point pusch_slot, unsigned max_harq_nof_retxs);
+
+  /// \brief Called on a new retx of a DL HARQ process.
+  void new_dl_retx(harq_utils::dl_harq_process_impl& h, slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
+
+  /// \brief Called on a new retx of a UL HARQ process.
+  void new_ul_retx(harq_utils::ul_harq_process_impl& h, slot_point pusch_slot);
 
   /// Updates a DL HARQ process given the received HARQ-ACK info.
   harq_utils::dl_harq_process_impl::status_update
@@ -243,6 +242,8 @@ public:
                         "Empty HARQ process created");
   }
 
+  harq_id_t id() const { return cell_harq_mng->dl.harqs[harq_ref_idx].h_id; }
+
   bool is_waiting_ack() const
   {
     return cell_harq_mng->dl.harqs[harq_ref_idx].status == harq_utils::harq_state_t::waiting_ack;
@@ -251,6 +252,8 @@ public:
   {
     return cell_harq_mng->dl.harqs[harq_ref_idx].status == harq_utils::harq_state_t::pending_retx;
   }
+
+  void new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
 
   /// \brief Update the state of the DL HARQ process waiting for an HARQ-ACK.
   /// \param[in] ack HARQ-ACK status received.
@@ -281,6 +284,8 @@ public:
                         "Empty HARQ process created");
   }
 
+  harq_id_t id() const { return cell_harq_mng->ul.harqs[harq_ref_idx].h_id; }
+
   bool is_waiting_ack() const
   {
     return cell_harq_mng->ul.harqs[harq_ref_idx].status == harq_utils::harq_state_t::waiting_ack;
@@ -289,6 +294,8 @@ public:
   {
     return cell_harq_mng->ul.harqs[harq_ref_idx].status == harq_utils::harq_state_t::pending_retx;
   }
+
+  void new_retx(slot_point pusch_slot);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.
@@ -320,12 +327,15 @@ public:
   unique_ue_harq_entity& operator=(const unique_ue_harq_entity&) = delete;
   unique_ue_harq_entity& operator=(unique_ue_harq_entity&& other) noexcept;
 
+  /// Gets the maximum number of HARQ processes a UE can use, which depends on its configuration.
   unsigned nof_dl_harqs() const { return get_dl_ue().harqs.size(); }
   unsigned nof_ul_harqs() const { return get_ul_ue().harqs.size(); }
 
+  /// Checks whether there are free HARQ processes.
   bool has_empty_dl_harqs() const { return not get_dl_ue().free_harq_ids.empty(); }
   bool has_empty_ul_harqs() const { return not get_ul_ue().free_harq_ids.empty(); }
 
+  /// Deallocate UE HARQ entity.
   void reset();
 
   std::optional<dl_harq_process_view> dl_harq(harq_id_t h_id)
