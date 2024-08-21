@@ -97,7 +97,7 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
   unique_rx_buffer buffer = rm_buffer_pool.reserve(slot, id, nof_codeblocks, new_data);
 
   // Skip processing if the buffer is not valid. The pool shall log the context and the reason of the failure.
-  if (!buffer.is_valid()) {
+  if (!buffer) {
     // Report data-related discarded result if shared channel data is present.
     if (pdu.pdu.codeword.has_value()) {
       ul_pusch_results_data discarded_results =

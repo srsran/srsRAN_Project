@@ -333,7 +333,7 @@ int main(int argc, char** argv)
 
       // Reserve buffer.
       unique_rx_buffer buffer = pool->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks, true);
-      TESTASSERT(buffer.is_valid());
+      TESTASSERT(buffer);
 
       // Reset code blocks CRCs.
       buffer.get().reset_codeblocks_crc();

@@ -376,7 +376,7 @@ private:
       // Get a receive buffer.
       unique_rx_buffer buffer =
           buffer_pool->get_pool().reserve(pusch_config.slot, trx_buffer_identifier(rnti, 0), nof_codeblocks, true);
-      report_error_if_not(buffer.is_valid(), "Invalid buffer.");
+      report_error_if_not(buffer, "Invalid buffer.");
 
       // Process PUSCH.
       pusch_processor_notifier_adaptor rx_notifier;
