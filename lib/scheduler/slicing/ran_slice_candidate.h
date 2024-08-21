@@ -55,6 +55,9 @@ public:
                : max_rbs - inst->pusch_rb_count_per_slot[slot_tx.to_uint()];
   }
 
+  /// Returns slot at which PUSCH/PDSCH needs to be scheduled for this slice candidate.
+  slot_point get_slot_tx() const { return slot_tx; }
+
 protected:
   ran_slice_instance* inst    = nullptr;
   unsigned            max_rbs = 0;
