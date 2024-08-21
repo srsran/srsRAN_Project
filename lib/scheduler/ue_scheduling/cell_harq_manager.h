@@ -36,6 +36,14 @@ public:
   virtual void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) = 0;
 };
 
+class noop_harq_timeout_notifier : public harq_timeout_notifier
+{
+public:
+  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
+  { /* do nothing */
+  }
+};
+
 namespace harq_utils {
 
 const static unsigned INVALID_HARQ_REF_INDEX = std::numeric_limits<unsigned>::max();
@@ -156,7 +164,13 @@ struct cell_harq_repository {
 class cell_harq_manager
 {
 public:
-  cell_harq_manager(unsigned max_ues, unsigned max_ack_wait_timeout, std::unique_ptr<harq_timeout_notifier> notifier);
+  /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
+  /// (implementation-defined).
+  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
+
+  cell_harq_manager(unsigned                               max_ues  = MAX_NOF_DU_UES,
+                    std::unique_ptr<harq_timeout_notifier> notifier = std::make_unique<noop_harq_timeout_notifier>(),
+                    unsigned                               max_ack_wait_timeout = DEFAULT_ACK_TIMEOUT_SLOTS);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void slot_indication(slot_point sl_tx);
@@ -168,8 +182,10 @@ public:
   /// Values: {2, 4, 6, 10, 12, 16}.
   /// \param nof_ul_harq_procs Number of UL HARQ processes that gNB can support. This value is implementation-defined
   /// and can up to 16 (there are up to 4 bits for HARQ-Id signalling).
-  unique_ue_harq_entity
-  add_ue(du_ue_index_t ue_idx, rnti_t crnti, unsigned nof_dl_harq_procs, unsigned nof_ul_harq_procs);
+  unique_ue_harq_entity add_ue(du_ue_index_t ue_idx,
+                               rnti_t        crnti,
+                               unsigned      nof_dl_harq_procs = MAX_NOF_HARQS,
+                               unsigned      nof_ul_harq_procs = MAX_NOF_HARQS);
 
   /// Checks whether an UE with the provided ue index exists.
   bool contains(du_ue_index_t ue_idx) const;
@@ -223,6 +239,17 @@ public:
   dl_harq_process_view(cell_harq_manager& cell_harq_mng_, unsigned h_ref_idx) :
     cell_harq_mng(&cell_harq_mng_), harq_ref_idx(h_ref_idx)
   {
+    srsran_sanity_check(cell_harq_mng->dl.harqs[harq_ref_idx].status != harq_utils::harq_state_t::empty,
+                        "Empty HARQ process created");
+  }
+
+  bool is_waiting_ack() const
+  {
+    return cell_harq_mng->dl.harqs[harq_ref_idx].status == harq_utils::harq_state_t::waiting_ack;
+  }
+  bool has_pending_retx() const
+  {
+    return cell_harq_mng->dl.harqs[harq_ref_idx].status == harq_utils::harq_state_t::pending_retx;
   }
 
   /// \brief Update the state of the DL HARQ process waiting for an HARQ-ACK.
@@ -232,6 +259,12 @@ public:
   status_update dl_ack_info(mac_harq_ack_report_status ack, std::optional<float> pucch_snr);
 
   const grant_params& get_grant_params() const { return cell_harq_mng->dl.harqs[harq_ref_idx].prev_tx_params; }
+
+  bool operator==(const dl_harq_process_view& other) const
+  {
+    return cell_harq_mng == other.cell_harq_mng and harq_ref_idx == other.harq_ref_idx;
+  }
+  bool operator!=(const dl_harq_process_view& other) const { return !(*this == other); }
 
 private:
   cell_harq_manager* cell_harq_mng = nullptr;
@@ -244,11 +277,28 @@ public:
   ul_harq_process_view(cell_harq_manager& cell_harq_mng_, unsigned h_ref_idx) :
     cell_harq_mng(&cell_harq_mng_), harq_ref_idx(h_ref_idx)
   {
+    srsran_sanity_check(cell_harq_mng->ul.harqs[harq_ref_idx].status != harq_utils::harq_state_t::empty,
+                        "Empty HARQ process created");
+  }
+
+  bool is_waiting_ack() const
+  {
+    return cell_harq_mng->ul.harqs[harq_ref_idx].status == harq_utils::harq_state_t::waiting_ack;
+  }
+  bool has_pending_retx() const
+  {
+    return cell_harq_mng->ul.harqs[harq_ref_idx].status == harq_utils::harq_state_t::pending_retx;
   }
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(bool ack);
+
+  bool operator==(const ul_harq_process_view& other) const
+  {
+    return cell_harq_mng == other.cell_harq_mng and harq_ref_idx == other.harq_ref_idx;
+  }
+  bool operator!=(const ul_harq_process_view& other) const { return !(*this == other); }
 
 private:
   cell_harq_manager* cell_harq_mng = nullptr;
@@ -258,9 +308,11 @@ private:
 class unique_ue_harq_entity
 {
 public:
+  unique_ue_harq_entity() = default;
   unique_ue_harq_entity(cell_harq_manager* mgr, du_ue_index_t ue_idx, rnti_t crnti_) :
     cell_harq_mgr(mgr), ue_index(ue_idx), crnti(crnti_)
   {
+    (void)crnti;
   }
   ~unique_ue_harq_entity();
   unique_ue_harq_entity(const unique_ue_harq_entity&) = delete;
@@ -273,6 +325,8 @@ public:
 
   bool has_empty_dl_harqs() const { return not get_dl_ue().free_harq_ids.empty(); }
   bool has_empty_ul_harqs() const { return not get_ul_ue().free_harq_ids.empty(); }
+
+  void reset();
 
   std::optional<dl_harq_process_view> dl_harq(harq_id_t h_id)
   {
@@ -318,7 +372,7 @@ private:
 
   cell_harq_manager* cell_harq_mgr = nullptr;
   du_ue_index_t      ue_index      = INVALID_DU_UE_INDEX;
-  rnti_t             crnti;
+  rnti_t             crnti         = rnti_t::INVALID_RNTI;
 };
 
 } // namespace srsran

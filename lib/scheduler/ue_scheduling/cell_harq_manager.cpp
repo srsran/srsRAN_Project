@@ -32,6 +32,9 @@ cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
     ues[i].free_harq_ids.reserve(MAX_NOF_HARQS);
     ues[i].harqs.resize(MAX_NOF_HARQS, INVALID_HARQ_REF_INDEX);
   }
+
+  const unsigned RING_SIZE = 40; // TODO: use function to define this value.
+  harq_timeout_wheel.resize(RING_SIZE);
 }
 
 template <bool IsDl>
@@ -240,7 +243,7 @@ unsigned cell_harq_repository<IsDl>::find_ue_harq_in_state(du_ue_index_t ue_idx,
   for (unsigned h_ref_idx : ues[ue_idx].harqs) {
     if (h_ref_idx != INVALID_HARQ_REF_INDEX) {
       const harq_type& h = harqs[h_ref_idx];
-      if (h.status == harq_state_t::pending_retx) {
+      if (h.status == state) {
         return h_ref_idx;
       }
     }
@@ -254,8 +257,8 @@ template struct harq_utils::cell_harq_repository<false>;
 // Cell HARQ manager.
 
 cell_harq_manager::cell_harq_manager(unsigned                               max_ues,
-                                     unsigned                               max_ack_wait_timeout,
-                                     std::unique_ptr<harq_timeout_notifier> notifier) :
+                                     std::unique_ptr<harq_timeout_notifier> notifier,
+                                     unsigned                               max_ack_wait_timeout) :
   timeout_notifier(std::move(notifier)),
   logger(srslog::fetch_basic_logger("SCHED")),
   dl(max_ues, max_ack_wait_timeout, *timeout_notifier, logger),
@@ -403,7 +406,9 @@ unique_ue_harq_entity::unique_ue_harq_entity(unique_ue_harq_entity&& other) noex
 
 unique_ue_harq_entity& unique_ue_harq_entity::operator=(unique_ue_harq_entity&& other) noexcept
 {
-  cell_harq_mgr->destroy_ue(ue_index);
+  if (cell_harq_mgr != nullptr) {
+    cell_harq_mgr->destroy_ue(ue_index);
+  }
   cell_harq_mgr       = other.cell_harq_mgr;
   ue_index            = other.ue_index;
   other.cell_harq_mgr = nullptr;
@@ -415,6 +420,14 @@ unique_ue_harq_entity::~unique_ue_harq_entity()
 {
   if (cell_harq_mgr != nullptr) {
     cell_harq_mgr->destroy_ue(ue_index);
+  }
+}
+
+void unique_ue_harq_entity::reset()
+{
+  if (cell_harq_mgr != nullptr) {
+    cell_harq_mgr->destroy_ue(ue_index);
+    cell_harq_mgr = nullptr;
   }
 }
 
