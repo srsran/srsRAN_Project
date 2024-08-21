@@ -83,6 +83,9 @@ private:
 
   // Helper functions.
   float bytes_to_kbits(float value);
+  bool  handle_no_meas_data_available(const std::vector<asn1::e2sm::ue_id_c>&        ues,
+                                      std::vector<asn1::e2sm::meas_record_item_c>&   items,
+                                      asn1::e2sm::meas_record_item_c::types::options value_type);
 
   // Measurement getter functions.
   metric_meas_getter_func_t get_cqi;

@@ -250,14 +250,38 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data(const asn1::e2sm::meas_type_c
   return (this->*metric_meas_getter_func)(label_info_list, ues, cell_global_id, items);
 }
 
+bool e2sm_kpm_du_meas_provider_impl::handle_no_meas_data_available(
+    const std::vector<asn1::e2sm::ue_id_c>&        ues,
+    std::vector<asn1::e2sm::meas_record_item_c>&   items,
+    asn1::e2sm::meas_record_item_c::types::options value_type)
+{
+  if (ues.empty()) {
+    // Fill with zero if E2 Node Measurement (Report Style 1)
+    meas_record_item_c meas_record_item;
+    if (value_type == asn1::e2sm::meas_record_item_c::types::options::integer) {
+      meas_record_item.set_integer() = 0;
+    } else if (value_type == asn1::e2sm::meas_record_item_c::types::options::real) {
+      meas_record_item.set_real();
+      meas_record_item.real().value = 0;
+    } else if (value_type == asn1::e2sm::meas_record_item_c::types::options::not_satisfied) {
+      meas_record_item.set_not_satisfied();
+    } else {
+      meas_record_item.set_no_value();
+    }
+    items.push_back(meas_record_item);
+    return true;
+  }
+  return false;
+}
+
 bool e2sm_kpm_du_meas_provider_impl::get_cqi(const asn1::e2sm::label_info_list_l          label_info_list,
                                              const std::vector<asn1::e2sm::ue_id_c>&      ues,
                                              const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                              std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.size() == 0) {
-    return meas_collected;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
 
@@ -277,8 +301,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrp(const asn1::e2sm::label_info_list_
                                               std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.size() == 0) {
-    return meas_collected;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
 
@@ -296,8 +320,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm::label_info_list_
                                               std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.size() == 0) {
-    return meas_collected;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
 
@@ -315,8 +339,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_in
                                                       std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.size() == 0) {
-    return meas_collected;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -344,8 +368,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_in
                                                       std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.size() == 0) {
-    return meas_collected;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -373,8 +397,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(const asn1::e2sm::label
                                                          std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.size() == 0) {
-    return meas_collected;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -411,8 +435,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(const asn1::e2sm::label
                                                          std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.size() == 0) {
-    return meas_collected;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -447,8 +471,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
                                                   std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.size() == 0) {
-    return meas_collected;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
   }
   scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
@@ -475,6 +499,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
                                                                 std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
+  if (ue_aggr_rlc_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+  }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.UEThpDl supports only NO_LABEL label.");
@@ -482,9 +509,6 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
   }
   double                       seconds = 1;
   std::map<uint16_t, unsigned> ue_throughput;
-  if (ue_aggr_rlc_metrics.size() == 0) {
-    return meas_collected;
-  }
   for (auto& ue : ue_aggr_rlc_metrics) {
     size_t num_pdu_bytes_with_segmentation;
     switch (ue.second.front().tx.tx_low.mode) {
@@ -550,16 +574,17 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
                                                                 std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
+  if (ue_aggr_rlc_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+  }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.UEThpUl supports only NO_LABEL label.");
     return meas_collected;
   }
+
   double                       seconds = 1;
   std::map<uint16_t, unsigned> ue_throughput;
-  if (ue_aggr_rlc_metrics.size() == 0) {
-    return meas_collected;
-  }
   for (auto& ue : ue_aggr_rlc_metrics) {
     auto num_pdu_bytes =
         std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
@@ -604,7 +629,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(const asn1::e2sm::l
                                                              std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-
+  if (ue_aggr_rlc_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+  }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.PacketSuccessRateUlgNBUu supports only NO_LABEL label.");
@@ -679,6 +706,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
     std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
+  if (ue_aggr_rlc_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+  }
 
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -757,6 +787,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl(
     std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
+  if (ue_aggr_rlc_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+  }
 
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -813,6 +846,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
     std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
+  if (ue_aggr_rlc_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+  }
 
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -868,11 +904,16 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
                                                                 std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
+  if (ue_aggr_rlc_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
+  }
+
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.RlcSduDelayDl supports only NO_LABEL label.");
     return meas_collected;
   }
+
   if (ues.size() == 0) {
     meas_record_item_c meas_record_item;
     float              av_ue_sdu_latency_us = 0;
@@ -938,11 +979,16 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
                                                                 std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
+  if (ue_aggr_rlc_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
+  }
+
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.RlcDelayUl supports only NO_LABEL label.");
     return meas_collected;
   }
+
   if (ues.size() == 0) {
     meas_record_item_c meas_record_item;
     float              av_ue_sdu_latency_us = 0;
