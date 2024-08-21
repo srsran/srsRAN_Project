@@ -2237,75 +2237,75 @@ asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_
 static void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_periodicity_and_offset_c&   out,
                                                              const srs_config::srs_periodicity_and_offset& cfg)
 {
-  if (cfg.period != srs_config::srs_periodicity_and_offset::periodicity::sl1) {
+  if (cfg.period != srs_periodicity::sl1) {
     srsran_sanity_check(cfg.offset < static_cast<uint16_t>(cfg.period), "Offset must be smaller than the periodicity");
   }
 
   switch (cfg.period) {
-    case srs_config::srs_periodicity_and_offset::periodicity::sl1:
+    case srs_periodicity::sl1:
       out.set_sl1();
       break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl2: {
+    case srs_periodicity::sl2: {
       auto& p_and_o = out.set_sl2();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl4: {
+    case srs_periodicity::sl4: {
       auto& p_and_o = out.set_sl4();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl5: {
+    case srs_periodicity::sl5: {
       auto& p_and_o = out.set_sl5();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl8: {
+    case srs_periodicity::sl8: {
       auto& p_and_o = out.set_sl8();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl10: {
+    case srs_periodicity::sl10: {
       auto& p_and_o = out.set_sl10();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl16: {
+    case srs_periodicity::sl16: {
       auto& p_and_o = out.set_sl16();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl20: {
+    case srs_periodicity::sl20: {
       auto& p_and_o = out.set_sl20();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl32: {
+    case srs_periodicity::sl32: {
       auto& p_and_o = out.set_sl32();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl40: {
+    case srs_periodicity::sl40: {
       auto& p_and_o = out.set_sl40();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl64: {
+    case srs_periodicity::sl64: {
       auto& p_and_o = out.set_sl64();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl80: {
+    case srs_periodicity::sl80: {
       auto& p_and_o = out.set_sl80();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl160: {
+    case srs_periodicity::sl160: {
       auto& p_and_o = out.set_sl160();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl320: {
+    case srs_periodicity::sl320: {
       auto& p_and_o = out.set_sl320();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl640: {
+    case srs_periodicity::sl640: {
       auto& p_and_o = out.set_sl640();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl1280: {
+    case srs_periodicity::sl1280: {
       auto& p_and_o = out.set_sl1280();
       p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::periodicity::sl2560: {
+    case srs_periodicity::sl2560: {
       auto& p_and_o = out.set_sl2560();
       p_and_o       = cfg.offset;
     } break;

@@ -762,8 +762,8 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
           .reference_signal = srs_config::srs_resource::srs_spatial_relation_info::srs_ref_signal{
               .res_id = static_cast<srs_config::srs_res_id>(1), .ul_bwp = static_cast<bwp_id_t>(1)}}});
 
-  dest_pusch_cfg.srs_res.back().periodicity_and_offset.emplace(srs_config::srs_periodicity_and_offset{
-      .period = srsran::srs_config::srs_periodicity_and_offset::periodicity::sl10, .offset = 30});
+  dest_pusch_cfg.srs_res.back().periodicity_and_offset.emplace(
+      srs_config::srs_periodicity_and_offset{.period = srsran::srs_periodicity::sl10, .offset = 30});
 
   // Release.
   dest_pusch_cfg.srs_res.erase(dest_pusch_cfg.srs_res.begin());

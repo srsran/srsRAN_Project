@@ -12,6 +12,8 @@
 
 #include "srsran/ran/alpha.h"
 #include "srsran/ran/csi_rs/csi_rs_id.h"
+#include "srsran/ran/ssb_configuration.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
 #include <variant>
 
 namespace srsran {
@@ -31,6 +33,26 @@ enum srs_nof_symbols : uint8_t {
   n1 = 1,
   n2 = 2,
   n4 = 4,
+};
+
+enum class srs_periodicity : uint16_t {
+  sl1    = 1,
+  sl2    = 2,
+  sl4    = 4,
+  sl5    = 5,
+  sl8    = 6,
+  sl10   = 10,
+  sl16   = 16,
+  sl20   = 20,
+  sl32   = 32,
+  sl40   = 40,
+  sl64   = 64,
+  sl80   = 80,
+  sl160  = 160,
+  sl320  = 320,
+  sl640  = 640,
+  sl1280 = 1280,
+  sl2560 = 2560
 };
 
 /// Used to configure Sounding Reference Signal transmissions or to configure Sounding Reference Signal
@@ -150,28 +172,8 @@ struct srs_config {
   /// \brief Periodicity and slot offset for a SRS resource, as per \c SRS-PeriodicityAndOffset, TS 38.331,
   /// \c SRS-resource.
   struct srs_periodicity_and_offset {
-    enum class periodicity : uint16_t {
-      sl1    = 1,
-      sl2    = 2,
-      sl4    = 4,
-      sl5    = 5,
-      sl8    = 6,
-      sl10   = 10,
-      sl16   = 16,
-      sl20   = 20,
-      sl32   = 32,
-      sl40   = 40,
-      sl64   = 64,
-      sl80   = 80,
-      sl160  = 160,
-      sl320  = 320,
-      sl640  = 640,
-      sl1280 = 1280,
-      sl2560 = 2560
-    };
-
     /// SRS period, in slots.
-    periodicity period;
+    srs_periodicity period;
     /// Offset, Values {0,..,period_slots-1}.
     uint16_t offset;
 
@@ -274,10 +276,10 @@ struct srs_config {
     uint8_t freq_domain_pos;
     /// \c freqDomainShift, as per TS 38.331, "SRS-Resource", or \f$n_{shift}\f$, as per TS 38.211, Section 6.4.1.4.3.
     /// Values {0,...,268}.
-    uint16_t                  freq_domain_shift;
-    frequency_hopping         freq_hop;
+    uint16_t                      freq_domain_shift;
+    frequency_hopping             freq_hop;
     srs_group_or_sequence_hopping grp_or_seq_hop;
-    srs_resource_type         res_type;
+    srs_resource_type             res_type;
     /// Set/Valid only if resource type is "semi-persistent" or "periodic".
     std::optional<srs_periodicity_and_offset> periodicity_and_offset;
     /// Sequence ID used to initialize pseudo random group and sequence hopping. Values {0,...,1023}.
