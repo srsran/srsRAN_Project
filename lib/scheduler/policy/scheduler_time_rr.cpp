@@ -329,6 +329,7 @@ static alloc_result alloc_ul_ue(const slice_ue&         u,
                                 bool                    schedule_sr_only,
                                 srslog::basic_logger&   logger,
                                 ran_slice_id_t          slice_id,
+                                slot_point              pusch_slot,
                                 std::optional<unsigned> ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   unsigned pending_newtx_bytes = 0;
@@ -358,7 +359,7 @@ static alloc_result alloc_ul_ue(const slice_ue&         u,
 
     // Iterate through allocation parameter candidates.
     for (const ul_harq_process* h_ul : harq_candidates) {
-      ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id};
+      ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id, pusch_slot};
       if (not is_retx) {
         grant.recommended_nof_bytes = pending_newtx_bytes;
         grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
@@ -416,9 +417,6 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
         };
     result           = round_robin_apply(ues, next_dl_ue_index, drb_newtx_ue_function);
     next_dl_ue_index = result.first;
-    if (result.second == alloc_status::skip_slot) {
-      return;
-    }
   }
 }
 
@@ -426,9 +424,10 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_resource_grid_view& res_grid,
                                  ul_ran_slice_candidate&      slice_candidate)
 {
-  const slice_ue_repository& ues      = slice_candidate.get_slice_ues();
-  const unsigned             max_rbs  = slice_candidate.remaining_rbs();
-  const ran_slice_id_t       slice_id = slice_candidate.id();
+  const slice_ue_repository& ues        = slice_candidate.get_slice_ues();
+  const unsigned             max_rbs    = slice_candidate.remaining_rbs();
+  const ran_slice_id_t       slice_id   = slice_candidate.id();
+  const slot_point           pusch_slot = slice_candidate.get_slot_tx();
 
   if (ues.empty() or max_rbs == 0) {
     // No UEs to be scheduled or if there are no RBs to be scheduled in slice.
@@ -439,9 +438,11 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, max_rbs);
   // First, schedule UEs with pending SR.
-  auto sr_ue_function = [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot, slice_id](const slice_ue& u) {
-    return alloc_ul_ue(u, pusch_alloc, false, true, logger, slice_id, ul_new_tx_max_nof_rbs_per_ue_per_slot);
-  };
+  auto sr_ue_function =
+      [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot, slice_id, pusch_slot](const slice_ue& u) {
+        return alloc_ul_ue(
+            u, pusch_alloc, false, true, logger, slice_id, pusch_slot, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+      };
   auto result      = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
   next_ul_ue_index = result.first;
   if (result.second == alloc_status::skip_slot) {
@@ -449,8 +450,8 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 
   // Second, schedule UEs with re-transmissions.
-  auto data_retx_ue_function = [this, &pusch_alloc, slice_id](const slice_ue& u) {
-    return alloc_ul_ue(u, pusch_alloc, true, false, logger, slice_id);
+  auto data_retx_ue_function = [this, &pusch_alloc, slice_id, pusch_slot](const slice_ue& u) {
+    return alloc_ul_ue(u, pusch_alloc, true, false, logger, slice_id, pusch_slot);
   };
   result           = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
   next_ul_ue_index = result.first;
@@ -461,13 +462,11 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   // Then, schedule UEs with new transmissions.
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     auto data_tx_ue_function =
-        [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot, slice_id](const slice_ue& u) {
-          return alloc_ul_ue(u, pusch_alloc, false, false, logger, slice_id, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+        [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot, slice_id, pusch_slot](const slice_ue& u) {
+          return alloc_ul_ue(
+              u, pusch_alloc, false, false, logger, slice_id, pusch_slot, ul_new_tx_max_nof_rbs_per_ue_per_slot);
         };
     result           = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
     next_ul_ue_index = result.first;
-    if (result.second == alloc_status::skip_slot) {
-      return;
-    }
   }
 }
