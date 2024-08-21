@@ -28,7 +28,7 @@ public:
   slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_);
 
   /// Reset the state of the slices.
-  void slot_indication();
+  void slot_indication(slot_point slot_tx);
 
   /// Update the state of the slice with the provided UE configs.
   void add_ue(du_ue_index_t ue_idx);
@@ -66,16 +66,19 @@ private:
     }
 
     /// Determines the slice candidate priority.
-    priority_type get_prio(bool is_dl, slot_count_type current_slot_count, bool slice_resched) const;
+    priority_type
+    get_prio(bool is_dl, slot_count_type current_slot_count, bool slice_resched, slot_point slot_tx) const;
   };
 
   struct slice_candidate_context {
     ran_slice_id_t     id;
     priority_type      prio;
     interval<unsigned> rb_lims;
+    /// Slot at which PUSCH/PDSCH needs to be scheduled for this slice candidate.
+    slot_point slot_tx;
 
-    slice_candidate_context(ran_slice_id_t id_, priority_type prio_, interval<unsigned> rb_lims_) :
-      id(id_), prio(prio_), rb_lims(rb_lims_)
+    slice_candidate_context(ran_slice_id_t id_, priority_type prio_, interval<unsigned> rb_lims_, slot_point slot_tx_) :
+      id(id_), prio(prio_), rb_lims(rb_lims_), slot_tx(slot_tx_)
     {
     }
 
@@ -121,6 +124,10 @@ private:
   srslog::basic_logger&     logger;
 
   ue_repository& ues;
+
+  /// Vector circularly indexed by slot with the list of applicable PUSCH time domain resources per slot.
+  /// NOTE: The list would be empty for UL slots.
+  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> valid_pusch_td_list_per_slot;
 
   std::vector<ran_slice_sched_context> slices;
 

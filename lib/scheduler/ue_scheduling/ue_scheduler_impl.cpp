@@ -48,7 +48,7 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
   }
 
   // Update slice context and compute slice priorities.
-  cells[cell_index]->slice_sched.slot_indication();
+  cells[cell_index]->slice_sched.slot_indication(slot_tx);
 
   // Perform round-robin prioritization of UL and DL scheduling. This gives unfair preference to DL over UL. This is
   // done to avoid the issue of sending wrong DAI value in DCI format 0_1 to UE while the PDSCH is allocated

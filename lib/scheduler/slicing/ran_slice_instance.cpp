@@ -17,12 +17,16 @@ ran_slice_instance::ran_slice_instance(ran_slice_id_t                 id_,
                                        const slice_rrm_policy_config& cfg_) :
   id(id_), cell_cfg(&cell_cfg_), cfg(cfg_)
 {
+  std::fill(pusch_rb_count_per_slot.begin(), pusch_rb_count_per_slot.end(), 0);
 }
 
-void ran_slice_instance::slot_indication()
+void ran_slice_instance::slot_indication(slot_point slot_tx)
 {
   pdsch_rb_count = 0;
-  pusch_rb_count = 0;
+  // Clear RB count in previous slots.
+  for (unsigned count = 0; count < nof_slots_to_clear; ++count) {
+    pusch_rb_count_per_slot[(slot_tx - 1 - count).to_uint()] = 0;
+  }
 }
 
 void ran_slice_instance::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)

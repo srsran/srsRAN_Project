@@ -67,7 +67,7 @@ protected:
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
     grid_alloc.slot_indication(next_slot);
-    slice_sched.slot_indication();
+    slice_sched.slot_indication(next_slot);
 
     res_grid.slot_indication(next_slot);
     pdcch_alloc.slot_indication(next_slot);

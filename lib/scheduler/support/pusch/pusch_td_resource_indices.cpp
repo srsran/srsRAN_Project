@@ -22,6 +22,12 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
 {
   // Compute list of PUSCH time domain resource index list relevant for the PUSCH slot.
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list;
+  if (pusch_time_domain_list.empty()) {
+    return pusch_td_res_index_list;
+  }
+  // [Implementation-defined] Default PUSCH time domain resource index to use if no valid PUSCH time domain resource is
+  // found.
+  const unsigned default_pusch_td_res_index = 0;
 
   std::optional<unsigned> nof_full_ul_slots = std::nullopt;
   std::optional<unsigned> nof_full_dl_slots = std::nullopt;
@@ -51,6 +57,10 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
         pusch_td_res_index_list.push_back(std::distance(pusch_time_domain_list.begin(), &pusch_td_res));
       }
     }
+  }
+
+  if (pusch_td_res_index_list.empty()) {
+    pusch_td_res_index_list.push_back(default_pusch_td_res_index);
   }
 
   return pusch_td_res_index_list;
