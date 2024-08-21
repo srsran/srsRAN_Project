@@ -89,6 +89,13 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
   check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_oran_metrics());
 }
 
+e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
+                                                               int                            max_rlc_metrics_) :
+  e2sm_kpm_du_meas_provider_impl(f1ap_ue_id_translator_)
+{
+  max_rlc_metrics = max_rlc_metrics_;
+}
+
 bool e2sm_kpm_du_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metric_defs)
 {
   std::string metric_name;

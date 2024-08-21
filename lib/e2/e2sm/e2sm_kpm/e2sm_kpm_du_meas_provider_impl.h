@@ -30,6 +30,8 @@ public:
   // constructor takes logger as argument
   e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator);
 
+  e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator, int max_rlc_metrics_);
+
   ~e2sm_kpm_du_meas_provider_impl() = default;
 
   /// scheduler_ue_metrics_notifier functions.
@@ -105,7 +107,7 @@ private:
   unsigned                                           nof_cell_prbs;
   std::vector<scheduler_ue_metrics>                  last_ue_metrics;
   std::map<uint16_t, std::deque<rlc_metrics>>        ue_aggr_rlc_metrics;
-  const size_t                                       max_rlc_metrics = 30;
+  size_t                                             max_rlc_metrics = 1;
   std::map<std::string, e2sm_kpm_supported_metric_t> supported_metrics;
 };
 
