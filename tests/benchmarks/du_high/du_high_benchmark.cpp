@@ -216,6 +216,11 @@ static void print_args(const bench_params& params)
 class dummy_metrics_handler : public scheduler_metrics_notifier
 {
 public:
+  dummy_metrics_handler() :
+    logger(srslog::fetch_basic_logger("METRICS")), pending_metrics(logger.info.enabled() ? 128 : 1)
+  {
+  }
+
   void report_metrics(const scheduler_cell_metrics& metrics) override
   {
     unsigned sum_dl_bs = 0;
@@ -223,11 +228,37 @@ public:
       sum_dl_bs += ue.dl_bs;
     }
     tot_dl_bs.store(sum_dl_bs, std::memory_order_relaxed);
+
+    if (logger.info.enabled()) {
+      auto metrics_copy = metrics;
+      pending_metrics.try_push(std::move(metrics_copy));
+    }
   }
+
+  void log()
+  {
+    if (not logger.info.enabled()) {
+      return;
+    }
+    scheduler_cell_metrics metrics;
+    while (pending_metrics.try_pop(metrics)) {
+      fmt::format_to(fmtbuf, "Latency=[{}]", fmt::join(metrics.latency_histogram, ", "));
+      logger.info("cell metrics: {}\n", to_c_str(fmtbuf));
+      fmtbuf.clear();
+    }
+  }
+
+  srslog::basic_logger& logger;
 
   // This metric is used by benchmark to determine whether to push more traffic to DU F1-U. Therefore, it needs to be
   // protected.
   std::atomic<unsigned> tot_dl_bs{0};
+
+  concurrent_queue<scheduler_cell_metrics,
+                   concurrent_queue_policy::lockfree_mpmc,
+                   srsran::concurrent_queue_wait_policy::non_blocking>
+                     pending_metrics;
+  fmt::memory_buffer fmtbuf;
 };
 
 /// \brief Simulator of the CU-CP from the perspective of the DU. This class should reply to the F1AP messages
@@ -740,6 +771,9 @@ public:
 
     // Process PHY metrics.
     sim_phy.process_results();
+
+    // Run metrics logger.
+    metrics_handler.log();
 
     // Advance slot.
     ++next_sl_tx;
@@ -1264,6 +1298,7 @@ int main(int argc, char** argv)
   srslog::fetch_basic_logger("DU-F1-U").set_level(test_log_level);
   srslog::fetch_basic_logger("UE-MNG").set_level(test_log_level);
   srslog::fetch_basic_logger("DU-MNG").set_level(test_log_level);
+  srslog::fetch_basic_logger("METRICS").set_level(srslog::basic_levels::warning);
   srslog::init();
 
   std::string tracing_filename = "";
