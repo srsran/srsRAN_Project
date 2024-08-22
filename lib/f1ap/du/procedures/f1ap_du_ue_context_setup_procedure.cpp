@@ -159,6 +159,11 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
     }
   }
 
+  // > Add UE capabilities information.
+  if (not msg->cu_to_du_rrc_info.ue_cap_rat_container_list.empty()) {
+    du_request.ue_cap_rat_list = msg->cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
+  }
+
   return ue->du_handler.request_ue_context_update(du_request);
 }
 
