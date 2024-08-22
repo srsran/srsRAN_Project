@@ -14,6 +14,11 @@
 #include "srsran/support/format_utils.h"
 #include "fmt/format.h"
 
+#ifdef __aarch64__
+#include <asm/hwcap.h>
+#include <sys/auxv.h>
+#endif // __aarch64__
+
 namespace srsran {
 
 /// CPU feature list.
@@ -47,6 +52,8 @@ enum class cpu_feature {
   ///
   /// NEON is supported if \c __ARM_NEON is defined in compilation time.
   neon,
+  /// CPU supports carry-less multiplication instruction PMULL.
+  pmull,
 #endif // __aarch64__
 };
 
@@ -80,6 +87,8 @@ constexpr const char* to_string(cpu_feature feature)
 #ifdef __aarch64__
     case cpu_feature::neon:
       return "neon";
+    case cpu_feature::pmull:
+      return "pmull";
 #endif // __aarch64__
   }
   return "invalid_cpu_feature";
@@ -121,6 +130,8 @@ inline bool cpu_supports_feature(cpu_feature feature)
     case cpu_feature::neon:
       return true;
 #endif // __ARM_NEON
+    case cpu_feature::pmull:
+      return getauxval(AT_HWCAP) & HWCAP_PMULL;
 #endif // __aarch64__
     default:
       return false;
