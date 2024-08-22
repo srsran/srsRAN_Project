@@ -77,12 +77,15 @@ load retina variables:
 .prepare_test:
   variables:
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
   before_script:
     - |
-      eval K_PATH="\$$KUBECONFIG_VAR_NAME"
       export FORCE_COLOR=1
+      eval K_PATH="\$$KUBECONFIG_VAR_NAME"
       export KUBECONFIG=$K_PATH
 
+      eval K_PATH_EXTRA="\$$KUBECONFIG_VAR_NAME_EXTRA"
+      export KUBECONFIG_EXTRA=$K_PATH_EXTRA
 e2e request and config validation:
   stage: static
   extends:
@@ -123,6 +126,7 @@ e2e request and config validation:
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "20G"
     KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "20G"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
     GROUP: zmq
   tags:
     - "${RETINA_TAG}"
@@ -586,6 +590,7 @@ android b200:
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -600,6 +605,7 @@ android x300:
     MARKERS: "android_hp"
     E2E_LOG_LEVEL: "info"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -619,6 +625,7 @@ viavi:
     MARKERS: "viavi"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   needs:
@@ -647,6 +654,7 @@ viavi-debug:
     MARKERS: "viavi_debug"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   allow_failure: true
