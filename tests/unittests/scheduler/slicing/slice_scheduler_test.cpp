@@ -355,6 +355,7 @@ TEST_F(rb_ratio_slice_scheduler_test,
   // Original slice is selected again, now using maxRB ratio as the remaining RBs.
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_SLICE_RB - MIN_SLICE_RB);
+  next_dl_slice->store_grant(MAX_SLICE_RB - MIN_SLICE_RB);
 
   // No more slices to schedule.
   next_dl_slice = slice_sched.get_next_dl_candidate();
@@ -374,7 +375,7 @@ TEST_F(rb_ratio_slice_scheduler_test,
   next_dl_slice = slice_sched.get_next_dl_candidate();
   next_dl_slice->store_grant(MIN_SLICE_RB);
   next_dl_slice = slice_sched.get_next_dl_candidate();
-  next_dl_slice = slice_sched.get_next_dl_candidate();
+  next_dl_slice->store_grant(MAX_SLICE_RB - MIN_SLICE_RB);
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_FALSE(next_dl_slice.has_value());
 
@@ -390,6 +391,7 @@ TEST_F(rb_ratio_slice_scheduler_test,
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_SLICE_RB - MIN_SLICE_RB);
+  next_dl_slice->store_grant(MAX_SLICE_RB - MIN_SLICE_RB);
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_FALSE(next_dl_slice.has_value());
 }
