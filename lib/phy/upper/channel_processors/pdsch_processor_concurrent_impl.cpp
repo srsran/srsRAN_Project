@@ -237,14 +237,18 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
   cb_counter      = 0;
 
   auto async_task = [this]() {
-    trace_point process_pdsch_tp = l1_tracer.now();
-
     // Select codeblock processor.
     pdsch_codeblock_processor& cb_processor = cb_processor_pool->get();
 
     // For each segment within the batch.
     unsigned absolute_i_cb;
     while ((absolute_i_cb = cb_counter.fetch_add(1)) < nof_cb) {
+      trace_point process_pdsch_tp = l1_tracer.now();
+
+      // As the last codeblock has a higher overhead due to the transport block CRC calculation. Reverse codeblock order
+      // to process first the last CB.
+      absolute_i_cb = nof_cb - 1 - absolute_i_cb;
+
       // Limit the codeblock number of information bits.
       units::bits nof_info_bits = std::min<units::bits>(cb_info_bits, tbs - cb_info_bits * absolute_i_cb);
 
@@ -270,6 +274,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
 
       // Map into the resource grid.
       mapper->map(buffer, allocation, reserved, precoding, re_offset[absolute_i_cb]);
+
+      l1_tracer << trace_event((absolute_i_cb == (nof_cb - 1)) ? "Last CB" : "CB", process_pdsch_tp);
     }
 
     // Decrement code block batch counter.
@@ -280,8 +286,6 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
         notifier->on_finish_processing();
       }
     }
-
-    l1_tracer << trace_event("CB batch", process_pdsch_tp);
   };
 
   // Spawn tasks.
