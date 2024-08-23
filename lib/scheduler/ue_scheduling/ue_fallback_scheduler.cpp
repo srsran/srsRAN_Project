@@ -542,14 +542,14 @@ static dci_dl_rnti_config_type get_dci_type(const ue& u, const dl_harq_process& 
 
 // Helper to allocate common (and optionally dedicated) PUCCH.
 static std::pair<std::optional<unsigned>, std::optional<uint8_t>>
-allocate_common_pucch(ue&                         u,
-                      cell_resource_allocator&    res_alloc,
-                      pucch_allocator&            pucch_alloc,
-                      const pdcch_dl_information& pdcch_info,
-                      span<const uint8_t>         k1_values,
-                      slot_point                  pdsch_slot,
-                      slot_point                  min_ack_slot,
-                      bool                        common_and_ded_alloc)
+allocate_ue_fallback_pucch(ue&                         u,
+                           cell_resource_allocator&    res_alloc,
+                           pucch_allocator&            pucch_alloc,
+                           const pdcch_dl_information& pdcch_info,
+                           span<const uint8_t>         k1_values,
+                           slot_point                  pdsch_slot,
+                           slot_point                  min_ack_slot,
+                           bool                        common_and_ded_alloc)
 {
   const unsigned pdsch_delay = pdsch_slot - res_alloc.slot_tx();
 
@@ -700,14 +700,14 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                      u,
   // scheduler doesn't know exactly when the UE will start transmitting SRs and CSIs.
   // - If the UE object in the scheduler doesn't have a complete configuration, don't use the PUCCH ded. resources.
   const bool use_common_and_ded_res     = is_retx and u.ue_cfg_dedicated()->is_ue_cfg_complete();
-  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(u,
-                                                                res_alloc,
-                                                                pucch_alloc,
-                                                                *pdcch,
-                                                                dci_1_0_k1_values,
-                                                                pdsch_alloc.slot,
-                                                                most_recent_ack_slot,
-                                                                use_common_and_ded_res);
+  auto [pucch_res_indicator, chosen_k1] = allocate_ue_fallback_pucch(u,
+                                                                     res_alloc,
+                                                                     pucch_alloc,
+                                                                     *pdcch,
+                                                                     dci_1_0_k1_values,
+                                                                     pdsch_alloc.slot,
+                                                                     most_recent_ack_slot,
+                                                                     use_common_and_ded_res);
 
   if (not pucch_res_indicator.has_value()) {
     if (chosen_k1.has_value()) {
@@ -910,14 +910,14 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
   // - If the UE object in the scheduler doesn't have a complete configuration (i.e., when SRB0 is for RRC Reject),
   // don't use the PUCCH ded. resources.
   const bool use_common_and_ded_res     = is_retx and u.ue_cfg_dedicated()->is_ue_cfg_complete();
-  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(u,
-                                                                res_alloc,
-                                                                pucch_alloc,
-                                                                *pdcch,
-                                                                dci_1_0_k1_values,
-                                                                pdsch_alloc.slot,
-                                                                most_recent_ack_slot,
-                                                                use_common_and_ded_res);
+  auto [pucch_res_indicator, chosen_k1] = allocate_ue_fallback_pucch(u,
+                                                                     res_alloc,
+                                                                     pucch_alloc,
+                                                                     *pdcch,
+                                                                     dci_1_0_k1_values,
+                                                                     pdsch_alloc.slot,
+                                                                     most_recent_ack_slot,
+                                                                     use_common_and_ded_res);
   if (not pucch_res_indicator.has_value()) {
     if (chosen_k1.has_value()) {
       // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
@@ -1128,14 +1128,14 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
   // function that handles PUCCH dedicated resource), don't use the PUCCH dedicated resources.
   const bool use_common_and_ded_res =
       u.ue_cfg_dedicated()->is_ue_cfg_complete() and (dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx);
-  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(u,
-                                                                res_alloc,
-                                                                pucch_alloc,
-                                                                *pdcch,
-                                                                dci_1_0_k1_values,
-                                                                pdsch_alloc.slot,
-                                                                most_recent_ack_slot,
-                                                                use_common_and_ded_res);
+  auto [pucch_res_indicator, chosen_k1] = allocate_ue_fallback_pucch(u,
+                                                                     res_alloc,
+                                                                     pucch_alloc,
+                                                                     *pdcch,
+                                                                     dci_1_0_k1_values,
+                                                                     pdsch_alloc.slot,
+                                                                     most_recent_ack_slot,
+                                                                     use_common_and_ded_res);
   if (not pucch_res_indicator.has_value()) {
     if (chosen_k1.has_value()) {
       logger.debug("rnti={}: Failed to allocate PDSCH for SRB1 for slot={}. Cause: No space in PUCCH",
