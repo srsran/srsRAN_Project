@@ -146,11 +146,8 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
 inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 {
   srs_cu_cp::cu_cp_configuration cfg{};
-  // Slices
-  s_nssai_t slice_cfg;
-  slice_cfg.sst = 1;
-  cfg.node.supported_tas.push_back(
-      srsran::srs_cu_cp::supported_tracking_area{7, plmn_identity::test_value(), {slice_cfg}});
+  // Supported TAs (this default entry will be removed if supported TAs are provided in the config)
+  cfg.node.supported_tas.push_back(srsran::srs_cu_cp::supported_tracking_area{7, plmn_identity::test_value(), {{1}}});
   // DRBs
   cfg.bearers.drb_config = config_helpers::make_default_cu_cp_qos_config_list();
   // Security.

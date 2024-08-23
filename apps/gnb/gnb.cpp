@@ -234,10 +234,16 @@ int main(int argc, char** argv)
     autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
 
     // Create the supported tracking areas list from the cells.
+    // These will only be used if no supported TAs are provided in the CU-CP configuration.
     std::vector<cu_cp_unit_supported_ta_item> supported_tas;
     supported_tas.reserve(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
     for (const auto& cell : du_unit_cfg.du_high_cfg.config.cells_cfg) {
-      supported_tas.push_back({cell.cell.tac, cell.cell.plmn, {}});
+      // Make sure supported tracking areas are unique.
+      if (std::find_if(supported_tas.begin(), supported_tas.end(), [&cell](const auto& ta) {
+            return ta.tac == cell.cell.tac && ta.plmn == cell.cell.plmn;
+          }) == supported_tas.end()) {
+        supported_tas.push_back({cell.cell.tac, cell.cell.plmn, {{1}}});
+      }
     }
 
     // If test mode is enabled, we auto-enable "no_core" option

@@ -328,7 +328,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.node.gnb_id        = cu_cfg.gnb_id;
   out_cfg.node.ran_node_name = cu_cfg.ran_node_name;
 
-  srsran_assert(!cu_cfg.supported_tas.empty(), "Supported tracking area list is empty");
+  if (!cu_cfg.supported_tas.empty()) {
+    // Clear default supported TAs if any are provided in the config.
+    out_cfg.node.supported_tas.clear();
+  }
   for (const auto& supported_ta : cu_cfg.supported_tas) {
     expected<plmn_identity> plmn = plmn_identity::parse(supported_ta.plmn);
     srsran_assert(plmn.has_value(), "Invalid PLMN: {}", supported_ta.plmn);

@@ -441,10 +441,40 @@ static bool validate_amf_appconfig(const cu_cp_unit_amf_config& config)
   return true;
 }
 
+/// Validates the given supported tracking areas configuration. Returns true on success, otherwise false.
+static bool validate_supported_tas_appconfig(const std::vector<cu_cp_unit_supported_ta_item>& config)
+{
+  if (config.size() > 1) {
+    for (unsigned outer_ta_idx = 0; outer_ta_idx < config.size(); outer_ta_idx++) {
+      for (unsigned inner_ta_idx = outer_ta_idx + 1; inner_ta_idx < config.size(); inner_ta_idx++) {
+        if (config[outer_ta_idx].plmn == config[inner_ta_idx].plmn &&
+            config[outer_ta_idx].tac == config[inner_ta_idx].tac) {
+          fmt::print("Supported tracking areas must be unique\n");
+          return false;
+        }
+      }
+    }
+  }
+
+  for (const auto& ta : config) {
+    if (ta.tai_slice_support_list.empty()) {
+      fmt::print("TAI slice support list for PLMN={} and TAC={} is empty\n", ta.plmn, ta.tac);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /// Validates the given CU-CP configuration. Returns true on success, otherwise false.
 static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_config& config)
 {
   if (!validate_amf_appconfig(config.amf_cfg)) {
+    return false;
+  }
+
+  // validate supported tracking area config
+  if (!validate_supported_tas_appconfig(config.supported_tas)) {
     return false;
   }
 

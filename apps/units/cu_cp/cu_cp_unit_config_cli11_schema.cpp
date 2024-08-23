@@ -523,7 +523,7 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
 
 static std::vector<cu_cp_unit_supported_ta_item> auto_generate_supported_tas()
 {
-  std::vector<cu_cp_unit_supported_ta_item> vec = {{7, "00101", {}}};
+  std::vector<cu_cp_unit_supported_ta_item> vec = {{7, "00101", {{1}}}};
   return vec;
 }
 
