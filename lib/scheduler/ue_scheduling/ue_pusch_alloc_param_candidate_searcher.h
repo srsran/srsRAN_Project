@@ -157,13 +157,15 @@ public:
                                           du_cell_index_t        cell_index,
                                           ul_harq_process&       ul_harq_,
                                           slot_point             pdcch_slot_,
-                                          span<const slot_point> slots_with_no_pusch_space_) :
+                                          span<const slot_point> slots_with_no_pusch_space_,
+                                          slot_point             pusch_slot_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
     slots_with_no_pusch_space(slots_with_no_pusch_space_),
     ul_harq(ul_harq_),
     is_retx(not ul_harq.empty()),
-    pdcch_slot(pdcch_slot_)
+    pdcch_slot(pdcch_slot_),
+    pusch_slot(pusch_slot_)
   {
     // Cell is not part of UE configured cells.
     if (ue_cc == nullptr) {
@@ -233,11 +235,10 @@ private:
     }
 
     // Check whether PUSCH Time Domain resource index is valid.
-    if (current.time_res >= (*current.ss_it)->pusch_time_domain_list.size()) {
+    if ((current.time_res >= (*current.ss_it)->pusch_time_domain_list.size()) or
+        (pdcch_slot + current.pusch_td_res().k2 != pusch_slot)) {
       return false;
     }
-
-    const slot_point pusch_slot = pdcch_slot + current.pusch_td_res().k2;
 
     // Check whether PUSCH slot is UL enabled.
     if (not ue_cc->cfg().cell_cfg_common.is_ul_enabled(pusch_slot)) {
@@ -310,8 +311,10 @@ private:
   // RNTI type used to generate ss_candidate_list.
   std::optional<dci_ul_rnti_config_type> preferred_rnti_type;
 
-  // PDCCH slot point used to verify if the PUSCH fits a UL slot.
+  // Slot at which UL PDCCH is scheduled if valid PUSCH allocation candidate is found.
   slot_point pdcch_slot;
+  // Slot at which PUSCH needs to be scheduled.
+  slot_point pusch_slot;
 };
 
 } // namespace srsran

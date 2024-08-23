@@ -554,9 +554,11 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
     return {alloc_status::invalid_params};
   }
 
+  slot_point pusch_slot = grant.pusch_slot;
+
   // Create PUSCH param candidate search object.
   ue_pusch_alloc_param_candidate_searcher candidates{
-      u, grant.cell_index, h_ul, pdcch_alloc.slot, slots_with_no_pusch_space};
+      u, grant.cell_index, h_ul, pdcch_alloc.slot, slots_with_no_pusch_space, pusch_slot};
   if (candidates.is_empty()) {
     // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
     return {alloc_status::skip_ue};
@@ -582,8 +584,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
     // transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be scheduled to
     // transmit a PUSCH starting earlier than the end of the first PUSCH by a PDCCH that ends later than symbol i".
     if (ue_cc->last_pusch_allocated_slot.valid() and pusch_alloc.slot <= ue_cc->last_pusch_allocated_slot) {
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_ue};
     }
 
     // Check if there is space in PUSCH resource grid.
@@ -591,8 +592,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
         std::find(slots_with_no_pusch_space.begin(), slots_with_no_pusch_space.end(), pusch_alloc.slot) !=
         slots_with_no_pusch_space.end();
     if (is_pusch_full) {
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_slot};
     }
 
     if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
@@ -602,8 +602,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
           u.crnti,
           pusch_alloc.slot,
           final_k2);
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_slot};
     }
 
     // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will
@@ -625,8 +624,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
                     pusch_alloc.slot,
                     expert_cfg.max_puschs_per_slot);
       }
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_slot};
     }
 
     // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common
@@ -637,8 +635,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
                    u.ue_index,
                    u.crnti,
                    pusch_alloc.slot);
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_ue};
     }
 
     const unsigned start_ul_symbols =
@@ -664,16 +661,14 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
                    pusch_alloc.slot,
                    start_rb,
                    end_rb);
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_slot};
     }
 
     const crb_interval ul_crb_lims = {start_rb, end_rb};
     const prb_bitmap   used_crbs   = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, pusch_td_cfg.symbols);
     if (used_crbs.all()) {
       slots_with_no_pusch_space.push_back(pusch_alloc.slot);
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_slot};
     }
 
     // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
@@ -733,8 +728,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
                    u.ue_index,
                    u.crnti,
                    pusch_alloc.slot);
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_slot};
     }
 
     // In case of Retx, the #CRBs need to stay the same.
@@ -745,8 +739,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
           u.crnti,
           pusch_alloc.slot,
           h_ul.id);
-      // Try next candidate.
-      continue;
+      return {alloc_status::skip_ue};
     }
 
     // Verify there is no RB collision.
@@ -758,8 +751,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
                      pusch_alloc.slot,
                      crbs.start(),
                      crbs.stop());
-      // Try next candidate.
-      continue;
+      return {alloc_status::invalid_params};
     }
 
     const aggregation_level aggr_lvl =

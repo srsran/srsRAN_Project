@@ -44,6 +44,15 @@ protected:
     ue_cc = &ue_ptr->get_cell(to_ue_cell_index(0));
   }
 
+  slot_point get_next_ul_slot(slot_point start_slot)
+  {
+    slot_point next_ul_slot = start_slot + sched_cfg.ue.min_k1;
+    while (not cell_cfg.is_fully_ul_enabled(next_ul_slot)) {
+      ++next_ul_slot;
+    }
+    return next_ul_slot;
+  }
+
   void run_slot() { next_slot++; }
 
   const scheduler_expert_config        sched_cfg = config_helpers::make_default_scheduler_expert_config();
@@ -63,11 +72,12 @@ protected:
 
 TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_searchspaces_in_ue_dedicated_cfg_is_considered)
 {
-  const harq_id_t                        h_id    = to_harq_id(0);
+  const harq_id_t                        h_id = to_harq_id(0);
+  const slot_point                       pdcch_slot{0, 0};
   span<const search_space_configuration> ss_list = ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces;
 
   ue_pdsch_alloc_param_candidate_searcher dl_searcher(
-      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.dl_harq(h_id), slot_point{0, 0}, {});
+      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.dl_harq(h_id), pdcch_slot, {});
   ASSERT_TRUE(not dl_searcher.is_empty());
   for (const auto& candidate : dl_searcher) {
     bool ss_present_in_ue_ded_cfg =
@@ -77,8 +87,8 @@ TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_searchspaces_in_ue_ded
     ASSERT_TRUE(ss_present_in_ue_ded_cfg);
   }
   ue_pusch_alloc_param_candidate_searcher ul_searcher(
-      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), slot_point{0, 0}, {});
-  ASSERT_TRUE(not dl_searcher.is_empty());
+      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), pdcch_slot, {}, get_next_ul_slot(pdcch_slot));
+  ASSERT_TRUE(not ul_searcher.is_empty());
   for (const auto& candidate : ul_searcher) {
     bool ss_present_in_ue_ded_cfg =
         std::find_if(ss_list.begin(), ss_list.end(), [&candidate](const search_space_configuration& ss_cfg) {
