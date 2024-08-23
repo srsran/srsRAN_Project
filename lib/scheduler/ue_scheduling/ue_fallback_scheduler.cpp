@@ -694,8 +694,21 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                      u,
   }
 
   // Allocate PUCCH resources.
-  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(
-      u, res_alloc, pucch_alloc, *pdcch, dci_1_0_k1_values, pdsch_alloc.slot, most_recent_ack_slot, is_retx);
+  // NOTEs:
+  // - The dedicated resources are needed as, at this point, the UE object in the scheduler (not the actual terminal)
+  // could have a complete configuration; if so, the UCI scheduler can start allocating SRs and CSIs in advance, as the
+  // scheduler doesn't know exactly when the UE will start transmitting SRs and CSIs.
+  // - If the UE object in the scheduler doesn't have a complete configuration, don't use the PUCCH ded. resources.
+  const bool use_common_and_ded_res     = is_retx and u.ue_cfg_dedicated()->is_ue_cfg_complete();
+  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(u,
+                                                                res_alloc,
+                                                                pucch_alloc,
+                                                                *pdcch,
+                                                                dci_1_0_k1_values,
+                                                                pdsch_alloc.slot,
+                                                                most_recent_ack_slot,
+                                                                use_common_and_ded_res);
+
   if (not pucch_res_indicator.has_value()) {
     if (chosen_k1.has_value()) {
       // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
@@ -887,8 +900,24 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
   }
 
   // Allocate PUCCH resources.
-  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(
-      u, res_alloc, pucch_alloc, *pdcch, dci_1_0_k1_values, pdsch_alloc.slot, most_recent_ack_slot, is_retx);
+  // NOTEs:
+  // - The dedicated resources are needed as, at this point, the UE object in the scheduler (not the actual terminal)
+  // could have a complete configuration; if so, (i) the UCI scheduler can start allocating SRs and CSIs in advance, as
+  // the scheduler doesn't know exactly when the UE will start transmitting SRs and CSIs; (ii) if the actual UE has
+  // received the RRCSetup (with configuration) but the GNB doesn't receive an ACK = 1, the UE can use the PUCCH
+  // dedicated resource to ack the RRCSetup retx (as per TS 38.213, Section 9.2.1, "If a UE has dedicated PUCCH resource
+  // configuration, the UE is provided by higher layers with one or more PUCCH resources [...]").
+  // - If the UE object in the scheduler doesn't have a complete configuration (i.e., when SRB0 is for RRC Reject),
+  // don't use the PUCCH ded. resources.
+  const bool use_common_and_ded_res     = is_retx and u.ue_cfg_dedicated()->is_ue_cfg_complete();
+  auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(u,
+                                                                res_alloc,
+                                                                pucch_alloc,
+                                                                *pdcch,
+                                                                dci_1_0_k1_values,
+                                                                pdsch_alloc.slot,
+                                                                most_recent_ack_slot,
+                                                                use_common_and_ded_res);
   if (not pucch_res_indicator.has_value()) {
     if (chosen_k1.has_value()) {
       // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
@@ -1092,7 +1121,13 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
   }
 
   // Allocate PUCCH resources.
-  const bool alloc_common_and_ded_pucch = dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx;
+  // - The dedicated resources are needed as, at this point, the UE object in the scheduler (not the actual terminal)
+  // could have a complete configuration; if so, the UCI scheduler can start allocating SRs and CSIs in advance, as the
+  // scheduler doesn't know exactly when the UE will start transmitting SRs and CSIs.
+  // - If the UE object in the scheduler doesn't have a complete configuration (which is a requirement for any PUCCH
+  // function that handles PUCCH dedicated resource), don't use the PUCCH dedicated resources.
+  const bool use_common_and_ded_res =
+      u.ue_cfg_dedicated()->is_ue_cfg_complete() and (dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx);
   auto [pucch_res_indicator, chosen_k1] = allocate_common_pucch(u,
                                                                 res_alloc,
                                                                 pucch_alloc,
@@ -1100,7 +1135,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
                                                                 dci_1_0_k1_values,
                                                                 pdsch_alloc.slot,
                                                                 most_recent_ack_slot,
-                                                                alloc_common_and_ded_pucch);
+                                                                use_common_and_ded_res);
   if (not pucch_res_indicator.has_value()) {
     if (chosen_k1.has_value()) {
       logger.debug("rnti={}: Failed to allocate PDSCH for SRB1 for slot={}. Cause: No space in PUCCH",
