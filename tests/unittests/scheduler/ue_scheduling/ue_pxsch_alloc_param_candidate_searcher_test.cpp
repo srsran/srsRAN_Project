@@ -97,3 +97,17 @@ TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_searchspaces_in_ue_ded
     ASSERT_TRUE(ss_present_in_ue_ded_cfg);
   }
 }
+
+TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_candidates_for_given_pusch_slot_is_returned)
+{
+  const harq_id_t  h_id = to_harq_id(0);
+  const slot_point pdcch_slot{0, 0};
+  const slot_point pusch_slot = get_next_ul_slot(pdcch_slot);
+
+  ue_pusch_alloc_param_candidate_searcher ul_searcher(
+      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), pdcch_slot, {}, pusch_slot);
+  ASSERT_TRUE(not ul_searcher.is_empty());
+  for (const auto& candidate : ul_searcher) {
+    ASSERT_EQ(pdcch_slot + candidate.pusch_td_res().k2, pusch_slot) << "Candidate is not for the given PUSCH slot";
+  }
+}
