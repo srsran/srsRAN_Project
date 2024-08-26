@@ -362,6 +362,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // PRACH config.
     rach_config_common& rach_cfg                    = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
     rach_cfg.rach_cfg_generic.prach_config_index    = base_cell.prach_cfg.prach_config_index.value();
+    rach_cfg.rach_cfg_generic.ra_resp_window        = base_cell.prach_cfg.ra_resp_window.value();
     rach_cfg.rach_cfg_generic.preamble_trans_max    = base_cell.prach_cfg.preamble_trans_max;
     rach_cfg.rach_cfg_generic.power_ramping_step_db = base_cell.prach_cfg.power_ramping_step_db;
     rach_cfg.msg3_transform_precoder                = cell.cell.pusch_cfg.enable_transform_precoding;

@@ -458,6 +458,9 @@ static YAML::Node build_du_high_prach_section(const du_high_unit_prach_config& c
     node["ports"].push_back(static_cast<unsigned>(id));
   }
   node["ports"].SetStyle(YAML::EmitterStyle::Flow);
+  if (config.ra_resp_window.has_value()) {
+    node["ra_resp_window"] = config.ra_resp_window.value();
+  }
 
   return node;
 }

@@ -516,6 +516,9 @@ struct du_high_unit_prach_config {
   /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
   /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.
   uint8_t nof_cb_preambles_per_ssb = 64;
+  /// RA-Response (MSG2) window length in number of slots. Values: {1, 2, 4, 8, 10, 20, 40, 80}.  If not specified, it
+  /// is automatically derived to be equal to 10ms.
+  std::optional<unsigned> ra_resp_window;
 };
 
 /// Slice scheduling configuration for a cell.
