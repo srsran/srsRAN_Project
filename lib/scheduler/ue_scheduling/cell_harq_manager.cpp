@@ -449,6 +449,11 @@ dl_harq_process_view::status_update dl_harq_process_view::dl_ack_info(mac_harq_a
   return cell_harq_mng->dl_ack_info(cell_harq_mng->dl.harqs[harq_ref_idx], ack, pucch_snr);
 }
 
+void dl_harq_process_view::increment_pucch_counter()
+{
+  ++cell_harq_mng->dl.harqs[harq_ref_idx].pucch_ack_to_receive;
+}
+
 void ul_harq_process_view::new_retx(slot_point pusch_slot)
 {
   cell_harq_mng->new_ul_retx(cell_harq_mng->ul.harqs[harq_ref_idx], pusch_slot);

@@ -160,6 +160,9 @@ public:
   /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
   /// (implementation-defined).
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
+  /// \brief Timeout value to use when the HARQ has been ACKed/NACKed, but it is expecting another PUCCH before being
+  /// cleared (implementation-defined).
+  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 8U;
 
   cell_harq_manager(unsigned                               max_ues              = MAX_NOF_DU_UES,
                     std::unique_ptr<harq_timeout_notifier> notifier             = nullptr,
@@ -187,10 +190,6 @@ private:
   friend class unique_ue_harq_entity;
   friend class dl_harq_process_view;
   friend class ul_harq_process_view;
-
-  /// \brief Timeout value to use when the HARQ has been ACKed/NACKed, but it is expecting another PUCCH before being
-  /// cleared (implementation-defined).
-  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 8U;
 
   const static unsigned INVALID_HARQ = std::numeric_limits<unsigned>::max();
 
@@ -260,6 +259,8 @@ public:
   /// \param[in] pucch_snr SNR of the PUCCH that carried the HARQ-ACK.
   /// \return Status update after processing the ACK info.
   status_update dl_ack_info(mac_harq_ack_report_status ack, std::optional<float> pucch_snr);
+
+  void increment_pucch_counter();
 
   const grant_params& get_grant_params() const { return cell_harq_mng->dl.harqs[harq_ref_idx].prev_tx_params; }
 
