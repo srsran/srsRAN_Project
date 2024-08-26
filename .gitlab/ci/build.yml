@@ -33,6 +33,7 @@ variables:
   OS:
     description: Operating system
     options:
+      - "ubuntu-24.10"
       - "ubuntu-24.04"
       - "ubuntu-23.10"
       - "ubuntu-22.04"
@@ -928,6 +929,7 @@ package:
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.10"
       - OS_VERSION: "24.04"
+      - OS_VERSION: "24.10"
   needs: []
 
 install-package:
@@ -946,6 +948,7 @@ install-package:
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.10"
       - OS_VERSION: "24.04"
+      - OS_VERSION: "24.10"
   needs:
     - package
 
@@ -971,8 +974,8 @@ export on amd64:
   tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
-      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
         MARCH: x86-64-v3
 
 export on amd64 avx512:
@@ -980,10 +983,24 @@ export on amd64 avx512:
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
         MARCH: x86-64-v4
 
 # Build + unit tests combinations
+
+ubuntu-24.10 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 210 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX2_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.10
+        <<: *basic_combinations
+        MARCH: x86-64-v3
 
 ubuntu-24.04 amd64 avx2:
   extends: .build_and_unit
@@ -1117,6 +1134,9 @@ ubuntu dpdk:
   tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
+      - OS: ubuntu-24.10
+        COMPILER: [gcc, clang]
+        DPDK_VERSION: ["23.11.1_avx2"]
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["23.11.1_avx2"]
@@ -1231,7 +1251,7 @@ debian 12 amd64 avx512:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1241,12 +1261,12 @@ debian 12 amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.04]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
@@ -1257,7 +1277,7 @@ sanitizers amd64 native:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1267,7 +1287,7 @@ sanitizers amd64 native:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
@@ -1282,7 +1302,7 @@ sanitizers amd64 avx2:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1292,12 +1312,12 @@ sanitizers amd64 avx2:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.04]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
@@ -1310,7 +1330,7 @@ sanitizers amd64 avx512:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1320,7 +1340,7 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
@@ -1351,6 +1371,9 @@ build uhd alt:
   tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
+      - OS: ubuntu-24.10
+        COMPILER: [gcc, clang]
+        UHD_VERSION: ["4.7.0.0"]
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.7.0.0", "4.6.0.0"]
@@ -1362,6 +1385,60 @@ build uhd alt:
         UHD_VERSION: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
 
 # Build + unit tests combinations
+
+ubuntu-24.10 amd64 native:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 90 minutes
+  interruptible: false
+  tags: ["${AMD64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.10
+        <<: *basic_combinations
+
+ubuntu-24.10 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 90 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.10
+        <<: *basic_combinations
+        MARCH: x86-64-v4
+
+ubuntu-24.10 arm native:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 90 minutes
+  interruptible: false
+  tags: ["${ARM64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.10
+        <<: *basic_combinations
+
+ubuntu-24.10 arm neon:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 90 minutes
+  interruptible: false
+  tags: ["${ARM64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.10
+        <<: *basic_combinations
+        MARCH: armv8.2-a+crypto+fp16+dotprod
 
 ubuntu-24.04 amd64 native:
   extends: .build_and_unit
@@ -1618,6 +1695,36 @@ ubuntu-24.04 amd64 avx512 dpdk:
   parallel:
     matrix:
       - OS: ubuntu-24.04
+        <<: *basic_combinations_dpdk
+        DPDK_VERSION: "23.11.1_avx512"
+        MARCH: x86-64-v4
+
+ubuntu-24.10 amd64 avx2 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 420 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX2_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.10
+        <<: *basic_combinations_dpdk
+        DPDK_VERSION: "23.11.1_avx2"
+        MARCH: x86-64-v3
+
+ubuntu-24.10 amd64 avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 450 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.10
         <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx512"
         MARCH: x86-64-v4

@@ -116,6 +116,8 @@ tox python in builder:
         uhd_version: ["4.7.0.0", "4.6.0.0"] # "4.4.0.0" default
       - os_version: "24.04"
         uhd_version: ["4.7.0.0"] # "4.6.0.0" default
+      # - os_version: "24.10"
+      #   uhd_version: [] # "4.7.0.0" default
 
 ubuntu-uhd-builder avx2:
   extends: .ubuntu-uhd-builder
@@ -215,6 +217,9 @@ ubuntu-uhd-builder arm64:
       - &dpdk_2404_matrix
         os_version: "24.04"
         dpdk_version: ["23.11.1"]
+      - &dpdk_2410_matrix
+        os_version: "24.10"
+        dpdk_version: ["23.11.1"]
 
 ubuntu-dpdk-builder no isa:
   extends: .ubuntu-dpdk-builder
@@ -240,6 +245,7 @@ ubuntu-dpdk-builder avx2:
       - *dpdk_2204_matrix
       - *dpdk_2310_matrix
       - *dpdk_2404_matrix
+      - *dpdk_2410_matrix
 
 ubuntu-dpdk-builder avx512:
   extends: .ubuntu-dpdk-builder
@@ -254,6 +260,7 @@ ubuntu-dpdk-builder avx512:
       - *dpdk_2204_matrix
       - *dpdk_2310_matrix
       - *dpdk_2404_matrix
+      - *dpdk_2410_matrix
 
 ubuntu-dpdk-builder arm64:
   extends: .ubuntu-dpdk-builder
@@ -629,6 +636,83 @@ manifest [ubuntu, 24.04]:
     - job: alternative-tag [ubuntu, 24.04, amd64]
       optional: false
     - job: alternative-tag [ubuntu, 24.04, arm64]
+      optional: false
+  parallel:
+    matrix:
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+################################################################################
+# Ubuntu 24.10
+################################################################################
+image-build-publish [ubuntu, 24.10, amd64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "24.10"
+    PLATFORM: amd64
+  needs:
+    - builder version
+    - job: ubuntu-dpdk-builder avx2
+      parallel:
+        matrix:
+          - os_version: "24.10"
+            dpdk_version: ["23.11.1"]
+    - job: ubuntu-dpdk-builder avx512
+      parallel:
+        matrix:
+          - os_version: "24.10"
+            dpdk_version: ["23.11.1"]
+
+alternative-tag [ubuntu, 24.10, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.10"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 24.10, amd64]
+
+image-build-publish [ubuntu, 24.10, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "24.10"
+    PLATFORM: arm64
+  needs:
+    - builder version
+    - job: ubuntu-dpdk-builder arm64
+      parallel:
+        matrix:
+          - os_version: "24.10"
+            dpdk_version: ["23.11.1"]
+
+alternative-tag [ubuntu, 24.10, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.10"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 24.10, arm64]
+
+manifest [ubuntu, 24.10]:
+  extends: .manifest
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.10"
+  needs:
+    - builder version
+    - job: alternative-tag [ubuntu, 24.10, amd64]
+      optional: false
+    - job: alternative-tag [ubuntu, 24.10, arm64]
       optional: false
   parallel:
     matrix:

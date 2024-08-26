@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-ARG VERSION=24.04
+ARG VERSION=24.10
 ARG OS_NAME=ubuntu
 FROM $OS_NAME:$VERSION
 
