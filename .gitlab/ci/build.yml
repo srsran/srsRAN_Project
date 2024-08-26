@@ -1397,13 +1397,13 @@ build uhd alt:
     matrix:
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.6.0.0"]
+        UHD_VERSION: ["4.7.0.0", "4.6.0.0"]
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.6.0.0", "4.4.0.0"]
+        UHD_VERSION: ["4.7.0.0", "4.6.0.0", "4.4.0.0"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
+        UHD_VERSION: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
 
 # Build + unit tests combinations
 

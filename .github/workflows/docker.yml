@@ -77,7 +77,7 @@ jobs:
             MARCH: x86-64-v3
             PLATFORM: amd64
             LIB: uhd
-            LIB_VERSION: "4.6.0.0"
+            LIB_VERSION: "4.7.0.0"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
           - TAGNAME: split8_release_with_debug_avx2
@@ -86,7 +86,7 @@ jobs:
             MARCH: x86-64-v3
             PLATFORM: amd64
             LIB: uhd
-            LIB_VERSION: "4.6.0.0"
+            LIB_VERSION: "4.7.0.0"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
     env:

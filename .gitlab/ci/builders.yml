@@ -110,25 +110,12 @@ tox python in builder:
     expire_in: 8 hours
   parallel:
     matrix:
-      - &uhd_2204_matrix
-        os_version: "22.04"
-        uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
-      - &uhd_2310_matrix
-        os_version: "23.10"
-        uhd_version: ["4.6.0.0"] # "4.4.0.0" default
-      # - os_version: "24.04"
-      #   uhd_version: [] # "4.6.0.0" default
-
-ubuntu-uhd-builder no isa:
-  extends: .ubuntu-uhd-builder
-  tags:
-    - amd64
-  variables:
-    arch_name: amd64
-    target_arch: x86-64 # x86-64-vX not supported in compilers' versions
-  parallel:
-    matrix:
-      - *uhd_2204_matrix
+      - os_version: "22.04"
+        uhd_version: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
+      - os_version: "23.10"
+        uhd_version: ["4.7.0.0", "4.6.0.0"] # "4.4.0.0" default
+      - os_version: "24.04"
+        uhd_version: ["4.7.0.0"] # "4.6.0.0" default
 
 ubuntu-uhd-builder avx2:
   extends: .ubuntu-uhd-builder
@@ -137,10 +124,6 @@ ubuntu-uhd-builder avx2:
   variables:
     arch_name: amd64
     target_arch: x86-64-v3
-  parallel:
-    matrix:
-      - *uhd_2204_matrix
-      - *uhd_2310_matrix
 
 ubuntu-uhd-builder arm64:
   extends: .ubuntu-uhd-builder
@@ -402,7 +385,7 @@ image-build-publish [ubuntu, 22.04, amd64]:
       parallel:
         matrix:
           - os_version: "22.04"
-            uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
+            uhd_version: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"]
     - job: ubuntu-dpdk-builder no isa
       parallel:
         matrix:
@@ -444,7 +427,7 @@ image-build-publish [ubuntu, 22.04, arm64]:
       parallel:
         matrix:
           - os_version: "22.04"
-            uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
+            uhd_version: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"]
     - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
@@ -494,7 +477,7 @@ image-build-publish [ubuntu, 23.10, amd64]:
       parallel:
         matrix:
           - os_version: "23.10"
-            uhd_version: ["4.6.0.0"] # "4.4.0.0" default
+            uhd_version: ["4.7.0.0", "4.6.0.0"] # "4.4.0.0" default
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
@@ -531,7 +514,7 @@ image-build-publish [ubuntu, 23.10, arm64]:
       parallel:
         matrix:
           - os_version: "23.10"
-            uhd_version: ["4.6.0.0"] # "4.4.0.0" default
+            uhd_version: ["4.7.0.0", "4.6.0.0"] # "4.4.0.0" default
     - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
@@ -577,6 +560,11 @@ image-build-publish [ubuntu, 24.04, amd64]:
     PLATFORM: amd64
   needs:
     - builder version
+    - job: ubuntu-uhd-builder avx2
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            uhd_version: ["4.7.0.0"] # "4.6.0.0" default    
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
@@ -609,6 +597,11 @@ image-build-publish [ubuntu, 24.04, arm64]:
     PLATFORM: arm64
   needs:
     - builder version
+    - job: ubuntu-uhd-builder arm64
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
     - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:

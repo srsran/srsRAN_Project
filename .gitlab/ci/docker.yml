@@ -38,7 +38,7 @@ variables:
 .uhd_params:
   variables: &uhd_params
     LIB: uhd
-    LIB_VERSION: "4.6.0.0"
+    LIB_VERSION: "4.7.0.0"
 
 .dpdk_params:
   variables: &dpdk_params
