@@ -35,10 +35,15 @@ public:
   /// \brief Constructs a resource grid pool.
   /// \param async_executor_ Asynchronous housekeeping executor.
   /// \param grids_          Resource grids.
-  resource_grid_pool_impl(task_executor* async_executor_, std::vector<std::unique_ptr<resource_grid>> grids_);
+  resource_grid_pool_impl(task_executor* async_executor_, std::vector<resource_grid_ptr> grids_);
 
   /// \brief The destructor checks that all resource grids have been returned to the pool.
-  ~resource_grid_pool_impl();
+  ///
+  /// The resource grids that are still active in at least one scope get dereferenced if the pool is destructed prior
+  /// their context release. This triggers a segmentation fault signal.
+  ///
+  /// A fatal error is triggered if not all the resource grids have been returned to the pool.
+  ~resource_grid_pool_impl() override;
 
   // See resource_grid_pool interface for documentation.
   shared_resource_grid allocate_resource_grid(const resource_grid_context& context) override;
@@ -59,7 +64,9 @@ private:
   std::vector<resource_grid_ptr> grids;
   /// Counts the resource grid requests.
   unsigned counter = 0;
-  /// Resource grid scope count. Zero means they are available.
+  /// \brief Resource grid scope count.
+  ///
+  /// A resource grid is available when the counter is equal to \c ref_counter_available.
   std::vector<std::atomic<unsigned>> grids_scope_count;
   /// Pool of resource grid zero set string for tracing.
   std::vector<std::string> grids_str_zero;

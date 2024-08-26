@@ -9,7 +9,6 @@
  */
 
 #include "resource_grid_pool_impl.h"
-#include "srsran/adt/optional.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"

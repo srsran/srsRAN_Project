@@ -118,11 +118,16 @@ public:
     // Request RX symbol if UL processing is enabled.
     if (enable_ul_processing) {
       resource_grid_context rx_symb_context;
-      rx_symb_context.sector  = 0;
-      rx_symb_context.slot    = context.slot;
+      rx_symb_context.sector = 0;
+      rx_symb_context.slot   = context.slot;
+
+      // Try to allocate a resource grid.
       shared_resource_grid rg = ul_rg_pool->allocate_resource_grid(rx_symb_context);
-      srsran_assert(rg, "Failed to fetch a resource grid.");
-      rx_symb_req_notifier->on_uplink_slot_request(rx_symb_context, rg);
+
+      // If the resource grid allocation fails, it aborts the slot request.
+      if (rg) {
+        rx_symb_req_notifier->on_uplink_slot_request(rx_symb_context, rg);
+      }
     }
 
     // Request PRACH capture if PRACH processing is enabled.
