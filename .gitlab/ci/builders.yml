@@ -646,55 +646,10 @@ image-build-publish [debian]:
     PLATFORM: amd64
   parallel:
     matrix:
-      - OS_VERSION: ["11", "12"]
+      - OS_VERSION: "12"
         PLATFORM: [amd64, arm64]
   needs:
     - builder version
-
-alternative-tag [debian, 11, amd64]:
-  extends:
-    - .alternative-tag
-  variables:
-    OS_NAME: debian
-    OS_VERSION: "11"
-    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
-  needs:
-    - builder version
-    - job: image-build-publish [debian]
-      parallel:
-        matrix:
-          - OS_VERSION: "11"
-            PLATFORM: amd64
-
-alternative-tag [debian, 11, arm64]:
-  extends:
-    - .alternative-tag
-  variables:
-    OS_NAME: debian
-    OS_VERSION: "11"
-    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
-  needs:
-    - builder version
-    - job: image-build-publish [debian]
-      parallel:
-        matrix:
-          - OS_VERSION: "11"
-            PLATFORM: arm64
-
-manifest [debian, 11]:
-  extends: .manifest
-  variables:
-    OS_NAME: debian
-    OS_VERSION: "11"
-  needs:
-    - builder version
-    - job: alternative-tag [debian, 11, amd64]
-      optional: false
-    - job: alternative-tag [debian, 11, arm64]
-      optional: false
-  parallel:
-    matrix:
-      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 alternative-tag [debian, 12, amd64]:
   extends:

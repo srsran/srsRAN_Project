@@ -1214,50 +1214,6 @@ debian 12 amd64 avx512:
         <<: *basic_combinations
         MARCH: x86-64-v4
 
-debian 11 amd64 native:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Alternative OSs/
-      when: delayed
-      start_in: 120 minutes
-  interruptible: false
-  tags: ["${AMD64_TAG}"]
-  parallel:
-    matrix:
-      - OS: debian-11
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
-
-debian 11 amd64 avx2:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Alternative OSs/
-      when: delayed
-      start_in: 150 minutes
-  interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
-  parallel:
-    matrix:
-      - OS: debian-11
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
-        MARCH: x86-64-v2
-
-debian 11 amd64 avx512:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Alternative OSs/
-      when: delayed
-      start_in: 60 minutes
-  interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
-  parallel:
-    matrix:
-      - OS: debian-11
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
-        MARCH: x86-64-v4
-
 ##########
 # Weekly #
 ##########
