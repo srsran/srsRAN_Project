@@ -472,6 +472,7 @@ create-tags:
         create_tag "${name}_$(date -u +"%Y.%m.%d")"
       done
   needs: []
+  retry: 2
 
 ################################################################################
 # Enable / Disable pipelines
