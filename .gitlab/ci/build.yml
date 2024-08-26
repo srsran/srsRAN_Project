@@ -419,7 +419,7 @@ variables:
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
-    DPDK_VERSION: "23.11_avx2"
+    DPDK_VERSION: "23.11.1_avx2"
     MARCH: x86-64-v3
   tags: ["${AMD64_AVX2_TAG}"]
 
@@ -1119,13 +1119,13 @@ ubuntu dpdk:
     matrix:
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["23.11_avx2"]
+        DPDK_VERSION: ["23.11.1_avx2"]
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
+        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
+        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
 
 ###################
 # Alternative OSs #
@@ -1588,7 +1588,7 @@ ubuntu-22.04 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
+        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
         MARCH: x86-64-v3
 
 ubuntu-22.04 amd64 avx512 dpdk:
@@ -1603,7 +1603,7 @@ ubuntu-22.04 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.3_avx512", "23.11_avx512"]
+        DPDK_VERSION: ["22.11.6_avx512", "23.11.1_avx512"]
         MARCH: x86-64-v4
 
 ubuntu-23.10 amd64 avx2 dpdk:
@@ -1618,7 +1618,7 @@ ubuntu-23.10 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
+        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
         MARCH: x86-64-v3
 
 ubuntu-23.10 amd64 avx512 dpdk:
@@ -1633,7 +1633,7 @@ ubuntu-23.10 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.3_avx512", "23.11_avx512"]
+        DPDK_VERSION: ["22.11.6_avx512", "23.11.1_avx512"]
         MARCH: x86-64-v4
 
 ubuntu-24.04 amd64 avx2 dpdk:
@@ -1648,7 +1648,7 @@ ubuntu-24.04 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11_avx2"
+        DPDK_VERSION: "23.11.1_avx2"
         MARCH: x86-64-v3
 
 ubuntu-24.04 amd64 avx512 dpdk:
@@ -1663,7 +1663,7 @@ ubuntu-24.04 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11_avx512"
+        DPDK_VERSION: "23.11.1_avx512"
         MARCH: x86-64-v4
 
 #############
@@ -1796,7 +1796,7 @@ basic avx512 dpdk:
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
-    DPDK_VERSION: "23.11_avx512"
+    DPDK_VERSION: "23.11.1_avx512"
     MARCH: x86-64-v4
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: MINIMAL

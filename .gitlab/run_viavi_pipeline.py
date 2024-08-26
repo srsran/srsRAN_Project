@@ -54,7 +54,7 @@ def main():
 
     MAKE_ARGS = "-j6"
     BUILD_ARGS = '-DCMAKE_BUILD_TYPE=Release -DFORCE_DEBUG_INFO=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DMARCH="x86-64-v4"'
-    DPDK_VERSION = "23.11_avx512"
+    DPDK_VERSION = "23.11.1_avx512"
 
     TESTBED = "viavi"
     MARKERS = "viavi_manual"

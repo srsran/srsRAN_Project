@@ -43,7 +43,7 @@ variables:
 .dpdk_params:
   variables: &dpdk_params
     LIB: dpdk
-    LIB_VERSION: "23.11"
+    LIB_VERSION: "23.11.1"
 
 ################################################################################
 # Static
