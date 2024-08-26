@@ -22,12 +22,6 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
 {
   // Compute list of PUSCH time domain resource index list relevant for the PUSCH slot.
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list;
-  if (pusch_time_domain_list.empty()) {
-    return pusch_td_res_index_list;
-  }
-  // [Implementation-defined] Default PUSCH time domain resource index to use if no valid PUSCH time domain resource is
-  // found.
-  const unsigned default_pusch_td_res_index = 0;
 
   std::optional<unsigned> nof_full_ul_slots = std::nullopt;
   std::optional<unsigned> nof_full_dl_slots = std::nullopt;
@@ -59,10 +53,6 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
     }
   }
 
-  if (pusch_td_res_index_list.empty()) {
-    pusch_td_res_index_list.push_back(default_pusch_td_res_index);
-  }
-
   return pusch_td_res_index_list;
 }
 
@@ -71,7 +61,7 @@ srsran::get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
                                       slot_point                pdcch_slot,
                                       const search_space_info*  ss_info)
 {
-  unsigned                                          min_k1 = cell_cfg.expert_cfg.ue.min_k1;
+  unsigned min_k1 = *std::min(cell_cfg.dl_data_to_ul_ack.begin(), cell_cfg.dl_data_to_ul_ack.end());
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
       cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
   if (ss_info != nullptr) {
