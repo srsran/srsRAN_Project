@@ -282,10 +282,11 @@ protected:
     return total_cw_tb_size_bytes >= exp_size;
   }
 
-  bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index)
+  bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index, bool remove_ded_cfg = false)
   {
     // Add cell to UE cell grid allocator.
-    auto ue_create_req     = test_helpers::create_default_sched_ue_creation_request(bench->builder_params);
+    auto ue_create_req     = remove_ded_cfg ? test_helpers::create_empty_spcell_cfg_sched_ue_creation_request()
+                                            : test_helpers::create_default_sched_ue_creation_request(bench->builder_params);
     ue_create_req.crnti    = tc_rnti;
     ue_create_req.ue_index = ue_index;
     return bench->add_ue(ue_create_req);
@@ -1394,6 +1395,68 @@ INSTANTIATE_TEST_SUITE_P(test_fdd_and_tdd,
                          ul_fallback_sched_tester_sr_indication,
                          testing::Values(ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD},
                                          ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD}));
+
+class fallback_sched_ue_w_out_pucch_cfg : public base_fallback_tester, public ::testing::Test
+{
+protected:
+  fallback_sched_ue_w_out_pucch_cfg() : base_fallback_tester(srsran::duplex_mode::TDD)
+  {
+    const unsigned      k0                 = 0;
+    const sch_mcs_index max_msg4_mcs_index = 8;
+    auto                cell_cfg           = create_custom_cell_config_request(k0);
+    setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
+  }
+
+  // Helper that generates the slot for the SRB0 buffer update.
+  static unsigned generate_srb0_traffic_slot() { return test_rgen::uniform_int(20U, 30U); }
+
+  const unsigned MAC_SRB_SDU_SIZE   = 101;
+  const unsigned MAX_TEST_RUN_SLOTS = 50;
+};
+
+TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common_is_scheduled)
+{
+  add_ue(to_rnti(0x4601), to_du_ue_index(0), true);
+  auto& u = bench->ue_db[to_du_ue_index(0)];
+
+  ASSERT_FALSE(u.get_pcell().cfg().cfg_dedicated().ul_config.has_value());
+
+  slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb0_traffic_slot()};
+
+  // Check if the SRB0 gets transmitted at least once.
+  bool srb_transmitted = false;
+  for (unsigned idx = 1; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
+    run_slot();
+
+    // Allocate buffer for SRB0.
+    if (current_slot == slot_update_srb_traffic) {
+      push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, MAC_SRB_SDU_SIZE, true);
+    }
+
+    // If PUCCH is detected, then it must be 1 grant only (PUCCH common).
+    auto& pucchs = bench->res_grid[0].result.ul.pucchs;
+    if (not pucchs.empty()) {
+      srb_transmitted        = true;
+      const auto* pucch_srb0 = std::find_if(
+          pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
+      ASSERT_TRUE(pucch_srb0 != pucchs.end());
+      ASSERT_TRUE(pucch_srb0->pdu_context.is_common);
+      ASSERT_EQ(1, std::count_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+                  return pucch.crnti == rnti;
+                }));
+    }
+
+    // NACK the HARQ processes that are waiting for ACK to trigger a retransmissions.
+    const unsigned   bit_index_1_harq_only = 0U;
+    dl_harq_process* dl_harq = u.get_pcell().harqs.find_dl_harq_waiting_ack_slot(current_slot, bit_index_1_harq_only);
+    if (dl_harq != nullptr) {
+      static constexpr unsigned tb_idx = 0U;
+      dl_harq->ack_info(tb_idx, mac_harq_ack_report_status::nack, {});
+    }
+  }
+
+  ASSERT_TRUE(srb_transmitted);
+}
 
 int main(int argc, char** argv)
 {
