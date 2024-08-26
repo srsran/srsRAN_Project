@@ -298,8 +298,8 @@ struct srs_config {
     bool operator!=(const srs_resource& rhs) const { return !(rhs == *this); }
   };
 
-  static_vector<srs_resource_set, srs_res_set_id::MAX_NOF_SRS_RES_SETS> srs_res_set;
-  static_vector<srs_resource, srs_res_id::MAX_NOF_SRS_RES>              srs_res;
+  static_vector<srs_resource_set, srs_res_set_id::MAX_NOF_SRS_RES_SETS> srs_res_set_list;
+  static_vector<srs_resource, srs_res_id::MAX_NOF_SRS_RES>              srs_res_list;
   /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value disabled and UE applies the TPC
   /// command without accumulation (this applies to SRS when a separate closed loop is configured for SRS). If false,
   /// the field is absent in NR RRC and UE applies TPC commands via accumulation.
@@ -307,7 +307,7 @@ struct srs_config {
 
   bool operator==(const srs_config& rhs) const
   {
-    return srs_res_set == rhs.srs_res_set && srs_res == rhs.srs_res &&
+    return srs_res_set_list == rhs.srs_res_set_list && srs_res_list == rhs.srs_res_list &&
            is_tpc_accum_disabled == rhs.is_tpc_accum_disabled;
   }
   bool operator!=(const srs_config& rhs) const { return !(rhs == *this); }

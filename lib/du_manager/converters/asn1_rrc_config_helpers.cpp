@@ -2459,16 +2459,16 @@ static void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_co
   calculate_addmodremlist_diff(
       out.srs_res_set_to_add_mod_list,
       out.srs_res_set_to_release_list,
-      src.srs_res_set,
-      dest.srs_res_set,
+      src.srs_res_set_list,
+      dest.srs_res_set_list,
       [](const srs_config::srs_resource_set& res) { return make_asn1_rrc_srs_res_set(res); },
       [](const srs_config::srs_resource_set& res) { return res.id; });
 
   calculate_addmodremlist_diff(
       out.srs_res_to_add_mod_list,
       out.srs_res_to_release_list,
-      src.srs_res,
-      dest.srs_res,
+      src.srs_res_list,
+      dest.srs_res_list,
       [](const srs_config::srs_resource& res) { return make_asn1_rrc_srs_res(res); },
       [](const srs_config::srs_resource& res) { return res.id; });
 
