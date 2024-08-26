@@ -70,6 +70,11 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
     sched_req.nzp_csi_rs_res_list = du_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list;
   }
 
+  if (du_cfg.ue_ded_serv_cell_cfg.ul_config.has_value() and
+      du_cfg.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value()) {
+    sched_req.dl_data_to_ul_ack = du_cfg.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack;
+  }
+
   sched_req.rrm_policy_members = du_cfg.rrm_policy_members;
 
   return sched_req;

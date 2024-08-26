@@ -55,6 +55,9 @@ public:
   /// List of nzp-CSI-RS resources.
   std::vector<nzp_csi_rs_resource> nzp_csi_rs_list;
 
+  /// List of dl-DataToUL-ACK values sent to UE in its dedicated configuration.
+  static_vector<uint8_t, 8> dl_data_to_ul_ack;
+
   /// List of RRM Policy members configured for this cell.
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 

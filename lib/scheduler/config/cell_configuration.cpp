@@ -36,6 +36,7 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   pucch_guardbands(msg.pucch_guardbands),
   zp_csi_rs_list(msg.zp_csi_rs_list),
   nzp_csi_rs_list(msg.nzp_csi_rs_res_list),
+  dl_data_to_ul_ack(msg.dl_data_to_ul_ack),
   rrm_policy_members(msg.rrm_policy_members),
   // SSB derived params.
   ssb_case(band_helper::get_ssb_pattern(msg.dl_carrier.band, msg.ssb_config.scs)),

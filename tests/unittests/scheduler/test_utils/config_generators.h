@@ -68,6 +68,13 @@ make_default_sched_cell_configuration_request(const config_helpers::cell_config_
     sched_req.nzp_csi_rs_res_list = csi_meas.nzp_csi_rs_res_list;
   }
 
+  if (sched_req.tdd_ul_dl_cfg_common.has_value()) {
+    sched_req.dl_data_to_ul_ack =
+        config_helpers::generate_k1_candidates(*sched_req.tdd_ul_dl_cfg_common, params.min_k1);
+  } else {
+    sched_req.dl_data_to_ul_ack = {params.min_k1};
+  }
+
   return sched_req;
 }
 
