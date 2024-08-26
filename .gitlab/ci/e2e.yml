@@ -176,6 +176,8 @@ e2e request and config validation:
       echo "${E2E_CMD}"
       eval $E2E_CMD
   after_script:
+    # Remove any existing retina resource for this group
+    - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
     # Push test metrics
     - |
       find . -iname "test_metrics.csv" -exec \
@@ -694,3 +696,5 @@ retina post:
   extends: .demolition
   dependencies:
     - load retina variables
+  when: manual
+  allow_failure: true
