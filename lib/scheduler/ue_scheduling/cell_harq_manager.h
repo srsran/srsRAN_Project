@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../slicing/ran_slice_id.h"
 #include "srsran/adt/intrusive_list.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
@@ -23,6 +24,9 @@
 #include <queue>
 
 namespace srsran {
+
+struct pdsch_information;
+struct pusch_information;
 
 class unique_ue_harq_entity;
 
@@ -79,6 +83,8 @@ struct dl_harq_process_impl : public base_harq_process {
     pdsch_mcs_table         mcs_table;
     sch_mcs_index           mcs;
     unsigned                tbs_bytes;
+    /// RAN slice identifier.
+    std::optional<ran_slice_id_t> slice_id;
     /// \brief MCS originally suggested by the OLLA. It might differ from the actual MCS used.
     std::optional<sch_mcs_index> olla_mcs;
   };
@@ -99,13 +105,14 @@ struct dl_harq_process_impl : public base_harq_process {
 struct ul_harq_process_impl : public base_harq_process {
   /// \brief Parameters relative to the last allocated PUSCH PDU for this HARQ process.
   struct alloc_params {
-    dci_ul_rnti_config_type      dci_cfg_type;
-    vrb_alloc                    rbs;
-    pusch_mcs_table              mcs_table;
-    sch_mcs_index                mcs;
-    unsigned                     tbs_bytes;
-    unsigned                     nof_symbols;
-    std::optional<sch_mcs_index> olla_mcs;
+    dci_ul_rnti_config_type       dci_cfg_type;
+    vrb_alloc                     rbs;
+    pusch_mcs_table               mcs_table;
+    sch_mcs_index                 mcs;
+    unsigned                      tbs_bytes;
+    unsigned                      nof_symbols;
+    std::optional<ran_slice_id_t> slice_id;
+    std::optional<sch_mcs_index>  olla_mcs;
   };
 
   /// Parameters used for the last Tx of this HARQ process.
@@ -139,20 +146,40 @@ struct cell_harq_repository {
 
   unsigned get_harq_ref_idx(const harq_type& h) const;
 
-  void       slot_indication(slot_point sl_tx);
-  void       handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
-  harq_type* alloc_harq(du_ue_index_t ue_idx, slot_point sl_tx, slot_point sl_ack, unsigned max_nof_harq_retxs);
-  void       dealloc_harq(harq_type& h);
-  void       handle_ack(harq_type& h, bool ack);
-  void       set_pending_retx(harq_type& h);
-  void       handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack);
-  void       reserve_ue_harqs(du_ue_index_t ue_idx, unsigned nof_harqs);
-  void       destroy_ue_harqs(du_ue_index_t ue_idx);
-  void       cancel_retxs(harq_type& h);
-  unsigned   find_ue_harq_in_state(du_ue_index_t ue_idx, harq_utils::harq_state_t state) const;
+  void               slot_indication(slot_point sl_tx);
+  void               handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
+  harq_type*         alloc_harq(du_ue_index_t ue_idx, slot_point sl_tx, slot_point sl_ack, unsigned max_nof_harq_retxs);
+  void               dealloc_harq(harq_type& h);
+  void               handle_ack(harq_type& h, bool ack);
+  void               set_pending_retx(harq_type& h);
+  [[nodiscard]] bool handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack);
+  void               reserve_ue_harqs(du_ue_index_t ue_idx, unsigned nof_harqs);
+  void               destroy_ue_harqs(du_ue_index_t ue_idx);
+  void               cancel_retxs(harq_type& h);
+  unsigned           find_ue_harq_in_state(du_ue_index_t ue_idx, harq_utils::harq_state_t state) const;
 };
 
 } // namespace harq_utils
+
+/// \brief Context of the scheduler during the current PDSCH allocation.
+struct dl_harq_sched_context {
+  /// DCI format used to signal the PDSCH allocation.
+  dci_dl_rnti_config_type dci_cfg_type;
+  /// MCS suggested by the OLLA.
+  std::optional<sch_mcs_index> olla_mcs;
+  /// RAN slice identifier of the slice to which PDSCH belongs to.
+  std::optional<ran_slice_id_t> slice_id;
+};
+
+/// \brief Context of the scheduler during the current PUSCH allocation.
+struct ul_harq_sched_context {
+  /// DCI format used to signal the PUSCH allocation.
+  dci_ul_rnti_config_type dci_cfg_type;
+  /// MCS suggested by the OLLA.
+  std::optional<sch_mcs_index> olla_mcs;
+  /// RAN slice identifier of the slice to which PUSCH belongs to.
+  std::optional<ran_slice_id_t> slice_id;
+};
 
 class cell_harq_manager
 {
@@ -206,10 +233,11 @@ private:
   harq_utils::ul_harq_process_impl* new_ul_tx(du_ue_index_t ue_idx, slot_point pusch_slot, unsigned max_harq_nof_retxs);
 
   /// \brief Called on a new retx of a DL HARQ process.
-  void new_dl_retx(harq_utils::dl_harq_process_impl& h, slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
+  [[nodiscard]] bool
+  new_dl_retx(harq_utils::dl_harq_process_impl& h, slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
 
   /// \brief Called on a new retx of a UL HARQ process.
-  void new_ul_retx(harq_utils::ul_harq_process_impl& h, slot_point pusch_slot);
+  [[nodiscard]] bool new_ul_retx(harq_utils::ul_harq_process_impl& h, slot_point pusch_slot);
 
   /// Updates a DL HARQ process given the received HARQ-ACK info.
   harq_utils::dl_harq_process_impl::status_update
@@ -241,18 +269,15 @@ public:
                         "Empty HARQ process created");
   }
 
-  harq_id_t id() const { return cell_harq_mng->dl.harqs[harq_ref_idx].h_id; }
-
-  bool is_waiting_ack() const
+  harq_id_t id() const { return fetch_impl().h_id; }
+  bool      is_waiting_ack() const { return fetch_impl().status == harq_utils::harq_state_t::waiting_ack; }
+  bool      has_pending_retx() const { return fetch_impl().status == harq_utils::harq_state_t::pending_retx; }
+  bool      empty() const
   {
-    return cell_harq_mng->dl.harqs[harq_ref_idx].status == harq_utils::harq_state_t::waiting_ack;
-  }
-  bool has_pending_retx() const
-  {
-    return cell_harq_mng->dl.harqs[harq_ref_idx].status == harq_utils::harq_state_t::pending_retx;
+    return harq_ref_idx == cell_harq_manager::INVALID_HARQ or fetch_impl().status == harq_utils::harq_state_t::empty;
   }
 
-  void new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
+  [[nodiscard]] bool new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
 
   /// \brief Update the state of the DL HARQ process waiting for an HARQ-ACK.
   /// \param[in] ack HARQ-ACK status received.
@@ -262,7 +287,17 @@ public:
 
   void increment_pucch_counter();
 
-  const grant_params& get_grant_params() const { return cell_harq_mng->dl.harqs[harq_ref_idx].prev_tx_params; }
+  /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
+  /// they can be later fetched and optionally reused.
+  void save_grant_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch);
+
+  slot_point pdsch_slot() const { return fetch_impl().slot_tx; }
+  slot_point uci_slot() const { return fetch_impl().slot_ack; }
+  unsigned   max_nof_retxs() const { return fetch_impl().max_nof_harq_retxs; }
+  unsigned   nof_retxs() const { return fetch_impl().nof_retxs; }
+  bool       ndi() const { return fetch_impl().ndi; }
+
+  const grant_params& get_grant_params() const { return fetch_impl().prev_tx_params; }
 
   bool operator==(const dl_harq_process_view& other) const
   {
@@ -271,6 +306,9 @@ public:
   bool operator!=(const dl_harq_process_view& other) const { return !(*this == other); }
 
 private:
+  harq_utils::dl_harq_process_impl&       fetch_impl() { return cell_harq_mng->dl.harqs[harq_ref_idx]; }
+  const harq_utils::dl_harq_process_impl& fetch_impl() const { return cell_harq_mng->dl.harqs[harq_ref_idx]; }
+
   cell_harq_manager* cell_harq_mng = nullptr;
   unsigned           harq_ref_idx  = cell_harq_manager::INVALID_HARQ;
 };
@@ -281,26 +319,28 @@ public:
   ul_harq_process_view(cell_harq_manager& cell_harq_mng_, unsigned h_ref_idx) :
     cell_harq_mng(&cell_harq_mng_), harq_ref_idx(h_ref_idx)
   {
-    srsran_sanity_check(cell_harq_mng->ul.harqs[harq_ref_idx].status != harq_utils::harq_state_t::empty,
-                        "Empty HARQ process created");
+    srsran_sanity_check(fetch_impl().status != harq_utils::harq_state_t::empty, "Empty HARQ process created");
   }
 
-  harq_id_t id() const { return cell_harq_mng->ul.harqs[harq_ref_idx].h_id; }
+  harq_id_t id() const { return fetch_impl().h_id; }
 
-  bool is_waiting_ack() const
-  {
-    return cell_harq_mng->ul.harqs[harq_ref_idx].status == harq_utils::harq_state_t::waiting_ack;
-  }
-  bool has_pending_retx() const
-  {
-    return cell_harq_mng->ul.harqs[harq_ref_idx].status == harq_utils::harq_state_t::pending_retx;
-  }
+  bool is_waiting_ack() const { return fetch_impl().status == harq_utils::harq_state_t::waiting_ack; }
+  bool has_pending_retx() const { return fetch_impl().status == harq_utils::harq_state_t::pending_retx; }
 
-  void new_retx(slot_point pusch_slot);
+  [[nodiscard]] bool new_retx(slot_point pusch_slot);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(bool ack);
+
+  /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
+  /// they can be later fetched and optionally reused.
+  void save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pdsch);
+
+  slot_point pusch_slot() const { return fetch_impl().slot_tx; }
+  unsigned   max_nof_retxs() const { return fetch_impl().max_nof_harq_retxs; }
+  unsigned   nof_retxs() const { return fetch_impl().nof_retxs; }
+  bool       ndi() const { return fetch_impl().ndi; }
 
   bool operator==(const ul_harq_process_view& other) const
   {
@@ -309,6 +349,9 @@ public:
   bool operator!=(const ul_harq_process_view& other) const { return !(*this == other); }
 
 private:
+  harq_utils::ul_harq_process_impl&       fetch_impl() { return cell_harq_mng->ul.harqs[harq_ref_idx]; }
+  const harq_utils::ul_harq_process_impl& fetch_impl() const { return cell_harq_mng->ul.harqs[harq_ref_idx]; }
+
   cell_harq_manager* cell_harq_mng = nullptr;
   unsigned           harq_ref_idx  = cell_harq_manager::INVALID_HARQ;
 };

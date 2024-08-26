@@ -9,6 +9,7 @@
  */
 
 #include "cell_harq_manager.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 
 using namespace srsran;
 using namespace harq_utils;
@@ -219,9 +220,12 @@ void cell_harq_repository<IsDl>::set_pending_retx(harq_type& h)
 }
 
 template <bool IsDl>
-void cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack)
+bool cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack)
 {
-  srsran_assert(h.status == harq_state_t::pending_retx, "Attempt of retx in an HARQ that has no pending retx");
+  if (h.status != harq_state_t::pending_retx) {
+    logger.warning("ue={} h_id={}: Attempt of retx in a HARQ process that has no pending retx", h.ue_idx, h.h_id);
+    return false;
+  }
 
   // Remove HARQ from pending Retx list.
   harq_pending_retx_list.pop(&h);
@@ -237,6 +241,7 @@ void cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx,
   // Add HARQ to the timeout list.
   h.slot_ack_timeout = sl_ack + max_ack_wait_in_slots;
   harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
+  return true;
 }
 
 template <bool IsDl>
@@ -367,21 +372,24 @@ cell_harq_manager::new_ul_tx(du_ue_index_t ue_idx, slot_point pusch_slot, unsign
   return h;
 }
 
-void cell_harq_manager::new_dl_retx(harq_utils::dl_harq_process_impl& h,
+bool cell_harq_manager::new_dl_retx(harq_utils::dl_harq_process_impl& h,
                                     slot_point                        pdsch_slot,
                                     unsigned                          k1,
                                     uint8_t                           harq_bit_idx)
 {
-  dl.handle_new_retx(h, pdsch_slot, pdsch_slot + k1);
+  if (not dl.handle_new_retx(h, pdsch_slot, pdsch_slot + k1)) {
+    return false;
+  }
   h.harq_bit_idx         = harq_bit_idx;
   h.pucch_ack_to_receive = 0;
   h.chosen_ack           = mac_harq_ack_report_status::dtx;
   h.last_pucch_snr       = std::nullopt;
+  return true;
 }
 
-void cell_harq_manager::new_ul_retx(harq_utils::ul_harq_process_impl& h, slot_point pusch_slot)
+bool cell_harq_manager::new_ul_retx(harq_utils::ul_harq_process_impl& h, slot_point pusch_slot)
 {
-  ul.handle_new_retx(h, pusch_slot, pusch_slot);
+  return ul.handle_new_retx(h, pusch_slot, pusch_slot);
 }
 
 dl_harq_process_impl::status_update cell_harq_manager::dl_ack_info(harq_utils::dl_harq_process_impl& h,
@@ -438,30 +446,89 @@ int cell_harq_manager::ul_crc_info(harq_utils::ul_harq_process_impl& h, bool ack
   return ack ? (int)h.prev_tx_params.tbs_bytes : 0;
 }
 
-void dl_harq_process_view::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
+bool dl_harq_process_view::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
 {
-  cell_harq_mng->new_dl_retx(cell_harq_mng->dl.harqs[harq_ref_idx], pdsch_slot, k1, harq_bit_idx);
+  return cell_harq_mng->new_dl_retx(fetch_impl(), pdsch_slot, k1, harq_bit_idx);
 }
 
 dl_harq_process_view::status_update dl_harq_process_view::dl_ack_info(mac_harq_ack_report_status ack,
                                                                       std::optional<float>       pucch_snr)
 {
-  return cell_harq_mng->dl_ack_info(cell_harq_mng->dl.harqs[harq_ref_idx], ack, pucch_snr);
+  return cell_harq_mng->dl_ack_info(fetch_impl(), ack, pucch_snr);
 }
 
 void dl_harq_process_view::increment_pucch_counter()
 {
-  ++cell_harq_mng->dl.harqs[harq_ref_idx].pucch_ack_to_receive;
+  ++fetch_impl().pucch_ack_to_receive;
 }
 
-void ul_harq_process_view::new_retx(slot_point pusch_slot)
+void dl_harq_process_view::save_grant_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch)
 {
-  cell_harq_mng->new_ul_retx(cell_harq_mng->ul.harqs[harq_ref_idx], pusch_slot);
+  srsran_assert(pdsch.codewords.size() == 1, "Only one codeword supported");
+  dl_harq_process_impl& impl = fetch_impl();
+  srsran_assert(impl.status == harq_utils::harq_state_t::waiting_ack,
+                "Setting allocation parameters for DL HARQ process id={} in invalid state",
+                id());
+
+  const pdsch_codeword&               cw          = pdsch.codewords[0];
+  dl_harq_process_impl::alloc_params& prev_params = impl.prev_tx_params;
+
+  if (impl.nof_retxs == 0) {
+    prev_params.tbs_bytes    = cw.tb_size_bytes;
+    prev_params.dci_cfg_type = ctx.dci_cfg_type;
+    prev_params.olla_mcs     = ctx.olla_mcs;
+    prev_params.slice_id     = ctx.slice_id;
+  } else {
+    srsran_assert(ctx.dci_cfg_type == prev_params.dci_cfg_type,
+                  "DCI format and RNTI type cannot change during DL HARQ retxs");
+    srsran_assert(prev_params.tbs_bytes == cw.tb_size_bytes,
+                  "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, RBs={}. New MCS={}, RBs={}",
+                  prev_params.tbs_bytes,
+                  cw.tb_size_bytes,
+                  prev_params.mcs,
+                  prev_params.rbs,
+                  cw.mcs_index,
+                  pdsch.rbs);
+  }
+  prev_params.mcs_table   = cw.mcs_table;
+  prev_params.mcs         = cw.mcs_index;
+  prev_params.rbs         = pdsch.rbs;
+  prev_params.nof_symbols = pdsch.symbols.length();
+}
+
+bool ul_harq_process_view::new_retx(slot_point pusch_slot)
+{
+  return cell_harq_mng->new_ul_retx(cell_harq_mng->ul.harqs[harq_ref_idx], pusch_slot);
 }
 
 int ul_harq_process_view::ul_crc_info(bool ack)
 {
   return cell_harq_mng->ul_crc_info(cell_harq_mng->ul.harqs[harq_ref_idx], ack);
+}
+
+void ul_harq_process_view::save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pusch)
+{
+  ul_harq_process_impl& impl = fetch_impl();
+  srsran_assert(impl.status == harq_utils::harq_state_t::waiting_ack,
+                "Setting allocation parameters for DL HARQ process id={} in invalid state",
+                id());
+
+  ul_harq_process_impl::alloc_params& prev_tx_params = impl.prev_tx_params;
+
+  if (impl.nof_retxs == 0) {
+    prev_tx_params.dci_cfg_type = ctx.dci_cfg_type;
+    prev_tx_params.olla_mcs     = ctx.olla_mcs;
+    prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
+    prev_tx_params.slice_id     = ctx.slice_id;
+  } else {
+    srsran_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
+                  "DCI format and RNTI type cannot change during HARQ retxs");
+    srsran_assert(prev_tx_params.tbs_bytes == pusch.tb_size_bytes, "TBS cannot change during HARQ retxs");
+  }
+  prev_tx_params.mcs_table   = pusch.mcs_table;
+  prev_tx_params.mcs         = pusch.mcs_index;
+  prev_tx_params.rbs         = pusch.rbs;
+  prev_tx_params.nof_symbols = pusch.symbols.length();
 }
 
 // UE HARQ entity.
