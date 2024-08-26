@@ -483,7 +483,8 @@ alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gra
   return {alloc_status::invalid_params};
 }
 
-alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id)
+alloc_result
+ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot)
 {
   srsran_assert(ues.contains(grant.user->ue_index()), "Invalid UE candidate index={}", grant.user->ue_index());
   srsran_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
@@ -553,8 +554,6 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
                    grant.h_id);
     return {alloc_status::invalid_params};
   }
-
-  slot_point pusch_slot = grant.pusch_slot;
 
   // Create PUSCH param candidate search object.
   ue_pusch_alloc_param_candidate_searcher candidates{

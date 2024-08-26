@@ -94,7 +94,7 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
   while (not ul_queue.empty() and rem_rbs > 0) {
     ue_ctxt& ue = *ul_queue.top();
     if (alloc_result.status != alloc_status::skip_slot) {
-      alloc_result = try_ul_alloc(ue, ues, pusch_alloc, rem_rbs, slice_candidate.get_slot_tx());
+      alloc_result = try_ul_alloc(ue, ues, pusch_alloc, rem_rbs);
     }
     ue.save_ul_alloc(alloc_result.alloc_bytes);
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
@@ -143,12 +143,10 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
 alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
                                              const slice_ue_repository& ues,
                                              ue_pusch_allocator&        pusch_alloc,
-                                             unsigned                   max_rbs,
-                                             slot_point                 pusch_slot)
+                                             unsigned                   max_rbs)
 {
   alloc_result   alloc_result = {alloc_status::invalid_params};
   ue_pusch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
-  grant.pusch_slot = pusch_slot;
   // Prioritize reTx over newTx.
   if (ctxt.ul_retx_h != nullptr) {
     grant.h_id   = ctxt.ul_retx_h->id;

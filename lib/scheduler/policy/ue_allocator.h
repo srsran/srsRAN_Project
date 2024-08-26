@@ -35,8 +35,6 @@ struct ue_pusch_grant {
   const slice_ue* user;
   du_cell_index_t cell_index;
   harq_id_t       h_id;
-  /// Slot at which PUSCH grant needs to be allocated.
-  slot_point pusch_slot;
   /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
   std::optional<unsigned> recommended_nof_bytes;
   /// Maximum nof. RBs to allocate to the UE. This field is not present/ignored in case of HARQ retransmission.

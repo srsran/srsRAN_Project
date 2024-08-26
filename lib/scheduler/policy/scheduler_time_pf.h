@@ -83,11 +83,8 @@ private:
   try_dl_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, ue_pdsch_allocator& pdsch_alloc, unsigned max_rbs);
   /// \brief Attempts to allocate PUSCH for a UE.
   /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.
-  alloc_result try_ul_alloc(ue_ctxt&                   ctxt,
-                            const slice_ue_repository& ues,
-                            ue_pusch_allocator&        pusch_alloc,
-                            unsigned                   max_rbs,
-                            slot_point                 pusch_slot);
+  alloc_result
+  try_ul_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, ue_pusch_allocator& pusch_alloc, unsigned max_rbs);
 
   slotted_id_table<du_ue_index_t, ue_ctxt, MAX_NOF_DU_UES> ue_history_db;
 

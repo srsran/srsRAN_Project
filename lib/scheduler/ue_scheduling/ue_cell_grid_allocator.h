@@ -40,7 +40,7 @@ public:
 
   alloc_result allocate_dl_grant(const ue_pdsch_grant& grant, ran_slice_id_t slice_id);
 
-  alloc_result allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id);
+  alloc_result allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot);
 
 private:
   struct cell_t {
@@ -114,7 +114,8 @@ public:
 
   alloc_result allocate_ul_grant(const ue_pusch_grant& grant) override
   {
-    const alloc_result result = pusch_alloc.allocate_ul_grant(grant, slice_candidate.id());
+    const alloc_result result =
+        pusch_alloc.allocate_ul_grant(grant, slice_candidate.id(), slice_candidate.get_slot_tx());
     if (result.status == alloc_status::success) {
       slice_candidate.store_grant(result.alloc_nof_rbs);
     }
