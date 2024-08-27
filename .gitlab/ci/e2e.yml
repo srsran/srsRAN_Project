@@ -78,7 +78,7 @@ load retina variables:
   variables:
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
-  before_script:
+  before_script: &setup_kube_config
     - |
       export FORCE_COLOR=1
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
@@ -86,6 +86,7 @@ load retina variables:
 
       eval K_PATH_EXTRA="\$$KUBECONFIG_VAR_NAME_EXTRA"
       export KUBECONFIG_EXTRA=$K_PATH_EXTRA
+
 e2e request and config validation:
   stage: static
   extends:
@@ -177,6 +178,7 @@ e2e request and config validation:
       eval $E2E_CMD
   after_script:
     # Remove any existing retina resource for this group
+    - *setup_kube_config
     - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
     # Push test metrics
     - |
