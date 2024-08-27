@@ -22,7 +22,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between NGAP and CU-CP
-class ngap_cu_cp_adapter : public ngap_cu_cp_du_repository_notifier, public ngap_cu_cp_notifier
+class ngap_cu_cp_adapter : public ngap_cu_cp_notifier
 {
 public:
   explicit ngap_cu_cp_adapter() = default;

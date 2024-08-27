@@ -85,7 +85,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   // Create NGAP.
   ngap_entity = create_ngap(create_ngap_cfg(cfg),
                             ngap_cu_cp_ev_notifier,
-                            ngap_cu_cp_ev_notifier,
                             *cfg.services.n2_gw,
                             *cfg.services.timers,
                             *cfg.services.cu_cp_executor);

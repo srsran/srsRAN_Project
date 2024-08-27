@@ -32,16 +32,14 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(const ngap_configuration&          ngap_cfg_,
-                     ngap_cu_cp_notifier&               cu_cp_notifier_,
-                     ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
-                     n2_connection_client&              n2_gateway,
-                     timer_manager&                     timers_,
-                     task_executor&                     ctrl_exec_) :
+ngap_impl::ngap_impl(const ngap_configuration& ngap_cfg_,
+                     ngap_cu_cp_notifier&      cu_cp_notifier_,
+                     n2_connection_client&     n2_gateway,
+                     timer_manager&            timers_,
+                     task_executor&            ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   ue_ctxt_list(logger),
   cu_cp_notifier(cu_cp_notifier_),
-  cu_cp_du_repository_notifier(cu_cp_du_repository_notifier_),
   timers(timers_),
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{timers, ctrl_exec}),
@@ -710,7 +708,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   cu_cp_paging_message cu_cp_paging_msg;
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
-  cu_cp_du_repository_notifier.on_paging_message(cu_cp_paging_msg);
+  cu_cp_notifier.on_paging_message(cu_cp_paging_msg);
 }
 
 // free function to generate a handover failure message
@@ -743,8 +741,8 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
               ho_request.source_to_target_transparent_container.target_cell_id.nci);
 
   // Create UE in target cell
-  ho_request.ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(
-      ho_request.source_to_target_transparent_container.target_cell_id);
+  ho_request.ue_index =
+      cu_cp_notifier.request_new_ue_index_allocation(ho_request.source_to_target_transparent_container.target_cell_id);
   if (ho_request.ue_index == ue_index_t::invalid) {
     logger.warning("Sending HandoverFailure. Couldn't allocate UE index");
     tx_pdu_notifier->on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
@@ -764,7 +762,6 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
                                                                     uint_to_amf_ue_id(msg->amf_ue_ngap_id),
                                                                     ue_ctxt_list,
                                                                     cu_cp_notifier,
-                                                                    cu_cp_du_repository_notifier,
                                                                     *tx_pdu_notifier,
                                                                     timers,
                                                                     ctrl_exec,

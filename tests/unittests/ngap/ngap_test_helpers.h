@@ -80,11 +80,10 @@ protected:
   manual_task_worker  ctrl_worker{128};
   cu_cp_configuration cu_cp_cfg;
 
-  ue_manager                       ue_mng{cu_cp_cfg};
-  dummy_n2_gateway                 n2_gw;
-  dummy_ngap_cu_cp_notifier        cu_cp_notifier{ue_mng};
-  dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;
-  std::unique_ptr<ngap_interface>  ngap;
+  ue_manager                      ue_mng{cu_cp_cfg};
+  dummy_n2_gateway                n2_gw;
+  dummy_ngap_cu_cp_notifier       cu_cp_notifier{ue_mng};
+  std::unique_ptr<ngap_interface> ngap;
 };
 
 } // namespace srs_cu_cp

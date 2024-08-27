@@ -199,14 +199,6 @@ public:
 
   /// \brief Notify that the TNL connection to the AMF was lost.
   virtual void on_n2_disconnection() = 0;
-};
-
-/// Interface to communication with the DU repository
-/// Useful when the NGAP does not know the DU for an UE, e.g. paging and handover.
-class ngap_cu_cp_du_repository_notifier
-{
-public:
-  virtual ~ngap_cu_cp_du_repository_notifier() = default;
 
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;

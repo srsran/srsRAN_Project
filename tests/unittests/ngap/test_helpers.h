@@ -139,36 +139,6 @@ private:
   srslog::basic_logger& logger;
 };
 
-class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_du_repository_notifier
-{
-public:
-  dummy_ngap_cu_cp_paging_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
-
-  void on_paging_message(cu_cp_paging_message& msg) override
-  {
-    logger.info("Received a new Paging message");
-    last_msg = std::move(msg);
-  }
-
-  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
-
-  async_task<ngap_handover_resource_allocation_response>
-  on_ngap_handover_request(const ngap_handover_request& request) override
-  {
-    return launch_async([res = ngap_handover_resource_allocation_response{}](
-                            coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-
-      CORO_RETURN(res);
-    });
-  }
-
-  cu_cp_paging_message last_msg;
-
-private:
-  srslog::basic_logger& logger;
-};
-
 class dummy_ngap_cu_cp_notifier : public ngap_cu_cp_notifier
 {
 public:
@@ -365,12 +335,32 @@ public:
     return ue_index;
   }
 
+  void on_paging_message(cu_cp_paging_message& msg) override
+  {
+    logger.info("Received a new Paging message");
+    last_paging_msg = std::move(msg);
+  }
+
+  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
+
+  async_task<ngap_handover_resource_allocation_response>
+  on_ngap_handover_request(const ngap_handover_request& request) override
+  {
+    return launch_async([res = ngap_handover_resource_allocation_response{}](
+                            coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      CORO_RETURN(res);
+    });
+  }
+
   ue_index_t                                 last_ue = ue_index_t::invalid;
   ngap_init_context_setup_request            last_init_ctxt_setup_request;
   cu_cp_pdu_session_resource_setup_request   last_request;
   cu_cp_pdu_session_resource_modify_request  last_modify_request;
   cu_cp_pdu_session_resource_release_command last_release_command;
   std::optional<ue_index_t>                  last_created_ue_index;
+  cu_cp_paging_message                       last_paging_msg;
 
 private:
   ue_manager&           ue_mng;
