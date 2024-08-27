@@ -217,7 +217,7 @@ void cell_harq_repository<IsDl>::set_pending_retx(harq_type& h)
   harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
 
   // Add HARQ to pending Retx list.
-  harq_pending_retx_list.push_front(&h);
+  harq_pending_retx_list.push_back(&h);
 
   // Update HARQ process state.
   h.status = harq_state_t::pending_retx;

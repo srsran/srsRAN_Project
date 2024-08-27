@@ -936,3 +936,35 @@ TEST_F(multi_ue_harq_manager_test, when_harq_entities_are_nacked_then_they_appea
   }
   ASSERT_EQ(count, 1);
 }
+
+TEST_F(multi_ue_harq_manager_test, pending_harq_retxs_are_ordered_from_oldest_to_newest_ack)
+{
+  const unsigned        k1 = 4, k2 = 6, max_retxs = 4;
+  unique_ue_harq_entity harq_ent1 = cell_harqs.add_ue(to_du_ue_index(1), to_rnti(0x4601), nof_harqs, nof_harqs);
+  unique_ue_harq_entity harq_ent2 = cell_harqs.add_ue(to_du_ue_index(2), to_rnti(0x4602), nof_harqs, nof_harqs);
+
+  ASSERT_TRUE(harq_ent1.alloc_dl_harq(current_slot, k1, max_retxs, 0).has_value());
+  ASSERT_TRUE(harq_ent2.alloc_ul_harq(current_slot + k2, max_retxs).has_value());
+  ASSERT_TRUE(harq_ent2.alloc_dl_harq(current_slot, k1, max_retxs, 0).has_value());
+  ASSERT_TRUE(harq_ent1.alloc_ul_harq(current_slot + k2, max_retxs).has_value());
+
+  ASSERT_EQ(harq_ent1.find_dl_harq(current_slot + k1, 0)->dl_ack_info(mac_harq_ack_report_status::nack, std::nullopt),
+            dl_harq_process_handle::status_update::nacked);
+  ASSERT_EQ(harq_ent2.find_dl_harq(current_slot + k1, 0)->dl_ack_info(mac_harq_ack_report_status::nack, std::nullopt),
+            dl_harq_process_handle::status_update::nacked);
+  ASSERT_EQ(harq_ent2.find_ul_harq(current_slot + k2)->ul_crc_info(false), 0);
+  ASSERT_EQ(harq_ent1.find_ul_harq(current_slot + k2)->ul_crc_info(false), 0);
+
+  unsigned count = 0;
+  for (dl_harq_process_handle h : cell_harqs.pending_dl_retxs()) {
+    ASSERT_EQ(h.rnti(), to_rnti(0x4601 + count));
+    count++;
+  }
+  ASSERT_EQ(count, 2);
+  count = 0;
+  for (ul_harq_process_handle h : cell_harqs.pending_ul_retxs()) {
+    ASSERT_EQ(h.rnti(), to_rnti(0x4602 - count));
+    count++;
+  }
+  ASSERT_EQ(count, 2);
+}
