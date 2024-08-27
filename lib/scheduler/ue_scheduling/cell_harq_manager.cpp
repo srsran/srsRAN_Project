@@ -9,6 +9,7 @@
  */
 
 #include "cell_harq_manager.h"
+#include "../cell/resource_grid_util.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 
 using namespace srsran;
@@ -46,21 +47,41 @@ cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
     ues[i].harqs.reserve(MAX_NOF_HARQS);
   }
 
-  const unsigned RING_SIZE = 320; // TODO: use function to define this value. It must account the timeout arg and k
-                                  // values
-  harq_timeout_wheel.resize(RING_SIZE);
+  harq_timeout_wheel.resize(get_allocator_ring_size_gt_min(max_ack_wait_timeout + get_max_slot_ul_alloc_delay(0)));
 }
 
 template <bool IsDl>
 void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
 {
+  last_sl_ind = sl_tx;
+
   // Handle HARQs that timed out.
   auto& harqs_timing_out = harq_timeout_wheel[sl_tx.to_uint() % harq_timeout_wheel.size()];
   while (not harqs_timing_out.empty()) {
     handle_harq_ack_timeout(harqs_timing_out.front(), sl_tx);
   }
 
-  last_sl_ind = sl_tx;
+  // Handle HARQs with pending reTx that are trapped (never scheduled). This is a safety mechanism to account for a
+  // potential bug or limitation in the scheduler policy that is leaving HARQ processes with pending reTxs for too long.
+  // Note: we assume that the list is ordered based on when they were last ACKed.
+  while (not harq_pending_retx_list.empty()) {
+    auto& h = harq_pending_retx_list.front();
+    srsran_sanity_check(h.status == harq_state_t::pending_retx, "HARQ process in wrong state");
+    // [Implementation-defined] Maximum time we give to the scheduler policy to retransmit a HARQ process.
+    const unsigned max_nof_slots_for_retx = last_sl_ind.nof_slots_per_system_frame() / 4;
+    if (last_sl_ind < (h.slot_ack + max_nof_slots_for_retx)) {
+      break;
+    }
+
+    // HARQ is trapped. Remove it.
+    logger.warning(
+        "rnti={} h_id={}: Discarding {} HARQ. Cause: Too much time has passed since the last HARQ "
+        "transmission. The scheduler policy is likely not prioritizing retransmissions of old HARQ processes.",
+        h.rnti,
+        h.h_id,
+        IsDl ? "DL" : "UL");
+    dealloc_harq(h);
+  }
 }
 
 template <bool IsDl>
@@ -306,6 +327,15 @@ unsigned cell_harq_repository<IsDl>::find_ue_harq_in_state(du_ue_index_t ue_idx,
 template struct harq_utils::cell_harq_repository<true>;
 template struct harq_utils::cell_harq_repository<false>;
 
+template <bool IsDl>
+void harq_utils::base_harq_process_handle<IsDl>::cancel_retxs()
+{
+  harq_repo->cancel_retxs(fetch_impl());
+}
+
+template class harq_utils::base_harq_process_handle<true>;
+template class harq_utils::base_harq_process_handle<false>;
+
 // Cell HARQ manager.
 
 cell_harq_manager::cell_harq_manager(unsigned                               max_ues,
@@ -453,11 +483,6 @@ void dl_harq_process_handle::increment_pucch_counter()
   ++fetch_impl().pucch_ack_to_receive;
 }
 
-void dl_harq_process_handle::cancel_retxs()
-{
-  harq_repo->cancel_retxs(fetch_impl());
-}
-
 void dl_harq_process_handle::save_grant_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch)
 {
   srsran_assert(pdsch.codewords.size() == 1, "Only one codeword supported");
@@ -509,11 +534,6 @@ int ul_harq_process_handle::ul_crc_info(bool ack)
   harq_repo->handle_ack(h, ack);
 
   return ack ? (int)h.prev_tx_params.tbs_bytes : 0;
-}
-
-void ul_harq_process_handle::cancel_retxs()
-{
-  harq_repo->cancel_retxs(fetch_impl());
 }
 
 void ul_harq_process_handle::save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pusch)

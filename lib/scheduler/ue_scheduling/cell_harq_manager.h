@@ -193,6 +193,11 @@ public:
   unsigned nof_retxs() const { return fetch_impl().nof_retxs; }
   bool     ndi() const { return fetch_impl().ndi; }
 
+  /// \brief Cancels any retransmissions for this HARQ process.
+  /// If the HARQ process has a pending retransmission, it is reset. If the ACK/CRC info has not been received yet, the
+  /// HARQ process waits for it to arrive before being reset.
+  void cancel_retxs();
+
   bool operator==(const base_harq_process_handle& other) const
   {
     return harq_repo == other.harq_repo and harq_ref_idx == other.harq_ref_idx;
@@ -255,6 +260,8 @@ public:
   using base_type::ndi;
   using base_type::nof_retxs;
 
+  using base_type::cancel_retxs;
+
   [[nodiscard]] bool new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
 
   /// \brief Update the state of the DL HARQ process waiting for an HARQ-ACK.
@@ -264,8 +271,6 @@ public:
   status_update dl_ack_info(mac_harq_ack_report_status ack, std::optional<float> pucch_snr);
 
   void increment_pucch_counter();
-
-  void cancel_retxs();
 
   /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
@@ -296,13 +301,13 @@ public:
   using base_type::ndi;
   using base_type::nof_retxs;
 
+  using base_type::cancel_retxs;
+
   [[nodiscard]] bool new_retx(slot_point pusch_slot);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(bool ack);
-
-  void cancel_retxs();
 
   /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
