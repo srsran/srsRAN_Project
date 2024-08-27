@@ -57,10 +57,23 @@ struct du_high_unit_logger_config {
   bool f1ap_json_enabled = false;
 };
 
+/// Timing Advance MAC CE scheduling expert configuration.
+struct du_high_unit_ta_sched_expert_config {
+  /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
+  unsigned ta_measurement_slot_period = 80;
+  /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
+  /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
+  int ta_cmd_offset_threshold = 1;
+  /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
+  float ta_update_measurement_ul_sinr_threshold = 0.0F;
+};
+
 /// Scheduler expert configuration.
 struct du_high_unit_scheduler_expert_config {
   /// Policy scheduler expert parameters.
   policy_scheduler_expert_config policy_sched_expert_cfg = time_rr_scheduler_expert_config{};
+  /// Timing Advance MAC CE scheduling expert configuration.
+  du_high_unit_ta_sched_expert_config ta_sched_cfg;
 };
 
 struct du_high_unit_ssb_config {

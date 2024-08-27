@@ -563,11 +563,35 @@ static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_s
   pf_sched_cfg_subcmd->parse_complete_callback(pf_sched_verify_callback);
 }
 
+static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit_ta_sched_expert_config& ta_params)
+{
+  add_option(app,
+             "--ta_measurement_slot_period",
+             ta_params.ta_measurement_slot_period,
+             "Measurements periodicity in nof. slots over which the new Timing Advance Command is computed")
+      ->capture_default_str();
+  add_option(app,
+             "--ta_cmd_offset_threshold",
+             ta_params.ta_cmd_offset_threshold,
+             "Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. If set to "
+             "less than zero, issuing of TA Command is disabled")
+      ->capture_default_str()
+      ->check(CLI::Range(-1, 31));
+  add_option(app,
+             "--ta_update_measurement_ul_sinr_threshold",
+             ta_params.ta_update_measurement_ul_sinr_threshold,
+             "UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid")
+      ->capture_default_str();
+}
+
 static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
 {
   CLI::App* policy_sched_cfg_subcmd =
       add_subcommand(app, "policy_sched_cfg", "Policy scheduler expert configuration")->configurable();
   configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
+  CLI::App* ta_sched_cfg_subcmd =
+      add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
+  configure_cli11_ta_scheduler_expert_args(*ta_sched_cfg_subcmd, expert_params.ta_sched_cfg);
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common_config& ul_common_params)
