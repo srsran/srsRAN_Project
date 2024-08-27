@@ -292,7 +292,7 @@ amari 1UE:
     - *txrx-lib
     - *retina-needs
 
-amari 1UE 2x2 mimo:
+amari 32UE 2x2 mimo:
   extends: .zmq
   variables:
     MARKERS: "zmq_2x2_mimo"

@@ -281,11 +281,9 @@ def _print_ping_result(msg: str, task: grpc.Future):
         result: PingResponse = task.result()
         if not result.status:
             log_fn = logging.error
-    except (grpc.RpcError, grpc.FutureCancelledError, grpc.FutureTimeoutError) as err:
-        log_fn = logging.error
-        result = ErrorReportedByAgent(err)
-    finally:
         log_fn("Ping %s:\n%s", msg, MessageToString(result, indent=2))
+    except (grpc.RpcError, grpc.FutureCancelledError, grpc.FutureTimeoutError) as err:
+        logging.error(ErrorReportedByAgent(err))
 
 
 def iperf_parallel(
