@@ -234,7 +234,8 @@ slice_scheduler::get_next_candidate()
     }
 
     const slice_rrm_policy_config& cfg = chosen_slice.inst.cfg;
-    if (cfg.min_prb > 0 and cfg.min_prb != cfg.max_prb and rb_lims.stop() >= cfg.min_prb) {
+    if (cfg.min_prb > 0 and cfg.min_prb != cfg.max_prb and rb_lims.stop() >= cfg.min_prb and
+        rb_lims.stop() != cfg.max_prb) {
       // For the special case when minRB ratio>0, the first candidate for this slice was bounded between {RBLimsMin,
       // RBLimsMax}. We re-add the slice as a candidate, this time, with RB bounds {RBLimsMax, maxRB}.
       priority_type prio    = chosen_slice.get_prio(IsDownlink, slot_count, slot_tx);

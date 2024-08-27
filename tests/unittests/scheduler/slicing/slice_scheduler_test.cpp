@@ -262,6 +262,7 @@ protected:
   constexpr static ran_slice_id_t default_srb_slice_id{0};
   constexpr static ran_slice_id_t default_drb_slice_id{1};
   constexpr static ran_slice_id_t drb1_slice_id{2};
+  constexpr static ran_slice_id_t drb2_slice_id{3};
 
   rb_ratio_slice_scheduler_test() :
     slice_scheduler_test({{{plmn_identity::test_value(), s_nssai_t{1}}, MIN_SLICE_RB, MAX_SLICE_RB},
@@ -355,7 +356,6 @@ TEST_F(rb_ratio_slice_scheduler_test,
   // Original slice is selected again, now using maxRB ratio as the remaining RBs.
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_SLICE_RB - MIN_SLICE_RB);
-  next_dl_slice->store_grant(MAX_SLICE_RB - MIN_SLICE_RB);
 
   // No more slices to schedule.
   next_dl_slice = slice_sched.get_next_dl_candidate();
@@ -375,7 +375,6 @@ TEST_F(rb_ratio_slice_scheduler_test,
   next_dl_slice = slice_sched.get_next_dl_candidate();
   next_dl_slice->store_grant(MIN_SLICE_RB);
   next_dl_slice = slice_sched.get_next_dl_candidate();
-  next_dl_slice->store_grant(MAX_SLICE_RB - MIN_SLICE_RB);
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_FALSE(next_dl_slice.has_value());
 
@@ -391,7 +390,6 @@ TEST_F(rb_ratio_slice_scheduler_test,
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_SLICE_RB - MIN_SLICE_RB);
-  next_dl_slice->store_grant(MAX_SLICE_RB - MIN_SLICE_RB);
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_FALSE(next_dl_slice.has_value());
 }
@@ -399,8 +397,6 @@ TEST_F(rb_ratio_slice_scheduler_test,
 TEST_F(rb_ratio_slice_scheduler_test,
        when_slices_are_saturated_then_slices_should_have_equal_opportunity_to_reach_max_rbs)
 {
-  constexpr static ran_slice_id_t drb2_slice_id{3};
-
   std::initializer_list<logical_channel_config> lc_cfgs = {
       config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0),
       config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1),
