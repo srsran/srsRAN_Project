@@ -208,7 +208,7 @@ protected:
     srb_creation_message msg;
     msg.ue_index = allocated_ue_index;
     msg.srb_id   = srb_id_t::srb2;
-    rrc_ue->get_rrc_ue_srb_handler().create_srb(msg);
+    rrc_ue->get_rrc_ue_control_message_handler().create_srb(msg);
   }
 
   void receive_setup_request()

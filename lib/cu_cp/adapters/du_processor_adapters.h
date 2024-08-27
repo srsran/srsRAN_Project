@@ -146,11 +146,7 @@ class du_processor_rrc_ue_adapter : public du_processor_rrc_ue_notifier
 public:
   du_processor_rrc_ue_adapter() = default;
 
-  void connect_rrc_ue(rrc_ue_control_message_handler& rrc_ue_handler_, rrc_ue_srb_handler& srb_handler_)
-  {
-    rrc_ue_handler = &rrc_ue_handler_;
-    srb_handler    = &srb_handler_;
-  }
+  void connect_rrc_ue(rrc_ue_control_message_handler& rrc_ue_handler_) { rrc_ue_handler = &rrc_ue_handler_; }
 
   async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override
   {
@@ -222,19 +218,18 @@ public:
 
   void create_srb(const srb_creation_message& msg) override
   {
-    srsran_assert(srb_handler != nullptr, "RRC UE SRB handler must not be nullptr");
-    return srb_handler->create_srb(msg);
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->create_srb(msg);
   }
 
   static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override
   {
-    srsran_assert(srb_handler != nullptr, "RRC UE SRB handler must not be nullptr");
-    return srb_handler->get_srbs();
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_srbs();
   }
 
 private:
   rrc_ue_control_message_handler* rrc_ue_handler = nullptr;
-  rrc_ue_srb_handler*             srb_handler    = nullptr;
 };
 
 class du_processor_cu_cp_connection_adapter final : public du_connection_notifier

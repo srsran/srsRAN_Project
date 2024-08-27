@@ -93,23 +93,24 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
   // Launch RRC setup procedure
   cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(
-      context, du_to_cu_container, *this, get_rrc_ue_srb_handler(), nas_notifier, *event_mng, logger));
+      context, du_to_cu_container, *this, get_rrc_ue_control_message_handler(), nas_notifier, *event_mng, logger));
 }
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
   // Launch RRC re-establishment procedure
-  cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_reestablishment_procedure>(msg,
-                                                                                    context,
-                                                                                    du_to_cu_container,
-                                                                                    *this,
-                                                                                    *this,
-                                                                                    get_rrc_ue_srb_handler(),
-                                                                                    cu_cp_notifier,
-                                                                                    cu_cp_ue_notifier,
-                                                                                    nas_notifier,
-                                                                                    *event_mng,
-                                                                                    logger));
+  cu_cp_ue_notifier.schedule_async_task(
+      launch_async<rrc_reestablishment_procedure>(msg,
+                                                  context,
+                                                  du_to_cu_container,
+                                                  *this,
+                                                  *this,
+                                                  get_rrc_ue_control_message_handler(),
+                                                  cu_cp_notifier,
+                                                  cu_cp_ue_notifier,
+                                                  nas_notifier,
+                                                  *event_mng,
+                                                  logger));
 }
 
 void rrc_ue_impl::stop()
@@ -369,7 +370,8 @@ byte_buffer rrc_ue_impl::get_packed_ue_radio_access_cap_info() const
 
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
-  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, get_rrc_ue_srb_handler(), logger);
+  return launch_async<rrc_reconfiguration_procedure>(
+      context, msg, *this, *event_mng, get_rrc_ue_control_message_handler(), logger);
 }
 
 rrc_ue_handover_reconfiguration_context

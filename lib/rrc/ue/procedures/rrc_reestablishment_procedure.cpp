@@ -24,7 +24,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     const byte_buffer&                       du_to_cu_container_,
     rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier_,
     rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier_,
-    rrc_ue_srb_handler&                      srb_notifier_,
+    rrc_ue_control_message_handler&          srb_notifier_,
     rrc_ue_context_update_notifier&          cu_cp_notifier_,
     rrc_ue_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
     rrc_ue_nas_notifier&                     nas_notifier_,

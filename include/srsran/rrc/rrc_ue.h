@@ -120,21 +120,6 @@ struct srb_creation_message {
   srb_pdcp_config pdcp_cfg;
 };
 
-/// Interface to handle the creation of SRBs.
-class rrc_ue_srb_handler
-{
-public:
-  virtual ~rrc_ue_srb_handler() = default;
-
-  /// \brief Instruct the RRC UE to create a new SRB. It creates all
-  /// required intermediate objects (e.g. PDCP) and connects them with one another.
-  /// \param[in] msg The UE index, SRB ID and config.
-  virtual void create_srb(const srb_creation_message& msg) = 0;
-
-  /// \brief Get all SRBs of the UE.
-  virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() = 0;
-};
-
 /// Interface used by the RRC reconfiguration procedure to
 /// invoke actions carried out by the main RRC UE class (i.e. send DL message, remove UE).
 class rrc_ue_reconfiguration_proc_notifier
@@ -301,6 +286,14 @@ public:
 
   /// \brief Get the packed RRC Handover Preparation Message.
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
+
+  /// \brief Instruct the RRC UE to create a new SRB. It creates all
+  /// required intermediate objects (e.g. PDCP) and connects them with one another.
+  /// \param[in] msg The UE index, SRB ID and config.
+  virtual void create_srb(const srb_creation_message& msg) = 0;
+
+  /// \brief Get all SRBs of the UE.
+  virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() = 0;
 };
 
 class rrc_ue_cu_cp_ue_notifier
@@ -428,7 +421,6 @@ public:
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_pdu_handler,
                          public rrc_ngap_message_handler,
-                         public rrc_ue_srb_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
@@ -443,7 +435,6 @@ public:
   virtual rrc_ue_controller&              get_controller()                     = 0;
   virtual rrc_ul_pdu_handler&             get_ul_pdu_handler()                 = 0;
   virtual rrc_ngap_message_handler&       get_rrc_ngap_message_handler()       = 0;
-  virtual rrc_ue_srb_handler&             get_rrc_ue_srb_handler()             = 0;
   virtual rrc_ue_control_message_handler& get_rrc_ue_control_message_handler() = 0;
   virtual rrc_ue_context_handler&         get_rrc_ue_context_handler()         = 0;
 };

@@ -179,8 +179,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
 
   // Create and connect DU Processor to RRC UE adapter
   rrc_ue_adapters[ue.get_ue_index()] = {};
-  rrc_ue_adapters.at(ue.get_ue_index())
-      .connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler(), rrc_ue->get_rrc_ue_srb_handler());
+  rrc_ue_adapters.at(ue.get_ue_index()).connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler());
   ue.set_rrc_ue_notifier(rrc_ue_adapters.at(ue.get_ue_index()));
 
   // Notify CU-CP about the creation of the RRC UE
