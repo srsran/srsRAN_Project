@@ -21,7 +21,11 @@ namespace srsran {
 /// Misalignment example: Assume NOF_SLOTS_PER_SYSTEM_FRAME = 10240 and RING_ALLOCATOR_SIZE = 37
 /// At the slot 1023.9, the ring index 10239 % 37 = 26 is accessed. At slot point 0.0 (once slot point wraps around),
 /// the ring index 0 % 37 = 0 would be accessed.
-constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned minimum_value)
+/// \remark 2. Numerology 0 (SCS=15kHz) can be used as a conservative value, at the expense of more space used, since
+/// that if the condition NOF_SLOTS_PER_SYSTEM_FRAME % RING_ALLOCATOR_SIZE = 0 is satisfied for numerology 0, it is
+/// also satisfied for other numerologies.
+constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned           minimum_value,
+                                                         subcarrier_spacing scs = subcarrier_spacing::kHz15)
 {
   auto power2_ceil = [](unsigned x) {
     if (x <= 1)
@@ -33,11 +37,9 @@ constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned minimum_value)
     return power;
   };
 
-  // Note: we compute ring size assuming numerology 0. The reason being that if the condition
-  // NOF_SLOTS_PER_SYSTEM_FRAME % RING_ALLOCATOR_SIZE = 0 is true for numerology 0, it will be as well for other
-  // numerologies.
-  unsigned div10 = divide_ceil(minimum_value, 10U);
-  return power2_ceil(div10) * 10;
+  unsigned slots_per_frame = 10U * get_nof_slots_per_subframe(scs);
+  unsigned frames_ceil     = divide_ceil(minimum_value, slots_per_frame);
+  return power2_ceil(frames_ceil) * slots_per_frame;
 }
 
 /// \brief Retrieves how far in advance the scheduler can allocate resources in the UL resource grid.
