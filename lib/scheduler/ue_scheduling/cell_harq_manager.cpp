@@ -176,12 +176,12 @@ void cell_harq_repository<IsDl>::handle_ack(harq_type& h, bool ack)
 {
   if (not ack and h.nof_retxs >= h.max_nof_harq_retxs) {
     if (h.retxs_cancelled) {
-      logger.info("rnti={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Retxs for this HARQ process were "
-                  "cancelled",
-                  h.rnti,
-                  h.h_id,
-                  IsDl ? "DL" : "UL",
-                  h.prev_tx_params.tbs_bytes);
+      logger.debug("rnti={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Retxs for this HARQ process "
+                   "were cancelled",
+                   h.rnti,
+                   h.h_id,
+                   IsDl ? "DL" : "UL",
+                   h.prev_tx_params.tbs_bytes);
     } else {
       logger.info(
           "rnti={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Maximum number of reTxs {} exceeded",
@@ -465,6 +465,11 @@ void dl_harq_process_view::increment_pucch_counter()
   ++fetch_impl().pucch_ack_to_receive;
 }
 
+void dl_harq_process_view::cancel_retxs()
+{
+  cell_harq_mng->dl.cancel_retxs(fetch_impl());
+}
+
 void dl_harq_process_view::save_grant_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch)
 {
   srsran_assert(pdsch.codewords.size() == 1, "Only one codeword supported");
@@ -507,6 +512,11 @@ bool ul_harq_process_view::new_retx(slot_point pusch_slot)
 int ul_harq_process_view::ul_crc_info(bool ack)
 {
   return cell_harq_mng->ul_crc_info(cell_harq_mng->ul.harqs[harq_ref_idx], ack);
+}
+
+void ul_harq_process_view::cancel_retxs()
+{
+  cell_harq_mng->ul.cancel_retxs(fetch_impl());
 }
 
 void ul_harq_process_view::save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pusch)

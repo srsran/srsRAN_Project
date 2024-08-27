@@ -413,6 +413,20 @@ TEST_F(single_harq_process_test, when_ack_wait_timeout_reached_then_harq_is_avai
   }
 }
 
+TEST_F(single_harq_process_test, when_harq_retx_is_cancelled_then_harq_nack_empties_it)
+{
+  h_dl.cancel_retxs();
+  h_ul.cancel_retxs();
+  ASSERT_TRUE(h_dl.is_waiting_ack());
+  ASSERT_TRUE(h_ul.is_waiting_ack());
+
+  ASSERT_EQ(h_dl.dl_ack_info(mac_harq_ack_report_status::nack, std::nullopt),
+            dl_harq_process_view::status_update::nacked);
+  ASSERT_EQ(h_ul.ul_crc_info(false), 0);
+  ASSERT_TRUE(h_dl.empty());
+  ASSERT_TRUE(h_ul.empty());
+}
+
 // DL HARQ process with multi PUCCH test
 
 TEST_F(dl_harq_process_multi_pucch_test, when_dtx_received_after_ack_then_dtx_is_ignored)

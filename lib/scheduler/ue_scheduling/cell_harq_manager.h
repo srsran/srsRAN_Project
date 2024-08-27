@@ -291,6 +291,8 @@ public:
 
   void increment_pucch_counter();
 
+  void cancel_retxs();
+
   /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
   void save_grant_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch);
@@ -330,12 +332,18 @@ public:
 
   bool is_waiting_ack() const { return fetch_impl().status == harq_utils::harq_state_t::waiting_ack; }
   bool has_pending_retx() const { return fetch_impl().status == harq_utils::harq_state_t::pending_retx; }
+  bool empty() const
+  {
+    return harq_ref_idx == cell_harq_manager::INVALID_HARQ or fetch_impl().status == harq_utils::harq_state_t::empty;
+  }
 
   [[nodiscard]] bool new_retx(slot_point pusch_slot);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(bool ack);
+
+  void cancel_retxs();
 
   /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
