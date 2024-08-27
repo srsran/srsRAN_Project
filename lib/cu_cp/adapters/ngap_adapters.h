@@ -16,7 +16,7 @@
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/rrc/rrc.h"
+#include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
 namespace srs_cu_cp {

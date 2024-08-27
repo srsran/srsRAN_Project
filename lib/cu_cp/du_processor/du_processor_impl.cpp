@@ -237,8 +237,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   }
   rrc_ue_interface* rrc_ue       = rrc->find_ue(ue_index);
   f1ap_rrc_ue_adapters[ue_index] = {};
-  f1ap_rrc_ue_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(),
-                                                   rrc_ue->get_ul_dcch_pdu_handler());
+  f1ap_rrc_ue_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_pdu_handler());
 
   // Signal back that the UE was successfully created.
   logger.info("ue={} c-rnti={}: UE created", ue->get_ue_index(), req.c_rnti);

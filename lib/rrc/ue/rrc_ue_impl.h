@@ -38,15 +38,13 @@ public:
               std::optional<rrc_ue_transfer_context> rrc_context);
   ~rrc_ue_impl();
 
-  // rrc_ul_ccch_pdu_handler
+  // rrc_ul_pdu_handler
   void handle_ul_ccch_pdu(byte_buffer pdu) override;
-  // rrc_ul_dcch_pdu_handler
   void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu) override;
 
   // rrc_ue_interface
   rrc_ue_controller&                      get_controller() override { return *this; }
-  rrc_ul_ccch_pdu_handler&                get_ul_ccch_pdu_handler() override { return *this; }
-  rrc_ul_dcch_pdu_handler&                get_ul_dcch_pdu_handler() override { return *this; }
+  rrc_ul_pdu_handler&                     get_ul_pdu_handler() override { return *this; }
   rrc_dl_nas_message_handler&             get_rrc_dl_nas_message_handler() override { return *this; }
   rrc_ue_srb_handler&                     get_rrc_ue_srb_handler() override { return *this; }
   rrc_ue_control_message_handler&         get_rrc_ue_control_message_handler() override { return *this; }

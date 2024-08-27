@@ -18,7 +18,6 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/rrc/rrc.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"
@@ -43,6 +42,41 @@ public:
 
   /// \brief Cancel currently running transactions.
   virtual void stop() = 0;
+};
+
+enum ue_context_release_cause : uint16_t {
+  radio_network = 0,
+  transport     = 1,
+  protocol      = 2,
+  misc          = 3,
+  choice_ext    = 4,
+  nulltype      = 5
+};
+
+/// This interface represents the data entry point for the RRC UE receiving UL PDUs on the CCCH and DCCH logical
+/// channel. The lower-layers will use this class to pass PDUs into the RRC.
+class rrc_ul_pdu_handler
+{
+public:
+  virtual ~rrc_ul_pdu_handler() = default;
+
+  /// Handle the incoming PDU on the UL-CCCH logical channel.
+  virtual void handle_ul_ccch_pdu(byte_buffer pdu) = 0;
+
+  /// Handle the incoming SRB PDCP PDU on the UL-DCCH logical channel.
+  virtual void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) = 0;
+};
+
+/// This interface represents the data entry point for the RRC receiving NAS PDUs.
+/// The higher-layers will use this class to pass PDUs into the RRC.
+class rrc_dl_nas_message_handler
+{
+public:
+  virtual ~rrc_dl_nas_message_handler() = default;
+
+  /// \brief Handle the received Downlink NAS Transport message.
+  /// \param[in] nas_pdu The received NAS PDU.
+  virtual void handle_dl_nas_transport_message(byte_buffer nas_pdu) = 0;
 };
 
 /// Interface to notify F1AP about a new SRB PDU.
@@ -406,8 +440,7 @@ public:
 
 /// Combined entry point for the RRC UE handling.
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
-class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
-                         public rrc_ul_dcch_pdu_handler,
+class rrc_ue_interface : public rrc_ul_pdu_handler,
                          public rrc_dl_nas_message_handler,
                          public rrc_ue_srb_handler,
                          public rrc_ue_control_message_handler,
@@ -424,8 +457,7 @@ public:
   virtual ~rrc_ue_interface() = default;
 
   virtual rrc_ue_controller&                      get_controller()                             = 0;
-  virtual rrc_ul_ccch_pdu_handler&                get_ul_ccch_pdu_handler()                    = 0;
-  virtual rrc_ul_dcch_pdu_handler&                get_ul_dcch_pdu_handler()                    = 0;
+  virtual rrc_ul_pdu_handler&                     get_ul_pdu_handler()                         = 0;
   virtual rrc_dl_nas_message_handler&             get_rrc_dl_nas_message_handler()             = 0;
   virtual rrc_ue_srb_handler&                     get_rrc_ue_srb_handler()                     = 0;
   virtual rrc_ue_control_message_handler&         get_rrc_ue_control_message_handler()         = 0;
