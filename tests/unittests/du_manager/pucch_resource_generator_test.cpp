@@ -395,9 +395,11 @@ TEST_P(test_pucch_res_generator_params, test_pucch_res_given_number)
 
   std::vector<pucch_resource> res_list;
   if (nof_res_f0 != 0) {
-    res_list = generate_cell_pucch_res_list(nof_res_f0, nof_res_f2, params_f0, params_f2, bwp_size);
+    res_list = generate_cell_pucch_res_list(
+        nof_res_f0, nof_res_f2, params_f0, params_f2, bwp_size, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
   } else {
-    res_list = generate_cell_pucch_res_list(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
+    res_list = generate_cell_pucch_res_list(
+        nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
   }
 
   ASSERT_TRUE(res_list.size() > 0);
@@ -910,9 +912,11 @@ TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
       << "PUCCH Format 0 and Format 1 resources cannot be used together";
 
   if (nof_f0_res_harq_per_ue != 0) {
-    res_list = generate_cell_pucch_res_list(nof_f0_res, nof_f2_res, f0_params, f2_params, bwp_size);
+    res_list = generate_cell_pucch_res_list(
+        nof_f0_res, nof_f2_res, f0_params, f2_params, bwp_size, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
   } else {
-    res_list = generate_cell_pucch_res_list(nof_f1_res, nof_f2_res, f1_params, f2_params, bwp_size);
+    res_list = generate_cell_pucch_res_list(
+        nof_f1_res, nof_f2_res, f1_params, f2_params, bwp_size, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
   }
 
   const unsigned harq_idx_cfg = test_rgen::uniform_int<unsigned>(0, nof_harq_cfg_per_ue - 1);

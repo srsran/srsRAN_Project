@@ -57,7 +57,8 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
                                                cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
                                            cell_cfg_list_[0].pucch_cfg.f0_or_f1_params,
                                            cell_cfg_list_[0].pucch_cfg.f2_params,
-                                           cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
+                                           cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                                           cell_cfg_list_[0].pucch_cfg.max_nof_symbols)),
   default_pucch_cfg(
       build_default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(),
                               user_defined_pucch_cfg)),

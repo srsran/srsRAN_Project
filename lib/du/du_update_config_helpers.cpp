@@ -74,7 +74,8 @@ unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_build
           user_params.nof_csi_resources,
       user_params.f0_or_f1_params,
       user_params.f2_params,
-      bwp_size);
+      bwp_size,
+      user_params.max_nof_symbols);
 
   srsran_assert(not res_list.empty(), "The PUCCH resource list cannot be empty");
 

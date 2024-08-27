@@ -91,6 +91,11 @@ struct pucch_builder_params {
   // NOTE: Having \c pucch_f1_params force the varint to use the Format 1 in the default constructor.
   std::variant<pucch_f1_params, pucch_f0_params> f0_or_f1_params;
   pucch_f2_params                                f2_params;
+  /// Maximum number of symbols per UL slot dedicated for PUCCH.
+  /// \remark In case of Sounding Reference Signals (SRS) being used, the number of symbols should be reduced so that
+  /// the PUCCH resources do not overlap in symbols with the SRS resources.
+  /// \remark This parameter should be computed the GNB and not exposed to the user configuration interface.
+  bounded_integer<unsigned, 1, 14> max_nof_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.

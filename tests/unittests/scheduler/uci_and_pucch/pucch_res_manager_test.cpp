@@ -614,7 +614,8 @@ protected:
                                              (nof_res_per_ue + 1) * nof_configurations,
                                              pucch_f1_params{},
                                              pucch_f2_params{},
-                                             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length());
+                                             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+                                             NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     for (unsigned ue_idx = 0; ue_idx != nof_ues; ++ue_idx) {
       sched_ue_creation_request_message ue_req   = test_helpers::create_default_sched_ue_creation_request();
       serving_cell_config&              serv_cfg = ue_req.cfg.cells->front().serv_cell_cfg;
