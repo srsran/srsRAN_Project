@@ -330,6 +330,16 @@ bool cell_harq_manager::contains(du_ue_index_t ue_idx) const
   return ue_idx < dl.ues.size() and dl.ues[ue_idx].free_harq_ids.size() != 0;
 }
 
+dl_harq_pending_retx_list cell_harq_manager::pending_dl_retxs()
+{
+  return dl_harq_pending_retx_list{dl};
+}
+
+ul_harq_pending_retx_list cell_harq_manager::pending_ul_retxs()
+{
+  return ul_harq_pending_retx_list{ul};
+}
+
 unique_ue_harq_entity
 cell_harq_manager::add_ue(du_ue_index_t ue_idx, rnti_t crnti, unsigned nof_dl_harq_procs, unsigned nof_ul_harq_procs)
 {

@@ -173,6 +173,7 @@ protected:
   using harq_impl_type = std::conditional_t<IsDl, dl_harq_process_impl, ul_harq_process_impl>;
 
 public:
+  base_harq_process_handle() = default;
   base_harq_process_handle(harq_pool& pool_, unsigned harq_ref_idx_) : harq_repo(&pool_), harq_ref_idx(harq_ref_idx_)
   {
     srsran_sanity_check(harq_ref_idx < harq_repo->harqs.size(), "Invalid HARQ created");
@@ -180,6 +181,7 @@ public:
                         "Empty HARQ process created");
   }
 
+  rnti_t    rnti() const { return fetch_impl().rnti; }
   harq_id_t id() const { return fetch_impl().h_id; }
   bool      is_waiting_ack() const { return fetch_impl().status == harq_utils::harq_state_t::waiting_ack; }
   bool      has_pending_retx() const { return fetch_impl().status == harq_utils::harq_state_t::pending_retx; }
@@ -227,61 +229,6 @@ struct ul_harq_sched_context {
   std::optional<ran_slice_id_t> slice_id;
 };
 
-class cell_harq_manager
-{
-public:
-  /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
-  /// (implementation-defined).
-  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
-
-  cell_harq_manager(unsigned                               max_ues              = MAX_NOF_DU_UES,
-                    std::unique_ptr<harq_timeout_notifier> notifier             = nullptr,
-                    unsigned                               max_ack_wait_timeout = DEFAULT_ACK_TIMEOUT_SLOTS);
-
-  /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
-  void slot_indication(slot_point sl_tx);
-
-  /// Create new UE HARQ entity.
-  /// \param rnti RNTI of the UE
-  /// \param nof_dl_harq_procs Number of DL HARQ processes that the UE can support. This value is derived based on
-  /// the UE capabilities, and passed to the UE via RRC signalling. See TS38.331, "nrofHARQ-ProcessesForPDSCH".
-  /// Values: {2, 4, 6, 10, 12, 16}.
-  /// \param nof_ul_harq_procs Number of UL HARQ processes that gNB can support. This value is implementation-defined
-  /// and can up to 16 (there are up to 4 bits for HARQ-Id signalling).
-  unique_ue_harq_entity add_ue(du_ue_index_t ue_idx,
-                               rnti_t        crnti,
-                               unsigned      nof_dl_harq_procs = MAX_NOF_HARQS,
-                               unsigned      nof_ul_harq_procs = MAX_NOF_HARQS);
-
-  /// Checks whether an UE with the provided ue index exists.
-  bool contains(du_ue_index_t ue_idx) const;
-
-private:
-  friend class unique_ue_harq_entity;
-
-  void destroy_ue(du_ue_index_t ue_idx);
-
-  /// \brief Called on every DL new Tx to allocate an DL HARQ process.
-  harq_utils::dl_harq_process_impl* new_dl_tx(du_ue_index_t ue_idx,
-                                              rnti_t        rnti,
-                                              slot_point    pdsch_slot,
-                                              unsigned      k1,
-                                              unsigned      max_harq_nof_retxs,
-                                              uint8_t       harq_bit_idx);
-
-  /// \brief Called on every UL new Tx to allocate an UL HARQ process.
-  harq_utils::ul_harq_process_impl*
-  new_ul_tx(du_ue_index_t ue_idx, rnti_t rnti, slot_point pusch_slot, unsigned max_harq_nof_retxs);
-
-  std::unique_ptr<harq_timeout_notifier> timeout_notifier;
-  srslog::basic_logger&                  logger;
-
-  slot_point last_sl_tx;
-
-  harq_utils::cell_harq_repository<true>  dl;
-  harq_utils::cell_harq_repository<false> ul;
-};
-
 /// \brief Interface used to fetch and update the status of a DL HARQ process.
 /// \remark This handle acts like a view to an internal HARQ process. It is not a "unique" type that controls the
 /// lifetime of a HARQ. Avoid storing and using the same handle across different slots.
@@ -297,10 +244,7 @@ public:
   using status_update = harq_utils::dl_harq_process_impl::status_update;
   using grant_params  = harq_utils::dl_harq_process_impl::alloc_params;
 
-  dl_harq_process_handle(harq_utils::cell_harq_repository<true>& harq_repo_, unsigned h_ref_idx_) :
-    base_type(harq_repo_, h_ref_idx_)
-  {
-  }
+  using base_type::base_type;
 
   using base_type::empty;
   using base_type::has_pending_retx;
@@ -341,7 +285,7 @@ class ul_harq_process_handle : public harq_utils::base_harq_process_handle<false
   using base_type = harq_utils::base_harq_process_handle<false>;
 
 public:
-  ul_harq_process_handle(harq_pool& harq_repo_, unsigned h_ref_idx) : base_type(harq_repo_, h_ref_idx) {}
+  using base_type::base_type;
 
   using base_type::empty;
   using base_type::has_pending_retx;
@@ -365,6 +309,124 @@ public:
   void save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pdsch);
 
   slot_point pusch_slot() const { return fetch_impl().slot_tx; }
+};
+
+namespace harq_utils {
+
+template <bool IsDl>
+class harq_pending_retx_list_impl
+{
+  using harq_pool      = harq_utils::cell_harq_repository<IsDl>;
+  using harq_impl_type = std::conditional_t<IsDl, harq_utils::dl_harq_process_impl, harq_utils::ul_harq_process_impl>;
+  using handle_type    = std::conditional_t<IsDl, dl_harq_process_handle, ul_harq_process_handle>;
+
+public:
+  struct iterator {
+    using value_type        = handle_type;
+    using reference         = handle_type;
+    using pointer           = std::optional<value_type>;
+    using iterator_category = std::forward_iterator_tag;
+
+    iterator(harq_pool& pool_, typename intrusive_double_linked_list<harq_impl_type>::iterator it_) :
+      pool(&pool_), it(it_)
+    {
+    }
+
+    reference operator++()
+    {
+      ++it;
+      return value();
+    }
+    reference operator*() { return value(); }
+    reference value()
+    {
+      return it != pool->harq_pending_retx_list.end() ? handle_type{*pool, get_harq_ref_idx(*it)} : handle_type{};
+    }
+
+    bool operator==(const iterator& other) const { return pool == other.pool and it == other.it; }
+    bool operator!=(const iterator& other) const { return !(*this == other); }
+
+  private:
+    unsigned get_harq_ref_idx(const harq_impl_type& h) { return &h - pool->harqs.data(); }
+
+    harq_pool*                                                      pool;
+    typename intrusive_double_linked_list<harq_impl_type>::iterator it;
+  };
+
+  explicit harq_pending_retx_list_impl(harq_pool& pool_) : pool(&pool_) {}
+
+  bool empty() const { return pool->harq_pending_retx_list.empty(); }
+
+  iterator begin() { return iterator{*pool, pool->harq_pending_retx_list.begin()}; }
+  iterator end() { return iterator{*pool, pool->harq_pending_retx_list.end()}; }
+
+private:
+  harq_pool* pool;
+};
+
+} // namespace harq_utils
+
+using dl_harq_pending_retx_list = harq_utils::harq_pending_retx_list_impl<true>;
+using ul_harq_pending_retx_list = harq_utils::harq_pending_retx_list_impl<false>;
+
+/// Manager of all HARQ processes in a given cell.
+class cell_harq_manager
+{
+public:
+  /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
+  /// (implementation-defined).
+  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
+
+  cell_harq_manager(unsigned                               max_ues              = MAX_NOF_DU_UES,
+                    std::unique_ptr<harq_timeout_notifier> notifier             = nullptr,
+                    unsigned                               max_ack_wait_timeout = DEFAULT_ACK_TIMEOUT_SLOTS);
+
+  /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
+  void slot_indication(slot_point sl_tx);
+
+  /// Create new UE HARQ entity.
+  /// \param rnti RNTI of the UE
+  /// \param nof_dl_harq_procs Number of DL HARQ processes that the UE can support. This value is derived based on
+  /// the UE capabilities, and passed to the UE via RRC signalling. See TS38.331, "nrofHARQ-ProcessesForPDSCH".
+  /// Values: {2, 4, 6, 10, 12, 16}.
+  /// \param nof_ul_harq_procs Number of UL HARQ processes that gNB can support. This value is implementation-defined
+  /// and can up to 16 (there are up to 4 bits for HARQ-Id signalling).
+  unique_ue_harq_entity add_ue(du_ue_index_t ue_idx,
+                               rnti_t        crnti,
+                               unsigned      nof_dl_harq_procs = MAX_NOF_HARQS,
+                               unsigned      nof_ul_harq_procs = MAX_NOF_HARQS);
+
+  /// Checks whether an UE with the provided ue index exists.
+  bool contains(du_ue_index_t ue_idx) const;
+
+  /// Retrieve list of HARQ processes with pending retxs.
+  dl_harq_pending_retx_list pending_dl_retxs();
+  ul_harq_pending_retx_list pending_ul_retxs();
+
+private:
+  friend class unique_ue_harq_entity;
+
+  void destroy_ue(du_ue_index_t ue_idx);
+
+  /// \brief Called on every DL new Tx to allocate an DL HARQ process.
+  harq_utils::dl_harq_process_impl* new_dl_tx(du_ue_index_t ue_idx,
+                                              rnti_t        rnti,
+                                              slot_point    pdsch_slot,
+                                              unsigned      k1,
+                                              unsigned      max_harq_nof_retxs,
+                                              uint8_t       harq_bit_idx);
+
+  /// \brief Called on every UL new Tx to allocate an UL HARQ process.
+  harq_utils::ul_harq_process_impl*
+  new_ul_tx(du_ue_index_t ue_idx, rnti_t rnti, slot_point pusch_slot, unsigned max_harq_nof_retxs);
+
+  std::unique_ptr<harq_timeout_notifier> timeout_notifier;
+  srslog::basic_logger&                  logger;
+
+  slot_point last_sl_tx;
+
+  harq_utils::cell_harq_repository<true>  dl;
+  harq_utils::cell_harq_repository<false> ul;
 };
 
 class unique_ue_harq_entity
