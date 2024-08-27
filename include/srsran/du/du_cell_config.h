@@ -94,8 +94,18 @@ struct pucch_builder_params {
   /// Maximum number of symbols per UL slot dedicated for PUCCH.
   /// \remark In case of Sounding Reference Signals (SRS) being used, the number of symbols should be reduced so that
   /// the PUCCH resources do not overlap in symbols with the SRS resources.
-  /// \remark This parameter should be computed the GNB and not exposed to the user configuration interface.
+  /// \remark This parameter should be computed by the GNB and not exposed to the user configuration interface.
   bounded_integer<unsigned, 1, 14> max_nof_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+};
+
+struct srs_builder_params {
+  /// Enable Sound Reference Signals (SRS) for the UEs within this cell.
+  bool srs_enabled = false;
+  /// Maximum number of symbols per UL slot dedicated for SRS resources.
+  /// \remark In case of Sounding Reference Signals (SRS) being used, the number of symbols should be reduced so that
+  /// the PUCCH resources do not overlap in symbols with the SRS resources.
+  /// \remark The SRS resources are always placed at the end of the slot.
+  bounded_integer<unsigned, 1, 6> max_nof_symbols = 2U;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -170,6 +180,9 @@ struct du_cell_config {
 
   /// Parameters for PUCCH-Config generation.
   pucch_builder_params pucch_cfg;
+
+  /// Parameters for SRS-Config generation.
+  srs_builder_params srs_cfg;
 
   /// Defines the maximum allowable channel delay in slots when runnning in NTN mode. seee (TS 38.300 section 16.14.2)
   unsigned ntn_cs_koffset = 0;

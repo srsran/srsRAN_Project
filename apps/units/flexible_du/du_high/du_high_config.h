@@ -270,6 +270,13 @@ struct du_high_unit_pucch_config {
   unsigned max_consecutive_kos = 100;
 };
 
+struct du_high_unit_srs_config {
+  /// Enable Sound Reference Signals (SRS) for the UEs within this cell.
+  bool srs_enabled = false;
+  /// Defines the maximum number of symbols dedicated to the cell SRS resources in a slot.  Values: {1,...,6}.
+  unsigned max_nof_symbols_per_slot = 2U;
+};
+
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
 struct du_high_unit_phy_cell_group_config {
   /// \brief \c p-NR-FR1, part of \c PhysicalCellGroupConfig, TS 38.331. Values: {-30,...,33}.
@@ -553,6 +560,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_pusch_config pusch_cfg;
   /// PUCCH configuration.
   du_high_unit_pucch_config pucch_cfg;
+  /// srs configuration.
+  du_high_unit_srs_config srs_cfg;
   /// Physical Cell Group parameters.
   du_high_unit_phy_cell_group_config pcg_cfg;
   /// MAC Cell Gropup parameters.

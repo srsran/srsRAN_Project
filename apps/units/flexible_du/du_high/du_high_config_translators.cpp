@@ -532,6 +532,12 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     du_pucch_cfg.f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
     du_pucch_cfg.f2_params.max_payload_bits       = user_pucch_cfg.max_payload_bits;
 
+    // Parameters for SRS-Config.
+    srs_builder_params&            du_srs_cfg   = out_cell.srs_cfg;
+    const du_high_unit_srs_config& user_srs_cfg = base_cell.srs_cfg;
+    du_srs_cfg.srs_enabled                      = user_srs_cfg.srs_enabled;
+    du_srs_cfg.max_nof_symbols                  = user_srs_cfg.max_nof_symbols_per_slot;
+
     // Parameters for PUSCH-Config.
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.emplace();
@@ -604,6 +610,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
                                                  base_cell.csi_cfg.csi_rs_enabled
                                                      ? std::optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec}
                                                      : std::nullopt);
+    // The maximum number of symbols for cell PUCCH resources is computed based on the SRS configuration.
+    du_pucch_cfg.max_nof_symbols = config_helpers::compute_max_nof_pucch_symbols(du_srs_cfg);
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
