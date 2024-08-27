@@ -141,8 +141,7 @@ private:
 };
 
 // Adapter between DU processor and RRC UE
-class du_processor_rrc_ue_adapter : public du_processor_rrc_ue_control_message_notifier,
-                                    public du_processor_rrc_ue_srb_control_notifier
+class du_processor_rrc_ue_adapter : public du_processor_rrc_ue_notifier
 {
 public:
   du_processor_rrc_ue_adapter() = default;

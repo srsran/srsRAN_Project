@@ -18,15 +18,15 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 reestablishment_context_modification_routine::reestablishment_context_modification_routine(
-    ue_index_t                                    ue_index_,
-    const srsran::security::sec_as_config&        security_cfg_,
-    e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng_,
-    f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng_,
-    du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_,
-    cu_cp_rrc_ue_interface&                       cu_cp_notifier_,
-    ue_task_scheduler&                            ue_task_sched_,
-    up_resource_manager&                          up_resource_mng_,
-    srslog::basic_logger&                         logger_) :
+    ue_index_t                             ue_index_,
+    const srsran::security::sec_as_config& security_cfg_,
+    e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
+    f1ap_ue_context_manager&               f1ap_ue_ctxt_mng_,
+    du_processor_rrc_ue_notifier&          rrc_ue_notifier_,
+    cu_cp_rrc_ue_interface&                cu_cp_notifier_,
+    ue_task_scheduler&                     ue_task_sched_,
+    up_resource_manager&                   up_resource_mng_,
+    srslog::basic_logger&                  logger_) :
   ue_index(ue_index_),
   security_cfg(security_cfg_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),

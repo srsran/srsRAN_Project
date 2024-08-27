@@ -217,7 +217,7 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
     return reest_context;
   }
 
-  auto srbs = old_ue->get_rrc_ue_srb_notifier().get_srbs();
+  auto srbs = old_ue->get_rrc_ue_notifier().get_srbs();
   if (std::find(srbs.begin(), srbs.end(), srb_id_t::srb2) == srbs.end()) {
     logger.debug("ue={}: SRB2 not setup for this UE - rejecting RRC reestablishment", old_ue_index);
     reest_context.ue_index = old_ue_index;

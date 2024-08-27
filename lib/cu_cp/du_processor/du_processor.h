@@ -98,11 +98,11 @@ public:
   virtual void on_release_ues() = 0;
 };
 
-/// Interface to notify an RRC UE about control messages.
-class du_processor_rrc_ue_control_message_notifier
+/// Interface to notify an RRC UE about control and srb messages.
+class du_processor_rrc_ue_notifier
 {
 public:
-  virtual ~du_processor_rrc_ue_control_message_notifier() = default;
+  virtual ~du_processor_rrc_ue_notifier() = default;
 
   /// \brief Notify the RRC UE to trigger a UE capability transfer procedure.
   /// \param[in] msg The new request msg containing the RAT type, etc.
@@ -153,13 +153,6 @@ public:
   /// \returns The RRC Handover Command PDU.
   virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
                                                        unsigned                                     transaction_id) = 0;
-};
-
-/// Interface to notify an RRC UE about SRB control queries (e.g. SRB creation).
-class du_processor_rrc_ue_srb_control_notifier
-{
-public:
-  virtual ~du_processor_rrc_ue_srb_control_notifier() = default;
 
   /// \brief Create an SRB at the target RRC UE.
   virtual void create_srb(const srb_creation_message& msg) = 0;

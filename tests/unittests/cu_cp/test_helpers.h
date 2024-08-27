@@ -515,9 +515,9 @@ private:
   f1ap_ue_context_modification_request ue_context_modifcation_request;
 };
 
-struct dummy_du_processor_rrc_ue_control_message_notifier : public du_processor_rrc_ue_control_message_notifier {
+struct dummy_du_processor_rrc_ue_notifier : public du_processor_rrc_ue_notifier {
 public:
-  dummy_du_processor_rrc_ue_control_message_notifier() = default;
+  dummy_du_processor_rrc_ue_notifier() = default;
 
   void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
 
@@ -595,21 +595,6 @@ public:
     return byte_buffer{};
   }
 
-  std::optional<rrc_radio_bearer_config> last_radio_bearer_cfg;
-
-  void reset() { last_radio_bearer_cfg.reset(); }
-
-  unsigned last_transaction_id;
-
-private:
-  srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
-  bool                  ue_cap_transfer_outcome     = true;
-  bool                  rrc_reconfiguration_outcome = false;
-  unsigned              transaction_id;
-};
-
-struct dummy_du_processor_rrc_ue_srb_control_notifier : public du_processor_rrc_ue_srb_control_notifier {
-public:
   void create_srb(const srb_creation_message& msg) override
   {
     logger.info("ue={} Creating {}", msg.ue_index, msg.srb_id);
@@ -619,10 +604,17 @@ public:
 
   static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override { return srb_vec; }
 
+  std::optional<rrc_radio_bearer_config> last_radio_bearer_cfg;
+  void                                   reset() { last_radio_bearer_cfg.reset(); }
+
+  unsigned last_transaction_id;
   srb_id_t last_srb_id;
 
 private:
-  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST");
+  srslog::basic_logger&                 logger                      = srslog::fetch_basic_logger("TEST");
+  bool                                  ue_cap_transfer_outcome     = true;
+  bool                                  rrc_reconfiguration_outcome = false;
+  unsigned                              transaction_id;
   static_vector<srb_id_t, MAX_NOF_SRBS> srb_vec;
 };
 

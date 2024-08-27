@@ -19,7 +19,7 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd_,
     e1ap_bearer_context_manager&                      e1ap_bearer_ctxt_mng_,
     f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng_,
-    du_processor_rrc_ue_control_message_notifier&     rrc_ue_notifier_,
+    du_processor_rrc_ue_notifier&                     rrc_ue_notifier_,
     cu_cp_rrc_ue_interface&                           cu_cp_notifier_,
     ue_task_scheduler&                                task_sched_,
     up_resource_manager&                              up_resource_mng_,

@@ -97,7 +97,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
     // prepare F1AP UE Context Setup Command and call F1AP notifier of target DU
     if (!generate_ue_context_setup_request(
-            target_ue_context_setup_request, source_ue->get_rrc_ue_srb_notifier().get_srbs(), source_rrc_context)) {
+            target_ue_context_setup_request, source_ue->get_rrc_ue_notifier().get_srbs(), source_rrc_context)) {
       logger.warning("ue={}: \"{}\" failed to generate UeContextSetupRequest", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
@@ -298,7 +298,7 @@ void inter_du_handover_routine::create_srb(cu_cp_ue* ue, srb_id_t srb_id)
   srb_msg.srb_id          = srb_id;
   srb_msg.enable_security = true;
   // TODO: add support for non-default PDCP config.
-  ue->get_rrc_ue_srb_notifier().create_srb(srb_msg);
+  ue->get_rrc_ue_notifier().create_srb(srb_msg);
 }
 
 bool inter_du_handover_routine::add_security_context_to_bearer_context_modification(

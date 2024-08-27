@@ -273,7 +273,7 @@ void inter_cu_handover_target_routine::create_srb1()
   srb1_msg.srb_id          = srb_id_t::srb1;
   srb1_msg.pdcp_cfg        = {};
   srb1_msg.enable_security = true;
-  ue_mng.find_du_ue(request.ue_index)->get_rrc_ue_srb_notifier().create_srb(srb1_msg);
+  ue_mng.find_du_ue(request.ue_index)->get_rrc_ue_notifier().create_srb(srb1_msg);
 }
 
 ngap_handover_resource_allocation_response

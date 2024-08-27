@@ -28,7 +28,7 @@ public:
   pdu_session_resource_release_routine(const cu_cp_pdu_session_resource_release_command& release_cmd_,
                                        e1ap_bearer_context_manager&                      e1ap_bearer_ctxt_mng_,
                                        f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng_,
-                                       du_processor_rrc_ue_control_message_notifier&     rrc_ue_notifier_,
+                                       du_processor_rrc_ue_notifier&                     rrc_ue_notifier_,
                                        cu_cp_rrc_ue_interface&                           cu_cp_notifier_,
                                        ue_task_scheduler&                                task_sched_,
                                        up_resource_manager&                              up_resource_mng_,
@@ -48,13 +48,13 @@ private:
 
   up_config_update next_config;
 
-  e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng; // to trigger bearer context setup at CU-UP
-  f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng;     // to trigger UE context modification at DU
-  du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;      // to trigger RRC Reconfiguration at UE
-  cu_cp_rrc_ue_interface&                       cu_cp_notifier;       // to trigger UE release at CU-CP
-  ue_task_scheduler&                            task_sched;           // to schedule UE release request
-  up_resource_manager&                          up_resource_mng;      // to get RRC DRB config
-  srslog::basic_logger&                         logger;
+  e1ap_bearer_context_manager&  e1ap_bearer_ctxt_mng; // to trigger bearer context setup at CU-UP
+  f1ap_ue_context_manager&      f1ap_ue_ctxt_mng;     // to trigger UE context modification at DU
+  du_processor_rrc_ue_notifier& rrc_ue_notifier;      // to trigger RRC Reconfiguration at UE
+  cu_cp_rrc_ue_interface&       cu_cp_notifier;       // to trigger UE release at CU-CP
+  ue_task_scheduler&            task_sched;           // to schedule UE release request
+  up_resource_manager&          up_resource_mng;      // to get RRC DRB config
+  srslog::basic_logger&         logger;
 
   // (sub-)routine requests
   f1ap_ue_context_modification_request     ue_context_mod_request;
