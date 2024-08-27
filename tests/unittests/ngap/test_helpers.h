@@ -111,7 +111,7 @@ private:
 };
 
 /// Dummy NGAP to RRC UE notifier
-class dummy_ngap_rrc_ue_notifier : public ngap_rrc_ue_pdu_notifier, public ngap_rrc_ue_control_notifier
+class dummy_ngap_rrc_ue_notifier : public ngap_rrc_ue_notifier
 {
 public:
   dummy_ngap_rrc_ue_notifier() : logger(srslog::fetch_basic_logger("TEST")){};

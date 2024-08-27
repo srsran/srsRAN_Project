@@ -144,18 +144,11 @@ public:
     return ue->get_task_sched().schedule_async_task(std::move(task));
   }
 
-  /// \brief Get the RRC UE PDU notifier of the UE.
-  ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override
+  /// \brief Get the RRC UE notifier of the UE.
+  ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() override
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
-    return ue->get_rrc_ue_pdu_notifier();
-  }
-
-  /// \brief Get the RRC UE control notifier of the UE.
-  ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override
-  {
-    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
-    return ue->get_rrc_ue_control_notifier();
+    return ue->get_ngap_rrc_ue_notifier();
   }
 
   bool init_security_context(security::security_context sec_ctxt) override
@@ -175,7 +168,7 @@ private:
 };
 
 /// Adapter between NGAP and RRC UE
-class ngap_rrc_ue_adapter : public ngap_rrc_ue_pdu_notifier, public ngap_rrc_ue_control_notifier
+class ngap_rrc_ue_adapter : public ngap_rrc_ue_notifier
 {
 public:
   ngap_rrc_ue_adapter() = default;

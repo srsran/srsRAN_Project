@@ -107,11 +107,8 @@ public:
   /// \brief Set the RRC UE of the UE.
   void set_rrc_ue(rrc_ue_interface& rrc_ue_);
 
-  /// \brief Get the RRC UE PDU notifier of the UE.
-  ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override;
-
-  /// \brief Get the RRC UE control notifier of the UE.
-  ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override;
+  /// \brief Get the RRC UE notifier of the UE.
+  ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() override;
 
   /// \brief Get the NGAP CU-CP UE notifier of the UE.
   ngap_cu_cp_ue_notifier& get_ngap_cu_cp_ue_notifier() { return ngap_cu_cp_ue_ev_notifier; }

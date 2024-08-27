@@ -384,12 +384,8 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   fill_ngap_dl_nas_transport_message(dl_nas_msg, ue->get_ue_index(), msg);
 
   // start routine
-  ue->schedule_async_task(
-      launch_async<ngap_dl_nas_message_transfer_procedure>(dl_nas_msg,
-                                                           ue->get_rrc_ue_pdu_notifier(),
-                                                           ue->get_rrc_ue_control_notifier(),
-                                                           get_ngap_ue_radio_cap_management_handler(),
-                                                           ue_ctxt.logger));
+  ue->schedule_async_task(launch_async<ngap_dl_nas_message_transfer_procedure>(
+      dl_nas_msg, ue->get_ngap_rrc_ue_notifier(), get_ngap_ue_radio_cap_management_handler(), ue_ctxt.logger));
 }
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
@@ -945,7 +941,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                                            ue_ctxt.serving_guami.plmn,
                                                            ue_ctxt.ue_ids,
                                                            *tx_pdu_notifier,
-                                                           ue->get_rrc_ue_control_notifier(),
+                                                           ue->get_ngap_rrc_ue_notifier(),
                                                            cu_cp_notifier,
                                                            ev_mng,
                                                            timer_factory{timers, ctrl_exec},

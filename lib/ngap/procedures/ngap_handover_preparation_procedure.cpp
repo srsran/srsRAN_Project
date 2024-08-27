@@ -24,7 +24,7 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const plmn_identity&                     serving_plmn_,
     const ngap_ue_ids&                       ue_ids_,
     ngap_message_notifier&                   amf_notifier_,
-    ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
+    ngap_rrc_ue_notifier&                    rrc_ue_notifier_,
     ngap_cu_cp_notifier&                     cu_cp_notifier_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,

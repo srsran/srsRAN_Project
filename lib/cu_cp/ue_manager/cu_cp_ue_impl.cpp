@@ -97,14 +97,8 @@ void cu_cp_ue::set_rrc_ue(rrc_ue_interface& rrc_ue_)
   rrc_ue = &rrc_ue_;
 }
 
-/// \brief Get the RRC UE PDU notifier of the UE.
-ngap_rrc_ue_pdu_notifier& cu_cp_ue::get_rrc_ue_pdu_notifier()
-{
-  return ngap_rrc_ue_ev_notifier;
-}
-
-/// \brief Get the RRC UE control notifier of the UE.
-ngap_rrc_ue_control_notifier& cu_cp_ue::get_rrc_ue_control_notifier()
+/// \brief Get the NGAP RRC UE notifier of the UE.
+ngap_rrc_ue_notifier& cu_cp_ue::get_ngap_rrc_ue_notifier()
 {
   return ngap_rrc_ue_ev_notifier;
 }
