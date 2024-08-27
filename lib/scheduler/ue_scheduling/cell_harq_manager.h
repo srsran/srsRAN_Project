@@ -222,6 +222,10 @@ struct dl_harq_sched_context {
   std::optional<sch_mcs_index> olla_mcs;
   /// RAN slice identifier of the slice to which PDSCH belongs to.
   std::optional<ran_slice_id_t> slice_id;
+  /// CQI value at the moment of newTx.
+  std::optional<cqi_value> cqi;
+  /// Whether the HARQ allocation was done in fallback mode.
+  bool is_fallback = false;
 };
 
 /// \brief Context of the scheduler during the current PUSCH allocation.
@@ -290,6 +294,8 @@ class ul_harq_process_handle : public harq_utils::base_harq_process_handle<false
   using base_type = harq_utils::base_harq_process_handle<false>;
 
 public:
+  using grant_params = harq_utils::ul_harq_process_impl::alloc_params;
+
   using base_type::base_type;
 
   using base_type::empty;
@@ -311,9 +317,11 @@ public:
 
   /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
-  void save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pdsch);
+  void save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pusch);
 
   slot_point pusch_slot() const { return fetch_impl().slot_tx; }
+
+  const grant_params& get_grant_params() const { return fetch_impl().prev_tx_params; }
 };
 
 namespace harq_utils {
@@ -371,6 +379,7 @@ private:
 
 } // namespace harq_utils
 
+/// List of HARQ processes with pending retransmissions
 using dl_harq_pending_retx_list = harq_utils::harq_pending_retx_list_impl<true>;
 using ul_harq_pending_retx_list = harq_utils::harq_pending_retx_list_impl<false>;
 
@@ -434,6 +443,7 @@ private:
   harq_utils::cell_harq_repository<false> ul;
 };
 
+/// HARQ entity that manages a set of HARQ processes of a single UE.
 class unique_ue_harq_entity
 {
 public:

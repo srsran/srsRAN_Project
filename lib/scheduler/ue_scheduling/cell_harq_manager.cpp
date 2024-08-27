@@ -255,12 +255,10 @@ bool cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx,
   // Remove HARQ from pending Retx list.
   harq_pending_retx_list.pop(&h);
 
-  h.status          = harq_state_t::waiting_ack;
-  h.slot_tx         = sl_tx;
-  h.slot_ack        = sl_ack;
-  h.ndi             = !h.ndi;
-  h.ack_on_timeout  = false;
-  h.retxs_cancelled = false;
+  h.status         = harq_state_t::waiting_ack;
+  h.slot_tx        = sl_tx;
+  h.slot_ack       = sl_ack;
+  h.ack_on_timeout = false;
   h.nof_retxs++;
 
   // Add HARQ to the timeout list.
@@ -487,6 +485,8 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_sched_context& ctx,
 {
   srsran_assert(pdsch.codewords.size() == 1, "Only one codeword supported");
   dl_harq_process_impl& impl = fetch_impl();
+  srsran_sanity_check(pdsch.rnti == impl.rnti, "RNTI mismatch");
+  srsran_sanity_check(pdsch.harq_id == impl.h_id, "HARQ-id mismatch");
   srsran_assert(impl.status == harq_utils::harq_state_t::waiting_ack,
                 "Setting allocation parameters for DL HARQ process id={} in invalid state",
                 id());
@@ -497,8 +497,11 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_sched_context& ctx,
   if (impl.nof_retxs == 0) {
     prev_params.tbs_bytes    = cw.tb_size_bytes;
     prev_params.dci_cfg_type = ctx.dci_cfg_type;
+    prev_params.nof_layers   = pdsch.nof_layers;
     prev_params.olla_mcs     = ctx.olla_mcs;
     prev_params.slice_id     = ctx.slice_id;
+    prev_params.cqi          = ctx.cqi.has_value() ? ctx.cqi.value() : cqi_value{1};
+    prev_params.is_fallback  = ctx.is_fallback;
   } else {
     srsran_assert(ctx.dci_cfg_type == prev_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during DL HARQ retxs");
@@ -510,6 +513,8 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_sched_context& ctx,
                   prev_params.rbs,
                   cw.mcs_index,
                   pdsch.rbs);
+    srsran_assert(prev_params.nof_layers == pdsch.nof_layers, "Number of layers cannot change during HARQ retxs");
+    srsran_assert(prev_params.is_fallback == ctx.is_fallback, "Fallback state cannot change across DL HARQ retxs");
   }
   prev_params.mcs_table   = cw.mcs_table;
   prev_params.mcs         = cw.mcs_index;
@@ -539,6 +544,8 @@ int ul_harq_process_handle::ul_crc_info(bool ack)
 void ul_harq_process_handle::save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pusch)
 {
   ul_harq_process_impl& impl = fetch_impl();
+  srsran_sanity_check(pusch.rnti == impl.rnti, "RNTI mismatch");
+  srsran_sanity_check(pusch.harq_id == impl.h_id, "HARQ-id mismatch");
   srsran_assert(impl.status == harq_utils::harq_state_t::waiting_ack,
                 "Setting allocation parameters for DL HARQ process id={} in invalid state",
                 id());

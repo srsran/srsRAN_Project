@@ -31,6 +31,8 @@ mac_harq_ack_report_status get_random_harq_ack()
 pdsch_information make_dummy_pdsch_info()
 {
   pdsch_information pdsch;
+  pdsch.rnti    = to_rnti(0x4601);
+  pdsch.harq_id = to_harq_id(0);
   pdsch.codewords.resize(1);
   pdsch.codewords[0].mcs_table     = srsran::pdsch_mcs_table::qam64;
   pdsch.codewords[0].mcs_index     = 10;
@@ -42,6 +44,8 @@ pdsch_information make_dummy_pdsch_info()
 pusch_information make_dummy_pusch_info()
 {
   pusch_information pusch;
+  pusch.rnti          = to_rnti(0x4601);
+  pusch.harq_id       = to_harq_id(0);
   pusch.mcs_table     = pusch_mcs_table::qam64;
   pusch.mcs_index     = 10;
   pusch.tb_size_bytes = 10000;
@@ -350,10 +354,8 @@ TEST_F(single_harq_process_test, when_max_retxs_reached_then_harq_becomes_empty)
     ASSERT_TRUE(h_ul.new_retx(current_slot + k2));
     ASSERT_EQ(h_dl.nof_retxs(), i + 1);
     ASSERT_EQ(h_ul.nof_retxs(), i + 1);
-    ASSERT_NE(old_dl_ndi, h_dl.ndi());
-    ASSERT_NE(old_ul_ndi, h_ul.ndi());
-    old_dl_ndi = h_dl.ndi();
-    old_ul_ndi = h_dl.ndi();
+    ASSERT_EQ(old_dl_ndi, h_dl.ndi());
+    ASSERT_EQ(old_ul_ndi, h_ul.ndi());
   }
   ASSERT_EQ(h_dl.dl_ack_info(mac_harq_ack_report_status::nack, 5), dl_harq_process_handle::status_update::nacked);
   ASSERT_EQ(h_ul.ul_crc_info(false), 0);
