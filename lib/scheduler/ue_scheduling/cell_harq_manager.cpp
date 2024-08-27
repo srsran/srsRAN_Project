@@ -70,21 +70,21 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
     // Only in non-NTN case, we log a warning.
     if (h.ack_on_timeout) {
       // Case: Not all HARQ-ACKs were received, but at least one positive ACK was received.
-      logger.debug("ue={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was "
+      logger.debug("rnti={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was "
                    "reached with still missing PUCCH HARQ-ACKs. However, one positive ACK was received.",
-                   h.ue_idx,
+                   h.rnti,
                    h.h_id,
                    IsDl ? "DL" : "UL",
                    h.slot_ack_timeout - h.slot_ack);
     } else {
       // At least one of the expected ACKs went missing and we haven't received any positive ACK.
-      logger.warning(
-          "ue={} h_id={}: Discarding {} HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but there are still "
-          "missing HARQ-ACKs and none of the received ones are positive.",
-          h.ue_idx,
-          h.h_id,
-          IsDl ? "DL" : "UL",
-          h.slot_ack_timeout - h.slot_ack);
+      logger.warning("rnti={} h_id={}: Discarding {} HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but "
+                     "there are still "
+                     "missing HARQ-ACKs and none of the received ones are positive.",
+                     h.rnti,
+                     h.h_id,
+                     IsDl ? "DL" : "UL",
+                     h.slot_ack_timeout - h.slot_ack);
     }
 
     // Report timeout with NACK.
@@ -103,6 +103,7 @@ unsigned cell_harq_repository<IsDl>::get_harq_ref_idx(const harq_type& h) const
 
 template <bool IsDl>
 typename cell_harq_repository<IsDl>::harq_type* cell_harq_repository<IsDl>::alloc_harq(du_ue_index_t ue_idx,
+                                                                                       rnti_t        rnti,
                                                                                        slot_point    sl_tx,
                                                                                        slot_point    sl_ack,
                                                                                        unsigned      max_nof_harq_retxs)
@@ -124,6 +125,7 @@ typename cell_harq_repository<IsDl>::harq_type* cell_harq_repository<IsDl>::allo
 
   // Set allocated HARQ common params.
   h.ue_idx             = ue_idx;
+  h.rnti               = rnti;
   h.h_id               = h_id;
   h.status             = harq_state_t::waiting_ack;
   h.slot_tx            = sl_tx;
@@ -174,16 +176,16 @@ void cell_harq_repository<IsDl>::handle_ack(harq_type& h, bool ack)
 {
   if (not ack and h.nof_retxs >= h.max_nof_harq_retxs) {
     if (h.retxs_cancelled) {
-      logger.info(
-          "ue={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Retxs for this HARQ process were cancelled",
-          h.ue_idx,
-          h.h_id,
-          IsDl ? "DL" : "UL",
-          h.prev_tx_params.tbs_bytes);
+      logger.info("rnti={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Retxs for this HARQ process were "
+                  "cancelled",
+                  h.rnti,
+                  h.h_id,
+                  IsDl ? "DL" : "UL",
+                  h.prev_tx_params.tbs_bytes);
     } else {
       logger.info(
-          "ue={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-          h.ue_idx,
+          "rnti={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+          h.rnti,
           h.h_id,
           IsDl ? "DL" : "UL",
           h.prev_tx_params.tbs_bytes,
@@ -223,7 +225,7 @@ template <bool IsDl>
 bool cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack)
 {
   if (h.status != harq_state_t::pending_retx) {
-    logger.warning("ue={} h_id={}: Attempt of retx in a HARQ process that has no pending retx", h.ue_idx, h.h_id);
+    logger.warning("rnti={} h_id={}: Attempt of retx in a HARQ process that has no pending retx", h.rnti, h.h_id);
     return false;
   }
 
@@ -338,12 +340,13 @@ void cell_harq_manager::destroy_ue(du_ue_index_t ue_idx)
 }
 
 harq_utils::dl_harq_process_impl* cell_harq_manager::new_dl_tx(du_ue_index_t ue_idx,
+                                                               rnti_t        rnti,
                                                                slot_point    pdsch_slot,
                                                                unsigned      k1,
                                                                unsigned      max_harq_nof_retxs,
                                                                uint8_t       harq_bit_idx)
 {
-  dl_harq_process_impl* h = dl.alloc_harq(ue_idx, pdsch_slot, pdsch_slot + k1, max_harq_nof_retxs);
+  dl_harq_process_impl* h = dl.alloc_harq(ue_idx, rnti, pdsch_slot, pdsch_slot + k1, max_harq_nof_retxs);
   if (h == nullptr) {
     return nullptr;
   }
@@ -359,9 +362,9 @@ harq_utils::dl_harq_process_impl* cell_harq_manager::new_dl_tx(du_ue_index_t ue_
 }
 
 harq_utils::ul_harq_process_impl*
-cell_harq_manager::new_ul_tx(du_ue_index_t ue_idx, slot_point pusch_slot, unsigned max_harq_nof_retxs)
+cell_harq_manager::new_ul_tx(du_ue_index_t ue_idx, rnti_t rnti, slot_point pusch_slot, unsigned max_harq_nof_retxs)
 {
-  ul_harq_process_impl* h = ul.alloc_harq(ue_idx, pusch_slot, pusch_slot, max_harq_nof_retxs);
+  ul_harq_process_impl* h = ul.alloc_harq(ue_idx, rnti, pusch_slot, pusch_slot, max_harq_nof_retxs);
   if (h == nullptr) {
     return nullptr;
   }
@@ -400,7 +403,7 @@ dl_harq_process_impl::status_update cell_harq_manager::dl_ack_info(harq_utils::d
 
   if (h.status != harq_state_t::waiting_ack) {
     // If the HARQ process is not expecting an HARQ-ACK, it means that it has already been ACKed/NACKed.
-    logger.warning("ue={} h_id={}: ACK arrived for inactive DL HARQ", h.ue_idx, h.h_id);
+    logger.warning("rnti={} h_id={}: ACK arrived for inactive DL HARQ", h.rnti, h.h_id);
     return status_update::error;
   }
 
@@ -437,7 +440,7 @@ int cell_harq_manager::ul_crc_info(harq_utils::ul_harq_process_impl& h, bool ack
 {
   if (h.status != harq_state_t::waiting_ack) {
     // HARQ is not expecting CRC info.
-    logger.warning("ue={} h_id={}: CRC arrived for UL HARQ not expecting it", h.ue_idx, h.h_id);
+    logger.warning("rnti={} h_id={}: CRC arrived for UL HARQ not expecting it", h.rnti, h.h_id);
     return -1;
   }
 
@@ -533,6 +536,11 @@ void ul_harq_process_view::save_grant_params(const ul_harq_sched_context& ctx, c
 
 // UE HARQ entity.
 
+unique_ue_harq_entity::unique_ue_harq_entity(cell_harq_manager* mgr, du_ue_index_t ue_idx, rnti_t crnti_) :
+  cell_harq_mgr(mgr), ue_index(ue_idx), crnti(crnti_)
+{
+}
+
 unique_ue_harq_entity::unique_ue_harq_entity(unique_ue_harq_entity&& other) noexcept :
   cell_harq_mgr(other.cell_harq_mgr), ue_index(other.ue_index)
 {
@@ -570,7 +578,7 @@ void unique_ue_harq_entity::reset()
 std::optional<dl_harq_process_view>
 unique_ue_harq_entity::alloc_dl_harq(slot_point sl_tx, unsigned k1, unsigned max_harq_nof_retxs, unsigned harq_bit_idx)
 {
-  dl_harq_process_impl* h = cell_harq_mgr->new_dl_tx(ue_index, sl_tx, k1, max_harq_nof_retxs, harq_bit_idx);
+  dl_harq_process_impl* h = cell_harq_mgr->new_dl_tx(ue_index, crnti, sl_tx, k1, max_harq_nof_retxs, harq_bit_idx);
   if (h == nullptr) {
     return std::nullopt;
   }
@@ -579,7 +587,7 @@ unique_ue_harq_entity::alloc_dl_harq(slot_point sl_tx, unsigned k1, unsigned max
 
 std::optional<ul_harq_process_view> unique_ue_harq_entity::alloc_ul_harq(slot_point sl_tx, unsigned max_harq_nof_retxs)
 {
-  ul_harq_process_impl* h = cell_harq_mgr->new_ul_tx(ue_index, sl_tx, max_harq_nof_retxs);
+  ul_harq_process_impl* h = cell_harq_mgr->new_ul_tx(ue_index, crnti, sl_tx, max_harq_nof_retxs);
   if (h == nullptr) {
     return std::nullopt;
   }

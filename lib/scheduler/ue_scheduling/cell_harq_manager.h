@@ -50,6 +50,7 @@ enum class harq_state_t { empty, pending_retx, waiting_ack };
 /// Parameters that are common to DL and UL HARQ processes.
 struct base_harq_process : public intrusive_double_linked_list_element<> {
   du_ue_index_t ue_idx;
+  rnti_t        rnti;
   harq_id_t     h_id;
   harq_state_t  status = harq_state_t::empty;
   slot_point    slot_tx;
@@ -146,12 +147,13 @@ struct cell_harq_repository {
 
   unsigned get_harq_ref_idx(const harq_type& h) const;
 
-  void               slot_indication(slot_point sl_tx);
-  void               handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
-  harq_type*         alloc_harq(du_ue_index_t ue_idx, slot_point sl_tx, slot_point sl_ack, unsigned max_nof_harq_retxs);
-  void               dealloc_harq(harq_type& h);
-  void               handle_ack(harq_type& h, bool ack);
-  void               set_pending_retx(harq_type& h);
+  void slot_indication(slot_point sl_tx);
+  void handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
+  harq_type*
+       alloc_harq(du_ue_index_t ue_idx, rnti_t rnti, slot_point sl_tx, slot_point sl_ack, unsigned max_nof_harq_retxs);
+  void dealloc_harq(harq_type& h);
+  void handle_ack(harq_type& h, bool ack);
+  void set_pending_retx(harq_type& h);
   [[nodiscard]] bool handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack);
   void               reserve_ue_harqs(du_ue_index_t ue_idx, unsigned nof_harqs);
   void               destroy_ue_harqs(du_ue_index_t ue_idx);
@@ -224,13 +226,15 @@ private:
 
   /// \brief Called on every DL new Tx to allocate an DL HARQ process.
   harq_utils::dl_harq_process_impl* new_dl_tx(du_ue_index_t ue_idx,
+                                              rnti_t        rnti,
                                               slot_point    pdsch_slot,
                                               unsigned      k1,
                                               unsigned      max_harq_nof_retxs,
                                               uint8_t       harq_bit_idx);
 
   /// \brief Called on every UL new Tx to allocate an UL HARQ process.
-  harq_utils::ul_harq_process_impl* new_ul_tx(du_ue_index_t ue_idx, slot_point pusch_slot, unsigned max_harq_nof_retxs);
+  harq_utils::ul_harq_process_impl*
+  new_ul_tx(du_ue_index_t ue_idx, rnti_t rnti, slot_point pusch_slot, unsigned max_harq_nof_retxs);
 
   /// \brief Called on a new retx of a DL HARQ process.
   [[nodiscard]] bool
@@ -360,11 +364,7 @@ class unique_ue_harq_entity
 {
 public:
   unique_ue_harq_entity() = default;
-  unique_ue_harq_entity(cell_harq_manager* mgr, du_ue_index_t ue_idx, rnti_t crnti_) :
-    cell_harq_mgr(mgr), ue_index(ue_idx), crnti(crnti_)
-  {
-    (void)crnti;
-  }
+  unique_ue_harq_entity(cell_harq_manager* mgr, du_ue_index_t ue_idx, rnti_t crnti_);
   ~unique_ue_harq_entity();
   unique_ue_harq_entity(const unique_ue_harq_entity&) = delete;
   unique_ue_harq_entity(unique_ue_harq_entity&& other) noexcept;
