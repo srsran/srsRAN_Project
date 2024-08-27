@@ -371,10 +371,10 @@ private:
   uint64_t ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
 };
 
-class dummy_rrc_dl_nas_message_handler : public rrc_dl_nas_message_handler
+class dummy_rrc_ngap_message_handler : public rrc_ngap_message_handler
 {
 public:
-  dummy_rrc_dl_nas_message_handler(ue_index_t ue_index_) :
+  dummy_rrc_ngap_message_handler(ue_index_t ue_index_) :
     ue_index(ue_index_), logger(srslog::fetch_basic_logger("TEST")){};
 
   void handle_dl_nas_transport_message(byte_buffer nas_pdu) override
@@ -383,28 +383,7 @@ public:
     last_nas_pdu = std::move(nas_pdu);
   }
 
-  byte_buffer last_nas_pdu;
-
-private:
-  ue_index_t            ue_index = ue_index_t::invalid;
-  srslog::basic_logger& logger;
-};
-
-class dummy_rrc_ue_radio_access_capability_handler : public rrc_ue_radio_access_capability_handler
-{
-public:
-  dummy_rrc_ue_radio_access_capability_handler() : logger(srslog::fetch_basic_logger("TEST")){};
-
   byte_buffer get_packed_ue_radio_access_cap_info() const override { return make_byte_buffer("deadbeef").value(); }
-
-private:
-  srslog::basic_logger& logger;
-};
-
-class dummy_rrc_ue_handover_preparation_handler : public rrc_ue_handover_preparation_handler
-{
-public:
-  dummy_rrc_ue_handover_preparation_handler() : logger(srslog::fetch_basic_logger("TEST")){};
 
   void set_ho_preparation_message(byte_buffer ho_preparation_message_)
   {
@@ -413,7 +392,10 @@ public:
 
   byte_buffer get_packed_handover_preparation_message() override { return ho_preparation_message.copy(); }
 
+  byte_buffer last_nas_pdu;
+
 private:
+  ue_index_t            ue_index = ue_index_t::invalid;
   srslog::basic_logger& logger;
   byte_buffer           ho_preparation_message;
 };

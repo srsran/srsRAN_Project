@@ -51,7 +51,7 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
   add_pdu_session_to_up_manager(ue_index, uint_to_pdu_session_id(1), uint_to_drb_id(0), uint_to_qos_flow_id(0));
 
   auto& ue = test_ues.at(ue_index);
-  ue.rrc_ue_ho_prep_handler.set_ho_preparation_message({});
+  ue.rrc_ue_handler.set_ho_preparation_message({});
 
   ngap_handover_preparation_request request =
       generate_handover_preparation_request(ue_index,

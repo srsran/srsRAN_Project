@@ -67,16 +67,23 @@ public:
   virtual void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) = 0;
 };
 
-/// This interface represents the data entry point for the RRC receiving NAS PDUs.
+/// This interface represents the data entry point for the RRC receiving NAS and control messages from the NGAP.
 /// The higher-layers will use this class to pass PDUs into the RRC.
-class rrc_dl_nas_message_handler
+class rrc_ngap_message_handler
 {
 public:
-  virtual ~rrc_dl_nas_message_handler() = default;
+  virtual ~rrc_ngap_message_handler() = default;
 
   /// \brief Handle the received Downlink NAS Transport message.
   /// \param[in] nas_pdu The received NAS PDU.
   virtual void handle_dl_nas_transport_message(byte_buffer nas_pdu) = 0;
+
+  /// \brief Get the packed UE Radio Access Cap Info.
+  /// \returns The packed UE Radio Access Cap Info.
+  virtual byte_buffer get_packed_ue_radio_access_cap_info() const = 0;
+
+  /// \brief Get the packed Handover Preparation Message.
+  virtual byte_buffer get_packed_handover_preparation_message() = 0;
 };
 
 /// Interface to notify F1AP about a new SRB PDU.
@@ -296,27 +303,6 @@ public:
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
 };
 
-/// Handler to get the UE radio access capability info to the NGAP.
-class rrc_ue_radio_access_capability_handler
-{
-public:
-  virtual ~rrc_ue_radio_access_capability_handler() = default;
-
-  /// \brief Get the packed UE Radio Access Cap Info.
-  /// \returns The packed UE Radio Access Cap Info.
-  virtual byte_buffer get_packed_ue_radio_access_cap_info() const = 0;
-};
-
-/// Handler to get the handover preparation context to the NGAP.
-class rrc_ue_handover_preparation_handler
-{
-public:
-  virtual ~rrc_ue_handover_preparation_handler() = default;
-
-  /// \brief Get the packed Handover Preparation Message.
-  virtual byte_buffer get_packed_handover_preparation_message() = 0;
-};
-
 class rrc_ue_cu_cp_ue_notifier
 {
 public:
@@ -441,29 +427,25 @@ public:
 /// Combined entry point for the RRC UE handling.
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_pdu_handler,
-                         public rrc_dl_nas_message_handler,
+                         public rrc_ngap_message_handler,
                          public rrc_ue_srb_handler,
                          public rrc_ue_control_message_handler,
-                         public rrc_ue_radio_access_capability_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
                          public rrc_ue_reconfiguration_proc_notifier,
                          public rrc_ue_context_handler,
-                         public rrc_ue_reestablishment_proc_notifier,
-                         public rrc_ue_handover_preparation_handler
+                         public rrc_ue_reestablishment_proc_notifier
 {
 public:
   rrc_ue_interface()          = default;
   virtual ~rrc_ue_interface() = default;
 
-  virtual rrc_ue_controller&                      get_controller()                             = 0;
-  virtual rrc_ul_pdu_handler&                     get_ul_pdu_handler()                         = 0;
-  virtual rrc_dl_nas_message_handler&             get_rrc_dl_nas_message_handler()             = 0;
-  virtual rrc_ue_srb_handler&                     get_rrc_ue_srb_handler()                     = 0;
-  virtual rrc_ue_control_message_handler&         get_rrc_ue_control_message_handler()         = 0;
-  virtual rrc_ue_radio_access_capability_handler& get_rrc_ue_radio_access_capability_handler() = 0;
-  virtual rrc_ue_context_handler&                 get_rrc_ue_context_handler()                 = 0;
-  virtual rrc_ue_handover_preparation_handler&    get_rrc_ue_handover_preparation_handler()    = 0;
+  virtual rrc_ue_controller&              get_controller()                     = 0;
+  virtual rrc_ul_pdu_handler&             get_ul_pdu_handler()                 = 0;
+  virtual rrc_ngap_message_handler&       get_rrc_ngap_message_handler()       = 0;
+  virtual rrc_ue_srb_handler&             get_rrc_ue_srb_handler()             = 0;
+  virtual rrc_ue_control_message_handler& get_rrc_ue_control_message_handler() = 0;
+  virtual rrc_ue_context_handler&         get_rrc_ue_context_handler()         = 0;
 };
 
 } // namespace srs_cu_cp

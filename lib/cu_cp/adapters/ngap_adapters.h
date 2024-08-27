@@ -173,37 +173,28 @@ class ngap_rrc_ue_adapter : public ngap_rrc_ue_notifier
 public:
   ngap_rrc_ue_adapter() = default;
 
-  void connect_rrc_ue(rrc_dl_nas_message_handler&             rrc_ue_msg_handler_,
-                      rrc_ue_radio_access_capability_handler& rrc_ue_radio_access_cap_handler_,
-                      rrc_ue_handover_preparation_handler&    rrc_ue_ho_prep_handler_)
-  {
-    rrc_ue_msg_handler              = &rrc_ue_msg_handler_;
-    rrc_ue_radio_access_cap_handler = &rrc_ue_radio_access_cap_handler_;
-    rrc_ue_ho_prep_handler          = &rrc_ue_ho_prep_handler_;
-  }
+  void connect_rrc_ue(rrc_ngap_message_handler& rrc_ue_handler_) { rrc_ue_handler = &rrc_ue_handler_; }
 
   void on_new_pdu(byte_buffer nas_pdu) override
   {
-    srsran_assert(rrc_ue_msg_handler != nullptr, "RRC UE message handler must not be nullptr");
-    rrc_ue_msg_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    rrc_ue_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
   byte_buffer on_ue_radio_access_cap_info_required() override
   {
-    srsran_assert(rrc_ue_radio_access_cap_handler != nullptr, "RRC UE Radio Access Cap handler must not be nullptr");
-    return rrc_ue_radio_access_cap_handler->get_packed_ue_radio_access_cap_info();
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_packed_ue_radio_access_cap_info();
   }
 
   byte_buffer on_handover_preparation_message_required() override
   {
-    srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE UP manager must not be nullptr");
-    return rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_packed_handover_preparation_message();
   }
 
 private:
-  rrc_dl_nas_message_handler*             rrc_ue_msg_handler              = nullptr;
-  rrc_ue_radio_access_capability_handler* rrc_ue_radio_access_cap_handler = nullptr;
-  rrc_ue_handover_preparation_handler*    rrc_ue_ho_prep_handler          = nullptr;
+  rrc_ngap_message_handler* rrc_ue_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

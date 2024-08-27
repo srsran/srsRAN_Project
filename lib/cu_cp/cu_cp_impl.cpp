@@ -664,9 +664,7 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
   ue->set_rrc_ue(rrc_ue);
 
   // Connect RRC UE to NGAP to RRC UE adapter
-  ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_dl_nas_message_handler(),
-                                                          rrc_ue.get_rrc_ue_radio_access_capability_handler(),
-                                                          rrc_ue.get_rrc_ue_handover_preparation_handler());
+  ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ngap_message_handler());
 
   // Connect cu-cp to rrc ue adapters
   ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(get_cu_cp_rrc_ue_interface(),
