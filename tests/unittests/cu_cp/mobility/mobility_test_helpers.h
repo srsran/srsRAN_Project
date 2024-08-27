@@ -34,7 +34,6 @@ protected:
   cu_cp_configuration cu_cp_cfg;
 
   ue_manager                                  ue_mng{cu_cp_cfg};
-  dummy_ngap_ue_context_removal_handler       ngap_ue_removal_handler;
   dummy_cu_cp_ue_context_manipulation_handler cu_cp_handler;
 };
 

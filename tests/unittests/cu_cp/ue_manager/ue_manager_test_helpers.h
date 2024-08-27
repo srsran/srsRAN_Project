@@ -43,7 +43,6 @@ protected:
   // DU processor to RRC UE adapters
   std::unordered_map<ue_index_t, dummy_du_processor_rrc_ue_control_message_notifier> rrc_ue_adapters;
   dummy_ngap_rrc_ue_notifier                                                         rrc_ue_pdu_notifier;
-  dummy_ngap_ue_context_removal_handler                                              ngap_ue_removal_handler;
 };
 
 } // namespace srs_cu_cp
