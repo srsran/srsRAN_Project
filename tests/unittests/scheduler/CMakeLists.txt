@@ -12,7 +12,7 @@ include_directories(../../..)
 
 add_subdirectory(test_utils)
 add_subdirectory(support)
-add_subdirectory(cell_resource_grid)
+add_subdirectory(cell)
 add_subdirectory(common_scheduling)
 add_subdirectory(ue_scheduling)
 add_subdirectory(uci_and_pucch)

@@ -8,7 +8,6 @@
 
 set(SOURCES
         harq_process.cpp
-        cell_harq_manager.cpp
         dl_logical_channel_manager.cpp
         ul_logical_channel_manager.cpp
         ta_manager.cpp

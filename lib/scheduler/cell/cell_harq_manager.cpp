@@ -9,7 +9,7 @@
  */
 
 #include "cell_harq_manager.h"
-#include "../cell/resource_grid_util.h"
+#include "resource_grid_util.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 
 using namespace srsran;
@@ -30,12 +30,16 @@ public:
 template <bool IsDl>
 cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
                                                  unsigned               max_ack_wait_timeout,
+                                                 unsigned               max_harqs_per_ue_,
                                                  harq_timeout_notifier& timeout_notifier_,
                                                  srslog::basic_logger&  logger_) :
-  max_ack_wait_in_slots(max_ack_wait_timeout), timeout_notifier(timeout_notifier_), logger(logger_)
+  max_ack_wait_in_slots(max_ack_wait_timeout),
+  max_harqs_per_ue(max_harqs_per_ue_),
+  timeout_notifier(timeout_notifier_),
+  logger(logger_)
 {
-  harqs.resize(MAX_NOF_HARQS * max_ues);
-  free_harqs.resize(MAX_NOF_HARQS * max_ues);
+  harqs.resize(max_harqs_per_ue * max_ues);
+  free_harqs.resize(max_harqs_per_ue * max_ues);
   for (unsigned i = 0; i != free_harqs.size(); ++i) {
     free_harqs[i] = free_harqs.size() - i - 1;
   }
@@ -43,8 +47,8 @@ cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
   // Reserve space in advance for UEs.
   ues.resize(max_ues);
   for (unsigned i = 0; i != max_ues; i++) {
-    ues[i].free_harq_ids.reserve(MAX_NOF_HARQS);
-    ues[i].harqs.reserve(MAX_NOF_HARQS);
+    ues[i].free_harq_ids.reserve(max_harqs_per_ue);
+    ues[i].harqs.reserve(max_harqs_per_ue);
   }
 
   harq_timeout_wheel.resize(get_allocator_ring_size_gt_min(max_ack_wait_timeout + get_max_slot_ul_alloc_delay(0)));
@@ -337,18 +341,19 @@ template class harq_utils::base_harq_process_handle<false>;
 // Cell HARQ manager.
 
 cell_harq_manager::cell_harq_manager(unsigned                               max_ues,
+                                     unsigned                               max_harqs_per_ue_,
                                      std::unique_ptr<harq_timeout_notifier> notifier,
                                      unsigned                               max_ack_wait_timeout) :
+  max_harqs_per_ue(max_harqs_per_ue_),
   timeout_notifier(notifier != nullptr ? std::move(notifier) : std::make_unique<noop_harq_timeout_notifier>()),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl(max_ues, max_ack_wait_timeout, *timeout_notifier, logger),
-  ul(max_ues, max_ack_wait_timeout, *timeout_notifier, logger)
+  dl(max_ues, max_ack_wait_timeout, max_harqs_per_ue, *timeout_notifier, logger),
+  ul(max_ues, max_ack_wait_timeout, max_harqs_per_ue, *timeout_notifier, logger)
 {
 }
 
 void cell_harq_manager::slot_indication(slot_point sl_tx)
 {
-  last_sl_tx = sl_tx;
   dl.slot_indication(sl_tx);
   ul.slot_indication(sl_tx);
 }
@@ -371,9 +376,9 @@ ul_harq_pending_retx_list cell_harq_manager::pending_ul_retxs()
 unique_ue_harq_entity
 cell_harq_manager::add_ue(du_ue_index_t ue_idx, rnti_t crnti, unsigned nof_dl_harq_procs, unsigned nof_ul_harq_procs)
 {
-  srsran_sanity_check(nof_dl_harq_procs > 0, "Invalid number of HARQs");
-  srsran_sanity_check(nof_ul_harq_procs > 0, "Invalid number of HARQs");
-  srsran_sanity_check(ue_idx < dl.ues.size(), "Invalid ue_index");
+  srsran_assert(nof_dl_harq_procs <= max_harqs_per_ue and nof_dl_harq_procs > 0, "Invalid number of DL HARQs");
+  srsran_assert(nof_ul_harq_procs <= max_harqs_per_ue and nof_ul_harq_procs > 0, "Invalid number of DL HARQs");
+  srsran_assert(ue_idx < dl.ues.size(), "Invalid ue_index");
   srsran_assert(not contains(ue_idx), "Creating UE with duplicate ue_index");
   dl.reserve_ue_harqs(ue_idx, nof_dl_harq_procs);
   ul.reserve_ue_harqs(ue_idx, nof_ul_harq_procs);

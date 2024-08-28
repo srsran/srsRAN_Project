@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/ue_scheduling/cell_harq_manager.h"
+#include "lib/scheduler/cell/cell_harq_manager.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -92,7 +92,8 @@ public:
 class base_harq_manager_test
 {
 protected:
-  base_harq_manager_test(unsigned nof_ues) : cell_harqs(nof_ues, timeout_handler.make_notifier(), max_ack_wait_timeout)
+  base_harq_manager_test(unsigned nof_ues) :
+    cell_harqs(nof_ues, max_harqs_per_ue, timeout_handler.make_notifier(), max_ack_wait_timeout)
   {
     logger.set_level(srslog::basic_levels::warning);
     srslog::init();
@@ -109,6 +110,7 @@ protected:
   }
 
   const unsigned             max_ack_wait_timeout = 16;
+  const unsigned             max_harqs_per_ue     = 16;
   dummy_harq_timeout_handler timeout_handler;
   srslog::basic_logger&      logger = srslog::fetch_basic_logger("SCHED");
 

@@ -21,7 +21,6 @@
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/srslog/srslog.h"
-#include <queue>
 
 namespace srsran {
 
@@ -133,11 +132,13 @@ struct cell_harq_repository {
 
   cell_harq_repository(unsigned               max_ues,
                        unsigned               max_ack_wait_in_slots,
+                       unsigned               max_harqs_per_ue,
                        harq_timeout_notifier& timeout_notifier_,
                        srslog::basic_logger&  logger_);
 
   /// Maximum value of time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned         max_ack_wait_in_slots;
+  const unsigned         max_harqs_per_ue;
   harq_timeout_notifier& timeout_notifier;
   srslog::basic_logger&  logger;
 
@@ -392,6 +393,7 @@ public:
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
   cell_harq_manager(unsigned                               max_ues              = MAX_NOF_DU_UES,
+                    unsigned                               max_harqs_per_ue     = MAX_NOF_HARQS,
                     std::unique_ptr<harq_timeout_notifier> notifier             = nullptr,
                     unsigned                               max_ack_wait_timeout = DEFAULT_ACK_TIMEOUT_SLOTS);
 
@@ -434,10 +436,9 @@ private:
   harq_utils::ul_harq_process_impl*
   new_ul_tx(du_ue_index_t ue_idx, rnti_t rnti, slot_point pusch_slot, unsigned max_harq_nof_retxs);
 
+  const unsigned                         max_harqs_per_ue;
   std::unique_ptr<harq_timeout_notifier> timeout_notifier;
   srslog::basic_logger&                  logger;
-
-  slot_point last_sl_tx;
 
   harq_utils::cell_harq_repository<true>  dl;
   harq_utils::cell_harq_repository<false> ul;
