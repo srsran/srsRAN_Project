@@ -756,6 +756,8 @@ check builders ubuntu versions:
   stage: static
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+  variables:
+    VERSIONS_TO_IGNORE: "20.04"
   script:
     - check_if_image_exists ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu- :${DOCKER_BUILDER_VERSION}
 
