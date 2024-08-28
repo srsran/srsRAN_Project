@@ -24,6 +24,7 @@
 #include "du_processor/du_processor_repository.h"
 #include "ngap_repository.h"
 #include "ue_manager/ue_manager_impl.h"
+#include "srsran/cu_cp/cu_configurator.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e2/e2_cu.h"
@@ -149,6 +150,7 @@ public:
   cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler() override { return *this; }
   cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
   cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
+  cu_configurator&                       get_cu_configurator() override { return cu_cp_cfgtr; }
 
 private:
   // Handling of DU events.
@@ -227,6 +229,10 @@ private:
   unique_timer statistics_report_timer;
 
   std::atomic<bool> stopped{false};
+
+  cu_configurator cu_cp_cfgtr;
+  // E2 interface
+  std::unique_ptr<e2_interface> e2ap_entity;
 };
 
 } // namespace srs_cu_cp

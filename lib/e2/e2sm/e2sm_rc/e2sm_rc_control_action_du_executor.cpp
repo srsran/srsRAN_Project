@@ -54,30 +54,6 @@ e2sm_rc_control_action_du_executor_base::return_ctrl_failure(const e2sm_ric_cont
   });
 }
 
-void e2sm_rc_control_action_du_executor_base::parse_ran_parameter_value(const ran_param_value_type_c& ran_param,
-                                                                        uint64_t                      ran_param_id,
-                                                                        uint64_t                      ue_id,
-                                                                        srs_du::du_mac_sched_control_config& ctrl_cfg)
-{
-  if (ran_param.type() == ran_param_value_type_c::types_opts::ran_p_choice_list) {
-    for (auto& ran_p_list : ran_param.ran_p_choice_list().ran_param_list.list_of_ran_param) {
-      for (auto& ran_p : ran_p_list.seq_of_ran_params) {
-        if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
-          parse_ran_parameter_value(ran_p.ran_param_value_type, ran_p.ran_param_id, ue_id, ctrl_cfg);
-        }
-      }
-    }
-  } else if (ran_param.type() == ran_param_value_type_c::types_opts::ran_p_choice_structure) {
-    for (auto& ran_seq : ran_param.ran_p_choice_structure().ran_param_structure.seq_of_ran_params) {
-      if (action_params.find(ran_seq.ran_param_id) != action_params.end()) {
-        parse_ran_parameter_value(ran_seq.ran_param_value_type, ran_seq.ran_param_id, ue_id, ctrl_cfg);
-      }
-    }
-  } else if (ran_param.type() == ran_param_value_type_c::types_opts::ran_p_choice_elem_false) {
-    parse_action_ran_parameter_value(ran_param, ran_param_id, ue_id, ctrl_cfg);
-  }
-}
-
 e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(
     srs_du::du_configurator& du_configurator_) :
   e2sm_rc_control_action_du_executor_base(du_configurator_, 6)
@@ -252,10 +228,20 @@ e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_
       ctrl_config.ue_id = 0;
       break;
   }
-
+  // Use a lambda to define the templete function in parse_ran_parameter_value
+  auto parse_action_ran_parameter_value_lambda = [this](const ran_param_value_type_c&        ran_param,
+                                                        uint64_t                             ran_param_id,
+                                                        uint64_t                             ue_id,
+                                                        srs_du::du_mac_sched_control_config& ctrl_cfg) {
+    this->parse_action_ran_parameter_value(ran_param, ran_param_id, ue_id, ctrl_cfg);
+  };
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
-      parse_ran_parameter_value(ran_p.ran_param_value_type, ran_p.ran_param_id, ctrl_config.ue_id, ctrl_config);
+      parse_ran_parameter_value(ran_p.ran_param_value_type,
+                                ran_p.ran_param_id,
+                                ctrl_config.ue_id,
+                                ctrl_config,
+                                parse_action_ran_parameter_value_lambda);
     }
     if (ctrl_config.param_list.empty()) {
       return {};

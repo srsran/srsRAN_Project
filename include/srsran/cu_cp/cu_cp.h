@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_configurator.h"
 #include "srsran/cu_cp/cu_cp_command_handler.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
@@ -39,6 +40,9 @@ public:
 
   /// \brief Get the metrics handler interface of the CU-CP.
   virtual metrics_handler& get_metrics_handler() = 0;
+
+  /// \brief Get cu configutator interface of the CU-CP.
+  virtual cu_configurator& get_cu_configurator() = 0;
 
   /// \brief Initiate AMF TNL connection and run NG Setup Procedure.
   ///

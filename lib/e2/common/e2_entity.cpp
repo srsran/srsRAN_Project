@@ -12,6 +12,7 @@
 #include "../e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "../e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "../e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
+#include "../e2sm/e2sm_rc/e2sm_rc_control_action_cu_executor.h"
 #include "../e2sm/e2sm_rc/e2sm_rc_control_action_du_executor.h"
 #include "../e2sm/e2sm_rc/e2sm_rc_control_service_impl.h"
 #include "../e2sm/e2sm_rc/e2sm_rc_impl.h"
@@ -27,13 +28,13 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using metrics_interface = std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*>;
 
-e2_entity::e2_entity(const e2ap_configuration       cfg_,
-                     e2_connection_client&          e2_client_,
-                     metrics_interface              e2_metrics_,
-                     srs_du::f1ap_ue_id_translator* f1ap_ue_id_translator_,
-                     srs_du::du_configurator*       du_configurator_,
-                     timer_factory                  timers_,
-                     task_executor&                 task_exec_) :
+e2_entity::e2_entity(const e2ap_configuration                                 cfg_,
+                     e2_connection_client&                                    e2_client_,
+                     metrics_interface                                        e2_metrics_,
+                     srs_du::f1ap_ue_id_translator*                           f1ap_ue_id_translator_,
+                     std::variant<srs_du::du_configurator*, cu_configurator*> configurator_,
+                     timer_factory                                            timers_,
+                     task_executor&                                           task_exec_) :
   logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
 {
   e2sm_mngr         = std::make_unique<e2sm_manager>(logger);
@@ -49,17 +50,35 @@ e2_entity::e2_entity(const e2ap_configuration       cfg_,
     }
   }
 
-  if (cfg.e2sm_rc_enabled && du_configurator_) {
+  if (cfg.e2sm_rc_enabled) {
     auto e2sm_rc_packer = std::make_unique<e2sm_rc_asn1_packer>();
     auto e2sm_rc_iface  = std::make_unique<e2sm_rc_impl>(logger, *e2sm_rc_packer);
-    // Create e2sm_rc Control Service Style 2.
-    std::unique_ptr<e2sm_control_service> rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
-    std::unique_ptr<e2sm_control_action_executor> rc_control_action_2_6_executor =
-        std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*du_configurator_);
-    rc_control_service_style2->add_e2sm_rc_control_action_executor(std::move(rc_control_action_2_6_executor));
+    int  control_service_style_id;
+    if (std::holds_alternative<srs_du::du_configurator*>(configurator_)) {
+      control_service_style_id = 2;
+    } else {
+      control_service_style_id = 3;
+    }
 
-    e2sm_rc_packer->add_e2sm_control_service(rc_control_service_style2.get());
-    e2sm_rc_iface->add_e2sm_control_service(std::move(rc_control_service_style2));
+    std::unique_ptr<e2sm_control_service> rc_control_service_style =
+        std::make_unique<e2sm_rc_control_service>(control_service_style_id);
+
+    std::unique_ptr<e2sm_control_action_executor> rc_control_action_executor;
+    std::visit(
+        [&rc_control_action_executor](auto&& arg) {
+          using T = std::decay_t<decltype(arg)>;
+          if constexpr (std::is_same_v<T, srs_du::du_configurator>) {
+            rc_control_action_executor = std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*arg);
+          } else if constexpr (std::is_same_v<T, cu_configurator>) {
+            rc_control_action_executor = std::make_unique<e2sm_rc_control_action_3_1_cu_executor>(*arg);
+          }
+        },
+        configurator_);
+
+    rc_control_service_style->add_e2sm_rc_control_action_executor(std::move(rc_control_action_executor));
+
+    e2sm_rc_packer->add_e2sm_control_service(rc_control_service_style.get());
+    e2sm_rc_iface->add_e2sm_control_service(std::move(rc_control_service_style));
     e2sm_handlers.push_back(std::move(e2sm_rc_packer));
     e2sm_mngr->add_e2sm_service(e2sm_rc_asn1_packer::oid, std::move(e2sm_rc_iface));
   }

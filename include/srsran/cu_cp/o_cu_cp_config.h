@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_configurator.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 
 namespace srsran {
@@ -29,6 +30,8 @@ struct o_cu_cp_dependencies {
   e2_connection_client* e2_client = nullptr;
   /// E2 CU metrics interface.
   e2_cu_metrics_interface* e2_cu_metric_iface = nullptr;
+  // E2 CU configurator.
+  cu_configurator* cu_cfg = nullptr;
 };
 
 } // namespace srs_cu_cp

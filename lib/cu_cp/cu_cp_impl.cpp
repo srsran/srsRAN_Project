@@ -66,7 +66,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   paging_handler(du_db),
   metrics_hdlr(
-      std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor, *cfg.services.timers, ue_mng, du_db))
+      std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor, *cfg.services.timers, ue_mng, du_db)),
+  cu_cp_cfgtr(mobility_manager_ev_notifier)
 {
   assert_cu_cp_configuration_valid(cfg);
 
