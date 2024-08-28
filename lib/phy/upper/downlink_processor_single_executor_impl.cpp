@@ -229,14 +229,14 @@ bool downlink_processor_single_executor_impl::configure_resource_grid(const reso
   // update internal state to allow processing PDUs and increase the pending task counter.
   state.on_resource_grid_configured();
 
-  l1_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::thread);
+  l1_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::global);
 
   return true;
 }
 
 void srsran::downlink_processor_single_executor_impl::finish_processing_pdus()
 {
-  l1_tracer << instant_trace_event("finish_processing_pdus", instant_trace_event::cpu_scope::global);
+  l1_tracer << instant_trace_event("finish_processing_pdus", instant_trace_event::cpu_scope::thread);
 
   bool can_send_grid = false;
   {
