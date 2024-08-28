@@ -273,7 +273,9 @@ struct du_high_unit_pucch_config {
 struct du_high_unit_srs_config {
   /// Enable Sound Reference Signals (SRS) for the UEs within this cell.
   bool srs_enabled = false;
-  /// Defines the maximum number of symbols dedicated to the cell SRS resources in a slot.  Values: {1,...,6}.
+  /// \brief Defines the maximum number of symbols dedicated to the cell SRS resources in a slot.  Values: {1,...,6}.
+  /// This is the space that the GNB reserves for all the cell SRS resources in the UL slots, not to be confused with
+  /// the symbols per SRS resource configured in the UE dedicated configuration.
   unsigned max_nof_symbols_per_slot = 2U;
 };
 
@@ -560,7 +562,7 @@ struct du_high_unit_base_cell_config {
   du_high_unit_pusch_config pusch_cfg;
   /// PUCCH configuration.
   du_high_unit_pucch_config pucch_cfg;
-  /// srs configuration.
+  /// SRS configuration.
   du_high_unit_srs_config srs_cfg;
   /// Physical Cell Group parameters.
   du_high_unit_phy_cell_group_config pcg_cfg;

@@ -39,7 +39,7 @@ void compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_params,
                                   float                   sr_period_msec,
                                   std::optional<unsigned> csi_period_msec);
 
-bounded_integer<unsigned, 1, 14> compute_max_nof_pucch_symbols(const srs_builder_params&   user_srs_params);
+bounded_integer<unsigned, 1, 14> compute_max_nof_pucch_symbols(const srs_builder_params& user_srs_params);
 
 } // namespace config_helpers
 } // namespace srsran

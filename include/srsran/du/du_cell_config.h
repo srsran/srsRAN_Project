@@ -105,6 +105,7 @@ struct srs_builder_params {
   /// \remark In case of Sounding Reference Signals (SRS) being used, the number of symbols should be reduced so that
   /// the PUCCH resources do not overlap in symbols with the SRS resources.
   /// \remark The SRS resources are always placed at the end of the slot.
+  /// \remark As per TS 38.211, Section 6.4.1.4.1, SRS resource can only be placed in the last 6 symbols of a slot.
   bounded_integer<unsigned, 1, 6> max_nof_symbols = 2U;
 };
 
