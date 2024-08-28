@@ -268,120 +268,48 @@ smoke zmq:
     - *txrx-lib
     - *retina-needs
 
-srsue:
-  extends: .zmq
+.zmq-uesim:
+  stage: zmq
+  extends: .e2e-run
   variables:
-    TESTBED: "zmq_srsue"
-    MARKERS: "zmq_srsue"
+    TESTBED: zmq_uesim
     E2E_LOG_LEVEL: "info"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
-    - *txrx-lib
+    - job: "build uesim zmq driver"
+      artifacts: true
     - *retina-needs
+  allow_failure: true
+
+srsue:
+  extends: .zmq
+  variables:
+    TESTBED: "zmq_srsue"
 
 amari 1UE:
   extends: .zmq
   variables:
     MARKERS: "zmq_single_ue"
-    E2E_LOG_LEVEL: "info"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
-
-amari 32UE 2x2 mimo:
-  extends: .zmq
-  variables:
-    MARKERS: "zmq_2x2_mimo"
-    E2E_LOG_LEVEL: "info"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
-  allow_failure: true
 
 amari 1UE 4x4 mimo:
   extends: .zmq
   variables:
     MARKERS: "zmq_4x4_mimo"
-    E2E_LOG_LEVEL: "info"
     RETINA_PARAM_ARGS: "gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
 
 amari 4UE deb:
   extends: .zmq
   variables:
     TESTBED: "zmq_deb"
     MARKERS: "smoke"
-    E2E_LOG_LEVEL: "info"
     RETINA_PARAM_ARGS: "gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic package"
       artifacts: true
     - *txrx-lib
     - *retina-needs
-
-amari 8UE:
-  extends: .zmq
-  variables:
-    MARKERS: "zmq and not smoke"
-    E2E_LOG_LEVEL: "info"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
-  parallel:
-    matrix:
-      - KEYWORDS:
-          [
-            "attach_detach",
-            "reestablishment and sequentially",
-            "handover and sequentially",
-          ]
-
-amari 8UE beta:
-  extends: amari 8UE
-  parallel:
-    matrix:
-      - KEYWORDS:
-          [
-            "reestablishment and not sequentially",
-            "handover and not sequentially",
-          ]
-  allow_failure: true
-
-amari 32UE:
-  extends: .zmq
-  variables:
-    MARKERS: "zmq and not smoke"
-    E2E_LOG_LEVEL: "info"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
-  parallel:
-    matrix:
-      - KEYWORDS:
-          [
-            "ping",
-            "iperf and udp and band:3",
-            "iperf and udp and not band:3",
-            "iperf and tcp and band:3",
-            "iperf and tcp and not band:3",
-          ]
 
 amari 4UE asan:
   extends: .zmq
@@ -419,18 +347,59 @@ amari 4UE memcheck:
     - *txrx-lib
     - *retina-needs
 
+amari 8UE:
+  extends: .zmq
+  variables:
+    MARKERS: "zmq and not smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  parallel:
+    matrix:
+      - KEYWORDS:
+          [
+            "attach_detach",
+            "reestablishment and sequentially",
+            "handover and sequentially",
+          ]
+
+amari 8UE beta:
+  extends: amari 8UE
+  parallel:
+    matrix:
+      - KEYWORDS:
+          [
+            "reestablishment and not sequentially",
+            "handover and not sequentially",
+          ]
+  allow_failure: true
+
+amari 32UE:
+  extends: .zmq
+  variables:
+    MARKERS: "zmq and not smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  parallel:
+    matrix:
+      - KEYWORDS:
+          [
+            "ping",
+            "iperf and udp and band:3",
+            "iperf and udp and not band:3",
+            "iperf and tcp and band:3",
+            "iperf and tcp and not band:3",
+          ]
+
+amari 32UE 2x2 mimo:
+  extends: .zmq
+  variables:
+    MARKERS: "zmq_2x2_mimo"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+
 cudu amari 8UE:
   extends: .zmq
   variables:
     TESTBED: zmq_cudu
     MARKERS: "zmq and not smoke"
-    E2E_LOG_LEVEL: "info"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
   parallel:
     matrix:
       - KEYWORDS: ["reestablishment and sequentially"]
@@ -440,35 +409,18 @@ cudu amari 32UE:
   variables:
     TESTBED: zmq_cudu
     MARKERS: "zmq and not smoke"
-    E2E_LOG_LEVEL: "info"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
   parallel:
     matrix:
       - KEYWORDS: ["ping", "iperf and tcp and not band:3 and bandwidth:50"]
 
 uesim 32UE beta:
   stage: zmq
-  extends: .e2e-run
-  timeout: 8h
+  extends: .zmq-uesim
   variables:
-    GROUP: uesim
-    TESTBED: zmq_uesim
     MARKERS: "zmq and not smoke"
     KEYWORDS: ping
-    E2E_LOG_LEVEL: "info"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - job: "build uesim zmq driver"
-      artifacts: true
-    - *retina-needs
-  allow_failure: true
 
 ################################################################################
 # TEST MODE
