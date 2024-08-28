@@ -19,6 +19,7 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/security_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
+#include "srsran/ran/plmn_identity.h"
 #include <optional>
 #include <unordered_map>
 
@@ -71,12 +72,14 @@ public:
   /// \param[in] pci The PCI of the cell the UE is connected to.
   /// \param[in] rnti The RNTI of the UE.
   /// \param[in] pcell_index The index of the PCell the UE is connected to.
+  /// \param[in] plmn The PLMN of the UE.
   /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
   ue_index_t add_ue(du_index_t                     du_index,
                     std::optional<gnb_du_id_t>     du_id       = std::nullopt,
                     std::optional<pci_t>           pci         = std::nullopt,
                     std::optional<rnti_t>          rnti        = std::nullopt,
-                    std::optional<du_cell_index_t> pcell_index = std::nullopt);
+                    std::optional<du_cell_index_t> pcell_index = std::nullopt,
+                    std::optional<plmn_identity>   plmn        = std::nullopt);
 
   /// \brief Set the DU context of the UE.
   /// \param[in] ue_index Index of the UE.
@@ -84,9 +87,14 @@ public:
   /// \param[in] pci The PCI of the cell the UE is connected to.
   /// \param[in] rnti The RNTI of the UE.
   /// \param[in] pcell_index The index of the PCell the UE is connected to.
+  /// \param[in] plmn The PLMN of the UE.
   /// \return Pointer to the DU UE if found, nullptr otherwise.
-  cu_cp_ue*
-  set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti, du_cell_index_t pcell_index);
+  cu_cp_ue* set_ue_du_context(ue_index_t      ue_index,
+                              gnb_du_id_t     du_id,
+                              pci_t           pci,
+                              rnti_t          rnti,
+                              du_cell_index_t pcell_index,
+                              plmn_identity   plmn);
 
   /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.

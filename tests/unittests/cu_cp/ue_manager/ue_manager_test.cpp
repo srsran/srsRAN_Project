@@ -9,6 +9,7 @@
  */
 
 #include "ue_manager_test_helpers.h"
+#include "srsran/ran/plmn_identity.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -97,8 +98,9 @@ TEST_F(ue_manager_test, when_du_context_valid_then_ue_updated)
   ue_index_t      ue_index    = ue_mng.add_ue(du_index);
   rnti_t          rnti        = to_rnti(0x4601);
   du_cell_index_t pcell_index = du_cell_index_t::min;
+  plmn_identity   plmn        = plmn_identity::test_value();
 
-  auto* ue = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
+  auto* ue = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index, plmn);
 
   // check that the UE has been created
   ASSERT_NE(ue, nullptr);
@@ -148,12 +150,13 @@ TEST_F(ue_manager_test, when_rnti_already_exits_then_ue_not_added)
   du_index_t      du_index    = du_index_t::min;
   rnti_t          rnti        = to_rnti(0x4601);
   du_cell_index_t pcell_index = du_cell_index_t::min;
-  ue_index_t      ue_index    = ue_mng.add_ue(du_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
+  plmn_identity   plmn        = plmn_identity::test_value();
+  ue_index_t      ue_index    = ue_mng.add_ue(du_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index, plmn);
 
   // check that the number of DU UEs is 1
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), 1U);
 
-  auto* ue2 = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
+  auto* ue2 = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index, plmn);
 
   // check that the UE has not been added
   ASSERT_EQ(ue2, nullptr);

@@ -207,7 +207,8 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
 
   if (ue_index == ue_index_t::invalid) {
     // Add new CU-CP UE
-    ue_index = ue_mng.add_ue(cfg.du_index, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti, pcell->cell_index);
+    ue_index = ue_mng.add_ue(
+        cfg.du_index, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti, pcell->cell_index, req.cgi.plmn_id);
     if (ue_index == ue_index_t::invalid) {
       logger.warning("CU-CP UE creation failed");
       return make_unexpected(rrc_du_adapter.on_rrc_reject_required());
@@ -217,7 +218,8 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     /// NOTE: From this point on the UE exists in the UE manager and must be removed if any error occurs.
 
   } else {
-    ue = ue_mng.set_ue_du_context(ue_index, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti, pcell->cell_index);
+    ue = ue_mng.set_ue_du_context(
+        ue_index, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti, pcell->cell_index, req.cgi.plmn_id);
     if (ue == nullptr) {
       logger.warning("ue={}: Could not create UE context", ue_index);
       // A UE with the same PCI and RNTI already exists, so we don't remove it and only reject the new UE.

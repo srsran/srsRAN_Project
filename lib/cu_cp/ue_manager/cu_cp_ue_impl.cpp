@@ -21,7 +21,8 @@ cu_cp_ue::cu_cp_ue(ue_index_t                     ue_index_,
                    std::optional<gnb_du_id_t>     du_id_,
                    std::optional<pci_t>           pci_,
                    std::optional<rnti_t>          c_rnti_,
-                   std::optional<du_cell_index_t> pcell_index_) :
+                   std::optional<du_cell_index_t> pcell_index_,
+                   std::optional<plmn_identity>   plmn_) :
   ue_index(ue_index_),
   task_sched(std::move(task_sched_)),
   up_mng(up_cfg),
@@ -44,6 +45,10 @@ cu_cp_ue::cu_cp_ue(ue_index_t                     ue_index_,
     pcell_index = pcell_index_.value();
   }
 
+  if (plmn_.has_value()) {
+    ue_ctxt.plmn = plmn_.value();
+  }
+
   ue_ctxt.du_idx = du_index_;
 
   rrc_ue_cu_cp_ue_ev_notifier.connect_ue(*this);
@@ -51,7 +56,11 @@ cu_cp_ue::cu_cp_ue(ue_index_t                     ue_index_,
 }
 
 /// \brief Update a UE with PCI and/or C-RNTI.
-void cu_cp_ue::update_du_ue(gnb_du_id_t du_id_, pci_t pci_, rnti_t c_rnti_, du_cell_index_t pcell_index_)
+void cu_cp_ue::update_du_ue(gnb_du_id_t     du_id_,
+                            pci_t           pci_,
+                            rnti_t          c_rnti_,
+                            du_cell_index_t pcell_index_,
+                            plmn_identity   plmn_)
 {
   if (du_id_ != gnb_du_id_t::invalid) {
     ue_ctxt.du_id = du_id_;
@@ -68,6 +77,8 @@ void cu_cp_ue::update_du_ue(gnb_du_id_t du_id_, pci_t pci_, rnti_t c_rnti_, du_c
   if (pcell_index_ != du_cell_index_t::invalid) {
     pcell_index = pcell_index_;
   }
+
+  ue_ctxt.plmn = plmn_;
 }
 
 /// \brief Set/update the measurement context of the UE.

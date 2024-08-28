@@ -17,6 +17,7 @@
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "cu_cp_ue_impl_interface.h"
 #include "ue_task_scheduler_impl.h"
+#include "srsran/ran/plmn_identity.h"
 #include <optional>
 #include <unordered_map>
 
@@ -26,10 +27,11 @@ namespace srs_cu_cp {
 
 /// \brief Context of a CU-CP UE.
 struct cu_cp_ue_context {
-  du_index_t  du_idx   = du_index_t::invalid;
-  gnb_du_id_t du_id    = gnb_du_id_t::invalid;
-  ue_index_t  ue_index = ue_index_t::invalid;
-  rnti_t      crnti    = rnti_t::INVALID_RNTI;
+  du_index_t    du_idx   = du_index_t::invalid;
+  gnb_du_id_t   du_id    = gnb_du_id_t::invalid;
+  ue_index_t    ue_index = ue_index_t::invalid;
+  rnti_t        crnti    = rnti_t::INVALID_RNTI;
+  plmn_identity plmn     = plmn_identity::test_value();
   /// \brief Flag to disable new UE reconfigurations. This can be used, for instance, to reconfigure UE contexts
   /// that are in the process of handover.
   bool reconfiguration_disabled = false;
@@ -46,7 +48,8 @@ public:
            std::optional<gnb_du_id_t>     du_id_       = std::nullopt,
            std::optional<pci_t>           pci_         = std::nullopt,
            std::optional<rnti_t>          c_rnti_      = std::nullopt,
-           std::optional<du_cell_index_t> pcell_index_ = std::nullopt);
+           std::optional<du_cell_index_t> pcell_index_ = std::nullopt,
+           std::optional<plmn_identity>   plmn_        = std::nullopt);
 
   /// \brief Cancel all pending UE tasks.
   void stop();
@@ -87,7 +90,8 @@ public:
   void update_du_ue(gnb_du_id_t     du_id_       = gnb_du_id_t::invalid,
                     pci_t           pci_         = INVALID_PCI,
                     rnti_t          c_rnti_      = rnti_t::INVALID_RNTI,
-                    du_cell_index_t pcell_index_ = du_cell_index_t::invalid);
+                    du_cell_index_t pcell_index_ = du_cell_index_t::invalid,
+                    plmn_identity   plmn_        = plmn_identity::test_value());
 
   /// \brief Set/update the measurement context of the UE.
   void update_meas_context(cell_meas_manager_ue_context meas_ctxt);
