@@ -139,7 +139,7 @@ public:
   /// Builds the provided log entry and passes it to the backend. When the
   /// channel is disabled the log entry will be discarded.
   template <typename... Args>
-  void operator()(std::shared_ptr<const std::string> log_label, const char* fmtstr, Args&&... args)
+  void operator()(const std::shared_ptr<const std::string>& log_label, const char* fmtstr, Args&&... args)
   {
     if (!enabled()) {
       return;
@@ -164,7 +164,7 @@ public:
                                     store,
                                     log_name,
                                     log_tag,
-                                    std::move(log_label)}};
+                                    log_label}};
     backend.push(std::move(entry));
   }
 
@@ -240,10 +240,10 @@ public:
   /// Builds the provided log entry and passes it to the backend. When the
   /// channel is disabled the log entry will be discarded.
   template <typename... Args>
-  void operator()(std::shared_ptr<const std::string> log_label,
-                  const uint8_t*                     buffer,
-                  size_t                             len,
-                  const char*                        fmtstr,
+  void operator()(const std::shared_ptr<const std::string>& log_label,
+                  const uint8_t*                            buffer,
+                  size_t                                    len,
+                  const char*                               fmtstr,
                   Args&&... args)
   {
     if (!enabled()) {
@@ -389,7 +389,7 @@ public:
                                     store,
                                     log_name,
                                     log_tag,
-                                    std::move(log_label),
+                                    log_label,
                                     std::vector<uint8_t>(it_begin, it_end)}};
     backend.push(std::move(entry));
   }
