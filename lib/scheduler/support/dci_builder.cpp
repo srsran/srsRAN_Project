@@ -8,6 +8,8 @@
  */
 
 #include "dci_builder.h"
+#include "../cell/cell_harq_manager.h"
+#include "../ue_scheduling/harq_process.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/pdcch/search_space.h"
@@ -291,12 +293,8 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
                                     const crb_interval&        crbs,
                                     unsigned                   time_resource,
                                     sch_mcs_index              mcs_index,
-                                    uint8_t                    rv,
-                                    const ul_harq_process&     h_ul)
+                                    uint8_t                    rv)
 {
-  // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
-  srsran_assert(h_ul.id == 0, "UL HARQ process used for Msg3 must have id=0");
-
   dci.type                            = dci_ul_rnti_config_type::tc_rnti_f0_0;
   dci.tc_rnti_f0_0                    = {};
   dci_0_0_tc_rnti_configuration& f0_0 = dci.tc_rnti_f0_0;

@@ -206,7 +206,7 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
       break;
     }
 
-    // HARQ is trapped. Remove it.
+    // HARQ retransmission is trapped. Deallocate HARQ process.
     logger.warning(
         "rnti={} h_id={}: Discarding {} HARQ. Cause: Too much time has passed since the last HARQ "
         "transmission. The scheduler policy is likely not prioritizing retransmissions of old HARQ processes.",
@@ -214,6 +214,9 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
         h.h_id,
         IsDl ? "DL" : "UL");
     dealloc_harq(h);
+
+    // Report timeout after the HARQ gets deleted to avoid reentrancy.
+    timeout_notifier.on_harq_timeout(h.ue_idx, IsDl, false);
   }
 }
 
@@ -222,9 +225,10 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
 {
   srsran_sanity_check(h.status == harq_state_t::waiting_ack, "HARQ process in wrong state");
 
+  bool ack_val = h.ack_on_timeout;
   if (not is_ntn_mode()) {
     // Only in non-NTN case, we log a warning.
-    if (h.ack_on_timeout) {
+    if (ack_val) {
       // Case: Not all HARQ-ACKs were received, but at least one positive ACK was received.
       logger.debug("rnti={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was "
                    "reached with still missing PUCCH HARQ-ACKs. However, one positive ACK was received.",
@@ -242,13 +246,16 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                      IsDl ? "DL" : "UL",
                      h.slot_ack_timeout - h.slot_ack);
     }
-
-    // Report timeout with NACK.
-    timeout_notifier.on_harq_timeout(h.ue_idx, IsDl, h.ack_on_timeout);
   }
 
   // Deallocate HARQ.
   dealloc_harq(h);
+
+  if (max_ack_wait_in_slots != 1) {
+    // Report timeout with NACK after we delete the HARQ to avoid reentrancy.
+    // Only in non-NTN case.
+    timeout_notifier.on_harq_timeout(h.ue_idx, IsDl, ack_val);
+  }
 }
 
 template <bool IsDl>
@@ -736,10 +743,11 @@ unique_ue_harq_entity::unique_ue_harq_entity(cell_harq_manager* mgr, du_ue_index
 }
 
 unique_ue_harq_entity::unique_ue_harq_entity(unique_ue_harq_entity&& other) noexcept :
-  cell_harq_mgr(other.cell_harq_mgr), ue_index(other.ue_index)
+  cell_harq_mgr(other.cell_harq_mgr), ue_index(other.ue_index), crnti(other.crnti)
 {
   other.cell_harq_mgr = nullptr;
   other.ue_index      = INVALID_DU_UE_INDEX;
+  other.crnti         = rnti_t::INVALID_RNTI;
 }
 
 unique_ue_harq_entity& unique_ue_harq_entity::operator=(unique_ue_harq_entity&& other) noexcept
@@ -749,8 +757,10 @@ unique_ue_harq_entity& unique_ue_harq_entity::operator=(unique_ue_harq_entity&& 
   }
   cell_harq_mgr       = other.cell_harq_mgr;
   ue_index            = other.ue_index;
+  crnti               = other.crnti;
   other.cell_harq_mgr = nullptr;
   other.ue_index      = INVALID_DU_UE_INDEX;
+  other.crnti         = rnti_t::INVALID_RNTI;
   return *this;
 }
 

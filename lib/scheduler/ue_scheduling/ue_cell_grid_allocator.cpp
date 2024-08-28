@@ -877,8 +877,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
                                crbs,
                                param_candidate.pusch_td_res_index(),
                                mcs_tbs_info.value().mcs,
-                               rv,
-                               h_ul);
+                               rv);
         break;
       case dci_ul_rnti_config_type::c_rnti_f0_0:
         build_dci_f0_0_c_rnti(pdcch->dci,

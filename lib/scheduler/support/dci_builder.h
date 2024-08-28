@@ -10,13 +10,15 @@
 #pragma once
 
 #include "../config/ue_configuration.h"
-#include "../ue_scheduling/harq_process.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
+
+class dl_harq_process;
+class ul_harq_process;
 
 /// Builds DCI f1_0 for SI-RNTI used in SIBs.
 void build_dci_f1_0_si_rnti(dci_dl_info&               dci,
@@ -85,8 +87,7 @@ void build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
                             const crb_interval&        crbs,
                             unsigned                   time_resource,
                             sch_mcs_index              mcs_index,
-                            uint8_t                    rv,
-                            const ul_harq_process&     h_ul);
+                            uint8_t                    rv);
 
 /// Builds DCI f0_0 for C-RNTI.
 void build_dci_f0_0_c_rnti(dci_ul_info&             dci,
