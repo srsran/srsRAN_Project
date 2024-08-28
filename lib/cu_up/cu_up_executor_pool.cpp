@@ -9,6 +9,7 @@
  */
 
 #include "srsran/cu_up/cu_up_executor_pool.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
@@ -22,14 +23,26 @@ class cancellable_task_executor final : public task_executor
 public:
   cancellable_task_executor(task_executor& exec_) : exec(&exec_) {}
 
-  /// \brief Cancel pending tasks.
   /// Note: This needs to be called from within the executor's context.
-  void cancel() { cancelled = true; }
+  ~cancellable_task_executor() override
+  {
+    // cancel pending tasks.
+    *cancelled = true;
+
+    // extend life-time of cancelled flag by moving it into an executor.
+    while (not exec->defer([flag_moved = std::move(cancelled)]() mutable {
+      // flag is finally destroyed.
+      flag_moved.reset();
+    })) {
+      srslog::fetch_basic_logger("ALL").warning("Unable to dispatch UE task executor deletion. Retrying...");
+      std::this_thread::sleep_for(std::chrono::microseconds{100});
+    }
+  }
 
   [[nodiscard]] bool execute(unique_task task) override
   {
-    return exec->execute([this, task = std::move(task)]() {
-      if (cancelled) {
+    return exec->execute([cancelled_ref = *cancelled, task = std::move(task)]() {
+      if (cancelled_ref) {
         return;
       }
       task();
@@ -38,8 +51,8 @@ public:
 
   [[nodiscard]] bool defer(unique_task task) override
   {
-    return exec->defer([this, task = std::move(task)]() {
-      if (cancelled) {
+    return exec->defer([cancelled_ref = *cancelled, task = std::move(task)]() {
+      if (cancelled_ref) {
         return;
       }
       task();
@@ -47,8 +60,8 @@ public:
   }
 
 private:
-  task_executor* exec;
-  bool           cancelled = false;
+  task_executor*        exec;
+  std::unique_ptr<bool> cancelled = std::make_unique<bool>(false);
 };
 
 /// Implementation of the UE executor mapper.
@@ -72,13 +85,13 @@ public:
       CORO_BEGIN(ctx);
 
       // Switch to the UE execution context.
-      CORO_AWAIT(defer_to_blocking(ctrl_exec));
+      CORO_AWAIT(defer_to_blocking(*ctrl_exec));
 
       // Cancel all pending tasks.
       // Note: this operation is only thread-safe because we are calling it from the UE executor's context.
-      ctrl_exec.cancel();
-      ul_exec.cancel();
-      dl_exec.cancel();
+      ctrl_exec.reset();
+      ul_exec.reset();
+      dl_exec.reset();
 
       // Return back to main control execution context.
       CORO_AWAIT(defer_to_blocking(main_exec));
@@ -87,17 +100,17 @@ public:
     });
   }
 
-  task_executor& ctrl_executor() override { return ctrl_exec; }
-  task_executor& ul_pdu_executor() override { return ul_exec; }
-  task_executor& dl_pdu_executor() override { return dl_exec; }
+  task_executor& ctrl_executor() override { return *ctrl_exec; }
+  task_executor& ul_pdu_executor() override { return *ul_exec; }
+  task_executor& dl_pdu_executor() override { return *dl_exec; }
   task_executor& crypto_executor() override { return crypto_exec; }
 
 private:
-  cancellable_task_executor ctrl_exec;
-  cancellable_task_executor ul_exec;
-  cancellable_task_executor dl_exec;
-  task_executor&            crypto_exec;
-  task_executor&            main_exec;
+  std::optional<cancellable_task_executor> ctrl_exec;
+  std::optional<cancellable_task_executor> ul_exec;
+  std::optional<cancellable_task_executor> dl_exec;
+  task_executor&                           crypto_exec;
+  task_executor&                           main_exec;
 };
 
 } // namespace
