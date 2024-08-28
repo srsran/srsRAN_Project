@@ -41,7 +41,7 @@ public:
 
   [[nodiscard]] bool execute(unique_task task) override
   {
-    return exec->execute([cancelled_ref = *cancelled, task = std::move(task)]() {
+    return exec->execute([&cancelled_ref = *cancelled, task = std::move(task)]() {
       if (cancelled_ref) {
         return;
       }
@@ -51,7 +51,7 @@ public:
 
   [[nodiscard]] bool defer(unique_task task) override
   {
-    return exec->defer([cancelled_ref = *cancelled, task = std::move(task)]() {
+    return exec->defer([&cancelled_ref = *cancelled, task = std::move(task)]() {
       if (cancelled_ref) {
         return;
       }
