@@ -41,8 +41,6 @@ public:
 
 namespace harq_utils {
 
-const static unsigned INVALID_HARQ_REF_INDEX = std::numeric_limits<unsigned>::max();
-
 /// Possible states of a HARQ process.
 enum class harq_state_t { empty, pending_retx, waiting_ack };
 
@@ -119,16 +117,14 @@ struct ul_harq_process_impl : public base_harq_process {
   alloc_params prev_tx_params;
 };
 
-struct ue_harq_entity_impl {
-  std::vector<unsigned>  harqs;
-  std::vector<harq_id_t> free_harq_ids;
-};
-
 template <bool IsDl>
 struct cell_harq_repository {
   using harq_type = std::conditional_t<IsDl, dl_harq_process_impl, ul_harq_process_impl>;
 
-  const static unsigned INVALID_HARQ = std::numeric_limits<unsigned>::max();
+  struct ue_harq_entity_impl {
+    std::vector<harq_type> harqs;
+    std::vector<harq_id_t> free_harq_ids;
+  };
 
   cell_harq_repository(unsigned               max_ues,
                        unsigned               max_ack_wait_in_slots,
@@ -136,34 +132,31 @@ struct cell_harq_repository {
                        harq_timeout_notifier& timeout_notifier_,
                        srslog::basic_logger&  logger_);
 
-  /// Maximum value of time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
-  const unsigned         max_ack_wait_in_slots;
+  /// Time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
+  const unsigned max_ack_wait_in_slots;
+  /// Maximum number of HARQs allowed per UE.
   const unsigned         max_harqs_per_ue;
   harq_timeout_notifier& timeout_notifier;
   srslog::basic_logger&  logger;
 
   slot_point last_sl_ind;
 
-  std::vector<harq_type>                               harqs;
-  std::vector<unsigned>                                free_harqs;
   std::vector<ue_harq_entity_impl>                     ues;
   intrusive_double_linked_list<harq_type>              harq_pending_retx_list;
   std::vector<intrusive_double_linked_list<harq_type>> harq_timeout_wheel;
 
-  unsigned get_harq_ref_idx(const harq_type& h) const;
-
-  void slot_indication(slot_point sl_tx);
-  void handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
-  harq_type*
-       alloc_harq(du_ue_index_t ue_idx, rnti_t rnti, slot_point sl_tx, slot_point sl_ack, unsigned max_nof_harq_retxs);
-  void dealloc_harq(harq_type& h);
-  void handle_ack(harq_type& h, bool ack);
-  void set_pending_retx(harq_type& h);
+  void               slot_indication(slot_point sl_tx);
+  void               handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
+  harq_type*         alloc_harq(du_ue_index_t ue_idx, slot_point sl_tx, slot_point sl_ack, unsigned max_nof_harq_retxs);
+  void               dealloc_harq(harq_type& h);
+  void               handle_ack(harq_type& h, bool ack);
+  void               set_pending_retx(harq_type& h);
   [[nodiscard]] bool handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack);
-  void               reserve_ue_harqs(du_ue_index_t ue_idx, unsigned nof_harqs);
-  void               destroy_ue_harqs(du_ue_index_t ue_idx);
+  void               reserve_ue_harqs(du_ue_index_t ue_idx, rnti_t rnti, unsigned nof_harqs);
+  void               destroy_ue(du_ue_index_t ue_idx);
   void               cancel_retxs(harq_type& h);
-  unsigned           find_ue_harq_in_state(du_ue_index_t ue_idx, harq_utils::harq_state_t state) const;
+  harq_type*         find_ue_harq_in_state(du_ue_index_t ue_idx, harq_utils::harq_state_t state);
+  const harq_type*   find_ue_harq_in_state(du_ue_index_t ue_idx, harq_utils::harq_state_t state) const;
 };
 
 template <bool IsDl>
@@ -175,24 +168,16 @@ protected:
 
 public:
   base_harq_process_handle() = default;
-  base_harq_process_handle(harq_pool& pool_, unsigned harq_ref_idx_) : harq_repo(&pool_), harq_ref_idx(harq_ref_idx_)
-  {
-    srsran_sanity_check(harq_ref_idx < harq_repo->harqs.size(), "Invalid HARQ created");
-    srsran_sanity_check(harq_repo->harqs[harq_ref_idx].status != harq_utils::harq_state_t::empty,
-                        "Empty HARQ process created");
-  }
+  base_harq_process_handle(harq_pool& pool_, harq_impl_type& h_) : harq_repo(&pool_), impl(&h_) {}
 
-  rnti_t    rnti() const { return fetch_impl().rnti; }
-  harq_id_t id() const { return fetch_impl().h_id; }
-  bool      is_waiting_ack() const { return fetch_impl().status == harq_utils::harq_state_t::waiting_ack; }
-  bool      has_pending_retx() const { return fetch_impl().status == harq_utils::harq_state_t::pending_retx; }
-  bool      empty() const
-  {
-    return harq_ref_idx == harq_pool::INVALID_HARQ or fetch_impl().status == harq_utils::harq_state_t::empty;
-  }
-  unsigned max_nof_retxs() const { return fetch_impl().max_nof_harq_retxs; }
-  unsigned nof_retxs() const { return fetch_impl().nof_retxs; }
-  bool     ndi() const { return fetch_impl().ndi; }
+  rnti_t    rnti() const { return impl->rnti; }
+  harq_id_t id() const { return impl->h_id; }
+  bool      is_waiting_ack() const { return impl->status == harq_utils::harq_state_t::waiting_ack; }
+  bool      has_pending_retx() const { return impl->status == harq_utils::harq_state_t::pending_retx; }
+  bool      empty() const { return impl->status == harq_utils::harq_state_t::empty; }
+  unsigned  max_nof_retxs() const { return impl->max_nof_harq_retxs; }
+  unsigned  nof_retxs() const { return impl->nof_retxs; }
+  bool      ndi() const { return impl->ndi; }
 
   /// \brief Cancels any retransmissions for this HARQ process.
   /// If the HARQ process has a pending retransmission, it is reset. If the ACK/CRC info has not been received yet, the
@@ -201,16 +186,13 @@ public:
 
   bool operator==(const base_harq_process_handle& other) const
   {
-    return harq_repo == other.harq_repo and harq_ref_idx == other.harq_ref_idx;
+    return harq_repo == other.harq_repo and impl == other.impl;
   }
   bool operator!=(const base_harq_process_handle& other) const { return !(*this == other); }
 
 protected:
-  harq_impl_type&       fetch_impl() { return harq_repo->harqs[harq_ref_idx]; }
-  const harq_impl_type& fetch_impl() const { return harq_repo->harqs[harq_ref_idx]; }
-
-  harq_pool* harq_repo    = nullptr;
-  unsigned   harq_ref_idx = harq_pool::INVALID_HARQ;
+  harq_pool*      harq_repo = nullptr;
+  harq_impl_type* impl      = nullptr;
 };
 
 } // namespace harq_utils
@@ -281,10 +263,10 @@ public:
   /// they can be later fetched and optionally reused.
   void save_grant_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch);
 
-  slot_point pdsch_slot() const { return fetch_impl().slot_tx; }
-  slot_point uci_slot() const { return fetch_impl().slot_ack; }
+  slot_point pdsch_slot() const { return impl->slot_tx; }
+  slot_point uci_slot() const { return impl->slot_ack; }
 
-  const grant_params& get_grant_params() const { return fetch_impl().prev_tx_params; }
+  const grant_params& get_grant_params() const { return impl->prev_tx_params; }
 };
 
 /// Interface used to fetch and update the status of a UL HARQ process.
@@ -320,9 +302,9 @@ public:
   /// they can be later fetched and optionally reused.
   void save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pusch);
 
-  slot_point pusch_slot() const { return fetch_impl().slot_tx; }
+  slot_point pusch_slot() const { return impl->slot_tx; }
 
-  const grant_params& get_grant_params() const { return fetch_impl().prev_tx_params; }
+  const grant_params& get_grant_params() const { return impl->prev_tx_params; }
 };
 
 namespace harq_utils {
@@ -352,17 +334,12 @@ public:
       return value();
     }
     reference operator*() { return value(); }
-    reference value()
-    {
-      return it != pool->harq_pending_retx_list.end() ? handle_type{*pool, get_harq_ref_idx(*it)} : handle_type{};
-    }
+    reference value() { return it != pool->harq_pending_retx_list.end() ? handle_type{*pool, *it} : handle_type{}; }
 
     bool operator==(const iterator& other) const { return pool == other.pool and it == other.it; }
     bool operator!=(const iterator& other) const { return !(*this == other); }
 
   private:
-    unsigned get_harq_ref_idx(const harq_impl_type& h) { return &h - pool->harqs.data(); }
-
     harq_pool*                                                      pool;
     typename intrusive_double_linked_list<harq_impl_type>::iterator it;
   };
@@ -447,6 +424,9 @@ private:
 /// HARQ entity that manages a set of HARQ processes of a single UE.
 class unique_ue_harq_entity
 {
+  using dl_harq_ent_impl = harq_utils::cell_harq_repository<true>::ue_harq_entity_impl;
+  using ul_harq_ent_impl = harq_utils::cell_harq_repository<false>::ue_harq_entity_impl;
+
 public:
   unique_ue_harq_entity() = default;
   unique_ue_harq_entity(cell_harq_manager* mgr, du_ue_index_t ue_idx, rnti_t crnti_);
@@ -469,15 +449,15 @@ public:
 
   std::optional<dl_harq_process_handle> dl_harq(harq_id_t h_id)
   {
-    if (cell_harq_mgr->dl.ues[ue_index].harqs[h_id] != harq_utils::INVALID_HARQ_REF_INDEX) {
-      return dl_harq_process_handle{cell_harq_mgr->dl, cell_harq_mgr->dl.ues[ue_index].harqs[h_id]};
+    if (get_dl_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
+      return dl_harq_process_handle{cell_harq_mgr->dl, get_dl_ue().harqs[h_id]};
     }
     return std::nullopt;
   }
   std::optional<ul_harq_process_handle> ul_harq(harq_id_t h_id)
   {
-    if (cell_harq_mgr->ul.ues[ue_index].harqs[h_id] != harq_utils::INVALID_HARQ_REF_INDEX) {
-      return ul_harq_process_handle{cell_harq_mgr->ul, cell_harq_mgr->ul.ues[ue_index].harqs[h_id]};
+    if (get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
+      return ul_harq_process_handle{cell_harq_mgr->ul, get_ul_ue().harqs[h_id]};
     }
     return std::nullopt;
   }
@@ -504,10 +484,10 @@ public:
   std::optional<ul_harq_process_handle> find_ul_harq(slot_point pusch_slot);
 
 private:
-  harq_utils::ue_harq_entity_impl&       get_dl_ue() { return cell_harq_mgr->dl.ues[ue_index]; }
-  const harq_utils::ue_harq_entity_impl& get_dl_ue() const { return cell_harq_mgr->dl.ues[ue_index]; }
-  harq_utils::ue_harq_entity_impl&       get_ul_ue() { return cell_harq_mgr->ul.ues[ue_index]; }
-  const harq_utils::ue_harq_entity_impl& get_ul_ue() const { return cell_harq_mgr->ul.ues[ue_index]; }
+  dl_harq_ent_impl&       get_dl_ue() { return cell_harq_mgr->dl.ues[ue_index]; }
+  const dl_harq_ent_impl& get_dl_ue() const { return cell_harq_mgr->dl.ues[ue_index]; }
+  ul_harq_ent_impl&       get_ul_ue() { return cell_harq_mgr->ul.ues[ue_index]; }
+  const ul_harq_ent_impl& get_ul_ue() const { return cell_harq_mgr->ul.ues[ue_index]; }
 
   cell_harq_manager* cell_harq_mgr = nullptr;
   du_ue_index_t      ue_index      = INVALID_DU_UE_INDEX;

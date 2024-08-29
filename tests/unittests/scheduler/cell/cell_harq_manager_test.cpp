@@ -972,3 +972,40 @@ TEST_F(multi_ue_harq_manager_test, pending_harq_retxs_are_ordered_from_oldest_to
   }
   ASSERT_EQ(count, 2);
 }
+
+TEST_F(multi_ue_harq_manager_test, when_new_tx_occur_for_different_ues_then_ndi_is_still_valid)
+{
+  const unsigned        k1 = 4, k2 = 6, max_retxs = 4;
+  unique_ue_harq_entity harq_ent1 = cell_harqs.add_ue(to_du_ue_index(1), to_rnti(0x4601), nof_harqs, nof_harqs);
+  unique_ue_harq_entity harq_ent2 = cell_harqs.add_ue(to_du_ue_index(2), to_rnti(0x4602), nof_harqs, nof_harqs);
+
+  auto h_dl = harq_ent1.alloc_dl_harq(current_slot, k1, max_retxs, 0);
+  auto h_ul = harq_ent1.alloc_ul_harq(current_slot + k2, max_retxs);
+  ASSERT_TRUE(h_dl.has_value());
+  ASSERT_TRUE(h_ul.has_value());
+
+  bool ndi_dl1 = h_dl->ndi();
+  bool ndi_ul1 = h_ul->ndi();
+
+  ASSERT_EQ(h_dl->dl_ack_info(mac_harq_ack_report_status::ack, std::nullopt),
+            dl_harq_process_handle::status_update::acked);
+  ASSERT_EQ(h_ul->ul_crc_info(true), 0);
+
+  h_dl = harq_ent2.alloc_dl_harq(current_slot, k1, max_retxs, 0);
+  h_ul = harq_ent2.alloc_ul_harq(current_slot + k2, max_retxs);
+  ASSERT_TRUE(h_dl.has_value());
+  ASSERT_TRUE(h_ul.has_value());
+
+  ASSERT_EQ(h_dl->ndi(), ndi_dl1);
+  ASSERT_EQ(h_ul->ndi(), ndi_ul1);
+
+  ASSERT_EQ(h_dl->dl_ack_info(mac_harq_ack_report_status::ack, std::nullopt),
+            dl_harq_process_handle::status_update::acked);
+  ASSERT_EQ(h_ul->ul_crc_info(true), 0);
+
+  h_dl = harq_ent1.alloc_dl_harq(current_slot, k1, max_retxs, 0);
+  h_ul = harq_ent1.alloc_ul_harq(current_slot + k2, max_retxs);
+
+  ASSERT_NE(h_dl->ndi(), ndi_dl1);
+  ASSERT_NE(h_ul->ndi(), ndi_ul1);
+}
