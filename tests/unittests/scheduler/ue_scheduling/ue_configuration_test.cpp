@@ -25,6 +25,9 @@ protected:
   scheduler_harq_timeout_dummy_handler     harq_timeout_handler;
 
   cell_common_configuration_list cell_cfg_db;
+  cell_harq_manager              cell_harqs{1,
+                               MAX_NOF_HARQS,
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
 };
 
 TEST_F(ue_configuration_test, configuration_valid_on_creation)
@@ -74,7 +77,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   // Test Preamble.
   cell_cfg_db.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg));
   ue_configuration ue_ded_cfg{ue_create_msg.ue_index, ue_create_msg.crnti, cell_cfg_db, ue_create_msg.cfg};
-  ue               u{ue_creation_command{ue_ded_cfg, ue_create_msg.starts_in_fallback, harq_timeout_handler}};
+  ue               u{ue_creation_command{ue_ded_cfg, ue_create_msg.starts_in_fallback, cell_harqs}};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
   sched_ue_reconfiguration_message recfg{};

@@ -45,7 +45,7 @@ protected:
   const ue_configuration* add_ue(const sched_ue_creation_request_message& req)
   {
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
-    ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_cfg, req.starts_in_fallback, harq_timeout_handler}));
+    ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_cfg, req.starts_in_fallback, cell_harqs}));
     slice_sched.add_ue(req.ue_index);
     return ue_cfg;
   }
@@ -56,7 +56,10 @@ protected:
 
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
-  ue_repository ues;
+  cell_harq_manager cell_harqs{MAX_NOF_DU_UES,
+                               MAX_NOF_HARQS,
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
+  ue_repository     ues;
 
   slice_scheduler slice_sched{cell_cfg, ues};
 

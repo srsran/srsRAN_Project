@@ -8,7 +8,6 @@
  */
 
 #include "sch_pdu_builder.h"
-#include "../ue_scheduling/ue_channel_state_manager.h"
 #include "dmrs_helpers.h"
 #include "pdsch/pdsch_default_time_allocation.h"
 #include "srsran/adt/optional.h"
@@ -16,8 +15,6 @@
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_pusch_size.h"
-#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
-#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;
@@ -545,7 +542,7 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
                                      search_space_id                 ss_id,
                                      const dci_1_1_configuration&    dci_cfg,
                                      const crb_interval&             crbs,
-                                     const dl_harq_process&          h_dl,
+                                     bool                            is_new_data,
                                      const ue_channel_state_manager& cs_mgr)
 {
   const cell_configuration&    cell_cfg       = ue_cell_cfg.cell_cfg_common;
@@ -575,7 +572,7 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   // TODO: Add second Codeword when supported.
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
-  cw.new_data        = h_dl.tb(0).nof_retxs == 0;
+  cw.new_data        = is_new_data;
   cw.rv_index        = dci_cfg.tb1_redundancy_version;
   cw.mcs_index       = dci_cfg.tb1_modulation_coding_scheme;
   cw.mcs_table       = pdsch_cfg.mcs_table;
@@ -699,7 +696,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
                                      search_space_id              ss_id,
                                      const dci_0_1_configuration& dci_cfg,
                                      const crb_interval&          crbs,
-                                     const ul_harq_process&       h_ul)
+                                     bool                         is_new_data)
 {
   const cell_configuration&                cell_cfg      = ue_cell_cfg.cell_cfg_common;
   const search_space_info&                 ss_info       = ue_cell_cfg.search_space(ss_id);
@@ -759,5 +756,5 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   // HARQ.
   pusch.rv_index = dci_cfg.redundancy_version;
   pusch.harq_id  = dci_cfg.harq_process_number;
-  pusch.new_data = h_ul.tb().nof_retxs == 0;
+  pusch.new_data = is_new_data;
 }

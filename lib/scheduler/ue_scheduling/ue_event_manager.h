@@ -23,6 +23,7 @@ namespace srsran {
 class cell_metrics_handler;
 class scheduler_event_logger;
 class uci_scheduler_impl;
+class cell_harq_manager;
 
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
@@ -36,6 +37,7 @@ public:
   ~ue_event_manager();
 
   void add_cell(cell_resource_allocator& cell_res_grid,
+                cell_harq_manager&       cell_harqs,
                 ue_fallback_scheduler&   fallback_sched,
                 uci_scheduler_impl&      uci_sched,
                 scheduler_event_logger&  ev_logger,
@@ -114,6 +116,8 @@ private:
     const cell_configuration* cfg = nullptr;
 
     cell_resource_allocator* res_grid = nullptr;
+
+    cell_harq_manager* cell_harqs = nullptr;
 
     // Reference to fallback scheduler.
     ue_fallback_scheduler* fallback_sched = nullptr;

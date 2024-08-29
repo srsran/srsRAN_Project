@@ -695,7 +695,8 @@ int ul_harq_process_handle::ul_crc_info(bool ack)
 {
   if (impl->status != harq_state_t::waiting_ack) {
     // HARQ is not expecting CRC info.
-    harq_repo->logger.warning("rnti={} h_id={}: CRC arrived for UL HARQ not expecting it", impl->rnti, impl->h_id);
+    harq_repo->logger.warning(
+        "rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting any CRC", impl->rnti, impl->h_id);
     return -1;
   }
 

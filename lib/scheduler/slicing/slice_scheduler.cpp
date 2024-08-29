@@ -118,17 +118,17 @@ void slice_scheduler::reconf_ue(du_ue_index_t ue_idx)
   // Check if any UE HARQs need to be cancelled in case the UE got removed from the respective slice.
   ue_cell& ue_cell = *u->find_cell(cell_cfg.cell_index);
   for (unsigned i = 0; i != ue_cell.harqs.nof_dl_harqs(); ++i) {
-    dl_harq_process& h_dl = ue_cell.harqs.dl_harq(to_harq_id(i));
-    if (h_dl.has_pending_retx() and h_dl.last_alloc_params().tb[0]->slice_id.has_value() and
-        not slices[h_dl.last_alloc_params().tb[0]->slice_id->value()].inst.contains(ue_idx)) {
-      h_dl.cancel_harq_retxs(0);
+    std::optional<dl_harq_process_handle> h_dl = ue_cell.harqs.dl_harq(to_harq_id(i));
+    if (h_dl.has_value() and h_dl->get_grant_params().slice_id.has_value() and
+        not slices[h_dl->get_grant_params().slice_id->value()].inst.contains(ue_idx)) {
+      h_dl->cancel_retxs();
     }
   }
   for (unsigned i = 0; i != ue_cell.harqs.nof_ul_harqs(); ++i) {
-    ul_harq_process& h_ul = ue_cell.harqs.ul_harq(to_harq_id(i));
-    if (h_ul.has_pending_retx() and h_ul.last_tx_params().slice_id.has_value() and
-        not slices[h_ul.last_tx_params().slice_id->value()].inst.contains(ue_idx)) {
-      h_ul.cancel_harq_retxs();
+    std::optional<ul_harq_process_handle> h_ul = ue_cell.harqs.ul_harq(to_harq_id(i));
+    if (h_ul.has_value() and h_ul->get_grant_params().slice_id.has_value() and
+        not slices[h_ul->get_grant_params().slice_id->value()].inst.contains(ue_idx)) {
+      h_ul->cancel_retxs();
     }
   }
 }

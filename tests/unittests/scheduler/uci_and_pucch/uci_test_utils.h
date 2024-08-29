@@ -127,6 +127,7 @@ public:
   std::vector<std::unique_ptr<ue_configuration>> ue_ded_cfgs;
 
   cell_resource_allocator res_grid{cell_cfg};
+  cell_harq_manager       cell_harqs;
   pdcch_dl_information    dci_info;
   const unsigned          k0;
   const unsigned          k1{4};

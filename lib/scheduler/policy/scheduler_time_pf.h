@@ -59,10 +59,10 @@ private:
     /// UL priority value of the UE.
     double ul_prio = 0;
 
-    const dl_harq_process* dl_retx_h  = nullptr;
-    const dl_harq_process* dl_newtx_h = nullptr;
-    const ul_harq_process* ul_retx_h  = nullptr;
-    const ul_harq_process* ul_newtx_h = nullptr;
+    bool                                  has_empty_dl_harq = false;
+    bool                                  has_empty_ul_harq = false;
+    std::optional<dl_harq_process_handle> dl_retx_h;
+    std::optional<ul_harq_process_handle> ul_retx_h;
     /// Flag indicating whether SR indication from the UE is received or not.
     bool sr_ind_received = false;
 
@@ -113,7 +113,7 @@ private:
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(ue_ctxt* elem)
     {
-      if (elem->dl_retx_h == nullptr and elem->dl_newtx_h == nullptr) {
+      if (not elem->dl_retx_h.has_value() and not elem->has_empty_dl_harq) {
         return;
       }
       base_type::push(elem);
@@ -138,7 +138,7 @@ private:
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(ue_ctxt* elem)
     {
-      if (elem->ul_retx_h == nullptr and elem->ul_newtx_h == nullptr) {
+      if (not elem->ul_retx_h.has_value() and not elem->has_empty_ul_harq) {
         return;
       }
       base_type::push(elem);

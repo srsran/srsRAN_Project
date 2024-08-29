@@ -21,7 +21,7 @@ ue::ue(const ue_creation_command& cmd) :
   expert_cfg(cmd.cfg.expert_cfg()),
   cell_cfg_common(cmd.cfg.pcell_cfg().cell_cfg_common),
   ue_ded_cfg(&cmd.cfg),
-  harq_timeout_notif(cmd.harq_timeout_notifier, ue_index),
+  pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
   ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr)
 {
@@ -39,9 +39,6 @@ void ue::slot_indication(slot_point sl_tx)
 {
   for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
     if (ue_du_cells[i] != nullptr) {
-      // Clear old HARQs.
-      ue_du_cells[i]->harqs.slot_indication(sl_tx);
-
       // [Implementation-defined]
       // Clear last PxSCH allocated slot if gap to current \c sl_tx is too large. This is done in order to circumvent
       // the ambiguity caused by the slot_point wrap around while scheduling next PxSCHs. e.g. last PxSCH allocated
@@ -101,8 +98,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
     du_cell_index_t cell_index   = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
     auto&           ue_cell_inst = ue_du_cells[cell_index];
     if (ue_cell_inst == nullptr) {
-      ue_cell_inst =
-          std::make_unique<ue_cell>(ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), harq_timeout_notif);
+      ue_cell_inst = std::make_unique<ue_cell>(ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), pcell_harq_pool);
       if (ue_cell_index >= ue_cells.size()) {
         ue_cells.resize(ue_cell_index + 1);
       }
@@ -153,9 +149,9 @@ unsigned ue::pending_ul_newtx_bytes() const
     }
     unsigned harq_bytes = 0;
     for (unsigned i = 0; i != ue_cc->harqs.nof_ul_harqs(); ++i) {
-      const ul_harq_process& h_ul = ue_cc->harqs.ul_harq(i);
-      if (not h_ul.empty()) {
-        harq_bytes += h_ul.last_tx_params().tbs_bytes;
+      std::optional<const ul_harq_process_handle> h_ul = ue_cc->harqs.ul_harq(to_harq_id(i));
+      if (h_ul.has_value()) {
+        harq_bytes += h_ul->get_grant_params().tbs_bytes;
       }
     }
     harq_bytes += ue_cc->harqs.ntn_get_tbs_pending_crcs();

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../cell/cell_harq_manager.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../policy/scheduler_policy.h"
 #include "../pucch_scheduling/pucch_guardbands_scheduler.h"
@@ -61,6 +62,9 @@ private:
   struct cell {
     cell_resource_allocator* cell_res_alloc;
 
+    /// HARQ pool for this cell.
+    cell_harq_manager cell_harqs;
+
     /// PUCCH scheduler.
     uci_scheduler_impl uci_sched;
 
@@ -70,13 +74,10 @@ private:
     /// Slice scheduler.
     slice_scheduler slice_sched;
 
-    cell(const scheduler_ue_expert_config& expert_cfg, const ue_scheduler_cell_params& params, ue_repository& ues) :
-      cell_res_alloc(params.cell_res_alloc),
-      uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
-      fallback_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues),
-      slice_sched(params.cell_res_alloc->cfg, ues)
-    {
-    }
+    cell(const scheduler_ue_expert_config& expert_cfg,
+         const ue_scheduler_cell_params&   params,
+         ue_repository&                    ues,
+         cell_metrics_handler&             metrics_handler);
   };
 
   // Helper to catch simultaneous PUCCH and PUSCH grants allocated for the same UE.
@@ -84,6 +85,7 @@ private:
   void puxch_grant_sanitizer(cell_resource_allocator& cell_alloc);
 
   const scheduler_ue_expert_config& expert_cfg;
+  cell_metrics_handler&             metrics_handler;
 
   std::array<std::unique_ptr<cell>, MAX_NOF_DU_CELLS> cells;
 

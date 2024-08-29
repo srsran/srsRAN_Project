@@ -82,9 +82,9 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
     }
     unsigned harq_bytes = 0;
     for (unsigned i = 0; i != ue_cc.harqs.nof_ul_harqs(); ++i) {
-      const ul_harq_process& h_ul = ue_cc.harqs.ul_harq(i);
-      if (not h_ul.empty()) {
-        harq_bytes += h_ul.last_tx_params().tbs_bytes;
+      std::optional<const ul_harq_process_handle> h_ul = ue_cc.harqs.ul_harq(to_harq_id(i));
+      if (h_ul.has_value()) {
+        harq_bytes += h_ul->get_grant_params().tbs_bytes;
       }
     }
     harq_bytes += ue_cc.harqs.ntn_get_tbs_pending_crcs();

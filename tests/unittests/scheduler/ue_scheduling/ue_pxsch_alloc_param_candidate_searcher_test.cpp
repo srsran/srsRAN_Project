@@ -39,9 +39,8 @@ protected:
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
     ue_ded_cfg.emplace(ue_creation_req.ue_index, ue_creation_req.crnti, cell_cfg_list, ue_creation_req.cfg);
-    ue_ptr = std::make_unique<ue>(
-        ue_creation_command{*ue_ded_cfg, ue_creation_req.starts_in_fallback, harq_timeout_handler});
-    ue_cc = &ue_ptr->get_cell(to_ue_cell_index(0));
+    ue_ptr = std::make_unique<ue>(ue_creation_command{*ue_ded_cfg, ue_creation_req.starts_in_fallback, cell_harqs});
+    ue_cc  = &ue_ptr->get_cell(to_ue_cell_index(0));
   }
 
   slot_point get_next_ul_slot(slot_point start_slot)
@@ -60,6 +59,9 @@ protected:
   cell_common_configuration_list       cell_cfg_list;
   const cell_configuration&            cell_cfg;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
+  cell_harq_manager                    cell_harqs{1,
+                               MAX_NOF_HARQS,
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
   std::optional<ue_configuration>      ue_ded_cfg;
 
   srslog::basic_logger& logger;

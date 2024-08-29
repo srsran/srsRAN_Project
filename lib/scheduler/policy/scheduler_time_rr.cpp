@@ -128,107 +128,107 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&  
   return (std::min(bwp_crb_limits.length(), slice_max_rbs) / nof_ues_to_be_scheduled_per_slot);
 }
 
-/// \brief Fetches list of DL HARQ candidates to schedule.
-static static_vector<const dl_harq_process*, MAX_NOF_HARQS> get_ue_dl_harq_candidates(const slice_ue&       ue_ref,
-                                                                                      ue_cell_index_t       cell_index,
-                                                                                      bool                  is_retx,
-                                                                                      ran_slice_id_t        slice_id,
-                                                                                      srslog::basic_logger& logger)
+static bool can_allocate_dl_newtx(const slice_ue& ue_ref, ue_cell_index_t cell_index, srslog::basic_logger& logger)
 {
-  static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
+  // If there are no pending new Tx bytes, return.
+  if (not ue_ref.has_pending_dl_newtx_bytes()) {
+    return false;
+  }
 
   const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
-  if (is_retx) {
-    // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
-    for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
-      const dl_harq_process& h = ue_cc.harqs.dl_harq(i);
-      if (h.has_pending_retx() and h.last_alloc_params().tb[0]->slice_id == slice_id) {
-        dl_harq_candidates.push_back(&h);
-      }
-    }
-    std::sort(dl_harq_candidates.begin(),
-              dl_harq_candidates.end(),
-              [](const dl_harq_process* lhs, const dl_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
-  } else {
-    // If there are no pending new Tx bytes, return.
-    if (not ue_ref.has_pending_dl_newtx_bytes()) {
-      return dl_harq_candidates;
-    }
-
-    // Find empty HARQ. If any, add to the list.
-    const dl_harq_process* h = ue_cc.harqs.find_empty_dl_harq();
-    if (h != nullptr) {
-      dl_harq_candidates.push_back(h);
+  if (not ue_cc.harqs.has_empty_dl_harqs()) {
+    // No empty HARQs are available. Log this occurrence.
+    if (ue_cc.harqs.find_pending_dl_retx().has_value()) {
+      // HARQs are waiting for a grant for a retransmission.
+      logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
+                   ue_cc.ue_index,
+                   ue_cc.rnti());
     } else {
-      // No empty HARQs are available. Log this occurrence.
-      if (ue_cc.harqs.find_pending_dl_retx() != nullptr) {
-        // HARQs are waiting for a grant for a retransmission.
-        logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
-                     ue_cc.ue_index,
-                     ue_cc.rnti());
-      } else {
-        // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
-        // and HARQ-ACK.
-        logger.warning(
-            "ue={} rnti={} PDSCH allocation skipped. Cause: All the HARQs are allocated and waiting for their "
-            "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
-            "the scheduler.",
-            ue_cc.ue_index,
-            ue_cc.rnti());
-      }
+      // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
+      // and HARQ-ACK.
+      logger.warning(
+          "ue={} rnti={} PDSCH allocation skipped. Cause: All the HARQs are allocated and waiting for their "
+          "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
+          "the scheduler.",
+          ue_cc.ue_index,
+          ue_cc.rnti());
+    }
+    return false;
+  }
+  return true;
+}
+
+/// \brief Fetches list of DL HARQ candidates to schedule.
+static static_vector<dl_harq_process_handle, MAX_NOF_HARQS>
+get_ue_dl_harq_candidates(const slice_ue& ue_ref, ue_cell_index_t cell_index, ran_slice_id_t slice_id)
+{
+  static_vector<dl_harq_process_handle, MAX_NOF_HARQS> dl_harq_candidates;
+
+  const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
+  // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
+  for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
+    std::optional<dl_harq_process_handle> h = ue_cc.harqs.dl_harq(to_harq_id(i));
+    if (h.has_value() and h->has_pending_retx() and h->get_grant_params().slice_id == slice_id) {
+      dl_harq_candidates.push_back(*h);
     }
   }
+  std::sort(dl_harq_candidates.begin(),
+            dl_harq_candidates.end(),
+            [](const dl_harq_process_handle& lhs, const dl_harq_process_handle& rhs) {
+              return lhs.uci_slot() < rhs.uci_slot();
+            });
+
   return dl_harq_candidates;
 }
 
-/// \brief Fetches list of UL HARQ candidates to schedule.
-static static_vector<const ul_harq_process*, MAX_NOF_HARQS> get_ue_ul_harq_candidates(const slice_ue&       ue_ref,
-                                                                                      ue_cell_index_t       cell_index,
-                                                                                      bool                  is_retx,
-                                                                                      ran_slice_id_t        slice_id,
-                                                                                      srslog::basic_logger& logger)
+static bool can_allocate_ul_newtx(const slice_ue& ue_ref, ue_cell_index_t cell_index, srslog::basic_logger& logger)
 {
-  static_vector<const ul_harq_process*, MAX_NOF_HARQS> ul_harq_candidates;
+  // If there are no pending new Tx bytes, return.
+  if (ue_ref.pending_ul_newtx_bytes() == 0) {
+    return false;
+  }
 
   const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
-  if (is_retx) {
-    // Create list of UL HARQ processes with pending retx, sorted from oldest to newest.
-    for (unsigned i = 0; i != ue_cc.harqs.nof_ul_harqs(); ++i) {
-      const ul_harq_process& h = ue_cc.harqs.ul_harq(i);
-      if (h.has_pending_retx() and h.last_tx_params().slice_id == slice_id) {
-        ul_harq_candidates.push_back(&h);
-      }
-    }
-    std::sort(ul_harq_candidates.begin(),
-              ul_harq_candidates.end(),
-              [](const ul_harq_process* lhs, const ul_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
-  } else {
-    // If there are no pending new Tx bytes, return.
-    if (ue_ref.pending_ul_newtx_bytes() == 0) {
-      return ul_harq_candidates;
-    }
-
-    // Find empty HARQ. If any, add to the list.
-    const ul_harq_process* h = ue_cc.harqs.find_empty_ul_harq();
-    if (h != nullptr) {
-      ul_harq_candidates.push_back(h);
+  if (not ue_cc.harqs.has_empty_ul_harqs()) {
+    // No empty HARQs are available. Log this occurrence.
+    if (ue_cc.harqs.find_pending_ul_retx().has_value()) {
+      // HARQs are waiting for a grant for a retransmission.
+      logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: No available HARQs for new transmissions.",
+                   ue_cc.ue_index,
+                   ue_cc.rnti());
     } else {
-      // No empty HARQs are available. Log this occurrence.
-      if (ue_cc.harqs.find_pending_ul_retx() != nullptr) {
-        // HARQs are waiting for a grant for a retransmission.
-        logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: No available HARQs for new transmissions.",
+      // All HARQs are waiting for their respective CRC. This may be a symptom of a slow PUSCH processing chain.
+      logger.warning("ue={} rnti={} PUSCH allocation skipped. Cause: All the UE HARQs are busy waiting for "
+                     "their respective CRC result. Check if any CRC PDU went missing in the lower layers or is "
+                     "arriving too late to the scheduler.",
                      ue_cc.ue_index,
                      ue_cc.rnti());
-      } else {
-        // All HARQs are waiting for their respective CRC. This may be a symptom of a slow PUSCH processing chain.
-        logger.warning("ue={} rnti={} PUSCH allocation skipped. Cause: All the UE HARQs are busy waiting for "
-                       "their respective CRC result. Check if any CRC PDU went missing in the lower layers or is "
-                       "arriving too late to the scheduler.",
-                       ue_cc.ue_index,
-                       ue_cc.rnti());
-      }
+    }
+    return false;
+  }
+
+  return true;
+}
+
+/// \brief Fetches list of UL HARQ candidates to schedule.
+static static_vector<ul_harq_process_handle, MAX_NOF_HARQS>
+get_ue_ul_harq_candidates(const slice_ue& ue_ref, ue_cell_index_t cell_index, ran_slice_id_t slice_id)
+{
+  static_vector<ul_harq_process_handle, MAX_NOF_HARQS> ul_harq_candidates;
+
+  const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
+  // Create list of UL HARQ processes with pending retx, sorted from oldest to newest.
+  for (unsigned i = 0; i != ue_cc.harqs.nof_ul_harqs(); ++i) {
+    std::optional<ul_harq_process_handle> h = ue_cc.harqs.ul_harq(to_harq_id(i));
+    if (h.has_value() and h->has_pending_retx() and h->get_grant_params().slice_id == slice_id) {
+      ul_harq_candidates.push_back(*h);
     }
   }
+  std::sort(ul_harq_candidates.begin(),
+            ul_harq_candidates.end(),
+            [](const ul_harq_process_handle& lhs, const ul_harq_process_handle& rhs) {
+              return lhs.pusch_slot() < rhs.pusch_slot();
+            });
   return ul_harq_candidates;
 }
 
@@ -298,20 +298,21 @@ static alloc_result alloc_dl_ue(const slice_ue&              u,
       return {alloc_status::skip_ue};
     }
 
-    // Get DL HARQ candidates.
-    const auto harq_candidates = get_ue_dl_harq_candidates(u, to_ue_cell_index(i), is_retx, slice_id, logger);
-    if (harq_candidates.empty()) {
-      // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available HARQs).
-      continue;
-    }
-
-    // Iterate through allocation parameter candidates.
-    for (const dl_harq_process* h_dl : harq_candidates) {
-      ue_pdsch_grant grant{&u, ue_cc.cell_index, h_dl->id};
-      if (not is_retx) {
-        grant.recommended_nof_bytes = u.pending_dl_newtx_bytes();
-        grant.max_nof_rbs           = dl_new_tx_max_nof_rbs_per_ue_per_slot;
+    if (is_retx) {
+      // Get DL HARQ candidates.
+      const auto harq_candidates = get_ue_dl_harq_candidates(u, to_ue_cell_index(i), slice_id);
+      // Iterate through allocation parameter candidates.
+      for (dl_harq_process_handle h_dl : harq_candidates) {
+        ue_pdsch_grant     grant{&u, ue_cc.cell_index, h_dl.id()};
+        const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
+        // If the allocation failed due to invalid parameters, we continue iteration.
+        if (result.status != alloc_status::invalid_params) {
+          return result;
+        }
       }
+    } else if (can_allocate_dl_newtx(u, to_ue_cell_index(i), logger)) {
+      ue_pdsch_grant grant{
+          &u, ue_cc.cell_index, INVALID_HARQ_ID, u.pending_dl_newtx_bytes(), dl_new_tx_max_nof_rbs_per_ue_per_slot};
       const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
       if (result.status != alloc_status::invalid_params) {
@@ -349,20 +350,25 @@ static alloc_result alloc_ul_ue(const slice_ue&         u,
                   "policy scheduler called for UE={} in fallback",
                   ue_cc.ue_index);
 
-    // Get UL HARQ candidates.
-    const auto harq_candidates = get_ue_ul_harq_candidates(u, to_ue_cell_index(i), is_retx, slice_id, logger);
-    if (harq_candidates.empty()) {
-      // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available HARQs).
-      continue;
-    }
-
-    // Iterate through allocation parameter candidates.
-    for (const ul_harq_process* h_ul : harq_candidates) {
-      ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id};
-      if (not is_retx) {
-        grant.recommended_nof_bytes = pending_newtx_bytes;
-        grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
+    if (is_retx) {
+      // Get UL HARQ candidates.
+      const auto harq_candidates = get_ue_ul_harq_candidates(u, to_ue_cell_index(i), slice_id);
+      if (harq_candidates.empty()) {
+        // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available HARQs).
+        continue;
       }
+      // Iterate through allocation parameter candidates.
+      for (ul_harq_process_handle h_ul : harq_candidates) {
+        ue_pusch_grant     grant{&u, ue_cc.cell_index, h_ul.id()};
+        const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
+        // If the allocation failed due to invalid parameters, we continue iteration.
+        if (result.status != alloc_status::invalid_params) {
+          return result;
+        }
+      }
+    } else if (can_allocate_ul_newtx(u, to_ue_cell_index(i), logger)) {
+      ue_pusch_grant grant{
+          &u, ue_cc.cell_index, INVALID_HARQ_ID, pending_newtx_bytes, ul_new_tx_max_nof_rbs_per_ue_per_slot};
       const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
       if (result.status != alloc_status::invalid_params) {

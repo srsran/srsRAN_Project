@@ -71,6 +71,7 @@ protected:
     logger.set_context(current_slot.sfn(), current_slot.slot_index());
 
     res_grid.slot_indication(current_slot);
+    cell_harqs.slot_indication(current_slot);
     pdcch_alloc.slot_indication(current_slot);
     pucch_alloc.slot_indication(current_slot);
     uci_alloc.slot_indication(current_slot);
@@ -107,8 +108,8 @@ protected:
   ue& add_ue(const sched_ue_creation_request_message& ue_creation_req)
   {
     auto ev = cfg_mng.add_ue(ue_creation_req);
-    ues.add_ue(std::make_unique<ue>(
-        ue_creation_command{ev.next_config(), ue_creation_req.starts_in_fallback, harq_timeout_handler}));
+    ues.add_ue(
+        std::make_unique<ue>(ue_creation_command{ev.next_config(), ue_creation_req.starts_in_fallback, cell_harqs}));
     slice_ues.emplace(ue_creation_req.ue_index, ues[ue_creation_req.ue_index]);
     for (const auto& lc_cfg : *ue_creation_req.cfg.lc_config_list) {
       slice_ues[ue_creation_req.ue_index].add_logical_channel(lc_cfg.lcid, lc_cfg.lc_group);
@@ -127,6 +128,9 @@ protected:
   sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}};
   const cell_configuration&  cell_cfg;
 
+  cell_harq_manager       cell_harqs{MAX_NOF_DU_UES,
+                               MAX_NOF_HARQS,
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
   cell_resource_allocator res_grid{cell_cfg};
 
   pdcch_resource_allocator_impl pdcch_alloc{cell_cfg};
@@ -167,7 +171,7 @@ TEST_P(ue_grid_allocator_tester,
 
   ue_pdsch_grant grant{.user                  = &slice_ues[u.ue_index],
                        .cell_index            = to_du_cell_index(0),
-                       .h_id                  = to_harq_id(0),
+                       .h_id                  = INVALID_HARQ_ID,
                        .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(
@@ -192,7 +196,7 @@ TEST_P(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_tabl
   // SearchSpace#2 uses non-fallback DCI format hence the MCS table set in dedicated PDSCH configuration must be used.
   const ue_pdsch_grant grant{.user                  = &slice_ues[u.ue_index],
                              .cell_index            = to_du_cell_index(0),
-                             .h_id                  = to_harq_id(0),
+                             .h_id                  = INVALID_HARQ_ID,
                              .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(
@@ -215,7 +219,7 @@ TEST_P(ue_grid_allocator_tester, allocates_pdsch_restricted_to_recommended_max_n
 
   const ue_pdsch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
@@ -240,7 +244,7 @@ TEST_P(ue_grid_allocator_tester, allocates_pusch_restricted_to_recommended_max_n
 
   const ue_pusch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
@@ -265,7 +269,7 @@ TEST_P(ue_grid_allocator_tester, does_not_allocate_pusch_with_all_remaining_rbs_
 
   const ue_pusch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = u1.pending_ul_newtx_bytes()};
 
   const crb_interval cell_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
@@ -292,13 +296,13 @@ TEST_P(ue_grid_allocator_tester, no_two_pdschs_are_allocated_in_same_slot_for_a_
   // First PDSCH grant for the UE.
   const ue_pdsch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   // Second PDSCH grant for the UE.
   const ue_pdsch_grant grant2{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(1),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(run_until([&]() {
@@ -325,13 +329,13 @@ TEST_P(ue_grid_allocator_tester, no_two_puschs_are_allocated_in_same_slot_for_a_
   // First PUSCH grant for the UE.
   const ue_pusch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   // Second PUSCH grant for the UE.
   const ue_pusch_grant grant2{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(1),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(run_until([&]() {
@@ -358,7 +362,7 @@ TEST_P(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
   // First PUSCH grant for the UE.
   const ue_pusch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(run_until(
@@ -370,7 +374,7 @@ TEST_P(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
   // Second PUSCH grant for the UE trying to allocate PUSCH in a slot previous to grant1.
   const ue_pusch_grant grant2{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(1),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_FALSE(run_until([&]() {
@@ -390,7 +394,7 @@ TEST_P(ue_grid_allocator_tester, consecutive_pdschs_for_a_ue_are_allocated_in_in
   // First PDSCH grant for the UE.
   const ue_pdsch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(
@@ -403,7 +407,7 @@ TEST_P(ue_grid_allocator_tester, consecutive_pdschs_for_a_ue_are_allocated_in_in
   // Second PDSCH grant in the same slot for the UE.
   const ue_pdsch_grant grant2{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(1),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(
@@ -425,7 +429,7 @@ TEST_P(ue_grid_allocator_tester,
   // First PDSCH grant for the UE.
   const ue_pdsch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(
@@ -438,7 +442,7 @@ TEST_P(ue_grid_allocator_tester,
   // Second PDSCH grant in the same slot for the UE.
   const ue_pdsch_grant grant2{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(1),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(
@@ -465,7 +469,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pdsch_even_with_large_ga
   // First PDSCH grant for the UE.
   const ue_pdsch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(
@@ -481,7 +485,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pdsch_even_with_large_ga
   // Next PDSCH grant to be allocated.
   const ue_pdsch_grant grant2{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(1),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(
@@ -507,7 +511,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
   // First PUSCH grant for the UE.
   const ue_pusch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(run_until([&]() {
@@ -525,7 +529,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
   // Second PUSCH grant for the UE.
   const ue_pusch_grant grant2{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(1),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_TRUE(run_until(
@@ -564,14 +568,14 @@ TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_dl_rbs_are_alloca
   static const unsigned sched_bytes = 20U;
   const ue_pdsch_grant  grant1{.user                  = &slice_ues[u1.ue_index],
                                .cell_index            = to_du_cell_index(0),
-                               .h_id                  = to_harq_id(0),
+                               .h_id                  = INVALID_HARQ_ID,
                                .recommended_nof_bytes = sched_bytes};
 
   // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
   const unsigned       total_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
   const ue_pdsch_grant grant2{.user                  = &slice_ues[u2.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = sched_bytes};
 
   ASSERT_TRUE(run_until([&]() {
@@ -613,11 +617,11 @@ TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_ul_rbs_are_alloca
   slot_point           pusch_to_alloc_slot = get_next_ul_slot(current_slot);
   const ue_pusch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
   const ue_pusch_grant grant2{.user                  = &slice_ues[u2.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
 
   ASSERT_TRUE(run_until([&]() {
@@ -666,7 +670,7 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
 
   const ue_pdsch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
@@ -693,7 +697,7 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
 
   const ue_pdsch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
@@ -720,7 +724,7 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
 
   const ue_pusch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
@@ -749,7 +753,7 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
 
   const ue_pusch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
@@ -801,7 +805,7 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pdsch_wit
 
   const ue_pdsch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
@@ -826,7 +830,7 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pusch_wit
 
   const ue_pusch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
+                              .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 

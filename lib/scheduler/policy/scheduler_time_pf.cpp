@@ -54,7 +54,7 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
     ue.save_dl_alloc(alloc_result.alloc_bytes);
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
     // attempted again before scheduling new transmissions.
-    if (ue.dl_retx_h != nullptr and alloc_result.status == alloc_status::invalid_params) {
+    if (ue.dl_retx_h.has_value() and alloc_result.status == alloc_status::invalid_params) {
       dl_queue.push(&ue);
     }
     dl_queue.pop();
@@ -99,7 +99,7 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
     ue.save_ul_alloc(alloc_result.alloc_bytes);
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
     // attempted again before scheduling new transmissions.
-    if (ue.ul_retx_h != nullptr and alloc_result.status == alloc_status::invalid_params) {
+    if (ue.ul_retx_h.has_value() and alloc_result.status == alloc_status::invalid_params) {
       ul_queue.push(&ue);
     }
     ul_queue.pop();
@@ -115,24 +115,24 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
   alloc_result   alloc_result = {alloc_status::invalid_params};
   ue_pdsch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
   // Prioritize reTx over newTx.
-  if (ctxt.dl_retx_h != nullptr) {
-    grant.h_id   = ctxt.dl_retx_h->id;
+  if (ctxt.dl_retx_h.has_value()) {
+    grant.h_id   = ctxt.dl_retx_h->id();
     alloc_result = pdsch_alloc.allocate_dl_grant(grant);
     if (alloc_result.status == alloc_status::success) {
-      ctxt.dl_retx_h = nullptr;
+      ctxt.dl_retx_h.reset();
     }
     // Return result here irrespective of the outcome so that reTxs of UEs are scheduled before scheduling newTxs of
     // UEs.
     return alloc_result;
   }
 
-  if (ctxt.dl_newtx_h != nullptr) {
-    grant.h_id                  = ctxt.dl_newtx_h->id;
+  if (ctxt.has_empty_dl_harq) {
+    grant.h_id                  = INVALID_HARQ_ID;
     grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_dl_newtx_bytes();
     grant.max_nof_rbs           = max_rbs;
     alloc_result                = pdsch_alloc.allocate_dl_grant(grant);
     if (alloc_result.status == alloc_status::success) {
-      ctxt.dl_newtx_h = nullptr;
+      ctxt.has_empty_dl_harq = false;
     }
     return alloc_result;
   }
@@ -148,24 +148,24 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
   alloc_result   alloc_result = {alloc_status::invalid_params};
   ue_pusch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
   // Prioritize reTx over newTx.
-  if (ctxt.ul_retx_h != nullptr) {
-    grant.h_id   = ctxt.ul_retx_h->id;
+  if (ctxt.ul_retx_h.has_value()) {
+    grant.h_id   = ctxt.ul_retx_h->id();
     alloc_result = pusch_alloc.allocate_ul_grant(grant);
     if (alloc_result.status == alloc_status::success) {
-      ctxt.ul_retx_h = nullptr;
+      ctxt.ul_retx_h.reset();
     }
     // Return result here irrespective of the outcome so that reTxs of UEs are scheduled before scheduling newTxs of
     // UEs.
     return alloc_result;
   }
 
-  if (ctxt.ul_newtx_h != nullptr) {
-    grant.h_id                  = ctxt.ul_newtx_h->id;
+  if (ctxt.has_empty_ul_harq) {
+    grant.h_id                  = INVALID_HARQ_ID;
     grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_ul_newtx_bytes();
     grant.max_nof_rbs           = max_rbs;
     alloc_result                = pusch_alloc.allocate_ul_grant(grant);
     if (alloc_result.status == alloc_status::success) {
-      ctxt.ul_newtx_h = nullptr;
+      ctxt.has_empty_ul_harq = false;
     }
     return alloc_result;
   }
@@ -177,8 +177,8 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
 
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id)
 {
-  dl_retx_h            = nullptr;
-  dl_newtx_h           = nullptr;
+  dl_retx_h.reset();
+  has_empty_dl_harq    = false;
   dl_prio              = 0;
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr) {
@@ -188,23 +188,21 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
                 "policy scheduler called for UE={} in fallback",
                 ue_cc->ue_index);
 
-  static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
-  // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
+  std::optional<dl_harq_process_handle> oldest_dl_harq_candidate;
   for (unsigned i = 0; i != ue_cc->harqs.nof_dl_harqs(); ++i) {
-    const dl_harq_process& h = ue_cc->harqs.dl_harq(i);
-    if (h.has_pending_retx() and not h.last_alloc_params().is_fallback and
-        h.last_alloc_params().tb[0]->slice_id == slice_id) {
-      dl_harq_candidates.push_back(&h);
+    std::optional<dl_harq_process_handle> h = ue_cc->harqs.dl_harq(to_harq_id(i));
+    if (h.has_value() and h->has_pending_retx() and not h->get_grant_params().is_fallback and
+        h->get_grant_params().slice_id == slice_id) {
+      if (not oldest_dl_harq_candidate.has_value() or oldest_dl_harq_candidate->uci_slot() > h->uci_slot()) {
+        oldest_dl_harq_candidate = h;
+      }
     }
   }
-  std::sort(dl_harq_candidates.begin(),
-            dl_harq_candidates.end(),
-            [](const dl_harq_process* lhs, const dl_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
 
   // Calculate DL priority.
-  dl_retx_h  = dl_harq_candidates.empty() ? nullptr : dl_harq_candidates.front();
-  dl_newtx_h = ue_cc->harqs.find_empty_dl_harq();
-  if (dl_retx_h != nullptr or (dl_newtx_h != nullptr and u.has_pending_dl_newtx_bytes())) {
+  dl_retx_h         = oldest_dl_harq_candidate;
+  has_empty_dl_harq = ue_cc->harqs.has_empty_dl_harqs();
+  if (dl_retx_h.has_value() or (has_empty_dl_harq and u.has_pending_dl_newtx_bytes())) {
     // NOTE: It does not matter whether it's a reTx or newTx since DL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
     // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
@@ -235,8 +233,8 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
     std::optional<sch_mcs_index> mcs = ue_cc->link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
     if (not mcs.has_value()) {
       // CQI is either 0, or > 15.
-      dl_retx_h  = nullptr;
-      dl_newtx_h = nullptr;
+      has_empty_dl_harq = false;
+      dl_retx_h         = std::nullopt;
       return;
     }
 
@@ -251,15 +249,15 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
     }
     return;
   }
-  dl_newtx_h = nullptr;
+  has_empty_dl_harq = false;
 }
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
                                                  const ue_resource_grid_view& res_grid,
                                                  ran_slice_id_t               slice_id)
 {
-  ul_retx_h            = nullptr;
-  ul_newtx_h           = nullptr;
+  ul_retx_h.reset();
+  has_empty_ul_harq    = false;
   ul_prio              = 0;
   sr_ind_received      = false;
   const ue_cell* ue_cc = u.find_cell(cell_index);
@@ -270,23 +268,21 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
                 "policy scheduler called for UE={} in fallback",
                 ue_cc->ue_index);
 
-  static_vector<const ul_harq_process*, MAX_NOF_HARQS> ul_harq_candidates;
-  // Create list of UL HARQ processes with pending retx, sorted from oldest to newest.
+  std::optional<ul_harq_process_handle> oldest_ul_harq_candidate;
   for (unsigned i = 0; i != ue_cc->harqs.nof_ul_harqs(); ++i) {
-    const ul_harq_process& h = ue_cc->harqs.ul_harq(i);
-    if (h.has_pending_retx() and h.last_tx_params().slice_id == slice_id) {
-      ul_harq_candidates.push_back(&h);
+    std::optional<ul_harq_process_handle> h = ue_cc->harqs.ul_harq(to_harq_id(i));
+    if (h.has_value() and h->has_pending_retx() and h->get_grant_params().slice_id == slice_id) {
+      if (not oldest_ul_harq_candidate.has_value() or oldest_ul_harq_candidate->pusch_slot() > h->pusch_slot()) {
+        oldest_ul_harq_candidate = h;
+      }
     }
   }
-  std::sort(ul_harq_candidates.begin(),
-            ul_harq_candidates.end(),
-            [](const ul_harq_process* lhs, const ul_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
 
   // Calculate UL priority.
-  ul_retx_h       = ul_harq_candidates.empty() ? nullptr : ul_harq_candidates.front();
-  ul_newtx_h      = ue_cc->harqs.find_empty_ul_harq();
-  sr_ind_received = u.has_pending_sr();
-  if (ul_retx_h != nullptr or (ul_newtx_h != nullptr and u.pending_ul_newtx_bytes() > 0)) {
+  ul_retx_h         = oldest_ul_harq_candidate;
+  has_empty_ul_harq = ue_cc->harqs.has_empty_ul_harqs();
+  sr_ind_received   = u.has_pending_sr();
+  if (ul_retx_h.has_value() or (has_empty_ul_harq and u.pending_ul_newtx_bytes() > 0)) {
     // NOTE: It does not matter whether it's a reTx or newTx since UL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
     // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
@@ -340,7 +336,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
     }
     return;
   }
-  ul_newtx_h = nullptr;
+  has_empty_ul_harq = false;
 }
 
 void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t alloc_bytes)
@@ -368,8 +364,8 @@ void scheduler_time_pf::ue_ctxt::save_ul_alloc(uint32_t alloc_bytes)
 bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
                                                        const scheduler_time_pf::ue_ctxt* rhs) const
 {
-  const bool is_lhs_retx = lhs->dl_retx_h != nullptr;
-  const bool is_rhs_retx = rhs->dl_retx_h != nullptr;
+  const bool is_lhs_retx = lhs->dl_retx_h.has_value();
+  const bool is_rhs_retx = rhs->dl_retx_h.has_value();
 
   // First, prioritize UEs with re-transmissions.
   // ReTx in one UE and not in other UE.
@@ -383,8 +379,8 @@ bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::
 bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
                                                        const scheduler_time_pf::ue_ctxt* rhs) const
 {
-  const bool is_lhs_retx = lhs->ul_retx_h != nullptr;
-  const bool is_rhs_retx = rhs->ul_retx_h != nullptr;
+  const bool is_lhs_retx = lhs->ul_retx_h.has_value();
+  const bool is_rhs_retx = rhs->ul_retx_h.has_value();
   // First, prioritize UEs with pending SR.
   // SR indication in one UE and not in other UE.
   if (lhs->sr_ind_received != rhs->sr_ind_received) {

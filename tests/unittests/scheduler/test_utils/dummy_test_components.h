@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "lib/scheduler/cell/cell_harq_manager.h"
 #include "lib/scheduler/logging/scheduler_metrics_ue_configurator.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator.h"
@@ -162,6 +163,23 @@ public:
   du_ue_index_t last_ue_idx = INVALID_DU_UE_INDEX;
 
   void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override { last_ue_idx = ue_index; }
+};
+
+class scheduler_harq_timeout_dummy_notifier : public harq_timeout_notifier
+{
+public:
+  scheduler_harq_timeout_dummy_notifier() = default;
+  explicit scheduler_harq_timeout_dummy_notifier(harq_timeout_handler& handler_) : handler(&handler_) {}
+
+  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
+  {
+    if (handler != nullptr) {
+      handler->handle_harq_timeout(ue_idx, is_dl);
+    }
+  }
+
+private:
+  harq_timeout_handler* handler = nullptr;
 };
 
 class scheduler_ue_metrics_dummy_configurator : public sched_metrics_ue_configurator

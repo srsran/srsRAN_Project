@@ -155,7 +155,7 @@ public:
   /// Create a searcher for UE PUSCH parameters.
   ue_pusch_alloc_param_candidate_searcher(const ue&              ue_ref_,
                                           du_cell_index_t        cell_index,
-                                          ul_harq_process&       ul_harq_,
+                                          const std::optional<ul_harq_process_handle>& ul_harq_,
                                           slot_point             pdcch_slot_,
                                           span<const slot_point> slots_with_no_pusch_space_,
                                           slot_point             pusch_slot_) :
@@ -163,7 +163,7 @@ public:
     ue_cc(ue_ref.find_cell(cell_index)),
     slots_with_no_pusch_space(slots_with_no_pusch_space_),
     ul_harq(ul_harq_),
-    is_retx(not ul_harq.empty()),
+    is_retx(ul_harq.has_value()),
     pdcch_slot(pdcch_slot_),
     pusch_slot(pusch_slot_)
   {
@@ -172,8 +172,8 @@ public:
       return;
     }
 
-    if (not ul_harq.empty()) {
-      preferred_rnti_type = ul_harq.last_tx_params().dci_cfg_type;
+    if (ul_harq.has_value()) {
+      preferred_rnti_type = ul_harq->get_grant_params().dci_cfg_type;
     }
 
     // Generate list of Search Spaces.
@@ -259,7 +259,7 @@ private:
 
     // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
     // the first transmission.
-    if (is_retx and current.pusch_td_res().symbols.length() != ul_harq.last_tx_params().nof_symbols) {
+    if (is_retx and current.pusch_td_res().symbols.length() != ul_harq->get_grant_params().nof_symbols) {
       return false;
     }
 
@@ -301,7 +301,7 @@ private:
   span<const slot_point> slots_with_no_pusch_space;
 
   // UL HARQ considered for allocation.
-  const ul_harq_process& ul_harq;
+  const std::optional<ul_harq_process_handle>& ul_harq;
   // Whether the current search is for a newTx or a reTx.
   const bool is_retx;
   // List of SearchSpace candidates for the UL HARQ considered for allocation.

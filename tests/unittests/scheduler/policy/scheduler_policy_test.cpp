@@ -70,6 +70,7 @@ protected:
     slice_sched.slot_indication(next_slot);
 
     res_grid.slot_indication(next_slot);
+    cell_harqs.slot_indication(next_slot);
     pdcch_alloc.slot_indication(next_slot);
     pucch_alloc.slot_indication(next_slot);
     uci_alloc.slot_indication(next_slot);
@@ -119,8 +120,8 @@ protected:
   {
     ue_ded_cell_cfg_list.push_back(
         std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
-    ues.add_ue(std::make_unique<ue>(
-        ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
+    ues.add_ue(
+        std::make_unique<ue>(ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, cell_harqs}));
     slice_sched.add_ue(ue_req.ue_index);
     return ues[ue_req.ue_index];
   }
@@ -176,6 +177,9 @@ protected:
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   cell_resource_allocator       res_grid{cell_cfg};
+  cell_harq_manager             cell_harqs{MAX_NOF_DU_UES,
+                               MAX_NOF_HARQS,
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
   pdcch_resource_allocator_impl pdcch_alloc{cell_cfg};
   pucch_allocator_impl   pucch_alloc{cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot};
   uci_allocator_impl     uci_alloc{pucch_alloc};

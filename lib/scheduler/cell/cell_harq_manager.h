@@ -464,28 +464,28 @@ public:
 
   std::optional<dl_harq_process_handle> dl_harq(harq_id_t h_id)
   {
-    if (get_dl_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
+    if (h_id < get_dl_ue().harqs.size() and get_dl_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
       return dl_harq_process_handle{cell_harq_mgr->dl, get_dl_ue().harqs[h_id]};
     }
     return std::nullopt;
   }
   std::optional<const dl_harq_process_handle> dl_harq(harq_id_t h_id) const
   {
-    if (get_dl_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
+    if (h_id < get_dl_ue().harqs.size() and get_dl_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
       return dl_harq_process_handle{cell_harq_mgr->dl, cell_harq_mgr->dl.ues[ue_index].harqs[h_id]};
     }
     return std::nullopt;
   }
   std::optional<ul_harq_process_handle> ul_harq(harq_id_t h_id)
   {
-    if (get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
+    if (h_id < get_ul_ue().harqs.size() and get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
       return ul_harq_process_handle{cell_harq_mgr->ul, get_ul_ue().harqs[h_id]};
     }
     return std::nullopt;
   }
   std::optional<const ul_harq_process_handle> ul_harq(harq_id_t h_id) const
   {
-    if (get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
+    if (h_id < get_ul_ue().harqs.size() and get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
       return ul_harq_process_handle{cell_harq_mgr->ul, cell_harq_mgr->ul.ues[ue_index].harqs[h_id]};
     }
     return std::nullopt;

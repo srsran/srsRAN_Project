@@ -17,8 +17,8 @@
 
 namespace srsran {
 
-class dl_harq_process;
-class ul_harq_process;
+class dl_harq_process_handle;
+class ul_harq_process_handle;
 
 /// Builds DCI f1_0 for SI-RNTI used in SIBs.
 void build_dci_f1_0_si_rnti(dci_dl_info&               dci,
@@ -43,42 +43,42 @@ void build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
                             sch_mcs_index              mcs_index);
 
 /// Builds DCI f1_0 for TC-RNTI, used for instance in Msg4.
-void build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
-                            const bwp_downlink_common& init_dl_bwp,
-                            crb_interval               crbs,
-                            unsigned                   time_resource,
-                            unsigned                   k1,
-                            unsigned                   pucch_res_indicator,
-                            sch_mcs_index              mcs_index,
-                            uint8_t                    rv,
-                            const dl_harq_process&     h_dl);
+void build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
+                            const bwp_downlink_common&    init_dl_bwp,
+                            crb_interval                  crbs,
+                            unsigned                      time_resource,
+                            unsigned                      k1,
+                            unsigned                      pucch_res_indicator,
+                            sch_mcs_index                 mcs_index,
+                            uint8_t                       rv,
+                            const dl_harq_process_handle& h_dl);
 
 /// Builds DCI f1_0 for C-RNTI.
-void build_dci_f1_0_c_rnti(dci_dl_info&               dci,
-                           const search_space_info&   ss_info,
-                           const bwp_downlink_common& init_dl_bwp,
-                           crb_interval               crbs,
-                           unsigned                   time_resource,
-                           unsigned                   k1,
-                           unsigned                   pucch_res_indicator,
-                           unsigned                   dai,
-                           sch_mcs_index              mcs_index,
-                           uint8_t                    rv,
-                           const dl_harq_process&     h_dl);
+void build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
+                           const search_space_info&      ss_info,
+                           const bwp_downlink_common&    init_dl_bwp,
+                           crb_interval                  crbs,
+                           unsigned                      time_resource,
+                           unsigned                      k1,
+                           unsigned                      pucch_res_indicator,
+                           unsigned                      dai,
+                           sch_mcs_index                 mcs_index,
+                           uint8_t                       rv,
+                           const dl_harq_process_handle& h_dl);
 
 /// Builds DCI f1_1 for C-RNTI.
-void build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
-                           const ue_cell_configuration& ue_cell_cfg,
-                           search_space_id              ss_id,
-                           prb_interval                 prbs,
-                           unsigned                     time_resource,
-                           unsigned                     k1,
-                           unsigned                     pucch_res_indicator,
-                           unsigned                     dai,
-                           sch_mcs_index                tb1_mcs_index,
-                           uint8_t                      rv,
-                           const dl_harq_process&       h_dl,
-                           unsigned                     nof_layers);
+void build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
+                           const ue_cell_configuration&  ue_cell_cfg,
+                           search_space_id               ss_id,
+                           prb_interval                  prbs,
+                           unsigned                      time_resource,
+                           unsigned                      k1,
+                           unsigned                      pucch_res_indicator,
+                           unsigned                      dai,
+                           sch_mcs_index                 tb1_mcs_index,
+                           uint8_t                       rv,
+                           const dl_harq_process_handle& h_dl,
+                           unsigned                      nof_layers);
 
 /// Builds DCI f0_0 for TC-RNTI, used in Msg3 retxs.
 void build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
@@ -90,25 +90,25 @@ void build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
                             uint8_t                    rv);
 
 /// Builds DCI f0_0 for C-RNTI.
-void build_dci_f0_0_c_rnti(dci_ul_info&             dci,
-                           const search_space_info& ss_info,
-                           const bwp_uplink_common& init_ul_bwp,
-                           const crb_interval&      crbs,
-                           unsigned                 time_resource,
-                           sch_mcs_index            mcs_index,
-                           uint8_t                  rv,
-                           const ul_harq_process&   h_ul);
+void build_dci_f0_0_c_rnti(dci_ul_info&                  dci,
+                           const search_space_info&      ss_info,
+                           const bwp_uplink_common&      init_ul_bwp,
+                           const crb_interval&           crbs,
+                           unsigned                      time_resource,
+                           sch_mcs_index                 mcs_index,
+                           uint8_t                       rv,
+                           const ul_harq_process_handle& h_ul);
 
 /// Builds DCI f0_1 for C-RNTI.
-void build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
-                           const ue_cell_configuration& ue_cell_cfg,
-                           search_space_id              ss_id,
-                           const crb_interval&          crbs,
-                           unsigned                     time_resource,
-                           sch_mcs_index                mcs_index,
-                           uint8_t                      rv,
-                           const ul_harq_process&       h_ul,
-                           unsigned                     total_dai,
-                           unsigned                     nof_layers);
+void build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
+                           const ue_cell_configuration&  ue_cell_cfg,
+                           search_space_id               ss_id,
+                           const crb_interval&           crbs,
+                           unsigned                      time_resource,
+                           sch_mcs_index                 mcs_index,
+                           uint8_t                       rv,
+                           const ul_harq_process_handle& h_ul,
+                           unsigned                      total_dai,
+                           unsigned                      nof_layers);
 
 } // namespace srsran

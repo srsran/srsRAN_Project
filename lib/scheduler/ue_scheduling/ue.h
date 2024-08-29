@@ -23,7 +23,7 @@ namespace srsran {
 struct ue_creation_command {
   const ue_configuration& cfg;
   bool                    starts_in_fallback;
-  harq_timeout_handler&   harq_timeout_notifier;
+  cell_harq_manager&      pcell_harq_pool;
 };
 
 /// Parameters used to reconfigure a UE.
@@ -185,19 +185,14 @@ public:
   unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
 private:
-  /// Expert config parameters used for UE scheduler.
+  // Expert config parameters used for UE scheduler.
   const scheduler_ue_expert_config& expert_cfg;
-
-  /// Cell configuration. This is common to all UEs within the same cell.
+  // Cell configuration. This is common to all UEs within the same cell.
   const cell_configuration& cell_cfg_common;
-
-  /// Dedicated configuration for the UE.
+  // Dedicated configuration for the UE.
   const ue_configuration* ue_ded_cfg = nullptr;
-
-  /// Notifier used by HARQ processes to signal timeouts due to undetected HARQ ACKs/CRCs.
-  ue_harq_timeout_notifier harq_timeout_notif;
-
-  srslog::basic_logger& logger;
+  cell_harq_manager&      pcell_harq_pool;
+  srslog::basic_logger&   logger;
 
   /// List of UE cells indexed by \c du_cell_index_t. If an element is null, it means that the DU cell is not
   /// configured to be used by the UE.

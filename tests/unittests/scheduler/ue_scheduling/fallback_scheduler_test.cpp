@@ -85,6 +85,9 @@ struct test_bench {
   const cell_configuration& cell_cfg;
 
   cell_resource_allocator       res_grid{cell_cfg};
+  cell_harq_manager             cell_harqs{MAX_NOF_DU_UES,
+                               MAX_NOF_HARQS,
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
   pdcch_resource_allocator_impl pdcch_sch{cell_cfg};
   pucch_allocator_impl          pucch_alloc{cell_cfg, 31U, 32U};
   uci_allocator_impl            uci_alloc{pucch_alloc};
@@ -114,8 +117,7 @@ struct test_bench {
     }
 
     // Add UE to UE DB.
-    auto u = std::make_unique<ue>(
-        ue_creation_command{ev.next_config(), create_req.starts_in_fallback, harq_timeout_handler});
+    auto u = std::make_unique<ue>(ue_creation_command{ev.next_config(), create_req.starts_in_fallback, cell_harqs});
     if (ue_db.contains(create_req.ue_index)) {
       // UE already exists.
       ev.abort();
@@ -825,12 +827,11 @@ TEST_P(fallback_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocat
     }
 
     // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
-    const unsigned   bit_index_1_harq_only = 0U;
-    dl_harq_process* dl_harq =
-        test_ue.get_pcell().harqs.find_dl_harq_waiting_ack_slot(current_slot, bit_index_1_harq_only);
-    if (dl_harq != nullptr) {
-      static constexpr unsigned tb_idx = 0U;
-      dl_harq->ack_info(tb_idx, mac_harq_ack_report_status::ack, {});
+    const unsigned                        bit_index_1_harq_only = 0U;
+    std::optional<dl_harq_process_handle> dl_harq =
+        test_ue.get_pcell().harqs.find_dl_harq(current_slot, bit_index_1_harq_only);
+    if (dl_harq.has_value()) {
+      dl_harq->dl_ack_info(mac_harq_ack_report_status::ack, std::nullopt);
     }
   }
 }
@@ -883,8 +884,8 @@ protected:
         case ue_state::waiting_for_tx: {
           for (harq_id_t h_id = to_harq_id(0); h_id != MAX_HARQ_ID;
                h_id           = to_harq_id(std::underlying_type_t<harq_id_t>(h_id) + 1)) {
-            const auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
-            if (h_dl.is_waiting_ack()) {
+            std::optional<dl_harq_process_handle> h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
+            if (h_dl.has_value() and h_dl->is_waiting_ack()) {
               ongoing_h_id = h_id;
               break;
             }
@@ -898,18 +899,16 @@ protected:
         }
           // Wait until the slot at which the ACK is expected and update successful and unsuccessful TX counters.
         case ue_state::waiting_for_ack: {
-          const dl_harq_process& h_dl = test_ue.get_pcell().harqs.dl_harq(ongoing_h_id);
+          std::optional<dl_harq_process_handle> h_dl = test_ue.get_pcell().harqs.dl_harq(ongoing_h_id);
 
-          if (h_dl.slot_ack() == sl) {
+          if (h_dl.has_value() and h_dl->uci_slot() == sl) {
             static constexpr double ack_probability = 0.5f;
             ack_outcome                             = test_rgen::bernoulli(ack_probability);
             if (ack_outcome) {
               ++successful_tx_cnt;
               state = ue_state::reset_harq;
             } else {
-              const unsigned tb_index_only_1_tb_supported = 0U;
-              if (h_dl.tb(tb_index_only_1_tb_supported).nof_retxs !=
-                  h_dl.tb(tb_index_only_1_tb_supported).max_nof_harq_retxs) {
+              if (h_dl->nof_retxs() != h_dl->max_nof_retxs()) {
                 state = ue_state::waiting_for_retx;
               } else {
                 ++unsuccessful_tx_cnt;
@@ -921,11 +920,11 @@ protected:
         }
           // Wait for UE to re-transmit the SRBO / SRB1 related PDSCH
         case ue_state::waiting_for_retx: {
-          const dl_harq_process& h_dl = test_ue.get_pcell().harqs.dl_harq(ongoing_h_id);
-          if (h_dl.empty()) {
+          std::optional<dl_harq_process_handle> h_dl = test_ue.get_pcell().harqs.dl_harq(ongoing_h_id);
+          if (not h_dl.has_value() or h_dl->empty()) {
             ++missed_srb_cnt;
             state = ue_state::reset_harq;
-          } else if (h_dl.is_waiting_ack()) {
+          } else if (h_dl->is_waiting_ack()) {
             state = ue_state::waiting_for_ack;
           }
           break;
@@ -946,12 +945,11 @@ protected:
     void ack_harq_process(slot_point sl)
     {
       // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
-      const unsigned   bit_index_1_harq_only = 0U;
-      dl_harq_process* dl_harq = test_ue.get_pcell().harqs.find_dl_harq_waiting_ack_slot(sl, bit_index_1_harq_only);
-      if (dl_harq != nullptr) {
-        srsran_assert(dl_harq->id == ongoing_h_id, "HARQ process mismatch");
-        static constexpr unsigned tb_idx = 0U;
-        dl_harq->ack_info(tb_idx, ack_outcome ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
+      const unsigned                        bit_index_1_harq_only = 0U;
+      std::optional<dl_harq_process_handle> dl_harq = test_ue.get_pcell().harqs.find_dl_harq(sl, bit_index_1_harq_only);
+      if (dl_harq.has_value()) {
+        srsran_assert(dl_harq->id() == ongoing_h_id, "HARQ process mismatch");
+        dl_harq->dl_ack_info(ack_outcome ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
       }
     }
 
@@ -1076,11 +1074,10 @@ protected:
       for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
         harq_id_t h_id = to_harq_id(h_id_idx);
 
-        dl_harq_process& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
-        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl) {
-          const unsigned tb_idx   = 0U;
-          const unsigned tx_bytes = h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
-                                        ? h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
+        std::optional<dl_harq_process_handle> h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
+        if (h_dl.has_value() and h_dl->is_waiting_ack() and h_dl->nof_retxs() == 0 and h_dl->pdsch_slot() == sl) {
+          const unsigned tx_bytes = h_dl->get_grant_params().tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
+                                        ? h_dl->get_grant_params().tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
                                         : 0U;
           if (pending_srb1_bytes > tx_bytes) {
             pending_srb1_bytes -= tx_bytes;
@@ -1090,7 +1087,7 @@ protected:
           test_logger.debug("rnti={}, slot={}: RLC buffer state update for h_id={} with {} bytes",
                             test_ue.crnti,
                             sl,
-                            to_harq_id(h_dl.id),
+                            to_harq_id(h_dl->id()),
                             pending_srb1_bytes);
           parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
           latest_rlc_update_slot.emplace(sl);
@@ -1117,30 +1114,30 @@ protected:
       for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
         harq_id_t h_id = to_harq_id(h_id_idx);
 
-        auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
-        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl) {
-          const unsigned tb_idx   = 0U;
-          const unsigned tx_bytes = h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
-                                        ? h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
+        std::optional<dl_harq_process_handle> h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
+        if (h_dl.has_value() and h_dl->is_waiting_ack() and h_dl->nof_retxs() == 0 and h_dl->pdsch_slot() == sl) {
+          const unsigned tx_bytes = h_dl->get_grant_params().tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
+                                        ? h_dl->get_grant_params().tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
                                         : 0U;
           pending_srb1_bytes > tx_bytes ? pending_srb1_bytes -= tx_bytes : pending_srb1_bytes = 0U;
           test_logger.debug("rnti={}, slot={}: RLC buffer state update for h_id={} with {} bytes",
                             test_ue.crnti,
                             sl,
-                            to_harq_id(h_dl.id),
+                            to_harq_id(h_dl->id()),
                             pending_srb1_bytes);
           parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
         }
 
         // Check if any HARQ process with pending transmissions is re-set by the scheduler.
-        if (latest_harq_states[h_id_idx] == h_state::pending_retx and test_ue.get_pcell().harqs.dl_harq(h_id).empty()) {
+        if (latest_harq_states[h_id_idx] == h_state::pending_retx and
+            not test_ue.get_pcell().harqs.dl_harq(h_id).has_value()) {
           ++missing_retx;
         }
 
         // Save HARQ process latest.
-        if (test_ue.get_pcell().harqs.dl_harq(h_id).empty()) {
+        if (not test_ue.get_pcell().harqs.dl_harq(h_id).has_value()) {
           latest_harq_states[h_id_idx] = h_state::empty;
-        } else if (test_ue.get_pcell().harqs.dl_harq(h_id).is_waiting_ack()) {
+        } else if (test_ue.get_pcell().harqs.dl_harq(h_id)->is_waiting_ack()) {
           latest_harq_states[h_id_idx] = h_state::waiting_ack;
         } else {
           latest_harq_states[h_id_idx] = h_state::pending_retx;
@@ -1154,17 +1151,16 @@ protected:
     void ack_harq_process(slot_point sl)
     {
       // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
-      const unsigned   bit_index_1_harq_only = 0U;
-      dl_harq_process* dl_harq = test_ue.get_pcell().harqs.find_dl_harq_waiting_ack_slot(sl, bit_index_1_harq_only);
-      if (dl_harq != nullptr) {
-        static constexpr unsigned tb_idx          = 0U;
-        static constexpr double   ack_probability = 0.5f;
-        const bool                ack             = test_rgen::bernoulli(ack_probability);
-        dl_harq->ack_info(tb_idx, ack ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
+      const unsigned                        bit_index_1_harq_only = 0U;
+      std::optional<dl_harq_process_handle> dl_harq = test_ue.get_pcell().harqs.find_dl_harq(sl, bit_index_1_harq_only);
+      if (dl_harq.has_value()) {
+        static constexpr double ack_probability = 0.5f;
+        const bool              ack             = test_rgen::bernoulli(ack_probability);
+        dl_harq->dl_ack_info(ack ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
         test_logger.debug("Slot={}, rnti={}: acking process h_id={} with {}",
                           sl,
                           test_ue.crnti,
-                          to_harq_id(dl_harq->id),
+                          to_harq_id(dl_harq->id()),
                           ack ? "ACK" : "NACK");
       }
     }
@@ -1271,11 +1267,11 @@ protected:
       for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
         harq_id_t h_id = to_harq_id(h_id_idx);
 
-        auto& h_ul = test_ue.get_pcell().harqs.ul_harq(h_id);
-        if (h_ul.is_waiting_ack() and h_ul.slot_ack() == sl) {
+        std::optional<ul_harq_process_handle> h_ul = test_ue.get_pcell().harqs.ul_harq(h_id);
+        if (h_ul.has_value() and h_ul->is_waiting_ack() and h_ul->pusch_slot() == sl) {
           test_ue.pending_ul_newtx_bytes();
-          bool           ack             = ack_harq_process(sl, h_ul);
-          const unsigned delivered_bytes = ack ? h_ul.last_tx_params().tbs_bytes - 10U : 0U;
+          bool           ack             = ack_harq_process(sl, *h_ul);
+          const unsigned delivered_bytes = ack ? h_ul->get_grant_params().tbs_bytes - 10U : 0U;
           buffer_bytes > delivered_bytes ? buffer_bytes -= delivered_bytes : buffer_bytes = 0U;
           test_logger.info(
               "rnti={}, slot={}: generating BSR indication with {} bytes", test_ue.crnti, sl, buffer_bytes);
@@ -1284,17 +1280,17 @@ protected:
       }
     }
 
-    bool ack_harq_process(slot_point sl, ul_harq_process& h_ul)
+    bool ack_harq_process(slot_point sl, ul_harq_process_handle h_ul)
     {
       static constexpr double ack_probability = 0.5f;
 
       // NOTE: to simply the generation of SRB1 buffer, we only allow max 3 NACKs.
-      const bool ack = h_ul.tb().nof_retxs <= 3U ? test_rgen::bernoulli(ack_probability) : true;
-      h_ul.crc_info(ack);
+      const bool ack = h_ul.nof_retxs() <= 3U ? test_rgen::bernoulli(ack_probability) : true;
+      h_ul.ul_crc_info(ack);
       test_logger.info("Slot={}, rnti={}: ACKing process h_id={} with {}",
                        sl,
                        test_ue.crnti,
-                       to_harq_id(h_ul.id),
+                       to_harq_id(h_ul.id()),
                        ack ? "ACK" : "NACK");
       return ack;
     }
@@ -1447,11 +1443,11 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
     }
 
     // NACK the HARQ processes that are waiting for ACK to trigger a retransmissions.
-    const unsigned   bit_index_1_harq_only = 0U;
-    dl_harq_process* dl_harq = u.get_pcell().harqs.find_dl_harq_waiting_ack_slot(current_slot, bit_index_1_harq_only);
-    if (dl_harq != nullptr) {
-      static constexpr unsigned tb_idx = 0U;
-      dl_harq->ack_info(tb_idx, mac_harq_ack_report_status::nack, {});
+    const unsigned                        bit_index_1_harq_only = 0U;
+    std::optional<dl_harq_process_handle> dl_harq =
+        u.get_pcell().harqs.find_dl_harq(current_slot, bit_index_1_harq_only);
+    if (dl_harq.has_value()) {
+      dl_harq->dl_ack_info(mac_harq_ack_report_status::nack, {});
     }
   }
 
