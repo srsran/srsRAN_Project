@@ -47,7 +47,8 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   logger(srslog::fetch_basic_logger("DU-MNG")),
   test_cfg(test_cfg_),
   pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot),
-  bearer_res_mng(srb_config, qos_config, logger)
+  bearer_res_mng(srb_config, qos_config, logger),
+  srs_res_mng(std::make_unique<du_srs_policy_max_ul_th>(cell_cfg_list))
 {
 }
 
@@ -164,7 +165,7 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
     ue_res.cell_group.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
     if (not pucch_res_mng.alloc_resources(ue_res.cell_group)) {
-      // Deallocate dedicated Search Spaces.
+      // Deallocate previously allocated SRS + dedicated Search Spaces.
       ue_res.cell_group.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
       return make_unexpected(fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", cell_index));
     }

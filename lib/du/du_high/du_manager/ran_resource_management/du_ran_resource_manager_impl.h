@@ -13,6 +13,7 @@
 #include "du_bearer_resource_manager.h"
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
+#include "du_srs_resource_manager.h"
 #include "ue_capability_manager.h"
 #include "srsran/ran/qos/five_qi.h"
 
@@ -107,6 +108,8 @@ private:
 
   /// Allocator of UE bearer resources.
   du_bearer_resource_manager bearer_res_mng;
+
+  std::unique_ptr<du_srs_resource_manager> srs_res_mng;
 };
 
 } // namespace srs_du
