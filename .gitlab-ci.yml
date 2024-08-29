@@ -466,7 +466,7 @@ create-tags:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 3 hours
   script:
     - |
       for name in $TAG_NAME_ARRAY; do
