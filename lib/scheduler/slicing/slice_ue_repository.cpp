@@ -42,6 +42,9 @@ void slice_ue::rem_logical_channel(lcid_t lcid)
 
 bool slice_ue::has_pending_dl_newtx_bytes() const
 {
+  if (u.has_pending_ce_bytes()) {
+    return true;
+  }
   for (unsigned lcid = 0, e = bearers.size(); lcid != e; ++lcid) {
     if (bearers.test(lcid) and u.has_pending_dl_newtx_bytes(uint_to_lcid(lcid))) {
       return true;
@@ -52,7 +55,7 @@ bool slice_ue::has_pending_dl_newtx_bytes() const
 
 unsigned slice_ue::pending_dl_newtx_bytes() const
 {
-  unsigned pending_bytes = 0;
+  unsigned pending_bytes = u.pending_ce_bytes();
   for (unsigned lcid = 0, e = bearers.size(); lcid != e; ++lcid) {
     if (bearers.test(lcid)) {
       pending_bytes += u.pending_dl_newtx_bytes(uint_to_lcid(lcid));
