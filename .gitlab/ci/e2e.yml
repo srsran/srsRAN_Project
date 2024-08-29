@@ -287,6 +287,7 @@ srsue:
   extends: .zmq
   variables:
     TESTBED: "zmq_srsue"
+    MARKERS: "zmq_srsue"
 
 amari 1UE:
   extends: .zmq
