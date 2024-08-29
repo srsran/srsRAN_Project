@@ -139,6 +139,9 @@ public:
   /// \brief Returns the UE pending CEs' bytes to be scheduled, if any.
   unsigned pending_ce_bytes() const { return dl_lc_ch_mgr.pending_ce_bytes(); }
 
+  /// \brief Returns whether the UE has pending CEs' bytes to be scheduled, if any.
+  bool has_pending_ce_bytes() const { return dl_lc_ch_mgr.is_con_res_id_pending() or dl_lc_ch_mgr.has_pending_ces(); }
+
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ. The value is used
   /// to derive the required transport block size for an DL grant.
   /// param[in] lcid If the LCID is provided, the method will return the number of pending bytes for that LCID.
