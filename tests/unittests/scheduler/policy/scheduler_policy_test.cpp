@@ -408,6 +408,23 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_srb_newtx_first_th
   ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, u2.ue_index);
 }
 
+TEST_P(scheduler_policy_test, scheduler_allocates_pdsch_even_when_only_pending_ces_are_enqueued)
+{
+  const lcg_id_t drb_lcg_id = uint_to_lcg_id(2);
+  ue&            u1 = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {LCID_MIN_DRB}, drb_lcg_id));
+
+  // Enqueue TA CMD MAC CE.
+  dl_mac_ce_indication ind{};
+  ind.ue_index = u1.ue_index;
+  ind.ce_lcid  = lcid_dl_sch_t::TA_CMD;
+  u1.handle_dl_mac_ce_indication(ind);
+
+  bool pdsch_scheduled = run_until([this]() { return not this->res_grid[0].result.dl.ue_grants.empty(); });
+  ASSERT_TRUE(pdsch_scheduled);
+  ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, u1.ue_index);
+  ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].tb_list.back().lc_chs_to_sched.back().lcid, lcid_dl_sch_t::TA_CMD);
+}
+
 class scheduler_policy_partial_slot_tdd_test : public base_scheduler_policy_test,
                                                public ::testing::TestWithParam<policy_scheduler_type>
 {
