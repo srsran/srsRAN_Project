@@ -21,7 +21,7 @@ class noop_harq_timeout_notifier : public harq_timeout_notifier
 {
 public:
   void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
-  { /* do nothing */
+  { // do nothing
   }
 };
 
@@ -322,6 +322,12 @@ void harq_utils::base_harq_process_handle<IsDl>::cancel_retxs()
   harq_repo->cancel_retxs(*impl);
 }
 
+template <bool IsDl>
+void harq_utils::base_harq_process_handle<IsDl>::reset()
+{
+  harq_repo->dealloc_harq(*impl);
+}
+
 template class harq_utils::base_harq_process_handle<true>;
 template class harq_utils::base_harq_process_handle<false>;
 
@@ -472,7 +478,7 @@ void dl_harq_process_handle::increment_pucch_counter()
   ++impl->pucch_ack_to_receive;
 }
 
-void dl_harq_process_handle::save_grant_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch)
+void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx, const pdsch_information& pdsch)
 {
   srsran_assert(pdsch.codewords.size() == 1, "Only one codeword supported");
   srsran_sanity_check(pdsch.rnti == impl->rnti, "RNTI mismatch");
@@ -530,7 +536,7 @@ int ul_harq_process_handle::ul_crc_info(bool ack)
   return ack ? (int)impl->prev_tx_params.tbs_bytes : 0;
 }
 
-void ul_harq_process_handle::save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pusch)
+void ul_harq_process_handle::save_grant_params(const ul_harq_alloc_context& ctx, const pusch_information& pusch)
 {
   srsran_sanity_check(pusch.rnti == impl->rnti, "RNTI mismatch");
   srsran_sanity_check(pusch.harq_id == impl->h_id, "HARQ-id mismatch");
@@ -626,7 +632,25 @@ std::optional<dl_harq_process_handle> unique_ue_harq_entity::find_pending_dl_ret
   return dl_harq_process_handle(cell_harq_mgr->dl, *h);
 }
 
+std::optional<const dl_harq_process_handle> unique_ue_harq_entity::find_pending_dl_retx() const
+{
+  dl_harq_process_impl* h = cell_harq_mgr->dl.find_ue_harq_in_state(ue_index, harq_state_t::pending_retx);
+  if (h == nullptr) {
+    return std::nullopt;
+  }
+  return dl_harq_process_handle(cell_harq_mgr->dl, *h);
+}
+
 std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_pending_ul_retx()
+{
+  ul_harq_process_impl* h = cell_harq_mgr->ul.find_ue_harq_in_state(ue_index, harq_state_t::pending_retx);
+  if (h == nullptr) {
+    return std::nullopt;
+  }
+  return ul_harq_process_handle(cell_harq_mgr->ul, *h);
+}
+
+std::optional<const ul_harq_process_handle> unique_ue_harq_entity::find_pending_ul_retx() const
 {
   ul_harq_process_impl* h = cell_harq_mgr->ul.find_ue_harq_in_state(ue_index, harq_state_t::pending_retx);
   if (h == nullptr) {
@@ -674,4 +698,18 @@ std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_ul_harq(slot_p
     }
   }
   return std::nullopt;
+}
+
+void unique_ue_harq_entity::uci_sched_failed(slot_point uci_slot)
+{
+  std::vector<dl_harq_process_impl>& dl_harqs = cell_harq_mgr->dl.ues[ue_index].harqs;
+  for (dl_harq_process_impl& h : dl_harqs) {
+    if (h.status == harq_utils::harq_state_t::waiting_ack and h.slot_ack == uci_slot) {
+      unsigned nof_nacks = std::max(h.pucch_ack_to_receive, 1U);
+      auto     h_handle  = dl_harq_process_handle(cell_harq_mgr->dl, h);
+      for (unsigned i = 0; i != nof_nacks; ++i) {
+        h_handle.dl_ack_info(mac_harq_ack_report_status::dtx, std::nullopt);
+      }
+    }
+  }
 }

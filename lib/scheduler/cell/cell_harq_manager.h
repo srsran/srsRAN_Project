@@ -170,19 +170,23 @@ public:
   base_harq_process_handle() = default;
   base_harq_process_handle(harq_pool& pool_, harq_impl_type& h_) : harq_repo(&pool_), impl(&h_) {}
 
-  rnti_t    rnti() const { return impl->rnti; }
-  harq_id_t id() const { return impl->h_id; }
-  bool      is_waiting_ack() const { return impl->status == harq_utils::harq_state_t::waiting_ack; }
-  bool      has_pending_retx() const { return impl->status == harq_utils::harq_state_t::pending_retx; }
-  bool      empty() const { return impl->status == harq_utils::harq_state_t::empty; }
-  unsigned  max_nof_retxs() const { return impl->max_nof_harq_retxs; }
-  unsigned  nof_retxs() const { return impl->nof_retxs; }
-  bool      ndi() const { return impl->ndi; }
+  du_ue_index_t ue_index() const { return impl->ue_idx; }
+  rnti_t        rnti() const { return impl->rnti; }
+  harq_id_t     id() const { return impl->h_id; }
+  bool          is_waiting_ack() const { return impl->status == harq_utils::harq_state_t::waiting_ack; }
+  bool          has_pending_retx() const { return impl->status == harq_utils::harq_state_t::pending_retx; }
+  bool          empty() const { return impl->status == harq_utils::harq_state_t::empty; }
+  unsigned      max_nof_retxs() const { return impl->max_nof_harq_retxs; }
+  unsigned      nof_retxs() const { return impl->nof_retxs; }
+  bool          ndi() const { return impl->ndi; }
 
   /// \brief Cancels any retransmissions for this HARQ process.
   /// If the HARQ process has a pending retransmission, it is reset. If the ACK/CRC info has not been received yet, the
   /// HARQ process waits for it to arrive before being reset.
   void cancel_retxs();
+
+  /// Empty the HARQ process.
+  void reset();
 
   bool operator==(const base_harq_process_handle& other) const
   {
@@ -198,7 +202,7 @@ protected:
 } // namespace harq_utils
 
 /// \brief Context of the scheduler during the current PDSCH allocation.
-struct dl_harq_sched_context {
+struct dl_harq_alloc_context {
   /// DCI format used to signal the PDSCH allocation.
   dci_dl_rnti_config_type dci_cfg_type;
   /// MCS suggested by the OLLA.
@@ -212,7 +216,7 @@ struct dl_harq_sched_context {
 };
 
 /// \brief Context of the scheduler during the current PUSCH allocation.
-struct ul_harq_sched_context {
+struct ul_harq_alloc_context {
   /// DCI format used to signal the PUSCH allocation.
   dci_ul_rnti_config_type dci_cfg_type;
   /// MCS suggested by the OLLA.
@@ -261,7 +265,7 @@ public:
 
   /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
-  void save_grant_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch);
+  void save_grant_params(const dl_harq_alloc_context& ctx, const pdsch_information& pdsch);
 
   slot_point pdsch_slot() const { return impl->slot_tx; }
   slot_point uci_slot() const { return impl->slot_ack; }
@@ -300,7 +304,7 @@ public:
 
   /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
-  void save_grant_params(const ul_harq_sched_context& ctx, const pusch_information& pusch);
+  void save_grant_params(const ul_harq_alloc_context& ctx, const pusch_information& pusch);
 
   slot_point pusch_slot() const { return impl->slot_tx; }
 
@@ -436,6 +440,8 @@ public:
   unique_ue_harq_entity& operator=(const unique_ue_harq_entity&) = delete;
   unique_ue_harq_entity& operator=(unique_ue_harq_entity&& other) noexcept;
 
+  bool empty() const { return cell_harq_mgr == nullptr; }
+
   /// Gets the maximum number of HARQ processes a UE can use, which depends on its configuration.
   unsigned nof_dl_harqs() const { return get_dl_ue().harqs.size(); }
   unsigned nof_ul_harqs() const { return get_ul_ue().harqs.size(); }
@@ -454,10 +460,24 @@ public:
     }
     return std::nullopt;
   }
+  std::optional<const dl_harq_process_handle> dl_harq(harq_id_t h_id) const
+  {
+    if (get_dl_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
+      return dl_harq_process_handle{cell_harq_mgr->dl, cell_harq_mgr->dl.ues[ue_index].harqs[h_id]};
+    }
+    return std::nullopt;
+  }
   std::optional<ul_harq_process_handle> ul_harq(harq_id_t h_id)
   {
     if (get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
       return ul_harq_process_handle{cell_harq_mgr->ul, get_ul_ue().harqs[h_id]};
+    }
+    return std::nullopt;
+  }
+  std::optional<const ul_harq_process_handle> ul_harq(harq_id_t h_id) const
+  {
+    if (get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
+      return ul_harq_process_handle{cell_harq_mgr->ul, cell_harq_mgr->ul.ues[ue_index].harqs[h_id]};
     }
     return std::nullopt;
   }
@@ -466,8 +486,10 @@ public:
   alloc_dl_harq(slot_point sl_tx, unsigned k1, unsigned max_harq_nof_retxs, unsigned harq_bit_idx);
   std::optional<ul_harq_process_handle> alloc_ul_harq(slot_point sl_tx, unsigned max_harq_nof_retxs);
 
-  std::optional<dl_harq_process_handle> find_pending_dl_retx();
-  std::optional<ul_harq_process_handle> find_pending_ul_retx();
+  std::optional<dl_harq_process_handle>       find_pending_dl_retx();
+  std::optional<const dl_harq_process_handle> find_pending_dl_retx() const;
+  std::optional<ul_harq_process_handle>       find_pending_ul_retx();
+  std::optional<const ul_harq_process_handle> find_pending_ul_retx() const;
 
   std::optional<dl_harq_process_handle> find_dl_harq_waiting_ack();
   std::optional<ul_harq_process_handle> find_ul_harq_waiting_ack();
@@ -482,6 +504,18 @@ public:
   /// \param[in] pusch_slot Slot when the PUSCH was transmitted.
   /// \return Active UL HARQ process with matching PUSCH slot, if found.
   std::optional<ul_harq_process_handle> find_ul_harq(slot_point pusch_slot);
+
+  /// \brief The UCI scheduling associated with a given slot was cancelled. The associated DL HARQs will be NACKed, and
+  /// won't expect further UCIs.
+  ///
+  /// This function can be called for instance when there is an error indication coming from lower layers.
+  void uci_sched_failed(slot_point uci_slot);
+
+  unsigned ntn_get_tbs_pending_crcs() const
+  {
+    // TODO
+    return 0;
+  }
 
 private:
   dl_harq_ent_impl&       get_dl_ue() { return cell_harq_mgr->dl.ues[ue_index]; }

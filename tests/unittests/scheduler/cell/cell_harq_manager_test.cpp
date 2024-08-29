@@ -155,10 +155,10 @@ protected:
   single_harq_process_test()
   {
     pdsch_info = make_dummy_pdsch_info();
-    dl_harq_sched_context harq_ctxt{dci_dl_rnti_config_type::c_rnti_f1_0};
+    dl_harq_alloc_context harq_ctxt{dci_dl_rnti_config_type::c_rnti_f1_0};
     h_dl.save_grant_params(harq_ctxt, pdsch_info);
     pusch_info = make_dummy_pusch_info();
-    ul_harq_sched_context ul_harq_ctxt{dci_ul_rnti_config_type::c_rnti_f0_0};
+    ul_harq_alloc_context ul_harq_ctxt{dci_ul_rnti_config_type::c_rnti_f0_0};
     h_ul.save_grant_params(ul_harq_ctxt, pusch_info);
   }
 
