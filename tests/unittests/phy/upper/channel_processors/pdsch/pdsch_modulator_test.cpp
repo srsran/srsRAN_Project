@@ -8,12 +8,10 @@
  *
  */
 
-#include "../../support/resource_grid_mapper_test_doubles.h"
+#include "../../../support/resource_grid_mapper_test_doubles.h"
 #include "pdsch_modulator_test_data.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/srsvec/bit.h"
 

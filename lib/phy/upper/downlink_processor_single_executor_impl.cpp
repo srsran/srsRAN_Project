@@ -15,6 +15,7 @@
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

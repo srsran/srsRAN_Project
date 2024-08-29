@@ -20,6 +20,7 @@
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
+#include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/sch/sch_dmrs_power.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/sch/tbs_calculator.h"

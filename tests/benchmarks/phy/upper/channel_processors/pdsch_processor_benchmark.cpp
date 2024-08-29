@@ -8,9 +8,9 @@
  *
  */
 
-#include "../../../../unittests/phy/upper/channel_processors/pdsch_processor_test_doubles.h"
+#include "../../../../unittests/phy/upper/channel_processors/pdsch/pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/benchmark_utils.h"
@@ -438,29 +438,31 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
         unsigned tbs            = tbs_calculator_calculate(tbs_config);
 
         // Build the PDSCH PDU configuration.
-        pdsch_processor::pdu_t config = {std::nullopt,
-                                         slot_point(to_numerology_value(profile.scs), 0),
-                                         1,
-                                         nof_prb,
-                                         0,
-                                         profile.cp,
-                                         {pdsch_processor::codeword_description{mcs.modulation, i_rv}},
-                                         0,
-                                         pdsch_processor::pdu_t::CRB0,
-                                         dmrs_symbol_mask,
-                                         dmrs_type::options::TYPE1,
-                                         0,
-                                         false,
-                                         nof_cdm_groups_without_data,
-                                         rb_allocation::make_type1(config.bwp_start_rb, nof_prb),
-                                         profile.start_symbol,
-                                         profile.nof_symbols,
-                                         get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)),
-                                         units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes(),
-                                         {},
-                                         0.0,
-                                         0.0,
-                                         precoding_config};
+        pdsch_processor::pdu_t config = {
+            .context                     = std::nullopt,
+            .slot                        = slot_point(to_numerology_value(profile.scs), 0),
+            .rnti                        = 1,
+            .bwp_size_rb                 = nof_prb,
+            .bwp_start_rb                = 0,
+            .cp                          = profile.cp,
+            .codewords                   = {pdsch_processor::codeword_description{mcs.modulation, i_rv}},
+            .n_id                        = 0,
+            .ref_point                   = pdsch_processor::pdu_t::CRB0,
+            .dmrs_symbol_mask            = dmrs_symbol_mask,
+            .dmrs                        = dmrs_type::options::TYPE1,
+            .scrambling_id               = 0,
+            .n_scid                      = false,
+            .nof_cdm_groups_without_data = nof_cdm_groups_without_data,
+            .freq_alloc                  = rb_allocation::make_type1(config.bwp_start_rb, nof_prb),
+            .start_symbol_index          = profile.start_symbol,
+            .nof_symbols                 = profile.nof_symbols,
+            .ldpc_base_graph             = get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)),
+            .tbs_lbrm                    = units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes(),
+            .reserved                    = {},
+            .ptrs                        = std::nullopt,
+            .ratio_pdsch_dmrs_to_sss_dB  = 0.0,
+            .ratio_pdsch_data_to_sss_dB  = 0.0,
+            .precoding                   = precoding_config};
         test_case_set.emplace_back(std::tuple<pdsch_processor::pdu_t, unsigned>(config, tbs));
       }
     }

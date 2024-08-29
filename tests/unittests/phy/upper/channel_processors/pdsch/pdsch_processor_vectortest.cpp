@@ -8,15 +8,15 @@
  *
  */
 
-#include "../../support/resource_grid_mapper_test_doubles.h"
+#include "../../../support/resource_grid_mapper_test_doubles.h"
 #include "pdsch_processor_test_data.h"
 #include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/executors/task_worker_pool.h"
-#include "srsran/support/math_utils.h"
 #ifdef HWACC_PDSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"

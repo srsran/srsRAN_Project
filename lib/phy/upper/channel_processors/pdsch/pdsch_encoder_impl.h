@@ -16,7 +16,7 @@
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
-#include "srsran/phy/upper/channel_processors/pdsch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
 #include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 

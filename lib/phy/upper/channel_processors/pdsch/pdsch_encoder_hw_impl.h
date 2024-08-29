@@ -17,7 +17,7 @@
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc.h"
 #include "srsran/phy/upper/channel_coding/crc_calculator.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
-#include "srsran/phy/upper/channel_processors/pdsch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 
 namespace srsran {

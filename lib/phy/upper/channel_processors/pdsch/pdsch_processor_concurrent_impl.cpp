@@ -12,6 +12,7 @@
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/ran/ptrs/ptrs_pattern.h"
 #include "srsran/support/event_tracing.h"
 
 using namespace srsran;
@@ -29,6 +30,23 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
 
   // Set the number of asynchronous tasks. It counts as CB processing and DM-RS generation.
   async_task_counter = 2;
+
+  // Add PT-RS to the asynchronous tasks.
+  if (config.ptrs) {
+    ++async_task_counter;
+
+    // Process PT-RS concurrently.
+    auto ptrs_task = [this]() { process_ptrs(); };
+
+    bool success = false;
+    if (cb_processor_pool->capacity() > 1) {
+      success = executor.execute(ptrs_task);
+    }
+
+    if (!success) {
+      ptrs_task();
+    }
+  }
 
   // Process DM-RS concurrently.
   auto dmrs_task = [this]() { process_dmrs(); };
@@ -212,9 +230,42 @@ unsigned pdsch_processor_concurrent_impl::compute_nof_data_re(const pdu_t& confi
   // Calculate the number of RE used by DM-RS. It assumes it does not overlap with reserved elements.
   unsigned nof_grid_dmrs = nof_prb * dmrs_pattern.re_mask.count() * dmrs_pattern.symbols.count();
 
+  // Generate reserved pattern.
+  re_pattern_list reserved = config.reserved;
+
+  // If the pattern contains PT-RS, append the reserved elements to the list.
+  if (config.ptrs) {
+    // Extract specific PT-RS configuration.
+    const ptrs_configuration& ptrs_config = config.ptrs.value();
+
+    // Create PT-RS pattern configuration.
+    ptrs_pattern_configuration ptrs_pattern_config = {
+        .rnti             = to_rnti(config.rnti),
+        .dmrs_type        = (config.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2,
+        .dmrs_symbol_mask = config.dmrs_symbol_mask,
+        .rb_mask          = prb_mask,
+        .time_allocation  = {config.start_symbol_index, config.start_symbol_index + config.nof_symbols},
+        .freq_density     = ptrs_config.freq_density,
+        .time_density     = ptrs_config.time_density,
+        .re_offset        = ptrs_config.re_offset,
+        .nof_ports        = 1};
+
+    // Calculate PT-RS pattern and convert it to an RE pattern.
+    ptrs_pattern ptrs_reserved_pattern = get_ptrs_pattern(ptrs_pattern_config);
+
+    re_pattern ptrs_reserved_re_pattern;
+    for (unsigned i_prb = ptrs_reserved_pattern.rb_begin; i_prb < ptrs_reserved_pattern.rb_end;
+         i_prb += ptrs_reserved_pattern.rb_stride) {
+      ptrs_reserved_re_pattern.prb_mask.set(i_prb);
+    }
+    ptrs_reserved_re_pattern.symbols = ptrs_reserved_pattern.symbol_mask;
+    ptrs_reserved_re_pattern.re_mask.set(ptrs_reserved_pattern.re_offset.front());
+
+    reserved.merge(ptrs_reserved_re_pattern);
+  }
+
   // Calculate the number of reserved resource elements.
-  unsigned nof_reserved_re =
-      config.reserved.get_inclusion_count(config.start_symbol_index, config.nof_symbols, prb_mask);
+  unsigned nof_reserved_re = reserved.get_inclusion_count(config.start_symbol_index, config.nof_symbols, prb_mask);
 
   // Subtract the number of reserved RE from the number of allocated RE.
   srsran_assert(nof_grid_re > nof_reserved_re,
@@ -331,6 +382,54 @@ void pdsch_processor_concurrent_impl::process_dmrs()
   dmrs_generator_pool->get().map(*mapper, dmrs_config);
 
   l1_tracer << trace_event("process_dmrs", process_dmrs_tp);
+
+  // Decrement asynchronous task counter.
+  if (async_task_counter.fetch_sub(1) == 1) {
+    // Notify end of the processing.
+    notifier->on_finish_processing();
+  }
+}
+
+void pdsch_processor_concurrent_impl::process_ptrs()
+{
+  trace_point process_ptrs_tp = l1_tracer.now();
+
+  // Extract PT-RS configuration parameters.
+  const ptrs_configuration& ptrs = config.ptrs.value();
+
+  bounded_bitset<MAX_RB> rb_mask_bitset = config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
+
+  // Select the DM-RS reference point.
+  unsigned ptrs_reference_point_k_rb = 0;
+  if (config.ref_point == pdu_t::PRB0) {
+    ptrs_reference_point_k_rb = config.bwp_start_rb;
+  }
+
+  // Calculate the PT-RS sequence amplitude following TS38.214 Section 4.1.
+  float amplitude = convert_dB_to_amplitude(ptrs.ratio_ptrs_to_pdsch_data_dB - config.ratio_pdsch_data_to_sss_dB);
+
+  // Prepare PT-RS configuration.
+  ptrs_pdsch_generator::configuration ptrs_config;
+  ptrs_config.slot                 = config.slot;
+  ptrs_config.rnti                 = to_rnti(config.rnti);
+  ptrs_config.dmrs_config_type     = config.dmrs;
+  ptrs_config.reference_point_k_rb = ptrs_reference_point_k_rb;
+  ptrs_config.scrambling_id        = config.scrambling_id;
+  ptrs_config.n_scid               = config.n_scid;
+  ptrs_config.amplitude            = amplitude;
+  ptrs_config.dmrs_symbols_mask    = config.dmrs_symbol_mask;
+  ptrs_config.rb_mask              = rb_mask_bitset;
+  ptrs_config.time_allocation      = {config.start_symbol_index, config.start_symbol_index + config.nof_symbols};
+  ptrs_config.freq_density         = ptrs.freq_density;
+  ptrs_config.time_density         = ptrs.time_density;
+  ptrs_config.re_offset            = ptrs.re_offset;
+  ptrs_config.reserved             = config.reserved;
+  ptrs_config.precoding            = config.precoding;
+
+  // Put PT-RS.
+  ptrs_generator_pool->get().generate(*mapper, ptrs_config);
+
+  l1_tracer << trace_event("process_ptrs", process_ptrs_tp);
 
   // Decrement asynchronous task counter.
   if (async_task_counter.fetch_sub(1) == 1) {

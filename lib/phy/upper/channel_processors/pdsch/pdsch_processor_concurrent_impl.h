@@ -11,9 +11,10 @@
 
 #include "pdsch_codeblock_processor.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
-#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
@@ -29,6 +30,8 @@ public:
   using codeblock_processor_pool = concurrent_thread_local_object_pool<pdsch_codeblock_processor>;
   /// PDSCH DM-RS generator pool type.
   using pdsch_dmrs_generator_pool = concurrent_thread_local_object_pool<dmrs_pdsch_processor>;
+  /// PDSCH PT-RS generator pool type.
+  using pdsch_ptrs_generator_pool = concurrent_thread_local_object_pool<ptrs_pdsch_generator>;
 
   /// \brief Creates a concurrent PDSCH processor with all the dependencies.
   /// \param[in] cb_processor_pool_    Codeblock processor pool.
@@ -38,10 +41,12 @@ public:
   pdsch_processor_concurrent_impl(std::shared_ptr<codeblock_processor_pool>  cb_processor_pool_,
                                   std::unique_ptr<pseudo_random_generator>   scrambler_,
                                   std::shared_ptr<pdsch_dmrs_generator_pool> dmrs_generator_pool_,
+                                  std::shared_ptr<pdsch_ptrs_generator_pool> ptrs_generator_pool_,
                                   task_executor&                             executor_) :
     scrambler(std::move(scrambler_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
     dmrs_generator_pool(std::move(dmrs_generator_pool_)),
+    ptrs_generator_pool(std::move(ptrs_generator_pool_)),
     executor(executor_)
   {
     srsran_assert(scrambler, "Invalid scrambler pointer.");
@@ -76,12 +81,17 @@ private:
   /// Processes PDSCH DM-RS.
   void process_dmrs();
 
+  /// Processes PDSCH PT-RS.
+  void process_ptrs();
+
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
   /// Pool of code block processors.
   std::shared_ptr<codeblock_processor_pool> cb_processor_pool;
   /// DM-RS processor.
   std::shared_ptr<pdsch_dmrs_generator_pool> dmrs_generator_pool;
+  /// PT-RS processor.
+  std::shared_ptr<pdsch_ptrs_generator_pool> ptrs_generator_pool;
   /// Asynchronous task executor.
   task_executor& executor;
 

@@ -8,12 +8,13 @@
  *
  */
 
-#include "../../support/resource_grid_mapper_test_doubles.h"
-#include "../rx_buffer_test_doubles.h"
+#include "../../../support/resource_grid_mapper_test_doubles.h"
+#include "../../rx_buffer_test_doubles.h"
 #include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "fmt/ostream.h"
@@ -24,29 +25,30 @@ using namespace srsran;
 namespace {
 
 // Valid PDSCH configuration used as a base for the test cases.
-const pdsch_processor::pdu_t base_pdu = {std::nullopt,
-                                         {0, 19},
-                                         1,
-                                         52,
-                                         0,
-                                         cyclic_prefix::NORMAL,
-                                         {{modulation_scheme::QPSK, 0}},
-                                         1,
-                                         pdsch_processor::pdu_t::CRB0,
-                                         {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},
-                                         dmrs_type::TYPE1,
-                                         0,
-                                         0,
-                                         1,
-                                         rb_allocation::make_type1(0, 52),
-                                         2,
-                                         12,
-                                         ldpc_base_graph_type::BG1,
-                                         units::bytes(3168),
-                                         {},
-                                         0,
-                                         0,
-                                         precoding_configuration::make_wideband(make_single_port())};
+const pdsch_processor::pdu_t base_pdu = {.context                     = std::nullopt,
+                                         .slot                        = {0, 19},
+                                         .rnti                        = 1,
+                                         .bwp_size_rb                 = 52,
+                                         .bwp_start_rb                = 0,
+                                         .cp                          = cyclic_prefix::NORMAL,
+                                         .codewords                   = {{modulation_scheme::QPSK, 0}},
+                                         .n_id                        = 1,
+                                         .ref_point                   = pdsch_processor::pdu_t::CRB0,
+                                         .dmrs_symbol_mask            = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},
+                                         .dmrs                        = dmrs_type::TYPE1,
+                                         .scrambling_id               = 0,
+                                         .n_scid                      = 0,
+                                         .nof_cdm_groups_without_data = 1,
+                                         .freq_alloc                  = rb_allocation::make_type1(0, 52),
+                                         .start_symbol_index          = 2,
+                                         .nof_symbols                 = 12,
+                                         .ldpc_base_graph             = ldpc_base_graph_type::BG1,
+                                         .tbs_lbrm                    = units::bytes(3168),
+                                         .reserved                    = {},
+                                         .ptrs                        = std::nullopt,
+                                         .ratio_pdsch_dmrs_to_sss_dB  = 0,
+                                         .ratio_pdsch_data_to_sss_dB  = 0,
+                                         .precoding = precoding_configuration::make_wideband(make_single_port())};
 
 struct test_case_t {
   std::function<pdsch_processor::pdu_t()> get_pdu;
@@ -55,7 +57,8 @@ struct test_case_t {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  fmt::print(os, "{}", test_case.get_pdu());
+  pdsch_processor::pdu_t pdu = test_case.get_pdu();
+  fmt::print(os, "{}", pdu);
   return os;
 }
 

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {

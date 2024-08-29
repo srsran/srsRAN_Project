@@ -11,9 +11,14 @@
 #pragma once
 
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
-#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/adt/mpmc_queue.h"
+#include "srsran/adt/span.h"
+#include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/srslog/logger.h"
+#include "srsran/srslog/srslog.h"
+#include <memory>
+#include <vector>
 
 namespace srsran {
 

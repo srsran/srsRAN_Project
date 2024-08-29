@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "../../phy_test_utils.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "../../../phy_test_utils.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/srsvec/copy.h"
 
 namespace srsran {

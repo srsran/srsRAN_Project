@@ -8,16 +8,16 @@
  *
  */
 
-#include "../../support/resource_grid_test_doubles.h"
-#include "../signal_processors/dmrs_pdsch_processor_test_doubles.h"
+#include "../../../support/resource_grid_test_doubles.h"
+#include "../../signal_processors/dmrs_pdsch_processor_test_doubles.h"
 #include "pdsch_encoder_test_doubles.h"
 #include "pdsch_modulator_test_doubles.h"
 #include "pdsch_processor_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/srsvec/compare.h"
-#include <fmt/ostream.h>
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>
 

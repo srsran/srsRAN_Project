@@ -9,7 +9,7 @@
  */
 
 #include "pdsch_encoder_test_data.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/support/srsran_test.h"
 #ifdef HWACC_PDSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"

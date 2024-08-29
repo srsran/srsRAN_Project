@@ -18,6 +18,7 @@
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/ran/pdsch/pdsch_context.h"
+#include "srsran/ran/ptrs/ptrs.h"
 #include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/ran/slot_point.h"
 
@@ -48,6 +49,20 @@ public:
     modulation_scheme modulation;
     /// Redundancy version index.
     unsigned rv;
+  };
+
+  /// Parameters for the Phase Tracking Reference Signals (PT-RS).
+  struct ptrs_configuration {
+    /// Frequency domain density.
+    ptrs_frequency_density freq_density;
+    /// Time domain density.
+    ptrs_time_density time_density;
+    /// Resource element offset.
+    ptrs_re_offset re_offset;
+    /// \brief Ratio of PT-RS EPRE to PDSCH data EPRE in decibels.
+    ///
+    /// Parameter \f$\rho_{PTRS}f$ as per TS38.214 Section 4.1.
+    float ratio_ptrs_to_pdsch_data_dB;
   };
 
   /// \brief Describes the PDSCH processing parameters.
@@ -130,6 +145,10 @@ public:
     units::bytes tbs_lbrm;
     /// Indicates the reserved resource elements which cannot carry PDSCH.
     re_pattern_list reserved;
+    /// \brief Optional Phase Tracking Reference Signal (PT-RS) configuration.
+    ///
+    /// Set to \c std::nullopt for no transmission of PT-RS.
+    std::optional<ptrs_configuration> ptrs;
     /// \brief Ratio of PDSCH DM-RS EPRE to SSS EPRE in decibels.
     ///
     /// Parameter \f$\beta _\textup{DMRS}\f$ in TS38.214 Section 6.2.2. It is converted to parameter \f$\beta _{PUSCH}

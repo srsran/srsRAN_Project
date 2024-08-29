@@ -9,9 +9,9 @@
  */
 #pragma once
 
-#include "srsran/phy/upper/channel_processors/pdsch_encoder.h"
-#include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
-#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_modulator.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 
