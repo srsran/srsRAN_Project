@@ -272,6 +272,7 @@ smoke zmq:
   stage: zmq
   extends: .e2e-run
   variables:
+    GROUP: uesim
     TESTBED: zmq_uesim
     E2E_LOG_LEVEL: "info"
   needs:
@@ -495,28 +496,8 @@ cudu amari 8UE:
     matrix:
       - KEYWORDS: ["reestablishment and sequentially"]
 
-cudu amari 8UE uesim:
-  extends: .zmq-uesim
-  variables:
-    TESTBED: zmq_cudu
-    MARKERS: "zmq and not smoke"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  parallel:
-    matrix:
-      - KEYWORDS: ["reestablishment and sequentially"]
-
 cudu amari 32UE:
   extends: .zmq
-  variables:
-    TESTBED: zmq_cudu
-    MARKERS: "zmq and not smoke"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  parallel:
-    matrix:
-      - KEYWORDS: ["ping", "iperf and tcp and not band:3 and bandwidth:50"]
-
-cudu amari 32UE uesim:
-  extends: .zmq-uesim
   variables:
     TESTBED: zmq_cudu
     MARKERS: "zmq and not smoke"
