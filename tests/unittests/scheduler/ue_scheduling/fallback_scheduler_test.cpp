@@ -829,7 +829,7 @@ TEST_P(fallback_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocat
     // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
     const unsigned                        bit_index_1_harq_only = 0U;
     std::optional<dl_harq_process_handle> dl_harq =
-        test_ue.get_pcell().harqs.find_dl_harq(current_slot, bit_index_1_harq_only);
+        test_ue.get_pcell().harqs.find_dl_harq_waiting_ack(current_slot, bit_index_1_harq_only);
     if (dl_harq.has_value()) {
       dl_harq->dl_ack_info(mac_harq_ack_report_status::ack, std::nullopt);
     }
@@ -946,7 +946,8 @@ protected:
     {
       // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
       const unsigned                        bit_index_1_harq_only = 0U;
-      std::optional<dl_harq_process_handle> dl_harq = test_ue.get_pcell().harqs.find_dl_harq(sl, bit_index_1_harq_only);
+      std::optional<dl_harq_process_handle> dl_harq =
+          test_ue.get_pcell().harqs.find_dl_harq_waiting_ack(sl, bit_index_1_harq_only);
       if (dl_harq.has_value()) {
         srsran_assert(dl_harq->id() == ongoing_h_id, "HARQ process mismatch");
         dl_harq->dl_ack_info(ack_outcome ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
@@ -1152,7 +1153,8 @@ protected:
     {
       // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
       const unsigned                        bit_index_1_harq_only = 0U;
-      std::optional<dl_harq_process_handle> dl_harq = test_ue.get_pcell().harqs.find_dl_harq(sl, bit_index_1_harq_only);
+      std::optional<dl_harq_process_handle> dl_harq =
+          test_ue.get_pcell().harqs.find_dl_harq_waiting_ack(sl, bit_index_1_harq_only);
       if (dl_harq.has_value()) {
         static constexpr double ack_probability = 0.5f;
         const bool              ack             = test_rgen::bernoulli(ack_probability);
@@ -1445,7 +1447,7 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
     // NACK the HARQ processes that are waiting for ACK to trigger a retransmissions.
     const unsigned                        bit_index_1_harq_only = 0U;
     std::optional<dl_harq_process_handle> dl_harq =
-        u.get_pcell().harqs.find_dl_harq(current_slot, bit_index_1_harq_only);
+        u.get_pcell().harqs.find_dl_harq_waiting_ack(current_slot, bit_index_1_harq_only);
     if (dl_harq.has_value()) {
       dl_harq->dl_ack_info(mac_harq_ack_report_status::nack, {});
     }

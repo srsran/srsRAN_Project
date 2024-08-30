@@ -147,14 +147,7 @@ unsigned ue::pending_ul_newtx_bytes() const
     if (pending_bytes == 0) {
       break;
     }
-    unsigned harq_bytes = 0;
-    for (unsigned i = 0; i != ue_cc->harqs.nof_ul_harqs(); ++i) {
-      std::optional<const ul_harq_process_handle> h_ul = ue_cc->harqs.ul_harq(to_harq_id(i));
-      if (h_ul.has_value()) {
-        harq_bytes += h_ul->get_grant_params().tbs_bytes;
-      }
-    }
-    harq_bytes += ue_cc->harqs.ntn_get_tbs_pending_crcs();
+    unsigned harq_bytes = ue_cc->harqs.total_ul_bytes_waiting_ack();
     pending_bytes -= std::min(pending_bytes, harq_bytes);
   }
 

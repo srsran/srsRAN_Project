@@ -854,7 +854,8 @@ std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_ul_harq_waitin
   return ul_harq_process_handle(cell_harq_mgr->ul, *h);
 }
 
-std::optional<dl_harq_process_handle> unique_ue_harq_entity::find_dl_harq(slot_point uci_slot, uint8_t harq_bit_idx)
+std::optional<dl_harq_process_handle> unique_ue_harq_entity::find_dl_harq_waiting_ack(slot_point uci_slot,
+                                                                                      uint8_t    harq_bit_idx)
 {
   if (cell_harq_mgr->dl.alloc_hist != nullptr) {
     // NTN mode.
@@ -871,7 +872,7 @@ std::optional<dl_harq_process_handle> unique_ue_harq_entity::find_dl_harq(slot_p
   return std::nullopt;
 }
 
-std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_ul_harq(slot_point pusch_slot)
+std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_ul_harq_waiting_ack(slot_point pusch_slot)
 {
   if (cell_harq_mgr->ul.alloc_hist != nullptr) {
     // NTN mode.
@@ -901,7 +902,7 @@ void unique_ue_harq_entity::uci_sched_failed(slot_point uci_slot)
   }
 }
 
-unsigned unique_ue_harq_entity::total_ul_bytes_waiting_crc() const
+unsigned unique_ue_harq_entity::total_ul_bytes_waiting_ack() const
 {
   if (cell_harq_mgr->ul.is_ntn_mode()) {
     return cell_harq_mgr->ul.alloc_hist->sum_pending_ul_tbs(ue_index);

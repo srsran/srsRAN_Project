@@ -503,16 +503,16 @@ public:
   std::optional<dl_harq_process_handle> find_dl_harq_waiting_ack();
   std::optional<ul_harq_process_handle> find_ul_harq_waiting_ack();
 
-  /// Fetch active DL HARQ process based on HARQ-ACK UCI slot and HARQ bit index.
+  /// Fetch a DL HARQ process expecting ACK info based on HARQ-ACK UCI slot and HARQ bit index.
   /// \param[in] uci_slot Slot when the UCI is to be received.
   /// \param[in] harq_bit_idx Bit index of the HARQ-ACK in the UCI indication.
   /// \return Active DL HARQ process with matching UCI slot and HARQ bit index, if found.
-  std::optional<dl_harq_process_handle> find_dl_harq(slot_point uci_slot, uint8_t harq_bit_idx);
+  std::optional<dl_harq_process_handle> find_dl_harq_waiting_ack(slot_point uci_slot, uint8_t harq_bit_idx);
 
   /// Fetch active UL HARQ process based on slot when its PUSCH was transmitted.
   /// \param[in] pusch_slot Slot when the PUSCH was transmitted.
   /// \return Active UL HARQ process with matching PUSCH slot, if found.
-  std::optional<ul_harq_process_handle> find_ul_harq(slot_point pusch_slot);
+  std::optional<ul_harq_process_handle> find_ul_harq_waiting_ack(slot_point pusch_slot);
 
   /// \brief The UCI scheduling associated with a given slot was cancelled. The associated DL HARQs will be NACKed, and
   /// won't expect further UCIs.
@@ -520,13 +520,8 @@ public:
   /// This function can be called for instance when there is an error indication coming from lower layers.
   void uci_sched_failed(slot_point uci_slot);
 
-  unsigned ntn_get_tbs_pending_crcs() const
-  {
-    // TODO
-    return 0;
-  }
-
-  unsigned total_ul_bytes_waiting_crc() const;
+  /// Determines the sum of the number of bytes that are in active UL HARQ processes.
+  unsigned total_ul_bytes_waiting_ack() const;
 
 private:
   dl_harq_ent_impl&       get_dl_ue() { return cell_harq_mgr->dl.ues[ue_index]; }

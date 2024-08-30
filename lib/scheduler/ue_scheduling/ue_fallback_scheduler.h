@@ -166,6 +166,7 @@ private:
                                        const pusch_time_domain_resource_allocation& pusch_td,
                                        std::optional<ul_harq_process_handle>        h_ul_retx);
 
+  /// \return A pair with the number of SRB bytes allocated and which DL HARQ process was used.
   std::pair<unsigned, dl_harq_process_handle> fill_dl_srb_grant(ue&                                   u,
                                                                 slot_point                            pdsch_slot,
                                                                 std::optional<dl_harq_process_handle> h_dl,

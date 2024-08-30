@@ -108,7 +108,7 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
       // expecting to be acknowledged on the same slot.
       for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
         std::optional<dl_harq_process_handle> h_dl =
-            user->get_pcell().harqs.find_dl_harq(slot_alloc.slot, harq_bit_idx);
+            user->get_pcell().harqs.find_dl_harq_waiting_ack(slot_alloc.slot, harq_bit_idx);
         if (not h_dl.has_value() or not h_dl->is_waiting_ack()) {
           logger.warning(
               "ue={} rnti={}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index={}",

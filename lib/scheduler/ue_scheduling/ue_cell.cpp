@@ -102,7 +102,7 @@ std::optional<dl_harq_process::dl_ack_info_result> ue_cell::handle_dl_ack_info(s
                                                                                unsigned                   harq_bit_idx,
                                                                                std::optional<float>       pucch_snr)
 {
-  std::optional<dl_harq_process_handle> h_dl = harqs.find_dl_harq(uci_slot, harq_bit_idx);
+  std::optional<dl_harq_process_handle> h_dl = harqs.find_dl_harq_waiting_ack(uci_slot, harq_bit_idx);
   if (not h_dl.has_value()) {
     logger.warning("rnti={}: Discarding ACK info. Cause: DL HARQ for uci slot={} not found.", rnti(), uci_slot);
     return std::nullopt;
@@ -232,18 +232,12 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
 int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu)
 {
   // Find UL HARQ with matching PUSCH slot.
-  std::optional<ul_harq_process_handle> h_ul = harqs.ul_harq(crc_pdu.harq_id);
-  if (not h_ul.has_value()) {
-    logger.warning("rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not active", rnti(), crc_pdu.harq_id);
-    return -1;
-  }
-  if (h_ul->pusch_slot() != pusch_slot) {
-    logger.warning(
-        "rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process was expecting a CRC at a different slot ({}!={})",
-        rnti(),
-        crc_pdu.harq_id,
-        pusch_slot,
-        h_ul->pusch_slot());
+  std::optional<ul_harq_process_handle> h_ul = harqs.find_ul_harq_waiting_ack(pusch_slot);
+  if (not h_ul.has_value() or h_ul->id() != crc_pdu.harq_id) {
+    logger.warning("rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting CRC for PUSCH slot {}",
+                   rnti(),
+                   crc_pdu.harq_id,
+                   pusch_slot);
     return -1;
   }
 

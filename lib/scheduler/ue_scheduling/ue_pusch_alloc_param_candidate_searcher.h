@@ -153,12 +153,12 @@ public:
   };
 
   /// Create a searcher for UE PUSCH parameters.
-  ue_pusch_alloc_param_candidate_searcher(const ue&              ue_ref_,
-                                          du_cell_index_t        cell_index,
+  ue_pusch_alloc_param_candidate_searcher(const ue&                                    ue_ref_,
+                                          du_cell_index_t                              cell_index,
                                           const std::optional<ul_harq_process_handle>& ul_harq_,
-                                          slot_point             pdcch_slot_,
-                                          span<const slot_point> slots_with_no_pusch_space_,
-                                          slot_point             pusch_slot_) :
+                                          slot_point                                   pdcch_slot_,
+                                          span<const slot_point>                       slots_with_no_pusch_space_,
+                                          slot_point                                   pusch_slot_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
     slots_with_no_pusch_space(slots_with_no_pusch_space_),
