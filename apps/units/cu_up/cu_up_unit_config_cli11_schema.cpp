@@ -166,9 +166,9 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
 
-  // AMF section.
-  CLI::App* amf_subcmd = add_subcommand(app, "amf", "AMF parameters")->configurable();
-  configure_cli11_upf_args(*amf_subcmd, unit_cfg.upf_cfg);
+  // UPF section.
+  CLI::App* upf_subcmd = add_subcommand(app, "upf", "UPF parameters")->configurable();
+  configure_cli11_upf_args(*upf_subcmd, unit_cfg.upf_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {

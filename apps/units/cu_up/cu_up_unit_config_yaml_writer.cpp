@@ -127,7 +127,7 @@ void srsran::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit
   fill_cu_up_log_section(node["log"], config.loggers);
   fill_cu_up_pcap_section(node["pcap"], config.pcap_cfg);
   fill_cu_up_metrics_section(node["metrics"], config.metrics);
-  fill_cu_up_upf_section(node["amf"], config.upf_cfg);
+  fill_cu_up_upf_section(node["upf"], config.upf_cfg);
 
   fill_cu_up_qos_section(node, config.qos_cfg);
 }
