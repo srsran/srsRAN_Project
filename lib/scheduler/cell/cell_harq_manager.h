@@ -175,7 +175,6 @@ protected:
   using harq_impl_type = std::conditional_t<IsDl, dl_harq_process_impl, ul_harq_process_impl>;
 
 public:
-  base_harq_process_handle() = default;
   base_harq_process_handle(harq_pool& pool_, harq_impl_type& h_) : harq_repo(&pool_), impl(&h_) {}
 
   du_ue_index_t ue_index() const { return impl->ue_idx; }
@@ -340,13 +339,29 @@ public:
     {
     }
 
-    reference operator++()
+    iterator& operator++()
     {
       ++it;
-      return value();
+      return *this;
     }
-    reference operator*() { return value(); }
-    reference value() { return it != pool->harq_pending_retx_list.end() ? handle_type{*pool, *it} : handle_type{}; }
+    iterator operator++(int)
+    {
+      iterator ret{*this};
+      ++it;
+      return ret;
+    }
+    reference operator*()
+    {
+      srsran_assert(it != pool->harq_pending_retx_list.end(), "Dereferencing list end()");
+      return handle_type{*pool, *it};
+    }
+    pointer operator->()
+    {
+      if (it != pool->harq_pending_retx_list.end()) {
+        return handle_type{*pool, *it};
+      }
+      return std::nullopt;
+    }
 
     bool operator==(const iterator& other) const { return pool == other.pool and it == other.it; }
     bool operator!=(const iterator& other) const { return !(*this == other); }
