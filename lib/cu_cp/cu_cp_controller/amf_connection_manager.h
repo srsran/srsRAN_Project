@@ -23,9 +23,7 @@ struct cu_cp_configuration;
 class amf_connection_manager
 {
 public:
-  amf_connection_manager(common_task_scheduler&     common_task_sched_,
-                         const cu_cp_configuration& cu_cp_cfg_,
-                         ngap_connection_manager&   ngap_conn_mng_);
+  amf_connection_manager(common_task_scheduler& common_task_sched_, ngap_connection_manager& ngap_conn_mng_);
 
   /// \brief Initiates the connection to the AMF.
   /// A promise is passed as a parameter to enable blocking synchronization between the completion of the scheduled
@@ -41,9 +39,8 @@ public:
 private:
   void handle_connection_setup_result(bool success);
 
-  common_task_scheduler&     common_task_sched;
-  const cu_cp_configuration& cu_cp_cfg;
-  ngap_connection_manager&   ngap_conn_mng;
+  common_task_scheduler&   common_task_sched;
+  ngap_connection_manager& ngap_conn_mng;
 
   std::atomic<bool> amf_connected{false};
 };

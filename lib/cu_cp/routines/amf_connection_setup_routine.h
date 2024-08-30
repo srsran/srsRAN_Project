@@ -22,16 +22,14 @@ namespace srs_cu_cp {
 class amf_connection_setup_routine
 {
 public:
-  amf_connection_setup_routine(const cu_cp_configuration& cu_cp_cfg_, ngap_connection_manager& ngap_conn_mng_);
+  amf_connection_setup_routine(ngap_connection_manager& ngap_conn_mng_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
 private:
-  ngap_ng_setup_request            fill_ng_setup_request();
   async_task<ngap_ng_setup_result> send_ng_setup_request();
 
-  const cu_cp_configuration& cu_cp_cfg;
-  ngap_connection_manager&   ngap_conn_mng;
+  ngap_connection_manager& ngap_conn_mng;
 
   ngap_ng_setup_result result_msg = {};
 };

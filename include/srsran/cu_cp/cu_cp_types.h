@@ -42,6 +42,8 @@ const uint16_t MAX_NOF_DU_CELLS = 16;
 const uint16_t MAX_NOF_CU_UPS = 65535;
 /// Maximum number of UEs supported by CU-CP (implementation-defined).
 const uint64_t MAX_NOF_CU_UES = 4294967295; // 2^32 - 1
+/// Maximum number of AMFs supported by CU-CP (implementation-defined).
+const uint16_t MAX_NOF_AMFS = 65535;
 
 /// \brief ue_index internally used to identify the UE CU-CP-wide.
 /// \remark The ue_index is derived from the maximum number of DUs and the maximum number of UEs per DU.
@@ -102,6 +104,21 @@ inline du_cell_index_t uint_to_du_cell_index(std::underlying_type_t<du_cell_inde
 constexpr inline std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(du_cell_index_t du_cell_index)
 {
   return static_cast<std::underlying_type_t<du_cell_index_t>>(du_cell_index);
+}
+
+/// Maximum number of AMFs supported by CU-CP (implementation-defined).
+enum class amf_index_t : uint16_t { min = 0, max = MAX_NOF_AMFS - 1, invalid = MAX_NOF_AMFS };
+
+/// Convert integer to AMF index type.
+constexpr inline amf_index_t uint_to_amf_index(std::underlying_type_t<amf_index_t> index)
+{
+  return static_cast<amf_index_t>(index);
+}
+
+/// Convert AMF index type to integer.
+constexpr inline std::underlying_type_t<amf_index_t> amf_index_to_uint(amf_index_t amf_index)
+{
+  return static_cast<std::underlying_type_t<amf_index_t>>(amf_index);
 }
 
 /// QoS Configuration, i.e. 5QI and the associated PDCP

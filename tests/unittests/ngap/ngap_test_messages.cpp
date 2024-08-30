@@ -59,34 +59,6 @@ bool srsran::srs_cu_cp::is_pdu_type(const ngap_message&                         
   return pdu.pdu.successful_outcome().value.type().value == type;
 }
 
-ngap_ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
-{
-  ngap_ng_setup_request request_msg;
-  request_msg.global_ran_node_id.gnb_id  = {411, 22};
-  request_msg.global_ran_node_id.plmn_id = plmn_identity::test_value();
-
-  request_msg.ran_node_name = "srsgnb01";
-
-  ngap_supported_ta_item supported_ta_item;
-  supported_ta_item.tac = 7;
-
-  ngap_broadcast_plmn_item broadcast_plmn_item;
-  broadcast_plmn_item.plmn_id = plmn_identity::test_value();
-
-  slice_support_item_t slice_support_item;
-  slice_support_item.s_nssai.sst = 1;
-
-  broadcast_plmn_item.tai_slice_support_list.push_back(slice_support_item);
-
-  supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
-
-  request_msg.supported_ta_list.push_back(supported_ta_item);
-
-  request_msg.default_paging_drx = 256;
-
-  return request_msg;
-}
-
 ngap_message srsran::srs_cu_cp::generate_ng_setup_response()
 {
   ngap_message ng_setup_response = {};

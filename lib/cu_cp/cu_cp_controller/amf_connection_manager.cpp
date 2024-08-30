@@ -16,10 +16,9 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-amf_connection_manager::amf_connection_manager(common_task_scheduler&     common_task_sched_,
-                                               const cu_cp_configuration& cu_cp_cfg_,
-                                               ngap_connection_manager&   ngap_conn_mng_) :
-  common_task_sched(common_task_sched_), cu_cp_cfg(cu_cp_cfg_), ngap_conn_mng(ngap_conn_mng_)
+amf_connection_manager::amf_connection_manager(common_task_scheduler&   common_task_sched_,
+                                               ngap_connection_manager& ngap_conn_mng_) :
+  common_task_sched(common_task_sched_), ngap_conn_mng(ngap_conn_mng_)
 {
 }
 
@@ -31,7 +30,7 @@ void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signa
         CORO_BEGIN(ctx);
 
         // Launch procedure to initiate AMF connection.
-        CORO_AWAIT_VALUE(bool success, launch_async<amf_connection_setup_routine>(cu_cp_cfg, ngap_conn_mng));
+        CORO_AWAIT_VALUE(bool success, launch_async<amf_connection_setup_routine>(ngap_conn_mng));
 
         // Handle result of NG setup.
         handle_connection_setup_result(success);

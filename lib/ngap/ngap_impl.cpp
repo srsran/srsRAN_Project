@@ -25,6 +25,7 @@
 #include "procedures/ngap_ue_context_release_procedure.h"
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap_reset.h"
+#include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cause/ngap_cause.h"
 
@@ -95,7 +96,7 @@ async_task<void> ngap_impl::handle_amf_disconnection_request()
   return conn_handler.handle_tnl_association_removal();
 }
 
-async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(const ngap_ng_setup_request& request)
+async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(unsigned max_setup_retries)
 {
   logger.info("Sending NgSetupRequest");
 
@@ -104,10 +105,10 @@ async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(const ngap_n
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
 
   auto& ng_setup_request = ngap_msg.pdu.init_msg().value.ng_setup_request();
-  fill_asn1_ng_setup_request(ng_setup_request, request);
+  fill_asn1_ng_setup_request(ng_setup_request, context);
 
   return launch_async<ng_setup_procedure>(
-      context, ngap_msg, request.max_setup_retries, *tx_pdu_notifier, ev_mng, timer_factory{timers, ctrl_exec}, logger);
+      context, ngap_msg, max_setup_retries, *tx_pdu_notifier, ev_mng, timer_factory{timers, ctrl_exec}, logger);
 }
 
 async_task<void> ngap_impl::handle_ng_reset_message(const cu_cp_ng_reset& msg)
