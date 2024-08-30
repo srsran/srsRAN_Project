@@ -229,7 +229,7 @@ int main(int argc, char** argv)
   configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &gnb_cfg, &du_unit_cfg, &cu_cp_config]() {
+  app.callback([&app, &gnb_cfg, &du_unit_cfg, &cu_cp_config, &cu_up_config]() {
     autoderive_gnb_parameters_after_parsing(app, gnb_cfg);
     autoderive_slicing_args(du_unit_cfg, cu_cp_config);
     autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
@@ -253,6 +253,8 @@ int main(int argc, char** argv)
     }
 
     autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(supported_tas));
+    autoderive_cu_up_parameters_after_parsing(
+        cu_cp_config.amf_cfg.bind_addr, cu_cp_config.amf_cfg.no_core, cu_up_config);
   });
 
   // Parse arguments.
