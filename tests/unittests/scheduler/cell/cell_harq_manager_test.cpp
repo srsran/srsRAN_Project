@@ -1065,3 +1065,23 @@ TEST_F(single_ntn_ue_harq_process_test, harq_history_is_reachable_after_timeout)
 
   ASSERT_EQ(h_ul.get_grant_params().tbs_bytes, harq_ent.total_ul_bytes_waiting_crc());
 }
+
+TEST_F(single_ntn_ue_harq_process_test, when_harq_gets_acked_then_it_reports_the_correct_tbs)
+{
+  slot_point pusch_slot   = current_slot + k2;
+  slot_point uci_slot     = current_slot + k1;
+  slot_point slot_timeout = std::max(pusch_slot, uci_slot) + 1;
+  while (current_slot != slot_timeout) {
+    run_slot();
+  }
+
+  h_ul = harq_ent.find_ul_harq(pusch_slot).value();
+  ASSERT_EQ(harq_ent.total_ul_bytes_waiting_crc(), pusch_info.tb_size_bytes);
+  ASSERT_EQ(h_ul.ul_crc_info(true), pusch_info.tb_size_bytes);
+  ASSERT_EQ(harq_ent.total_ul_bytes_waiting_crc(), 0);
+
+  h_dl = harq_ent.find_dl_harq(uci_slot, 0).value();
+  ASSERT_EQ(h_dl.dl_ack_info(mac_harq_ack_report_status::ack, std::nullopt),
+            dl_harq_process_handle::status_update::acked);
+  ASSERT_EQ(h_dl.get_grant_params().tbs_bytes, pdsch_info.codewords[0].tb_size_bytes);
+}

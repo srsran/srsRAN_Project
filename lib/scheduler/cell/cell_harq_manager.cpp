@@ -62,6 +62,18 @@ public:
     }
   }
 
+  void handle_ack(harq_impl_type& h)
+  {
+    auto& hist_entry = history[get_offset_index(h.slot_ack)];
+    if (&h < hist_entry.data() or &h >= hist_entry.data() + hist_entry.size()) {
+      // Check if the HARQ Process being ACKed is the same as the one managed by the NTN history.
+      srsran_assertion_failure("ACK Info handled for a non-NTN HARQ process");
+      srslog::fetch_basic_logger("SCHED").error("ACK Info handled for a non-NTN HARQ process");
+      return;
+    }
+    h.status = harq_state_t::empty;
+  }
+
 protected:
   unsigned get_current_index(slot_point sl) const { return mod(sl.to_uint()); }
   unsigned get_offset_index(slot_point sl) const { return get_current_index(sl + ntn_cs_koffset); }
@@ -320,6 +332,7 @@ void cell_harq_repository<IsDl>::handle_ack(harq_type& h, bool ack)
 
   if (is_ntn_mode()) {
     // In NTN mode, ACK info does not affect the timeout/retx containers.
+    alloc_hist->handle_ack(h);
     return;
   }
 

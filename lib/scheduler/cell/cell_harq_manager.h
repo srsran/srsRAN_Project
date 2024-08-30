@@ -402,7 +402,7 @@ public:
                                unsigned      nof_dl_harq_procs = MAX_NOF_HARQS,
                                unsigned      nof_ul_harq_procs = MAX_NOF_HARQS);
 
-  /// Checks whether an UE with the provided ue index exists.
+  /// Checks whether a UE with the provided ue index exists.
   bool contains(du_ue_index_t ue_idx) const;
 
   /// Retrieve list of HARQ processes with pending retxs.
