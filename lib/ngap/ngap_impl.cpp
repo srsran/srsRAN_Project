@@ -975,6 +975,17 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
   tx_pdu_notifier->on_new_message(ngap_msg);
 }
 
+std::vector<plmn_identity> ngap_impl::get_supported_plmns() const
+{
+  std::vector<plmn_identity> supported_plmns;
+  supported_plmns.reserve(context.served_guami_list.size());
+  for (const auto& guami : context.served_guami_list) {
+    supported_plmns.push_back(guami.plmn);
+  }
+
+  return supported_plmns;
+}
+
 void ngap_impl::remove_ue_context(ue_index_t ue_index)
 {
   if (!ue_ctxt_list.contains(ue_index)) {

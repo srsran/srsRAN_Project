@@ -26,6 +26,7 @@ set(SOURCES
       du_processor/du_processor_factory.cpp
       du_processor/du_processor_repository.cpp
       metrics_handler/metrics_handler_impl.cpp
+      ngap_repository.cpp
       routines/amf_connection_setup_routine.cpp
       routines/initial_context_setup_routine.cpp
       routines/pdu_session_routine_helpers.cpp

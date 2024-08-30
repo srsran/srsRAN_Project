@@ -1,0 +1,78 @@
+/*
+ *
+ * Copyright 2021-2024 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "adapters/ngap_adapters.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/gateways/n2_connection_client.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/ran/plmn_identity.h"
+
+namespace srsran {
+namespace srs_cu_cp {
+
+struct cu_cp_configuration;
+
+struct ngap_repository_config {
+  const cu_cp_configuration& cu_cp;
+  cu_cp_ngap_handler&        cu_cp_notifier;
+  paging_message_handler&    paging_handler;
+  srslog::basic_logger&      logger;
+};
+
+class ngap_repository
+{
+public:
+  explicit ngap_repository(ngap_repository_config cfg_);
+
+  /// \brief Adds a NGAP object to the CU-CP.
+  /// \return A pointer to the interface of the added NGAP object if it was successfully created, a nullptr otherwise.
+  ngap_interface* add_ngap(amf_index_t amf_index, const cu_cp_configuration::ngap_params& config);
+
+  /// \brief Updates the PLMN lookup table with the PLMNs supported by the connected NGAP.
+  /// \param[in] amf_index The AMF index to identify the NGAP.
+  void update_plmn_lookup(amf_index_t amf_index);
+
+  /// \brief Checks whether a AMF with the specified PLMN is served by any of the connected NGAPs.
+  /// \param[in] plmn The PLMN to identify the NGAP.
+  /// \return The interface of the NGAP for the given PLMN if it is found, nullptr if no NGAP for the PLMN is found.
+  ngap_interface* find_ngap(const plmn_identity& plmn);
+
+  /// \brief Get the all NGAP interfaces.
+  std::map<amf_index_t, ngap_interface*> get_ngaps();
+
+  /// Number of NGAPs managed by the CU-CP.
+  size_t get_nof_ngaps() const { return ngap_db.size(); }
+
+  /// Number of UEs managed by the CU-CP.
+  size_t get_nof_ngap_ues();
+
+private:
+  struct ngap_context {
+    // CU-CP handler of NGAP events.
+    ngap_cu_cp_adapter ngap_to_cu_cp_notifier;
+
+    std::unique_ptr<ngap_interface> ngap;
+
+    /// Notifier used by the CU-CP to push NGAP Tx messages to the respective AMF.
+    std::unique_ptr<ngap_message_notifier> ngap_tx_pdu_notifier;
+  };
+
+  ngap_repository_config cfg;
+  srslog::basic_logger&  logger;
+
+  std::unordered_map<plmn_identity, amf_index_t> plmn_to_amf_index;
+  std::map<amf_index_t, ngap_context>            ngap_db;
+};
+
+} // namespace srs_cu_cp
+} // namespace srsran

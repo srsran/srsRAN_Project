@@ -25,8 +25,6 @@ namespace srs_cu_cp {
 class ngap_cu_cp_adapter : public ngap_cu_cp_notifier
 {
 public:
-  explicit ngap_cu_cp_adapter() = default;
-
   void connect_cu_cp(cu_cp_ngap_handler& cu_cp_handler_, paging_message_handler& paging_handler_)
   {
     cu_cp_handler  = &cu_cp_handler_;

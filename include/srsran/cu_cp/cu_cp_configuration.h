@@ -59,6 +59,13 @@ struct cu_cp_configuration {
     n2_connection_client* n2_gw          = nullptr;
     timer_manager*        timers         = nullptr;
   };
+
+  struct ngap_params {
+    n2_connection_client* n2_gw = nullptr;
+    // Supported TAs for each AMF.
+    std::vector<supported_tracking_area> supported_tas;
+  };
+
   struct rrc_params {
     /// Force re-establishment fallback.
     bool force_reestablishment_fallback = false;
@@ -90,6 +97,8 @@ struct cu_cp_configuration {
   ran_node_configuration node;
   /// Parameters to determine the admission of new CU-UP, DU and UE connections.
   admission_params admission;
+  /// NGAP layer-specific parameters.
+  std::vector<ngap_params> ngaps;
   /// RRC layer-specific parameters.
   rrc_params rrc;
   /// F1AP layer-specific parameters.

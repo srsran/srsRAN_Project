@@ -16,6 +16,7 @@
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -247,6 +248,9 @@ public:
   virtual void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
                                                      const nr_cell_global_id_t& cgi,
                                                      const unsigned             tac) = 0;
+
+  /// \brief Get the supported PLMNs.
+  virtual std::vector<plmn_identity> get_supported_plmns() const = 0;
 };
 
 /// Interface to control the NGAP.
