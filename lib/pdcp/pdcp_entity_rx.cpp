@@ -224,8 +224,24 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     return;
   }
 
+  pdcp_rx_sdu_info pdu_info;
+  pdu_info.sdu             = std::move(pdu);
+  pdu_info.count           = rcvd_count;
+  pdu_info.time_of_arrival = time_start;
+
+  // apply security in crypto executor
+  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_security(std::move(pdu_info)); };
+  if (not crypto_executor.execute(std::move(fn))) {
+    logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);
+  }
+}
+
+void pdcp_entity_rx::apply_security(pdcp_rx_sdu_info pdu_info)
+{
+  uint32_t rcvd_count = pdu_info.count;
+
   // Apply deciphering and integrity check
-  expected<byte_buffer> exp_buf = apply_deciphering_and_integrity_check(std::move(pdu), rcvd_count);
+  expected<byte_buffer> exp_buf = apply_deciphering_and_integrity_check(std::move(pdu_info.sdu), rcvd_count);
   if (!exp_buf.has_value()) {
     logger.log_warning("Failed deciphering and integrity check. count={}", rcvd_count);
     return;
@@ -235,8 +251,18 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
   unsigned hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
   exp_buf.value().trim_head(hdr_size);
 
-  pdu = std::move(exp_buf.value());
+  pdu_info.sdu = std::move(exp_buf.value());
 
+  // apply reordering in UE executor
+  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_reordering(std::move(pdu_info)); };
+  if (not ue_ul_executor.execute(std::move(fn))) {
+    logger.log_warning("Dropped PDU, UE executor queue is full. count={}", rcvd_count);
+  }
+}
+
+void pdcp_entity_rx::apply_reordering(pdcp_rx_sdu_info pdu_info)
+{
+  uint32_t rcvd_count = pdu_info.count;
   /*
    * Check valid rcvd_count:
    *
@@ -262,9 +288,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
 
   // Store PDU in Rx window
   pdcp_rx_sdu_info& sdu_info = rx_window.add_sn(rcvd_count);
-  sdu_info.sdu               = std::move(pdu);
-  sdu_info.count             = rcvd_count;
-  sdu_info.time_of_arrival   = time_start;
+  sdu_info                   = std::move(pdu_info);
 
   // Update RX_NEXT
   if (rcvd_count >= st.rx_next) {

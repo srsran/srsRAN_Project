@@ -131,8 +131,12 @@ private:
   // Handling of different PDU types
 
   /// \brief Handles a received data PDU.
-  /// \param buf The data PDU to be handled (including header and payload)
-  void handle_data_pdu(byte_buffer buf);
+  /// \param pdu The data PDU to be handled (including header and payload)
+  void handle_data_pdu(byte_buffer pdu);
+
+  void apply_security(pdcp_rx_sdu_info pdu_info);
+
+  void apply_reordering(pdcp_rx_sdu_info pdu_info);
 
   /// \brief Handles a received control PDU.
   /// \param buf The control PDU to be handled (including header and payload)

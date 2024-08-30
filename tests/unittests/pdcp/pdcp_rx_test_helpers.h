@@ -13,9 +13,11 @@
 #include "lib/pdcp/pdcp_entity_rx.h"
 #include "lib/pdcp/pdcp_interconnect.h"
 #include "pdcp_test_vectors.h"
+#include "srsran/adt/concurrent_queue.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -109,7 +111,7 @@ protected:
     test_frame  = std::make_unique<pdcp_rx_test_frame>();
     metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker);
     pdcp_rx     = std::make_unique<pdcp_entity_rx>(
-        0, rb_id, config, *test_frame, *test_frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
+        0, rb_id, config, *test_frame, *test_frame, timer_factory{timers, worker}, worker, crypto_exec, *metrics_agg);
     pdcp_rx->set_status_handler(test_frame.get());
 
     srslog::flush();
@@ -154,6 +156,15 @@ protected:
   timer_manager                       timers;
   manual_task_worker                  worker{64};
   std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
+
+  unsigned nof_crypto_threads = 4;
+  unsigned crypto_queue_size  = 128;
+
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc>          crypto_worker_pool{"crypto",
+                                                                              nof_crypto_threads,
+                                                                              crypto_queue_size};
+  task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_exec =
+      task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
 
   security::sec_128_as_config              sec_cfg;
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
