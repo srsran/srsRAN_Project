@@ -82,7 +82,6 @@ protected:
                                              *tester,
                                              *tester,
                                              *metrics_agg,
-                                             true,
                                              pcap,
                                              pcell_worker,
                                              ue_worker,

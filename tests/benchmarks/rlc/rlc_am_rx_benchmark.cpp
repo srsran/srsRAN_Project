@@ -151,7 +151,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   null_rlc_pcap pcap;
 
   metrics_agg = std::make_unique<rlc_metrics_aggregator>(
-      gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1000}, tester.get(), ue_worker);
+      gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{0}, tester.get(), ue_worker);
 
   // Make PDUs
   std::vector<byte_buffer> pdus;
@@ -163,7 +163,6 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
                                               *tester,
                                               *tester,
                                               *metrics_agg,
-                                              false,
                                               pcap,
                                               pcell_worker,
                                               ue_worker,
@@ -239,7 +238,7 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
   config.t_reassembly      = 200;
 
   auto metrics_agg = std::make_unique<rlc_metrics_aggregator>(
-      gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1000}, tester.get(), ue_worker);
+      gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{0}, tester.get(), ue_worker);
 
   // Create RLC AM RX entity
   std::unique_ptr<rlc_rx_am_entity> rlc_rx = std::make_unique<rlc_rx_am_entity>(gnb_du_id_t::min,
@@ -248,7 +247,6 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
                                                                                 config,
                                                                                 *tester,
                                                                                 *metrics_agg,
-                                                                                false,
                                                                                 pcap,
                                                                                 ue_worker,
                                                                                 timers);
