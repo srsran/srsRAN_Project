@@ -121,6 +121,11 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
     }
   }
 
+  // synchronization point - Wait for PDUs to reach RLC SDU queues.
+  for (unsigned i = 0; i != this->workers.ue_workers.size(); ++i) {
+    this->workers.ue_workers[i].wait_pending_tasks();
+  }
+
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
   std::vector<unsigned> bytes_sched_per_cell(GetParam().nof_cells, 0);
   for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
@@ -164,7 +169,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
             std::any_of(ue_grant.tb_list[0].lc_chs_to_sched.begin(),
                         ue_grant.tb_list[0].lc_chs_to_sched.end(),
                         // is DRB data
-                        [](const dl_msg_lc_info& lc) { return lc.lcid.is_sdu() and lc.lcid.to_lcid() >= LCID_SRB3; })) {
+                        [](const dl_msg_lc_info& lc) { return lc.lcid.is_sdu() and lc.lcid.to_lcid() > LCID_SRB3; })) {
           unsigned pdu_size = phy_cell.last_dl_data.value().ue_pdus[i].pdu.size();
           bytes_sched_per_cell[c] += pdu_size;
           largest_pdu_per_cell[c] = std::max(largest_pdu_per_cell[c], pdu_size);
