@@ -55,15 +55,17 @@ protected:
     low_metrics_timer(ue_timer_factory.create_timer()),
     metrics_agg(metrics_agg_)
   {
-    if (metrics_enabled) {
-      high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
-        metrics_agg.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
-        high_metrics_timer.run();
-      });
-      low_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
-        metrics_agg.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
-        low_metrics_timer.run();
-      });
+    if (metrics_agg.get_metrics_period().count()) {
+      high_metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()),
+                             [this](timer_id_t tid) {
+                               metrics_agg.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
+                               high_metrics_timer.run();
+                             });
+      low_metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()),
+                            [this](timer_id_t tid) {
+                              metrics_agg.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
+                              low_metrics_timer.run();
+                            });
 
       high_metrics_timer.run();
       low_metrics_timer.run();
