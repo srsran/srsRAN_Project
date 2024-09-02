@@ -479,7 +479,7 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
   cfg.srs_res_list.emplace_back();
   // TODO: Verify correctness of the config based on what we support.
   srs_config::srs_resource& res    = cfg.srs_res_list.back();
-  res.id                           = static_cast<srs_config::srs_res_id>(0);
+  res.id.ue_res_id                 = static_cast<srs_config::srs_res_id>(0);
   res.nof_ports                    = srs_config::srs_resource::nof_srs_ports::port1;
   res.tx_comb.size                 = tx_comb_size::n2;
   res.tx_comb.tx_comb_offset       = 0;

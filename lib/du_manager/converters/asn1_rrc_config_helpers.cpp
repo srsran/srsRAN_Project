@@ -2317,7 +2317,7 @@ static void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_p
 asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg)
 {
   srs_res_s res;
-  res.srs_res_id = cfg.id;
+  res.srs_res_id = cfg.id.ue_res_id;
 
   switch (cfg.nof_ports) {
     case srs_config::srs_resource::nof_srs_ports::port1:
@@ -2470,7 +2470,7 @@ static void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_co
       src.srs_res_list,
       dest.srs_res_list,
       [](const srs_config::srs_resource& res) { return make_asn1_rrc_srs_res(res); },
-      [](const srs_config::srs_resource& res) { return res.id; });
+      [](const srs_config::srs_resource& res) { return res.id.ue_res_id; });
 
   if (dest.is_tpc_accum_disabled) {
     out.tpc_accumulation_present = true;

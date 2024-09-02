@@ -77,6 +77,18 @@ struct srs_config {
     MAX_NOF_SRS_RES_PER_SET = 16
   };
 
+  struct srs_res_id_t {
+    /// Resource ID within the cell. The UE doesn't care about this value.
+    unsigned cell_res_id;
+    /// Resource ID for the UE.
+    srs_res_id ue_res_id;
+
+    bool operator==(const srs_res_id_t& rhs) const
+    {
+      return cell_res_id == rhs.cell_res_id && ue_res_id == rhs.ue_res_id;
+    }
+  };
+
   struct srs_resource_set {
     struct aperiodic_resource_type {
       /// The DCI "code point" upon which the UE shall transmit SRS according to this SRS resource set configuration.
@@ -245,7 +257,7 @@ struct srs_config {
       bool operator!=(const srs_spatial_relation_info& rhs) const { return !(rhs == *this); }
     };
 
-    srs_res_id      id;
+    srs_res_id_t    id;
     nof_srs_ports   nof_ports;
     ptrs_port_index ptrs_port{ptrs_port_index::not_set};
 

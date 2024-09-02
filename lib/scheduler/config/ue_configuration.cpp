@@ -211,10 +211,10 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       // to 'codebook', the UE shall expect that higher layer parameters nrofSRS-Ports in SRS-Resource in
       // SRS-ResourceSet shall be configured with the same value for all these SRS resources.
       const auto  srs_resource_id = srs_res_set->srs_res_id_list.front();
-      const auto* srs_res =
-          std::find_if(opt_srs_cfg.value().srs_res_list.begin(),
-                       opt_srs_cfg.value().srs_res_list.end(),
-                       [srs_resource_id](const srs_config::srs_resource& res) { return res.id == srs_resource_id; });
+      const auto* srs_res         = std::find_if(
+          opt_srs_cfg.value().srs_res_list.begin(),
+          opt_srs_cfg.value().srs_res_list.end(),
+          [srs_resource_id](const srs_config::srs_resource& res) { return res.id.ue_res_id == srs_resource_id; });
       srsran_assert(srs_res != opt_srs_cfg.value().srs_res_list.end(), "No valid SRS resource found");
       if (not dci_sz_cfg.tx_config_non_codebook) {
         dci_sz_cfg.nof_srs_ports = static_cast<unsigned>(srs_res->nof_ports);
