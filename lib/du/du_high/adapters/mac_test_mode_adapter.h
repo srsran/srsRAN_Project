@@ -14,6 +14,7 @@
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/srslog/srslog.h"
+#include <mutex>
 #include <unordered_map>
 
 namespace srsran {
@@ -154,7 +155,12 @@ public:
   void handle_uci(const mac_uci_indication_message& msg) override;
 
 private:
-  struct slot_descision_history {
+  struct slot_decision_history {
+    // Locks a given slot.
+    // Note: In normal scenarios, this mutex will have no contention, as the times of write and read are separate.
+    // However, if the ring buffer is too small, this may stop being true.
+    mutable std::mutex         mutex;
+    slot_point                 slot;
     std::vector<pucch_info>    pucchs;
     std::vector<ul_sched_info> puschs;
   };
@@ -166,6 +172,8 @@ private:
   void forward_uci_ind_to_mac(const mac_uci_indication_message& uci_msg);
   void forward_crc_ind_to_mac(const mac_crc_indication_message& crc_msg);
 
+  size_t get_ring_idx(slot_point sl) const { return sl.to_uint() % sched_decision_history.size(); }
+
   const srs_du::du_test_mode_config::test_mode_ue_config& test_ue_cfg;
   mac_cell_control_information_handler&                   adapted;
   mac_pdu_handler&                                        pdu_handler;
@@ -174,7 +182,7 @@ private:
   std::function<void(rnti_t)>                             dl_bs_notifier;
   srslog::basic_logger&                                   logger;
 
-  std::vector<slot_descision_history> sched_decision_history;
+  std::vector<slot_decision_history> sched_decision_history;
 
   test_ue_info_manager& ue_info_mgr;
 };

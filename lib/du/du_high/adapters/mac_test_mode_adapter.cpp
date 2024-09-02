@@ -71,6 +71,13 @@ private:
   byte_buffer tx_sdu;
 };
 
+size_t get_ring_size(const mac_cell_creation_request& cell_cfg)
+{
+  // Note: The history ring size has to be a multiple of the TDD frame size in slots.
+  // Number of slots managed by this container.
+  return get_allocator_ring_size_gt_min(get_max_slot_ul_alloc_delay(cell_cfg.sched_req.ntn_cs_koffset));
+}
+
 } // namespace
 
 mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
@@ -89,75 +96,83 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
   result_notifier(result_notifier_),
   dl_bs_notifier(std::move(dl_bs_notifier_)),
   logger(srslog::fetch_basic_logger("MAC")),
+  sched_decision_history(get_ring_size(cell_cfg)),
   ue_info_mgr(ue_info_mgr_)
 {
-  // Number of previous slot results to keep in history before they get deleted. Having access to past decisions is
-  // useful during the handling of error indications.
-  static const size_t RING_MAX_HISTORY_SIZE = 8;
-  // Number of slots managed by this container.
-  static const size_t HISTORY_RING_SIZE = get_allocator_ring_size_gt_min(
-      RING_MAX_HISTORY_SIZE + get_max_slot_ul_alloc_delay(cell_cfg.sched_req.ntn_cs_koffset));
-  sched_decision_history.resize(HISTORY_RING_SIZE);
 }
 
 void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
 {
   if (test_ue_cfg.auto_ack_indication_delay.has_value()) {
     // auto-generation of CRC/UCI indication is enabled.
-    slot_point                    sl_rx = sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
-    const slot_descision_history& entry = sched_decision_history[sl_rx.to_uint() % sched_decision_history.size()];
+    slot_point                   sl_rx = sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
+    const slot_decision_history& entry = sched_decision_history[get_ring_idx(sl_rx)];
+    std::unique_lock<std::mutex> lock(entry.mutex);
+    if (entry.slot == sl_rx) {
+      // Handle auto-generation of pending CRC indications.
+      if (not entry.puschs.empty()) {
+        mac_crc_indication_message crc_ind{};
+        crc_ind.sl_rx = sl_rx;
 
-    // Handle auto-generation of pending CRC indications.
-    if (not entry.puschs.empty()) {
-      mac_crc_indication_message crc_ind{};
-      crc_ind.sl_rx = sl_rx;
+        for (const ul_sched_info& pusch : entry.puschs) {
+          auto& crc_pdu   = crc_ind.crcs.emplace_back();
+          crc_pdu.rnti    = pusch.pusch_cfg.rnti;
+          crc_pdu.harq_id = pusch.pusch_cfg.harq_id;
+          // Force CRC=OK for test UE.
+          crc_pdu.tb_crc_success = true;
+          // Force UL SINR.
+          crc_pdu.ul_sinr_dB = 100;
+        }
 
-      for (const ul_sched_info& pusch : entry.puschs) {
-        auto& crc_pdu   = crc_ind.crcs.emplace_back();
-        crc_pdu.rnti    = pusch.pusch_cfg.rnti;
-        crc_pdu.harq_id = pusch.pusch_cfg.harq_id;
-        // Force CRC=OK for test UE.
-        crc_pdu.tb_crc_success = true;
-        // Force UL SINR.
-        crc_pdu.ul_sinr_dB = 100;
+        // Unlock before forward CRC indication
+        lock.unlock();
+
+        // Forward CRC to the real MAC.
+        forward_crc_ind_to_mac(crc_ind);
+
+        lock.lock();
       }
 
-      // Forward CRC to the real MAC.
-      forward_crc_ind_to_mac(crc_ind);
-    }
+      // Handle auto-generation of pending UCI indications.
+      mac_uci_indication_message uci_ind;
+      uci_ind.sl_rx = sl_rx;
 
-    // Handle auto-generation of pending UCI indications.
-    mac_uci_indication_message uci_ind;
-    uci_ind.sl_rx = sl_rx;
-
-    // > Handle pending PUCCHs.
-    for (const pucch_info& pucch : entry.pucchs) {
-      mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
-      pdu.rnti         = pucch.crnti;
-      switch (pucch.format) {
-        case pucch_format::FORMAT_0:
-        case pucch_format::FORMAT_1: {
-          fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>(), pucch);
-        } break;
-        case pucch_format::FORMAT_2: {
-          fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(), pucch);
-        } break;
-        default:
-          break;
-      }
-    }
-
-    // > Handle pending PUSCHs.
-    for (const ul_sched_info& pusch : entry.puschs) {
-      if (pusch.uci.has_value()) {
+      // > Handle pending PUCCHs.
+      for (const pucch_info& pucch : entry.pucchs) {
         mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
-        pdu.rnti         = pusch.pusch_cfg.rnti;
-        fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pusch_type>(), pusch);
+        pdu.rnti         = pucch.crnti;
+        switch (pucch.format) {
+          case pucch_format::FORMAT_0:
+          case pucch_format::FORMAT_1: {
+            fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>(), pucch);
+          } break;
+          case pucch_format::FORMAT_2: {
+            fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(), pucch);
+          } break;
+          default:
+            break;
+        }
       }
-    }
 
-    // Forward UCI indication to real MAC.
-    forward_uci_ind_to_mac(uci_ind);
+      // > Handle pending PUSCHs.
+      for (const ul_sched_info& pusch : entry.puschs) {
+        if (pusch.uci.has_value()) {
+          mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
+          pdu.rnti         = pusch.pusch_cfg.rnti;
+          fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pusch_type>(), pusch);
+        }
+      }
+
+      // Unlock before forward UCI indication
+      lock.unlock();
+
+      // Forward UCI indication to real MAC.
+      forward_uci_ind_to_mac(uci_ind);
+    } else {
+      logger.warning(
+          "Failed to generate UCI and CRC for slot={}. Cause: Overflow of the test mode internal storage detected",
+          sl_rx);
+    }
   }
 
   slot_handler.handle_slot_indication(sl_tx);
@@ -165,12 +180,16 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
 
 void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error_event event)
 {
-  slot_descision_history& entry = sched_decision_history[sl_tx.to_uint() % sched_decision_history.size()];
-
   if (event.pusch_and_pucch_discarded) {
-    // Delete expected UCI and CRC indications that resulted from the scheduler decisions for this slot.
-    entry.puschs.clear();
-    entry.pucchs.clear();
+    slot_decision_history&      entry = sched_decision_history[get_ring_idx(sl_tx)];
+    std::lock_guard<std::mutex> lock(entry.mutex);
+    if (entry.slot == sl_tx) {
+      // Delete expected UCI and CRC indications that resulted from the scheduler decisions for this slot.
+      entry.puschs.clear();
+      entry.pucchs.clear();
+    } else {
+      logger.warning("Failed to handle error indication. Cause: Overflow of the test mode internal storage detected");
+    }
   }
 
   slot_handler.handle_error_indication(sl_tx, event);
@@ -178,33 +197,40 @@ void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error
 
 void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& msg)
 {
-  // Forward CRC to MAC, but remove the UCI for the test mode UE.
-  mac_crc_indication_message msg_copy;
-  msg_copy.sl_rx = msg.sl_rx;
-  for (const mac_crc_pdu& crc : msg.crcs) {
-    if (ue_info_mgr.is_test_ue(crc.rnti)) {
-      // test mode UE case.
+  mac_crc_indication_message msg_copy = msg;
 
-      // Find respective PUSCH PDU that was previously scheduled.
-      const slot_descision_history& entry = sched_decision_history[msg.sl_rx.to_uint() % sched_decision_history.size()];
-      bool found = std::any_of(entry.puschs.begin(), entry.puschs.end(), [&](const ul_sched_info& pusch) {
-        return pusch.pusch_cfg.rnti == crc.rnti and pusch.pusch_cfg.harq_id == crc.harq_id;
-      });
-      if (not found) {
-        logger.warning(
-            "c-rnti={}: Mismatch between provided CRC and expected PUSCH for slot_rx={}", crc.rnti, msg.sl_rx);
-        continue;
+  {
+    // Try to acquire history.
+    const slot_decision_history& entry = sched_decision_history[get_ring_idx(msg.sl_rx)];
+    std::lock_guard<std::mutex>  lock(entry.mutex);
+    if (entry.slot == msg.sl_rx) {
+      // Forward CRC to MAC, but remove the UCI for the test mode UE.
+      for (mac_crc_pdu& crc : msg_copy.crcs) {
+        if (ue_info_mgr.is_test_ue(crc.rnti)) {
+          // test mode UE case.
+
+          // Find respective PUSCH PDU that was previously scheduled.
+          bool found = std::any_of(entry.puschs.begin(), entry.puschs.end(), [&](const ul_sched_info& pusch) {
+            return pusch.pusch_cfg.rnti == crc.rnti and pusch.pusch_cfg.harq_id == crc.harq_id;
+          });
+          if (not found) {
+            logger.warning(
+                "c-rnti={}: Failed to set CRC. Cause: Mismatch between provided CRC and expected PUSCH for slot_rx={}",
+                crc.rnti,
+                msg.sl_rx);
+            continue;
+          }
+
+          // Intercept the CRC indication and force crc=OK and UL SNR.
+          crc.tb_crc_success = true;
+          crc.ul_sinr_dB     = 100;
+        }
       }
-
-      // Intercept the CRC indication and force crc=OK and UL SNR.
-      mac_crc_pdu test_crc    = crc;
-      test_crc.tb_crc_success = true;
-      test_crc.ul_sinr_dB     = 100;
-      msg_copy.crcs.push_back(test_crc);
-
     } else {
-      // non-test mode UE. Forward the original CRC PDU.
-      msg_copy.crcs.push_back(crc);
+      // Failed to lock entry in ring.
+      logger.warning(
+          "Unable to force CRC test mode value for slot={}. Cause: Overflow detected in test mode internal storage",
+          msg.sl_rx);
     }
   }
 
@@ -395,48 +421,51 @@ void mac_test_mode_cell_adapter::forward_crc_ind_to_mac(const mac_crc_indication
 
 void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& msg)
 {
-  const slot_descision_history& entry = sched_decision_history[msg.sl_rx.to_uint() % sched_decision_history.size()];
+  mac_uci_indication_message   msg_copy{msg};
+  const slot_decision_history& entry = sched_decision_history[get_ring_idx(msg.sl_rx)];
 
-  // Forward UCI to MAC, but alter the UCI for the test mode UE.
-  mac_uci_indication_message msg_copy;
-  msg_copy.sl_rx = msg.sl_rx;
-  for (const mac_uci_pdu& pdu : msg.ucis) {
-    if (not ue_info_mgr.is_test_ue(pdu.rnti)) {
-      // non-test mode UE. Forward the original UCI indication PDU.
-      msg_copy.ucis.push_back(pdu);
-    } else {
-      // test mode UE.
-      // Intercept the UCI indication and force HARQ-ACK=ACK and CSI.
-      msg_copy.ucis.push_back(pdu);
-      mac_uci_pdu& test_uci = msg_copy.ucis.back();
-
-      bool entry_found = false;
-      if (std::holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
-        for (const ul_sched_info& pusch : entry.puschs) {
-          if (pusch.pusch_cfg.rnti == pdu.rnti and pusch.uci.has_value()) {
-            fill_uci_pdu(std::get<mac_uci_pdu::pusch_type>(test_uci.pdu), pusch);
-            entry_found = true;
-          }
-        }
-      } else {
-        // PUCCH case.
-        for (const pucch_info& pucch : entry.pucchs) {
-          if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
-            // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
-            if (pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1) {
-              fill_uci_pdu(std::get<mac_uci_pdu::pucch_f0_or_f1_type>(test_uci.pdu), pucch);
-            } else {
-              fill_uci_pdu(std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);
+  {
+    std::unique_lock<std::mutex> lock(entry.mutex);
+    if (entry.slot == msg_copy.sl_rx) {
+      // Forward UCI to MAC, but alter the UCI for the test mode UE.
+      for (mac_uci_pdu& test_uci : msg_copy.ucis) {
+        if (ue_info_mgr.is_test_ue(test_uci.rnti)) {
+          bool entry_found = false;
+          if (std::holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
+            for (const ul_sched_info& pusch : entry.puschs) {
+              if (pusch.pusch_cfg.rnti == test_uci.rnti and pusch.uci.has_value()) {
+                fill_uci_pdu(std::get<mac_uci_pdu::pusch_type>(test_uci.pdu), pusch);
+                entry_found = true;
+              }
             }
-            entry_found = true;
+          } else {
+            // PUCCH case.
+            for (const pucch_info& pucch : entry.pucchs) {
+              if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
+                // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
+                if (pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1) {
+                  fill_uci_pdu(std::get<mac_uci_pdu::pucch_f0_or_f1_type>(test_uci.pdu), pucch);
+                } else {
+                  fill_uci_pdu(std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);
+                }
+                entry_found = true;
+              }
+            }
+          }
+
+          if (not entry_found) {
+            logger.warning("c-rnti={}: Failed to set UCI test mode value. Cause: Mismatch between provided UCI and "
+                           "expected UCI for slot_rx={}",
+                           test_uci.rnti,
+                           msg.sl_rx);
           }
         }
       }
-
-      if (not entry_found) {
-        msg_copy.ucis.pop_back();
-        logger.warning("c-rnti={}: Mismatch between provided UCI and expected UCI for slot_rx={}", pdu.rnti, msg.sl_rx);
-      }
+    } else {
+      // Failed to lock entry in history ring.
+      logger.warning(
+          "Unable to set UCI test mode value for slot={}. Cause: Overflow detected in test mode internal storage",
+          msg.sl_rx);
     }
   }
 
@@ -447,24 +476,29 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
 // Intercepts the UL results coming from the MAC.
 void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {
-  slot_descision_history& entry = sched_decision_history[ul_res.slot.to_uint() % sched_decision_history.size()];
+  {
+    slot_decision_history&       entry = sched_decision_history[get_ring_idx(ul_res.slot)];
+    std::unique_lock<std::mutex> lock(entry.mutex);
+    entry.slot = ul_res.slot;
 
-  // Resets the history for this ring element.
-  entry.pucchs.clear();
-  entry.puschs.clear();
+    // Resets the history for this ring element.
+    entry.pucchs.clear();
+    entry.puschs.clear();
 
-  // Fill the ring element with the scheduler decisions.
-  for (const pucch_info& pucch : ul_res.ul_res->pucchs) {
-    if (ue_info_mgr.is_test_ue(pucch.crnti)) {
-      entry.pucchs.push_back(pucch);
+    // Fill the ring element with the scheduler decisions.
+    for (const pucch_info& pucch : ul_res.ul_res->pucchs) {
+      if (ue_info_mgr.is_test_ue(pucch.crnti)) {
+        entry.pucchs.push_back(pucch);
+      }
+    }
+    for (const ul_sched_info& pusch : ul_res.ul_res->puschs) {
+      if (ue_info_mgr.is_test_ue(pusch.pusch_cfg.rnti)) {
+        entry.puschs.push_back(pusch);
+      }
     }
   }
-  for (const ul_sched_info& pusch : ul_res.ul_res->puschs) {
-    if (ue_info_mgr.is_test_ue(pusch.pusch_cfg.rnti)) {
-      entry.puschs.push_back(pusch);
-    }
-  }
 
+  // Forward results to PHY.
   result_notifier.on_new_uplink_scheduler_results(ul_res);
 }
 
