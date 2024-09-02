@@ -46,8 +46,8 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
       unsigned nof_pucch_snr_reports  = 0;
       unsigned nof_pusch_snr_reports  = 0;
       unsigned nof_pusch_rsrp_reports = 0;
-      unsigned dl_prbs_used           = 0;
-      unsigned ul_prbs_used           = 0;
+      unsigned tot_dl_prbs_used       = 0;
+      unsigned tot_ul_prbs_used       = 0;
       /// CQI statistics over the metrics report interval.
       sample_statistics<unsigned> cqi;
       /// RI statistics over the metrics report interval.

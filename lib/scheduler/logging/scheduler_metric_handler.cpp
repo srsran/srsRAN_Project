@@ -191,7 +191,12 @@ void cell_metrics_handler::report_metrics()
 
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
-    next_report.ue_metrics.push_back(ue.compute_report(report_period));
+    scheduler_ue_metrics sched_ue_metrics = ue.compute_report(report_period);
+    sched_ue_metrics.mean_dl_prbs_used =
+        nof_dl_slots > 0 ? static_cast<double>(1.0 * sched_ue_metrics.tot_dl_prbs_used / nof_dl_slots) : 0;
+    sched_ue_metrics.mean_ul_prbs_used =
+        nof_ul_slots > 0 ? static_cast<double>(1.0 * sched_ue_metrics.tot_ul_prbs_used / nof_ul_slots) : 0;
+    next_report.ue_metrics.push_back(sched_ue_metrics);
   }
 
   next_report.nof_error_indications    = error_indication_counter;
@@ -231,13 +236,13 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       u.data.nof_dl_cws++;
     }
     if (dl_grant.pdsch_cfg.rbs.is_type0()) {
-      u.data.dl_prbs_used += full_dl_slot ? convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(),
-                                                                 {0, u.nof_prbs},
-                                                                 get_nominal_rbg_size(u.nof_prbs, true))
-                                                .count()
-                                          : 0;
+      u.data.tot_dl_prbs_used += full_dl_slot ? convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(),
+                                                                     {0, u.nof_prbs},
+                                                                     get_nominal_rbg_size(u.nof_prbs, true))
+                                                    .count()
+                                              : 0;
     } else if (dl_grant.pdsch_cfg.rbs.is_type1()) {
-      u.data.dl_prbs_used += full_dl_slot ? (dl_grant.pdsch_cfg.rbs.type1().length()) : 0;
+      u.data.tot_dl_prbs_used += full_dl_slot ? (dl_grant.pdsch_cfg.rbs.type1().length()) : 0;
     }
   }
 
@@ -248,14 +253,14 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       continue;
     }
     if (ul_grant.pusch_cfg.rbs.is_type0()) {
-      ues[it->second].data.ul_prbs_used +=
+      ues[it->second].data.tot_ul_prbs_used +=
           full_ul_slot ? convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
                                               {0, ues[it->second].nof_prbs},
                                               get_nominal_rbg_size(ues[it->second].nof_prbs, true))
                              .count()
                        : 0;
     } else if (ul_grant.pusch_cfg.rbs.is_type1()) {
-      ues[it->second].data.ul_prbs_used += full_ul_slot ? (ul_grant.pusch_cfg.rbs.type1().length()) : 0;
+      ues[it->second].data.tot_ul_prbs_used += full_ul_slot ? (ul_grant.pusch_cfg.rbs.type1().length()) : 0;
     }
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
@@ -302,29 +307,29 @@ scheduler_ue_metrics
 cell_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period)
 {
   scheduler_ue_metrics ret{};
-  ret.pci           = pci;
-  ret.rnti          = rnti;
-  ret.cqi_stats     = data.cqi;
-  ret.ri_stats      = data.ri;
-  uint8_t mcs       = data.nof_dl_cws > 0 ? std::roundf(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
-  ret.dl_mcs        = sch_mcs_index{mcs};
-  mcs               = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
-  ret.ul_mcs        = sch_mcs_index{mcs};
-  ret.dl_prbs_used  = static_cast<double>(data.dl_prbs_used / (metric_report_period.count()));
-  ret.ul_prbs_used  = static_cast<double>(data.ul_prbs_used / (metric_report_period.count()));
-  ret.dl_brate_kbps = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
-  ret.ul_brate_kbps = static_cast<double>(data.sum_ul_tb_bytes * 8U) / metric_report_period.count();
-  ret.dl_nof_ok     = data.count_uci_harq_acks;
-  ret.dl_nof_nok    = data.count_uci_harqs - data.count_uci_harq_acks;
-  ret.ul_nof_ok     = data.count_crc_acks;
-  ret.ul_nof_nok    = data.count_crc_pdus - data.count_crc_acks;
-  ret.pusch_snr_db  = data.nof_pusch_snr_reports > 0 ? data.sum_pusch_snrs / data.nof_pusch_snr_reports : 0;
-  ret.pusch_rsrp_db = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
-                                                      : -std::numeric_limits<float>::infinity();
-  ret.pucch_snr_db  = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
-  ret.ul_delay_ms   = data.sum_ul_delay_ms / data.count_crc_pdus;
-  ret.bsr           = last_bsr;
-  ret.dl_bs         = 0;
+  ret.pci              = pci;
+  ret.rnti             = rnti;
+  ret.cqi_stats        = data.cqi;
+  ret.ri_stats         = data.ri;
+  uint8_t mcs          = data.nof_dl_cws > 0 ? std::roundf(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
+  ret.dl_mcs           = sch_mcs_index{mcs};
+  mcs                  = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
+  ret.ul_mcs           = sch_mcs_index{mcs};
+  ret.tot_dl_prbs_used = data.tot_dl_prbs_used;
+  ret.tot_ul_prbs_used = data.tot_ul_prbs_used;
+  ret.dl_brate_kbps    = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
+  ret.ul_brate_kbps    = static_cast<double>(data.sum_ul_tb_bytes * 8U) / metric_report_period.count();
+  ret.dl_nof_ok        = data.count_uci_harq_acks;
+  ret.dl_nof_nok       = data.count_uci_harqs - data.count_uci_harq_acks;
+  ret.ul_nof_ok        = data.count_crc_acks;
+  ret.ul_nof_nok       = data.count_crc_pdus - data.count_crc_acks;
+  ret.pusch_snr_db     = data.nof_pusch_snr_reports > 0 ? data.sum_pusch_snrs / data.nof_pusch_snr_reports : 0;
+  ret.pusch_rsrp_db    = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
+                                                         : -std::numeric_limits<float>::infinity();
+  ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
+  ret.ul_delay_ms      = data.sum_ul_delay_ms / data.count_crc_pdus;
+  ret.bsr              = last_bsr;
+  ret.dl_bs            = 0;
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
