@@ -20,7 +20,3 @@ cell_cfg:
   mac_cell_group:
     bsr_cfg:
       periodic_bsr_timer: 1
-
-expert_phy:
-  max_request_headroom_slots: 0
-  max_proc_delay: 1
