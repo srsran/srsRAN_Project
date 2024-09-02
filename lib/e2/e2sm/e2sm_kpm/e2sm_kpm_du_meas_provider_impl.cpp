@@ -413,7 +413,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(const asn1::e2sm::label
     return meas_collected;
   }
 
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     double mean_dl_prbs_used =
         std::accumulate(last_ue_metrics.begin(),
                         last_ue_metrics.end(),
@@ -452,7 +452,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(const asn1::e2sm::label
     logger.debug("Metric: RRU.PrbTotUl supports only NO_LABEL label.");
     return meas_collected;
   }
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     double mean_ul_prbs_used =
         std::accumulate(last_ue_metrics.begin(),
                         last_ue_metrics.end(),
@@ -551,7 +551,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
               (float)1000;
     ue_throughput[ue.first] = bytes_to_kbits(num_pdu_bytes_no_segmentation + num_pdu_bytes_with_segmentation) / seconds;
   }
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     meas_record_item_c meas_record_item;
     int                total_throughput = 0;
     for (auto& ue : ue_throughput) {
@@ -606,7 +606,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
               (float)1000;
     ue_throughput[ue.first] = bytes_to_kbits(num_pdu_bytes) / seconds; // unit is kbps
   }
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     meas_record_item_c meas_record_item;
     int                total_throughput = 0;
     for (auto& ue : ue_throughput) {
@@ -651,7 +651,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(const asn1::e2sm::l
   if (cell_global_id.has_value()) {
     logger.debug("Metric: DRB.PacketSuccessRateUlgNBUu currently does not support cell_global_id filter.");
   }
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     // E2 level measurements.
     meas_record_item_c meas_record_item;
     float              success_rate    = 0;
@@ -731,7 +731,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
     logger.debug("Metric: DRB.RlcPacketDropRateDl currently does not support cell_global_id filter.");
   }
 
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     // E2 level measurements.
     meas_record_item_c meas_record_item;
     float              drop_rate          = 0;
@@ -812,7 +812,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl(
     logger.debug("Metric: DRB.RlcSduTransmittedVolumeDL currently does not support cell_global_id filter.");
   }
 
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     // E2 level measurements.
     meas_record_item_c meas_record_item;
     size_t             total_tx_num_sdu_bytes = 0;
@@ -871,7 +871,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
     logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL currently does not support cell_global_id filter.");
   }
 
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     // E2 level measurements.
     meas_record_item_c meas_record_item;
     size_t             total_rx_num_sdu_bytes = 0;
@@ -925,7 +925,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
     return meas_collected;
   }
 
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     meas_record_item_c meas_record_item;
     float              av_ue_sdu_latency_us = 0;
     for (auto& rlc_metric : ue_aggr_rlc_metrics) {
@@ -1000,7 +1000,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
     return meas_collected;
   }
 
-  if (ues.size() == 0) {
+  if (ues.empty()) {
     meas_record_item_c meas_record_item;
     float              av_ue_sdu_latency_us = 0;
     for (auto& rlc_metric : ue_aggr_rlc_metrics) {
