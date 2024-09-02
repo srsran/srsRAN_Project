@@ -56,6 +56,10 @@ struct scheduler_cell_metrics {
   static constexpr unsigned nof_usec_per_bin = 50;
   /// Number of cell PRBs.
   unsigned nof_prbs = 0;
+  /// Number of full downlink slots.
+  unsigned nof_dl_slots = 0;
+  /// Number of full uplink slots.
+  unsigned nof_ul_slots = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};

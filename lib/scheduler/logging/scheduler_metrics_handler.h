@@ -88,6 +88,12 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
   /// Number of the cell PRBs.
   unsigned nof_prbs = 0;
 
+  /// Number of full downlink slots.
+  unsigned nof_dl_slots = 0;
+
+  /// Number of full uplink slots.
+  unsigned nof_ul_slots = 0;
+
   /// Counter of number of slots elapsed since the last report.
   unsigned slot_counter = 0;
 
