@@ -557,7 +557,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
     for (auto& ue : ue_throughput) {
       total_throughput += ue.second;
     }
-    meas_record_item.set_integer() = total_throughput / ue_throughput.size();
+    meas_record_item.set_integer() = total_throughput;
     items.push_back(meas_record_item);
     meas_collected = true;
   }
@@ -612,7 +612,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
     for (auto& ue : ue_throughput) {
       total_throughput += ue.second;
     }
-    meas_record_item.set_integer() = total_throughput / ue_throughput.size();
+    meas_record_item.set_integer() = total_throughput;
     items.push_back(meas_record_item);
     meas_collected = true;
   }
