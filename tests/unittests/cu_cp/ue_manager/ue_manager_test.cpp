@@ -30,7 +30,7 @@ TEST_F(ue_manager_test, when_multiple_ue_indexes_allocated_then_ue_indexes_valid
 
   for (unsigned it = 0; it < cu_cp_cfg.admission.max_nof_ues; it++) {
     // Check that the ue index is valid
-    ASSERT_NE(ue_mng.add_ue(du_index), ue_index_t::invalid);
+    ASSERT_NE(ue_mng.add_ue(du_index, plmn_identity::test_value()), ue_index_t::invalid);
   }
 }
 
@@ -45,7 +45,7 @@ TEST_F(ue_manager_test, when_more_than_max_ue_indexes_allocated_then_ue_index_in
 
   for (unsigned it = 0; it < cu_cp_cfg.admission.max_nof_ues; it++) {
     // Check that the ue index is valid
-    ASSERT_NE(ue_mng.add_ue(du_index), ue_index_t::invalid);
+    ASSERT_NE(ue_mng.add_ue(du_index, plmn_identity::test_value()), ue_index_t::invalid);
   }
 
   // reset log level
@@ -53,7 +53,7 @@ TEST_F(ue_manager_test, when_more_than_max_ue_indexes_allocated_then_ue_index_in
   test_logger.set_level(srslog::basic_levels::debug);
 
   // Allocate additional ue index
-  ASSERT_EQ(ue_mng.add_ue(du_index), ue_index_t::invalid);
+  ASSERT_EQ(ue_mng.add_ue(du_index, plmn_identity::test_value()), ue_index_t::invalid);
 }
 
 /// Test successful creation of a DU UE
@@ -62,8 +62,9 @@ TEST_F(ue_manager_test, when_valid_du_context_added_at_creation_then_ue_added)
   du_index_t      du_index    = du_index_t::min;
   rnti_t          rnti        = to_rnti(0x4601);
   du_cell_index_t pcell_index = du_cell_index_t::min;
-  ue_index_t      ue_index    = ue_mng.add_ue(du_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
-  auto*           ue          = ue_mng.find_ue(ue_index);
+  ue_index_t      ue_index =
+      ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
+  auto* ue = ue_mng.find_ue(ue_index);
 
   // check that the UE has been created
   ASSERT_NE(ue, nullptr);
@@ -95,12 +96,11 @@ TEST_F(ue_manager_test, when_valid_du_context_added_at_creation_then_ue_added)
 TEST_F(ue_manager_test, when_du_context_valid_then_ue_updated)
 {
   du_index_t      du_index    = du_index_t::min;
-  ue_index_t      ue_index    = ue_mng.add_ue(du_index);
+  ue_index_t      ue_index    = ue_mng.add_ue(du_index, plmn_identity::test_value());
   rnti_t          rnti        = to_rnti(0x4601);
   du_cell_index_t pcell_index = du_cell_index_t::min;
-  plmn_identity   plmn        = plmn_identity::test_value();
 
-  auto* ue = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index, plmn);
+  auto* ue = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
 
   // check that the UE has been created
   ASSERT_NE(ue, nullptr);
@@ -134,8 +134,9 @@ TEST_F(ue_manager_test, when_ue_index_invalid_then_ue_not_found)
   du_index_t      du_index    = du_index_t::min;
   rnti_t          rnti        = to_rnti(0x4601);
   du_cell_index_t pcell_index = du_cell_index_t::min;
-  ue_index_t      ue_index    = ue_mng.add_ue(du_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
-  auto*           ue          = ue_mng.find_ue(ue_index);
+  ue_index_t      ue_index =
+      ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
+  auto* ue = ue_mng.find_ue(ue_index);
 
   // check that the UE has been created
   ASSERT_NE(ue, nullptr);
@@ -150,13 +151,13 @@ TEST_F(ue_manager_test, when_rnti_already_exits_then_ue_not_added)
   du_index_t      du_index    = du_index_t::min;
   rnti_t          rnti        = to_rnti(0x4601);
   du_cell_index_t pcell_index = du_cell_index_t::min;
-  plmn_identity   plmn        = plmn_identity::test_value();
-  ue_index_t      ue_index    = ue_mng.add_ue(du_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index, plmn);
+  ue_index_t      ue_index =
+      ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
 
   // check that the number of DU UEs is 1
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), 1U);
 
-  auto* ue2 = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index, plmn);
+  auto* ue2 = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
 
   // check that the UE has not been added
   ASSERT_EQ(ue2, nullptr);
@@ -169,8 +170,9 @@ TEST_F(ue_manager_test, when_ue_exists_then_removal_successful)
   du_index_t      du_index    = du_index_t::min;
   rnti_t          rnti        = to_rnti(0x4601);
   du_cell_index_t pcell_index = du_cell_index_t::min;
-  ue_index_t      ue_index    = ue_mng.add_ue(du_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
-  auto*           ue          = ue_mng.find_ue(ue_index);
+  ue_index_t      ue_index =
+      ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
+  auto* ue = ue_mng.find_ue(ue_index);
 
   ue_mng.remove_ue(ue->get_ue_index());
 
@@ -191,9 +193,10 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
   for (unsigned it = to_value(rnti_t::MIN_CRNTI);
        it < unsigned(to_value(rnti_t::MIN_CRNTI) + cu_cp_cfg.admission.max_nof_ues);
        it++) {
-    rnti_t     rnti     = to_rnti(it);
-    ue_index_t ue_index = ue_mng.add_ue(du_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
-    auto*      ue       = ue_mng.find_ue(ue_index);
+    rnti_t     rnti = to_rnti(it);
+    ue_index_t ue_index =
+        ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
+    auto* ue = ue_mng.find_ue(ue_index);
 
     // check that the UE has been created
     ASSERT_NE(ue, nullptr);
@@ -235,9 +238,10 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
   for (unsigned it = to_value(rnti_t::MIN_CRNTI);
        it < unsigned(to_value(rnti_t::MIN_CRNTI) + cu_cp_cfg.admission.max_nof_ues);
        it++) {
-    rnti_t     rnti     = to_rnti(it);
-    ue_index_t ue_index = ue_mng.add_ue(du_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
-    auto*      ue       = ue_mng.find_ue(ue_index);
+    rnti_t     rnti = to_rnti(it);
+    ue_index_t ue_index =
+        ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
+    auto* ue = ue_mng.find_ue(ue_index);
 
     // check that the UE has been created
     ASSERT_NE(ue, nullptr);
@@ -266,7 +270,7 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
   // check that the maximum number of DU UEs has been reached
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), cu_cp_cfg.admission.max_nof_ues);
 
-  ue_index_t ue_index = ue_mng.add_ue(du_index);
+  ue_index_t ue_index = ue_mng.add_ue(du_index, plmn_identity::test_value());
   ASSERT_EQ(ue_index, ue_index_t::invalid);
 
   // check that the UE has not been added

@@ -80,7 +80,7 @@ protected:
   void init()
   {
     // add UE to UE manager
-    allocated_ue_index = ue_mng.add_ue(du_index_t::min);
+    allocated_ue_index = ue_mng.add_ue(du_index_t::min, plmn_identity::test_value());
 
     // create RRC UE
     rrc_ue_creation_message rrc_ue_create_msg{};

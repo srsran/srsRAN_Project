@@ -89,7 +89,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   {
     // Allocate UE index at target DU
-    target_ue_context_setup_request.ue_index = ue_mng.add_ue(request.target_du_index);
+    target_ue_context_setup_request.ue_index = ue_mng.add_ue(request.target_du_index, request.cgi.plmn_id);
     if (target_ue_context_setup_request.ue_index == ue_index_t::invalid) {
       logger.warning("ue={}: \"{}\" failed to allocate UE index at target DU", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);

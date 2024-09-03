@@ -34,11 +34,11 @@ void ue_manager::stop()
 }
 
 ue_index_t ue_manager::add_ue(du_index_t                     du_index,
+                              plmn_identity                  plmn,
                               std::optional<gnb_du_id_t>     du_id,
                               std::optional<pci_t>           pci,
                               std::optional<rnti_t>          rnti,
-                              std::optional<du_cell_index_t> pcell_index,
-                              std::optional<plmn_identity>   plmn)
+                              std::optional<du_cell_index_t> pcell_index)
 {
   if (du_index == du_index_t::invalid) {
     logger.warning("CU-CP UE creation Failed. Cause: Invalid DU index={}", du_index);
@@ -90,15 +90,17 @@ ue_index_t ue_manager::add_ue(du_index_t                     du_index,
       std::piecewise_construct,
       std::forward_as_tuple(new_ue_index),
       std::forward_as_tuple(
-          new_ue_index, du_index, up_config, sec_config, std::move(ue_sched), du_id, pci, rnti, pcell_index, plmn));
+          new_ue_index, du_index, up_config, sec_config, std::move(ue_sched), plmn, du_id, pci, rnti, pcell_index));
 
   // Add PCI and RNTI to lookup.
   if (pci.has_value() && rnti.has_value()) {
     pci_rnti_to_ue_index.emplace(std::make_tuple(pci.value(), rnti.value()), new_ue_index);
   }
 
-  logger.info("ue={}{}{}{}{}: Created new CU-CP UE",
+  logger.info("ue={} du_index={} plmn={}{}{}{}{}: Created new CU-CP UE",
               new_ue_index,
+              du_index,
+              plmn,
               du_id.has_value() ? fmt::format(" gnb_du_id={}", du_id.value()) : "",
               pci.has_value() ? fmt::format(" pci={}", pci.value()) : "",
               rnti.has_value() ? fmt::format(" rnti={}", rnti.value()) : "",
@@ -171,8 +173,7 @@ cu_cp_ue* ue_manager::set_ue_du_context(ue_index_t      ue_index,
                                         gnb_du_id_t     du_id,
                                         pci_t           pci,
                                         rnti_t          rnti,
-                                        du_cell_index_t pcell_index,
-                                        plmn_identity   plmn)
+                                        du_cell_index_t pcell_index)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   srsran_assert(pci != INVALID_PCI, "Invalid pci={}", pci);
@@ -192,7 +193,7 @@ cu_cp_ue* ue_manager::set_ue_du_context(ue_index_t      ue_index,
   }
 
   auto& ue = ues.at(ue_index);
-  ue.update_du_ue(du_id, pci, rnti, pcell_index, plmn);
+  ue.update_du_ue(du_id, pci, rnti, pcell_index);
 
   // Add PCI and RNTI to lookup.
   pci_rnti_to_ue_index.emplace(std::make_tuple(pci, rnti), ue_index);

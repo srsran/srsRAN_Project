@@ -25,16 +25,24 @@ protected:
 
   void create_ues(bool procedure_outcome, unsigned transaction_id_)
   {
-    ue_index_t source_ue_index =
-        get_ue_manager()->add_ue(source_du_index, int_to_gnb_du_id(0), source_pci, source_rnti, du_cell_index_t::min);
-    source_ue = get_ue_manager()->find_ue(source_ue_index);
+    ue_index_t source_ue_index = get_ue_manager()->add_ue(source_du_index,
+                                                          plmn_identity::test_value(),
+                                                          int_to_gnb_du_id(0),
+                                                          source_pci,
+                                                          source_rnti,
+                                                          du_cell_index_t::min);
+    source_ue                  = get_ue_manager()->find_ue(source_ue_index);
     ASSERT_NE(source_ue, nullptr);
     source_rrc_ue_notifier.set_transaction_id(transaction_id_);
     source_ue->set_rrc_ue_notifier(source_rrc_ue_notifier);
 
-    ue_index_t target_ue_index =
-        get_ue_manager()->add_ue(target_du_index, int_to_gnb_du_id(0), target_pci, target_rnti, du_cell_index_t::min);
-    target_ue = get_ue_manager()->find_ue(target_ue_index);
+    ue_index_t target_ue_index = get_ue_manager()->add_ue(target_du_index,
+                                                          plmn_identity::test_value(),
+                                                          int_to_gnb_du_id(0),
+                                                          target_pci,
+                                                          target_rnti,
+                                                          du_cell_index_t::min);
+    target_ue                  = get_ue_manager()->find_ue(target_ue_index);
     ASSERT_NE(target_ue, nullptr);
     cu_cp_handler.set_rrc_reconfiguration_outcome(procedure_outcome);
     target_ue->set_rrc_ue_notifier(target_rrc_ue_notifier);

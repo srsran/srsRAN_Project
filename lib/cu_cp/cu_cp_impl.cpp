@@ -588,7 +588,7 @@ ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_i
     logger.warning("Could not find DU for CGI={}", cgi.nci);
     return ue_index_t::invalid;
   }
-  return ue_mng.add_ue(du_index);
+  return ue_mng.add_ue(du_index, cgi.plmn_id);
 }
 
 void cu_cp_impl::handle_n2_disconnection()
