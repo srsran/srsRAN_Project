@@ -166,11 +166,11 @@ public:
   virtual void on_new_as_security_context() = 0;
 };
 
-/// Interface to notify about NAS messages.
-class rrc_ue_nas_notifier
+/// Interface to notify about NGAP messages.
+class rrc_ue_ngap_notifier
 {
 public:
-  virtual ~rrc_ue_nas_notifier() = default;
+  virtual ~rrc_ue_ngap_notifier() = default;
 
   /// \brief Notify about the Initial UE Message.
   /// \param[in] msg The initial UE message.
@@ -179,23 +179,16 @@ public:
   /// \brief Notify about an Uplink NAS Transport message.
   /// \param[in] msg The Uplink NAS Transport message.
   virtual void on_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) = 0;
-};
-
-struct rrc_reconfiguration_response_message {
-  ue_index_t ue_index = ue_index_t::invalid;
-  bool       success  = false;
-};
-
-/// Interface to notify about control messages.
-class rrc_ue_control_notifier
-{
-public:
-  virtual ~rrc_ue_control_notifier() = default;
 
   /// \brief Notify about the reception of an inter CU handove related RRC Reconfiguration Complete.
   virtual void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
                                                           const nr_cell_global_id_t& cgi,
                                                           const unsigned             tac) = 0;
+};
+
+struct rrc_reconfiguration_response_message {
+  ue_index_t ue_index = ue_index_t::invalid;
+  bool       success  = false;
 };
 
 struct rrc_ue_security_mode_command_context {

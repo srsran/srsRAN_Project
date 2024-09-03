@@ -27,7 +27,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     rrc_ue_control_message_handler&          srb_notifier_,
     rrc_ue_context_update_notifier&          cu_cp_notifier_,
     rrc_ue_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
-    rrc_ue_nas_notifier&                     nas_notifier_,
+    rrc_ue_ngap_notifier&                    ngap_notifier_,
     rrc_ue_event_manager&                    event_mng_,
     rrc_ue_logger&                           logger_) :
   reestablishment_request(request_),
@@ -38,7 +38,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
   srb_notifier(srb_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
   cu_cp_ue_notifier(cu_cp_ue_notifier_),
-  nas_notifier(nas_notifier_),
+  ngap_notifier(ngap_notifier_),
   event_mng(event_mng_),
   logger(logger_)
 {
@@ -131,7 +131,7 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
 
     // Reject RRC Reestablishment Request by sending RRC Setup
     CORO_AWAIT(launch_async<rrc_setup_procedure>(
-        context, du_to_cu_container, rrc_ue_setup_notifier, srb_notifier, nas_notifier, event_mng, logger));
+        context, du_to_cu_container, rrc_ue_setup_notifier, srb_notifier, ngap_notifier, event_mng, logger));
 
     if (old_ue_reest_context.ue_index != ue_index_t::invalid and !old_ue_reest_context.old_ue_fully_attached) {
       // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.

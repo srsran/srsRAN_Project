@@ -22,8 +22,7 @@ struct ue_context;
 
 struct rrc_du_creation_message {
   const rrc_cfg_t&                    cfg;
-  rrc_ue_nas_notifier&                nas_notifier;
-  rrc_ue_control_notifier&            ngap_ctrl_notifier;
+  rrc_ue_ngap_notifier&               ngap_notifier;
   rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier;
 };
 

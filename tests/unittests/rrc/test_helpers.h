@@ -32,7 +32,7 @@ public:
   srb_id_t    last_srb_id;
 };
 
-class dummy_rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
+class dummy_rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
 {
 public:
   void set_ue_context_release_outcome(bool outcome) { ue_context_release_outcome = outcome; }

@@ -33,8 +33,7 @@ public:
   du_processor_impl(du_processor_config_t               du_processor_config_,
                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
                     f1ap_message_notifier&              f1ap_pdu_notifier_,
-                    rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
-                    rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
+                    rrc_ue_ngap_notifier&               ngap_notifier_,
                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                     common_task_scheduler&              common_task_sched_,
                     ue_manager&                         ue_mng_);
@@ -95,7 +94,7 @@ private:
 
   du_processor_cu_cp_notifier&         cu_cp_notifier;
   f1ap_message_notifier&               f1ap_pdu_notifier;
-  rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
+  rrc_ue_ngap_notifier&                ngap_notifier;
   ue_manager&                          ue_mng;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
 

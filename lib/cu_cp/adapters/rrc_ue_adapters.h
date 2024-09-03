@@ -49,7 +49,7 @@ private:
 };
 
 // Adapter between RRC UE and NGAP
-class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
+class rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
 {
 public:
   explicit rrc_ue_ngap_adapter(ngap_repository& ngap_db_) : ngap_db(ngap_db_) {}

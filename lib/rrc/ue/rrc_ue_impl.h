@@ -25,9 +25,8 @@ class rrc_ue_impl final : public rrc_ue_interface, public rrc_ue_controller
 {
 public:
   rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifier_,
-              rrc_ue_nas_notifier&                   nas_notif_,
-              rrc_ue_control_notifier&               ngap_ctrl_notif_,
-              rrc_ue_context_update_notifier&        cu_cp_notif_,
+              rrc_ue_ngap_notifier&                  ngap_notifier_,
+              rrc_ue_context_update_notifier&        cu_cp_notifier_,
               rrc_ue_measurement_notifier&           measurement_notifier_,
               rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
               const ue_index_t                       ue_index_,
@@ -103,8 +102,7 @@ private:
 
   rrc_ue_context_t                context;
   rrc_pdu_f1ap_notifier&          f1ap_pdu_notifier;    // PDU notifier to the F1AP
-  rrc_ue_nas_notifier&            nas_notifier;         // PDU notifier to the NGAP
-  rrc_ue_control_notifier&        ngap_ctrl_notifier;   // Control message notifier to the NGAP
+  rrc_ue_ngap_notifier&           ngap_notifier;        // notifier to the NGAP
   rrc_ue_context_update_notifier& cu_cp_notifier;       // notifier to the CU-CP
   rrc_ue_measurement_notifier&    measurement_notifier; // cell measurement notifier
   rrc_ue_cu_cp_ue_notifier&       cu_cp_ue_notifier;    // cu-cp ue notifier

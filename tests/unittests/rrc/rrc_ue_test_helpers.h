@@ -109,7 +109,6 @@ protected:
     ue_cfg.rrc_procedure_timeout_ms = cu_cp_cfg.rrc.rrc_procedure_timeout_ms;
     rrc_ue                          = std::make_unique<rrc_ue_impl>(*rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
-                                           rrc_ue_ngap_notifier,
                                            *rrc_ue_create_msg.rrc_ue_cu_cp_notifier,
                                            *rrc_ue_create_msg.measurement_notifier,
                                            *rrc_ue_create_msg.cu_cp_ue_notifier,

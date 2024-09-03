@@ -93,7 +93,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
   // Launch RRC setup procedure
   cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(
-      context, du_to_cu_container, *this, get_rrc_ue_control_message_handler(), nas_notifier, *event_mng, logger));
+      context, du_to_cu_container, *this, get_rrc_ue_control_message_handler(), ngap_notifier, *event_mng, logger));
 }
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
@@ -108,7 +108,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                                                   get_rrc_ue_control_message_handler(),
                                                   cu_cp_notifier,
                                                   cu_cp_ue_notifier,
-                                                  nas_notifier,
+                                                  ngap_notifier,
                                                   *event_mng,
                                                   logger));
 }
@@ -157,8 +157,7 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
       if (context.transfer_context.has_value() && context.transfer_context.value().is_inter_cu_handover) {
         logger.log_debug("Received a RRC Reconfiguration Complete during inter CU handover. Notifying NGAP");
-        ngap_ctrl_notifier.on_inter_cu_ho_rrc_recfg_complete_received(
-            context.ue_index, context.cell.cgi, context.cell.tac);
+        ngap_notifier.on_inter_cu_ho_rrc_recfg_complete_received(context.ue_index, context.cell.cgi, context.cell.tac);
         context.transfer_context.value().is_inter_cu_handover = false;
       } else {
         handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
@@ -224,7 +223,7 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
   ul_nas_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_id;
   ul_nas_msg.user_location_info.tai.tac     = context.cell.tac;
 
-  nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
+  ngap_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }
 
 void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg)

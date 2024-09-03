@@ -33,8 +33,7 @@ struct du_repository_config {
   cu_cp_du_event_handler&                cu_cp_du_handler;
   cu_cp_ue_removal_handler&              ue_removal_handler;
   cu_cp_ue_context_manipulation_handler& ue_context_handler;
-  rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
-  rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
+  rrc_ue_ngap_notifier&                  ngap_notifier;
   common_task_scheduler&                 common_task_sched;
   ue_manager&                            ue_mng;
   rrc_du_measurement_config_notifier&    meas_config_notifier;
