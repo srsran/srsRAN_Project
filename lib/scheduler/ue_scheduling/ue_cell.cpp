@@ -34,17 +34,22 @@ using namespace srsran;
 /// Number of UL HARQs reserved per UE (Implementation-defined)
 constexpr unsigned NOF_UL_HARQS = 16;
 
+/// The default number of HARQ processes to be used on the PDSCH of a serving cell. See TS 38.331, \c
+/// nrofHARQ-ProcessesForPDSCH.
+constexpr unsigned DEFAULT_NOF_DL_HARQS = 8;
+
 ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  rnti_t                       crnti_val,
                  const ue_cell_configuration& ue_cell_cfg_,
-                 ue_harq_timeout_notifier     harq_timeout_notifier) :
+                 cell_harq_manager&           cell_harq_pool) :
   ue_index(ue_index_),
   cell_index(ue_cell_cfg_.cell_cfg_common.cell_index),
-  harqs(crnti_val,
-        (unsigned)ue_cell_cfg_.cfg_dedicated().pdsch_serv_cell_cfg->nof_harq_proc,
-        NOF_UL_HARQS,
-        harq_timeout_notifier,
-        ue_cell_cfg_.cell_cfg_common.ntn_cs_koffset),
+  harqs(cell_harq_pool.add_ue(ue_index,
+                              crnti_val,
+                              ue_cell_cfg_.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
+                                  ? (unsigned)ue_cell_cfg_.cfg_dedicated().pdsch_serv_cell_cfg->nof_harq_proc
+                                  : DEFAULT_NOF_DL_HARQS,
+                              NOF_UL_HARQS)),
   crnti_(crnti_val),
   cell_cfg(ue_cell_cfg_.cell_cfg_common),
   ue_cfg(&ue_cell_cfg_),
@@ -57,12 +62,21 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
 
 void ue_cell::deactivate()
 {
-  // Stop UL HARQ retransmissions.
-  // Note: We do no stop DL retransmissions because we are still relying on DL to send a potential RRC Release.
-  for (unsigned hid = 0; hid != harqs.nof_ul_harqs(); ++hid) {
-    harqs.ul_harq(hid).cancel_harq_retxs();
+  // Stop HARQ retransmissions.
+  // Note: We assume that when this function is called, any RRC container (e.g. containing RRC Release) was already
+  // transmitted+ACKed (ensured by F1AP).
+  for (unsigned hid = 0; hid != harqs.nof_dl_harqs(); ++hid) {
+    std::optional<dl_harq_process_handle> h_dl = harqs.dl_harq(to_harq_id(hid));
+    if (h_dl.has_value()) {
+      h_dl->cancel_retxs();
+    }
   }
-
+  for (unsigned hid = 0; hid != harqs.nof_ul_harqs(); ++hid) {
+    std::optional<ul_harq_process_handle> h_ul = harqs.ul_harq(to_harq_id(hid));
+    if (h_ul.has_value()) {
+      h_ul->cancel_retxs();
+    }
+  }
   active = false;
 }
 
@@ -77,6 +91,21 @@ void ue_cell::set_fallback_state(bool set_fallback)
     return;
   }
   in_fallback_mode = set_fallback;
+
+  // Cancel pending HARQs retxs of different state.
+  for (unsigned i = 0; i != harqs.nof_dl_harqs(); ++i) {
+    std::optional<dl_harq_process_handle> h_dl = harqs.dl_harq(to_harq_id(i));
+    if (h_dl.has_value() and h_dl.value().get_grant_params().is_fallback != in_fallback_mode) {
+      h_dl.value().cancel_retxs();
+    }
+  }
+  for (unsigned i = 0; i != harqs.nof_ul_harqs(); ++i) {
+    std::optional<ul_harq_process_handle> h_ul = harqs.ul_harq(to_harq_id(i));
+    if (h_ul.has_value()) {
+      h_ul->cancel_retxs();
+    }
+  }
+
   logger.debug("ue={} rnti={}: {} fallback mode", ue_index, rnti(), in_fallback_mode ? "Entering" : "Leaving");
 }
 
@@ -85,16 +114,27 @@ std::optional<dl_harq_process::dl_ack_info_result> ue_cell::handle_dl_ack_info(s
                                                                                unsigned                   harq_bit_idx,
                                                                                std::optional<float>       pucch_snr)
 {
-  std::optional<dl_harq_process::dl_ack_info_result> result =
-      harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx, pucch_snr);
+  std::optional<dl_harq_process_handle> h_dl = harqs.find_dl_harq_waiting_ack(uci_slot, harq_bit_idx);
+  if (not h_dl.has_value()) {
+    logger.warning("rnti={}: Discarding ACK info. Cause: DL HARQ for uci slot={} not found.", rnti(), uci_slot);
+    return std::nullopt;
+  }
 
-  if (result.has_value() and (result->update == dl_harq_process::status_update::acked or
-                              result->update == dl_harq_process::status_update::nacked)) {
+  dl_harq_process_handle::status_update outcome = h_dl->dl_ack_info(ack_value, pucch_snr);
+  dl_harq_process::dl_ack_info_result   result;
+  result.h_id         = h_dl->id();
+  result.tb.mcs_table = h_dl->get_grant_params().mcs_table;
+  result.tb.mcs       = h_dl->get_grant_params().mcs;
+  result.tb.tbs_bytes = h_dl->get_grant_params().tbs_bytes;
+  result.tb.slice_id  = h_dl->get_grant_params().slice_id;
+  result.tb.olla_mcs  = h_dl->get_grant_params().olla_mcs;
+  result.update       = (dl_harq_process::status_update)outcome;
+
+  if (result.update == dl_harq_process::status_update::acked or
+      result.update == dl_harq_process::status_update::nacked) {
     // HARQ is not expecting more ACK bits. Consider the feedback in the link adaptation controller.
-    ue_mcs_calculator.handle_dl_ack_info(result->update == dl_harq_process::status_update::acked,
-                                         result->tb.mcs,
-                                         result->tb.mcs_table,
-                                         result->tb.olla_mcs);
+    ue_mcs_calculator.handle_dl_ack_info(
+        result.update == dl_harq_process::status_update::acked, result.tb.mcs, result.tb.mcs_table, result.tb.olla_mcs);
   }
 
   return result;
@@ -203,18 +243,27 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
 
 int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu)
 {
+  // Find UL HARQ with matching PUSCH slot.
+  std::optional<ul_harq_process_handle> h_ul = harqs.find_ul_harq_waiting_ack(pusch_slot);
+  if (not h_ul.has_value() or h_ul->id() != crc_pdu.harq_id) {
+    logger.warning("rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting CRC for PUSCH slot {}",
+                   rnti(),
+                   crc_pdu.harq_id,
+                   pusch_slot);
+    return -1;
+  }
+
   // Update UL HARQ state.
-  int tbs = harqs.ul_crc_info(crc_pdu.harq_id, crc_pdu.tb_crc_success, pusch_slot);
+  int tbs = h_ul->ul_crc_info(crc_pdu.tb_crc_success);
 
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
 
     // Update link adaptation controller.
-    const ul_harq_process& h_ul = harqs.ul_harq(crc_pdu.harq_id);
     ue_mcs_calculator.handle_ul_crc_info(crc_pdu.tb_crc_success,
-                                         h_ul.last_tx_params().mcs,
-                                         h_ul.last_tx_params().mcs_table,
-                                         h_ul.last_tx_params().olla_mcs);
+                                         h_ul->get_grant_params().mcs,
+                                         h_ul->get_grant_params().mcs_table,
+                                         h_ul->get_grant_params().olla_mcs);
 
     // Update PUSCH KO count metrics.
     ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;
@@ -461,23 +510,22 @@ void ue_cell::apply_link_adaptation_procedures(const csi_report_data& csi_report
                               ? csi_report.ri->value()
                               : channel_state.get_nof_dl_layers();
 
-  static const uint8_t tb_index = 0;
   // Link adaptation for HARQs.
   // [Implementation-defined] If the drop in RI or CQI when compared to the RI or CQI at the time of new HARQ
   // transmission is above threshold then HARQ re-transmissions are cancelled.
   for (unsigned hid = 0; hid != harqs.nof_dl_harqs(); ++hid) {
-    dl_harq_process& h_dl = harqs.dl_harq(hid);
-    if (h_dl.empty()) {
+    std::optional<dl_harq_process_handle> h_dl = harqs.dl_harq(to_harq_id(hid));
+    if (not h_dl.has_value()) {
       continue;
     }
     const bool is_ri_diff_above_threshold =
         expert_cfg.dl_harq_la_ri_drop_threshold != 0 and
-        recommended_dl_layers + expert_cfg.dl_harq_la_ri_drop_threshold <= h_dl.last_alloc_params().nof_layers;
+        recommended_dl_layers + expert_cfg.dl_harq_la_ri_drop_threshold <= h_dl->get_grant_params().nof_layers;
     const bool is_cqi_diff_above_threshold =
         expert_cfg.dl_harq_la_cqi_drop_threshold != 0 and
-        wideband_cqi.to_uint() + expert_cfg.dl_harq_la_cqi_drop_threshold <= h_dl.last_alloc_params().cqi.to_uint();
+        wideband_cqi.to_uint() + expert_cfg.dl_harq_la_cqi_drop_threshold <= h_dl->get_grant_params().cqi.to_uint();
     if (is_ri_diff_above_threshold or is_cqi_diff_above_threshold) {
-      h_dl.cancel_harq_retxs(tb_index);
+      h_dl->cancel_retxs();
     }
   }
 }

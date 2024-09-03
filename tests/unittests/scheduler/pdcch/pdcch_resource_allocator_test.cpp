@@ -49,7 +49,7 @@ const char* to_string(alloc_type a)
   return "invalid";
 }
 
-using cell_bw = bs_channel_bandwidth_fr1;
+using cell_bw = bs_channel_bandwidth;
 
 namespace pdcch_test {
 
@@ -497,7 +497,7 @@ struct multi_alloc_test_params {
     std::optional<unsigned> expected_ncce;
   };
 
-  bs_channel_bandwidth_fr1              cell_bw;
+  bs_channel_bandwidth                  cell_bw;
   std::optional<std::array<uint8_t, 5>> ss2_nof_candidates;
   std::vector<alloc>                    allocs;
 };

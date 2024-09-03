@@ -33,6 +33,7 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_pool.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/uplink_request_processor.h"
 #include "srsran/phy/upper/uplink_slot_pdu_repository.h"
@@ -63,7 +64,10 @@ public:
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue NZP-CSI-RS PDU in the downlink processor");
   }
-  bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override { return true; }
+  bool configure_resource_grid(const resource_grid_context& context, shared_resource_grid grid) override
+  {
+    return true;
+  }
   void finish_processing_pdus() override {}
 };
 
@@ -128,10 +132,16 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
   // FIXME: 0 is hardcoded as the sector as in this implementation there is one DU per sector, so each DU have its own
   // resource grid pool and downlink processor pool. It is also in the previous get processor call of the downlink
   // processor pool
-  resource_grid& grid = rg_pool.get_resource_grid({slot_, 0});
+  shared_resource_grid grid = rg_pool.allocate_resource_grid({slot_, 0});
+
+  // If the resource grid is not valid, all DL transmissions for this slot shall be discarded.
+  if (!grid) {
+    dl_processor = dummy_dl_processor;
+    return;
+  }
 
   // Configure the downlink processor.
-  bool success = dl_processor.get().configure_resource_grid(context, grid);
+  bool success = dl_processor.get().configure_resource_grid(context, std::move(grid));
 
   // Swap the DL processor with a dummy if it failed to configure the resource grid.
   if (!success) {
@@ -524,7 +534,17 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   // Get ul_resource_grid.
   resource_grid_context pool_context = rg_context;
   pool_context.sector                = 0;
-  resource_grid& ul_rg               = ul_rg_pool.get_resource_grid(pool_context);
+  shared_resource_grid ul_rg         = ul_rg_pool.allocate_resource_grid(pool_context);
+
+  // Abort UL processing for this slot if the resource grid is not available.
+  if (!ul_rg) {
+    logger.warning("Failed to allocate UL resource grid for UL_TTI.request from slot {}.{}", msg.sfn, msg.slot);
+    // Raise out of message transmit error.
+    error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
+    l1_tracer << instant_trace_event{"ul_tti_failed_grid", instant_trace_event::cpu_scope::global};
+    return;
+  }
+
   // Request to capture uplink slot.
   ul_request_processor.process_uplink_slot_request(rg_context, ul_rg);
   l1_tracer << trace_event("ul_tti_request", tp);

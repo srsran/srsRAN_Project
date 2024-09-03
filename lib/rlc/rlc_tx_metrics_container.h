@@ -34,6 +34,8 @@ class rlc_tx_metrics_high_container
 public:
   rlc_tx_metrics_high_container(bool enabled_) : enabled(enabled_) {}
 
+  bool is_enabled() const { return enabled; }
+
   void metrics_add_sdus(uint32_t num_sdus, size_t num_sdu_bytes)
   {
     if (not enabled) {
@@ -106,6 +108,8 @@ class rlc_tx_metrics_low_container
 public:
   rlc_tx_metrics_low_container(bool enabled_) : enabled(enabled_) {}
 
+  bool is_enabled() const { return enabled; }
+
   void metrics_set_mode(rlc_mode mode)
   {
     if (not enabled) {
@@ -137,6 +141,21 @@ public:
       return;
     }
     metrics_lo.sum_sdu_latency_us += sdu_latency;
+  }
+
+  void metrics_add_pdu_latency_ns(uint32_t pdu_latency)
+  {
+    if (not enabled) {
+      return;
+    }
+    metrics_lo.sum_pdu_latency_ns += pdu_latency;
+
+    unsigned bin_idx = pdu_latency / (1000 * rlc_tx_metrics_lower::nof_usec_per_bin);
+
+    bin_idx = std::min(bin_idx, rlc_tx_metrics_lower::pdu_latency_hist_bins - 1);
+    metrics_lo.pdu_latency_hist_ns[bin_idx]++;
+
+    metrics_lo.max_pdu_latency_ns = std::max(pdu_latency, metrics_lo.max_pdu_latency_ns);
   }
 
   // TM specific metrics

@@ -28,6 +28,7 @@ namespace srsran {
 namespace srsvec {
 
 void add(span<const cf_t> x, span<const cf_t> y, span<cf_t> z);
+void add(span<const cf_t> x, span<const cbf16_t> y, span<cf_t> z);
 void add(span<const float> x, span<const float> y, span<float> z);
 void add(span<const int16_t> x, span<const int16_t> y, span<int16_t> z);
 void add(span<const int8_t> x, span<const int8_t> y, span<int8_t> z);

@@ -37,6 +37,7 @@
 
 namespace srsran {
 
+/// Radio UHD transmit stream finite state machine.
 class radio_uhd_tx_stream_fsm
 {
 private:

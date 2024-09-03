@@ -22,11 +22,13 @@
 
 #pragma once
 
-#include "five_qi.h"
-#include "nr_cgi.h"
-#include "qos_prio_level.h"
-#include "s_nssai.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/qos/qos_flow_id.h"
+#include "srsran/ran/qos/qos_parameters.h"
+#include "srsran/ran/qos/qos_prio_level.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/sdap/sdap_config.h"
 #include "fmt/format.h"
 
@@ -49,25 +51,6 @@ constexpr inline uint16_t pdu_session_id_to_uint(pdu_session_id_t id)
 constexpr inline pdu_session_id_t uint_to_pdu_session_id(uint16_t idx)
 {
   return static_cast<pdu_session_id_t>(idx);
-}
-
-// See TS 38.463 Section 9.3.1.24: QoS Flow ID valid values: (0..63)
-constexpr static uint8_t MAX_NOF_QOS_FLOWS = 64;
-
-/// \brief QoS Flow ID.
-/// \remark See TS 38.463 Section 9.3.1.21: QoS Flow ID valid values: (0..63)
-enum class qos_flow_id_t : uint8_t { min = 0, max = MAX_NOF_QOS_FLOWS - 1, invalid = MAX_NOF_QOS_FLOWS };
-
-/// Convert QoS Flow ID type to integer.
-constexpr inline uint8_t qos_flow_id_to_uint(qos_flow_id_t id)
-{
-  return static_cast<uint8_t>(id);
-}
-
-/// Convert integer to QoS Flow ID type.
-constexpr inline qos_flow_id_t uint_to_qos_flow_id(uint8_t idx)
-{
-  return static_cast<qos_flow_id_t>(idx);
 }
 
 /// \brief RAN_UE_ID (non ASN1 type of RAN_UE_NGAP_ID).
@@ -95,49 +78,8 @@ struct nr_cgi_support_item_t {
   nr_cell_global_id_t nr_cgi;
 };
 
-struct packet_error_rate_t {
-  uint8_t per_scalar;
-  uint8_t per_exponent;
-};
-
-struct dyn_5qi_descriptor_t {
-  qos_prio_level_t           qos_prio_level;
-  uint16_t                   packet_delay_budget;
-  packet_error_rate_t        packet_error_rate;
-  std::optional<five_qi_t>   five_qi;
-  std::optional<std::string> delay_crit;
-  std::optional<uint16_t>    averaging_win;
-  std::optional<uint16_t>    max_data_burst_volume;
-};
-
-struct non_dyn_5qi_descriptor_t {
-  five_qi_t                       five_qi;
-  std::optional<qos_prio_level_t> qos_prio_level;
-  std::optional<uint16_t>         averaging_win;
-  std::optional<uint16_t>         max_data_burst_volume;
-};
-
-struct qos_characteristics_t {
-  five_qi_t get_five_qi() const
-  {
-    if (non_dyn_5qi.has_value()) {
-      return non_dyn_5qi.value().five_qi;
-    } else if (dyn_5qi.has_value()) {
-      if (dyn_5qi.value().five_qi.has_value()) {
-        return dyn_5qi.value().five_qi.value();
-      }
-    } else {
-      srsran_assertion_failure("Invalid QoS characteristics. Either dynamic or non-dynamic 5QI must be set");
-    }
-    return five_qi_t::invalid;
-  }
-
-  std::optional<dyn_5qi_descriptor_t>     dyn_5qi;
-  std::optional<non_dyn_5qi_descriptor_t> non_dyn_5qi;
-};
-
 struct ng_ran_qos_support_item_t {
-  non_dyn_5qi_descriptor_t non_dyn_5qi_descriptor;
+  non_dyn_5qi_descriptor non_dyn_5qi_desc;
 };
 
 struct supported_plmns_item_t {
@@ -238,26 +180,6 @@ struct formatter<srsran::pdu_session_id_t> {
   auto format(const srsran::pdu_session_id_t& sid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "psi={:#}", pdu_session_id_to_uint(sid));
-  }
-};
-
-template <>
-struct formatter<srsran::qos_flow_id_t> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::qos_flow_id_t& qfi, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
-  {
-    switch (qfi) {
-      case srsran::qos_flow_id_t::invalid:
-        return format_to(ctx.out(), "invalid QFI");
-      default:
-        return format_to(ctx.out(), "QFI={:#}", qos_flow_id_to_uint(qfi));
-    }
   }
 };
 

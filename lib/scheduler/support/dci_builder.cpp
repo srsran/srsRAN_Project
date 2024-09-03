@@ -21,6 +21,7 @@
  */
 
 #include "dci_builder.h"
+#include "../cell/cell_harq_manager.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/pdcch/search_space.h"
@@ -122,18 +123,16 @@ void srsran::build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
   ra_dci.tb_scaling               = 0; // TODO.
 }
 
-void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
-                                    const bwp_downlink_common& init_dl_bwp,
-                                    crb_interval               crbs,
-                                    unsigned                   time_resource,
-                                    unsigned                   k1,
-                                    unsigned                   pucch_res_indicator,
-                                    sch_mcs_index              mcs_index,
-                                    uint8_t                    rv,
-                                    const dl_harq_process&     h_dl)
+void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
+                                    const bwp_downlink_common&    init_dl_bwp,
+                                    crb_interval                  crbs,
+                                    unsigned                      time_resource,
+                                    unsigned                      k1,
+                                    unsigned                      pucch_res_indicator,
+                                    sch_mcs_index                 mcs_index,
+                                    uint8_t                       rv,
+                                    const dl_harq_process_handle& h_dl)
 {
-  static constexpr unsigned tb_idx = 0;
-
   dci.type                            = dci_dl_rnti_config_type::tc_rnti_f1_0;
   dci.tc_rnti_f1_0                    = {};
   dci_1_0_tc_rnti_configuration& f1_0 = dci.tc_rnti_f1_0;
@@ -158,22 +157,22 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
   f1_0.modulation_coding_scheme = mcs_index.to_uint();
 
   // HARQ params.
-  f1_0.harq_process_number = h_dl.id;
-  f1_0.new_data_indicator  = h_dl.tb(tb_idx).ndi;
+  f1_0.harq_process_number = h_dl.id();
+  f1_0.new_data_indicator  = h_dl.ndi();
   f1_0.redundancy_version  = rv;
 }
 
-void srsran::build_dci_f1_0_c_rnti(dci_dl_info&               dci,
-                                   const search_space_info&   ss_info,
-                                   const bwp_downlink_common& init_dl_bwp,
-                                   crb_interval               crbs,
-                                   unsigned                   time_resource,
-                                   unsigned                   k1,
-                                   unsigned                   pucch_res_indicator,
-                                   unsigned                   dai,
-                                   sch_mcs_index              mcs_index,
-                                   uint8_t                    rv,
-                                   const dl_harq_process&     h_dl)
+void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
+                                   const search_space_info&      ss_info,
+                                   const bwp_downlink_common&    init_dl_bwp,
+                                   crb_interval                  crbs,
+                                   unsigned                      time_resource,
+                                   unsigned                      k1,
+                                   unsigned                      pucch_res_indicator,
+                                   unsigned                      dai,
+                                   sch_mcs_index                 mcs_index,
+                                   uint8_t                       rv,
+                                   const dl_harq_process_handle& h_dl)
 {
   const coreset_configuration& cs_cfg            = *ss_info.coreset;
   const bwp_downlink_common&   active_dl_bwp_cmn = *ss_info.bwp->dl_common;
@@ -216,23 +215,23 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&               dci,
   f1_0.modulation_coding_scheme = mcs_index.to_uint();
 
   // HARQ params.
-  f1_0.harq_process_number = h_dl.id;
-  f1_0.new_data_indicator  = h_dl.tb(0).ndi;
+  f1_0.harq_process_number = h_dl.id();
+  f1_0.new_data_indicator  = h_dl.ndi();
   f1_0.redundancy_version  = rv;
 }
 
-void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
-                                   const ue_cell_configuration& ue_cell_cfg,
-                                   search_space_id              ss_id,
-                                   prb_interval                 prbs,
-                                   unsigned                     time_resource,
-                                   unsigned                     k1,
-                                   unsigned                     pucch_res_indicator,
-                                   unsigned                     dai,
-                                   sch_mcs_index                tb1_mcs_index,
-                                   uint8_t                      rv,
-                                   const dl_harq_process&       h_dl,
-                                   unsigned                     nof_layers)
+void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
+                                   const ue_cell_configuration&  ue_cell_cfg,
+                                   search_space_id               ss_id,
+                                   prb_interval                  prbs,
+                                   unsigned                      time_resource,
+                                   unsigned                      k1,
+                                   unsigned                      pucch_res_indicator,
+                                   unsigned                      dai,
+                                   sch_mcs_index                 tb1_mcs_index,
+                                   uint8_t                       rv,
+                                   const dl_harq_process_handle& h_dl,
+                                   unsigned                      nof_layers)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
   srsran_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
@@ -293,8 +292,8 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
   f1_1.tb1_modulation_coding_scheme = tb1_mcs_index.to_uint();
 
   // HARQ params.
-  f1_1.harq_process_number    = h_dl.id;
-  f1_1.tb1_new_data_indicator = h_dl.tb(0).ndi;
+  f1_1.harq_process_number    = h_dl.id();
+  f1_1.tb1_new_data_indicator = h_dl.ndi();
   f1_1.tb1_redundancy_version = rv;
 }
 
@@ -304,12 +303,8 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
                                     const crb_interval&        crbs,
                                     unsigned                   time_resource,
                                     sch_mcs_index              mcs_index,
-                                    uint8_t                    rv,
-                                    const ul_harq_process&     h_ul)
+                                    uint8_t                    rv)
 {
-  // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
-  srsran_assert(h_ul.id == 0, "UL HARQ process used for Msg3 must have id=0");
-
   dci.type                            = dci_ul_rnti_config_type::tc_rnti_f0_0;
   dci.tc_rnti_f0_0                    = {};
   dci_0_0_tc_rnti_configuration& f0_0 = dci.tc_rnti_f0_0;
@@ -344,14 +339,14 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
   f0_0.redundancy_version = rv;
 }
 
-void srsran::build_dci_f0_0_c_rnti(dci_ul_info&             dci,
-                                   const search_space_info& ss_info,
-                                   const bwp_uplink_common& init_ul_bwp,
-                                   const crb_interval&      crbs,
-                                   unsigned                 time_resource,
-                                   sch_mcs_index            mcs_index,
-                                   uint8_t                  rv,
-                                   const ul_harq_process&   h_ul)
+void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                  dci,
+                                   const search_space_info&      ss_info,
+                                   const bwp_uplink_common&      init_ul_bwp,
+                                   const crb_interval&           crbs,
+                                   unsigned                      time_resource,
+                                   sch_mcs_index                 mcs_index,
+                                   uint8_t                       rv,
+                                   const ul_harq_process_handle& h_ul)
 {
   const bwp_configuration& active_ul_bwp = ss_info.bwp->ul_common->generic_params;
 
@@ -385,21 +380,21 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&             dci,
   f0_0.modulation_coding_scheme = mcs_index.to_uint();
 
   // HARQ params.
-  f0_0.harq_process_number = h_ul.id;
-  f0_0.new_data_indicator  = h_ul.tb().ndi;
+  f0_0.harq_process_number = h_ul.id();
+  f0_0.new_data_indicator  = h_ul.ndi();
   f0_0.redundancy_version  = rv;
 }
 
-void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
-                                   const ue_cell_configuration& ue_cell_cfg,
-                                   search_space_id              ss_id,
-                                   const crb_interval&          crbs,
-                                   unsigned                     time_resource,
-                                   sch_mcs_index                mcs_index,
-                                   uint8_t                      rv,
-                                   const ul_harq_process&       h_ul,
-                                   unsigned                     dai,
-                                   unsigned                     nof_layers)
+void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
+                                   const ue_cell_configuration&  ue_cell_cfg,
+                                   search_space_id               ss_id,
+                                   const crb_interval&           crbs,
+                                   unsigned                      time_resource,
+                                   sch_mcs_index                 mcs_index,
+                                   uint8_t                       rv,
+                                   const ul_harq_process_handle& h_ul,
+                                   unsigned                      dai,
+                                   unsigned                      nof_layers)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
   srsran_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
@@ -432,8 +427,8 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
   f0_1.modulation_coding_scheme = mcs_index.to_uint();
 
   // HARQ params.
-  f0_1.harq_process_number = h_ul.id;
-  f0_1.new_data_indicator  = h_ul.tb().ndi;
+  f0_1.harq_process_number = h_ul.id();
+  f0_1.new_data_indicator  = h_ul.ndi();
   f0_1.redundancy_version  = rv;
 
   // TODO: Set values for -

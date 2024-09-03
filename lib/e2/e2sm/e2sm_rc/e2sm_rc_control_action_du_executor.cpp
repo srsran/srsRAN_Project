@@ -116,8 +116,8 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(co
   if (action_params[ran_param_id] == "PLMN Identity") {
     control_config_params cur_control_params = {};
     cur_control_params.rrm_policy_group.emplace();
-    cur_control_params.rrm_policy_group.value().pol_member.plmn_id.append(
-        ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_string());
+    cur_control_params.rrm_policy_group.value().pol_member.plmn_id =
+        plmn_identity::parse(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_string()).value();
     ctrl_cfg.param_list.push_back(cur_control_params);
   } else if (action_params[ran_param_id] == "SST") {
     if (ctrl_cfg.param_list.size()) {

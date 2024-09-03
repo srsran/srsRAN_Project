@@ -42,7 +42,7 @@
 
 namespace srsran {
 
-class scheduler_metrics_handler;
+class cell_metrics_handler;
 
 /// \brief This class holds all the resources that are specific to a cell.
 /// This includes the SIB and RA scheduler objects, PDCCH scheduler object, the cell resource grid, etc.
@@ -53,7 +53,7 @@ public:
                           const sched_cell_configuration_request_message& msg,
                           const cell_configuration&                       cell_cfg,
                           ue_scheduler&                                   ue_sched,
-                          scheduler_metrics_handler&                      metrics);
+                          cell_metrics_handler&                           metrics);
 
   void run_slot(slot_point sl_tx);
 
@@ -75,10 +75,10 @@ private:
   cell_resource_allocator res_grid;
 
   /// Logger of cell events and scheduling results.
-  scheduler_event_logger     event_logger;
-  scheduler_metrics_handler& metrics;
-  scheduler_result_logger    result_logger;
-  srslog::basic_logger&      logger;
+  scheduler_event_logger  event_logger;
+  cell_metrics_handler&   metrics;
+  scheduler_result_logger result_logger;
+  srslog::basic_logger&   logger;
 
   ssb_scheduler                 ssb_sch;
   pdcch_resource_allocator_impl pdcch_sch;

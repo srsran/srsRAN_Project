@@ -24,8 +24,6 @@
 #include "lib/scheduler/support/mcs_tbs_calculator.h"
 #include "lib/scheduler/support/sch_pdu_builder.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "srsran/ran/pdsch/dlsch_info.h"
-#include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/ran/uci/uci_mapping.h"
 #include "srsran/support/test_utils.h"

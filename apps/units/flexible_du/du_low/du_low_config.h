@@ -58,6 +58,7 @@ struct du_low_unit_expert_upper_phy_config {
 /// DU low logging functionalities.
 struct du_low_unit_logger_config {
   srslog::basic_levels phy_level = srslog::basic_levels::warning;
+  srslog::basic_levels hal_level = srslog::basic_levels::warning;
   /// Set to true to log broadcasting messages and all PRACH opportunities.
   bool broadcast_enabled = false;
   /// Maximum number of bytes to write when dumping hex arrays.
@@ -135,6 +136,71 @@ struct du_low_unit_expert_execution_config {
   std::vector<du_low_unit_cpu_affinities_cell_config> cell_affinities = {{}};
 };
 
+/// Hardware-accelerated PDSCH encoder configuration of the DU low.
+struct hwacc_pdsch_appconfig {
+  /// \brief Number of hardware-accelerated PDSCH encoding functions.
+  unsigned nof_hwacc;
+  /// \brief Operation mode of the PDSCH encoder (CB = true, TB = false [default]).
+  bool cb_mode = false;
+  /// \brief Maximum supported buffer size in bytes (CB mode will be forced for larger TBs). Only used in TB mode to
+  /// size the mbufs.
+  ///
+  /// Set to the maximum supported size by default.
+  std::optional<unsigned> max_buffer_size;
+  /// \brief Type of hardware queue usage (dedicated = true [default], shared = false). In case of a shared usage, the
+  /// accelerated function needs to reseve a hardware-queue for each operation.
+  bool dedicated_queue = true;
+};
+
+/// Hardware-accelerated PUSCH decoder configuration of the DU low.
+struct hwacc_pusch_appconfig {
+  /// \brief Number of hardware-accelerated PUSCH decoding functions.
+  unsigned nof_hwacc;
+  /// \brief Defines if the soft-buffer is implemented in the accelerator (true [default]) or not (false).
+  bool ext_softbuffer = true;
+  /// \brief Size of the HARQ context repository.
+  ///
+  /// Set to the maximum number of CBs supported by the gNB config by default.
+  std::optional<unsigned> harq_context_size;
+  /// \brief Type of hardware queue usage (dedicated = true [default], shared = false). In case of a shared usage, the
+  /// accelerated function needs to reseve a hardware-queue for each operation.
+  bool dedicated_queue = true;
+};
+
+/// BBDEV configuration of the DU low.
+struct bbdev_appconfig {
+  /// \brief Type of BBDEV hardware-accelerator.
+  std::string bbdev_acc_type = "srs";
+  /// \brief Type of BBDEV hardware-accelerator.
+  std::string hwacc_type;
+  /// \brief ID of the BBDEV-based hardware-accelerator.
+  unsigned id;
+  /// \brief Structure providing the configuration of hardware-accelerated PDSCH encoding functions.
+  std::optional<hwacc_pdsch_appconfig> pdsch_enc;
+  /// \brief Structure providing the configuration of hardware-accelerated PUSCH decoding functions.
+  std::optional<hwacc_pusch_appconfig> pusch_dec;
+  /// \brief Size (in bytes) of each DPDK memory buffer (mbuf) used to exchange unencoded and unrate-matched messages
+  /// with the accelerator.
+  ///
+  /// Set to the maximum supported size by default.
+  std::optional<unsigned> msg_mbuf_size;
+  /// \brief Size (in bytes) of each DPDK memory buffer (mbuf) used to exchange encoded and rate-matched messages with
+  /// the accelerator.
+  ///
+  /// Set to the maximum supported size by default.
+  std::optional<unsigned> rm_mbuf_size;
+  /// \brief Number of DPDK memory buffers (mbufs) in each memory pool.
+  ///
+  /// Set to the maximum number of CBs supported by the gNB config by default.
+  std::optional<unsigned> nof_mbuf;
+};
+
+// HAL configuration of the DU low.
+struct du_low_unit_hal_config {
+  /// BBDEV-based hardware-accelerator arguments.
+  std::optional<bbdev_appconfig> bbdev_hwacc;
+};
+
 /// DU low configuration.
 struct du_low_unit_config {
   /// Loggers.
@@ -143,6 +209,8 @@ struct du_low_unit_config {
   du_low_unit_expert_upper_phy_config expert_phy_cfg;
   /// Expert execution parameters for the DU low.
   du_low_unit_expert_execution_config expert_execution_cfg;
+  /// HAL configuration.
+  std::optional<du_low_unit_hal_config> hal_config;
 };
 
 } // namespace srsran

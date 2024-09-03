@@ -47,12 +47,12 @@ public:
   ///
   /// In case the gateway was configured to use a hostname,
   /// this function can be used to get the actual IP address in string form.
-  virtual bool get_bind_address(std::string& ip_address) = 0;
+  virtual bool get_bind_address(std::string& ip_address) const = 0;
 
   /// Get bind port currently being used by the NG-U TNL session for the reception of PDUs.
   /// \return If a UDP link is being used, returns the respective bind port. If the connection is local, it returns
   /// std::nullopt.
-  virtual std::optional<uint16_t> get_bind_port() = 0;
+  virtual std::optional<uint16_t> get_bind_port() const = 0;
 };
 
 /// \brief This class is called by the CU-UP to instantiate new NG-U TNL PDU sessions.

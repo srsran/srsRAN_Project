@@ -23,6 +23,7 @@
 #include "cu_cp_config_translators.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rlc/rlc_config.h"
 #include <sstream>
 
@@ -187,6 +188,148 @@ static srs_cu_cp::rrc_ssb_mtc generate_rrc_ssb_mtc(unsigned period, unsigned off
   return ssb_mtc;
 }
 
+static srs_cu_cp::rrc_periodical_report_cfg
+generate_cu_cp_periodical_report_config(const cu_cp_unit_report_config& report_cfg_item)
+{
+  srs_cu_cp::rrc_periodical_report_cfg periodical;
+
+  periodical.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
+  periodical.report_interv          = report_cfg_item.report_interval_ms;
+  periodical.report_amount          = -1;
+  periodical.report_quant_cell.rsrp = true;
+  periodical.report_quant_cell.rsrq = true;
+  periodical.report_quant_cell.sinr = true;
+  periodical.max_report_cells       = 4;
+
+  srs_cu_cp::rrc_meas_report_quant report_quant_rs_idxes;
+  report_quant_rs_idxes.rsrp       = true;
+  report_quant_rs_idxes.rsrq       = true;
+  report_quant_rs_idxes.sinr       = true;
+  periodical.report_quant_rs_idxes = report_quant_rs_idxes;
+
+  periodical.max_nrof_rs_idxes_to_report = 4;
+  periodical.include_beam_meass          = true;
+  periodical.use_allowed_cell_list       = false;
+
+  return periodical;
+}
+
+static srs_cu_cp::rrc_event_trigger_cfg
+generate_cu_cp_event_trigger_report_config(const cu_cp_unit_report_config& report_cfg_item)
+{
+  srs_cu_cp::rrc_event_trigger_cfg event_trigger_cfg;
+
+  {
+    srs_cu_cp::rrc_event_id event_id;
+
+    if (report_cfg_item.event_triggered_report_type.value() == "a1") {
+      event_id.id = srs_cu_cp::rrc_event_id::event_id_t::a1;
+    }
+    if (report_cfg_item.event_triggered_report_type.value() == "a2") {
+      event_id.id = srs_cu_cp::rrc_event_id::event_id_t::a2;
+    }
+    if (report_cfg_item.event_triggered_report_type.value() == "a3") {
+      event_id.id = srs_cu_cp::rrc_event_id::event_id_t::a3;
+    }
+    if (report_cfg_item.event_triggered_report_type.value() == "a4") {
+      event_id.id = srs_cu_cp::rrc_event_id::event_id_t::a4;
+    }
+    if (report_cfg_item.event_triggered_report_type.value() == "a5") {
+      event_id.id = srs_cu_cp::rrc_event_id::event_id_t::a5;
+    }
+    if (report_cfg_item.event_triggered_report_type.value() == "a6") {
+      event_id.id = srs_cu_cp::rrc_event_id::event_id_t::a6;
+    }
+
+    event_id.meas_trigger_quant_thres_or_offset.emplace();
+
+    // Event id
+    if (report_cfg_item.event_triggered_report_type.value() == "a1" or
+        report_cfg_item.event_triggered_report_type.value() == "a2" or
+        report_cfg_item.event_triggered_report_type.value() == "a4" or
+        report_cfg_item.event_triggered_report_type.value() == "a5") {
+      if (report_cfg_item.event_triggered_report_type.value() == "a5") {
+        event_id.meas_trigger_quant_thres_2.emplace();
+      }
+      // Meas trigger quantity threshold
+      if (report_cfg_item.meas_trigger_quantity.value() == "rsrp") {
+        event_id.meas_trigger_quant_thres_or_offset.value().rsrp =
+            report_cfg_item.meas_trigger_quantity_threshold_db.value();
+        if (report_cfg_item.event_triggered_report_type.value() == "a5") {
+          event_id.meas_trigger_quant_thres_2.value().rsrp =
+              report_cfg_item.meas_trigger_quantity_threshold_2_db.value();
+        }
+      } else if (report_cfg_item.meas_trigger_quantity.value() == "rsrq") {
+        event_id.meas_trigger_quant_thres_or_offset.value().rsrq =
+            report_cfg_item.meas_trigger_quantity_threshold_db.value();
+        if (report_cfg_item.event_triggered_report_type.value() == "a5") {
+          event_id.meas_trigger_quant_thres_2.value().rsrq =
+              report_cfg_item.meas_trigger_quantity_threshold_2_db.value();
+        }
+      } else if (report_cfg_item.meas_trigger_quantity.value() == "sinr") {
+        event_id.meas_trigger_quant_thres_or_offset.value().sinr =
+            report_cfg_item.meas_trigger_quantity_threshold_db.value();
+        if (report_cfg_item.event_triggered_report_type.value() == "a5") {
+          event_id.meas_trigger_quant_thres_2.value().sinr =
+              report_cfg_item.meas_trigger_quantity_threshold_2_db.value();
+        }
+      }
+    }
+
+    if (report_cfg_item.event_triggered_report_type.value() == "a3" or
+        report_cfg_item.event_triggered_report_type.value() == "a6") {
+      // Meas trigger quantity offset
+      if (report_cfg_item.meas_trigger_quantity.value() == "rsrp") {
+        event_id.meas_trigger_quant_thres_or_offset.value().rsrp =
+            report_cfg_item.meas_trigger_quantity_offset_db.value();
+      } else if (report_cfg_item.meas_trigger_quantity.value() == "rsrq") {
+        event_id.meas_trigger_quant_thres_or_offset.value().rsrq =
+            report_cfg_item.meas_trigger_quantity_offset_db.value();
+      } else if (report_cfg_item.meas_trigger_quantity.value() == "sinr") {
+        event_id.meas_trigger_quant_thres_or_offset.value().sinr =
+            report_cfg_item.meas_trigger_quantity_offset_db.value();
+      }
+    }
+
+    if (report_cfg_item.event_triggered_report_type.value() == "a3" or
+        report_cfg_item.event_triggered_report_type.value() == "a4" or
+        report_cfg_item.event_triggered_report_type.value() == "a5" or
+        report_cfg_item.event_triggered_report_type.value() == "a6") {
+      // Report on leave
+      event_id.use_allowed_cell_list = false;
+    }
+
+    // Common parameters
+
+    // Report on leave
+    event_id.report_on_leave = false;
+
+    // Hysteresis
+    event_id.hysteresis = report_cfg_item.hysteresis_db.value();
+
+    // Time to trigger
+    event_id.time_to_trigger = report_cfg_item.time_to_trigger_ms.value();
+
+    event_trigger_cfg.event_id = event_id;
+  }
+
+  event_trigger_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
+  event_trigger_cfg.report_interv          = report_cfg_item.report_interval_ms;
+  event_trigger_cfg.report_amount          = -1;
+  event_trigger_cfg.report_quant_cell.rsrp = true;
+  event_trigger_cfg.report_quant_cell.rsrq = true;
+  event_trigger_cfg.report_quant_cell.sinr = true;
+  event_trigger_cfg.max_report_cells       = 4;
+
+  srs_cu_cp::rrc_meas_report_quant report_quant_rs_idxes;
+  report_quant_rs_idxes.rsrp              = true;
+  report_quant_rs_idxes.rsrq              = true;
+  report_quant_rs_idxes.sinr              = true;
+  event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
+
+  return event_trigger_cfg;
+}
+
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_config& cu_cfg)
 {
   srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
@@ -194,13 +337,18 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.admission.max_nof_cu_ups       = cu_cfg.max_nof_cu_ups;
   out_cfg.admission.max_nof_ues          = cu_cfg.max_nof_ues;
 
-  srsran_assert(!cu_cfg.plmns.empty(), "PLMN list is empty");
-  srsran_assert(!cu_cfg.tacs.empty(), "PLMN list is empty");
-  out_cfg.node.gnb_id           = cu_cfg.gnb_id;
-  out_cfg.node.ran_node_name    = cu_cfg.ran_node_name;
-  out_cfg.node.plmn             = plmn_identity::parse(cu_cfg.plmns.front()).value();
-  out_cfg.node.tac              = cu_cfg.tacs.front();
-  out_cfg.node.supported_slices = cu_cfg.slice_cfg;
+  out_cfg.node.gnb_id        = cu_cfg.gnb_id;
+  out_cfg.node.ran_node_name = cu_cfg.ran_node_name;
+
+  if (!cu_cfg.supported_tas.empty()) {
+    // Clear default supported TAs if any are provided in the config.
+    out_cfg.node.supported_tas.clear();
+  }
+  for (const auto& supported_ta : cu_cfg.supported_tas) {
+    expected<plmn_identity> plmn = plmn_identity::parse(supported_ta.plmn);
+    srsran_assert(plmn.has_value(), "Invalid PLMN: {}", supported_ta.plmn);
+    out_cfg.node.supported_tas.push_back({supported_ta.tac, plmn.value(), supported_ta.tai_slice_support_list});
+  }
 
   out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc.rrc_procedure_timeout_ms       = std::chrono::milliseconds{cu_cfg.rrc_config.rrc_procedure_timeout_ms};
@@ -274,77 +422,9 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
     srs_cu_cp::rrc_report_cfg_nr report_cfg;
 
     if (report_cfg_item.report_type == "periodical") {
-      srs_cu_cp::rrc_periodical_report_cfg periodical;
-
-      periodical.rs_type = srs_cu_cp::rrc_nr_rs_type::ssb;
-      if (report_cfg_item.report_interval_ms.has_value()) {
-        periodical.report_interv = report_cfg_item.report_interval_ms.value();
-      } else {
-        periodical.report_interv = 1024;
-      }
-      periodical.report_amount          = -1;
-      periodical.report_quant_cell.rsrp = true;
-      periodical.report_quant_cell.rsrq = true;
-      periodical.report_quant_cell.sinr = true;
-      periodical.max_report_cells       = 4;
-
-      srs_cu_cp::rrc_meas_report_quant report_quant_rs_idxes;
-      report_quant_rs_idxes.rsrp       = true;
-      report_quant_rs_idxes.rsrq       = true;
-      report_quant_rs_idxes.sinr       = true;
-      periodical.report_quant_rs_idxes = report_quant_rs_idxes;
-
-      periodical.max_nrof_rs_idxes_to_report = 4;
-      periodical.include_beam_meass          = true;
-      periodical.use_allowed_cell_list       = false;
-
-      report_cfg.periodical = periodical;
+      report_cfg = generate_cu_cp_periodical_report_config(report_cfg_item);
     } else {
-      srs_cu_cp::rrc_event_trigger_cfg event_trigger_cfg;
-
-      // event id
-      // A3 event config is currently the only supported event.
-      auto& event_a3 = event_trigger_cfg.event_id.event_a3.emplace();
-
-      if (report_cfg_item.a3_report_type.empty() or !report_cfg_item.a3_offset_db.has_value() or
-          !report_cfg_item.a3_hysteresis_db.has_value()) {
-        report_error("Invalid measurement report configuration.\n");
-      }
-
-      if (report_cfg_item.a3_report_type == "rsrp") {
-        event_a3.a3_offset.rsrp = report_cfg_item.a3_offset_db.value();
-      } else if (report_cfg_item.a3_report_type == "rsrq") {
-        event_a3.a3_offset.rsrq = report_cfg_item.a3_offset_db.value();
-      } else if (report_cfg_item.a3_report_type == "sinr") {
-        event_a3.a3_offset.sinr = report_cfg_item.a3_offset_db.value();
-      }
-
-      event_a3.report_on_leave = false;
-
-      event_a3.hysteresis      = report_cfg_item.a3_hysteresis_db.value();
-      event_a3.time_to_trigger = report_cfg_item.a3_time_to_trigger_ms.value();
-
-      event_a3.use_allowed_cell_list = false;
-
-      event_trigger_cfg.rs_type = srs_cu_cp::rrc_nr_rs_type::ssb;
-      if (report_cfg_item.report_interval_ms.has_value()) {
-        event_trigger_cfg.report_interv = report_cfg_item.report_interval_ms.value();
-      } else {
-        event_trigger_cfg.report_interv = 1024;
-      }
-      event_trigger_cfg.report_amount          = -1;
-      event_trigger_cfg.report_quant_cell.rsrp = true;
-      event_trigger_cfg.report_quant_cell.rsrq = true;
-      event_trigger_cfg.report_quant_cell.sinr = true;
-      event_trigger_cfg.max_report_cells       = 4;
-
-      srs_cu_cp::rrc_meas_report_quant report_quant_rs_idxes;
-      report_quant_rs_idxes.rsrp              = true;
-      report_quant_rs_idxes.rsrq              = true;
-      report_quant_rs_idxes.sinr              = true;
-      event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
-
-      report_cfg.event_triggered = event_trigger_cfg;
+      report_cfg = generate_cu_cp_event_trigger_report_config(report_cfg_item);
     }
 
     // Store config.

@@ -26,6 +26,8 @@
 
 namespace srsran {
 
+class shared_resource_grid;
+
 /// \brief Lower physical layer resource grid handler interface.
 ///
 /// The resource grid handler modulates and transmits the given downlink resource grid through the underlying radio
@@ -40,7 +42,7 @@ public:
   ///
   /// \param[in] context Resource grid context.
   /// \param[in] grid Resource grid to transmit.
-  virtual void handle_resource_grid(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
+  virtual void handle_resource_grid(const resource_grid_context& context, const shared_resource_grid& grid) = 0;
 };
 
 } // namespace srsran

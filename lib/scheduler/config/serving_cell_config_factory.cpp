@@ -43,7 +43,7 @@ cell_config_builder_params_extended::cell_config_builder_params_extended(const c
   cell_config_builder_params(source)
 {
   if (not band.has_value()) {
-    band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
+    band = band_helper::get_band_from_dl_arfcn(dl_f_ref_arfcn);
   }
 
   cell_nof_crbs = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, band_helper::get_freq_range(band.value()));
@@ -72,10 +72,10 @@ cell_config_builder_params_extended::cell_config_builder_params_extended(const c
     std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (coreset0_index.has_value()) {
       ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(
-          dl_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, search_space0_index, coreset0_index.value());
+          dl_f_ref_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, search_space0_index, coreset0_index.value());
     } else {
       ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          dl_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, search_space0_index, max_coreset0_duration);
+          dl_f_ref_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, search_space0_index, max_coreset0_duration);
     }
     if (!ssb_freq_loc.has_value()) {
       report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", pci);
@@ -87,7 +87,7 @@ cell_config_builder_params_extended::cell_config_builder_params_extended(const c
 
   // Compute and store final SSB position based on (selected) values.
   ssb_arfcn = band_helper::get_ssb_arfcn(
-      dl_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, offset_to_point_a.value(), k_ssb.value());
+      dl_f_ref_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, offset_to_point_a.value(), k_ssb.value());
   srsran_assert(ssb_arfcn.has_value(), "Unable to derive SSB location correctly");
 }
 
@@ -98,11 +98,11 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
   cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
   cfg.band           = params.band.value();
   if (is_dl) {
-    cfg.arfcn   = params.dl_arfcn;
-    cfg.nof_ant = params.nof_dl_ports;
+    cfg.arfcn_f_ref = params.dl_f_ref_arfcn;
+    cfg.nof_ant     = params.nof_dl_ports;
   } else {
-    cfg.arfcn   = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, cfg.band);
-    cfg.nof_ant = 1;
+    cfg.arfcn_f_ref = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_f_ref_arfcn, cfg.band);
+    cfg.nof_ant     = 1;
   }
   const min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cfg.band, params.scs_common);
   srsran_assert(cfg.carrier_bw_mhz >= min_channel_bandwidth_to_MHz(min_channel_bw),
@@ -266,9 +266,13 @@ srsran::config_helpers::make_default_dl_config_common(const cell_config_builder_
   cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = params.cell_nof_crbs;
 
   cfg.freq_info_dl.absolute_frequency_ssb = params.ssb_arfcn.value();
-  const double dl_f_ref                   = band_helper::get_abs_freq_point_a_from_f_ref(
-      band_helper::nr_arfcn_to_freq(params.dl_arfcn), params.cell_nof_crbs, params.scs_common);
-  cfg.freq_info_dl.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(dl_f_ref);
+
+  // \c params.dl_f_ref_arfcn refers to the ARFCN of the DL f_ref, as per TS 38.104, Section 5.4.2.1.
+  const double dl_absolute_freq_point_a = band_helper::get_abs_freq_point_a_from_f_ref(
+      band_helper::nr_arfcn_to_freq(params.dl_f_ref_arfcn), params.cell_nof_crbs, params.scs_common);
+  // \c absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
+  // Section 4.4.4.2.
+  cfg.freq_info_dl.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(dl_absolute_freq_point_a);
 
   // Configure initial DL BWP.
   cfg.init_dl_bwp.generic_params = make_default_init_bwp(params);
@@ -342,23 +346,16 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
 {
   ul_config_common cfg{};
   // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
-  const uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, params.band);
-  // This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
-
-  const frequency_range freq_range = band_helper::get_freq_range(params.band.value());
-  const duplex_mode     duplex     = band_helper::get_duplex_mode(params.band.value());
-
-  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(params.channel_bw_mhz, params.scs_common, freq_range);
-
-  const double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
-      band_helper::nr_arfcn_to_freq(ul_arfcn), nof_crbs, params.scs_common);
-  // absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
+  const uint32_t ul_arfcn                 = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_f_ref_arfcn, params.band);
+  const double   ul_absolute_freq_point_a = band_helper::get_abs_freq_point_a_from_f_ref(
+      band_helper::nr_arfcn_to_freq(ul_arfcn), params.cell_nof_crbs, params.scs_common);
+  // \c absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
   // Section 4.4.4.2.
-  cfg.freq_info_ul.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(ul_f_ref);
+  cfg.freq_info_ul.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(ul_absolute_freq_point_a);
   cfg.freq_info_ul.scs_carrier_list.resize(1);
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
   cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;
-  cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = nof_crbs;
+  cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = params.cell_nof_crbs;
   cfg.freq_info_ul.freq_band_list.emplace_back();
   cfg.freq_info_ul.freq_band_list.back().band = *params.band;
   cfg.init_ul_bwp.generic_params              = make_default_init_bwp(params);
@@ -377,6 +374,8 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
   // Although this is not specified in the TS, from our tests, the UE expects Msg1-SCS to be given when using short
   // PRACH Preambles formats. With long formats, we can set Msg1-SCS as \c invalid, in which case the UE derives the
   // PRACH SCS from \c prach-ConfigurationIndex in RACH-ConfigGeneric.
+  const frequency_range freq_range = band_helper::get_freq_range(params.band.value());
+  const duplex_mode     duplex     = band_helper::get_duplex_mode(params.band.value());
   cfg.init_ul_bwp.rach_cfg_common->msg1_scs =
       is_long_preamble(prach_configuration_get(
                            freq_range, duplex, cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
@@ -390,7 +389,6 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
       prach_configuration_get(freq_range, duplex, cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format);
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index      = 1;
-  cfg.init_ul_bwp.rach_cfg_common->msg3_transform_precoder   = false;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm = 1;
   // Add +3 PRBS to the MSG1 frequency start, which act as a guardband between the PUCCH and PRACH.
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start = 6;

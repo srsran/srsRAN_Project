@@ -14,7 +14,13 @@ srbs:
         poll-pdu: -1
         poll-byte: -1
         queue-size: 256
+        queue-bytes: 64000
       rx:
         sn: 12
         t-reassembly: 35
         t-status-prohibit: 0
+    mac:
+      lc_priority: 1
+      lc_group_id: 0
+      bucket_size_duration_ms: 5
+      prioritized_bit_rate_kBps: 65537

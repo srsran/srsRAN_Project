@@ -24,6 +24,10 @@
 #include "avx512_helpers.h"
 #include "packing_utils_avx512.h"
 #include "quantizer.h"
+#include "srsran/ofh/compression/compression_properties.h"
+#include "srsran/srsvec/prod.h"
+#include "srsran/support/math_utils.h"
+#include "srsran/support/units.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -43,37 +47,49 @@ static inline __m512i loadu_epi16_avx512(const void* mem_address)
 /// \param[in] exponent        Exponent used in BFP compression.
 /// \param[in] data_width      Bit width of resulting compressed samples.
 static void
-compress_prb_avx512(compressed_prb& c_prb, const int16_t* uncompr_samples, uint8_t exponent, unsigned data_width)
+compress_prb_avx512(span<uint8_t> comp_prb_buffer, const int16_t* uncomp_samples, uint8_t exponent, unsigned data_width)
 {
   const __mmask32 load_mask = 0x00ffffff;
 
   // Load from memory.
-  __m512i rb_epi16 = _mm512_maskz_loadu_epi16(load_mask, uncompr_samples);
+  __m512i rb_epi16 = _mm512_maskz_loadu_epi16(load_mask, uncomp_samples);
 
   // Apply exponent (compress).
   __m512i rb_shifted_epi16 = _mm512_srai_epi16(rb_epi16, exponent);
 
+  // Save exponent.
+  std::memcpy(comp_prb_buffer.data(), &exponent, sizeof(uint8_t));
+
   // Pack compressed samples.
-  mm512::pack_prb_big_endian(c_prb, rb_shifted_epi16, data_width);
+  mm512::pack_prb_big_endian(
+      comp_prb_buffer.last(comp_prb_buffer.size() - sizeof(exponent)), rb_shifted_epi16, data_width);
 }
 
-void iq_compression_bfp_avx512::compress(span<compressed_prb>         output,
-                                         span<const cbf16_t>          input,
+void iq_compression_bfp_avx512::compress(span<uint8_t>                buffer,
+                                         span<const cbf16_t>          iq_data,
                                          const ru_compression_params& params)
 {
   // Use generic implementation if AVX512 utils don't support requested bit width.
   if (!mm512::iq_width_packing_supported(params.data_width)) {
-    iq_compression_bfp_impl::compress(output, input, params);
+    iq_compression_bfp_impl::compress(buffer, iq_data, params);
     return;
   }
 
   // AVX512 register size in a number of 16-bit words.
   static constexpr size_t AVX512_REG_SIZE = 32;
 
+  // Number of input PRBs.
+  unsigned nof_prbs = (iq_data.size() / NOF_SUBCARRIERS_PER_RB);
+
+  // Size in bytes of one compressed PRB using the given compression parameters.
+  unsigned prb_size = get_compressed_prb_size(params).value();
+
+  srsran_assert(buffer.size() >= prb_size * nof_prbs, "Output buffer doesn't have enough space to decompress PRBs");
+
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(iq_data.data()), iq_data.size() * 2U);
   span<int16_t>      input_quantized_span(input_quantized.data(), float_samples_span.size());
   // Performs conversion of input brain float values to signed 16-bit integers.
   quantize_input(input_quantized_span, float_samples_span);
@@ -83,7 +99,7 @@ void iq_compression_bfp_avx512::compress(span<compressed_prb>         output,
   unsigned rb         = 0;
 
   // With 3 AVX512 registers we can process 4 PRBs at a time (48 16-bit IQ pairs).
-  for (size_t rb_index_end = (output.size() / 4) * 4; rb != rb_index_end; rb += 4) {
+  for (size_t rb_index_end = (nof_prbs / 4) * 4; rb != rb_index_end; rb += 4) {
     // Load input.
     __m512i r0_epi16 = loadu_epi16_avx512(&input_quantized[sample_idx]);
     __m512i r1_epi16 = loadu_epi16_avx512(&input_quantized[sample_idx + AVX512_REG_SIZE]);
@@ -94,30 +110,37 @@ void iq_compression_bfp_avx512::compress(span<compressed_prb>         output,
 
     // Exponents are stored in the first bytes of each 128bit lane of the result.
     const auto* exp_byte_ptr = reinterpret_cast<const uint8_t*>(&exp_epu32);
-    output[rb].set_compression_param(exp_byte_ptr[0]);
-    output[rb + 1].set_compression_param(exp_byte_ptr[16]);
-    output[rb + 2].set_compression_param(exp_byte_ptr[32]);
-    output[rb + 3].set_compression_param(exp_byte_ptr[48]);
 
-    // Compress and pack the first PRB using utility function.
+    // Compress the first PRB.
+    // Save the exponent.
+    span<uint8_t> output_span(&buffer[rb * prb_size], prb_size);
+    std::memcpy(output_span.data(), &exp_byte_ptr[0], sizeof(uint8_t));
+    // Apply exponent (compress).
     __m512i rb0_shifted_epi16 = _mm512_srai_epi16(r0_epi16, exp_byte_ptr[0]);
-    mm512::pack_prb_big_endian(output[rb], rb0_shifted_epi16, params.data_width);
+    // Pack compressed samples.
+    mm512::pack_prb_big_endian(
+        output_span.last(output_span.size() - sizeof(uint8_t)), rb0_shifted_epi16, params.data_width);
 
     // Compress second PRB.
+    output_span = span<uint8_t>(&buffer[(rb + 1) * prb_size], prb_size);
     compress_prb_avx512(
-        output[rb + 1], &input_quantized[sample_idx + NOF_SAMPLES_PER_PRB], exp_byte_ptr[16], params.data_width);
+        output_span, &input_quantized[sample_idx + NOF_SAMPLES_PER_PRB], exp_byte_ptr[16], params.data_width);
+
     // Compress third PRB.
+    output_span = span<uint8_t>(&buffer[(rb + 2) * prb_size], prb_size);
     compress_prb_avx512(
-        output[rb + 2], &input_quantized[sample_idx + 2 * NOF_SAMPLES_PER_PRB], exp_byte_ptr[32], params.data_width);
+        output_span, &input_quantized[sample_idx + 2 * NOF_SAMPLES_PER_PRB], exp_byte_ptr[32], params.data_width);
+
     // Compress fourth PRB.
+    output_span = span<uint8_t>(&buffer[(rb + 3) * prb_size], prb_size);
     compress_prb_avx512(
-        output[rb + 3], &input_quantized[sample_idx + 3 * NOF_SAMPLES_PER_PRB], exp_byte_ptr[48], params.data_width);
+        output_span, &input_quantized[sample_idx + 3 * NOF_SAMPLES_PER_PRB], exp_byte_ptr[48], params.data_width);
 
     sample_idx += 4 * NOF_SAMPLES_PER_PRB;
   }
 
   // Process the remaining PRBs (one PRB at a time),
-  for (size_t rb_index_end = output.size(); rb != rb_index_end; ++rb) {
+  for (; rb != nof_prbs; ++rb) {
     const __m512i   AVX512_ZERO = _mm512_set1_epi16(0);
     const __mmask32 load_mask   = 0x00ffffff;
     __m512i         rb_epi16    = _mm512_maskz_loadu_epi16(load_mask, &input_quantized[sample_idx]);
@@ -125,46 +148,74 @@ void iq_compression_bfp_avx512::compress(span<compressed_prb>         output,
     // Determine BFP exponent and extract it from the first byte of the first 128bit lane.
     __m512i     exp_epu32    = mm512::determine_bfp_exponent(rb_epi16, AVX512_ZERO, AVX512_ZERO, params.data_width);
     const auto* exp_byte_ptr = reinterpret_cast<const uint8_t*>(&exp_epu32);
-    output[rb].set_compression_param(exp_byte_ptr[0]);
 
-    // Shift and pack the first PRB using utility function.
+    span<uint8_t> output_span(&buffer[rb * prb_size], prb_size);
+
+    // Save exponent.
+    memcpy(output_span.data(), &exp_byte_ptr[0], sizeof(uint8_t));
+
+    // Shift and pack a PRB using utility function.
     __m512i rb_shifted_epi16 = _mm512_srai_epi16(rb_epi16, exp_byte_ptr[0]);
-    mm512::pack_prb_big_endian(output[rb], rb_shifted_epi16, params.data_width);
+    mm512::pack_prb_big_endian(
+        output_span.last(output_span.size() - sizeof(uint8_t)), rb_shifted_epi16, params.data_width);
 
     sample_idx += NOF_SAMPLES_PER_PRB;
   }
 }
 
-void iq_compression_bfp_avx512::decompress(span<cbf16_t>                output,
-                                           span<const compressed_prb>   input,
+void iq_compression_bfp_avx512::decompress(span<cbf16_t>                iq_data,
+                                           span<const uint8_t>          compressed_data,
                                            const ru_compression_params& params)
 {
   // Use generic implementation if AVX512 utils don't support requested bit width.
   if (!mm512::iq_width_packing_supported(params.data_width)) {
-    iq_compression_bfp_impl::decompress(output, input, params);
+    iq_compression_bfp_impl::decompress(iq_data, compressed_data, params);
     return;
   }
 
-  quantizer q_out(Q_BIT_WIDTH);
+  // Number of output PRBs.
+  unsigned nof_prbs = iq_data.size() / NOF_SUBCARRIERS_PER_RB;
 
-  unsigned out_idx = 0;
-  for (const auto& c_prb : input) {
-    // Compute scaling factor.
-    uint8_t exponent = c_prb.get_compression_param();
-    int16_t scaler   = 1 << exponent;
+  // Size in bytes of one compressed PRB using the given compression parameters.
+  unsigned comp_prb_size = get_compressed_prb_size(params).value();
 
-    // Determine array size so that AVX512 store operation doesn't write the data out of array bounds.
-    constexpr size_t avx512_size_iqs = 32;
-    constexpr size_t arr_size        = divide_ceil(NOF_SUBCARRIERS_PER_RB * 2, avx512_size_iqs) * avx512_size_iqs;
-    alignas(64) std::array<int16_t, arr_size> unpacked_iq_data;
+  srsran_assert(compressed_data.size() >= nof_prbs * comp_prb_size,
+                "Input does not contain enough bytes to decompress {} PRBs",
+                nof_prbs);
+
+  const float fixp_gain = (1 << (Q_BIT_WIDTH - 1)) - 1.0f;
+
+  // Determine array size so that AVX512 store operation doesn't write the data out of array bounds.
+  constexpr size_t avx512_size_iqs = 32;
+  constexpr size_t prb_size        = divide_ceil(NOF_SUBCARRIERS_PER_RB * 2, avx512_size_iqs) * avx512_size_iqs;
+
+  alignas(64) std::array<int16_t, MAX_NOF_PRBS * prb_size>                 unpacked_iq_data;
+  alignas(64) std::array<float, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB * 2> unpacked_iq_scaling;
+
+  unsigned idx = 0;
+  for (unsigned c_prb_idx = 0; c_prb_idx != nof_prbs; ++c_prb_idx) {
+    // Get view over compressed PRB bytes.
+    span<const uint8_t> comp_prb_buffer(&compressed_data[c_prb_idx * comp_prb_size], comp_prb_size);
+
+    // Compute scaling factor, first byte contains the exponent.
+    uint8_t exponent = comp_prb_buffer[0];
+    float   scaler   = 1 << exponent;
+
+    // Get view over the bytes following the compression parameter.
+    comp_prb_buffer = comp_prb_buffer.last(comp_prb_buffer.size() - sizeof(exponent));
+
     // Unpack resource block.
-    mm512::unpack_prb_big_endian(unpacked_iq_data, c_prb.get_packed_data(), params.data_width);
+    span<int16_t> unpacked_prb_span(&unpacked_iq_data[idx], prb_size);
+    mm512::unpack_prb_big_endian(unpacked_prb_span, comp_prb_buffer, params.data_width);
 
-    span<cbf16_t> output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
-    span<int16_t> unpacked_span(unpacked_iq_data.data(), NOF_SUBCARRIERS_PER_RB * 2);
+    // Save scaling factor.
+    std::fill(&unpacked_iq_scaling[idx], &unpacked_iq_scaling[idx + NOF_SUBCARRIERS_PER_RB * 2], scaler / fixp_gain);
 
-    // Convert to complex samples.
-    q_out.to_brain_float(output_span, unpacked_span, scaler);
-    out_idx += NOF_SUBCARRIERS_PER_RB;
+    idx += (NOF_SUBCARRIERS_PER_RB * 2);
   }
+  span<int16_t> unpacked_iq_int16_span(unpacked_iq_data.data(), iq_data.size() * 2);
+  span<float>   unpacked_iq_scaling_span(unpacked_iq_scaling.data(), iq_data.size() * 2);
+
+  // Scale unpacked IQ samples using saved exponents and convert to complex samples.
+  srsvec::convert(iq_data, unpacked_iq_int16_span, unpacked_iq_scaling_span);
 }

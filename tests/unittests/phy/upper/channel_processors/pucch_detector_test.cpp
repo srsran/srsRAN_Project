@@ -59,40 +59,36 @@ class PUCCHDetectFixture : public ::testing::TestWithParam<test_case_t>
 protected:
   static void SetUpTestSuite()
   {
-    if (!detector_factory) {
+    if (!detector_test) {
       std::shared_ptr<low_papr_sequence_generator_factory> low_papr_gen =
           create_low_papr_sequence_generator_sw_factory();
       std::shared_ptr<low_papr_sequence_collection_factory> low_papr_col =
           create_low_papr_sequence_collection_sw_factory(low_papr_gen);
       std::shared_ptr<pseudo_random_generator_factory> pseudorandom = create_pseudo_random_generator_sw_factory();
       std::shared_ptr<channel_equalizer_factory>       equalizer    = create_channel_equalizer_generic_factory();
-      detector_factory = create_pucch_detector_factory_sw(low_papr_col, pseudorandom, equalizer);
+      std::shared_ptr<pucch_detector_factory>          detector_factory =
+          create_pucch_detector_factory_sw(low_papr_col, pseudorandom, equalizer);
+      report_fatal_error_if_not(detector_factory, "Failed to create factory.");
+
+      detector_test = detector_factory->create();
+      report_fatal_error_if_not(detector_test, "Failed to create detector.");
+      ASSERT_NE(detector_test, nullptr);
+
+      channel_estimate::channel_estimate_dimensions ch_dims;
+      ch_dims.nof_tx_layers = 1;
+      ch_dims.nof_rx_ports  = MAX_PORTS;
+      ch_dims.nof_symbols   = MAX_NSYMB_PER_SLOT;
+      ch_dims.nof_prb       = MAX_RB;
+      csi.resize(ch_dims);
     }
-    ASSERT_NE(detector_factory, nullptr);
   }
 
-  void SetUp() override
-  {
-    // Assert factories again for compatibility with GTest < 1.11.
-    ASSERT_NE(detector_factory, nullptr);
-
-    detector_test = detector_factory->create();
-    ASSERT_NE(detector_test, nullptr);
-
-    channel_estimate::channel_estimate_dimensions ch_dims;
-    ch_dims.nof_tx_layers = 1;
-    ch_dims.nof_rx_ports  = MAX_PORTS;
-    ch_dims.nof_symbols   = MAX_NSYMB_PER_SLOT;
-    ch_dims.nof_prb       = MAX_RB;
-    csi.resize(ch_dims);
-  }
-
-  static std::shared_ptr<pucch_detector_factory> detector_factory;
-  std::unique_ptr<pucch_detector>                detector_test;
-  channel_estimate                               csi;
+  static std::unique_ptr<pucch_detector> detector_test;
+  static channel_estimate                csi;
 };
 
-std::shared_ptr<pucch_detector_factory> PUCCHDetectFixture::detector_factory = nullptr;
+std::unique_ptr<pucch_detector> PUCCHDetectFixture::detector_test = nullptr;
+channel_estimate                PUCCHDetectFixture::csi;
 
 void fill_ch_estimate(channel_estimate& ch_est, const std::vector<resource_grid_reader_spy::expected_entry_t>& entries)
 {

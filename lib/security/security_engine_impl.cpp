@@ -94,6 +94,20 @@ security_result security_engine_impl::encrypt_and_protect_integrity(byte_buffer 
 
 security_result security_engine_impl::decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count)
 {
-  security_result result;
+  security_result result{.buf = std::move(buf), .count = count};
+
+  // apply deciphering if activated
+  if (cipher_eng != nullptr) {
+    result = cipher_eng->apply_ciphering(std::move(result.buf.value()), offset, result.count);
+    if (!result.buf.has_value()) {
+      return result;
+    }
+  }
+
+  // verify integrity if activated
+  if (integ_eng != nullptr) {
+    result = integ_eng->verify_integrity(std::move(result.buf.value()), result.count);
+  }
+
   return result;
 }

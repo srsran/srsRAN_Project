@@ -29,6 +29,8 @@
 
 namespace srsran {
 
+class ldpc_encoder_buffer;
+
 /// LDPC rate matching (i.e., bit selection and bit interleaving) interface.
 class ldpc_rate_matcher
 {
@@ -39,11 +41,10 @@ public:
   /// \brief Carries out the rate matching of a codeblock.
   ///
   /// \param[out] output  Rate matched codeblock.
-  /// \param[in]  input   Original, full codeblock (may contain filler bits). Each \c uint8_t entry corresponds to a
-  ///                     single bit.
+  /// \param[in]  input   Reference to an LDPC encoder buffer.
   /// \param[in]  cfg     Configuration parameters.
   /// \remark The sizes of \c input and \c output determine the behavior of the rate matching algorithm.
-  virtual void rate_match(bit_buffer& output, const bit_buffer& input, const codeblock_metadata& cfg) = 0;
+  virtual void rate_match(bit_buffer& output, const ldpc_encoder_buffer& input, const codeblock_metadata& cfg) = 0;
 };
 
 } // namespace srsran

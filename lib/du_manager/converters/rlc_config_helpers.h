@@ -34,24 +34,12 @@
 namespace srsran {
 namespace srs_du {
 
-struct rlc_bearer_config {
-  lcid_t                  lcid;
-  std::optional<drb_id_t> drb_id;
-  rlc_config              rlc_cfg;
-  mac_lc_config           mac_cfg;
-
-  bool operator==(const rlc_bearer_config& rhs) const
-  {
-    // TODO: Remaining fields
-    return lcid == rhs.lcid and drb_id == rhs.drb_id and rlc_cfg.mode == rhs.rlc_cfg.mode and mac_cfg == rhs.mac_cfg;
-  }
-};
-
 /// \brief Create configuration for RLC SRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
                                                              du_ue_index_t                            ue_index,
                                                              du_cell_index_t                          pcell_index,
                                                              du_ue_srb&                               bearer,
+                                                             const rlc_config&                        rlc_cfg,
                                                              const du_manager_params::service_params& du_services,
                                                              rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
                                                              rlc_pcap&                                rlc_pcap);
@@ -61,6 +49,7 @@ rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t        
                                                              du_ue_index_t                            ue_index,
                                                              du_cell_index_t                          pcell_index,
                                                              du_ue_drb&                               bearer,
+                                                             const rlc_config&                        rlc_cfg,
                                                              const du_manager_params::service_params& du_services,
                                                              rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
                                                              rlc_metrics_notifier*                    rlc_metrics_notif,

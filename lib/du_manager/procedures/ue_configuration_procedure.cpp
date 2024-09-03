@@ -48,15 +48,16 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   proc_logger.log_proc_started();
 
-  if (request.drbs_to_setup.empty() and request.srbs_to_setup.empty() and request.drbs_to_rem.empty() and
-      request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
+  if (request.drbs_to_setup.empty() and request.drbs_to_mod.empty() and request.srbs_to_setup.empty() and
+      request.drbs_to_rem.empty() and request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
     // No SCells, DRBs or SRBs to setup or release so nothing to do.
     proc_logger.log_proc_completed();
     CORO_EARLY_RETURN(make_empty_ue_config_response());
   }
 
-  prev_cell_group = ue->resources.value();
-  if (ue->resources.update(ue->pcell_index, request).release_required()) {
+  prev_ue_res_cfg = ue->resources.value();
+  ue_res_cfg_resp = ue->resources.update(ue->pcell_index, request, ue->reestablished_cfg_pending.get());
+  if (ue_res_cfg_resp.failed()) {
     proc_logger.log_proc_failure("Failed to allocate DU UE resources");
     CORO_EARLY_RETURN(make_ue_config_failure());
   }
@@ -87,27 +88,23 @@ async_task<void> ue_configuration_procedure::stop_drbs_to_rem()
 void ue_configuration_procedure::update_ue_context()
 {
   // > Create DU UE SRB objects.
-  for (srb_id_t srbid : request.srbs_to_setup) {
+  for (const auto& srb_cfg : ue->resources->srbs) {
+    srb_id_t srbid = srb_cfg.srb_id;
     if (ue->bearers.srbs().contains(srbid)) {
-      // >> In case the SRB already exists, we ignore the request for its configuration.
+      // >> In case the SRB already exists, we ignore the request for its reconfiguration.
       continue;
     }
     srbs_added.push_back(srbid);
 
-    lcid_t lcid = srb_id_to_lcid(srbid);
-    auto   it   = std::find_if(ue->resources->rlc_bearers.begin(),
-                           ue->resources->rlc_bearers.end(),
-                           [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
-    srsran_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
-
     // >> Create SRB bearer.
-    du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
+    du_ue_srb& srb = ue->bearers.add_srb(srbid);
 
     // >> Create RLC SRB entity.
     srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
                                                                         ue->ue_index,
                                                                         ue->pcell_index,
                                                                         srb,
+                                                                        srb_cfg.rlc_cfg,
                                                                         du_params.services,
                                                                         ue->get_rlc_rlf_notifier(),
                                                                         du_params.rlc.pcap_writer));
@@ -135,62 +132,84 @@ void ue_configuration_procedure::update_ue_context()
   // Note: This DRB pointer will remain valid and accessible from other layers until we update the latter.
   for (const drb_id_t& drb_to_rem : request.drbs_to_rem) {
     if (ue->bearers.drbs().count(drb_to_rem) == 0) {
-      proc_logger.log_proc_warning("Failed to release {}. Cause: DRB does not exist", drb_to_rem);
+      proc_logger.log_proc_warning("Failed to release {}. Cause: DRB entity does not exist", drb_to_rem);
       continue;
     }
-    srsran_assert(std::any_of(prev_cell_group.rlc_bearers.begin(),
-                              prev_cell_group.rlc_bearers.end(),
-                              [&drb_to_rem](const rlc_bearer_config& e) { return e.drb_id == drb_to_rem; }),
-                  "The bearer to be deleted must already exist");
-
     drbs_to_rem.push_back(ue->bearers.remove_drb(drb_to_rem));
   }
 
-  // > Create DU UE DRB objects.
+  // > Create new DU UE DRB objects.
   for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
-    if (drbtoadd.uluptnl_info_list.empty()) {
-      proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
+    if (std::find(ue_res_cfg_resp.failed_drbs.begin(), ue_res_cfg_resp.failed_drbs.end(), drbtoadd.drb_id) !=
+        ue_res_cfg_resp.failed_drbs.end()) {
+      // >> In case it was not possible to setup DRB in the UE resources, we continue to the next DRB.
       continue;
     }
     if (ue->bearers.drbs().count(drbtoadd.drb_id) > 0) {
-      proc_logger.log_proc_warning("Failed to modify {}. Cause: DRB modifications not supported.", drbtoadd.drb_id);
+      proc_logger.log_proc_warning("Failed to setup {}. Cause: DRB setup for an already existing DRB.",
+                                   drbtoadd.drb_id);
+      ue_res_cfg_resp.failed_drbs.push_back(drbtoadd.drb_id);
       continue;
     }
 
-    // Find the RLC configuration for this DRB.
-    auto it = std::find_if(ue->resources->rlc_bearers.begin(),
-                           ue->resources->rlc_bearers.end(),
-                           [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
-    srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
-
-    // Find the F1-U configuration for this DRB.
-    auto f1u_cfg_it = du_params.ran.qos.find(drbtoadd.five_qi);
-    srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for {}", drbtoadd.five_qi);
-
-    // TODO: Adjust QoS characteristics passed while creating a DRB since one DRB can contain multiple QoS flow of
-    //  varying 5QI.
+    // Find the configurations for this DRB.
+    const du_ue_drb_config& drb_cfg = ue->resources->drbs[drbtoadd.drb_id];
 
     // Create DU DRB instance.
-    std::unique_ptr<du_ue_drb> drb =
-        create_drb(drb_creation_info{ue->ue_index,
-                                     ue->pcell_index,
-                                     drbtoadd.drb_id,
-                                     it->lcid,
-                                     it->rlc_cfg,
-                                     it->mac_cfg,
-                                     f1u_cfg_it->second.f1u,
-                                     drbtoadd.uluptnl_info_list,
-                                     ue_mng.get_f1u_teid_pool(),
-                                     du_params,
-                                     ue->get_rlc_rlf_notifier(),
-                                     get_5qi_to_qos_characteristics_mapping(drbtoadd.five_qi),
-                                     drbtoadd.gbr_flow_info,
-                                     drbtoadd.s_nssai});
+    std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
+                                                                  ue->pcell_index,
+                                                                  drbtoadd.drb_id,
+                                                                  drb_cfg.lcid,
+                                                                  drb_cfg.rlc_cfg,
+                                                                  drb_cfg.f1u,
+                                                                  drbtoadd.uluptnl_info_list,
+                                                                  ue_mng.get_f1u_teid_pool(),
+                                                                  du_params,
+                                                                  ue->get_rlc_rlf_notifier()});
     if (drb == nullptr) {
+      ue_res_cfg_resp.failed_drbs.push_back(drbtoadd.drb_id);
       proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.", drbtoadd.drb_id);
       continue;
     }
     ue->bearers.add_drb(std::move(drb));
+  }
+
+  // > Modify existing UE DRBs.
+  for (const f1ap_drb_to_modify& drbtomod : request.drbs_to_mod) {
+    if (std::find(ue_res_cfg_resp.failed_drbs.begin(), ue_res_cfg_resp.failed_drbs.end(), drbtomod.drb_id) !=
+        ue_res_cfg_resp.failed_drbs.end()) {
+      // >> Failed to modify DRB, continue to next DRB.
+      continue;
+    }
+
+    // Find the RLC configuration for this DRB.
+    const du_ue_drb_config& drb_cfg = ue->resources->drbs[drbtomod.drb_id];
+
+    auto drb_it = ue->bearers.drbs().find(drbtomod.drb_id);
+    if (drb_it == ue->bearers.drbs().end()) {
+      // >> It's a DRB modification after RRC Reestablishment. We need to create a new DRB instance.
+
+      // Create DU DRB instance.
+      std::unique_ptr<du_ue_drb> drb = create_drb(drb_creation_info{ue->ue_index,
+                                                                    ue->pcell_index,
+                                                                    drbtomod.drb_id,
+                                                                    drb_cfg.lcid,
+                                                                    drb_cfg.rlc_cfg,
+                                                                    drb_cfg.f1u,
+                                                                    drbtomod.uluptnl_info_list,
+                                                                    ue_mng.get_f1u_teid_pool(),
+                                                                    du_params,
+                                                                    ue->get_rlc_rlf_notifier()});
+      if (drb == nullptr) {
+        proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.",
+                                     drbtomod.drb_id);
+        ue_res_cfg_resp.failed_drbs.push_back(drbtomod.drb_id);
+        continue;
+      }
+      ue->bearers.add_drb(std::move(drb));
+    } else {
+      // TODO: Support existing DRB entity modifications.
+    }
   }
 }
 
@@ -214,8 +233,8 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
   mac_ue_reconf_req.ue_index           = request.ue_index;
   mac_ue_reconf_req.crnti              = ue->rnti;
   mac_ue_reconf_req.pcell_index        = ue->pcell_index;
-  mac_ue_reconf_req.mac_cell_group_cfg = ue->resources->mcg_cfg;
-  mac_ue_reconf_req.phy_cell_group_cfg = ue->resources->pcg_cfg;
+  mac_ue_reconf_req.mac_cell_group_cfg = ue->resources->cell_group.mcg_cfg;
+  mac_ue_reconf_req.phy_cell_group_cfg = ue->resources->cell_group.pcg_cfg;
 
   for (const srb_id_t srbid : srbs_added) {
     du_ue_srb& bearer = ue->bearers.srbs()[srbid];
@@ -242,9 +261,22 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
+  for (const auto& drb : request.drbs_to_mod) {
+    if (std::find(ue_res_cfg_resp.failed_drbs.begin(), ue_res_cfg_resp.failed_drbs.end(), drb.drb_id) !=
+        ue_res_cfg_resp.failed_drbs.end()) {
+      // The DRB failed to be modified. Carry on with other DRBs.
+      continue;
+    }
+    du_ue_drb& bearer = *ue->bearers.drbs().at(drb.drb_id);
+    mac_ue_reconf_req.bearers_to_addmod.emplace_back();
+    auto& lc_ch     = mac_ue_reconf_req.bearers_to_addmod.back();
+    lc_ch.lcid      = bearer.lcid;
+    lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
+    lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
+  }
 
   // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
-  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue);
+  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue, *ue->resources);
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }
@@ -257,25 +289,40 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   // > Handle DRBs that were setup or failed to be setup.
   for (const f1ap_drb_to_setup& drb_req : request.drbs_to_setup) {
     if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
-      resp.drbs_failed_to_setup.push_back(drb_req.drb_id);
+      resp.failed_drbs_setups.push_back({drb_req.drb_id, f1ap_cause_radio_network_t::no_radio_res_available});
       continue;
     }
     du_ue_drb& drb_added = *ue->bearers.drbs().at(drb_req.drb_id);
 
     resp.drbs_setup.emplace_back();
-    f1ap_drb_setup& drb_setup   = resp.drbs_setup.back();
-    drb_setup.drb_id            = drb_added.drb_id;
-    drb_setup.dluptnl_info_list = drb_added.dluptnl_info_list;
+    f1ap_drb_setupmod& drb_setup = resp.drbs_setup.back();
+    drb_setup.drb_id             = drb_added.drb_id;
+    drb_setup.dluptnl_info_list  = drb_added.dluptnl_info_list;
+  }
+
+  // > Handle DRBs that were modified or failed to be modified.
+  for (const f1ap_drb_to_modify& drb_req : request.drbs_to_mod) {
+    if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
+      resp.failed_drb_mods.push_back({drb_req.drb_id, f1ap_cause_radio_network_t::unknown_drb_id});
+      continue;
+    }
+    du_ue_drb& drb_modified = *ue->bearers.drbs().at(drb_req.drb_id);
+
+    resp.drbs_mod.emplace_back();
+    f1ap_drb_setupmod& drb_mod = resp.drbs_mod.back();
+    drb_mod.drb_id             = drb_modified.drb_id;
+    drb_mod.dluptnl_info_list  = drb_modified.dluptnl_info_list;
+    drb_mod.rlc_reestablished  = ue->reestablished_cfg_pending != nullptr;
   }
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
-  if (ue->reestablishment_pending) {
+  if (ue->reestablished_cfg_pending != nullptr) {
     // In case of reestablishment, we send the full configuration to the UE but without an SRB1 and with SRB2 and DRBs
     // set to "RLCReestablish".
-    ue->reestablishment_pending = false;
+    ue->reestablished_cfg_pending = nullptr;
 
-    calculate_cell_group_config_diff(asn1_cell_group, cell_group_config{}, *ue->resources);
+    calculate_cell_group_config_diff(asn1_cell_group, du_ue_resource_config{}, ue->resources.value());
     auto it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
                            asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
                            [](const auto& b) { return b.lc_ch_id == LCID_SRB1; });
@@ -289,17 +336,17 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     }
   } else if (request.full_config_required) {
     // The CU requested a full configuration of the UE cellGroupConfig.
-    calculate_cell_group_config_diff(asn1_cell_group, {}, *ue->resources);
+    calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources.value());
     resp.full_config_present = true;
 
   } else if (not request.source_cell_group_cfg.empty()) {
     // In case of source cell group configuration is passed, a delta configuration should be generated with it.
     // TODO: Apply diff using sourceCellGroup. For now, we use fullConfig.
-    calculate_cell_group_config_diff(asn1_cell_group, {}, *ue->resources);
+    calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources.value());
     resp.full_config_present = true;
 
   } else {
-    calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
+    calculate_cell_group_config_diff(asn1_cell_group, prev_ue_res_cfg, ue->resources.value());
   }
 
   // Include reconfiguration with sync if HandoverPreparationInformation is included.
@@ -313,8 +360,12 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
         return make_ue_config_failure();
       }
     }
-    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present = calculate_reconfig_with_sync_diff(
-        asn1_cell_group.sp_cell_cfg.recfg_with_sync, du_params.ran.cells[0], *ue->resources, ho_prep_info, ue->rnti);
+    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present =
+        calculate_reconfig_with_sync_diff(asn1_cell_group.sp_cell_cfg.recfg_with_sync,
+                                          du_params.ran.cells[0],
+                                          ue->resources.value(),
+                                          ho_prep_info,
+                                          ue->rnti);
     if (not asn1_cell_group.sp_cell_cfg.recfg_with_sync_present) {
       proc_logger.log_proc_failure("Failed to calculate ReconfigWithSync");
       return make_ue_config_failure();

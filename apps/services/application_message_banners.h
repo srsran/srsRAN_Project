@@ -23,7 +23,7 @@
 #pragma once
 
 #include "external/fmt/include/fmt/core.h"
-#include "srsran/support/build_info/build_info.h"
+#include "srsran/support/versioning/build_info.h"
 
 namespace srsran {
 namespace app_services {
@@ -54,7 +54,7 @@ public:
   static void log_build_info(srslog::basic_logger& logger)
   {
     // Log build info
-    logger.info("Built in {} mode using {})", get_build_mode(), get_build_info());
+    logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
   }
 };
 

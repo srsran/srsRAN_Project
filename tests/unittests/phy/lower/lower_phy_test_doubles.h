@@ -138,7 +138,7 @@ public:
   }
 
   // See interface for documentation.
-  void on_rx_symbol(const lower_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
+  void on_rx_symbol(const lower_phy_rx_symbol_context& context, const shared_resource_grid& grid) override
   {
     logger.debug(context.slot.sfn(),
                  context.slot.slot_index(),
@@ -148,7 +148,7 @@ public:
     rx_symbol_events.emplace_back();
     rx_symbol_event& event = rx_symbol_events.back();
     event.context          = context;
-    event.grid             = &grid;
+    event.grid             = &grid.get_reader();
   }
 
   // See interface for documentation.

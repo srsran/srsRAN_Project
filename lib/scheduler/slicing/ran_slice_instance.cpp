@@ -29,37 +29,38 @@ ran_slice_instance::ran_slice_instance(ran_slice_id_t                 id_,
                                        const slice_rrm_policy_config& cfg_) :
   id(id_), cell_cfg(&cell_cfg_), cfg(cfg_)
 {
+  std::fill(pusch_rb_count_per_slot.begin(), pusch_rb_count_per_slot.end(), 0);
 }
 
-void ran_slice_instance::slot_indication(const ue_repository& cell_ues)
+void ran_slice_instance::slot_indication(slot_point slot_tx)
 {
   pdsch_rb_count = 0;
-  pusch_rb_count = 0;
-  // Remove UEs from slice UEs list if it's removed from UE repository.
-  auto* ue_to_rem_it = slice_ues_to_rem.begin();
-  while (ue_to_rem_it != slice_ues_to_rem.end()) {
-    if (not cell_ues.contains(*ue_to_rem_it)) {
-      slice_ues.erase(*ue_to_rem_it);
-      bearers.erase(*ue_to_rem_it);
-      ue_to_rem_it = slice_ues_to_rem.erase(ue_to_rem_it);
-      continue;
-    }
-    ++ue_to_rem_it;
+  // Clear RB count in previous slots.
+  for (unsigned count = 0; count < nof_slots_to_clear; ++count) {
+    pusch_rb_count_per_slot[(slot_tx - 1 - count).to_uint()] = 0;
   }
 }
 
 void ran_slice_instance::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
 {
-  if (lcid < MAX_NOF_RB_LCIDS) {
-    if (bearers.contains(ue_idx)) {
-      bearers[ue_idx].reset(lcid);
-      if (bearers[ue_idx].none()) {
-        slice_ues_to_rem.push_back(ue_idx);
-      }
-    }
+  if (not slice_ues.contains(ue_idx)) {
     return;
   }
-  slice_ues_to_rem.push_back(ue_idx);
+
+  slice_ues[ue_idx].rem_logical_channel(lcid);
+
+  if (not slice_ues[ue_idx].has_bearers_in_slice()) {
+    // If no more bearers active for this UE, remove it from the slice.
+    slice_ues.erase(ue_idx);
+  }
+}
+
+void ran_slice_instance::rem_ue(du_ue_index_t ue_idx)
+{
+  if (not slice_ues.contains(ue_idx)) {
+    return;
+  }
+  slice_ues.erase(ue_idx);
 }
 
 const slice_ue_repository& ran_slice_instance::get_ues()
@@ -67,13 +68,14 @@ const slice_ue_repository& ran_slice_instance::get_ues()
   return slice_ues;
 }
 
-void ran_slice_instance::add_logical_channel(const ue* u, lcid_t lcid)
+void ran_slice_instance::add_logical_channel(const ue& u, lcid_t lcid, lcg_id_t lcg_id)
 {
-  if (not slice_ues.contains(u->ue_index)) {
-    slice_ues.emplace(u->ue_index, u);
+  if (lcid == LCID_SRB0) {
+    // SRB0 is not handled by slice scheduler.
+    return;
   }
-  if (not bearers.contains(u->ue_index)) {
-    bearers.emplace(u->ue_index, MAX_NOF_RB_LCIDS);
+  if (not slice_ues.contains(u.ue_index)) {
+    slice_ues.emplace(u.ue_index, u);
   }
-  bearers[u->ue_index].set(lcid);
+  slice_ues[u.ue_index].add_logical_channel(lcid, lcg_id);
 }

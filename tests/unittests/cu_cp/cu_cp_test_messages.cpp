@@ -71,13 +71,11 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
       qos_flow_setup_request_item qos_item;
       qos_item.qos_flow_id = uint_to_qos_flow_id(i + k + 1);
 
-      non_dyn_5qi_descriptor_t non_dyn_5qi;
-      non_dyn_5qi.five_qi                                                = uint_to_five_qi(9); // all with same FiveQI
-      qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+      non_dyn_5qi_descriptor non_dyn_5qi;
+      non_dyn_5qi.five_qi                         = uint_to_five_qi(9); // all with same FiveQI
+      qos_item.qos_flow_level_qos_params.qos_desc = non_dyn_5qi;
 
-      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
-      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
-      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+      qos_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp = 8;
 
       item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
     }
@@ -117,12 +115,10 @@ srsran::srs_cu_cp::generate_pdu_session_resource_modification(ue_index_t ue_inde
   cu_cp_qos_flow_add_or_mod_item qos_item;
   qos_item.qos_flow_id = uint_to_qos_flow_id(qfi);
   {
-    non_dyn_5qi_descriptor_t non_dyn_5qi;
-    non_dyn_5qi.five_qi                                                                   = uint_to_five_qi(7);
-    qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi                    = non_dyn_5qi;
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+    non_dyn_5qi_descriptor non_dyn_5qi;
+    non_dyn_5qi.five_qi                                                    = uint_to_five_qi(7);
+    qos_item.qos_flow_level_qos_params.qos_desc                            = non_dyn_5qi;
+    qos_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp = 8;
   }
 
   cu_cp_pdu_session_res_modify_request_transfer transfer;
@@ -180,19 +176,6 @@ srsran::srs_cu_cp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_
 
   fill_e1ap_bearer_context_modification_response(resp,
                                                  asn1_res.pdu.successful_outcome().value.bearer_context_mod_resp());
-
-  return resp;
-};
-
-f1ap_ue_context_modification_response
-srsran::srs_cu_cp::generate_f1ap_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
-                                                                  gnb_du_ue_f1ap_id_t du_ue_f1ap_id)
-{
-  f1ap_ue_context_modification_response resp;
-
-  f1ap_message asn1_res = generate_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
-
-  fill_f1ap_ue_context_modification_response(resp, asn1_res.pdu.successful_outcome().value.ue_context_mod_resp());
 
   return resp;
 };

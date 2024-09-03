@@ -70,11 +70,11 @@ struct sector_configuration {
   /// Highest subcarrier spacing.
   subcarrier_spacing scs;
   /// Cell channel bandwidth.
-  bs_channel_bandwidth_fr1 bw;
+  bs_channel_bandwidth bw;
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  bs_channel_bandwidth_fr1 ru_operating_bw;
+  bs_channel_bandwidth ru_operating_bw;
 
   /// PRACH eAxC.
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> prach_eaxc;

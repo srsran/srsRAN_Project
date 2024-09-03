@@ -113,11 +113,8 @@ void pdsch_block_processor::new_codeblock()
   // Number of symbols.
   unsigned nof_symbols = rm_length / get_bits_per_symbol(modulation);
 
-  // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
-  rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
-
   // Encode the segment into a codeblock.
-  encoder.encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+  const ldpc_encoder_buffer& rm_buffer = encoder.encode(descr_seg.get_data(), descr_seg.get_metadata().tb_common);
 
   // Rate match the codeblock.
   temp_codeblock.resize(rm_length);
@@ -136,7 +133,7 @@ void pdsch_block_processor::new_codeblock()
 
 span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
 {
-  // Process a new code block if the buffer with code block symbols is empty.
+  // Process a new codeblock if the buffer with codeblock symbols is empty.
   if (codeblock_symbols.empty()) {
     new_codeblock();
   }

@@ -27,6 +27,7 @@
 namespace srsran {
 
 class task_executor;
+class shared_resource_grid;
 
 namespace ofh {
 class uplink_request_handler;
@@ -47,7 +48,7 @@ public:
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override;
 
   // See interface for documentation.
-  void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
+  void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
 private:
   std::vector<ofh::uplink_request_handler*> sectors;

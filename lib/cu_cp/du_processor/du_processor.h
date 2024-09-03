@@ -110,11 +110,11 @@ public:
   virtual void on_release_ues() = 0;
 };
 
-/// Interface to notify an RRC UE about control messages.
-class du_processor_rrc_ue_control_message_notifier
+/// Interface to notify an RRC UE about control and srb messages.
+class du_processor_rrc_ue_notifier
 {
 public:
-  virtual ~du_processor_rrc_ue_control_message_notifier() = default;
+  virtual ~du_processor_rrc_ue_notifier() = default;
 
   /// \brief Notify the RRC UE to trigger a UE capability transfer procedure.
   /// \param[in] msg The new request msg containing the RAT type, etc.
@@ -165,13 +165,6 @@ public:
   /// \returns The RRC Handover Command PDU.
   virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
                                                        unsigned                                     transaction_id) = 0;
-};
-
-/// Interface to notify an RRC UE about SRB control queries (e.g. SRB creation).
-class du_processor_rrc_ue_srb_control_notifier
-{
-public:
-  virtual ~du_processor_rrc_ue_srb_control_notifier() = default;
 
   /// \brief Create an SRB at the target RRC UE.
   virtual void create_srb(const srb_creation_message& msg) = 0;
@@ -198,18 +191,6 @@ class du_processor_cu_cp_notifier
 {
 public:
   virtual ~du_processor_cu_cp_notifier() = default;
-
-  /// \brief Notifies about a successful F1AP and RRC creation.
-  /// \param[in] du_index The index of the DU the UE is connected to.
-  /// \param[in] f1ap_handler Handler to the F1AP to initiate the UE context removal.
-  /// \param[in] f1ap_statistic_handler Handler to the F1AP statistic interface.
-  /// \param[in] rrc_handler Handler to the RRC DU to initiate the RRC UE removal.
-  /// \param[in] rrc_statistic_handler Handler to the RRC DU statistic interface.
-  virtual void on_du_processor_created(du_index_t                       du_index,
-                                       f1ap_ue_context_removal_handler& f1ap_handler,
-                                       f1ap_statistics_handler&         f1ap_statistic_handler,
-                                       rrc_ue_handler&                  rrc_handler,
-                                       rrc_du_statistics_handler&       rrc_statistic_handler) = 0;
 
   /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] ue_index The index of the UE.
@@ -241,6 +222,9 @@ public:
 
   /// \brief Retrieve F1AP handler for the respective DU.
   virtual f1ap_cu& get_f1ap_handler() = 0;
+
+  /// \brief Retrieve RRC DU handler for the respective DU.
+  virtual rrc_du& get_rrc_du_handler() = 0;
 
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 

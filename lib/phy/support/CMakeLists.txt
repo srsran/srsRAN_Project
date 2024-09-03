@@ -26,8 +26,7 @@ add_library(srsran_phy_support STATIC
         re_pattern.cpp
         resource_grid_impl.cpp
         resource_grid_mapper_impl.cpp
-        resource_grid_pool_asynchronous_impl.cpp
-        resource_grid_pool_generic_impl.cpp
+        resource_grid_pool_impl.cpp
         resource_grid_reader_impl.cpp
         resource_grid_writer_impl.cpp
         support_factories.cpp)

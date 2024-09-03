@@ -22,12 +22,11 @@
 
 #pragma once
 
-#include "cell_group_config.h"
+#include "du_ue_resource_config.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 
-namespace srsran {
-namespace srs_du {
+namespace srsran::srs_du {
 
 /// The following values have to be set according to the \ref pucch_resource_manager capabilities.
 /// Maximum number of PUCCH F0/F1 resources per UE for HARQ-ACK reporting.
@@ -46,7 +45,8 @@ error_type<std::string> pucch_parameters_validator(unsigned                     
                                                    unsigned                                       nof_res_f2,
                                                    std::variant<pucch_f1_params, pucch_f0_params> f0_f1_params,
                                                    pucch_f2_params                                f2_params,
-                                                   unsigned                                       bwp_size_rbs);
+                                                   unsigned                                       bwp_size_rbs,
+                                                   bounded_integer<unsigned, 1, 14>               max_nof_symbols);
 
 /// \brief Generates the list of cell PUCCH resources (Format 0/1 and 2) given the number of requested resources.
 ///
@@ -66,7 +66,8 @@ std::vector<pucch_resource> generate_cell_pucch_res_list(unsigned               
                                                          unsigned                                       nof_res_f2,
                                                          std::variant<pucch_f1_params, pucch_f0_params> f0_f1_params,
                                                          pucch_f2_params                                f2_params,
-                                                         unsigned                                       bwp_size_rbs);
+                                                         unsigned                                       bwp_size_rbs,
+                                                         bounded_integer<unsigned, 1, 14> max_nof_symbols);
 
 /// \brief Generates the list of PUCCH resources for a given UE.
 ///
@@ -127,5 +128,4 @@ bool ue_pucch_config_builder(serving_cell_config&                               
                              unsigned                                            nof_harq_pucch_sets,
                              unsigned                                            nof_cell_pucch_f0_f1_res_sr,
                              unsigned                                            nof_cell_pucch_f2_res_csi = 1);
-} // namespace srs_du
-} // namespace srsran
+} // namespace srsran::srs_du

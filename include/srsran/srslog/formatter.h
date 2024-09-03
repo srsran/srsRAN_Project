@@ -51,6 +51,15 @@ struct metric_value_formatter<metric<Ty, Name, Units>> {
   }
 };
 
+template <typename Ty, typename Name, typename Units>
+struct metric_value_formatter<metric<std::vector<Ty>, Name, Units>> {
+  template <typename T>
+  void format(const T& v, fmt::memory_buffer& buffer)
+  {
+    fmt::format_to(buffer, "[{}]", fmt::join(v.cbegin(), v.cend(), ", "));
+  }
+};
+
 /// This is the base class that provides a common framework to format log
 /// entries to different kinds of formats. User should implement two different
 /// kinds of formats:

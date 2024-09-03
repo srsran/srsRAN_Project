@@ -32,9 +32,9 @@
 
 namespace srsran {
 
-/// This class implements the ue_pdsch_allocator and ue_pusch_allocator interfaces, namely the methods to allocate
-/// PDSCH and PUSCH grants in different cells, and the methods to fetch the current gNB resource grid DL and UL states.
-class ue_cell_grid_allocator : public ue_pdsch_allocator, public ue_pusch_allocator
+/// This class implements the methods to allocate PDSCH and PUSCH grants in different cells for a slice, and the
+/// methods to fetch the current gNB resource grid DL and UL states.
+class ue_cell_grid_allocator
 {
 public:
   ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
@@ -51,9 +51,9 @@ public:
 
   void slot_indication(slot_point sl);
 
-  alloc_result allocate_dl_grant(const ue_pdsch_grant& grant) override;
+  alloc_result allocate_dl_grant(const ue_pdsch_grant& grant, ran_slice_id_t slice_id);
 
-  alloc_result allocate_ul_grant(const ue_pusch_grant& grant) override;
+  alloc_result allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot);
 
 private:
   struct cell_t {
@@ -96,14 +96,14 @@ private:
 class dl_slice_ue_cell_grid_allocator : public ue_pdsch_allocator
 {
 public:
-  dl_slice_ue_cell_grid_allocator(ue_pdsch_allocator& pdsch_alloc_, dl_ran_slice_candidate& slice_candidate_) :
+  dl_slice_ue_cell_grid_allocator(ue_cell_grid_allocator& pdsch_alloc_, dl_ran_slice_candidate& slice_candidate_) :
     pdsch_alloc(pdsch_alloc_), slice_candidate(slice_candidate_)
   {
   }
 
   alloc_result allocate_dl_grant(const ue_pdsch_grant& grant) override
   {
-    const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
+    const alloc_result result = pdsch_alloc.allocate_dl_grant(grant, slice_candidate.id());
     if (result.status == alloc_status::success) {
       slice_candidate.store_grant(result.alloc_nof_rbs);
     }
@@ -111,7 +111,7 @@ public:
   }
 
 private:
-  ue_pdsch_allocator&     pdsch_alloc;
+  ue_cell_grid_allocator& pdsch_alloc;
   dl_ran_slice_candidate& slice_candidate;
 };
 
@@ -120,14 +120,15 @@ private:
 class ul_slice_ue_cell_grid_allocator : public ue_pusch_allocator
 {
 public:
-  ul_slice_ue_cell_grid_allocator(ue_pusch_allocator& pusch_alloc_, ul_ran_slice_candidate& slice_candidate_) :
+  ul_slice_ue_cell_grid_allocator(ue_cell_grid_allocator& pusch_alloc_, ul_ran_slice_candidate& slice_candidate_) :
     pusch_alloc(pusch_alloc_), slice_candidate(slice_candidate_)
   {
   }
 
   alloc_result allocate_ul_grant(const ue_pusch_grant& grant) override
   {
-    const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
+    const alloc_result result =
+        pusch_alloc.allocate_ul_grant(grant, slice_candidate.id(), slice_candidate.get_slot_tx());
     if (result.status == alloc_status::success) {
       slice_candidate.store_grant(result.alloc_nof_rbs);
     }
@@ -135,7 +136,7 @@ public:
   }
 
 private:
-  ue_pusch_allocator&     pusch_alloc;
+  ue_cell_grid_allocator& pusch_alloc;
   ul_ran_slice_candidate& slice_candidate;
 };
 

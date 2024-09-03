@@ -21,55 +21,52 @@
  */
 
 #include "resource_grid_test_doubles.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/support/srsran_test.h"
 #include <vector>
 
 using namespace srsran;
 
-void test(unsigned nof_slots, unsigned nof_sectors)
+void test(unsigned nof_slots)
 {
-  // Create grids
+  // Create grids.
   std::vector<std::unique_ptr<resource_grid>> grid_pool;
-  std::vector<std::vector<resource_grid*>>    grids;
+  std::vector<resource_grid*>                 expected_grids;
 
   // Generate resource grids
-  grids.reserve(nof_slots * nof_sectors);
-  grids.resize(nof_slots);
   for (unsigned slot = 0; slot != nof_slots; ++slot) {
-    grids[slot].resize(nof_sectors);
-    for (unsigned sector = 0; sector != nof_sectors; ++sector) {
-      grids[slot][sector] = new resource_grid_dummy;
-      grid_pool.emplace_back(grids[slot][sector]);
-    }
+    grid_pool.emplace_back(std::make_unique<resource_grid_dummy>());
+    expected_grids.emplace_back(grid_pool.back().get());
   }
 
   // Create resource grid pool
   std::unique_ptr<resource_grid_pool> pool = create_generic_resource_grid_pool(std::move(grid_pool));
 
   // Iterate all parameters and assert grid reference
-  for (unsigned slot_count = 0; slot_count != nof_slots; ++slot_count) {
-    for (unsigned sector = 0; sector != nof_sectors; ++sector) {
-      // Create context
-      resource_grid_context context = {};
-      context.slot                  = {0, slot_count};
-      context.sector                = sector;
+  std::vector<shared_resource_grid> reserved_grids;
+  for (unsigned slot = 0; slot != nof_slots; ++slot) {
+    // Create context
+    resource_grid_context context = {};
+    context.slot                  = {0, slot};
+    context.sector                = 0;
 
-      // Get grid
-      const resource_grid& grid = pool->get_resource_grid(context);
+    // Get grid.
+    shared_resource_grid grid = pool->allocate_resource_grid(context);
+    TESTASSERT(grid.is_valid());
 
-      // Verify grid reference match
-      TESTASSERT_EQ((void*)&grid, (void*)grids[slot_count][sector]);
-    }
+    // Verify grid reference match
+    TESTASSERT_EQ(reinterpret_cast<const void*>(&grid.get()), reinterpret_cast<const void*>(expected_grids[slot]));
+
+    // Move grid to the reserved list to avoid being released.
+    reserved_grids.emplace_back(std::move(grid));
   }
 }
 
 int main()
 {
   for (unsigned nof_slots : {40}) {
-    for (unsigned nof_sectors : {1, 2, 3}) {
-      test(nof_slots, nof_sectors);
-    }
+    test(nof_slots);
   }
 
   return 0;

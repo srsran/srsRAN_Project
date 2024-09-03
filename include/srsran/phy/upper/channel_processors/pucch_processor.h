@@ -206,32 +206,32 @@ public:
   virtual ~pucch_processor() = default;
 
   /// \brief Processes a PUCCH Format 0 message.
-  /// \param[out] grid    Resource grid.
-  /// \param[in]  config  PUCCH Format 0 configuration.
+  /// \param[in] grid    Resource grid.
+  /// \param[in] config  PUCCH Format 0 configuration.
   /// \return The PUCCH process result.
   virtual pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 1 message.
-  /// \param[out] grid    Resource grid.
-  /// \param[in]  config  PUCCH Format 1 configuration.
+  /// \param[in] grid    Resource grid.
+  /// \param[in] config  PUCCH Format 1 configuration.
   /// \return The PUCCH process result.
   virtual pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 2 message.
-  /// \param[out] grid    Resource grid.
-  /// \param[in]  config  PUCCH Format 2 configuration.
+  /// \param[in] grid    Resource grid.
+  /// \param[in] config  PUCCH Format 2 configuration.
   /// \return The PUCCH process result.
   virtual pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 3 message.
-  /// \param[out] grid    Resource grid.
-  /// \param[in]  config  PUCCH Format 3 configuration.
+  /// \param[in] grid    Resource grid.
+  /// \param[in] config  PUCCH Format 3 configuration.
   /// \return The PUCCH process result.
   virtual pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 4 message.
-  /// \param[out] indication PUCCH process result.
-  /// \param[in]  config     PUCCH Format 4 configuration.
+  /// \param[in] grid    Resource grid.
+  /// \param[in] config  PUCCH Format 4 configuration.
   /// \return The PUCCH process result.
   virtual pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) = 0;
 };

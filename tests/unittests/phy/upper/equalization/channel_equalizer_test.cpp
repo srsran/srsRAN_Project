@@ -189,7 +189,7 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerTest)
   ASSERT_EQ(span<const float>(eq_noise_vars_expected), span<const float>(eq_noise_vars_actual));
 }
 
-TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroNvar)
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerAllZeroNvar)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
@@ -208,6 +208,21 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroNvar)
   // Assert results.
   ASSERT_EQ(span<const cf_t>(eq_symbols_expected), span<const cf_t>(eq_symbols_actual));
   ASSERT_EQ(span<const float>(eq_noise_vars_expected), span<const float>(eq_noise_vars_actual));
+}
+
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerOneZeroNvar)
+{
+  // Load the test case data.
+  const test_case_t& t_case = GetParam();
+
+  // Force noise variances set to zero.
+  test_noise_vars.front() = 0;
+
+  // Equalize the symbols coming from the Rx ports using the modified noise variances.
+  test_equalizer->equalize(
+      eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, test_noise_vars, t_case.context.scaling);
+
+  // Skip assertions, the test shall not abort.
 }
 
 TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)

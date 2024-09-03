@@ -40,7 +40,7 @@ struct ru_sdr_cell_validation_config {
   /// PRACH preamble information.
   prach_preamble_information preamble_info;
   /// Channel bandwidth in MHz.
-  bs_channel_bandwidth_fr1 channel_bw_mhz;
+  bs_channel_bandwidth channel_bw_mhz;
   /// Duplex mode.
   duplex_mode dplx_mode;
 };

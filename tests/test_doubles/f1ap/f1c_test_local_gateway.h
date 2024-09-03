@@ -134,7 +134,7 @@ class f1u_test_local_gateway : public srs_du::f1u_du_gateway
 
   void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) override {}
 
-  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) override { return std::string("127.0.0.1"); }
+  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) const override { return std::string("127.0.0.1"); }
 };
 
 } // namespace srsran

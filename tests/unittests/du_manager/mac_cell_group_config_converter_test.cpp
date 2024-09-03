@@ -27,23 +27,23 @@
 
 using namespace srsran;
 
-static srs_du::cell_group_config make_initial_cell_group_config()
+static srs_du::du_ue_resource_config make_initial_du_ue_resource_config()
 {
-  srs_du::cell_group_config dest_cell_grp_cfg{};
-  dest_cell_grp_cfg.mcg_cfg = config_helpers::make_initial_mac_cell_group_config();
-  return dest_cell_grp_cfg;
+  srs_du::du_ue_resource_config dest_cfg{};
+  dest_cfg.cell_group.mcg_cfg = config_helpers::make_initial_mac_cell_group_config();
+  return dest_cfg;
 }
 
 TEST(mac_cell_group_config_converter_test, test_default_initial_sr_cfg_conversion)
 {
-  auto                           dest_cell_grp_cfg = make_initial_cell_group_config();
+  auto                           dest_cfg = make_initial_du_ue_resource_config();
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cell_grp_cfg);
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
   const auto& rrc_mcg_cfg  = rrc_cell_grp_cfg.mac_cell_group_cfg;
-  const auto& dest_mcg_cfg = dest_cell_grp_cfg.mcg_cfg;
+  const auto& dest_mcg_cfg = dest_cfg.cell_group.mcg_cfg;
 
   if (not dest_mcg_cfg.scheduling_request_config.empty()) {
     ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_present);
@@ -56,10 +56,10 @@ TEST(mac_cell_group_config_converter_test, test_default_initial_sr_cfg_conversio
 
 TEST(mac_cell_group_config_converter_test, test_custom_sr_cfg_conversion)
 {
-  const auto&               src_cell_grp_cfg = make_initial_cell_group_config();
-  srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
+  const auto&                   src_cfg = make_initial_du_ue_resource_config();
+  srs_du::du_ue_resource_config dest_cfg{src_cfg};
   // Add new configuration to be setup.
-  auto& dest_mcg_cfg = dest_cell_grp_cfg.mcg_cfg;
+  auto& dest_mcg_cfg = dest_cfg.cell_group.mcg_cfg;
   dest_mcg_cfg.scheduling_request_config.push_back(scheduling_request_to_addmod{
       .sr_id = static_cast<scheduling_request_id>(1), .prohibit_timer = sr_prohib_timer::ms1, .max_tx = sr_max_tx::n8});
   dest_mcg_cfg.scheduling_request_config.push_back(
@@ -69,7 +69,7 @@ TEST(mac_cell_group_config_converter_test, test_custom_sr_cfg_conversion)
   dest_mcg_cfg.scheduling_request_config.erase(dest_mcg_cfg.scheduling_request_config.begin());
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -85,16 +85,16 @@ TEST(mac_cell_group_config_converter_test, test_custom_sr_cfg_conversion)
 
 TEST(mac_cell_group_config_converter_test, test_custom_bsr_cfg_conversion)
 {
-  const auto&               src_cell_grp_cfg = make_initial_cell_group_config();
-  srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
+  const auto                    src_cfg = make_initial_du_ue_resource_config();
+  srs_du::du_ue_resource_config dest_cfg{src_cfg};
   // Add new configuration to be setup. Assume BSR Config is already set.
-  auto& dest_mcg_cfg                             = dest_cell_grp_cfg.mcg_cfg;
+  auto& dest_mcg_cfg                             = dest_cfg.cell_group.mcg_cfg;
   dest_mcg_cfg.bsr_cfg.value().periodic_timer    = srsran::periodic_bsr_timer::sf2560;
   dest_mcg_cfg.bsr_cfg.value().lc_sr_delay_timer = logical_channel_sr_delay_timer::sf1024;
   dest_mcg_cfg.bsr_cfg.value().retx_timer        = srsran::retx_bsr_timer::sf5120;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -109,14 +109,14 @@ TEST(mac_cell_group_config_converter_test, test_custom_bsr_cfg_conversion)
 
 TEST(mac_cell_group_config_converter_test, test_default_initial_tag_cfg_conversion)
 {
-  auto                           dest_cell_grp_cfg = make_initial_cell_group_config();
+  auto                           dest_cfg = make_initial_du_ue_resource_config();
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cell_grp_cfg);
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
   const auto& rrc_mcg_cfg  = rrc_cell_grp_cfg.mac_cell_group_cfg;
-  const auto& dest_mcg_cfg = dest_cell_grp_cfg.mcg_cfg;
+  const auto& dest_mcg_cfg = dest_cfg.cell_group.mcg_cfg;
 
   if (not dest_mcg_cfg.tag_config.empty()) {
     ASSERT_TRUE(rrc_mcg_cfg.tag_cfg_present);
@@ -128,16 +128,16 @@ TEST(mac_cell_group_config_converter_test, test_default_initial_tag_cfg_conversi
 
 TEST(mac_cell_group_config_converter_test, test_custom_tag_cfg_conversion)
 {
-  const auto&               src_cell_grp_cfg = make_initial_cell_group_config();
-  srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
+  const auto                    src_cfg = make_initial_du_ue_resource_config();
+  srs_du::du_ue_resource_config dest_cfg{src_cfg};
   // Add new configuration to be setup.
-  auto& dest_mcg_cfg = dest_cell_grp_cfg.mcg_cfg;
+  auto& dest_mcg_cfg = dest_cfg.cell_group.mcg_cfg;
   dest_mcg_cfg.tag_config.push_back(tag{.tag_id = static_cast<tag_id_t>(1), .ta_timer = time_alignment_timer::ms2560});
   dest_mcg_cfg.tag_config.push_back(tag{.tag_id = static_cast<tag_id_t>(2), .ta_timer = time_alignment_timer::ms1280});
   dest_mcg_cfg.tag_config.erase(dest_mcg_cfg.tag_config.begin());
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -153,14 +153,14 @@ TEST(mac_cell_group_config_converter_test, test_custom_tag_cfg_conversion)
 
 TEST(mac_cell_group_config_converter_test, test_default_initial_phr_cfg_conversion)
 {
-  auto                           dest_cell_grp_cfg = make_initial_cell_group_config();
+  auto                           dest_cfg = make_initial_du_ue_resource_config();
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cell_grp_cfg);
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
   const auto& rrc_mcg_cfg  = rrc_cell_grp_cfg.mac_cell_group_cfg;
-  const auto& dest_mcg_cfg = dest_cell_grp_cfg.mcg_cfg;
+  const auto& dest_mcg_cfg = dest_cfg.cell_group.mcg_cfg;
 
   if (dest_mcg_cfg.phr_cfg.has_value()) {
     ASSERT_TRUE(rrc_mcg_cfg.phr_cfg_present);
@@ -171,10 +171,10 @@ TEST(mac_cell_group_config_converter_test, test_default_initial_phr_cfg_conversi
 
 TEST(mac_cell_group_config_converter_test, test_custom_phr_cfg_conversion)
 {
-  const auto&               src_cell_grp_cfg = make_initial_cell_group_config();
-  srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
+  const auto                    src_cfg = make_initial_du_ue_resource_config();
+  srs_du::du_ue_resource_config dest_cfg{src_cfg};
   // Add new configuration to be setup.
-  auto& dest_mcg_cfg                                  = dest_cell_grp_cfg.mcg_cfg;
+  auto& dest_mcg_cfg                                  = dest_cfg.cell_group.mcg_cfg;
   dest_mcg_cfg.phr_cfg.value().periodic_timer         = phr_periodic_timer::sf100;
   dest_mcg_cfg.phr_cfg.value().prohibit_timer         = phr_prohibit_timer::sf20;
   dest_mcg_cfg.phr_cfg.value().power_factor_change    = phr_tx_power_factor_change::db3;
@@ -184,7 +184,7 @@ TEST(mac_cell_group_config_converter_test, test_custom_phr_cfg_conversion)
   dest_mcg_cfg.phr_cfg.value().phr_mode               = phr_mode_other_cg::virtual_;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -208,14 +208,14 @@ TEST(mac_cell_group_config_converter_test, test_custom_phr_cfg_conversion)
 
 TEST(serving_cell_config_converter_test, test_phr_cfg_release_conversion)
 {
-  const auto&               src_cell_grp_cfg = make_initial_cell_group_config();
-  srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
+  const auto&                   src_cfg = make_initial_du_ue_resource_config();
+  srs_du::du_ue_resource_config dest_cfg{src_cfg};
   // Remove PHR configuration to be setup.
-  auto& dest_mcg_cfg = dest_cell_grp_cfg.mcg_cfg;
+  auto& dest_mcg_cfg = dest_cfg.cell_group.mcg_cfg;
   dest_mcg_cfg.phr_cfg.reset();
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 

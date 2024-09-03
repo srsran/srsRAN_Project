@@ -44,8 +44,8 @@ public:
   node*       tail  = nullptr;
   std::size_t count = 0;
 
-  constexpr static std::size_t min_memory_block_size() { return sizeof(node); }
-  constexpr static std::size_t min_memory_block_align() { return alignof(node); }
+  static constexpr std::size_t min_memory_block_size() { return sizeof(node); }
+  static constexpr std::size_t min_memory_block_align() { return alignof(node); }
 
   /// Pushes a new memory block to the linked list.
   void push(void* block) noexcept

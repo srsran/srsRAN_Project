@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/srsvec/detail/traits.h"
+#include "srsran/srsvec/type_traits.h"
 #include "srsran/srsvec/types.h"
 
 namespace srsran {
@@ -31,8 +31,8 @@ namespace srsvec {
 template <typename T, typename U>
 void copy(T&& dst, const U& src)
 {
-  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span");
-  static_assert(detail::is_span_compatible<U>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<T>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<U>::value, "Template type is not compatible with a span");
   srsran_srsvec_assert_size(dst, src);
 
   std::copy(src.begin(), src.end(), dst.begin());

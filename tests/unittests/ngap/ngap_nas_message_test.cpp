@@ -47,10 +47,10 @@ protected:
 
   bool was_dl_nas_transport_forwarded(const test_ue& ue) const
   {
-    return ue.rrc_ue_dl_nas_handler.last_nas_pdu.length() == nas_pdu_len;
+    return ue.rrc_ue_handler.last_nas_pdu.length() == nas_pdu_len;
   }
 
-  bool was_dl_nas_transport_dropped(const test_ue& ue) const { return ue.rrc_ue_dl_nas_handler.last_nas_pdu.empty(); }
+  bool was_dl_nas_transport_dropped(const test_ue& ue) const { return ue.rrc_ue_handler.last_nas_pdu.empty(); }
 
   bool was_ue_radio_capability_info_indication_sent() const
   {

@@ -50,28 +50,20 @@ public:
               std::optional<rrc_ue_transfer_context> rrc_context);
   ~rrc_ue_impl();
 
-  // rrc_ul_ccch_pdu_handler
+  // rrc_ul_pdu_handler
   void handle_ul_ccch_pdu(byte_buffer pdu) override;
-  // rrc_ul_dcch_pdu_handler
   void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu) override;
 
   // rrc_ue_interface
-  rrc_ue_controller&                      get_controller() override { return *this; }
-  rrc_ul_ccch_pdu_handler&                get_ul_ccch_pdu_handler() override { return *this; }
-  rrc_ul_dcch_pdu_handler&                get_ul_dcch_pdu_handler() override { return *this; }
-  rrc_dl_nas_message_handler&             get_rrc_dl_nas_message_handler() override { return *this; }
-  rrc_ue_srb_handler&                     get_rrc_ue_srb_handler() override { return *this; }
-  rrc_ue_control_message_handler&         get_rrc_ue_control_message_handler() override { return *this; }
-  rrc_ue_radio_access_capability_handler& get_rrc_ue_radio_access_capability_handler() override { return *this; }
-  rrc_ue_context_handler&                 get_rrc_ue_context_handler() override { return *this; }
-  rrc_ue_handover_preparation_handler&    get_rrc_ue_handover_preparation_handler() override { return *this; }
+  rrc_ue_controller&              get_controller() override { return *this; }
+  rrc_ul_pdu_handler&             get_ul_pdu_handler() override { return *this; }
+  rrc_ngap_message_handler&       get_rrc_ngap_message_handler() override { return *this; }
+  rrc_ue_control_message_handler& get_rrc_ue_control_message_handler() override { return *this; }
+  rrc_ue_context_handler&         get_rrc_ue_context_handler() override { return *this; }
 
-  // rrc_ue_srb_handler
-  void                                  create_srb(const srb_creation_message& msg) override;
-  static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override;
-
-  // rrc_dl_nas_message_handler
-  void handle_dl_nas_transport_message(byte_buffer nas_pdu) override;
+  // rrc_ngap_message_handler
+  void        handle_dl_nas_transport_message(byte_buffer nas_pdu) override;
+  byte_buffer get_packed_handover_preparation_message() override;
 
   // rrc_ue_control_message_handler
   rrc_ue_security_mode_command_context get_security_mode_command_context() override;
@@ -82,16 +74,16 @@ public:
   rrc_ue_handover_reconfiguration_context
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override;
   async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) override;
+  bool             store_ue_capabilities(byte_buffer ue_capabilities) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
-  rrc_ue_release_context      get_rrc_ue_release_context(bool requires_rrc_message) override;
-  rrc_ue_transfer_context     get_transfer_context() override;
-  std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) override;
-  byte_buffer                 get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
-                                                       unsigned                                     transaction_id) override;
-
-  // rrc_ue_handover_preparation_handler
-  byte_buffer get_packed_handover_preparation_message() override;
-  byte_buffer handle_rrc_handover_command(byte_buffer cmd) override;
+  rrc_ue_release_context                get_rrc_ue_release_context(bool requires_rrc_message) override;
+  rrc_ue_transfer_context               get_transfer_context() override;
+  std::optional<rrc_meas_cfg>           generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) override;
+  byte_buffer                           get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
+                                                                 unsigned                                     transaction_id) override;
+  byte_buffer                           handle_rrc_handover_command(byte_buffer cmd) override;
+  void                                  create_srb(const srb_creation_message& msg) override;
+  static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override;
 
   // rrc_ue_context_handler
   rrc_ue_reestablishment_context_response get_context() override;

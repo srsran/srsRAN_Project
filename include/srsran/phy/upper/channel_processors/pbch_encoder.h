@@ -30,7 +30,7 @@
 
 namespace srsran {
 
-/// Describes the PBCH encoder interface
+/// PBCH encoder interface.
 class pbch_encoder
 {
 public:

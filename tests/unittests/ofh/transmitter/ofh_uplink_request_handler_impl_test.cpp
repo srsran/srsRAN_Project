@@ -21,7 +21,9 @@
  */
 
 #include "../../../../lib/ofh/transmitter/ofh_uplink_request_handler_impl.h"
+#include "../../phy/support/resource_grid_test_doubles.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
+#include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
@@ -46,9 +48,9 @@ class uplane_rx_symbol_notifier_spy : public uplane_rx_symbol_notifier
   const resource_grid_reader* rg_reader = nullptr;
 
 public:
-  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, const resource_grid_reader& grid) override
+  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid) override
   {
-    rg_reader = &grid;
+    rg_reader = &(grid.get_reader());
   }
 
   void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
@@ -58,7 +60,7 @@ public:
 
 class prach_buffer_dummy : public prach_buffer
 {
-  std::array<cf_t, 1> buffer;
+  std::array<cbf16_t, 1> buffer;
 
 public:
   unsigned get_max_nof_ports() const override { return 0; }
@@ -71,109 +73,16 @@ public:
 
   unsigned get_sequence_length() const override { return 0; }
 
-  span<cf_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
+  span<cbf16_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
   {
     return buffer;
   }
 
-  span<const cf_t>
+  span<const cbf16_t>
   get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
   {
     return buffer;
   }
-};
-
-class resource_grid_dummy : public resource_grid
-{
-  class resource_grid_mapper_dummy : public resource_grid_mapper
-  {
-  public:
-    void
-    map(const re_buffer_reader<>& input, const re_pattern& pattern, const precoding_configuration& precoding) override
-    {
-    }
-
-    void map(symbol_buffer&                 buffer,
-             const re_pattern_list&         pattern,
-             const re_pattern_list&         reserved,
-             const precoding_configuration& precoding,
-             unsigned                       re_skip) override
-    {
-    }
-  };
-
-  class resource_grid_writer_dummy : public resource_grid_writer
-  {
-  public:
-    unsigned get_nof_ports() const override { return 1; }
-    unsigned get_nof_subc() const override { return 1; }
-    unsigned get_nof_symbols() const override { return 14; }
-
-    span<const cf_t> put(unsigned                            port,
-                         unsigned                            l,
-                         unsigned                            k_init,
-                         const bounded_bitset<NRE * MAX_RB>& mask,
-                         span<const cf_t>                    symbols) override
-    {
-      return {};
-    }
-
-    span<const cbf16_t> put(unsigned                            port,
-                            unsigned                            l,
-                            unsigned                            k_init,
-                            const bounded_bitset<NRE * MAX_RB>& mask,
-                            span<const cbf16_t>                 symbols) override
-    {
-      return {};
-    }
-
-    void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
-    void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cbf16_t> symbols) override {}
-    span<cbf16_t> get_view(unsigned port, unsigned l) override { return {}; }
-  };
-
-  class resource_grid_reader_dummy : public resource_grid_reader
-  {
-  public:
-    unsigned   get_nof_ports() const override { return 1; }
-    unsigned   get_nof_subc() const override { return 1; }
-    unsigned   get_nof_symbols() const override { return 14; }
-    bool       is_empty(unsigned port) const override { return true; }
-    bool       is_empty() const override { return true; }
-    span<cf_t> get(span<cf_t>                          symbols,
-                   unsigned                            port,
-                   unsigned                            l,
-                   unsigned                            k_init,
-                   const bounded_bitset<MAX_RB * NRE>& mask) const override
-    {
-      return {};
-    }
-    span<cbf16_t> get(span<cbf16_t>                       symbols,
-                      unsigned                            port,
-                      unsigned                            l,
-                      unsigned                            k_init,
-                      const bounded_bitset<MAX_RB * NRE>& mask) const override
-    {
-      return {};
-    }
-    void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride) const override {}
-    void get(span<cbf16_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
-
-    span<const cbf16_t> get_view(unsigned port, unsigned l) const override { return {}; }
-  };
-
-  resource_grid_reader_dummy reader;
-  resource_grid_writer_dummy writer;
-  resource_grid_mapper_dummy mapper;
-
-public:
-  void set_all_zero() override {}
-
-  resource_grid_writer& get_writer() override { return writer; }
-
-  const resource_grid_reader& get_reader() const override { return reader; }
-
-  resource_grid_mapper& get_mapper() override { return mapper; }
 };
 
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
@@ -182,6 +91,10 @@ protected:
   const cyclic_prefix                        cp          = {cyclic_prefix::NORMAL};
   const tdd_ul_dl_config_common              ttd_pattern = {subcarrier_spacing::kHz30, {10, 6, 6, 3, 3}, {}};
   uplink_request_handler_impl_config         cfg;
+  resource_grid_reader_spy                   reader_spy;
+  resource_grid_writer_spy                   writer_spy;
+  resource_grid_spy                          grid;
+  shared_resource_grid_spy                   shared_grid;
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   std::shared_ptr<prach_context_repository>  ul_prach_repo;
   data_flow_cplane_scheduling_commands_spy*  data_flow;
@@ -190,6 +103,10 @@ protected:
   uplink_request_handler_impl                handler_prach_cp_en;
 
   explicit ofh_uplink_request_handler_impl_fixture() :
+    reader_spy(1, 14, 1),
+    writer_spy(1, 14, 1),
+    grid(reader_spy, writer_spy),
+    shared_grid(grid),
     ul_slot_repo(std::make_shared<uplink_context_repository>(REPOSITORY_SIZE)),
     ul_prach_repo(std::make_shared<prach_context_repository>(REPOSITORY_SIZE)),
     handler(get_config_prach_cp_disabled(), get_dependencies_prach_cp_disabled()),
@@ -295,12 +212,11 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_c
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cplane_message)
 {
-  resource_grid_dummy   rg;
   resource_grid_context rg_context;
   rg_context.slot   = slot_point(1, 1, 7);
   rg_context.sector = 1;
 
-  handler.handle_new_uplink_slot(rg_context, rg);
+  handler.handle_new_uplink_slot(rg_context, shared_grid.get_grid());
 
   // Assert data flow.
   ASSERT_TRUE(data_flow->has_enqueue_section_type_1_method_been_called());
@@ -310,25 +226,24 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cpl
   ASSERT_EQ(data_direction::uplink, info.direction);
 
   const ofdm_symbol_range symbol_range = get_active_tdd_ul_symbols(ttd_pattern, rg_context.slot.slot_index(), cp);
-  for (unsigned i = 0, e = rg.get_writer().get_nof_symbols(); i != e; ++i) {
+  for (unsigned i = 0, e = writer_spy.get_nof_symbols(); i != e; ++i) {
     ASSERT_FALSE(ul_slot_repo->get(rg_context.slot, i).empty());
   }
 
   // Assert that the symbol range equals the number of symbols of the grid.
   ASSERT_EQ(0, symbol_range.start());
-  ASSERT_EQ(rg.get_writer().get_nof_symbols(), symbol_range.stop());
+  ASSERT_EQ(writer_spy.get_nof_symbols(), symbol_range.stop());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture,
        handle_uplink_in_special_slot_generates_cplane_message_with_valid_symbols)
 {
-  resource_grid_dummy   rg;
   resource_grid_context rg_context;
   // Use special slot.
   rg_context.slot   = slot_point(1, 1, 6);
   rg_context.sector = 1;
 
-  handler.handle_new_uplink_slot(rg_context, rg);
+  handler.handle_new_uplink_slot(rg_context, shared_grid.get_grid());
 
   // Assert data flow.
   ASSERT_TRUE(data_flow->has_enqueue_section_type_1_method_been_called());
@@ -338,7 +253,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture,
   ASSERT_EQ(data_direction::uplink, info.direction);
 
   const ofdm_symbol_range symbol_range = get_active_tdd_ul_symbols(ttd_pattern, rg_context.slot.slot_index(), cp);
-  for (unsigned i = 0, e = rg.get_writer().get_nof_symbols(); i != e; ++i) {
+  for (unsigned i = 0, e = writer_spy.get_nof_symbols(); i != e; ++i) {
     if (i >= symbol_range.start() && i < symbol_range.stop()) {
       ASSERT_FALSE(ul_slot_repo->get(rg_context.slot, i).empty());
     } else {

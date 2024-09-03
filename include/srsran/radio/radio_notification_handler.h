@@ -40,6 +40,7 @@ public:
   class event_source
   {
   public:
+    /// Radio event sources.
     enum sources {
       /// Default event value meaning it is not set.
       UNDEFINED = 0,
@@ -83,6 +84,7 @@ public:
   class event_type
   {
   public:
+    /// Radio event types.
     enum types {
       /// Default event value meaning it is not set.
       UNDEFINED = 0,

@@ -23,7 +23,6 @@
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
-#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include <gtest/gtest.h>
 
@@ -34,6 +33,47 @@ namespace srsran {
 bool operator==(span<const bool> left, span<const bool> right)
 {
   return std::equal(left.begin(), left.end(), right.begin(), right.end());
+}
+
+/// \brief Tries to reserve buffers from a pool for a number of trials with a waiting time after every failed
+/// reservation.
+///
+/// This function is intended for being used when it is expect that a buffer shall be available but due memory
+/// synchronization it could potentially fail.
+///
+/// \param     pool           Receive buffer pool.
+/// \param[in] slot           Slot context in which the reservation occurs.
+/// \param[in] id             Buffer identifier.
+/// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
+/// \param[in] new_data       Set to true if the transmission is for new data.
+/// \return A valid receive buffer if the reservation is successful before exhausting the number trials. Otherwise, an
+/// invalid buffer.
+inline unique_rx_buffer reserve_buffer_trial(rx_buffer_pool&       pool,
+                                             const slot_point&     slot,
+                                             trx_buffer_identifier id,
+                                             unsigned              nof_codeblocks,
+                                             bool                  new_data)
+{
+  // Maximum number of trials.
+  static constexpr unsigned max_nof_trials = 10;
+  // Waiting time between failed reservations.
+  static constexpr std::chrono::milliseconds wait_time_between_trials(100);
+
+  for (unsigned i_trial = 0; i_trial != max_nof_trials; ++i_trial) {
+    // Try to reserve buffer.
+    unique_rx_buffer rx_buffer = pool.reserve(slot, id, nof_codeblocks, new_data);
+
+    // Return a valid buffer if the reservation is successful.
+    if (rx_buffer) {
+      return rx_buffer;
+    }
+
+    // Wait time before trying again.
+    std::this_thread::sleep_for(wait_time_between_trials);
+  }
+
+  // It did not reserve successfully a buffer. Return an invalid buffer.
+  return unique_rx_buffer();
 }
 
 } // namespace srsran
@@ -63,12 +103,12 @@ TEST(rx_buffer_pool, buffer_limit)
 
     // Reserve buffer, it shall not fail.
     buffers.emplace_back(pool->get_pool().reserve(slot, buffer_id, 1, true));
-    ASSERT_TRUE(buffers.back().is_valid());
+    ASSERT_TRUE(buffers.back());
   }
 
   // Create one more buffer. No buffers are available. It must fail to reserve.
   trx_buffer_identifier buffer_id(static_cast<uint16_t>(pool_config.nof_buffers), 0);
-  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id, 1, true).is_valid());
+  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id, 1, true));
 }
 
 // Tests that the pool returns nullptr when the limit of codeblocks is reached.
@@ -92,11 +132,11 @@ TEST(rx_buffer_pool, codeblock_limit)
   // Reserve buffer with all the codeblocks, it shall not fail.
   trx_buffer_identifier buffer_id0(0x1234, 0x3);
   unique_rx_buffer      buffer = pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true);
-  ASSERT_TRUE(buffer.is_valid());
+  ASSERT_TRUE(buffer);
 
   // Create one more buffer. No codeblocks are available. It must fail to reserve.
   trx_buffer_identifier buffer_id1(0x1234, buffer_id0.get_harq() + 1);
-  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id1, pool_config.nof_codeblocks, true).is_valid());
+  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id1, pool_config.nof_codeblocks, true));
 }
 
 // Tests that the pool frees reserved buffer.
@@ -120,7 +160,7 @@ TEST(rx_buffer_pool, buffer_free)
   // Reserve buffer with all the codeblocks, it shall not fail.
   trx_buffer_identifier buffer_id0(0x1234, 0x3);
   unique_rx_buffer      buffer = pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true);
-  ASSERT_TRUE(buffer.is_valid());
+  ASSERT_TRUE(buffer);
 
   // Extract CRCs.
   span<bool> crc = buffer->get_codeblocks_crc();
@@ -132,15 +172,15 @@ TEST(rx_buffer_pool, buffer_free)
   std::fill(crc.begin(), crc.end(), true);
 
   // Unlock buffer. It is still reserved.
-  buffer = unique_rx_buffer();
+  buffer.unlock();
 
   // Reserve buffer with the same identifier. It shall not fail.
   buffer = pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, false);
-  ASSERT_TRUE(buffer.is_valid());
+  ASSERT_TRUE(buffer);
 
   // Reserve buffer with a different identifier. It shall fail.
   trx_buffer_identifier buffer_id1(0x1234, buffer_id0.get_harq() + 1);
-  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id1, pool_config.nof_codeblocks, true).is_valid());
+  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id1, pool_config.nof_codeblocks, true));
 
   // Extract CRCs.
   crc = buffer->get_codeblocks_crc();
@@ -156,7 +196,7 @@ TEST(rx_buffer_pool, buffer_free)
 
   // Reserve buffer with all the codeblocks, it shall not fail.
   buffer = pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true);
-  ASSERT_TRUE(buffer.is_valid());
+  ASSERT_TRUE(buffer);
 
   // Check the CRC are all false.
   ASSERT_TRUE(std::find(crc.begin(), crc.end(), true) == crc.end());
@@ -184,25 +224,25 @@ TEST(rx_buffer_pool, buffer_expire)
 
   // Reserve buffer with all the codeblocks, it shall not fail.
   trx_buffer_identifier buffer_id0(0x1234, 0x3);
-  ASSERT_TRUE(pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true).is_valid());
+  ASSERT_TRUE(pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true));
 
   // Run slot and reserve the same buffer.
   slot += delay;
   pool->get_pool().run_slot(slot);
-  ASSERT_TRUE(pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true).is_valid());
+  ASSERT_TRUE(pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true));
 
   // Run for each slot until it expires.
   do {
     // Try to reserve another buffer. As there are no buffers available it shall fail.
     trx_buffer_identifier buffer_id1(0x1234, buffer_id0.get_harq() + 1);
-    ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id1, pool_config.nof_codeblocks, true).is_valid());
+    ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id1, pool_config.nof_codeblocks, true));
     ++slot;
     pool->get_pool().run_slot(slot);
   } while (slot.system_slot() < pool_config.expire_timeout_slots + delay);
 
   // After the first buffer expired, buffer reservation shall not fail.
   trx_buffer_identifier buffer_id2(0x1234, buffer_id0.get_harq() + 2);
-  ASSERT_TRUE(pool->get_pool().reserve(slot, buffer_id2, pool_config.nof_codeblocks, true).is_valid());
+  ASSERT_TRUE(reserve_buffer_trial(pool->get_pool(), slot, buffer_id2, pool_config.nof_codeblocks, true));
 }
 
 // Tests that the pool renews buffer expiration if they are locked.
@@ -228,7 +268,7 @@ TEST(rx_buffer_pool, buffer_renew_expire)
   // Reserve buffer with all the codeblocks, it shall not fail.
   trx_buffer_identifier buffer_id0(0x1234, 0x3);
   unique_rx_buffer      buffer = pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true);
-  ASSERT_TRUE(buffer.is_valid());
+  ASSERT_TRUE(buffer);
 
   // Advance slots. As the buffer is locked, the expiration shall be renewed.
   slot += expire_timeout_slots;
@@ -236,24 +276,24 @@ TEST(rx_buffer_pool, buffer_renew_expire)
 
   // Try to get the same buffer. It must fail as the buffer is locked.
   unique_rx_buffer locked_buffer = pool->get_pool().reserve(slot, buffer_id0, pool_config.nof_codeblocks, true);
-  ASSERT_FALSE(locked_buffer.is_valid());
+  ASSERT_FALSE(locked_buffer);
 
   // Unlock buffer.
-  buffer = unique_rx_buffer();
+  buffer.unlock();
 
   // Run for each slot until it expires.
   do {
     // Try to reserve another buffer. As there are no buffers available it shall fail.
     trx_buffer_identifier buffer_id1(0x1234, buffer_id0.get_harq() + 1);
     unique_rx_buffer      invalid_buffer = pool->get_pool().reserve(slot, buffer_id1, pool_config.nof_codeblocks, true);
-    ASSERT_FALSE(invalid_buffer.is_valid());
+    ASSERT_FALSE(invalid_buffer);
     ++slot;
     pool->get_pool().run_slot(slot);
   } while (slot.system_slot() < pool_config.expire_timeout_slots + expire_timeout_slots);
 
   // After the first buffer expired, buffer reservation shall not fail.
   trx_buffer_identifier buffer_id2(0x1234, buffer_id0.get_harq() + 2);
-  ASSERT_TRUE(pool->get_pool().reserve(slot, buffer_id2, pool_config.nof_codeblocks, true).is_valid());
+  ASSERT_TRUE(pool->get_pool().reserve(slot, buffer_id2, pool_config.nof_codeblocks, true));
 }
 
 // Tests that the pool renews buffer expiration if they are locked.
@@ -279,7 +319,7 @@ TEST(rx_buffer_pool, buffer_resize)
   // Reserve buffer with max_nof_codeblocks - 1 codeblocks, it shall not fail.
   trx_buffer_identifier buffer_id0(0x1234, 0x3);
   unique_rx_buffer      buffer = pool->get_pool().reserve(slot, buffer_id0, max_nof_codeblocks, true);
-  ASSERT_TRUE(buffer.is_valid());
+  ASSERT_TRUE(buffer);
 
   // Check the number of codeblock matches.
   ASSERT_EQ(buffer.get().get_nof_codeblocks(), max_nof_codeblocks);
@@ -289,7 +329,7 @@ TEST(rx_buffer_pool, buffer_resize)
   std::fill(crc.begin(), crc.end(), true);
 
   // Unlock the buffer.
-  buffer = unique_rx_buffer();
+  buffer.unlock();
 
   // Reserve the same buffer with more codeblocks.
   buffer = pool->get_pool().reserve(slot, buffer_id0, max_nof_codeblocks - 1, true);
@@ -325,16 +365,16 @@ TEST(rx_buffer_pool, buffer_resize_false_retransmission)
   // Reserve buffer with nof_codeblocks - 1 codeblocks, it shall not fail.
   trx_buffer_identifier buffer_id0(0x1234, 0x3);
   unique_rx_buffer      buffer = pool->get_pool().reserve(slot, buffer_id0, nof_codeblocks, true);
-  ASSERT_TRUE(buffer.is_valid());
+  ASSERT_TRUE(buffer);
 
   // Check the number of codeblock matches.
   ASSERT_EQ(buffer.get().get_nof_codeblocks(), nof_codeblocks);
 
   // Unlock the buffer.
-  buffer = unique_rx_buffer();
+  buffer.unlock();
 
   // Reserve the same buffer with less codeblocks, the buffer shall be invalid.
-  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id0, nof_codeblocks - 1, false).is_valid());
+  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id0, nof_codeblocks - 1, false));
 }
 
 // Tests that the pool returns an invalid buffer upon a retransmission without a previous reservation.
@@ -360,7 +400,7 @@ TEST(rx_buffer_pool, fresh_false_retransmission)
   // Reserve buffer as retransmission without a previous reservation, the buffer shall be invalid.
   trx_buffer_identifier buffer_id0(0x1234, 0x3);
   unique_rx_buffer      buffer = pool->get_pool().reserve(slot, buffer_id0, nof_codeblocks, false);
-  ASSERT_FALSE(buffer.is_valid());
+  ASSERT_FALSE(buffer);
 }
 
 // Tests buffer soft bits contents persists between retransmissions.
@@ -397,7 +437,7 @@ TEST(rx_buffer_pool, buffer_contents)
   {
     // Reserve buffer, it shall not fail.
     unique_rx_buffer rm_buffer = pool->get_pool().reserve(slot, buffer_id, nof_cb_x_buffer, true);
-    ASSERT_TRUE(rm_buffer.is_valid());
+    ASSERT_TRUE(rm_buffer);
 
     // For each codeblock...
     for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
@@ -425,7 +465,7 @@ TEST(rx_buffer_pool, buffer_contents)
 
   // Reserve buffer, it shall not fail.
   unique_rx_buffer buffer = pool->get_pool().reserve(slot, buffer_id, nof_cb_x_buffer, true);
-  ASSERT_TRUE(buffer.is_valid());
+  ASSERT_TRUE(buffer);
 
   // For each codeblock...
   for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
@@ -479,7 +519,7 @@ TEST(rx_buffer_pool, reserve_after_stop)
       pool->get_pool().reserve(slot, trx_buffer_identifier(0, 0), pool_config.nof_codeblocks, true);
 
   // The buffer must be invalid.
-  ASSERT_FALSE(buffer.is_valid());
+  ASSERT_FALSE(buffer);
 }
 
 // Tests buffer pool waits to stop.
@@ -517,7 +557,7 @@ TEST(rx_buffer_pool, wait_to_stop)
   async_unlock.join();
 
   // The buffer must be invalid.
-  ASSERT_FALSE(buffer.is_valid());
+  ASSERT_FALSE(buffer);
 }
 
 TEST(rx_buffer_pool, concurrent)
@@ -553,10 +593,10 @@ TEST(rx_buffer_pool, concurrent)
           pool->get_pool().reserve(slot, trx_buffer_identifier(0x1234, i_buffer), nof_cb_x_buffer, true);
 
       // The reservation should be successful for the first time.
-      ASSERT_TRUE((i_repetition > 0) || buffer.is_valid());
+      ASSERT_TRUE((i_repetition > 0) || buffer);
 
       // Release or unlock buffer asynchronously in the worker pool.
-      if (buffer.is_valid()) {
+      if (buffer) {
         if (i_repetition & 1) {
           ASSERT_TRUE(release_worker_pool.push_task([buffer2 = std::move(buffer)]() mutable { buffer2.unlock(); }));
         } else {

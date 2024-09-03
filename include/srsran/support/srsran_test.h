@@ -28,7 +28,7 @@ namespace srsran {
 
 namespace detail {
 
-/// Helper function to format TESTASSERT_EQ
+/// Helper function to format TESTASSERT_EQ.
 template <typename T, typename U>
 [[gnu::noinline]] inline std::string
 assert_eq_format_helper(T expected_val, U actual_val, bool eq_cmp, const std::string& msg) noexcept

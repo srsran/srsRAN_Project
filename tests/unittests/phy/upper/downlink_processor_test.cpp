@@ -36,6 +36,15 @@ using namespace srsran;
 
 static srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY");
 
+static shared_resource_grid get_dummy_grid()
+{
+  static resource_grid_reader_spy rg_reader_spy;
+  static resource_grid_writer_spy rg_writer_spy;
+  static resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
+  static shared_resource_grid_spy unique_rg_spy(rg_spy);
+  return unique_rg_spy.get_grid();
+}
+
 TEST(downlinkProcessorTest, worksInOrder)
 {
   upper_phy_rg_gateway_fto gw;
@@ -61,8 +70,7 @@ TEST(downlinkProcessorTest, worksInOrder)
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  resource_grid_dummy grid;
-  dl_processor->configure_resource_grid({slot, sector}, grid);
+  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
 
   ASSERT_FALSE(pdcch_ref.is_process_called());
   ASSERT_FALSE(pdsch_ref.is_process_called());
@@ -118,8 +126,7 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  resource_grid_dummy grid;
-  dl_processor->configure_resource_grid({slot, sector}, grid);
+  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
@@ -176,7 +183,7 @@ TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
   unsigned   sector = 0;
 
   resource_grid_dummy grid;
-  dl_processor->configure_resource_grid({slot, sector}, grid);
+  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
@@ -278,7 +285,7 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   unsigned   sector = 0;
 
   resource_grid_dummy grid;
-  dl_processor->configure_resource_grid({slot, sector}, grid);
+  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
@@ -295,8 +302,7 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
 
   slot_point slot2(1, 2, 2);
   gw.clear_sent();
-  resource_grid_dummy grid2;
-  dl_processor->configure_resource_grid({slot2, sector}, grid2);
+  dl_processor->configure_resource_grid({slot2, sector}, get_dummy_grid());
 
   dl_processor->process_ssb({});
   dl_processor->process_pdcch(pdu);
@@ -325,8 +331,7 @@ TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  resource_grid_spy grid(0, 0, 0);
-  dl_processor->configure_resource_grid({slot, sector}, grid);
+  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
 
   // By finishing PDUs, the resource grid should be sent.
   dl_processor->finish_processing_pdus();

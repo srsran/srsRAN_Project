@@ -28,13 +28,13 @@
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/rrc/rrc.h"
+#include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between NGAP and CU-CP
-class ngap_cu_cp_adapter : public ngap_cu_cp_du_repository_notifier, public ngap_cu_cp_notifier
+class ngap_cu_cp_adapter : public ngap_cu_cp_notifier
 {
 public:
   explicit ngap_cu_cp_adapter() = default;
@@ -156,18 +156,11 @@ public:
     return ue->get_task_sched().schedule_async_task(std::move(task));
   }
 
-  /// \brief Get the RRC UE PDU notifier of the UE.
-  ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override
+  /// \brief Get the RRC UE notifier of the UE.
+  ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() override
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
-    return ue->get_rrc_ue_pdu_notifier();
-  }
-
-  /// \brief Get the RRC UE control notifier of the UE.
-  ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override
-  {
-    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
-    return ue->get_rrc_ue_control_notifier();
+    return ue->get_ngap_rrc_ue_notifier();
   }
 
   bool init_security_context(security::security_context sec_ctxt) override
@@ -187,42 +180,33 @@ private:
 };
 
 /// Adapter between NGAP and RRC UE
-class ngap_rrc_ue_adapter : public ngap_rrc_ue_pdu_notifier, public ngap_rrc_ue_control_notifier
+class ngap_rrc_ue_adapter : public ngap_rrc_ue_notifier
 {
 public:
   ngap_rrc_ue_adapter() = default;
 
-  void connect_rrc_ue(rrc_dl_nas_message_handler&             rrc_ue_msg_handler_,
-                      rrc_ue_radio_access_capability_handler& rrc_ue_radio_access_cap_handler_,
-                      rrc_ue_handover_preparation_handler&    rrc_ue_ho_prep_handler_)
-  {
-    rrc_ue_msg_handler              = &rrc_ue_msg_handler_;
-    rrc_ue_radio_access_cap_handler = &rrc_ue_radio_access_cap_handler_;
-    rrc_ue_ho_prep_handler          = &rrc_ue_ho_prep_handler_;
-  }
+  void connect_rrc_ue(rrc_ngap_message_handler& rrc_ue_handler_) { rrc_ue_handler = &rrc_ue_handler_; }
 
   void on_new_pdu(byte_buffer nas_pdu) override
   {
-    srsran_assert(rrc_ue_msg_handler != nullptr, "RRC UE message handler must not be nullptr");
-    rrc_ue_msg_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    rrc_ue_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
   byte_buffer on_ue_radio_access_cap_info_required() override
   {
-    srsran_assert(rrc_ue_radio_access_cap_handler != nullptr, "RRC UE Radio Access Cap handler must not be nullptr");
-    return rrc_ue_radio_access_cap_handler->get_packed_ue_radio_access_cap_info();
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_packed_ue_radio_access_cap_info();
   }
 
   byte_buffer on_handover_preparation_message_required() override
   {
-    srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE UP manager must not be nullptr");
-    return rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_packed_handover_preparation_message();
   }
 
 private:
-  rrc_dl_nas_message_handler*             rrc_ue_msg_handler              = nullptr;
-  rrc_ue_radio_access_capability_handler* rrc_ue_radio_access_cap_handler = nullptr;
-  rrc_ue_handover_preparation_handler*    rrc_ue_ho_prep_handler          = nullptr;
+  rrc_ngap_message_handler* rrc_ue_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

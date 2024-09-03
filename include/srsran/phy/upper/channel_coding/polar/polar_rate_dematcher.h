@@ -44,9 +44,7 @@ public:
   ///                       operation.
   /// \param[in] input      The LLRs obtained from the channel samples that correspond to
   ///                       the codeword to be, first, rate-dematched and, second, decoded.
-  /// \param[in] E          Rate-matched codeword length.
-  /// \param[in] n          \f$log_2\f$ of the codeword length.
-  /// \param[in] K          Message size (including CRC).
+  /// \param[in] code       Polar code description.
   virtual void
   rate_dematch(span<log_likelihood_ratio> output, span<const log_likelihood_ratio> input, const polar_code& code) = 0;
 };

@@ -31,4 +31,10 @@ set_tests_properties(sctp_network_gateway_test PROPERTIES LABELS "tsan")
 
 add_executable(udp_network_gateway_test udp_network_gateway_test.cpp)
 target_link_libraries(udp_network_gateway_test srsran_gateway srsran_support srslog gtest gtest_main)
-gtest_discover_tests(udp_network_gateway_test)
+add_test(udp_network_gateway_test udp_network_gateway_test)
+set_tests_properties(udp_network_gateway_test PROPERTIES LABELS "tsan")
+
+add_executable(udp_network_gateway_pool_depletion_test udp_network_gateway_pool_depletion_test.cpp)
+target_link_libraries(udp_network_gateway_pool_depletion_test srsran_gateway srsran_support srslog gtest gtest_main)
+add_test(udp_network_gateway_pool_depletion_test udp_network_gateway_pool_depletion_test)
+set_tests_properties(udp_network_gateway_pool_depletion_test PROPERTIES LABELS "tsan")

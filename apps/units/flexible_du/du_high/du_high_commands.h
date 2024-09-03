@@ -23,17 +23,17 @@
 #pragma once
 
 #include "apps/services/application_command.h"
-#include "apps/services/metrics_plotter_stdout.h"
+#include "metrics/du_high_scheduler_cell_metrics_consumers.h"
 
 namespace srsran {
 
 /// Application command to display/hide the DU high metrics in STDOUT.
 class toggle_stdout_metrics_app_command : public app_services::application_command
 {
-  metrics_plotter_stdout& printer;
+  scheduler_cell_metrics_consumer_stdout& printer;
 
 public:
-  explicit toggle_stdout_metrics_app_command(metrics_plotter_stdout& printer_) : printer(printer_) {}
+  explicit toggle_stdout_metrics_app_command(scheduler_cell_metrics_consumer_stdout& printer_) : printer(printer_) {}
 
   // See interface for documentation.
   std::string_view get_name() const override { return "t"; }

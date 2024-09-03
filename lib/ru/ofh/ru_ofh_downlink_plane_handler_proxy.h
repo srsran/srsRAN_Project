@@ -27,6 +27,7 @@
 namespace srsran {
 
 class task_executor;
+class shared_resource_grid;
 
 namespace ofh {
 class downlink_handler;
@@ -43,7 +44,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) override;
+  void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
 private:
   std::vector<ofh::downlink_handler*> sectors;

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/circular_array.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/slot_point.h"
 #include <mutex>
 #include <utility>
@@ -35,20 +36,22 @@ namespace srsran {
 /// resource grid. The pool access is thread-safe and it is done by exchange requests.
 ///
 /// \tparam GridType Resource grid type.
-template <typename GridType>
 class resource_grid_request_pool
 {
 public:
   /// Internal storage type.
   struct request_type {
-    slot_point slot;
-    GridType*  grid;
+    slot_point           slot;
+    shared_resource_grid grid;
   };
 
   /// \brief Exchanges a request from the pool by the given one.
   /// \param[in] request The given request, it is copied into <tt>request.slot.system_slot() % REQUEST_ARRAY_SIZE</tt>.
   /// \return The previous request at position  <tt> request.slot.system_slot() % REQUEST_ARRAY_SIZE </tt>.
-  request_type exchange(const request_type& request) { return requests[request.slot.system_slot()].exchange(request); }
+  request_type exchange(request_type request)
+  {
+    return requests[request.slot.system_slot()].exchange(std::move(request));
+  }
 
 private:
   /// Number of requests contained in the array.
@@ -59,15 +62,17 @@ private:
   {
   public:
     /// Default constructor - constructs an empty request.
-    request_wrapper() : request({slot_point(), nullptr}) {}
+    request_wrapper() : request({slot_point(), shared_resource_grid()}) {}
 
     /// \brief Exchanges the previous request with a new request.
     /// \param[in] new_request New request.
     /// \return A copy of the previous request.
-    request_type exchange(const request_type& new_request)
+    request_type exchange(request_type new_request)
     {
       std::unique_lock<std::mutex> lock(mutex);
-      return std::exchange(request, new_request);
+      request_type                 old_request = std::move(request);
+      request                                  = std::move(new_request);
+      return old_request;
     }
 
   private:

@@ -57,11 +57,11 @@ struct message_receiver_config {
 /// Message receiver dependencies.
 struct message_receiver_dependencies {
   /// Logger.
-  srslog::basic_logger* logger;
+  srslog::basic_logger* logger = nullptr;
   /// Ethernet receiver.
   std::unique_ptr<ether::receiver> eth_receiver;
   /// Reception window checker.
-  rx_window_checker* window_checker;
+  rx_window_checker* window_checker = nullptr;
   /// eCPRI packet decoder.
   std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
   /// Ethernet frame decoder.

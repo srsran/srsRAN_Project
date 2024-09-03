@@ -29,18 +29,20 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
+constexpr std::chrono::milliseconds ng_cancel_ack_timeout{5000};
+
 ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_handover_preparation_request& request_,
-    const ngap_context_t&                    context_,
+    const plmn_identity&                     serving_plmn_,
     const ngap_ue_ids&                       ue_ids_,
     ngap_message_notifier&                   amf_notifier_,
-    ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
+    ngap_rrc_ue_notifier&                    rrc_ue_notifier_,
     ngap_cu_cp_notifier&                     cu_cp_notifier_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
     ngap_ue_logger&                          logger_) :
   request(request_),
-  context(context_),
+  serving_plmn(serving_plmn_),
   ue_ids(ue_ids_),
   amf_notifier(amf_notifier_),
   rrc_ue_notifier(rrc_ue_notifier_),
@@ -75,7 +77,25 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 
   if (transaction_sink.timeout_expired()) {
     logger.log_warning("\"{}\" timed out after {}ms", name(), tng_reloc_prep_ms.count());
-    // TODO: Initialize Handover Cancellation procedure
+    // Initialize Handover Cancellation procedure
+    ho_cancel_transaction_sink.subscribe_to(ev_mng.handover_cancel_outcome, ng_cancel_ack_timeout);
+
+    send_handover_cancel();
+
+    CORO_AWAIT(ho_cancel_transaction_sink);
+
+    if (ho_cancel_transaction_sink.timeout_expired()) {
+      logger.log_warning("\"{}\" Handover Cancel timed out after {}ms", name(), ng_cancel_ack_timeout.count());
+    }
+    if (transaction_sink.successful()) {
+      logger.log_debug("\"{}\" Handover Cancel Ack received", name());
+    }
+    CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
+  }
+
+  if (transaction_sink.failed()) {
+    logger.log_warning("\"{}\" failed. Cause: Received Handover Preparation Failure", name());
+    CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
   if (transaction_sink.successful()) {
@@ -131,12 +151,28 @@ void ngap_handover_preparation_procedure::send_handover_required()
   amf_notifier.on_new_message(msg);
 }
 
+void ngap_handover_preparation_procedure::send_handover_cancel()
+{
+  ngap_message msg = {};
+  // set NGAP PDU contents
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_CANCEL);
+  ho_cancel_s& ho_cancel = msg.pdu.init_msg().value.ho_cancel();
+
+  ho_cancel->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
+  ho_cancel->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+
+  ho_cancel->cause.set_radio_network();
+  ho_cancel->cause.set_radio_network() = cause_radio_network_opts::ho_cancelled;
+  amf_notifier.on_new_message(msg);
+}
+
 void ngap_handover_preparation_procedure::fill_asn1_target_ran_node_id(target_id_c& target_id)
 {
   auto& target_node = target_id.set_target_ran_node_id();
   target_node.global_ran_node_id.set(global_ran_node_id_c::types::global_gnb_id);
   auto& global_gnb   = target_node.global_ran_node_id.global_gnb_id();
-  global_gnb.plmn_id = context.plmn.to_bytes();
+  global_gnb.plmn_id = serving_plmn.to_bytes();
   global_gnb.gnb_id.set_gnb_id();
   global_gnb.gnb_id.gnb_id().from_number(request.gnb_id.id, request.gnb_id.bit_length);
 }
@@ -178,7 +214,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   }
   nr_cgi_s& target_nr_cgi = transparent_container.target_cell_id.set_nr_cgi();
 
-  target_nr_cgi.plmn_id = context.plmn.to_bytes();
+  target_nr_cgi.plmn_id = serving_plmn.to_bytes();
   target_nr_cgi.nr_cell_id.from_number(request.nci.value());
 
   last_visited_cell_item_s        last_visited_cell_item;
@@ -199,7 +235,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
 
 byte_buffer ngap_handover_preparation_procedure::get_rrc_handover_command()
 {
-  auto& target_to_source_container_packed = transaction_sink.response()->target_to_source_transparent_container;
+  const auto& target_to_source_container_packed = transaction_sink.response()->target_to_source_transparent_container;
 
   asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s target_to_source_container;
   asn1::cbit_ref bref({target_to_source_container_packed.begin(), target_to_source_container_packed.end()});

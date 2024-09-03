@@ -39,7 +39,8 @@ struct ngap_ue_ids {
 
 struct ngap_ue_context {
   ngap_ue_ids             ue_ids;
-  ngap_cu_cp_ue_notifier* ue                            = nullptr;
+  ngap_cu_cp_ue_notifier* ue = nullptr;
+  guami_t                 serving_guami;
   uint64_t                aggregate_maximum_bit_rate_dl = 0;
   unique_timer            pdu_session_setup_timer       = {};
   bool                    release_requested             = false;

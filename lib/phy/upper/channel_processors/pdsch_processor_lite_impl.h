@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "pdsch_codeblock_processor.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
@@ -88,13 +89,11 @@ private:
   /// Current codeblock index.
   unsigned next_i_cb = 0;
   /// Temporary storage of codeblock symbols.
-  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> rm_buffer;
-  /// Temporary storage of codeblock symbols.
   std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
   /// Current view of the codeblock modulated symbols.
   span<ci8_t> codeblock_symbols;
 
-  /// Processes a new codeblock and writes the new data in \ref encoded_bit_buffer.
+  /// Processes a new codeblock and writes the new data in \ref temp_codeblock_symbols.
   void new_codeblock();
 };
 

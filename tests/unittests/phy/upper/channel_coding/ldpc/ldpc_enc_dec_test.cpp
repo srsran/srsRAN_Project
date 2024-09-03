@@ -29,6 +29,7 @@
 
 #include "ldpc_encoder_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/zero.h"
 #include <gtest/gtest.h>
@@ -273,12 +274,9 @@ TEST_P(LDPCEncDecFixture, LDPCEncTest)
       span<const uint8_t> expected_encoded = cblock_i.first(length);
 
       // Check the encoder.
-      std::vector<uint8_t> encoded(length);
-      dynamic_bit_buffer   encoded_packed(length);
-
-      encoder_test->encode(encoded_packed, message_packed, cfg_enc);
-
-      srsvec::bit_unpack(encoded, encoded_packed);
+      std::vector<uint8_t>       encoded(length);
+      const ldpc_encoder_buffer& rm_buffer = encoder_test->encode(message_packed, cfg_enc);
+      rm_buffer.write_codeblock(encoded, 0);
       ASSERT_EQ(span<const uint8_t>(encoded), span<const uint8_t>(expected_encoded)) << "Wrong codeblock.";
     }
   }

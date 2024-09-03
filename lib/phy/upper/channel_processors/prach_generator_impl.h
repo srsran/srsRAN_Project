@@ -66,12 +66,6 @@ private:
   span<const cf_t> generate_y_u_v_short(unsigned u, unsigned C_v);
 
 public:
-  /// \brief Constructor - Acquires ownership of the internal components.
-  ///
-  /// The PRACH generator depends on the DFT to generate the frequency-domain signals.
-  ///
-  /// \param dft_long_ DFT processor for generating long sequences.
-  /// \param dft_short_ DFT processor for generating short sequences.
   prach_generator_impl() : sequence(LONG)
   {
     // Do nothing.

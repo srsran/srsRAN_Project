@@ -39,8 +39,8 @@ iq_decompressor_selector::iq_decompressor_selector(
 }
 
 void iq_decompressor_selector::decompress(span<cbf16_t>                iq_data,
-                                          span<const compressed_prb>   compressed_prbs,
+                                          span<const uint8_t>          compressed_data,
                                           const ru_compression_params& params)
 {
-  return decompressors[static_cast<unsigned>(params.type)]->decompress(iq_data, compressed_prbs, params);
+  return decompressors[static_cast<unsigned>(params.type)]->decompress(iq_data, compressed_data, params);
 }

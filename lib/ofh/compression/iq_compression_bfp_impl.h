@@ -25,6 +25,7 @@
 #include "quantizer.h"
 #include "srsran/ofh/compression/iq_compressor.h"
 #include "srsran/ofh/compression/iq_decompressor.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
@@ -42,11 +43,11 @@ public:
 
   // See interface for the documentation.
   virtual void
-  compress(span<compressed_prb> output, span<const cbf16_t> input, const ru_compression_params& params) override;
+  compress(span<uint8_t> buffer, span<const cbf16_t> iq_data, const ru_compression_params& params) override;
 
   // See interface for the documentation.
   virtual void
-  decompress(span<cbf16_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
+  decompress(span<cbf16_t> iq_data, span<const uint8_t> compressed_data, const ru_compression_params& params) override;
 
 protected:
   /// Number of quantized samples per resource block.
@@ -82,17 +83,17 @@ protected:
   /// \param[out] c_prb      Compressed PRB.
   /// \param input_quantized Span of quantized IQ samples of a resource block to be compressed.
   /// \param data_width      BFP compression bit width.
-  static void compress_prb_generic(compressed_prb& c_prb, span<const int16_t> input_quantized, unsigned data_width);
+  static void compress_prb_generic(span<uint8_t> c_prb, span<const int16_t> input_quantized, unsigned data_width);
 
   /// \brief Decompresses one resource block using a generic implementation of the algorithm
   /// from O-RAN.WG4.CUS, Annex A.1.3.
   ///
-  /// \param[out] output Span of decompressed complex samples of a resource block (12 samples).
-  /// \param[in]  c_prb  Compressed PRB.
-  /// \param[in]  q      Quantizer object.
-  /// \param data_width  Bit width of compressed samples.
+  /// \param[out] output   Span of decompressed complex samples of a resource block (12 samples).
+  /// \param[in]  comp_prb Compressed PRB IQ samples and compression parameter.
+  /// \param[in]  q        Quantizer object.
+  /// \param data_width    Bit width of compressed samples.
   static void
-  decompress_prb_generic(span<cbf16_t> output, const compressed_prb& c_prb, const quantizer& q, unsigned data_width);
+  decompress_prb_generic(span<cbf16_t> output, span<const uint8_t> comp_prb, const quantizer& q, unsigned data_width);
 
   /// Quantizes complex float samples using the specified bit width.
   ///

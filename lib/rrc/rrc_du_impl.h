@@ -33,7 +33,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Main RRC representation with the DU
-class rrc_du_impl : public rrc_du_interface
+class rrc_du_impl : public rrc_du
 {
 public:
   rrc_du_impl(const rrc_cfg_t&                    cfg_,
@@ -53,7 +53,9 @@ public:
   // rrc_ue_handler
   rrc_ue_interface* find_ue(ue_index_t ue_index) override
   {
-    srsran_assert(ue_db.find(ue_index) != ue_db.end(), "UE not found");
+    if (ue_db.find(ue_index) == ue_db.end()) {
+      return nullptr;
+    }
     return ue_db.at(ue_index).get();
   }
   void remove_ue(ue_index_t ue_index) override;

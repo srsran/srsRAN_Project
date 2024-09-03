@@ -73,7 +73,7 @@ srsran::get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
                                       slot_point                pdcch_slot,
                                       const search_space_info*  ss_info)
 {
-  unsigned                                          min_k1 = cell_cfg.expert_cfg.ue.min_k1;
+  unsigned min_k1 = *std::min(cell_cfg.dl_data_to_ul_ack.begin(), cell_cfg.dl_data_to_ul_ack.end());
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
       cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
   if (ss_info != nullptr) {

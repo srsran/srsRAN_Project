@@ -44,11 +44,29 @@ public:
     srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", unsigned(numerology));
   }
 
+  slot_symbol_point(const slot_symbol_point& symbol_point) :
+    nof_symbols(symbol_point.get_nof_symbols()),
+    numerology(symbol_point.get_numerology()),
+    count_val(symbol_point.to_uint())
+  {
+  }
+  slot_symbol_point& operator=(const slot_symbol_point& symbol_point)
+  {
+    nof_symbols = symbol_point.get_nof_symbols();
+    numerology  = symbol_point.get_numerology();
+    count_val   = symbol_point.to_uint();
+
+    return *this;
+  }
+
   /// Slot point.
   slot_point get_slot() const
   {
     return numerology < NOF_NUMEROLOGIES ? slot_point(numerology, count_val / nof_symbols) : slot_point();
   }
+
+  /// Returns true if the slot symbol point is valid, false otherwise.
+  bool is_valid() const { return nof_symbols != 0 && numerology < NOF_NUMEROLOGIES; }
 
   /// Symbol index in a slot. Value: (0..nof_symbols-1).
   unsigned get_symbol_index() const { return count_val % nof_symbols; }

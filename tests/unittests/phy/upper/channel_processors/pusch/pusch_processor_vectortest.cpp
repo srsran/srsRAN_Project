@@ -40,8 +40,44 @@
 
 using namespace srsran;
 
+static std::string eal_arguments = "pusch_processor_vectortest";
 #ifdef HWACC_PUSCH_ENABLED
-static bool skip_hwacc_test = false;
+static bool                                     skip_hwacc_test   = false;
+static std::unique_ptr<dpdk::dpdk_eal>          dpdk_interface    = nullptr;
+static std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory = nullptr;
+
+// Separates EAL and non-EAL arguments.
+// The function assumes that 'eal_arg' flags the start of the EAL arguments and that no more non-EAL arguments follow.
+static std::string capture_eal_args(int* argc, char*** argv)
+{
+  // Searchs for the EAL args (if any), flagged by 'eal_args', while removing all the rest (except argv[0]).
+  bool        eal_found = false;
+  char**      mod_argv  = *argv;
+  std::string eal_argv  = {mod_argv[0]};
+  int         opt_ind   = *argc;
+  for (int j = 1; j < opt_ind; ++j) {
+    // Search for the 'eal_args' flag (if any).
+    if (!eal_found) {
+      if (strcmp(mod_argv[j], "eal_args") == 0) {
+        // 'eal_args' flag found.
+        eal_found = true;
+        // Remove all main app arguments starting from that point, while copying them to the EAL argument string.
+        mod_argv[j] = NULL;
+        for (int k = j + 1; k < opt_ind; ++k) {
+          eal_argv += " ";
+          eal_argv += mod_argv[k];
+          mod_argv[k] = NULL;
+        }
+        *argc = j;
+      }
+    }
+  }
+  *argv = mod_argv;
+
+  fmt::print("eal_arg={}\n", eal_argv);
+
+  return eal_argv;
+}
 #endif // HWACC_PUSCH_ENABLED
 
 namespace srsran {
@@ -97,7 +133,8 @@ private:
     return create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
   }
 
-  static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
+  static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory>
+  create_hw_accelerator_pusch_dec_factory(const std::string& eal_arguments)
   {
 #ifdef HWACC_PUSCH_ENABLED
     //  Hardcoded stdout and error logging.
@@ -108,10 +145,9 @@ private:
     logger.set_level(srslog::basic_levels::error);
 
     // Pointer to a dpdk-based hardware-accelerator interface.
-    static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;
     if (!dpdk_interface && !skip_hwacc_test) {
       // :TODO: Enable passing EAL arguments.
-      dpdk_interface = dpdk::create_dpdk_eal("pusch_processor_vectortest", logger);
+      dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
       if (!dpdk_interface) {
         skip_hwacc_test = true;
         return nullptr;
@@ -120,14 +156,23 @@ private:
       return nullptr;
     }
 
+    // Create a bbdev accelerator factory.
+    if (!bbdev_acc_factory) {
+      bbdev_acc_factory = srsran::dpdk::create_bbdev_acc_factory("srs");
+      if (!bbdev_acc_factory || skip_hwacc_test) {
+        skip_hwacc_test = true;
+        return nullptr;
+      }
+    }
+
     // Intefacing to the bbdev-based hardware-accelerator.
     dpdk::bbdev_acc_configuration bbdev_config;
     bbdev_config.id                                    = 0;
     bbdev_config.nof_ldpc_enc_lcores                   = 0;
-    bbdev_config.nof_ldpc_dec_lcores                   = 1;
+    bbdev_config.nof_ldpc_dec_lcores                   = dpdk::MAX_NOF_BBDEV_VF_INSTANCES;
     bbdev_config.nof_fft_lcores                        = 0;
     bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
-    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
+    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, logger);
     if (!bbdev_accelerator || skip_hwacc_test) {
       skip_hwacc_test = true;
       return nullptr;
@@ -143,8 +188,8 @@ private:
       return nullptr;
     }
 
-    // Set the hardware-accelerator configuration.
-    hal::hw_accelerator_pusch_dec_configuration hw_decoder_config;
+    // Set the PUSCH decoder hardware-accelerator factory configuration for the ACC100.
+    hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
     hw_decoder_config.acc_type            = "acc100";
     hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
     hw_decoder_config.ext_softbuffer      = true;
@@ -152,14 +197,15 @@ private:
     hw_decoder_config.dedicated_queue     = true;
 
     // ACC100 hardware-accelerator implementation.
-    return hal::create_hw_accelerator_pusch_dec_factory(hw_decoder_config);
+    return srsran::hal::create_bbdev_pusch_dec_acc_factory(hw_decoder_config, "srs");
 #else  // HWACC_PUSCH_ENABLED
     return nullptr;
 #endif // HWACC_PUSCH_ENABLED
   }
 
   static std::shared_ptr<pusch_decoder_factory>
-  create_acc100_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
+  create_acc100_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory,
+                                      const std::string&                      eal_arguments)
   {
     std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
     if (!segmenter_rx_factory) {
@@ -167,22 +213,25 @@ private:
     }
 
     std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory =
-        create_hw_accelerator_pusch_dec_factory();
+        create_hw_accelerator_pusch_dec_factory(eal_arguments);
     if (!hw_decoder_factory) {
       return nullptr;
     }
 
     // Set the hardware-accelerated PUSCH decoder configuration.
     pusch_decoder_factory_hw_configuration decoder_hw_factory_config;
-    decoder_hw_factory_config.segmenter_factory  = segmenter_rx_factory;
-    decoder_hw_factory_config.crc_factory        = crc_calculator_factory;
-    decoder_hw_factory_config.hw_decoder_factory = hw_decoder_factory;
+    decoder_hw_factory_config.segmenter_factory         = segmenter_rx_factory;
+    decoder_hw_factory_config.crc_factory               = crc_calculator_factory;
+    decoder_hw_factory_config.hw_decoder_factory        = hw_decoder_factory;
+    decoder_hw_factory_config.executor                  = nullptr;
+    decoder_hw_factory_config.nof_pusch_decoder_threads = 2;
     return create_pusch_decoder_factory_hw(decoder_hw_factory_config);
   }
 
   static std::shared_ptr<pusch_decoder_factory>
   create_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory,
-                               const std::string&                      decoder_type)
+                               const std::string&                      decoder_type,
+                               const std::string&                      eal_arguments)
   {
     if (decoder_type == "empty") {
       return create_pusch_decoder_empty_factory(MAX_RB, pusch_constants::MAX_NOF_LAYERS);
@@ -193,18 +242,25 @@ private:
     }
 
     if (decoder_type == "acc100") {
-      return create_acc100_pusch_decoder_factory(crc_calculator_factory);
+      return create_acc100_pusch_decoder_factory(crc_calculator_factory, eal_arguments);
     }
 
     return nullptr;
   }
 
   std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory(const test_case_context& context,
-                                                                          const std::string&       decoder_type)
+                                                                          const std::string&       decoder_type,
+                                                                          const std::string&       eal_arguments)
   {
     // Create pseudo-random sequence generator.
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
     if (!prg_factory) {
+      return nullptr;
+    }
+    // Create low-PAPR sequence generator.
+    std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
+        create_low_papr_sequence_generator_sw_factory();
+    if (!low_papr_sequence_gen_factory) {
       return nullptr;
     }
 
@@ -249,7 +305,7 @@ private:
 
     // Create DM-RS for PUSCH channel estimator.
     std::shared_ptr<dmrs_pusch_estimator_factory> dmrs_pusch_chan_estimator_factory =
-        create_dmrs_pusch_estimator_factory_sw(prg_factory, port_chan_estimator_factory);
+        create_dmrs_pusch_estimator_factory_sw(prg_factory, low_papr_sequence_gen_factory, port_chan_estimator_factory);
     if (!dmrs_pusch_chan_estimator_factory) {
       return nullptr;
     }
@@ -281,7 +337,7 @@ private:
 
     // Create PUSCH decoder factory.
     std::shared_ptr<pusch_decoder_factory> pusch_dec_factory =
-        create_pusch_decoder_factory(crc_calc_factory, decoder_type);
+        create_pusch_decoder_factory(crc_calc_factory, decoder_type, eal_arguments);
     if (!pusch_dec_factory) {
       return nullptr;
     }
@@ -327,7 +383,8 @@ protected:
     const test_case_context&    context      = test_case.context;
 
     // Create PDSCH processor factory.
-    std::shared_ptr<pusch_processor_factory> pusch_proc_factory = create_pusch_processor_factory(context, decoder_type);
+    std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
+        create_pusch_processor_factory(context, decoder_type, eal_arguments);
 #ifdef HWACC_PUSCH_ENABLED
     if (decoder_type == "acc100" && skip_hwacc_test) {
       GTEST_SKIP() << "[WARNING] ACC100 not found. Skipping test.";
@@ -538,3 +595,16 @@ INSTANTIATE_TEST_SUITE_P(PuschProcessorVectortest,
 #endif // HWACC_PUSCH_ENABLED
                                           ::testing::ValuesIn(pusch_processor_test_data)));
 } // namespace
+
+int main(int argc, char** argv)
+{
+#ifdef HWACC_PUSCH_ENABLED
+  if (argc > 1) {
+    // Separate EAL and non-EAL arguments.
+    eal_arguments = capture_eal_args(&argc, &argv);
+  }
+#endif // HWACC_PUSCH_ENABLED
+
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

@@ -37,19 +37,28 @@ srsran::test_helpers::create_ccch_message(slot_point sl_rx, rnti_t rnti, du_cell
                   byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}).value()}}};
 }
 
-mac_rx_data_indication srsran::test_helpers::create_pdu_with_sdu(slot_point sl_rx, rnti_t rnti, lcid_t lcid)
+mac_rx_data_indication
+srsran::test_helpers::create_pdu_with_sdu(slot_point sl_rx, rnti_t rnti, lcid_t lcid, uint32_t rlc_sn)
 {
-  return mac_rx_data_indication{
-      sl_rx,
-      to_du_cell_index(0),
-      {mac_rx_pdu{
-          rnti,
-          0,
-          0,
-          byte_buffer::create({(uint8_t)lcid, 0x23, 0xc0, 0x00, 0x00, 0x00, 0x10, 0x00, 0x05, 0xdf, 0x80, 0x10, 0x5e,
-                               0x40,          0x03, 0x40, 0x40, 0x3c, 0x44, 0x3c, 0x3f, 0xc0, 0x00, 0x04, 0x0c, 0x95,
-                               0x1d,          0xa6, 0x0b, 0x80, 0xb8, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00})
-              .value()}}};
+  // assuming RLC SN size of 12bits.
+  uint8_t rlc_sn_part1 = (rlc_sn & 0xf00U) >> 8U;
+  uint8_t rlc_sn_part2 = (rlc_sn & 0xffU);
+
+  byte_buffer mac_pdu = byte_buffer::create({(uint8_t)lcid, 0x23, static_cast<uint8_t>(0xc0U + rlc_sn_part1),
+                                             rlc_sn_part2,  0x00, 0x00,
+                                             0x10,          0x00, 0x05,
+                                             0xdf,          0x80, 0x10,
+                                             0x5e,          0x40, 0x03,
+                                             0x40,          0x40, 0x3c,
+                                             0x44,          0x3c, 0x3f,
+                                             0xc0,          0x00, 0x04,
+                                             0x0c,          0x95, 0x1d,
+                                             0xa6,          0x0b, 0x80,
+                                             0xb8,          0x38, 0x00,
+                                             0x00,          0x00, 0x00,
+                                             0x00})
+                            .value();
+  return mac_rx_data_indication{sl_rx, to_du_cell_index(0), {mac_rx_pdu{rnti, 0, 0, std::move(mac_pdu)}}};
 }
 
 mac_crc_indication_message srsran::test_helpers::create_crc_indication(slot_point sl_rx, rnti_t rnti, harq_id_t h_id)

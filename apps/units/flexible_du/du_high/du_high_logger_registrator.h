@@ -52,6 +52,10 @@ inline void register_du_high_loggers(const du_high_unit_logger_config& log_cfg)
   auto& f1u_logger = srslog::fetch_basic_logger("DU-F1-U", false);
   f1u_logger.set_level(log_cfg.f1u_level);
   f1u_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  auto& gtpu_logger = srslog::fetch_basic_logger("GTPU", false);
+  gtpu_logger.set_level(log_cfg.gtpu_level);
+  gtpu_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 }
 
 } // namespace srsran

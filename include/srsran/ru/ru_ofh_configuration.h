@@ -40,11 +40,11 @@ struct ru_ofh_sector_configuration {
   /// Highest subcarrier spacing.
   subcarrier_spacing scs;
   /// Cell channel bandwidth.
-  bs_channel_bandwidth_fr1 bw;
+  bs_channel_bandwidth bw;
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  std::optional<bs_channel_bandwidth_fr1> ru_operating_bw;
+  std::optional<bs_channel_bandwidth> ru_operating_bw;
 
   /// DU transmission window timing parameters.
   ofh::tx_window_timing_parameters tx_window_timing_params;

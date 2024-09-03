@@ -26,7 +26,7 @@ namespace srsran {
 
 struct lower_phy_rx_symbol_context;
 struct resource_grid_context;
-class resource_grid_reader;
+class shared_resource_grid;
 
 /// \brief Lower physical layer PUxCH processor - Notifier interface.
 ///
@@ -40,7 +40,7 @@ public:
 
   /// \brief Notifies a PUxCH request outside the slot window.
   ///
-  /// See \ref lower_phy_error_notifier::on_pdxch_request_late for more information.
+  /// See \ref lower_phy_error_notifier::on_puxch_request_late for more information.
   /// \param[in] context PUxCH context.
   virtual void on_puxch_request_late(const resource_grid_context& context) = 0;
 
@@ -49,7 +49,7 @@ public:
   /// See \ref lower_phy_error_notifier::on_puxch_request_late for more information.
   /// \param[in] grid    Received resource grid.
   /// \param[in] context Received symbol context.
-  virtual void on_rx_symbol(const resource_grid_reader& grid, const lower_phy_rx_symbol_context& context) = 0;
+  virtual void on_rx_symbol(const shared_resource_grid& grid, const lower_phy_rx_symbol_context& context) = 0;
 };
 
 } // namespace srsran

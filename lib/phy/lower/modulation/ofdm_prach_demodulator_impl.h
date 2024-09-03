@@ -50,23 +50,9 @@ public:
   ofdm_prach_demodulator_impl(sampling_rate srate_, dft_processors_table dft_processors_) :
     srate(srate_), dft_processors(std::move(dft_processors_))
   {
-    using int_type = std::underlying_type_t<prach_subcarrier_spacing>;
-    for (int_type i_scs     = static_cast<int_type>(prach_subcarrier_spacing::kHz15),
-                  i_scs_end = static_cast<int_type>(prach_subcarrier_spacing::invalid);
-         i_scs != i_scs_end;
-         ++i_scs) {
-      prach_subcarrier_spacing ra_scs = static_cast<prach_subcarrier_spacing>(i_scs);
-      srsran_assert(dft_processors.contains(ra_scs),
-                    "Table does not contain a DFT processor for {} subcarrier spacing.",
-                    to_string(ra_scs));
-      srsran_assert(dft_processors[ra_scs], "Invalid DFT processor for {} subcarrier spacing.", to_string(ra_scs));
-      srsran_assert(dft_processors[ra_scs]->get_direction() == dft_processor::direction::DIRECT,
-                    "Invalid DFT processor direction for {} subcarrier spacing.",
-                    to_string(ra_scs));
-      srsran_assert(dft_processors[ra_scs]->get_size() == srate.get_dft_size(ra_scs_to_Hz(ra_scs)),
-                    "Invalid DFT processor size (i.e., {}) for {} subcarrier spacing.",
-                    dft_processors[ra_scs]->get_size(),
-                    to_string(ra_scs));
+    for (const auto& dft_proc : dft_processors) {
+      srsran_assert(dft_proc, "Invalid DFT processor.");
+      srsran_assert(dft_proc->get_direction() == dft_processor::direction::DIRECT, "Invalid DFT processor direction.");
     }
   }
 

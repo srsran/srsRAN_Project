@@ -20,6 +20,9 @@
  *
  */
 
+/// \file
+/// \brief Polar rate matcher interface.
+
 #pragma once
 
 #include "srsran/adt/span.h"
@@ -28,21 +31,17 @@
 
 namespace srsran {
 
+/// Polar rate matcher interface.
 class polar_rate_matcher
 {
 public:
+  /// Default destructor.
   virtual ~polar_rate_matcher() = default;
 
-  /*!
-   * Carries out the actual rate-matching.
-   * \param[in] input        The codeword obtained from the polar encoder.
-   * \param[out] output      The rate-matched codeword resulting from the rate-matching
-   *                         operation.
-   * \param[in] n            \f$log_2\f$ of the codeword length.
-   * \param[in] E            Rate-matched codeword length.
-   * \param[in] K            Message size (including CRC).
-   * \return An integer: 0 if the function executes correctly, -1 otherwise.
-   */
+  /// \brief Carries out the actual rate-matching.
+  /// \param[out] output  The rate-matched codeword resulting from the rate-matching operation.
+  /// \param[in]  input   The codeword obtained from the polar encoder.
+  /// \param[in]  code    The polar code description.
   virtual void rate_match(span<uint8_t> output, span<const uint8_t> input, const polar_code& code) = 0;
 };
 

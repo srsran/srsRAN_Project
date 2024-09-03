@@ -21,51 +21,74 @@
  */
 
 #include "iq_compression_none_impl.h"
-#include "compressed_prb_packer.h"
-#include "compressed_prb_unpacker.h"
+#include "packing_utils_generic.h"
 #include "quantizer.h"
+#include "srsran/ofh/compression/compression_properties.h"
 #include "srsran/srsvec/dot_prod.h"
+#include "srsran/support/units.h"
 
 using namespace srsran;
 using namespace ofh;
 
-void iq_compression_none_impl::compress(span<compressed_prb>         output,
-                                        span<const cbf16_t>          input,
+void iq_compression_none_impl::compress(span<uint8_t>                buffer,
+                                        span<const cbf16_t>          iq_data,
                                         const ru_compression_params& params)
 {
   // Quantizer object.
   quantizer q(params.data_width);
 
-  span<const bf16_t> float_samples(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2);
+  // Number of input PRBs.
+  unsigned nof_prbs = (iq_data.size() / NOF_SUBCARRIERS_PER_RB);
+
+  // Size in bytes of one compressed PRB using the given compression parameters.
+  unsigned prb_size = get_compressed_prb_size(params).value();
+
+  srsran_assert(buffer.size() >= prb_size * nof_prbs, "Output buffer doesn't have enough space to decompress PRBs");
+
+  span<const bf16_t> float_samples(reinterpret_cast<const bf16_t*>(iq_data.data()), iq_data.size() * 2);
 
   unsigned in_sample_idx = 0;
-  for (compressed_prb& c_prb : output) {
-    // Auxiliary buffer used for float to int16_t conversion.
+  for (unsigned rb = 0; rb != nof_prbs; ++rb) {
+    // Auxiliary buffer used for brain float to int16_t conversion.
     std::array<int16_t, NOF_SUBCARRIERS_PER_RB * 2> conv_buffer;
 
     // Scale input IQ data to the range [-1: +1) and convert it to int16_t.
     q.to_fixed_point(conv_buffer, float_samples.subspan(in_sample_idx, NOF_SUBCARRIERS_PER_RB * 2), iq_scaling);
 
-    compressed_prb_packer packer(c_prb);
-    packer.pack(conv_buffer, params.data_width);
+    // View over output bytes corresponding to the current PRB.
+    span<uint8_t> out_compr_prb(&buffer[rb * prb_size], prb_size);
+
+    bit_buffer bit_buf = bit_buffer::from_bytes(out_compr_prb);
+    pack_bytes(bit_buf, conv_buffer, params.data_width);
 
     in_sample_idx += (NOF_SUBCARRIERS_PER_RB * 2);
   }
 }
 
 void iq_compression_none_impl::decompress(span<cbf16_t>                output,
-                                          span<const compressed_prb>   input,
+                                          span<const uint8_t>          input,
                                           const ru_compression_params& params)
 {
   // Quantizer object.
   quantizer q(params.data_width);
 
+  // Number of output PRBs.
+  unsigned nof_prbs = output.size() / NOF_SUBCARRIERS_PER_RB;
+
+  // Size in bytes of one compressed PRB using the given compression parameters.
+  unsigned prb_size = get_compressed_prb_size(params).value();
+
+  srsran_assert(
+      input.size() >= nof_prbs * prb_size, "Input does not contain enough bytes to decompress {} PRBs", nof_prbs);
+
   unsigned out_idx = 0;
-  for (const auto& c_prb : input) {
-    compressed_prb_unpacker unpacker(c_prb);
+  for (unsigned c_prb_idx = 0, e = nof_prbs; c_prb_idx != e; ++c_prb_idx) {
+    span<const uint8_t> c_prb(&input[c_prb_idx * prb_size], prb_size);
+
+    bit_buffer_reader bits_reader = bit_buffer_reader::from_bytes(c_prb);
     for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB; ++i) {
-      int16_t re = q.sign_extend(unpacker.unpack(read_pos, params.data_width));
-      int16_t im = q.sign_extend(unpacker.unpack(read_pos + params.data_width, params.data_width));
+      int16_t re = q.sign_extend(unpack_bits(bits_reader, read_pos, params.data_width));
+      int16_t im = q.sign_extend(unpack_bits(bits_reader, read_pos + params.data_width, params.data_width));
       read_pos += (params.data_width * 2);
       output[out_idx++] = {q.to_float(re), q.to_float(im)};
     }

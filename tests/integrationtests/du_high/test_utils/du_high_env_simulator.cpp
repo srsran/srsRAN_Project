@@ -29,6 +29,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du/du_qos_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/test_utils.h"
@@ -167,33 +168,37 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     init_loggers();
 
     du_high_configuration cfg{};
-    cfg.exec_mapper  = &workers.exec_mapper;
-    cfg.f1c_client   = &cu_notifier;
-    cfg.f1u_gw       = &cu_up_sim;
-    cfg.phy_adapter  = &phy;
-    cfg.timers       = &timers;
-    cfg.gnb_du_id    = gnb_du_id_t::min;
-    cfg.gnb_du_name  = "srsdu";
-    cfg.du_bind_addr = transport_layer_address::create_from_string("127.0.0.1");
+    cfg.exec_mapper                          = &workers.exec_mapper;
+    cfg.f1c_client                           = &cu_notifier;
+    cfg.f1u_gw                               = &cu_up_sim;
+    cfg.phy_adapter                          = &phy;
+    cfg.timers                               = &timers;
+    cfg.ran.sched_cfg.log_broadcast_messages = false;
 
-    cfg.cells.reserve(params.nof_cells);
-    cell_config_builder_params builder_params;
+    cfg.ran.cells.reserve(params.nof_cells);
+    auto builder_params =
+        params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
     for (unsigned i = 0; i < params.nof_cells; ++i) {
       builder_params.pci = (pci_t)i;
-      cfg.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
-      cfg.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
+      cfg.ran.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
+      cfg.ran.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
+      if (params.pucch_cfg.has_value()) {
+        cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
+      }
     }
 
-    cfg.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
-    cfg.sched_cfg = config_helpers::make_default_scheduler_expert_config();
-    cfg.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.mac_p     = &mac_pcap;
-    cfg.rlc_p     = &rlc_pcap;
+    cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
+    cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
+    cfg.ran.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
+    cfg.mac_p         = &mac_pcap;
+    cfg.rlc_p         = &rlc_pcap;
 
     return cfg;
   }()),
   du_hi(make_du_high(du_high_cfg)),
-  next_slot(0, test_rgen::uniform_int<unsigned>(0, 10239))
+  next_slot(to_numerology_value(du_high_cfg.ran.cells[0].scs_common),
+            test_rgen::uniform_int<unsigned>(0, 10239) *
+                get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common))
 {
   // Start DU and try to connect to CU.
   du_hi->start();
@@ -210,9 +215,10 @@ du_high_env_simulator::~du_high_env_simulator()
   workers.stop();
 }
 
-bool du_high_env_simulator::run_until(unique_function<bool()> condition, unsigned max_slot_count)
+bool du_high_env_simulator::run_until(unique_function<bool()> condition, std::optional<unsigned> max_slot_count)
 {
-  for (unsigned count = 0; count != max_slot_count; ++count) {
+  unsigned max_count = max_slot_count.has_value() ? max_slot_count.value() : 1000;
+  for (unsigned count = 0; count != max_count; ++count) {
     if (condition()) {
       return true;
     }
@@ -288,42 +294,131 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
     test_logger.error("rnti={}: Failed to run RRC Setup procedure. Cause: UE not found", rnti);
     return false;
   }
-  const ue_sim_context& u        = it->second;
-  const auto&           phy_cell = phy.cells[u.pcell_index];
+  const ue_sim_context& u = it->second;
 
   // Send DL RRC Message which contains RRC Setup.
   f1ap_message msg = generate_dl_rrc_message_transfer(
       *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
-  du_hi->get_f1ap_message_handler().handle_message(msg);
 
-  // Wait for Msg4 to be sent to the PHY.
-  bool ret = run_until([&]() {
-    if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
-      auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
-      return find_ue_pdsch_with_lcid(rnti, LCID_SRB0, dl_res.ue_grants) != nullptr;
-    }
+  return send_dl_rrc_msg_and_await_ul_rrc_msg(u, msg, 0);
+}
+
+bool du_high_env_simulator::run_rrc_reject(rnti_t rnti)
+{
+  return run_ue_context_release(rnti, srb_id_t::srb0);
+}
+
+bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti, reestablishment_stage stop_at)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    test_logger.error("rnti={}: Failed to run RRC Reestablishment. Cause: UE not found", rnti);
     return false;
-  });
+  }
+  const ue_sim_context& u      = it->second;
+  auto                  old_it = ues.find(old_rnti);
+  if (old_it == ues.end()) {
+    test_logger.error(
+        "rnti={}: Failed to run RRC Reestablishment. Cause: Old UE with c-rnti={} not found", rnti, old_rnti);
+    return false;
+  }
+  const ue_sim_context& old_u = old_it->second;
+
+  // Generate DL RRC Message Transfer (containing RRC Reestablishment)
+  f1ap_message msg = generate_dl_rrc_message_transfer(
+      *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  msg.pdu.init_msg().value.dl_rrc_msg_transfer()->old_gnb_du_ue_f1ap_id_present = true;
+  msg.pdu.init_msg().value.dl_rrc_msg_transfer()->old_gnb_du_ue_f1ap_id         = (uint64_t)old_u.du_ue_id.value();
+
+  // Send RRC Reestablishment and await response.
+  if (not send_dl_rrc_msg_and_await_ul_rrc_msg(u, msg, 0)) {
+    return false;
+  }
+  if (stop_at == reestablishment_stage::reest_complete) {
+    return true;
+  }
+
+  // Run F1AP UE Context Modification procedure.
+  msg = test_helpers::generate_ue_context_modification_request(*u.du_ue_id, *u.cu_ue_id, {}, {drb_id_t::drb1}, {});
+  cu_notifier.last_f1ap_msgs.clear();
+  du_hi->get_f1ap_message_handler().handle_message(msg);
+  bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
   if (not ret) {
-    test_logger.error("rnti={}: Msg4 not sent to the PHY", rnti);
+    test_logger.error("rnti={}: F1AP UE Context Modification Request not sent back to the CU-CP", u.rnti);
+    return false;
+  }
+  if (not test_helpers::is_valid_ue_context_modification_response(
+          cu_notifier.last_f1ap_msgs.back(), msg, test_helpers::ue_context_mod_context::reestablistment)) {
+    test_logger.error("rnti={}: F1AP UE Context Modification Response sent back to the CU-CP is not valid", u.rnti);
+    return false;
+  }
+  const asn1::f1ap::ue_context_mod_resp_s& resp =
+      cu_notifier.last_f1ap_msgs.back().pdu.successful_outcome().value.ue_context_mod_resp();
+  EXPECT_FALSE(resp->drbs_failed_to_be_modified_list_present);
+
+  // CU-CP sends RRC Reconfiguration and awaits RRC Reconfiguration Complete.
+  msg = generate_dl_rrc_message_transfer(
+      *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  if (not send_dl_rrc_msg_and_await_ul_rrc_msg(u, msg, 1)) {
     return false;
   }
 
-  // Wait for Msg4 to be ACKed.
-  unsigned msg4_k1 = 4;
-  for (unsigned i = 0; i != msg4_k1; ++i) {
+  return true;
+}
+
+bool du_high_env_simulator::await_dl_msg_sched(const ue_sim_context&   u,
+                                               lcid_t                  lcid,
+                                               std::optional<unsigned> max_slot_count)
+{
+  const auto& phy_cell = phy.cells[u.pcell_index];
+
+  bool ret = run_until(
+      [&]() {
+        if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
+          auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
+          return find_ue_pdsch_with_lcid(u.rnti, lcid, dl_res.ue_grants) != nullptr;
+        }
+        return false;
+      },
+      max_slot_count);
+  if (not ret) {
+    test_logger.error("rnti={}: Msg4 not sent to the PHY", u.rnti);
+    return false;
+  }
+  return true;
+}
+
+bool du_high_env_simulator::send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u,
+                                                                 const f1ap_message&   dl_msg,
+                                                                 uint32_t              rlc_ul_sn)
+{
+  lcid_t dl_lcid = uint_to_lcid(dl_msg.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id);
+  lcid_t ul_lcid = dl_lcid == LCID_SRB0 ? LCID_SRB1 : dl_lcid;
+
+  du_hi->get_f1ap_message_handler().handle_message(dl_msg);
+
+  // Wait for DL message to be sent to the PHY.
+  if (not await_dl_msg_sched(u, dl_lcid)) {
+    return false;
+  }
+
+  // Wait for DL message to be ACKed.
+  unsigned dl_msg_k1 = 4;
+  for (unsigned i = 0; i != dl_msg_k1; ++i) {
     run_slot();
   }
 
-  // UE sends RRC Setup Complete. Wait until F1AP forwards UL RRC Message to CU-CP.
+  // UE sends UL message. Wait until F1AP forwards UL RRC Message to CU-CP.
   cu_notifier.last_f1ap_msgs.clear();
   du_hi->get_pdu_handler().handle_rx_data_indication(
-      test_helpers::create_pdu_with_sdu(next_slot, rnti, lcid_t::LCID_SRB1));
-  ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
-  if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), srb_id_t::srb1)) {
-    test_logger.error("rnti={}: F1AP UL RRC Message (containing rrcSetupComplete) not sent or is invalid", rnti);
+      test_helpers::create_pdu_with_sdu(next_slot, u.rnti, ul_lcid, rlc_ul_sn));
+  bool     ret       = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  srb_id_t ul_srb_id = int_to_srb_id(ul_lcid);
+  if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), ul_srb_id)) {
+    test_logger.error("rnti={}: F1AP UL RRC Message not sent or is invalid", u.rnti);
     return false;
   }
+
   return true;
 }
 
@@ -394,14 +489,51 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
   return true;
 }
 
+bool du_high_env_simulator::run_ue_context_release(rnti_t rnti, srb_id_t srb_id)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    return false;
+  }
+  auto& u = it->second;
+
+  // Send UE Context Release Command which contains dummy RRC Release.
+  cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message msg = test_helpers::generate_ue_context_release_command(*u.cu_ue_id, *u.du_ue_id, srb_id);
+  du_hi->get_f1ap_message_handler().handle_message(msg);
+
+  // Await for RRC container to be scheduled in the MAC.
+  lcid_t lcid = srb_id_to_lcid(srb_id);
+  if (not await_dl_msg_sched(u, lcid, 120)) {
+    return false;
+  }
+
+  // Wait for UE Context Release Complete.
+  bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  if (not ret) {
+    test_logger.error("Did not receive UE context release complete");
+    return false;
+  }
+  if (not is_ue_context_release_complete_valid(cu_notifier.last_f1ap_msgs.back(), *u.du_ue_id, *u.cu_ue_id)) {
+    test_logger.error("UE context release complete message is not valid");
+    return false;
+  }
+
+  ues.erase(rnti);
+
+  return true;
+}
+
 void du_high_env_simulator::run_slot()
 {
-  for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
-    // Dispatch a slot indication to each cell in the L2.
+  // Dispatch a slot indication to all cells in the L2 (fork work across cells).
+  for (unsigned i = 0; i != du_high_cfg.ran.cells.size(); ++i) {
     du_hi->get_slot_handler(to_du_cell_index(i)).handle_slot_indication(next_slot);
+  }
 
-    // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
-    // main thread).
+  // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (join cell results, in this
+  // case, with the join point being the test main thread).
+  for (unsigned i = 0; i != du_high_cfg.ran.cells.size(); ++i) {
     const unsigned MAX_COUNT = 100000;
     for (unsigned count = 0; count < MAX_COUNT and phy.cells[i].last_slot_res != next_slot; ++count) {
       // Process tasks dispatched to the test main thread (e.g. L2 slot result)
@@ -416,7 +548,7 @@ void du_high_env_simulator::run_slot()
                        phy.cells[i].last_slot_res);
     const std::optional<mac_dl_sched_result>& dl_result = phy.cells[i].last_dl_res;
     if (dl_result.has_value()) {
-      EXPECT_TRUE(dl_result->slot == next_slot);
+      EXPECT_EQ(dl_result->slot, next_slot);
     }
 
     // Process results.

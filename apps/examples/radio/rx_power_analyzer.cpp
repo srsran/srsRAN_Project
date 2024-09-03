@@ -42,7 +42,7 @@
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/file_sink.h"
+#include "srsran/support/file_vector.h"
 #include "srsran/support/signal_handling.h"
 #include <getopt.h>
 #include <random>
@@ -195,7 +195,7 @@ static void write_results_csv(const std::vector<result_type>& results)
     fmt::print("Result filename is not set. \n");
   }
 
-  file_sink<char> results_file(results_filename);
+  file_vector<char> results_file(results_filename.c_str(), openmode::write_only);
 
   fmt::print("Writing to CSV file {}...\n", results_filename);
   fmt::print("CSV columns: <rx_gain>,<rx_port>,<rx_power_dBFS>\n");

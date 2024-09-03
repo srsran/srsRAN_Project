@@ -194,7 +194,8 @@ struct freq_band_indicator {
 /// \brief This class provides basic parameters of a downlink carrier and transmission.
 /// \remark See TS 38.331, "FrequencyInfoDL" and "FrequencyInfoDL-SIB".
 struct frequency_info_dl {
-  /// Absolute frequency (as ARFCN) of the SSB.
+  /// \brief Absolute frequency of the SSB as ARFCN. This is the ARFCN of the SS_ref (or SSB central frequency).
+  /// SS_ref is defined is per TS 38.104, Section 5.4.3.1 and 5.4.3.2.
   unsigned absolute_frequency_ssb;
   /// Absolute frequency (in ARFCN) of the reference resource block (common RB0).
   unsigned absolute_freq_point_a;

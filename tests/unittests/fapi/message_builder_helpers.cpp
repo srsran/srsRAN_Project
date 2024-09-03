@@ -21,7 +21,6 @@
  */
 
 #include "message_builder_helpers.h"
-#include "srsran/adt/bitmap_utils.h"
 #include <random>
 
 static std::mt19937 gen(0);

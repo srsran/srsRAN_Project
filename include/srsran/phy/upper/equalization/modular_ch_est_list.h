@@ -32,18 +32,16 @@ template <unsigned MaxNofElements>
 class modular_ch_est_list : public channel_equalizer::ch_est_list
 {
 public:
+  /// Default constructor - creates an empty modular channel estimate list.
+  modular_ch_est_list() = default;
+
   /// \brief Creates a list of channel estimates from a maximum number of receive ports and layers.
-  /// \param[in] max_nof_rx_ports_ Maximum number of receive ports.
-  /// \param[in] max_nof_layers_   Maximum number of layers.
-  modular_ch_est_list(unsigned max_nof_rx_ports_, unsigned max_nof_layers_) :
-    max_nof_rx_ports(max_nof_rx_ports_), max_nof_layers(max_nof_layers_), data({max_nof_rx_ports, max_nof_layers})
+  /// \param[in] nof_re_      Initial number of resource elements.
+  /// \param[in] nof_rx_ports Number of receive ports.
+  /// \param[in] nof_layers   Number of layers.
+  modular_ch_est_list(unsigned nof_re_, unsigned nof_rx_ports, unsigned nof_layers)
   {
-    srsran_assert(max_nof_rx_ports * max_nof_layers <= MaxNofElements,
-                  "The maximum number of layers (i.e., {}) times the maximum number of ports (i.e., {}) exceeds the "
-                  "maximum number of elements (i.e., {})",
-                  max_nof_layers,
-                  max_nof_rx_ports,
-                  MaxNofElements);
+    resize(nof_re_, nof_rx_ports, nof_layers);
   }
 
   /// \brief Sets the contents of a channel.
@@ -62,18 +60,16 @@ public:
 
   /// \brief Resizes the channel estimates list.
   ///
-  /// \remark An assertion is triggered if the number of receive ports exceeds the maximum number of receive ports.
-  /// \remark An assertion is triggered if the number of layers exceeds the maximum number of layers.
+  /// \remark An assertion is triggered if the number of receive ports times the number of transmit layers exceeds the
+  /// maximum number of elements.
   void resize(unsigned nof_re_, unsigned nof_rx_ports, unsigned nof_layers)
   {
-    srsran_assert(nof_rx_ports <= max_nof_rx_ports,
-                  "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
+    srsran_assert(nof_rx_ports * nof_layers <= MaxNofElements,
+                  "The number of receive ports (i.e., {}) times the number of layers exceeds the maximum number of "
+                  "elements (i.e., {}).",
                   nof_rx_ports,
-                  max_nof_rx_ports);
-    srsran_assert(nof_layers <= max_nof_layers,
-                  "The number of layers (i.e., {}) exceeds the maximum number of layers (i.e., {}).",
-                  nof_rx_ports,
-                  max_nof_layers);
+                  nof_layers,
+                  MaxNofElements);
     nof_re = nof_re_;
     data.resize({nof_rx_ports, nof_layers});
 
@@ -86,6 +82,14 @@ public:
   // See interface for documentation.
   span<const cbf16_t> get_channel(unsigned i_rx_port, unsigned i_layer) const override
   {
+    srsran_assert(i_rx_port < data.get_dimension_size(ch_dims::rx_port),
+                  "The receive port index (i.e., {}) exceeds the number of receive ports (i.e., {}).",
+                  i_rx_port,
+                  data.get_dimension_size(ch_dims::rx_port));
+    srsran_assert(i_layer < data.get_dimension_size(ch_dims::tx_layer),
+                  "The transmit layer index (i.e., {}) exceeds the number of transmit layers (i.e., {}).",
+                  i_layer,
+                  data.get_dimension_size(ch_dims::tx_layer));
     return data[{i_rx_port, i_layer}];
   }
 
@@ -111,10 +115,6 @@ private:
 
   /// Number of resource elements.
   unsigned nof_re = 0;
-  /// Maximum number of receive ports.
-  unsigned max_nof_rx_ports;
-  /// Maximum number of layers.
-  unsigned max_nof_layers;
   /// Data storage as a tensor of views for each channel.
   static_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), span<const cbf16_t>, MaxNofElements, ch_dims> data;
 };

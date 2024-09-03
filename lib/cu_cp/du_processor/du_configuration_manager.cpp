@@ -21,6 +21,7 @@
  */
 
 #include "du_configuration_manager.h"
+#include "srsran/ran/plmn_identity.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -85,8 +86,8 @@ private:
   du_configuration_manager& parent;
 };
 
-du_configuration_manager::du_configuration_manager(const gnb_id_t& gnb_id_, const plmn_identity& plmn_id_) :
-  gnb_id(gnb_id_), plmn_id(plmn_id_), logger(srslog::fetch_basic_logger("CU-CP"))
+du_configuration_manager::du_configuration_manager(const gnb_id_t& gnb_id_, const std::vector<plmn_identity>& plmns_) :
+  gnb_id(gnb_id_), plmns(plmns_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
@@ -221,14 +222,15 @@ du_configuration_manager::validate_new_du_config(const du_setup_request& req) co
       return ret;
     }
 
-    if (served_cell.served_cell_info.nr_cgi.plmn_id != plmn_id) {
+    if (std::find(plmns.begin(), plmns.end(), served_cell.served_cell_info.nr_cgi.plmn_id) == plmns.end()) {
       return make_unexpected(du_setup_result::rejected{f1ap_cause_radio_network_t::plmn_not_served_by_the_gnb_cu,
                                                        "Served Cell CGI PLMN is not supported by the CU-CP"});
     }
 
-    if (std::none_of(served_cell.served_cell_info.served_plmns.begin(),
-                     served_cell.served_cell_info.served_plmns.end(),
-                     [this](const plmn_identity& plmn) { return plmn == plmn_id; })) {
+    if (std::none_of(
+            served_cell.served_cell_info.served_plmns.begin(),
+            served_cell.served_cell_info.served_plmns.end(),
+            [this](const plmn_identity& plmn) { return std::find(plmns.begin(), plmns.end(), plmn) != plmns.end(); })) {
       return make_unexpected(du_setup_result::rejected{f1ap_cause_radio_network_t::plmn_not_served_by_the_gnb_cu,
                                                        "None of the served cell PLMNs is available in the CU-CP"});
     }

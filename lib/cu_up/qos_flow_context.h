@@ -33,11 +33,9 @@ namespace srs_cu_up {
 struct qos_flow_context {
   qos_flow_context(const e1ap_qos_flow_qos_param_item& flow) : qos_flow_id(flow.qos_flow_id)
   {
-    const auto& qos_params = flow.qos_flow_level_qos_params.qos_characteristics;
-    if (qos_params.non_dyn_5qi.has_value()) {
-      five_qi = qos_params.non_dyn_5qi.value().five_qi;
-    }
-    srsran_assert(qos_params.dyn_5qi.has_value() == false, "Dynamic 5QI not supported.");
+    const auto& qos_params = flow.qos_flow_level_qos_params.qos_desc;
+    five_qi                = qos_params.get_5qi();
+    srsran_assert(not qos_params.is_dyn_5qi(), "Dynamic 5QI not supported.");
     srsran_assert(five_qi != five_qi_t::invalid, "FiveQI must be set.");
   };
 

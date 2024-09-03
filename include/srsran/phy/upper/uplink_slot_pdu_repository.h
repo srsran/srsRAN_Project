@@ -49,7 +49,7 @@ class uplink_slot_pdu_repository
 public:
   /// \brief Constructs an uplink slot pdu repository that supports the given number of slots.
   ///
-  /// \param nof_slots_[in] Number of slots supported by the repository.
+  /// \param[in] nof_slots_ Number of slots supported by the repository.
   explicit uplink_slot_pdu_repository(unsigned nof_slots_) : nof_slots(nof_slots_), repository(nof_slots_) {}
 
   /// Adds the given PUSCH PDU to the repository at the given slot.

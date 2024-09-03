@@ -60,19 +60,16 @@ integrity_engine_nia2_cmac::~integrity_engine_nia2_cmac()
   mbedtls_cipher_free(&ctx);
 }
 
-security_result integrity_engine_nia2_cmac::protect_integrity(byte_buffer buf, uint32_t count)
+expected<security::sec_mac, security_error> integrity_engine_nia2_cmac::compute_mac(const byte_buffer_view v,
+                                                                                    uint32_t               count)
 {
-  security_result   result{.buf = std::move(buf), .count = count};
   security::sec_mac mac = {};
-
-  byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
 
   // reset state machine
   int ret;
   ret = mbedtls_cipher_cmac_reset(&ctx);
   if (ret != 0) {
-    result.buf = make_unexpected(security_error::integrity_failure);
-    return result;
+    return make_unexpected(security_error::integrity_failure);
   }
 
   // process preamble
@@ -84,8 +81,7 @@ security_result integrity_engine_nia2_cmac::protect_integrity(byte_buffer buf, u
   preamble[4]                     = (bearer_id << 3) | (to_number(direction) << 2);
   ret                             = mbedtls_cipher_cmac_update(&ctx, preamble.data(), preamble.size());
   if (ret != 0) {
-    result.buf = make_unexpected(security_error::integrity_failure);
-    return result;
+    return make_unexpected(security_error::integrity_failure);
   }
 
   // process PDU segments
@@ -93,8 +89,7 @@ security_result integrity_engine_nia2_cmac::protect_integrity(byte_buffer buf, u
   for (const auto& segment : segments) {
     ret = mbedtls_cipher_cmac_update(&ctx, segment.data(), segment.size());
     if (ret != 0) {
-      result.buf = make_unexpected(security_error::integrity_failure);
-      return result;
+      return make_unexpected(security_error::integrity_failure);
     }
   }
 
@@ -102,22 +97,63 @@ security_result integrity_engine_nia2_cmac::protect_integrity(byte_buffer buf, u
   std::array<uint8_t, 16> tmp_mac;
   ret = mbedtls_cipher_cmac_finish(&ctx, tmp_mac.data());
   if (ret != 0) {
-    result.buf = make_unexpected(security_error::integrity_failure);
-    return result;
+    return make_unexpected(security_error::integrity_failure);
   }
 
   // copy first 4 bytes
   std::copy(tmp_mac.begin(), tmp_mac.begin() + 4, mac.begin());
 
-  if (not result.buf->append(mac)) {
+  return mac;
+}
+
+security_result integrity_engine_nia2_cmac::protect_integrity(byte_buffer buf, uint32_t count)
+{
+  security_result  result{.buf = std::move(buf), .count = count};
+  byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
+
+  expected<security::sec_mac, security_error> mac = compute_mac(v, count);
+
+  if (not mac.has_value()) {
+    result.buf = make_unexpected(mac.error());
+    return result;
+  }
+
+  if (not result.buf->append(mac.value())) {
     result.buf = make_unexpected(security_error::buffer_failure);
   }
+
   return result;
 }
 
 security_result integrity_engine_nia2_cmac::verify_integrity(byte_buffer buf, uint32_t count)
 {
-  security_result result;
+  security_result result{.buf = std::move(buf), .count = count};
+
+  if (result.buf->length() <= sec_mac_len) {
+    result.buf = make_unexpected(security_error::integrity_failure);
+    return result;
+  }
+
+  byte_buffer_view v{result.buf.value(), 0, result.buf.value().length() - sec_mac_len};
+  byte_buffer_view m{result.buf.value(), result.buf.value().length() - sec_mac_len, sec_mac_len};
+
+  // compute MAC
+  expected<security::sec_mac, security_error> mac = compute_mac(v, count);
+
+  if (not mac.has_value()) {
+    result.buf = make_unexpected(mac.error());
+    return result;
+  }
+
+  // verify MAC
+  if (!std::equal(mac.value().begin(), mac.value().end(), m.begin(), m.end())) {
+    result.buf = make_unexpected(security_error::integrity_failure);
+    return result;
+  }
+
+  // trim MAC from PDU
+  result.buf.value().trim_tail(sec_mac_len);
+
   return result;
 }
 

@@ -141,23 +141,30 @@ private:
 class dmrs_pusch_estimator_factory_sw : public dmrs_pusch_estimator_factory
 {
 public:
-  dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
-                                  std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory_) :
-    prg_factory(std::move(prg_factory_)), ch_estimator_factory(std::move(ch_estimator_factory_))
+  dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory>     prg_factory_,
+                                  std::shared_ptr<low_papr_sequence_generator_factory> low_papr_gen_factory_,
+                                  std::shared_ptr<port_channel_estimator_factory>      ch_estimator_factory_) :
+    prg_factory(std::move(prg_factory_)),
+    low_papr_gen_factory(std::move(low_papr_gen_factory_)),
+    ch_estimator_factory(std::move(ch_estimator_factory_))
   {
     srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(low_papr_gen_factory, "Invalid low-PAPR generator factory.");
     srsran_assert(ch_estimator_factory, "Invalid channel estimator factory.");
   }
 
   std::unique_ptr<dmrs_pusch_estimator> create() override
   {
     return std::make_unique<dmrs_pusch_estimator_impl>(
-        prg_factory->create(), ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::filter));
+        prg_factory->create(),
+        low_papr_gen_factory->create(),
+        ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::filter));
   }
 
 private:
-  std::shared_ptr<pseudo_random_generator_factory> prg_factory;
-  std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory;
+  std::shared_ptr<pseudo_random_generator_factory>     prg_factory;
+  std::shared_ptr<low_papr_sequence_generator_factory> low_papr_gen_factory;
+  std::shared_ptr<port_channel_estimator_factory>      ch_estimator_factory;
 };
 
 class nzp_csi_rs_generator_factory_sw : public nzp_csi_rs_generator_factory
@@ -295,11 +302,13 @@ srsran::create_dmrs_pucch_estimator_factory_sw(std::shared_ptr<pseudo_random_gen
   return std::make_shared<dmrs_pucch_estimator_sw_factory>(prg_factory, lpc_factory, ch_estimator_factory);
 }
 
-std::shared_ptr<dmrs_pusch_estimator_factory>
-srsran::create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
-                                               std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory)
+std::shared_ptr<dmrs_pusch_estimator_factory> srsran::create_dmrs_pusch_estimator_factory_sw(
+    std::shared_ptr<pseudo_random_generator_factory>     prg_factory,
+    std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory,
+    std::shared_ptr<port_channel_estimator_factory>      ch_estimator_factory)
 {
-  return std::make_shared<dmrs_pusch_estimator_factory_sw>(std::move(prg_factory), std::move(ch_estimator_factory));
+  return std::make_shared<dmrs_pusch_estimator_factory_sw>(
+      std::move(prg_factory), std::move(low_papr_sequence_gen_factory), std::move(ch_estimator_factory));
 }
 
 std::shared_ptr<nzp_csi_rs_generator_factory>

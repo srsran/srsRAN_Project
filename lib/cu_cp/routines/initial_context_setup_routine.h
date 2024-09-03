@@ -46,7 +46,7 @@ public:
 
   static const char* name() { return "Initial Context Setup Routine"; }
 
-  void handle_failure();
+  void handle_failure(ngap_cause_t cause);
   void handle_nas_pdu(byte_buffer nas_pdu);
   void send_ue_radio_capability_info_indication();
 

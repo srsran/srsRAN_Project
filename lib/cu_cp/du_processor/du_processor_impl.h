@@ -56,6 +56,8 @@ public:
 
   f1ap_cu& get_f1ap_handler() override { return *f1ap; };
 
+  rrc_du& get_rrc_du_handler() override { return *rrc; };
+
   size_t get_nof_ues() const { return ue_mng.get_nof_du_ues(cfg.du_index); };
 
   // du_processor_mobility_manager_interface
@@ -125,8 +127,8 @@ private:
   std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
 
   // Components
-  std::unique_ptr<f1ap_cu>          f1ap;
-  std::unique_ptr<rrc_du_interface> rrc;
+  std::unique_ptr<f1ap_cu> f1ap;
+  std::unique_ptr<rrc_du>  rrc;
 };
 
 } // namespace srs_cu_cp

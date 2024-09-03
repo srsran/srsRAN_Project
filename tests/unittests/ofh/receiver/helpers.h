@@ -34,9 +34,9 @@ namespace testing {
 /// PRACH buffer dummy implementation.
 class prach_buffer_dummy : public prach_buffer
 {
-  unsigned                 nof_symbols;
-  static_vector<cf_t, 839> buffer;
-  mutable bool             symbol_out_of_bounds;
+  unsigned                    nof_symbols;
+  static_vector<cbf16_t, 839> buffer;
+  mutable bool                symbol_out_of_bounds;
 
 public:
   prach_buffer_dummy(unsigned nof_symbols_, bool long_format = true) :
@@ -54,12 +54,12 @@ public:
 
   unsigned get_sequence_length() const override { return buffer.size(); }
 
-  span<cf_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
+  span<cbf16_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
   {
     return buffer;
   }
 
-  span<const cf_t>
+  span<const cbf16_t>
   get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
   {
     if (i_symbol >= nof_symbols) {
@@ -90,7 +90,7 @@ public:
   }
 
   unsigned get_nof_ports() const override { return 1; };
-  unsigned get_nof_subc() const override { return 51 * NOF_SUBCARRIERS_PER_RB; };
+  unsigned get_nof_subc() const override { return grid_data.size(); };
   unsigned get_nof_symbols() const override { return MAX_NSYMB_PER_SLOT; };
 
   span<const cf_t> put(unsigned                                               port,
@@ -151,24 +151,6 @@ public:
     }
     return nof_prbs_written;
   }
-};
-
-class resource_grid_dummy_with_spy_writer : public resource_grid
-{
-  resource_grid_writer_bool_spy& writer;
-  resource_grid_reader_spy       reader;
-  resource_grid_mapper_dummy     mapper;
-
-public:
-  explicit resource_grid_dummy_with_spy_writer(resource_grid_writer_bool_spy& writer_) :
-    writer(writer_), reader(1, 14, 51)
-  {
-  }
-
-  void                        set_all_zero() override {}
-  resource_grid_writer&       get_writer() override { return writer; }
-  const resource_grid_reader& get_reader() const override { return reader; }
-  resource_grid_mapper&       get_mapper() override { return mapper; }
 };
 
 } // namespace testing

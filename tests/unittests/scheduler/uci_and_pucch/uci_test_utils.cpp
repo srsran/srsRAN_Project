@@ -117,6 +117,24 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
   return is_equal;
 }
 
+namespace {
+
+class dummy_harq_timeout_notifier : public harq_timeout_notifier
+{
+public:
+  dummy_harq_timeout_notifier(harq_timeout_handler& handler_) : handler(handler_) {}
+
+  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
+  {
+    handler.handle_harq_timeout(ue_idx, is_dl);
+  }
+
+private:
+  harq_timeout_handler& handler;
+};
+
+} // namespace
+
 /////////        TEST BENCH for PUCCH scheduler        /////////
 
 // Test bench with all that is needed for the PUCCH.
@@ -132,6 +150,7 @@ test_bench::test_bench(const test_bench_params& params,
             expert_cfg, make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)));
     return *cell_cfg_list[to_du_cell_index(0)];
   }()},
+  cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>(harq_timeout_handler)},
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   max_pucchs_per_slot{max_pucchs_per_slot_},
@@ -146,7 +165,7 @@ test_bench::test_bench(const test_bench_params& params,
   cell_config_builder_params cfg_params{};
   cfg_params.csi_rs_enabled                = true;
   cfg_params.scs_common                    = params.is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15;
-  cfg_params.dl_arfcn                      = params.is_tdd ? 520000U : 365000U;
+  cfg_params.dl_f_ref_arfcn                = params.is_tdd ? 520000U : 365000U;
   sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request(cfg_params);
   ue_req.ue_index                          = main_ue_idx;
 
@@ -205,6 +224,8 @@ test_bench::test_bench(const test_bench_params& params,
 
   if (use_format_0) {
     pucch_builder_params pucch_params{};
+    pucch_params.nof_ue_pucch_f0_or_f1_res_harq = 6;
+    pucch_params.nof_ue_pucch_f2_res_harq       = 6;
     pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
     pucch_builder.setup(
         cell_cfg.ul_cfg_common.init_ul_bwp, params.is_tdd ? cell_cfg.tdd_cfg_common : std::nullopt, pucch_params);
@@ -215,8 +236,7 @@ test_bench::test_bench(const test_bench_params& params,
   }
 
   ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
-  ues.add_ue(
-      std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
+  ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
   uci_sched.add_ue(ues[ue_req.ue_index].get_pcell().cfg());
   last_allocated_rnti   = ue_req.crnti;
   last_allocated_ue_idx = main_ue_idx;
@@ -253,8 +273,7 @@ void test_bench::add_ue()
                 "UE PUCCH configuration couldn't be built");
 
   ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
-  ues.add_ue(
-      std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
+  ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
   last_allocated_rnti = ue_req.crnti;
 }
 

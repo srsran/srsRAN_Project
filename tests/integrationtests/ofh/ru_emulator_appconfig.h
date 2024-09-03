@@ -42,7 +42,7 @@ struct ru_emulator_ofh_appconfig {
   /// RU Uplink ports.
   std::vector<unsigned> ru_ul_port_id = {0, 1};
   /// RU emulator operating bandwidth.
-  bs_channel_bandwidth_fr1 bandwidth = srsran::bs_channel_bandwidth_fr1::MHz100;
+  bs_channel_bandwidth bandwidth = srsran::bs_channel_bandwidth::MHz100;
   /// Uplink compression method.
   std::string ul_compr_method = "bfp";
   /// Uplink compression bitwidth.

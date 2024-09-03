@@ -32,9 +32,10 @@
 
 namespace srsran {
 
-class scheduler_metrics_handler;
+class cell_metrics_handler;
 class scheduler_event_logger;
 class uci_scheduler_impl;
+class cell_harq_manager;
 
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
@@ -44,10 +45,11 @@ class ue_event_manager final : public sched_ue_configuration_handler,
                                public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler);
+  ue_event_manager(ue_repository& ue_db, cell_metrics_handler& metrics_handler);
   ~ue_event_manager();
 
   void add_cell(cell_resource_allocator& cell_res_grid,
+                cell_harq_manager&       cell_harqs,
                 ue_fallback_scheduler&   fallback_sched,
                 uci_scheduler_impl&      uci_sched,
                 scheduler_event_logger&  ev_logger,
@@ -117,15 +119,17 @@ private:
                        std::optional<float>                   pucch_snr);
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
-  ue_repository&             ue_db;
-  scheduler_metrics_handler& metrics_handler;
-  srslog::basic_logger&      logger;
+  ue_repository&        ue_db;
+  cell_metrics_handler& metrics_handler;
+  srslog::basic_logger& logger;
 
   /// List of added and configured cells.
   struct du_cell {
     const cell_configuration* cfg = nullptr;
 
     cell_resource_allocator* res_grid = nullptr;
+
+    cell_harq_manager* cell_harqs = nullptr;
 
     // Reference to fallback scheduler.
     ue_fallback_scheduler* fallback_sched = nullptr;

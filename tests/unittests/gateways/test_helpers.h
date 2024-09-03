@@ -167,7 +167,7 @@ public:
     return rx_bytes;
   }
 
-  expected<byte_buffer> get_rx_pdu_blocking(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(1000))
+  expected<byte_buffer> get_rx_pdu_blocking(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(5000))
   {
     // wait until at least one PDU is received
     std::unique_lock<std::mutex> lock(rx_mutex);

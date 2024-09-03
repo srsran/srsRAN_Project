@@ -135,6 +135,11 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   f1u_du_gateway&     f1u_gw    = drb_info.du_params.f1u.f1u_gw;
   gtpu_teid_pool&     teid_pool = drb_info.teid_pool;
 
+  // > Get DL UP TNL bind address.
+  expected<std::string> f1u_bind_string = f1u_gw.get_du_bind_address(drb_info.du_params.ran.gnb_du_id);
+  assert(f1u_bind_string.has_value());
+  transport_layer_address f1u_bind_addr = transport_layer_address::create_from_string(f1u_bind_string.value());
+
   // > Setup DL UP TNL info.
   expected<gtpu_teid_t> dl_teid = teid_pool.request_teid();
   if (not dl_teid.has_value()) {
@@ -142,29 +147,21 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
     return nullptr;
   }
   // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
-  std::array<up_transport_layer_info, 1> dluptnl_info_list = {
-      up_transport_layer_info{drb_info.du_params.ran.du_bind_addr, dl_teid.value()}};
+  std::array<up_transport_layer_info, 1> dluptnl_info_list = {up_transport_layer_info{f1u_bind_addr, dl_teid.value()}};
 
   // > Create DRB instance.
   std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();
 
   // > Setup DRB config
-  drb->drb_id       = drb_info.drb_id;
-  drb->lcid         = drb_info.lcid;
-  drb->rlc_cfg      = drb_info.rlc_cfg;
-  drb->f1u_cfg      = drb_info.f1u_cfg;
-  drb->mac_cfg      = drb_info.mac_cfg;
-  drb->qos_info     = drb_info.qos_info;
-  drb->gbr_qos_info = drb_info.gbr_qos_info;
-  drb->s_nssai      = drb_info.s_nssai;
-
+  drb->drb_id = drb_info.drb_id;
+  drb->lcid   = drb_info.lcid;
   drb->uluptnl_info_list.assign(drb_info.uluptnl_info_list.begin(), drb_info.uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
 
   drb->f1u_gw_bearer = drb_info.du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
       drb->drb_id,
-      drb->f1u_cfg,
+      drb_info.f1u_cfg,
       drb->dluptnl_info_list[0],
       drb->uluptnl_info_list[0],
       drb->connector.f1u_gateway_nru_rx_notif,
@@ -179,7 +176,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   srsran::srs_du::f1u_bearer_creation_message f1u_msg = {};
   f1u_msg.ue_index                                    = ue_index;
   f1u_msg.drb_id                                      = drb->drb_id;
-  f1u_msg.config                                      = drb->f1u_cfg;
+  f1u_msg.config                                      = drb_info.f1u_cfg;
   f1u_msg.dl_tnl_info                                 = drb->dluptnl_info_list[0];
   f1u_msg.rx_sdu_notifier                             = &drb->connector.f1u_rx_sdu_notif;
   f1u_msg.tx_pdu_notifier                             = drb->f1u_gw_bearer.get();
@@ -199,6 +196,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
                                                                        ue_index,
                                                                        drb_info.pcell_index,
                                                                        *drb,
+                                                                       drb_info.rlc_cfg,
                                                                        drb_info.du_params.services,
                                                                        drb_info.rlc_rlf_notifier,
                                                                        drb_info.du_params.rlc.rlc_metrics_notif,

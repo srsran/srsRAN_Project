@@ -25,7 +25,7 @@
 namespace srsran {
 
 struct resource_grid_context;
-class resource_grid;
+class shared_resource_grid;
 
 /// \brief Lower physical layer PUxCH processor - Request handler interface.
 ///
@@ -44,7 +44,7 @@ public:
   ///
   /// \param[in] grid Destination uplink resource grid.
   /// \param[in] context Resource grid context.
-  virtual void handle_request(resource_grid& grid, const resource_grid_context& context) = 0;
+  virtual void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) = 0;
 };
 
 } // namespace srsran

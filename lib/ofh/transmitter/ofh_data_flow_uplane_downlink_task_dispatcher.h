@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ofh_data_flow_uplane_downlink_data.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
@@ -42,10 +43,10 @@ public:
 
   // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
-                                      const resource_grid_reader&                   grid) override
+                                      const shared_resource_grid&                   grid) override
   {
     if (!executor.execute(
-            [this, context, &grid]() { data_flow_uplane->enqueue_section_type_1_message(context, grid); })) {
+            [this, context, rg = grid.copy()]() { data_flow_uplane->enqueue_section_type_1_message(context, rg); })) {
       srslog::fetch_basic_logger("OFH").warning(
           "Failed to dispatch message in the downlink data flow User-Plane for slot '{}'", context.slot);
     }

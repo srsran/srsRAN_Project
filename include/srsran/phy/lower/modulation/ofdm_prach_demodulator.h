@@ -24,7 +24,7 @@
 
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/ran/prach/prach_format_type.h"
-#include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 
@@ -38,6 +38,10 @@ class ofdm_prach_demodulator
 public:
   /// Collects the necessary parameters to demodulate PRACH frequency- and time-domain occasions within a slot.
   struct configuration {
+    /// \brief OFDM slot in which the PRACH window starts.
+    ///
+    /// The slot contains uplink resource grid subcarrier spacing. Expresses the numerology \f$\mu\f$.
+    slot_point slot;
     /// PRACH preamble format.
     prach_format_type format;
     /// Number of time-domain occasions.
@@ -50,8 +54,6 @@ public:
     unsigned rb_offset;
     /// Uplink resource grid size (see \ref prach_buffer_context::nof_prb_ul_grid).
     unsigned nof_prb_ul_grid;
-    /// Uplink resource grid subcarrier spacing. Expresses the numerology \f$\mu\f$.
-    subcarrier_spacing pusch_scs;
     /// Destination port identifier.
     unsigned port;
   };

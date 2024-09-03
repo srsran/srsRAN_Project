@@ -39,9 +39,10 @@ struct cell_config_builder_params {
   /// subCarrierSpacingCommon, as per \c MIB, TS 38.331.
   subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
   /// BS Channel Bandwidth, as per TS 38.104, Section 5.3.1.
-  bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10;
-  /// This ARFCN represents "f_ref" for DL, as per TS 38.211, Section 5.4.2.1.
-  unsigned dl_arfcn = 365000;
+  bs_channel_bandwidth channel_bw_mhz = bs_channel_bandwidth::MHz10;
+  /// This ARFCN represents "f_ref" for DL, as per TS 38.104, Section 5.4.2.1. As per TS 38.104, Section 5.4.2.2,
+  /// "f_ref" maps to the central frequency of the band.
+  unsigned dl_f_ref_arfcn = 365000;
   /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2, TS 38.104. If not specified, a valid band for the
   /// provided DL ARFCN is automatically derived.
   std::optional<nr_band> band;

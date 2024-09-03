@@ -262,8 +262,8 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_transmit_notification)
   constexpr uint32_t pdcp_sn         = 123;
   constexpr uint32_t highest_pdcp_sn = 55;
 
-  f1u->handle_transmit_notification(highest_pdcp_sn);
-  f1u->handle_transmit_notification(highest_pdcp_sn + 1);
+  f1u->handle_transmit_notification(highest_pdcp_sn, 0);
+  f1u->handle_transmit_notification(highest_pdcp_sn + 1, 0);
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   auto        chain1       = byte_buffer_chain::create(tx_pdcp_pdu1.deep_copy().value());
@@ -298,7 +298,18 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_transmit_notification)
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu.value(), tx_pdcp_pdu2);
-  EXPECT_FALSE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  EXPECT_TRUE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  {
+    nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
+    EXPECT_FALSE(status.final_frame_ind);
+    EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
+    EXPECT_FALSE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_FALSE(status.cause_value.has_value());
+    EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());
+    ASSERT_TRUE(status.highest_transmitted_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_transmitted_pdcp_sn.value(), highest_pdcp_sn + 1);
+  }
   EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
 
   tester->tx_msg_list.pop_front();
@@ -355,7 +366,18 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu.value(), tx_pdcp_pdu2);
-  EXPECT_FALSE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  EXPECT_TRUE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  {
+    nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
+    EXPECT_FALSE(status.final_frame_ind);
+    EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
+    ASSERT_TRUE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_delivered_pdcp_sn.value(), highest_pdcp_sn + 1);
+    EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.cause_value.has_value());
+    EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.highest_transmitted_pdcp_sn.has_value());
+  }
   EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
 
   tester->tx_msg_list.pop_front();
@@ -363,7 +385,7 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
   EXPECT_TRUE(tester->tx_msg_list.empty());
 
   // handle another transmit notification; check UL notif timer has been reset to full time
-  f1u->handle_transmit_notification(highest_pdcp_sn + 2);
+  f1u->handle_transmit_notification(highest_pdcp_sn + 2, 0);
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
@@ -381,7 +403,8 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
     nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
     EXPECT_FALSE(status.final_frame_ind);
     EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
-    EXPECT_FALSE(status.highest_delivered_pdcp_sn.has_value());
+    ASSERT_TRUE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_delivered_pdcp_sn.value(), highest_pdcp_sn + 1);
     EXPECT_FALSE(status.cause_value.has_value());
     EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
     EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());
@@ -397,8 +420,8 @@ TEST_F(f1u_du_test, tx_transmit_notification)
 {
   constexpr uint32_t highest_pdcp_sn = 123;
 
-  f1u->handle_transmit_notification(highest_pdcp_sn);
-  f1u->handle_transmit_notification(highest_pdcp_sn + 1);
+  f1u->handle_transmit_notification(highest_pdcp_sn, 0);
+  f1u->handle_transmit_notification(highest_pdcp_sn + 1, 0);
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());

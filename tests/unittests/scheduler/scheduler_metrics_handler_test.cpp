@@ -62,7 +62,7 @@ protected:
 
   std::chrono::milliseconds          report_period;
   test_scheduler_ue_metrics_notifier metrics_notif;
-  scheduler_metrics_handler          metrics;
+  cell_metrics_handler               metrics;
   du_ue_index_t test_ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_NOF_DU_UES - 1));
 
   slot_point next_sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10239)};

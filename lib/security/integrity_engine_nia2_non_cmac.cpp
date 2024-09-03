@@ -57,12 +57,10 @@ integrity_engine_nia2_non_cmac::integrity_engine_nia2_non_cmac(sec_128_key      
   }
 }
 
-security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer buf, uint32_t count)
+expected<security::sec_mac, security_error> integrity_engine_nia2_non_cmac::compute_mac(const byte_buffer_view v,
+                                                                                        uint32_t               count)
 {
-  security_result   result{.buf = std::move(buf), .count = count};
   security::sec_mac mac = {};
-
-  byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
 
   uint32_t len      = v.length();
   uint32_t len_bits = len * 8;
@@ -116,14 +114,56 @@ security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer bu
   // copy first 4 bytes
   std::copy(tmp_mac.begin(), tmp_mac.begin() + 4, mac.begin());
 
-  if (not result.buf->append(mac)) {
+  return mac;
+}
+
+security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer buf, uint32_t count)
+{
+  security_result  result{.buf = std::move(buf), .count = count};
+  byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
+
+  expected<security::sec_mac, security_error> mac = compute_mac(v, count);
+
+  if (not mac.has_value()) {
+    result.buf = make_unexpected(mac.error());
+    return result;
+  }
+
+  if (not result.buf->append(mac.value())) {
     result.buf = make_unexpected(security_error::buffer_failure);
   }
+
   return result;
 }
 
 security_result integrity_engine_nia2_non_cmac::verify_integrity(byte_buffer buf, uint32_t count)
 {
-  security_result result;
+  security_result result{.buf = std::move(buf), .count = count};
+
+  if (result.buf->length() <= sec_mac_len) {
+    result.buf = make_unexpected(security_error::integrity_failure);
+    return result;
+  }
+
+  byte_buffer_view v{result.buf.value(), 0, result.buf.value().length() - sec_mac_len};
+  byte_buffer_view m{result.buf.value(), result.buf.value().length() - sec_mac_len, sec_mac_len};
+
+  // compute MAC
+  expected<security::sec_mac, security_error> mac = compute_mac(v, count);
+
+  if (not mac.has_value()) {
+    result.buf = make_unexpected(mac.error());
+    return result;
+  }
+
+  // verify MAC
+  if (!std::equal(mac.value().begin(), mac.value().end(), m.begin(), m.end())) {
+    result.buf = make_unexpected(security_error::integrity_failure);
+    return result;
+  }
+
+  // trim MAC from PDU
+  result.buf.value().trim_tail(sec_mac_len);
+
   return result;
 }

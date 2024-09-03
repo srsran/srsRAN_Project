@@ -22,6 +22,7 @@
 
 #include "pusch_processor_validator_impl.h"
 #include "pusch_processor_impl.h"
+#include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 
 using namespace srsran;
 
@@ -117,14 +118,33 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
     return false;
   }
 
-  // Only DM-RS Type 1 is supported.
-  if (pdu.dmrs != dmrs_type::TYPE1) {
-    return false;
-  }
+  // Check if transform precoding is enabled.
+  if (std::holds_alternative<pusch_processor::dmrs_configuration>(pdu.dmrs)) {
+    const pusch_processor::dmrs_configuration& dmrs_config = std::get<pusch_processor::dmrs_configuration>(pdu.dmrs);
+    // Only DM-RS Type 1 is supported.
+    if (dmrs_config.dmrs != dmrs_type::TYPE1) {
+      return false;
+    }
 
-  // Only two CDM groups without data is supported.
-  if (pdu.nof_cdm_groups_without_data != 2) {
-    return false;
+    // Only two CDM groups without data is supported.
+    if (dmrs_config.nof_cdm_groups_without_data != 2) {
+      return false;
+    }
+  } else {
+    // Number of layers must be one.
+    if (pdu.nof_tx_layers != 1) {
+      return false;
+    }
+
+    // Frequency allocation must be contiguous.
+    if (!pdu.freq_alloc.is_contiguous()) {
+      return false;
+    }
+
+    // Number of PRB must be valid.
+    if (!is_transform_precoding_nof_prb_valid(pdu.freq_alloc.get_nof_rb())) {
+      return false;
+    }
   }
 
   // DC position is outside the channel estimate dimensions.

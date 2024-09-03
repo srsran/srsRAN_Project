@@ -98,7 +98,10 @@ create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& conf
 /// \brief Creates a software generic PRACH demodulator.
 /// \param[in] dft_factory DFT factory.
 /// \param[in] srate       Sampling rate.
+/// \param[in] fr          Frequency range.
 std::shared_ptr<ofdm_prach_demodulator_factory>
-create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory, sampling_rate srate);
+create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
+                                         sampling_rate                          srate,
+                                         frequency_range                        fr);
 
 } // namespace srsran

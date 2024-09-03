@@ -37,6 +37,9 @@ protected:
   scheduler_harq_timeout_dummy_handler     harq_timeout_handler;
 
   cell_common_configuration_list cell_cfg_db;
+  cell_harq_manager              cell_harqs{1,
+                               MAX_NOF_HARQS,
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
 };
 
 TEST_F(ue_configuration_test, configuration_valid_on_creation)
@@ -86,7 +89,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   // Test Preamble.
   cell_cfg_db.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg));
   ue_configuration ue_ded_cfg{ue_create_msg.ue_index, ue_create_msg.crnti, cell_cfg_db, ue_create_msg.cfg};
-  ue               u{ue_creation_command{ue_ded_cfg, ue_create_msg.starts_in_fallback, harq_timeout_handler}};
+  ue               u{ue_creation_command{ue_ded_cfg, ue_create_msg.starts_in_fallback, cell_harqs}};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
   sched_ue_reconfiguration_message recfg{};
@@ -125,9 +128,9 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
 {
   cell_config_builder_params params{};
   params.scs_common     = subcarrier_spacing::kHz30;
-  params.dl_arfcn       = 520002;
+  params.dl_f_ref_arfcn = 520002;
   params.band           = nr_band::n41;
-  params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz50;
+  params.channel_bw_mhz = bs_channel_bandwidth::MHz50;
   msg                   = test_helpers::make_default_sched_cell_configuration_request(params);
   ue_create_msg         = test_helpers::create_default_sched_ue_creation_request(params);
 

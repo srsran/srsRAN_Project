@@ -149,7 +149,7 @@ class intrusive_double_linked_list
   template <typename U>
   class iterator_impl
   {
-    using elem_t = typename std::conditional<std::is_const<U>::value, const node_t, node_t>::type;
+    using elem_t = std::conditional_t<std::is_const<U>::value, const node_t, node_t>;
 
   public:
     using iterator_category = std::bidirectional_iterator_tag;
@@ -185,24 +185,28 @@ public:
 
   intrusive_double_linked_list()
   {
-    static_assert(std::is_base_of<node_t, T>::value,
+    static_assert(std::is_base_of_v<node_t, T>,
                   "Provided template argument T must have intrusive_forward_list_element<Tag> as base class");
   }
   intrusive_double_linked_list(const intrusive_double_linked_list&) = default;
-  intrusive_double_linked_list(intrusive_double_linked_list&& other) noexcept : node(other.node)
+  intrusive_double_linked_list(intrusive_double_linked_list&& other) noexcept : node(other.node), tail(other.tail)
   {
     other.node = nullptr;
+    other.tail = nullptr;
   }
   intrusive_double_linked_list& operator=(const intrusive_double_linked_list&) = default;
   intrusive_double_linked_list& operator=(intrusive_double_linked_list&& other) noexcept
   {
     node       = other.node;
+    tail       = other.tail;
     other.node = nullptr;
+    other.tail = nullptr;
     return *this;
   }
   ~intrusive_double_linked_list() { clear(); }
 
   T& front() const { return *static_cast<T*>(node); }
+  T& back() const { return *static_cast<T*>(tail); }
 
   void push_front(T* t)
   {
@@ -211,8 +215,23 @@ public:
     new_head->next_node = node;
     if (node != nullptr) {
       node->prev_node = new_head;
+    } else {
+      tail = new_head;
     }
     node = new_head;
+  }
+
+  void push_back(T* t)
+  {
+    node_t* new_tail    = static_cast<node_t*>(t);
+    new_tail->prev_node = tail;
+    new_tail->next_node = nullptr;
+    if (tail != nullptr) {
+      tail->next_node = new_tail;
+    } else {
+      node = new_tail;
+    }
+    tail = new_tail;
   }
 
   void pop(T* t)
@@ -220,6 +239,12 @@ public:
     node_t* to_rem = static_cast<node_t*>(t);
     if (to_rem == node) {
       node = to_rem->next_node;
+      if (node == nullptr) {
+        tail = nullptr;
+      }
+    } else if (to_rem == tail) {
+      tail = to_rem->prev_node;
+      // tail==head checked in first if condition.
     }
     if (to_rem->prev_node != nullptr) {
       to_rem->prev_node->next_node = to_rem->next_node;
@@ -230,7 +255,11 @@ public:
     to_rem->next_node = nullptr;
     to_rem->prev_node = nullptr;
   }
+
   void pop_front() { pop(static_cast<T*>(node)); }
+
+  void pop_back() { pop(static_cast<T*>(tail)); }
+
   void clear()
   {
     while (node != nullptr) {
@@ -239,6 +268,7 @@ public:
       torem->next_node = nullptr;
       torem->prev_node = nullptr;
     }
+    tail = nullptr;
   }
 
   bool empty() const { return node == nullptr; }
@@ -250,6 +280,7 @@ public:
 
 private:
   node_t* node = nullptr;
+  node_t* tail = nullptr;
 };
 
 } // namespace srsran

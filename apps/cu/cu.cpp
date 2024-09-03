@@ -30,7 +30,6 @@
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/backtrace.h"
-#include "srsran/support/build_info/build_info.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/error_handling.h"
@@ -41,11 +40,11 @@
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/sysinfo.h"
 #include "srsran/support/timers.h"
-#include "srsran/support/version/version.h"
+#include "srsran/support/versioning/build_info.h"
+#include "srsran/support/versioning/version.h"
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
 #include "apps/cu/cu_worker_manager.h"
-#include "apps/services/metrics_log_helper.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
@@ -214,9 +213,8 @@ int main(int argc, char** argv)
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &cu_cp_config]() {
     // Create the PLMN and TAC list from the cells.
-    std::vector<std::string> plmns;
-    std::vector<unsigned>    tacs;
-    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(plmns), std::move(tacs));
+    std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(supported_tas));
   });
 
   // Parse arguments.
@@ -305,7 +303,8 @@ int main(int argc, char** argv)
   udp_network_gateway_config  cu_f1u_gw_config  = {};
   cu_f1u_gw_config.bind_address                 = cu_cfg.nru_cfg.bind_addr;
   cu_f1u_gw_config.bind_port                    = GTPU_PORT;
-  cu_f1u_gw_config.reuse_addr                   = true;
+  cu_f1u_gw_config.reuse_addr                   = false;
+  cu_f1u_gw_config.pool_occupancy_threshold     = cu_cfg.nru_cfg.pool_occupancy_threshold;
   std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
       srs_cu_up::create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
@@ -340,9 +339,6 @@ int main(int argc, char** argv)
 
   // Create console helper object for commands and metrics printing.
   app_services::stdin_command_dispatcher command_parser(*epoll_broker, cu_cp_obj_and_cmds.commands);
-
-  // Create metrics log helper.
-  metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());

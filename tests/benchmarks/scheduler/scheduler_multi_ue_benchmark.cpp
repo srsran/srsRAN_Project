@@ -26,7 +26,6 @@
 #include "srsran/adt/circular_array.h"
 #include "srsran/scheduler/scheduler_factory.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/math/lcm.h"
 #include <getopt.h>
 
 using namespace srsran;
@@ -255,9 +254,9 @@ void benchmark_tdd(benchmarker& bm, const bench_params& params)
   sched_cfg.ue.max_pdcch_alloc_attempts_per_slot = params.max_dl_grants_per_slot;
 
   cell_config_builder_params builder_params{};
-  builder_params.dl_arfcn             = 520002;
+  builder_params.dl_f_ref_arfcn       = 520002;
   builder_params.band                 = nr_band::n41;
-  builder_params.channel_bw_mhz       = bs_channel_bandwidth_fr1::MHz100;
+  builder_params.channel_bw_mhz       = bs_channel_bandwidth::MHz100;
   builder_params.scs_common           = subcarrier_spacing::kHz30;
   builder_params.tdd_ul_dl_cfg_common = tdd_ul_dl_config_common{builder_params.scs_common, {10, 7, 8, 2, 0}};
   builder_params.nof_dl_ports         = 4;

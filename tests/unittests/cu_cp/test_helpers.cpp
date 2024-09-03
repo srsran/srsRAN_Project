@@ -22,6 +22,8 @@
 
 #include "test_helpers.h"
 #include "../rrc/rrc_ue_test_helpers.h"
+#include "tests/test_doubles/rrc/rrc_test_messages.h"
+#include "srsran/security/integrity.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -44,4 +46,26 @@ byte_buffer srsran::srs_cu_cp::generate_rrc_setup_complete()
       "0000f1001032e04f070f0702f1b08010027db00000000080101b669000000000801000001000000005202f8990000011707f070c0401980b"
       "018010174000090530101000000000");
   return octet_str.to_byte_buffer();
+}
+
+byte_buffer srsran::srs_cu_cp::generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count)
+{
+  byte_buffer pdu_with_count = byte_buffer::create({0x00, count}).value();
+  if (!pdu_with_count.append(pack_ul_dcch_msg(create_rrc_reconfiguration_complete(transaction_id)))) {
+    return {};
+  }
+
+  security::sec_mac mac_exp   = {};
+  auto              k_128_int = std::array<uint8_t, 16>{
+                   0xf3, 0xd5, 0x99, 0x4a, 0x3b, 0x29, 0x06, 0xfb, 0x27, 0x00, 0x4a, 0x44, 0x90, 0x6c, 0x6b, 0xd1};
+  byte_buffer_view buf = pdu_with_count;
+
+  security::security_nia2(
+      mac_exp, k_128_int, count, srb_id_to_uint(srb_id_t::srb1) - 1, security::security_direction::uplink, buf);
+
+  if (!pdu_with_count.append(mac_exp)) {
+    return {};
+  }
+
+  return pdu_with_count;
 }

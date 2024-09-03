@@ -133,10 +133,14 @@ public:
 
   using threshold_and_margin_type = std::pair<float, unsigned>;
 
+  /// Mapping between PRACH configuration and threshold value.
   struct threshold_entry {
-    threshold_params          configuration;
+    /// Subset of PRACH configuration parameters affecting the threshold value.
+    threshold_params configuration;
+    /// Threshold value and search margin.
     threshold_and_margin_type threshold_and_margin;
-    threshold_flag            flag;
+    /// Threshold quality flag.
+    threshold_flag flag;
   };
 
   /// Constructor: receives the list of pairings and ensures it is sorted.
@@ -168,6 +172,7 @@ public:
     return {/* threshold */ 0.3F, /* margin */ 12};
   }
 
+  /// Checks the quality flag of the threshold for the given configurations.
   threshold_flag check_flag(const threshold_params& params) const
   {
     auto it =
@@ -183,10 +188,12 @@ public:
   }
 
 private:
+  /// Sorted list of thresholds.
   std::vector<threshold_entry> sorted_thresholds_and_margins;
 };
 
-using th_flag                               = threshold_and_margin_finder::threshold_flag;
+using th_flag = threshold_and_margin_finder::threshold_flag;
+/// Unsorted list of thresholds.
 static const auto all_threshold_and_margins = to_array<threshold_and_margin_finder::threshold_entry>({
     // clang-format off
     {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz1_25, prach_format_type::zero, /* ZCZ */ 0, /* combine symbols */ true}, {0.147F, 5}, th_flag::orange},

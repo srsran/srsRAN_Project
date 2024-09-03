@@ -58,13 +58,13 @@ class unique_timer;
 /// separate threads. An unique_timer object and the timer_manager communicate with one another via thread-safe queues.
 class timer_manager
 {
-  /// \brief Unambiguous identifier of the last command sent by a unique_timer to the timer_manager.
+  /// Unambiguous identifier of the last command sent by a unique_timer to the timer_manager.
   using cmd_id_t = uint32_t;
 
-  /// \brief Constant used to represent invalid timer durations.
-  constexpr static timer_duration INVALID_DURATION = std::numeric_limits<timer_duration>::max();
+  /// Constant used to represent invalid timer durations.
+  static constexpr timer_duration INVALID_DURATION = std::numeric_limits<timer_duration>::max();
 
-  /// \brief Possible states for a timer.
+  /// Possible states for a timer.
   enum class state_t { stopped, running, expired };
 
   /// Command sent by the unique_timer (front-end) to the timer manager (back-end).
@@ -73,13 +73,10 @@ class timer_manager
 
     /// Unique identity of the timer.
     timer_id_t id;
-
     /// Identifier associated with this particular command.
     cmd_id_t cmd_id;
-
     /// Action Request type sent by the unique_timer.
     action_t action;
-
     /// Timer duration used, in case the action type is "start".
     unsigned duration;
   };
@@ -104,7 +101,7 @@ class timer_manager
     /// Callback triggered when timer expires. Callback updates are protected by backend lock.
     unique_function<void(timer_id_t)> timeout_callback;
 
-    timer_frontend(timer_manager& parent_, timer_id_t id_);
+    timer_frontend(timer_manager& parent_, timer_id_t id_) : parent(parent_), id(id_) {}
 
     void destroy();
 
@@ -117,14 +114,14 @@ class timer_manager
     void stop();
   };
 
-  /// \brief Timer context used solely by the back-end side of the timer manager.
+  /// Timer context used solely by the back-end side of the timer manager.
   struct timer_backend_context {
     cmd_id_t cmd_id  = 0;
     state_t  state   = state_t::stopped;
     unsigned timeout = 0;
   };
 
-  /// \brief Object holding both the front-end and back-end contexts of the timers.
+  /// Object holding both the front-end and back-end contexts of the timers.
   struct timer_handle : public intrusive_double_linked_list_element<>, public intrusive_forward_list_element<> {
     std::unique_ptr<timer_frontend> frontend;
     timer_backend_context           backend;
@@ -147,7 +144,7 @@ public:
   size_t nof_timers() const;
 
   /// Returns the number of running timers handled by this instance.
-  unsigned nof_running_timers() const;
+  unsigned nof_running_timers() const { return nof_timers_running; }
 
 private:
   friend class unique_timer;
@@ -158,15 +155,15 @@ private:
   /// Push a new timer command (start, stop, destroy) from the front-end execution context to the backend.
   void push_timer_command(cmd_t cmd);
 
-  /// \brief Create a new timer_handle object in the timer manager back-end side and associate it with the provided
-  /// front-end timer.
+  /// Create a new timer_handle object in the timer manager back-end side and associate it with the provided frontend
+  /// timer.
   void create_timer_handle(std::unique_ptr<timer_frontend> timer);
 
   /// Start the ticking of a timer with a given duration.
   void start_timer_backend(timer_handle& timer, unsigned duration);
 
-  /// \brief Stop a timer from ticking. If \c expiry_reason is set to true, the timer callback is dispatched to the
-  /// frontend execution context.
+  /// Stop a timer from ticking. If \c expiry_reason is set to true, the timer callback is dispatched to the frontend
+  /// execution context.
   bool try_stop_timer_backend(timer_handle& timer, bool expiry_reason);
   void stop_timer_backend(timer_handle& timer, bool expiry_reason);
 
@@ -305,7 +302,7 @@ private:
   timer_manager::timer_frontend* handle = nullptr;
 };
 
-/// \brief Factory of timers that associates created timers to specific task executors.
+/// Factory of timers that associates created timers to specific task executors.
 class timer_factory
 {
 public:

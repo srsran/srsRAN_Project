@@ -75,6 +75,8 @@ struct pusch_decoder_factory_hw_configuration {
   std::shared_ptr<ldpc_segmenter_rx_factory>             segmenter_factory;
   std::shared_ptr<crc_calculator_factory>                crc_factory;
   std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory;
+  unsigned                                               nof_pusch_decoder_threads;
+  task_executor*                                         executor;
 };
 
 std::shared_ptr<pusch_decoder_factory>

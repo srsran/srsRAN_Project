@@ -22,6 +22,7 @@
 
 #include "processor_notifier_adaptor.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -87,7 +88,7 @@ void processor_notifier_adaptor::puxch_adaptor::on_puxch_request_late(const reso
   error_notifier->on_puxch_request_late(context);
 }
 
-void processor_notifier_adaptor::puxch_adaptor::on_rx_symbol(const resource_grid_reader&        grid,
+void processor_notifier_adaptor::puxch_adaptor::on_rx_symbol(const shared_resource_grid&        grid,
                                                              const lower_phy_rx_symbol_context& context)
 {
   srsran_assert(error_notifier, "The adaptor is not connected to an error notifier.");

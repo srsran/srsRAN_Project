@@ -47,6 +47,7 @@ public:
   bool is_valid(const ssb_processor::pdu_t& pdu) const override { return true; }
 };
 
+/// SSB processor implementation.
 class ssb_processor_impl : public ssb_processor
 {
 private:

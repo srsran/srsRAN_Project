@@ -29,17 +29,21 @@
 
 using namespace srsran;
 
-static void generate_du_low_config(du_low_config&             out_config,
-                                   const du_low_unit_config&  du_low,
-                                   span<const du_cell_config> du_cells,
-                                   span<const unsigned>       max_puschs_per_slot,
-                                   unsigned                   du_id)
+static void generate_du_low_config(du_low_config&              out_config,
+                                   const du_low_unit_config&   du_low,
+                                   const hal_upper_phy_config& hal_config,
+                                   span<const du_cell_config>  du_cells,
+                                   span<const unsigned>        max_puschs_per_slot,
+                                   unsigned                    du_id)
 {
   out_config.cells.reserve(du_cells.size());
 
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     const du_cell_config& cell           = du_cells[i];
     upper_phy_config&     upper_phy_cell = out_config.cells.emplace_back().upper_phy_cfg;
+
+    // Initialize the HAL config of the upper PHY.
+    upper_phy_cell.hal_config = hal_config;
 
     // Get band, frequency range and duplex mode from the band.
     nr_band               band       = cell.dl_carrier.band;
@@ -133,7 +137,6 @@ static void generate_du_low_config(du_low_config&             out_config,
     upper_phy_cell.ldpc_decoder_iterations    = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
     upper_phy_cell.ldpc_decoder_early_stop    = du_low.expert_phy_cfg.pusch_decoder_early_stop;
     upper_phy_cell.nof_dl_rg                  = dl_pipeline_depth + 2;
-    upper_phy_cell.dl_rg_expire_timeout_slots = dl_pipeline_depth;
     upper_phy_cell.nof_dl_processors          = dl_pipeline_depth;
     upper_phy_cell.nof_ul_rg                  = ul_pipeline_depth;
     upper_phy_cell.max_ul_thread_concurrency  = du_low.expert_execution_cfg.threads.nof_ul_threads + 1;
@@ -170,11 +173,12 @@ static void generate_du_low_config(du_low_config&             out_config,
 
 void srsran::generate_du_low_wrapper_config(du_low_wrapper_config&              out_config,
                                             const du_low_unit_config&           du_low_unit_cfg,
+                                            const hal_upper_phy_config&         hal_config,
                                             std::vector<cell_prach_ports_entry> prach_ports,
                                             span<const du_cell_config>          du_cells,
                                             span<const unsigned>                max_puschs_per_slot,
                                             unsigned                            du_id)
 {
-  generate_du_low_config(out_config.du_low_cfg, du_low_unit_cfg, du_cells, max_puschs_per_slot, du_id);
+  generate_du_low_config(out_config.du_low_cfg, du_low_unit_cfg, hal_config, du_cells, max_puschs_per_slot, du_id);
   out_config.prach_ports = std::move(prach_ports);
 }

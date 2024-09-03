@@ -33,8 +33,14 @@ build trx driver:
   script:
     - |
       download_amarisoft() {
-        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates
-        
+        . /etc/os-release
+
+        if [[ "$ID" == "debian" || "$ID" == "ubuntu" ]]; then
+          DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates
+        elif [[ "$ID" == "fedora" ]]; then
+          dnf -y install curl
+        fi
+
         cd ${CI_PROJECT_DIR}
         http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${AMARISOFT_PACKAGE_REGISTRY}/${AMARISOFT_VERSION}/amarisoft.${AMARISOFT_VERSION}.tar.gz" -o amarisoft.tar.gz)
         if [[ $http_code != "200" ]]; then
@@ -58,7 +64,7 @@ build trx driver:
         rm -Rf build 
         mkdir build
         cd build
-        cmake -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DAUTO_DETECT_ISA=False -DCMAKE_CXX_FLAGS="-march=x86-64-v3" ..
+        cmake -DBUILD_TESTS=False -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DMARCH=x86-64-v3 ..
         make -j${KUBERNETES_CPU_REQUEST} trx_srsran_test
       }
     - |
@@ -84,6 +90,17 @@ build amariue zmq driver:
   extends: build trx driver
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  artifacts:
+    <<: *trx_artifacts
+    expire_in: 3 days
+
+build uesim zmq driver:
+  extends: build trx driver
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  variables:
+    OS: fedora-39
+    AMARISOFT_VERSION: "2024-03-15"
   artifacts:
     <<: *trx_artifacts
     expire_in: 3 days

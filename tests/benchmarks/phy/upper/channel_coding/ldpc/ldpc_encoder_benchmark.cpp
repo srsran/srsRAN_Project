@@ -102,17 +102,14 @@ int main(int argc, char** argv)
           data.insert(rgen() & 1, i_bit, 1);
         }
 
-        // Generate codeblock.
-        dynamic_bit_buffer codeblock(cb_length);
-
         srsran::codeblock_metadata::tb_common_metadata cfg_enc = {bg, ls};
 
         fmt::memory_buffer descr_buffer;
         fmt::format_to(descr_buffer, "BG={} LS={:<3} cb_len={}", bg, ls, cb_length);
 
         perf_meas_generic.new_measure(to_string(descr_buffer), data.size(), [&]() {
-          encoder->encode(codeblock, data, cfg_enc);
-          do_not_optimize(codeblock);
+          const ldpc_encoder_buffer& rm_buffer = encoder->encode(data, cfg_enc);
+          do_not_optimize(&rm_buffer);
         });
       }
     }

@@ -122,7 +122,7 @@ static const auto profiles = to_array<configuration_profile>({
      []() {
        // Do nothing.
      }},
-    {"b200_50MHz",
+    {"b200_50MHz_15kHz",
      "Single channel B200 USRP 50MHz bandwidth.",
      []() {
        device_arguments = "type=b200";
@@ -130,13 +130,42 @@ static const auto profiles = to_array<configuration_profile>({
        bw_rb            = 270;
        otw_format       = radio_configuration::over_the_wire_format::SC12;
      }},
-    {"x300_50MHz",
+    {"b200_50MHz_120kHz",
+     "Single channel B200 USRP 50MHz bandwidth.",
+     []() {
+       device_arguments = "type=b200";
+       srate            = sampling_rate::from_MHz(61.44);
+       bw_rb            = 32;
+       ssb_pattern      = ssb_pattern_case::D;
+       scs              = to_subcarrier_spacing(ssb_pattern);
+       otw_format       = radio_configuration::over_the_wire_format::SC12;
+       dl_center_freq   = 3.5e9;
+       ssb_center_freq  = 3.5e9;
+       rx_freq          = 3.5e9;
+       tx_gain          = 80;
+     }},
+    {"x300_50MHz_15kHz",
      "Single channel X3x0 USRP 50MHz bandwidth.",
      []() {
        device_arguments = "type=x300";
        srate            = sampling_rate::from_MHz(92.16);
        tx_gain          = 10;
        rx_gain          = 10;
+     }},
+    {"x300_100MHz_120kHz",
+     "Single channel X3x0 USRP 100MHz bandwidth.",
+     []() {
+       device_arguments = "type=x300";
+       srate            = sampling_rate::from_MHz(184.32);
+       bw_rb            = 66;
+       ssb_pattern      = ssb_pattern_case::D;
+       scs              = to_subcarrier_spacing(ssb_pattern);
+       otw_format       = radio_configuration::over_the_wire_format::SC16;
+       dl_center_freq   = 3.5e9;
+       ssb_center_freq  = 3.5e9;
+       rx_freq          = 3.5e9;
+       tx_gain          = 30;
+       rx_gain          = 5;
      }},
     {"n310_50MHz",
      "Single channel N310 USRP 50MHz bandwidth.",
@@ -241,9 +270,9 @@ static const auto profiles = to_array<configuration_profile>({
 /// Global instances.
 static std::mutex                             stop_execution_mutex;
 static std::atomic<bool>                      stop               = {false};
+static std::unique_ptr<upper_phy_ssb_example> upper_phy          = nullptr;
 static std::unique_ptr<lower_phy>             lower_phy_instance = nullptr;
 static std::unique_ptr<radio_session>         radio              = nullptr;
-static std::unique_ptr<upper_phy_ssb_example> upper_phy          = nullptr;
 
 static void stop_execution()
 {
@@ -626,8 +655,14 @@ int main(int argc, char** argv)
 
   double scs_Hz = static_cast<double>(1000U * scs_to_khz(scs));
 
+  subcarrier_spacing ref_scs = subcarrier_spacing::kHz15;
+  if (ssb_pattern > ssb_pattern_case::C) {
+    ref_scs = subcarrier_spacing::kHz60;
+  }
+  double ref_scs_Hz = scs_to_khz(ref_scs) * 1000;
+
   // Ratio between the resource grid SCS and 15kHz SCS.
-  unsigned ratio_scs_over_15kHz = pow2(to_numerology_value(scs));
+  unsigned ratio_scs_over_ref = pow2(to_numerology_value(scs) - to_numerology_value(ref_scs));
   // Frequency of Point A in Hz.
   double dl_pointA_freq_Hz = dl_center_freq - scs_Hz * NRE * bw_rb / 2;
   // Frequency of the lowest SS/PBCH block subcarrier.
@@ -635,20 +670,20 @@ int main(int argc, char** argv)
   // Frequency offset from Point A to the lowest SS/PBCH block subcarrier in Hz.
   double ssb_offset_pointA_Hz = ssb_lowest_freq_Hz - dl_pointA_freq_Hz;
   // Frequency offset from Point A to the lowest SS/PBCH block subcarrier in 15kHz subcarriers (only valid for FR1).
-  unsigned ssb_offset_pointA_subc_15kHz = static_cast<unsigned>(ssb_offset_pointA_Hz / 15e3);
+  unsigned ssb_offset_pointA_subc_ref = static_cast<unsigned>(ssb_offset_pointA_Hz / ref_scs_Hz);
   // Make sure it is possible to map the SS/PBCH block in the grid.
-  srsran_assert(ssb_offset_pointA_subc_15kHz % ratio_scs_over_15kHz == 0,
+  srsran_assert(ssb_offset_pointA_subc_ref % ratio_scs_over_ref == 0,
                 "The combination of DL center frequency {} MHz and SSB center frequency {} MHz results in a fractional "
                 "offset of {}kHz SCS between Point A and the lowest SS/PBCH block lowest subcarrier.",
                 dl_center_freq,
                 ssb_center_freq,
                 scs_to_khz(scs));
   // SSB frequency offset to Point A as a number of RBs.
-  ssb_offset_to_pointA ssb_offset_pointA_subc_rb = ssb_offset_pointA_subc_15kHz / NRE;
+  ssb_offset_to_pointA ssb_offset_pointA_subc_rb = ssb_offset_pointA_subc_ref / NRE;
   // Round down the offset to Point A to match CRB boundaries.
-  ssb_offset_pointA_subc_rb = (ssb_offset_pointA_subc_rb.to_uint() / ratio_scs_over_15kHz) * ratio_scs_over_15kHz;
+  ssb_offset_pointA_subc_rb = (ssb_offset_pointA_subc_rb.to_uint() / ratio_scs_over_ref) * ratio_scs_over_ref;
   // Remainder SSB frequency offset from Point A after rounding.
-  ssb_subcarrier_offset subcarrier_offset = ssb_offset_pointA_subc_15kHz - ssb_offset_pointA_subc_rb.to_uint() * NRE;
+  ssb_subcarrier_offset subcarrier_offset = ssb_offset_pointA_subc_ref - ssb_offset_pointA_subc_rb.to_uint() * NRE;
 
   upper_phy_ssb_example::configuration upper_phy_sample_config;
   upper_phy_sample_config.log_level                    = log_level;

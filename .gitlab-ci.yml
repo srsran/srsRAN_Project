@@ -203,8 +203,8 @@ full-code-format:
       export CXX=/usr/bin/clang++
       mkdir -p build
       cd build || exit
-      cmake -DASSERT_LEVEL=PARANOID -DAUTO_DETECT_ISA=False -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False ..
-      make srsran_build_info # needed to generate hashes.h
+      cmake -DASSERT_LEVEL=PARANOID -DMARCH=x86-64-v3 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False ..
+      make srsran_versioning # needed to generate hashes.h
     - |
       monitor_child_process() {
           while true; do
@@ -477,13 +477,15 @@ create-tags:
   stage: .post
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      when: always
+      when: delayed
+      start_in: 3 hours
   script:
     - |
       for name in $TAG_NAME_ARRAY; do
         create_tag "${name}_$(date -u +"%Y.%m.%d")"
       done
   needs: []
+  retry: 2
 
 ################################################################################
 # Enable / Disable pipelines

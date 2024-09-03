@@ -24,6 +24,7 @@
 /// \brief LDPC decoder benchmark.
 
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/srsran_test.h"
@@ -145,8 +146,8 @@ int main(int argc, char** argv)
               codeblock.begin(), codeblock.end(), [&]() { return static_cast<int8_t>((rgen() & 1) * 20 - 10); });
         } else {
           // Generate random message, attach its CRC and encode.
-          dynamic_bit_buffer to_encode(msg_length);
-          dynamic_bit_buffer encoded(cb_length);
+          dynamic_bit_buffer   to_encode(msg_length);
+          std::vector<uint8_t> encoded(cb_length);
           // Generate a random message.
           unsigned   msg_len_minus_crc = msg_length - 16;
           bit_buffer msg_span          = to_encode.first(msg_len_minus_crc);
@@ -158,12 +159,15 @@ int main(int argc, char** argv)
           to_encode.insert(checksum, msg_len_minus_crc, 16);
           // Encode entire message.
           srsran::codeblock_metadata::tb_common_metadata cfg_enc;
-          cfg_enc = {bg, ls};
-          encoder->encode(encoded, to_encode, cfg_enc);
+          cfg_enc                              = {bg, ls};
+          const ldpc_encoder_buffer& rm_buffer = encoder->encode(to_encode, cfg_enc);
+
+          // Write codeblock in the encoded intermediate buffer.
+          rm_buffer.write_codeblock(encoded, 0);
 
           // Convert codeblock bits to LLRs.
           for (unsigned i_bit = 0; i_bit != cb_length; ++i_bit) {
-            codeblock[i_bit] = log_likelihood_ratio::copysign(10, 1 - 2 * encoded.extract(i_bit, 1));
+            codeblock[i_bit] = log_likelihood_ratio::copysign(10, 1 - 2 * encoded[i_bit]);
           }
         }
 

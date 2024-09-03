@@ -27,7 +27,7 @@
 
 namespace srsran {
 struct resource_grid_context;
-class resource_grid_reader;
+class shared_resource_grid;
 
 namespace ofh {
 
@@ -54,7 +54,7 @@ public:
 
   /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
   virtual void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
-                                              const resource_grid_reader&                   grid) = 0;
+                                              const shared_resource_grid&                   grid) = 0;
 };
 
 } // namespace ofh

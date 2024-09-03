@@ -1,0 +1,13 @@
+# Example configuration file for supported tracking areas.
+
+cu_cp:
+  supported_tracking_areas:
+    # List of all tracking areas supported by the CU-CP.
+    # Note that the first PLMN of this list is used for the Global RAN Node ID
+    - tac: 7
+      plmn: "00101"
+      tai_slice_support_list:
+        - sst: 1
+          sd: 1
+        - sst: 2
+          sd: 42

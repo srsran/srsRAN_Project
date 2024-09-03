@@ -37,9 +37,9 @@ public:
   virtual const radio_configuration::validator& get_configuration_validator() = 0;
 
   /// \brief Creates a new radio session with the given configuration parameters.
-  /// \param[in] config Provides the configuration parameters.
-  /// \param[in] task_executor Provides a task executor for executing asynchronous tasks.
-  /// \param[in] notifier Provides radio event notifier interface.
+  /// \param[in] config                Provides the configuration parameters.
+  /// \param[in] async_task_executor   Provides a task executor for executing asynchronous tasks.
+  /// \param[in] notifier              Provides radio event notifier interface.
   /// \return The ownership to a radio session if the session was successfully created.
   virtual std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                                 task_executor&                    async_task_executor,

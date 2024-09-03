@@ -113,13 +113,13 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
         for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
           // Prepare PRACH demodulator configuration.
           ofdm_prach_demodulator::configuration config;
+          config.slot             = prach_context.slot;
           config.format           = prach_context.format;
           config.nof_td_occasions = prach_context.nof_td_occasions;
           config.nof_fd_occasions = prach_context.nof_fd_occasions;
           config.start_symbol     = prach_context.start_symbol;
           config.rb_offset        = prach_context.rb_offset;
           config.nof_prb_ul_grid  = prach_context.nof_prb_ul_grid;
-          config.pusch_scs        = prach_context.pusch_scs;
           config.port             = i_port;
 
           // Make a view of the first samples in the buffer.

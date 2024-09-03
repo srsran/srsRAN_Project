@@ -194,6 +194,13 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
     TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
   }
 
+  // Create a bbdev accelerator factory.
+  static std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory = nullptr;
+  if (!bbdev_acc_factory) {
+    bbdev_acc_factory = srsran::dpdk::create_bbdev_acc_factory("srs");
+    TESTASSERT(bbdev_acc_factory, "Failed to create the bbdev accelerator factory.");
+  }
+
   // Intefacing to the bbdev-based hardware-accelerator.
   dpdk::bbdev_acc_configuration bbdev_config;
   bbdev_config.id                                    = 0;
@@ -201,7 +208,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   bbdev_config.nof_ldpc_dec_lcores                   = 1;
   bbdev_config.nof_fft_lcores                        = 0;
   bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
-  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
+  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, logger);
   TESTASSERT(bbdev_accelerator);
 
   // Interfacing to a shared external HARQ buffer context repository.
@@ -211,8 +218,8 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
       hal::create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, test_harq);
   TESTASSERT(harq_buffer_context);
 
-  // Set the hardware-accelerator configuration.
-  hal::hw_accelerator_pusch_dec_configuration hw_decoder_config;
+  // Set the PUSCH decoder hardware-accelerator factory configuration for the ACC100.
+  hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
   hw_decoder_config.acc_type            = "acc100";
   hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
   hw_decoder_config.ext_softbuffer      = ext_softbuffer;
@@ -220,7 +227,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   hw_decoder_config.dedicated_queue     = dedicated_queue;
 
   // ACC100 hardware-accelerator implementation.
-  return create_hw_accelerator_pusch_dec_factory(hw_decoder_config);
+  return srsran::hal::create_bbdev_pusch_dec_acc_factory(hw_decoder_config, "srs");
 #else  // HWACC_PUSCH_ENABLED
   return nullptr;
 #endif // HWACC_PUSCH_ENABLED
@@ -242,6 +249,7 @@ static std::shared_ptr<pusch_decoder_factory> create_acc100_pusch_decoder_factor
   decoder_hw_factory_config.segmenter_factory  = segmenter_rx_factory;
   decoder_hw_factory_config.crc_factory        = crc_calculator_factory;
   decoder_hw_factory_config.hw_decoder_factory = hw_decoder_factory;
+  decoder_hw_factory_config.executor           = nullptr;
   return create_pusch_decoder_factory_hw(decoder_hw_factory_config);
 }
 
@@ -337,7 +345,7 @@ int main(int argc, char** argv)
 
       // Reserve buffer.
       unique_rx_buffer buffer = pool->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks, true);
-      TESTASSERT(buffer.is_valid());
+      TESTASSERT(buffer);
 
       // Reset code blocks CRCs.
       buffer.get().reset_codeblocks_crc();

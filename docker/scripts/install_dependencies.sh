@@ -73,6 +73,17 @@ main() {
             dnf -y install cppzmq-devel libusb1-devel boost-devel numactl-devel # dpdk libelf libdwarf
         fi
 
+    elif [[ "$ID" == "fedora" ]]; then
+        if [[ "$mode" == "all" || "$mode" == "build" ]]; then
+            dnf -y install cmake fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel
+        fi
+        if [[ "$mode" == "all" || "$mode" == "run" ]]; then
+            dnf -y install fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel
+        fi
+        if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
+            dnf -y install cppzmq-devel libusb1-devel boost-devel numactl-devel # dpdk libelf libdwarf
+        fi
+
     else
         echo "OS $ID not supported"
         exit 1

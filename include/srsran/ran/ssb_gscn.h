@@ -39,10 +39,10 @@ namespace band_helper {
 /// \param[in] ssb_scs SSB subcarrier spacing.
 /// \param[in] bw Channel Bandwidth in MHz, which is required to validate some bands' GSCN values.
 /// \return If the GSCN is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string> is_gscn_valid_given_band(unsigned                 gscn,
-                                                 nr_band                  band,
-                                                 subcarrier_spacing       ssb_scs,
-                                                 bs_channel_bandwidth_fr1 bw = bs_channel_bandwidth_fr1::invalid);
+error_type<std::string> is_gscn_valid_given_band(unsigned             gscn,
+                                                 nr_band              band,
+                                                 subcarrier_spacing   ssb_scs,
+                                                 bs_channel_bandwidth bw = bs_channel_bandwidth::invalid);
 
 /// \brief Get an iterator to the GSCN values for bands with special GSCN rasters.
 ///

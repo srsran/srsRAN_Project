@@ -31,7 +31,19 @@ static std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_config&      
                                                    const downlink_processor_factory_sw_config& dl_fact_config)
 {
   // Create downlink processor factory.
-  std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_fact_config);
+  std::shared_ptr<downlink_processor_factory> dl_proc_factory = nullptr;
+  // Check if a hardware-accelerated PDSCH processor is requested.
+  if (!upper_config.hal_config.hwacc_pdsch_processor) {
+    dl_proc_factory = create_downlink_processor_factory_sw(dl_fact_config);
+  } else {
+    downlink_processor_factory_hw_config hw_cfg = {};
+    hw_cfg.crc_calculator_type                  = upper_config.crc_calculator_type;
+    hw_cfg.nof_concurrent_threads               = dl_fact_config.nof_concurrent_threads;
+#ifdef HWACC_PDSCH_ENABLED
+    hw_cfg.hwacc_pdsch_enc_cfg = upper_config.hal_config.hwacc_pdsch_enc_cfg;
+#endif // HWACC_PDSCH_ENABLED
+    dl_proc_factory = create_downlink_processor_factory_hw(hw_cfg);
+  }
   report_fatal_error_if_not(dl_proc_factory, "Invalid DL processor factory.");
 
   // Create channel precoder factory.

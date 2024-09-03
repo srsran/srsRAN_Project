@@ -28,6 +28,7 @@ namespace srsran {
 
 class prach_buffer_pool;
 class upper_phy_rx_symbol_request_notifier;
+class shared_resource_grid;
 
 /// \brief Implementation of the uplink request processor interface.
 ///
@@ -45,7 +46,7 @@ public:
   void process_prach_request(const prach_buffer_context& context) override;
 
   // See interface for documentation.
-  void process_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) override;
+  void process_uplink_slot_request(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
 private:
   /// Symbol request notifier.

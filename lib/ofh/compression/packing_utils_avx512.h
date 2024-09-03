@@ -23,7 +23,6 @@
 #pragma once
 
 #include "avx512_helpers.h"
-#include "srsran/ofh/compression/compressed_prb.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
@@ -32,13 +31,16 @@ namespace mm512 {
 
 /// \brief Packs 16bit IQ values of the PRB as 9 bit values in big-endian format.
 ///
-/// \param[out] c_prb Compressed PRB object storing packed bytes.
-/// \param[in] reg    AVX512 register storing 16bit IQ samples of the PRB.
-inline void avx512_pack_prb_9b_big_endian(compressed_prb& c_prb, __m512i reg)
+/// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
+/// \param[in] reg              AVX512 register storing 16bit IQ samples of the PRB.
+inline void avx512_pack_prb_9b_big_endian(span<uint8_t> comp_prb_buffer, __m512i reg)
 {
   static constexpr unsigned BYTES_PER_PRB_9BIT_COMPRESSION = 27;
   static constexpr unsigned bytes_per_lane                 = BYTES_PER_PRB_9BIT_COMPRESSION / 3;
   static constexpr unsigned lane_write_mask                = 0x01ff;
+
+  srsran_assert(comp_prb_buffer.size() == BYTES_PER_PRB_9BIT_COMPRESSION,
+                "Output buffer has incorrect size for packing compressed samples");
 
   // Input IQ samples need to be shifted in order to align bits before final packing.
   // 0:  i0 0  0  0  0  0  0  0   i8 i7 i6 i5 i4 i3 i2 i1   <- rotate right by 1 (shift left by 7, swap bytes later)
@@ -92,25 +94,28 @@ inline void avx512_pack_prb_9b_big_endian(compressed_prb& c_prb, __m512i reg)
   __m512i iq_packed_epi8 = _mm512_or_si512(tmp_iq_0_epi8, tmp_iq_1_epi8);
 
   // Store first 9 bytes of the first three 128bit lanes of the AVX512 register.
-  uint8_t* data = c_prb.get_byte_buffer().data();
+  uint8_t* data = comp_prb_buffer.data();
   _mm_mask_storeu_epi8(data, lane_write_mask, _mm512_extracti64x2_epi64(iq_packed_epi8, 0));
   _mm_mask_storeu_epi8(data + bytes_per_lane, lane_write_mask, _mm512_extracti64x2_epi64(iq_packed_epi8, 1));
   _mm_mask_storeu_epi8(data + bytes_per_lane * 2, lane_write_mask, _mm512_extracti64x2_epi64(iq_packed_epi8, 2));
-
-  c_prb.set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 
 /// \brief Packs 16bit IQ values of the PRB using big-endian format.
 ///
-/// \param[out] c_prb Compressed PRB object storing packed bytes.
-/// \param[in] reg    AVX512 register storing 16bit IQ samples of the PRB.
-inline void avx512_pack_prb_16b_big_endian(compressed_prb& c_prb, __m512i reg)
+/// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
+/// \param[in] reg              AVX512 register storing 16bit IQ samples of the PRB.
+inline void avx512_pack_prb_16b_big_endian(span<uint8_t> comp_prb_buffer, __m512i reg)
 {
-  static constexpr unsigned BYTES_PER_PRB_NO_COMPRESSION = 48;
-  static constexpr unsigned write_mask                   = 0xffffff;
+  /// Number of bytes used by 1 packed PRB with IQ samples compressed to 16 bits.
+  static constexpr unsigned BYTES_PER_PRB_16BIT_COMPRESSION = 48;
+
+  static constexpr unsigned write_mask = 0xffffff;
+
+  srsran_assert(comp_prb_buffer.size() == BYTES_PER_PRB_16BIT_COMPRESSION,
+                "Output buffer has incorrect size for packing compressed samples");
 
   // Input contains 24 16 bit Iand Q samples.
-  uint8_t* data = c_prb.get_byte_buffer().data();
+  uint8_t* data = comp_prb_buffer.data();
 
   // Swap bytes to convert from big-endian format and write them directly to the output memory.
   const __m512i shuffle_mask_epi8 = _mm512_setr_epi64(0x0607040502030001,
@@ -124,21 +129,20 @@ inline void avx512_pack_prb_16b_big_endian(compressed_prb& c_prb, __m512i reg)
 
   __m512i reg_swp_epi16 = _mm512_shuffle_epi8(reg, shuffle_mask_epi8);
   _mm512_mask_storeu_epi16(data, write_mask, reg_swp_epi16);
-  c_prb.set_stored_size(BYTES_PER_PRB_NO_COMPRESSION);
 }
 
 /// \brief Packs 16bit IQ values of a resource block using the specified width and big-endian format.
 ///
-/// \param[out] c_prb   Output PRB storing compressed packed bytes.
-/// \param[in]  reg     AVX512 register storing 16bit IQ pairs of the PRB.
-/// \param[in] iq_width Bit width of the resulting packed IQ samples.
-inline void pack_prb_big_endian(ofh::compressed_prb& c_prb, __m512i reg, unsigned iq_width)
+/// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
+/// \param[in]  reg             AVX512 register storing 16bit IQ pairs of the PRB.
+/// \param[in] iq_width         Bit width of the resulting packed IQ samples.
+inline void pack_prb_big_endian(span<uint8_t> comp_prb_buffer, __m512i reg, unsigned iq_width)
 {
   if (iq_width == 9) {
-    return avx512_pack_prb_9b_big_endian(c_prb, reg);
+    return avx512_pack_prb_9b_big_endian(comp_prb_buffer, reg);
   }
   if (iq_width == 16) {
-    return avx512_pack_prb_16b_big_endian(c_prb, reg);
+    return avx512_pack_prb_16b_big_endian(comp_prb_buffer, reg);
   }
   report_fatal_error("Unsupported bit width");
 }
@@ -153,7 +157,8 @@ inline void pack_prb_big_endian(ofh::compressed_prb& c_prb, __m512i reg, unsigne
 inline void avx512_unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
 {
   // Load input, 27 bytes (fits in one AVX512 register).
-  __m512i packed_data_epi8 = _mm512_mask_loadu_epi8(_mm512_set1_epi64(0), 0x1fffffff, packed_data.data());
+  static constexpr __mmask64 mask             = (1UL << 27) - 1UL;
+  __m512i                    packed_data_epi8 = _mm512_maskz_loadu_epi8(mask, packed_data.data());
 
   // Duplicate input words (it is required since below in the code every byte will be used twice:
   // to provide MSB bits of the current IQ sample and LSB bits of the previous IQ sample).

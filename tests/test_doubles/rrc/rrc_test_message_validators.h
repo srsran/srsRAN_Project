@@ -24,6 +24,9 @@
 
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
+#include "srsran/ran/lcid.h"
+#include <optional>
 
 namespace srsran {
 namespace test_helpers {
@@ -45,8 +48,16 @@ bool is_valid_rrc_ue_capability_enquiry(const asn1::rrc_nr::dl_dcch_msg_s& msg);
 bool is_valid_rrc_ue_capability_enquiry(const byte_buffer& dl_dcch_msg);
 
 /// \brief Check if DL-DCCH message is a valid RRC Reconfiguration message.
-bool is_valid_rrc_reconfiguration(const asn1::rrc_nr::dl_dcch_msg_s& msg);
-bool is_valid_rrc_reconfiguration(const byte_buffer& dl_dcch_msg);
+bool is_valid_rrc_reconfiguration(const asn1::rrc_nr::dl_dcch_msg_s&          msg,
+                                  bool                                        contains_nas_pdu,
+                                  const std::optional<std::vector<srb_id_t>>& expected_srbs_to_add_mod,
+                                  const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod,
+                                  const std::optional<std::vector<drb_id_t>>& expected_drbs_to_release);
+bool is_valid_rrc_reconfiguration(const byte_buffer&                          dl_dcch_msg,
+                                  bool                                        contains_nas_pdu         = true,
+                                  const std::optional<std::vector<srb_id_t>>& expected_srbs_to_add_mod = std::nullopt,
+                                  const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod = std::nullopt,
+                                  const std::optional<std::vector<drb_id_t>>& expected_drbs_to_release = std::nullopt);
 
 } // namespace test_helpers
 } // namespace srsran

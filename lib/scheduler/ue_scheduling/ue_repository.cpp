@@ -31,22 +31,21 @@ ue_repository::ue_repository() : logger(srslog::fetch_basic_logger("SCHED"))
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
 
-/// \brief This function checks whether it is safe to remove a UE. Currently we verify that:
-/// - The UE has no pending DL SRB data. This ensures that messages like RRC Release are sent before the UE removal.
-/// - The UE has no DL or UL HARQ awaiting an ACK.
+/// \brief This function checks whether it is safe to remove a UE. Currently we verify that the UE has no DL or UL
+/// HARQ awaiting an ACK.
 static bool is_ue_ready_for_removal(ue& u)
 {
   // Ensure that there no currently active HARQs.
   unsigned nof_ue_cells = u.nof_cells();
   for (unsigned cell_idx = 0; cell_idx != nof_ue_cells; ++cell_idx) {
-    ue_cell& c = u.get_cell((ue_cell_index_t)cell_idx);
+    const ue_cell& c = u.get_cell((ue_cell_index_t)cell_idx);
     for (unsigned i = 0; i != c.harqs.nof_dl_harqs(); ++i) {
-      if (not c.harqs.dl_harq(i).empty()) {
+      if (c.harqs.dl_harq(to_harq_id(i)).has_value()) {
         return false;
       }
     }
     for (unsigned i = 0; i != c.harqs.nof_ul_harqs(); ++i) {
-      if (not c.harqs.ul_harq(i).empty()) {
+      if (c.harqs.ul_harq(to_harq_id(i)).has_value()) {
         return false;
       }
     }

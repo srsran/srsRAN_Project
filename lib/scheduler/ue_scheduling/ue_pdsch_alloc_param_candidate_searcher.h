@@ -161,16 +161,16 @@ public:
   };
 
   /// Create a searcher for UE PDSCH parameters.
-  ue_pdsch_alloc_param_candidate_searcher(const ue&              ue_ref_,
-                                          du_cell_index_t        cell_index,
-                                          dl_harq_process&       dl_harq_,
-                                          slot_point             pdcch_slot_,
-                                          span<const slot_point> slots_with_no_pdsch_space_) :
+  ue_pdsch_alloc_param_candidate_searcher(const ue&                                    ue_ref_,
+                                          du_cell_index_t                              cell_index,
+                                          const std::optional<dl_harq_process_handle>& dl_harq_,
+                                          slot_point                                   pdcch_slot_,
+                                          span<const slot_point>                       slots_with_no_pdsch_space_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
     slots_with_no_pdsch_space(slots_with_no_pdsch_space_),
     dl_harq(dl_harq_),
-    is_retx(not dl_harq.empty()),
+    is_retx(dl_harq.has_value()),
     pdcch_slot(pdcch_slot_)
   {
     // Cell is not part of UE configured cells.
@@ -178,8 +178,8 @@ public:
       return;
     }
 
-    if (not dl_harq.empty()) {
-      preferred_rnti_type = dl_harq.last_alloc_params().dci_cfg_type;
+    if (dl_harq.has_value()) {
+      preferred_rnti_type = dl_harq->get_grant_params().dci_cfg_type;
     }
 
     // Generate list of Search Spaces.
@@ -235,7 +235,7 @@ private:
     }
 
     // Check whether PDSCH Time Domain resource index is valid.
-    if (current.time_res >= (*current.ss_it)->pusch_time_domain_list.size()) {
+    if (current.time_res >= (*current.ss_it)->pdsch_time_domain_list.size()) {
       return false;
     }
 
@@ -265,7 +265,7 @@ private:
 
     // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
     // the first transmission.
-    if (is_retx and current.pdsch_td_res().symbols.length() != dl_harq.last_alloc_params().nof_symbols) {
+    if (is_retx and current.pdsch_td_res().symbols.length() != dl_harq->get_grant_params().nof_symbols) {
       return false;
     }
 
@@ -303,7 +303,7 @@ private:
   span<const slot_point> slots_with_no_pdsch_space;
 
   // DL HARQ considered for allocation.
-  const dl_harq_process& dl_harq;
+  const std::optional<dl_harq_process_handle>& dl_harq;
   // Whether the current search is for a newTx or a reTx.
   const bool is_retx;
   // List of Search Space candidates for the DL HARQ considered for allocation.

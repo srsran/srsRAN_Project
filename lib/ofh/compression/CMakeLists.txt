@@ -19,8 +19,7 @@
 #
 
 set(SOURCES
-        compressed_prb_packer.cpp
-        compressed_prb_unpacker.cpp
+        packing_utils_generic.cpp
         compression_factory.cpp
         iq_compression_none_impl.cpp
         iq_compression_bfp_impl.cpp

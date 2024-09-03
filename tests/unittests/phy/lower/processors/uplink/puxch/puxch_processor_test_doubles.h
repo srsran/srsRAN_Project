@@ -29,6 +29,7 @@
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_notifier.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_request_handler.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/srslog/srslog.h"
 #include <vector>
 
@@ -64,15 +65,15 @@ class puxch_processor_request_handler_spy : public puxch_processor_request_handl
 {
 public:
   struct entry_t {
-    resource_grid*        grid;
+    const resource_grid*  grid;
     resource_grid_context context;
   };
 
-  void handle_request(resource_grid& grid, const resource_grid_context& context) override
+  void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
-    entry.grid     = &grid;
+    entry.grid     = &grid.get();
     entry.context  = context;
   }
 

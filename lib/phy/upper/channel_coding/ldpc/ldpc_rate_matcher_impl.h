@@ -26,6 +26,7 @@
 #pragma once
 
 #include "ldpc_graph_impl.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 
 namespace srsran {
@@ -35,7 +36,7 @@ class ldpc_rate_matcher_impl : public ldpc_rate_matcher
 {
 public:
   // See interface for the documentation.
-  void rate_match(bit_buffer& output, const bit_buffer& input, const codeblock_metadata& cfg) override;
+  void rate_match(bit_buffer& output, const ldpc_encoder_buffer& input, const codeblock_metadata& cfg) override;
 
 private:
   /// Initializes the rate matcher internal state.
@@ -44,8 +45,8 @@ private:
   /// \brief Carries out bit selection, as per TS38.212 Section 5.4.2.1.
   ///
   /// \param[out] out Sequence of selected bits.
-  /// \param[in]  in  Input encoded code block.
-  void select_bits(span<uint8_t> out, const bit_buffer& in) const;
+  /// \param[in]  in  Input encoded codeblock.
+  void select_bits(span<uint8_t> out, const ldpc_encoder_buffer& in) const;
 
   /// \brief Carries out bit interleaving, as per TS38.212 Section 5.4.2.2.
   ///

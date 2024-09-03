@@ -30,6 +30,8 @@
 
 namespace srsran {
 
+class shared_resource_grid;
+
 /// Adapts the lower physical layer handlers to the internal processors request handlers.
 class processor_handler_adaptor
 {
@@ -57,7 +59,7 @@ private:
     rg_handler_adaptor(pdxch_processor_request_handler& pdxch_handler_) : pdxch_handler(pdxch_handler_) {}
 
     // See interface for documentation.
-    void handle_resource_grid(const resource_grid_context& context, const resource_grid_reader& grid) override;
+    void handle_resource_grid(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
   private:
     /// Actual PDxCH processor request handler.
@@ -79,7 +81,7 @@ private:
     void request_prach_window(const prach_buffer_context& context, prach_buffer& buffer) override;
 
     // See interface for documentation.
-    void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
+    void request_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
   private:
     /// Actual PRACH processor request handler.

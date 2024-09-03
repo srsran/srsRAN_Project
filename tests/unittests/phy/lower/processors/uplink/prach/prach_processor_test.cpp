@@ -518,10 +518,10 @@ TEST_P(PrachProcessorFixture, SingleBasebandSymbols)
   const auto demodulate_entry = ofdm_prach_factory_spy->get_total_demodulate_entries().back();
   ASSERT_EQ(demodulate_entry.buffer, &buffer);
   ASSERT_EQ(demodulate_entry.input.size(), prach_window_length);
+  ASSERT_EQ(demodulate_entry.config.slot, context.slot);
   ASSERT_EQ(demodulate_entry.config.format, context.format);
   ASSERT_EQ(demodulate_entry.config.rb_offset, context.rb_offset);
   ASSERT_EQ(demodulate_entry.config.nof_prb_ul_grid, context.nof_prb_ul_grid);
-  ASSERT_EQ(demodulate_entry.config.pusch_scs, context.pusch_scs);
   ASSERT_EQ(span<const cf_t>(demodulate_entry.input),
             samples.get_reader().get_channel_buffer(context.ports.front()).first(prach_window_length));
 
@@ -657,10 +657,10 @@ TEST_P(PrachProcessorFixture, ThreeBasebandSymbols)
   const auto demodulate_entry = ofdm_prach_factory_spy->get_total_demodulate_entries().back();
   ASSERT_EQ(demodulate_entry.buffer, &buffer);
   ASSERT_EQ(demodulate_entry.input.size(), prach_window_length);
+  ASSERT_EQ(demodulate_entry.config.slot, context.slot);
   ASSERT_EQ(demodulate_entry.config.format, context.format);
   ASSERT_EQ(demodulate_entry.config.rb_offset, context.rb_offset);
   ASSERT_EQ(demodulate_entry.config.nof_prb_ul_grid, context.nof_prb_ul_grid);
-  ASSERT_EQ(demodulate_entry.config.pusch_scs, context.pusch_scs);
   ASSERT_EQ(span<const cf_t>(demodulate_entry.input),
             samples.get_reader().get_channel_buffer(context.ports.front()).first(prach_window_length));
 

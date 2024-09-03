@@ -36,7 +36,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     const byte_buffer&                       du_to_cu_container_,
     rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier_,
     rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier_,
-    rrc_ue_srb_handler&                      srb_notifier_,
+    rrc_ue_control_message_handler&          srb_notifier_,
     rrc_ue_context_update_notifier&          cu_cp_notifier_,
     rrc_ue_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
     rrc_ue_nas_notifier&                     nas_notifier_,
@@ -237,8 +237,8 @@ bool rrc_reestablishment_procedure::verify_security_context()
 void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_keys()
 {
   // store capabilities if available
-  if (old_ue_reest_context.capabilities.has_value()) {
-    context.capabilities = old_ue_reest_context.capabilities.value();
+  if (old_ue_reest_context.capabilities_list.has_value()) {
+    context.capabilities_list = old_ue_reest_context.capabilities_list.value();
   }
 
   // Transfer UP context from old UE
@@ -249,7 +249,7 @@ void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_
   uint32_t ssb_arfcn = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
   cu_cp_ue_notifier.update_security_context(old_ue_reest_context.sec_context);
   cu_cp_ue_notifier.perform_horizontal_key_derivation(context.cell.pci, ssb_arfcn);
-  logger.log_debug("Refreshed keys horizontally. pci={} ssb-arfcn={}", context.cell.pci, ssb_arfcn);
+  logger.log_debug("Refreshed keys horizontally. pci={} ssb-arfcn_f_ref={}", context.cell.pci, ssb_arfcn);
 }
 
 void rrc_reestablishment_procedure::create_srb1()

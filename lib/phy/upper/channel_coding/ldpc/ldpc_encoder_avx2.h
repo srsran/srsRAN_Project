@@ -38,8 +38,7 @@ private:
   void load_input(const bit_buffer& in) override;
   void preprocess_systematic_bits() override { (this->*systematic_bits)(); }
   void encode_high_rate() override { (this->*high_rate)(); }
-  void encode_ext_region() override { (this->*ext_region)(); }
-  void write_codeblock(bit_buffer& out) override;
+  void write_codeblock(span<uint8_t> out, unsigned offset) const override;
 
   /// Alias for pointer to private methods.
   using strategy_method = void (ldpc_encoder_avx2::*)();
@@ -48,8 +47,6 @@ private:
   strategy_method systematic_bits;
   /// Placeholder for strategy implementation of encode_high_rate.
   strategy_method high_rate;
-  /// Placeholder for strategy implementation of encode_ext_region.
-  strategy_method ext_region;
 
   /// Helper method to set the high-rate encoding strategy.
   template <unsigned NODE_SIZE_AVX2_PH>
@@ -59,9 +56,6 @@ private:
   /// Helper method to set the strategy for the systematic bits.
   template <unsigned NODE_SIZE_AVX2_PH>
   static strategy_method select_sys_bits_strategy(ldpc_base_graph_type current_bg, unsigned node_size_avx2);
-  /// Helper method to set the extended-region encoding strategy.
-  template <unsigned NODE_SIZE_AVX2_PH>
-  static strategy_method select_ext_strategy(unsigned node_size_avx2);
 
   /// \brief Long lifting size version of preprocess_systematic_bits - short lifting size.
   /// \tparam BG_K_PH            Placeholder for the number of information nodes (i.e., K) for the current base graph.
@@ -87,10 +81,8 @@ private:
   /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
   template <unsigned NODE_SIZE_AVX2_PH>
   void high_rate_bg2_other_inner();
-  /// \brief Carries out the extended region encoding when the lifting size is long.
-  /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
-  template <unsigned NODE_SIZE_AVX2_PH>
-  void ext_region_inner();
+  /// Carries out the extended region encoding when the lifting size is large.
+  void ext_region_inner(span<uint8_t> output_node, unsigned i_layer) const;
 
   /// Buffer containing the codeblock.
   std::array<uint8_t, ldpc::MAX_BG_N_FULL * ldpc::MAX_LIFTING_SIZE> codeblock_buffer;

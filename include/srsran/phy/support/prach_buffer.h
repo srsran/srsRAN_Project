@@ -62,7 +62,8 @@ public:
   /// \param[in] i_fd_occasion Frequency-domain occasion.
   /// \param[in] i_symbol      Symbol index within the occasion.
   /// \return A read-write view of a PRACH OFDM symbol.
-  virtual span<cf_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) = 0;
+  virtual span<cbf16_t>
+  get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) = 0;
 
   /// \brief Gets a read-only PRACH symbol for a given port, occasion and symbol.
   ///
@@ -71,7 +72,7 @@ public:
   /// \param[in] i_fd_occasion Frequency-domain occasion.
   /// \param[in] i_symbol      Symbol index within the occasion.
   /// \return A read-only view of a PRACH OFDM symbol.
-  virtual span<const cf_t>
+  virtual span<const cbf16_t>
   get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const = 0;
 };
 

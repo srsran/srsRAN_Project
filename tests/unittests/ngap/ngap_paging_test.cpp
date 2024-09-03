@@ -32,28 +32,28 @@ protected:
   bool was_minimal_conversion_successful() const
   {
     // check ue paging id
-    if (cu_cp_paging_notifier.last_msg.ue_paging_id.get_amf_set_id() != 1) {
+    if (cu_cp_notifier.last_paging_msg.ue_paging_id.get_amf_set_id() != 1) {
       test_logger.error(
-          "AMF Set ID mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.get_amf_set_id(), 1);
+          "AMF Set ID mismatch {} != {}", cu_cp_notifier.last_paging_msg.ue_paging_id.get_amf_set_id(), 1);
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.ue_paging_id.get_amf_pointer() != 0) {
+    if (cu_cp_notifier.last_paging_msg.ue_paging_id.get_amf_pointer() != 0) {
       test_logger.error(
-          "AMF Pointer mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.get_amf_pointer(), 0);
+          "AMF Pointer mismatch {} != {}", cu_cp_notifier.last_paging_msg.ue_paging_id.get_amf_pointer(), 0);
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.ue_paging_id.get_five_g_tmsi() != 4211117727) {
+    if (cu_cp_notifier.last_paging_msg.ue_paging_id.get_five_g_tmsi() != 4211117727) {
       test_logger.error(
-          "FiveG TMSI mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.get_five_g_tmsi(), 4211117727);
+          "FiveG TMSI mismatch {} != {}", cu_cp_notifier.last_paging_msg.ue_paging_id.get_five_g_tmsi(), 4211117727);
       return false;
     }
 
     // check tai list for paging
-    if (cu_cp_paging_notifier.last_msg.tai_list_for_paging.size() != 1) {
+    if (cu_cp_notifier.last_paging_msg.tai_list_for_paging.size() != 1) {
       return false;
     }
 
-    auto& paging_item = cu_cp_paging_notifier.last_msg.tai_list_for_paging.front();
+    auto& paging_item = cu_cp_notifier.last_paging_msg.tai_list_for_paging.front();
     if (paging_item.tai.plmn_id != plmn_identity::test_value()) {
       test_logger.error("PLMN mismatch {} != 00f110", paging_item.tai.plmn_id);
       return false;
@@ -73,58 +73,58 @@ protected:
     }
 
     // check paging drx
-    if (!cu_cp_paging_notifier.last_msg.paging_drx.has_value()) {
+    if (!cu_cp_notifier.last_paging_msg.paging_drx.has_value()) {
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.paging_drx.value() != 64) {
-      test_logger.error("Paging DRX mismatch {} != {}", cu_cp_paging_notifier.last_msg.paging_drx, 64);
+    if (cu_cp_notifier.last_paging_msg.paging_drx.value() != 64) {
+      test_logger.error("Paging DRX mismatch {} != {}", cu_cp_notifier.last_paging_msg.paging_drx, 64);
       return false;
     }
 
     // check paging prio
-    if (!cu_cp_paging_notifier.last_msg.paging_prio.has_value()) {
+    if (!cu_cp_notifier.last_paging_msg.paging_prio.has_value()) {
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.paging_prio.value() != 5) {
-      test_logger.error("Paging prio mismatch {} != {}", cu_cp_paging_notifier.last_msg.paging_prio.value(), 5);
+    if (cu_cp_notifier.last_paging_msg.paging_prio.value() != 5) {
+      test_logger.error("Paging prio mismatch {} != {}", cu_cp_notifier.last_paging_msg.paging_prio.value(), 5);
       return false;
     }
 
     // check ue radio cap for paging
-    if (!cu_cp_paging_notifier.last_msg.ue_radio_cap_for_paging.has_value()) {
+    if (!cu_cp_notifier.last_paging_msg.ue_radio_cap_for_paging.has_value()) {
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.ue_radio_cap_for_paging.value().ue_radio_cap_for_paging_of_nr !=
+    if (cu_cp_notifier.last_paging_msg.ue_radio_cap_for_paging.value().ue_radio_cap_for_paging_of_nr !=
         make_byte_buffer("deadbeef").value()) {
       test_logger.error("UE radio cap for paging mismatch {} != {}",
-                        cu_cp_paging_notifier.last_msg.ue_radio_cap_for_paging.value().ue_radio_cap_for_paging_of_nr,
+                        cu_cp_notifier.last_paging_msg.ue_radio_cap_for_paging.value().ue_radio_cap_for_paging_of_nr,
                         make_byte_buffer("deadbeef").value());
       return false;
     }
 
     // check paging origin
-    if (!cu_cp_paging_notifier.last_msg.paging_origin.has_value()) {
+    if (!cu_cp_notifier.last_paging_msg.paging_origin.has_value()) {
       return false;
     }
-    if (!cu_cp_paging_notifier.last_msg.paging_origin.value()) {
+    if (!cu_cp_notifier.last_paging_msg.paging_origin.value()) {
       test_logger.error("Paging origin mismatch");
       return false;
     }
 
     // check assist data for paging
-    if (!cu_cp_paging_notifier.last_msg.assist_data_for_paging.has_value()) {
+    if (!cu_cp_notifier.last_paging_msg.assist_data_for_paging.has_value()) {
       return false;
     }
 
-    if (!cu_cp_paging_notifier.last_msg.assist_data_for_paging.value().assist_data_for_recommended_cells.has_value()) {
+    if (!cu_cp_notifier.last_paging_msg.assist_data_for_paging.value().assist_data_for_recommended_cells.has_value()) {
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+    if (cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
             .assist_data_for_recommended_cells.value()
             .recommended_cells_for_paging.recommended_cell_list.size() != 1) {
       return false;
     }
-    auto& cell_item = cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+    auto& cell_item = cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
                           .assist_data_for_recommended_cells.value()
                           .recommended_cells_for_paging.recommended_cell_list.front();
     if (cell_item.ngran_cgi.plmn_id != plmn_identity::test_value()) {
@@ -141,39 +141,39 @@ protected:
       return false;
     }
 
-    if (!cu_cp_paging_notifier.last_msg.assist_data_for_paging.value().paging_attempt_info.has_value()) {
+    if (!cu_cp_notifier.last_paging_msg.assist_data_for_paging.value().paging_attempt_info.has_value()) {
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+    if (cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
             .paging_attempt_info.value()
             .paging_attempt_count != 3) {
       test_logger.error("Paging attempt count mismatch {} != {}",
-                        cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+                        cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
                             .paging_attempt_info.value()
                             .paging_attempt_count,
                         3);
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+    if (cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
             .paging_attempt_info.value()
             .intended_nof_paging_attempts != 4) {
       test_logger.error("Intended nof paging attempts mismatch {} != {}",
-                        cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+                        cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
                             .paging_attempt_info.value()
                             .intended_nof_paging_attempts,
                         4);
       return false;
     }
-    if (!cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+    if (!cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
              .paging_attempt_info.value()
              .next_paging_area_scope.has_value()) {
       return false;
     }
-    if (cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+    if (cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
             .paging_attempt_info.value()
             .next_paging_area_scope.value() != "changed") {
       test_logger.error("Next paging area mismatch {} != changed",
-                        cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
+                        cu_cp_notifier.last_paging_msg.assist_data_for_paging.value()
                             .paging_attempt_info.value()
                             .next_paging_area_scope.value());
       return false;

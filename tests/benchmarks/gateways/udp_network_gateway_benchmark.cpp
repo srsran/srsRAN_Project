@@ -145,6 +145,8 @@ int main(int argc, char** argv)
   fmt::print("Tx done\n\n");
 
   std::this_thread::sleep_for(std::chrono::milliseconds(750));
+  gw1.reset();
+  gw2.reset();
 
   uint64_t tx_duration_us = duration.count();
   uint64_t rx_duration_us = gw2_dn.get_t_rx().count();

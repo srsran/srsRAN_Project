@@ -148,7 +148,7 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   auto& ue = test_ues.at(ue_index);
 
   ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
-      ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
+      ue.amf_ue_id.value(), ue.ran_ue_id.value(), {{pdu_session_id, {{uint_to_qos_flow_id(1), 9}}}});
   ngap->handle_message(pdu_session_resource_setup_request);
 
   // Check conversion in adapter
@@ -188,7 +188,7 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test, when_security_not_enabled
       pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
 
   ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
-      ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
+      ue.amf_ue_id.value(), ue.ran_ue_id.value(), {{pdu_session_id, {{uint_to_qos_flow_id(1), 9}}}});
   ngap->handle_message(pdu_session_resource_setup_request);
 
   // Check that Error Indication has been sent to AMF

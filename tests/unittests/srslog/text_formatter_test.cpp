@@ -134,8 +134,9 @@ DECLARE_METRIC_SET("ue_container", ue_set, thr_t, ip_addr_t, antenna_list_t);
 
 DECLARE_METRIC("type", entry_type_t, std::string, "");
 DECLARE_METRIC("sector_id", sector_id_t, unsigned, "");
+DECLARE_METRIC("Value_Array", valarray_t, std::vector<unsigned>, "");
 DECLARE_METRIC_LIST("ue_list", ue_list_t, std::vector<ue_set>);
-DECLARE_METRIC_SET("sector_metrics", sector_set, entry_type_t, sector_id_t, ue_list_t);
+DECLARE_METRIC_SET("sector_metrics", sector_set, entry_type_t, sector_id_t, valarray_t, ue_list_t);
 
 DECLARE_METRIC_LIST("sector_list", sector_list_t, std::vector<sector_set>);
 
@@ -151,6 +152,7 @@ static complex_ctx_t build_complex_context()
   ctx.get<sector_list_t>().emplace_back();
   ctx.at<sector_list_t>(0).write<entry_type_t>("event");
   ctx.at<sector_list_t>(0).write<sector_id_t>(1);
+  ctx.at<sector_list_t>(0).write<valarray_t>(std::vector<unsigned>{1, 2, 3, 4});
 
   ctx.at<sector_list_t>(0).get<ue_list_t>().emplace_back();
   ctx.at<sector_list_t>(0).at<ue_list_t>(0).write<thr_t>(1.2);
@@ -193,6 +195,7 @@ static bool when_log_entry_with_only_context_is_passed_then_context_is_formatted
                          "    > Set: sector_metrics\n"
                          "      type: event\n"
                          "      sector_id: 1\n"
+                         "      Value_Array: [1, 2, 3, 4]\n"
                          "      > List: ue_list\n"
                          "        > Set: ue_container\n"
                          "          Throughput: 1.2 MB/s\n"
@@ -228,13 +231,14 @@ static bool when_log_entry_with_context_and_message_is_passed_then_context_is_fo
 
   fmt::memory_buffer buffer;
   text_formatter{}.format_ctx(ctx, std::move(entry), buffer);
-  std::string result   = fmt::to_string(buffer);
-  std::string expected = "1970-01-01T00:00:00.050000 [ABC     ] [Z] [   99.99] [[sector_metrics_type: event, "
-                         "sector_metrics_sector_id: 1, [ue_container_Throughput: 1.2 MB/s, "
-                         "ue_container_Address: 10.20.30.40, [RF_SNR: 5.1 dB, RF_PWR: -11 "
-                         "dBm][RF_SNR: 10.1 dB, RF_PWR: -20 dBm]][ue_container_Throughput: 10.2 "
-                         "MB/s, ue_container_Address: 10.20.30.41, [RF_SNR: 20.1 dB, RF_PWR: -30 "
-                         "dBm][RF_SNR: 30.1 dB, RF_PWR: -40 dBm]]]]: Text 88\n";
+  std::string result = fmt::to_string(buffer);
+  std::string expected =
+      "1970-01-01T00:00:00.050000 [ABC     ] [Z] [   99.99] [[sector_metrics_type: event, "
+      "sector_metrics_sector_id: 1, sector_metrics_Value_Array: [1, 2, 3, 4], [ue_container_Throughput: 1.2 MB/s, "
+      "ue_container_Address: 10.20.30.40, [RF_SNR: 5.1 dB, RF_PWR: -11 "
+      "dBm][RF_SNR: 10.1 dB, RF_PWR: -20 dBm]][ue_container_Throughput: 10.2 "
+      "MB/s, ue_container_Address: 10.20.30.41, [RF_SNR: 20.1 dB, RF_PWR: -30 "
+      "dBm][RF_SNR: 30.1 dB, RF_PWR: -40 dBm]]]]: Text 88\n";
 
   ASSERT_EQ(result, expected);
 

@@ -12,7 +12,8 @@ qos:
       um-bidir:
         tx:
           sn: 12
-          queue-size: 4096
+          queue-size: 16384
+          queue-bytes: 6172672
         rx:
           sn: 12
           t-reassembly: 50
@@ -42,7 +43,8 @@ qos:
       um-bidir:
         tx:
           sn: 12
-          queue-size: 4096
+          queue-size: 16384
+          queue-bytes: 6172672
         rx:
           sn: 12
           t-reassembly: 50
@@ -76,7 +78,8 @@ qos:
           max-retx-threshold: 4
           poll-pdu: 64
           poll-byte: 125
-          queue-size: 4096
+          queue-size: 16384
+          queue-bytes: 6172672
         rx:
           sn: 12
           t-reassembly: 80
@@ -107,7 +110,8 @@ qos:
       um-bidir:
         tx:
           sn: 12
-          queue-size: 4096
+          queue-size: 16384
+          queue-bytes: 6172672
         rx:
           sn: 12
           t-reassembly: 50
@@ -141,7 +145,8 @@ qos:
           max-retx-threshold: 4
           poll-pdu: 64
           poll-byte: 125
-          queue-size: 4096
+          queue-size: 16384
+          queue-bytes: 6172672
         rx:
           sn: 12
           t-reassembly: 80

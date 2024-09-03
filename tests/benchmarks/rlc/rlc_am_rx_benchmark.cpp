@@ -47,7 +47,7 @@ public:
   rlc_tx_am_test_frame(rlc_am_sn_size sn_size_) : sn_size(sn_size_), status(sn_size_) {}
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) override {}
+  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t queue_free_bytes) override {}
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override {}
   void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override {}
   void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override {}
@@ -136,14 +136,15 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
 {
   // Set Tx config
   rlc_tx_am_config config;
-  config.sn_field_length = rlc_am_sn_size::size18bits;
-  config.pdcp_sn_len     = pdcp_sn_size::size18bits;
-  config.t_poll_retx     = 45;
-  config.max_retx_thresh = 4;
-  config.poll_pdu        = 4;
-  config.poll_byte       = 25;
-  config.queue_size      = 4096;
-  config.max_window      = 0;
+  config.sn_field_length  = rlc_am_sn_size::size18bits;
+  config.pdcp_sn_len      = pdcp_sn_size::size18bits;
+  config.t_poll_retx      = 45;
+  config.max_retx_thresh  = 4;
+  config.poll_pdu         = 4;
+  config.poll_byte        = 25;
+  config.queue_size       = 4096;
+  config.queue_size_bytes = 4096 * 1507;
+  config.max_window       = 0;
 
   // Create test frame
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);

@@ -85,7 +85,7 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_long_prach_buffer_triggers_n
   context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
   context.start_symbol     = 0;
 
-  static_vector<cf_t, 839> samples(839);
+  static_vector<cbf16_t, 839> samples(839);
   repo->add(context, buffer, std::nullopt, std::nullopt);
   ASSERT_FALSE(repo->get(slot).empty());
 
@@ -119,7 +119,7 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_short_prach_buffer_triggers_
   context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
   context.start_symbol     = 0;
 
-  static_vector<cf_t, 139> samples(139);
+  static_vector<cbf16_t, 139> samples(139);
   repo->add(context, buffer, std::nullopt, std::nullopt);
   ASSERT_FALSE(repo->get(slot).empty());
 

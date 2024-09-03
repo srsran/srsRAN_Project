@@ -30,7 +30,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
                                const sched_cell_configuration_request_message& msg,
                                const cell_configuration&                       cell_cfg_,
                                ue_scheduler&                                   ue_sched_,
-                               scheduler_metrics_handler&                      metrics_handler) :
+                               cell_metrics_handler&                           metrics_handler) :
   cell_cfg(cell_cfg_),
   ue_sched(ue_sched_),
   res_grid(cell_cfg),

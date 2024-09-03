@@ -23,29 +23,25 @@
 #include "cu_cp_controller.h"
 #include "../cu_up_processor/cu_up_processor_repository.h"
 #include "../du_processor/du_processor_repository.h"
-#include "../routine_managers/cu_cp_routine_manager.h"
 #include <thread>
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
 cu_cp_controller::cu_cp_controller(const cu_cp_configuration&  config_,
-                                   cu_cp_routine_manager&      routine_manager_,
-                                   ue_manager&                 ue_mng_,
+                                   common_task_scheduler&      common_task_sched_,
                                    ngap_connection_manager&    ngap_conn_mng_,
                                    cu_up_processor_repository& cu_ups_,
                                    du_processor_repository&    dus_,
                                    task_executor&              ctrl_exec_) :
   cfg(config_),
-  ue_mng(ue_mng_),
-  routine_mng(routine_manager_),
+  common_task_sched(common_task_sched_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("CU-CP")),
-  amf_mng(routine_manager_, cfg, ngap_conn_mng_),
-  du_mng(cfg.admission.max_nof_dus, dus_, ctrl_exec, routine_manager_),
-  cu_up_mng(cfg.admission.max_nof_cu_ups, cu_ups_, ctrl_exec, routine_manager_)
+  amf_mng(common_task_sched_, cfg, ngap_conn_mng_),
+  du_mng(cfg.admission.max_nof_dus, dus_, ctrl_exec, common_task_sched_),
+  cu_up_mng(cfg.admission.max_nof_cu_ups, cu_ups_, ctrl_exec, common_task_sched_)
 {
-  (void)ue_mng;
 }
 
 void cu_cp_controller::stop()
@@ -77,7 +73,7 @@ void cu_cp_controller::stop()
 
 void cu_cp_controller::stop_impl()
 {
-  routine_mng.schedule_async_task(launch_async([this](coro_context<async_task<void>>& ctx) {
+  common_task_sched.schedule_async_task(launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
     // Stop AMF connection.

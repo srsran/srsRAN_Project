@@ -161,20 +161,19 @@ void du_high_cu_test_simulator::start_dus()
 
     // Instantiate DU-high.
     srs_du::du_high_configuration& du_hi_cfg = du_ctxt.du_high_cfg;
-    du_hi_cfg.gnb_du_name                    = fmt::format("srsgnb{}", du_idx + 1);
-    du_hi_cfg.gnb_du_id                      = (gnb_du_id_t)(du_idx + 1);
-    du_hi_cfg.du_bind_addr = transport_layer_address::create_from_string(fmt::format("127.0.0.{}", du_idx + 1));
-    du_hi_cfg.exec_mapper  = workers.du_hi_exec_mappers[du_idx].get();
-    du_hi_cfg.f1c_client   = &f1c_gw;
-    du_hi_cfg.f1u_gw       = nullptr;
-    du_hi_cfg.phy_adapter  = &du_ctxt.phy;
-    du_hi_cfg.timers       = &timers;
-    du_hi_cfg.sched_ue_metrics_notifier = &du_ctxt.ue_metrics_notifier;
-    du_hi_cfg.cells                     = cfg.dus[du_idx];
-    du_hi_cfg.sched_cfg                 = config_helpers::make_default_scheduler_expert_config();
-    du_hi_cfg.mac_p                     = &du_ctxt.mac_pcap;
-    du_hi_cfg.rlc_p                     = &du_ctxt.rlc_pcap;
-    du_ctxt.du_high_inst                = make_du_high(du_hi_cfg);
+    du_hi_cfg.ran.gnb_du_name                = fmt::format("srsgnb{}", du_idx + 1);
+    du_hi_cfg.ran.gnb_du_id                  = (gnb_du_id_t)(du_idx + 1);
+    du_hi_cfg.exec_mapper                    = workers.du_hi_exec_mappers[du_idx].get();
+    du_hi_cfg.f1c_client                     = &f1c_gw;
+    du_hi_cfg.f1u_gw                         = nullptr;
+    du_hi_cfg.phy_adapter                    = &du_ctxt.phy;
+    du_hi_cfg.timers                         = &timers;
+    du_hi_cfg.sched_ue_metrics_notifier      = &du_ctxt.ue_metrics_notifier;
+    du_hi_cfg.ran.cells                      = cfg.dus[du_idx];
+    du_hi_cfg.ran.sched_cfg                  = config_helpers::make_default_scheduler_expert_config();
+    du_hi_cfg.mac_p                          = &du_ctxt.mac_pcap;
+    du_hi_cfg.rlc_p                          = &du_ctxt.rlc_pcap;
+    du_ctxt.du_high_inst                     = make_du_high(du_hi_cfg);
 
     du_ctxt.du_high_inst->start();
   }

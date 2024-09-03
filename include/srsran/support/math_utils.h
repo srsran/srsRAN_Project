@@ -27,14 +27,15 @@
 
 #include "srsran_assert.h"
 #include "srsran/adt/complex.h"
+#include <numeric>
 
 namespace srsran {
 
 /// Defines two times Pi.
-static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
+constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
 
 /// Floating point near zero value.
-static constexpr float near_zero = 1e-9;
+constexpr float near_zero = 1e-9;
 
 /// \brief Performs an integer division rounding up.
 ///
@@ -156,7 +157,7 @@ inline Integer reverse_byte(Integer byte)
 {
   static_assert(std::is_convertible_v<Integer, uint8_t>,
                 "The input type must be convertible to an unsigned integer of eight bits");
-  static const std::array<Integer, 256> reverse_lut = {
+  static constexpr std::array<Integer, 256> reverse_lut = {
       0b00000000, 0b10000000, 0b01000000, 0b11000000, 0b00100000, 0b10100000, 0b01100000, 0b11100000, 0b00010000,
       0b10010000, 0b01010000, 0b11010000, 0b00110000, 0b10110000, 0b01110000, 0b11110000, 0b00001000, 0b10001000,
       0b01001000, 0b11001000, 0b00101000, 0b10101000, 0b01101000, 0b11101000, 0b00011000, 0b10011000, 0b01011000,
@@ -188,6 +189,13 @@ inline Integer reverse_byte(Integer byte)
       0b00111111, 0b10111111, 0b01111111, 0b11111111,
   };
   return reverse_lut[byte];
+}
+
+/// Calculates the least common multiplier (LCM) for a range of integers.
+template <typename Integer, typename It>
+Integer lcm(It begin, It end)
+{
+  return std::accumulate(begin, end, Integer(1), [](Integer a, Integer b) { return std::lcm<Integer>(a, b); });
 }
 
 } // namespace srsran

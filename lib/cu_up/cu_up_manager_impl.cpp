@@ -245,9 +245,9 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
   drb_to_setup.pdcp_cfg.discard_timer      = pdcp_discard_timer::infinity;
   drb_to_setup.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms200;
 
-  e1ap_qos_flow_qos_param_item qos_item                              = {};
-  qos_item.qos_flow_id                                               = uint_to_qos_flow_id(0x01);
-  qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = {uint_to_five_qi(9), {}, {}, {}};
+  e1ap_qos_flow_qos_param_item qos_item       = {};
+  qos_item.qos_flow_id                        = uint_to_qos_flow_id(0x01);
+  qos_item.qos_flow_level_qos_params.qos_desc = non_dyn_5qi_descriptor{uint_to_five_qi(9), {}, {}, {}};
 
   drb_to_setup.qos_flow_info_to_be_setup.emplace(qos_item.qos_flow_id, qos_item);
   pdu_session.drb_to_setup_list_ng_ran.emplace(drb_to_setup.drb_id, drb_to_setup);

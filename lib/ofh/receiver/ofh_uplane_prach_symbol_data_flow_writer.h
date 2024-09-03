@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../support/prach_context_repository.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 namespace ofh {

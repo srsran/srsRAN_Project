@@ -25,6 +25,7 @@
 
 namespace srsran {
 
+/// Timer for the ZeroMQ-based radio channel.
 class radio_zmq_timer
 {
 public:

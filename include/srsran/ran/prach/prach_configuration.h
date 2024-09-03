@@ -38,17 +38,31 @@ namespace srsran {
 ///
 /// The PRACH transmission occasions are in the system frames \f$n_{SFN}\f$ that satisfy \f$n_{SFN} \bmod x = y\f$.
 struct prach_configuration {
+  /// Maximum number of system frame offsets.
+  static constexpr unsigned max_nof_sfn_offsets = 2;
+  /// Maximum number of PRACH slots per radio frame assuming a subcarrier spacing of 60kHz.
+  static constexpr unsigned max_nof_slots_60kHz_frame =
+      NOF_SUBFRAMES_PER_FRAME * (1U << to_numerology_value(subcarrier_spacing::kHz60));
+
   /// Preamble format (see [here](\ref preamble_format) for more information).
   prach_format_type format;
   /// SFN period, \f$x\f$.
   unsigned x;
   /// SFN offset \f$y\f$.
-  unsigned y;
-  /// Subframes within a frame that contain PRACH occasions.
-  static_vector<uint8_t, NOF_SUBFRAMES_PER_FRAME> subframe;
+  static_vector<uint8_t, max_nof_sfn_offsets> y;
+  /// \brief Slots within a radio frame that contain PRACH occasions.
+  ///
+  /// The slot numbering assumes the subcarrier spacing:
+  /// - 15kHz for FR1; and
+  /// - 60kHz for FR2.
+  static_vector<uint8_t, max_nof_slots_60kHz_frame> slots;
   /// Starting OFDM symbol index.
   uint8_t starting_symbol;
-  /// Number of PRACH slots within a subframe. Set zero for reserved.
+  /// \brief Number of PRACH slots. Set zero for reserved.
+  ///
+  /// Depending on the frequency range:
+  /// - FR1: within a subframe (15 kHz slot); or
+  /// - FR2: within a 60 kHz slot.
   uint8_t nof_prach_slots_within_subframe;
   /// Number of time-domain PRACH occasions within a PRACH slot. Set zero for reserved.
   uint8_t nof_occasions_within_slot;
@@ -57,8 +71,7 @@ struct prach_configuration {
 };
 
 /// Reserved PRACH configuration. Indicates the configuration parameters are invalid.
-static const prach_configuration PRACH_CONFIG_RESERVED =
-    {prach_format_type::invalid, UINT32_MAX, UINT32_MAX, {}, 0, 0, 0, 0};
+static const prach_configuration PRACH_CONFIG_RESERVED = {prach_format_type::invalid, UINT32_MAX, {}, {}, 0, 0, 0, 0};
 
 /// \brief Gets a PRACH configuration.
 ///

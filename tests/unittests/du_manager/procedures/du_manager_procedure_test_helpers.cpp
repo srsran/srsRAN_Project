@@ -87,26 +87,36 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
 
   // Prepare DU resource allocator response.
   cell_res_alloc.next_context_update_result = cell_res_alloc.ue_resource_pool[req.ue_index];
+  auto& u                                   = *ue_mng.find_ue(req.ue_index);
+  if (u.reestablished_cfg_pending != nullptr) {
+    cell_res_alloc.next_context_update_result.srbs = u.reestablished_cfg_pending->srbs;
+    cell_res_alloc.next_context_update_result.drbs = u.reestablished_cfg_pending->drbs;
+  }
   for (srb_id_t srb_id : req.srbs_to_setup) {
-    cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg =
-        make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
+    cell_res_alloc.next_context_update_result.srbs.emplace(srb_id);
+    auto& new_srb   = cell_res_alloc.next_context_update_result.srbs[srb_id];
+    new_srb.srb_id  = srb_id;
+    new_srb.rlc_cfg = make_default_srb_rlc_config();
+    new_srb.mac_cfg = make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
   }
   for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
-    cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = uint_to_lcid(3 + (unsigned)drb.drb_id);
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_drb_mac_lc_config();
+    auto& new_drb       = cell_res_alloc.next_context_update_result.drbs.emplace(drb.drb_id);
+    new_drb.drb_id      = drb.drb_id;
+    new_drb.lcid        = uint_to_lcid(3 + (unsigned)drb.drb_id);
+    new_drb.rlc_cfg     = make_default_srb_rlc_config();
+    new_drb.mac_cfg     = make_default_drb_mac_lc_config();
+    new_drb.pdcp_sn_len = drb.pdcp_sn_len;
+    new_drb.s_nssai     = drb.qos_info.s_nssai;
+    new_drb.qos         = drb.qos_info.drb_qos;
+    new_drb.f1u         = {};
+  }
+  for (const f1ap_drb_to_modify& drb : req.drbs_to_mod) {
+    srsran_assert(cell_res_alloc.next_context_update_result.drbs.contains(drb.drb_id),
+                  "reestablishment context should have created DRB");
   }
   for (drb_id_t drb_id : req.drbs_to_rem) {
-    auto it = std::find_if(cell_res_alloc.next_context_update_result.rlc_bearers.begin(),
-                           cell_res_alloc.next_context_update_result.rlc_bearers.end(),
-                           [drb_id](const auto& b) { return b.drb_id == drb_id; });
-    if (it != cell_res_alloc.next_context_update_result.rlc_bearers.end()) {
-      cell_res_alloc.next_context_update_result.rlc_bearers.erase(it);
+    if (cell_res_alloc.next_context_update_result.drbs.contains(drb_id)) {
+      cell_res_alloc.next_context_update_result.drbs.erase(drb_id);
     }
   }
 

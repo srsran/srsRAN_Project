@@ -68,10 +68,10 @@ template <typename IdTag, bool DebugSanitizeAddress = false>
 class fixed_size_memory_block_pool
 {
   /// The number of blocks in batch that the worker can steal from the central cache.
-  constexpr static size_t block_batch_size = 32U;
+  static constexpr size_t block_batch_size = 32U;
 
   /// The number of batches of blocks that a worker can store in its own thread for non-contended access.
-  constexpr static size_t MAX_LOCAL_BATCH_CAPACITY = 64U;
+  static constexpr size_t MAX_LOCAL_BATCH_CAPACITY = 64U;
 
   /// A batch of memory blocks that is exchanged in bulk between the central and local caches.
   using memory_block_batch = free_memory_block_list;
@@ -83,7 +83,7 @@ class fixed_size_memory_block_pool
   // to account the potential number of producers. The way to exactly over-dimension this queue is inconvenient, so
   // we just try to conservatively ensure it can accommodate up to 32 producers for a block size of 32. If this is
   // not enough, the queue will resize itself and malloc in the process.
-  const static size_t OVER_DIM_CENTRAL_CACHE = 2 * 32 * 32;
+  static const size_t OVER_DIM_CENTRAL_CACHE = 2 * 32 * 32;
 
   /// Ctor of the memory pool. It is set as private because the class works as a singleton.
   explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :

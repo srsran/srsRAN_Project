@@ -109,7 +109,7 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   periodical.include_beam_meass          = true;
   periodical.use_allowed_cell_list       = false;
 
-  report_cfg_nr.periodical         = periodical;
+  report_cfg_nr                    = periodical;
   report_cfg_to_add_mod.report_cfg = report_cfg_nr;
 
   meas_cfg.report_cfg_to_add_mod_list.push_back(report_cfg_to_add_mod);

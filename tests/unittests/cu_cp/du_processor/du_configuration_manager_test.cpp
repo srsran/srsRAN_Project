@@ -53,11 +53,11 @@ static du_setup_request create_basic_du_setup_request(unsigned du_counter = 0)
 class du_configuration_manager_test : public ::testing::Test
 {
 public:
-  du_configuration_manager_test() : du_cfg_mng(gnb_id, plmn) {}
+  du_configuration_manager_test() : du_cfg_mng(gnb_id, plmns) {}
 
-  gnb_id_t                 gnb_id{411, 22};
-  plmn_identity            plmn = plmn_identity::test_value();
-  du_configuration_manager du_cfg_mng;
+  gnb_id_t                   gnb_id{411, 22};
+  std::vector<plmn_identity> plmns = {plmn_identity::test_value()};
+  du_configuration_manager   du_cfg_mng;
 };
 
 TEST_F(du_configuration_manager_test, when_instance_created_then_it_has_no_dus)

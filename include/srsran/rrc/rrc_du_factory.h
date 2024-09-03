@@ -40,7 +40,7 @@ struct rrc_du_creation_message {
 };
 
 /// Create an instance of an RRC entity
-std::unique_ptr<rrc_du_interface> create_rrc_du(const rrc_du_creation_message& msg);
+std::unique_ptr<rrc_du> create_rrc_du(const rrc_du_creation_message& msg);
 
 } // namespace srs_cu_cp
 

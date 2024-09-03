@@ -39,6 +39,7 @@ struct prach_buffer_context;
 class slot_point;
 class upper_phy_rx_results_notifier;
 struct srs_estimator_configuration;
+class shared_resource_grid;
 
 /// \brief Uplink processor interface.
 ///
@@ -114,7 +115,7 @@ public:
   virtual void process_pusch(span<uint8_t>                      data,
                              unique_rx_buffer                   rm_buffer,
                              upper_phy_rx_results_notifier&     notifier,
-                             const resource_grid_reader&        grid,
+                             const shared_resource_grid&        grid,
                              const uplink_processor::pusch_pdu& pdu) = 0;
 
   /// \brief Processes a PUCCH transmission.
@@ -126,7 +127,7 @@ public:
   /// \param[in] grid     Resource grid.
   /// \param[in] pdu      PUCCH transmission parameters.
   virtual void
-  process_pucch(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const pucch_pdu& pdu) = 0;
+  process_pucch(upper_phy_rx_results_notifier& notifier, const shared_resource_grid& grid, const pucch_pdu& pdu) = 0;
 
   /// \brief Processes Sounding Reference Signals.
   ///
@@ -137,7 +138,7 @@ public:
   /// \param[in] grid     UL resource grid containing the SRS RE.
   /// \param[in] pdu      SRS configuration parameters.
   virtual void
-  process_srs(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const srs_pdu& pdu) = 0;
+  process_srs(upper_phy_rx_results_notifier& notifier, const shared_resource_grid& grid, const srs_pdu& pdu) = 0;
 };
 
 /// Uplink processor validation interface.

@@ -31,7 +31,7 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
-#include "srsran/ran/qos/qos_info.h"
+#include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/s_nssai.h"
@@ -104,6 +104,9 @@ struct sched_cell_configuration_request_message {
   /// List of nzp-CSI-RS resources common to all UEs.
   std::vector<nzp_csi_rs_resource> nzp_csi_rs_res_list;
 
+  /// List of dl-DataToUL-ACK values sent to UE in its dedicated configuration.
+  static_vector<uint8_t, 8> dl_data_to_ul_ack;
+
   /// List of RAN slices to support in the scheduler.
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 
@@ -135,9 +138,9 @@ struct sched_drb_info {
   /// Single Network Slice Selection Assistance Information (S-NSSAI).
   s_nssai_t s_nssai;
   /// QoS characteristics associated with the logical channel.
-  qos_characteristics qos_info;
+  standardized_qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
-  std::optional<gbr_qos_info_t> gbr_qos_info;
+  std::optional<gbr_qos_flow_information> gbr_qos_info;
 };
 
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.

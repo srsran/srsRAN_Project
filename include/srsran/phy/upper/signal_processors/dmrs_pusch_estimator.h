@@ -31,6 +31,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include <variant>
 
 namespace srsran {
 
@@ -40,16 +41,30 @@ class resource_grid_reader;
 class dmrs_pusch_estimator
 {
 public:
-  /// Parameters required to receive the demodulation reference signals described in 3GPP TS38.211 Section 6.4.1.1.
-  struct configuration {
-    /// Slot context for sequence initialization.
-    slot_point slot;
+  /// Parameters for pseudo-random sequence.
+  struct pseudo_random_sequence_configuration {
     /// DL DM-RS configuration type.
     dmrs_type type;
+    /// Number of transmit layers.
+    unsigned nof_tx_layers;
     /// PUSCH DM-RS scrambling ID.
     unsigned scrambling_id;
     /// DM-RS sequence initialization (parameter \f$n_{SCID}\f$ in the TS).
     bool n_scid;
+  };
+
+  /// Parameters for pseudo-random sequence.
+  struct low_papr_sequence_configuration {
+    /// Reference signal sequence identifier {0, ..., 1007}.
+    unsigned n_rs_id;
+  };
+
+  /// Parameters required to receive the demodulation reference signals described in 3GPP TS38.211 Section 6.4.1.1.
+  struct configuration {
+    /// Slot context for sequence initialization.
+    slot_point slot;
+    /// Sequence generator configuration.
+    std::variant<pseudo_random_sequence_configuration, low_papr_sequence_configuration> sequence_config;
     /// \brif DM-RS amplitude scaling factor.
     ///
     /// Parameter \f$\beta _{\textup{PUSCH}}^{\textup{DMRS}}\f$ as per TS38.211 Section 6.4.1.1.3. It must be set
@@ -69,10 +84,34 @@ public:
     unsigned first_symbol = 0;
     /// Number of OFDM symbols for which the channel should be estimated.
     unsigned nof_symbols = 0;
-    /// Number of transmit layers.
-    unsigned nof_tx_layers = 0;
     /// List of receive ports.
     static_vector<uint8_t, DMRS_MAX_NPORTS> rx_ports;
+
+    /// \brief Gets the number of transmit layers.
+    ///
+    /// The number of transmit layers when low-PAPR sequences are used is always one. Otherwise, it is specified in the
+    /// sequence configuration.
+    unsigned get_nof_tx_layers() const
+    {
+      if (std::holds_alternative<pseudo_random_sequence_configuration>(sequence_config)) {
+        return std::get<pseudo_random_sequence_configuration>(sequence_config).nof_tx_layers;
+      }
+
+      return 1;
+    }
+
+    /// \brief  Gets the DM-RS type.
+    ///
+    /// The DM-RS type is always 1 when low-PAPR sequences are used. Otherwise, it is specified in the sequence
+    /// configuration.
+    dmrs_type get_dmrs_type() const
+    {
+      if (std::holds_alternative<pseudo_random_sequence_configuration>(sequence_config)) {
+        return std::get<pseudo_random_sequence_configuration>(sequence_config).type;
+      }
+
+      return dmrs_type::TYPE1;
+    }
   };
 
   /// Default destructor.

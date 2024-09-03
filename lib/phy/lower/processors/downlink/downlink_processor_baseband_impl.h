@@ -73,7 +73,7 @@ public:
 
   /// \brief Reads samples from the buffer, starting at an initial timestamp.
   ///
-  /// Copies the samples starting at the sample indicated by \c timestamp until \out is filled or until all samples
+  /// Copies the samples starting at the sample indicated by \c timestamp until \c out is filled or until all samples
   /// have been read.
   ///
   /// \param[out] out Destination buffer.

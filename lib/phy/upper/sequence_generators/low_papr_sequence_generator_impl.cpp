@@ -30,11 +30,13 @@
 
 using namespace srsran;
 
-// Sequence sizes used in PUCCH Format 1 and SRS.
+// Sequence sizes used in PUCCH Format 1, SRS and PUSCH with transform precoding.
 const std::set<unsigned> low_papr_sequence_generator_impl::sequence_sizes = {
-    12,  24,  36,  48,  60,  72,  84,  96,  108,  120,  132,  144,  156,  168,  180,  192,  204,  216,  228, 240,
-    252, 264, 276, 288, 312, 324, 336, 360, 384,  396,  408,  432,  456,  480,  504,  528,  552,  576,  624, 648,
-    672, 720, 768, 792, 816, 864, 912, 960, 1008, 1056, 1104, 1152, 1248, 1296, 1344, 1440, 1536, 1584, 1632};
+    6,    12,   18,   24,   30,   36,   48,   54,   60,   72,   84,   90,   96,   108, 120,  132,  144,
+    150,  156,  162,  168,  180,  192,  204,  216,  228,  240,  252,  264,  270,  276, 288,  300,  312,
+    324,  336,  360,  384,  396,  408,  432,  450,  456,  480,  486,  504,  528,  540, 552,  576,  600,
+    624,  648,  672,  720,  750,  768,  792,  810,  816,  864,  900,  912,  960,  972, 1008, 1056, 1080,
+    1104, 1152, 1200, 1248, 1296, 1344, 1350, 1440, 1458, 1500, 1536, 1584, 1620, 1632};
 
 const std::array<std::array<int, 6>, low_papr_sequence_generator_impl::NOF_ZC_SEQ>
     low_papr_sequence_generator_impl::phi_M_sc_6 = {
@@ -152,7 +154,23 @@ static unsigned get_N_zc(unsigned M_zc)
     return prime_lower_than(M_zc);
   }
 
+  if (M_zc == 30) {
+    return 31;
+  }
+
   return 4;
+}
+
+span<const int> low_papr_sequence_generator_impl::phi_M_sc_30(unsigned u)
+{
+  static constexpr unsigned M_zc     = 30;
+  static constexpr unsigned N_zc     = 31;
+  span<int>                 r_uv_arg = span<int>(temp_r_uv_arg).first(30);
+  for (unsigned n = 0; n != M_zc; ++n) {
+    r_uv_arg[n] = -static_cast<int>(((u + 1L) * (n + 1L) * (n + 2L)) % (2 * N_zc));
+  }
+
+  return r_uv_arg;
 }
 
 span<const int> low_papr_sequence_generator_impl::r_uv_arg_mprb(unsigned u, unsigned v, unsigned M_zc)
@@ -177,13 +195,25 @@ span<const int> low_papr_sequence_generator_impl::r_uv_arg(unsigned u, unsigned 
 {
   if (M_zc == 6) {
     return phi_M_sc_6[u];
-  } else if (M_zc == 12) {
+  }
+
+  if (M_zc == 12) {
     return phi_M_sc_12[u];
-  } else if (M_zc == 18) {
+  }
+
+  if (M_zc == 18) {
     return phi_M_sc_18[u];
-  } else if (M_zc == 24) {
+  }
+
+  if (M_zc == 24) {
     return phi_M_sc_24[u];
-  } else if (M_zc >= 36) {
+  }
+
+  if (M_zc == 30) {
+    return phi_M_sc_30(u);
+  }
+
+  if (M_zc >= 36) {
     return r_uv_arg_mprb(u, v, M_zc);
   }
 

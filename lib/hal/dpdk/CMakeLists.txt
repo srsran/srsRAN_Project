@@ -29,3 +29,5 @@ set(SOURCES
 add_library(hal_dpdk STATIC ${SOURCES})
 target_compile_options(hal_dpdk PRIVATE ${DPDK_CFLAGS})
 target_link_libraries(hal_dpdk srslog ${DPDK_LIBRARIES})
+
+add_to_exported_libs(hal_dpdk)

@@ -154,9 +154,8 @@ public:
   /// Initializes all the polar decoder variables according to the Simplified Successive
   /// Cancellation (SSC) decoder algorithm and the maximum given code size.
   ///
-  /// \param[in] enc           A polar encoder.
-  /// \param[in] code_size_log The \f$ log_2\f$ of the number of bits of the decoder input/output vector.
-  /// \return A unique pointer to the initialized SSC polar decoder.
+  /// \param[in] enc_   A polar encoder.
+  /// \param[in] nMax \f$log_2\f$ of the maximum number of bits in the codeword.
   polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint8_t nMax);
 
   // See interface for the documentation.

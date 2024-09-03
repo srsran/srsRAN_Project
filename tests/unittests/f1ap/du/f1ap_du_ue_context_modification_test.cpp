@@ -88,7 +88,6 @@ TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1a
   ASSERT_EQ(req.srbs_to_setup.size(), 0);
   ASSERT_EQ(req.drbs_to_setup.size(), 1);
   ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
-  ASSERT_FALSE(req.drbs_to_setup[0].lcid.has_value());
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,
@@ -127,7 +126,8 @@ TEST_F(f1ap_du_ue_context_modification_test,
 {
   // Prepare DU manager response to F1AP with failed DRB.
   this->f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
-  this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_failed_to_setup.push_back(drb_id_t::drb1);
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.failed_drbs_setups.push_back(
+      {drb_id_t::drb1, f1ap_cause_radio_network_t::no_radio_res_available});
   this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container =
       byte_buffer::create({0x1, 0x2, 0x3}).value();
 

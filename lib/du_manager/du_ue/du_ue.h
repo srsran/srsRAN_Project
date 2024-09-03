@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "../ran_resource_management/cell_group_config.h"
 #include "../ran_resource_management/du_ran_resource_manager.h"
+#include "../ran_resource_management/du_ue_resource_config.h"
 #include "du_ue_bearer_manager.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
@@ -108,9 +108,9 @@ public:
   /// \brief Radio access network resources currently allocated to the UE.
   ue_ran_resource_configurator resources;
 
-  /// \brief Determines whether this UE is running the RRC Reestablishment procedure.
-  // TODO: refactor.
-  bool reestablishment_pending = false;
+  /// \brief Determines whether this UE is running the RRC Reestablishment procedure and which context was retrieved
+  /// from the old UE.
+  std::unique_ptr<du_ue_resource_config> reestablished_cfg_pending;
 };
 
 } // namespace srs_du

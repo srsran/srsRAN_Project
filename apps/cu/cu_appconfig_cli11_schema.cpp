@@ -42,6 +42,12 @@ static void configure_cli11_nru_args(CLI::App& app, srs_cu::cu_nru_appconfig& nr
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
   add_option(app, "--udp_max_rx_msgs", nru_cfg.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
+  add_option(app,
+             "--pool_threshold",
+             nru_cfg.pool_occupancy_threshold,
+             "Pool occupancy threshold after which packets are dropped")
+      ->check(CLI::Range(0.0, 1.0));
+  ;
 }
 
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)

@@ -73,7 +73,7 @@ TEST_F(f1ap_cu_ue_context_modification_test, when_f1ap_receives_response_then_pr
   // The UE CONTEXT MODIFICATION procedure finished successfully.
   EXPECT_TRUE(t.ready());
   EXPECT_TRUE(t.get().success);
-  EXPECT_EQ(t.get().drbs_setup_mod_list.size(), 1);
+  EXPECT_EQ(t.get().drbs_setup_list.size(), 1);
   EXPECT_EQ(t.get().srbs_setup_mod_list.size(), 0);
 }
 
@@ -99,10 +99,10 @@ TEST_F(f1ap_cu_ue_context_modification_test,
   // The UE CONTEXT MODIFICATION procedure finished unsuccessfully.
   EXPECT_TRUE(t.ready());
   EXPECT_TRUE(t.get().success);
-  EXPECT_EQ(t.get().drbs_setup_mod_list.size(), 0);
+  EXPECT_EQ(t.get().drbs_setup_list.size(), 0);
   EXPECT_EQ(t.get().srbs_setup_mod_list.size(), 0);
-  EXPECT_EQ(t.get().drbs_failed_to_be_setup_mod_list.size(), 1);
-  EXPECT_EQ(t.get().drbs_failed_to_be_setup_mod_list[drb_id_t::drb1].drb_id, drb_id_t::drb1);
+  EXPECT_EQ(t.get().drbs_failed_to_be_setup_list.size(), 1);
+  EXPECT_EQ(t.get().drbs_failed_to_be_setup_list[0].drb_id, drb_id_t::drb1);
 }
 
 TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_failure_received_then_procedure_is_unsuccessful)
@@ -119,6 +119,6 @@ TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_failure_receiv
   // The UE CONTEXT MODIFICATION procedure finished unsuccessfully.
   EXPECT_TRUE(t.ready());
   EXPECT_FALSE(t.get().success);
-  EXPECT_EQ(t.get().drbs_setup_mod_list.size(), 0);
+  EXPECT_EQ(t.get().drbs_setup_list.size(), 0);
   EXPECT_EQ(t.get().srbs_setup_mod_list.size(), 0);
 }

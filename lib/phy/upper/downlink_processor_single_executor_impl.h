@@ -25,6 +25,7 @@
 #include "downlink_processor_single_executor_state.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/srslog/logger.h"
 #include <mutex>
@@ -98,7 +99,7 @@ public:
   void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override;
 
   // See interface for documentation.
-  bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override;
+  bool configure_resource_grid(const resource_grid_context& context, shared_resource_grid grid) override;
 
   // See interface for documentation.
   void finish_processing_pdus() override;
@@ -132,7 +133,7 @@ private:
 
   upper_phy_rg_gateway&                 gateway;
   resource_grid_context                 rg_context;
-  resource_grid*                        current_grid;
+  shared_resource_grid                  current_grid;
   std::unique_ptr<pdcch_processor>      pdcch_proc;
   std::unique_ptr<pdsch_processor>      pdsch_proc;
   std::unique_ptr<ssb_processor>        ssb_proc;

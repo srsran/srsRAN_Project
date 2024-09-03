@@ -23,7 +23,9 @@
 #pragma once
 
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/srsvec/aligned_vec.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/executors/task_worker.h"
 #include <fstream>
@@ -43,6 +45,7 @@ public:
     logger(logger_),
     worker("rx_symb_print", 40),
     temp_buffer(nof_rb * NRE),
+    temp_prach_buffer(prach_constants::LONG_SEQUENCE_LENGTH),
     nof_symbols(MAX_NSYMB_PER_SLOT),
     start_port(ul_print_ports.start()),
     end_port(ul_print_ports.stop()),
@@ -63,7 +66,7 @@ public:
     }
   }
 
-  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
+  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override
   {
     // Handle Rx symbol.
     handler->handle_rx_symbol(context, grid);
@@ -78,7 +81,7 @@ public:
           // Save the resource grid.
           for (unsigned i_port = start_port; i_port != end_port; ++i_port) {
             for (unsigned symbol_idx = 0; symbol_idx != nof_symbols; ++symbol_idx) {
-              grid.get(temp_buffer, i_port, symbol_idx, 0);
+              grid.get_reader().get(temp_buffer, i_port, symbol_idx, 0);
               file.write(reinterpret_cast<const char*>(temp_buffer.data()), temp_buffer.size() * sizeof(cf_t));
             }
           }
@@ -112,8 +115,15 @@ public:
           unsigned prach_stop   = buffer.get_max_nof_ports();
           for (unsigned i_port = prach_start; i_port != prach_stop; ++i_port) {
             for (unsigned i_replica = 0; i_replica != nof_replicas; ++i_replica) {
-              span<const cf_t> samples = buffer.get_symbol(i_port, 0, 0, i_replica);
-              file.write(reinterpret_cast<const char*>(samples.data()), samples.size() * sizeof(cf_t));
+              // Select view of the replica.
+              span<const cbf16_t> samples = buffer.get_symbol(i_port, 0, 0, i_replica);
+
+              // Convert samples to complex float.
+              span<cf_t> samples_cf = temp_prach_buffer.first(samples.size());
+              srsvec::convert(samples_cf, samples);
+
+              // Write file.
+              file.write(reinterpret_cast<const char*>(samples_cf.data()), samples.size() * sizeof(cf_t));
             }
           }
 
@@ -142,6 +152,7 @@ private:
   std::ofstream                                file;
   task_worker                                  worker;
   srsvec::aligned_vec<cf_t>                    temp_buffer;
+  srsvec::aligned_vec<cf_t>                    temp_prach_buffer;
   unsigned                                     nof_symbols;
   unsigned                                     start_port;
   unsigned                                     end_port;

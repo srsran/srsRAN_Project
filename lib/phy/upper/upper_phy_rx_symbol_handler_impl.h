@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/circular_array.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_slot_pdu_repository.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
@@ -96,7 +97,7 @@ public:
                                    upper_phy_rx_results_notifier& rx_results_notifier_);
 
   // See interface for documentation.
-  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override;
+  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override;
 
   // See interface for documentation.
   void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override;
@@ -105,7 +106,7 @@ private:
   /// Process the given PUSCH PDU using the given uplink processor, grid and slot.
   void process_pusch(const uplink_processor::pusch_pdu& pdu,
                      uplink_processor&                  ul_processor,
-                     const resource_grid_reader&        grid,
+                     const shared_resource_grid&        grid,
                      slot_point                         slot);
 
 private:

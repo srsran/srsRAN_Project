@@ -71,6 +71,8 @@ static unsigned                     bwp_size_rb                      = 273;
 static pusch_mcs_table              mcs_table                        = pusch_mcs_table::qam64;
 static sch_mcs_index                mcs_index                        = 20;
 static bool                         enable_dc_position               = false;
+static std::string                  pxsch_type                       = "auto";
+static std::string                  eal_arguments                    = "pxsch_bler_test";
 
 namespace {
 
@@ -90,6 +92,39 @@ const char* to_string(pusch_mcs_table table)
   }
   return "invalid";
 }
+
+#if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
+// Separates EAL and non-EAL arguments.
+// The function assumes that 'eal_arg' flags the start of the EAL arguments and that no more non-EAL arguments follow.
+static std::string capture_eal_args(int* argc, char*** argv)
+{
+  // Searchs for the EAL args (if any), flagged by 'eal_args', while removing all the rest (except argv[0]).
+  bool        eal_found = false;
+  char**      mod_argv  = *argv;
+  std::string eal_argv  = {mod_argv[0]};
+  int         opt_ind   = *argc;
+  for (int j = 1; j < opt_ind; ++j) {
+    // Search for the 'eal_args' flag (if any).
+    if (!eal_found) {
+      if (strcmp(mod_argv[j], "eal_args") == 0) {
+        // 'eal_args' flag found.
+        eal_found = true;
+        // Remove all main app arguments starting from that point, while copying them to the EAL argument string.
+        mod_argv[j] = NULL;
+        for (int k = j + 1; k < opt_ind; ++k) {
+          eal_argv += " ";
+          eal_argv += mod_argv[k];
+          mod_argv[k] = NULL;
+        }
+        *argc = j;
+      }
+    }
+  }
+  *argv = mod_argv;
+
+  return eal_argv;
+}
+#endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
 
 std::optional<pusch_mcs_table> to_mcs_table(const char* str)
 {
@@ -207,12 +242,12 @@ private:
 
     // Create PDSCH processor factory.
     std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
-        create_sw_pdsch_processor_factory(*executor, max_nof_threads + 1);
+        create_sw_pdsch_processor_factory(*executor, max_nof_threads + 1, eal_arguments, pxsch_type);
     report_fatal_error_if_not(pdsch_proc_factory, "Failted to create PDSCH processor factory.");
 
     // Create PUSCH processor factory.
-    std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
-        create_sw_pusch_processor_factory(*executor, max_nof_threads + 1, nof_ldpc_iterations, use_early_stop);
+    std::shared_ptr<pusch_processor_factory> pusch_proc_factory = create_sw_pusch_processor_factory(
+        *executor, max_nof_threads + 1, nof_ldpc_iterations, use_early_stop, pxsch_type);
     report_fatal_error_if_not(pusch_proc_factory, "Failted to create PUSCH processor factory.");
 
     // Create resource grid factory.
@@ -275,28 +310,28 @@ private:
     std::iota(rx_ports.begin(), rx_ports.end(), 0U);
 
     // Prepare PUSCH processor configuration.
-    pusch_config.context                     = std::nullopt;
-    pusch_config.slot                        = slot_point(to_numerology_value(scs), 0);
-    pusch_config.rnti                        = rnti;
-    pusch_config.bwp_size_rb                 = bwp_size_rb;
-    pusch_config.bwp_start_rb                = bwp_start_rb;
-    pusch_config.cp                          = cp;
-    pusch_config.mcs_descr                   = mcs_descr;
-    pusch_config.codeword                    = {rv, ldpc_base_graph, true};
-    pusch_config.uci                         = {};
-    pusch_config.n_id                        = n_id;
-    pusch_config.nof_tx_layers               = nof_layers;
-    pusch_config.rx_ports                    = rx_ports;
-    pusch_config.dmrs_symbol_mask            = dmrs_symbol_mask;
-    pusch_config.dmrs                        = dmrs;
-    pusch_config.scrambling_id               = scrambling_id;
-    pusch_config.n_scid                      = n_scid;
-    pusch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
-    pusch_config.freq_alloc                  = freq_alloc;
-    pusch_config.start_symbol_index          = 0;
-    pusch_config.nof_symbols                 = nof_ofdm_symbols;
-    pusch_config.tbs_lbrm                    = tbs_lbrm_default;
-    pusch_config.dc_position                 = {};
+    pusch_config.context            = std::nullopt;
+    pusch_config.slot               = slot_point(to_numerology_value(scs), 0);
+    pusch_config.rnti               = rnti;
+    pusch_config.bwp_size_rb        = bwp_size_rb;
+    pusch_config.bwp_start_rb       = bwp_start_rb;
+    pusch_config.cp                 = cp;
+    pusch_config.mcs_descr          = mcs_descr;
+    pusch_config.codeword           = {rv, ldpc_base_graph, true};
+    pusch_config.uci                = {};
+    pusch_config.n_id               = n_id;
+    pusch_config.nof_tx_layers      = nof_layers;
+    pusch_config.rx_ports           = rx_ports;
+    pusch_config.dmrs_symbol_mask   = dmrs_symbol_mask;
+    pusch_config.dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs,
+                                                                          .scrambling_id               = scrambling_id,
+                                                                          .n_scid                      = n_scid,
+                                                                          .nof_cdm_groups_without_data = nof_cdm_groups_without_data};
+    pusch_config.freq_alloc         = freq_alloc;
+    pusch_config.start_symbol_index = 0;
+    pusch_config.nof_symbols        = nof_ofdm_symbols;
+    pusch_config.tbs_lbrm           = tbs_lbrm_default;
+    pusch_config.dc_position        = {};
 
     if (enable_dc_position) {
       pusch_config.dc_position = {bwp_size_rb * NRE / 2};
@@ -353,7 +388,7 @@ private:
       // Get a receive buffer.
       unique_rx_buffer buffer =
           buffer_pool->get_pool().reserve(pusch_config.slot, trx_buffer_identifier(rnti, 0), nof_codeblocks, true);
-      report_error_if_not(buffer.is_valid(), "Invalid buffer.");
+      report_error_if_not(buffer, "Invalid buffer.");
 
       // Process PUSCH.
       pusch_processor_notifier_adaptor rx_notifier;
@@ -388,6 +423,7 @@ private:
       ++pdsch_config.slot;
       ++pusch_config.slot;
 
+      // Set following line to 1 for printing partial results.
       if (show_stats && (n % 100 == 0)) {
         // Calculate resultant metrics.
         double crc_bler        = static_cast<double>(crc_error_count) / static_cast<double>(count);
@@ -399,7 +435,8 @@ private:
                    "BLER={:.10f}/{:.10f}; "
                    "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
                    "EVM={{{:.3f} {:.3f} {:.3f}}}; "
-                   "TA={{{:.2f} {:.2f} {:.2f}}}us\r",
+                   "TA={{{:.2f} {:.2f} {:.2f}}}us; "
+                   "pxsch={}\r",
                    static_cast<double>(n) / static_cast<double>(nof_repetitions) * 100.0,
                    min_iterations,
                    max_iterations,
@@ -415,7 +452,8 @@ private:
                    evm_stats.get_mean(),
                    ta_stats_us.get_min(),
                    ta_stats_us.get_max(),
-                   ta_stats_us.get_mean());
+                   ta_stats_us.get_mean(),
+                   pxsch_type);
       }
     }
 
@@ -429,7 +467,8 @@ private:
                "BLER={:.10f}/{:.10f}; "
                "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
                "EVM={{{:.3f} {:.3f} {:.3f}}}; "
-               "TA={{{:.2f} {:.2f} {:.2f}}}us;\n",
+               "TA={{{:.2f} {:.2f} {:.2f}}}us;"
+               "pxsch={}\n",
                min_iterations,
                max_iterations,
                mean_iterations,
@@ -443,7 +482,8 @@ private:
                evm_stats.get_mean(),
                ta_stats_us.get_min(),
                ta_stats_us.get_max(),
-               ta_stats_us.get_mean());
+               ta_stats_us.get_mean(),
+               pxsch_type);
   }
 
   unsigned nof_codeblocks;
@@ -469,26 +509,28 @@ private:
 
 static void usage(std::string_view prog)
 {
-  fmt::print("Usage: {}\n", prog);
-  fmt::print("\t-C Channel delay profile: single-tap, TDLA, TDLB or TDLC. [Default {}]\n", channel_delay_profile);
-  fmt::print("\t-F Channel fading distribution: uniform-phase or rayleigh. [Default {}]\n",
+  fmt::print("Usage: {} [-C X] [-F X] [-S X] [-N X] [-P X] [-R X] [-M X] [-m X] [-D] [-T X] [eal_args ...]\n", prog);
+  fmt::print("\t-C       Channel delay profile: single-tap, TDLA, TDLB or TDLC. [Default {}]\n", channel_delay_profile);
+  fmt::print("\t-F       Channel fading distribution: uniform-phase or rayleigh. [Default {}]\n",
              channel_fading_distribution);
-  fmt::print("\t-D Toggle enable DC position. [Default {}]\n", enable_dc_position);
-  fmt::print("\t-S SINR. [Default {}]\n", sinr_dB);
-  fmt::print("\t-N Number of corrupted RE per OFDM symbol. [Default {}]\n", nof_corrupted_re_per_ofdm_symbol);
-  fmt::print("\t-P Number of receive ports. [Default {}]\n", nof_rx_ports);
-  fmt::print("\t-B Number of allocated PRBs (same as BWP size). [Default {}]\n", bwp_size_rb);
-  fmt::print("\t-M MCS table. [Default {}]\n", mcs_table);
-  fmt::print("\t-m MCS index. [Default {}]\n", mcs_index);
-  fmt::print("\t-R Number of slots to process. [Default {}]\n", nof_repetitions);
-  fmt::print("\t-v Toggle preliminary stats. [Default {}]\n", show_stats);
-  fmt::print("\t-h Print this message.\n");
+  fmt::print("\t-D       Toggle enable DC position. [Default {}]\n", enable_dc_position);
+  fmt::print("\t-S       SINR. [Default {}]\n", sinr_dB);
+  fmt::print("\t-N       Number of corrupted RE per OFDM symbol. [Default {}]\n", nof_corrupted_re_per_ofdm_symbol);
+  fmt::print("\t-P       Number of receive ports. [Default {}]\n", nof_rx_ports);
+  fmt::print("\t-B       Number of allocated PRBs (same as BWP size). [Default {}]\n", bwp_size_rb);
+  fmt::print("\t-M       MCS table. [Default {}]\n", mcs_table);
+  fmt::print("\t-m       MCS index. [Default {}]\n", mcs_index);
+  fmt::print("\t-R       Number of slots to process. [Default {}]\n", nof_repetitions);
+  fmt::print("\t-T       PxSCH implementation type [auto,acc100][Default {}]\n", pxsch_type);
+  fmt::print("\teal_args EAL arguments\n");
+  fmt::print("\t-v       Toggle preliminary stats. [Default {}]\n", show_stats);
+  fmt::print("\t-h       Print this message.\n");
 }
 
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "C:F:S:N:P:R:B:M:m:Dvh")) != -1) {
+  while ((opt = getopt(argc, argv, "C:F:S:N:P:R:B:M:m:DT:vh")) != -1) {
     switch (opt) {
       case 'C':
         if (optarg != nullptr) {
@@ -532,6 +574,9 @@ static void parse_args(int argc, char** argv)
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
+      case 'T':
+        pxsch_type = std::string(optarg);
+        break;
       case 'v':
         show_stats = !show_stats;
         break;
@@ -545,6 +590,11 @@ static void parse_args(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+#if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
+  // Separate EAL and non-EAL arguments.
+  eal_arguments = capture_eal_args(&argc, &argv);
+#endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
+
   parse_args(argc, argv);
 
   pxsch_bler_test test;

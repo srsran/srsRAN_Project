@@ -73,7 +73,7 @@ public:
   downlink_handler_impl(const downlink_handler_impl_config& config, downlink_handler_impl_dependencies&& dependencies);
 
   // See interface for documentation.
-  void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) override;
+  void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
   // See interface for documentation.
   void set_error_notifier(error_notifier& notifier) override { err_notifier = std::ref(notifier); }

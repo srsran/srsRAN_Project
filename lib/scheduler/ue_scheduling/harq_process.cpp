@@ -142,7 +142,15 @@ void detail::harq_process<IsDownlink>::cancel_harq_retxs(unsigned tb_idx)
   if (empty(tb_idx)) {
     return;
   }
+  if (has_pending_retx(tb_idx)) {
+    // If a retx is pending, do not allow it to take place.
+    tb_array[tb_idx].state = transport_block::state_t::empty;
+    return;
+  }
+  // If the HARQ is still waiting for an ACK to arrive, just mark it as max retxs have been exceeded. The ack_info
+  // function will automatically update the HARQ state.
   tb_array[tb_idx].max_nof_harq_retxs = tb_array[tb_idx].nof_retxs;
+  tb_array[tb_idx].cancelled          = true;
 }
 
 template <bool IsDownlink>
@@ -174,6 +182,7 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx,
   tb_array[tb_idx].nof_retxs          = 0;
   tb_array[tb_idx].harq_bit_idx       = harq_bit_idx;
   tb_array[tb_idx].ack_on_timeout     = false;
+  tb_array[tb_idx].cancelled          = false;
 }
 
 template <bool IsDownlink>
@@ -207,8 +216,6 @@ void dl_harq_process::new_tx(slot_point pdsch_slot,
   prev_tx_params.nof_layers  = nof_layers;
   prev_tx_params.is_fallback = is_fallback_;
   prev_tx_params.tb[0].emplace();
-  // NOTE: Correct value will be set when \c save_alloc_params is called.
-  prev_tx_params.tb[0]->contains_srb_data = false;
   prev_tx_params.tb[1].reset();
   pucch_ack_to_receive = 0;
   chosen_ack           = mac_harq_ack_report_status::dtx;
@@ -239,8 +246,6 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
     if (tb_tx_req[i] == tb_tx_request::newtx) {
       base_type::new_tx_tb_common(i, max_harq_nof_retxs, harq_bit_idx);
       prev_tx_params.tb[i].emplace();
-      // NOTE: Correct value will be set when \c save_alloc_params is called.
-      prev_tx_params.tb[i]->contains_srb_data = false;
     } else if (tb_tx_req[i] == tb_tx_request::retx) {
       base_type::new_retx_tb_common(i, harq_bit_idx);
     } else {
@@ -267,15 +272,26 @@ dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, std::
   if (pucch_ack_to_receive <= 1) {
     // Case: This is the last HARQ-ACK that is expected for this HARQ process.
 
-    base_type::ack_info_common(tb_idx, chosen_ack == mac_harq_ack_report_status::ack);
-    if (chosen_ack != mac_harq_ack_report_status::ack and empty(tb_idx)) {
-      logger.info(id,
-                  "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                  tb_idx,
-                  prev_tx_params.tb[tb_idx]->tbs_bytes,
-                  max_nof_harq_retxs(tb_idx));
+    bool is_ack = chosen_ack == mac_harq_ack_report_status::ack;
+    base_type::ack_info_common(tb_idx, is_ack);
+    if (is_ack) {
+      return status_update::acked;
     }
-    return chosen_ack == mac_harq_ack_report_status::ack ? status_update::acked : status_update::nacked;
+    if (empty(tb_idx)) {
+      if (this->tb_array[tb_idx].cancelled) {
+        logger.debug(id,
+                     "Discarding HARQ process tb={} with tbs={}. Cause: HARQ process was cancelled",
+                     tb_idx,
+                     prev_tx_params.tb[tb_idx]->tbs_bytes);
+      } else {
+        logger.info(id,
+                    "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                    tb_idx,
+                    prev_tx_params.tb[tb_idx]->tbs_bytes,
+                    max_nof_harq_retxs(tb_idx));
+      }
+    }
+    return status_update::nacked;
   }
 
   // Case: This is not the last PUCCH HARQ-ACK that is expected for this HARQ process.
@@ -288,9 +304,7 @@ dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, std::
   return status_update::no_update;
 }
 
-void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx,
-                                        const pdsch_information&     pdsch,
-                                        bool                         contains_srb_data)
+void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch)
 {
   unsigned tb_idx = empty(0) ? 1 : 0;
   for (const pdsch_codeword& cw : pdsch.codewords) {
@@ -298,9 +312,9 @@ void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx,
     prev_tx_params.tb[tb_idx]->mcs_table = cw.mcs_table;
     prev_tx_params.tb[tb_idx]->mcs       = cw.mcs_index;
     if (tb(tb_idx).nof_retxs == 0) {
-      prev_tx_params.tb[tb_idx]->tbs_bytes         = cw.tb_size_bytes;
-      prev_tx_params.tb[tb_idx]->olla_mcs          = ctx.olla_mcs;
-      prev_tx_params.tb[tb_idx]->contains_srb_data = contains_srb_data;
+      prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;
+      prev_tx_params.tb[tb_idx]->olla_mcs  = ctx.olla_mcs;
+      prev_tx_params.tb[tb_idx]->slice_id  = ctx.slice_id;
     } else {
       srsran_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                     "DCI format and RNTI type cannot change during DL HARQ retxs");
@@ -331,7 +345,6 @@ void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
   // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_tx_tb_common(0, max_harq_retxs, 0);
   prev_tx_params = {};
-  harq_cancelled = false;
 }
 
 void ul_harq_process::new_retx(slot_point pusch_slot)
@@ -348,8 +361,8 @@ int ul_harq_process::crc_info(bool ack)
       return (int)prev_tx_params.tbs_bytes;
     }
     if (empty()) {
-      if (harq_cancelled) {
-        logger.info(id, "Discarding HARQ with tbs={}. Cause: HARQ process was cancelled", prev_tx_params.tbs_bytes);
+      if (this->tb_array[0].cancelled) {
+        logger.debug(id, "Discarding HARQ with tbs={}. Cause: HARQ process was cancelled", prev_tx_params.tbs_bytes);
       } else {
         logger.info(id,
                     "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
@@ -375,6 +388,7 @@ void ul_harq_process::save_alloc_params(const ul_harq_sched_context& ctx, const 
     prev_tx_params.dci_cfg_type = ctx.dci_cfg_type;
     prev_tx_params.olla_mcs     = ctx.olla_mcs;
     prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
+    prev_tx_params.slice_id     = ctx.slice_id;
   } else {
     srsran_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during HARQ retxs");
@@ -384,7 +398,6 @@ void ul_harq_process::save_alloc_params(const ul_harq_sched_context& ctx, const 
 
 void ul_harq_process::cancel_harq_retxs()
 {
-  harq_cancelled = true;
   base_type::cancel_harq_retxs(0);
 }
 

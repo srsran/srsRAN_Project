@@ -149,8 +149,6 @@ private:
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits;
   /// Buffer for storing the codeblock symbols.
   std::array<ci8_t, pdsch_constants::CODEWORD_MAX_SYMBOLS> temp_cb_symbols;
-  /// Temporary rate match buffer.
-  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> rm_buffer;
 };
 
 } // namespace srsran

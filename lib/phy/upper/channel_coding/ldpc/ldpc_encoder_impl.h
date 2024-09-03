@@ -26,15 +26,19 @@
 
 #include "ldpc_graph_impl.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
 
 namespace srsran {
 
-/// Template LDPC encoder.
-class ldpc_encoder_impl : public ldpc_encoder
+/// \brief LDPC encoder implementation outline.
+///
+/// This class defines the main steps of the encoder algorithm by means of virtual methods. Derived classes provide
+/// a number of implementations of these methods that leverage different instruction sets.
+class ldpc_encoder_impl : public ldpc_encoder, private ldpc_encoder_buffer
 {
 public:
   // See interface for the documentation.
-  void encode(bit_buffer& output, const bit_buffer& input, const codeblock_metadata::tb_common_metadata& cfg) override;
+  ldpc_encoder_buffer& encode(const bit_buffer& input, const codeblock_metadata::tb_common_metadata& cfg) override;
 
 private:
   /// Initializes the encoder inner variables.
@@ -48,10 +52,10 @@ private:
   /// Computes the shortest possible codeword (systematic part plus high-rate region, that is the first
   /// 4 x lifting size redundancy bits).
   virtual void encode_high_rate() = 0;
-  /// Computes the rest of the redundancy bits (extension region).
-  virtual void encode_ext_region() = 0;
-  /// Moves relevant encoded bits from the internal register to the output vector.
-  virtual void write_codeblock(bit_buffer& out) = 0;
+  // See ldpc_encoder_buffer interface for documentation.
+  virtual void write_codeblock(span<uint8_t> data, unsigned offset) const override = 0;
+  // See ldpc_encoder_buffer interface for documentation.
+  unsigned get_codeblock_length() const override;
 
 protected:
   /// Number of base graph parity nodes in the high-rate region.

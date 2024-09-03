@@ -44,6 +44,7 @@ protected:
   upper_phy_rx_symbol_handler_impl           rx_handler;
   prach_buffer_spy                           buffer_dummy;
   resource_grid_dummy                        rg;
+  shared_resource_grid_spy                   shared_rg;
 
   void handle_prach_symbol()
   {
@@ -71,7 +72,7 @@ protected:
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 0);
-      rx_handler.handle_rx_symbol(ctx, rg.get_reader());
+      rx_handler.handle_rx_symbol(ctx, shared_rg.get_grid());
     }
   }
 
@@ -92,7 +93,7 @@ protected:
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 1);
-      rx_handler.handle_rx_symbol(ctx, rg.get_reader());
+      rx_handler.handle_rx_symbol(ctx, shared_rg.get_grid());
     }
   }
 
@@ -112,7 +113,7 @@ protected:
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 0);
-      rx_handler.handle_rx_symbol(ctx, rg.get_reader());
+      rx_handler.handle_rx_symbol(ctx, shared_rg.get_grid());
     }
   }
 
@@ -120,7 +121,8 @@ protected:
     rm_buffer_pool(create_rx_buffer_pool(rx_buffer_pool_config{16, 2, 2, 16})),
     ul_processor_pool(create_ul_processor_pool()),
     pdu_repo(2),
-    rx_handler(*ul_processor_pool, pdu_repo, rm_buffer_pool->get_pool(), rx_results_wrapper)
+    rx_handler(*ul_processor_pool, pdu_repo, rm_buffer_pool->get_pool(), rx_results_wrapper),
+    shared_rg(rg)
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
     srslog::init();

@@ -60,7 +60,7 @@ void pusch_decoder_empty_impl::decoder_buffer_impl::new_data(span<uint8_t>      
 
   // Save inputs.
   rm_buffer = std::move(rm_buffer_);
-  srsran_assert(rm_buffer.is_valid(), "Invalid buffer.");
+  srsran_assert(rm_buffer, "Invalid buffer.");
   notifier       = &notifier_;
   is_new_data    = cfg.new_data;
   softbits_count = 0;

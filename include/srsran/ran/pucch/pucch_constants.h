@@ -79,5 +79,13 @@ static constexpr unsigned MAX_NOF_LLR = MAX_NOF_RE * 2;
 /// Information Element \e PUCCH-FormatConfig.
 static constexpr float MAX_CODE_RATE = 0.80F;
 
+/// [Implementation-defined] Maximum number of PUCCH resources in a cell.
+constexpr size_t MAX_NOF_CELL_PUCCH_RESOURCES = 256;
+
+/// Maximum number of common PUCCH resources in a cell.
+/// \remark See TS 38.331, section 9.2.1, maximum value is given by the number of possible values of r_PUCCH, which
+/// is 16.
+constexpr size_t MAX_NOF_CELL_COMMON_PUCCH_RESOURCES = 16;
+
 } // namespace pucch_constants
 } // namespace srsran

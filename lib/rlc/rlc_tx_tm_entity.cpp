@@ -50,7 +50,7 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                 ue_executor_,
                 timers),
   cfg(config),
-  sdu_queue(cfg.queue_size, logger),
+  sdu_queue(cfg.queue_size, cfg.queue_size_bytes, logger),
   pcap_context(ue_index, rb_id_, /* is_uplink */ false)
 {
   metrics_low.metrics_set_mode(rlc_mode::tm);
@@ -92,16 +92,20 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 {
   size_t grant_len = mac_sdu_buf.size();
   logger.log_debug("MAC opportunity. grant_len={}", grant_len);
+  std::chrono::time_point<std::chrono::steady_clock> pull_begin;
+  if (metrics_high.is_enabled()) {
+    pull_begin = std::chrono::steady_clock::now();
+  }
 
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
-    logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue.get_state());
     if (not sdu_queue.read(sdu)) {
       logger.log_debug("SDU queue empty. grant_len={}", grant_len);
       return 0;
     }
     logger.log_debug("Read SDU. pdcp_sn={} sdu_len={}", sdu.pdcp_sn, sdu.buf.length());
   }
+  rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
 
   size_t sdu_len = sdu.buf.length();
   if (sdu_len > grant_len) {
@@ -112,7 +116,7 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
   if (sdu.pdcp_sn.has_value()) {
-    upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
+    upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), queue_state.n_bytes);
   }
 
   // In TM there is no header, just pass the plain SDU
@@ -126,11 +130,16 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   // Release SDU
   sdu.buf.clear();
 
-  // Update metrics
-  metrics_low.metrics_add_pdus_no_segmentation(1, sdu_len);
-
   // Push PDU into PCAP.
   pcap.push_pdu(pcap_context, mac_sdu_buf.subspan(0, pdu_len));
+
+  // Update metrics
+  metrics_low.metrics_add_pdus_no_segmentation(1, sdu_len);
+  if (metrics_low.is_enabled()) {
+    std::chrono::time_point pull_end   = std::chrono::steady_clock::now();
+    auto                    pull_delta = std::chrono::duration_cast<std::chrono::nanoseconds>(pull_end - pull_begin);
+    metrics_low.metrics_add_pdu_latency_ns(pull_delta.count());
+  }
 
   return pdu_len;
 }

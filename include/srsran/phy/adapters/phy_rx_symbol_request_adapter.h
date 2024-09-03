@@ -45,7 +45,7 @@ public:
   }
 
   // See interface for documentation.
-  void on_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) override
+  void on_uplink_slot_request(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
     report_fatal_error_if_not(rx_symbol_request_handler, "Adapter is not connected.");
 

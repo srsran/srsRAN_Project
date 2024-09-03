@@ -84,6 +84,9 @@ private:
   up_transport_layer_info   ul_tnl_info;
   task_executor&            ul_exec;
 
+  /// Sentinel value representing a not-yet set PDCP SN
+  static constexpr uint32_t unset_pdcp_sn = UINT32_MAX;
+
   /// Downlink notification timer that triggers periodic transmission of discard blocks towards lower layers. The
   /// purpose of this timer is to avoid excessive downlink notifications for every PDCP SN that is discarded by upper
   /// layers.
@@ -92,6 +95,11 @@ private:
   /// UE inactivity timer that is injected from parent entities. The timer must run in the UL executor!
   /// The timer shall be restarted on each UL PDU (= UL activity) and on each transmit notification (= DL activity).
   unique_timer& ue_inactivity_timer;
+
+  /// Holds the last highest transmitted PDCP SN that was reported to upper layers
+  uint32_t notif_highest_transmitted_pdcp_sn = unset_pdcp_sn;
+  /// Holds the last highest delivered PDCP SN that was reported to upper layers
+  uint32_t notif_highest_delivered_pdcp_sn = unset_pdcp_sn;
 
   /// Collection of pending \c nru_pdcp_sn_discard_block objects.
   nru_pdcp_sn_discard_blocks discard_blocks;

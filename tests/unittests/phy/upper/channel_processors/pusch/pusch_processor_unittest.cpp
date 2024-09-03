@@ -200,15 +200,15 @@ protected:
     pdu.nof_tx_layers = 1;
     pdu.rx_ports.resize(nof_rx_ports);
     std::generate(pdu.rx_ports.begin(), pdu.rx_ports.end(), []() { return rx_port_dist(rgen); });
-    pdu.dmrs                        = dmrs_type::TYPE1;
-    pdu.scrambling_id               = scrambling_id_dist(rgen);
-    pdu.n_scid                      = n_scid_dist(rgen) == 0;
-    pdu.nof_cdm_groups_without_data = 2;
-    pdu.freq_alloc                  = rb_allocation::make_type1(rb_alloc_start, rb_alloc_count);
-    pdu.start_symbol_index          = start_symbol_index_dist(rgen);
-    pdu.nof_symbols                 = nof_symbols_slot - pdu.start_symbol_index;
-    pdu.tbs_lbrm                    = units::bytes(tbs_lbrm_bytes_dist(rgen));
-    pdu.dmrs_symbol_mask            = symbol_slot_mask(nof_symbols_slot);
+    pdu.dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs_type::TYPE1,
+                                                                 .scrambling_id               = scrambling_id_dist(rgen),
+                                                                 .n_scid                      = n_scid_dist(rgen) == 0,
+                                                                 .nof_cdm_groups_without_data = 2};
+    pdu.freq_alloc         = rb_allocation::make_type1(rb_alloc_start, rb_alloc_count);
+    pdu.start_symbol_index = start_symbol_index_dist(rgen);
+    pdu.nof_symbols        = nof_symbols_slot - pdu.start_symbol_index;
+    pdu.tbs_lbrm           = units::bytes(tbs_lbrm_bytes_dist(rgen));
+    pdu.dmrs_symbol_mask   = symbol_slot_mask(nof_symbols_slot);
 
     for (unsigned i_symbol = pdu.start_symbol_index, i_symbol_end = pdu.start_symbol_index + pdu.nof_symbols;
          i_symbol != i_symbol_end;
@@ -319,7 +319,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   unsigned nof_dmrs_symbols = pdu.dmrs_symbol_mask.count();
 
   // Calculate the total number of DM-RS per PRB.
-  unsigned nof_dmrs_per_prb = pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data * nof_dmrs_symbols;
+  const auto& dmrs_config = std::get<pusch_processor::dmrs_configuration>(pdu.dmrs);
+  unsigned    nof_dmrs_per_prb =
+      dmrs_config.dmrs.nof_dmrs_per_rb() * dmrs_config.nof_cdm_groups_without_data * nof_dmrs_symbols;
 
   // Calculate the mnumber of data RE per PRB.
   unsigned nof_re_per_prb = NRE * pdu.nof_symbols - nof_dmrs_per_prb;
@@ -348,9 +350,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ulsch_config.nof_rb                = rb_mask.count();
   ulsch_config.start_symbol_index    = pdu.start_symbol_index;
   ulsch_config.nof_symbols           = pdu.nof_symbols;
-  ulsch_config.dmrs_type             = pdu.dmrs == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2;
-  ulsch_config.dmrs_symbol_mask      = pdu.dmrs_symbol_mask;
-  ulsch_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
+  ulsch_config.dmrs_type = (dmrs_config.dmrs == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2);
+  ulsch_config.dmrs_symbol_mask            = pdu.dmrs_symbol_mask;
+  ulsch_config.nof_cdm_groups_without_data = dmrs_config.nof_cdm_groups_without_data;
   ulsch_config.nof_layers                  = pdu.nof_tx_layers;
   ulsch_config.contains_dc                 = false;
   ulsch_information ulsch_info             = get_ulsch_information(ulsch_config);
@@ -389,19 +391,21 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Assert channel estimator inputs.
   ASSERT_EQ(1, estimator_spy->get_entries().size());
   const dmrs_pusch_estimator_spy::entry_t& estimator_entry = estimator_spy->get_entries().front();
+  const auto&                              dmrs_sequence_config =
+      std::get<dmrs_pusch_estimator::pseudo_random_sequence_configuration>(estimator_entry.config.sequence_config);
   ASSERT_EQ(&rg_spy, estimator_entry.grid);
   ASSERT_EQ(pdu.slot, estimator_entry.config.slot);
-  ASSERT_EQ(pdu.dmrs, estimator_entry.config.type);
-  ASSERT_EQ(pdu.scrambling_id, estimator_entry.config.scrambling_id);
-  ASSERT_EQ(pdu.n_scid, estimator_entry.config.n_scid);
-  ASSERT_EQ(convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data)),
+  ASSERT_EQ(dmrs_config.dmrs, dmrs_sequence_config.type);
+  ASSERT_EQ(dmrs_config.scrambling_id, dmrs_sequence_config.scrambling_id);
+  ASSERT_EQ(dmrs_config.n_scid, dmrs_sequence_config.n_scid);
+  ASSERT_EQ(convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(dmrs_config.nof_cdm_groups_without_data)),
             estimator_entry.config.scaling);
   ASSERT_EQ(pdu.cp, estimator_entry.config.c_prefix);
   ASSERT_EQ(pdu.dmrs_symbol_mask, estimator_entry.config.symbols_mask);
   ASSERT_EQ(rb_mask, estimator_entry.config.rb_mask);
   ASSERT_EQ(pdu.start_symbol_index, estimator_entry.config.first_symbol);
   ASSERT_EQ(pdu.nof_symbols, estimator_entry.config.nof_symbols);
-  ASSERT_EQ(pdu.nof_tx_layers, estimator_entry.config.nof_tx_layers);
+  ASSERT_EQ(pdu.nof_tx_layers, dmrs_sequence_config.nof_tx_layers);
   ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(estimator_entry.config.rx_ports));
 
   // Assert demodulator inputs.
@@ -415,8 +419,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(pdu.start_symbol_index, demodulator_entry.config.start_symbol_index);
   ASSERT_EQ(pdu.nof_symbols, demodulator_entry.config.nof_symbols);
   ASSERT_EQ(pdu.dmrs_symbol_mask, demodulator_entry.config.dmrs_symb_pos);
-  ASSERT_EQ(pdu.dmrs, demodulator_entry.config.dmrs_config_type);
-  ASSERT_EQ(pdu.nof_cdm_groups_without_data, demodulator_entry.config.nof_cdm_groups_without_data);
+  ASSERT_EQ(dmrs_config.dmrs, demodulator_entry.config.dmrs_config_type);
+  ASSERT_EQ(dmrs_config.nof_cdm_groups_without_data, demodulator_entry.config.nof_cdm_groups_without_data);
   ASSERT_EQ(pdu.n_id, demodulator_entry.config.n_id);
   ASSERT_EQ(pdu.nof_tx_layers, demodulator_entry.config.nof_tx_layers);
   ASSERT_EQ(false, demodulator_entry.config.enable_transform_precoding);
@@ -433,9 +437,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(pdu.start_symbol_index, demux_entry.config.start_symbol_index);
   ASSERT_EQ(pdu.nof_symbols, demux_entry.config.nof_symbols);
   ASSERT_EQ(ulsch_info.nof_harq_ack_rvd.value(), demux_entry.config.nof_harq_ack_rvd);
-  ASSERT_EQ(pdu.dmrs, demux_entry.config.dmrs);
+  ASSERT_EQ(dmrs_config.dmrs, demux_entry.config.dmrs);
   ASSERT_EQ(pdu.dmrs_symbol_mask, demux_entry.config.dmrs_symbol_mask);
-  ASSERT_EQ(pdu.nof_cdm_groups_without_data, demux_entry.config.nof_cdm_groups_without_data);
+  ASSERT_EQ(dmrs_config.nof_cdm_groups_without_data, demux_entry.config.nof_cdm_groups_without_data);
 
   // Assert decoder inputs only if the codeword is present.
   if (pdu.codeword.has_value()) {

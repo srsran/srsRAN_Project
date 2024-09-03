@@ -45,7 +45,7 @@ public:
   /// Safe execution from: pcell_executor
   ///
   /// \param highest_pdcp_sn The highest transmitted PDCP sequence number
-  virtual void handle_transmit_notification(uint32_t highest_pdcp_sn) = 0;
+  virtual void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes) = 0;
 
   /// \brief Handles a delivery notification from lower layers (i.e. from RLC AM).
   ///

@@ -116,6 +116,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_outside_pr
 
 TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_before_prach_prbs_do_not_write)
 {
+  repo->clear(slot);
   buffer_context.pusch_scs = subcarrier_spacing::kHz60;
   buffer_context.format    = prach_format_type::zero;
   unsigned nof_symbols_    = 1U;
@@ -138,6 +139,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_before_pra
 
 TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prbs_at_the_beginning_write_the_expected_re)
 {
+  repo->clear(slot);
   buffer_context.pusch_scs = subcarrier_spacing::kHz60;
   buffer_context.format    = prach_format_type::zero;
   unsigned nof_symbols_    = 1U;
@@ -160,6 +162,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prbs_at_the_beginning_w
 
 TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_message)
 {
+  repo->clear(slot);
   buffer_context.pusch_scs = subcarrier_spacing::kHz60;
   buffer_context.format    = prach_format_type::zero;
   preamble_length          = 839;
@@ -183,6 +186,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_m
 
 TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_message_all_prbs)
 {
+  repo->clear(slot);
   buffer_context.pusch_scs = subcarrier_spacing::kHz60;
   buffer_context.format    = prach_format_type::zero;
   preamble_length          = 839;
@@ -227,6 +231,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_in_one_pac
 
 TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_with_start_symbol_offset_passes)
 {
+  repo->clear(slot);
   buffer = prach_buffer_dummy(nof_symbols, is_long_preamble(buffer_context.format));
   // Offset the start symbol.
   buffer_context.start_symbol = 2;

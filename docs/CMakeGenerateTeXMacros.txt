@@ -1,0 +1,25 @@
+#
+# Copyright 2021-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/math_macros.tex
+  "\\renewcommand{\\Re}{\\mathbb{R}\\mathrm{e}}\n"
+  "\\renewcommand{\\Im}{\\mathbb{I}\\mathrm{m}}\n"
+  "\n"
+  "\\newcommand{\\ls}{\\mathrm{LS}}\n"
+  "\\newcommand{\\mj}{\\mathrm{j}}\n"
+  "\\newcommand{\\me}{\\mathrm{e}}\n"
+  "\\newcommand{\\sign}{\\mathrm{sign}}\n"
+  "\n"
+  "\\newcommand{\\abs}[1]{\\lvert #1 \\rvert}\n"
+  "\\newcommand{\\norm}[1]{\\lVert #1 \\rVert}\n"
+  "\\newcommand{\\conj}[1]{\\overline{#1}}\n"
+  "\n"
+  "\\newcommand{\\EV}{\\mathbb{E}}\n"
+  "\n"
+  "\\newcommand{\\textup}[1]{\\text{#1}}\n"
+)

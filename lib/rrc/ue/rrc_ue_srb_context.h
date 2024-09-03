@@ -105,11 +105,9 @@ public:
                           security::ciphering_enabled ciph_enabled,
                           security::sec_128_as_config sec_cfg) const
   {
-    // Configure tx security
+    // Configure rx security
     auto& pdcp_rx_ctrl = pdcp_context.entity->get_rx_upper_control_interface();
-    pdcp_rx_ctrl.configure_security(sec_cfg);
-    pdcp_rx_ctrl.set_integrity_protection(int_enabled);
-    pdcp_rx_ctrl.set_ciphering(ciph_enabled);
+    pdcp_rx_ctrl.configure_security(sec_cfg, int_enabled, ciph_enabled);
   }
 
   // Full security setup. Used e.g., with SRB2
@@ -121,9 +119,7 @@ public:
 
     // Configure tx security
     auto& pdcp_rx_ctrl = pdcp_context.entity->get_rx_upper_control_interface();
-    pdcp_rx_ctrl.configure_security(sec_cfg);
-    pdcp_rx_ctrl.set_integrity_protection(security::integrity_enabled::on);
-    pdcp_rx_ctrl.set_ciphering(security::ciphering_enabled::on);
+    pdcp_rx_ctrl.configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
   }
 
   // Add ciphering and integrity protection to an RRC PDU.

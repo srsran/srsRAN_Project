@@ -29,6 +29,7 @@
 #include "srsran/du_high/du_high.h"
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/scheduler/config/cell_config_builder_params.h"
 
 namespace srsran {
 namespace srs_du {
@@ -54,7 +55,9 @@ bool is_ue_context_release_complete_valid(const f1ap_message& msg,
 
 /// Parameters to set the DU-high environment simulator.
 struct du_high_env_sim_params {
-  unsigned nof_cells = 1;
+  unsigned                                  nof_cells = 1;
+  std::optional<cell_config_builder_params> builder_params;
+  std::optional<pucch_builder_params>       pucch_cfg;
 };
 
 class du_high_env_simulator
@@ -69,11 +72,24 @@ public:
   /// Transfer) until the CU receives the RRC Setup Complete (via UL RRC Message Transfer).
   bool run_rrc_setup(rnti_t rnti);
 
+  /// Run the RRC reject procedure for a given RNTI.
+  bool run_rrc_reject(rnti_t rnti);
+
+  /// Run the RRC Reestablishment procedure for the given RNTI from the moment the CU-CP sends an RRC Reestablishment
+  /// (via DL RRC Message Transfer) until the CU receives the RRC Reestablishment Complete (via UL RRC Message
+  /// Transfer).
+  enum class reestablishment_stage { reest_complete, reconf_complete };
+  [[nodiscard]] bool run_rrc_reestablishment(rnti_t                rnti,
+                                             rnti_t                old_rnti,
+                                             reestablishment_stage stop_at = reestablishment_stage::reconf_complete);
+
   bool run_ue_context_setup(rnti_t rnti);
+
+  bool run_ue_context_release(rnti_t rnti, srb_id_t srb_id = srb_id_t::srb1);
 
   void run_slot();
 
-  bool run_until(unique_function<bool()> condition, unsigned max_slot_count = 1000);
+  bool run_until(unique_function<bool()> condition, std::optional<unsigned> max_slot_count = std::nullopt);
 
   virtual void handle_slot_results(du_cell_index_t cell_index);
 
@@ -92,7 +108,7 @@ public:
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-private:
+protected:
   struct ue_sim_context {
     struct srb_context {
       uint32_t next_pdcp_sn = 0;
@@ -104,6 +120,12 @@ private:
     du_cell_index_t                       pcell_index;
     std::array<srb_context, MAX_NOF_SRBS> srbs;
   };
+
+  [[nodiscard]] bool
+  await_dl_msg_sched(const ue_sim_context& u, lcid_t lcid, std::optional<unsigned> max_slot_count = std::nullopt);
+
+  [[nodiscard]] bool
+  send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u, const f1ap_message& dl_msg, uint32_t rlc_ul_sn);
 
   std::unordered_map<rnti_t, ue_sim_context> ues;
 

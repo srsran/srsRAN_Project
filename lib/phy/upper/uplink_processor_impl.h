@@ -165,17 +165,17 @@ public:
   void process_pusch(span<uint8_t>                      data,
                      unique_rx_buffer                   rm_buffer,
                      upper_phy_rx_results_notifier&     notifier,
-                     const resource_grid_reader&        grid,
+                     const shared_resource_grid&        grid,
                      const uplink_processor::pusch_pdu& pdu) override;
 
   // See interface for documentation.
   void process_pucch(upper_phy_rx_results_notifier& notifier,
-                     const resource_grid_reader&    grid,
+                     const shared_resource_grid&    grid,
                      const pucch_pdu&               pdu) override;
 
   // See interface for documentation.
   void
-  process_srs(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const srs_pdu& pdu) override;
+  process_srs(upper_phy_rx_results_notifier& notifier, const shared_resource_grid& grid, const srs_pdu& pdu) override;
 
 private:
   /// Maximum number of PUSCH notifier adaptors.

@@ -55,16 +55,16 @@ build_fapi_adaptors(const du_cell_config& du_cell, du_high_wrapper_sector_depend
 std::unique_ptr<du_high_wrapper> srsran::make_du_high_wrapper(const du_high_wrapper_config&  config,
                                                               du_high_wrapper_dependencies&& wrapper_dependencies)
 {
-  srsran_assert(config.du_hi.cells.size() == wrapper_dependencies.sectors.size(),
+  srsran_assert(config.du_hi.ran.cells.size() == wrapper_dependencies.sectors.size(),
                 "DU high number of cells '{}' does not match number sectors '{}' in wrapper dependencies",
-                config.du_hi.cells.size(),
+                config.du_hi.ran.cells.size(),
                 wrapper_dependencies.sectors.size());
 
   du_high_wrapper_impl_dependencies dependencies;
 
   for (unsigned i = 0, e = wrapper_dependencies.sectors.size(); i != e; ++i) {
     dependencies.du_high_adaptor.push_back(
-        build_fapi_adaptors(config.du_hi.cells[i], wrapper_dependencies.sectors[i], i));
+        build_fapi_adaptors(config.du_hi.ran.cells[i], wrapper_dependencies.sectors[i], i));
   }
 
   auto& logger        = srslog::fetch_basic_logger("DU");

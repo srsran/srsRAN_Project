@@ -34,10 +34,10 @@
 
 namespace srsran {
 
-// Number of bits in one byte.
+/// Number of bits in one byte.
 static constexpr unsigned BITS_PER_BYTE = 8;
 
-// Maximum TBS that implies a 16-bit CRC.
+/// Maximum TBS that implies a 16-bit CRC.
 constexpr unsigned MAX_BITS_CRC16 = 3824;
 
 /// Implementation of the PUSCH decoder.

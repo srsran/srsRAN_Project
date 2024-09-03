@@ -64,8 +64,8 @@ cell_cfg:
     nof_dl_symbols: 7
     nof_dl_slots: 7
     nof_ul_slots: 2
-  # nof_antennas_dl: 1 - Set in gnb call. Please check it in agent.log
-  # nof_antennas_ul: 1 - Set in gnb call. Please check it in agent.log
+  nof_antennas_dl: {{nof_antennas_dl}}
+  nof_antennas_ul: {{nof_antennas_ul}}
 
 test_mode:
   test_ue:

@@ -24,6 +24,7 @@
 
 #include "../support/uplink_context_repository.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 namespace ofh {

@@ -42,7 +42,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   static const unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 
   // Convert list of PRACH subframe occasions to bitmap.
-  for (const unsigned pos : prach_cfg.subframe) {
+  for (const unsigned pos : prach_cfg.slots) {
     prach_subframe_occasion_bitmap.set(pos, true);
   }
 
@@ -154,7 +154,9 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
     }
   }
 
-  if (sl.sfn() % prach_cfg.x != prach_cfg.y) {
+  bool prach_occasion_sfn = std::any_of(
+      prach_cfg.y.begin(), prach_cfg.y.end(), [this, sl](uint8_t y) { return sl.sfn() % prach_cfg.x != y; });
+  if (prach_occasion_sfn) {
     // PRACH is not enabled in this SFN.
     return;
   }

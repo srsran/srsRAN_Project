@@ -138,6 +138,8 @@ protected:
     }
   }
 
+  LowerPhyUplinkProcessorFixture() : rg_spy(rg_reader_spy, rg_writer_spy), shared_rg_spy(rg_spy) {}
+
   void SetUp() override
   {
     ASSERT_NE(puxch_proc_factory, nullptr);
@@ -176,8 +178,12 @@ protected:
   static std::shared_ptr<puxch_processor_factory>      puxch_proc_factory;
 
   puxch_processor_configuration    config;
-  std::unique_ptr<puxch_processor> puxch_proc     = nullptr;
   ofdm_symbol_demodulator_spy*     ofdm_demod_spy = nullptr;
+  resource_grid_reader_spy         rg_reader_spy;
+  resource_grid_writer_spy         rg_writer_spy;
+  resource_grid_spy                rg_spy;
+  shared_resource_grid_spy         shared_rg_spy;
+  std::unique_ptr<puxch_processor> puxch_proc = nullptr;
 };
 
 std::mt19937                                  LowerPhyUplinkProcessorFixture::rgen(0);
@@ -305,8 +311,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowFloodRequest)
         rg_context.sector = dist_sector_id(rgen);
 
         // Request resource grid demodulation for the current slot.
-        resource_grid_spy rg_spy;
-        puxch_proc->get_request_handler().handle_request(rg_spy, rg_context);
+        puxch_proc->get_request_handler().handle_request(shared_rg_spy.get_grid(), rg_context);
 
         for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
           unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
@@ -339,7 +344,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowFloodRequest)
           for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
             const auto& ofdm_demod_entry = ofdm_demod_entries[i_port];
             ASSERT_EQ(span<const cf_t>(ofdm_demod_entry.input), buffer[i_port]);
-            ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(&rg_spy.get_writer()));
+            ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(&rg_writer_spy));
             ASSERT_EQ(ofdm_demod_entry.port_index, i_port);
             ASSERT_EQ(ofdm_demod_entry.symbol_index, i_symbol_subframe);
           }
@@ -376,27 +381,25 @@ TEST_P(LowerPhyUplinkProcessorFixture, LateRequest)
   unsigned late_slot    = 2;
   unsigned next_slot    = 4;
 
-  resource_grid_spy initial_rg_spy(0, 0, 0);
-  resource_grid_spy late_rg_spy(0, 0, 0);
-  resource_grid_spy next_rg_spy(0, 0, 0);
+  shared_resource_grid shared_rg = shared_rg_spy.get_grid();
 
   // Initial request.
   resource_grid_context initial_rg_context;
   initial_rg_context.slot   = slot_point(to_numerology_value(scs), initial_slot);
   initial_rg_context.sector = sector_id;
-  puxch_proc->get_request_handler().handle_request(initial_rg_spy, initial_rg_context);
+  puxch_proc->get_request_handler().handle_request(shared_rg.copy(), initial_rg_context);
 
   // Late request.
   resource_grid_context late_rg_context;
   late_rg_context.slot   = slot_point(to_numerology_value(scs), late_slot);
   late_rg_context.sector = sector_id;
-  puxch_proc->get_request_handler().handle_request(late_rg_spy, late_rg_context);
+  puxch_proc->get_request_handler().handle_request(shared_rg.copy(), late_rg_context);
 
   // Next request.
   resource_grid_context next_rg_context;
   next_rg_context.slot   = slot_point(to_numerology_value(scs), next_slot);
   next_rg_context.sector = sector_id;
-  puxch_proc->get_request_handler().handle_request(next_rg_spy, next_rg_context);
+  puxch_proc->get_request_handler().handle_request(shared_rg.copy(), next_rg_context);
 
   for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
     for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot) {
@@ -429,12 +432,12 @@ TEST_P(LowerPhyUplinkProcessorFixture, LateRequest)
         // Assert OFDM demodulator call only for initial and next slot.
         const auto& ofdm_demod_entries = ofdm_demod_spy->get_demodulate_entries();
         if ((i_slot == initial_slot) || (i_slot == next_slot)) {
-          resource_grid_spy* rg_spy = (i_slot == initial_slot) ? &initial_rg_spy : &next_rg_spy;
+          resource_grid_spy* rg_spy_ptr = &rg_spy;
           ASSERT_EQ(ofdm_demod_entries.size(), nof_rx_ports);
           for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
             const auto& ofdm_demod_entry = ofdm_demod_entries[i_port];
             ASSERT_EQ(span<const cf_t>(ofdm_demod_entry.input), buffer[i_port]);
-            ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(rg_spy));
+            ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(rg_spy_ptr));
             ASSERT_EQ(ofdm_demod_entry.port_index, i_port);
             ASSERT_EQ(ofdm_demod_entry.symbol_index, i_symbol_subframe);
           }
@@ -475,7 +478,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, OverflowRequest)
   puxch_processor_notifier_spy puxch_proc_notifier_spy;
   puxch_proc->connect(puxch_proc_notifier_spy);
 
-  resource_grid_spy rg_spy;
+  shared_resource_grid shared_rg = shared_rg_spy.get_grid();
 
   // Generate requests.
   slot_point slot(to_numerology_value(scs), 0);
@@ -483,7 +486,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, OverflowRequest)
     resource_grid_context rg_context;
     rg_context.slot   = slot + i_request;
     rg_context.sector = sector_id;
-    puxch_proc->get_request_handler().handle_request(rg_spy, rg_context);
+    puxch_proc->get_request_handler().handle_request(shared_rg.copy(), rg_context);
 
     unsigned nof_expected_late = (i_request >= request_queue_size) ? (i_request - request_queue_size + 1) : 0;
     ASSERT_EQ(puxch_proc_notifier_spy.get_rx_symbol().size(), 0);

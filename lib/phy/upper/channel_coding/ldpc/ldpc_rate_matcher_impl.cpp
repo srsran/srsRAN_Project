@@ -90,16 +90,18 @@ void ldpc_rate_matcher_impl::init(const codeblock_metadata& cfg, unsigned block_
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
 }
 
-void ldpc_rate_matcher_impl::rate_match(bit_buffer& output, const bit_buffer& input, const codeblock_metadata& cfg)
+void ldpc_rate_matcher_impl::rate_match(bit_buffer&                output,
+                                        const ldpc_encoder_buffer& input,
+                                        const codeblock_metadata&  cfg)
 {
-  init(cfg, input.size(), output.size());
+  init(cfg, input.get_codeblock_length(), output.size());
 
   span<uint8_t> aux = span<uint8_t>(auxiliary_buffer).first(output.size());
-  select_bits(aux, input.first(buffer_length));
+  select_bits(aux, input);
   interleave_bits(output, aux);
 }
 
-void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, const bit_buffer& in) const
+void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, const ldpc_encoder_buffer& in) const
 {
   unsigned output_length = out.size();
   unsigned out_index     = 0;
@@ -126,7 +128,7 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, const bit_buffer& in
     }
 
     // Select input chunk interval. Stop the chunk at the first filler bit.
-    interval<unsigned> input_chunk_range(in_index, in.size());
+    interval<unsigned> input_chunk_range(in_index, buffer_length);
     if (!filler_bits_range.empty() && input_chunk_range.contains(filler_bits_range.start())) {
       input_chunk_range = {in_index, filler_bits_range.start()};
     }
@@ -135,7 +137,7 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, const bit_buffer& in
     unsigned count = std::min(input_chunk_range.length(), output_length - out_index);
 
     // Append the consecutive number of bits.
-    srsvec::bit_unpack(out.subspan(out_index, count), in, in_index);
+    in.write_codeblock(out.subspan(out_index, count), in_index);
     out_index += count;
 
     // Advance in_index the amount of written bits.

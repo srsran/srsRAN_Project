@@ -26,6 +26,7 @@
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
@@ -131,8 +132,14 @@ public:
       resource_grid_context rx_symb_context;
       rx_symb_context.sector = 0;
       rx_symb_context.slot   = context.slot;
-      resource_grid& rg      = ul_rg_pool->get_resource_grid(rx_symb_context);
-      rx_symb_req_notifier->on_uplink_slot_request(rx_symb_context, rg);
+
+      // Try to allocate a resource grid.
+      shared_resource_grid rg = ul_rg_pool->allocate_resource_grid(rx_symb_context);
+
+      // If the resource grid allocation fails, it aborts the slot request.
+      if (rg) {
+        rx_symb_req_notifier->on_uplink_slot_request(rx_symb_context, rg);
+      }
     }
 
     // Request PRACH capture if PRACH processing is enabled.
@@ -162,10 +169,21 @@ public:
     rg_context.slot   = context.slot;
 
     // Get a resource grid from the pool.
-    resource_grid& rg = dl_rg_pool->get_resource_grid(rg_context);
+    shared_resource_grid rg = dl_rg_pool->allocate_resource_grid(rg_context);
+
+    // Abort slot processing if the grid is not valid.
+    if (!rg) {
+      logger.warning(context.slot.sfn(), context.slot.slot_index(), "Invalid resource grid.");
+
+      // Raise TTI boundary and notify.
+      tti_boundary = true;
+      cvar_tti_boundary.notify_all();
+
+      return;
+    }
 
     // Set all the RE to zero.
-    rg.set_all_zero();
+    rg.get().set_all_zero();
 
     // Calculate SSB period in half-radio frame.
     unsigned ssb_period_hrf = ssb_config.period_ms / 5;
@@ -194,7 +212,7 @@ public:
         pdu.bch_payload       = {};
         pdu.ports             = {0};
 
-        ssb->process(rg.get_writer(), pdu);
+        ssb->process(rg.get().get_writer(), pdu);
         logger.info("SSB: phys_cell_id={}; ssb_idx={};", pdu.phys_cell_id, pdu.ssb_idx);
       }
     }
@@ -224,11 +242,11 @@ public:
       re_pattern grid_allocation(0, nof_subcs / NRE, 1, ~re_prb_mask(), ~symbol_slot_mask());
 
       // Map the data symbols to the grid.
-      resource_grid_mapper& mapper = rg.get_mapper();
+      resource_grid_mapper& mapper = rg->get_mapper();
       mapper.map(data_symbols, grid_allocation, precoding_config);
     }
 
-    gateway->send(rg_context, rg.get_reader());
+    gateway->send(rg_context, std::move(rg));
 
     // Raise TTI boundary and notify.
     tti_boundary = true;

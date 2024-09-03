@@ -82,7 +82,7 @@ class e2sm_kpm_meas_provider_test : public ::testing::Test
 
     du_metrics        = std::make_unique<e2_rlc_metrics_notifier>();
     f1ap_ue_id_mapper = std::make_unique<dummy_f1ap_ue_id_translator>();
-    du_meas_provider  = std::make_unique<e2sm_kpm_du_meas_provider_impl>(*f1ap_ue_id_mapper);
+    du_meas_provider  = std::make_unique<e2sm_kpm_du_meas_provider_impl>(*f1ap_ue_id_mapper, 30);
     e2sm_packer       = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
     e2sm_iface        = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
     gw                = std::make_unique<dummy_network_gateway_data_handler>();

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
 #include <mutex>
 
@@ -40,7 +41,7 @@ public:
     logger.set_level(log_level);
   }
 
-  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
+  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override
   {
     std::unique_lock<std::mutex> lock(mutex);
     logger.debug(context.slot.sfn(),

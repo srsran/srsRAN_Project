@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
+// This file was generated using the following MATLAB class on 30-07-2024 (seed 0):
 //   + "srsOFDMDemodulatorUnittest.m"
 
 #include "srsran/phy/lower/modulation/ofdm_demodulator.h"
@@ -64,6 +64,11 @@ static const std::vector<test_case_t> ofdm_demodulator_test_data = {
   {{{2, 96, 2048, cyclic_prefix::EXTENDED, 9, -0.24786, 587300000}, 5, 1}, {"test_data/ofdm_demodulator_test_input17.dat"}, {"test_data/ofdm_demodulator_test_output17.dat"}},
   {{{2, 192, 4096, cyclic_prefix::NORMAL, 138, 0.79273, 409800000}, 11, 0}, {"test_data/ofdm_demodulator_test_input18.dat"}, {"test_data/ofdm_demodulator_test_output18.dat"}},
   {{{2, 192, 4096, cyclic_prefix::EXTENDED, 129, -0.5615, 2965400000}, 8, 3}, {"test_data/ofdm_demodulator_test_input19.dat"}, {"test_data/ofdm_demodulator_test_output19.dat"}},
+  {{{3, 12, 256, cyclic_prefix::NORMAL, 8, -0.20632, 1101900000}, 4, 1}, {"test_data/ofdm_demodulator_test_input20.dat"}, {"test_data/ofdm_demodulator_test_output20.dat"}},
+  {{{3, 24, 512, cyclic_prefix::NORMAL, 8, -0.52499, 2907500000}, 2, 4}, {"test_data/ofdm_demodulator_test_input21.dat"}, {"test_data/ofdm_demodulator_test_output21.dat"}},
+  {{{3, 48, 1024, cyclic_prefix::NORMAL, 18, 0.34035, 2073300000}, 9, 7}, {"test_data/ofdm_demodulator_test_input22.dat"}, {"test_data/ofdm_demodulator_test_output22.dat"}},
+  {{{3, 96, 2048, cyclic_prefix::NORMAL, 43, 0.90053, 2675800000}, 8, 1}, {"test_data/ofdm_demodulator_test_input23.dat"}, {"test_data/ofdm_demodulator_test_output23.dat"}},
+  {{{3, 192, 4096, cyclic_prefix::NORMAL, 132, 0.9089, 1736000000}, 14, 4}, {"test_data/ofdm_demodulator_test_input24.dat"}, {"test_data/ofdm_demodulator_test_output24.dat"}},
     // clang-format on
 };
 

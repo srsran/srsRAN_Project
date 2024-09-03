@@ -22,12 +22,7 @@ add_subdirectory(buffer_pool)
 add_subdirectory(logger)
 
 set(SOURCES
-        metrics_log_helper.cpp
         e2_metric_connector_manager.cpp
-        metrics_hub.cpp
-        metrics_plotter_json.cpp
-        metrics_plotter_stdout.cpp
-        rlc_metrics_plotter_json.cpp
         stdin_command_dispatcher.cpp
         worker_manager.cpp)
 

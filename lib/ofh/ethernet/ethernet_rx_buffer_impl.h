@@ -43,8 +43,11 @@ public:
   /// Copy constructor is deleted.
   ethernet_rx_buffer_impl(ethernet_rx_buffer_impl& /**/) = delete;
 
-  /// Move assigment operator.
-  ethernet_rx_buffer_impl& operator=(ethernet_rx_buffer_impl&& other) = delete;
+  /// Copy assignment operator is deleted.
+  ethernet_rx_buffer_impl& operator=(const ethernet_rx_buffer_impl& other) = delete;
+
+  /// Move assignment operator.
+  ethernet_rx_buffer_impl& operator=(ethernet_rx_buffer_impl&& other) noexcept;
 
   /// Move constructor.
   ethernet_rx_buffer_impl(ethernet_rx_buffer_impl&& other) noexcept;

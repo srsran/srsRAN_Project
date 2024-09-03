@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 
 namespace srsran {
 namespace ofh {
@@ -36,7 +37,7 @@ class uplane_rx_symbol_notifier_spy : public uplane_rx_symbol_notifier
 
 public:
   // See interface for documentation.
-  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, const resource_grid_reader& grid) override
+  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid) override
   {
     new_uplink_symbol_function_called = true;
   }

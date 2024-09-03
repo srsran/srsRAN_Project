@@ -42,15 +42,13 @@ protected:
   class test_ue
   {
   public:
-    test_ue(ue_index_t ue_index_) : ue_index(ue_index_), rrc_ue_dl_nas_handler(ue_index_) {}
+    test_ue(ue_index_t ue_index_) : ue_index(ue_index_), rrc_ue_handler(ue_index_) {}
 
     ue_index_t                 ue_index = ue_index_t::invalid;
     std::optional<amf_ue_id_t> amf_ue_id;
     std::optional<ran_ue_id_t> ran_ue_id;
 
-    dummy_rrc_dl_nas_message_handler             rrc_ue_dl_nas_handler;
-    dummy_rrc_ue_radio_access_capability_handler rrc_ue_radio_access_cap_handler;
-    dummy_rrc_ue_handover_preparation_handler    rrc_ue_ho_prep_handler;
+    dummy_rrc_ngap_message_handler rrc_ue_handler;
   };
 
   ngap_test();
@@ -92,11 +90,10 @@ protected:
   manual_task_worker  ctrl_worker{128};
   cu_cp_configuration cu_cp_cfg;
 
-  ue_manager                       ue_mng{cu_cp_cfg};
-  dummy_n2_gateway                 n2_gw;
-  dummy_ngap_cu_cp_notifier        cu_cp_notifier{ue_mng};
-  dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;
-  std::unique_ptr<ngap_interface>  ngap;
+  ue_manager                      ue_mng{cu_cp_cfg};
+  dummy_n2_gateway                n2_gw;
+  dummy_ngap_cu_cp_notifier       cu_cp_notifier{ue_mng};
+  std::unique_ptr<ngap_interface> ngap;
 };
 
 } // namespace srs_cu_cp

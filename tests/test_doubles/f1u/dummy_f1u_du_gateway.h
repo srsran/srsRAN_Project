@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/f1u/du/f1u_gateway.h"
+#include <map>
 
 namespace srsran {
 namespace srs_du {
@@ -47,8 +48,11 @@ public:
 class cu_up_simulator : public f1u_du_gateway
 {
 public:
-  std::vector<srs_du::f1u_du_gateway_bearer_rx_notifier*> created_du_notifs;
-  std::vector<up_transport_layer_info>                    registered_dl_tnls;
+  struct bearer_context_t {
+    srs_du::f1u_du_gateway_bearer_rx_notifier* rx_notifier;
+    up_transport_layer_info                    dl_tnl_info;
+  };
+  std::map<std::pair<uint32_t, drb_id_t>, bearer_context_t> bearers;
 
   std::optional<uint32_t> last_ue_idx;
   std::optional<drb_id_t> last_drb_id;
@@ -62,8 +66,7 @@ public:
                                                           timer_factory                              timers,
                                                           task_executor& ue_executor) override
   {
-    created_du_notifs.push_back(&du_rx);
-    registered_dl_tnls.push_back(dl_up_tnl_info);
+    bearers.insert(std::make_pair(std::make_pair(ue_index, drb_id), bearer_context_t{&du_rx, dl_up_tnl_info}));
     last_ue_idx = ue_index;
     last_drb_id = drb_id;
     auto bearer = std::make_unique<f1u_gw_dummy_bearer>();
@@ -72,16 +75,15 @@ public:
 
   void remove_du_bearer(const up_transport_layer_info& dl_tnl) override
   {
-    for (unsigned i = 0; i != registered_dl_tnls.size(); ++i) {
-      if (dl_tnl == registered_dl_tnls[i]) {
-        registered_dl_tnls.erase(registered_dl_tnls.begin() + i);
-        created_du_notifs.erase(created_du_notifs.begin() + i);
+    for (const auto& [key, value] : bearers) {
+      if (value.dl_tnl_info == dl_tnl) {
+        bearers.erase(key);
         break;
       }
     }
   }
 
-  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) override { return std::string("127.0.0.1"); }
+  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) const override { return std::string("127.0.0.1"); }
 };
 
 } // namespace srs_du

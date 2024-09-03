@@ -24,6 +24,8 @@
 #include "du_processor_config.h"
 #include "du_processor_factory.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rrc/rrc_config.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include <thread>
@@ -32,7 +34,9 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.node.gnb_id, cfg.cu_cp.node.plmn)
+  cfg(cfg_),
+  logger(cfg.logger),
+  du_cfg_mng(cfg.cu_cp.node.gnb_id, config_helpers::get_supported_plmns(cfg.cu_cp.node.supported_tas))
 {
 }
 
@@ -84,9 +88,6 @@ async_task<void> du_processor_repository::remove_du(du_index_t du_index)
     // Stop DU activity, eliminating pending transactions for the DU and respective UEs.
     CORO_AWAIT(du_db.find(du_index)->second.processor->get_f1ap_handler().stop());
 
-    // Notify the CU-CP about the removal of the DU processor.
-    cfg.cu_cp_du_handler.handle_du_processor_removal(du_index);
-
     // Remove DU
     du_db.erase(du_index);
     logger.info("Removed DU {}", du_index);
@@ -105,13 +106,6 @@ du_index_t du_processor_repository::get_next_du_index()
     }
   }
   return du_index_t::invalid;
-}
-
-du_processor& du_processor_repository::find_du(du_index_t du_index)
-{
-  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
-  srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
-  return *du_db.at(du_index).processor;
 }
 
 du_index_t du_processor_repository::find_du(pci_t pci)
@@ -138,6 +132,14 @@ du_index_t du_processor_repository::find_du(const nr_cell_global_id_t& cgi)
   return index;
 }
 
+du_processor* du_processor_repository::find_du_processor(du_index_t du_index)
+{
+  if (du_db.find(du_index) == du_db.end()) {
+    return nullptr;
+  }
+  return du_db.at(du_index).processor.get();
+}
+
 du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
@@ -148,7 +150,8 @@ du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
 std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
   std::vector<metrics_report::du_info> du_reports;
-  for (auto& du : du_db) {
+  du_reports.reserve(du_db.size());
+  for (const auto& du : du_db) {
     du_reports.emplace_back(du.second.processor->get_metrics_handler().handle_du_metrics_report_request());
   }
   return du_reports;
@@ -159,6 +162,15 @@ size_t du_processor_repository::get_nof_f1ap_ues()
   size_t nof_ues = 0;
   for (auto& du : du_db) {
     nof_ues += du.second.processor->get_f1ap_handler().get_nof_ues();
+  }
+  return nof_ues;
+}
+
+size_t du_processor_repository::get_nof_rrc_ues()
+{
+  size_t nof_ues = 0;
+  for (auto& du : du_db) {
+    nof_ues += du.second.processor->get_rrc_du_handler().get_nof_ues();
   }
   return nof_ues;
 }

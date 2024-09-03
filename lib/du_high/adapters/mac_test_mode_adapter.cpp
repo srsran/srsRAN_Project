@@ -143,6 +143,7 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
       mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
       pdu.rnti         = pucch.crnti;
       switch (pucch.format) {
+        case pucch_format::FORMAT_0:
         case pucch_format::FORMAT_1: {
           fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>(), pucch);
         } break;
@@ -223,18 +224,34 @@ void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f0_or_f1_type& 
                                               const pucch_info&                 pucch) const
 {
   pucch_ind.ul_sinr_dB = 100;
-  if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
-    // In test mode, SRs are never detected, and instead BSR is injected.
-    pucch_ind.sr_info.emplace();
-    pucch_ind.sr_info.value().detected = false;
-  }
-  if (pucch.format_1.harq_ack_nof_bits > 0) {
-    pucch_ind.harq_info.emplace();
-    // In case of PUCCH F1 with only HARQ-ACK bits, set all HARQ-ACK bits to ACK. If SR is included, then we
-    // consider that the PUCCH is not detected.
-    auto ack_val = pucch.format_1.sr_bits == sr_nof_bits::no_sr ? uci_pucch_f0_or_f1_harq_values::ack
-                                                                : uci_pucch_f0_or_f1_harq_values::dtx;
-    pucch_ind.harq_info->harqs.resize(pucch.format_1.harq_ack_nof_bits, ack_val);
+  srsran_assert(pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1,
+                "Expected PUCCH Format is F0 or F1");
+  if (pucch.format == pucch_format::FORMAT_0) {
+    // In case of Format 0, unlike with Format 0, the GNB only schedules 1 PUCCH per slot; this PUCCH (and the
+    // corresponding UCI indication) can have HARQ-ACK bits or SR bits, or both.
+    if (pucch.format_0.sr_bits != sr_nof_bits::no_sr) {
+      // In test mode, SRs are never detected, and instead BSR is injected.
+      pucch_ind.sr_info.emplace();
+      pucch_ind.sr_info.value().detected = false;
+    }
+    if (pucch.format_0.harq_ack_nof_bits > 0) {
+      pucch_ind.harq_info.emplace();
+      pucch_ind.harq_info->harqs.resize(pucch.format_0.harq_ack_nof_bits, uci_pucch_f0_or_f1_harq_values::ack);
+    }
+  } else {
+    if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
+      // In test mode, SRs are never detected, and instead BSR is injected.
+      pucch_ind.sr_info.emplace();
+      pucch_ind.sr_info.value().detected = false;
+    }
+    if (pucch.format_1.harq_ack_nof_bits > 0) {
+      pucch_ind.harq_info.emplace();
+      // In case of PUCCH F1 with only HARQ-ACK bits, set all HARQ-ACK bits to ACK. If SR is included, then we
+      // consider that the PUCCH is not detected.
+      auto ack_val = pucch.format_1.sr_bits == sr_nof_bits::no_sr ? uci_pucch_f0_or_f1_harq_values::ack
+                                                                  : uci_pucch_f0_or_f1_harq_values::dtx;
+      pucch_ind.harq_info->harqs.resize(pucch.format_1.harq_ack_nof_bits, ack_val);
+    }
   }
 }
 
@@ -283,13 +300,17 @@ static bool pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci_
   if (pucch.crnti != uci_ind.rnti) {
     return false;
   }
-  if (pucch.format == pucch_format::FORMAT_1 and
+  if ((pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1) and
       std::holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu)) {
+    const auto pucch_pdu_sr_bits =
+        pucch.format == pucch_format::FORMAT_1 ? pucch.format_1.sr_bits : pucch.format_0.sr_bits;
     const auto& f1_ind = std::get<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu);
-    if (f1_ind.sr_info.has_value() != (pucch.format_1.sr_bits != sr_nof_bits::no_sr)) {
+    if (f1_ind.sr_info.has_value() != (pucch_pdu_sr_bits != sr_nof_bits::no_sr)) {
       return false;
     }
-    if (f1_ind.harq_info.has_value() != (pucch.format_1.harq_ack_nof_bits > 0)) {
+    const auto pucch_pdu_harq_bits =
+        pucch.format == pucch_format::FORMAT_1 ? pucch.format_1.harq_ack_nof_bits : pucch.format_0.harq_ack_nof_bits;
+    if (f1_ind.harq_info.has_value() != (pucch_pdu_harq_bits > 0)) {
       return false;
     }
     return true;
@@ -410,7 +431,7 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
         for (const pucch_info& pucch : entry.pucchs) {
           if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
             // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
-            if (pucch.format == pucch_format::FORMAT_1) {
+            if (pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1) {
               fill_uci_pdu(std::get<mac_uci_pdu::pucch_f0_or_f1_type>(test_uci.pdu), pucch);
             } else {
               fill_uci_pdu(std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);

@@ -101,7 +101,7 @@ public:
   /// lower layers.
   ///
   /// \param max_tx_pdcp_sn Highest transmitted PDCP PDU sequence number.
-  virtual void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) = 0;
+  virtual void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t bytes_free_in_queue) = 0;
 
   /// \brief Informs upper layer about the highest PDCP PDU sequence number of the PDCP PDU that was successfully
   /// delivered in sequence towards the UE.

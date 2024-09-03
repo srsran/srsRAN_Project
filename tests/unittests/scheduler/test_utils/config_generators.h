@@ -80,6 +80,13 @@ make_default_sched_cell_configuration_request(const config_helpers::cell_config_
     sched_req.nzp_csi_rs_res_list = csi_meas.nzp_csi_rs_res_list;
   }
 
+  if (sched_req.tdd_ul_dl_cfg_common.has_value()) {
+    sched_req.dl_data_to_ul_ack =
+        config_helpers::generate_k1_candidates(*sched_req.tdd_ul_dl_cfg_common, params.min_k1);
+  } else {
+    sched_req.dl_data_to_ul_ack = {params.min_k1};
+  }
+
   return sched_req;
 }
 
@@ -116,6 +123,32 @@ create_default_sched_ue_creation_request(const cell_config_builder_params&    pa
       msg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
   }
+
+  return msg;
+}
+
+inline sched_ue_creation_request_message
+create_empty_spcell_cfg_sched_ue_creation_request(const cell_config_builder_params& params = {})
+{
+  sched_ue_creation_request_message msg{};
+
+  msg.ue_index = to_du_ue_index(0);
+  msg.crnti    = to_rnti(0x4601);
+
+  cell_config_dedicated cfg;
+  cfg.serv_cell_idx              = to_serv_cell_index(0);
+  serving_cell_config& serv_cell = cfg.serv_cell_cfg;
+
+  serv_cell.cell_index = to_du_cell_index(0);
+  // > TAG-ID.
+  serv_cell.tag_id = static_cast<tag_id_t>(0);
+
+  msg.cfg.cells.emplace();
+  msg.cfg.cells->push_back(cfg);
+
+  msg.cfg.lc_config_list.emplace();
+  msg.cfg.lc_config_list->resize(1);
+  (*msg.cfg.lc_config_list)[0] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
 
   return msg;
 }
@@ -255,7 +288,8 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
   // the active DL BWP of a corresponding serving cell.
   // Inactive for format1_0."
   // Note2: Only k1 >= 4 supported.
-  nr_band band = params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  nr_band band =
+      params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_f_ref_arfcn);
   if (band_helper::get_duplex_mode(band) == duplex_mode::FDD) {
     pucch_cfg.dl_data_to_ul_ack = {params.min_k1};
   } else {

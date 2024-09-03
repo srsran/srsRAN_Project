@@ -21,8 +21,8 @@
  */
 
 #include "f1ap_du_ue_context_setup_procedure.h"
+#include "../../common/asn1_helpers.h"
 #include "../ue_context/f1ap_du_ue_manager.h"
-#include "f1ap_du_ue_context_common.h"
 #include "proc_logger.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -31,6 +31,9 @@
 using namespace srsran;
 using namespace srs_du;
 using namespace asn1::f1ap;
+
+// Time waiting for RRC container delivery.
+constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
 
 f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     const asn1::f1ap::ue_context_setup_request_s& msg_,
@@ -104,7 +107,16 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   // > If the UE CONTEXT SETUP REQUEST message contains the RRC-Container IE, the gNB-DU shall send the corresponding
   // RRC message to the UE via SRB1.
   if (msg->rrc_container_present and not msg->rrc_container.empty()) {
-    CORO_AWAIT(handle_rrc_container());
+    CORO_AWAIT_VALUE(bool ret, handle_rrc_container());
+    if (ret) {
+      logger.debug("{}: RRC container sent successfully.", f1ap_log_prefix{ue->context, name()});
+    } else {
+      logger.error("{}: Failed to send RRC container after timeout of {}msec",
+                   f1ap_log_prefix{ue->context, name()},
+                   rrc_container_delivery_timeout.count());
+      send_ue_context_setup_failure();
+      CORO_EARLY_RETURN();
+    }
   }
 
   // Respond back to CU-CP with success.
@@ -113,14 +125,15 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   CORO_RETURN();
 }
 
-async_task<void> f1ap_du_ue_context_setup_procedure::handle_rrc_container()
+async_task<bool> f1ap_du_ue_context_setup_procedure::handle_rrc_container()
 {
   f1c_bearer* srb1 = ue->bearers.find_srb(srb_id_t::srb1);
-  if (srb1 != nullptr) {
-    return srb1->handle_pdu_and_await_transmission(msg->rrc_container.copy());
+  if (srb1 == nullptr) {
+    logger.error("{}: Failed to find SRB1 bearer to send RRC container.", f1ap_log_prefix{ue->context, name()});
+    return launch_no_op_task(false);
   }
-  logger.error("{}: Failed to find SRB1 bearer to send RRC container.", f1ap_log_prefix{ue->context, name()});
-  return launch_no_op_task();
+
+  return srb1->handle_pdu_and_await_transmission(msg->rrc_container.copy(), rrc_container_delivery_timeout);
 }
 
 async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::request_du_ue_config()
@@ -138,7 +151,7 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
 
   // > Pass SRBs to setup.
   for (const auto& srb : msg->srbs_to_be_setup_list) {
-    du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_item()));
+    du_request.srbs_to_setup.push_back(int_to_srb_id(srb.value().srbs_to_be_setup_item().srb_id));
   }
 
   // > Pass DRBs to setup.
@@ -156,6 +169,11 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
     if (msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg_present) {
       du_request.source_cell_group_cfg = msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg.copy();
     }
+  }
+
+  // > Add UE capabilities information.
+  if (not msg->cu_to_du_rrc_info.ue_cap_rat_container_list.empty()) {
+    du_request.ue_cap_rat_list = msg->cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
   }
 
   return ue->du_handler.request_ue_context_update(du_request);
@@ -204,37 +222,11 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   }
 
   // > DRBs setup List.
-  resp->drbs_setup_list_present = not du_ue_cfg_response.drbs_setup.empty();
-  if (resp->drbs_setup_list_present) {
-    resp->drbs_setup_list.resize(du_ue_cfg_response.drbs_setup.size());
-    for (unsigned i = 0; i != resp->drbs_setup_list.size(); ++i) {
-      resp->drbs_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
-      drbs_setup_item_s& asn1_drb = resp->drbs_setup_list[i].value().drbs_setup_item();
-      auto&              drb_resp = du_ue_cfg_response.drbs_setup[i];
-      asn1_drb.drb_id             = drb_id_to_uint(drb_resp.drb_id);
-      asn1_drb.lcid_present       = drb_resp.lcid.has_value();
-      if (asn1_drb.lcid_present) {
-        asn1_drb.lcid = drb_resp.lcid.value();
-      }
-      asn1_drb.dl_up_tnl_info_to_be_setup_list.resize(drb_resp.dluptnl_info_list.size());
-      for (unsigned j = 0; j != drb_resp.dluptnl_info_list.size(); ++j) {
-        up_transport_layer_info_to_asn1(asn1_drb.dl_up_tnl_info_to_be_setup_list[j].dl_up_tnl_info,
-                                        drb_resp.dluptnl_info_list[j]);
-      }
-    }
-  }
-
-  // > DRBs-FailedToBeSetupMod-List.
-  resp->drbs_failed_to_be_setup_list_present = not du_ue_cfg_response.drbs_failed_to_setup.empty();
-  if (resp->drbs_failed_to_be_setup_list_present) {
-    resp->drbs_failed_to_be_setup_list.resize(du_ue_cfg_response.drbs_failed_to_setup.size());
-    for (unsigned i = 0; i != du_ue_cfg_response.drbs_failed_to_setup.size(); ++i) {
-      resp->drbs_failed_to_be_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
-      drbs_failed_to_be_setup_item_s& asn1_drb = resp->drbs_failed_to_be_setup_list[i]->drbs_failed_to_be_setup_item();
-      asn1_drb.drb_id                          = drb_id_to_uint(du_ue_cfg_response.drbs_failed_to_setup[i]);
-      asn1_drb.cause.set_transport().value     = cause_transport_opts::transport_res_unavailable;
-    }
-  }
+  resp->drbs_setup_list         = make_drbs_setup_list(du_ue_cfg_response.drbs_setup);
+  resp->drbs_setup_list_present = resp->drbs_setup_list.size() > 0;
+  // > DRBs-FailedToBeSetup-List.
+  resp->drbs_failed_to_be_setup_list         = make_drbs_failed_to_be_setup_list(du_ue_cfg_response.failed_drbs_setups);
+  resp->drbs_failed_to_be_setup_list_present = resp->drbs_failed_to_be_setup_list.size() > 0;
 
   // Send Response to CU-CP.
   ue->f1ap_msg_notifier.on_new_message(f1ap_msg);

@@ -91,11 +91,11 @@ public:
 
   /// Checks if the hardware-accelerated PDSCH encoder uses CB mode or TB mode.
   /// \return True if CB mode is used, false otherwise.
-  virtual bool get_cb_mode() const = 0;
+  virtual bool is_cb_mode_supported() const = 0;
 
-  /// Checks the maximum supported TB size. Only used in TB mode.
-  /// \return TB size (in bytes).
-  virtual unsigned get_max_tb_size() const = 0;
+  /// Checks the maximum supported buffer size. Only used in TB mode.
+  /// \return Buffer size (in bytes).
+  virtual unsigned get_max_supported_buff_size() const = 0;
 };
 
 } // namespace hal

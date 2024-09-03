@@ -33,11 +33,7 @@ class iq_compressor_dummy : public iq_compressor
 {
 public:
   // See interface for documentation.
-  void compress(span<compressed_prb>         compressed_prbs,
-                span<const cbf16_t>          iq_data,
-                const ru_compression_params& params) override
-  {
-  }
+  void compress(span<uint8_t> buffer, span<const cbf16_t> iq_data, const ru_compression_params& params) override {}
 };
 
 } // namespace testing

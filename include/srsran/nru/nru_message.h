@@ -235,12 +235,8 @@ struct nru_ul_message {
       }
       copy.t_pdu = std::move(chain.value());
     }
-    if (data_delivery_status.has_value()) {
-      copy.data_delivery_status = data_delivery_status.value();
-    }
-    if (assistance_information.has_value()) {
-      copy.assistance_information = assistance_information.value();
-    }
+    copy.data_delivery_status   = data_delivery_status;
+    copy.assistance_information = assistance_information;
     return copy;
   }
 

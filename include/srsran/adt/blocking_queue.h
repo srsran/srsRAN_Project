@@ -457,9 +457,7 @@ protected:
 /// \tparam T value type stored by buffer
 /// \tparam PushingCallback function void(const T&) called while pushing an element to the queue
 /// \tparam PoppingCallback function void(const T&) called while popping an element from the queue
-template <typename T,
-          typename PushingCallback = detail::noop_operation,
-          typename PoppingCallback = detail::noop_operation>
+template <typename T, typename PushingCallback = noop_operation, typename PoppingCallback = noop_operation>
 class blocking_queue : public detail::base_blocking_queue<ring_buffer<T, true>, PushingCallback, PoppingCallback>
 {
   using super_type = detail::base_blocking_queue<ring_buffer<T, true>, PushingCallback, PoppingCallback>;
@@ -480,10 +478,7 @@ public:
 /// \tparam N size of queue
 /// \tparam PushingCallback function void(const T&) called while pushing an element to the queue
 /// \tparam PoppingCallback function void(const T&) called while popping an element from the queue
-template <typename T,
-          size_t N,
-          typename PushingCallback = detail::noop_operation,
-          typename PoppingCallback = detail::noop_operation>
+template <typename T, size_t N, typename PushingCallback = noop_operation, typename PoppingCallback = noop_operation>
 class static_blocking_queue
   : public detail::base_blocking_queue<static_ring_buffer<T, N>, PushingCallback, PoppingCallback>
 {

@@ -39,9 +39,9 @@ namespace srsran {
 /// \remark See TS 38.331, "maxNrofPUCCH-ResourceSets".
 constexpr size_t MAX_NOF_PUCCH_RESOURCE_SETS = 4;
 
-/// Maximum number of PUCCH resources.
+/// Maximum number of PUCCH resources that can be configured for a UE.
 /// \remark See TS 38.331, "maxNrofPUCCH-Resources".
-constexpr size_t MAX_NOF_PUCCH_RESOURCES = 128;
+constexpr size_t MAX_NOF_UE_PUCCH_RESOURCES = 128;
 
 /// Maximum number of PUCCH Resources per PUCCH-ResourceSet.
 /// \remark See TS 38.331, "maxNrofPUCCH-ResourcesPerSet". Only valid for the first \c pucch_resource_set, see
@@ -200,7 +200,7 @@ struct pucch_config {
   // NOTE: PUCCH resource set ID 0 can only contain PUCCH format 0 and 1.
   static_vector<pucch_resource_set, MAX_NOF_PUCCH_RESOURCE_SETS> pucch_res_set;
   /// List of \c PUCCH-Resource.
-  static_vector<pucch_resource, MAX_NOF_PUCCH_RESOURCES> pucch_res_list;
+  static_vector<pucch_resource, MAX_NOF_UE_PUCCH_RESOURCES> pucch_res_list;
   /// \c format1 .. \c format4, which contain the parameters that are common to a given PUCCH Format.
   std::optional<pucch_common_all_formats> format_1_common_param;
   std::optional<pucch_common_all_formats> format_2_common_param;

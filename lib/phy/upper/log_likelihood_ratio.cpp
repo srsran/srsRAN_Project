@@ -21,7 +21,6 @@
  */
 
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "../lib/srsvec/simd.h"
 #include "srsran/adt/optional.h"
 #include "srsran/srsvec/compare.h"
 #include <cmath>
@@ -35,8 +34,8 @@
 
 using namespace srsran;
 
-// Computes the sum when at least one of the summands is plus/minus infinity.
-// Note that also the indeterminate case +LLR_INFTY + (-LLR_INFTY) is set to zero.
+/// Computes the sum when at least one of the summands is plus/minus infinity.
+/// Note that also the indeterminate case +LLR_INFTY + (-LLR_INFTY) is set to zero.
 static std::optional<log_likelihood_ratio> tackle_special_sums(log_likelihood_ratio val_a, log_likelihood_ratio val_b)
 {
   if (val_a == -val_b) {
@@ -51,7 +50,8 @@ static std::optional<log_likelihood_ratio> tackle_special_sums(log_likelihood_ra
   if (log_likelihood_ratio::isinf(val_b)) {
     return val_b;
   }
-  return {};
+
+  return std::nullopt;
 }
 
 log_likelihood_ratio log_likelihood_ratio::operator+=(log_likelihood_ratio rhs)
@@ -111,7 +111,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
 
   for (unsigned max_bit = (len / AVX2_B_SIZE) * AVX2_B_SIZE; i_bit != max_bit; i_bit += AVX2_B_SIZE) {
     // Load AVX2_B_SIZE LLRs.
-    __m256i soft_epi8 = _mm256_loadu_si256((__m256i*)(&soft_bits[i_bit]));
+    __m256i soft_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(soft_bits + i_bit));
 
     // Shuffle soft_epi8: the soft bits are taken in groups of 8 and, inside each group, we reverse their order (this is
     // because, once we convert the soft bits into hard bits, the hard bits forming a byte need to be reversed before
@@ -159,7 +159,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
     uint32_t bytes = _mm256_movemask_epi8(soft_epi8);
 
     // Write the packed bits into 4 bytes of the internal buffer.
-    *(reinterpret_cast<uint32_t*>(packed_buffer.begin())) = bytes;
+    std::memcpy(packed_buffer.begin(), &bytes, sizeof(uint32_t));
 
     // Advance buffer.
     packed_buffer = packed_buffer.last(packed_buffer.size() - (AVX2_B_SIZE / 8));

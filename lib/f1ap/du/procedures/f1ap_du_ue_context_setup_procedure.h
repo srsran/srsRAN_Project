@@ -51,7 +51,7 @@ private:
   // Send UE Context Setup Failure to CU.
   void send_ue_context_setup_failure();
 
-  async_task<void> handle_rrc_container();
+  async_task<bool> handle_rrc_container();
 
   const char* name() const { return "UE Context Setup"; }
 

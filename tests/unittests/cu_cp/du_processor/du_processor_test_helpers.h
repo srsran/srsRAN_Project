@@ -54,7 +54,6 @@ protected:
   cu_cp_configuration cu_cp_cfg;
 
   ue_manager                              ue_mng{cu_cp_cfg};
-  dummy_ngap_ue_context_removal_handler   ngap_ue_removal_handler;
   dummy_du_processor_cu_cp_notifier       cu_cp_notifier{&ue_mng};
   dummy_du_connection_notifier            du_conn_notifier;
   dummy_f1ap_pdu_notifier                 f1ap_pdu_notifier;

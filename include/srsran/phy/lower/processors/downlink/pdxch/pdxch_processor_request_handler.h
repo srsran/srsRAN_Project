@@ -25,7 +25,7 @@
 namespace srsran {
 
 struct resource_grid_context;
-class resource_grid_reader;
+class shared_resource_grid;
 
 /// \brief Lower physical layer downlink processor - Request handler interface.
 ///
@@ -44,7 +44,7 @@ public:
   ///
   /// \param[in] grid    Resource grid to transmit.
   /// \param[in] context Resource grid transmission context.
-  virtual void handle_request(const resource_grid_reader& grid, const resource_grid_context& context) = 0;
+  virtual void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) = 0;
 };
 
 } // namespace srsran

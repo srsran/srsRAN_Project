@@ -23,8 +23,8 @@
 #pragma once
 
 #include "ofh_data_flow_cplane_scheduling_commands.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
-#include <atomic>
 #include <memory>
 
 namespace srsran {

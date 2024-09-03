@@ -34,8 +34,7 @@ class ngap_dl_nas_message_transfer_procedure
 {
 public:
   ngap_dl_nas_message_transfer_procedure(const ngap_dl_nas_transport_message&         msg_,
-                                         ngap_rrc_ue_pdu_notifier&                    rrc_ue_pdu_notifier_,
-                                         ngap_rrc_ue_control_notifier&                rrc_ue_ctrl_notifier_,
+                                         ngap_rrc_ue_notifier&                        rrc_ue_notifier_,
                                          ngap_ue_radio_capability_management_handler& ngap_handler_,
                                          ngap_ue_logger&                              logger_);
 
@@ -49,8 +48,7 @@ private:
   void send_ue_radio_capability_info_indication();
 
   ngap_dl_nas_transport_message                msg;
-  ngap_rrc_ue_pdu_notifier&                    rrc_ue_pdu_notifier;
-  ngap_rrc_ue_control_notifier&                rrc_ue_ctrl_notifier;
+  ngap_rrc_ue_notifier&                        rrc_ue_notifier;
   ngap_ue_radio_capability_management_handler& ngap_handler;
   ngap_ue_logger&                              logger;
 };

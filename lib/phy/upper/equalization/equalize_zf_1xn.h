@@ -34,8 +34,8 @@ namespace srsran {
 
 /// \brief Implementation of a Zero Forcing equalizer for a SIMO 1 X \c RX_PORTS channel.
 /// \tparam RX_PORTS          Number of receive antenna ports.
-/// \param[out] eq_symbols    Resultant equalized symbols.
-/// \param[out] noise_vars    Noise variances after equalization.
+/// \param[out] symbols_out   Resultant equalized symbols.
+/// \param[out] nvars_out     Noise variances after equalization.
 /// \param[in]  ch_symbols    Channel symbols, i.e., complex samples from the receive ports.
 /// \param[in]  ch_estimates  Channel estimation coefficients.
 /// \param[in]  noise_var_est Estimated noise variance for each port.

@@ -21,11 +21,109 @@
  */
 
 #include "pxsch_bler_test_factories.h"
+#if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
+#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
+#include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
+#include "srsran/hal/dpdk/dpdk_eal_factory.h"
+#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
+#endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
 
 using namespace srsran;
 
-std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_factory(task_executor& executor,
-                                                                                   unsigned       max_nof_threads)
+#if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
+static bool                                                   hwacc_pxsch_init_done   = false;
+static std::unique_ptr<dpdk::dpdk_eal>                        dpdk_interface          = nullptr;
+static std::unique_ptr<dpdk::bbdev_acc_factory>               bbdev_acc_factory       = nullptr;
+static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hwacc_pdsch_enc_factory = nullptr;
+static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hwacc_pusch_dec_factory = nullptr;
+
+static void create_hwacc_pxsch_factories(const std::string& eal_arguments)
+{
+  if (!hwacc_pxsch_init_done) {
+    // Hardcoded stdout and error logging.
+    srslog::sink* log_sink = srslog::create_stdout_sink();
+    srslog::set_default_sink(*log_sink);
+    srslog::init();
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("HAL", false);
+    logger.set_level(srslog::basic_levels::error);
+
+    // Pointer to a dpdk-based hardware-accelerator interface.
+    if (!dpdk_interface) {
+      // :TODO: Enable passing EAL arguments.
+      dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
+      if (!dpdk_interface) {
+        return;
+      }
+    }
+
+    // Create a bbdev accelerator factory.
+    if (!bbdev_acc_factory) {
+      bbdev_acc_factory = srsran::dpdk::create_bbdev_acc_factory("srs");
+      if (!bbdev_acc_factory) {
+        return;
+      }
+    }
+
+    // Intefacing to the bbdev-based hardware-accelerator.
+    dpdk::bbdev_acc_configuration bbdev_config;
+    bbdev_config.id                                    = 0;
+    bbdev_config.nof_ldpc_enc_lcores                   = dpdk::MAX_NOF_BBDEV_VF_INSTANCES;
+    bbdev_config.nof_ldpc_dec_lcores                   = dpdk::MAX_NOF_BBDEV_VF_INSTANCES;
+    bbdev_config.nof_fft_lcores                        = 0;
+    bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
+    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, logger);
+    if (!bbdev_accelerator) {
+      return;
+    }
+
+    // Set the PDSCH encoder hardware-accelerator factory configuration for the ACC100.
+    hal::bbdev_hwacc_pdsch_enc_factory_configuration hw_encoder_config;
+    hw_encoder_config.acc_type          = "acc100";
+    hw_encoder_config.bbdev_accelerator = bbdev_accelerator;
+    hw_encoder_config.cb_mode           = false;
+    hw_encoder_config.max_tb_size       = RTE_BBDEV_LDPC_E_MAX_MBUF;
+    hw_encoder_config.dedicated_queue   = true;
+    // ACC100 hardware-accelerator implementation.
+    hwacc_pdsch_enc_factory = srsran::hal::create_bbdev_pdsch_enc_acc_factory(hw_encoder_config, "srs");
+    if (!hwacc_pdsch_enc_factory) {
+      return;
+    }
+
+    // Interfacing to a shared external HARQ buffer context repository.
+    unsigned nof_cbs                   = MAX_NOF_SEGMENTS;
+    uint64_t acc100_ext_harq_buff_size = bbdev_accelerator->get_harq_buff_size_bytes();
+    std::shared_ptr<hal::ext_harq_buffer_context_repository> harq_buffer_context =
+        hal::create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, false);
+    if (!harq_buffer_context) {
+      return;
+    }
+
+    // Set the PUSCH decoder hardware-accelerator factory configuration for the ACC100.
+    hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
+    hw_decoder_config.acc_type            = "acc100";
+    hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
+    hw_decoder_config.ext_softbuffer      = true;
+    hw_decoder_config.harq_buffer_context = harq_buffer_context;
+    hw_decoder_config.dedicated_queue     = true;
+    // ACC100 hardware-accelerator implementation.
+    hwacc_pusch_dec_factory = hal::create_bbdev_pusch_dec_acc_factory(hw_decoder_config, "srs");
+    if (!hwacc_pusch_dec_factory) {
+      return;
+    }
+
+    hwacc_pxsch_init_done = true;
+  }
+}
+#endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
+
+std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_factory(task_executor&     executor,
+                                                                                   unsigned           max_nof_threads,
+                                                                                   const std::string& eal_arguments,
+                                                                                   const std::string& pxsch_type)
 {
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   report_fatal_error_if_not(crc_calc_factory, "Failed to create CRC calculator factory.");
@@ -50,6 +148,31 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
       create_dmrs_pdsch_processor_factory_sw(pseudo_random_gen_factory);
   report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Failed to create factory.");
 
+#if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
+  if (pxsch_type.find("acc100") != std::string::npos) {
+    // Initialize the hardware-accelerator.
+    create_hwacc_pxsch_factories(eal_arguments);
+    if (!hwacc_pxsch_init_done) {
+      return nullptr;
+    }
+
+    // Set the hardware-accelerated PDSCH encoder configuration.
+    pdsch_encoder_factory_hw_configuration encoder_hw_factory_config;
+    encoder_hw_factory_config.crc_factory        = crc_calc_factory;
+    encoder_hw_factory_config.segmenter_factory  = segmenter_factory;
+    encoder_hw_factory_config.hw_encoder_factory = hwacc_pdsch_enc_factory;
+    std::shared_ptr<pdsch_encoder_factory> pdsch_encoder_factory =
+        create_pdsch_encoder_factory_hw(encoder_hw_factory_config);
+    report_fatal_error_if_not(pdsch_encoder_factory, "Failed to create factory.");
+
+    std::shared_ptr<pdsch_modulator_factory> pdsch_modulator_factory =
+        create_pdsch_modulator_factory_sw(channel_mod_factory, pseudo_random_gen_factory);
+    report_fatal_error_if_not(pdsch_modulator_factory, "Failed to create factory.");
+
+    return create_pdsch_processor_factory_sw(pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_proc_factory);
+  }
+#endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
+
   return create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
                                                       ldpc_encoder_factory,
                                                       ldpc_rate_matcher_factory,
@@ -63,7 +186,8 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
 std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_factory(task_executor& executor,
                                                                                    unsigned       max_nof_threads,
                                                                                    unsigned       nof_ldpc_iterations,
-                                                                                   bool           dec_enable_early_stop)
+                                                                                   bool           dec_enable_early_stop,
+                                                                                   const std::string& pxsch_type)
 {
   std::shared_ptr<dft_processor_factory> dft_proc_factory = create_dft_processor_factory_fftw_slow();
   report_fatal_error_if_not(dft_proc_factory, "Failed to create factory.");
@@ -81,22 +205,40 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
   report_fatal_error_if_not(segmenter_rx_factory, "Failed to create factory.");
 
-  pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;
-  pusch_decoder_factory_sw_config.crc_factory               = crc_calc_factory;
-  pusch_decoder_factory_sw_config.decoder_factory           = ldpc_decoder_factory;
-  pusch_decoder_factory_sw_config.dematcher_factory         = ldpc_rate_dematcher_factory;
-  pusch_decoder_factory_sw_config.segmenter_factory         = segmenter_rx_factory;
-  pusch_decoder_factory_sw_config.nof_pusch_decoder_threads = max_nof_threads;
-  pusch_decoder_factory_sw_config.executor                  = &executor;
-  pusch_decoder_factory_sw_config.nof_prb                   = MAX_RB;
-  pusch_decoder_factory_sw_config.nof_layers                = pusch_constants::MAX_NOF_LAYERS;
-  std::shared_ptr<pusch_decoder_factory> pusch_dec_factory =
-      create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
+  std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = nullptr;
+#if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
+  if (pxsch_type.find("acc100") != std::string::npos) {
+    // Set the hardware-accelerated PUSCH decoder configuration.
+    pusch_decoder_factory_hw_configuration decoder_hw_factory_config;
+    decoder_hw_factory_config.segmenter_factory  = segmenter_rx_factory;
+    decoder_hw_factory_config.crc_factory        = crc_calc_factory;
+    decoder_hw_factory_config.hw_decoder_factory = hwacc_pusch_dec_factory;
+    decoder_hw_factory_config.executor           = &executor;
+    pusch_dec_factory                            = create_pusch_decoder_factory_hw(decoder_hw_factory_config);
+  } else {
+#endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
+    pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;
+    pusch_decoder_factory_sw_config.crc_factory               = crc_calc_factory;
+    pusch_decoder_factory_sw_config.decoder_factory           = ldpc_decoder_factory;
+    pusch_decoder_factory_sw_config.dematcher_factory         = ldpc_rate_dematcher_factory;
+    pusch_decoder_factory_sw_config.segmenter_factory         = segmenter_rx_factory;
+    pusch_decoder_factory_sw_config.nof_pusch_decoder_threads = max_nof_threads;
+    pusch_decoder_factory_sw_config.executor                  = &executor;
+    pusch_decoder_factory_sw_config.nof_prb                   = MAX_RB;
+    pusch_decoder_factory_sw_config.nof_layers                = pusch_constants::MAX_NOF_LAYERS;
+    pusch_dec_factory = create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
+#if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
+  }
+#endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
   report_fatal_error_if_not(pusch_dec_factory, "Failed to create factory.");
 
   std::shared_ptr<pseudo_random_generator_factory> pseudo_random_gen_factory =
       create_pseudo_random_generator_sw_factory();
   report_fatal_error_if_not(pseudo_random_gen_factory, "Failed to create factory.");
+
+  std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
+      create_low_papr_sequence_generator_sw_factory();
+  report_fatal_error_if_not(low_papr_sequence_gen_factory, "Failed to create factory.");
 
   std::shared_ptr<time_alignment_estimator_factory> ta_est_factory =
       create_time_alignment_estimator_dft_factory(dft_proc_factory);
@@ -106,8 +248,8 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
       create_port_channel_estimator_factory_sw(ta_est_factory);
   report_fatal_error_if_not(chan_estimator_factory, "Failed to create factory.");
 
-  std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory =
-      create_dmrs_pusch_estimator_factory_sw(pseudo_random_gen_factory, chan_estimator_factory);
+  std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory = create_dmrs_pusch_estimator_factory_sw(
+      pseudo_random_gen_factory, low_papr_sequence_gen_factory, chan_estimator_factory);
   report_fatal_error_if_not(chan_est_factory, "Failed to create factory.");
 
   std::shared_ptr<channel_equalizer_factory> eq_factory =

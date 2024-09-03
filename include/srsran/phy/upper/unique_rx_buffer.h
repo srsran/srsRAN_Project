@@ -117,6 +117,9 @@ public:
   /// Returns true if the unique buffer contains a valid buffer.
   bool is_valid() const { return ptr != nullptr; }
 
+  /// Overload conversion to bool.
+  explicit operator bool() const noexcept { return is_valid(); }
+
   /// Unlock and releases the buffer resources.
   void release()
   {

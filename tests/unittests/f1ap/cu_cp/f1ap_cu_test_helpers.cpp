@@ -26,8 +26,8 @@
 #include "srsran/asn1/rrc_nr/dl_ccch_msg_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
-#include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/qos/five_qi.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 
@@ -156,18 +156,14 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
   req.drx_cycle                   = drx_cycle;
 
   for (const auto& drb : drbs_to_add) {
-    f1ap_drbs_to_be_setup_mod_item drb_item;
-    drb_item.drb_id = drb;
-    drb_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.emplace();
-    drb_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.value().five_qi    = five_qi_t::min;
-    drb_item.qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp            = 0;
-    drb_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap           = "shall_not_trigger_pre_emption";
-    drb_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not_pre_emptable";
-    drb_item.qos_info.s_nssai.sst                                                = 1;
-    drb_item.rlc_mod                                                             = rlc_mode::am;
-    drb_item.pdcp_sn_len                                                         = pdcp_sn_size::size12bits;
+    f1ap_drb_to_setup drb_item;
+    drb_item.drb_id                                               = drb;
+    drb_item.qos_info.drb_qos.alloc_retention_prio.prio_level_arp = 1;
+    drb_item.qos_info.s_nssai.sst                                 = 1;
+    drb_item.mode                                                 = rlc_mode::am;
+    drb_item.pdcp_sn_len                                          = pdcp_sn_size::size12bits;
 
-    req.drbs_to_be_setup_list.emplace(drb, drb_item);
+    req.drbs_to_be_setup_list.push_back(drb_item);
   }
   return req;
 }

@@ -25,8 +25,7 @@
 #include "prach_buffer_impl.h"
 #include "prach_buffer_pool_impl.h"
 #include "resource_grid_impl.h"
-#include "resource_grid_pool_asynchronous_impl.h"
-#include "resource_grid_pool_generic_impl.h"
+#include "resource_grid_pool_impl.h"
 #include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/ran/prach/prach_constants.h"
 
@@ -64,15 +63,14 @@ private:
 std::unique_ptr<resource_grid_pool>
 srsran::create_generic_resource_grid_pool(std::vector<std::unique_ptr<resource_grid>> grids)
 {
-  return std::make_unique<resource_grid_pool_generic_impl>(std::move(grids));
+  return std::make_unique<resource_grid_pool_impl>(nullptr, std::move(grids));
 }
 
 std::unique_ptr<resource_grid_pool>
-srsran::create_asynchronous_resource_grid_pool(unsigned                                    expire_timeout_slots,
-                                               task_executor&                              async_executor,
+srsran::create_asynchronous_resource_grid_pool(task_executor&                              async_executor,
                                                std::vector<std::unique_ptr<resource_grid>> grids)
 {
-  return std::make_unique<resource_grid_pool_asynchronous_impl>(expire_timeout_slots, async_executor, std::move(grids));
+  return std::make_unique<resource_grid_pool_impl>(&async_executor, std::move(grids));
 }
 
 std::unique_ptr<prach_buffer_pool>

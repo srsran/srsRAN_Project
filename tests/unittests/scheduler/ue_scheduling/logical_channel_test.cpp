@@ -307,3 +307,25 @@ TEST(dl_logical_channel_test, assign_leftover_bytes_to_sdu_if_leftover_bytes_is_
   // Verify leftover bytes are assigned to the last SDU.
   ASSERT_EQ(allocated_bytes, tb_size);
 }
+
+TEST(dl_logical_channel_test, ta_cmd_mac_ce_gets_updated_if_already_in_pending_ces_queue)
+{
+  dl_logical_channel_manager lch_mng;
+  const auto                 first_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = 0, .ta_cmd = 29};
+  lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = first_ta_cmd_ce_payload});
+  ASSERT_TRUE(lch_mng.has_pending_bytes());
+  ASSERT_TRUE(lch_mng.has_pending_ces());
+
+  const auto second_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = 0, .ta_cmd = 33};
+  lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = second_ta_cmd_ce_payload});
+  ASSERT_TRUE(lch_mng.has_pending_bytes());
+  ASSERT_TRUE(lch_mng.has_pending_ces());
+
+  dl_msg_lc_info subpdu;
+  lch_mng.allocate_mac_ce(subpdu, 100000);
+
+  ASSERT_EQ(subpdu.lcid, lcid_dl_sch_t::TA_CMD);
+  ASSERT_EQ(subpdu.sched_bytes, lcid_dl_sch_t{lcid_dl_sch_t::TA_CMD}.sizeof_ce());
+  ASSERT_TRUE(std::holds_alternative<ta_cmd_ce_payload>(subpdu.ce_payload));
+  ASSERT_EQ(std::get<ta_cmd_ce_payload>(subpdu.ce_payload).ta_cmd, second_ta_cmd_ce_payload.ta_cmd);
+}

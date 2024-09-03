@@ -396,14 +396,15 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
           config.nof_tx_layers             = nof_layers;
           config.rx_ports.resize(profile.nof_rx_ports);
           std::iota(config.rx_ports.begin(), config.rx_ports.end(), 0);
-          config.dmrs_symbol_mask            = dmrs_symbol_mask;
-          config.dmrs                        = dmrs;
-          config.scrambling_id               = 0;
-          config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
-          config.freq_alloc                  = rb_allocation::make_type1(config.bwp_start_rb, nof_prb);
-          config.start_symbol_index          = 0;
-          config.nof_symbols                 = profile.nof_symbols;
-          config.tbs_lbrm                    = tbs_lbrm_default;
+          config.dmrs_symbol_mask   = dmrs_symbol_mask;
+          config.dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs,
+                                                                          .scrambling_id               = 0,
+                                                                          .n_scid                      = false,
+                                                                          .nof_cdm_groups_without_data = nof_cdm_groups_without_data};
+          config.freq_alloc         = rb_allocation::make_type1(config.bwp_start_rb, nof_prb);
+          config.start_symbol_index = 0;
+          config.nof_symbols        = profile.nof_symbols;
+          config.tbs_lbrm           = tbs_lbrm_default;
 
           test_case_set.emplace_back(std::tuple<pusch_processor::pdu_t, unsigned>(config, tbs));
         }
@@ -442,16 +443,28 @@ create_sw_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calc
 static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
 {
 #ifdef HWACC_PUSCH_ENABLED
+  // Create a bbdev accelerator factory.
+  static std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory = nullptr;
+  if (!bbdev_acc_factory) {
+    bbdev_acc_factory = srsran::dpdk::create_bbdev_acc_factory("srs");
+    TESTASSERT(bbdev_acc_factory, "Failed to create the bbdev accelerator factory.");
+  }
+
+  TESTASSERT(nof_threads + nof_pusch_decoder_threads + 1 <= dpdk::MAX_NOF_BBDEV_VF_INSTANCES,
+             "Insufficient hardware-accelerated LDPC decoder VFs: requested {} but only {} are available.",
+             nof_threads + nof_pusch_decoder_threads + 1,
+             dpdk::MAX_NOF_BBDEV_VF_INSTANCES);
+
   // Intefacing to the bbdev-based hardware-accelerator.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("HWACC", false);
   logger.set_level(hal_log_level);
   dpdk::bbdev_acc_configuration bbdev_config;
   bbdev_config.id                                    = 0;
   bbdev_config.nof_ldpc_enc_lcores                   = 0;
-  bbdev_config.nof_ldpc_dec_lcores                   = nof_threads;
+  bbdev_config.nof_ldpc_dec_lcores                   = nof_threads + nof_pusch_decoder_threads + 1;
   bbdev_config.nof_fft_lcores                        = 0;
   bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
-  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
+  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, logger);
   TESTASSERT(bbdev_accelerator);
 
   // Interfacing to a shared external HARQ buffer context repository.
@@ -461,8 +474,8 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
       hal::create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, false);
   TESTASSERT(harq_buffer_context);
 
-  // Set the hardware-accelerator configuration.
-  hal::hw_accelerator_pusch_dec_configuration hw_decoder_config;
+  // Set the PUSCH decoder hardware-accelerator factory configuration for the ACC100.
+  hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
   hw_decoder_config.acc_type            = "acc100";
   hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
   hw_decoder_config.ext_softbuffer      = ext_softbuffer;
@@ -470,7 +483,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   hw_decoder_config.dedicated_queue     = dedicated_queue;
 
   // ACC100 hardware-accelerator implementation.
-  return create_hw_accelerator_pusch_dec_factory(hw_decoder_config);
+  return srsran::hal::create_bbdev_pusch_dec_acc_factory(hw_decoder_config, "srs");
 #else  // HWACC_PUSCH_ENABLED
   return nullptr;
 #endif // HWACC_PUSCH_ENABLED
@@ -487,9 +500,11 @@ create_acc100_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_
 
   // Set the hardware-accelerated PUSCH decoder configuration.
   pusch_decoder_factory_hw_configuration decoder_hw_factory_config;
-  decoder_hw_factory_config.segmenter_factory  = segmenter_rx_factory;
-  decoder_hw_factory_config.crc_factory        = crc_calculator_factory;
-  decoder_hw_factory_config.hw_decoder_factory = hw_decoder_factory;
+  decoder_hw_factory_config.segmenter_factory         = segmenter_rx_factory;
+  decoder_hw_factory_config.crc_factory               = crc_calculator_factory;
+  decoder_hw_factory_config.hw_decoder_factory        = hw_decoder_factory;
+  decoder_hw_factory_config.executor                  = executor.get();
+  decoder_hw_factory_config.nof_pusch_decoder_threads = nof_threads + nof_pusch_decoder_threads + 1;
   return create_pusch_decoder_factory_hw(decoder_hw_factory_config);
 }
 
@@ -514,6 +529,10 @@ static pusch_processor_factory& get_pusch_processor_factory()
   // Create pseudo-random sequence generator.
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
+
+  std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
+      create_low_papr_sequence_generator_sw_factory();
+  TESTASSERT(low_papr_sequence_gen_factory);
 
   // Create demodulator mapper factory.
   std::shared_ptr<channel_modulation_factory> chan_modulation_factory = create_channel_modulation_sw_factory();
@@ -543,7 +562,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
 
   // Create DM-RS for PUSCH channel estimator.
   std::shared_ptr<dmrs_pusch_estimator_factory> dmrs_pusch_chan_estimator_factory =
-      create_dmrs_pusch_estimator_factory_sw(prg_factory, port_chan_estimator_factory);
+      create_dmrs_pusch_estimator_factory_sw(prg_factory, low_papr_sequence_gen_factory, port_chan_estimator_factory);
   TESTASSERT(dmrs_pusch_chan_estimator_factory);
 
   // Create channel equalizer factory.
@@ -565,7 +584,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
 
   // Create worker pool and exectuors for concurrent PUSCH processor implementations.
   // Note that currently hardware-acceleration is limited to "generic" processor types.
-  if (nof_pusch_decoder_threads != 0 && ldpc_decoder_type != "acc100" && rate_dematcher_type != "acc100") {
+  if (nof_pusch_decoder_threads != 0) {
     worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
         "decoder", nof_pusch_decoder_threads, 1024);
     executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
@@ -737,14 +756,19 @@ int main(int argc, char** argv)
 
   // Inform of the benchmark configuration.
   if (benchmark_mode != benchmark_modes::silent) {
+    std::string hwacc_verbose = "";
+    if (ldpc_decoder_type == "acc100") {
+      hwacc_verbose = fmt::format(" ({} VFs)", nof_threads + nof_pusch_decoder_threads + 1);
+    }
     fmt::print("Launching benchmark for {} threads, {} times per thread, and {} repetitions. Using {} profile, {} LDPC "
-               "decoder, and {} rate dematcher.\n",
+               "decoder, and {} rate dematcher{}.\n",
                nof_threads,
                batch_size_per_thread,
                nof_repetitions,
                selected_profile_name,
                ldpc_decoder_type,
-               rate_dematcher_type);
+               rate_dematcher_type,
+               hwacc_verbose);
   }
 
   benchmarker perf_meas("PUSCH processor", nof_repetitions);

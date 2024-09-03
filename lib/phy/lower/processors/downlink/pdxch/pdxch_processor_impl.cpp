@@ -22,12 +22,10 @@
 
 #include "pdxch_processor_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
-#include "srsran/phy/support/resource_grid_reader_empty.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/zero.h"
 
 using namespace srsran;
-
-const resource_grid_reader_empty pdxch_processor_impl::empty_rg(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB);
 
 void pdxch_processor_impl::connect(pdxch_processor_notifier& notifier_)
 {
@@ -49,37 +47,42 @@ bool pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&       
 {
   srsran_assert(notifier != nullptr, "Notifier has not been connected.");
 
-  // Check if the slot has changed.
+  // Update the current resource grid if the slot has changed.
   if (context.slot != current_slot) {
     // Update slot.
     current_slot = context.slot;
 
-    // Exchange an empty request with the current slot with a stored request.
-    auto request = requests.exchange({context.slot, nullptr});
+    // Release current grid.
+    current_grid.release();
 
-    // Handle the returned request.
-    if (request.grid == nullptr) {
-      // If the request resource grid pointer is nullptr, the request is empty.
-      current_grid = empty_rg;
+    // Exchange an empty request with the current slot with a stored request.
+    auto request = requests.exchange({context.slot, shared_resource_grid()});
+
+    // If the request resource grid pointer is invalid, the request is empty.
+    if (!request.grid) {
       return false;
     }
 
+    // If the slot of the request does not match the current slot, then notify a late event.
     if (current_slot != request.slot) {
-      // If the slot of the request does not match the current slot, then notify a late event.
       resource_grid_context late_context;
       late_context.slot   = request.slot;
       late_context.sector = context.sector;
       notifier->on_pdxch_request_late(late_context);
-      current_grid = empty_rg;
       return false;
     }
 
-    // If the request is valid, then select request grid.
-    current_grid = *request.grid;
+    // Discard the resource grid if there is nothing to transmit.
+    if (request.grid.get_reader().is_empty()) {
+      return false;
+    }
+
+    // Update the current grid with the new resource grid.
+    current_grid = std::move(request.grid);
   }
 
-  // Skip processing if the resource grid is empty.
-  if (current_grid.get().is_empty()) {
+  // Skip processing if the resource grid is invalid.
+  if (!current_grid) {
     return false;
   }
 
@@ -88,21 +91,21 @@ bool pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&       
 
   // Modulate each of the ports.
   for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-    modulator->modulate(samples.get_channel_buffer(i_port), current_grid, i_port, symbol_index_subframe);
+    modulator->modulate(samples.get_channel_buffer(i_port), current_grid.get_reader(), i_port, symbol_index_subframe);
   }
 
   return true;
 }
 
-void pdxch_processor_impl::handle_request(const resource_grid_reader& grid, const resource_grid_context& context)
+void pdxch_processor_impl::handle_request(const shared_resource_grid& grid, const resource_grid_context& context)
 {
   srsran_assert(notifier != nullptr, "Notifier has not been connected.");
 
   // Swap the new request by the current request in the circular array.
-  auto request = requests.exchange({context.slot, &grid});
+  auto request = requests.exchange({context.slot, grid.copy()});
 
   // If there was a request with a resource grid, then notify a late event with the context of the discarded request.
-  if (request.grid != nullptr) {
+  if (request.grid) {
     resource_grid_context late_context;
     late_context.slot   = request.slot;
     late_context.sector = context.sector;

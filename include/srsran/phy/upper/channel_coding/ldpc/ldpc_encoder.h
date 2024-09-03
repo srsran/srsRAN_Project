@@ -30,6 +30,8 @@
 
 namespace srsran {
 
+class ldpc_encoder_buffer;
+
 /// LDPC encoder interface.
 class ldpc_encoder
 {
@@ -39,12 +41,12 @@ public:
 
   /// \brief Encodes a message.
   ///
-  /// \param[out] output  Resulting codeblock.
   /// \param[in]  input   Message: original information bits, with the filler bits (if any) set to zero.
   /// \param[in]  cfg     Encoder configuration for the current codeblock.
+  /// \return A reference to the LDPC encoder buffer.
   /// \note The length of the output codeblock is deduced from the size of parameter \c output.
-  virtual void
-  encode(bit_buffer& output, const bit_buffer& input, const codeblock_metadata::tb_common_metadata& cfg) = 0;
+  virtual const ldpc_encoder_buffer& encode(const bit_buffer&                             input,
+                                            const codeblock_metadata::tb_common_metadata& cfg) = 0;
 };
 
 } // namespace srsran

@@ -22,6 +22,9 @@ set(SOURCES
   rrc_du_factory.cpp
   rrc_du_impl.cpp
   ue/meas_types_validators.cpp
+  ue/rrc_asn1_helpers.cpp
+  ue/rrc_asn1_converters.cpp
+  ue/rrc_measurement_types_asn1_converters.cpp
   ue/rrc_ue_impl.cpp
   ue/rrc_ue_context.cpp
   ue/rrc_ue_message_handlers.cpp

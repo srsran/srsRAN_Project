@@ -126,30 +126,30 @@ TEST(test_is_gscn_valid_given_band, mixed_bands)
   ASSERT_FALSE(band_helper::is_gscn_valid_given_band(9447U, nr_band::n48, subcarrier_spacing::kHz15).has_value());
   ASSERT_TRUE(band_helper::is_gscn_valid_given_band(7911U, nr_band::n78, subcarrier_spacing::kHz30).has_value());
   ASSERT_FALSE(band_helper::is_gscn_valid_given_band(7700U, nr_band::n78, subcarrier_spacing::kHz30).has_value());
-  ASSERT_TRUE(band_helper::is_gscn_valid_given_band(
-                  8720U, nr_band::n79, subcarrier_spacing::kHz30, bs_channel_bandwidth_fr1::MHz40)
-                  .has_value());
-  ASSERT_FALSE(band_helper::is_gscn_valid_given_band(
-                   8716U, nr_band::n79, subcarrier_spacing::kHz30, bs_channel_bandwidth_fr1::MHz40)
-                   .has_value());
-  ASSERT_TRUE(band_helper::is_gscn_valid_given_band(
-                  8716U, nr_band::n79, subcarrier_spacing::kHz30, bs_channel_bandwidth_fr1::MHz10)
-                  .has_value());
-  ASSERT_FALSE(band_helper::is_gscn_valid_given_band(
-                   8885U, nr_band::n79, subcarrier_spacing::kHz30, bs_channel_bandwidth_fr1::MHz10)
-                   .has_value());
-  ASSERT_TRUE(band_helper::is_gscn_valid_given_band(
-                  6717U, nr_band::n90, subcarrier_spacing::kHz15, bs_channel_bandwidth_fr1::MHz10)
-                  .has_value());
-  ASSERT_FALSE(band_helper::is_gscn_valid_given_band(
-                   6718U, nr_band::n90, subcarrier_spacing::kHz15, bs_channel_bandwidth_fr1::MHz10)
-                   .has_value());
-  ASSERT_TRUE(band_helper::is_gscn_valid_given_band(
-                  6718U, nr_band::n90, subcarrier_spacing::kHz15, bs_channel_bandwidth_fr1::MHz5)
-                  .has_value());
-  ASSERT_FALSE(band_helper::is_gscn_valid_given_band(
-                   6244U, nr_band::n90, subcarrier_spacing::kHz15, bs_channel_bandwidth_fr1::MHz5)
-                   .has_value());
+  ASSERT_TRUE(
+      band_helper::is_gscn_valid_given_band(8720U, nr_band::n79, subcarrier_spacing::kHz30, bs_channel_bandwidth::MHz40)
+          .has_value());
+  ASSERT_FALSE(
+      band_helper::is_gscn_valid_given_band(8716U, nr_band::n79, subcarrier_spacing::kHz30, bs_channel_bandwidth::MHz40)
+          .has_value());
+  ASSERT_TRUE(
+      band_helper::is_gscn_valid_given_band(8716U, nr_band::n79, subcarrier_spacing::kHz30, bs_channel_bandwidth::MHz10)
+          .has_value());
+  ASSERT_FALSE(
+      band_helper::is_gscn_valid_given_band(8885U, nr_band::n79, subcarrier_spacing::kHz30, bs_channel_bandwidth::MHz10)
+          .has_value());
+  ASSERT_TRUE(
+      band_helper::is_gscn_valid_given_band(6717U, nr_band::n90, subcarrier_spacing::kHz15, bs_channel_bandwidth::MHz10)
+          .has_value());
+  ASSERT_FALSE(
+      band_helper::is_gscn_valid_given_band(6718U, nr_band::n90, subcarrier_spacing::kHz15, bs_channel_bandwidth::MHz10)
+          .has_value());
+  ASSERT_TRUE(
+      band_helper::is_gscn_valid_given_band(6718U, nr_band::n90, subcarrier_spacing::kHz15, bs_channel_bandwidth::MHz5)
+          .has_value());
+  ASSERT_FALSE(
+      band_helper::is_gscn_valid_given_band(6244U, nr_band::n90, subcarrier_spacing::kHz15, bs_channel_bandwidth::MHz5)
+          .has_value());
   ASSERT_TRUE(band_helper::is_gscn_valid_given_band(6554U, nr_band::n90, subcarrier_spacing::kHz30).has_value());
   ASSERT_FALSE(band_helper::is_gscn_valid_given_band(6250U, nr_band::n90, subcarrier_spacing::kHz30).has_value());
   ASSERT_TRUE(band_helper::is_gscn_valid_given_band(10062U, nr_band::n96, subcarrier_spacing::kHz30).has_value());

@@ -23,21 +23,22 @@
 #include "reestablishment_context_modification_routine.h"
 #include "pdu_session_routine_helpers.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsran/f1ap/common/ue_context_config.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 reestablishment_context_modification_routine::reestablishment_context_modification_routine(
-    ue_index_t                                    ue_index_,
-    const srsran::security::sec_as_config&        security_cfg_,
-    e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng_,
-    f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng_,
-    du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_,
-    cu_cp_rrc_ue_interface&                       cu_cp_notifier_,
-    ue_task_scheduler&                            ue_task_sched_,
-    up_resource_manager&                          up_resource_mng_,
-    srslog::basic_logger&                         logger_) :
+    ue_index_t                             ue_index_,
+    const srsran::security::sec_as_config& security_cfg_,
+    e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
+    f1ap_ue_context_manager&               f1ap_ue_ctxt_mng_,
+    du_processor_rrc_ue_notifier&          rrc_ue_notifier_,
+    cu_cp_rrc_ue_interface&                cu_cp_notifier_,
+    ue_task_scheduler&                     ue_task_sched_,
+    up_resource_manager&                   up_resource_mng_,
+    srslog::basic_logger&                  logger_) :
   ue_index(ue_index_),
   security_cfg(security_cfg_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
@@ -115,11 +116,10 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
       // add SRB2 again
-      slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item> srbs_to_setup_list;
-      f1ap_srbs_to_be_setup_mod_item                              srb_to_setup = {};
-
-      srb_to_setup.srb_id = srb_id_t::srb2;
-      srbs_to_setup_list.insert(srb_id_t::srb2, srb_to_setup);
+      std::vector<f1ap_srb_to_setup> srbs_to_setup_list;
+      f1ap_srb_to_setup              srb_to_setup = {};
+      srb_to_setup.srb_id                         = srb_id_t::srb2;
+      srbs_to_setup_list.push_back(srb_to_setup);
 
       // convert pdu session context
       std::map<pdu_session_id_t, up_pdu_session_context_update> pdu_sessions_to_setup_list;
@@ -195,11 +195,6 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
         e1ap_pdu_session_resource_modify_list)
 {
-  // Set up SRB2 in DU
-  f1ap_srbs_to_be_setup_mod_item srb2;
-  srb2.srb_id = srb_id_t::srb2;
-  ue_context_mod_req.srbs_to_be_setup_mod_list.emplace(srb2.srb_id, srb2);
-
   for (const auto& e1ap_item : e1ap_pdu_session_resource_modify_list) {
     cu_cp_pdu_session_resource_modify_response_item item;
     item.pdu_session_id = e1ap_item.pdu_session_id;
@@ -230,31 +225,15 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
 
       // Fill UE context modification for DU
       {
-        f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
-        drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
+        f1ap_drb_to_modify drb_modified_item;
+        drb_modified_item.drb_id = e1ap_drb_item.drb_id;
 
         // Add up tnl info
         for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
-          drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+          drb_modified_item.uluptnl_info_list.push_back(ul_up_transport_param.up_tnl_info);
         }
 
-        // Add rlc mode
-        drb_setup_mod_item.rlc_mod     = drb_up_context.rlc_mod;
-        drb_setup_mod_item.pdcp_sn_len = drb_up_context.pdcp_cfg.tx.sn_size;
-
-        // fill QoS info
-        drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
-        drb_setup_mod_item.qos_info.s_nssai    = drb_up_context.s_nssai;
-        drb_setup_mod_item.qos_info.notif_ctrl = f1ap_notif_ctrl::active;
-        // Fill QoS flows for UE context modification.
-        for (const auto& flow : drb_up_context.qos_flows) {
-          // Add mapped flows and extract required QoS info from original NGAP request
-          f1ap_flows_mapped_to_drb_item mapped_flow_item;
-          mapped_flow_item.qos_flow_id               = flow.first;
-          mapped_flow_item.qos_flow_level_qos_params = drb_up_context.qos_params;
-          drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
-        }
-        ue_context_mod_req.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
+        ue_context_mod_req.drbs_to_be_modified_list.push_back(drb_modified_item);
       }
     }
 
@@ -276,9 +255,8 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
     bool                                             reestablish_pdcp)
 {
   // Fail procedure if (single) DRB couldn't be setup
-  if (!ue_context_modification_resp.drbs_failed_to_be_setup_mod_list.empty()) {
-    logger.warning("Couldn't setup {} DRBs at DU",
-                   ue_context_modification_resp.drbs_failed_to_be_setup_mod_list.size());
+  if (!ue_context_modification_resp.drbs_failed_to_be_setup_list.empty()) {
+    logger.warning("Couldn't setup {} DRBs at DU", ue_context_modification_resp.drbs_failed_to_be_setup_list.size());
     return false;
   }
 
@@ -311,16 +289,16 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
     e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
     e1ap_mod_item.pdu_session_id = pdu_session.pdu_session_id;
 
-    for (const auto& drb_item : ue_context_modification_resp.drbs_setup_mod_list) {
+    for (const auto& drb_item : ue_context_modification_resp.drbs_modified_list) {
       // Only include the DRB if it belongs to the this session.
       if (pdu_session.drb_modified_list_ng_ran.contains(drb_item.drb_id)) {
         // DRB belongs to this PDU session
         e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
         e1ap_drb_item.drb_id = drb_item.drb_id;
 
-        for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
+        for (const auto& dl_up_tnl_info : drb_item.dluptnl_info_list) {
           e1ap_up_params_item e1ap_dl_up_param;
-          e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
+          e1ap_dl_up_param.up_tnl_info   = dl_up_tnl_info;
           e1ap_dl_up_param.cell_group_id = 0; // TODO: Remove hardcoded value
 
           e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);

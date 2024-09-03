@@ -242,7 +242,7 @@ public:
 
 private:
   /// Ensure the sample type is arithmetic.
-  static_assert(std::is_arithmetic<T>::value, "Invalid type.");
+  static_assert(std::is_arithmetic_v<T>, "Invalid type.");
   /// Records the maximum observed value.
   T max = std::numeric_limits<T>::min();
   /// Records the minimum observed value.

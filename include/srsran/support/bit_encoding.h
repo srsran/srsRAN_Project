@@ -34,7 +34,7 @@ public:
   explicit bit_encoder(byte_buffer& bytes) : writer(bytes) {}
 
   /// Get a view to held byte buffer.
-  srsran::byte_buffer_view data() const { return writer.view(); }
+  byte_buffer_view data() const { return writer.view(); }
 
   /// Gets number of written bytes.
   unsigned nof_bytes() const { return writer.length(); }
@@ -59,17 +59,17 @@ public:
 
   /// Append range of bytes into byte_buffer held by bit_encoder.
   /// \param bytes span of bytes.
-  bool pack_bytes(srsran::span<const uint8_t> bytes);
+  bool pack_bytes(span<const uint8_t> bytes);
 
   /// Append bytes of a byte_buffer into byte_buffer held by bit_encoder.
-  bool pack_bytes(srsran::byte_buffer_view bytes);
+  bool pack_bytes(byte_buffer_view bytes);
 
   /// Pads held buffer with zeros until the next byte.
-  void align_bytes_zero();
+  void align_bytes_zero() { offset = 0; }
 
 private:
   /// Interface to byte buffer where bits are going to be appended.
-  srsran::byte_buffer_writer writer;
+  byte_buffer_writer writer;
   /// Offset of the next bit to be set. Values: (0..7).
   uint8_t offset = 0;
 };
@@ -78,7 +78,7 @@ private:
 class bit_decoder
 {
 public:
-  explicit bit_decoder(srsran::byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
+  explicit bit_decoder(byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
 
   /// Get a view to held byte buffer.
   byte_buffer_view data() const { return buffer; }
@@ -101,13 +101,13 @@ public:
   /// \param val bitmap of bits read.
   /// \param n_bits number of bits to read.
   /// \return true if read is successful. False, if the number of bits read exceeded the byte_buffer size.
-  template <class T>
+  template <typename T>
   bool unpack(T& val, uint32_t n_bits);
 
   /// Read unaligned bytes from underlying byte_buffer.
   /// \param bytes span of bytes where the result is stored. The span size defines the number of bytes to be read.
   /// \return true if successful. False if the number of bytes to be read exceeds the end of the byte_buffer.
-  bool unpack_bytes(srsran::span<uint8_t> bytes);
+  bool unpack_bytes(span<uint8_t> bytes);
 
   /// Create a view across \c n_bytes bytes of the underlying byte_buffer, starting at the first full byte from the
   /// current location. For this purpose, the decoder is first automatically aligned via \c align_bytes.
@@ -120,9 +120,9 @@ public:
   void align_bytes();
 
 private:
-  srsran::byte_buffer_view            buffer;
-  srsran::byte_buffer::const_iterator it;
-  uint8_t                             offset = 0;
+  byte_buffer_view            buffer;
+  byte_buffer::const_iterator it;
+  uint8_t                     offset = 0;
 };
 
 } // namespace srsran

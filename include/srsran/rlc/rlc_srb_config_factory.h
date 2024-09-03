@@ -29,10 +29,11 @@ namespace srsran {
 /// \brief SRB0 default configuration (only implementation-specific parameters)
 inline rlc_config make_default_srb0_rlc_config()
 {
-  rlc_config cfg       = {};
-  cfg.mode             = rlc_mode::tm;
-  cfg.tm.tx.queue_size = 8;
-  cfg.metrics_period   = std::chrono::milliseconds(0); // disable metrics reporting for SRBs
+  rlc_config cfg             = {};
+  cfg.mode                   = rlc_mode::tm;
+  cfg.tm.tx.queue_size       = 8;
+  cfg.tm.tx.queue_size_bytes = 8 * 2000;
+  cfg.metrics_period         = std::chrono::milliseconds(0); // disable metrics reporting for SRBs
   return cfg;
 }
 
@@ -48,6 +49,7 @@ inline rlc_config make_default_srb_rlc_config()
   cfg.am.tx.poll_byte         = -1;
   cfg.am.tx.max_retx_thresh   = 8;
   cfg.am.tx.queue_size        = 32;
+  cfg.am.tx.queue_size_bytes  = 64000;
   cfg.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
   cfg.am.rx.t_reassembly      = 35;
   cfg.am.rx.t_status_prohibit = 0;

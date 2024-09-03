@@ -33,9 +33,8 @@ class iq_decompressor_dummy : public iq_decompressor
 {
 public:
   // See interface for documentation.
-  void decompress(span<cbf16_t>                iq_data,
-                  span<const compressed_prb>   compressed_prbs,
-                  const ru_compression_params& params) override
+  void
+  decompress(span<cbf16_t> iq_data, span<const uint8_t> compressed_data, const ru_compression_params& params) override
   {
   }
 };

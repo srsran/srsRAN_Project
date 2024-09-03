@@ -39,6 +39,14 @@ dl_logical_channel_manager::dl_logical_channel_manager()
   set_status(LCID_SRB0, true);
 }
 
+void dl_logical_channel_manager::deactivate()
+{
+  for (unsigned lcid = LCID_SRB0; lcid <= LCID_MAX_DRB; lcid++) {
+    set_status((lcid_t)lcid, false);
+  }
+  pending_ces.clear();
+}
+
 void dl_logical_channel_manager::configure(span<const logical_channel_config> log_channels_configs)
 {
   for (unsigned i = 1; i != channels.size(); ++i) {

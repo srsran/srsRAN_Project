@@ -61,7 +61,6 @@ public:
     temp_eq_re(max_nof_rb * NRE * pusch_constants::MAX_NOF_LAYERS),
     temp_eq_noise_vars(max_nof_rb * NRE * pusch_constants::MAX_NOF_LAYERS),
     ch_estimates_copy(max_nof_rb * NRE, pusch_constants::MAX_NOF_RX_PORTS, pusch_constants::MAX_NOF_LAYERS),
-    ch_estimates_view(pusch_constants::MAX_NOF_RX_PORTS, pusch_constants::MAX_NOF_LAYERS),
     compute_post_eq_sinr(compute_post_eq_sinr_)
   {
     srsran_assert(equalizer, "Invalid pointer to channel_equalizer object.");

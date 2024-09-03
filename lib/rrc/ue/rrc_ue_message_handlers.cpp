@@ -28,6 +28,7 @@
 #include "rrc_ue_helpers.h"
 #include "rrc_ue_impl.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
 #include "srsran/ran/lcid.h"
@@ -104,23 +105,24 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
   // Launch RRC setup procedure
   cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(
-      context, du_to_cu_container, *this, get_rrc_ue_srb_handler(), nas_notifier, *event_mng, logger));
+      context, du_to_cu_container, *this, get_rrc_ue_control_message_handler(), nas_notifier, *event_mng, logger));
 }
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
   // Launch RRC re-establishment procedure
-  cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_reestablishment_procedure>(msg,
-                                                                                    context,
-                                                                                    du_to_cu_container,
-                                                                                    *this,
-                                                                                    *this,
-                                                                                    get_rrc_ue_srb_handler(),
-                                                                                    cu_cp_notifier,
-                                                                                    cu_cp_ue_notifier,
-                                                                                    nas_notifier,
-                                                                                    *event_mng,
-                                                                                    logger));
+  cu_cp_ue_notifier.schedule_async_task(
+      launch_async<rrc_reestablishment_procedure>(msg,
+                                                  context,
+                                                  du_to_cu_container,
+                                                  *this,
+                                                  *this,
+                                                  get_rrc_ue_control_message_handler(),
+                                                  cu_cp_notifier,
+                                                  cu_cp_ue_notifier,
+                                                  nas_notifier,
+                                                  *event_mng,
+                                                  logger));
 }
 
 void rrc_ue_impl::stop()
@@ -320,11 +322,9 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
 
 async_task<bool> rrc_ue_impl::handle_security_mode_complete_expected(uint8_t transaction_id)
 {
-  // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
-  const std::chrono::milliseconds timeout_ms{1000};
-
   return launch_async(
-      [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+      [this, timeout_ms = context.cfg.rrc_procedure_timeout_ms, transaction_id, transaction = rrc_transaction{}](
+          coro_context<async_task<bool>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         logger.log_debug("Awaiting RRC Security Mode Complete (timeout={}ms)", timeout_ms.count());
@@ -382,7 +382,8 @@ byte_buffer rrc_ue_impl::get_packed_ue_radio_access_cap_info() const
 
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
-  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, get_rrc_ue_srb_handler(), logger);
+  return launch_async<rrc_reconfiguration_procedure>(
+      context, msg, *this, *event_mng, get_rrc_ue_control_message_handler(), logger);
 }
 
 rrc_ue_handover_reconfiguration_context
@@ -424,11 +425,9 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
 
 async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id)
 {
-  // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
-  const std::chrono::milliseconds timeout_ms{1000};
-
   return launch_async(
-      [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+      [this, timeout_ms = context.cfg.rrc_procedure_timeout_ms, transaction_id, transaction = rrc_transaction{}](
+          coro_context<async_task<bool>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         logger.log_debug("Awaiting RRC Reconfiguration Complete (timeout={}ms)", timeout_ms.count());
@@ -451,6 +450,40 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
 
         CORO_RETURN(procedure_result);
       });
+}
+
+bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)
+{
+  // Unpack UE Capabilities
+  asn1::rrc_nr::ue_radio_access_cap_info_s ue_radio_access_cap_info;
+  asn1::cbit_ref                           bref({ue_capabilities.begin(), ue_capabilities.end()});
+
+  if (ue_radio_access_cap_info.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    logger.log_error("Couldn't unpack UE Radio Access Capability Info RRC container");
+    return false;
+  }
+
+  asn1::rrc_nr::ue_cap_rat_container_list_l ue_cap_rat_container_list;
+  asn1::cbit_ref                            bref2(
+      {ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.begin(),
+                                  ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.end()});
+  if (asn1::unpack_dyn_seq_of(ue_cap_rat_container_list, bref2, 0, 8) != asn1::SRSASN_SUCCESS) {
+    logger.log_error("Couldn't unpack UE Capability RAT Container List RRC container");
+    return false;
+  }
+
+  context.capabilities_list.emplace(ue_cap_rat_container_list);
+
+  if (logger.get_basic_logger().debug.enabled()) {
+    logger.log_debug("UE Capabilities:\n");
+    asn1::json_writer json_writer;
+    for (const auto& rat_container : ue_cap_rat_container_list) {
+      rat_container.to_json(json_writer);
+      logger.log_debug("{}\n", json_writer.to_string().c_str());
+    }
+  }
+
+  return true;
 }
 
 async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg)
@@ -547,8 +580,8 @@ rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
   rrc_ue_reestablishment_context_response rrc_reest_context;
   rrc_reest_context.sec_context = cu_cp_ue_notifier.get_security_context();
 
-  if (context.capabilities.has_value()) {
-    rrc_reest_context.capabilities = context.capabilities.value();
+  if (context.capabilities_list.has_value()) {
+    rrc_reest_context.capabilities_list = context.capabilities_list.value();
   }
   rrc_reest_context.up_ctx = cu_cp_notifier.on_up_context_required();
 

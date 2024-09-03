@@ -59,109 +59,57 @@ struct bbdev_acc_configuration {
   unsigned nof_mbuf = 256;
 };
 
-/// Abstracted interfacing to bbdev-based hardware-accelerators.
+/// Wireless Baseband Device (bbdev) interface.
 class bbdev_acc
 {
 public:
-  /// Constructor.
-  /// \param[in] cfg    Configuration parameters of the bbdev-based hardware-accelerator.
-  /// \param[in] info   bbdev Device information.
-  /// \param[in] logger SRS logger.
-  explicit bbdev_acc(const bbdev_acc_configuration& cfg, const ::rte_bbdev_info& info_, srslog::basic_logger& logger);
-
-  /// Destructor.
-  ~bbdev_acc();
+  /// Default destructor.
+  virtual ~bbdev_acc() = default;
 
   /// Returns the ID of the bbdev-based hardware-accelerator device.
-  /// \return Device ID.
-  unsigned get_device_id() const { return id; }
+  virtual unsigned get_device_id() const = 0;
 
   /// Returns the ID of the socket used by the bbdev-based hardware-accelerator.
-  /// \return Socket ID.
-  int get_socket_id() const { return info.socket_id; }
+  virtual int get_socket_id() const = 0;
 
   /// Returns the number of LDPC encoder cores provided by the bbdev-based hardware-accelerator.
-  /// \return Number of LDPC encoder cores.
-  unsigned get_nof_ldpc_enc_cores() const { return nof_ldpc_enc_lcores; }
+  virtual unsigned get_nof_ldpc_enc_cores() const = 0;
 
   /// Returns the number of LDPC decoder cores provided by the bbdev-based hardware-accelerator.
-  /// \return Number of LDPC decoder cores.
-  unsigned get_nof_ldpc_dec_cores() const { return nof_ldpc_dec_lcores; }
+  virtual unsigned get_nof_ldpc_dec_cores() const = 0;
 
   /// Returns the number of FFT cores provided by the bbdev-based hardware-accelerator.
-  /// \return Number of FFT cores.
-  unsigned get_nof_fft_cores() const { return nof_fft_lcores; }
+  virtual unsigned get_nof_fft_cores() const = 0;
 
   /// Returns the size of the (external) HARQ buffer size embedded in the hardware-accelerator.
-  /// \return HARQ buffer size in bytes. Note that 64 bits are used to enable sizes >= 4GB.
-  uint64_t get_harq_buff_size_bytes() const { return static_cast<uint64_t>(info.drv.harq_buffer_size) * 1024; }
+  virtual uint64_t get_harq_buff_size_bytes() const = 0;
 
   /// Returns the size of each mbuf used to exchange unencoded and unrate-matched messages with the accelerator.
-  /// \return Unencoded and unrate-matched mbuf size (in bytes).
-  units::bytes get_msg_mbuf_size() const { return units::bytes(msg_mbuf_size); }
+  virtual units::bytes get_msg_mbuf_size() const = 0;
 
   /// Returns the size of each mbuf used to exchange encoded and rate-matched messages with the accelerator.
-  /// \return Encoded and rate-matched mbuf size (in bytes).
-  units::bytes get_rm_mbuf_size() const { return units::bytes(rm_mbuf_size); }
+  virtual units::bytes get_rm_mbuf_size() const = 0;
 
   /// Returns the number of mbufs in each memory pool used to exchange data with the accelerator.
-  /// \return Number of mbufs.
-  unsigned get_nof_mbuf() const { return nof_mbuf; }
+  virtual unsigned get_nof_mbuf() const = 0;
 
   /// Returns the internal SRS logger.
-  /// \return SRS logger.
-  srslog::basic_logger& get_logger() { return logger; }
+  virtual srslog::basic_logger& get_logger() = 0;
 
-  /// Reserves a free queue to be used by a specific hardware-accelerated channel processor function.
+  /// \brief Reserves a free queue to be used by a specific hardware-accelerated channel processor function.
   /// \param[in] op_type Type of bbdev op.
-  /// \return ID of the reserved queue.
-  int reserve_queue(::rte_bbdev_op_type op_type);
+  /// \return The identifier of the reserved queue if successful, otherwise a negative integer.
+  virtual int reserve_queue(::rte_bbdev_op_type op_type) = 0;
 
-  /// Frees a queue used by a specific hardware-accelerated channel processor function.
-  /// \param[in] queue_id ID of the queue to be freed.
-  void free_queue(::rte_bbdev_op_type op_type, unsigned queue_id);
+  /// \brief Frees a queue used by a specific hardware-accelerated channel processor function.
+  /// \param[in] queue_id Identifier of the queue to be freed.
+  virtual void free_queue(::rte_bbdev_op_type op_type, unsigned queue_id) = 0;
 
   /// Returns a unique ID for an instance of an LDPC encoder using the bbdev-based accelerator.
-  /// \return Encoder ID.
-  unsigned reserve_encoder() { return nof_ldpc_enc_instances++; }
+  virtual unsigned reserve_encoder() = 0;
 
   /// Returns a unique ID for an instance of an LDPC decoder using the bbdev-based accelerator.
-  /// \return Decoder ID.
-  unsigned reserve_decoder() { return nof_ldpc_dec_instances++; }
-
-private:
-  /// Codeblock identifier list type.
-  using queue_id_list =
-      concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
-
-  /// ID of the bbdev-based hardware-accelerator.
-  unsigned id;
-  /// Structure providing device information.
-  ::rte_bbdev_info info;
-  /// Number of lcores available to the hardware-accelerated LDPC encoder (disabled if 0).
-  unsigned nof_ldpc_enc_lcores;
-  /// Number of lcores available to the hardware-accelerated LDPC decoder (disabled if 0).
-  unsigned nof_ldpc_dec_lcores;
-  /// Number of lcores available to the hardware-accelerated FFT (disabled if 0).
-  unsigned nof_fft_lcores;
-  /// List containing the free queue ids for hardware-acclerated LDPC encoder functions.
-  queue_id_list available_ldpc_enc_queue;
-  /// List containing the free queue ids for hardware-acclerated LDPC decoder functions.
-  queue_id_list available_ldpc_dec_queue;
-  /// List containing the free queue ids for hardware-acclerated FFT functions.
-  queue_id_list available_fft_queue;
-  /// Size of each mbuf used to exchange unencoded and unrate-matched messages with the accelerator in bytes.
-  unsigned msg_mbuf_size;
-  /// Size of each mbuf used to exchange encoded and rate-matched messages with the accelerator in bytes.
-  unsigned rm_mbuf_size;
-  /// Number of mbufs in each memory pool.
-  unsigned nof_mbuf;
-  /// SRS logger.
-  srslog::basic_logger& logger;
-  /// Number of LDPC encoder instances using this bbdev accelerator.
-  unsigned nof_ldpc_enc_instances;
-  /// Number of LDPC decoder instances using this bbdev accelerator.
-  unsigned nof_ldpc_dec_instances;
+  virtual unsigned reserve_decoder() = 0;
 };
 
 } // namespace dpdk

@@ -72,7 +72,23 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
   app_services::add_log_option(app, log_params.rlc_level, "--rlc_level", "RLC log level");
   app_services::add_log_option(app, log_params.f1ap_level, "--f1ap_level", "F1AP log level");
   app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
+  app_services::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
   app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
+
+  auto metric_level_check = [](const std::string& value) -> std::string {
+    if (auto level = srslog::str_to_basic_level(value); !level.has_value() ||
+                                                        level.value() == srslog::basic_levels::error ||
+                                                        level.value() == srslog::basic_levels::warning) {
+      return "Log level value not supported. Accepted values [none,info,debug]";
+    }
+
+    return {};
+  };
+
+  add_option_function<std::string>(
+      app, "--metrics_level", app_services::capture_log_level_function(log_params.metrics_level), "Metrics log level")
+      ->default_str(srslog::basic_level_to_string(log_params.metrics_level))
+      ->check(metric_level_check);
 
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
@@ -544,8 +560,7 @@ static void configure_cli11_pf_scheduler_expert_args(CLI::App& app, time_pf_sche
       ->capture_default_str();
 }
 
-static void configure_cli11_policy_scheduler_expert_args(CLI::App&                             app,
-                                                         du_high_unit_scheduler_expert_config& expert_params)
+static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)
 {
   static time_pf_scheduler_expert_config pf_sched_expert_cfg;
   CLI::App*                              pf_sched_cfg_subcmd =
@@ -554,17 +569,41 @@ static void configure_cli11_policy_scheduler_expert_args(CLI::App&              
   auto pf_sched_verify_callback = [&]() {
     CLI::App* pf_sched_sub_cmd = app.get_subcommand("pf_sched");
     if (pf_sched_sub_cmd->count() != 0) {
-      expert_params.policy_sched_expert_cfg = pf_sched_expert_cfg;
+      expert_params = pf_sched_expert_cfg;
     }
   };
   pf_sched_cfg_subcmd->parse_complete_callback(pf_sched_verify_callback);
+}
+
+static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit_ta_sched_expert_config& ta_params)
+{
+  add_option(app,
+             "--ta_measurement_slot_period",
+             ta_params.ta_measurement_slot_period,
+             "Measurements periodicity in nof. slots over which the new Timing Advance Command is computed")
+      ->capture_default_str();
+  add_option(app,
+             "--ta_cmd_offset_threshold",
+             ta_params.ta_cmd_offset_threshold,
+             "Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. If set to "
+             "less than zero, issuing of TA Command is disabled")
+      ->capture_default_str()
+      ->check(CLI::Range(-1, 31));
+  add_option(app,
+             "--ta_update_measurement_ul_sinr_threshold",
+             ta_params.ta_update_measurement_ul_sinr_threshold,
+             "UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid")
+      ->capture_default_str();
 }
 
 static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
 {
   CLI::App* policy_sched_cfg_subcmd =
       add_subcommand(app, "policy_sched_cfg", "Policy scheduler expert configuration")->configurable();
-  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params);
+  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
+  CLI::App* ta_sched_cfg_subcmd =
+      add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
+  configure_cli11_ta_scheduler_expert_args(*ta_sched_cfg_subcmd, expert_params.ta_sched_cfg);
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common_config& ul_common_params)
@@ -746,6 +785,10 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   app.add_option("--end_rb", pusch_params.end_rb, "End RB for resource allocation of UE PUSCHs")
       ->capture_default_str()
       ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--enable_transform_precoding",
+                 pusch_params.enable_transform_precoding,
+                 "Enable transform precoding for PUSCH.")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config& pucch_params)
@@ -779,9 +822,9 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
       ->capture_default_str();
   add_option(app,
-             "--f1_nof_ue_res_harq",
-             pucch_params.nof_ue_pucch_f0_or_f1_res_harq,
-             "Number of PUCCH F0/F1 resources available per UE for HARQ")
+             "--nof_ue_res_harq_per_set",
+             pucch_params.nof_ue_pucch_res_harq_per_set,
+             "Number of PUCCH resources available per UE for HARQ for each PUCCH resource set")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   add_option(app,
@@ -814,12 +857,6 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              "higher the number of sets, the lower the chances UEs have to share the same PUCCH resources.")
       ->capture_default_str()
       ->check(CLI::Range(1, 10));
-  add_option(app,
-             "--f2_nof_ue_res_harq",
-             pucch_params.nof_ue_pucch_f2_res_harq,
-             "Number of PUCCH F2 resources available per UE for HARQ")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 8));
   add_option(app,
              "--f2_nof_cell_res_csi",
              pucch_params.nof_cell_csi_resources,
@@ -1054,6 +1091,11 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
              "Maximum percentage of PRBs to be allocated to the slice")
       ->capture_default_str()
       ->check(CLI::Range(1U, 100U));
+
+  // Policy scheduler configuration.
+  CLI::App* policy_sched_cfg_subcmd =
+      add_subcommand(app, "policy_sched_cfg", "Policy scheduler configuration for the slice")->configurable();
+  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, slice_sched_params.slice_policy_sched_cfg);
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_config& slice_params)
@@ -1080,7 +1122,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
              "(NCI). If not specified, a unique value for the DU is automatically derived")
       ->capture_default_str()
       ->check(CLI::Range(0U, (1U << 14) - 1U));
-  add_option(app, "--dl_arfcn", cell_params.dl_arfcn, "Downlink ARFCN")->capture_default_str();
+  add_option(app, "--dl_arfcn", cell_params.dl_f_ref_arfcn, "Downlink ARFCN")->capture_default_str();
   add_auto_enum_option(app, "--band", cell_params.band, "NR band");
   add_option_function<std::string>(
       app,
@@ -1101,7 +1143,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
         unsigned          bw;
         ss >> bw;
         const std::string& error_message = "Error in the channel bandwidth property. Valid values "
-                                           "[5,10,15,20,25,30,40,50,60,70,80,90,100]";
+                                           "[5,10,15,20,25,30,40,50,60,70,80,90,100,200,400]";
         // Bandwidth cannot be less than 5MHz.
         if (bw < 5U) {
           return error_message;
@@ -1115,6 +1157,11 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
         // Check from [30-100] in steps of 10.
         if (bw < 101U) {
           return ((bw % 10) == 0) ? "" : error_message;
+        }
+
+        // Check from [200-400] in steps of 200.
+        if (bw < 401U) {
+          return ((bw % 200) == 0) ? "" : error_message;
         }
 
         return error_message;
@@ -1331,7 +1378,9 @@ static void configure_cli11_rlc_am_args(CLI::App& app, du_high_unit_rlc_am_confi
              rlc_am_params.tx.max_window,
              "Non-standard parameter that limits the tx window size. Can be used for limiting memory usage with "
              "large windows. 0 means no limits other than the SN size (i.e. 2^[sn_size-1]).");
-  add_option(*rlc_tx_am_subcmd, "--queue-size", rlc_am_params.tx.queue_size, "RLC AM TX SDU queue size")
+  add_option(*rlc_tx_am_subcmd, "--queue-size", rlc_am_params.tx.queue_size, "RLC AM TX SDU queue size in PDUs")
+      ->capture_default_str();
+  add_option(*rlc_tx_am_subcmd, "--queue-bytes", rlc_am_params.tx.queue_size_bytes, "RLC AM TX SDU queue size in bytes")
       ->capture_default_str();
   CLI::App* rlc_rx_am_subcmd = add_subcommand(app, "rx", "AM RX parameters");
   add_option(*rlc_rx_am_subcmd, "--sn", rlc_am_params.rx.sn_field_length, "RLC AM RX SN")->capture_default_str();
@@ -1350,10 +1399,10 @@ static void configure_cli11_mac_args(CLI::App& app, du_high_unit_mac_lc_config& 
              mac_params.priority,
              "Logical Channel priority. An increasing priority value indicates a lower priority level")
       ->capture_default_str()
-      ->check(CLI::Range(4, 16));
+      ->check(CLI::Range(1, 16));
   add_option(app, "--lc_group_id", mac_params.lc_group_id, "Logical Channel Group id")
       ->capture_default_str()
-      ->check(CLI::Range(1, 7));
+      ->check(CLI::Range(0, 7));
   add_option(
       app, "--bucket_size_duration_ms", mac_params.bucket_size_duration_ms, "Bucket size duration in milliseconds")
       ->capture_default_str()
@@ -1389,6 +1438,10 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
 
   add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
+
+  add_option(
+      app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
+      ->capture_default_str();
 
   add_option(app,
              "--stdout_metrics_period",
@@ -1479,7 +1532,9 @@ static void configure_cli11_rlc_um_args(CLI::App& app, du_high_unit_rlc_um_confi
 {
   CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
   rlc_tx_um_subcmd->add_option("--sn", rlc_um_params.tx.sn_field_length, "RLC UM TX SN")->capture_default_str();
-  rlc_tx_um_subcmd->add_option("--queue-size", rlc_um_params.tx.queue_size, "RLC UM TX SDU queue size")
+  rlc_tx_um_subcmd->add_option("--queue-size", rlc_um_params.tx.queue_size, "RLC UM TX SDU queue limit in PDUs")
+      ->capture_default_str();
+  rlc_tx_um_subcmd->add_option("--queue-bytes", rlc_um_params.tx.queue_size_bytes, "RLC UM TX SDU queue limit in bytes")
       ->capture_default_str();
   CLI::App* rlc_rx_um_subcmd = app.add_subcommand("rx", "UM TX parameters");
   rlc_rx_um_subcmd->add_option("--sn", rlc_um_params.rx.sn_field_length, "RLC UM RX SN")->capture_default_str();
@@ -1692,7 +1747,7 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
 {
   // If NR band is not set, derive a valid one from the DL-ARFCN.
   if (not cell_cfg.band.has_value()) {
-    cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+    cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
   }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.

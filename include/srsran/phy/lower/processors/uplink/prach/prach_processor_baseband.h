@@ -41,11 +41,11 @@ public:
 
   /// Collects the parameters that describe a symbol context.
   struct symbol_context {
-    // Current slot.
+    /// Current slot.
     slot_point slot;
-    // Current symbol index within the slot.
+    /// Current symbol index within the slot.
     unsigned symbol;
-    // Sector identifier.
+    /// Sector identifier.
     unsigned sector;
   };
 

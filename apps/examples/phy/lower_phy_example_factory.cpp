@@ -27,6 +27,12 @@ using namespace srsran;
 
 std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config)
 {
+  // Deduce frequency range from the subcarrier spacing.
+  frequency_range fr = frequency_range::FR1;
+  if (config.scs > subcarrier_spacing::kHz60) {
+    fr = frequency_range::FR2;
+  }
+
   // Get the maximum number of receive ports.
   unsigned max_nof_rx_ports =
       std::max_element(config.sectors.begin(),
@@ -57,7 +63,7 @@ std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& con
 
   // Create OFDM PRACH demodulator factory.
   std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
-      create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate);
+      create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate, fr);
 
   // Create PDxCH processor factory.
   std::shared_ptr<pdxch_processor_factory> pdxch_proc_factory =

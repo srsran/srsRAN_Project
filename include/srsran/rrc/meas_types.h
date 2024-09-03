@@ -22,12 +22,11 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
-#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace srsran {
@@ -135,9 +134,12 @@ inline bool operator==(const rrc_ssb_mtc2& lhs, const rrc_ssb_mtc2& rhs)
 };
 
 struct rrc_ssb_to_measure {
-  std::optional<uint8_t>  short_bitmap;
-  std::optional<uint8_t>  medium_bitmap;
-  std::optional<uint64_t> long_bitmap;
+  enum class bitmap_type_t : uint8_t { /* uint8_t */ short_bitmap,
+                                       /* uint8_t */ medium_bitmap,
+                                       /* uint64_t */ long_bitmap };
+
+  bitmap_type_t type;
+  uint64_t      bitmap;
 };
 
 struct rrc_ssb_to_measure_setup_release {
@@ -157,11 +159,10 @@ struct rrc_csi_rs_meas_bw {
 };
 
 struct rrc_slot_cfg {
-  std::optional<uint8_t>  ms4;
-  std::optional<uint8_t>  ms5;
-  std::optional<uint8_t>  ms10;
-  std::optional<uint8_t>  ms20;
-  std::optional<uint16_t> ms40;
+  enum class period_t : uint8_t { ms4, ms5, ms10, ms20, ms40 };
+
+  period_t period;
+  uint16_t offset;
 };
 
 struct rrc_associated_ssb {
@@ -169,10 +170,10 @@ struct rrc_associated_ssb {
   bool    is_quasi_colocated;
 };
 
-struct rrc_freq_domain_alloc {
-  std::optional<uint8_t>  row1;
-  std::optional<uint16_t> row2;
-};
+using rrc_freq_domain_alloc_row1 = uint8_t;
+using rrc_freq_domain_alloc_row2 = uint16_t;
+
+using rrc_freq_domain_alloc = std::variant<rrc_freq_domain_alloc_row1, rrc_freq_domain_alloc_row2>;
 
 struct rrc_csi_rs_res_mob {
   uint8_t                           csi_rs_idx;
@@ -271,10 +272,7 @@ struct rrc_n4 {
   uint8_t cyclic_shift_n4;
 };
 
-struct rrc_tx_comb {
-  std::optional<rrc_n2> n2;
-  std::optional<rrc_n4> n4;
-};
+using rrc_tx_comb = std::variant<rrc_n2, rrc_n4>;
 
 struct rrc_res_map {
   uint8_t start_position;
@@ -289,34 +287,39 @@ struct rrc_freq_hop {
 };
 
 struct rrc_srs_periodicity_and_offset {
-  bool                    is_sl1;
-  std::optional<uint8_t>  sl2;
-  std::optional<uint8_t>  sl4;
-  std::optional<uint8_t>  sl5;
-  std::optional<uint8_t>  sl8;
-  std::optional<uint8_t>  sl10;
-  std::optional<uint8_t>  sl16;
-  std::optional<uint8_t>  sl20;
-  std::optional<uint8_t>  sl32;
-  std::optional<uint8_t>  sl40;
-  std::optional<uint8_t>  sl64;
-  std::optional<uint8_t>  sl80;
-  std::optional<uint8_t>  sl160;
-  std::optional<uint16_t> sl320;
-  std::optional<uint16_t> sl640;
-  std::optional<uint16_t> sl1280;
-  std::optional<uint16_t> sl2560;
+  enum class period_t : uint16_t {
+    ms1,
+    ms2,
+    ms4,
+    ms5,
+    ms8,
+    ms10,
+    ms16,
+    ms20,
+    ms32,
+    ms40,
+    ms64,
+    ms80,
+    ms160,
+    ms320,
+    ms640,
+    ms1280,
+    ms2560
+  };
+
+  period_t period;
+  uint16_t offset;
 };
 
-struct rrc_semi_persistent_periodic {
+struct rrc_periodic {
   rrc_srs_periodicity_and_offset periodicity_and_offset_sp_p;
 };
 
-struct rrc_res_type {
-  bool                                        is_aperiodic;
-  std::optional<rrc_semi_persistent_periodic> semi_persistent;
-  std::optional<rrc_semi_persistent_periodic> periodic;
+struct rrc_semi_persistent {
+  rrc_srs_periodicity_and_offset periodicity_and_offset_sp_p;
 };
+
+using rrc_res_type = std::variant<bool, rrc_semi_persistent, rrc_periodic>;
 
 struct rrc_srs {
   uint8_t res_id;
@@ -324,11 +327,10 @@ struct rrc_srs {
 };
 
 struct rrc_srs_spatial_relation_info {
-  struct rrc_ref_sig_ {
-    std::optional<uint8_t> ssb_idx;
-    std::optional<uint8_t> csi_rs_idx;
-    std::optional<rrc_srs> srs;
-  };
+  enum class ssb_idx_t : uint8_t;
+  enum class csi_rs_idx_t : uint8_t;
+
+  using rrc_ref_sig_ = std::variant<ssb_idx_t, csi_rs_idx_t, rrc_srs>;
 
   std::optional<uint8_t> serving_cell_id;
   rrc_ref_sig_           ref_sig;
@@ -380,62 +382,25 @@ struct rrc_meas_trigger_quant {
   std::optional<uint8_t> sinr;
 };
 
-struct rrc_event_a1 {
-  rrc_meas_trigger_quant a1_thres;
-  bool                   report_on_leave;
-  uint8_t                hysteresis;
-  uint16_t               time_to_trigger;
-};
-
-struct rrc_event_a2 {
-  rrc_meas_trigger_quant a2_thres;
-  bool                   report_on_leave;
-  uint8_t                hysteresis;
-  uint16_t               time_to_trigger;
-};
-
 using rrc_meas_trigger_quant_offset = rrc_meas_trigger_quant;
 
-struct rrc_event_a3 {
-  rrc_meas_trigger_quant_offset a3_offset;
-  bool                          report_on_leave;
-  uint8_t                       hysteresis;
-  uint16_t                      time_to_trigger;
-  bool                          use_allowed_cell_list;
-};
-
-struct rrc_event_a4 {
-  rrc_meas_trigger_quant a4_thres;
-  bool                   report_on_leave;
-  uint8_t                hysteresis;
-  uint16_t               time_to_trigger;
-  bool                   use_allowed_cell_list;
-};
-
-struct rrc_event_a5 {
-  rrc_meas_trigger_quant a5_thres_1;
-  rrc_meas_trigger_quant a5_thres_2;
-  bool                   report_on_leave;
-  uint8_t                hysteresis;
-  uint16_t               time_to_trigger;
-  bool                   use_allowed_cell_list;
-};
-
-struct rrc_event_a6 {
-  rrc_meas_trigger_quant_offset a6_offset;
-  bool                          report_on_leave;
-  uint8_t                       hysteresis;
-  uint16_t                      time_to_trigger;
-  bool                          use_allowed_cell_list;
-};
-
 struct rrc_event_id {
-  std::optional<rrc_event_a1> event_a1;
-  std::optional<rrc_event_a2> event_a2;
-  std::optional<rrc_event_a3> event_a3;
-  std::optional<rrc_event_a4> event_a4;
-  std::optional<rrc_event_a5> event_a5;
-  std::optional<rrc_event_a6> event_a6;
+  enum class event_id_t : uint8_t { a1, a2, a3, a4, a5, a6 };
+  // common parameters
+  event_id_t id;
+
+  bool     report_on_leave;
+  uint8_t  hysteresis;
+  uint16_t time_to_trigger;
+
+  // event A1/A2/A4/A5
+  std::optional<rrc_meas_trigger_quant>
+      meas_trigger_quant_thres_or_offset; ///< Threshold for the measurement trigger quantity of event A1/A2/A4/A5 or
+                                          ///< offset for event A3/A6
+  std::optional<rrc_meas_trigger_quant>
+      meas_trigger_quant_thres_2; ///< Threshold 2 for the measurement trigger quantity of event A5
+
+  std::optional<bool> use_allowed_cell_list; ///< For event A3/A4/A5/A6
 };
 
 struct rrc_event_trigger_cfg {
@@ -473,13 +438,8 @@ struct rrc_cond_event_a5 {
   uint16_t               time_to_trigger;
 };
 
-struct rrc_report_cfg_nr {
-  // choice
-  std::optional<rrc_periodical_report_cfg> periodical;
-  std::optional<rrc_event_trigger_cfg>     event_triggered;
-  std::optional<rrc_report_cgi>            report_cgi;
-  std::optional<rrc_report_sftd_nr>        report_sftd;
-};
+using rrc_report_cfg_nr =
+    std::variant<rrc_periodical_report_cfg, rrc_event_trigger_cfg, rrc_report_cgi, rrc_report_sftd_nr>;
 
 struct rrc_report_cfg_to_add_mod {
   report_cfg_id_t   report_cfg_id;
@@ -493,8 +453,10 @@ struct rrc_meas_id_to_add_mod {
 };
 
 struct rrc_s_measure_cfg {
-  std::optional<uint8_t> ssb_rsrp;
-  std::optional<uint8_t> csi_rsrp;
+  enum class measure_type_t : uint8_t { ssb_rsrp, csi_rsrp };
+
+  measure_type_t type;
+  uint8_t        measure_config;
 };
 
 struct rrc_filt_cfg {
@@ -594,7 +556,6 @@ struct rrc_meas_result_serv_mo {
 };
 
 struct rrc_meas_result_neigh_cells {
-  // choice
   std::vector<rrc_meas_result_nr> meas_result_list_nr;
 };
 

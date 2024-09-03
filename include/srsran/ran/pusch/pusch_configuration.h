@@ -188,8 +188,9 @@ struct pusch_config {
     return data_scrambling_id_pusch == rhs.data_scrambling_id_pusch && tx_cfg == rhs.tx_cfg &&
            pusch_mapping_type_a_dmrs == rhs.pusch_mapping_type_a_dmrs &&
            pusch_mapping_type_b_dmrs == rhs.pusch_mapping_type_b_dmrs && pusch_pwr_ctrl == rhs.pusch_pwr_ctrl &&
-           res_alloc == rhs.res_alloc && trans_precoder == rhs.trans_precoder && cb_subset == rhs.cb_subset &&
-           max_rank == rhs.max_rank && uci_cfg == rhs.uci_cfg && pusch_td_alloc_list == rhs.pusch_td_alloc_list;
+           res_alloc == rhs.res_alloc && mcs_table == rhs.mcs_table && trans_precoder == rhs.trans_precoder &&
+           cb_subset == rhs.cb_subset && max_rank == rhs.max_rank && uci_cfg == rhs.uci_cfg &&
+           pusch_td_alloc_list == rhs.pusch_td_alloc_list;
   }
   bool operator!=(const pusch_config& rhs) const { return !(rhs == *this); }
 };

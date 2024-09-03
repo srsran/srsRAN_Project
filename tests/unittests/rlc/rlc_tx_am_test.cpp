@@ -41,6 +41,7 @@ public:
   std::list<uint32_t> highest_delivered_pdcp_sn_list;
   std::list<uint32_t> highest_retransmitted_pdcp_sn_list;
   std::list<uint32_t> highest_delivered_retransmitted_pdcp_sn_list;
+  std::list<uint32_t> queue_free_size_list;
   rlc_am_sn_size      sn_size;
   rlc_am_status_pdu   status;
   bool                status_required = false;
@@ -52,10 +53,11 @@ public:
   rlc_tx_am_test_frame(rlc_am_sn_size sn_size_) : sn_size(sn_size_), status(sn_size_) {}
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) override
+  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t queue_free_size) override
   {
     // store in list
     highest_transmitted_pdcp_sn_list.push_back(max_tx_pdcp_sn);
+    queue_free_size_list.push_back(queue_free_size);
   }
 
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override
@@ -114,14 +116,15 @@ protected:
     logger.info("Creating RLC Tx AM entity ({} bit)", to_number(sn_size));
 
     // Set Tx config
-    config.sn_field_length = sn_size;
-    config.pdcp_sn_len     = static_cast<pdcp_sn_size>(sn_size); // use the same SN size for PDCP
-    config.t_poll_retx     = 45;
-    config.max_retx_thresh = 4;
-    config.poll_pdu        = 4;
-    config.poll_byte       = 25;
-    config.max_window      = 0;
-    config.queue_size      = 4096;
+    config.sn_field_length  = sn_size;
+    config.pdcp_sn_len      = static_cast<pdcp_sn_size>(sn_size); // use the same SN size for PDCP
+    config.t_poll_retx      = 45;
+    config.max_retx_thresh  = 4;
+    config.poll_pdu         = 4;
+    config.poll_byte        = 25;
+    config.max_window       = 0;
+    config.queue_size       = 4096;
+    config.queue_size_bytes = 4096 * 1500;
 
     // Create test frame
     tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);

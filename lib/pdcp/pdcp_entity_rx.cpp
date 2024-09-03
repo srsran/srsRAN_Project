@@ -21,10 +21,9 @@
  */
 
 #include "pdcp_entity_rx.h"
+#include "../security/security_engine_impl.h"
 #include "../support/sdu_window_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
-#include "srsran/security/ciphering.h"
-#include "srsran/security/integrity.h"
 #include "srsran/support/bit_encoding.h"
 
 using namespace srsran;
@@ -40,8 +39,6 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
-  direction(cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
-                                                             : security::security_direction::downlink),
   rx_window(create_rx_window(cfg.sn_size)),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
@@ -98,7 +95,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
   up_tracer << trace_event{"pdcp_rx_pdu", rx_tp};
 }
 
-void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg_)
+void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg)
 {
   // - process the PDCP Data PDUs that are received from lower layers due to the re-establishment of the lower layers,
   //   as specified in the clause 5.2.2.1;
@@ -141,7 +138,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg_)
   //   procedure;
   // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
   //   establishment procedure.
-  configure_security(sec_cfg_);
+  configure_security(sec_cfg, integrity_enabled, ciphering_enabled);
 }
 
 void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
@@ -209,48 +206,18 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     return;
   }
 
-  /*
-   * TS 38.323, section 5.8: Deciphering
-   *
-   * The data unit that is ciphered is the MAC-I and the
-   * data part of the PDCP Data PDU except the
-   * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
-   */
-  byte_buffer_view sdu_plus_mac = byte_buffer_view{pdu.begin() + hdr_len_bytes, pdu.end()};
-  if (ciphering_enabled == security::ciphering_enabled::on &&
-      sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
-    cipher_decrypt(sdu_plus_mac, rcvd_count);
+  // Apply deciphering and integrity check
+  expected<byte_buffer> exp_buf = apply_deciphering_and_integrity_check(std::move(pdu), rcvd_count);
+  if (!exp_buf.has_value()) {
+    logger.log_warning("Failed deciphering and integrity check. count={}", rcvd_count);
+    return;
   }
 
-  /*
-   * Extract MAC-I:
-   * Always extract from SRBs, only extract from DRBs if integrity is enabled
-   */
-  security::sec_mac mac = {};
-  if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-    extract_mac(pdu, mac);
-  }
-
-  /*
-   * TS 38.323, section 5.9: Integrity verification
-   *
-   * The data unit that is integrity protected is the PDU header
-   * and the data part of the PDU before ciphering.
-   */
-  if (integrity_enabled == security::integrity_enabled::on) {
-    bool is_valid = integrity_verify(pdu, rcvd_count, mac);
-    if (!is_valid) {
-      logger.log_warning(pdu.begin(), pdu.end(), "Integrity failed, dropping PDU.");
-      metrics_add_integrity_failed_pdus(1);
-      // TODO: Re-enable once the RRC supports notifications from the PDCP
-      // upper_cn.on_integrity_failure();
-      return; // Invalid packet, drop.
-    }
-    metrics_add_integrity_verified_pdus(1);
-    logger.log_debug(pdu.begin(), pdu.end(), "Integrity passed.");
-  }
   // After checking the integrity, we can discard the header.
-  discard_data_header(pdu);
+  unsigned hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
+  exp_buf.value().trim_head(hdr_size);
+
+  pdu = std::move(exp_buf.value());
 
   /*
    * Check valid rcvd_count:
@@ -443,78 +410,118 @@ std::unique_ptr<sdu_window<pdcp_rx_sdu_info>> pdcp_entity_rx::create_rx_window(p
 }
 
 /*
- * Security helpers
+ * Deciphering and Integrity Protection Helpers
  */
-bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac)
+expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
 {
-  srsran_assert(sec_cfg.k_128_int.has_value(), "Cannot verify integrity: Integrity key is not configured.");
-  srsran_assert(sec_cfg.integ_algo.has_value(), "Cannot verify integrity: Integrity algorithm is not configured.");
-  security::sec_mac mac_exp  = {};
-  bool              is_valid = true;
-  switch (sec_cfg.integ_algo.value()) {
-    case security::integrity_algorithm::nia0:
-      break;
-    case security::integrity_algorithm::nia1:
-      security_nia1(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf);
-      break;
-    case security::integrity_algorithm::nia2:
-      security_nia2(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf);
-      break;
-    case security::integrity_algorithm::nia3:
-      security_nia3(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf);
-      break;
-    default:
-      break;
-  }
-
-  if (sec_cfg.integ_algo != security::integrity_algorithm::nia0) {
-    for (uint8_t i = 0; i < 4; i++) {
-      if (mac[i] != mac_exp[i]) {
-        is_valid = false;
-        break;
+  if (sec_engine == nullptr) {
+    // Security is not configured. Pass through for DRBs; trim zero MAC-I for SRBs.
+    if (is_srb()) {
+      if (buf.length() <= security::sec_mac_len) {
+        logger.log_warning("Failed to trim MAC-I from PDU. count={}", count);
+        return make_unexpected(default_error_t{});
       }
+      buf.trim_tail(security::sec_mac_len);
     }
-    srslog::basic_levels level = is_valid ? srslog::basic_levels::debug : srslog::basic_levels::warning;
-    logger.log(level,
-               buf.begin(),
-               buf.end(),
-               "Integrity check. is_valid={} count={} bearer_id={} dir={}",
-               is_valid,
-               count,
-               bearer_id,
-               direction);
-    logger.log(level, "Integrity check key: {}", sec_cfg.k_128_int);
-    logger.log(level, "MAC expected: {}", mac_exp);
-    logger.log(level, "MAC found: {}", mac);
-    logger.log(level, buf.begin(), buf.end(), "Integrity check input message. len={}", buf.length());
+    return buf;
   }
 
-  return is_valid;
+  // TS 38.323, section 5.8: Deciphering
+  // The data unit that is ciphered is the MAC-I and the
+  // data part of the PDCP Data PDU except the
+  // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
+
+  // TS 38.323, section 5.9: Integrity verification
+  // The data unit that is integrity protected is the PDU header
+  // and the data part of the PDU before ciphering.
+
+  unsigned                  hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
+  security::security_result result   = sec_engine->decrypt_and_verify_integrity(std::move(buf), hdr_size, count);
+  if (!result.buf.has_value()) {
+    switch (result.buf.error()) {
+      case srsran::security::security_error::integrity_failure:
+        logger.log_warning("Integrity failed, dropping PDU. count={}", result.count);
+        metrics_add_integrity_failed_pdus(1);
+        upper_cn.on_integrity_failure();
+        break;
+      case srsran::security::security_error::ciphering_failure:
+        logger.log_warning("Deciphering failed, dropping PDU. count={}", result.count);
+        upper_cn.on_protocol_failure();
+        break;
+      case srsran::security::security_error::buffer_failure:
+        logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", result.count);
+        upper_cn.on_protocol_failure();
+        break;
+    }
+    return make_unexpected(default_error_t{});
+  }
+  metrics_add_integrity_verified_pdus(1);
+  logger.log_debug(result.buf.value().begin(), result.buf.value().end(), "Integrity passed.");
+
+  return {std::move(result.buf.value())};
 }
 
-byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view& msg, uint32_t count)
+/*
+ * Security configuration
+ */
+void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
+                                        security::integrity_enabled integrity_enabled_,
+                                        security::ciphering_enabled ciphering_enabled_)
 {
-  logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug("Cipher decrypt key: {}", sec_cfg.k_128_enc);
-  logger.log_debug(msg.begin(), msg.end(), "Cipher decrypt input msg.");
-
-  byte_buffer ct;
-
-  switch (sec_cfg.cipher_algo) {
-    case security::ciphering_algorithm::nea1:
-      security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
-      break;
-    case security::ciphering_algorithm::nea2:
-      security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
-      break;
-    case security::ciphering_algorithm::nea3:
-      security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
-      break;
-    default:
-      break;
+  srsran_assert((is_srb() && sec_cfg.domain == security::sec_domain::rrc) ||
+                    (is_drb() && sec_cfg.domain == security::sec_domain::up),
+                "Invalid sec_domain={} for {} in {}",
+                sec_cfg.domain,
+                rb_type,
+                rb_id);
+  // The 'NULL' integrity protection algorithm (nia0) is used only for SRBs and for the UE in limited service mode,
+  // see TS 33.501 [11] and when used for SRBs, integrity protection is disabled for DRBs. In case the ′NULL'
+  // integrity protection algorithm is used, 'NULL' ciphering algorithm is also used.
+  // Ref: TS 38.331 Sec. 5.3.1.2
+  //
+  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...) may
+  // still be allowed to establish emergency session by sending the emergency registration request message. (...)
+  if ((sec_cfg.integ_algo == security::integrity_algorithm::nia0) &&
+      (is_drb() || (is_srb() && sec_cfg.cipher_algo != security::ciphering_algorithm::nea0))) {
+    logger.log_error("Integrity algorithm NIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
+                     is_srb(),
+                     sec_cfg.integ_algo,
+                     sec_cfg.cipher_algo);
   }
-  logger.log_debug(msg.begin(), msg.end(), "Cipher decrypt output msg.");
-  return ct;
+
+  // Evaluate and store integrity indication
+  if (integrity_enabled_ == security::integrity_enabled::on) {
+    if (!sec_cfg.k_128_int.has_value()) {
+      logger.log_error("Cannot enable integrity protection: Integrity key is not configured.");
+      return;
+    }
+    if (!sec_cfg.integ_algo.has_value()) {
+      logger.log_error("Cannot enable integrity protection: Integrity algorithm is not configured.");
+      return;
+    }
+  } else {
+    srsran_assert(!is_srb(), "Integrity protection cannot be disabled for SRBs.");
+  }
+  integrity_enabled = integrity_enabled_;
+
+  // Evaluate and store ciphering indication
+  ciphering_enabled = ciphering_enabled_;
+
+  auto direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
+                                                                    : security::security_direction::downlink;
+  sec_engine     = std::make_unique<security::security_engine_impl>(
+      sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
+
+  logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
+                  sec_cfg.integ_algo,
+                  integrity_enabled,
+                  sec_cfg.cipher_algo,
+                  ciphering_enabled,
+                  sec_cfg.domain);
+  if (sec_cfg.k_128_int.has_value()) {
+    logger.log_info("128 K_int: {}", sec_cfg.k_128_int);
+  }
+  logger.log_info("128 K_enc: {}", sec_cfg.k_128_enc);
 }
 
 /*
@@ -597,21 +604,4 @@ bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_
       return false;
   }
   return true;
-}
-
-void pdcp_entity_rx::discard_data_header(byte_buffer& buf) const
-{
-  buf.trim_head(hdr_len_bytes);
-}
-
-void pdcp_entity_rx::extract_mac(byte_buffer& buf, security::sec_mac& mac) const
-{
-  if (buf.length() <= security::sec_mac_len) {
-    logger.log_error("PDU too small to extract MAC-I. pdu_len={} mac_len={}", buf.length(), security::sec_mac_len);
-    return;
-  }
-  for (unsigned i = 0; i < security::sec_mac_len; i++) {
-    mac[i] = buf[buf.length() - security::sec_mac_len + i];
-  }
-  buf.trim_tail(security::sec_mac_len);
 }

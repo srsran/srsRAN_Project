@@ -28,6 +28,7 @@
 
 namespace srsran {
 
+/// Uplink Shared Channel demultiplexer implementation.
 class ulsch_demultiplex_impl : public ulsch_demultiplex, private pusch_codeword_buffer
 {
 public:

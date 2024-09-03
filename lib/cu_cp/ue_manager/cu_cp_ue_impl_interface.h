@@ -33,8 +33,7 @@ namespace srs_cu_cp {
 class up_resource_manager;
 class ue_task_scheduler;
 class ue_security_manager;
-class ngap_rrc_ue_pdu_notifier;
-class ngap_rrc_ue_control_notifier;
+class ngap_rrc_ue_notifier;
 
 /// Common UE interface.
 class cu_cp_ue_impl_interface
@@ -54,11 +53,8 @@ public:
   /// \brief Get the security manager of the UE.
   virtual ue_security_manager& get_security_manager() = 0;
 
-  /// \brief Get the RRC UE PDU notifier of the UE.
-  virtual ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() = 0;
-
-  /// \brief Get the RRC UE control notifier of the UE.
-  virtual ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() = 0;
+  /// \brief Get the RRC UE notifier of the UE.
+  virtual ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() = 0;
 };
 
 } // namespace srs_cu_cp

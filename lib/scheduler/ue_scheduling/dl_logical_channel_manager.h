@@ -43,6 +43,9 @@ public:
 
   dl_logical_channel_manager();
 
+  /// \brief Deactivate all bearers.
+  void deactivate();
+
   /// \brief Activate/Deactivate Bearer.
   void set_status(lcid_t lcid, bool active)
   {
@@ -128,9 +131,18 @@ public:
   {
     if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
       pending_con_res_id = true;
-    } else {
-      pending_ces.push_back(ce);
+      return;
     }
+    if (ce.ce_lcid == lcid_dl_sch_t::TA_CMD) {
+      auto ce_it = std::find_if(pending_ces.begin(), pending_ces.end(), [](const mac_ce_info& c) {
+        return c.ce_lcid == lcid_dl_sch_t::TA_CMD;
+      });
+      if (ce_it != pending_ces.end()) {
+        ce_it->ce_payload = ce.ce_payload;
+        return;
+      }
+    }
+    pending_ces.push_back(ce);
   }
 
   /// \brief Allocates highest priority MAC SDU within space of \c rem_bytes bytes. Updates \c lch_info with allocated

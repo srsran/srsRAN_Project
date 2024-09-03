@@ -24,6 +24,7 @@
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
+#include "srsran/du/du_qos_config_helpers.h"
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/ran/duplex_mode.h"
@@ -231,7 +232,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     param.pci                                      = base_cell.pci;
     param.scs_common                               = base_cell.common_scs;
     param.channel_bw_mhz                           = base_cell.channel_bw_mhz;
-    param.dl_arfcn                                 = base_cell.dl_arfcn;
+    param.dl_f_ref_arfcn                           = base_cell.dl_f_ref_arfcn;
     param.band                                     = *base_cell.band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled      = base_cell.csi_cfg.csi_rs_enabled;
@@ -244,7 +245,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     // in one extra symbol to be used for PDSCH.
     if (base_cell.pdcch_cfg.common.max_coreset0_duration.has_value()) {
       param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration.value();
-    } else if (param.channel_bw_mhz > bs_channel_bandwidth_fr1::MHz50) {
+    } else if (param.channel_bw_mhz > bs_channel_bandwidth::MHz50) {
       param.max_coreset0_duration = 1;
     }
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
@@ -253,7 +254,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
       ssb_freq_loc =
-          band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(base_cell.dl_arfcn,
+          band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(base_cell.dl_f_ref_arfcn,
                                                                     *param.band,
                                                                     nof_crbs,
                                                                     base_cell.common_scs,
@@ -261,7 +262,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
                                                                     param.search_space0_index,
                                                                     base_cell.pdcch_cfg.common.coreset0_index.value());
     } else {
-      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
+      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_f_ref_arfcn,
                                                                  *param.band,
                                                                  nof_crbs,
                                                                  base_cell.common_scs,
@@ -367,6 +368,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     rach_cfg.rach_cfg_generic.prach_config_index    = base_cell.prach_cfg.prach_config_index.value();
     rach_cfg.rach_cfg_generic.preamble_trans_max    = base_cell.prach_cfg.preamble_trans_max;
     rach_cfg.rach_cfg_generic.power_ramping_step_db = base_cell.prach_cfg.power_ramping_step_db;
+    rach_cfg.msg3_transform_precoder                = cell.cell.pusch_cfg.enable_transform_precoding;
     const bool is_long_prach =
         is_long_preamble(prach_configuration_get(band_helper::get_freq_range(param.band.value()),
                                                  band_helper::get_duplex_mode(param.band.value()),
@@ -519,24 +521,34 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     // Parameters for PUCCH-Config builder (these parameters will be used later on to generate the PUCCH resources).
     pucch_builder_params&            du_pucch_cfg   = out_cell.pucch_cfg;
     const du_high_unit_pucch_config& user_pucch_cfg = base_cell.pucch_cfg;
-    du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq     = user_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq;
-    du_pucch_cfg.nof_ue_pucch_f2_res_harq           = user_pucch_cfg.nof_ue_pucch_f2_res_harq;
     du_pucch_cfg.nof_cell_harq_pucch_res_sets       = user_pucch_cfg.nof_cell_harq_pucch_sets;
     du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
     du_pucch_cfg.nof_csi_resources                  = user_pucch_cfg.nof_cell_csi_resources;
     if (user_pucch_cfg.use_format_0) {
-      auto& f0_params                  = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();
-      f0_params.intraslot_freq_hopping = user_pucch_cfg.f0_intraslot_freq_hopping;
+      auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();
+      // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
+      // allocator when the DU create the UE configuration.
+      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
+      du_pucch_cfg.nof_ue_pucch_f2_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
+      f0_params.intraslot_freq_hopping            = user_pucch_cfg.f0_intraslot_freq_hopping;
     } else {
-      auto& f1_params                  = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
-      f1_params.occ_supported          = user_pucch_cfg.f1_enable_occ;
-      f1_params.nof_cyc_shifts         = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
-      f1_params.intraslot_freq_hopping = user_pucch_cfg.f1_intraslot_freq_hopping;
+      auto& f1_params                             = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
+      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
+      du_pucch_cfg.nof_ue_pucch_f2_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
+      f1_params.occ_supported                     = user_pucch_cfg.f1_enable_occ;
+      f1_params.nof_cyc_shifts                    = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
+      f1_params.intraslot_freq_hopping            = user_pucch_cfg.f1_intraslot_freq_hopping;
     }
     du_pucch_cfg.f2_params.max_code_rate          = user_pucch_cfg.max_code_rate;
     du_pucch_cfg.f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
     du_pucch_cfg.f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
     du_pucch_cfg.f2_params.max_payload_bits       = user_pucch_cfg.max_payload_bits;
+
+    // Parameters for SRS-Config.
+    srs_builder_params&            du_srs_cfg   = out_cell.srs_cfg;
+    const du_high_unit_srs_config& user_srs_cfg = base_cell.srs_cfg;
+    du_srs_cfg.srs_enabled                      = user_srs_cfg.srs_enabled;
+    du_srs_cfg.max_nof_symbols                  = user_srs_cfg.max_nof_symbols_per_slot;
 
     // Parameters for PUSCH-Config.
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.has_value()) {
@@ -610,6 +622,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
                                                  base_cell.csi_cfg.csi_rs_enabled
                                                      ? std::optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec}
                                                      : std::nullopt);
+    // The maximum number of symbols for cell PUCCH resources is computed based on the SRS configuration.
+    du_pucch_cfg.max_nof_symbols = config_helpers::compute_max_nof_pucch_symbols(du_srs_cfg);
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
@@ -624,7 +638,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
         "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
         base_cell.pci,
         *param.band,
-        base_cell.dl_arfcn,
+        base_cell.dl_f_ref_arfcn,
         nof_crbs,
         to_string(base_cell.common_scs),
         to_string(out_cfg.back().ssb_cfg.scs),
@@ -651,12 +665,13 @@ static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config&
   if (!from_number(out_rlc.tx.sn_field_length, in_cfg.tx.sn_field_length)) {
     report_error("Invalid RLC AM TX SN: SN={}\n", in_cfg.tx.sn_field_length);
   }
-  out_rlc.tx.t_poll_retx     = in_cfg.tx.t_poll_retx;
-  out_rlc.tx.max_retx_thresh = in_cfg.tx.max_retx_thresh;
-  out_rlc.tx.poll_pdu        = in_cfg.tx.poll_pdu;
-  out_rlc.tx.poll_byte       = in_cfg.tx.poll_byte;
-  out_rlc.tx.max_window      = in_cfg.tx.max_window;
-  out_rlc.tx.queue_size      = in_cfg.tx.queue_size;
+  out_rlc.tx.t_poll_retx      = in_cfg.tx.t_poll_retx;
+  out_rlc.tx.max_retx_thresh  = in_cfg.tx.max_retx_thresh;
+  out_rlc.tx.poll_pdu         = in_cfg.tx.poll_pdu;
+  out_rlc.tx.poll_byte        = in_cfg.tx.poll_byte;
+  out_rlc.tx.max_window       = in_cfg.tx.max_window;
+  out_rlc.tx.queue_size       = in_cfg.tx.queue_size;
+  out_rlc.tx.queue_size_bytes = in_cfg.tx.queue_size_bytes;
   //< RX SN
   if (!from_number(out_rlc.rx.sn_field_length, in_cfg.rx.sn_field_length)) {
     report_error("Invalid RLC AM RX SN: SN={}\n", in_cfg.rx.sn_field_length);
@@ -693,9 +708,10 @@ srsran::generate_du_slicing_rrm_policy_config(span<const std::string>           
     for (const auto& cfg : slice_cfg) {
       rrm_policy_cfgs.emplace_back();
       rrm_policy_cfgs.back().rrc_member.s_nssai = cfg.s_nssai;
-      rrm_policy_cfgs.back().rrc_member.plmn_id = plmn;
+      rrm_policy_cfgs.back().rrc_member.plmn_id = plmn_identity::parse(plmn).value();
       rrm_policy_cfgs.back().min_prb            = (nof_cell_crbs * cfg.sched_cfg.min_prb_policy_ratio) / 100;
       rrm_policy_cfgs.back().max_prb            = (nof_cell_crbs * cfg.sched_cfg.max_prb_policy_ratio) / 100;
+      rrm_policy_cfgs.back().policy_sched_cfg   = cfg.sched_cfg.slice_policy_sched_cfg;
     }
   }
   return rrm_policy_cfgs;
@@ -731,7 +747,8 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const du_high_
       if (!from_number(out_rlc.um.tx.sn_field_length, qos.rlc.um.tx.sn_field_length)) {
         report_error("Invalid RLC UM TX SN: {}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
       }
-      out_rlc.um.tx.queue_size = qos.rlc.um.tx.queue_size;
+      out_rlc.um.tx.queue_size       = qos.rlc.um.tx.queue_size;
+      out_rlc.um.tx.queue_size_bytes = qos.rlc.um.tx.queue_size_bytes;
     } else if (out_rlc.mode == rlc_mode::am) {
       // AM Config
       out_rlc.am = generate_du_rlc_am_config(qos.rlc.am);
@@ -741,7 +758,9 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const du_high_
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
     //< t-Notify
-    out_f1u.t_notify     = qos.f1u_du.t_notify;
+    out_f1u.t_notify = qos.f1u_du.t_notify;
+    out_f1u.rlc_queue_bytes_limit =
+        qos.rlc.mode == "am" ? qos.rlc.am.tx.queue_size_bytes : qos.rlc.um.tx.queue_size_bytes;
     out_f1u.warn_on_drop = config.warn_on_drop;
 
     // Convert MAC config
@@ -758,34 +777,40 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const du_high_u
   srb_cfg.insert(std::make_pair(srb_id_t::srb1, du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb1].rlc;
+    auto& out_mac = srb_cfg[srb_id_t::srb1].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb1).mac);
   } else {
     srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
+    srb_cfg.at(srb_id_t::srb1).mac = make_default_srb_mac_lc_config(LCID_SRB1);
   }
-  srb_cfg.at(srb_id_t::srb1).mac = make_default_srb_mac_lc_config(LCID_SRB1);
 
   // SRB2
   srb_cfg.insert(std::make_pair(srb_id_t::srb2, du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb2) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb2].rlc;
+    auto& out_mac = srb_cfg[srb_id_t::srb2].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
+    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb2).mac);
   } else {
     srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
+    srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB2);
   }
-  srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB2);
 
   // SRB3
   srb_cfg.insert(std::make_pair(srb_id_t::srb3, du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb3) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb3].rlc;
+    auto& out_mac = srb_cfg[srb_id_t::srb3].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
+    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb3).mac);
   } else {
     srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
+    srb_cfg.at(srb_id_t::srb3).mac = make_default_srb_mac_lc_config(LCID_SRB3);
   }
-  srb_cfg.at(srb_id_t::srb3).mac = make_default_srb_mac_lc_config(LCID_SRB3);
 
   if (config.ntn_cfg.has_value()) {
     ntn_augment_rlc_parameters(config.ntn_cfg.value(), srb_cfg);
@@ -841,6 +866,10 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   if (std::holds_alternative<time_pf_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
     out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
   }
+  out_cfg.ue.ta_cmd_offset_threshold    = app_sched_expert_cfg.ta_sched_cfg.ta_cmd_offset_threshold;
+  out_cfg.ue.ta_measurement_slot_period = app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_period;
+  out_cfg.ue.ta_update_measurement_ul_sinr_threshold =
+      app_sched_expert_cfg.ta_sched_cfg.ta_update_measurement_ul_sinr_threshold;
 
   // PUCCH and scheduler expert parameters.
   out_cfg.ue.max_ul_grants_per_slot = cell.ul_common_cfg.max_ul_grants_per_slot;

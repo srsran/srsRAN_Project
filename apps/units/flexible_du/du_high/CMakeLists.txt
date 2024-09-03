@@ -18,6 +18,8 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+add_subdirectory(metrics)
+
 set(SOURCES
             du_high_config_cli11_schema.cpp
             du_high_config_translators.cpp
@@ -27,4 +29,4 @@ set(SOURCES
 
 add_library(srsran_du_high_unit_helpers STATIC ${SOURCES})
 target_include_directories(srsran_du_high_unit_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_du_high_unit_helpers sched_config)
+target_link_libraries(srsran_du_high_unit_helpers sched_config srsran_du_high_unit_metrics_helpers)

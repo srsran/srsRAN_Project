@@ -28,44 +28,40 @@
 
 using namespace srsran;
 
-/*!
- * \file polar_chain_test.c
- * \brief Ent-to-end test for the Polar coding chain including: subchannel allocator, encoder, rate-matcher,
- rate-dematcher, decoder and subchannel deallocation.
- *
- * A batch of example messages is randomly generated, frozen bits are added, encoded, rate-matched, 2-PAM modulated,
- * sent over an AWGN channel, rate-dematched, and, finally, decoded by all three types of
- * decoder. Transmitted and received messages are compared to estimate the WER.
- * Multiple batches are simulated if the number of errors is not significant
- * enough.
- *
- * Synopsis: **polar_chain_test [options]**
- *
- * Options:
- *
- *  - <b>-n \<number\></b> nMax,  [Default 9] -- Use 9 for downlink, and 10 for uplink configuration.
- *  - <b>-k \<number\></b> Message size (K),  [Default 128]. K includes the CRC bits if applicable.
- *  If nMax = 9, K must satisfy 165 > K > 35. If nMax = 10, K must satisfy K > 17 and K <1024, excluding 31 > K > 25.
- *  - <b>-e \<number\></b> Rate matching size (E), [Default 256]. If 17 < K < 26, E must satisfy K +3 < E < 8193.
- * If K > 30, E must satisfy K < E < 8193.
- *  - <b>-i \<number\></b> Enable bit interleaver (bil),  [Default 0] -- Set bil = 0 to disable the
- * bit interleaver at rate matching. Choose 0 for downlink and 1 for uplink configuration.
- *  - <b>-s \<number\></b>  SNR [dB, Default 3.00 dB] -- Use 100 for scan, and 101 for noiseless.
- *  - <b>-o \<number\></b>  Print output results [Default 0] -- Use 0 for detailed, Use 1 for 1 line, Use 2 for vector
- * form.
- *
- * Example 1: BCH - ./polar_chain_test -n9 -k56 -e864 -i0 -s101 -o1
- *
- * Example 2: DCI - ./polar_chain_test -n9 -k40 -e100 -i0 -s101 -o1
- *
- * Example 3: UCI - PC bits - ./polar_chain_test -n10 -k20 -e256 -i1 -s101 -o1
- *
- * Example 4: UCI - puncturing 19 first bits - ./polar_chain_test -n10 -k18 -e45 -i1 -s101 -o1
- *
- * Example 5: UCI - shortening 26 last bits - ./polar_chain_test -n10 -k18 -e38 -i1 -s101 -o1
- *
- *
- */
+/// \file
+/// \brief Ent-to-end test for the Polar coding chain including: subchannel allocator, encoder, rate-matcher,
+/// rate-dematcher, decoder and subchannel deallocation.
+///
+/// A batch of example messages is randomly generated, frozen bits are added, encoded, rate-matched, 2-PAM modulated,
+/// sent over an AWGN channel, rate-dematched, and, finally, decoded by all three types of
+/// decoder. Transmitted and received messages are compared to estimate the WER.
+/// Multiple batches are simulated if the number of errors is not significant
+/// enough.
+///
+/// Synopsis: **polar_chain_test [options]**
+///
+/// Options:
+///
+///  - <b>-n \<number\></b> nMax,  [Default 9] -- Use 9 for downlink, and 10 for uplink configuration.
+///  - <b>-k \<number\></b> Message size (K),  [Default 128]. K includes the CRC bits if applicable.
+///  If nMax = 9, K must satisfy 165 > K > 35. If nMax = 10, K must satisfy K > 17 and K <1024, excluding 31 > K > 25.
+///  - <b>-e \<number\></b> Rate matching size (E), [Default 256]. If 17 < K < 26, E must satisfy K +3 < E < 8193.
+/// If K > 30, E must satisfy K < E < 8193.
+///  - <b>-i \<number\></b> Enable bit interleaver (bil),  [Default 0] -- Set bil = 0 to disable the
+/// bit interleaver at rate matching. Choose 0 for downlink and 1 for uplink configuration.
+///  - <b>-s \<number\></b>  SNR [dB, Default 3.00 dB] -- Use 100 for scan, and 101 for noiseless.
+///  - <b>-o \<number\></b>  Print output results [Default 0] -- Use 0 for detailed, Use 1 for 1 line, Use 2 for vector
+/// form.
+///
+/// Example 1: BCH - ./polar_chain_test -n9 -k56 -e864 -i0 -s101 -o1
+///
+/// Example 2: DCI - ./polar_chain_test -n9 -k40 -e100 -i0 -s101 -o1
+///
+/// Example 3: UCI - PC bits - ./polar_chain_test -n10 -k20 -e256 -i1 -s101 -o1
+///
+/// Example 4: UCI - puncturing 19 first bits - ./polar_chain_test -n10 -k18 -e45 -i1 -s101 -o1
+///
+/// Example 5: UCI - shortening 26 last bits - ./polar_chain_test -n10 -k18 -e38 -i1 -s101 -o1
 
 // default values
 static uint16_t        K      = 56;  /*!< \brief Number of message bits (data and CRC). */

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/downlink_processor.h"
 
 namespace srsran {
@@ -56,7 +57,7 @@ public:
 
   void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override {}
 
-  bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override
+  bool configure_resource_grid(const resource_grid_context& context, shared_resource_grid grid) override
   {
     configure_resource_grid_method_called = true;
     return true;

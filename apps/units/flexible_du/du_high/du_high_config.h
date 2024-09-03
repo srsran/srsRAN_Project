@@ -27,7 +27,6 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
-#include "srsran/ran/five_qi.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/ran/lcid.h"
@@ -38,6 +37,7 @@
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
+#include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/sib/system_info_config.h"
@@ -53,11 +53,13 @@ namespace srsran {
 
 /// DU high logging functionalities.
 struct du_high_unit_logger_config {
-  srslog::basic_levels du_level   = srslog::basic_levels::warning;
-  srslog::basic_levels mac_level  = srslog::basic_levels::warning;
-  srslog::basic_levels rlc_level  = srslog::basic_levels::warning;
-  srslog::basic_levels f1ap_level = srslog::basic_levels::warning;
-  srslog::basic_levels f1u_level  = srslog::basic_levels::warning;
+  srslog::basic_levels du_level      = srslog::basic_levels::warning;
+  srslog::basic_levels mac_level     = srslog::basic_levels::warning;
+  srslog::basic_levels rlc_level     = srslog::basic_levels::warning;
+  srslog::basic_levels f1ap_level    = srslog::basic_levels::warning;
+  srslog::basic_levels f1u_level     = srslog::basic_levels::warning;
+  srslog::basic_levels gtpu_level    = srslog::basic_levels::warning;
+  srslog::basic_levels metrics_level = srslog::basic_levels::none;
 
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
@@ -67,10 +69,24 @@ struct du_high_unit_logger_config {
   bool f1ap_json_enabled = false;
 };
 
+/// Timing Advance MAC CE scheduling expert configuration.
+struct du_high_unit_ta_sched_expert_config {
+  /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
+  unsigned ta_measurement_slot_period = 80;
+  /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
+  /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
+  /// \remark T_A is defined in TS 38.213, clause 4.2.
+  int ta_cmd_offset_threshold = 1;
+  /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
+  float ta_update_measurement_ul_sinr_threshold = 0.0F;
+};
+
 /// Scheduler expert configuration.
 struct du_high_unit_scheduler_expert_config {
   /// Policy scheduler expert parameters.
   policy_scheduler_expert_config policy_sched_expert_cfg = time_rr_scheduler_expert_config{};
+  /// Timing Advance MAC CE scheduling expert configuration.
+  du_high_unit_ta_sched_expert_config ta_sched_cfg;
 };
 
 struct du_high_unit_ssb_config {
@@ -214,6 +230,9 @@ struct du_high_unit_pusch_config {
   unsigned start_rb = 0;
   /// End RB for resource allocation of UE PUSCHs.
   unsigned end_rb = MAX_NOF_PRBS;
+
+  /// Set to true to enable transform precoding in PUSCH.
+  bool enable_transform_precoding = false;
 };
 
 struct du_high_unit_pucch_config {
@@ -224,12 +243,13 @@ struct du_high_unit_pucch_config {
   unsigned pucch_resource_common = 11;
 
   /// \c PUCCH-Config parameters.
-  /// Number of PUCCH Format 0/1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
-  unsigned nof_ue_pucch_f0_or_f1_res_harq = 8;
-  /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
-  unsigned nof_ue_pucch_f2_res_harq = 6;
   /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
   bool use_format_0 = false;
+  /// Number of PUCCH resources per UE (per PUCCH resource set) for HARQ-ACK reporting.
+  /// Values {3,...,8} if \c use_format_0 is set. Else, Values {1,...,8}.
+  /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
+  /// resources.
+  unsigned nof_ue_pucch_res_harq_per_set = 8;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
   /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
   /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of
@@ -274,6 +294,15 @@ struct du_high_unit_pucch_config {
 
   /// Maximum number of consecutive undecoded PUCCH Format 2 for CSI before an RLF is reported.
   unsigned max_consecutive_kos = 100;
+};
+
+struct du_high_unit_srs_config {
+  /// Enable Sound Reference Signals (SRS) for the UEs within this cell.
+  bool srs_enabled = false;
+  /// \brief Defines the maximum number of symbols dedicated to the cell SRS resources in a slot.  Values: {1,...,6}.
+  /// This is the space that the GNB reserves for all the cell SRS resources in the UL slots, not to be confused with
+  /// the symbols per SRS resource configured in the UE dedicated configuration.
+  unsigned max_nof_symbols_per_slot = 2U;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -505,6 +534,8 @@ struct du_high_unit_cell_slice_sched_config {
   unsigned min_prb_policy_ratio = 0;
   /// Sets the maximum percentage of PRBs to be allocated to this group.
   unsigned max_prb_policy_ratio = 100;
+  /// Policy scheduler parameters for the slice.
+  policy_scheduler_expert_config slice_policy_sched_cfg = time_rr_scheduler_expert_config{};
 };
 
 /// Slice configuration for a cell.
@@ -521,14 +552,14 @@ struct du_high_unit_base_cell_config {
   pci_t pci = 1;
   /// Sector Id (4-14 bits) that gets concatenated with gNB-Id to form the NR Cell Identity (NCI).
   std::optional<unsigned> sector_id;
-  /// Downlink arfcn.
-  unsigned dl_arfcn = 536020;
+  /// DL ARFCN of "F_REF", which is the RF reference frequency, as per TS 38.104, Section 5.4.2.1.
+  unsigned dl_f_ref_arfcn = 536020;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// NR band.
   std::optional<nr_band> band;
   /// Channel bandwidth in MHz.
-  bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+  bs_channel_bandwidth channel_bw_mhz = bs_channel_bandwidth::MHz20;
   /// Number of antennas in downlink.
   unsigned nof_antennas_dl = 1;
   /// Number of antennas in uplink.
@@ -557,6 +588,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_pusch_config pusch_cfg;
   /// PUCCH configuration.
   du_high_unit_pucch_config pucch_cfg;
+  /// SRS configuration.
+  du_high_unit_srs_config srs_cfg;
   /// Physical Cell Group parameters.
   du_high_unit_phy_cell_group_config pcg_cfg;
   /// MAC Cell Gropup parameters.
@@ -616,8 +649,9 @@ struct du_high_unit_metrics_config {
     unsigned report_period = 0; // RLC report period in ms
     bool     json_enabled  = false;
   } rlc;
-  bool     enable_json_metrics   = false;
-  unsigned stdout_metrics_period = 1000; // Statistics report period in milliseconds
+  bool     enable_json_metrics      = false;
+  unsigned stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+  bool     autostart_stdout_metrics = false;
 };
 
 struct du_high_unit_pcap_config {
@@ -700,7 +734,8 @@ struct du_high_unit_rlc_tx_am_config {
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
   int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
   uint32_t max_window = 0;  ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
-  uint32_t queue_size = 4096; ///< RLC SDU queue size
+  uint32_t queue_size = 4096;              ///< RLC SDU queue size
+  uint32_t queue_size_bytes = 4096 * 1507; ///< RLC SDU queue size in bytes
 };
 
 /// RLC UM RX configuration
@@ -734,8 +769,9 @@ struct du_high_unit_f1u_du_config {
 
 /// RLC UM TX configuration
 struct du_high_unit_rlc_tx_um_config {
-  uint16_t sn_field_length; ///< Number of bits used for sequence number
-  uint32_t queue_size;      ///< RLC SDU queue size
+  uint16_t sn_field_length;  ///< Number of bits used for sequence number
+  uint32_t queue_size;       ///< RLC SDU queue size in pdus
+  uint32_t queue_size_bytes; ///< RLC SDU queue size in bytes
 };
 
 /// RLC UM RX configuration

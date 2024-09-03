@@ -72,15 +72,16 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
                                          const resource_grid_reader& grid,
                                          const configuration&        config)
 {
-  unsigned nof_tx_layers = config.nof_tx_layers;
-  unsigned nof_rx_ports  = config.rx_ports.size();
+  dmrs_type type          = config.get_dmrs_type();
+  unsigned  nof_tx_layers = config.get_nof_tx_layers();
+  unsigned  nof_rx_ports  = config.rx_ports.size();
 
   // Select the DM-RS pattern for this PUSCH transmission.
   span<layer_dmrs_pattern> coordinates = span<layer_dmrs_pattern>(temp_pattern).first(nof_tx_layers);
 
   // Prepare DM-RS symbol buffer dimensions.
   re_measurement_dimensions dims;
-  dims.nof_subc    = config.rb_mask.count() * config.type.nof_dmrs_per_rb();
+  dims.nof_subc    = config.rb_mask.count() * type.nof_dmrs_per_rb();
   dims.nof_symbols = config.symbols_mask.count();
   dims.nof_slices  = nof_tx_layers;
 
@@ -113,13 +114,24 @@ void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequenc
                                                     unsigned             symbol,
                                                     const configuration& config) const
 {
+  // Generate low-PAPR sequence.
+  if (std::holds_alternative<low_papr_sequence_configuration>(config.sequence_config)) {
+    const auto& sequence_config = std::get<low_papr_sequence_configuration>(config.sequence_config);
+    unsigned    sequence_group  = sequence_config.n_rs_id % 30;
+    low_paper_sequence_gen->generate(sequence, sequence_group, 0, 0, 1);
+    return;
+  }
+
+  // Generate pseudo-random sequence.
+  const auto& sequence_config = std::get<pseudo_random_sequence_configuration>(config.sequence_config);
+
   // Get signal amplitude.
   float amplitude = M_SQRT1_2;
 
   // Extract parameters to calculate the PRG initial state.
   unsigned nslot    = config.slot.slot_index();
-  unsigned nidnscid = config.scrambling_id;
-  unsigned nscid    = config.n_scid ? 1 : 0;
+  unsigned nidnscid = sequence_config.scrambling_id;
+  unsigned nscid    = sequence_config.n_scid ? 1 : 0;
   unsigned nsymb    = get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
   // Calculate initial sequence state.
@@ -130,13 +142,16 @@ void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequenc
 
   // Generate sequence.
   dmrs_sequence_generate(
-      sequence, *prg, amplitude, DMRS_REF_POINT_K_TO_POINT_A, config.type.nof_dmrs_per_rb(), config.rb_mask);
+      sequence, *prg, amplitude, DMRS_REF_POINT_K_TO_POINT_A, sequence_config.type.nof_dmrs_per_rb(), config.rb_mask);
 }
 
 void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
                                          span<layer_dmrs_pattern> mask,
                                          const configuration&     cfg)
 {
+  dmrs_type type          = cfg.get_dmrs_type();
+  unsigned  nof_tx_layers = cfg.get_nof_tx_layers();
+
   // For each symbol in the transmission generate DMRS for layer 0.
   for (unsigned ofdm_symbol_index = cfg.first_symbol,
                 ofdm_symbol_end   = cfg.first_symbol + cfg.nof_symbols,
@@ -147,19 +162,6 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
     if (!cfg.symbols_mask.test(ofdm_symbol_index)) {
       continue;
     }
-
-    // Extract parameters to calculate the PRG initial state.
-    unsigned nslot    = cfg.slot.slot_index();
-    unsigned nidnscid = cfg.scrambling_id;
-    unsigned nscid    = cfg.n_scid ? 1 : 0;
-    unsigned nsymb    = get_nsymb_per_slot(cyclic_prefix::NORMAL);
-
-    // Calculate initial sequence state.
-    unsigned c_init =
-        ((nsymb * nslot + ofdm_symbol_index + 1) * (2 * nidnscid + 1) * pow2(17) + (2 * nidnscid + nscid)) % pow2(31);
-
-    // Initialize sequence.
-    prg->init(c_init);
 
     // Select a view to the DM-RS symbols for this OFDM symbol and layer 0.
     span<cf_t> dmrs_symbols = symbols.get_symbol(dmrs_symbol_index, 0);
@@ -172,9 +174,9 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
   }
 
   // For each layer...
-  for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
     // Select layer parameters.
-    const parameters& params = (cfg.type == dmrs_type::TYPE1) ? params_type1[i_layer] : params_type2[i_layer];
+    const parameters& params = (type == dmrs_type::TYPE1) ? params_type1[i_layer] : params_type2[i_layer];
 
     // Skip copy for layer 0.
     if (i_layer != 0) {

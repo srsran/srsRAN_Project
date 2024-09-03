@@ -155,16 +155,23 @@ struct formatter<srsran::pusch_processor::pdu_t> {
 
     helper.format_if_verbose(ctx, "n_id={}", pdu.n_id);
     helper.format_if_verbose(ctx, "dmrs_mask={}", pdu.dmrs_symbol_mask);
-    helper.format_if_verbose(ctx, "n_scr_id={}", pdu.scrambling_id);
-    helper.format_if_verbose(ctx, "n_scid={}", pdu.n_scid);
-    helper.format_if_verbose(ctx, "n_cdm_g_wd={}", pdu.nof_cdm_groups_without_data);
-    helper.format_if_verbose(ctx, "dmrs_type={}", (pdu.dmrs == srsran::dmrs_type::TYPE1) ? 1 : 2);
     helper.format_if_verbose(ctx, "tbs_lbrm={}bytes", pdu.tbs_lbrm);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
     helper.format_if_verbose(ctx, "nof_layers={}", pdu.nof_tx_layers);
     helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.rx_ports));
     helper.format_if_verbose(ctx, "dc_position={}", pdu.dc_position);
+
+    if (std::holds_alternative<srsran::pusch_processor::dmrs_configuration>(pdu.dmrs)) {
+      const auto& dmrs_config = std::get<srsran::pusch_processor::dmrs_configuration>(pdu.dmrs);
+      helper.format_if_verbose(ctx, "n_scr_id={}", dmrs_config.scrambling_id);
+      helper.format_if_verbose(ctx, "n_scid={}", dmrs_config.n_scid);
+      helper.format_if_verbose(ctx, "n_cdm_g_wd={}", dmrs_config.nof_cdm_groups_without_data);
+      helper.format_if_verbose(ctx, "dmrs_type={}", (dmrs_config.dmrs == srsran::dmrs_type::TYPE1) ? 1 : 2);
+    } else {
+      const auto& dmrs_config = std::get<srsran::pusch_processor::dmrs_transform_precoding_configuration>(pdu.dmrs);
+      helper.format_if_verbose(ctx, "n_rs_id={}", dmrs_config.n_rs_id);
+    }
 
     return ctx.out();
   }

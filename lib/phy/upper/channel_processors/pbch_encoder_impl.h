@@ -34,6 +34,7 @@
 
 namespace srsran {
 
+/// PBCH encoder implementation.
 class pbch_encoder_impl : public pbch_encoder
 {
 private:

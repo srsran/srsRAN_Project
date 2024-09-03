@@ -31,12 +31,19 @@ ethernet_rx_buffer_impl::ethernet_rx_buffer_impl(ethernet_rx_buffer_pool& pool_,
   size = pool.get_data(id).size();
 }
 
-ethernet_rx_buffer_impl::ethernet_rx_buffer_impl(ethernet_rx_buffer_impl&& other) noexcept : pool(other.pool)
+ethernet_rx_buffer_impl::ethernet_rx_buffer_impl(ethernet_rx_buffer_impl&& other) noexcept :
+  pool(other.pool), id(std::exchange(other.id, -1)), size(std::exchange(other.size, 0))
+{
+}
+
+ethernet_rx_buffer_impl& ethernet_rx_buffer_impl::operator=(ethernet_rx_buffer_impl&& other) noexcept
 {
   id         = other.id;
   size       = other.size;
   other.id   = -1;
   other.size = 0;
+
+  return *this;
 }
 
 span<const uint8_t> ethernet_rx_buffer_impl::data() const

@@ -50,12 +50,11 @@ void PrintTo(const prach_test_params& value, ::std::ostream* os)
 static sched_cell_configuration_request_message
 make_custom_sched_cell_configuration_request(const prach_test_params test_params)
 {
-  cell_config_builder_params params = {.scs_common     = test_params.scs,
-                                       .channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz20,
-                                       .band           = test_params.band};
+  cell_config_builder_params params = {
+      .scs_common = test_params.scs, .channel_bw_mhz = srsran::bs_channel_bandwidth::MHz20, .band = test_params.band};
   // For TDD, set DL ARFCN according to the band.
   if (not band_helper::is_paired_spectrum(test_params.band)) {
-    params.dl_arfcn = 520002;
+    params.dl_f_ref_arfcn = 520002;
   }
   sched_cell_configuration_request_message sched_req =
       test_helpers::make_default_sched_cell_configuration_request(params);
@@ -119,11 +118,12 @@ protected:
 
   bool is_prach_slot()
   {
-    if (sl.sfn() % prach_cfg.x != prach_cfg.y) {
+    bool prach_occasion_sfn =
+        std::any_of(prach_cfg.y.begin(), prach_cfg.y.end(), [this](uint8_t y) { return sl.sfn() % prach_cfg.x != y; });
+    if (prach_occasion_sfn) {
       return false;
     }
-    if (std::find(prach_cfg.subframe.begin(), prach_cfg.subframe.end(), sl.subframe_index()) ==
-        prach_cfg.subframe.end()) {
+    if (std::find(prach_cfg.slots.begin(), prach_cfg.slots.end(), sl.subframe_index()) == prach_cfg.slots.end()) {
       return false;
     }
 

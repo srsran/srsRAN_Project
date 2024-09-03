@@ -22,7 +22,6 @@
 
 #include "lower_phy_impl.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
-#include "srsran/phy/support/resource_grid_reader_empty.h"
 
 using namespace srsran;
 

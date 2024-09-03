@@ -52,6 +52,7 @@ set(SOURCES
         support/csi_report_helpers.cpp
         slicing/slice_scheduler.cpp
         slicing/ran_slice_instance.cpp
+        slicing/slice_ue_repository.cpp
         cell_scheduler.cpp
         scheduler_factory.cpp
         scheduler_impl.cpp

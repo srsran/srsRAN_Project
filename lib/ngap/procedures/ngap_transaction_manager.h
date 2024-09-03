@@ -33,7 +33,10 @@ class ngap_transaction_manager
 {
 public:
   ngap_transaction_manager(timer_factory timers) :
-    ng_setup_outcome(timers), ng_reset_outcome(timers), handover_preparation_outcome(timers)
+    ng_setup_outcome(timers),
+    ng_reset_outcome(timers),
+    handover_preparation_outcome(timers),
+    handover_cancel_outcome(timers)
   {
   }
 
@@ -45,6 +48,9 @@ public:
 
   /// Handover Preparation Response/Failure Event Source.
   protocol_transaction_event_source<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> handover_preparation_outcome;
+
+  /// Handover Cancel Ack Event Source.
+  protocol_transaction_event_source<asn1::ngap::ho_cancel_ack_s> handover_cancel_outcome;
 };
 
 } // namespace srs_cu_cp

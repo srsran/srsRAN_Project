@@ -27,8 +27,9 @@
 
 namespace srsran {
 
-/// Describes a bit buffer that contains packed bits.
-class bit_buffer
+namespace detail {
+
+class bit_buffer_base
 {
 protected:
   /// Internal storage word.
@@ -43,6 +44,121 @@ protected:
     return (nof_bits + (bits_per_word - 1)) / bits_per_word;
   }
 
+  /// Determines the number of words that are currently used.
+  unsigned nof_words() const { return calculate_nof_words(size()); }
+
+  /// Determines the number of words that are fully occupied by bits.
+  unsigned nof_full_words() const { return size() / bits_per_word; }
+
+  /// Current size in bits.
+  size_t current_size;
+
+public:
+  /// Constructor specifying the size of buffer.
+  bit_buffer_base(size_t current_size_ = 0) : current_size(current_size_) {}
+
+  /// Gets the current bit buffer size.
+  size_t size() const { return current_size; }
+
+  /// Determines whether the bit buffer is empty.
+  bool is_empty() const { return current_size == 0; }
+};
+
+} // namespace detail
+
+/// Describes a reader class that extracts bits packed in a bit buffer.
+class bit_buffer_reader : public detail::bit_buffer_base
+{
+public:
+  /// \brief Replaces the internal data container and sets the current size.
+  /// \remark The previous data container will still contain the data present before calling this method.
+  void set_buffer(span<const word_t> new_buffer, unsigned new_size)
+  {
+    buffer       = new_buffer;
+    current_size = new_size;
+  }
+
+  /// Creates a bit buffer reader from a buffer and a size.
+  bit_buffer_reader(span<const word_t> buffer_, size_t current_size_ = 0) :
+    detail::bit_buffer_base(current_size_), buffer(buffer_)
+  {
+    srsran_assert(nof_words() <= buffer.size(),
+                  "The current size (i.e., {}) requires {} words which exceeds the maximum number of words (i.e., {}).",
+                  current_size,
+                  nof_words(),
+                  buffer.size());
+  }
+
+  /// Creates a bit buffer reader from a view of bytes.
+  static bit_buffer_reader from_bytes(span<const word_t> bytes) { return {bytes, bytes.size() * bits_per_word}; }
+
+  /// \brief Extracts a consecutive \c count number of bits starting at \c startpos.
+  ///
+  /// Extracts \c count bits starting at \c startpos position and stores them at the \c count least significant bits.
+  ///
+  /// \tparam Integer Integer type of the bits to insert.
+  /// \param[in] startpos Starting bit position.
+  /// \param[in] count    Number of bits to insert.
+  /// \return The corresponding bits occupying the \c count least significant bits.
+  ///  \remark An assertion is triggered if the number of bits is larger than the number of bits per word.
+  ///  \remark An assertion is triggered if range of bits exceed the maximum size of the buffer.
+  template <typename Integer = uint8_t>
+  Integer extract(unsigned startpos, unsigned count) const
+  {
+    srsran_assert(count <= bits_per_word,
+                  "The number of bits to insert (i.e., {}) exceeds the number of bits per word (i.e., {}).",
+                  count,
+                  static_cast<unsigned>(bits_per_word));
+    srsran_assert(startpos + count <= size(),
+                  "The bit range starting at {} for {} bits exceed the buffer size (i.e., {}).",
+                  startpos,
+                  count,
+                  size());
+    unsigned start_word = startpos / bits_per_word;
+    unsigned start_mod  = startpos % bits_per_word;
+
+    // If the operation does not cross boundaries between words.
+    if (start_mod == 0) {
+      return buffer[start_word] >> (bits_per_word - count);
+    }
+
+    // If the insertion only affects to one word.
+    if (start_mod + count <= bits_per_word) {
+      return (buffer[start_word] >> (bits_per_word - start_mod - count)) & mask_lsb_ones<Integer>(count);
+    }
+
+    // Concatenates two bytes in a 32-bit register and then extracts a word with the requested number of bits.
+    using extended_word_t = uint32_t;
+    extended_word_t word  = static_cast<extended_word_t>(buffer[start_word]) << bits_per_word;
+    word |= static_cast<extended_word_t>(buffer[start_word + 1]);
+    word = word >> (2 * bits_per_word - start_mod - count);
+    word &= mask_lsb_ones<extended_word_t>(count);
+
+    return static_cast<Integer>(word);
+  }
+
+  /// \brief Gets an entire byte.
+  /// \remark The byte index must not point to a word that is not fully occupied by bits.
+  const uint8_t get_byte(unsigned i_byte) const
+  {
+    srsran_assert(i_byte < nof_full_words(),
+                  "The byte index {} exceeds the number of full words (i.e., {}).",
+                  i_byte,
+                  nof_full_words());
+    return buffer[i_byte];
+  }
+
+private:
+  /// Data storage.
+  span<const word_t> buffer;
+};
+
+/// Describes a bit buffer that contains packed bits.
+class bit_buffer : public detail::bit_buffer_base
+{
+protected:
+  // using word_t = detail::word_t;
+
   /// \brief Replaces the internal data container and sets the current size.
   /// \remark The previous data container will still contain the data present before calling this method.
   void set_buffer(span<word_t> new_buffer, unsigned new_size)
@@ -52,21 +168,19 @@ protected:
   }
 
   /// Default constructor - it creates a bit buffer with an invalid data storage.
-  bit_buffer() : buffer({}), current_size(0) {}
+  bit_buffer() : buffer({}) {}
 
   /// Creates a bit buffer from a buffer and a size.
-  bit_buffer(span<word_t> buffer_, unsigned current_size_ = 0) : buffer(buffer_), current_size(current_size_)
+  bit_buffer(span<word_t> buffer_, unsigned current_size_ = 0) : detail::bit_buffer_base(current_size_), buffer(buffer_)
   {
-    srsran_assert(nof_words() <= buffer.size(),
-                  "The current size (i.e., {}) requires {} words which exceeds the maximum number of words (i.e., {}).",
-                  current_size,
-                  nof_words(),
-                  buffer.size());
   }
 
 public:
   /// Creates a bit buffer from a view of bytes.
-  static bit_buffer from_bytes(span<word_t> bytes) { return bit_buffer(bytes, bytes.size() * bits_per_word); }
+  static bit_buffer from_bytes(span<word_t> bytes) { return {bytes, unsigned(bytes.size()) * bits_per_word}; }
+
+  /// Returns a reader object for this bit buffer.
+  bit_buffer_reader get_reader() const { return {buffer, current_size}; }
 
   /// Fill with zeros.
   void zero() { std::fill_n(buffer.begin(), nof_words(), 0); }
@@ -159,48 +273,12 @@ public:
   template <typename Integer = uint8_t>
   Integer extract(unsigned startpos, unsigned count) const
   {
-    srsran_assert(count <= bits_per_word,
-                  "The number of bits to insert (i.e., {}) exceeds the number of bits per word (i.e., {}).",
-                  count,
-                  static_cast<unsigned>(bits_per_word));
-    srsran_assert(startpos + count <= size(),
-                  "The bit range starting at {} for {} bits exceed the buffer size (i.e., {}).",
-                  startpos,
-                  count,
-                  size());
-    unsigned start_word = startpos / bits_per_word;
-    unsigned start_mod  = startpos % bits_per_word;
-
-    // If the operation does not cross boundaries between words.
-    if (start_mod == 0) {
-      return buffer[start_word] >> (bits_per_word - count);
-    }
-
-    // If the insertion only affects to one word.
-    if (start_mod + count <= bits_per_word) {
-      return (buffer[start_word] >> (bits_per_word - start_mod - count)) & mask_lsb_ones<Integer>(count);
-    }
-
-    // Concatenates two bytes in a 32-bit register and then extracts a word with the requested number of bits.
-    using extended_word_t = uint32_t;
-    extended_word_t word  = static_cast<extended_word_t>(buffer[start_word]) << bits_per_word;
-    word |= static_cast<extended_word_t>(buffer[start_word + 1]);
-    word = word >> (2 * bits_per_word - start_mod - count);
-    word &= mask_lsb_ones<extended_word_t>(count);
-
-    return static_cast<Integer>(word);
+    return get_reader().extract(startpos, count);
   }
 
   /// \brief Gets an entire byte.
   /// \remark The byte index must not point to a word that is not fully occupied by bits.
-  const uint8_t get_byte(unsigned i_byte) const
-  {
-    srsran_assert(i_byte < nof_full_words(),
-                  "The byte index {} exceeds the number of full words (i.e., {}).",
-                  i_byte,
-                  nof_full_words());
-    return buffer[i_byte];
-  }
+  const uint8_t get_byte(unsigned i_byte) const { return get_reader().get_byte(i_byte); }
 
   /// \brief Sets an entire byte.
   /// \remark The byte index must not point to a word that is not fully occupied by bits.
@@ -256,9 +334,6 @@ public:
     return bit_buffer(buffer.subspan(buffer_start, buffer_len), count);
   }
 
-  /// Gets the current bit buffer size.
-  size_t size() const { return current_size; }
-
   /// Converts the bit buffer into a binary string.
   template <typename OutputIt>
   OutputIt to_bin_string(OutputIt&& mem_buffer) const
@@ -284,9 +359,6 @@ public:
     fmt::format_to(mem_buffer, "{:02X}", buffer.first(nof_words()));
     return mem_buffer;
   }
-
-  /// Determines whether the bit buffer is empty.
-  bool is_empty() const { return current_size == 0; }
 
   /// Copy assign operator.
   bit_buffer& operator=(const bit_buffer& other)
@@ -330,16 +402,8 @@ public:
   span<const word_t> get_buffer() const { return buffer.first(nof_words()); }
 
 private:
-  /// Determines the number of words that are currently used.
-  unsigned nof_words() const { return calculate_nof_words(size()); }
-
-  /// Determines the number of words that are fully occupied by bits.
-  unsigned nof_full_words() const { return size() / bits_per_word; }
-
   /// Data storage.
   span<word_t> buffer;
-  /// Current size in bits.
-  size_t current_size;
 };
 
 /// \brief Implements a bit buffer that uses static memory.

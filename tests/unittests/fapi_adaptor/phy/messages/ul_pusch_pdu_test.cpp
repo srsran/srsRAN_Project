@@ -76,12 +76,18 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   for (unsigned i = 0; i != 14; ++i) {
     ASSERT_EQ(((fapi_pdu.ul_dmrs_symb_pos >> i) & 1U) == 1U, phy_pdu.dmrs_symbol_mask.test(i));
   }
-  ASSERT_EQ(dmrs_type((fapi_pdu.dmrs_type == fapi::dmrs_cfg_type::type_1) ? dmrs_type::options::TYPE1
-                                                                          : dmrs_type::options::TYPE2),
-            phy_pdu.dmrs);
-  ASSERT_EQ(fapi_pdu.pusch_dmrs_scrambling_id, phy_pdu.scrambling_id);
-  ASSERT_EQ(fapi_pdu.nscid, phy_pdu.n_scid);
-  ASSERT_EQ(fapi_pdu.num_dmrs_cdm_grps_no_data, phy_pdu.nof_cdm_groups_without_data);
+  if (fapi_pdu.transform_precoding) {
+    const auto& dmrs_config = std::get<pusch_processor::dmrs_transform_precoding_configuration>(phy_pdu.dmrs);
+    ASSERT_EQ(fapi_pdu.pusch_dmrs_identity, dmrs_config.n_rs_id);
+  } else {
+    const auto& dmrs_config = std::get<pusch_processor::dmrs_configuration>(phy_pdu.dmrs);
+    ASSERT_EQ(dmrs_type((fapi_pdu.dmrs_type == fapi::dmrs_cfg_type::type_1) ? dmrs_type::options::TYPE1
+                                                                            : dmrs_type::options::TYPE2),
+              dmrs_config.dmrs);
+    ASSERT_EQ(fapi_pdu.pusch_dmrs_scrambling_id, dmrs_config.scrambling_id);
+    ASSERT_EQ(fapi_pdu.nscid, dmrs_config.n_scid);
+    ASSERT_EQ(fapi_pdu.num_dmrs_cdm_grps_no_data, dmrs_config.nof_cdm_groups_without_data);
+  }
   ASSERT_EQ(fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes, phy_pdu.tbs_lbrm);
 
   // RB allocation.

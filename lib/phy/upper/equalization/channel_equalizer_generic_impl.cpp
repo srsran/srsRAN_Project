@@ -138,7 +138,8 @@ void equalize_zf_single_tx_layer_reduction(span<cf_t>                           
                                            span<const float>                     noise_var,
                                            float                                 tx_scaling)
 {
-  unsigned nof_ports = noise_var.size();
+  static constexpr unsigned nof_layers = 1;
+  unsigned                  nof_ports  = noise_var.size();
 
   // Function for checking if a noise variance is valid.
   const auto func_valid_noise_var = [](float nvar) {
@@ -160,7 +161,7 @@ void equalize_zf_single_tx_layer_reduction(span<cf_t>                           
     // Reduce ports.
     static_vector<float, NOF_PORTS>              reduced_noise_var(nof_valid_noise_var);
     modular_re_buffer_reader<cbf16_t, NOF_PORTS> reduced_ch_symbols(nof_ports, ch_symbols.get_nof_re());
-    modular_ch_est_list<NOF_PORTS>               reduced_ch_estimates(nof_ports, ch_symbols.get_nof_re());
+    modular_ch_est_list<NOF_PORTS>               reduced_ch_estimates(ch_symbols.get_nof_re(), nof_ports, nof_layers);
     for (unsigned i_port = 0, i_reduced_port = 0; i_port != nof_ports; ++i_port) {
       if (func_valid_noise_var(noise_var[i_port])) {
         reduced_noise_var[i_reduced_port] = noise_var[i_port];

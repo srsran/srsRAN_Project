@@ -32,9 +32,9 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
 {
   trace_point access_repo_tp = ofh_tracer.now();
 
-  slot_point     slot       = results.params.slot;
-  unsigned       symbol     = results.params.symbol_id;
-  uplink_context ul_context = ul_context_repo->get(slot, symbol);
+  slot_point            slot       = results.params.slot;
+  unsigned              symbol     = results.params.symbol_id;
+  const uplink_context& ul_context = ul_context_repo->get(slot, symbol);
   if (ul_context.empty()) {
     logger.warning("Dropped received Open Fronthaul message as no uplink slot context was found for slot '{}', symbol "
                    "'{}' and eAxC '{}'",

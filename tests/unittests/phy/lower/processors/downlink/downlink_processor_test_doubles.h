@@ -42,12 +42,12 @@ public:
     resource_grid_context       context;
   };
 
-  void handle_request(const resource_grid_reader& grid, const resource_grid_context& context) override
+  void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
     entry.context  = context;
-    entry.grid     = &grid;
+    entry.grid     = &grid.get_reader();
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

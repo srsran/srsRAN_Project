@@ -44,12 +44,11 @@ f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
 {
   f1_setup_request_message      request_msg = {};
   du_manager_params::ran_params ran_params;
-  ran_params.gnb_du_name  = "srsgnb";
-  ran_params.gnb_du_id    = (gnb_du_id_t)1;
-  ran_params.rrc_version  = 1;
-  ran_params.du_bind_addr = transport_layer_address::create_from_string("127.0.0.1");
-  du_cell_config cell     = config_helpers::make_default_du_cell_config();
-  ran_params.cells        = {cell};
+  ran_params.gnb_du_name = "srsgnb";
+  ran_params.gnb_du_id   = (gnb_du_id_t)1;
+  ran_params.rrc_version = 1;
+  du_cell_config cell    = config_helpers::make_default_du_cell_config();
+  ran_params.cells       = {cell};
   fill_f1_setup_request(request_msg, ran_params);
 
   return request_msg;
@@ -272,10 +271,13 @@ void f1ap_du_test::run_f1_removal_procedure()
 
 f1ap_du_test::ue_test_context* f1ap_du_test::run_f1ap_ue_create(du_ue_index_t ue_index)
 {
+  unsigned srb0_idx = srb_id_to_uint(srb_id_t::srb0);
   unsigned srb1_idx = srb_id_to_uint(srb_id_t::srb1);
   test_ues.emplace(ue_index);
   test_ues[ue_index].crnti    = to_rnti(0x4601 + ue_index);
   test_ues[ue_index].ue_index = ue_index;
+  test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb0));
+  test_ues[ue_index].f1c_bearers[srb0_idx].srb_id = srb_id_t::srb0;
   test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb1));
   test_ues[ue_index].f1c_bearers[srb1_idx].srb_id = srb_id_t::srb1;
 
@@ -352,7 +354,7 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
 
   // Report transmission notification back to F1AP.
   std::optional<uint32_t> pdcp_sn = get_pdcp_sn(f1ap_req->rrc_container, pdcp_sn_size::size12bits, true, test_logger);
-  ue.f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(pdcp_sn.value());
+  ue.f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(pdcp_sn.value(), 0);
   this->ctrl_worker.run_pending_tasks();
 }
 

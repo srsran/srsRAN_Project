@@ -34,15 +34,20 @@ namespace srs_cu_cp {
 
 class n2_connection_client;
 
+struct supported_tracking_area {
+  unsigned      tac;
+  plmn_identity plmn;
+  /// Supported Slices by the RAN node.
+  std::vector<s_nssai_t> supported_slices;
+};
+
 /// Parameters of the CU-CP that will reported to the 5G core.
 struct ran_node_configuration {
   /// The gNodeB identifier.
-  gnb_id_t      gnb_id{411, 22};
-  std::string   ran_node_name = "srsgnb01";
-  plmn_identity plmn          = plmn_identity::test_value();
-  unsigned      tac           = 7;
-  /// Supported Slices by the RAN node.
-  std::vector<s_nssai_t> supported_slices;
+  gnb_id_t    gnb_id{411, 22};
+  std::string ran_node_name = "srsgnb01";
+  // Supported TAs in the NG RAN node.
+  std::vector<supported_tracking_area> supported_tas;
 };
 
 struct mobility_configuration {

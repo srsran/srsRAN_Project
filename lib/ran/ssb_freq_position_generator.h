@@ -35,7 +35,7 @@ const unsigned NOF_SSB_SUBCARRIERS = NOF_SSB_PRBS * NOF_SUBCARRIERS_PER_RB;
 struct ssb_freq_location {
   /// Tells whether the set of parameters represent a valid configuration.
   bool is_valid;
-  /// <em>offsetToPointA<\em>, as per Section 4.4.4.2, TS 38.211.
+  /// \em offsetToPointA, as per Section 4.4.4.2, TS 38.211.
   ssb_offset_to_pointA offset_to_point_A;
   /// \f$k_{SSB}\f$, as per Section 7.4.3.1, TS 38.211.
   ssb_subcarrier_offset k_ssb;

@@ -21,13 +21,15 @@
  */
 
 #include "pucch_detector_format0.h"
+#include "srsran/phy/constants.h"
 #include "srsran/phy/support/resource_grid_reader.h"
-#include "srsran/ran/pucch/pucch_constants.h"
-#include "srsran/srsvec/accumulate.h"
 #include "srsran/srsvec/dot_prod.h"
-#include "srsran/srsvec/prod.h"
+#include <algorithm>
+#include <complex>
 
 using namespace srsran;
+
+namespace {
 
 /// \brief PUCCH Format 0 dictionary entry.
 ///
@@ -39,21 +41,23 @@ struct pucch_detector_format0_entry {
   pucch_uci_message message;
 };
 
+} // namespace
+
 /// Table for positive SR only. Defined in TS38.213 Section 9.2.4.
-static std::array<pucch_detector_format0_entry, 1> pucch_detector_format0_noharq_sr = {{{0, {{1}, {}, {}, {}}}}};
+static const std::array<pucch_detector_format0_entry, 1> pucch_detector_format0_noharq_sr = {{{0, {{1}, {}, {}, {}}}}};
 /// Table for one HARQ-ACK feedback bit. Defined in TS38.213 Section 9.2.4 Table 9.2.3-3.
-static std::array<pucch_detector_format0_entry, 2> pucch_detector_format0_oneharq_nosr = {
+static const std::array<pucch_detector_format0_entry, 2> pucch_detector_format0_oneharq_nosr = {
     {{0, {{}, {0}, {}, {}}}, {6, {{}, {1}, {}, {}}}}};
 /// Table for two HARQ-ACK feedback bit. Defined in TS38.213 Section 9.2.4 Table 9.2.3-4.
-static std::array<pucch_detector_format0_entry, 4> pucch_detector_format0_twoharq_nosr = {
+static const std::array<pucch_detector_format0_entry, 4> pucch_detector_format0_twoharq_nosr = {
     {{0, {{}, {0, 0}, {}, {}}}, {3, {{}, {0, 1}, {}, {}}}, {6, {{}, {1, 1}, {}, {}}}, {9, {{}, {1, 0}, {}, {}}}}};
 /// Table for one HARQ-ACK feedback bit and one SR bit. Defined in TS38.213 Table 9.2.3-3 for negative SR and Table
 /// 9.2.5-1 for positive SR.
-static std::array<pucch_detector_format0_entry, 4> pucch_detector_format0_oneharq_onesr = {
+static const std::array<pucch_detector_format0_entry, 4> pucch_detector_format0_oneharq_onesr = {
     {{0, {{0}, {0}, {}, {}}}, {6, {{0}, {1}, {}, {}}}, {3, {{1}, {0}, {}, {}}}, {9, {{1}, {1}, {}, {}}}}};
 /// Table for two HARQ-ACK feedback bit and one SR bit. Defined in TS38.213 Table 9.2.3-4 for negative SR and Table
 /// 9.2.5-2 for positive SR.
-static std::array<pucch_detector_format0_entry, 8> pucch_detector_format0_twoharq_onesr = {
+static const std::array<pucch_detector_format0_entry, 8> pucch_detector_format0_twoharq_onesr = {
     {{0, {{0}, {0, 0}, {}, {}}},
      {3, {{0}, {0, 1}, {}, {}}},
      {6, {{0}, {1, 1}, {}, {}}},
@@ -62,6 +66,51 @@ static std::array<pucch_detector_format0_entry, 8> pucch_detector_format0_twohar
      {4, {{1}, {0, 1}, {}, {}}},
      {7, {{1}, {1, 1}, {}, {}}},
      {10, {{1}, {1, 0}, {}, {}}}}};
+
+static float pick_threshold(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sequences)
+{
+  using threshold_index = std::pair<unsigned, unsigned>;
+  using threshold_entry = std::pair<threshold_index, float>;
+
+  // Detection thresholds.
+  //
+  // Thresholds depend on the number of degrees of freedom (i.e., the number of Rx antenna ports times the number of
+  // symbols carrying PUCCH) and on the number of sequences that have to be evaluated (1, 2, 4 or 8 depending on the ACK
+  // and SR bits in the PUCCH).
+  //
+  // Thresholds marked as TS38.104 correspond to the cases evaluated in the 3GPP conformance tests.
+  // Thresholds marked as TBR (to be refined) haven't been tested yet.
+  static constexpr std::array<threshold_entry, 16> pucch_detector_format0_thresholds = {{{{1, 1}, 0.5373},
+                                                                                         {{1, 2}, 0.6460},
+                                                                                         {{1, 4}, 0.7556},
+                                                                                         {{1, 8}, 1.6818},   // TBR
+                                                                                         {{2, 1}, 0.5273},   // TBR
+                                                                                         {{2, 2}, 0.4038},   // TS38.104
+                                                                                         {{2, 4}, 0.7273},   // TBR
+                                                                                         {{2, 8}, 0.8364},   // TBR
+                                                                                         {{4, 1}, 0.3455},   // TBR
+                                                                                         {{4, 2}, 0.2800},   // TS38.104
+                                                                                         {{4, 4}, 0.4455},   // TBR
+                                                                                         {{4, 8}, 0.5000},   // TBR
+                                                                                         {{8, 1}, 0.2545},   // TBR
+                                                                                         {{8, 2}, 0.2083},   // TS38.104
+                                                                                         {{8, 4}, 0.3000},   // TBR
+                                                                                         {{8, 8}, 0.3273}}}; // TBR
+  // Number of degrees of freedom.
+  unsigned nof_degrees = nof_ports * nof_symbols;
+
+  auto* it = std::lower_bound(pucch_detector_format0_thresholds.begin(),
+                              pucch_detector_format0_thresholds.end(),
+                              threshold_index(nof_degrees, nof_sequences),
+                              [](const threshold_entry& a, const threshold_index& b) { return (a.first < b); });
+
+  srsran_assert(it != pucch_detector_format0_thresholds.end(),
+                "Requested configuration ({} antenna ports, {} OFDM symbols, {} sequences) not supported.",
+                nof_ports,
+                nof_symbols,
+                nof_sequences);
+  return it->second;
+}
 
 std::pair<pucch_uci_message, channel_state_information>
 pucch_detector_format0::detect(const srsran::resource_grid_reader&          grid,
@@ -151,31 +200,23 @@ pucch_detector_format0::detect(const srsran::resource_grid_reader&          grid
         // Select received symbols.
         span<const cf_t> rx_symbols = temp_re.get_view({i_symbol, i_port});
 
-        // Calculate least square estimates.
-        srsvec::prod_conj(rx_symbols, sequence, lse);
+        // Received power.
+        float rx_power = srsvec::average_power(rx_symbols);
 
-        // Calculate the average power of the LSE.
-        float avg_pwr = srsvec::average_power(lse);
+        // Correlation between received symbols and spreading sequence.
+        cf_t rx_seq_corr = srsvec::dot_prod(rx_symbols, sequence);
 
-        // Calculate the correlation between the received signal and the low PAPR sequence.
-        float corr = std::norm(srsvec::accumulate(lse) / static_cast<float>(NRE));
-
-        // Estimate noise variance. Assume noise and signal are orthogonal and the EPRE is equal to the sum of the
-        // signal and the noise.
-        float noise_var = std::max(0.0F, avg_pwr - corr);
-
-        // Accumulate correlation for each channel.
-        sum_corr += corr;
-
-        // Accumulate noise variance weighted by the correlation.
-        sum_noise_var += noise_var * corr;
+        // Update cumulative values.
+        float corr_contribution = std::norm(rx_seq_corr) / static_cast<float>(NRE);
+        sum_corr += corr_contribution;
+        sum_noise_var += rx_power * static_cast<float>(NRE) - corr_contribution;
       }
     }
 
     // Calculate detection metric.
     float detection_metric = 0.0F;
     if (std::isnormal(sum_noise_var)) {
-      detection_metric = sum_corr * sum_corr / sum_noise_var;
+      detection_metric = sum_corr / sum_noise_var;
     }
 
     // Update the best metric and the actual message.
@@ -186,7 +227,8 @@ pucch_detector_format0::detect(const srsran::resource_grid_reader&          grid
     }
   }
 
-  pucch_uci_message message = *best_message;
+  pucch_uci_message message             = *best_message;
+  float             detection_threshold = pick_threshold(nof_ports, nof_symbols, m_cs_table.size());
   if (best_metric > detection_threshold) {
     message.set_status(uci_status::valid);
   } else {

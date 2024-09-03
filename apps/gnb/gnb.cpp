@@ -20,11 +20,11 @@
  *
  */
 
-#include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/signal_handling.h"
-#include "srsran/support/version/version.h"
+#include "srsran/support/versioning/build_info.h"
+#include "srsran/support/versioning/version.h"
 
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
 
@@ -45,9 +45,6 @@
 #include "apps/services/worker_manager.h"
 
 #include "apps/services/application_tracer.h"
-#include "apps/services/metrics_hub.h"
-#include "apps/services/metrics_log_helper.h"
-#include "apps/services/rlc_metrics_plotter_json.h"
 #include "apps/services/stdin_command_dispatcher.h"
 
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
@@ -74,8 +71,8 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/core_isolation_manager.h"
-#include "apps/services/metrics_plotter_json.h"
-#include "apps/services/metrics_plotter_stdout.h"
+#include "apps/services/metrics/metrics_manager.h"
+#include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_yaml_writer.h"
 #include "apps/units/cu_cp/pcap_factory.h"
@@ -248,12 +245,17 @@ int main(int argc, char** argv)
     autoderive_slicing_args(du_unit_cfg, cu_cp_config);
     autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
 
-    // Create the PLMN and TAC list from the cells.
-    std::vector<std::string> plmns;
-    std::vector<unsigned>    tacs;
+    // Create the supported tracking areas list from the cells.
+    // These will only be used if no supported TAs are provided in the CU-CP configuration.
+    std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+    supported_tas.reserve(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
     for (const auto& cell : du_unit_cfg.du_high_cfg.config.cells_cfg) {
-      plmns.push_back(cell.cell.plmn);
-      tacs.push_back(cell.cell.tac);
+      // Make sure supported tracking areas are unique.
+      if (std::find_if(supported_tas.begin(), supported_tas.end(), [&cell](const auto& ta) {
+            return ta.tac == cell.cell.tac && ta.plmn == cell.cell.plmn;
+          }) == supported_tas.end()) {
+        supported_tas.push_back({cell.cell.tac, cell.cell.plmn, {{1}}});
+      }
     }
 
     // If test mode is enabled, we auto-enable "no_core" option
@@ -261,7 +263,7 @@ int main(int argc, char** argv)
       cu_cp_config.amf_cfg.no_core = true;
     }
 
-    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(plmns), std::move(tacs));
+    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(supported_tas));
   });
 
   // Parse arguments.
@@ -384,16 +386,8 @@ int main(int argc, char** argv)
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
-  srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
-  json_channel.set_enabled(gnb_cfg.metrics_cfg.enable_json_metrics);
 
-  // Set up RLC JSON log channel used by metrics.
-  srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", json_sink, {});
-  rlc_json_channel.set_enabled(du_unit_cfg.du_high_cfg.config.metrics.rlc.json_enabled);
-  rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
-
-  std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
-  e2_metric_connector_manager  e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
+  e2_metric_connector_manager e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
   // Create N2 Gateway.
   std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client = srs_cu_cp::create_n2_connection_client(
@@ -417,8 +411,46 @@ int main(int argc, char** argv)
 
   srs_cu_cp::cu_cp& cu_cp_obj = *cu_cp_obj_and_cmds.unit;
 
-  // Create metrics log helper.
-  metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
+  // Create and start CU-UP
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = build_cu_up(cu_up_config,
+                                                                      workers,
+                                                                      *e1_gw,
+                                                                      *f1u_conn->get_f1u_cu_up_gateway(),
+                                                                      *cu_up_dlt_pcaps.n3,
+                                                                      *cu_timers,
+                                                                      *epoll_broker);
+
+  // Instantiate one DU.
+  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+  auto                                      du_inst_and_cmds = create_du(du_unit_cfg,
+                                    workers,
+                                    *f1c_gw,
+                                    *f1u_conn->get_f1u_du_gateway(),
+                                    app_timers,
+                                    *du_pcaps.mac,
+                                    *du_pcaps.rlc,
+                                    e2_gw,
+                                    e2_metric_connectors,
+                                    json_sink,
+                                    metrics_notifier_forwarder);
+
+  du& du_inst = *du_inst_and_cmds.unit;
+
+  // Only DU has metrics now. When CU returns metrics, create the vector of metrics as it is done for the commands.
+  app_services::metrics_manager metrics_mngr(
+      srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, du_inst_and_cmds.metrics);
+  // Connect the forwarder to the metrics manager.
+  metrics_notifier_forwarder.connect(metrics_mngr);
+
+  std::vector<std::unique_ptr<app_services::application_command>> commands;
+  for (auto& cmd : cu_cp_obj_and_cmds.commands) {
+    commands.push_back(std::move(cmd));
+  }
+  for (auto& cmd : du_inst_and_cmds.commands) {
+    commands.push_back(std::move(cmd));
+  }
+
+  app_services::stdin_command_dispatcher command_parser(*epoll_broker, commands);
 
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());
@@ -435,45 +467,7 @@ int main(int argc, char** argv)
   // Connect F1-C to CU-CP and start listening for new F1-C connection requests.
   f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
-  // Create and start CU-UP
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = build_cu_up(cu_up_config,
-                                                                      workers,
-                                                                      *e1_gw,
-                                                                      *f1u_conn->get_f1u_cu_up_gateway(),
-                                                                      *cu_up_dlt_pcaps.n3,
-                                                                      *cu_timers,
-                                                                      *epoll_broker);
   cu_up_obj->start();
-
-  // Instantiate one DU.
-  metrics_plotter_stdout metrics_stdout(gnb_cfg.metrics_cfg.autostart_stdout_metrics);
-  metrics_plotter_json   metrics_json(json_channel);
-  auto                   du_inst_and_cmds = create_du(du_unit_cfg,
-                                    workers,
-                                    *f1c_gw,
-                                    *f1u_conn->get_f1u_du_gateway(),
-                                    app_timers,
-                                    *du_pcaps.mac,
-                                    *du_pcaps.rlc,
-                                    metrics_stdout,
-                                    metrics_json,
-                                    metrics_logger,
-                                    e2_gw,
-                                    e2_metric_connectors,
-                                    rlc_json_plotter,
-                                    *hub);
-
-  du& du_inst = *du_inst_and_cmds.unit;
-
-  std::vector<std::unique_ptr<app_services::application_command>> commands;
-  for (auto& cmd : cu_cp_obj_and_cmds.commands) {
-    commands.push_back(std::move(cmd));
-  }
-  for (auto& cmd : du_inst_and_cmds.commands) {
-    commands.push_back(std::move(cmd));
-  }
-
-  app_services::stdin_command_dispatcher command_parser(*epoll_broker, commands);
 
   // Start processing.
   du_inst.start();

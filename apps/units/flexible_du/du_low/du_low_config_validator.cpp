@@ -27,7 +27,9 @@
 using namespace srsran;
 
 static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_threads_config& config,
-                                                 unsigned                                 max_processing_delay_slots)
+                                                 unsigned                                 max_processing_delay_slots,
+                                                 unsigned                                 nof_hwacc_pdsch,
+                                                 unsigned                                 nof_hwacc_pusch)
 {
   static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
   static const interval<unsigned, true> nof_pdsch_threads_range(2, std::thread::hardware_concurrency());
@@ -59,6 +61,24 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
     valid = false;
   }
 
+#ifdef DPDK_FOUND
+  if ((nof_hwacc_pdsch > 0) && (config.nof_dl_threads > nof_hwacc_pdsch)) {
+    fmt::print("Not enough hardware-accelerated PDSCH encoder functions. Number of PHY DL threads (i.e., {}) must be "
+               "in range {}.\n",
+               config.nof_dl_threads,
+               nof_hwacc_pdsch);
+    valid = false;
+  }
+  if ((nof_hwacc_pusch > 0) && ((config.nof_ul_threads + config.nof_pusch_decoder_threads) > nof_hwacc_pusch)) {
+    fmt::print("Not enough hardware-accelerated PUSCH decoder functions. Combined number of PHY UL threads (i.e., {}) "
+               "and PUSCH decoder threads (i.e., {}) must be in range {}.\n",
+               config.nof_ul_threads,
+               config.nof_pusch_decoder_threads,
+               nof_hwacc_pusch);
+    valid = false;
+  }
+#endif // DPDK_FOUND
+
   return valid;
 }
 
@@ -66,8 +86,16 @@ static bool validate_expert_execution_unit_config(const du_low_unit_config&     
                                                   unsigned                         nof_cells,
                                                   const os_sched_affinity_bitmask& available_cpus)
 {
+  unsigned nof_hwacc_pdsch = 0;
+  unsigned nof_hwacc_pusch = 0;
+#ifdef DPDK_FOUND
+  nof_hwacc_pdsch = config.hal_config->bbdev_hwacc->pdsch_enc->nof_hwacc;
+  nof_hwacc_pusch = config.hal_config->bbdev_hwacc->pusch_dec->nof_hwacc;
+#endif // DPDK_FOUND
   if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads,
-                                            config.expert_phy_cfg.max_processing_delay_slots)) {
+                                            config.expert_phy_cfg.max_processing_delay_slots,
+                                            nof_hwacc_pdsch,
+                                            nof_hwacc_pusch)) {
     return false;
   }
 

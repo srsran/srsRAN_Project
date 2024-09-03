@@ -238,101 +238,79 @@ unsigned pdsch_processor_concurrent_impl::compute_nof_data_re(const pdu_t& confi
 
 void pdsch_processor_concurrent_impl::fork_cb_batches()
 {
-  // Minimum number of codeblocks per batch.
-  unsigned min_cb_batch_size = 4;
+  // Create a task for eack thread in the pool.
+  unsigned nof_cb_tasks = cb_processor_pool->capacity();
 
-  // Calculate the number of batches.
-  unsigned nof_cb_batches = cb_processor_pool->capacity() * 8;
-
-  // Limit the number of batches to ensure a minimum number of CB per batch.
-  unsigned max_nof_cb_batches = divide_ceil(nof_cb, min_cb_batch_size);
-  nof_cb_batches              = std::min(nof_cb_batches, max_nof_cb_batches);
-
-  // Calculate the actual number of CB per batch.
-  unsigned cb_batch_size = divide_ceil(nof_cb, nof_cb_batches);
+  // Limit the number of tasks to the number of codeblocks.
+  nof_cb_tasks = std::min(nof_cb_tasks, nof_cb);
 
   // Set number of codeblock batches.
-  cb_batch_counter = nof_cb_batches;
+  cb_task_counter = nof_cb_tasks;
+  cb_counter      = 0;
 
-  for (unsigned i_cb_batch = 0, i_cb = 0; i_cb_batch != nof_cb_batches; ++i_cb_batch, i_cb += cb_batch_size) {
-    // Limit batch size for the last batch.
-    cb_batch_size = std::min(nof_cb - i_cb, cb_batch_size);
+  auto async_task = [this]() {
+    // Select codeblock processor.
+    pdsch_codeblock_processor& cb_processor = cb_processor_pool->get();
 
-    // Extract scrambling initial state for the next bit.
-    pseudo_random_generator::state_s c_init = scrambler->get_state();
-
-    auto async_task = [this, cb_batch_size, c_init, i_cb]() {
+    // For each segment within the batch.
+    unsigned absolute_i_cb;
+    while ((absolute_i_cb = cb_counter.fetch_add(1)) < nof_cb) {
       trace_point process_pdsch_tp = l1_tracer.now();
 
-      // Select codeblock processor.
-      pdsch_codeblock_processor& cb_processor = cb_processor_pool->get();
+      // As the last codeblock has a higher overhead due to the transport block CRC calculation. Reverse codeblock order
+      // to process first the last CB.
+      absolute_i_cb = nof_cb - 1 - absolute_i_cb;
 
-      // Save scrambling initial state.
-      pseudo_random_generator::state_s scrambling_state = c_init;
+      // Limit the codeblock number of information bits.
+      units::bits nof_info_bits = std::min<units::bits>(cb_info_bits, tbs - cb_info_bits * absolute_i_cb);
 
-      // For each segment within the batch.
-      for (unsigned batch_i_cb = 0; batch_i_cb != cb_batch_size; ++batch_i_cb) {
-        // Calculate the absolute codeblock index.
-        unsigned absolute_i_cb = i_cb + batch_i_cb;
+      // Set CB processor configuration.
+      pdsch_codeblock_processor::configuration cb_config;
+      cb_config.tb_offset    = cb_info_bits * absolute_i_cb;
+      cb_config.has_cb_crc   = nof_cb > 1;
+      cb_config.cb_info_size = nof_info_bits;
+      cb_config.cb_size      = segment_length;
+      cb_config.zero_pad     = zero_pad;
+      cb_config.metadata     = cb_metadata;
+      cb_config.c_init       = scrambler->get_state();
 
-        // Limit the codeblock number of information bits.
-        units::bits nof_info_bits = std::min<units::bits>(cb_info_bits, tbs - cb_info_bits * absolute_i_cb);
+      // Update codeblock specific metadata fields.
+      cb_config.metadata.cb_specific.cw_offset = cw_offset[absolute_i_cb].value();
+      cb_config.metadata.cb_specific.rm_length = rm_length[absolute_i_cb].value();
 
-        // Set CB processor configuration.
-        pdsch_codeblock_processor::configuration cb_config;
-        cb_config.tb_offset    = cb_info_bits * absolute_i_cb;
-        cb_config.has_cb_crc   = nof_cb > 1;
-        cb_config.cb_info_size = nof_info_bits;
-        cb_config.cb_size      = segment_length;
-        cb_config.zero_pad     = zero_pad;
-        cb_config.metadata     = cb_metadata;
-        cb_config.c_init       = scrambling_state;
+      // Process codeblock.
+      pdsch_codeblock_processor::result result = cb_processor.process(data, cb_config);
 
-        // Update codeblock specific metadata fields.
-        cb_config.metadata.cb_specific.cw_offset = cw_offset[absolute_i_cb].value();
-        cb_config.metadata.cb_specific.rm_length = rm_length[absolute_i_cb].value();
+      // Build resource grid mapper adaptor.
+      resource_grid_mapper::symbol_buffer_adapter buffer(result.cb_symbols);
 
-        // Process codeblock.
-        pdsch_codeblock_processor::result result = cb_processor.process(data, cb_config);
+      // Map into the resource grid.
+      mapper->map(buffer, allocation, reserved, precoding, re_offset[absolute_i_cb]);
 
-        // Build resource grid mapper adaptor.
-        resource_grid_mapper::symbol_buffer_adapter buffer(result.cb_symbols);
+      l1_tracer << trace_event((absolute_i_cb == (nof_cb - 1)) ? "Last CB" : "CB", process_pdsch_tp);
+    }
 
-        // Update scrambling sequence state.
-        scrambling_state = result.scrambling_state;
-
-        // Map into the resource grid.
-        mapper->map(buffer, allocation, reserved, precoding, re_offset[absolute_i_cb]);
+    // Decrement code block batch counter.
+    if (cb_task_counter.fetch_sub(1) == 1) {
+      // Decrement asynchronous task counter.
+      if (async_task_counter.fetch_sub(1) == 1) {
+        // Notify end of the processing.
+        notifier->on_finish_processing();
       }
+    }
+  };
 
-      // Decrement code block batch counter.
-      if (cb_batch_counter.fetch_sub(1) == 1) {
-        // Decrement asynchronous task counter.
-        if (async_task_counter.fetch_sub(1) == 1) {
-          // Notify end of the processing.
-          notifier->on_finish_processing();
-        }
-      }
-
-      l1_tracer << trace_event("CB batch", process_pdsch_tp);
-    };
-
+  // Spawn tasks.
+  for (unsigned i_task = 0; i_task != nof_cb_tasks; ++i_task) {
     // Try to execute task asynchronously.
     bool successful = false;
-    if (nof_cb_batches != 0) {
+    if (nof_cb_tasks != 0) {
       successful = executor.execute(async_task);
     }
 
     // Execute task locally if it was not enqueued.
     if (!successful) {
       async_task();
-    }
-
-    // Advance scrambling sequence for the next batch.
-    if (i_cb_batch != nof_cb_batches - 1) {
-      units::bits sequence_advance_count =
-          std::accumulate(rm_length.begin() + i_cb, rm_length.begin() + i_cb + cb_batch_size, units::bits(0));
-      scrambler->advance(sequence_advance_count.value());
     }
   }
 }

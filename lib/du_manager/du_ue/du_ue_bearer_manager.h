@@ -32,7 +32,7 @@ class du_ue_bearer_manager
 {
 public:
   /// Add new SRB with specified SRB-Id and configuration.
-  du_ue_srb& add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg, std::optional<const mac_lc_config> mac_cfg = {});
+  du_ue_srb& add_srb(srb_id_t srb_id);
 
   /// Add new bearer to list of bearers.
   void add_drb(std::unique_ptr<du_ue_drb> drb);

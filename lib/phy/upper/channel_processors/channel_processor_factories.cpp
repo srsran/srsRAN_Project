@@ -508,8 +508,7 @@ public:
     factory(std::move(factory_)), max_nof_processors(max_nof_processors_)
   {
     srsran_assert(factory, "Invalid PDSCH processor factory.");
-    srsran_assert(
-        max_nof_processors > 1, "The number of processors (i.e., {}) must be greater than one.", max_nof_processors);
+    srsran_assert(max_nof_processors != 0, "The number of processors must not be zero.");
   }
 
   std::unique_ptr<pdsch_processor> create() override

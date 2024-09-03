@@ -296,34 +296,10 @@ struct cu_cp_du_served_cells_item {
   std::optional<cu_cp_gnb_du_sys_info> gnb_du_sys_info; // not optional for NG-RAN
 };
 
-struct cu_cp_alloc_and_retention_prio {
-  uint8_t     prio_level_arp;
-  std::string pre_emption_cap;
-  std::string pre_emption_vulnerability;
-};
-
-struct cu_cp_gbr_qos_info {
-  uint64_t                   max_flow_bit_rate_dl;
-  uint64_t                   max_flow_bit_rate_ul;
-  uint64_t                   guaranteed_flow_bit_rate_dl;
-  uint64_t                   guaranteed_flow_bit_rate_ul;
-  std::optional<std::string> notif_ctrl;
-  std::optional<uint16_t>    max_packet_loss_rate_dl;
-  std::optional<uint16_t>    max_packet_loss_rate_ul;
-};
-
-struct cu_cp_qos_flow_level_qos_params {
-  qos_characteristics_t             qos_characteristics;
-  cu_cp_alloc_and_retention_prio    alloc_and_retention_prio;
-  std::optional<cu_cp_gbr_qos_info> gbr_qos_info;
-  std::optional<bool>               add_qos_flow_info;
-  std::optional<bool>               reflective_qos_attribute;
-};
-
 struct qos_flow_setup_request_item {
-  qos_flow_id_t                   qos_flow_id = qos_flow_id_t::invalid;
-  cu_cp_qos_flow_level_qos_params qos_flow_level_qos_params;
-  std::optional<uint8_t>          erab_id;
+  qos_flow_id_t                 qos_flow_id = qos_flow_id_t::invalid;
+  qos_flow_level_qos_parameters qos_flow_level_qos_params;
+  std::optional<uint8_t>        erab_id;
 };
 
 struct cu_cp_pdu_session_res_setup_item {

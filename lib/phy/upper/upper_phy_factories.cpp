@@ -323,8 +323,7 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
         return rg_factory->create(nof_tx_ports, MAX_NSYMB_PER_SLOT, dl_bw_rb * NRE);
       });
 
-  return create_asynchronous_resource_grid_pool(
-      config.dl_rg_expire_timeout_slots, *config.dl_executors.front(), std::move(grids));
+  return create_asynchronous_resource_grid_pool(*config.dl_executors.front(), std::move(grids));
 }
 
 static std::unique_ptr<resource_grid_pool>
@@ -382,8 +381,15 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   report_fatal_error_if_not(ta_estimator_factory, "Invalid TA estimator factory.");
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-  std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory =
+  report_error_if_not(prg_factory, "Invalid pseudo-random sequence generator factory.");
+
+  std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory =
       create_port_channel_estimator_factory_sw(ta_estimator_factory);
+  report_error_if_not(prg_factory, "Invalid channel estimator factory.");
+
+  std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
+      create_low_papr_sequence_generator_sw_factory();
+  report_error_if_not(low_papr_sequence_gen_factory, "Invalid low-PAPR sequence generator factory.");
 
   std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
   report_error_if_not(equalizer_factory, "Invalid equalizer factory.");
@@ -399,21 +405,40 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
       create_crc_calculator_factory_sw(config.crc_calculator_type);
   report_fatal_error_if_not(crc_calc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
 
-  pusch_decoder_factory_sw_configuration decoder_config;
-  decoder_config.crc_factory     = crc_calc_factory;
-  decoder_config.decoder_factory = create_ldpc_decoder_factory_sw(config.ldpc_decoder_type);
-  report_fatal_error_if_not(
-      decoder_config.decoder_factory, "Invalid LDPC decoder factory of type {}.", config.crc_calculator_type);
-  decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw(config.ldpc_rate_dematcher_type);
-  report_fatal_error_if_not(decoder_config.dematcher_factory,
-                            "Invalid LDPC Rate Dematcher factory of type {}.",
-                            config.ldpc_rate_dematcher_type);
-  decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
-  report_fatal_error_if_not(decoder_config.segmenter_factory, "Invalid LDPC Rx segmenter factory.");
-  decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
-  decoder_config.executor                  = config.pusch_decoder_executor;
-  decoder_config.nof_prb                   = config.ul_bw_rb;
-  decoder_config.nof_layers                = 1;
+  // Check if a hardware-accelerated PUSCH processor is requested.
+  pusch_processor_factory_sw_configuration pusch_config;
+  if (!config.hal_config.hwacc_pusch_processor) {
+    pusch_decoder_factory_sw_configuration decoder_config;
+    decoder_config.crc_factory     = crc_calc_factory;
+    decoder_config.decoder_factory = create_ldpc_decoder_factory_sw(config.ldpc_decoder_type);
+    report_fatal_error_if_not(
+        decoder_config.decoder_factory, "Invalid LDPC decoder factory of type {}.", config.crc_calculator_type);
+    decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw(config.ldpc_rate_dematcher_type);
+    report_fatal_error_if_not(decoder_config.dematcher_factory,
+                              "Invalid LDPC Rate Dematcher factory of type {}.",
+                              config.ldpc_rate_dematcher_type);
+    decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
+    report_fatal_error_if_not(decoder_config.segmenter_factory, "Invalid LDPC Rx segmenter factory.");
+    decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
+    decoder_config.executor                  = config.pusch_decoder_executor;
+    decoder_config.nof_prb                   = config.ul_bw_rb;
+    decoder_config.nof_layers                = 1;
+    pusch_config.decoder_factory             = create_pusch_decoder_factory_sw(decoder_config);
+  } else {
+    pusch_decoder_factory_hw_configuration decoder_config;
+    decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
+    report_fatal_error_if_not(decoder_config.segmenter_factory, "Invalid LDPC Rx segmenter factory.");
+    decoder_config.crc_factory               = crc_calc_factory;
+    decoder_config.hw_decoder_factory        = nullptr;
+    decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
+#ifdef HWACC_PUSCH_ENABLED
+    decoder_config.hw_decoder_factory =
+        hal::create_bbdev_pusch_dec_acc_factory(config.hal_config.hwacc_pusch_dec_cfg, "srs");
+#endif // HWACC_PUSCH_ENABLED
+    decoder_config.executor = config.pusch_decoder_executor;
+    report_fatal_error_if_not(decoder_config.hw_decoder_factory, "Invalid hardware-accelerated PUSCH decoder factory.");
+    pusch_config.decoder_factory = create_pusch_decoder_factory_hw(decoder_config);
+  }
 
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
   report_fatal_error_if_not(short_block_det_factory, "Invalid short block detector factory.");
@@ -433,8 +458,9 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   bool enable_eq_sinr = (config.pusch_sinr_calc_method == channel_state_information::sinr_type::post_equalization) ||
                         (config.log_level == srslog::basic_levels::debug);
 
-  pusch_processor_factory_sw_configuration pusch_config;
-  pusch_config.estimator_factory          = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
+  // Add the remaining PUSCH processor configuration values.
+  pusch_config.estimator_factory =
+      create_dmrs_pusch_estimator_factory_sw(prg_factory, low_papr_sequence_gen_factory, ch_estimator_factory);
   pusch_config.demodulator_factory        = create_pusch_demodulator_factory_sw(equalizer_factory,
                                                                          precoding_factory,
                                                                          demodulation_factory,
@@ -450,12 +476,10 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_config.max_nof_concurrent_threads = config.max_ul_thread_concurrency;
 
   // :TODO: check these values in the future. Extract them to more public config.
-  pusch_config.ch_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
-  pusch_config.ch_estimate_dimensions.nof_tx_layers = 1;
-  pusch_config.ch_estimate_dimensions.nof_prb       = config.ul_bw_rb;
-  pusch_config.ch_estimate_dimensions.nof_rx_ports  = config.nof_rx_ports;
-  pusch_config.decoder_factory                      = create_pusch_decoder_factory_sw(decoder_config);
-
+  pusch_config.ch_estimate_dimensions.nof_symbols        = MAX_NSYMB_PER_SLOT;
+  pusch_config.ch_estimate_dimensions.nof_tx_layers      = 1;
+  pusch_config.ch_estimate_dimensions.nof_prb            = config.ul_bw_rb;
+  pusch_config.ch_estimate_dimensions.nof_rx_ports       = config.nof_rx_ports;
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor factory.");
 
@@ -826,8 +850,14 @@ std::shared_ptr<downlink_processor_factory>
 srsran::create_downlink_processor_factory_hw(const downlink_processor_factory_hw_config& config)
 {
   // Create channel coding factories - CRC
-  std::shared_ptr<crc_calculator_factory> crc_calc_factory = config.crc_calc_factory;
-  report_fatal_error_if_not(crc_calc_factory, "Invalid CRC calculator factory.");
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory =
+      create_crc_calculator_factory_sw(config.crc_calculator_type);
+  report_fatal_error_if_not(crc_calc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
+
+  // Create channel coding factories - LDPC
+  std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_seg_tx_factory =
+      create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
+  report_fatal_error_if_not(ldpc_seg_tx_factory, "Invalid LDPC segmenter factory.");
 
   // Create channel coding factories - Polar
   std::shared_ptr<polar_factory> polar_factory = create_polar_factory_sw();
@@ -851,8 +881,16 @@ srsran::create_downlink_processor_factory_hw(const downlink_processor_factory_hw
       create_pdcch_encoder_factory_sw(crc_calc_factory, polar_factory);
   report_fatal_error_if_not(pdcch_enc_factory, "Invalid PDCCH encoder factory.");
 
-  std::shared_ptr<pdsch_encoder_factory> pdsch_enc_factory = config.pdsch_enc_factory;
-  report_fatal_error_if_not(pdsch_enc_factory, "Invalid PDSCH encoder factory.");
+  // Create a hardware-accelerated PDSCH encoder factory.
+  pdsch_encoder_factory_hw_configuration encoder_config;
+  encoder_config.crc_factory       = crc_calc_factory;
+  encoder_config.segmenter_factory = ldpc_seg_tx_factory;
+#ifdef HWACC_PDSCH_ENABLED
+  encoder_config.hw_encoder_factory = hal::create_bbdev_pdsch_enc_acc_factory(config.hwacc_pdsch_enc_cfg, "srs");
+#endif // HWACC_PDSCH_ENABLED
+  report_fatal_error_if_not(encoder_config.hw_encoder_factory, "Invalid hardware-accelerated PDSCH encoder factory.");
+  std::shared_ptr<pdsch_encoder_factory> pdsch_enc_factory = create_pdsch_encoder_factory_hw(encoder_config);
+  report_fatal_error_if_not(pdsch_enc_factory, "Invalid hardware-accelerated PDSCH encoder factory.");
 
   // Create channel processors modulation factories - PBCH
   std::shared_ptr<pbch_modulator_factory> pbch_mod_factory = create_pbch_modulator_factory_sw(mod_factory, prg_factory);
@@ -895,6 +933,7 @@ srsran::create_downlink_processor_factory_hw(const downlink_processor_factory_hw
   report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDCCH processor factory.");
 
   // Create channel processors - PDSCH
+  // Hardware-acceleration currently supports 'generic' PDSCH processor types only.
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
       create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
   report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
@@ -913,6 +952,27 @@ srsran::create_downlink_processor_factory_hw(const downlink_processor_factory_hw
   std::shared_ptr<nzp_csi_rs_generator_factory> nzp_csi_rs_factory =
       create_nzp_csi_rs_generator_factory_sw(prg_factory);
   report_fatal_error_if_not(nzp_csi_rs_factory, "Invalid NZP-CSI-RS generator factory.");
+
+  // Wrap the downlink processor dependencies with pools to allow concurrent execution.
+  if (config.nof_concurrent_threads > 1) {
+    // If the PDSCH instance is concurrent, the number of instances is given by the PDSCH processor configuration.
+    unsigned max_nof_simultaneous_pdsch = config.nof_concurrent_threads;
+
+    pdcch_proc_factory =
+        create_pdcch_processor_pool_factory(std::move(pdcch_proc_factory), config.nof_concurrent_threads);
+    report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDCCH processor pool factory.");
+
+    // The hardware-accelerated PDSCH processor pool needs to be locked.
+    pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), max_nof_simultaneous_pdsch);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor pool factory.");
+
+    ssb_proc_factory = create_ssb_processor_pool_factory(std::move(ssb_proc_factory), config.nof_concurrent_threads);
+    report_fatal_error_if_not(ssb_proc_factory, "Invalid SSB processor pool factory.");
+
+    nzp_csi_rs_factory =
+        create_nzp_csi_rs_generator_pool_factory(std::move(nzp_csi_rs_factory), config.nof_concurrent_threads);
+    report_fatal_error_if_not(nzp_csi_rs_factory, "Invalid NZP-CSI-RS generator pool factory.");
+  }
 
   return std::make_shared<downlink_processor_single_executor_factory>(
       pdcch_proc_factory, pdsch_proc_factory, ssb_proc_factory, nzp_csi_rs_factory);

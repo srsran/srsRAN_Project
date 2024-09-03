@@ -375,7 +375,7 @@ def test_zmq_2x2_mimo(
     direction: IPerfDir,
 ):
     """
-    ZMQ 4x4 mimo IPerfs
+    ZMQ 2x2 mimo IPerfs
     """
 
     _iperf(
@@ -397,6 +397,8 @@ def test_zmq_2x2_mimo(
         always_download_artifacts=True,
         rx_to_tx_latency=2,
         enable_dddsu=True,
+        nof_antennas_dl=2,
+        nof_antennas_ul=2,
     )
 
 
@@ -455,6 +457,8 @@ def test_zmq_4x4_mimo(
         global_timing_advance=-1,
         time_alignment_calibration=0,
         always_download_artifacts=False,
+        nof_antennas_dl=4,
+        nof_antennas_ul=4,
     )
 
 
@@ -553,6 +557,7 @@ def test_smoke(
         "iperf did not achieve the expected data rate",
         "socket is already closed",
         "failed to connect to all addresses",
+        "5GC crashed",
     ],
 )
 # pylint: disable=too-many-arguments
@@ -684,6 +689,8 @@ def _iperf(
     ue_stop_timeout: int = 0,
     rx_to_tx_latency: int = -1,
     enable_dddsu: bool = False,
+    nof_antennas_dl: int = 1,
+    nof_antennas_ul: int = 1,
 ):
     wait_before_power_off = 5
 
@@ -702,6 +709,8 @@ def _iperf(
         prach_config_index=prach_config_index,
         rx_to_tx_latency=rx_to_tx_latency,
         enable_dddsu=enable_dddsu,
+        nof_antennas_dl=nof_antennas_dl,
+        nof_antennas_ul=nof_antennas_ul,
     )
     configure_artifacts(
         retina_data=retina_data,

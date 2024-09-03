@@ -75,7 +75,9 @@ public:
   void put_byte(uint8_t byte)
   {
     unsigned idx;
-    if (order > 8) {
+    if (order == 24) {
+      idx = ((crc >> 16) & 0xffU) ^ byte;
+    } else if (order > 8) {
       // For more than 8 bits
       unsigned ord = order - 8U;
       idx          = ((crc >> (ord)) & 0xffU) ^ byte;

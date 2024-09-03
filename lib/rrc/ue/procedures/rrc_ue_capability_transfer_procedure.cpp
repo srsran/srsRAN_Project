@@ -40,7 +40,7 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
 {
   CORO_BEGIN(ctx);
 
-  if (context.capabilities.has_value()) {
+  if (context.capabilities_list.has_value()) {
     logger.log_debug("\"{}\" skipped. Capabilities already present", name());
     CORO_EARLY_RETURN(true);
   }
@@ -76,14 +76,12 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
             logger.log_debug("UE Capabilities:\n{}", json_writer.to_string().c_str());
           }
 
-          // Store capabilities for future use.
-          context.capabilities = ue_nr_cap;
         } else {
           logger.log_warning("Unsupported RAT type {}", ue_cap_rat_container.rat_type);
         }
       }
     }
-    procedure_result = context.capabilities.has_value();
+    procedure_result = context.capabilities_list.has_value();
   } else {
     logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms.count());
   }

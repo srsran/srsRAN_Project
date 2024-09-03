@@ -61,10 +61,11 @@ public:
   f1ap_du*                  f1ap;
 
   // DU manager -> F1AP.
-  f1ap_ue_creation_request                      next_ue_creation_req;
-  std::optional<f1ap_ue_creation_response>      last_ue_creation_response;
-  f1ap_ue_configuration_request                 next_ue_cfg_req;
-  std::optional<f1ap_ue_configuration_response> last_ue_cfg_response;
+  f1ap_ue_creation_request                               next_ue_creation_req;
+  std::optional<f1ap_ue_creation_response>               last_ue_creation_response;
+  f1ap_ue_configuration_request                          next_ue_cfg_req;
+  std::optional<f1ap_ue_configuration_response>          last_ue_cfg_response;
+  std::optional<std::pair<du_ue_index_t, du_ue_index_t>> last_reestablishment_ue_indexes;
 
   // F1AP procedures.
   std::optional<f1ap_ue_context_creation_request> last_ue_context_creation_req;
@@ -121,7 +122,10 @@ public:
 
   async_task<void> request_ue_drb_deactivation(du_ue_index_t ue_index) override { return launch_no_op_task(); }
 
-  void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) override {}
+  void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) override
+  {
+    last_reestablishment_ue_indexes = std::make_pair(new_ue_index, old_ue_index);
+  }
 
   /// \brief Retrieve task scheduler specific to a given UE.
   f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }

@@ -24,10 +24,10 @@
 
 namespace srsran {
 
-class resource_grid_reader;
 class prach_buffer;
 struct lower_phy_rx_symbol_context;
 struct prach_buffer_context;
+class shared_resource_grid;
 
 /// \brief Lower physical layer notifier for events related to received symbols.
 ///
@@ -43,7 +43,7 @@ public:
   ///
   /// \param[in] context Notification context.
   /// \param[in] grid    Resource grid that belongs to the context.
-  virtual void on_rx_symbol(const lower_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
+  virtual void on_rx_symbol(const lower_phy_rx_symbol_context& context, const shared_resource_grid& grid) = 0;
 
   /// \brief Notifies the completion of PRACH window.
   ///

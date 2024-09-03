@@ -21,11 +21,12 @@
  */
 
 #include "processor_handler_adaptor.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 
 using namespace srsran;
 
 void processor_handler_adaptor::rg_handler_adaptor::handle_resource_grid(const resource_grid_context& context,
-                                                                         const resource_grid_reader&  grid)
+                                                                         const shared_resource_grid&  grid)
 {
   pdxch_handler.handle_request(grid, context);
 }
@@ -37,7 +38,7 @@ void processor_handler_adaptor::request_handler_adaptor::request_prach_window(co
 }
 
 void processor_handler_adaptor::request_handler_adaptor::request_uplink_slot(const resource_grid_context& context,
-                                                                             resource_grid&               grid)
+                                                                             const shared_resource_grid&  grid)
 {
   puxch_handler.handle_request(grid, context);
 }

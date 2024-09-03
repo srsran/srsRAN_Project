@@ -30,7 +30,9 @@
 
 #include "ldpc_rate_matcher_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
 #include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/copy.h"
 #include "srsran/support/cpu_features.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -87,6 +89,25 @@ std::ostream& operator<<(std::ostream& os, const bit_buffer& data)
 } // namespace srsran
 
 namespace {
+
+/// Implements the LDPC encoder buffer interface.
+class ldpc_encoder_buffer_impl : public ldpc_encoder_buffer
+{
+public:
+  ldpc_encoder_buffer_impl(span<const uint8_t> buffer_) : buffer(buffer_)
+  {
+    // Do nothing.
+  }
+
+  unsigned get_codeblock_length() const override { return buffer.size(); }
+  void     write_codeblock(span<uint8_t> data, unsigned offset) const override
+  {
+    srsvec::copy(data, buffer.subspan(offset, data.size()));
+  }
+
+private:
+  span<const uint8_t> buffer;
+};
 
 #ifdef __x86_64__
 bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
@@ -161,17 +182,15 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   unsigned                                       n_ref           = test_data.is_lbrm ? test_data.n_ref : 0;
   unsigned                                       nof_filler_bits = test_data.nof_filler;
 
-  std::vector<uint8_t> codeblock     = test_data.full_cblock.read();
-  codeblock_metadata   rm_cfg        = {};
+  std::vector<uint8_t>     codeblock = test_data.full_cblock.read();
+  ldpc_encoder_buffer_impl rm_buffer(codeblock);
+  codeblock_metadata       rm_cfg    = {};
   rm_cfg.tb_common.rv                = test_data.rv;
   rm_cfg.tb_common.mod               = mod;
   rm_cfg.tb_common.Nref              = n_ref;
   rm_cfg.cb_specific.nof_filler_bits = nof_filler_bits;
 
-  dynamic_bit_buffer codeblock_packed(codeblock.size());
-  srsvec::bit_pack(codeblock_packed, codeblock);
-
-  matcher->rate_match(matched_packed, codeblock_packed, rm_cfg);
+  matcher->rate_match(matched_packed, rm_buffer, rm_cfg);
 
   // Unpack rate matched.
   srsvec::bit_unpack(matched, matched_packed);
@@ -199,15 +218,12 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
     return b.to_hard_bit();
   };
   std::vector<uint8_t> hard(dematched.size());
+  rm_buffer = ldpc_encoder_buffer_impl(hard);
   std::transform(dematched.cbegin(), dematched.cend(), hard.begin(), llrs_to_bit);
-
-  // Pack hard bits.
-  dynamic_bit_buffer hard_packed(dematched.size());
-  srsvec::bit_pack(hard_packed, hard);
 
   // Now, apply the rate matcher and compare results.
   static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> matched_packed2(rm_length);
-  matcher->rate_match(matched_packed2, hard_packed, rm_cfg);
+  matcher->rate_match(matched_packed2, rm_buffer, rm_cfg);
   EXPECT_EQ(matched_packed, matched_packed2) << "Wrong rate dematching.";
 }
 

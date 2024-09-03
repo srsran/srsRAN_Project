@@ -113,7 +113,7 @@ private:
                                                                            uint8_t            k_ssb)
   {
     sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request();
-    msg.dl_carrier.arfcn                             = freq_arfcn;
+    msg.dl_carrier.arfcn_f_ref                       = freq_arfcn;
     msg.dl_carrier.band                              = band_helper::get_band_from_dl_arfcn(freq_arfcn);
     msg.dl_cfg_common.freq_info_dl.offset_to_point_a = offset_to_point_A;
     msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
@@ -209,7 +209,7 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
 
   // For frequencies lower than the cutoff, there should only be at most 4 SSB opportunities (4 left-most bits in
   // in_burst_bitmap).
-  if (cell_cfg.dl_carrier.arfcn <= freq_cutoff) {
+  if (cell_cfg.dl_carrier.arfcn_f_ref <= freq_cutoff) {
     TESTASSERT((cell_cfg.ssb_cfg.ssb_bitmap & 0b00001111) == 0,
                TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), ssb_cfg.ssb_period, cell_cfg.ssb_case));
   }
@@ -291,7 +291,7 @@ void test_ssb_case_B(const slot_point&             slot_tx,
 
   // For frequencies lower than the cutoff, there should only be at most 4 SSB opportunities (4 left-most bits in
   // in_burst_bitmap).
-  if (cell_cfg.dl_carrier.arfcn <= CUTOFF_FREQ_ARFCN_CASE_A_B_C) {
+  if (cell_cfg.dl_carrier.arfcn_f_ref <= CUTOFF_FREQ_ARFCN_CASE_A_B_C) {
     TESTASSERT((in_burst_bitmap & 0b00001111) == 0,
                TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), ssb_cfg.ssb_period, cell_cfg.ssb_case));
   }

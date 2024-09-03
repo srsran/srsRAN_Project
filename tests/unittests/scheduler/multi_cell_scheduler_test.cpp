@@ -43,14 +43,14 @@ protected:
     cell_config_builder_params params{};
     params.scs_common =
         test_params.dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
-    params.dl_arfcn         = test_params.dplx_mode == duplex_mode::FDD ? 530000 : 520002;
-    params.band             = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
-    params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
+    params.dl_f_ref_arfcn   = test_params.dplx_mode == duplex_mode::FDD ? 530000 : 520002;
+    params.band             = band_helper::get_band_from_dl_arfcn(params.dl_f_ref_arfcn);
+    params.channel_bw_mhz   = bs_channel_bandwidth::MHz20;
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
     static const uint8_t                                   ss0_idx = 0;
     std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-        band_helper::get_ssb_coreset0_freq_location(params.dl_arfcn,
+        band_helper::get_ssb_coreset0_freq_location(params.dl_f_ref_arfcn,
                                                     *params.band,
                                                     nof_crbs,
                                                     params.scs_common,

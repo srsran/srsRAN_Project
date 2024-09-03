@@ -28,8 +28,8 @@
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/ran/bcd_helper.h"
-#include "srsran/ran/five_qi.h"
-#include "srsran/ran/qos_prio_level.h"
+#include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/qos/qos_prio_level.h"
 
 namespace srsran {
 namespace srs_cu_up {
@@ -85,26 +85,26 @@ inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(c
         asn1::e1ap::ng_ran_qos_support_item_s asn1_ran_item;
 
         // five qi
-        asn1_ran_item.non_dyn_5qi_descriptor.five_qi = five_qi_to_uint(ran_item.non_dyn_5qi_descriptor.five_qi);
+        asn1_ran_item.non_dyn_5qi_descriptor.five_qi = five_qi_to_uint(ran_item.non_dyn_5qi_desc.five_qi);
 
         // qos prio level
-        if (ran_item.non_dyn_5qi_descriptor.qos_prio_level.has_value()) {
+        if (ran_item.non_dyn_5qi_desc.qos_prio_level.has_value()) {
           asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level_present = true;
           asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level =
-              qos_prio_level_to_uint(ran_item.non_dyn_5qi_descriptor.qos_prio_level.value());
+              qos_prio_level_to_uint(ran_item.non_dyn_5qi_desc.qos_prio_level.value());
         }
 
         // averaging win
-        if (ran_item.non_dyn_5qi_descriptor.averaging_win.has_value()) {
+        if (ran_item.non_dyn_5qi_desc.averaging_win.has_value()) {
           asn1_ran_item.non_dyn_5qi_descriptor.averaging_win_present = true;
-          asn1_ran_item.non_dyn_5qi_descriptor.averaging_win = ran_item.non_dyn_5qi_descriptor.averaging_win.value();
+          asn1_ran_item.non_dyn_5qi_descriptor.averaging_win         = ran_item.non_dyn_5qi_desc.averaging_win.value();
         }
 
         // max data burst
-        if (ran_item.non_dyn_5qi_descriptor.max_data_burst_volume.has_value()) {
+        if (ran_item.non_dyn_5qi_desc.max_data_burst_volume.has_value()) {
           asn1_ran_item.non_dyn_5qi_descriptor.max_data_burst_volume_present = true;
           asn1_ran_item.non_dyn_5qi_descriptor.max_data_burst_volume =
-              ran_item.non_dyn_5qi_descriptor.max_data_burst_volume.value();
+              ran_item.non_dyn_5qi_desc.max_data_burst_volume.value();
         }
 
         asn1_plmn_item.qos_params_support_list.ng_ran_qos_support_list.push_back(asn1_ran_item);

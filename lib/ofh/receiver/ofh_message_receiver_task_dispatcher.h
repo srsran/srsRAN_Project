@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ofh_message_receiver.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {

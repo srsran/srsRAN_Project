@@ -30,6 +30,7 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ran/resource_block.h"
+#include <optional>
 
 namespace srsran {
 
@@ -61,7 +62,48 @@ inline span<const bool> get_transform_precoding_valid_nof_prb()
 /// Determines whether a number of PRB is valid.
 inline bool is_transform_precoding_nof_prb_valid(unsigned nof_prb)
 {
-  return get_transform_precoding_valid_nof_prb()[nof_prb];
+  span<const bool> valid_nof_prb = get_transform_precoding_valid_nof_prb();
+  if (nof_prb >= valid_nof_prb.size()) {
+    return false;
+  }
+  return valid_nof_prb[nof_prb];
+}
+
+/// \brief Gets the nearest valid of PRB for transform precoding.
+/// \return A number of PRB equal to or higher than the given number of PRB.
+inline std::optional<unsigned> get_transform_precoding_nearest_higher_nof_prb_valid(unsigned nof_prb)
+{
+  span<const bool> valid_nof_prb = get_transform_precoding_valid_nof_prb();
+  if (nof_prb > valid_nof_prb.size()) {
+    return std::nullopt;
+  }
+
+  auto nearest = std::find(valid_nof_prb.begin() + nof_prb, valid_nof_prb.end(), true);
+  if (nearest == valid_nof_prb.end()) {
+    return std::nullopt;
+  }
+
+  return std::distance(valid_nof_prb.begin(), nearest);
+}
+
+/// \brief Gets the nearest valid of PRB for transform precoding.
+/// \return A number of PRB equal to or lower than the given number of PRB.
+inline std::optional<unsigned> get_transform_precoding_nearest_lower_nof_prb_valid(unsigned nof_prb)
+{
+  span<const bool> valid_nof_prb = get_transform_precoding_valid_nof_prb();
+  if (nof_prb > valid_nof_prb.size()) {
+    return std::nullopt;
+  }
+
+  // Limit search to the first PRB.
+  valid_nof_prb = valid_nof_prb.first(nof_prb);
+
+  auto nearest = std::find(valid_nof_prb.rbegin(), valid_nof_prb.rend(), true);
+  if (nearest == valid_nof_prb.rend()) {
+    return std::nullopt;
+  }
+
+  return std::distance(valid_nof_prb.begin(), (++nearest).base());
 }
 
 } // namespace srsran

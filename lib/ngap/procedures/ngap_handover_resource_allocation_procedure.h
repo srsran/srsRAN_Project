@@ -33,15 +33,14 @@ namespace srs_cu_cp {
 class ngap_handover_resource_allocation_procedure
 {
 public:
-  ngap_handover_resource_allocation_procedure(const ngap_handover_request&       request_,
-                                              const amf_ue_id_t                  amf_ue_id_,
-                                              ngap_ue_context_list&              ue_ctxt_list_,
-                                              ngap_cu_cp_notifier&               cu_cp_ue_creation_notifier_,
-                                              ngap_cu_cp_du_repository_notifier& du_repository_notif_,
-                                              ngap_message_notifier&             amf_notif_,
-                                              timer_manager&                     timers_,
-                                              task_executor&                     task_exec_,
-                                              srslog::basic_logger&              logger_);
+  ngap_handover_resource_allocation_procedure(const ngap_handover_request& request_,
+                                              const amf_ue_id_t            amf_ue_id_,
+                                              ngap_ue_context_list&        ue_ctxt_list_,
+                                              ngap_cu_cp_notifier&         cu_cp_notifier_,
+                                              ngap_message_notifier&       amf_notif_,
+                                              timer_manager&               timers_,
+                                              task_executor&               task_exec_,
+                                              srslog::basic_logger&        logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -54,15 +53,14 @@ private:
   void send_handover_request_ack(ue_index_t ue_index, ran_ue_id_t ran_ue_id);
   void send_handover_failure();
 
-  const ngap_handover_request&       request;
-  const amf_ue_id_t                  amf_ue_id;
-  ngap_ue_context_list&              ue_ctxt_list;
-  ngap_cu_cp_notifier&               cu_cp_ue_creation_notifier;
-  ngap_cu_cp_du_repository_notifier& du_repository_notifier;
-  ngap_message_notifier&             amf_notifier;
-  timer_manager&                     timers;
-  task_executor&                     task_exec;
-  srslog::basic_logger&              logger;
+  const ngap_handover_request& request;
+  const amf_ue_id_t            amf_ue_id;
+  ngap_ue_context_list&        ue_ctxt_list;
+  ngap_cu_cp_notifier&         cu_cp_notifier;
+  ngap_message_notifier&       amf_notifier;
+  timer_manager&               timers;
+  task_executor&               task_exec;
+  srslog::basic_logger&        logger;
 
   // (sub-)routine requests
 

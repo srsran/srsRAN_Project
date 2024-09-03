@@ -113,12 +113,6 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
       create_rrc_config(cfg.cu_cp_cfg), rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier, rrc_du_cu_cp_notifier};
   rrc = create_rrc_du(du_creation_req);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
-
-  cu_cp_notifier.on_du_processor_created(cfg.du_index,
-                                         f1ap->get_f1ap_ue_context_removal_handler(),
-                                         f1ap->get_f1ap_statistics_handler(),
-                                         rrc->get_rrc_ue_handler(),
-                                         rrc->get_rrc_du_statistics_handler());
 }
 
 du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_request& request)
@@ -197,10 +191,8 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
 
   // Create and connect DU Processor to RRC UE adapter
   rrc_ue_adapters[ue.get_ue_index()] = {};
-  rrc_ue_adapters.at(ue.get_ue_index())
-      .connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler(), rrc_ue->get_rrc_ue_srb_handler());
+  rrc_ue_adapters.at(ue.get_ue_index()).connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler());
   ue.set_rrc_ue_notifier(rrc_ue_adapters.at(ue.get_ue_index()));
-  ue.set_rrc_ue_srb_notifier(rrc_ue_adapters.at(ue.get_ue_index()));
 
   // Notify CU-CP about the creation of the RRC UE
   cu_cp_notifier.on_rrc_ue_created(ue.get_ue_index(), *rrc_ue);
@@ -255,8 +247,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   }
   rrc_ue_interface* rrc_ue       = rrc->find_ue(ue_index);
   f1ap_rrc_ue_adapters[ue_index] = {};
-  f1ap_rrc_ue_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(),
-                                                   rrc_ue->get_ul_dcch_pdu_handler());
+  f1ap_rrc_ue_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_pdu_handler());
 
   // Signal back that the UE was successfully created.
   logger.info("ue={} c-rnti={}: UE created", ue->get_ue_index(), req.c_rnti);

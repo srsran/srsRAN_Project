@@ -33,7 +33,7 @@ namespace srsvec {
 
 /// \brief Circularly shifts a sequence in the forward direction.
 ///
-/// The element at position \c i is moved to position <tt>i + shift<\tt>. Elements that fall beyond the end of the
+/// The element at position \c i is moved to position <tt>i + shift</tt>. Elements that fall beyond the end of the
 /// sequence are reintroduced at its start.
 /// \param[out] out       Shifted output sequence.
 /// \param[in]  in        Original input sequence.
@@ -42,8 +42,8 @@ namespace srsvec {
 template <typename T, typename U>
 void circ_shift_forward(T&& out, const U& in, unsigned shift)
 {
-  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span");
-  static_assert(detail::is_span_compatible<U>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<T>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<U>::value, "Template type is not compatible with a span");
   srsran_srsvec_assert_size(out, in);
 
   unsigned length = out.size();
@@ -55,7 +55,7 @@ void circ_shift_forward(T&& out, const U& in, unsigned shift)
 
 /// \brief Circularly shifts a sequence in the backward direction.
 ///
-/// The element at position \c i is moved to position <tt>i - shift<\tt>. Elements that fall beyond the beginning of the
+/// The element at position \c i is moved to position <tt>i - shift</tt>. Elements that fall beyond the beginning of the
 /// sequence are reintroduced at its end.
 /// \param[out] out       Shifted output sequence.
 /// \param[in]  in        Original input sequence.
@@ -64,8 +64,8 @@ void circ_shift_forward(T&& out, const U& in, unsigned shift)
 template <typename T, typename U>
 void circ_shift_backward(T&& out, const U& in, unsigned shift)
 {
-  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span");
-  static_assert(detail::is_span_compatible<U>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<T>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<U>::value, "Template type is not compatible with a span");
   srsran_srsvec_assert_size(out, in);
 
   unsigned length = out.size();

@@ -33,31 +33,32 @@ namespace srsran {
 
 static float ASSERT_MAX_ERROR = 1e-3;
 
-static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
+static std::ostream& operator<<(std::ostream& os, span<const cbf16_t> data)
 {
   fmt::print(os, "{}", data);
   return os;
 }
 
-static bool operator==(span<const cf_t> lhs, span<const cf_t> rhs)
+static bool operator==(span<const cbf16_t> lhs, span<const cbf16_t> rhs)
 {
-  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cf_t lhs_val, cf_t rhs_val) {
-    return (std::abs(lhs_val - rhs_val) <= ASSERT_MAX_ERROR);
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cbf16_t lhs_val, cbf16_t rhs_val) {
+    return (std::abs(to_cf(lhs_val) - to_cf(rhs_val)) <= ASSERT_MAX_ERROR);
   });
 }
 
 std::ostream& operator<<(std::ostream& os, const ofdm_prach_demodulator::configuration& config)
 {
   fmt::print(os,
-             "Format={}; nof_td_occasions={}; nof_fd_occasions={}; start_symbol={}; rb_offset={}; "
+             "slot={}; Format={}; nof_td_occasions={}; nof_fd_occasions={}; start_symbol={}; rb_offset={}; "
              "nof_prb_ul_grid={}; pusch_scs={};",
+             config.slot,
              to_string(config.format),
              config.nof_td_occasions,
              config.nof_fd_occasions,
              config.start_symbol,
              config.rb_offset,
              config.nof_prb_ul_grid,
-             to_string(config.pusch_scs));
+             to_string(to_subcarrier_spacing(config.slot.numerology())));
   return os;
 }
 
@@ -78,13 +79,19 @@ protected:
 
   void SetUp() override
   {
-    sampling_rate srate = GetParam().context.srate;
+    sampling_rate      srate     = GetParam().context.srate;
+    subcarrier_spacing pusch_scs = to_subcarrier_spacing(GetParam().context.config.slot.numerology());
+
+    frequency_range fr = frequency_range::FR1;
+    if (pusch_scs > subcarrier_spacing::kHz60) {
+      fr = frequency_range::FR2;
+    }
 
     std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_generic();
     ASSERT_TRUE(dft_factory);
 
     std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_factory =
-        create_ofdm_prach_demodulator_factory_sw(dft_factory, srate);
+        create_ofdm_prach_demodulator_factory_sw(dft_factory, srate, fr);
     ASSERT_TRUE(ofdm_factory);
 
     demodulator = ofdm_factory->create();
@@ -96,6 +103,7 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
 {
   const test_case_t&                           test_case = GetParam();
   const ofdm_prach_demodulator::configuration& config    = test_case.context.config;
+  subcarrier_spacing pusch_scs = to_subcarrier_spacing(GetParam().context.config.slot.numerology());
 
   bool                          long_preamble = is_long_preamble(config.format);
   std::unique_ptr<prach_buffer> output =
@@ -111,7 +119,7 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
   // Select preamble information.
   prach_preamble_information preamble_info =
       long_preamble ? get_prach_preamble_long_info(config.format)
-                    : get_prach_preamble_short_info(config.format, to_ra_subcarrier_spacing(config.pusch_scs), false);
+                    : get_prach_preamble_short_info(config.format, to_ra_subcarrier_spacing(pusch_scs), false);
 
   // Calculate number of symbols.
   unsigned nof_symbols = preamble_info.nof_symbols;
@@ -128,8 +136,13 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
     for (unsigned i_td_occasion = 0; i_td_occasion != config.nof_td_occasions; ++i_td_occasion) {
       for (unsigned i_fd_occasion = 0; i_fd_occasion != config.nof_fd_occasions; ++i_fd_occasion) {
         for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
-          ASSERT_EQ(span<const cf_t>(expected_buffer.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)),
-                    span<const cf_t>(output->get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)));
+          ASSERT_EQ(span<const cbf16_t>(expected_buffer.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)),
+                    span<const cbf16_t>(output->get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)))
+              << fmt::format("i_port={}; i_td_occasion={}; i_fd_occasion={}; i_symbol={};",
+                             i_port,
+                             i_td_occasion,
+                             i_fd_occasion,
+                             i_symbol);
         }
       }
     }

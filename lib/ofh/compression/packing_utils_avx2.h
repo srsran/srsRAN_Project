@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/ofh/compression/compressed_prb.h"
 #include "srsran/support/error_handling.h"
 #include <immintrin.h>
 
@@ -90,16 +89,24 @@ inline __m256i pack_avx2_register_9b_be(__m256i cmp_data_epi16)
 /// | \c r1: | RB0 RB0 | RB0 RB0 | RB1 RB1 | RB1 RB1 |
 /// | \c r2: | RB1 RB1 | RB1 RB1 | RB1 RB1 | RB1 RB1 |
 ///
-/// \param[out] c_prbs Span of two compressed PRBs.
-/// \param[in] r0      AVX2 register storing 16bit IQ samples of the first RB.
-/// \param[in] r1      AVX2 register storing 16bit IQ samples of the first and second RB.
-/// \param[in] r2      AVX2 register storing 16bit IQ samples of the second RB.
-inline void avx2_pack_prbs_9b_big_endian(span<compressed_prb> c_prbs, __m256i r0, __m256i r1, __m256i r2)
+/// \param[out] comp_prb0_buffer Buffer dedicated for storing compressed packed bytes of the first PRB.
+/// \param[out] comp_prb1_buffer Buffer dedicated for storing compressed packed bytes of the second PRB.
+/// \param[in] r0                AVX2 register storing 16bit IQ samples of the first RB.
+/// \param[in] r1                AVX2 register storing 16bit IQ samples of the first and second RB.
+/// \param[in] r2                AVX2 register storing 16bit IQ samples of the second RB.
+inline void avx2_pack_prbs_9b_big_endian(span<uint8_t> comp_prb0_buffer,
+                                         span<uint8_t> comp_prb1_buffer,
+                                         __m256i       r0,
+                                         __m256i       r1,
+                                         __m256i       r2)
 {
   /// Number of bytes used by 1 packed resource block with IQ samples compressed to 9 bits.
   static constexpr unsigned BYTES_PER_PRB_9BIT_COMPRESSION = 27;
 
-  srsran_assert(c_prbs.size() == 2, "Output span must contain 2 resource blocks");
+  srsran_assert(comp_prb0_buffer.size() == BYTES_PER_PRB_9BIT_COMPRESSION,
+                "Output buffer corresponding to the first PRB has incorrect size");
+  srsran_assert(comp_prb1_buffer.size() == BYTES_PER_PRB_9BIT_COMPRESSION,
+                "Output buffer corresponding to the second PRB has incorrect size");
 
   // Returns first 18 packed bytes out of 27 for the first RB (9 bytes in each 128bit lane - same applies below).
   __m256i reg0_packed_epi8 = pack_avx2_register_9b_be(r0);
@@ -154,12 +161,13 @@ inline void avx2_pack_prbs_9b_big_endian(span<compressed_prb> c_prbs, __m256i r0
   __m256i prb1_tmp1_epi8 = _mm256_or_si256(reg2_tmp0_epi8, reg2_tmp1_epi8);
   __m256i prb1_epi8      = _mm256_blendv_epi8(prb1_tmp0_epi8, prb1_tmp1_epi8, sel_mask_1_epi8);
 
-  // Write resource blocks to the memory.
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(c_prbs[0].get_byte_buffer().data()), prb0_epi8);
-  c_prbs[0].set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
+  // Write the compressed resource blocks to the memory.
+  uint8_t avx2_tmp_buffer[32];
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(avx2_tmp_buffer), prb0_epi8);
+  std::memcpy(comp_prb0_buffer.data(), avx2_tmp_buffer, BYTES_PER_PRB_9BIT_COMPRESSION);
 
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(c_prbs[1].get_byte_buffer().data()), prb1_epi8);
-  c_prbs[1].set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(avx2_tmp_buffer), prb1_epi8);
+  std::memcpy(comp_prb1_buffer.data(), avx2_tmp_buffer, BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 
 /// \brief Packs 16bit IQ values of the two input RBs using 16bit big-endian format.
@@ -172,15 +180,23 @@ inline void avx2_pack_prbs_9b_big_endian(span<compressed_prb> c_prbs, __m256i r0
 /// | \c r1: | RB0 RB0 | RB0 RB0 | RB1 RB1 | RB1 RB1 |
 /// | \c r2: | RB1 RB1 | RB1 RB1 | RB1 RB1 | RB1 RB1 |
 ///
-/// \param[out] c_prbs Span of two compressed PRBs.
-/// \param[in] r0      AVX2 register storing 16bit IQ samples of the first RB.
-/// \param[in] r1      AVX2 register storing 16bit IQ samples of the first and second RB.
-/// \param[in] r2      AVX2 register storing 16bit IQ samples of the second RB.
-inline void avx2_pack_prbs_16b_big_endian(span<compressed_prb> c_prbs, __m256i r0, __m256i r1, __m256i r2)
+/// \param[out] comp_prb0_buffer Buffer dedicated for storing compressed packed bytes of the first PRB.
+/// \param[out] comp_prb1_buffer Buffer dedicated for storing compressed packed bytes of the second PRB.
+/// \param[in] r0                AVX2 register storing 16bit IQ samples of the first RB.
+/// \param[in] r1                AVX2 register storing 16bit IQ samples of the first and second RB.
+/// \param[in] r2                AVX2 register storing 16bit IQ samples of the second RB.
+inline void avx2_pack_prbs_16b_big_endian(span<uint8_t> comp_prb0_buffer,
+                                          span<uint8_t> comp_prb1_buffer,
+                                          __m256i       r0,
+                                          __m256i       r1,
+                                          __m256i       r2)
 {
-  srsran_assert(c_prbs.size() == 2, "Output span must contain 2 resource blocks");
-
   static constexpr unsigned BYTES_PER_PRB_NO_COMPRESSION = 48;
+
+  srsran_assert(comp_prb0_buffer.size() == BYTES_PER_PRB_NO_COMPRESSION,
+                "Output buffer corresponding to the first PRB has incorrect size");
+  srsran_assert(comp_prb1_buffer.size() == BYTES_PER_PRB_NO_COMPRESSION,
+                "Output buffer corresponding to the second PRB has incorrect size");
 
   // Swap bytes to convert from big-endian format and write them directly to the output memory.
   const __m256i shuffle_mask_epi8 =
@@ -190,20 +206,17 @@ inline void avx2_pack_prbs_16b_big_endian(span<compressed_prb> c_prbs, __m256i r
   __m256i reg1_swp_epi16 = _mm256_shuffle_epi8(r1, shuffle_mask_epi8);
   __m256i reg2_swp_epi16 = _mm256_shuffle_epi8(r2, shuffle_mask_epi8);
 
-  uint8_t* data = c_prbs[0].get_byte_buffer().data();
+  uint8_t* data = comp_prb0_buffer.data();
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(data), reg0_swp_epi16);
   _mm256_maskstore_epi32(reinterpret_cast<int*>(data + 32),
                          _mm256_setr_epi32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0, 0, 0, 0),
                          reg1_swp_epi16);
 
-  data = c_prbs[1].get_byte_buffer().data();
+  data = comp_prb1_buffer.data();
   _mm_maskstore_epi32(reinterpret_cast<int*>(data),
                       _mm_set_epi32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff),
                       _mm256_extracti128_si256(reg1_swp_epi16, 0x1));
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(data + 16), reg2_swp_epi16);
-
-  c_prbs[0].set_stored_size(BYTES_PER_PRB_NO_COMPRESSION);
-  c_prbs[1].set_stored_size(BYTES_PER_PRB_NO_COMPRESSION);
 }
 
 /// \brief Packs 16bit IQ values of the two RBs using the specified width and big-endian format.
@@ -216,19 +229,24 @@ inline void avx2_pack_prbs_16b_big_endian(span<compressed_prb> c_prbs, __m256i r
 /// | \c r1: | RB0 RB0 | RB0 RB0 | RB1 RB1 | RB1 RB1 |
 /// | \c r2: | RB1 RB1 | RB1 RB1 | RB1 RB1 | RB1 RB1 |
 ///
-/// \param[out] c_prbs Span of two output compressed PRBs storing packed bytes.
-/// \param[in] r0      AVX2 register storing 16bit IQ pairs of the first PRB.
-/// \param[in] r1      AVX2 register storing 16bit IQ pairs of the first and second PRB.
-/// \param[in] r2      AVX2 register storing 16bit IQ pairs of the second PRB.
-/// \param[in] iq_width Bit width of the resulting packed IQ samples.
-inline void
-pack_prbs_big_endian(span<ofh::compressed_prb> c_prbs, __m256i r0, __m256i r1, __m256i r2, unsigned iq_width)
+/// \param[out] comp_prb0_buffer Buffer dedicated for storing compressed packed bytes of the first PRB.
+/// \param[out] comp_prb1_buffer Buffer dedicated for storing compressed packed bytes of the second PRB.
+/// \param[in] r0                AVX2 register storing 16bit IQ pairs of the first PRB.
+/// \param[in] r1                AVX2 register storing 16bit IQ pairs of the first and second PRB.
+/// \param[in] r2                AVX2 register storing 16bit IQ pairs of the second PRB.
+/// \param[in] iq_width          Bit width of the resulting packed IQ samples.
+inline void pack_prbs_big_endian(span<uint8_t> comp_prb0_buffer,
+                                 span<uint8_t> comp_prb1_buffer,
+                                 __m256i       r0,
+                                 __m256i       r1,
+                                 __m256i       r2,
+                                 unsigned      iq_width)
 {
   switch (iq_width) {
     case 9:
-      return avx2_pack_prbs_9b_big_endian(c_prbs, r0, r1, r2);
+      return avx2_pack_prbs_9b_big_endian(comp_prb0_buffer, comp_prb1_buffer, r0, r1, r2);
     case 16:
-      return avx2_pack_prbs_16b_big_endian(c_prbs, r0, r1, r2);
+      return avx2_pack_prbs_16b_big_endian(comp_prb0_buffer, comp_prb1_buffer, r0, r1, r2);
     default:
       report_fatal_error("Unsupported bit width");
   }
@@ -247,7 +265,12 @@ inline void avx2_unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const uin
   srsran_assert(unpacked_iq_data.size() >= avx2_size_short_words * 2, "Wrong unpacked data span size");
 
   // Load input, 27 bytes (fits in one AVX2 register).
-  __m256i packed_data_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(packed_data.data()));
+  // Mask-load for epi8 is not available, so we do in a few steps.
+  __m128i packed_data_high =
+      _mm_srli_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(packed_data.data() + 11)), 5);
+  __m128i packed_data_low  = _mm_loadu_si128(reinterpret_cast<const __m128i*>(packed_data.data()));
+  __m256i packed_data_epi8 = _mm256_permute2f128_si256(
+      _mm256_castsi128_si256(packed_data_low), _mm256_castsi128_si256(packed_data_high), 0x20);
 
   // Duplicate input words (it is required since below in the code every byte will be used twice:
   // to provide MSB bits of the current IQ sample and LSB bits of the previous IQ sample).

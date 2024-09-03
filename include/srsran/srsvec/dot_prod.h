@@ -26,7 +26,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/srsvec/detail/traits.h"
+#include "srsran/srsvec/type_traits.h"
 #include "srsran/srsvec/types.h"
 #include "srsran/support/srsran_assert.h"
 #include <numeric>
@@ -50,10 +50,8 @@ namespace srsvec {
 template <typename T, typename U, typename V>
 inline V dot_prod(const T& x, const U& y, V init)
 {
-  static_assert(detail::is_arithmetic_span_compatible<T>::value,
-                "Template type is not compatible with a span of arithmetics");
-  static_assert(detail::is_arithmetic_span_compatible<U>::value,
-                "Template type is not compatible with a span of arithmetics");
+  static_assert(is_arithmetic_span_compatible<T>::value, "Template type is not compatible with a span of arithmetics");
+  static_assert(is_arithmetic_span_compatible<U>::value, "Template type is not compatible with a span of arithmetics");
   srsran_srsvec_assert_size(x, y);
   return std::inner_product(x.begin(), x.end(), y.begin(), init);
 }
@@ -81,14 +79,13 @@ cf_t dot_prod(span<const cf_t> x, span<const cf_t> y);
 ///
 /// The average power of a span is defined as its squared Euclidean norm divided by the number of its elements, i.e.
 /// <tt>dot_prod(x, x) / x.size()</tt>.
-inline float average_power(span<const cf_t> x)
-{
-  if (x.empty()) {
-    return 0.0F;
-  }
+float average_power(span<const cf_t> x);
 
-  return std::real(srsvec::dot_prod(x, x)) / static_cast<float>(x.size());
-}
+/// \brief Estimates the average power of a complex span - linear scale.
+///
+/// The average power of a span is defined as its squared Euclidean norm divided by the number of its elements, i.e.
+/// <tt>dot_prod(x, x) / x.size()</tt>.
+float average_power(span<const cbf16_t> x);
 
 } // namespace srsvec
 } // namespace srsran

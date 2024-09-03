@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/cu_up/cu_up_types.h"
-#include "srsran/ran/five_qi.h"
+#include "srsran/ran/qos/five_qi.h"
 #include <map>
 
 namespace srsran {

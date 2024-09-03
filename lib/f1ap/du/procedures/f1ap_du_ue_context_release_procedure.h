@@ -37,14 +37,16 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
+  const char* name() const { return "UE Context Release"; }
+
   void send_ue_context_release_complete();
+
+  async_task<bool> handle_rrc_container();
 
   const asn1::f1ap::ue_context_release_cmd_s msg;
   f1ap_du_ue&                                ue;
   srslog::basic_logger&                      logger = srslog::fetch_basic_logger("DU-F1");
   f1ap_message_notifier&                     cu_msg_notifier; // used after the UE context as been released.
-
-  unique_timer release_wait_timer;
 };
 
 } // namespace srs_du

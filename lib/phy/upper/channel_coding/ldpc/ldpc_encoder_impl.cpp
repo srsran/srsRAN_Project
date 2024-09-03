@@ -41,29 +41,24 @@ void ldpc_encoder_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
   select_strategy();
 }
 
-void ldpc_encoder_impl::encode(bit_buffer&                                   output,
-                               const bit_buffer&                             input,
-                               const codeblock_metadata::tb_common_metadata& cfg)
+ldpc_encoder_buffer& ldpc_encoder_impl::encode(const bit_buffer&                             input,
+                                               const codeblock_metadata::tb_common_metadata& cfg)
 {
   init(cfg);
 
-  uint16_t message_length    = bg_K * lifting_size;
-  uint16_t max_output_length = bg_N_short * lifting_size;
+  uint16_t message_length = bg_K * lifting_size;
+  uint16_t cb_length      = bg_N_short * lifting_size;
   srsran_assert(input.size() == message_length,
                 "Input size ({}) and message length ({}) must be equal",
                 input.size(),
                 message_length);
-  srsran_assert(output.size() <= max_output_length,
-                "Output size ({}) must be equal to or greater than {}",
-                output.size(),
-                max_output_length);
 
   // The minimum codeblock length is message_length + four times the lifting size
   // (that is, the length of the high-rate region).
   uint16_t min_codeblock_length = message_length + 4 * lifting_size;
   // The encoder works with at least min_codeblock_length bits. Recall that the encoder also shortens
   // the codeblock by 2 * lifting size before returning it as output.
-  codeblock_length = std::max(output.size() + 2UL * lifting_size, static_cast<size_t>(min_codeblock_length));
+  codeblock_length = std::max(cb_length + 2UL * lifting_size, static_cast<size_t>(min_codeblock_length));
   // The encoder works with a codeblock length that is a multiple of the lifting size.
   if (codeblock_length % lifting_size != 0) {
     codeblock_length = (codeblock_length / lifting_size + 1) * lifting_size;
@@ -75,7 +70,10 @@ void ldpc_encoder_impl::encode(bit_buffer&                                   out
 
   encode_high_rate();
 
-  encode_ext_region();
+  return *this;
+}
 
-  write_codeblock(output);
+unsigned ldpc_encoder_impl::get_codeblock_length() const
+{
+  return bg_N_short * lifting_size;
 }

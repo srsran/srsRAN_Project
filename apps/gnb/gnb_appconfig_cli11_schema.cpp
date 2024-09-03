@@ -56,8 +56,8 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
 
-  app.add_option(
-         "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
+  add_option(
+      app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
       ->capture_default_str();
 
   add_option(app,

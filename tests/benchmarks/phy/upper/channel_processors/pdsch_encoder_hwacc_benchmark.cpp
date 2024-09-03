@@ -200,6 +200,13 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
     TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
   }
 
+  // Create a bbdev accelerator factory.
+  static std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory = nullptr;
+  if (!bbdev_acc_factory) {
+    bbdev_acc_factory = srsran::dpdk::create_bbdev_acc_factory("srs");
+    TESTASSERT(bbdev_acc_factory, "Failed to create the bbdev accelerator factory.");
+  }
+
   // Intefacing to the bbdev-based hardware-accelerator.
   dpdk::bbdev_acc_configuration bbdev_config;
   bbdev_config.id                                    = 0;
@@ -207,11 +214,11 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   bbdev_config.nof_ldpc_dec_lcores                   = 0;
   bbdev_config.nof_fft_lcores                        = 0;
   bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
-  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
+  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, logger);
   TESTASSERT(bbdev_accelerator);
 
-  // Set the hardware-accelerator configuration.
-  hal::hw_accelerator_pdsch_enc_configuration hw_encoder_config;
+  // Set the PDSCH encoder hardware-accelerator factory configuration for the ACC100.
+  hal::bbdev_hwacc_pdsch_enc_factory_configuration hw_encoder_config;
   hw_encoder_config.acc_type          = "acc100";
   hw_encoder_config.bbdev_accelerator = bbdev_accelerator;
   hw_encoder_config.cb_mode           = cb_mode;
@@ -219,7 +226,7 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   hw_encoder_config.dedicated_queue   = dedicated_queue;
 
   // ACC100 hardware-accelerator implementation.
-  return create_hw_accelerator_pdsch_enc_factory(hw_encoder_config);
+  return srsran::hal::create_bbdev_pdsch_enc_acc_factory(hw_encoder_config, "srs");
 #else  // DPDK_FOUND
   return nullptr;
 #endif // DPDK_FOUND

@@ -49,9 +49,9 @@ public:
   }
 
   // See interface for documentation.
-  void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) override
+  void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
-    if (!executor.execute([this, context, &grid]() { ul_handler->handle_new_uplink_slot(context, grid); })) {
+    if (!executor.execute([this, context, rg = grid.copy()]() { ul_handler->handle_new_uplink_slot(context, rg); })) {
       srslog::fetch_basic_logger("OFH").warning("Failed to dispatch new uplink slot for slot '{}'", context.slot);
     }
   }

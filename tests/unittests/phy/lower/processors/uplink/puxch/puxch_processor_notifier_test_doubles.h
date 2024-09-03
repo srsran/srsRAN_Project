@@ -25,6 +25,7 @@
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 
 namespace srsran {
 
@@ -38,10 +39,10 @@ public:
 
   void on_puxch_request_late(const resource_grid_context& context) override { request_late.emplace_back(context); }
 
-  void on_rx_symbol(const resource_grid_reader& grid, const lower_phy_rx_symbol_context& context) override
+  void on_rx_symbol(const shared_resource_grid& grid, const lower_phy_rx_symbol_context& context) override
   {
-    rx_symbol_entry entry = {&grid, context};
-    rx_symbol.emplace_back(std::move(entry));
+    rx_symbol_entry entry = rx_symbol_entry{&grid.get_reader(), context};
+    rx_symbol.emplace_back(entry);
   }
 
   const std::vector<resource_grid_context>& get_request_late() const { return request_late; }

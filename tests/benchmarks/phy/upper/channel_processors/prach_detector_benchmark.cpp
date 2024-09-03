@@ -127,8 +127,8 @@ static std::unique_ptr<prach_buffer> create_buffer(prach_format_type format, uns
 
   for (unsigned i_antenna = 0; i_antenna != nof_antennas; ++i_antenna) {
     for (unsigned i_symbol = 0, i_symbol_end = buffer->get_max_nof_symbols(); i_symbol != i_symbol_end; ++i_symbol) {
-      span<cf_t> prach_symbol = buffer->get_symbol(i_antenna, 0, 0, i_symbol);
-      for (cf_t& sample : prach_symbol) {
+      span<cbf16_t> prach_symbol = buffer->get_symbol(i_antenna, 0, 0, i_symbol);
+      for (cbf16_t& sample : prach_symbol) {
         sample = complex_float_dist(rgen);
       }
     }

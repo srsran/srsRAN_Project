@@ -18,9 +18,8 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_subdirectory(build_info)
+add_subdirectory(versioning)
 add_subdirectory(network)
-add_subdirectory(version)
 
 set(SOURCES
         executors/priority_task_queue.cpp

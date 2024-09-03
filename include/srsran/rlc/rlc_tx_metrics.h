@@ -98,6 +98,13 @@ struct rlc_tx_metrics_lower {
   size_t   num_pdu_bytes_no_segmentation; ///< Number of transmitted PDU bytes without segmentation
   uint32_t num_of_pulled_sdus;            ///< Number of pulled SDUs
   uint32_t sum_sdu_latency_us;            ///< total SDU latency (in us)>
+  uint32_t sum_pdu_latency_ns;            ///< total PDU latency (in ns)>
+
+  // Histogram of pull pdus
+  static constexpr unsigned                   pdu_latency_hist_bins = 8;
+  constexpr static unsigned                   nof_usec_per_bin      = 10;
+  std::array<uint32_t, pdu_latency_hist_bins> pdu_latency_hist_ns;
+  uint32_t                                    max_pdu_latency_ns;
 
   /// RLC mode of the entity
   rlc_mode mode;
@@ -127,6 +134,9 @@ struct rlc_tx_metrics_lower {
     num_pdu_bytes_no_segmentation = {};
     num_of_pulled_sdus            = {};
     sum_sdu_latency_us            = {};
+    sum_pdu_latency_ns            = {};
+    pdu_latency_hist_ns           = {};
+    max_pdu_latency_ns            = {};
 
     // reset mode-specific values
     switch (mode) {
@@ -193,7 +203,7 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
   } else if (m.tx_low.mode == rlc_mode::am) {
     fmt::format_to(buffer,
                    " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={} "
-                   "retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps",
+                   "retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={}",
                    scaled_fmt_integer(m.tx_low.mode_specific.am.num_pdus_with_segmentation, false),
                    float_to_eng_string(static_cast<float>(m.tx_low.mode_specific.am.num_pdu_bytes_with_segmentation) *
                                            8 * 1000 / metrics_period.count(),
@@ -208,8 +218,19 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
                    float_to_eng_string(static_cast<float>(m.tx_low.mode_specific.am.num_ctrl_pdu_bytes) * 8 * 1000 /
                                            (double)metrics_period.count(),
                                        1,
-                                       false));
+                                       false),
+                   float_to_eng_string(
+                       static_cast<float>(m.tx_low.sum_pdu_latency_ns * 1e-9) /
+                           (m.tx_low.num_pdus_no_segmentation + m.tx_low.mode_specific.am.num_pdus_with_segmentation +
+                            m.tx_low.mode_specific.am.num_retx_pdus + m.tx_low.mode_specific.am.num_ctrl_pdus),
+                       1,
+                       false));
   }
+  fmt::format_to(buffer, " pdu_latency_hist=[");
+  for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {
+    fmt::format_to(buffer, " {}", float_to_eng_string(m.tx_low.pdu_latency_hist_ns[i], 1, false));
+  }
+  fmt::format_to(buffer, "] max_pull_latency={}us", m.tx_low.max_pdu_latency_ns * 1e-3);
   return to_c_str(buffer);
 }
 } // namespace srsran

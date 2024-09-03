@@ -44,9 +44,9 @@ public:
 protected:
   /// \brief Applies precoding to the RE belonging to a single antenna port.
   ///
-  /// \param[out] port_re   View over the RE of a single antenna port.
-  /// \param[in] input     Input symbols, indexed by RE and transmit layer.
-  /// \param[in] precoding Precoding coefficients, indexed by layer.
+  /// \param[out] port_re        View over the RE of a single antenna port.
+  /// \param[in]  input_re       Input symbols, indexed by RE and transmit layer.
+  /// \param[in]  port_weights   Layer weights for the current port.
   virtual void apply_precoding_port(span<cbf16_t>             port_re,
                                     const re_buffer_reader<>& input_re,
                                     span<const cf_t>          port_weights) const = 0;

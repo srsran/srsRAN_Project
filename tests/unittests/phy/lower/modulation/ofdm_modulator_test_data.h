@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 27-06-2024 (seed 0):
+// This file was generated using the following MATLAB class on 30-07-2024 (seed 0):
 //   + "srsOFDMModulatorUnittest.m"
 
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
@@ -64,6 +64,11 @@ static const std::vector<test_case_t> ofdm_modulator_test_data = {
   {{{2, 96, 2048, cyclic_prefix::EXTENDED, -0.93258, 2059300000}, 14, 3}, {"test_data/ofdm_modulator_test_input17.dat"}, {"test_data/ofdm_modulator_test_output17.dat"}},
   {{{2, 192, 4096, cyclic_prefix::NORMAL, -0.10732, 76300000}, 5, 1}, {"test_data/ofdm_modulator_test_input18.dat"}, {"test_data/ofdm_modulator_test_output18.dat"}},
   {{{2, 192, 4096, cyclic_prefix::EXTENDED, -0.82195, 605900000}, 3, 2}, {"test_data/ofdm_modulator_test_input19.dat"}, {"test_data/ofdm_modulator_test_output19.dat"}},
+  {{{3, 12, 256, cyclic_prefix::NORMAL, -0.12962, 965500000}, 12, 5}, {"test_data/ofdm_modulator_test_input20.dat"}, {"test_data/ofdm_modulator_test_output20.dat"}},
+  {{{3, 24, 512, cyclic_prefix::NORMAL, -0.64413, 2770200000}, 5, 2}, {"test_data/ofdm_modulator_test_input21.dat"}, {"test_data/ofdm_modulator_test_output21.dat"}},
+  {{{3, 48, 1024, cyclic_prefix::NORMAL, -0.64012, 622100000}, 9, 2}, {"test_data/ofdm_modulator_test_input22.dat"}, {"test_data/ofdm_modulator_test_output22.dat"}},
+  {{{3, 96, 2048, cyclic_prefix::NORMAL, -0.91491, 253100000}, 6, 2}, {"test_data/ofdm_modulator_test_input23.dat"}, {"test_data/ofdm_modulator_test_output23.dat"}},
+  {{{3, 192, 4096, cyclic_prefix::NORMAL, 0.73052, 2633100000}, 10, 6}, {"test_data/ofdm_modulator_test_input24.dat"}, {"test_data/ofdm_modulator_test_output24.dat"}},
     // clang-format on
 };
 

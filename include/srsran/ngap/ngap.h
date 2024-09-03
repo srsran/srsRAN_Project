@@ -99,22 +99,15 @@ public:
   virtual void remove_ue_context(ue_index_t ue_index) = 0;
 };
 
-/// Notifier to the RRC UE for NAS PDUs.
-class ngap_rrc_ue_pdu_notifier
+/// Notifier to the RRC UE.
+class ngap_rrc_ue_notifier
 {
 public:
-  virtual ~ngap_rrc_ue_pdu_notifier() = default;
+  virtual ~ngap_rrc_ue_notifier() = default;
 
   /// \brief Notify about the a new nas pdu.
   /// \param [in] nas_pdu The nas pdu.
   virtual void on_new_pdu(byte_buffer nas_pdu) = 0;
-};
-
-/// Notifier to the RRC UE for control messages.
-class ngap_rrc_ue_control_notifier
-{
-public:
-  virtual ~ngap_rrc_ue_control_notifier() = default;
 
   /// \brief Get packed packed UE radio access capability info for UE radio capability info indication.
   virtual byte_buffer on_ue_radio_access_cap_info_required() = 0;
@@ -135,11 +128,8 @@ public:
   /// \brief Schedule an async task for the UE.
   virtual bool schedule_async_task(async_task<void> task) = 0;
 
-  /// \brief Get the RRC UE PDU notifier of the UE.
-  virtual ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() = 0;
-
-  /// \brief Get the RRC UE control notifier of the UE.
-  virtual ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() = 0;
+  /// \brief Get the RRC UE notifier of the UE.
+  virtual ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() = 0;
 
   /// \brief Notify the CU-CP about a security context
   /// \param[in] sec_ctxt The received security context
@@ -211,14 +201,6 @@ public:
 
   /// \brief Notify that the TNL connection to the AMF was lost.
   virtual void on_n2_disconnection() = 0;
-};
-
-/// Interface to communication with the DU repository
-/// Useful when the NGAP does not know the DU for an UE, e.g. paging and handover.
-class ngap_cu_cp_du_repository_notifier
-{
-public:
-  virtual ~ngap_cu_cp_du_repository_notifier() = default;
 
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;

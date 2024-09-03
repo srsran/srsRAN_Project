@@ -40,6 +40,7 @@ public:
   std::queue<byte_buffer_chain> sdu_queue;
   uint32_t                      sdu_counter = 0;
   std::list<uint32_t>           transmitted_pdcp_sn_list;
+  std::list<uint32_t>           queue_free_bytes_list;
   uint32_t                      bsr       = 0;
   uint32_t                      bsr_count = 0;
 
@@ -51,7 +52,7 @@ public:
   }
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) override
+  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t queue_free_bytes) override
   {
     // store in list
     transmitted_pdcp_sn_list.push_back(max_tx_pdcp_sn);
@@ -94,9 +95,10 @@ protected:
     config.rx.t_reassembly    = 5;
 
     // Set Tx config
-    config.tx.sn_field_length = sn_size;
-    config.tx.pdcp_sn_len     = pdcp_sn_size::size12bits;
-    config.tx.queue_size      = 4096;
+    config.tx.sn_field_length  = sn_size;
+    config.tx.pdcp_sn_len      = pdcp_sn_size::size12bits;
+    config.tx.queue_size       = 4096;
+    config.tx.queue_size_bytes = 4096 * 1500;
 
     // Create RLC entities
     rlc1 = std::make_unique<rlc_um_entity>(gnb_du_id_t::min,

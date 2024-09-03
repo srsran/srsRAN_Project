@@ -125,6 +125,15 @@ protected:
     ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu, algo));
   }
 
+  /// \brief Gets test PDU based on the COUNT and SN size and algo
+  /// \param count COUNT being tested
+  /// \param exp_pdu Expected PDU that is set to the correct test vector
+  /// \param custom_algo Pick PDU for a specific algorithm (which may differ from current config)
+  void get_test_pdu(uint32_t count, byte_buffer& exp_pdu, unsigned custom_algo)
+  {
+    ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu, custom_algo));
+  }
+
   /// \brief Helper to advance the timers
   /// \param nof_tick Number of ticks to advance timers
   void tick_all(uint32_t nof_ticks)

@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "srsran/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
@@ -37,11 +38,13 @@ public:
   using layer_dmrs_pattern = port_channel_estimator::layer_dmrs_pattern;
 
   /// Constructor - sets the channel estimator.
-  explicit dmrs_pusch_estimator_impl(std::unique_ptr<pseudo_random_generator> prg_,
-                                     std::unique_ptr<port_channel_estimator>  ch_est) :
-    prg(std::move(prg_)), ch_estimator(std::move(ch_est))
+  explicit dmrs_pusch_estimator_impl(std::unique_ptr<pseudo_random_generator>     prg_,
+                                     std::unique_ptr<low_papr_sequence_generator> tp_sequence_generator_,
+                                     std::unique_ptr<port_channel_estimator>      ch_est) :
+    prg(std::move(prg_)), low_paper_sequence_gen(std::move(tp_sequence_generator_)), ch_estimator(std::move(ch_est))
   {
     srsran_assert(prg, "Invalid PRG.");
+    srsran_assert(low_paper_sequence_gen, "Invalid sequence generator.");
     srsran_assert(ch_estimator, "Invalid port channel estimator.");
   }
 
@@ -69,6 +72,8 @@ private:
 
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> prg;
+  /// Sequence generator for transform precoding.
+  std::unique_ptr<low_papr_sequence_generator> low_paper_sequence_gen;
   /// Antenna port channel estimator.
   std::unique_ptr<port_channel_estimator> ch_estimator;
   /// Buffer for DM-RS symbols.

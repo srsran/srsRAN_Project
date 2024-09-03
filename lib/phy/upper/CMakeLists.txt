@@ -41,14 +41,22 @@ target_link_libraries(srsran_uplink_processor srsran_channel_processors)
 add_library(srsran_upper_phy upper_phy_factories.cpp upper_phy_impl.cpp upper_phy_factories.cpp
                              upper_phy_rx_symbol_handler_impl.cpp upper_phy_rx_results_notifier_wrapper.cpp
                              upper_phy_error_handler_impl.cpp)
-target_link_libraries(srsran_upper_phy
-        srsran_instrumentation
+set(UPPER_PHY_LIBRARIES srsran_instrumentation
         srsran_downlink_processor
         srsran_uplink_processor
         srsran_phy_support
         srsran_generic_funcs
         srsran_transform_precoding
         srsran_channel_equalizer)
+
+# Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
+if (DPDK_FOUND)
+   set_source_files_properties(upper_phy_factories.cpp PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND; HWACC_PDSCH_ENABLED; HWACC_PUSCH_ENABLED")
+   list(APPEND UPPER_PHY_LIBRARIES hal_hwacc_pusch
+        hal_hwacc_pdsch
+        hal_bbdev_factory)
+endif (DPDK_FOUND)
+target_link_libraries(srsran_upper_phy ${UPPER_PHY_LIBRARIES})
 
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 target_link_libraries(log_likelihood_ratio srsvec)

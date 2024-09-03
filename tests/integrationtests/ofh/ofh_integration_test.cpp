@@ -20,7 +20,6 @@
  *
  */
 
-#include "../../../lib/phy/support/resource_grid_impl.h"
 #include "helpers.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/circular_map.h"
@@ -29,6 +28,9 @@
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/phy/support/shared_resource_grid.h"
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_downlink_plane.h"
 #include "srsran/ru/ru_error_notifier.h"
@@ -61,8 +63,8 @@ unsigned T1a_min_cp_ul = 8;  // 285us.
 unsigned T1a_max_up    = 9;  // 350us.
 unsigned T1a_min_up    = 2;  // 50us.
 /// Reception window parameters expressed in symbols, given the 30kHz scs.
-unsigned Ta4_min = 1; // 150us.
-unsigned Ta4_max = 5; // 25us.
+unsigned Ta4_min = 1;  // 35us.
+unsigned Ta4_max = 28; // 1ms.
 
 static const tdd_ul_dl_pattern tdd_pattern_7d2u{10, 7, 0, 2, 0};
 static const tdd_ul_dl_pattern tdd_pattern_6d3u{10, 6, 0, 3, 0};
@@ -83,27 +85,27 @@ namespace {
 
 /// User-defined test parameters.
 struct test_parameters {
-  bool                     silent                              = false;
-  srslog::basic_levels     log_level                           = srslog::basic_levels::info;
-  std::string              log_filename                        = "stdout";
-  bool                     is_prach_control_plane_enabled      = true;
-  bool                     is_downlink_broadcast_enabled       = false;
-  bool                     ignore_ecpri_payload_size_field     = false;
-  std::string              data_compr_method                   = "bfp";
-  unsigned                 data_bitwidth                       = 9;
-  std::string              prach_compr_method                  = "bfp";
-  unsigned                 prach_bitwidth                      = 9;
-  bool                     is_downlink_static_comp_hdr_enabled = false;
-  bool                     is_uplink_static_comp_hdr_enabled   = false;
-  bool                     is_downlink_parallelized            = true;
-  units::bytes             mtu                                 = units::bytes(9000);
-  std::vector<unsigned>    prach_port_id                       = {4, 5};
-  std::vector<unsigned>    dl_port_id                          = {0, 1, 2, 3};
-  std::vector<unsigned>    ul_port_id                          = {0, 1};
-  bs_channel_bandwidth_fr1 bw                                  = srsran::bs_channel_bandwidth_fr1::MHz20;
-  subcarrier_spacing       scs                                 = subcarrier_spacing::kHz30;
-  std::string              tdd_pattern_str                     = "7d2u";
-  bool                     use_loopback_receiver               = false;
+  bool                  silent                              = false;
+  srslog::basic_levels  log_level                           = srslog::basic_levels::info;
+  std::string           log_filename                        = "stdout";
+  bool                  is_prach_control_plane_enabled      = true;
+  bool                  is_downlink_broadcast_enabled       = false;
+  bool                  ignore_ecpri_payload_size_field     = false;
+  std::string           data_compr_method                   = "bfp";
+  unsigned              data_bitwidth                       = 9;
+  std::string           prach_compr_method                  = "bfp";
+  unsigned              prach_bitwidth                      = 9;
+  bool                  is_downlink_static_comp_hdr_enabled = false;
+  bool                  is_uplink_static_comp_hdr_enabled   = false;
+  bool                  is_downlink_parallelized            = true;
+  units::bytes          mtu                                 = units::bytes(9000);
+  std::vector<unsigned> prach_port_id                       = {4, 5};
+  std::vector<unsigned> dl_port_id                          = {0, 1, 2, 3};
+  std::vector<unsigned> ul_port_id                          = {0, 1};
+  bs_channel_bandwidth  bw                                  = srsran::bs_channel_bandwidth::MHz20;
+  subcarrier_spacing    scs                                 = subcarrier_spacing::kHz30;
+  std::string           tdd_pattern_str                     = "7d2u";
+  bool                  use_loopback_receiver               = false;
 };
 
 /// Dummy Radio Unit error notifier.
@@ -416,7 +418,10 @@ class dummy_rx_symbol_notifier : public ru_uplink_plane_rx_symbol_notifier
 {
 public:
   // See interface for documentation.
-  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const resource_grid_reader& grid) override {}
+  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid) override
+  {
+    srsran_assert(grid, "Invalid grid.");
+  }
 
   // See interface for documentation.
   void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
@@ -668,13 +673,19 @@ public:
   {
     std::uniform_real_distribution<float> dist(-1.0, +1.0);
 
+    std::shared_ptr<channel_precoder_factory> precoder_factory = create_channel_precoder_factory("auto");
+    report_fatal_error_if_not(precoder_factory, "Invalid factory");
+
+    std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoder_factory);
+    report_fatal_error_if_not(rg_factory, "Invalid factory");
+
     // Create resource grids according to TDD pattern.
+    std::vector<std::unique_ptr<resource_grid>> dl_resource_grids;
     for (unsigned rg_id = 0; rg_id != tdd_pattern.nof_dl_slots; rg_id++) {
       // Downlink.
-      dl_resource_grids.push_back(std::make_unique<resource_grid_impl>(
-          nof_antennas_dl, get_nsymb_per_slot(cyclic_prefix::NORMAL), nof_prb * NOF_SUBCARRIERS_PER_RB, nullptr));
-      resource_grid_impl&   grid      = *dl_resource_grids.back();
-      resource_grid_writer& rg_writer = grid.get_writer();
+      dl_resource_grids.push_back(
+          rg_factory->create(nof_antennas_dl, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
+      resource_grid_writer& rg_writer = dl_resource_grids.back()->get_writer();
 
       // Pre-generate random downlink data.
       for (unsigned sym = 0; sym != get_nsymb_per_slot(cyclic_prefix::NORMAL); ++sym) {
@@ -685,11 +696,15 @@ public:
         }
       }
     }
+    dl_rg_pool = create_generic_resource_grid_pool(std::move(dl_resource_grids));
+
     // Uplink.
+    std::vector<std::unique_ptr<resource_grid>> ul_resource_grids;
     for (unsigned rg_id = 0; rg_id != tdd_pattern.nof_ul_slots; rg_id++) {
-      ul_resource_grids.push_back(std::make_unique<resource_grid_impl>(
-          nof_antennas_ul, get_nsymb_per_slot(cyclic_prefix::NORMAL), nof_prb * NOF_SUBCARRIERS_PER_RB, nullptr));
+      ul_resource_grids.push_back(
+          rg_factory->create(nof_antennas_ul, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
     }
+    ul_rg_pool = create_generic_resource_grid_pool(std::move(ul_resource_grids));
   }
 
   /// Starts the DU emulator.
@@ -719,9 +734,16 @@ private:
 
       // Push downlink data.
       if (is_dl_slot) {
-        resource_grid_impl&   grid = *dl_resource_grids[slot_id];
         resource_grid_context context{slot, 0};
-        dl_handler.handle_dl_data(context, grid.get_reader());
+        shared_resource_grid  dl_grid;
+        while (!dl_grid) {
+          dl_grid = dl_rg_pool->allocate_resource_grid(context);
+          if (!dl_grid) {
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
+          }
+        }
+
+        dl_handler.handle_dl_data(context, dl_grid);
         logger.info("DU emulator pushed DL data in slot {}", slot);
       }
 
@@ -729,7 +751,15 @@ private:
       if (is_ul_slot) {
         slot_id = tdd_pattern.dl_ul_tx_period_nof_slots - slot_id - 1;
         resource_grid_context context{slot, 0};
-        ul_handler.handle_new_uplink_slot(context, *ul_resource_grids[slot_id]);
+        shared_resource_grid  ul_grid;
+        while (!ul_grid) {
+          ul_grid = ul_rg_pool->allocate_resource_grid(context);
+          if (!ul_grid) {
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
+          }
+        }
+
+        ul_handler.handle_new_uplink_slot(context, ul_grid);
       }
 
       // Sleep until the end of the slot.
@@ -744,12 +774,12 @@ private:
     test_finished.store(true, std::memory_order_relaxed);
   }
 
-  srslog::basic_logger&                            logger;
-  std::vector<std::unique_ptr<resource_grid_impl>> dl_resource_grids;
-  std::vector<std::unique_ptr<resource_grid_impl>> ul_resource_grids;
-  task_executor&                                   executor;
-  ru_downlink_plane_handler&                       dl_handler;
-  ru_uplink_plane_handler&                         ul_handler;
+  srslog::basic_logger&               logger;
+  std::unique_ptr<resource_grid_pool> dl_rg_pool;
+  std::unique_ptr<resource_grid_pool> ul_rg_pool;
+  task_executor&                      executor;
+  ru_downlink_plane_handler&          dl_handler;
+  ru_uplink_plane_handler&            ul_handler;
 
   const unsigned            nof_prb;
   std::chrono::microseconds slot_duration_us;
@@ -933,9 +963,9 @@ struct worker_manager {
       const std::string exec_name = "ru_rx_exec";
 
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+                                    {concurrent_queue_policy::locking_mpmc, task_worker_queue_size},
                                     {{exec_name}},
-                                    std::chrono::microseconds{1},
+                                    std::nullopt,
                                     os_thread_realtime_priority::max() - 1};
       if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);

@@ -33,7 +33,7 @@ class cpu_architecture_info
   /// Aggregates CPU information.
   struct cpu_description {
     /// Set of CPUs as returned by the OS.
-    cpu_set_t cpuset;
+    ::cpu_set_t cpuset;
     /// Total number of CPUs.
     size_t nof_cpus;
     /// Number of available CPUs.
@@ -80,7 +80,7 @@ public:
   size_t get_host_nof_available_cpus() const { return cpu_desc.nof_available_cpus; }
 
   /// Get available CPUs as a cpu_set_t structure.
-  cpu_set_t get_available_cpuset() const { return cpu_desc.cpuset; }
+  ::cpu_set_t get_available_cpuset() const { return cpu_desc.cpuset; }
 
   /// Prints discovered CPU information.
   void print_cpu_info(srslog::basic_logger& logger) const;

@@ -26,6 +26,7 @@
 #include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -68,9 +69,10 @@ downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
 }
 
 void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context& context,
-                                                     const resource_grid_reader&  grid)
+                                                     const shared_resource_grid&  grid)
 {
-  trace_point tp = ofh_tracer.now();
+  const resource_grid_reader& reader = grid.get_reader();
+  trace_point                 tp     = ofh_tracer.now();
 
   // Clear any stale buffers associated with the context slot.
   frame_pool->clear_downlink_slot(context.slot, logger);
@@ -92,7 +94,7 @@ void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context
   cplane_context.direction    = data_direction::downlink;
   cplane_context.symbol_range = tdd_config
                                     ? get_active_tdd_dl_symbols(tdd_config.value(), context.slot.slot_index(), cp)
-                                    : ofdm_symbol_range(0, grid.get_nof_symbols());
+                                    : ofdm_symbol_range(0, reader.get_nof_symbols());
 
   data_flow_uplane_resource_grid_context uplane_context;
   uplane_context.slot         = context.slot;

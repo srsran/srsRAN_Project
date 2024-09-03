@@ -85,7 +85,7 @@ struct pucch_builder_params {
   /// UE specific parameters. Use to set the number of resources per UE for HARQ-ACK reporting (not including SR/CSI
   /// dedicated resources). NOTE: by default, each UE is assigned 1 SR and 1 CSI resource.
   /// \remark Format 0 and Format 1 resources are mutually exclusive.
-  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_or_f1_res_harq = 3;
+  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_or_f1_res_harq = 6;
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_res_harq       = 6;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
   /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
@@ -103,6 +103,22 @@ struct pucch_builder_params {
   // NOTE: Having \c pucch_f1_params force the varint to use the Format 1 in the default constructor.
   std::variant<pucch_f1_params, pucch_f0_params> f0_or_f1_params;
   pucch_f2_params                                f2_params;
+  /// Maximum number of symbols per UL slot dedicated for PUCCH.
+  /// \remark In case of Sounding Reference Signals (SRS) being used, the number of symbols should be reduced so that
+  /// the PUCCH resources do not overlap in symbols with the SRS resources.
+  /// \remark This parameter should be computed by the GNB and not exposed to the user configuration interface.
+  bounded_integer<unsigned, 1, 14> max_nof_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+};
+
+struct srs_builder_params {
+  /// Enable Sound Reference Signals (SRS) for the UEs within this cell.
+  bool srs_enabled = false;
+  /// Maximum number of symbols per UL slot dedicated for SRS resources.
+  /// \remark In case of Sounding Reference Signals (SRS) being used, the number of symbols should be reduced so that
+  /// the PUCCH resources do not overlap in symbols with the SRS resources.
+  /// \remark The SRS resources are always placed at the end of the slot.
+  /// \remark As per TS 38.211, Section 6.4.1.4.1, SRS resource can only be placed in the last 6 symbols of a slot.
+  bounded_integer<unsigned, 1, 6> max_nof_symbols = 2U;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -177,6 +193,9 @@ struct du_cell_config {
 
   /// Parameters for PUCCH-Config generation.
   pucch_builder_params pucch_cfg;
+
+  /// Parameters for SRS-Config generation.
+  srs_builder_params srs_cfg;
 
   /// Defines the maximum allowable channel delay in slots when runnning in NTN mode. seee (TS 38.300 section 16.14.2)
   unsigned ntn_cs_koffset = 0;

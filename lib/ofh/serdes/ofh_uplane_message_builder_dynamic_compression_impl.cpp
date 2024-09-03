@@ -32,7 +32,8 @@ void ofh_uplane_message_builder_dynamic_compression_impl::serialize_compression_
 {
   // Serialize compression header.
   uint8_t value = 0U;
-  value |= uint8_t(params.data_width) << 4U;
+  // Note that an IQ bitwidth of 16 bits translates to a value of 0.
+  value |= uint8_t(params.data_width == 16 ? 0 : params.data_width) << 4U;
   value |= uint8_t(to_value(params.type));
   serializer.write(value);
 

@@ -86,7 +86,8 @@ unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_build
           user_params.nof_csi_resources,
       user_params.f0_or_f1_params,
       user_params.f2_params,
-      bwp_size);
+      bwp_size,
+      user_params.max_nof_symbols);
 
   srsran_assert(not res_list.empty(), "The PUCCH resource list cannot be empty");
 
@@ -128,4 +129,14 @@ void srsran::config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params& 
     user_params.nof_sr_resources  = std::min(max_pucch_grants_per_sr_csi, user_params.nof_sr_resources);
     user_params.nof_csi_resources = 0;
   }
+}
+
+bounded_integer<unsigned, 1, 14>
+srsran::config_helpers::compute_max_nof_pucch_symbols(const srs_builder_params& user_srs_params)
+{
+  // [Implementation-defined] In the following, we compute the maximum number of PUCCH symbols that can be used in a
+  // slot based on the PUCCH and SRS configurations. The maximum number of PUCCH symbols is computed so that PUCCH and
+  // SRS resources occupy all symbols in a slot and in such a way that they do not overlap each other.
+  return user_srs_params.srs_enabled ? NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - user_srs_params.max_nof_symbols.to_uint()
+                                     : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 }

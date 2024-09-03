@@ -36,7 +36,6 @@ namespace srsran {
 template <unsigned NDIMS, typename T, typename Index_type = unsigned>
 class file_tensor
 {
-private:
   const char*                 file_name;
   std::array<unsigned, NDIMS> dimension_sizes;
   openmode                    op;
@@ -50,7 +49,7 @@ public:
   /// \param[in] filename  Input file name.
   /// \param[in] dim_sizes Array describing the data dimensions.
   /// \param[in] op_       File opening mode.
-  file_tensor(const char* filename, const std::array<unsigned, NDIMS> dim_sizes, openmode op_ = openmode::read_only) :
+  file_tensor(const char* filename, const std::array<unsigned, NDIMS>& dim_sizes, openmode op_ = openmode::read_only) :
     file_name(filename), dimension_sizes(dim_sizes), op(op_)
   {
   }

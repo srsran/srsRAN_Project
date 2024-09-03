@@ -27,7 +27,7 @@
 namespace srsran {
 
 struct resource_grid_context;
-class resource_grid_reader;
+class shared_resource_grid;
 
 /// \brief Radio Unit resource grid handler interface.
 ///
@@ -43,7 +43,7 @@ public:
   ///
   /// \param[in] context Resource grid context.
   /// \param[in] grid Downlink data to transmit.
-  virtual void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
+  virtual void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) = 0;
 };
 
 } // namespace srsran

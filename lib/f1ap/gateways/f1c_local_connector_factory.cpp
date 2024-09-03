@@ -87,6 +87,9 @@ public:
 
     // Create direct connection between CU-CP and DU notifier.
     auto cu_notifier = cu_cp_du_mng->handle_new_du_connection(std::move(du_notifier));
+    if (cu_notifier == nullptr) {
+      return nullptr;
+    }
 
     // Decorate CU-CP RX notifier with pcap writing.
     if (pcap_writer.is_write_enabled()) {

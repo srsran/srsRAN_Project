@@ -28,6 +28,7 @@
 #include "srsran/srsvec/accumulate.h"
 #include "srsran/srsvec/add.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/division.h"
 #include "srsran/srsvec/dot_prod.h"
@@ -233,31 +234,28 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
       // Iterate all PRACH symbols if they are not combined, otherwise process only one PRACH symbol.
       for (unsigned i_symbol = 0, i_symbol_end = (combine_symbols) ? 1 : nof_symbols; i_symbol != i_symbol_end;
            ++i_symbol) {
+        // Get a temporary destination for the symbol combination.
+        span<cf_t> combined_symbols = span<cf_t>(cf_temp).first(L_ra);
+
         // Get view of the preamble.
-        span<const cf_t> preamble = input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol);
+        span<const cbf16_t> preamble = input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol);
 
-        // Combine symbols.
+        // Copy the first PRACH symbol.
+        srsvec::convert(combined_symbols, preamble);
+
+        // Combine the rest of PRACH symbols.
         if (combine_symbols && (nof_symbols > 1)) {
-          // Get a temporary destination for the symbol combination.
-          span<cf_t> combined_symbols = span<cf_t>(cf_temp).first(L_ra);
-
-          // Copy the first PRACH symbol.
-          srsvec::copy(combined_symbols, preamble);
-
-          // Combine the rest of PRACH symbols.
           for (unsigned i_comb_symbol = 1; i_comb_symbol != nof_symbols; ++i_comb_symbol) {
             srsvec::add(combined_symbols,
                         input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_comb_symbol),
                         combined_symbols);
           }
-
-          preamble = combined_symbols;
         }
 
         // Multiply the preamble by the complex conjugate of the root sequence.
         std::array<cf_t, prach_constants::LONG_SEQUENCE_LENGTH> no_root_temp;
         span<cf_t>                                              no_root = span<cf_t>(no_root_temp).first(L_ra);
-        srsvec::prod_conj(preamble, root, no_root);
+        srsvec::prod_conj(combined_symbols, root, no_root);
 
         // Prepare IDFT for correlation.
         srsvec::copy(idft_input.first(L_ra / 2 + 1), no_root.last(L_ra / 2 + 1));

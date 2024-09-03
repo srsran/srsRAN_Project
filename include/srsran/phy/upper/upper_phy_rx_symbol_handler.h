@@ -31,7 +31,7 @@ namespace srsran {
 
 class prach_buffer;
 struct prach_buffer_context;
-class resource_grid_reader;
+class shared_resource_grid;
 
 /// Describes the context of a newly received symbol.
 struct upper_phy_rx_symbol_context {
@@ -53,7 +53,7 @@ public:
   /// \brief Handles the reception of an OFDM symbol.
   /// \param[in] context Notification context: specifies sector, slot and symbol.
   /// \param[in] grid    Resource grid for the current slot (encompasses all receive antenna ports).
-  virtual void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
+  virtual void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) = 0;
 
   /// \brief Handles the arrival of PRACH sequences.
   /// \param[in] context PRACH context: specifies sector, slot and window.

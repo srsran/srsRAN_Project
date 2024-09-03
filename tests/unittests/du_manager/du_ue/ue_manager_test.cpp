@@ -47,7 +47,7 @@ protected:
     f1ap_dummy.next_ue_create_response.result = true;
     f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
   }
-  ~du_ue_manager_tester() { srslog::flush(); }
+  ~du_ue_manager_tester() override { srslog::flush(); }
 
   ul_ccch_indication_message create_ul_ccch_message(rnti_t rnti)
   {
@@ -108,13 +108,12 @@ protected:
   null_rlc_pcap                          rlc_pcap;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
-  du_manager_params params{
-      {"srsgnb", (gnb_du_id_t)1, 1, transport_layer_address::create_from_string("127.0.0.1"), cells},
-      {timers, worker, ue_execs, cell_execs},
-      {f1ap_dummy, f1ap_dummy},
-      {f1u_dummy},
-      {mac_dummy, f1ap_dummy, f1ap_dummy, rlc_pcap},
-      {mac_dummy, mac_dummy}};
+  du_manager_params params{{"srsgnb", (gnb_du_id_t)1, 1, cells},
+                           {timers, worker, ue_execs, cell_execs},
+                           {f1ap_dummy, f1ap_dummy},
+                           {f1u_dummy},
+                           {mac_dummy, f1ap_dummy, f1ap_dummy, rlc_pcap},
+                           {mac_dummy, mac_dummy}};
 
   du_ue_manager ue_mng{params, cell_res_alloc};
 };

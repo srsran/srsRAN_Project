@@ -231,131 +231,84 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   msg.scell_to_be_remd_list.push_back(scell_to_be_remd_item);
 
   // srbs to be setup mod list
-  f1ap_srbs_to_be_setup_mod_item srbs_to_be_setup_mod_item;
-  srbs_to_be_setup_mod_item.srb_id   = int_to_srb_id(1);
-  srbs_to_be_setup_mod_item.dupl_ind = f1ap_dupl_ind::true_value;
-  msg.srbs_to_be_setup_mod_list.emplace(int_to_srb_id(1), srbs_to_be_setup_mod_item);
+  f1ap_srb_to_setup srbs_to_be_setup_mod_item;
+  srbs_to_be_setup_mod_item.srb_id = int_to_srb_id(1);
+  msg.srbs_to_be_setup_mod_list.push_back(srbs_to_be_setup_mod_item);
 
   // drbs to be setup mod list
-  f1ap_drbs_to_be_setup_mod_item drbs_to_be_setup_mod_item;
+  f1ap_drb_to_setup drbs_to_be_setup_mod_item;
   drbs_to_be_setup_mod_item.drb_id = uint_to_drb_id(1);
   // qos info
 
   // drb qos
   // qos flow level qos params
   // qos characteristics
-  non_dyn_5qi_descriptor_t non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                        = uint_to_five_qi(8);
-  non_dyn_5qi.qos_prio_level                                                 = uint_to_qos_prio_level(1);
-  non_dyn_5qi.averaging_win                                                  = 3;
-  non_dyn_5qi.max_data_burst_volume                                          = 1000;
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+  non_dyn_5qi_descriptor non_dyn_5qi;
+  non_dyn_5qi.five_qi                                 = uint_to_five_qi(8);
+  non_dyn_5qi.qos_prio_level                          = uint_to_qos_prio_level(1);
+  non_dyn_5qi.averaging_win                           = 3;
+  non_dyn_5qi.max_data_burst_volume                   = 1000;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.qos_desc = non_dyn_5qi;
 
   // ng ran alloc retention prio
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp  = 1;
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_retention_prio.prio_level_arp         = 1;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_retention_prio.may_trigger_preemption = false;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_retention_prio.is_preemptable         = false;
 
   // gbr qos flow info
-  cu_cp_gbr_qos_info gbr_qos_info;
-  gbr_qos_info.max_flow_bit_rate_dl                       = 100000;
-  gbr_qos_info.max_flow_bit_rate_ul                       = 100000;
-  gbr_qos_info.guaranteed_flow_bit_rate_dl                = 100000;
-  gbr_qos_info.guaranteed_flow_bit_rate_ul                = 100000;
-  gbr_qos_info.max_packet_loss_rate_dl                    = 30;
-  gbr_qos_info.max_packet_loss_rate_ul                    = 30;
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.gbr_qos_info = gbr_qos_info;
+  auto& gbr_qos_info                   = drbs_to_be_setup_mod_item.qos_info.drb_qos.gbr_qos_info.emplace();
+  gbr_qos_info.max_br_dl               = 100000;
+  gbr_qos_info.max_br_ul               = 100000;
+  gbr_qos_info.gbr_dl                  = 100000;
+  gbr_qos_info.gbr_ul                  = 100000;
+  gbr_qos_info.max_packet_loss_rate_dl = 30;
+  gbr_qos_info.max_packet_loss_rate_ul = 30;
 
   // reflective qos attribute
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.reflective_qos_attribute = true;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.reflective_qos_attribute_subject_to = true;
 
   // s nssai
   drbs_to_be_setup_mod_item.qos_info.s_nssai.sst = 1;
   drbs_to_be_setup_mod_item.qos_info.s_nssai.sd  = 128;
 
   // notif ctrl
-  drbs_to_be_setup_mod_item.qos_info.notif_ctrl = f1ap_notif_ctrl::active;
+  drbs_to_be_setup_mod_item.qos_info.notif_ctrl = drb_notification_control::active;
 
   // flows mapped to drb list
-  f1ap_flows_mapped_to_drb_item flows_mapped_to_drb_item;
+  flow_mapped_to_drb flows_mapped_to_drb_item;
   flows_mapped_to_drb_item.qos_flow_id = uint_to_qos_flow_id(1);
   // qos characteristics
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.qos_desc = non_dyn_5qi;
   // ng ran alloc retention prio
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp = 1;
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
-      "shall-not-trigger-pre-emption";
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
-      "not-pre-emptable";
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp         = 1;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_retention_prio.may_trigger_preemption = false;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_retention_prio.is_preemptable         = false;
   // gbr qos flow info
   flows_mapped_to_drb_item.qos_flow_level_qos_params.gbr_qos_info = gbr_qos_info;
   // reflective qos attribute
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.reflective_qos_attribute = true;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.reflective_qos_attribute_subject_to = true;
 
-  drbs_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);
+  drbs_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.push_back(flows_mapped_to_drb_item);
 
   // ul up tnl info to be setup list
   up_transport_layer_info ul_up_tnl_info_item = {transport_layer_address::create_from_string("127.0.0.1"),
                                                  int_to_gtpu_teid(1)};
-  drbs_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
+  drbs_to_be_setup_mod_item.uluptnl_info_list.push_back(ul_up_tnl_info_item);
 
   // rlc mode
-  drbs_to_be_setup_mod_item.rlc_mod     = rlc_mode::am;
+  drbs_to_be_setup_mod_item.mode        = rlc_mode::am;
   drbs_to_be_setup_mod_item.pdcp_sn_len = pdcp_sn_size::size12bits;
 
-  // ul cfg
-  f1ap_ul_cfg ul_cfg;
-  ul_cfg.ul_ue_cfg                 = f1ap_ul_ue_cfg::no_data;
-  drbs_to_be_setup_mod_item.ul_cfg = ul_cfg;
-
-  // dupl activation
-  drbs_to_be_setup_mod_item.dupl_activation = f1ap_dupl_activation::active;
-
-  msg.drbs_to_be_setup_mod_list.emplace(uint_to_drb_id(1), drbs_to_be_setup_mod_item);
+  msg.drbs_to_be_setup_mod_list.push_back(drbs_to_be_setup_mod_item);
 
   // drbs to be modified list
-  f1ap_drbs_to_be_modified_item drbs_to_be_modified_item;
-
+  f1ap_drb_to_modify drbs_to_be_modified_item;
   drbs_to_be_modified_item.drb_id = uint_to_drb_id(1);
 
-  // qos info
-  f1ap_drb_info qos_info;
-  // drb qos
-  // qos flow level qos params
-  // qos characteristics
-  qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
-
-  // ng ran alloc retention prio
-  qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp            = 1;
-  qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap           = "shall-not-trigger-pre-emption";
-  qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
-
-  // gbr qos flow info
-  qos_info.drb_qos.gbr_qos_info = gbr_qos_info;
-
-  // reflective qos attribute
-  qos_info.drb_qos.reflective_qos_attribute = true;
-
-  // s nssai
-  qos_info.s_nssai.sst = 1;
-  qos_info.s_nssai.sd  = 128;
-
-  // notif ctrl
-  qos_info.notif_ctrl = f1ap_notif_ctrl::active;
-
-  // flows mapped to drb list
-  qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);
-
-  // qos info
-  drbs_to_be_modified_item.qos_info = qos_info;
-
   // ul up tnl info to be setup list
-  drbs_to_be_modified_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
+  drbs_to_be_modified_item.uluptnl_info_list.push_back(ul_up_tnl_info_item);
 
-  // ul cfg
-  drbs_to_be_modified_item.ul_cfg = ul_cfg;
-
-  msg.drbs_to_be_modified_list.emplace(uint_to_drb_id(1), drbs_to_be_modified_item);
+  msg.drbs_to_be_modified_list.push_back(drbs_to_be_modified_item);
 
   // srbs to be released list
   msg.srbs_to_be_released_list.push_back(int_to_srb_id(1));
@@ -412,9 +365,12 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   return msg;
 }
 
-f1ap_message srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                          gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                          rnti_t              crnti)
+f1ap_message
+srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t          cu_ue_id,
+                                                             gnb_du_ue_f1ap_id_t          du_ue_id,
+                                                             rnti_t                       crnti,
+                                                             const std::vector<drb_id_t>& drbs_setup_mod_list,
+                                                             const std::vector<drb_id_t>& drbs_modified_list)
 {
   f1ap_message ue_context_modification_response = {};
 
@@ -422,15 +378,24 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu
   ue_context_modification_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
 
   auto& ue_context_mod_resp = ue_context_modification_response.pdu.successful_outcome().value.ue_context_mod_resp();
-  ue_context_mod_resp->gnb_cu_ue_f1ap_id           = (unsigned)cu_ue_id;
-  ue_context_mod_resp->gnb_du_ue_f1ap_id           = (unsigned)du_ue_id;
-  ue_context_mod_resp->c_rnti_present              = true;
-  ue_context_mod_resp->c_rnti                      = (unsigned)crnti;
-  ue_context_mod_resp->drbs_setup_mod_list_present = true;
+  ue_context_mod_resp->gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
+  ue_context_mod_resp->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
+  ue_context_mod_resp->c_rnti_present    = true;
+  ue_context_mod_resp->c_rnti            = (unsigned)crnti;
 
-  ue_context_mod_resp->drbs_setup_mod_list.push_back({});
-  ue_context_mod_resp->drbs_setup_mod_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-  ue_context_mod_resp->drbs_setup_mod_list.back().value().drbs_setup_mod_item().drb_id = 1;
+  ue_context_mod_resp->drbs_setup_mod_list_present = !drbs_setup_mod_list.empty();
+  for (const auto& drb : drbs_setup_mod_list) {
+    ue_context_mod_resp->drbs_setup_mod_list.push_back({});
+    ue_context_mod_resp->drbs_setup_mod_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+    ue_context_mod_resp->drbs_setup_mod_list.back().value().drbs_setup_mod_item().drb_id = drb_id_to_uint(drb);
+  }
+
+  ue_context_mod_resp->drbs_modified_list_present = !drbs_modified_list.empty();
+  for (const auto& drb : drbs_modified_list) {
+    ue_context_mod_resp->drbs_modified_list.push_back({});
+    ue_context_mod_resp->drbs_modified_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_MODIFIED_ITEM);
+    ue_context_mod_resp->drbs_modified_list.back().value().drbs_modified_item().drb_id = drb_id_to_uint(drb);
+  }
 
   return ue_context_modification_response;
 }

@@ -102,7 +102,7 @@ TEST_P(du_high_many_cells_tester,
     // Ensure the F1AP Initial UL RRC message is correct.
     ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
     ASSERT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(
-        cu_notifier.last_f1ap_msgs.back(), rnti, du_high_cfg.cells[i].nr_cgi));
+        cu_notifier.last_f1ap_msgs.back(), rnti, du_high_cfg.ran.cells[i].nr_cgi));
   }
 }
 
@@ -126,10 +126,10 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   // Forward several DRB PDUs to all UEs.
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    for (unsigned c = 0; c != GetParam().nof_cells; ++c) {
+    for (auto& bearer : cu_up_sim.bearers) {
       nru_dl_message f1u_pdu{
           .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
-      cu_up_sim.created_du_notifs[c]->on_new_pdu(f1u_pdu);
+      bearer.second.rx_notifier->on_new_pdu(f1u_pdu);
     }
   }
 
@@ -141,7 +141,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
 
   // condition to stop experiment.
   auto stop_condition = [this, &bytes_sched_per_cell]() {
-    for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
+    for (unsigned c = 0; c != du_high_cfg.ran.cells.size(); ++c) {
       if (bytes_sched_per_cell[c] < nof_pdcp_pdus * pdcp_pdu_size) {
         // one of the cells still didn't send all the pending traffic.
         return false;
@@ -151,7 +151,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   };
   // check if a PDSCH was scheduled.
   auto pdsch_grant_scheduled = [this]() {
-    for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
+    for (unsigned i = 0; i != du_high_cfg.ran.cells.size(); ++i) {
       if (phy.cells[i].last_dl_data.has_value() and not phy.cells[i].last_dl_data.value().ue_pdus.empty()) {
         return true;
       }
@@ -161,7 +161,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
 
   std::vector<unsigned> largest_pdu_per_cell(GetParam().nof_cells, 0);
   while (not stop_condition() and this->run_until([pdsch_grant_scheduled]() { return pdsch_grant_scheduled(); })) {
-    for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
+    for (unsigned c = 0; c != du_high_cfg.ran.cells.size(); ++c) {
       auto& phy_cell = phy.cells[c];
       if (not phy_cell.last_dl_data.has_value()) {
         continue;
@@ -189,7 +189,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   ASSERT_TRUE(stop_condition()) << "Experiment did not finish when all cells transmitted pending traffic";
 
   // Cells should schedule equally large MAC PDUs
-  for (unsigned c = 1; c != du_high_cfg.cells.size(); ++c) {
+  for (unsigned c = 1; c != du_high_cfg.ran.cells.size(); ++c) {
     ASSERT_EQ(largest_pdu_per_cell[c], largest_pdu_per_cell[0])
         << fmt::format("cells {} and {} cannot schedule equally large PDUs", 0, c);
   }

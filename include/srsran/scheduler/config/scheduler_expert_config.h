@@ -77,6 +77,7 @@ struct scheduler_ue_expert_config {
   unsigned ta_measurement_slot_period{80};
   /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
   /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
+  /// \remark T_A is defined in TS 38.213, clause 4.2.
   int8_t ta_cmd_offset_threshold;
   /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
   float ta_update_measurement_ul_sinr_threshold;

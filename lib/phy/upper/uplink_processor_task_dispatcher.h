@@ -70,12 +70,12 @@ public:
   void process_pusch(span<uint8_t>                      data,
                      unique_rx_buffer                   rm_buffer,
                      upper_phy_rx_results_notifier&     notifier,
-                     const resource_grid_reader&        grid,
+                     const shared_resource_grid&        grid,
                      const uplink_processor::pusch_pdu& pdu) override
   {
-    bool success =
-        pusch_executor.execute([data, rm_buffer2 = std::move(rm_buffer), &notifier, &grid, pdu, this]() mutable {
-          processor->process_pusch(data, std::move(rm_buffer2), notifier, grid, pdu);
+    bool success = pusch_executor.execute(
+        [data, rm_buffer2 = std::move(rm_buffer), &notifier, rg = grid.copy(), pdu, this]() mutable {
+          processor->process_pusch(data, std::move(rm_buffer2), notifier, rg, pdu);
         });
 
     if (!success) {
@@ -99,11 +99,11 @@ public:
 
   // See interface for documentation.
   void process_pucch(upper_phy_rx_results_notifier& notifier,
-                     const resource_grid_reader&    grid,
+                     const shared_resource_grid&    grid,
                      const pucch_pdu&               pdu) override
   {
-    bool success =
-        pucch_executor.execute([&notifier, &grid, pdu, this]() { processor->process_pucch(notifier, grid, pdu); });
+    bool success = pucch_executor.execute(
+        [&notifier, rg = grid.copy(), pdu, this]() { processor->process_pucch(notifier, rg, pdu); });
     if (!success) {
       logger.warning(
           pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute PUCCH. Ignoring processing.");
@@ -134,10 +134,10 @@ public:
   }
 
   void
-  process_srs(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const srs_pdu& pdu) override
+  process_srs(upper_phy_rx_results_notifier& notifier, const shared_resource_grid& grid, const srs_pdu& pdu) override
   {
     bool success =
-        srs_executor.execute([&notifier, &grid, pdu, this]() { processor->process_srs(notifier, grid, pdu); });
+        srs_executor.execute([&notifier, rg = grid.copy(), pdu, this]() { processor->process_srs(notifier, rg, pdu); });
     if (!success) {
       logger.warning(
           pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute SRS. Ignoring processing.");

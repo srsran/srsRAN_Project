@@ -95,7 +95,7 @@ public:
     return buffer.get_sequence_length();
   }
 
-  span<cf_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
+  span<cbf16_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
   {
     get_symbol_entries.emplace_back();
     entry_t& entry      = get_symbol_entries.back();
@@ -106,7 +106,7 @@ public:
     return buffer.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol);
   }
 
-  span<const cf_t>
+  span<const cbf16_t>
   get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
   {
     get_symbol_const_entries.emplace_back();
@@ -170,10 +170,12 @@ public:
     count       = 5,
   };
 
-  using storage_type = tensor<static_cast<std::underlying_type_t<dims>>(dims::count), cf_t, dims>;
-
   /// Creates a PRACH buffer from the maximum parameters depending on the configuration.
-  explicit prach_buffer_tensor(storage_type& data_) : data(data_) {}
+  explicit prach_buffer_tensor(tensor<static_cast<std::underlying_type_t<dims>>(dims::count), cf_t, dims>& data_cf) :
+    data(data_cf.get_dimensions_size())
+  {
+    srsvec::copy(data.get_data(), data_cf.get_view<std::underlying_type_t<dims>(dims::count)>({}));
+  }
 
   // See interface for documentation.
   unsigned get_max_nof_ports() const override { return data.get_dimension_size(dims::port); }
@@ -191,7 +193,7 @@ public:
   unsigned get_sequence_length() const override { return data.get_dimension_size(dims::re); }
 
   // See interface for documentation.
-  span<cf_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
+  span<cbf16_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
   {
     srsran_assert(i_port < get_max_nof_ports(),
                   "The port index (i.e., {}) exceeds the maximum number of ports (i.e., {}).",
@@ -214,7 +216,7 @@ public:
   }
 
   // See interface for documentation.
-  span<const cf_t>
+  span<const cbf16_t>
   get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
   {
     srsran_assert(i_port < get_max_nof_ports(),
@@ -239,7 +241,7 @@ public:
 
 private:
   /// Data storage.
-  storage_type& data;
+  dynamic_tensor<static_cast<std::underlying_type_t<dims>>(dims::count), cbf16_t, dims> data;
 };
 
 } // namespace srsran

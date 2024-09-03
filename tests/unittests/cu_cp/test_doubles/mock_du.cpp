@@ -24,6 +24,7 @@
 #include "lib/f1ap/common/f1ap_asn1_utils.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
+#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/support/error_handling.h"
@@ -58,6 +59,21 @@ public:
   void push_ul_pdu(const f1ap_message& msg) override
   {
     report_fatal_error_if_not(tx_pdu_notifier != nullptr, "TNL connection is not established");
+
+    // For inter-CU handover no Init UL RRC message is received
+    if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome) {
+      if (msg.pdu.successful_outcome().value.type().value ==
+          asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp) {
+        const asn1::f1ap::ue_context_setup_resp_s& rrcmsg = msg.pdu.successful_outcome().value.ue_context_setup_resp();
+        gnb_du_ue_f1ap_id_t                        du_ue_id = int_to_gnb_du_ue_f1ap_id(rrcmsg->gnb_du_ue_f1ap_id);
+        gnb_cu_ue_f1ap_id_t                        cu_ue_id = int_to_gnb_cu_ue_f1ap_id(rrcmsg->gnb_cu_ue_f1ap_id);
+        if (ue_contexts.find(du_ue_id) == ue_contexts.end()) {
+          report_fatal_error_if_not(
+              ue_contexts.insert(std::make_pair(du_ue_id, ue_context{du_ue_id, cu_ue_id, {0, 0, 0}})).second,
+              "DU UE ID already exists");
+        }
+      }
+    }
 
     if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg) {
       if (msg.pdu.init_msg().value.type().value ==

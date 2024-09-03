@@ -21,11 +21,12 @@
  */
 
 #include "ru_ofh_rx_symbol_handler_impl.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 
 using namespace srsran;
 
 void ru_ofh_rx_symbol_handler_impl::on_new_uplink_symbol(const ofh::uplane_rx_symbol_context& context,
-                                                         const resource_grid_reader&          grid)
+                                                         shared_resource_grid                 grid)
 {
   ru_uplink_rx_symbol_context ru_context;
   ru_context.sector    = context.sector;

@@ -71,7 +71,7 @@ public:
   ///
   /// An assertion is triggered if the sum of start preamble index and number of preambles exceeds 64.
   ///
-  /// \param[in] signal Baseband signal buffer.
+  /// \param[in] input  Baseband signal buffer.
   /// \param[in] config PRACH configuration for the slot.
   /// \return The detection result.
   virtual prach_detection_result detect(const prach_buffer& input, const configuration& config) = 0;

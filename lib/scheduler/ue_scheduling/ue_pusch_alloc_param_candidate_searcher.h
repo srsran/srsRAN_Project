@@ -165,25 +165,27 @@ public:
   };
 
   /// Create a searcher for UE PUSCH parameters.
-  ue_pusch_alloc_param_candidate_searcher(const ue&              ue_ref_,
-                                          du_cell_index_t        cell_index,
-                                          ul_harq_process&       ul_harq_,
-                                          slot_point             pdcch_slot_,
-                                          span<const slot_point> slots_with_no_pusch_space_) :
+  ue_pusch_alloc_param_candidate_searcher(const ue&                                    ue_ref_,
+                                          du_cell_index_t                              cell_index,
+                                          const std::optional<ul_harq_process_handle>& ul_harq_,
+                                          slot_point                                   pdcch_slot_,
+                                          span<const slot_point>                       slots_with_no_pusch_space_,
+                                          slot_point                                   pusch_slot_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
     slots_with_no_pusch_space(slots_with_no_pusch_space_),
     ul_harq(ul_harq_),
-    is_retx(not ul_harq.empty()),
-    pdcch_slot(pdcch_slot_)
+    is_retx(ul_harq.has_value()),
+    pdcch_slot(pdcch_slot_),
+    pusch_slot(pusch_slot_)
   {
     // Cell is not part of UE configured cells.
     if (ue_cc == nullptr) {
       return;
     }
 
-    if (not ul_harq.empty()) {
-      preferred_rnti_type = ul_harq.last_tx_params().dci_cfg_type;
+    if (ul_harq.has_value()) {
+      preferred_rnti_type = ul_harq->get_grant_params().dci_cfg_type;
     }
 
     // Generate list of Search Spaces.
@@ -245,11 +247,10 @@ private:
     }
 
     // Check whether PUSCH Time Domain resource index is valid.
-    if (current.time_res >= (*current.ss_it)->pusch_time_domain_list.size()) {
+    if ((current.time_res >= (*current.ss_it)->pusch_time_domain_list.size()) or
+        (pdcch_slot + current.pusch_td_res().k2 != pusch_slot)) {
       return false;
     }
-
-    const slot_point pusch_slot = pdcch_slot + current.pusch_td_res().k2;
 
     // Check whether PUSCH slot is UL enabled.
     if (not ue_cc->cfg().cell_cfg_common.is_ul_enabled(pusch_slot)) {
@@ -270,7 +271,7 @@ private:
 
     // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
     // the first transmission.
-    if (is_retx and current.pusch_td_res().symbols.length() != ul_harq.last_tx_params().nof_symbols) {
+    if (is_retx and current.pusch_td_res().symbols.length() != ul_harq->get_grant_params().nof_symbols) {
       return false;
     }
 
@@ -312,7 +313,7 @@ private:
   span<const slot_point> slots_with_no_pusch_space;
 
   // UL HARQ considered for allocation.
-  const ul_harq_process& ul_harq;
+  const std::optional<ul_harq_process_handle>& ul_harq;
   // Whether the current search is for a newTx or a reTx.
   const bool is_retx;
   // List of SearchSpace candidates for the UL HARQ considered for allocation.
@@ -322,8 +323,10 @@ private:
   // RNTI type used to generate ss_candidate_list.
   std::optional<dci_ul_rnti_config_type> preferred_rnti_type;
 
-  // PDCCH slot point used to verify if the PUSCH fits a UL slot.
+  // Slot at which UL PDCCH is scheduled if valid PUSCH allocation candidate is found.
   slot_point pdcch_slot;
+  // Slot at which PUSCH needs to be scheduled.
+  slot_point pusch_slot;
 };
 
 } // namespace srsran

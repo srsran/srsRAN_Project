@@ -25,6 +25,8 @@
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/ran/lcid.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -52,10 +54,19 @@ e1ap_message generate_cu_up_e1_setup_respose(unsigned transaction_id);
 /// \return The Bearer Context Setup Request.
 e1ap_bearer_context_setup_request generate_bearer_context_setup_request(ue_index_t ue_index);
 
+struct drb_test_params {
+  drb_id_t      drb_id;
+  qos_flow_id_t qos_flow_id;
+};
+
 /// \brief Generate a dummy Bearer Context Setup Response.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
-e1ap_message generate_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
-                                                    gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+e1ap_message
+generate_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t                             cu_cp_ue_e1ap_id,
+                                       gnb_cu_up_ue_e1ap_id_t                             cu_up_ue_e1ap_id,
+                                       const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add =
+                                           {{uint_to_pdu_session_id(1), {drb_id_t::drb1, uint_to_qos_flow_id(1)}}},
+                                       const std::vector<pdu_session_id_t>& pdu_sessions_to_fail = {});
 
 /// \brief Generate a dummy Bearer Context Setup Failure.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
@@ -72,8 +83,11 @@ e1ap_bearer_context_modification_request generate_bearer_context_modification_re
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
 /// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
 /// \return The Bearer Context Modification Response.
-e1ap_message generate_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
-                                                           gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+e1ap_message generate_bearer_context_modification_response(
+    gnb_cu_cp_ue_e1ap_id_t                             cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t                             cu_up_ue_e1ap_id,
+    const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add = {},
+    const std::map<pdu_session_id_t, drb_id_t>& pdu_sessions_to_modify     = {{pdu_session_id_t::min, drb_id_t::drb1}});
 
 /// \brief Generate a dummy Bearer Context Modification Failure.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
@@ -99,6 +113,29 @@ e1ap_message generate_bearer_context_release_complete(gnb_cu_cp_ue_e1ap_id_t cu_
 /// \return The Bearer Context Inactivity Notification.
 e1ap_message generate_bearer_context_inactivity_notification_with_ue_level(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                            gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+
+/// \brief Generate a dummy Bearer Context Inactivity Notification with DRB activity level.
+/// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
+/// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
+/// \param[in] active_drbs The active DRBs.
+/// \param[in] inactive_drbs The inactive DRBs.
+/// \return The Bearer Context Inactivity Notification.
+e1ap_message generate_bearer_context_inactivity_notification_with_drb_level(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                            gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id,
+                                                                            const std::vector<drb_id_t>& active_drbs,
+                                                                            const std::vector<drb_id_t>& inactive_drbs);
+
+/// \brief Generate a dummy Bearer Context Inactivity Notification with PDU session activity level.
+/// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
+/// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
+/// \param[in] active_pdu_sessions The active PDU sessions.
+/// \param[in] inactive_pdu_sessions The inactive PDU sessions.
+/// \return The Bearer Context Inactivity Notification.
+e1ap_message generate_bearer_context_inactivity_notification_with_pdu_session_level(
+    gnb_cu_cp_ue_e1ap_id_t               cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t               cu_up_ue_e1ap_id,
+    const std::vector<pdu_session_id_t>& active_pdu_sessions,
+    const std::vector<pdu_session_id_t>& inactive_pdu_sessions);
 
 /// \brief Generate an invalid dummy Bearer Context Inactivity Notification with UE activity level.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.

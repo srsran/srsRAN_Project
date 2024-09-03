@@ -27,6 +27,7 @@
 #include "../support/uplink_cplane_context_repository.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

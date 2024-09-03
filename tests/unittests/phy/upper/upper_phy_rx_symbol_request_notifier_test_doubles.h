@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_request_notifier.h"
 
 namespace srsran {
@@ -35,7 +36,7 @@ public:
   {
     prach_capture_request_notified = true;
   }
-  void on_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) override {}
+  void on_uplink_slot_request(const resource_grid_context& context, const shared_resource_grid& grid) override {}
 
   bool has_prach_result_been_notified() const { return prach_capture_request_notified; }
 };

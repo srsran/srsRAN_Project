@@ -32,6 +32,9 @@ pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const 
   // Initialize scrambling with the initial state.
   scrambler->init(config.c_init);
 
+  // Advance scrambling sequence to the specific codeword offset.
+  scrambler->advance(config.metadata.cb_specific.cw_offset);
+
   // Prepare codeblock data.
   units::bits nof_used_bits = 0_bits;
   cb_data.resize(config.cb_size.value());
@@ -119,11 +122,8 @@ pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const 
     nof_used_bits += nof_zeros;
   }
 
-  // Prepare rate matching buffer.
-  rm_buffer.resize(config.metadata.cb_specific.full_length);
-
   // Encode the segment into a codeblock.
-  encoder->encode(rm_buffer, cb_data, config.metadata.tb_common);
+  const ldpc_encoder_buffer& rm_buffer = encoder->encode(cb_data, config.metadata.tb_common);
 
   // Rate match the codeblock.
   temp_packed_bits.resize(rm_length);

@@ -90,27 +90,50 @@ class ofdm_prach_demodulator_factory_sw : public ofdm_prach_demodulator_factory
 private:
   std::shared_ptr<dft_processor_factory> dft_factory;
   sampling_rate                          srate;
+  frequency_range                        fr;
+
+  static constexpr std::array<prach_subcarrier_spacing, 5> fr1_prach_scs = {prach_subcarrier_spacing::kHz15,
+                                                                            prach_subcarrier_spacing::kHz30,
+                                                                            prach_subcarrier_spacing::kHz60,
+                                                                            prach_subcarrier_spacing::kHz1_25,
+                                                                            prach_subcarrier_spacing::kHz5};
+
+  static constexpr std::array<prach_subcarrier_spacing, 1> fr2_prach_scs = {prach_subcarrier_spacing::kHz120};
 
 public:
-  ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_, sampling_rate srate_) :
-    dft_factory(std::move(dft_factory_)), srate(srate_)
+  ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_,
+                                    sampling_rate                          srate_,
+                                    frequency_range                        fr_) :
+    dft_factory(std::move(dft_factory_)), srate(srate_), fr(fr_)
   {
     srsran_assert(dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<ofdm_prach_demodulator> create() override
   {
-    using int_type = std::underlying_type_t<prach_subcarrier_spacing>;
+    // Select set of valid PRACH subcarrier spacing for the given frequency range. This avoids having extremely large
+    // unused DFTs.
+    span<const prach_subcarrier_spacing> possible_prach_scs = (fr == frequency_range::FR1)
+                                                                  ? span<const prach_subcarrier_spacing>(fr1_prach_scs)
+                                                                  : span<const prach_subcarrier_spacing>(fr2_prach_scs);
+
     ofdm_prach_demodulator_impl::dft_processors_table dft_processors;
-    for (int_type i_scs     = static_cast<int_type>(prach_subcarrier_spacing::kHz15),
-                  i_scs_end = static_cast<int_type>(prach_subcarrier_spacing::invalid);
-         i_scs != i_scs_end;
-         ++i_scs) {
-      prach_subcarrier_spacing     ra_scs     = static_cast<prach_subcarrier_spacing>(i_scs);
-      dft_processor::configuration dft_config = {.size = srate.get_dft_size(ra_scs_to_Hz(ra_scs)),
-                                                 .dir  = dft_processor::direction::DIRECT};
-      dft_processors.emplace(ra_scs, dft_factory->create(dft_config));
+
+    for (prach_subcarrier_spacing ra_scs : possible_prach_scs) {
+      // Create DFT for the given PRACH subcarrier spacing.
+      dft_processor::configuration   dft_config = {.size = srate.get_dft_size(ra_scs_to_Hz(ra_scs)),
+                                                   .dir  = dft_processor::direction::DIRECT};
+      std::unique_ptr<dft_processor> dft_proc   = dft_factory->create(dft_config);
+      srsran_assert(dft_proc,
+                    "Invalid DFT processor of size {}, for subcarrier spacing of {} and sampling rate {}.",
+                    dft_config.size,
+                    to_string(ra_scs),
+                    srate);
+
+      // Emplace the DFT into the dictionary.
+      dft_processors.emplace(ra_scs, std::move(dft_proc));
     }
+
     return std::make_unique<ofdm_prach_demodulator_impl>(srate, std::move(dft_processors));
   }
 };
@@ -131,7 +154,8 @@ srsran::create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configurati
 
 std::shared_ptr<ofdm_prach_demodulator_factory>
 srsran::create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
-                                                 sampling_rate                          srate)
+                                                 sampling_rate                          srate,
+                                                 frequency_range                        fr)
 {
-  return std::make_shared<ofdm_prach_demodulator_factory_sw>(std::move(dft_factory), srate);
+  return std::make_shared<ofdm_prach_demodulator_factory_sw>(std::move(dft_factory), srate, fr);
 }

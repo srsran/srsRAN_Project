@@ -29,7 +29,7 @@
 
 using namespace srsran;
 
-/// \brif Unwraps a list of floats.
+/// \brief Unwraps a list of floats.
 ///
 /// The inputs are assumed to take values in the range \f$[-\alpha, \alpha)\f$. Whenever the jump between two
 /// consecutive values is larger than \f$\alpha\f$, the second value is shifted by \f$\pm 2 \alpha\f$, depending on the

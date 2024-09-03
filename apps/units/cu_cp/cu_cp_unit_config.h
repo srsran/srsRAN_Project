@@ -24,25 +24,42 @@
 
 #include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
 #include "cu_cp_unit_logger_config.h"
-#include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/s_nssai.h"
 #include <vector>
 
 namespace srsran {
 
+struct cu_cp_unit_supported_ta_item {
+  unsigned    tac;
+  std::string plmn;
+  /// Supported Slices by the RAN node.
+  std::vector<s_nssai_t> tai_slice_support_list;
+};
+
+/// All tracking area related configuration parameters.
+struct cu_cp_unit_ta_config {
+  /// List of all tracking areas supported by the CU-CP.
+  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+};
+
 /// Report configuration, for now only supporting the A3 event.
 struct cu_cp_unit_report_config {
-  unsigned                report_cfg_id;
-  std::string             report_type;
-  std::optional<unsigned> report_interval_ms;
-  std::string             a3_report_type;
-  /// [-30..30] Note the actual value is field value * 0.5 dB. E.g. putting a value of -6 here results in -3dB offset.
-  std::optional<int>      a3_offset_db;
-  std::optional<unsigned> a3_hysteresis_db;
-  std::optional<unsigned> a3_time_to_trigger_ms;
+  unsigned    report_cfg_id;
+  std::string report_type;
+  unsigned    report_interval_ms;
+
+  std::optional<std::string> event_triggered_report_type;
+  std::optional<std::string> meas_trigger_quantity;
+  std::optional<int>         meas_trigger_quantity_threshold_db;
+  std::optional<int>         meas_trigger_quantity_threshold_2_db;
+  std::optional<int> meas_trigger_quantity_offset_db; ///< [-30..30] Note the actual value is field value * 0.5 dB. E.g.
+                                                      ///< putting a value of -6 here results in -3dB offset.
+  std::optional<unsigned> hysteresis_db;
+  std::optional<unsigned> time_to_trigger_ms;
 };
 
 struct cu_cp_unit_neighbor_cell_config_item {
@@ -239,10 +256,6 @@ struct cu_cp_unit_config {
   std::string ran_node_name = "cu_cp_01";
   /// gNB identifier.
   gnb_id_t gnb_id = {411, 22};
-  /// List of accepted PLMNs.
-  std::vector<std::string> plmns;
-  /// List of accepted TACs.
-  std::vector<unsigned> tacs;
   /// Maximum number of DUs.
   uint16_t max_nof_dus = 6;
   /// Maximum number of CU-UPs.
@@ -261,6 +274,8 @@ struct cu_cp_unit_config {
   cu_cp_unit_metrics_config metrics;
   /// AMF configuration.
   cu_cp_unit_amf_config amf_cfg;
+  /// List of all tracking areas supported by the CU-CP.
+  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
   /// Mobility configuration.
   cu_cp_unit_mobility_config mobility_config;
   /// RRC configuration.

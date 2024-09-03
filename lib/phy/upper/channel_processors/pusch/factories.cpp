@@ -119,20 +119,25 @@ private:
 /// HW-accelerated PUSCH decoder factory.
 class pusch_decoder_factory_hw : public pusch_decoder_factory
 {
-private:
-  std::shared_ptr<ldpc_segmenter_rx_factory>             segmenter_factory;
-  std::shared_ptr<crc_calculator_factory>                crc_factory;
-  std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory;
-
 public:
   explicit pusch_decoder_factory_hw(const pusch_decoder_factory_hw_configuration& config) :
     segmenter_factory(std::move(config.segmenter_factory)),
     crc_factory(std::move(config.crc_factory)),
-    hw_decoder_factory(std::move(config.hw_decoder_factory))
+    executor(config.executor)
   {
     srsran_assert(segmenter_factory, "Invalid LDPC segmenter factory.");
     srsran_assert(crc_factory, "Invalid CRC factory.");
-    srsran_assert(hw_decoder_factory, "Invalid hardware accelerator factory.");
+    srsran_assert(config.hw_decoder_factory, "Invalid hardware accelerator factory.");
+
+    // Creates a vector of hardware decoders. These are shared for all the PUSCH decoders.
+    std::vector<std::unique_ptr<hal::hw_accelerator_pusch_dec>> hw_decoders(
+        std::max(1U, config.nof_pusch_decoder_threads));
+    for (std::unique_ptr<hal::hw_accelerator_pusch_dec>& hw_decoder : hw_decoders) {
+      hw_decoder = config.hw_decoder_factory->create();
+    }
+
+    // Creates the hardware decoder pool. The pool is common among all the PUSCH decoders.
+    hw_decoder_pool = std::make_unique<pusch_decoder_hw_impl::hw_decoder_pool>(std::move(hw_decoders));
   }
 
   std::unique_ptr<pusch_decoder> create() override
@@ -142,8 +147,14 @@ public:
         crc_factory->create(crc_generator_poly::CRC24A),
         crc_factory->create(crc_generator_poly::CRC24B),
     };
-    return std::make_unique<pusch_decoder_hw_impl>(segmenter_factory->create(), crc, hw_decoder_factory->create());
+    return std::make_unique<pusch_decoder_hw_impl>(segmenter_factory->create(), crc, hw_decoder_pool, executor);
   }
+
+private:
+  std::shared_ptr<ldpc_segmenter_rx_factory>              segmenter_factory;
+  std::shared_ptr<crc_calculator_factory>                 crc_factory;
+  std::shared_ptr<pusch_decoder_hw_impl::hw_decoder_pool> hw_decoder_pool;
+  task_executor*                                          executor;
 };
 
 class pusch_demodulator_factory_generic : public pusch_demodulator_factory

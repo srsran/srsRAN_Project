@@ -186,6 +186,8 @@ int run_benchmark(bench_params params, int algo)
   auto int_algo  = static_cast<security::integrity_algorithm>(algo);
   auto ciph_algo = static_cast<security::ciphering_algorithm>(algo);
 
+  init_byte_buffer_segment_pool(1048576, byte_buffer_segment_pool_default_segment_size());
+
   if (algo == 0) {
     benchmark_pdcp_tx(params,
                       security::integrity_enabled::off,

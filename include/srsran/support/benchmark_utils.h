@@ -31,32 +31,29 @@ namespace srsran {
 
 /// This function forbids the compiler from optimizing away expressions without side-effects.
 template <typename T>
-inline std::enable_if_t<std::is_trivially_copyable<T>::value && (sizeof(T) <= sizeof(T*))>
-do_not_optimize(T const& value)
+inline std::enable_if_t<std::is_trivially_copyable_v<T> && (sizeof(T) <= sizeof(T*))> do_not_optimize(T const& value)
 {
   asm volatile("" : : "r,m"(value) : "memory");
 }
 template <typename T>
-inline std::enable_if_t<!std::is_trivially_copyable<T>::value || (sizeof(T) > sizeof(T*))>
-do_not_optimize(T const& value)
+inline std::enable_if_t<!std::is_trivially_copyable_v<T> || (sizeof(T) > sizeof(T*))> do_not_optimize(T const& value)
 {
   asm volatile("" : : "m"(value) : "memory");
 }
 template <typename T>
-inline std::enable_if_t<std::is_trivially_copyable<T>::value && (sizeof(T) <= sizeof(T*))> do_not_optimize(T& value)
+inline std::enable_if_t<std::is_trivially_copyable_v<T> && (sizeof(T) <= sizeof(T*))> do_not_optimize(T& value)
 {
   asm volatile("" : "+m,r"(value) : : "memory");
 }
 template <typename T>
-inline std::enable_if_t<!std::is_trivially_copyable<T>::value || (sizeof(T) > sizeof(T*))> do_not_optimize(T& value)
+inline std::enable_if_t<!std::is_trivially_copyable_v<T> || (sizeof(T) > sizeof(T*))> do_not_optimize(T& value)
 {
   asm volatile("" : "+m"(value) : : "memory");
 }
 
-/// \brief Describes a class for performing benchmarks.
+/// Describes a class for performing benchmarks.
 class benchmarker
 {
-private:
   /// Benchmark main title.
   std::string title;
   /// Number of repetitions.
@@ -74,7 +71,7 @@ private:
   /// Collects different measurements.
   std::vector<benchmark_result> benchmark_results;
 
-  /// \brief Get the maximum measured execution time.
+  /// Get the maximum measured execution time.
   /// \return A pair of values containing the maximum execution time and the number of elements in order.
   std::pair<uint64_t, uint64_t> get_max_meas_time_ns() const
   {
@@ -88,10 +85,9 @@ private:
   /// Get percentile column width for execution time, including one decimal point.
   unsigned get_percentile_width_time(double scaling = 1.0) const
   {
-    uint64_t max_meas_ns = get_max_meas_time_ns().first;
-    unsigned percentile_width =
-        static_cast<unsigned>(std::ceil(std::log10(static_cast<double>(max_meas_ns) * scaling)));
-    percentile_width = std::max(percentile_width, 6U);
+    uint64_t max_meas_ns  = get_max_meas_time_ns().first;
+    auto percentile_width = static_cast<unsigned>(std::ceil(std::log10(static_cast<double>(max_meas_ns) * scaling)));
+    percentile_width      = std::max(percentile_width, 6U);
     return percentile_width + 2;
   }
 
@@ -153,7 +149,7 @@ private:
   /// \param[in] time_ns Execution time in nanoseconds.
   /// \param[in] size    Number of elements processed during the measurement.
   /// \return The calculated throughput.
-  static inline double convert_to_throughput(uint64_t time_ns, size_t size)
+  static double convert_to_throughput(uint64_t time_ns, size_t size)
   {
     time_ns = std::max(time_ns, 1UL);
 
@@ -183,7 +179,7 @@ public:
   }
 
   /// Prints the time execution measurements in nanoseconds.
-  void print_percentiles_time(std::string units = "nanoseconds", double scaling = 1.0) const
+  void print_percentiles_time(const std::string& units = "nanoseconds", double scaling = 1.0) const
   {
     if (benchmark_results.empty()) {
       return;
@@ -215,7 +211,7 @@ public:
     }
   }
 
-  /// \brief Prints the throughput measurements in millions of elements per seconds.
+  /// Prints the throughput measurements in millions of elements per seconds.
   /// \param[in] units Units counted in the throughput (ie. bits, symbols, etc.).
   void print_percentiles_throughput(const std::string& units, double scaling = 1.0) const
   {
@@ -255,12 +251,13 @@ public:
   }
 
   /// \brief Performs a new performance measurement.
+  ///
   /// \tparam Func             Lambda type to perform the benchmark.
-  /// \tparam PostFunc     Lambda type to call after each Func call.
+  /// \tparam PostFunc         Lambda type to call after each Func call.
   /// \param[in] description   Measurement description for later reporting.
   /// \param[in] size          Number of elements processed in the measurement.
   /// \param[in] function      Lambda function to call repeatedly.
-  /// \param[in] post_func Lambda function to call repeatedly, after \c function, but without being accounted for
+  /// \param[in] post_func     Lambda function to call repeatedly, after \c function, but without being accounted for
   /// in the benchmark results.
   template <typename Func, typename PostFunc = do_nothing_functor>
   void new_measure(const std::string& description,

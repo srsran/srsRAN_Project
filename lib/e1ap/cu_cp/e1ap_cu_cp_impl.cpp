@@ -256,6 +256,11 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
           inactivity_notification.inactive_drbs.emplace_back(uint_to_drb_id(drb.drb_id));
         }
       }
+      // if no drbs are inactive, return
+      if (inactivity_notification.inactive_drbs.empty()) {
+        return;
+      }
+
       // if all drbs are inactive, release ue
       if (inactivity_notification.inactive_drbs.size() == msg->activity_info.drb_activity_list().size()) {
         inactivity_notification.ue_inactive = true;
@@ -270,6 +275,11 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
               uint_to_pdu_session_id(pdu_session.pdu_session_id));
         }
       }
+      // if no pdu sessions are inactive, return
+      if (inactivity_notification.inactive_pdu_sessions.empty()) {
+        return;
+      }
+
       // if all pdu sessions are inactive, release ue
       if (inactivity_notification.inactive_pdu_sessions.size() ==
           msg->activity_info.pdu_session_res_activity_list().size()) {

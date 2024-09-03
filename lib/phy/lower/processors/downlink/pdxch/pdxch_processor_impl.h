@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "../../resource_grid_request_pool.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
@@ -29,7 +30,6 @@
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_notifier.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
 #include "srsran/phy/support/resource_grid_context.h"
-#include "srsran/phy/support/resource_grid_reader_empty.h"
 
 namespace srsran {
 
@@ -67,16 +67,15 @@ private:
   bool process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) override;
 
   // See interface for documentation.
-  void handle_request(const resource_grid_reader& grid, const resource_grid_context& context) override;
+  void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) override;
 
-  unsigned                                               nof_symbols_per_slot;
-  unsigned                                               nof_tx_ports;
-  pdxch_processor_notifier*                              notifier = nullptr;
-  std::unique_ptr<ofdm_symbol_modulator>                 modulator;
-  slot_point                                             current_slot;
-  std::reference_wrapper<const resource_grid_reader>     current_grid = empty_rg;
-  resource_grid_request_pool<const resource_grid_reader> requests;
-  static const resource_grid_reader_empty                empty_rg;
+  unsigned                               nof_symbols_per_slot;
+  unsigned                               nof_tx_ports;
+  pdxch_processor_notifier*              notifier = nullptr;
+  std::unique_ptr<ofdm_symbol_modulator> modulator;
+  slot_point                             current_slot;
+  shared_resource_grid                   current_grid;
+  resource_grid_request_pool             requests;
 };
 
 } // namespace srsran

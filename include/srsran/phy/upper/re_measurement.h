@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "srsran/adt/detail/type_storage.h"
 #include "srsran/adt/tensor.h"
 #include "srsran/srsvec/copy.h"
 

@@ -42,7 +42,7 @@ void fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_item&      e1ap_qos_i
                                    const qos_flow_setup_request_item& request_item);
 void fill_e1ap_bearer_context_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& e1ap_list,
-    const slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>&              drb_setup_items,
+    const std::vector<f1ap_drb_setupmod>&                                     drb_setup_items,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&          pdu_sessions_update_list);
 void fill_e1ap_pdu_session_res_to_setup_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>&     pdu_session_res_to_setup_list,
@@ -71,24 +71,23 @@ void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_lis
 /// \param[in] sib1 Packed SIB1 content for direct delivery to UE (optional).
 /// \param[in] logger Logger reference.
 /// \return True on success, false otherwise.
-bool fill_rrc_reconfig_args(
-    rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
-    const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
-    const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
-    const std::vector<drb_id_t>&                                       drb_to_remove,
-    const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
-    const std::vector<byte_buffer>&                                    nas_pdus,
-    const std::optional<rrc_meas_cfg>                                  rrc_meas_cfg,
-    bool                                                               reestablish_srbs,
-    bool                                                               reestablish_drbs,
-    bool                                                               update_keys,
-    byte_buffer                                                        sib1,
-    const srslog::basic_logger&                                        logger);
+bool fill_rrc_reconfig_args(rrc_reconfiguration_procedure_request&                           rrc_reconfig_args,
+                            const std::vector<f1ap_srb_to_setup>&                            srbs_to_be_setup_mod_list,
+                            const std::map<pdu_session_id_t, up_pdu_session_context_update>& pdu_sessions,
+                            const std::vector<drb_id_t>&                                     drb_to_remove,
+                            const f1ap_du_to_cu_rrc_info&                                    du_to_cu_rrc_info,
+                            const std::vector<byte_buffer>&                                  nas_pdus,
+                            const std::optional<rrc_meas_cfg>                                rrc_meas_cfg,
+                            bool                                                             reestablish_srbs,
+                            bool                                                             reestablish_drbs,
+                            bool                                                             update_keys,
+                            byte_buffer                                                      sib1,
+                            const srslog::basic_logger&                                      logger);
 
 bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                    srb_setup_mod_list,
-    slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                    drb_setup_mod_list,
+    std::vector<f1ap_srb_to_setup>&                                                 srb_setup_mod_list,
+    std::vector<f1ap_drb_to_setup>&                                                 drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                  pdu_session_resource_setup_list,
@@ -97,8 +96,8 @@ bool update_setup_list(
     const security_indication_t& default_security_indication,
     const srslog::basic_logger&  logger);
 
-bool update_setup_list(slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                 srb_setup_mod_list,
-                       slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                 drb_setup_mod_list,
+bool update_setup_list(std::vector<f1ap_srb_to_setup>&                                              srb_setup_mod_list,
+                       std::vector<f1ap_drb_to_setup>&                                              drb_setup_mod_list,
                        const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
                        const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                                    pdu_session_resource_setup_list,
@@ -106,14 +105,15 @@ bool update_setup_list(slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_ite
                        up_resource_manager&        up_resource_mng,
                        const srslog::basic_logger& logger);
 
-bool update_setup_list(e1ap_bearer_context_modification_request&                    bearer_ctxt_mod_request,
-                       const slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>& drb_setup_mod_list,
-                       const up_config_update&                                      next_config,
-                       const srslog::basic_logger&                                  logger);
+bool update_setup_list(e1ap_bearer_context_modification_request& bearer_ctxt_mod_request,
+                       const std::vector<f1ap_drb_setupmod>&     drb_setup_mod_list,
+                       const up_config_update&                   next_config,
+                       const srslog::basic_logger&               logger);
 
 void update_failed_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
-    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list);
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list,
+    up_config_update&                                                                 next_config);
 
 /// \brief Processes the result of a Bearer Context Modifcation Result's PDU session modify list.
 /// \param[out] ngap_response_list Reference to the final NGAP response

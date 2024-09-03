@@ -37,7 +37,7 @@ ssb_scheduler::ssb_scheduler(const cell_configuration& cfg_) :
 void ssb_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_point& sl_point)
 {
   // Only FR1 are supported in this implementation.
-  const uint32_t freq_arfcn = cell_cfg.dl_carrier.arfcn;
+  const uint32_t freq_arfcn = cell_cfg.dl_carrier.arfcn_f_ref;
   srsran_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
                 "Frenquencies in the range FR2 not supported");
 
@@ -102,7 +102,7 @@ void ssb_scheduler::ssb_alloc_case_A_C(ssb_information_list& ssb_list,
   // The OFDM symbols allocations for Case A and case C are identical; the only difference is the cutoff frequency,
   // which is 3GHz for case A and C paired, but 1.88GHz for case C unpaired.
   // For frequency lower than cutoff, SSB is allocated in slot 0 and 1 only.
-  if (cell_cfg.dl_carrier.arfcn <= freq_arfcn_cut_off and slot_idx > 1) {
+  if (cell_cfg.dl_carrier.arfcn_f_ref <= freq_arfcn_cut_off and slot_idx > 1) {
     return;
   }
 
@@ -141,7 +141,7 @@ void ssb_scheduler::ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_
   uint32_t slot_idx = sl_point_mod.to_uint();
 
   // For frequency lower than cutoff, SSB is allocated in slot 0 and 1 only.
-  if (cell_cfg.dl_carrier.arfcn <= CUTOFF_FREQ_ARFCN_CASE_A_B_C and slot_idx > 1) {
+  if (cell_cfg.dl_carrier.arfcn_f_ref <= CUTOFF_FREQ_ARFCN_CASE_A_B_C and slot_idx > 1) {
     return;
   }
 

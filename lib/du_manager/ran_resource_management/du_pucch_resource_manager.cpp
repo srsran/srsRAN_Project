@@ -69,7 +69,8 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
                                                cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
                                            cell_cfg_list_[0].pucch_cfg.f0_or_f1_params,
                                            cell_cfg_list_[0].pucch_cfg.f2_params,
-                                           cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
+                                           cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                                           cell_cfg_list_[0].pucch_cfg.max_nof_symbols)),
   default_pucch_cfg(
       build_default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(),
                               user_defined_pucch_cfg)),
@@ -147,6 +148,7 @@ std::vector<std::pair<unsigned, unsigned>>::const_iterator
 du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
     const std::vector<std::pair<unsigned, unsigned>>& available_csi_slot_offsets,
     unsigned                                          candidate_sr_offset,
+    const pucch_resource&                             sr_res_cfg,
     const csi_meas_config&                            csi_meas_cfg)
 {
   // [Implementation-defined] Given that it takes some time for a UE to process a CSI-RS and integrate its estimate
@@ -163,21 +165,40 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
   const unsigned             csi_rs_period = csi_resource_periodicity_to_uint(*csi_res.csi_res_period);
   const unsigned             csi_rs_offset = *csi_res.csi_res_offset;
 
-  const auto weight_function = [&](unsigned offset_candidate) -> unsigned {
+  const auto weight_function = [&](std::pair<unsigned, unsigned> csi_res_offset_candidate) -> unsigned {
     // This weight formula prioritizes offsets equal or after the \c csi_rs_slot_offset +
     // MINIMUM_CSI_RS_REPORT_DISTANCE.
     unsigned weight =
-        (csi_rs_period + offset_candidate - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) % csi_rs_period;
+        (csi_rs_period + csi_res_offset_candidate.second - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) %
+        csi_rs_period;
+
+    if (sr_res_cfg.format == pucch_format::FORMAT_0) {
+      const pucch_resource& candidate_csi_res_cfg =
+          default_pucch_res_list[csi_du_res_idx_to_pucch_res_idx(csi_res_offset_candidate.first)];
+      srsran_assert(std::holds_alternative<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params),
+                    "PUCCH resource for CSI must be of format 2 or 3");
+      const ofdm_symbol_range csi_symbols = {
+          std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).starting_sym_idx,
+          std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).starting_sym_idx +
+              std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).nof_symbols};
+      const ofdm_symbol_range sr_symbols = {std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).starting_sym_idx,
+                                            std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).starting_sym_idx +
+                                                std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).nof_symbols};
+      if (not csi_symbols.overlaps(sr_symbols)) {
+        weight += 2 * csi_rs_period;
+        return weight;
+      }
+    }
 
     // We increase the weight if the CSI report offset collides with an SR slot offset.
-    if (csi_offset_collides_with_sr(candidate_sr_offset, offset_candidate)) {
+    if (csi_offset_collides_with_sr(candidate_sr_offset, csi_res_offset_candidate.second)) {
       weight += csi_rs_period;
     }
 
     // If the CSI offset exceeds the maximum number of PUCCH grants, we increase by 2 * csi_rs_period, to ensure this
     // gets picked as the last resort (the highest possible weight for a CSI colliding with SR
     // is = 2 * csi_rs_period - 1).
-    if (csi_offset_exceeds_grant_cnt(offset_candidate,
+    if (csi_offset_exceeds_grant_cnt(csi_res_offset_candidate.second,
                                      max_pucch_grants_per_slot,
                                      lcm_csi_sr_period,
                                      csi_period_slots,
@@ -192,7 +213,7 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
       available_csi_slot_offsets.begin(),
       available_csi_slot_offsets.end(),
       [&weight_function](const std::pair<unsigned, unsigned>& lhs, const std::pair<unsigned, unsigned>& rhs) {
-        return weight_function(lhs.second) < weight_function(rhs.second);
+        return weight_function(lhs) < weight_function(rhs);
       });
 
   return csi_offset_exceeds_grant_cnt(optimal_res_it->second,
@@ -213,6 +234,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 
   // Verify where there are SR and CSI resources to allocate a new UE.
   if (free_sr_list.empty() or (default_csi_report_cfg.has_value() and free_csi_list.empty())) {
+    disable_pucch_cfg(cell_grp_cfg);
     return false;
   }
 
@@ -239,10 +261,13 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
         free_sr_list.erase(sr_res_offset_it);
         break;
       }
+
+      const pucch_resource sr_res = default_pucch_res_list[sr_du_res_idx_to_pucch_res_idx(sr_res_offset_it->first)];
+
       cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list = {*default_csi_report_cfg};
 
       auto optimal_res_it = get_csi_resource_offset(
-          cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.value(), sr_res_offset_it->second, free_csi_list);
+          cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.value(), sr_res_offset_it->second, sr_res, free_csi_list);
 
       if (optimal_res_it != free_csi_list.end()) {
         // At this point the allocation has been successful. Remove SR and CSI resources assigned to this UE from the
@@ -258,6 +283,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   }
 
   if (!sr_res_offset.has_value()) {
+    disable_pucch_cfg(cell_grp_cfg);
     return false;
   }
 
@@ -309,6 +335,9 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 
 void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cfg)
 {
+  if (not cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value()) {
+    return;
+  }
   auto& sr_to_deallocate = cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list.front();
   cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_res_offset_free_list.emplace_back(
       pucch_res_idx_to_sr_du_res_idx(sr_to_deallocate.pucch_res_id.cell_res_id), sr_to_deallocate.offset);
@@ -336,10 +365,12 @@ void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cf
 std::vector<std::pair<unsigned, unsigned>>::const_iterator
 du_pucch_resource_manager::get_csi_resource_offset(const csi_meas_config& csi_meas_cfg,
                                                    unsigned               candidate_sr_offset,
+                                                   const pucch_resource&  sr_res_cfg,
                                                    const std::vector<std::pair<unsigned, unsigned>>& free_csi_list)
 {
   // Chosse the optimal CSI-RS slot offset.
-  auto optimal_res_it = find_optimal_csi_report_slot_offset(free_csi_list, candidate_sr_offset, csi_meas_cfg);
+  auto optimal_res_it =
+      find_optimal_csi_report_slot_offset(free_csi_list, candidate_sr_offset, sr_res_cfg, csi_meas_cfg);
 
   if (optimal_res_it != free_csi_list.end()) {
     // Set temporarily CSI report with a default PUCCH_res_id.
@@ -397,12 +428,33 @@ bool du_pucch_resource_manager::csi_offset_collides_with_sr(unsigned sr_offset, 
   return false;
 }
 
+unsigned du_pucch_resource_manager::sr_du_res_idx_to_pucch_res_idx(unsigned sr_du_res_idx) const
+{
+  // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH SR resource is the inverse of
+  // what is defined in \ref srs_du::ue_pucch_config_builder.
+  return user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
+             user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
+         sr_du_res_idx;
+}
+
 unsigned du_pucch_resource_manager::pucch_res_idx_to_sr_du_res_idx(unsigned pucch_res_idx) const
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH SR resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
   return pucch_res_idx - user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets;
+}
+
+unsigned du_pucch_resource_manager::csi_du_res_idx_to_pucch_res_idx(unsigned csi_du_res_idx) const
+{
+  // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH CSI resource is the inverse of
+  // what is defined in \ref srs_du::ue_pucch_config_builder.
+  return user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
+             user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
+         user_defined_pucch_cfg.nof_sr_resources +
+         user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
+             user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
+         csi_du_res_idx;
 }
 
 unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned pucch_res_idx) const
@@ -414,4 +466,14 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
                           user_defined_pucch_cfg.nof_sr_resources +
                           user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
                               user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets);
+}
+
+void du_pucch_resource_manager::disable_pucch_cfg(srsran::srs_du::cell_group_config& cell_grp_cfg)
+{
+  auto& serv_cell = cell_grp_cfg.cells[0].serv_cell_cfg;
+
+  serv_cell.ul_config->init_ul_bwp.pucch_cfg.reset();
+  if (serv_cell.csi_meas_cfg.has_value()) {
+    serv_cell.csi_meas_cfg.value().csi_report_cfg_list.clear();
+  }
 }

@@ -34,7 +34,7 @@ class ue_removal_routine
 {
 public:
   ue_removal_routine(ue_index_t                           ue_index_,
-                     cu_cp_rrc_ue_notifier&               rrc_du_notifier_,
+                     rrc_ue_handler&                      rrc_du_notifier_,
                      e1ap_bearer_context_removal_handler* e1ap_removal_handler_,
                      f1ap_ue_context_removal_handler&     f1ap_removal_handler_,
                      ngap_ue_context_removal_handler&     ngap_removal_handler_,
@@ -47,7 +47,7 @@ public:
 
 private:
   const ue_index_t                     ue_index;
-  cu_cp_rrc_ue_notifier&               rrc_du_notifier;      // to trigger removal of the UE at the RRC
+  rrc_ue_handler&                      rrc_du_notifier;      // to trigger removal of the UE at the RRC
   e1ap_bearer_context_removal_handler* e1ap_removal_handler; // to trigger removal of the UE at the E1AP
   f1ap_ue_context_removal_handler&     f1ap_removal_handler; // to trigger removal of the UE at the F1AP
   ngap_ue_context_removal_handler&     ngap_removal_handler; // to trigger removal of the UE at the NGAP

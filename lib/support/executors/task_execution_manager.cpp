@@ -403,8 +403,8 @@ struct priority_worker_pool_context final : public common_task_execution_context
         [&params]() {
           std::vector<concurrent_queue_params> qparams{params.queues.size()};
           for (unsigned i = 0; i != params.queues.size(); ++i) {
-            report_error_if_not(params.queues[i].policy != srsran::concurrent_queue_policy::lockfree_mpmc or
-                                    params.queues[i].policy != srsran::concurrent_queue_policy::locking_mpmc,
+            report_error_if_not(params.queues[i].policy != concurrent_queue_policy::lockfree_mpmc or
+                                    params.queues[i].policy != concurrent_queue_policy::locking_mpmc,
                                 "Only MPMC queues are supported for worker pools");
             qparams[i].policy = params.queues[i].policy;
             qparams[i].size   = params.queues[i].size;

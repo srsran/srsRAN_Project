@@ -85,6 +85,20 @@ worker_manager::worker_manager(const dynamic_du_unit_config&     du_cfg,
                                             ru));
   }
 
+  if (std::holds_alternative<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg)) {
+    auto exec_cfg = std::get<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg).config.expert_execution_cfg;
+    for (auto& affinity_mask : exec_cfg.txrx_affinities) {
+      ru_txrx_affinity_masks.emplace_back(affinity_mask);
+    }
+    // If ru_txrx_cpus parameters are not specified, use the affinities of ru_cpus parameters of the cells.
+    if (ru_txrx_affinity_masks.empty()) {
+      for (unsigned i = 0, e = nof_cells; i != e; ++i) {
+        auto affinity_cfg = exec_cfg.cell_affinities[i].ru_cpu_cfg;
+        ru_txrx_affinity_masks.emplace_back(affinity_cfg.mask);
+      }
+    }
+  }
+
   // Determine whether the gnb app is running in realtime or in simulated environment.
   bool is_blocking_mode_active = false;
   if (std::holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
@@ -551,13 +565,17 @@ void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_con
     const std::string name      = "ru_timing";
     const std::string exec_name = "ru_timing_exec";
 
-    // As the timer worker is shared for all the RU cells, pick the first cell from the affinity manager.
+    // Use the ru_timing_cpu configuration if specified, otherwise use the ru_cpus of the first cell, as the timer
+    // worker is shared for all the RU cells.
+    os_sched_affinity_bitmask ru_timing_cpu_mask =
+        ru_timing_mask.any() ? ru_timing_mask
+                             : affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru);
     const single_worker ru_worker{name,
                                   {concurrent_queue_policy::lockfree_spsc, 4},
                                   {{exec_name}},
                                   std::chrono::microseconds{0},
                                   os_thread_realtime_priority::max() - 0,
-                                  ru_timing_mask};
+                                  ru_timing_cpu_mask};
     if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
       report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
     }
@@ -603,9 +621,7 @@ void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_con
   }
   // Executor for Open Fronthaul messages transmission and reception.
   {
-    unsigned nof_txrx_workers = std::max(static_cast<unsigned>(std::ceil(nof_cells / 2.0f)), 1U);
-
-    for (unsigned i = 0; i != nof_txrx_workers; ++i) {
+    for (unsigned i = 0, e = ru_txrx_affinity_masks.size(); i != e; ++i) {
       const std::string name      = "ru_txrx_#" + std::to_string(i);
       const std::string exec_name = "ru_txrx_exec_#" + std::to_string(i);
 
@@ -614,7 +630,7 @@ void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_con
                                     {{exec_name}},
                                     std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 1,
-                                    affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru)};
+                                    ru_txrx_affinity_masks[i]};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }

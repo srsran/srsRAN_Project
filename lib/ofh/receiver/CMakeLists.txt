@@ -19,6 +19,7 @@
 #
 
 set(SOURCES
+        ofh_closed_rx_window_handler.cpp
         ofh_data_flow_uplane_uplink_data_impl.cpp
         ofh_data_flow_uplane_uplink_prach_impl.cpp
         ofh_message_receiver.cpp

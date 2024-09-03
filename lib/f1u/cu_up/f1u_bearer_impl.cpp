@@ -78,16 +78,26 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
     nru_dl_data_delivery_status& status = msg.data_delivery_status.value();
     // Highest transmitted PDCP SN
     if (status.highest_transmitted_pdcp_sn.has_value()) {
-      ue_inactivity_timer.run(); // restart inactivity timer due to confirmed transmission of DL PDU
       uint32_t pdcp_sn = status.highest_transmitted_pdcp_sn.value();
-      logger.log_debug("Notifying highest transmitted pdcp_sn={}", pdcp_sn);
-      rx_delivery_notifier.on_transmit_notification(pdcp_sn);
+      if (pdcp_sn != notif_highest_transmitted_pdcp_sn) {
+        ue_inactivity_timer.run(); // restart inactivity timer due to confirmed transmission of DL PDU
+        logger.log_debug("Notifying highest transmitted pdcp_sn={}", pdcp_sn);
+        notif_highest_transmitted_pdcp_sn = pdcp_sn;
+        rx_delivery_notifier.on_transmit_notification(pdcp_sn);
+      } else {
+        logger.log_debug("Ignored duplicate notification of highest transmitted pdcp_sn={}", pdcp_sn);
+      }
     }
     // Highest successfully delivered PDCP SN
     if (status.highest_delivered_pdcp_sn.has_value()) {
       uint32_t pdcp_sn = status.highest_delivered_pdcp_sn.value();
-      logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", pdcp_sn);
-      rx_delivery_notifier.on_delivery_notification(pdcp_sn);
+      if (pdcp_sn != notif_highest_delivered_pdcp_sn) {
+        logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", pdcp_sn);
+        notif_highest_delivered_pdcp_sn = pdcp_sn;
+        rx_delivery_notifier.on_delivery_notification(pdcp_sn);
+      } else {
+        logger.log_debug("Ignored duplicate notification of highest successfully delivered pdcp_sn={}", pdcp_sn);
+      }
     }
     // Highest retransmitted PDCP SN
     if (status.highest_retransmitted_pdcp_sn.has_value()) {

@@ -39,7 +39,7 @@ class udp_network_gateway_impl final : public udp_network_gateway
 public:
   explicit udp_network_gateway_impl(udp_network_gateway_config                   config_,
                                     network_gateway_data_notifier_with_src_addr& data_notifier_,
-                                    task_executor&                               io_executor_);
+                                    task_executor&                               io_tx_executor_);
   ~udp_network_gateway_impl() override { close_socket(); }
 
   bool subscribe_to(io_broker& broker) override;
@@ -60,8 +60,8 @@ private:
   bool                    create_and_bind() override;
   void                    receive() override;
   int                     get_socket_fd() override;
-  std::optional<uint16_t> get_bind_port() override;
-  bool                    get_bind_address(std::string& ip_address) override;
+  std::optional<uint16_t> get_bind_port() const override;
+  bool                    get_bind_address(std::string& ip_address) const override;
 
   // socket helpers
   bool set_non_blocking();
@@ -91,6 +91,9 @@ private:
 
   // Temporary Tx buffer for transmission.
   std::array<uint8_t, network_gateway_udp_max_len> tx_mem;
+
+  // Helper boolean to avoid spamming the logs in case of buffer pool depletion
+  bool warn_low_buffer_pool = true;
 };
 
 } // namespace srsran

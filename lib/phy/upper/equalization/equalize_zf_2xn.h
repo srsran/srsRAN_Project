@@ -37,7 +37,7 @@ namespace srsran {
 /// \param[out] eq_symbols     Equalized channel symbols.
 /// \param[out] noise_vars     Noise variances after equalization.
 /// \param[in]  ch_symbols     Channel symbols, i.e., complex samples from the receive ports.
-/// \param[in]  ch_estimates   Estimated channel coefficients.
+/// \param[in]  ch_estimates_  Estimated channel coefficients.
 /// \param[in]  noise_var_est  Estimated noise variance. It is assumed to be the same for all receive ports.
 /// \param[in]  tx_scaling     Transmission gain scaling factor.
 template <unsigned RX_PORTS>

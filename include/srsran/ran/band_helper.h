@@ -73,9 +73,9 @@ duplex_mode get_duplex_mode(nr_band band);
 
 /// \brief     Gets the lowest band that includes a given Downlink ARFCN.
 /// \remark    Some bands can be subset of others, e.g., band 2 is a subset of band 25.
-/// \param[in] arfcn Given Downlink ARFCN.
+/// \param[in] arfcn_f_ref Given Downlink ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.
 /// \return    The band number if the ARFCN is bounded in a band, UINT16_MAX otherwise.
-nr_band get_band_from_dl_arfcn(uint32_t arfcn);
+nr_band get_band_from_dl_arfcn(uint32_t arfcn_f_ref);
 
 /// \brief     Returns true if the band is used for shared spectrum channel access.
 /// \remark    As per TS 38.104, Table 5.2-1, only bands where Note 3 or Note 4 apply.
@@ -87,32 +87,38 @@ bool is_band_40mhz_min_ch_bw_equivalent(nr_band band);
 
 /// \brief     Checks whether a Downlink ARFCN is valid for a given band.
 /// \param[in] band Given NR band.
-/// \param[in] arfcn Given Downlink ARFCN.
+/// \param[in] arfcn_f_ref Given Downlink ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1. Only used
 /// for bands n41, n77, n78, n79.
 /// \param[in] bw Channel Bandwidth in MHz, which is required to validate some bands' ARFCN values.
 /// \return    If the DL ARFCN is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string> is_dl_arfcn_valid_given_band(nr_band                  band,
-                                                     uint32_t                 arfcn,
-                                                     subcarrier_spacing       scs,
-                                                     bs_channel_bandwidth_fr1 bw = bs_channel_bandwidth_fr1::MHz10);
+error_type<std::string> is_dl_arfcn_valid_given_band(nr_band              band,
+                                                     uint32_t             arfcn_f_ref,
+                                                     subcarrier_spacing   scs,
+                                                     bs_channel_bandwidth bw = bs_channel_bandwidth::MHz10);
 
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
 /// For paired spectrum (FDD) the function returns the respective ARFCN in the same band.
 /// For unparied spectrum (TDD) the function returns the same ARFCN.
 ///
-/// \param[in] dl_arfcn The DL ARFCN.
-/// \param[in] band     NR Band. If not given, the band is derived from the dl_arfcn.
-/// \return uint32_t the UL ARFCN.
+/// \param[in] dl_arfcn The DL ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.
+/// \param[in] band     NR Band. If not given, the band is derived from the dl_f_ref_arfcn.
+/// \return uint32_t the UL ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.
 uint32_t get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, std::optional<nr_band> band);
 
-/// \brief Return frequency of given NR-ARFCN in Hz as per TS38.104 5.4.2.1.
+/// \brief Return frequency of given NR-ARFCN in Hz as per TS 38.104 5.4.2.1.
+///
+/// Even though the NR-ARFCN-to-frequency mapping is defined for "F_REF" as per TS 38.104 5.4.2.1, this mapping can be
+/// used also SSB frequency and Absolute Point A.
 /// \param[in] nr_arfcn Given NR-ARFCN.
 /// \return The frequency in Hz.
 double nr_arfcn_to_freq(uint32_t nr_arfcn);
 
 /// \brief Calculates NR-ARFCN of a given frequency as per TS38.104 5.4.2.1.
+///
+/// Even though the frequency-to-NR-ARFCN mapping is defined for "F_REF" as per TS 38.104 5.4.2.1, this mapping can be
+/// used also SSB frequency and Absolute Point A.
 /// \param[in] freq Given Frequency in Hz.
 /// \return The NR-AFCN.
 uint32_t freq_to_nr_arfcn(double freq);
@@ -127,6 +133,9 @@ ssb_pattern_case get_ssb_pattern(nr_band band, subcarrier_spacing scs);
 
 /// \brief Returns the L_max length of the \c ssb-PositionsInBurst, as per TS 38.213, Section 4.1 and TS 38.331,
 /// \c ServingCellConfigCommon.
+/// \param[in] band NR Band number.
+/// \param[in] scs SSB Subcarrier spacing.
+/// \param[in] nr_arfcn The DL ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.
 uint8_t get_ssb_l_max(nr_band band, subcarrier_spacing scs, uint32_t nr_arfcn);
 
 /// \brief Selects the most suitable SSB subcarrier spacing valid for this band.
@@ -160,23 +169,23 @@ frequency_range get_freq_range(nr_band band);
 /// @return Absolute Point A frequency in Hz.
 double get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq);
 
-/// \brief Compute the absolute frequency point A for a arfcn
+/// \brief Compute the absolute frequency point A (as ARFCN) given the \c F_REF (as ARFCN).
 ///
 /// \param[in] band nr frequency band.
 /// \param[in] nof_prb Number of PRBs.
-/// \param[in] arfcn Given ARFCN.
-/// \return frequency point A in arfcn notation.
-uint32_t get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn);
+/// \param[in] arfcn_f_ref Given ARFCN of \c F_REF, as defined in TS 38.104, Section 5.4.2.1.
+/// \return Absolute frequency point A in ARFCN notation.
+uint32_t get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn_f_ref);
 
 /// \brief Compute the center frequency for a NR carrier from its bandwidth and the absolute pointA.
 /// The center frequency should point to the RB with index = ceil(Nrb / 2), where Nrb is the number of RBs of the cell.
 ///
-/// \param nof_prb Carrier bandwidth in number of RB.
-/// \param freq_point_a_arfcn Absolute Point A frequency ARFCN.
-/// \return double Frequency in Hz.
+/// \param[in] nof_prb Carrier bandwidth in number of RB.
+/// \param[in] freq_point_a_arfcn Absolute Frequency Point A as ARFCN.
+/// \return Frequency in Hz.
 double get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_point_a_arfcn);
 
-/// \brief Compute the Absolute frequency pointA for a NR carrier from the nof RBs, SCS and the RF reference frequency.
+/// \brief Compute the Absolute frequency pointA for an NR carrier from the nof RBs, SCS and the RF reference frequency.
 ///
 /// The RF reference frequency is defined in TS 38.104, Section 5.4.2.1.
 /// <em>Point A<\em> is defined in TS 38.211, Section 4.4.4.2.
@@ -206,7 +215,7 @@ double get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
 /// \param[in] fr is frequency range FR1 or FR2.
 /// \return \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
-unsigned get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, frequency_range fr);
+unsigned get_n_rbs_from_bw(bs_channel_bandwidth bw, subcarrier_spacing scs, frequency_range fr);
 
 /// \brief Returns the minimum BS Channel Bandwidth for a given band and SCS from Table 5.3.5-1, TS 38.104, for FR1.
 ///
@@ -331,7 +340,8 @@ std::optional<unsigned> get_ssb_arfcn(unsigned              dl_arfcn,
                                       ssb_offset_to_pointA  offset_to_point_A,
                                       ssb_subcarrier_offset k_ssb);
 
-/// \brief Validate the SSB ARFCN for a given band.
+/// \brief Validate the SSB ARFCN for a given band, i.e., ARFCN value of the \f$SS_{ref}\f$, where \f$SS_{ref}\f$ is
+/// defined in Section 5.4.3.1, TS 38.104.
 ///
 /// \remark The validity of the GSCN raster is based on the GSCN value, as per Section 5.4.3.1, TS 38.104. The ARFCN is
 /// considered valid if the corresponding \f$SS_{ref}\f$ maps to a valid GSCN value.
@@ -340,10 +350,10 @@ std::optional<unsigned> get_ssb_arfcn(unsigned              dl_arfcn,
 /// \param[in] ssb_scs SSB subcarrier spacing.
 /// \param[in] bw Channel Bandwidth in MHz, which is required to validate some bands' ARFCN values.
 /// \return If the ARFCN (GSCN) is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string> is_ssb_arfcn_valid_given_band(uint32_t                 ssb_arfcn,
-                                                      nr_band                  band,
-                                                      subcarrier_spacing       scs,
-                                                      bs_channel_bandwidth_fr1 bw = bs_channel_bandwidth_fr1::invalid);
+error_type<std::string> is_ssb_arfcn_valid_given_band(uint32_t             ssb_arfcn,
+                                                      nr_band              band,
+                                                      subcarrier_spacing   scs,
+                                                      bs_channel_bandwidth bw = bs_channel_bandwidth::invalid);
 
 } // namespace band_helper
 

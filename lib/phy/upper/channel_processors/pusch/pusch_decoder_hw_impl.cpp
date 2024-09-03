@@ -131,6 +131,25 @@ void pusch_decoder_hw_impl::on_new_softbits(span<const log_likelihood_ratio> sof
 
 void pusch_decoder_hw_impl::on_end_softbits()
 {
+  // Create the asynchronous function.
+  auto asynch_func = [this]() { run_asynch_hw_decoder(); };
+
+  // Try to execute the asynchronous decoder.
+  bool success = false;
+  if (executor != nullptr) {
+    success = executor->execute(asynch_func);
+  }
+
+  // Execute the decoder syncrhonously.
+  if (!success) {
+    asynch_func();
+  }
+}
+
+void pusch_decoder_hw_impl::run_asynch_hw_decoder()
+{
+  hal::hw_accelerator_pusch_dec& decoder = decoder_pool->get();
+
   unsigned modulation_order = get_bits_per_symbol(current_config.mod);
   srsran_assert(softbits_count % modulation_order == 0,
                 "The number of soft bits (i.e., {}) must be multiple of the modulation order (i.e., {}).\n",
@@ -138,7 +157,7 @@ void pusch_decoder_hw_impl::on_end_softbits()
                 modulation_order);
 
   // Reserve a hardware-queue for the current decoding operation.
-  decoder->reserve_queue();
+  decoder.reserve_queue();
 
   segmenter_config segmentation_config;
   segmentation_config.base_graph     = current_config.base_graph;
@@ -176,14 +195,10 @@ void pusch_decoder_hw_impl::on_end_softbits()
     srsvec::zero(cb_crcs);
   }
 
-  // Initialize decoder status.
-  pusch_decoder_result stats = {};
-
-  stats.nof_codeblocks_total = nof_cbs;
-  stats.ldpc_decoder_stats.reset();
+  // Decode the CBs.
   unsigned last_enqueued_cb_id = 0, last_dequeued_cb_id = 0, enq_tb_offset = 0, deq_tb_offset = 0;
   bool     all_enqueued = false, all_dequeued = false;
-  bool     external_harq = decoder->is_external_harq_supported();
+  bool     external_harq = decoder.is_external_harq_supported();
 
   // Validate that all CBs have been succesfully enqueued and dequeued.
   while (!all_enqueued || !all_dequeued) {
@@ -212,7 +227,8 @@ void pusch_decoder_hw_impl::on_end_softbits()
         absolute_cb_ids[cb_id] = softbuffer->get_absolute_codeblock_id(cb_id);
 
         // Set the decoding parameters of the CB as required by the hardware-accelerated PUSCH decoder.
-        set_hw_dec_configuration(nof_cbs,
+        set_hw_dec_configuration(decoder,
+                                 nof_cbs,
                                  cb_meta.cb_specific.rm_length,
                                  static_cast<unsigned>(cb_meta.tb_common.lifting_size),
                                  nof_new_bits,
@@ -234,7 +250,7 @@ void pusch_decoder_hw_impl::on_end_softbits()
             span<const int8_t>(reinterpret_cast<const int8_t*>(rm_buffer.data()), rm_buffer.size());
 
         // Enqueue the hardware-accelerated PUSCH decoding operation.
-        enqueued = decoder->enqueue_operation(cb_llrs_i8, rm_buffer_i8, cb_id);
+        enqueued = decoder.enqueue_operation(cb_llrs_i8, rm_buffer_i8, cb_id);
         // Exit the enqueing loop in case the operation couldn't be enqueued.
         if (!enqueued) {
           break;
@@ -302,7 +318,7 @@ void pusch_decoder_hw_impl::on_end_softbits()
         dequeued = false;
         while (!dequeued) {
           // Dequeue the hardware-accelerated PUSCH decoding operation (updates the softbuffer too).
-          dequeued = decoder->dequeue_operation(message.get_buffer(), codeblock_i8, cb_id);
+          dequeued = decoder.dequeue_operation(message.get_buffer(), codeblock_i8, cb_id);
           if (!dequeued) {
             if (num_dequeued > 0) {
               break;
@@ -311,7 +327,7 @@ void pusch_decoder_hw_impl::on_end_softbits()
             ++num_dequeued;
 
             // Check the CB decoding operation success.
-            check_hw_results(stats, cb_crcs, cb_id, crc_type, message.first(nof_new_bits + crc_len));
+            check_hw_results(cb_crcs, decoder, cb_id, crc_type, message.first(nof_new_bits + crc_len));
           }
         }
 
@@ -338,17 +354,17 @@ void pusch_decoder_hw_impl::on_end_softbits()
   }
   srsran_assert(deq_tb_offset == tb_and_crc_size, "All TB bits should be filled at this point.");
 
-  copy_tb_and_notify(stats, nof_cbs, cb_crcs);
+  copy_tb_and_notify(decoder, cb_crcs.first(nof_cbs));
 }
 
-void pusch_decoder_hw_impl::check_hw_results(pusch_decoder_result&   stats,
-                                             span<bool>              cb_crcs,
-                                             unsigned                cb_id,
-                                             hal::hw_dec_cb_crc_type crc_type,
-                                             bit_buffer              data)
+void pusch_decoder_hw_impl::check_hw_results(span<bool>                     cb_crcs,
+                                             hal::hw_accelerator_pusch_dec& decoder,
+                                             unsigned int                   cb_id,
+                                             hal::hw_dec_cb_crc_type        crc_type,
+                                             srsran::bit_buffer             data)
 {
   hal::hw_pusch_decoder_outputs hw_out = {};
-  decoder->read_operation_outputs(hw_out, cb_id, absolute_cb_ids[cb_id]);
+  decoder.read_operation_outputs(hw_out, cb_id, absolute_cb_ids[cb_id]);
   // CRC24B is always checked by the accelerator.
   if (crc_type != hal::hw_dec_cb_crc_type::CRC24B) {
     // CRC24A and CRC16 are not checked by the accelerator.
@@ -360,20 +376,39 @@ void pusch_decoder_hw_impl::check_hw_results(pusch_decoder_result&   stats,
   }
 
   cb_crcs[cb_id] = hw_out.CRC_pass;
-  stats.ldpc_decoder_stats.update(hw_out.nof_ldpc_iterations);
+  if (hw_out.CRC_pass) {
+    // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
+    cb_crcs[cb_id] = true;
+    cb_stats.push_blocking(hw_out.nof_ldpc_iterations);
+  } else {
+    cb_stats.push_blocking(current_config.nof_ldpc_iterations);
+  }
 }
 
-void pusch_decoder_hw_impl::copy_tb_and_notify(pusch_decoder_result& stats, unsigned nof_cbs, span<bool> cb_crcs)
+void pusch_decoder_hw_impl::copy_tb_and_notify(hal::hw_accelerator_pusch_dec& decoder, span<const bool> cb_crcs)
 {
-  stats.tb_crc_ok = false;
+  // Initialize decoder status.
+  unsigned             nof_cbs = cb_crcs.size();
+  pusch_decoder_result stats;
+  stats.tb_crc_ok            = false;
+  stats.nof_codeblocks_total = nof_cbs;
+  stats.ldpc_decoder_stats.reset();
+
+  // Calculate statistics.
+  std::optional<unsigned> cb_nof_iter = cb_stats.try_pop();
+  while (cb_nof_iter.has_value()) {
+    stats.ldpc_decoder_stats.update(cb_nof_iter.value());
+    cb_nof_iter = cb_stats.try_pop();
+  }
+
   if (nof_cbs == 1) {
     // When only one codeblock, the CRC of codeblock and transport block are the same.
     stats.tb_crc_ok = cb_crcs[0];
     if (stats.tb_crc_ok) {
       srsvec::copy(transport_block, tmp_tb_bits.get_buffer().first(transport_block.size()));
       // Free the HARQ context entries.
-      for (unsigned cb_idx = 0, cb_idx_end = nof_cbs; cb_idx != cb_idx_end; ++cb_idx) {
-        decoder->free_harq_context_entry(absolute_cb_ids[cb_idx]);
+      for (unsigned cb_idx = 0, cb_idx_end = cb_crcs.size(); cb_idx != cb_idx_end; ++cb_idx) {
+        decoder.free_harq_context_entry(absolute_cb_ids[cb_idx]);
       }
     }
   } else if (std::all_of(cb_crcs.begin(), cb_crcs.end(), [](bool a) { return a; })) {
@@ -384,8 +419,8 @@ void pusch_decoder_hw_impl::copy_tb_and_notify(pusch_decoder_result& stats, unsi
     if (crc_set.crc24A->calculate(tmp_tb_bits) == 0) {
       stats.tb_crc_ok = true;
       // Free the HARQ context entries.
-      for (unsigned cb_idx = 0, cb_idx_end = nof_cbs; cb_idx != cb_idx_end; ++cb_idx) {
-        decoder->free_harq_context_entry(absolute_cb_ids[cb_idx]);
+      for (unsigned cb_idx = 0, cb_idx_end = cb_crcs.size(); cb_idx != cb_idx_end; ++cb_idx) {
+        decoder.free_harq_context_entry(absolute_cb_ids[cb_idx]);
       }
     } else {
       // If the checksum is wrong, then at least one of the codeblocks is a false negative. Reset all of them.
@@ -401,7 +436,7 @@ void pusch_decoder_hw_impl::copy_tb_and_notify(pusch_decoder_result& stats, unsi
   }
 
   // Free the hardware-queue utilized by completed decoding operation.
-  decoder->free_queue();
+  decoder.free_queue();
 
   // In case there are multiple codeblocks and at least one has a corrupted codeblock CRC, nothing to do.
 
@@ -409,14 +444,15 @@ void pusch_decoder_hw_impl::copy_tb_and_notify(pusch_decoder_result& stats, unsi
   result_notifier->on_sch_data(stats);
 }
 
-void pusch_decoder_hw_impl::set_hw_dec_configuration(unsigned                nof_segments,
-                                                     unsigned                rm_length,
-                                                     unsigned                lifting_size,
-                                                     unsigned                nof_segment_bits,
-                                                     unsigned                nof_filler_bits,
-                                                     unsigned                crc_len,
-                                                     hal::hw_dec_cb_crc_type crc_type,
-                                                     unsigned                cb_index)
+void pusch_decoder_hw_impl::set_hw_dec_configuration(hal::hw_accelerator_pusch_dec& decoder,
+                                                     unsigned                       nof_segments,
+                                                     unsigned                       rm_length,
+                                                     unsigned                       lifting_size,
+                                                     unsigned                       nof_segment_bits,
+                                                     unsigned                       nof_filler_bits,
+                                                     unsigned                       crc_len,
+                                                     hal::hw_dec_cb_crc_type        crc_type,
+                                                     unsigned                       cb_index)
 {
   hal::hw_pusch_decoder_configuration hw_cfg = {};
 
@@ -469,5 +505,5 @@ void pusch_decoder_hw_impl::set_hw_dec_configuration(unsigned                nof
   hw_cfg.absolute_cb_id = absolute_cb_ids[cb_index];
 
   // Set configuration in the HW accelerated decoder.
-  decoder->configure_operation(hw_cfg, cb_index);
+  decoder.configure_operation(hw_cfg, cb_index);
 }

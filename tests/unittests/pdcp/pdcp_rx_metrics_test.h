@@ -22,12 +22,8 @@
 
 #pragma once
 
-#include "lib/pdcp/pdcp_entity_rx.h"
 #include "pdcp_rx_test_helpers.h"
-#include "pdcp_test_vectors.h"
-#include "srsran/pdcp/pdcp_config.h"
 #include <gtest/gtest.h>
-#include <queue>
 
 namespace srsran {
 

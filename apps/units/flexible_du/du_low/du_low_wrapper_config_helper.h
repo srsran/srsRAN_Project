@@ -33,6 +33,7 @@ struct du_low_unit_config;
 
 void make_du_low_wrapper_config_and_dependencies(du_low_wrapper_config&                out_cfg,
                                                  const du_low_unit_config&             du_low_unit_cfg,
+                                                 const hal_upper_phy_config&           hal_config,
                                                  std::vector<cell_prach_ports_entry>   prach_ports,
                                                  span<const du_cell_config>            du_cells,
                                                  span<const unsigned>                  max_puschs_per_slot,

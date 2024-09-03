@@ -25,6 +25,7 @@
 #include "test_doubles/mock_amf.h"
 #include "test_doubles/mock_cu_up.h"
 #include "test_doubles/mock_du.h"
+#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include <unordered_map>
@@ -44,11 +45,13 @@ class cu_cp_test_environment
 {
 public:
   struct ue_context {
-    rnti_t                             crnti = rnti_t::INVALID_RNTI;
-    std::optional<gnb_du_ue_f1ap_id_t> du_ue_id;
-    std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
-    std::optional<ran_ue_id_t>         ran_ue_id;
-    std::optional<amf_ue_id_t>         amf_ue_id;
+    rnti_t                                crnti = rnti_t::INVALID_RNTI;
+    std::optional<gnb_du_ue_f1ap_id_t>    du_ue_id;
+    std::optional<gnb_cu_ue_f1ap_id_t>    cu_ue_id;
+    std::optional<ran_ue_id_t>            ran_ue_id;
+    std::optional<amf_ue_id_t>            amf_ue_id;
+    std::optional<gnb_cu_cp_ue_e1ap_id_t> cu_cp_e1ap_id;
+    std::optional<gnb_cu_up_ue_e1ap_id_t> cu_up_e1ap_id;
   };
 
   explicit cu_cp_test_environment(cu_cp_test_env_params params = {});
@@ -70,7 +73,10 @@ public:
   /// Drop TNL connection between a DU and the CU-CP.
   bool drop_du_connection(unsigned du_idx);
   /// Run F1 setup procedure to completion.
-  bool run_f1_setup(unsigned du_idx);
+  bool run_f1_setup(unsigned         du_idx,
+                    gnb_du_id_t      gnb_du_id = int_to_gnb_du_id(0x11),
+                    nr_cell_identity nci       = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value(),
+                    pci_t            pci       = 0);
 
   /// Establish a TNL connection between a CU-UP and the CU-CP.
   std::optional<unsigned> connect_new_cu_up();
@@ -80,17 +86,47 @@ public:
   bool run_e1_setup(unsigned cu_up_idx);
 
   /// Connect a new UE to CU-CP through a provided DU. It runs the full RRC setup procedure.
-  bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
+  [[nodiscard]] bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
   /// Runs the NAS Authentication for a given UE.
-  bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
+  [[nodiscard]] bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
   /// Runs the Security Mode procedure for a given UE.
-  bool setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id);
-  /// Runs RRC setup, authentication, security, RRC Reconfiguration for a given UE.
-  bool attach_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti, amf_ue_id_t amf_ue_id);
+  [[nodiscard]] bool setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id);
+  /// Finishes the registration for a given UE.
+  [[nodiscard]] bool finish_ue_registration(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id);
+  /// Requests PDU Session Resource Setup
+  [[nodiscard]] bool
+  request_pdu_session_resource_setup(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id);
+  /// Runs PDU Session Resource Setup for a given UE.
+  [[nodiscard]] bool
+  setup_pdu_session(unsigned               du_idx,
+                    unsigned               cu_up_idx,
+                    gnb_du_ue_f1ap_id_t    du_ue_id,
+                    rnti_t                 crnti,
+                    gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
+                    pdu_session_id_t       psi                          = pdu_session_id_t::min,
+                    drb_id_t               drb_id                       = drb_id_t::drb1,
+                    qos_flow_id_t          qfi                          = qos_flow_id_t::min,
+                    byte_buffer            rrc_reconfiguration_complete = make_byte_buffer("00070e00cc6fcda5").value(),
+                    bool                   is_initial_session           = true);
+  /// Runs RRC setup, authentication, security, RRC Reconfiguration, PDU session setup for a given UE.
+  [[nodiscard]] bool attach_ue(unsigned               du_idx,
+                               unsigned               cu_up_idx,
+                               gnb_du_ue_f1ap_id_t    du_ue_id,
+                               rnti_t                 crnti,
+                               amf_ue_id_t            amf_ue_id,
+                               gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
+                               pdu_session_id_t       psi               = pdu_session_id_t::min,
+                               drb_id_t               drb_id            = drb_id_t::drb1,
+                               qos_flow_id_t          qfi               = qos_flow_id_t::min,
+                               byte_buffer rrc_reconfiguration_complete = make_byte_buffer("00070e00cc6fcda5").value());
   /// Reestablishes a UE connection, including RRC Reestablishment and RRC Reconfiguration procedures.
   /// \return True if the reestablishment was successful, false if RRC Setup/Reject was performed instead.
-  bool
-  reestablish_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t new_du_ue_id, rnti_t new_crnti, rnti_t old_crnti, pci_t old_pci);
+  [[nodiscard]] bool reestablish_ue(unsigned            du_idx,
+                                    unsigned            cu_up_idx,
+                                    gnb_du_ue_f1ap_id_t new_du_ue_id,
+                                    rnti_t              new_crnti,
+                                    rnti_t              old_crnti,
+                                    pci_t               old_pci);
 
   /// Tick the CU-CP clock.
   void tick();
@@ -115,6 +151,55 @@ public:
 
   /// Get CU-CP configuration used to instantiate CU-CP.
   const cu_cp_configuration& get_cu_cp_cfg() const { return cu_cp_cfg; }
+
+  // Helper functions
+  [[nodiscard]] bool send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
+      const ngap_message& pdu_session_resource_setup_request,
+      unsigned            du_idx,
+      unsigned            cu_up_idx,
+      gnb_du_ue_f1ap_id_t du_ue_id);
+
+  [[nodiscard]] bool send_pdu_session_resource_setup_request_and_await_bearer_context_modification_request(
+      const ngap_message& pdu_session_resource_setup_request,
+      unsigned            cu_up_idx);
+
+  [[nodiscard]] bool
+  send_bearer_context_setup_response_and_await_ue_context_modification_request(unsigned               du_idx,
+                                                                               unsigned               cu_up_idx,
+                                                                               gnb_du_ue_f1ap_id_t    du_ue_id,
+                                                                               gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
+                                                                               pdu_session_id_t       psi,
+                                                                               qos_flow_id_t          qfi);
+
+  [[nodiscard]] bool
+  send_bearer_context_modification_response_and_await_ue_context_modification_request(unsigned            du_idx,
+                                                                                      unsigned            cu_up_idx,
+                                                                                      gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                                      pdu_session_id_t    psi,
+                                                                                      drb_id_t            drb_id,
+                                                                                      qos_flow_id_t       qfi);
+
+  [[nodiscard]] bool
+  send_ue_context_modification_response_and_await_bearer_context_modification_request(unsigned            du_idx,
+                                                                                      unsigned            cu_up_idx,
+                                                                                      gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                                      rnti_t              crnti);
+
+  [[nodiscard]] bool send_bearer_context_modification_response_and_await_rrc_reconfiguration(
+      unsigned                                           du_idx,
+      unsigned                                           cu_up_idx,
+      gnb_du_ue_f1ap_id_t                                du_ue_id,
+      const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add = {},
+      const std::map<pdu_session_id_t, drb_id_t>& pdu_sessions_to_modify   = {{pdu_session_id_t::min, drb_id_t::drb1}},
+      const std::optional<std::vector<srb_id_t>>& expected_srbs_to_add_mod = std::nullopt,
+      const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod = std::nullopt);
+
+  [[nodiscard]] bool send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
+      unsigned                             du_idx,
+      gnb_du_ue_f1ap_id_t                  du_ue_id,
+      byte_buffer                          rrc_reconfiguration_complete,
+      const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
+      const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup);
 
 private:
   class worker_manager;

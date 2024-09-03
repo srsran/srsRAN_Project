@@ -85,6 +85,14 @@ public:
     offset += x;
   }
 
+  /// Returns a view over the given number of bytes and advances the offset by this amount.
+  span<const uint8_t> get_view_and_advance(unsigned x)
+  {
+    span<const uint8_t> view(ptr, x);
+    advance(x);
+    return view;
+  }
+
   /// Returns the current offset.
   unsigned get_offset() const { return offset; }
 

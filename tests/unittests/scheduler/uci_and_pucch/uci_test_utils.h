@@ -41,15 +41,15 @@ inline sched_cell_configuration_request_message
 make_default_sched_cell_configuration_request_scs(subcarrier_spacing scs, bool tdd_mode = false)
 {
   cell_config_builder_params params{
-      .scs_common = scs, .channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20, .nof_dl_ports = 1};
+      .scs_common = scs, .channel_bw_mhz = bs_channel_bandwidth::MHz20, .nof_dl_ports = 1};
   if (scs == subcarrier_spacing::kHz15) {
     // Band n5 for FDD, band n41 for TDD.
-    params.dl_arfcn = tdd_mode ? 499200 : 530000;
-    params.band     = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+    params.dl_f_ref_arfcn = tdd_mode ? 499200 : 530000;
+    params.band           = band_helper::get_band_from_dl_arfcn(params.dl_f_ref_arfcn);
   } else if (scs == subcarrier_spacing::kHz30) {
     // Band n5 for FDD, band n77 or n78 for TDD.
-    params.dl_arfcn = tdd_mode ? 630000 : 176000;
-    params.band     = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+    params.dl_f_ref_arfcn = tdd_mode ? 630000 : 176000;
+    params.band           = band_helper::get_band_from_dl_arfcn(params.dl_f_ref_arfcn);
   }
   return sched_cell_configuration_request_message{test_helpers::make_default_sched_cell_configuration_request(params)};
 }
@@ -91,8 +91,8 @@ inline sched_cell_configuration_request_message make_custom_sched_cell_configura
 {
   sched_cell_configuration_request_message req = test_helpers::make_default_sched_cell_configuration_request(
       cell_config_builder_params{.scs_common     = is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15,
-                                 .channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10,
-                                 .dl_arfcn       = is_tdd ? 520000U : 365000U});
+                                 .channel_bw_mhz = bs_channel_bandwidth::MHz10,
+                                 .dl_f_ref_arfcn = is_tdd ? 520000U : 365000U});
   req.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common = pucch_res_common;
   return req;
 }
@@ -139,6 +139,7 @@ public:
   std::vector<std::unique_ptr<ue_configuration>> ue_ded_cfgs;
 
   cell_resource_allocator res_grid{cell_cfg};
+  cell_harq_manager       cell_harqs;
   pdcch_dl_information    dci_info;
   const unsigned          k0;
   const unsigned          k1{4};

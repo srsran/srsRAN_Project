@@ -21,6 +21,7 @@
  */
 
 #include "ofh_uplink_request_handler_impl.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
@@ -179,7 +180,8 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   }
 }
 
-void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid)
+void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_context& context,
+                                                         const shared_resource_grid&  grid)
 {
   logger.debug("Registering UL context entry for slot '{}' and sector#{}", context.slot, context.sector);
 

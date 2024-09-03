@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/complex.h"
-#include "srsran/srsvec/detail/traits.h"
+#include "srsran/srsvec/type_traits.h"
 #include "srsran/support/srsran_assert.h"
 #include <numeric>
 
@@ -40,7 +40,7 @@ namespace srsvec {
 template <typename T>
 auto mean(const T& x)
 {
-  static_assert(detail::is_arithmetic_span_compatible<T>::value || detail::is_complex_span_compatible<T>::value,
+  static_assert(is_arithmetic_span_compatible<T>::value || is_complex_span_compatible<T>::value,
                 "The input type is not compatible with a span of arithmetic/cf_t values.");
 
   using DataType = typename T::value_type;

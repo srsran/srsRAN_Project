@@ -44,16 +44,14 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(const ngap_configuration&          ngap_cfg_,
-                     ngap_cu_cp_notifier&               cu_cp_notifier_,
-                     ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
-                     n2_connection_client&              n2_gateway,
-                     timer_manager&                     timers_,
-                     task_executor&                     ctrl_exec_) :
+ngap_impl::ngap_impl(const ngap_configuration& ngap_cfg_,
+                     ngap_cu_cp_notifier&      cu_cp_notifier_,
+                     n2_connection_client&     n2_gateway,
+                     timer_manager&            timers_,
+                     task_executor&            ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   ue_ctxt_list(logger),
   cu_cp_notifier(cu_cp_notifier_),
-  cu_cp_du_repository_notifier(cu_cp_du_repository_notifier_),
   timers(timers_),
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{timers, ctrl_exec}),
@@ -61,8 +59,7 @@ ngap_impl::ngap_impl(const ngap_configuration&          ngap_cfg_,
 {
   context.gnb_id                    = ngap_cfg_.gnb_id;
   context.ran_node_name             = ngap_cfg_.ran_node_name;
-  context.plmn                      = ngap_cfg_.plmn;
-  context.tac                       = ngap_cfg_.tac;
+  context.supported_tas             = ngap_cfg_.supported_tas;
   context.pdu_session_setup_timeout = ngap_cfg_.pdu_session_setup_timeout;
 }
 
@@ -399,12 +396,8 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   fill_ngap_dl_nas_transport_message(dl_nas_msg, ue->get_ue_index(), msg);
 
   // start routine
-  ue->schedule_async_task(
-      launch_async<ngap_dl_nas_message_transfer_procedure>(dl_nas_msg,
-                                                           ue->get_rrc_ue_pdu_notifier(),
-                                                           ue->get_rrc_ue_control_notifier(),
-                                                           get_ngap_ue_radio_cap_management_handler(),
-                                                           ue_ctxt.logger));
+  ue->schedule_async_task(launch_async<ngap_dl_nas_message_transfer_procedure>(
+      dl_nas_msg, ue->get_ngap_rrc_ue_notifier(), get_ngap_ue_radio_cap_management_handler(), ue_ctxt.logger));
 }
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
@@ -453,6 +446,9 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
     send_error_indication(*tx_pdu_notifier, logger, ue_ctxt.ue_ids.ran_ue_id, ue_ctxt.ue_ids.amf_ue_id);
     return;
   }
+
+  // Store serving PLMN
+  ue_ctxt.serving_guami = init_ctxt_setup_req.guami;
 
   // Store UE Aggregate Maximum Bitrate
   if (init_ctxt_setup_req.ue_aggr_max_bit_rate.has_value()) {
@@ -516,7 +512,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   // Convert to common type
   cu_cp_pdu_session_resource_setup_request msg;
   msg.ue_index     = ue_ctxt.ue_ids.ue_index;
-  msg.serving_plmn = context.plmn;
+  msg.serving_plmn = ue_ctxt.serving_guami.plmn;
   if (!fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req)) {
     ue_ctxt.logger.log_warning("Conversion of PduSessionResourceSetupRequest failed");
     send_error_indication(*tx_pdu_notifier, logger, ue_ctxt.ue_ids.ran_ue_id, ue_ctxt.ue_ids.amf_ue_id, {});
@@ -720,7 +716,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   cu_cp_paging_message cu_cp_paging_msg;
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
-  cu_cp_du_repository_notifier.on_paging_message(cu_cp_paging_msg);
+  cu_cp_notifier.on_paging_message(cu_cp_paging_msg);
 }
 
 // free function to generate a handover failure message
@@ -753,8 +749,8 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
               ho_request.source_to_target_transparent_container.target_cell_id.nci);
 
   // Create UE in target cell
-  ho_request.ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(
-      ho_request.source_to_target_transparent_container.target_cell_id);
+  ho_request.ue_index =
+      cu_cp_notifier.request_new_ue_index_allocation(ho_request.source_to_target_transparent_container.target_cell_id);
   if (ho_request.ue_index == ue_index_t::invalid) {
     logger.warning("Sending HandoverFailure. Couldn't allocate UE index");
     tx_pdu_notifier->on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
@@ -774,7 +770,6 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
                                                                     uint_to_amf_ue_id(msg->amf_ue_ngap_id),
                                                                     ue_ctxt_list,
                                                                     cu_cp_notifier,
-                                                                    cu_cp_du_repository_notifier,
                                                                     *tx_pdu_notifier,
                                                                     timers,
                                                                     ctrl_exec,
@@ -848,6 +843,9 @@ void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
     } break;
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ho_cmd: {
       ev_mng.handover_preparation_outcome.set(outcome.value.ho_cmd());
+    } break;
+    case ngap_elem_procs_o::successful_outcome_c::types_opts::ho_cancel_ack: {
+      ev_mng.handover_cancel_outcome.set(outcome.value.ho_cancel_ack());
     } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -952,10 +950,10 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
   ue_ctxt.logger.log_info("Starting HO preparation");
 
   return launch_async<ngap_handover_preparation_procedure>(msg,
-                                                           context,
+                                                           ue_ctxt.serving_guami.plmn,
                                                            ue_ctxt.ue_ids,
                                                            *tx_pdu_notifier,
-                                                           ue->get_rrc_ue_control_notifier(),
+                                                           ue->get_ngap_rrc_ue_notifier(),
                                                            cu_cp_notifier,
                                                            ev_mng,
                                                            timer_factory{timers, ctrl_exec},

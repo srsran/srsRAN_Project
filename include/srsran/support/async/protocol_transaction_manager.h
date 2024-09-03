@@ -177,7 +177,7 @@ class protocol_transaction_manager
 
 public:
   /// Time limit for a transaction to complete.
-  const static std::chrono::milliseconds max_timeout;
+  static const std::chrono::milliseconds max_timeout;
 
   explicit protocol_transaction_manager(protocol_transaction_id_t nof_transaction_ids_, timer_factory timer_service_) :
     nof_transaction_ids(nof_transaction_ids_), timer_service(timer_service_)

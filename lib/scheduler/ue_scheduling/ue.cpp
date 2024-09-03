@@ -33,7 +33,7 @@ ue::ue(const ue_creation_command& cmd) :
   expert_cfg(cmd.cfg.expert_cfg()),
   cell_cfg_common(cmd.cfg.pcell_cfg().cell_cfg_common),
   ue_ded_cfg(&cmd.cfg),
-  harq_timeout_notif(cmd.harq_timeout_notifier, ue_index),
+  pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
   ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr)
 {
@@ -51,9 +51,6 @@ void ue::slot_indication(slot_point sl_tx)
 {
   for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
     if (ue_du_cells[i] != nullptr) {
-      // Clear old HARQs.
-      ue_du_cells[i]->harqs.slot_indication(sl_tx);
-
       // [Implementation-defined]
       // Clear last PxSCH allocated slot if gap to current \c sl_tx is too large. This is done in order to circumvent
       // the ambiguity caused by the slot_point wrap around while scheduling next PxSCHs. e.g. last PxSCH allocated
@@ -74,16 +71,15 @@ void ue::slot_indication(slot_point sl_tx)
 
 void ue::deactivate()
 {
-  // Disable DL DRBs.
-  for (unsigned lcid = LCID_MIN_DRB; lcid <= LCID_MAX_DRB; lcid++) {
-    dl_lc_ch_mgr.set_status((lcid_t)lcid, false);
-  }
+  // Disable DL SRBs and DRBs.
+  // Note: We assume that when this function is called any pending RRC container (e.g. containing RRC Release) has
+  // already been Tx+ACKed or an upper layer timeout has triggered.
+  dl_lc_ch_mgr.deactivate();
 
   // Disable UL SRBs and DRBs.
   ul_lc_ch_mgr.deactivate();
 
-  // Stop UL HARQ retransmissions.
-  // Note: We do no stop DL retransmissions because we are still relying on DL to send a potential RRC Release.
+  // Cancel HARQ retransmissions in all UE cells.
   for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
     if (ue_du_cells[i] != nullptr) {
       ue_du_cells[i]->deactivate();
@@ -114,8 +110,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
     du_cell_index_t cell_index   = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
     auto&           ue_cell_inst = ue_du_cells[cell_index];
     if (ue_cell_inst == nullptr) {
-      ue_cell_inst =
-          std::make_unique<ue_cell>(ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), harq_timeout_notif);
+      ue_cell_inst = std::make_unique<ue_cell>(ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), pcell_harq_pool);
       if (ue_cell_index >= ue_cells.size()) {
         ue_cells.resize(ue_cell_index + 1);
       }
@@ -164,14 +159,7 @@ unsigned ue::pending_ul_newtx_bytes() const
     if (pending_bytes == 0) {
       break;
     }
-    unsigned harq_bytes = 0;
-    for (unsigned i = 0; i != ue_cc->harqs.nof_ul_harqs(); ++i) {
-      const ul_harq_process& h_ul = ue_cc->harqs.ul_harq(i);
-      if (not h_ul.empty()) {
-        harq_bytes += h_ul.last_tx_params().tbs_bytes;
-      }
-    }
-    harq_bytes += ue_cc->harqs.ntn_get_tbs_pending_crcs();
+    unsigned harq_bytes = ue_cc->harqs.total_ul_bytes_waiting_ack();
     pending_bytes -= std::min(pending_bytes, harq_bytes);
   }
 
@@ -179,16 +167,28 @@ unsigned ue::pending_ul_newtx_bytes() const
   return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
 }
 
+unsigned ue::pending_ul_newtx_bytes(lcg_id_t lcg_id) const
+{
+  return ul_lc_ch_mgr.pending_bytes(lcg_id);
+}
+
 bool ue::has_pending_sr() const
 {
   return ul_lc_ch_mgr.has_pending_sr();
 }
 
-unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, lcid_t lcid)
+unsigned ue::build_dl_transport_block_info(dl_msg_tb_info&                         tb_info,
+                                           unsigned                                tb_size_bytes,
+                                           const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, lcid);
+  for (unsigned lcid = 0, e = lcids.size(); lcid != e; ++lcid) {
+    if (lcids.test(lcid)) {
+      total_subpdu_bytes +=
+          allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
+    }
+  }
   return total_subpdu_bytes;
 }
 

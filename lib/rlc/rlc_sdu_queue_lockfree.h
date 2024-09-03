@@ -47,7 +47,8 @@ namespace srsran {
 class rlc_sdu_queue_lockfree
 {
 public:
-  explicit rlc_sdu_queue_lockfree(uint16_t capacity_, rlc_bearer_logger& logger_) : logger(logger_), capacity(capacity_)
+  explicit rlc_sdu_queue_lockfree(uint16_t capacity_, uint32_t byte_limit_, rlc_bearer_logger& logger_) :
+    logger(logger_), capacity(capacity_), byte_limit(byte_limit_)
   {
     sdu_states = std::make_unique<std::atomic<uint32_t>[]>(capacity);
     sdu_sizes  = std::make_unique<std::atomic<size_t>[]>(capacity);
@@ -68,11 +69,18 @@ public:
   /// The write fails (returns false) in the following cases:
   /// - The internal queue is full.
   /// - Another SDU with same value of [PDCP_SN mod capacity] exists (either valid or discarded) in the queue.
+  /// - The new SDU makes the queue exceed a preconfigured limit of buffered bytes.
   ///
   /// \param sdu The RLC SDU that shall be written.
   /// \return True if the RLC SDU was successfully written to the queue, otherwise false.
   bool write(rlc_sdu sdu)
   {
+    // first check if we do not exeed the byte limit
+    state_t st = get_state();
+    if (sdu.buf.length() + st.n_bytes >= byte_limit) {
+      return false;
+    }
+
     // if the SDU has a PDCP SN, first check the slot is available
     std::optional<uint32_t> pdcp_sn  = sdu.pdcp_sn;
     const size_t            sdu_size = sdu.buf.length();
@@ -279,7 +287,8 @@ private:
 
   rlc_bearer_logger& logger;
 
-  uint16_t capacity;
+  const uint16_t capacity;
+  const uint32_t byte_limit;
 
   /// Combined atomic state of the queue reflecting the number of SDUs and the number of bytes.
   /// Upper 32 bit: n_sdus; Lower 32 bit: n_bytes
@@ -322,7 +331,6 @@ struct formatter<srsran::rlc_sdu_queue_lockfree::state_t> {
 
   template <typename FormatContext>
   auto format(const srsran::rlc_sdu_queue_lockfree::state_t& state, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "queued_sdus={} queued_bytes={}", state.n_sdus, state.n_bytes);
   }

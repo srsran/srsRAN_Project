@@ -39,6 +39,8 @@ public:
   security_result verify_integrity(byte_buffer buf, uint32_t count) override;
 
 private:
+  expected<security::sec_mac, security_error> compute_mac(const byte_buffer_view v, uint32_t count);
+
   sec_128_key        k_128_int;
   uint8_t            bearer_id;
   security_direction direction;

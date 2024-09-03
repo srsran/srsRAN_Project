@@ -23,6 +23,7 @@
 #include "ofh_uplane_message_decoder_impl.h"
 #include "../serdes/ofh_cuplane_constants.h"
 #include "../support/network_order_binary_deserializer.h"
+#include "srsran/ofh/compression/compression_properties.h"
 #include "srsran/ofh/compression/iq_decompressor.h"
 #include "srsran/support/units.h"
 
@@ -197,26 +198,6 @@ static void fill_results_from_decoder_section(uplane_section_params&            
   results.ud_comp_param             = decoded_results.ud_comp_param;
 }
 
-/// Returns true if the compression parameter is present based on the given compression type.
-static bool is_ud_comp_param_present(compression_type comp)
-{
-  switch (comp) {
-    case compression_type::BFP:
-    case compression_type::block_scaling:
-    case compression_type::mu_law:
-    case compression_type::bfp_selective:
-    case compression_type::mod_selective:
-      return true;
-    case compression_type::none:
-    case compression_type::modulation:
-      return false;
-    default:
-      srsran_assert(0, "Invalid compression type '{}'", comp);
-  }
-
-  SRSRAN_UNREACHABLE;
-}
-
 /// \brief Returns true when the given deserializer contains enough bytes to decode the IQ samples defined by PRB IQ
 /// data size, otherwise false.
 ///
@@ -234,7 +215,7 @@ static bool check_iq_data_size(unsigned                           nof_prb,
       units::bits(NOF_SUBCARRIERS_PER_RB * 2 * compression_params.data_width).round_up_to_bytes().value());
 
   // Add one byte when the udCompParam is present.
-  if (is_ud_comp_param_present(compression_params.type)) {
+  if (is_compression_param_present(compression_params.type)) {
     prb_iq_data_size = prb_iq_data_size + units::bytes(1);
   }
 
@@ -322,53 +303,6 @@ uplane_message_decoder_impl::decode_section_header(decoder_uplane_section_params
   return decoded_section_status::ok;
 }
 
-/// \brief Decodes the compressed PRBs from the deserializer.
-///
-/// This function skips the udCompParam field.
-///
-/// \param[out] comp_prb Compressed PRBs to decode.
-/// \param[in] deserializer Deserializer.
-/// \param[in] prb_iq_data_size PRB size in bits.
-static void decode_prbs_no_ud_comp_param_field(span<compressed_prb>               comp_prb,
-                                               network_order_binary_deserializer& deserializer,
-                                               units::bits                        prb_iq_data_size)
-{
-  unsigned nof_bytes = prb_iq_data_size.round_up_to_bytes().value();
-
-  // Read the samples from the deserializer.
-  for (auto& prb : comp_prb) {
-    // No need to read the udCompParam field.
-    prb.set_compression_param(0);
-
-    deserializer.read(prb.get_byte_buffer().first(nof_bytes));
-    prb.set_stored_size(nof_bytes);
-  }
-}
-
-/// \brief Decodes the compressed PRBs from the deserializer.
-///
-/// This function decodes the udCompParam field.
-///
-/// \param[out] comp_prb Compressed PRBs to decode.
-/// \param[in] deserializer Deserializer.
-/// \param[in] prb_iq_data_size PRB size in bits.
-static void decode_prbs_with_ud_comp_param_field(span<compressed_prb>               comp_prb,
-                                                 network_order_binary_deserializer& deserializer,
-                                                 units::bits                        prb_iq_data_size)
-{
-  unsigned nof_bytes = prb_iq_data_size.round_up_to_bytes().value();
-
-  // For each PRB, udCompParam must be decoded.
-  for (auto& prb : comp_prb) {
-    // Decode udComParam.
-    prb.set_compression_param(deserializer.read<uint8_t>());
-
-    // Decode IQ data.
-    deserializer.read(prb.get_byte_buffer().first(nof_bytes));
-    prb.set_stored_size(nof_bytes);
-  }
-}
-
 uplane_message_decoder_impl::decoded_section_status
 uplane_message_decoder_impl::decode_compression_length(decoder_uplane_section_params&     results,
                                                        network_order_binary_deserializer& deserializer,
@@ -402,20 +336,18 @@ void uplane_message_decoder_impl::decode_iq_data(uplane_section_params&         
                                                  network_order_binary_deserializer& deserializer,
                                                  const ru_compression_params&       compression_params)
 {
-  std::array<compressed_prb, MAX_NOF_PRBS> comp_prbs_buffer;
-  span<compressed_prb>                     comp_prbs(comp_prbs_buffer.data(), results.nof_prbs);
   units::bits prb_iq_data_size_bits(NOF_SUBCARRIERS_PER_RB * 2 * compression_params.data_width);
 
   // udCompParam field is not present when compression type is none or modulation.
-  if (is_ud_comp_param_present(compression_params.type)) {
-    decode_prbs_with_ud_comp_param_field(comp_prbs, deserializer, prb_iq_data_size_bits);
-  } else {
-    decode_prbs_no_ud_comp_param_field(comp_prbs, deserializer, prb_iq_data_size_bits);
+  if (is_compression_param_present(compression_params.type)) {
+    prb_iq_data_size_bits += units::bits(8);
   }
+  span<const uint8_t> compressed_data =
+      deserializer.get_view_and_advance(results.nof_prbs * prb_iq_data_size_bits.round_up_to_bytes().value());
 
   // Decompress the samples.
   results.iq_samples.resize(results.nof_prbs * NOF_SUBCARRIERS_PER_RB);
-  decompressor->decompress(results.iq_samples, comp_prbs, compression_params);
+  decompressor->decompress(results.iq_samples, compressed_data, compression_params);
 }
 
 filter_index_type srsran::ofh::uplane_peeker::peek_filter_index(span<const uint8_t> message)

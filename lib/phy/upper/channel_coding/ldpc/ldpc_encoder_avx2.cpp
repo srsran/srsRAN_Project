@@ -110,24 +110,6 @@ ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_sys_bits_strategy<1
   return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 1>;
 }
 
-// Recursively selects the proper strategy for the extended region by successively decreasing the value of the template
-// parameter.
-template <unsigned NODE_SIZE_AVX2_PH>
-ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy(unsigned node_size_avx2)
-{
-  if (node_size_avx2 == NODE_SIZE_AVX2_PH) {
-    return &ldpc_encoder_avx2::ext_region_inner<NODE_SIZE_AVX2_PH>;
-  }
-  return select_ext_strategy<NODE_SIZE_AVX2_PH - 1>(node_size_avx2);
-}
-
-// Ensures that the recursion stops when NODE_SIZE_AVX2_PH == 1.
-template <>
-ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy<1>(unsigned /*node_size_avx2*/)
-{
-  return &ldpc_encoder_avx2::ext_region_inner<1>;
-}
-
 void ldpc_encoder_avx2::select_strategy()
 {
   ldpc_base_graph_type current_bg       = current_graph->get_base_graph();
@@ -138,7 +120,6 @@ void ldpc_encoder_avx2::select_strategy()
 
   systematic_bits = select_sys_bits_strategy<MAX_NODE_SIZE_AVX2>(current_bg, node_size_avx2);
   high_rate       = select_hr_strategy<MAX_NODE_SIZE_AVX2>(current_bg, current_ls_index, node_size_avx2);
-  ext_region      = select_ext_strategy<MAX_NODE_SIZE_AVX2>(node_size_avx2);
 }
 
 void ldpc_encoder_avx2::load_input(const bit_buffer& in)
@@ -150,7 +131,7 @@ void ldpc_encoder_avx2::load_input(const bit_buffer& in)
   codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
   length_extended     = (codeblock_length / lifting_size - bg_K) * node_size_avx2;
 
-  span<uint8_t> codeblock(codeblock_buffer.data(), codeblock_used_size * AVX2_SIZE_BYTE);
+  span<uint8_t> codeblock = span<uint8_t>(codeblock_buffer).first((bg_K + bg_hr_parity_nodes) * node_size_byte);
   // Unpack the input bits into the CB buffer.
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
     srsvec::bit_unpack(codeblock.first(lifting_size), in, i_node * lifting_size);
@@ -164,8 +145,10 @@ void ldpc_encoder_avx2::load_input(const bit_buffer& in)
 
 // Computes the XOR logical operation (modulo-2 sum) between the contents of "in0" and "in1". The result is stored in
 // "out". The representation is unpacked (1 byte represents 1 bit).
-static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
+template <typename Type>
+static void fast_xor(span<Type> out, span<const Type> in0, span<const Type> in1)
 {
+  static_assert(sizeof(Type) == 1, "Type size must be one byte.");
 #if defined(__AVX512F__) && defined(__AVX512BW__)
   // Upgrades the XOR to AVX512 if it is possible.
   unsigned       nof_vectors = in0.size() / AVX512_SIZE_BYTE;
@@ -206,51 +189,38 @@ static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_AVX2_PH>
 void ldpc_encoder_avx2::systematic_bits_inner()
 {
-  mm256::avx2_const_span codeblock(codeblock_buffer, codeblock_used_size);
+  static constexpr unsigned node_size_byte = NODE_SIZE_AVX2_PH * AVX2_SIZE_BYTE;
+  mm256::avx2_const_span    codeblock(codeblock_buffer, codeblock_used_size);
+  mm256::avx2_span          auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
 
-  mm256::avx2_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
+  std::array<int8_t, node_size_byte> tmp_blk = {};
+  span<int8_t>                       blk     = span<int8_t>(tmp_blk);
 
-  const auto& parity_check_sparse = current_graph->get_parity_check_sparse();
+  for (unsigned m = 0; m != bg_hr_parity_nodes; ++m) {
+    const ldpc::BG_adjacency_row_t& row = current_graph->get_adjacency_row(m);
 
-  std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk;
-  span<int8_t>                             blk           = span<int8_t>(tmp_blk).first(2 * lifting_size);
-  unsigned                                 current_i_blk = std::numeric_limits<unsigned>::max();
-
-  std::array<bool, BG_M_PH> m_mask;
-  m_mask.fill(false);
-
-  for (const auto& element : parity_check_sparse) {
-    unsigned m          = std::get<0>(element);
-    unsigned k          = std::get<1>(element);
-    unsigned node_shift = std::get<2>(element);
-
-    unsigned i_aux = m * NODE_SIZE_AVX2_PH;
-    unsigned i_blk = k * NODE_SIZE_AVX2_PH;
-
-    if (i_aux >= length_extended) {
-      continue;
-    }
-
-    if (i_blk != current_i_blk) {
-      current_i_blk = i_blk;
-      srsvec::copy(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
-      srsvec::copy(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
-    }
-
-    auto set_plain_auxiliary = [this, auxiliary, m, i_aux]() {
-      if (m < bg_hr_parity_nodes) {
-        return auxiliary.plain_span(i_aux, lifting_size);
+    for (uint16_t k : row) {
+      if ((k >= bg_K) || (k == NO_EDGE)) {
+        break;
       }
-      unsigned offset = (bg_K + m) * NODE_SIZE_AVX2_PH * AVX2_SIZE_BYTE;
-      return span<int8_t>(reinterpret_cast<int8_t*>(codeblock_buffer.data()) + offset, lifting_size);
-    };
-    span<int8_t> plain_auxiliary = set_plain_auxiliary();
 
-    if (m_mask[m]) {
-      fast_xor(plain_auxiliary, blk.subspan(node_shift, lifting_size), plain_auxiliary);
-    } else {
-      srsvec::copy(plain_auxiliary, blk.subspan(node_shift, lifting_size));
-      m_mask[m] = true;
+      unsigned node_shift = current_graph->get_lifted_node(m, k);
+      if (node_shift == NO_EDGE) {
+        break;
+      }
+
+      unsigned i_aux = m * NODE_SIZE_AVX2_PH;
+      unsigned i_blk = k * NODE_SIZE_AVX2_PH;
+
+      span<int8_t> plain_auxiliary = auxiliary.plain_span(i_aux, node_size_byte);
+
+      if (k == row[0]) {
+        srsvec::circ_shift_backward(
+            plain_auxiliary.first(lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
+      } else {
+        srsvec::circ_shift_backward(blk.first(lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
+        fast_xor<int8_t>(plain_auxiliary, blk, plain_auxiliary);
+      }
     }
   }
 }
@@ -408,62 +378,124 @@ void ldpc_encoder_avx2::high_rate_bg2_other_inner()
   }
 }
 
-template <unsigned NODE_SIZE_AVX2_PH>
-void ldpc_encoder_avx2::ext_region_inner()
+void ldpc_encoder_avx2::ext_region_inner(span<uint8_t> out_node, unsigned m) const
 {
-  // We only compute the variable nodes needed to fill the codeword.
-  // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
-  unsigned nof_layers = codeblock_length / lifting_size - bg_K;
+  unsigned            node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
+  span<const uint8_t> codeblock(codeblock_buffer);
 
-  mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
+  // Get the adjacency row for the node m.
+  const ldpc::BG_adjacency_row_t& row = current_graph->get_adjacency_row(m);
 
-  mm256::avx2_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
+  // Zero node.
+  srsvec::zero(out_node);
 
-  mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
-
-  // Encode the extended region.
-  for (unsigned m = bg_hr_parity_nodes; m != nof_layers; ++m) {
-    unsigned skip = (bg_K + m) * NODE_SIZE_AVX2_PH;
-
-    for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
-      unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
-
-      if (node_shift == NO_EDGE) {
-        continue;
-      }
-
-      // At this point, the codeblock nodes in the extended region already contain the contribution from the systematic
-      // bits (they were computed in systematic_bits_inner). All is left to do is to sum the contribution due to the
-      // high-rate region (also stored in codeblock), with the proper circular shifts.
-      srsvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size),
-                                  codeblock.plain_span((bg_K + k) * NODE_SIZE_AVX2_PH, lifting_size),
-                                  node_shift);
-
-      for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
-        codeblock.set_at(skip + j, _mm256_xor_si256(codeblock.get_at(skip + j), rotated_node.get_at(j)));
-      }
+  // Process each of the nodes.
+  for (uint16_t k : row) {
+    // Check if the node is in codeblock range.
+    if ((k >= bg_K) || (k == NO_EDGE)) {
+      break;
     }
-    skip += NODE_SIZE_AVX2_PH;
+
+    // Obtain the node cyclic shift.
+    unsigned node_shift = current_graph->get_lifted_node(m, k);
+    if (node_shift == NO_EDGE) {
+      break;
+    }
+
+    // Get the view of the codeblock node.
+    span<const uint8_t> codeblock_node = codeblock.subspan(k * node_size_byte, lifting_size);
+
+    // The first time, the node is copied; afterwards combined.
+    if (k == row[0]) {
+      srsvec::circ_shift_backward(out_node, codeblock_node, node_shift);
+    } else {
+      fast_xor<uint8_t>(out_node.first(lifting_size - node_shift),
+                        out_node.first(lifting_size - node_shift),
+                        codeblock_node.last(lifting_size - node_shift));
+      fast_xor<uint8_t>(out_node.last(node_shift), out_node.last(node_shift), codeblock_node.first(node_shift));
+    }
+  }
+
+  // Process extended region.
+  for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
+    unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
+
+    if (node_shift == NO_EDGE) {
+      continue;
+    }
+
+    // At this point, the codeblock nodes in the extended region already contain the contribution from the systematic
+    // bits (they were computed in systematic_bits_inner). All is left to do is to sum the contribution due to the
+    // high-rate region (also stored in codeblock), with the proper circular shifts.
+    span<const uint8_t> in_node = codeblock.subspan((bg_K + k) * node_size_byte, lifting_size);
+    fast_xor<uint8_t>(out_node.first(lifting_size - node_shift),
+                      out_node.first(lifting_size - node_shift),
+                      in_node.last(lifting_size - node_shift));
+    fast_xor<uint8_t>(out_node.last(node_shift), out_node.last(node_shift), in_node.first(node_shift));
   }
 }
 
-void ldpc_encoder_avx2::write_codeblock(bit_buffer& out)
+void ldpc_encoder_avx2::write_codeblock(span<uint8_t> out, unsigned offset) const
 {
-  unsigned nof_nodes = codeblock_length / lifting_size;
+  srsran_assert(out.size() + offset <= bg_N_short * lifting_size,
+                "The output size (i.e., {}) plus the offset (i.e., {}) exceeds the codeblock length (i.e., {}).",
+                out.size(),
+                offset,
+                bg_N_short * lifting_size);
 
-  // The first two blocks are shortened and the last node is not considered, since it can be incomplete.
+  // Calculate the node size in bytes, considering SIMD alignment.
   unsigned            node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
-  unsigned            out_offset     = 0;
   span<const uint8_t> codeblock(codeblock_buffer);
-  codeblock = codeblock.last(codeblock.size() - 2 * node_size_byte);
-  for (unsigned i_node = 2, max_i_node = nof_nodes - 1; i_node != max_i_node; ++i_node) {
-    srsvec::bit_pack(out, out_offset, codeblock.first(lifting_size));
 
+  // Select the initial node. The first two blocks are shortened and the last node is not considered, since it can be
+  // incomplete.
+  unsigned i_node_begin = 2 + offset / lifting_size;
+
+  // Advance the codeblock to the initial node.
+  codeblock = codeblock.last(codeblock.size() - i_node_begin * node_size_byte);
+
+  // End node.
+  unsigned i_node_end = i_node_begin + divide_ceil(out.size(), lifting_size);
+
+  // Calculate the offset within the first node.
+  offset = offset % lifting_size;
+
+  for (unsigned i_node = i_node_begin; i_node != i_node_end; ++i_node) {
+    // Determine the number of bits to read from this node.
+    unsigned count = std::min(lifting_size - offset, static_cast<unsigned>(out.size()));
+
+    // Check if it is operating in the extended region.
+    if (i_node < bg_hr_parity_nodes + bg_K) {
+      srsvec::copy(out.first(count), codeblock.subspan(offset, count));
+    } else {
+      // Detect if the extended region can be done directly on the output.
+      bool inplace = ((offset == 0) && (count == lifting_size));
+
+      // Create temporary data.
+      static_vector<uint8_t, MAX_LIFTING_SIZE> temp(lifting_size);
+      span<uint8_t>                            node_view = temp;
+
+      // Use direct output for the extended node.
+      if (inplace) {
+        node_view = out.first(lifting_size);
+      }
+
+      // Process extended region for the given node.
+      ext_region_inner(node_view, i_node - bg_K);
+
+      // Copy data if temporal buffer was used.
+      if (!inplace) {
+        srsvec::copy(out.first(count), node_view.subspan(offset, count));
+      }
+    }
+
+    // Advance codeblock.
     codeblock = codeblock.last(codeblock.size() - node_size_byte);
-    out_offset += lifting_size;
-  }
 
-  // Take care of the last node.
-  unsigned remainder = out.size() - out_offset;
-  srsvec::bit_pack(out, out_offset, codeblock.first(remainder));
+    // Advance output.
+    out = out.last(out.size() - count);
+
+    // The offset is no longer required after the first node.
+    offset = 0;
+  }
 }

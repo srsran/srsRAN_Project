@@ -56,6 +56,7 @@ static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_
   node["rlc_level"]         = srslog::basic_level_to_string(config.rlc_level);
   node["f1ap_level"]        = srslog::basic_level_to_string(config.f1ap_level);
   node["f1u_level"]         = srslog::basic_level_to_string(config.f1u_level);
+  node["gtpu_level"]        = srslog::basic_level_to_string(config.gtpu_level);
   node["du_level"]          = srslog::basic_level_to_string(config.du_level);
   node["hex_max_size"]      = config.hex_max_size;
   node["broadcast_enabled"] = config.broadcast_enabled;
@@ -418,24 +419,23 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
 {
   YAML::Node node;
 
-  node["p0_nominal"]                   = config.p0_nominal;
-  node["pucch_resource_common"]        = config.pucch_resource_common;
-  node["use_format_0"]                 = config.use_format_0;
-  node["sr_period_ms"]                 = config.sr_period_msec;
-  node["f0_or_f1_nof_ue_res_harq"]     = config.nof_ue_pucch_f0_or_f1_res_harq;
-  node["f0_or_f1_nof_cell_res_sr"]     = config.nof_cell_sr_resources;
-  node["f0_intraslot_freq_hop"]        = config.f0_intraslot_freq_hopping;
-  node["f1_enable_occ"]                = config.f1_enable_occ;
-  node["f1_nof_cyclic_shifts"]         = config.nof_cyclic_shift;
-  node["f1_intraslot_freq_hop"]        = config.f1_intraslot_freq_hopping;
-  node["nof_cell_harq_pucch_res_sets"] = config.nof_cell_harq_pucch_sets;
-  node["f2_nof_ue_res_harq"]           = config.nof_ue_pucch_f2_res_harq;
-  node["f2_nof_cell_res_csi"]          = config.nof_cell_csi_resources;
-  node["f2_max_nof_rbs"]               = config.f2_max_nof_rbs;
-  node["f2_max_code_rate"]             = to_string(config.max_code_rate);
-  node["f2_intraslot_freq_hop"]        = config.f2_intraslot_freq_hopping;
-  node["min_k1"]                       = config.min_k1;
-  node["max_consecutive_kos"]          = config.max_consecutive_kos;
+  node["p0_nominal"]                    = config.p0_nominal;
+  node["pucch_resource_common"]         = config.pucch_resource_common;
+  node["use_format_0"]                  = config.use_format_0;
+  node["sr_period_ms"]                  = config.sr_period_msec;
+  node["nof_ue_pucch_res_harq_per_set"] = config.nof_ue_pucch_res_harq_per_set;
+  node["f0_or_f1_nof_cell_res_sr"]      = config.nof_cell_sr_resources;
+  node["f0_intraslot_freq_hop"]         = config.f0_intraslot_freq_hopping;
+  node["f1_enable_occ"]                 = config.f1_enable_occ;
+  node["f1_nof_cyclic_shifts"]          = config.nof_cyclic_shift;
+  node["f1_intraslot_freq_hop"]         = config.f1_intraslot_freq_hopping;
+  node["nof_cell_harq_pucch_res_sets"]  = config.nof_cell_harq_pucch_sets;
+  node["f2_nof_cell_res_csi"]           = config.nof_cell_csi_resources;
+  node["f2_max_nof_rbs"]                = config.f2_max_nof_rbs;
+  node["f2_max_code_rate"]              = to_string(config.max_code_rate);
+  node["f2_intraslot_freq_hop"]         = config.f2_intraslot_freq_hopping;
+  node["min_k1"]                        = config.min_k1;
+  node["max_consecutive_kos"]           = config.max_consecutive_kos;
   if (config.max_payload_bits.has_value()) {
     node["f2_max_payload"] = config.max_payload_bits.value();
   }
@@ -572,7 +572,7 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   YAML::Node node;
 
   node["pci"]                   = config.pci;
-  node["dl_arfcn"]              = config.dl_arfcn;
+  node["dl_arfcn"]              = config.dl_f_ref_arfcn;
   node["common_scs"]            = scs_to_khz(config.common_scs);
   node["channel_bandwidth_MHz"] = bs_channel_bandwidth_to_MHz(config.channel_bw_mhz);
   node["nof_antennas_ul"]       = config.nof_antennas_ul;

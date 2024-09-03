@@ -21,19 +21,27 @@
  */
 
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
-#include "bbdev.h"
+#include "plugin_bbdev_acc_factory.h"
+#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 
 using namespace srsran;
 using namespace dpdk;
 
-std::shared_ptr<bbdev_acc> srsran::dpdk::create_bbdev_acc(const bbdev_acc_configuration& cfg,
-                                                          srslog::basic_logger&          logger)
+std::unique_ptr<bbdev_acc_factory> srsran::dpdk::create_bbdev_acc_factory(std::string impl_name)
 {
-  // bbdev device start procedure.
-  expected<::rte_bbdev_info> info = bbdev_start(cfg, logger);
-  if (not info.has_value()) {
-    return nullptr;
+  // Convert implementation name to lower case.
+  for (char& c : impl_name) {
+    c = std::tolower(c);
   }
 
-  return std::make_shared<bbdev_acc>(cfg, info.value(), logger);
+  // Try creating a plugin bbdev accelerator factory.
+  auto factory = create_plugin_bbdev_acc_factory(impl_name);
+  if (factory) {
+    return factory;
+  }
+
+  // No match.
+  fmt::print("Factory for bbdev accelerator type {} not found. Make sure to select a valid type.\n", impl_name);
+
+  return nullptr;
 }

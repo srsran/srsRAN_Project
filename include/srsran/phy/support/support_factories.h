@@ -73,13 +73,11 @@ create_generic_resource_grid_pool(std::vector<std::unique_ptr<resource_grid>> gr
 /// The resource grid repetition is not deterministic but it is guaranteed that it is repeated after
 /// \c expire_timeout_slots.
 ///
-/// \param[in] expire_timeout_slots Number of slots after which resource grids are expired.
 /// \param[in] async_executor       Asynchronous task executor for setting the grid to zero.
 /// \param[in] grids                Resource grids, ownerships are transferred to the pool.
 /// \return An asynchronous resource grid pool.
 std::unique_ptr<resource_grid_pool>
-create_asynchronous_resource_grid_pool(unsigned                                    expire_timeout_slots,
-                                       task_executor&                              async_executor,
+create_asynchronous_resource_grid_pool(task_executor&                              async_executor,
                                        std::vector<std::unique_ptr<resource_grid>> grids);
 
 /// \brief Creates a long PRACH sequence buffer.

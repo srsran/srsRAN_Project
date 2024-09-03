@@ -22,9 +22,9 @@
 
 #pragma once
 
+#include "srsran/adt/to_array.h"
 #include "srsran/support/format_utils.h"
 #include "fmt/format.h"
-#include <vector>
 
 namespace srsran {
 
@@ -139,7 +139,8 @@ inline bool cpu_supports_feature(cpu_feature feature)
   }
 }
 
-static const std::vector<cpu_feature> cpu_features_included = {
+namespace detail {
+constexpr auto cpu_features_included = to_array<cpu_feature>({
 #ifdef __x86_64__
 #ifdef __SSE4_1__
     cpu_feature::sse4_1,
@@ -180,12 +181,13 @@ static const std::vector<cpu_feature> cpu_features_included = {
     cpu_feature::neon,
 #endif // __ARM_NEON
 #endif // __aarch64__
-};
+});
+} // namespace detail
 
 inline std::string get_cpu_feature_info()
 {
   fmt::memory_buffer buffer;
-  for (cpu_feature feature : cpu_features_included) {
+  for (cpu_feature feature : detail::cpu_features_included) {
 #ifdef __x86_64__
     format_to(
         buffer, "{}{}{}", buffer.size() == 0 ? "" : " ", feature, cpu_supports_feature(feature) ? "(ok)" : "(na)");
@@ -199,7 +201,7 @@ inline std::string get_cpu_feature_info()
 
 inline bool cpu_supports_included_features()
 {
-  for (cpu_feature feature : cpu_features_included) {
+  for (cpu_feature feature : detail::cpu_features_included) {
     if (!cpu_supports_feature(feature)) {
       return false;
     }

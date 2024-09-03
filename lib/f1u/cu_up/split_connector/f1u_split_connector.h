@@ -119,7 +119,7 @@ public:
 
   f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
 
-  std::optional<uint16_t> get_bind_port() override { return udp_session->get_bind_port(); }
+  std::optional<uint16_t> get_bind_port() const override { return udp_session->get_bind_port(); }
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,

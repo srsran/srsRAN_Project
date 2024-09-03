@@ -62,9 +62,5 @@ e1ap_bearer_context_modification_response
 generate_e1ap_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                    gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
 
-/// \brief Generate a dummy CU-CP UE Context Modification Response.
-f1ap_ue_context_modification_response generate_f1ap_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
-                                                                                     gnb_du_ue_f1ap_id_t du_ue_f1ap_id);
-
 } // namespace srs_cu_cp
 } // namespace srsran

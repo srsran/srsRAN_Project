@@ -22,6 +22,7 @@
 
 #include "rrc_setup_procedure.h"
 #include "../rrc_asn1_helpers.h"
+#include "ue/rrc_asn1_converters.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include <variant>
 
@@ -29,13 +30,13 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&           context_,
-                                         const byte_buffer&          du_to_cu_container_,
-                                         rrc_ue_setup_proc_notifier& rrc_ue_notifier_,
-                                         rrc_ue_srb_handler&         srb_notifier_,
-                                         rrc_ue_nas_notifier&        nas_notifier_,
-                                         rrc_ue_event_manager&       event_mng_,
-                                         rrc_ue_logger&              logger_) :
+rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context_,
+                                         const byte_buffer&              du_to_cu_container_,
+                                         rrc_ue_setup_proc_notifier&     rrc_ue_notifier_,
+                                         rrc_ue_control_message_handler& srb_notifier_,
+                                         rrc_ue_nas_notifier&            nas_notifier_,
+                                         rrc_ue_event_manager&           event_mng_,
+                                         rrc_ue_logger&                  logger_) :
   context(context_),
   du_to_cu_container(du_to_cu_container_),
   rrc_ue(rrc_ue_notifier_),

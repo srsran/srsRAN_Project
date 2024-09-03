@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../ran_resource_management/cell_group_config.h"
+#include "../ran_resource_management/du_ue_resource_config.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/asn1/rrc_nr/ho_prep_info.h"
 
@@ -69,13 +69,13 @@ asn1::rrc_nr::tag_s make_asn1_rrc_tag_config(const tag& cfg);
 /// \param[in] src Previous cell group configuration of UE.
 /// \param[in] dest Next cell group configuration of UE.
 void calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
-                                      const cell_group_config&        src,
-                                      const cell_group_config&        dest);
+                                      const du_ue_resource_config&    src,
+                                      const du_ue_resource_config&    dest);
 
 /// Compute ReconfigurationWithSync field. This is used, for instance, during handover.
 bool calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync_s&    out,
                                        const du_cell_config&               du_cell_cfg,
-                                       const cell_group_config&            dest,
+                                       const du_ue_resource_config&        dest,
                                        const asn1::rrc_nr::ho_prep_info_s& ho_prep_info,
                                        rnti_t                              rnti);
 

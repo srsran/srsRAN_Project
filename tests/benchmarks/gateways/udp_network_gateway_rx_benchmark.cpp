@@ -126,6 +126,8 @@ int main(int argc, char** argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(750));
 
+  gw.reset();
+
   uint64_t rx_duration_us = gw_dn.get_t_rx().count();
   uint64_t rx_bytes       = gw_dn.get_rx_bytes();
   uint64_t rx_bits        = rx_bytes * 8;

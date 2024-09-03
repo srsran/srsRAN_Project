@@ -233,6 +233,9 @@ f1ap_test_mode_adapter::handle_du_connection_request(std::unique_ptr<f1ap_messag
 {
   tx_notifier = f1c_client.handle_du_connection_request(
       std::make_unique<gw_to_f1ap_pdu_interceptor>(*this, std::move(du_rx_pdu_notifier)));
+  if (tx_notifier == nullptr) {
+    return nullptr;
+  }
   return std::make_unique<f1ap_to_gw_pdu_interceptor>(*this);
 }
 

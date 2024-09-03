@@ -70,8 +70,8 @@ public:
   bool has_sn(uint32_t sn) const override { return window.contains(sn); }
 
 private:
-  PREFIXED_LOGGER&                               logger;
-  srsran::circular_map<uint32_t, T, WINDOW_SIZE> window;
+  PREFIXED_LOGGER&                       logger;
+  circular_map<uint32_t, T, WINDOW_SIZE> window;
 };
 
 } // namespace srsran

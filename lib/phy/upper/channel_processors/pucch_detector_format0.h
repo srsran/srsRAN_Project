@@ -49,8 +49,6 @@ public:
                                                                  const pucch_detector::format0_configuration& config);
 
 private:
-  /// Detection threshold.
-  static constexpr float detection_threshold = 4.0F;
   /// Maximum number of RE used for PUCCH Format 0. Recall that PUCCH format 0 occupies a single RB.
   static constexpr unsigned max_nof_re = NRE * MAX_PORTS * pucch_constants::format0_nof_symbols_range.stop();
 
@@ -64,8 +62,6 @@ private:
 
   /// Temporary storage of the resource elements.
   static_tensor<static_cast<unsigned>(dims::nof_dims), cf_t, max_nof_re, dims> temp_re;
-  /// Temporary least square estimates for a single OFDM symbol.
-  std::array<cf_t, NRE> lse;
 };
 
 } // namespace srsran

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../slicing/ran_slice_id.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
@@ -160,6 +161,9 @@ public:
     /// Whether to set the HARQ as ACKed or NACKed when the timeout expires.
     bool ack_on_timeout = false;
 
+    /// Whether the HARQ retransmissions were cancelled (e.g. due to UE changing state).
+    bool cancelled = false;
+
     bool empty() const { return state == state_t::empty; }
   };
 
@@ -267,6 +271,8 @@ struct dl_harq_sched_context {
   dci_dl_rnti_config_type dci_cfg_type;
   /// MCS suggested by the OLLA.
   std::optional<sch_mcs_index> olla_mcs;
+  /// RAN slice identifier of the slice to which PDSCH belongs to.
+  std::optional<ran_slice_id_t> slice_id;
 };
 
 class dl_harq_process : public detail::harq_process<true>
@@ -283,8 +289,8 @@ public:
       pdsch_mcs_table mcs_table;
       sch_mcs_index   mcs;
       unsigned        tbs_bytes;
-      /// Flag indicating whether the TB contains data from SRB or not.
-      bool contains_srb_data;
+      /// RAN slice identifier.
+      std::optional<ran_slice_id_t> slice_id;
       /// \brief MCS originally suggested by the OLLA. It might differ from the actual MCS used.
       std::optional<sch_mcs_index> olla_mcs;
     };
@@ -354,8 +360,7 @@ public:
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
-  void
-  save_alloc_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch, bool contains_srb_data = false);
+  void save_alloc_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch);
 
   void increment_pucch_counter();
 
@@ -376,6 +381,8 @@ struct ul_harq_sched_context {
   dci_ul_rnti_config_type dci_cfg_type;
   /// MCS suggested by the OLLA.
   std::optional<sch_mcs_index> olla_mcs;
+  /// RAN slice identifier of the slice to which PUSCH belongs to.
+  std::optional<ran_slice_id_t> slice_id;
 };
 
 class ul_harq_process : private detail::harq_process<false>
@@ -385,13 +392,14 @@ class ul_harq_process : private detail::harq_process<false>
 public:
   /// \brief Parameters relative to the last allocated PUSCH PDU for this HARQ process.
   struct alloc_params {
-    dci_ul_rnti_config_type      dci_cfg_type;
-    vrb_alloc                    rbs;
-    pusch_mcs_table              mcs_table;
-    sch_mcs_index                mcs;
-    unsigned                     tbs_bytes;
-    unsigned                     nof_symbols;
-    std::optional<sch_mcs_index> olla_mcs;
+    dci_ul_rnti_config_type       dci_cfg_type;
+    vrb_alloc                     rbs;
+    pusch_mcs_table               mcs_table;
+    sch_mcs_index                 mcs;
+    unsigned                      tbs_bytes;
+    unsigned                      nof_symbols;
+    std::optional<ran_slice_id_t> slice_id;
+    std::optional<sch_mcs_index>  olla_mcs;
   };
 
   using base_type::transport_block;
@@ -445,7 +453,6 @@ public:
 private:
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
-  bool         harq_cancelled = false;
 };
 
 /// \brief Helper function to fill HARQ allocation grant parameters.

@@ -47,10 +47,10 @@ public:
   precoding_configuration() = default;
 
   /// \brief Constructs a precoding configuration with the desired number of layers, ports and PRGs.
-  /// \param[in] nof_layers Number of layers.
-  /// \param[in] nof_ports  Number of ports.
-  /// \param[in] nof_prg    Number of PRGs.
-  /// \param[in] prg_size_  Number of PRB that comprise a PRG.
+  /// \param[in] nof_layers_ Number of layers.
+  /// \param[in] nof_ports_  Number of ports.
+  /// \param[in] nof_prg_    Number of PRGs.
+  /// \param[in] prg_size_   Number of PRB that comprise a PRG.
   /// \remark An assertion is triggered if the number of layers exceeds \ref precoding_constants::MAX_NOF_LAYERS.
   /// \remark An assertion is triggered if the number of ports exceeds \ref precoding_constants::MAX_NOF_PORTS.
   /// \remark An assertion is triggered if the number of PRGs exceeds \ref precoding_constants::MAX_NOF_PRG.

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "ue_configuration.h"
-#include "srsran/adt/detail/operations.h"
+#include "srsran/adt/noop_functor.h"
 #include "srsran/scheduler/config/scheduler_config.h"
 #include "srsran/srslog/logger.h"
 
@@ -56,9 +56,9 @@ public:
 private:
   du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
   // We use a unique_ptr with no deleter to automatically set the ptr to null on move.
-  std::unique_ptr<sched_config_manager, detail::noop_operation> parent;
-  std::unique_ptr<ue_configuration>                             next_ded_cfg;
-  std::optional<bool>                                           set_fallback_mode;
+  std::unique_ptr<sched_config_manager, noop_operation> parent;
+  std::unique_ptr<ue_configuration>                     next_ded_cfg;
+  std::optional<bool>                                   set_fallback_mode;
 };
 
 /// Event to delete a UE in the scheduler.
@@ -78,8 +78,8 @@ public:
   du_ue_index_t ue_index() const { return ue_idx; }
 
 private:
-  du_ue_index_t                                                 ue_idx = INVALID_DU_UE_INDEX;
-  std::unique_ptr<sched_config_manager, detail::noop_operation> parent;
+  du_ue_index_t                                         ue_idx = INVALID_DU_UE_INDEX;
+  std::unique_ptr<sched_config_manager, noop_operation> parent;
 };
 
 /// \brief Internal scheduler interface to create/update/delete UEs.
@@ -110,9 +110,10 @@ public:
 class sched_config_manager
 {
 public:
-  sched_config_manager(const scheduler_config& sched_cfg_, sched_metrics_ue_configurator& metrics_handler_);
+  sched_config_manager(const scheduler_config& sched_cfg_);
 
-  const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg);
+  const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg,
+                                     sched_metrics_ue_configurator&                  metrics_handler_);
 
   ue_config_update_event add_ue(const sched_ue_creation_request_message& cfg_req);
 
@@ -124,8 +125,7 @@ public:
 
   du_cell_group_index_t get_cell_group_index(du_cell_index_t cell_index) const
   {
-    return du_cell_to_cell_group_index.contains(cell_index) ? du_cell_to_cell_group_index[cell_index]
-                                                            : INVALID_DU_CELL_GROUP_INDEX;
+    return added_cells.contains(cell_index) ? added_cells[cell_index]->cell_group_index : INVALID_DU_CELL_GROUP_INDEX;
   }
 
   du_cell_group_index_t get_cell_group_index(du_ue_index_t ue_index) const
@@ -143,18 +143,17 @@ private:
   void handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_configuration> next_cfg);
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 
-  const scheduler_expert_config  expert_params;
-  sched_configuration_notifier&  config_notifier;
-  sched_metrics_ue_configurator& metrics_handler;
-  srslog::basic_logger&          logger;
+  const scheduler_expert_config expert_params;
+  sched_configuration_notifier& config_notifier;
+  srslog::basic_logger&         logger;
 
   // List of common configs for the scheduler cells.
   cell_common_configuration_list added_cells;
 
-  std::array<std::unique_ptr<ue_configuration>, MAX_NOF_DU_UES> ue_cfg_list;
+  // List of metrics handlers for each cell.
+  slotted_id_table<du_cell_index_t, sched_metrics_ue_configurator*, MAX_NOF_DU_CELLS> cell_metrics;
 
-  /// Mapping of DU cells to DU Cell Groups.
-  slotted_id_table<du_cell_index_t, du_cell_group_index_t, MAX_NOF_DU_CELLS> du_cell_to_cell_group_index;
+  std::array<std::unique_ptr<ue_configuration>, MAX_NOF_DU_UES> ue_cfg_list;
 
   /// Mapping of UEs to DU Cell Groups.
   std::array<std::atomic<du_cell_group_index_t>, MAX_NOF_DU_UES> ue_to_cell_group_index;

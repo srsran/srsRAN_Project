@@ -42,8 +42,7 @@ target_link_libraries(gnb
         srsran_gateway
         srsran_pcap
         srsran_support
-        srsran_version
-        srsran_build_info
+        srsran_versioning
         srsran_flexible_du_dynamic
         srsran_f1c_gateway
         srsran_e1_gateway
@@ -54,6 +53,14 @@ target_link_libraries(gnb
 if (DPDK_FOUND)
     add_definitions(-DDPDK_FOUND)
     target_link_libraries(gnb hal_dpdk)
+    if (ENABLE_PUSCH_HWACC)
+      add_definitions(-DENABLE_PUSCH_HWACC)
+      target_link_libraries(gnb hal_hwacc_pusch hal_bbdev_factory)
+    endif (ENABLE_PUSCH_HWACC)
+    if (ENABLE_PDSCH_HWACC)
+      add_definitions(-DENABLE_PDSCH_HWACC)
+      target_link_libraries(gnb hal_hwacc_pdsch hal_bbdev_factory)
+    endif (ENABLE_PDSCH_HWACC)
 endif (DPDK_FOUND)
 
 add_backward(gnb)

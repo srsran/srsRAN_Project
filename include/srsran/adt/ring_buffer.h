@@ -22,12 +22,11 @@
 
 #pragma once
 
-#include "srsran/adt/detail/operations.h"
 #include "srsran/adt/detail/type_storage.h"
 #include "srsran/adt/expected.h"
+#include "srsran/adt/noop_functor.h"
 #include "srsran/adt/span.h"
 #include "srsran/support/srsran_assert.h"
-
 #include <array>
 #include <type_traits>
 #include <vector>

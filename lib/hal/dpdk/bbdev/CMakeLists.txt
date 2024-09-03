@@ -19,14 +19,9 @@
 #
 
 set(SOURCES 
-  bbdev_acc.cpp
   bbdev_acc_factory.cpp
-  bbdev.cpp
-  bbdev_op_pool_factory.cpp
-  ldpc/bbdev_ldpc_decoder.cpp
-  ldpc/bbdev_ldpc_encoder.cpp
-)
+  plugin_bbdev_acc_factory.cpp)
 
-add_library(hal_bbdev STATIC ${SOURCES})
-target_compile_options(hal_bbdev PRIVATE ${DPDK_CFLAGS})
-target_link_libraries(hal_bbdev srslog ${DPDK_LIBRARIES})
+add_library(hal_bbdev_factory STATIC ${SOURCES})
+target_compile_options(hal_bbdev_factory PRIVATE ${DPDK_CFLAGS})
+target_link_libraries(hal_bbdev_factory srslog ${DPDK_LIBRARIES} dl)

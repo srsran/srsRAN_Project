@@ -22,6 +22,7 @@
 
 #include "uplink_request_processor_impl.h"
 #include "srsran/phy/support/prach_buffer_pool.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_request_notifier.h"
 
 using namespace srsran;
@@ -43,7 +44,7 @@ void uplink_request_processor_impl::process_prach_request(const prach_buffer_con
 }
 
 void uplink_request_processor_impl::process_uplink_slot_request(const resource_grid_context& context,
-                                                                resource_grid&               grid)
+                                                                const shared_resource_grid&  grid)
 {
   rx_symbol_request_notifier.on_uplink_slot_request(context, grid);
 }

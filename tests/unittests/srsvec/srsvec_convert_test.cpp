@@ -279,6 +279,32 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float16Random)
   }
 }
 
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestScaledInt16ComplexFloat16Random)
+{
+  constexpr float int16_gain = 1.0 / ((1 << 15) - 1);
+
+  std::uniform_int_distribution<int16_t> dist_i(-32768, 32767);
+  std::uniform_int_distribution<int16_t> dist_f(1, 128);
+
+  const unsigned size_i16 = size * 2;
+
+  srsvec::aligned_vec<int16_t> in(size_i16);
+  srsvec::aligned_vec<float>   gain(size_i16);
+
+  std::generate(in.begin(), in.end(), [&dist_i]() { return dist_i(rgen); });
+  std::generate(gain.begin(), gain.end(), [&dist_f]() { return int16_gain * float(dist_f(rgen)); });
+
+  // Convert from int16 to brain float.
+  srsvec::aligned_vec<cbf16_t> data_cbf16(size);
+  srsvec::convert(data_cbf16, in, gain);
+
+  // Assert conversion to cbf16.
+  for (size_t i = 0; i != size; ++i) {
+    ASSERT_EQ(data_cbf16[i].real, to_bf16(in[i * 2], 1 / gain[i * 2]));
+    ASSERT_EQ(data_cbf16[i].imag, to_bf16(in[i * 2 + 1], 1 / gain[i * 2 + 1]));
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(SrsvecConvertTest, SrsvecConvertFixture, ::testing::Values(1, 5, 7, 19, 23, 257, 1234));
 
 } // namespace

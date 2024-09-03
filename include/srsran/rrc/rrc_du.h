@@ -110,13 +110,13 @@ public:
 };
 
 /// Combined entry point for the RRC DU handling.
-class rrc_du_interface : public rrc_du_cell_manager,
-                         public rrc_du_ue_repository,
-                         public rrc_ue_handler,
-                         public rrc_du_statistics_handler
+class rrc_du : public rrc_du_cell_manager,
+               public rrc_du_ue_repository,
+               public rrc_ue_handler,
+               public rrc_du_statistics_handler
 {
 public:
-  virtual ~rrc_du_interface() = default;
+  virtual ~rrc_du() = default;
 
   virtual rrc_du_cell_manager&       get_rrc_du_cell_manager()       = 0;
   virtual rrc_du_ue_repository&      get_rrc_du_ue_repository()      = 0;

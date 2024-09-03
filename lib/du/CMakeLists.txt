@@ -31,4 +31,13 @@ target_link_libraries(srsran_du_high_wrapper PUBLIC srsran_du_config_validators 
 add_library(srsran_du_wrapper STATIC
         du_wrapper_impl.cpp
         du_wrapper_factory.cpp)
-target_link_libraries(srsran_du_wrapper PUBLIC srsran_du_high_wrapper srsran_du_low_wrapper)
+set(DU_WRAPPER_LIBRARIES srsran_du_high_wrapper srsran_du_low_wrapper)
+
+# Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
+if (DPDK_FOUND)
+   set_source_files_properties(du_wrapper_factory.cpp du_wrapper_impl.cpp PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND; HWACC_PDSCH_ENABLED; HWACC_PUSCH_ENABLED")
+   list(APPEND DU_LOW_LIBRARIES hal_hwacc_pusch
+        hal_hwacc_pdsch
+        hal_bbdev_factory)
+endif (DPDK_FOUND)
+target_link_libraries(srsran_du_wrapper PUBLIC ${DU_WRAPPER_LIBRARIES})

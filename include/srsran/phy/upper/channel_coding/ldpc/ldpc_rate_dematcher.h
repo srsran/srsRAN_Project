@@ -47,6 +47,8 @@ public:
   /// be determined from the input are set to zero.
   /// \param[in,out] output          Full-length codeblock (log-likelihood ratios).
   /// \param[in]     input           Rate-matched codeblock (log-likelihood ratios).
+  /// \param[in]     new_data        Boolean flag that indicates whether the input corresponds to a new codeblock (if
+  ///                                true) or to a retransmission of an old one (if false).
   /// \param[in]     cfg             Configuration parameters.
   /// \remark The sizes of \c input and \c output determine the behavior of the rate recovering algorithm.
   virtual void rate_dematch(span<log_likelihood_ratio>       output,

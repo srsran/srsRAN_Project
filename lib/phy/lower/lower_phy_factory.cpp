@@ -85,11 +85,13 @@ public:
 
     const lower_phy_sector_description& sector = config.sectors.front();
 
-    srsran_assert(config.scs < subcarrier_spacing::kHz60,
-                  "Subcarrier spacing of {} is not supported. Only {} and {} are supported.",
+    srsran_assert((config.scs == subcarrier_spacing::kHz15) || (config.scs == subcarrier_spacing::kHz30) ||
+                      (config.scs == subcarrier_spacing::kHz120),
+                  "Subcarrier spacing of {} is not supported. Only {}, {} and {} are supported.",
                   to_string(config.scs),
                   to_string(subcarrier_spacing::kHz15),
-                  to_string(subcarrier_spacing::kHz30));
+                  to_string(subcarrier_spacing::kHz30),
+                  to_string(subcarrier_spacing::kHz120));
     unsigned nof_samples_per_slot = config.srate.to_kHz() / pow2(to_numerology_value(config.scs));
 
     unsigned tx_buffer_size = config.bb_gateway->get_transmitter_optimal_buffer_size();

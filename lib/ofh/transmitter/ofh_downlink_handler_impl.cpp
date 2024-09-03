@@ -27,6 +27,7 @@
 #include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -66,12 +67,13 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   srsran_assert(frame_pool, "Invalid frame pool");
 }
 
-void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid)
+void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid)
 {
-  srsran_assert(grid.get_nof_ports() <= dl_eaxc.size(),
+  const resource_grid_reader& reader = grid.get_reader();
+  srsran_assert(reader.get_nof_ports() <= dl_eaxc.size(),
                 "Number of RU ports is '{}' and must be equal or greater than the number of cell ports which is '{}'",
                 dl_eaxc.size(),
-                grid.get_nof_ports());
+                reader.get_nof_ports());
 
   trace_point tp = ofh_tracer.now();
 
@@ -96,14 +98,14 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   cplane_context.direction    = data_direction::downlink;
   cplane_context.symbol_range = tdd_config
                                     ? get_active_tdd_dl_symbols(tdd_config.value(), context.slot.slot_index(), cp)
-                                    : ofdm_symbol_range(0, grid.get_nof_symbols());
+                                    : ofdm_symbol_range(0, reader.get_nof_symbols());
 
   data_flow_uplane_resource_grid_context uplane_context;
   uplane_context.slot         = context.slot;
   uplane_context.sector       = context.sector;
   uplane_context.symbol_range = cplane_context.symbol_range;
 
-  for (unsigned cell_port_id = 0, e = grid.get_nof_ports(); cell_port_id != e; ++cell_port_id) {
+  for (unsigned cell_port_id = 0, e = reader.get_nof_ports(); cell_port_id != e; ++cell_port_id) {
     cplane_context.eaxc = dl_eaxc[cell_port_id];
     // Control-Plane data flow.
     data_flow_cplane->enqueue_section_type_1_message(cplane_context);

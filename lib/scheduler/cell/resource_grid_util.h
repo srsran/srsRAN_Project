@@ -23,31 +23,36 @@
 #pragma once
 
 #include "srsran/scheduler/sched_consts.h"
+#include "srsran/support/math_utils.h"
 
 namespace srsran {
 
-/// \brief Retrieves the resource grid allocator ring size greater than given minimum value.
-/// \remark 1. The implementation of circular ring based resource allocator only works correctly if we set a
-/// ring size which satisfies the condition NOF_SLOTS_PER_SYSTEM_FRAME % RING_ALLOCATOR_SIZE = 0.
-/// The condition is placed to avoid misalignment between (last_slot_ind + slot_delay) slot point and
-/// slot point contained in ((last_slot_ind + slot_delay) % RING_ALLOCATOR_SIZE) slot, which occurs when slot point is
-/// close to NOF_SLOTS_PER_SYSTEM_FRAME value.
+/// \brief Derives a ring size for the resource grid allocator that is equal or larger than the given minimum value.
+/// \remark 1. The ring size must satisfy the condition NOF_SLOTS_PER_SYSTEM_FRAME % RING_ALLOCATOR_SIZE = 0, for
+/// the used numerology. Otherwise, misalignments may occur close to the slot point wrap around.
 /// Misalignment example: Assume NOF_SLOTS_PER_SYSTEM_FRAME = 10240 and RING_ALLOCATOR_SIZE = 37
-/// At Slot point (10238) % 37 = Element at index 26 of slots array/vector is accessed, similarly
-/// Slot point (10239) % 37 = 27
-/// Now, Slot point wraps around NOF_SLOTS_PER_SYSTEM_FRAME and is set to 0, this causes Slot point (0) % 37 = 0.
-/// Resulting in element at index 0 of slots array/vector being accessed rather than index 28.
-/// \remark 2. The reason for choosing values 20, 40 and 80 for RING_ALLOCATOR_SIZE is because it holds the condition
-/// NOF_SLOTS_PER_SYSTEM_FRAME % RING_ALLOCATOR_SIZE = 0. for all numerologies.
-constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned minimum_value)
+/// At the slot 1023.9, the ring index 10239 % 37 = 26 is accessed. At slot point 0.0 (once slot point wraps around),
+/// the ring index 0 % 37 = 0 would be accessed.
+/// \remark 2. If the condition NOF_SLOTS_PER_SYSTEM_FRAME % RING_ALLOCATOR_SIZE = 0 is satisfied for
+/// the numerology mu=0 (SCS=15kHz), it will be also satisfied for the same RING_ALLOCATOR_SIZE and larger numerologies.
+/// This means that in contexts where mu is not known (e.g. compile time), mu=0 can be used for generality sake,
+/// at the expense of more memory overhead.
+constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned           minimum_value,
+                                                         subcarrier_spacing scs = subcarrier_spacing::kHz15)
 {
-  if (minimum_value < 20) {
-    return 20;
-  }
-  if (minimum_value < 40) {
-    return 40;
-  }
-  return 640;
+  auto power2_ceil = [](unsigned x) {
+    if (x <= 1)
+      return 1U;
+    unsigned power = 2;
+    x--;
+    while (x >>= 1)
+      power <<= 1;
+    return power;
+  };
+
+  unsigned slots_per_frame = 10U * get_nof_slots_per_subframe(scs);
+  unsigned frames_ceil     = divide_ceil(minimum_value, slots_per_frame);
+  return power2_ceil(frames_ceil) * slots_per_frame;
 }
 
 /// \brief Retrieves how far in advance the scheduler can allocate resources in the UL resource grid.

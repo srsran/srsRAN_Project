@@ -24,6 +24,7 @@
 #include "srsran/phy/constants.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
 
 using namespace srsran;
@@ -35,14 +36,20 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
   // Cyclic prefix extension for short preambles at 0 and 0.5 ms from the start of the subframe.
   static constexpr phy_time_unit sixteen_kappa = phy_time_unit::from_units_of_kappa(16);
 
+  // Assumes that each slot has 14 OFDM symbols.
+  static constexpr unsigned nof_ofdm_symbols_slot = 14;
+
+  // Deduce PUSCH subcarrier spacing.
+  subcarrier_spacing pusch_scs    = to_subcarrier_spacing(config.slot.numerology());
+  unsigned           pusch_scs_Hz = scs_to_khz(pusch_scs) * 1000;
+
   // PUSCH symbol duration.
-  phy_time_unit pusch_symbol_duration =
-      phy_time_unit::from_units_of_kappa((144U + 2048U) >> to_numerology_value(config.pusch_scs));
+  phy_time_unit pusch_symbol_duration = phy_time_unit::from_units_of_kappa((144U + 2048U) >> config.slot.numerology());
 
   // Validate configuration.
   if (is_short_preamble(config.format)) {
     unsigned prach_window_length =
-        get_prach_window_duration(config.format, config.pusch_scs, config.start_symbol, config.nof_td_occasions)
+        get_prach_window_duration(config.format, pusch_scs, config.start_symbol, config.nof_td_occasions)
             .to_samples(srate.to_Hz());
     srsran_assert(
         input.size() >= prach_window_length,
@@ -73,42 +80,49 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
 
     // Get preamble information for the time occasion.
     prach_preamble_information preamble_info =
-        is_long_preamble(config.format) ? get_prach_preamble_long_info(config.format)
-                                        : get_prach_preamble_short_info(config.format,
-                                                                        to_ra_subcarrier_spacing(config.pusch_scs),
-                                                                        is_last_occasion);
-
-    unsigned pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
+        is_long_preamble(config.format)
+            ? get_prach_preamble_long_info(config.format)
+            : get_prach_preamble_short_info(config.format, to_ra_subcarrier_spacing(pusch_scs), is_last_occasion);
 
     // Calculate time-domain occasion symbol start.
     unsigned t_occasion_start_symbol = config.start_symbol + get_preamble_duration(config.format) * i_td_occasion;
 
-    // Calculate time-domain occasion start time.
+    // Calculate time-domain occasion start time relative to the beginning of the slot.
     phy_time_unit t_occasion_start = pusch_symbol_duration * t_occasion_start_symbol;
 
-    // Add sixteen kappa units if the symbol doesn't start at the beginning of the slot.
-    if (t_occasion_start > phy_time_unit::from_seconds(0.0)) {
-      t_occasion_start += sixteen_kappa;
-    }
+    // Calculate the slot start time within the subframe.
+    phy_time_unit t_slot_start = pusch_symbol_duration * config.slot.subframe_slot_index() * nof_ofdm_symbols_slot;
 
-    // Add sixteen kappa units if the symbol starts more than 0.5 ms after the beginning of the slot.
-    if (t_occasion_start > phy_time_unit::from_seconds(0.5e-3)) {
-      t_occasion_start += sixteen_kappa;
+    // Calculate time-domain occasion start time relative to the beginning of the subframe.
+    phy_time_unit t_ra_start = t_occasion_start + t_slot_start;
+
+    // Apply correction of the beginning of the window for 1.25, 5, 15 and 30kHz subcarrier spacing.
+    if ((preamble_info.scs == prach_subcarrier_spacing::kHz1_25) ||
+        (preamble_info.scs == prach_subcarrier_spacing::kHz5) ||
+        (preamble_info.scs == prach_subcarrier_spacing::kHz15) ||
+        (preamble_info.scs == prach_subcarrier_spacing::kHz30)) {
+      // Add sixteen kappa units if the symbol doesn't start at the beginning of the slot.
+      if (t_occasion_start > phy_time_unit::from_seconds(0.0)) {
+        t_occasion_start += sixteen_kappa;
+      }
+
+      // Add sixteen kappa units if the symbol starts more than 0.5 ms after the beginning of the slot.
+      if (t_occasion_start > phy_time_unit::from_seconds(0.5e-3)) {
+        t_occasion_start += sixteen_kappa;
+      }
     }
 
     // Calculate time-domain occasion end time.
-    phy_time_unit t_occasion_end = t_occasion_start + preamble_info.cp_length + preamble_info.symbol_length();
+    phy_time_unit t_ra_end = t_ra_start + preamble_info.cp_length + preamble_info.symbol_length();
 
     // Add sixteen kappa to the cyclic prefix length if ...
     if (is_short_preamble(preamble_info.scs)) {
       // The occasion overlaps with time zero.
-      if ((t_occasion_start <= phy_time_unit::from_seconds(0.0)) &&
-          (t_occasion_end >= phy_time_unit::from_seconds(0.0))) {
+      if ((t_ra_start <= phy_time_unit::from_seconds(0.0)) && (t_ra_end >= phy_time_unit::from_seconds(0.0))) {
         preamble_info.cp_length += sixteen_kappa;
       }
-      // The occasion overlaps with time 0.5ms from the beginning of the slot.
-      if ((t_occasion_start <= phy_time_unit::from_seconds(0.5e-3)) &&
-          (t_occasion_end >= phy_time_unit::from_seconds(0.5e-3))) {
+      // The occasion overlaps with time 0.5ms from the beginning of the subframe.
+      if ((t_ra_start <= phy_time_unit::from_seconds(0.5e-3)) && (t_ra_end >= phy_time_unit::from_seconds(0.5e-3))) {
         preamble_info.cp_length += sixteen_kappa;
       }
     }
@@ -116,6 +130,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
     // Calculate occasion duration.
     phy_time_unit occasion_duration = preamble_info.cp_length + preamble_info.symbol_length();
 
+    // Get the time occasion boundaries in samples.
     unsigned sample_offset = t_occasion_start.to_samples(srate.to_Hz());
     unsigned nof_samples   = occasion_duration.to_samples(srate.to_Hz());
 
@@ -123,8 +138,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
     span<const cf_t> input_occasion = input.subspan(sample_offset, nof_samples);
 
     // Get frequency mapping information, common for all frequency-domain occasions.
-    prach_frequency_mapping_information freq_mapping_info =
-        prach_frequency_mapping_get(preamble_info.scs, config.pusch_scs);
+    prach_frequency_mapping_information freq_mapping_info = prach_frequency_mapping_get(preamble_info.scs, pusch_scs);
     srsran_assert(freq_mapping_info.nof_rb_ra != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.nof_rb_ra,
                   "The PRACH and PUSCH subcarrier spacing combination resulted in a reserved configuration.");
     srsran_assert(freq_mapping_info.k_bar != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.k_bar,
@@ -176,7 +190,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
                       prach_grid_size);
 
         // Select destination PRACH symbol in the buffer.
-        span<cf_t> prach_symbol = buffer.get_symbol(config.port, i_td_occasion, i_fd_occasion, i_symbol);
+        span<cbf16_t> prach_symbol = buffer.get_symbol(config.port, i_td_occasion, i_fd_occasion, i_symbol);
 
         // Create views of the lower and upper grid.
         span<const cf_t> lower_grid = dft_output.last(prach_grid_size / 2);
@@ -188,11 +202,11 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
           unsigned N = std::min(prach_grid_size / 2 - k_start, preamble_info.sequence_length);
 
           // Copy first N subcarriers of the sequence in the lower half grid.
-          srsvec::copy(prach_symbol.first(N), lower_grid.subspan(k_start, N));
+          srsvec::convert(prach_symbol.first(N), lower_grid.subspan(k_start, N));
 
           // Copy the remainder of the sequence in the upper half grid.
-          srsvec::copy(prach_symbol.last(preamble_info.sequence_length - N),
-                       upper_grid.first(preamble_info.sequence_length - N));
+          srsvec::convert(prach_symbol.last(preamble_info.sequence_length - N),
+                          upper_grid.first(preamble_info.sequence_length - N));
         } else {
           // Copy the sequence in the upper half grid.
           srsvec::copy(prach_symbol, upper_grid.subspan(k_start - prach_grid_size / 2, preamble_info.sequence_length));

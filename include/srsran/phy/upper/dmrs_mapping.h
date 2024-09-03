@@ -122,6 +122,7 @@ public:
     return dmrs_pattern;
   }
 
+  /// Returns a string with the DM-RS type.
   const char* to_string() const
   {
     switch (value) {

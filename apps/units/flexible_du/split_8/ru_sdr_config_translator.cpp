@@ -107,8 +107,8 @@ static lower_phy_configuration generate_low_phy_config(const du_cell_config&    
   lower_phy_sector_description sector_config;
   sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(
       MHz_to_bs_channel_bandwidth(config.dl_carrier.carrier_bw_mhz), config.scs_common, frequency_range::FR1);
-  sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(config.dl_carrier.arfcn);
-  sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(config.ul_carrier.arfcn);
+  sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(config.dl_carrier.arfcn_f_ref);
+  sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(config.ul_carrier.arfcn_f_ref);
   sector_config.nof_rx_ports = config.ul_carrier.nof_ant;
   sector_config.nof_tx_ports = config.dl_carrier.nof_ant;
   out_cfg.sectors.push_back(sector_config);
@@ -190,8 +190,8 @@ static void generate_radio_config(radio_configuration::radio& out_cfg,
     radio_configuration::stream rx_stream_config;
 
     // Deduce center frequencies.
-    const double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn);
-    const double cell_rx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn);
+    const double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn_f_ref);
+    const double cell_rx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn_f_ref);
 
     // Correct actual RF center frequencies considering offset and PPM calibration.
     double center_tx_freq_cal_Hz =

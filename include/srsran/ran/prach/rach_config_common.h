@@ -68,7 +68,7 @@ struct rach_config_common {
   subcarrier_spacing    msg1_scs;
   restricted_set_config restricted_set;
   /// Enables the transform precoder for Msg3 transmission according to clause 6.1.3 of TS 38.214.
-  bool msg3_transform_precoder;
+  bool msg3_transform_precoder = false;
   /// Indicates the number of SSBs per RACH occasion (L1 parameter 'SSB-per-rach-occasion'). See TS 38.331, \c
   /// ssb-perRACH-OccasionAndCB-PreamblesPerSSB. Values {1/8, 1/4, 1/2, 1, 2, 4, 8, 16}.
   /// Value 1/8 corresponds to one SSB associated with 8 RACH occasions and so on so forth.

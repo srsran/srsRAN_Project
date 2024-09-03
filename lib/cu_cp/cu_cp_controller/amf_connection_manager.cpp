@@ -22,24 +22,23 @@
 
 #include "amf_connection_manager.h"
 #include "../cu_cp_impl_interface.h"
-#include "../routine_managers/cu_cp_routine_manager.h"
 #include "../routines/amf_connection_setup_routine.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-amf_connection_manager::amf_connection_manager(cu_cp_routine_manager&     routine_manager_,
+amf_connection_manager::amf_connection_manager(common_task_scheduler&     common_task_sched_,
                                                const cu_cp_configuration& cu_cp_cfg_,
                                                ngap_connection_manager&   ngap_conn_mng_) :
-  routine_manager(routine_manager_), cu_cp_cfg(cu_cp_cfg_), ngap_conn_mng(ngap_conn_mng_)
+  common_task_sched(common_task_sched_), cu_cp_cfg(cu_cp_cfg_), ngap_conn_mng(ngap_conn_mng_)
 {
 }
 
 void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signal)
 {
   // Schedules setup routine to be executed in sequence with other CU-CP procedures.
-  routine_manager.schedule_async_task(
+  common_task_sched.schedule_async_task(
       launch_async([this, p = completion_signal](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 

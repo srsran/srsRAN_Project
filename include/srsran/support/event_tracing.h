@@ -40,13 +40,13 @@ using trace_clock    = std::chrono::steady_clock;
 using trace_point    = trace_clock::time_point;
 using trace_duration = std::chrono::microseconds;
 
-/// \brief Open a file to write trace events to.
+/// Open a file to write trace events to.
 void open_trace_file(std::string_view trace_file_name = "/tmp/srsran_trace.json");
 
-/// \brief Close the trace file. This function is called automatically when the program exits.
+/// Close the trace file. This function is called automatically when the program exits.
 void close_trace_file();
 
-/// \brief Check if the trace file is open.
+/// Check if the trace file is open.
 bool is_trace_file_open();
 
 /// \brief Trace event used for events with defined name, starting point and duration.
@@ -112,13 +112,13 @@ public:
   void operator<<(const instant_trace_event& event) const;
 };
 
-/// \brief Specialization of file_event_tracer that does not write any events.
+/// Specialization of file_event_tracer that does not write any events.
 template <>
 class file_event_tracer<false> : public detail::null_event_tracer
 {
 };
 
-/// \brief Class that repurposes a log channel to write trace events.
+/// Class that repurposes a log channel to write trace events.
 template <bool Enabled = true>
 class logger_event_tracer
 {
@@ -142,7 +142,7 @@ class logger_event_tracer<false> : public detail::null_event_tracer
 {
 };
 
-/// \brief Class that writes trace events to a vector of strings for testing purposes.
+/// Class that writes trace events to a vector of strings for testing purposes.
 class test_event_tracer
 {
 public:

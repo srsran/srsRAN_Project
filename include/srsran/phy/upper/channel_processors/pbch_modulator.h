@@ -32,7 +32,7 @@ namespace srsran {
 
 class resource_grid_writer;
 
-/// Describes a PBCH modulator interface
+/// PBCH modulator interface.
 class pbch_modulator
 {
 public:

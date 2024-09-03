@@ -35,10 +35,8 @@ class log_sink_spy : public srslog::sink
 {
 public:
   explicit log_sink_spy(std::unique_ptr<srslog::log_formatter> f) :
-    srslog::sink(std::move(f)), s(srslog::get_default_sink())
+    srslog::sink(std::move(f)), s(srslog::get_default_sink()), error_counter(0), warning_counter(0)
   {
-    error_counter.store(0);
-    warning_counter.store(0);
   }
 
   /// Identifier of this custom sink.
@@ -135,12 +133,10 @@ private:
   std::vector<std::string> entries;
 };
 
-/**
- * Delimits beginning/ending of a test with the following console output:
- * ============= [Test <Name of the Test>] ===============
- * <test log>
- * =======================================================
- */
+/// Delimits beginning/ending of a test with the following console output:
+/// ============= [Test <Name of the Test>] ===============
+/// <test log>
+/// =======================================================
 class test_delimit_logger
 {
   const size_t delimiter_length = 128;
@@ -152,12 +148,14 @@ public:
     test_name               = fmt::format(test_name_fmt, std::forward<Args>(args)...);
     std::string name_str    = fmt::format("[ Test \"{}\" ]", test_name);
     double      nof_repeats = (delimiter_length - name_str.size()) / 2.0;
-    fmt::print("{0:=>{1}}{2}{0:=>{3}}\n", "", (int)floor(nof_repeats), name_str, (int)ceil(nof_repeats));
+    fmt::print("{0:=>{1}}{2}{0:=>{3}}\n", "", (int)std::floor(nof_repeats), name_str, (int)std::ceil(nof_repeats));
   }
+
   test_delimit_logger(const test_delimit_logger&)            = delete;
   test_delimit_logger(test_delimit_logger&&)                 = delete;
   test_delimit_logger& operator=(const test_delimit_logger&) = delete;
   test_delimit_logger& operator=(test_delimit_logger&&)      = delete;
+
   ~test_delimit_logger()
   {
     srslog::flush();
@@ -188,15 +186,18 @@ struct moveonly_test_object {
   moveonly_test_object& operator=(const moveonly_test_object& other) = delete;
 
   bool has_value() const { return val_ptr != nullptr; }
-  int  value() const
+
+  int value() const
   {
     srsran_assert(has_value(), "Invalid access");
     return *val_ptr;
   }
+
   bool operator==(const moveonly_test_object& other) const
   {
-    return has_value() == other.has_value() and (!has_value() || value() == other.value());
+    return has_value() == other.has_value() && (!has_value() || value() == other.value());
   }
+
   bool operator!=(const moveonly_test_object& other) const { return !(*this == other); }
 
   static size_t object_count() { return object_count_impl().load(std::memory_order_relaxed); }
@@ -221,8 +222,10 @@ struct copyonly_test_object {
   copyonly_test_object& operator=(const copyonly_test_object&) noexcept = default;
   copyonly_test_object& operator=(copyonly_test_object&&)               = delete;
 
-  int  value() const { return val; }
+  int value() const { return val; }
+
   bool operator==(const copyonly_test_object& other) const { return val == other.val; }
+
   bool operator!=(const copyonly_test_object& other) const { return val != other.val; }
 
   static size_t object_count() { return object_count_impl(); }
@@ -233,25 +236,30 @@ private:
     static size_t count = 0;
     return count;
   }
+
   int val;
 };
 
 struct nondefault_ctor_test_object {
   nondefault_ctor_test_object(int val_) : val(val_) {}
-  int  value() const { return val; }
+
+  int value() const { return val; }
+
   bool operator==(const nondefault_ctor_test_object& other) const { return val == other.val; }
+
   bool operator!=(const nondefault_ctor_test_object& other) const { return val != other.val; }
 
 private:
   int val;
 };
 
-/// \brief This class creates a random generation interface that is suitable for unit tests. The user has the
-/// ability to set a random seed to reproduce tests.
+/// \brief This class creates a random generation interface that is suitable for unit tests.
+///
+/// The user has the ability to set a random seed to reproduce tests.
 class test_rgen
 {
 public:
-  /// \brief Get test pseudo-random generator.
+  /// Get test pseudo-random generator.
   static std::mt19937& get()
   {
     thread_local std::mt19937& random_generator = init(std::random_device{}());
@@ -259,6 +267,7 @@ public:
   }
 
   /// \brief Set random seed for the test pseudo-random generator.
+  ///
   /// If this function is never called, the pseudo-random generator will be initialized with a random seed using
   /// std::random_device. If it is called once, the seed will be the one passed as an argument. If it is called more
   /// than once, the test will abort. Thus, there should not be race conditions in seed initialization.
@@ -270,7 +279,7 @@ public:
     }
   }
 
-  /// \brief Return a random integer with uniform distribution within the specified bounds.
+  /// Returns a random integer with uniform distribution within the specified bounds.
   template <typename Integer>
   static Integer uniform_int(Integer min, Integer max)
   {
@@ -285,7 +294,7 @@ public:
 
   static bool bernoulli(double p) { return std::bernoulli_distribution(p)(get()); }
 
-  /// \brief Return a vector of integers with specified size filled with random values.
+  /// Return a vector of integers with specified size filled with random values.
   template <typename Integer>
   static std::vector<Integer> random_vector(size_t sz)
   {
@@ -324,7 +333,7 @@ private:
 
 namespace fmt {
 
-/// \brief Formatter for moveonly_test_object.
+/// Formatter for moveonly_test_object.
 template <>
 struct formatter<srsran::moveonly_test_object> {
   template <typename ParseContext>
@@ -332,6 +341,7 @@ struct formatter<srsran::moveonly_test_object> {
   {
     return ctx.begin();
   }
+
   template <typename FormatContext>
   auto format(const srsran::moveonly_test_object& obj, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())

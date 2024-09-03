@@ -38,13 +38,13 @@ public:
 
   /// \brief Notifies that an uplink half slot has been received and processed by the lower PHY.
   ///
-  /// See \ref lower_phy_timing_notifier::on_half_slot for more information.
+  /// See \ref lower_phy_timing_notifier::on_ul_half_slot_boundary for more information.
   /// \param[in] context Timing context.
   virtual void on_half_slot(const lower_phy_timing_context& context) = 0;
 
   /// \brief Notifies that an uplink full slot has been received and processed by the lower PHY.
   ///
-  /// See \ref lower_phy_timing_notifier::on_full_slot for more information.
+  /// See \ref lower_phy_timing_notifier::on_ul_full_slot_boundary for more information.
   /// \param[in] context Timing context.
   virtual void on_full_slot(const lower_phy_timing_context& context) = 0;
 

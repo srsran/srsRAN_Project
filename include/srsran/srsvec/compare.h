@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/srsvec/detail/traits.h"
+#include "srsran/srsvec/type_traits.h"
 #include "srsran/srsvec/types.h"
 
 namespace srsran {
@@ -35,14 +35,14 @@ const char* find(span<const char> input, const char* value);
 template <typename T1, typename T2>
 bool equal(const T1& s1, const T2& s2)
 {
-  static_assert(detail::is_span_compatible<T1>::value, "Template type is not compatible with a span");
-  static_assert(detail::is_span_compatible<T2>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<T1>::value, "Template type is not compatible with a span");
+  static_assert(is_span_compatible<T2>::value, "Template type is not compatible with a span");
   srsran_srsvec_assert_size(s1, s2);
 
   return std::equal(s1.begin(), s1.end(), s2.begin(), s2.end());
 }
 
-/// \brief Finds the first value in \input that is equal to \c value.
+/// \brief Finds the first value in \c input that is equal to \c value.
 ///
 /// The implementation is equivalent to:
 /// \code

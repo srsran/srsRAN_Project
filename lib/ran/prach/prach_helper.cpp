@@ -87,7 +87,7 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
   const prach_symbols_slots_duration dur = get_prach_duration_info(prach_cfg, pusch_scs);
 
   // For each subframe with PRACH, check if all slots are UL.
-  for (uint8_t subframe_index : prach_cfg.subframe) {
+  for (uint8_t subframe_index : prach_cfg.slots) {
     // There are configuration for which the PRACH starts in an odd slot within the subframe
     // (for numerologies > mu(SCS 15kHz)); the addition of start_slot_pusch_scs compensate for this.
     uint8_t start_slot_index = subframe_index * nof_slots_per_subframe + dur.start_slot_pusch_scs;

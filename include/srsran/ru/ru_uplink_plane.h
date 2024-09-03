@@ -28,9 +28,8 @@ namespace srsran {
 
 class prach_buffer;
 struct prach_buffer_context;
-class resource_grid;
 struct resource_grid_context;
-class resource_grid_reader;
+class shared_resource_grid;
 
 /// Radio Unit uplink received symbol context.
 struct ru_uplink_rx_symbol_context {
@@ -56,7 +55,7 @@ public:
   ///
   /// \param[in] context Notification context.
   /// \param[in] grid    Resource grid that belongs to the context.
-  virtual void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
+  virtual void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid) = 0;
 
   /// \brief Notifies the completion of a PRACH window.
   ///
@@ -94,7 +93,7 @@ public:
   ///
   /// \param[in] context Resource grid context.
   /// \param[in] buffer  Resource grid to store the processed slot.
-  virtual void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) = 0;
+  virtual void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) = 0;
 };
 
 } // namespace srsran

@@ -31,6 +31,7 @@ namespace srsran {
 
 class resource_grid_mapper;
 
+/// PDCCH modulator implementation.
 class pdcch_modulator_impl : public pdcch_modulator
 {
 private:

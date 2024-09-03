@@ -40,7 +40,7 @@ public:
                                 const byte_buffer&                       du_to_cu_container_,
                                 rrc_ue_setup_proc_notifier&              rrc_setup_notifier_,
                                 rrc_ue_reestablishment_proc_notifier&    rrc_ue_notifier_,
-                                rrc_ue_srb_handler&                      srb_notifier_,
+                                rrc_ue_control_message_handler&          srb_notifier_,
                                 rrc_ue_context_update_notifier&          cu_cp_notifier_,
                                 rrc_ue_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
                                 rrc_ue_nas_notifier&                     nas_notifier_,
@@ -76,7 +76,7 @@ private:
   const byte_buffer&                       du_to_cu_container;
   rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier;
   rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier; // handler to the parent RRC UE object
-  rrc_ue_srb_handler&                      srb_notifier;          // for creating SRBs
+  rrc_ue_control_message_handler&          srb_notifier;          // for creating SRBs
   rrc_ue_context_update_notifier&          cu_cp_notifier;        // notifier to the CU-CP
   rrc_ue_cu_cp_ue_notifier&                cu_cp_ue_notifier;     // notifier to the CU-CP UE
   rrc_ue_nas_notifier&                     nas_notifier;          // notifier to the NGAP

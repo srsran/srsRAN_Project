@@ -34,7 +34,6 @@ class pdsch_processor_impl : public pdsch_processor
 {
 public:
   /// \brief Creates a generic PDSCH processor.
-  /// \param[in] config Provides the necessary configuration.
   pdsch_processor_impl(std::unique_ptr<pdsch_encoder>        encoder_,
                        std::unique_ptr<pdsch_modulator>      modulator_,
                        std::unique_ptr<dmrs_pdsch_processor> dmrs_) :

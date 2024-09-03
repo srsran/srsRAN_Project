@@ -60,10 +60,10 @@ private:
   upper_ru_ul_adapter                      ru_ul_adapt;
   upper_ru_timing_adapter                  ru_timing_adapt;
   upper_ru_error_adapter                   ru_error_adapt;
+  std::vector<std::unique_ptr<du_wrapper>> du_list;
   std::unique_ptr<radio_unit>              ru;
   upper_ru_dl_rg_adapter                   ru_dl_rg_adapt;
   upper_ru_ul_request_adapter              ru_ul_request_adapt;
-  std::vector<std::unique_ptr<du_wrapper>> du_list;
 };
 
 } // namespace srsran

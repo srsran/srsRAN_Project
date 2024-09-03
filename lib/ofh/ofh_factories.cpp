@@ -55,6 +55,7 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.is_prach_control_plane_enabled     = config.is_prach_control_plane_enabled;
   rx_config.ignore_ecpri_payload_size_field    = config.ignore_ecpri_payload_size_field;
   rx_config.ignore_ecpri_seq_id_field          = config.ignore_ecpri_seq_id_field;
+  rx_config.warn_unreceived_ru_frames          = config.warn_unreceived_ru_frames;
 
   // For the rx eAxCs, configure only those that will be used, so the other eAxCs can be discarded as soon as possible.
   rx_config.prach_eaxc.assign(config.prach_eaxc.begin(), config.prach_eaxc.begin() + config.nof_antennas_ul);
@@ -165,10 +166,9 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
 {
   unsigned repository_size = sector_cfg.max_processing_delay_slots * 4;
 
-  srslog::basic_logger* repo_logger = sector_cfg.warn_unreceived_ru_frames ? sector_deps.logger : nullptr;
-  auto                  cp_repo     = std::make_shared<uplink_cplane_context_repository>(repository_size);
-  auto                  prach_repo  = std::make_shared<prach_context_repository>(repository_size, repo_logger);
-  auto                  slot_repo   = std::make_shared<uplink_context_repository>(repository_size, repo_logger);
+  auto cp_repo    = std::make_shared<uplink_cplane_context_repository>(repository_size);
+  auto prach_repo = std::make_shared<prach_context_repository>(repository_size);
+  auto slot_repo  = std::make_shared<uplink_context_repository>(repository_size);
 
   // Build the ethernet txrx.
   auto eth_txrx = create_txrx(sector_cfg,

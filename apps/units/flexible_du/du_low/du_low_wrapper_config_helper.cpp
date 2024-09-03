@@ -29,28 +29,35 @@ using namespace srsran;
 
 static void generate_dl_processor_config(downlink_processor_factory_sw_config& out_cfg,
                                          const du_low_unit_config&             unit_cfg,
-                                         task_executor&                        pdsch_codeblock_executor)
+                                         task_executor&                        pdsch_codeblock_executor,
+                                         bool                                  hwacc_pdsch_processor)
 {
   out_cfg.ldpc_encoder_type   = "auto";
   out_cfg.crc_calculator_type = "auto";
 
   const du_low_unit_expert_threads_config& upper_phy_threads_cfg = unit_cfg.expert_execution_cfg.threads;
 
-  if ((upper_phy_threads_cfg.pdsch_processor_type == "lite") ||
-      ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads == 1))) {
+  // Hardware-acceleration is currently supported for 'generic' PDSCH processor types only.
+  if ((!hwacc_pdsch_processor) &&
+      ((upper_phy_threads_cfg.pdsch_processor_type == "lite") ||
+       ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads == 1)))) {
     out_cfg.pdsch_processor.emplace<pdsch_processor_lite_configuration>();
-  } else if ((upper_phy_threads_cfg.pdsch_processor_type == "concurrent") ||
-             ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads > 1))) {
+  } else if ((!hwacc_pdsch_processor) &&
+             ((upper_phy_threads_cfg.pdsch_processor_type == "concurrent") ||
+              ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads > 1)))) {
     pdsch_processor_concurrent_configuration pdsch_proc_config;
     pdsch_proc_config.nof_pdsch_codeblock_threads = upper_phy_threads_cfg.nof_dl_threads;
     pdsch_proc_config.max_nof_simultaneous_pdsch =
         (MAX_UE_PDUS_PER_SLOT + 1) * unit_cfg.expert_phy_cfg.max_processing_delay_slots;
     pdsch_proc_config.pdsch_codeblock_task_executor = &pdsch_codeblock_executor;
     out_cfg.pdsch_processor.emplace<pdsch_processor_concurrent_configuration>(pdsch_proc_config);
-  } else if (upper_phy_threads_cfg.pdsch_processor_type == "generic") {
+  } else if ((hwacc_pdsch_processor) || (upper_phy_threads_cfg.pdsch_processor_type == "generic")) {
     out_cfg.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
   } else {
-    srsran_assert(false, "Invalid PDSCH processor type {}.", upper_phy_threads_cfg.pdsch_processor_type);
+    srsran_assert(false,
+                  "Invalid {}PDSCH processor type {}.",
+                  hwacc_pdsch_processor ? "hardware-accelerated " : "",
+                  upper_phy_threads_cfg.pdsch_processor_type);
   }
   out_cfg.nof_concurrent_threads = upper_phy_threads_cfg.nof_dl_threads;
 }
@@ -58,6 +65,7 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
 void srsran::make_du_low_wrapper_config_and_dependencies(
     du_low_wrapper_config&                out_cfg,
     const du_low_unit_config&             du_low_unit_cfg,
+    const hal_upper_phy_config&           hal_config,
     std::vector<cell_prach_ports_entry>   prach_ports,
     span<const du_cell_config>            du_cells,
     span<const unsigned>                  max_puschs_per_slot,
@@ -69,13 +77,16 @@ void srsran::make_du_low_wrapper_config_and_dependencies(
   out_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
 
   generate_du_low_wrapper_config(
-      out_cfg, du_low_unit_cfg, std::move(prach_ports), du_cells, max_puschs_per_slot, du_id);
+      out_cfg, du_low_unit_cfg, hal_config, std::move(prach_ports), du_cells, max_puschs_per_slot, du_id);
 
   // Fill the workers information.
   for (unsigned i = 0, e = out_cfg.du_low_cfg.cells.size(); i != e; ++i) {
     du_low_cell_config& cell = out_cfg.du_low_cfg.cells[i];
 
-    generate_dl_processor_config(cell.dl_proc_cfg, du_low_unit_cfg, *workers.upper_pdsch_exec[i + du_id]);
+    generate_dl_processor_config(cell.dl_proc_cfg,
+                                 du_low_unit_cfg,
+                                 *workers.upper_pdsch_exec[i + du_id],
+                                 cell.upper_phy_cfg.hal_config.hwacc_pdsch_processor);
 
     upper_phy_config& upper          = cell.upper_phy_cfg;
     upper.rg_gateway                 = &rg_gateway;

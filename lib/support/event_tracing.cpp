@@ -78,12 +78,10 @@ public:
 
 private:
   FILE* fptr;
-
-  // Task worker to process events.
+  /// Task worker to process events.
   general_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep> trace_worker;
-
-  bool              first_entry = true;
-  std::atomic<bool> warn_logged{false};
+  bool                                                                                             first_entry = true;
+  std::atomic<bool>                                                                                warn_logged{false};
 };
 
 struct trace_event_extended : public trace_event {

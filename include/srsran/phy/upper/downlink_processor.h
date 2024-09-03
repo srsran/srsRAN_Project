@@ -30,7 +30,7 @@
 namespace srsran {
 
 struct resource_grid_context;
-class resource_grid;
+class shared_resource_grid;
 class unique_tx_buffer;
 
 /// \brief Downlink processor class that groups and process all the downlink channels within a slot.
@@ -74,14 +74,14 @@ public:
   /// \brief Configures the resource grid of the downlink_processor.
   ///
   /// \param[in] context Resource grid context that contains the information of the processing slot.
-  /// \param[in] grid Resource grid that will contain the data of the processed downlink channels.
+  /// \param[in] grid    Resource grid that will contain the data of the processed downlink channels.
   /// \return \c true if the resource grid is successfully configured, \c false otherwise.
   ///
   /// \note
   /// - Calling this method is mandatory before processing any PDU.
   /// - The resource grid number of ports and bandwidth must be sufficient to accommodate all the PDUs.
   // :TODO: move this method to other interface to avoid controlling the order of the methods execution.
-  virtual bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) = 0;
+  virtual bool configure_resource_grid(const resource_grid_context& context, shared_resource_grid grid) = 0;
 
   /// \brief Stops accepting PDUs.
   ///

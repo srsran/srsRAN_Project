@@ -24,6 +24,7 @@
 
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
+#include "../slicing/slice_ue_repository.h"
 #include "../ue_scheduling/ue.h"
 #include "../ue_scheduling/ue_repository.h"
 #include "../ue_scheduling/ue_scheduler.h"
@@ -33,7 +34,7 @@ namespace srsran {
 
 /// Information relative to a UE PDSCH grant.
 struct ue_pdsch_grant {
-  const ue*       user;
+  const slice_ue* user;
   du_cell_index_t cell_index;
   harq_id_t       h_id;
   /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
@@ -44,7 +45,7 @@ struct ue_pdsch_grant {
 
 /// Information relative to a UE PUSCH grant.
 struct ue_pusch_grant {
-  const ue*       user;
+  const slice_ue* user;
   du_cell_index_t cell_index;
   harq_id_t       h_id;
   /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.

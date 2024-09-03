@@ -22,11 +22,12 @@
 
 #include "ru_downlink_handler_generic_impl.h"
 #include "srsran/phy/lower/lower_phy_rg_handler.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 
 using namespace srsran;
 
 void ru_downlink_handler_generic_impl::handle_dl_data(const resource_grid_context& context,
-                                                      const resource_grid_reader&  grid)
+                                                      const shared_resource_grid&  grid)
 {
   srsran_assert(context.sector < handler.size(), "Invalid sector {}", context.sector);
 

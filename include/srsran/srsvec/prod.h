@@ -31,6 +31,7 @@ void prod(span<const cf_t> x, span<const cf_t> y, span<cf_t> z);
 void prod(span<const cf_t> x, span<const float> y, span<cf_t> z);
 void prod(span<const float> x, span<const cf_t> y, span<cf_t> z);
 void prod(span<const float> x, span<const float> y, span<float> z);
+void prod(span<const int16_t> x, span<const int16_t> y, span<int16_t> z);
 
 void prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t> z);
 

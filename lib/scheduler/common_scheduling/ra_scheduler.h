@@ -22,11 +22,11 @@
 
 #pragma once
 
+#include "../cell/cell_harq_manager.h"
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/prbs_calculator.h"
 #include "../support/slot_event_list.h"
-#include "../ue_scheduling/harq_process.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/srslog/srslog.h"
@@ -73,6 +73,8 @@ public:
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
+  class msg3_harq_timeout_notifier;
+
   struct pending_rar_t {
     rnti_t                                                  ra_rnti = rnti_t::INVALID_RNTI;
     slot_point                                              prach_slot_rx;
@@ -83,11 +85,12 @@ private:
   struct pending_msg3_t {
     /// Detected PRACH Preamble associated to this Msg3.
     rach_indication_message::preamble preamble{};
-    harq_logger msg3_harq_logger{srslog::fetch_basic_logger("SCHED"), rnti_t::INVALID_RNTI, to_du_cell_index(0), false};
     /// UL Harq used to schedule Msg3.
     /// Note: [TS 38.321, 5.4.2.1] "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is
     /// used".
-    ul_harq_process harq{to_harq_id(0), msg3_harq_logger};
+    unique_ue_harq_entity msg3_harq_ent;
+
+    bool busy() const { return not msg3_harq_ent.empty(); }
   };
   struct msg3_alloc_candidate {
     unsigned     pusch_td_res_index;
@@ -182,6 +185,7 @@ private:
   sch_mcs_description                 msg3_mcs_config;
 
   // variables
+  cell_harq_manager                        msg3_harqs;
   slot_event_list<rach_indication_message> pending_rachs;
   slot_event_list<ul_crc_indication>       pending_crcs;
   std::deque<pending_rar_t>                pending_rars;

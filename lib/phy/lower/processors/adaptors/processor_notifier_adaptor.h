@@ -189,7 +189,7 @@ private:
     void on_puxch_request_late(const resource_grid_context& context) override;
 
     // See interface for documentation.
-    void on_rx_symbol(const resource_grid_reader& grid, const lower_phy_rx_symbol_context& context) override;
+    void on_rx_symbol(const shared_resource_grid& grid, const lower_phy_rx_symbol_context& context) override;
 
   private:
     /// Receive notifier.

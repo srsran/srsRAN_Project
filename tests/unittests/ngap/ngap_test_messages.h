@@ -154,10 +154,16 @@ ngap_message generate_valid_ue_context_release_command_with_ue_ngap_id_pair(amf_
 /// \brief Generate a dummy PDU Session Resource Setup Request base.
 ngap_message generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
+struct qos_flow_test_params {
+  qos_flow_id_t qos_flow_id;
+  uint16_t      five_qi;
+};
+
 /// \brief Generate a valid dummy PDU Session Resource Setup Request Message.
-ngap_message generate_valid_pdu_session_resource_setup_request_message(amf_ue_id_t      amf_ue_id,
-                                                                       ran_ue_id_t      ran_ue_id,
-                                                                       pdu_session_id_t pdu_session_id);
+ngap_message generate_valid_pdu_session_resource_setup_request_message(
+    amf_ue_id_t                                                          amf_ue_id,
+    ran_ue_id_t                                                          ran_ue_id,
+    const std::map<pdu_session_id_t, std::vector<qos_flow_test_params>>& pdu_sessions);
 
 /// \brief Generate an invalid dummy PDU Session Resource Setup Request Message.
 ngap_message generate_invalid_pdu_session_resource_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
@@ -185,11 +191,12 @@ generate_cu_cp_pdu_session_resource_release_response(pdu_session_id_t pdu_sessio
 ngap_message generate_pdu_session_resource_modify_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a valid dummy PDU Session Resource Modify Request Message.
-ngap_message
-generate_valid_pdu_session_resource_modify_request_message(amf_ue_id_t      amf_ue_id,
-                                                           ran_ue_id_t      ran_ue_id,
-                                                           pdu_session_id_t pdu_session_id,
-                                                           qos_flow_id_t    qos_flow_id = uint_to_qos_flow_id(1));
+ngap_message generate_valid_pdu_session_resource_modify_request_message(
+    amf_ue_id_t                       amf_ue_id,
+    ran_ue_id_t                       ran_ue_id,
+    pdu_session_id_t                  pdu_session_id,
+    const std::vector<qos_flow_id_t>& qos_flow_add_or_modify_list = {uint_to_qos_flow_id(1)},
+    const std::vector<qos_flow_id_t>& qos_flow_to_release_list    = {});
 
 /// \brief Generate an invalid dummy PDU Session Resource Modify Request Message.
 ngap_message generate_invalid_pdu_session_resource_modify_request_message(amf_ue_id_t      amf_ue_id,
@@ -216,6 +223,9 @@ ngap_message generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_
 /// \brief Generate a valid dummy Handover Request message.
 ngap_message generate_valid_handover_request(amf_ue_id_t amf_ue_id);
 
+/// \brief Generate a valid dummy Handover Preparation Failure message.
+ngap_message generate_handover_preparation_failure(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
 /// \brief Generate a valid dummy Handover Command message.
 ngap_message generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
@@ -225,6 +235,9 @@ generate_handover_preparation_request(ue_index_t                                
                                       const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions,
                                       nr_cell_identity nci               = nr_cell_identity::create({1, 22}, 1).value(),
                                       uint32_t         gnb_id_bit_length = 22);
+
+/// \brief Generate a valid dummy Handover Cancel Acknowledgement message.
+ngap_message generate_handover_cancel_ack(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 } // namespace srs_cu_cp
 } // namespace srsran

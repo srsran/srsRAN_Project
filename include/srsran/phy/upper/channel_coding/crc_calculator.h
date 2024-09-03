@@ -38,6 +38,7 @@ enum class crc_generator_poly {
   // etc...
 };
 
+/// Returns the CRC size from its identifier.
 inline constexpr unsigned get_crc_size(crc_generator_poly poly)
 {
   switch (poly) {

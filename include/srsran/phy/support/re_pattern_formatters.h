@@ -27,7 +27,7 @@
 
 namespace fmt {
 
-// \brief Custom formatter for \c re_pattern.
+/// \brief Custom formatter for \c re_pattern.
 template <>
 struct formatter<srsran::re_pattern> {
   /// Helper used to parse formatting options and format fields.
