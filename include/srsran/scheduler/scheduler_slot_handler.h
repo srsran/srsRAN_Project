@@ -518,7 +518,9 @@ struct srs_info {
   /// Section 6.4.1.4.1, TS 38.211.
   ofdm_symbol_range symbols;
   /// Repetition factor \f$R\f$, or \c repetitionFactor, as per \c SRS-Resource, in \c SRS-Config, TS 38.331.
-  uint8_t nof_repetitions;
+  /// \remark As per TS 38.211, Section 6.4.1.4.3, the number of repetitions must be not greater than the \ref symbols
+  /// length.
+  srs_nof_symbols nof_repetitions;
   /// Configuration index, given by \c c_SRS, as per \c freqHopping, \c SRS-Resource, in \c SRS-Config, TS 38.331.
   /// Values {0,...,63}.
   uint8_t config_index;
@@ -529,8 +531,8 @@ struct srs_info {
   /// Values {0,...,3}.
   uint8_t bw_index;
   /// Transmission comb size, as per \c transmissionComb, in \c SRS-Config, TS 38.331, or \f$K_{TC}\f$, as per
-  /// Section 6.4.1.4.1, TS 38.211. Values {2, 4}.
-  uint8_t tx_comb_size;
+  /// Section 6.4.1.4.1, TS 38.211.
+  tx_comb_size tx_comb;
   /// Transmission comb offset, given in \c combOffset-n2 or \c combOffset-n4, \c transmissionComb, \c SRS-Resource,
   /// in \c SRS-Config, TS 38.331. Values {0, 1} if tx_comb_size == 2, {0,...,3} if tx_comb_size == 4.
   uint8_t comb_offset;

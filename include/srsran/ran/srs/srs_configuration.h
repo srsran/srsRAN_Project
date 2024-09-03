@@ -40,7 +40,7 @@ enum class srs_periodicity : uint16_t {
   sl2    = 2,
   sl4    = 4,
   sl5    = 5,
-  sl8    = 6,
+  sl8    = 8,
   sl10   = 10,
   sl16   = 16,
   sl20   = 20,
@@ -93,16 +93,16 @@ struct srs_config {
     struct aperiodic_resource_type {
       /// The DCI "code point" upon which the UE shall transmit SRS according to this SRS resource set configuration.
       /// See TS 38.214, clause 6.1.1.2.
-      /// Values {1,..,maxNrofSRS-TriggerStates-1}, \c max_nof_srs_trigger_states_minus_1.
+      /// Values {1,...,maxNrofSRS-TriggerStates-1}, \c max_nof_srs_trigger_states_minus_1.
       uint8_t aperiodic_srs_res_trigger;
       /// ID of CSI-RS resource associated with this SRS resource set.
       /// This field is optionally present, in case of non-codebook based transmission.
       std::optional<nzp_csi_rs_res_id_t> csi_rs;
       /// An offset in number of slots between the triggering DCI and the actual transmission of this SRS-ResourceSet.
-      /// If the field is absent the UE applies no offset (value 0). Values {1,..,32}.
+      /// If the field is absent the UE applies no offset (value 0). Values {1,...,32}.
       std::optional<unsigned> slot_offset;
       /// An additional list of DCI "code points" upon which the UE shall transmit SRS according to this SRS resource
-      /// set configuration. Values {1,..,maxNrofSRS-TriggerStates-1}, \c max_nof_srs_trigger_states_minus_1.
+      /// set configuration. Values {1,...,maxNrofSRS-TriggerStates-1}, \c max_nof_srs_trigger_states_minus_1.
       static_vector<uint8_t, max_nof_srs_trigger_states_minus_2> aperiodic_srs_res_trigger_list;
 
       bool operator==(const aperiodic_resource_type& rhs) const
@@ -162,7 +162,7 @@ struct srs_config {
     /// When the field is not set the UE applies the value 1.
     alpha srs_pwr_ctrl_alpha{alpha::not_set};
     /// P0 value for SRS power control. The value is in dBm. Only even values (step size 2) are allowed. Values
-    /// {-202,..,24}. This field is mandatory present upon configuration of SRS-ResourceSet or SRS-Resource and
+    /// {-202,...,24}. This field is mandatory present upon configuration of SRS-ResourceSet or SRS-Resource and
     /// optionally present otherwise.
     std::optional<int16_t> p0;
     /// Indicates whether hsrs,c(i) = fc(i,1) or hsrs,c(i) = fc(i,2) (if twoPUSCH-PC-AdjustmentStates are configured) or
@@ -186,7 +186,7 @@ struct srs_config {
   struct srs_periodicity_and_offset {
     /// SRS period, in slots.
     srs_periodicity period;
-    /// Offset, Values {0,..,period_slots-1}.
+    /// Offset, Values {0,...,period_slots-1}.
     uint16_t offset;
 
     bool operator==(const srs_periodicity_and_offset& rhs) const
@@ -205,7 +205,7 @@ struct srs_config {
 
     /// \brief OFDM symbol location of the SRS resource.
     struct resource_mapping {
-      /// Values {0,..,5}. Value 0 refers to the last symbol, value 1 refers to the second last symbol.
+      /// Values {0,...,5}. Value 0 refers to the last symbol, value 1 refers to the second last symbol.
       uint8_t         start_pos;
       srs_nof_symbols nof_symb;
       /// \c repetitionFactor, as per 3GPP TS 38.331, "SRS-Resource".
@@ -222,11 +222,11 @@ struct srs_config {
     /// \brief Includes parameters capturing SRS frequency hopping.
     /// \remark See 3GPP TS 38.331, "SRS-Resource".
     struct frequency_hopping {
-      /// Values {0,..,63}.
+      /// Values {0,...,63}.
       uint8_t c_srs;
-      /// Values {0,..,3}.
+      /// Values {0,...,3}.
       uint8_t b_srs;
-      /// Values {0,..,3}.
+      /// Values {0,...,3}.
       uint8_t b_hop;
 
       bool operator==(const frequency_hopping& rhs) const
