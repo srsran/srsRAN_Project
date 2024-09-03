@@ -580,8 +580,7 @@ android x300:
 ################################################################################
 # VIAVI
 ###############################################################################
-
-viavi:
+.viavi:
   stage: rf
   extends: .e2e-run
   timeout: 8h
@@ -594,6 +593,9 @@ viavi:
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
+
+viavi:
+  extends: .viavi
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
@@ -608,21 +610,28 @@ viavi:
             # "fading and 32UE",
             "birth-death and 1UE",
             # "birth-death and 32UE",
-            "32UE and experimental",
+            "32UE and experimental and not extended",
+          ]
+
+viavi-extended:
+  extends: .viavi
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  allow_failure: true
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS: [
+            "extended",
           ]
 
 viavi-debug:
-  stage: rf
-  extends: .e2e-run
+  extends: .viavi
   variables:
-    GROUP: "viavi"
-    TESTBED: "viavi"
     MARKERS: "viavi_debug"
-    E2E_LOG_LEVEL: "warning"
-    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
-    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   allow_failure: true
   needs:
     - job: "basic avx512 dpdk withassert"
