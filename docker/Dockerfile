@@ -62,7 +62,7 @@ RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
     LIB_UPPER=$(echo $LIB | tr '[:lower:]' '[:upper:]') && \
     export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" && \
     /src/docker/scripts/builder.sh \
-    -m "-j${NUM_CORES} install" \
+    -m "-j${NUM_CORES} --trace install" \
     -DBUILD_TESTS=True \
     -DENABLE_${LIB_UPPER}=On \
     -DMARCH=${MARCH} \

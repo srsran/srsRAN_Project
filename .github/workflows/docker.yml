@@ -1,9 +1,6 @@
 name: Docker Builder
 on:
   push:
-    branches:
-      - main
-      - test
   release:
     types: [published]
 
@@ -13,82 +10,82 @@ jobs:
     strategy:
       matrix:
         include:
-          # --> metrics server
-          - TAGNAME: ""
-            REPOSITORY: metrics-server
-            EXTRA_CMAKE_ARGS: ""
-            MARCH: ""
-            PLATFORM: amd64
-            LIB: ""
-            LIB_VERSION: ""
-            DOCKERFILE: ./docker/metrics_server/Dockerfile
-            CONTEXT: ./docker/metrics_server
-          # --> grafana
-          - TAGNAME: ""
-            REPOSITORY: grafana
-            EXTRA_CMAKE_ARGS: ""
-            MARCH: ""
-            PLATFORM: amd64
-            LIB: ""
-            LIB_VERSION: ""
-            DOCKERFILE: ./docker/grafana/Dockerfile
-            CONTEXT: ./docker/grafana
-          # --> split72
-          # AMD AVX2
-          - TAGNAME: split72_release_avx2
-            REPOSITORY: srsran-project
-            MARCH: x86-64-v3
-            PLATFORM: amd64
-            LIB: dpdk
-            LIB_VERSION: "23.11.1"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
-          - TAGNAME: split72_release_with_debug_avx2
-            REPOSITORY: srsran-project
-            EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-            MARCH: x86-64-v3
-            PLATFORM: amd64
-            LIB: dpdk
-            LIB_VERSION: "23.11.1"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
+          # # --> metrics server
+          # - TAGNAME: ""
+          #   REPOSITORY: metrics-server
+          #   EXTRA_CMAKE_ARGS: ""
+          #   MARCH: ""
+          #   PLATFORM: amd64
+          #   LIB: ""
+          #   LIB_VERSION: ""
+          #   DOCKERFILE: ./docker/metrics_server/Dockerfile
+          #   CONTEXT: ./docker/metrics_server
+          # # --> grafana
+          # - TAGNAME: ""
+          #   REPOSITORY: grafana
+          #   EXTRA_CMAKE_ARGS: ""
+          #   MARCH: ""
+          #   PLATFORM: amd64
+          #   LIB: ""
+          #   LIB_VERSION: ""
+          #   DOCKERFILE: ./docker/grafana/Dockerfile
+          #   CONTEXT: ./docker/grafana
+          # # --> split72
+          # # AMD AVX2
+          # - TAGNAME: split72_release_avx2
+          #   REPOSITORY: srsran-project
+          #   MARCH: x86-64-v3
+          #   PLATFORM: amd64
+          #   LIB: dpdk
+          #   LIB_VERSION: "23.11.1"
+          #   DOCKERFILE: ./docker/Dockerfile
+          #   CONTEXT: ./
+          # - TAGNAME: split72_release_with_debug_avx2
+          #   REPOSITORY: srsran-project
+          #   EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
+          #   MARCH: x86-64-v3
+          #   PLATFORM: amd64
+          #   LIB: dpdk
+          #   LIB_VERSION: "23.11.1"
+          #   DOCKERFILE: ./docker/Dockerfile
+          #   CONTEXT: ./
           # AMD AVX512
           - TAGNAME: split72_release_avx512
             REPOSITORY: srsran-project
-            MARCH: x86-64-v4
+            MARCH: skylake-avx512
             PLATFORM: amd64
             LIB: dpdk
             LIB_VERSION: "23.11.1"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
-          - TAGNAME: split72_release_with_debug_avx512
-            REPOSITORY: srsran-project
-            EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-            MARCH: x86-64-v4
-            PLATFORM: amd64
-            LIB: dpdk
-            LIB_VERSION: "23.11.1"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
-          # --> split8
-          # AMD AVX2
-          - TAGNAME: split8_release_avx2
-            REPOSITORY: srsran-project
-            MARCH: x86-64-v3
-            PLATFORM: amd64
-            LIB: uhd
-            LIB_VERSION: "4.7.0.0"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
-          - TAGNAME: split8_release_with_debug_avx2
-            REPOSITORY: srsran-project
-            EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-            MARCH: x86-64-v3
-            PLATFORM: amd64
-            LIB: uhd
-            LIB_VERSION: "4.7.0.0"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
+          # - TAGNAME: split72_release_with_debug_avx512
+          #   REPOSITORY: srsran-project
+          #   EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
+          #   MARCH: x86-64-v4
+          #   PLATFORM: amd64
+          #   LIB: dpdk
+          #   LIB_VERSION: "23.11.1"
+          #   DOCKERFILE: ./docker/Dockerfile
+          #   CONTEXT: ./
+          # # --> split8
+          # # AMD AVX2
+          # - TAGNAME: split8_release_avx2
+          #   REPOSITORY: srsran-project
+          #   MARCH: x86-64-v3
+          #   PLATFORM: amd64
+          #   LIB: uhd
+          #   LIB_VERSION: "4.7.0.0"
+          #   DOCKERFILE: ./docker/Dockerfile
+          #   CONTEXT: ./
+          # - TAGNAME: split8_release_with_debug_avx2
+          #   REPOSITORY: srsran-project
+          #   EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
+          #   MARCH: x86-64-v3
+          #   PLATFORM: amd64
+          #   LIB: uhd
+          #   LIB_VERSION: "4.7.0.0"
+          #   DOCKERFILE: ./docker/Dockerfile
+          #   CONTEXT: ./
     env:
       PREFIX: softwareradiosystems/${{ matrix.REPOSITORY }}:${{ matrix.TAGNAME }}
     environment: dockerhub
@@ -105,6 +102,13 @@ jobs:
       - name: Determine tags based on branch
         id: tags
         run: |
+          echo "***************************************************************"
+          lscpu
+          echo "***************************************************************"
+          lscpu | grep Flags
+          echo "***************************************************************"
+          cat /proc/cpuinfo
+          echo "***************************************************************"
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           DATE_TAG="${GITHUB_SHA:0:10}__$(date +'%Y-%m-%d')"
           RELEASE_NAME="${{ github.event.release.name }}"
@@ -133,7 +137,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          push: true
+          push: false
           tags: ${{ steps.tags.outputs.tags }}
           file: ${{ matrix.DOCKERFILE }}
           platforms: ${{ matrix.PLATFORM }}
