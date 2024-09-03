@@ -341,9 +341,14 @@ public:
 
   void write(span<const expected_entry_t> entries_)
   {
+    unsigned current_max_sc = max_prb * NRE;
     for (const expected_entry_t& e : entries_) {
       write(e);
+      if (e.subcarrier > current_max_sc) {
+        current_max_sc = e.subcarrier;
+      }
     }
+    max_prb = current_max_sc / NRE + 1;
   }
 
   void write(const expected_entry_t& entry)
