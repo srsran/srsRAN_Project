@@ -125,7 +125,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
 
   // > Get DL UP TNL bind address.
   expected<std::string> f1u_bind_string = f1u_gw.get_du_bind_address(drb_info.du_params.ran.gnb_du_id);
-  assert(f1u_bind_string.has_value());
+  srsran_assert(f1u_bind_string.has_value(), "Unable to bind F1U address");
   transport_layer_address f1u_bind_addr = transport_layer_address::create_from_string(f1u_bind_string.value());
 
   // > Setup DL UP TNL info.
