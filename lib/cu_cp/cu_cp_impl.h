@@ -194,9 +194,6 @@ private:
   // AMF connections beeing managed by the CU-CP.
   ngap_repository ngap_db;
 
-  // RRC UE to NGAP adapter
-  rrc_ue_ngap_adapter rrc_ue_ngap_notifier;
-
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
   std::unique_ptr<cu_cp_controller> controller;
 

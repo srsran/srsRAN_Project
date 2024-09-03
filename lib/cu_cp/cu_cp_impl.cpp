@@ -54,7 +54,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              *this,
                              get_cu_cp_ue_removal_handler(),
                              get_cu_cp_ue_context_handler(),
-                             rrc_ue_ngap_notifier,
                              common_task_sched,
                              ue_mng,
                              rrc_du_cu_cp_notifier,
@@ -63,7 +62,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   paging_handler(du_db),
   ngap_db(ngap_repository_config{cfg, get_cu_cp_ngap_handler(), paging_handler, srslog::fetch_basic_logger("CU-CP")}),
-  rrc_ue_ngap_notifier(ngap_db),
   metrics_hdlr(
       std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor, *cfg.services.timers, ue_mng, du_db))
 {
@@ -698,6 +696,9 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
 
   // Connect RRC UE to NGAP to RRC UE adapter
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ngap_message_handler());
+
+  // Connect NGAP to RRC UE to NGAP adapter
+  ue_mng.get_rrc_ue_ngap_adapter(ue_index).connect_ngap(ngap_db.find_ngap(ue->get_ue_context().plmn));
 
   // Connect cu-cp to rrc ue adapters
   ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(get_cu_cp_rrc_ue_interface(),

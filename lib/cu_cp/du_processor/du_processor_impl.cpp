@@ -76,14 +76,12 @@ private:
 du_processor_impl::du_processor_impl(du_processor_config_t               du_processor_config_,
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_message_notifier&              f1ap_pdu_notifier_,
-                                     rrc_ue_ngap_notifier&               ngap_notifier_,
                                      rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                                      common_task_scheduler&              common_task_sched_,
                                      ue_manager&                         ue_mng_) :
   cfg(std::move(du_processor_config_)),
   cu_cp_notifier(cu_cp_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
-  ngap_notifier(ngap_notifier_),
   ue_mng(ue_mng_),
   f1ap_ev_notifier(std::make_unique<f1ap_du_processor_adapter>(*this, common_task_sched_))
 {
@@ -96,7 +94,7 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
   // create RRC
-  rrc_du_creation_message du_creation_req{create_rrc_config(cfg.cu_cp_cfg), ngap_notifier, rrc_du_cu_cp_notifier};
+  rrc_du_creation_message du_creation_req{create_rrc_config(cfg.cu_cp_cfg), rrc_du_cu_cp_notifier};
   rrc = create_rrc_du(du_creation_req);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
 }
@@ -164,6 +162,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   rrc_ue_create_msg.cell.pci              = cell.pci;
   rrc_ue_create_msg.cell.bands            = cell.bands;
   rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
+  rrc_ue_create_msg.ngap_notifier         = &ue.get_rrc_ue_ngap_adapter();
   rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
   rrc_ue_create_msg.measurement_notifier  = &ue.get_rrc_ue_measurement_notifier();
   rrc_ue_create_msg.cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier();

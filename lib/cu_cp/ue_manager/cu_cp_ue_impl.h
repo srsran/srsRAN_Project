@@ -126,6 +126,9 @@ public:
   /// \brief Get the NGAP to RRC UE adapter of the UE.
   ngap_rrc_ue_adapter& get_ngap_rrc_ue_adapter() { return ngap_rrc_ue_ev_notifier; }
 
+  /// \brief Get the RRC UE to NGAP adapter of the UE.
+  rrc_ue_ngap_adapter& get_rrc_ue_ngap_adapter() { return rrc_ue_ngap_ev_notifier; }
+
   /// \brief Get the RRC to CU-CP adapter of the UE.
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter() { return rrc_ue_cu_cp_ev_notifier; }
 
@@ -148,7 +151,8 @@ private:
   du_processor_rrc_ue_notifier* rrc_ue_notifier = nullptr;
 
   // rrc ue
-  rrc_ue_interface* rrc_ue = nullptr;
+  rrc_ue_interface*   rrc_ue = nullptr;
+  rrc_ue_ngap_adapter rrc_ue_ngap_ev_notifier;
 
   // ngap ue context
   ngap_cu_cp_ue_adapter ngap_cu_cp_ue_ev_notifier;

@@ -52,19 +52,17 @@ private:
 class rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
 {
 public:
-  explicit rrc_ue_ngap_adapter(ngap_repository& ngap_db_) : ngap_db(ngap_db_) {}
+  void connect_ngap(ngap_interface* ngap_) { ngap = ngap_; }
 
   void on_initial_ue_message(const cu_cp_initial_ue_message& msg) override
   {
-    auto* ngap = ngap_db.find_ngap(msg.plmn);
-    srsran_assert(ngap != nullptr, "NGAP for PLMN={} not found", msg.plmn);
+    srsran_assert(ngap != nullptr, "ue={}: NGAP for not found", msg.ue_index);
     ngap->get_ngap_nas_message_handler().handle_initial_ue_message(msg);
   }
 
   void on_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override
   {
-    auto* ngap = ngap_db.find_ngap(msg.plmn);
-    srsran_assert(ngap != nullptr, "NGAP for PLMN={} not found", msg.plmn);
+    srsran_assert(ngap != nullptr, "ue={}: NGAP for not found", msg.ue_index);
     ngap->get_ngap_nas_message_handler().handle_ul_nas_transport_message(msg);
   }
 
@@ -72,13 +70,12 @@ public:
                                                   const nr_cell_global_id_t& cgi,
                                                   const unsigned             tac) override
   {
-    auto* ngap = ngap_db.find_ngap(cgi.plmn_id);
-    srsran_assert(ngap != nullptr, "NGAP for PLMN={} not found", cgi.plmn_id);
+    srsran_assert(ngap != nullptr, "ue={}: NGAP for not found", ue_index);
     ngap->get_ngap_control_message_handler().handle_inter_cu_ho_rrc_recfg_complete(ue_index, cgi, tac);
   }
 
 private:
-  ngap_repository& ngap_db;
+  ngap_interface* ngap = nullptr;
 };
 
 /// Adapter between RRC UE and CU-CP UE

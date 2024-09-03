@@ -112,6 +112,14 @@ public:
     return ues.at(ue_index).get_ngap_rrc_ue_adapter();
   }
 
+  rrc_ue_ngap_adapter& get_rrc_ue_ngap_adapter(ue_index_t ue_index)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
+
+    return ues.at(ue_index).get_rrc_ue_ngap_adapter();
+  }
+
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter(ue_index_t ue_index)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
