@@ -217,7 +217,6 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 {
   cu_cp_ul_nas_transport ul_nas_msg         = {};
   ul_nas_msg.ue_index                       = context.ue_index;
-  ul_nas_msg.plmn                           = context.cell.cgi.plmn_id;
   ul_nas_msg.nas_pdu                        = ul_info_transfer.ded_nas_msg.copy();
   ul_nas_msg.user_location_info.nr_cgi      = context.cell.cgi;
   ul_nas_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_id;
