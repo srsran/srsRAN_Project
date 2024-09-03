@@ -66,7 +66,12 @@ private:
     }
 
     /// Determines the slice candidate priority.
-    priority_type get_prio(bool is_dl, slot_count_type current_slot_count, slot_point slot_tx) const;
+    priority_type get_prio(bool            is_dl,
+                           slot_count_type current_slot_count,
+                           slot_point      pdcch_slot,
+                           slot_point      pxsch_slot,
+                           unsigned        nof_slices,
+                           bool            slice_resched) const;
   };
 
   struct slice_candidate_context {
@@ -121,6 +126,9 @@ private:
 
   const cell_configuration& cell_cfg;
   srslog::basic_logger&     logger;
+
+  // Represents current slot in the scheduler. This is updated on each slot indication.
+  slot_point current_slot;
 
   ue_repository& ues;
 
