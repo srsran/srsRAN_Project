@@ -10,6 +10,7 @@
 
 #include "ngap_repository.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -60,7 +61,7 @@ void ngap_repository::update_plmn_lookup(amf_index_t amf_index)
     return;
   }
 
-  std::vector<plmn_identity> supported_plmns = ngap->second.ngap->get_supported_plmns();
+  std::vector<plmn_identity> supported_plmns = ngap->second.ngap->get_ngap_context().get_supported_plmns();
   for (auto plmn : supported_plmns) {
     plmn_to_amf_index.emplace(plmn, amf_index);
   }

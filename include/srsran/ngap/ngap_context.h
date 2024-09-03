@@ -29,6 +29,17 @@ struct ngap_context_t {
   std::vector<guami_t>                 served_guami_list;
   uint16_t                             default_paging_drx = 256;  // default paging drx
   std::chrono::seconds                 pdu_session_setup_timeout; // timeout for PDU context setup in seconds
+
+  std::vector<plmn_identity> get_supported_plmns() const
+  {
+    std::vector<plmn_identity> supported_plmns;
+    supported_plmns.reserve(supported_tas.size());
+    for (const auto& ta : supported_tas) {
+      supported_plmns.push_back(ta.plmn);
+    }
+
+    return supported_plmns;
+  }
 };
 
 } // namespace srs_cu_cp

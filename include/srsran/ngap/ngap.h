@@ -11,12 +11,12 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
-#include "srsran/ran/plmn_identity.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -250,7 +250,7 @@ public:
                                                      const unsigned             tac) = 0;
 
   /// \brief Get the supported PLMNs.
-  virtual std::vector<plmn_identity> get_supported_plmns() const = 0;
+  virtual const ngap_context_t& get_ngap_context() const = 0;
 };
 
 /// Interface to control the NGAP.

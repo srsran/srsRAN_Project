@@ -11,13 +11,12 @@
 #pragma once
 
 #include "ngap_asn1_converters.h"
-#include "ngap_context.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_nas.h"
