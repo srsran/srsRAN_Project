@@ -9,18 +9,32 @@
  */
 
 #include "pucch_processor_impl.h"
+#include "srsran/adt/expected.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/support/transform_optional.h"
+#include "fmt/core.h"
 #include <functional>
 #include <optional>
 
 using namespace srsran;
 
+/// Looks at the output of the validator and, if unsuccessful, fills msg with the error message.
+/// This is used to call the validator inside the process methods only if asserts are active.
+[[maybe_unused]] static bool handle_validation(std::string& msg, const error_type<std::string>& err)
+{
+  bool is_success = err.has_value();
+  if (!is_success) {
+    msg = err.error();
+  }
+  return is_success;
+}
+
 pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&                   grid,
                                                      const pucch_processor::format0_configuration& config)
 {
-  assert_format0_config(config);
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdu_validator->is_valid(config)), "{}", msg);
 
   // Calculate actual PRB.
   std::optional<unsigned> second_hop_prb;
@@ -253,66 +267,6 @@ void pucch_processor_impl::assert_format1_config(const pucch_processor::format1_
       max_sizes.nof_rx_ports);
 }
 
-void pucch_processor_impl::assert_format0_config(const pucch_processor::format0_configuration& config)
-{
-  // Assert BWP allocation.
-  srsran_assert(config.bwp_start_rb + config.bwp_size_rb <= MAX_RB,
-                "BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
-                config.bwp_start_rb + config.bwp_size_rb,
-                MAX_RB);
-
-  // Assert that the PRB allocation is constrained to the BWP. Recall that PUCCH Format 0 occupies a single PRB.
-  srsran_assert(config.starting_prb < config.bwp_size_rb,
-                "PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
-                config.starting_prb + 1,
-                config.bwp_size_rb);
-
-  if (config.second_hop_prb.has_value()) {
-    srsran_assert(config.second_hop_prb.value() < config.bwp_size_rb,
-                  "Second hop PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
-                  config.second_hop_prb.value() + 1,
-                  config.bwp_size_rb);
-  }
-
-  // Assert that the OFDM symbols are constrained to the slot dimensions given by the CP.
-  srsran_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
-                "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
-                "{} CP, i.e., {}.",
-                config.start_symbol_index + config.nof_symbols,
-                config.cp.to_string(),
-                get_nsymb_per_slot(config.cp));
-
-  // Assert that the OFDM symbols are within the configured maximum slot dimensions.
-  srsran_assert(pucch_constants::format0_nof_symbols_range.contains(config.nof_symbols),
-                "Number of symbols (i.e., {}) is out of the range {}.",
-                config.nof_symbols,
-                pucch_constants::format0_nof_symbols_range);
-
-  // Assert that initial cyclic shift is within the valid range.
-  srsran_assert(pucch_constants::format0_initial_cyclic_shift_range.contains(config.initial_cyclic_shift),
-                "The initial cyclic shift (i.e., {}) is out of the range {}.",
-                config.initial_cyclic_shift,
-                pucch_constants::format0_initial_cyclic_shift_range);
-
-  // Assert that the sequence hopping identifier is within the valid range.
-  srsran_assert(pucch_constants::n_id_range.contains(config.n_id),
-                "The sequence hopping identifier (i.e., {}) is out of the range {}.",
-                config.n_id,
-                pucch_constants::n_id_range);
-
-  // Assert that the number of HARQ-ACK bits is within the valid range.
-  srsran_assert(pucch_constants::format0_nof_harq_ack_range.contains(config.nof_harq_ack),
-                "The number of HARQ-ACK bits (i.e., {}) is out of the range {}.",
-                config.nof_harq_ack,
-                pucch_constants::format0_nof_harq_ack_range);
-
-  // Assert that there is payload.
-  srsran_assert(config.sr_opportunity || (config.nof_harq_ack > 0), "No payload.");
-
-  // Assert the number of receive ports.
-  srsran_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
-}
-
 void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_configuration& config)
 {
   // Assert BWP allocation.
@@ -372,61 +326,82 @@ void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_
                 static_cast<unsigned>(FORMAT2_MAX_UCI_NBITS));
 }
 
-bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format0_configuration& config) const
+error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor::format0_configuration& config) const
 {
   // BWP PRB shall not exceed the maximum.
   if (config.bwp_start_rb + config.bwp_size_rb > MAX_RB) {
-    return false;
+    return make_unexpected(
+        fmt::format("BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
+                    config.bwp_start_rb + config.bwp_size_rb,
+                    MAX_RB));
   }
 
   // PRB allocation goes beyond the BWP. Recall that PUCCH Format 0 occupies a single PRB.
   if (config.starting_prb >= config.bwp_size_rb) {
-    return false;
+    return make_unexpected(fmt::format("PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
+                                       config.starting_prb + 1,
+                                       config.bwp_size_rb));
   }
 
   // Second hop PRB allocation goes beyond the BWP.
   if (config.second_hop_prb.has_value()) {
     if (config.second_hop_prb.value() >= config.bwp_size_rb) {
-      return false;
+      return make_unexpected(
+          fmt::format("Second hop PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
+                      config.second_hop_prb.value() + 1,
+                      config.bwp_size_rb));
     }
   }
 
   // The number of symbols shall be in the range.
   if (!pucch_constants::format0_nof_symbols_range.contains(config.nof_symbols)) {
-    return false;
+    return make_unexpected(fmt::format("Number of symbols (i.e., {}) is out of the range {}.",
+                                       config.nof_symbols,
+                                       pucch_constants::format0_nof_symbols_range));
   }
 
   // None of the occupied symbols can exceed the configured maximum slot size, or the slot size given by the CP.
   if (config.start_symbol_index + config.nof_symbols > get_nsymb_per_slot(config.cp)) {
-    return false;
+    return make_unexpected(fmt::format(
+        "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
+        "{} CP, i.e., {}.",
+        config.start_symbol_index + config.nof_symbols,
+        config.cp.to_string(),
+        get_nsymb_per_slot(config.cp)));
   }
 
   // Initial cyclic shift must be in range.
   if (!pucch_constants::format0_initial_cyclic_shift_range.contains(config.initial_cyclic_shift)) {
-    return false;
+    return make_unexpected(fmt::format("The initial cyclic shift (i.e., {}) is out of the range {}.",
+                                       config.initial_cyclic_shift,
+                                       pucch_constants::format0_initial_cyclic_shift_range));
   }
 
   // Hopping identifier must be in range.
   if (!pucch_constants::n_id_range.contains(config.n_id)) {
-    return false;
+    return make_unexpected(fmt::format("The sequence hopping identifier (i.e., {}) is out of the range {}.",
+                                       config.n_id,
+                                       pucch_constants::n_id_range));
   }
 
   // No payload detected.
   if ((config.nof_harq_ack == 0) && !config.sr_opportunity) {
-    return false;
+    return make_unexpected(fmt::format("No payload."));
   }
 
   // Number of HARQ-ACK exceeds maximum.
   if (!pucch_constants::format0_nof_harq_ack_range.contains(config.nof_harq_ack)) {
-    return false;
+    return make_unexpected(fmt::format("The number of HARQ-ACK bits (i.e., {}) is out of the range {}.",
+                                       config.nof_harq_ack,
+                                       pucch_constants::format0_nof_harq_ack_range));
   }
 
   // The number of receive ports must not be empty.
   if (config.ports.empty()) {
-    return false;
+    return make_unexpected(fmt::format("The number of receive ports cannot be zero."));
   }
 
-  return true;
+  return default_success_t();
 }
 
 bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format1_configuration& config) const

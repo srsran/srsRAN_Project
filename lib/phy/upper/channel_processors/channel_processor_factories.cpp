@@ -703,7 +703,8 @@ public:
 
   std::unique_ptr<pucch_processor> create() override
   {
-    return std::make_unique<pucch_processor_impl>(dmrs_factory->create_format1(),
+    return std::make_unique<pucch_processor_impl>(create_validator(),
+                                                  dmrs_factory->create_format1(),
                                                   dmrs_factory->create_format2(),
                                                   detector_factory->create(),
                                                   demodulator_factory->create(),

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/phy/upper/channel_processors/pucch_demodulator.h"
 #include "srsran/phy/upper/channel_processors/pucch_detector.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor.h"
@@ -35,11 +36,11 @@ public:
   }
 
   // See interface for documentation.
-  bool is_valid(const pucch_processor::format0_configuration& config) const override;
-  bool is_valid(const pucch_processor::format1_configuration& config) const override;
-  bool is_valid(const pucch_processor::format2_configuration& config) const override;
-  bool is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
-  bool is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
+  error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override;
+  bool                    is_valid(const pucch_processor::format1_configuration& config) const override;
+  bool                    is_valid(const pucch_processor::format2_configuration& config) const override;
+  bool                    is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
+  bool                    is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
 
 private:
   /// Maximum transmit and receive resource grid dimensions handled by the PUCCH processor.
@@ -77,12 +78,14 @@ public:
   }
 
   /// PUCCH processor constructor.
-  pucch_processor_impl(std::unique_ptr<dmrs_pucch_processor>                channel_estimator_format_1_,
+  pucch_processor_impl(std::unique_ptr<pucch_pdu_validator>                 pdu_validator_,
+                       std::unique_ptr<dmrs_pucch_processor>                channel_estimator_format_1_,
                        std::unique_ptr<dmrs_pucch_processor>                channel_estimator_format_2_,
                        std::unique_ptr<pucch_detector>                      detector_,
                        std::unique_ptr<pucch_demodulator>                   demodulator_,
                        std::unique_ptr<uci_decoder>                         decoder_,
                        const channel_estimate::channel_estimate_dimensions& estimates_dimensions) :
+    pdu_validator(std::move(pdu_validator_)),
     channel_estimator_format_1(std::move(channel_estimator_format_1_)),
     channel_estimator_format_2(std::move(channel_estimator_format_2_)),
     detector(std::move(detector_)),
@@ -99,13 +102,13 @@ public:
   }
 
 private:
-  /// Validates PUCCH Format 0 configuration.
-  void assert_format0_config(const pucch_processor::format0_configuration& config);
   /// Validates PUCCH Format 1 configuration.
   void assert_format1_config(const pucch_processor::format1_configuration& config);
   /// Validates PUCCH Format 2 configuration.
   void assert_format2_config(const pucch_processor::format2_configuration& config);
 
+  /// PUCCH PDU validator for all formats.
+  std::unique_ptr<pucch_pdu_validator> pdu_validator;
   /// Channel estimator for PUCCH Format 1.
   std::unique_ptr<dmrs_pucch_processor> channel_estimator_format_1;
   /// Channel estimator for PUCCH Format 2.

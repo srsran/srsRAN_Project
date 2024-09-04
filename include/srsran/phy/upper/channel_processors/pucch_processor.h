@@ -10,14 +10,12 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
+#include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor_result.h"
-#include "srsran/phy/upper/channel_processors/pucch_uci_message.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pucch/pucch_context.h"
-#include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
@@ -232,8 +230,8 @@ public:
   virtual ~pucch_pdu_validator() = default;
 
   /// \brief Validates PUCCH Format 0 configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format0_configuration& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 1 configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
