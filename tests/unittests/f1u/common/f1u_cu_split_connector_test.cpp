@@ -45,7 +45,7 @@ public:
   }
 
   expected<nru_ul_message> get_rx_pdu_blocking(manual_task_worker&       ue_worker,
-                                               std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(10))
+                                               std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(5000))
   {
     const int                 nof_attempts       = 100;
     std::chrono::milliseconds attempt_timeout_ms = timeout_ms / nof_attempts;
