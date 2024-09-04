@@ -136,17 +136,7 @@ static void update_du_metrics(std::vector<app_services::metrics_config>& flexibl
   }
 }
 
-du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
-                          worker_manager&                 workers,
-                          srs_du::f1c_connection_client&  f1c_client_handler,
-                          srs_du::f1u_du_gateway&         f1u_gw,
-                          timer_manager&                  timer_mng,
-                          mac_pcap&                       mac_p,
-                          rlc_pcap&                       rlc_p,
-                          e2_connection_client&           e2_client_handler,
-                          e2_metric_connector_manager&    e2_metric_connectors,
-                          srslog::sink&                   json_sink,
-                          app_services::metrics_notifier& metrics_notifier)
+du_unit srsran::create_du(const dynamic_du_unit_config& dyn_du_cfg, du_unit_dependencies& dependencies)
 {
   du_unit du_cmd_wrapper;
 
@@ -256,22 +246,22 @@ du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
                                                 span<const unsigned>(&max_pusch_per_slot[i], 1),
                                                 du_impl->get_upper_ru_dl_rg_adapter(),
                                                 du_impl->get_upper_ru_ul_request_adapter(),
-                                                workers,
+                                                *dependencies.workers,
                                                 i);
 
     auto cell_services_cfg = fill_du_high_wrapper_config(du_cfg.du_high_cfg,
                                                          tmp_cfg,
                                                          i,
-                                                         workers.get_du_high_executor_mapper(i),
-                                                         f1c_client_handler,
-                                                         f1u_gw,
-                                                         timer_mng,
-                                                         mac_p,
-                                                         rlc_p,
-                                                         e2_client_handler,
-                                                         e2_metric_connectors,
-                                                         json_sink,
-                                                         metrics_notifier);
+                                                         dependencies.workers->get_du_high_executor_mapper(i),
+                                                         *dependencies.f1c_client_handler,
+                                                         *dependencies.f1u_gw,
+                                                         *dependencies.timer_mng,
+                                                         *dependencies.mac_p,
+                                                         *dependencies.rlc_p,
+                                                         *dependencies.e2_client_handler,
+                                                         *dependencies.e2_metric_connectors,
+                                                         *dependencies.json_sink,
+                                                         *dependencies.metrics_notifier);
 
     update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_du_e2);
 
@@ -286,9 +276,9 @@ du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
     if (fapi_cfg.l2_nof_slots_ahead != 0) {
       // As the temporal configuration contains only one cell, pick the data from that cell.
       du_cfg.du_high_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
-      du_cfg.du_high_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
+      du_cfg.du_high_cfg.fapi.executor.emplace(dependencies.workers->fapi_exec[i]);
     } else {
-      report_error_if_not(workers.fapi_exec[i] == nullptr,
+      report_error_if_not(dependencies.workers->fapi_exec[i] == nullptr,
                           "FAPI buffered worker created for a cell with no MAC delay configured");
     }
 
@@ -297,7 +287,7 @@ du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
   }
 
   std::unique_ptr<radio_unit> ru = create_radio_unit(dyn_du_cfg.ru_cfg,
-                                                     workers,
+                                                     *dependencies.workers,
                                                      du_cells,
                                                      du_impl->get_upper_ru_ul_adapter(),
                                                      du_impl->get_upper_ru_timing_adapter(),

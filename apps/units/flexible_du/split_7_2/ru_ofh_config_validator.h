@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../../services/os_sched_affinity_manager.h"
+#include "apps/services/os_sched_affinity_manager.h"
 #include "ru_ofh_config.h"
 #include "srsran/ran/subcarrier_spacing.h"
 

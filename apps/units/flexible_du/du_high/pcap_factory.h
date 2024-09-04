@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../../services/worker_manager.h"
+#include "apps/services/worker_manager.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/mac_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"

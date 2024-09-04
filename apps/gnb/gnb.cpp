@@ -410,17 +410,19 @@ int main(int argc, char** argv)
 
   // Instantiate one DU.
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
-  auto                                      du_inst_and_cmds = create_du(du_unit_cfg,
-                                    workers,
-                                    *f1c_gw,
-                                    *f1u_conn->get_f1u_du_gateway(),
-                                    app_timers,
-                                    *du_pcaps.mac,
-                                    *du_pcaps.rlc,
-                                    e2_gw,
-                                    e2_metric_connectors,
-                                    json_sink,
-                                    metrics_notifier_forwarder);
+  du_unit_dependencies                      du_dependencies;
+  du_dependencies.workers              = &workers;
+  du_dependencies.f1c_client_handler   = f1c_gw.get();
+  du_dependencies.f1u_gw               = f1u_conn->get_f1u_du_gateway();
+  du_dependencies.timer_mng            = &app_timers;
+  du_dependencies.mac_p                = du_pcaps.mac.get();
+  du_dependencies.rlc_p                = du_pcaps.rlc.get();
+  du_dependencies.e2_client_handler    = &e2_gw;
+  du_dependencies.e2_metric_connectors = &e2_metric_connectors;
+  du_dependencies.json_sink            = &json_sink;
+  du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
+
+  auto du_inst_and_cmds = create_du(du_unit_cfg, du_dependencies);
 
   du& du_inst = *du_inst_and_cmds.unit;
 

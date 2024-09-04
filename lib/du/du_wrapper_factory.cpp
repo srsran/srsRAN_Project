@@ -31,7 +31,7 @@ std::unique_ptr<du_wrapper> srsran::make_du_wrapper(const du_wrapper_config& du_
 
   dependencies.du_hi = make_du_high_wrapper(du_cfg.du_high_cfg, std::move(high_wrapper_dependencies));
 
-  for (unsigned i = 0, e = du_cfg.du_low_cfg.prach_ports.size(); i != e; ++i) {
+  for (unsigned i = 0, e = du_cfg.du_low_cfg.du_low_cfg.cells.size(); i != e; ++i) {
     dependencies.du_lo->set_slot_time_message_notifier(i, dependencies.du_hi->get_slot_time_message_notifier(i));
     dependencies.du_lo->set_slot_error_message_notifier(i, dependencies.du_hi->get_slot_error_message_notifier(i));
     dependencies.du_lo->set_slot_data_message_notifier(i, dependencies.du_hi->get_slot_data_message_notifier(i));

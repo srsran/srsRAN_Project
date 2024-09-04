@@ -11,22 +11,16 @@
 #pragma once
 
 #include "apps/units/flexible_du/du_high/du_high_logger_registrator.h"
-#include "apps/units/flexible_du/du_low//du_low_wrapper_config_helper.h.h"
 #include "apps/units/flexible_du/fapi/fapi_logger_registrator.h"
+#include "split6_du_unit_config.h"
 
 namespace srsran {
-namespace modules {
-namespace flexible_du {
-namespace split_6 {
 
-/// Registers the DU split 6 loggers in the logger service.
-inline void register_logs(const log_appconfig& log_cfg)
+/// Registers all the loggers for the DU split 6.
+inline void register_split6_du_loggers(const split6_du_unit_config& config)
 {
-  du_high::register_logs(log_cfg);
-  fapi::register_logs(log_cfg);
+  register_du_high_loggers(config.du_high_cfg.config.loggers);
+  register_fapi_loggers(config.fapi_cfg);
 }
 
-} // namespace split_6
-} // namespace flexible_du
-} // namespace modules
 } // namespace srsran

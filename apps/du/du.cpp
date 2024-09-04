@@ -298,17 +298,19 @@ int main(int argc, char** argv)
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
-  auto                                      du_inst_and_cmds = create_du(du_unit_cfg,
-                                    workers,
-                                    *f1c_gw,
-                                    *du_f1u_conn,
-                                    app_timers,
-                                    *du_pcaps.mac,
-                                    *du_pcaps.rlc,
-                                    e2_gw,
-                                    e2_metric_connectors,
-                                    json_sink,
-                                    metrics_notifier_forwarder);
+  du_unit_dependencies                      du_dependencies;
+  du_dependencies.workers              = &workers;
+  du_dependencies.f1c_client_handler   = f1c_gw.get();
+  du_dependencies.f1u_gw               = du_f1u_conn.get();
+  du_dependencies.timer_mng            = &app_timers;
+  du_dependencies.mac_p                = du_pcaps.mac.get();
+  du_dependencies.rlc_p                = du_pcaps.rlc.get();
+  du_dependencies.e2_client_handler    = &e2_gw;
+  du_dependencies.e2_metric_connectors = &e2_metric_connectors;
+  du_dependencies.json_sink            = &json_sink;
+  du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
+
+  auto du_inst_and_cmds = create_du(du_unit_cfg, du_dependencies);
 
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
