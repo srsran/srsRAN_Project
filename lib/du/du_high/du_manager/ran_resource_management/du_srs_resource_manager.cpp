@@ -68,10 +68,56 @@ static bool is_partually_ul_slot(unsigned offset, const tdd_ul_dl_config_common&
              NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 }
 
+static bool srs_config_validator(const du_cell_config& cell_cfg)
+{
+  if (not cell_cfg.ue_ded_serv_cell_cfg.ul_config.has_value()) {
+    return false;
+  }
+
+  if (cell_cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.has_value()) {
+    return false;
+  }
+
+  const auto& srs_cfg = cell_cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value();
+  if (srs_cfg.srs_res_set_list.size() != 1) {
+    return false;
+  }
+
+  if (not std::holds_alternative<srs_config::srs_resource_set::periodic_resource_type>(
+          srs_cfg.srs_res_set_list.front().res_type)) {
+    return false;
+  }
+
+  if (srs_cfg.srs_res_set_list.front().srs_res_id_list.size() != 1 or
+      srs_cfg.srs_res_set_list.front().srs_res_id_list.front() != static_cast<srs_config::srs_res_id>(0U)) {
+    return false;
+  }
+
+  if (srs_cfg.srs_res_list.size() != 1 or
+      srs_cfg.srs_res_list.front().id.ue_res_id != static_cast<srs_config::srs_res_id>(0U)) {
+    return false;
+  }
+
+  if (srs_cfg.srs_res_list.front().res_type != srs_resource_type::periodic) {
+    return false;
+  }
+
+  if (not srs_cfg.srs_res_list.front().periodicity_and_offset.has_value()) {
+    return false;
+  }
+
+  return true;
+}
+
 du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell_cfg_list_) :
   cells(cell_cfg_list_.begin(), cell_cfg_list_.end())
 {
   for (auto& cell : cells) {
+    if (not cell.cell_cfg.srs_cfg.srs_period.has_value()) {
+      continue;
+    }
+
+    srsran_assert(srs_config_validator(cell.cell_cfg), "The SRS configuration is not valid");
     std::optional<unsigned> c_srs =
         compute_srs_bw_param(cell.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length()).value();
     srsran_assert(c_srs.has_value(), "SRS parameters didn't provide a valid C_SRS value");
