@@ -116,7 +116,7 @@ struct srs_config {
     struct semi_persistent_resource_type {
       // This user provided constructor is added here to fix a Clang compilation error related to the use of nested
       // types with std::optional.
-      semi_persistent_resource_type() = default;
+      semi_persistent_resource_type(){};
 
       /// This field is optionally present, in case of non-codebook based transmission.
       std::optional<nzp_csi_rs_res_id_t> associated_csi_rs;
@@ -131,7 +131,7 @@ struct srs_config {
     struct periodic_resource_type {
       // This user provided constructor is added here to fix a Clang compilation error related to the use of nested
       // types with std::optional.
-      periodic_resource_type() = default;
+      periodic_resource_type(){};
 
       /// This field is optionally present, in case of non-codebook based transmission.
       std::optional<nzp_csi_rs_res_id_t> associated_csi_rs;
