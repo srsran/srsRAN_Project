@@ -11,6 +11,9 @@
 #include "pucch_processor_impl.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/support/transform_optional.h"
+#include <functional>
+#include <optional>
 
 using namespace srsran;
 
@@ -135,15 +138,16 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   // Channel estimator configuration.
   dmrs_pucch_processor::config_t estimator_config;
-  estimator_config.format               = pucch_format::FORMAT_2;
-  estimator_config.slot                 = config.slot;
-  estimator_config.cp                   = config.cp;
-  estimator_config.group_hopping        = pucch_group_hopping::NEITHER;
-  estimator_config.start_symbol_index   = config.start_symbol_index;
-  estimator_config.nof_symbols          = config.nof_symbols;
-  estimator_config.starting_prb         = config.bwp_start_rb + config.starting_prb;
-  estimator_config.intra_slot_hopping   = false;
-  estimator_config.second_hop_prb       = 0;
+  estimator_config.format             = pucch_format::FORMAT_2;
+  estimator_config.slot               = config.slot;
+  estimator_config.cp                 = config.cp;
+  estimator_config.group_hopping      = pucch_group_hopping::NEITHER;
+  estimator_config.start_symbol_index = config.start_symbol_index;
+  estimator_config.nof_symbols        = config.nof_symbols;
+  estimator_config.starting_prb       = config.bwp_start_rb + config.starting_prb;
+  estimator_config.intra_slot_hopping = config.second_hop_prb.has_value();
+  estimator_config.second_hop_prb     = evaluate_or(config.second_hop_prb, 0U, std::plus(), config.bwp_start_rb);
+
   estimator_config.nof_prb              = config.nof_prb;
   estimator_config.initial_cyclic_shift = 0;
   estimator_config.time_domain_occ      = 0;
@@ -174,6 +178,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   pucch_demodulator::format2_configuration demod_config;
   demod_config.rx_ports           = config.ports;
   demod_config.first_prb          = config.bwp_start_rb + config.starting_prb;
+  demod_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
   demod_config.nof_prb            = config.nof_prb;
   demod_config.start_symbol_index = config.start_symbol_index;
   demod_config.nof_symbols        = config.nof_symbols;
@@ -349,9 +354,6 @@ void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_
   // CSI is not currently supported.
   srsran_assert(config.nof_csi_part2 == 0, "CSI Part 2 is not currently supported.");
 
-  // PUCCH Format 2 frequency hopping is not currently supported.
-  srsran_assert(!config.second_hop_prb.has_value(), "PUCCH Format 2 frequency hopping not supported.");
-
   // Expected UCI payload length.
   unsigned uci_payload_len = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
 
@@ -491,11 +493,6 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configura
 
   // CSI Part 2 is not supported.
   if (config.nof_csi_part2 != 0) {
-    return false;
-  }
-
-  // Intra-slot frequency hopping is not supported.
-  if (config.second_hop_prb.has_value()) {
     return false;
   }
 
