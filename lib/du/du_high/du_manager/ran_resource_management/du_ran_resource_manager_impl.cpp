@@ -164,11 +164,19 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
     }
     ue_res.cell_group.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
+    if (not srs_res_mng->alloc_resources(ue_res.cell_group)) {
+      // Deallocate dedicated Search Spaces.
+      ue_res.cell_group.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
+      return make_unexpected(fmt::format("Unable to allocate SRS resources for cell={}", cell_index));
+    }
+
     if (not pucch_res_mng.alloc_resources(ue_res.cell_group)) {
       // Deallocate previously allocated SRS + dedicated Search Spaces.
+      srs_res_mng->dealloc_resources(ue_res.cell_group);
       ue_res.cell_group.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
       return make_unexpected(fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", cell_index));
     }
+
   } else {
     srsran_assert(not ue_res.cell_group.cells.contains(serv_cell_index), "Reallocation of SCell detected");
     ue_res.cell_group.cells.emplace(serv_cell_index);
@@ -190,6 +198,7 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
                       ue_res.cell_group.cells[0].serv_cell_cfg.cell_index != INVALID_DU_CELL_INDEX,
                   "Double deallocation of same UE cell resources detected");
     pucch_res_mng.dealloc_resources(ue_res.cell_group);
+    srs_res_mng->dealloc_resources(ue_res.cell_group);
     ue_res.cell_group.cells[0].serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.

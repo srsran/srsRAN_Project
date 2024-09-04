@@ -51,8 +51,7 @@ public:
 
 private:
   struct cell_context {
-    cell_context(const du_cell_config& cfg) :
-      cell_cfg(cfg), default_srs_cfg(cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value()){};
+    cell_context(const du_cell_config& cfg) : cell_cfg(cfg){};
 
     using pair_res_id_offset = std::pair<unsigned, unsigned>;
 
@@ -84,7 +83,6 @@ private:
     using pair_cnt_max = std::pair<unsigned, const unsigned>;
 
     const du_cell_config& cell_cfg;
-    const srs_config      default_srs_cfg;
     srs_cell_common       srs_common_params;
     // List of all SRS resources available to the cell; these resources can be allocated over to different UEs over
     // different offsets.

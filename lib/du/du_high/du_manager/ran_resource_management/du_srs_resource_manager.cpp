@@ -171,9 +171,24 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
 
 bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
 {
-  // Allocation of SR PUCCH offset.
+  // TODO: Adapt this to the case of UEs with multiple cells configs.
+  srsran_assert(
+      cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].cell_cfg.ue_ded_serv_cell_cfg.ul_config.has_value(),
+      "UE UL config is empty");
+
+  // If periodic SRS is not enabled, don't allocate anything and exit with success.
+  if (not cells[0].cell_cfg.srs_cfg.srs_period.has_value() or not cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index]
+                                                                      .cell_cfg.ue_ded_serv_cell_cfg.ul_config.value()
+                                                                      .init_ul_bwp.srs_cfg.has_value()) {
+    return true;
+  }
+
+  // The UE SRS configuration is taken from a base configuration, saved in the GNB. The details that are UE specific
+  // will be added later on in this function.
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.emplace(
-      cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].default_srs_cfg);
+      cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index]
+          .cell_cfg.ue_ded_serv_cell_cfg.ul_config.value()
+          .init_ul_bwp.srs_cfg.value());
   srs_config& ue_srs_cfg    = cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
   auto&       free_srs_list = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].srs_res_offset_free_list;
 
@@ -273,7 +288,8 @@ du_srs_policy_max_ul_th::cell_context::find_optimal_ue_srs_resource()
 
 void du_srs_policy_max_ul_th::dealloc_resources(cell_group_config& cell_grp_cfg)
 {
-  if (not cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {
+  if (not cells[0].cell_cfg.srs_cfg.srs_period.has_value() or
+      not cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {
     return;
   }
 
