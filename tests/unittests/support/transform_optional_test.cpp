@@ -72,4 +72,20 @@ TEST(TransformOptionalTest, TypeChange)
   EXPECT_EQ(srsran::transform_optional(in, fn), static_cast<double>(in.value()) / 3.0)
       << "Error when transforming an optional with value.";
 }
+
+/// Test evaluate_or with one extra argument.
+TEST(TransformOptionalTest, EvaluateOr)
+{
+  std::optional<int> in    = std::nullopt;
+  auto               fn    = [](int a, int b, int c) { return a + b + c; };
+  int                d_out = 103;
+
+  int out = srsran::evaluate_or(in, d_out, fn, 2, 3);
+  EXPECT_EQ(out, d_out) << "Evaluating an empty optional should return the default output.";
+
+  int extra = 3;
+  in        = 5;
+  EXPECT_EQ(srsran::evaluate_or(in, d_out, fn, extra, extra), in.value() + 2 * extra)
+      << "Error when evaluating an optional with value.";
+}
 } // namespace
