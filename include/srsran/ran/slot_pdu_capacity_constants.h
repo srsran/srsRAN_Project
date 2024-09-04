@@ -65,7 +65,7 @@ static constexpr size_t MAX_PUSCH_PDUS_PER_SLOT = 16U;
 static constexpr size_t MAX_UL_PDCCH_PDUS_PER_SLOT = 16U;
 
 /// [Implementation defined] Maximum number of PUCCH PDUs per slot.
-static constexpr size_t MAX_PUCCH_PDUS_PER_SLOT = 64U;
+static constexpr size_t MAX_PUCCH_PDUS_PER_SLOT = 128U;
 
 /// [Implementation defined] Maximum number of SRS PDUs per slot.
 static constexpr size_t MAX_SRS_PDUS_PER_SLOT = 32U;
