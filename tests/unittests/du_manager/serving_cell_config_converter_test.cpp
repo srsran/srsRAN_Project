@@ -92,7 +92,7 @@ srs_config make_initial_srs_config()
   srs_config::srs_resource::tx_comb_params tx_comb{
       .size = tx_comb_size::n2, .tx_comb_offset = 0, .tx_comb_cyclic_shift = 0};
   cfg.srs_res_list.push_back(srs_config::srs_resource{
-      .id                    = static_cast<srs_config::srs_res_id>(0),
+      .id                    = srs_config::srs_res_id_t{0U, static_cast<srs_config::srs_res_id>(0)},
       .nof_ports             = srs_config::srs_resource::nof_srs_ports::port1,
       .tx_comb               = tx_comb,
       .res_mapping           = srs_config::srs_resource::resource_mapping{.start_pos   = 2,
@@ -746,7 +746,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
   srs_config::srs_resource::tx_comb_params tx_comb = {
       .size = srsran::tx_comb_size::n4, .tx_comb_offset = 0, .tx_comb_cyclic_shift = 0};
   dest_pusch_cfg.srs_res_list.push_back(srs_config::srs_resource{
-      .id                    = static_cast<srs_config::srs_res_id>(1),
+      .id                    = srs_config::srs_res_id_t{0U, static_cast<srs_config::srs_res_id>(1)},
       .nof_ports             = srs_config::srs_resource::nof_srs_ports::port1,
       .tx_comb               = tx_comb,
       .res_mapping           = srs_config::srs_resource::resource_mapping{.start_pos   = 50,
@@ -763,7 +763,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
               .res_id = static_cast<srs_config::srs_res_id>(1), .ul_bwp = static_cast<bwp_id_t>(1)}}});
 
   dest_pusch_cfg.srs_res_list.back().periodicity_and_offset.emplace(
-      srs_config::srs_periodicity_and_offset{.period = srsran::srs_periodicity::sl10, .offset = 30});
+      srs_config::srs_periodicity_and_offset{.period = srsran::srs_periodicity::sl10, .offset = 5});
 
   // Release.
   dest_pusch_cfg.srs_res_list.erase(dest_pusch_cfg.srs_res_list.begin());
