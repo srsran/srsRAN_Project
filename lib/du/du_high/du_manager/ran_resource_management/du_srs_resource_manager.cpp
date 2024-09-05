@@ -127,6 +127,7 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
     srsran_assert(freq_shift.has_value(), "SRS parameters didn't provide a valid freq_shift value");
     cell.srs_common_params.freq_shift = freq_shift.value();
 
+    // TODO: evaluate whether we need to consider the case of multiple cells.
     cell.cell_srs_res_list = generate_cell_srs_list(cell.cell_cfg);
 
     const unsigned srs_period_slots = static_cast<unsigned>(cell.cell_cfg.srs_cfg.srs_period.value());
@@ -161,10 +162,10 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
             continue;
           }
         }
-        cell.srs_res_offset_free_list.push_back({res.cell_res_id, offset});
+        cell.srs_res_offset_free_list.emplace_back(res.cell_res_id, offset);
         ++offset_res_cnt;
       }
-      cell.slot_resource_cnt.push_back({0U, offset_res_cnt});
+      cell.slot_resource_cnt.emplace_back(0U, offset_res_cnt);
     }
   }
 }

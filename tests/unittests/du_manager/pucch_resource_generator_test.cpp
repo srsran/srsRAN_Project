@@ -678,7 +678,7 @@ protected:
 
     // Check CSI and related PUCCH resource.
     if (has_csi) {
-      auto& csi_cfg = serv_cell_cfg.csi_meas_cfg.value();
+      const auto& csi_cfg = serv_cell_cfg.csi_meas_cfg.value();
       srsran_assert(not csi_cfg.csi_report_cfg_list.empty() and
                         std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                             csi_cfg.csi_report_cfg_list.front().report_cfg_type) and
@@ -919,9 +919,9 @@ TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
         nof_f1_res, nof_f2_res, f1_params, f2_params, bwp_size, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
   }
 
-  const unsigned harq_idx_cfg = test_rgen::uniform_int<unsigned>(0, nof_harq_cfg_per_ue - 1);
-  const unsigned sr_idx_cfg   = test_rgen::uniform_int<unsigned>(0, nof_sr_res_per_cell - 1);
-  const unsigned csi_idx_cfg  = test_rgen::uniform_int<unsigned>(0, nof_csi_res_per_cell - 1);
+  const auto harq_idx_cfg = test_rgen::uniform_int<unsigned>(0, nof_harq_cfg_per_ue - 1);
+  const auto sr_idx_cfg   = test_rgen::uniform_int<unsigned>(0, nof_sr_res_per_cell - 1);
+  const auto csi_idx_cfg  = test_rgen::uniform_int<unsigned>(0, nof_csi_res_per_cell - 1);
 
   // Update pucch_cfg with the UE list of resources (with at max 8 HARQ F1, 8 HARQ F2, 4 SR).
   ue_pucch_config_builder(serv_cell_cfg,
@@ -938,22 +938,21 @@ TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
   ASSERT_TRUE(verify_nof_res_and_idx(harq_idx_cfg, sr_idx_cfg, csi_idx_cfg));
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    ue_pucch_config_builder,
-    test_ue_pucch_config_builder,
-    // clang-format off
+INSTANTIATE_TEST_SUITE_P(ue_pucch_config_builder,
+                         test_ue_pucch_config_builder,
+                         // clang-format off
                          //                                   nof:  f0  |  f1  |  f2  | harq | sr | csi
                          //                                   nof:  f0  |  f1  |  f2  | cfg  | sr | csi
                          ::testing::Values(
-//                                           pucch_cfg_builder_params{ 0,     3,     6,     1,    2,   1 },
-//                                           pucch_cfg_builder_params{ 0,     7,     3,     1,    1,   1 },
-//                                           pucch_cfg_builder_params{ 0,     8,     8,     1,    4,   1 },
-//                                           pucch_cfg_builder_params{ 0,     1,     1,     1,    1,   1 },
-//                                           pucch_cfg_builder_params{ 0,     7,     7,     1,    3,   1 },
-//                                           pucch_cfg_builder_params{ 0,     8,     8,     4,    4,   4 },
-//                                           pucch_cfg_builder_params{ 0,     5,     2,    10,    2,   7 },
-//                                           pucch_cfg_builder_params{ 0,     2,     7,     3,    7,   3 },
-//                                           pucch_cfg_builder_params{ 0,     6,     4,     5,    6,   2 },
+                                           pucch_cfg_builder_params{ 0,     3,     6,     1,    2,   1 },
+                                           pucch_cfg_builder_params{ 0,     7,     3,     1,    1,   1 },
+                                           pucch_cfg_builder_params{ 0,     8,     8,     1,    4,   1 },
+                                           pucch_cfg_builder_params{ 0,     1,     1,     1,    1,   1 },
+                                           pucch_cfg_builder_params{ 0,     7,     7,     1,    3,   1 },
+                                           pucch_cfg_builder_params{ 0,     8,     8,     4,    4,   4 },
+                                           pucch_cfg_builder_params{ 0,     5,     2,    10,    2,   7 },
+                                           pucch_cfg_builder_params{ 0,     2,     7,     3,    7,   3 },
+                                           pucch_cfg_builder_params{ 0,     6,     4,     5,    6,   2 },
                                            pucch_cfg_builder_params{ 6,     0,     6,     1,    8,   8 },
                                            pucch_cfg_builder_params{ 5,     0,     3,     1,    1,   1 },
                                            pucch_cfg_builder_params{ 6,     0,     6,     1,    4,   1 },
@@ -969,5 +968,5 @@ INSTANTIATE_TEST_SUITE_P(
                                            pucch_cfg_builder_params{ 6,     0,     4,     5,    6,   2 },
                                            pucch_cfg_builder_params{ 6,     0,     6,     3,    6,   0 }
 )
-    // clang-format on
+                         // clang-format on
 );

@@ -497,16 +497,26 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
   res.freq_hop.b_srs = 0;
   res.freq_hop.b_hop = 0;
   res.grp_or_seq_hop = srs_group_or_sequence_hopping::neither;
-  res.res_type       = srs_resource_type::aperiodic;
-  res.sequence_id    = params.pci;
+  if (params.srs_periodic_enabled) {
+    res.res_type = srs_resource_type::periodic;
+    res.periodicity_and_offset.emplace(
+        srs_config::srs_periodicity_and_offset{.period = srs_periodicity::sl40, .offset = 0});
+  } else {
+    res.res_type = srs_resource_type::aperiodic;
+  }
+  res.sequence_id = params.pci;
 
   cfg.srs_res_set_list.emplace_back();
   // TODO: Verify correctness of the config based on what we support.
   srs_config::srs_resource_set& res_set = cfg.srs_res_set_list.back();
   res_set.id                            = static_cast<srs_config::srs_res_set_id>(0);
   res_set.srs_res_id_list.emplace_back(static_cast<srs_config::srs_res_id>(0));
-  res_set.res_type =
-      srs_config::srs_resource_set::aperiodic_resource_type{.aperiodic_srs_res_trigger = 1, .slot_offset = 7};
+  if (params.srs_periodic_enabled) {
+    res_set.res_type = srs_config::srs_resource_set::periodic_resource_type{};
+  } else {
+    res_set.res_type =
+        srs_config::srs_resource_set::aperiodic_resource_type{.aperiodic_srs_res_trigger = 1, .slot_offset = 7};
+  }
   res_set.srs_res_set_usage = srs_config::srs_resource_set::usage::codebook;
   res_set.p0                = -84;
   res_set.pathloss_ref_rs   = static_cast<ssb_id_t>(0);
