@@ -11,7 +11,7 @@
 #pragma once
 
 // This file was generated using the following MATLAB class on 27-08-2024 (seed 0):
-//   + "srsPDSCHptrsGeneratorUnittest.m"
+//   + "srsPDSCHPTRSGeneratorUnittest.m"
 
 #include "../../../support/resource_grid_test_doubles.h"
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
