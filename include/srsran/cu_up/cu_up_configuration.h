@@ -54,6 +54,10 @@ struct network_interface_config {
   /// Local IP address to bind for connection from DU to receive uplink user-plane traffic.
   std::string f1u_bind_addr = "127.0.2.1";
 
+  /// External IP address that is advertised to receive NR-U packets from the DU.
+  /// It defaults to \c f1u_bind_addr but may differ in case the CU-UP is behind a NAT.
+  std::string f1u_ext_addr = "auto";
+
   /// Local port to bind for connection from DU to receive uplink user-plane traffic.
   int f1u_bind_port = GTPU_PORT;
 };
