@@ -2419,8 +2419,8 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
     } break;
     case srs_resource_type::periodic: {
       srsran_assert(cfg.periodicity_and_offset.has_value(), "Periodic resource must have periodicity and offset");
-      auto& p_res = res.res_type.set_semi_persistent();
-      make_asn1_rrc_srs_config_perioidicity_and_offset(p_res.periodicity_and_offset_sp,
+      auto& p_res = res.res_type.set_periodic();
+      make_asn1_rrc_srs_config_perioidicity_and_offset(p_res.periodicity_and_offset_p,
                                                        cfg.periodicity_and_offset.value());
     } break;
     default:
