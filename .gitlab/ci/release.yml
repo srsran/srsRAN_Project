@@ -229,6 +229,21 @@ notify branch published:
     SLACK_CHANNEL: $SLACK_CHANNEL_OK
     LEVEL: "ok"
 
+publish maltab:
+  stage: public
+  interruptible: false
+  variables:
+    CI_DESCRIPTION: Release
+    NOTIFY_SLACK: "false"
+  rules:
+    - if: *on_public_push
+    - if: *on_public_release
+  needs:
+    - job: publish main
+  trigger:
+    project: softwareradiosystems/srsgnb_matlab
+    branch: master
+
 ################################################################################
 # Release
 ################################################################################
