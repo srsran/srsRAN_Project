@@ -364,6 +364,8 @@ TEST_P(pdcp_rx_test, count_wraparound)
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
 
+    pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::off, security::ciphering_enabled::off);
+
     // Write SDUs
     for (uint32_t i = 0; i < n_sdus; i++) {
       byte_buffer pdu;

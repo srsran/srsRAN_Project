@@ -28,6 +28,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
+  sec_engine_pool(8),
   rx_window(logger, pdcp_window_size(pdcp_sn_size_to_uint(cfg.sn_size))),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
@@ -438,6 +439,21 @@ byte_buffer pdcp_entity_rx::compile_status_report()
  */
 expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
 {
+  std::unique_ptr<security::security_engine_rx> sec_engine;
+  uint32_t                                      nof_retries = 0;
+  while (!sec_engine_pool.try_pop(sec_engine)) {
+    if (nof_retries++ < max_nof_retries) {
+      logger.log_info(
+          "Retrying to get security engine. count={} pdu_len={} nof_retries={}", count, buf.length(), nof_retries);
+    } else {
+      logger.log_error("Dropped PDU: Failed to get security engine. count={} pdu_len={} nof_retries={}",
+                       count,
+                       buf.length(),
+                       nof_retries);
+      return make_unexpected(default_error_t{});
+    }
+  }
+
   if (sec_engine == nullptr) {
     // Security is not configured. Pass through for DRBs; trim zero MAC-I for SRBs.
     if (is_srb()) {
@@ -461,6 +477,16 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
 
   unsigned                  hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
   security::security_result result   = sec_engine->decrypt_and_verify_integrity(std::move(buf), hdr_size, count);
+
+  nof_retries = 0;
+  while (!sec_engine_pool.try_push(std::move(sec_engine))) {
+    if (nof_retries++ < max_nof_retries) {
+      logger.log_info("Retrying to return security engine. count={} nof_retries={}", count, nof_retries);
+    } else {
+      logger.log_error("Failed to return security engine to pool. count={} nof_retries={}", count, nof_retries);
+    }
+  }
+
   if (!result.buf.has_value()) {
     switch (result.buf.error()) {
       case srsran::security::security_error::integrity_failure:
@@ -533,9 +559,37 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
 
   auto direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                     : security::security_direction::downlink;
-  sec_engine     = std::make_unique<security::security_engine_impl>(
-      sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
 
+  // Remove previous security engines
+  if (sec_configured) {
+    std::unique_ptr<security::security_engine_rx> old_sec_engine;
+    for (int i = 0; i < 8; i++) {
+      uint32_t nof_retries = 0;
+      while (!sec_engine_pool.try_pop(old_sec_engine)) {
+        if (nof_retries++ < max_nof_retries) {
+          logger.log_info("Retrying to remove security engine from pool. nof_retries={} sec_engine={}", nof_retries, i);
+        } else {
+          logger.log_error("Failed to remove security engine from pool. nof_retries={} sec_engine={}", nof_retries, i);
+        }
+      }
+    }
+  }
+
+  // Populate new security engines
+  for (int i = 0; i < 8; i++) {
+    auto sec_engine = std::make_unique<security::security_engine_impl>(
+        sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
+    uint32_t nof_retries = 0;
+    while (!sec_engine_pool.try_push(std::move(sec_engine))) {
+      if (nof_retries++ < max_nof_retries) {
+        logger.log_info("Retrying to add security engine to pool. nof_retries={} sec_engine={}", nof_retries, i);
+      } else {
+        logger.log_error("Failed to add security engine to pool. nof_retries={} sec_engine={}", nof_retries, i);
+      }
+    }
+  }
+
+  sec_configured = true;
   logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
                   sec_cfg.integ_algo,
                   integrity_enabled,

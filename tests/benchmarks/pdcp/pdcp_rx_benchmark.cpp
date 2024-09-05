@@ -12,6 +12,8 @@
 #include "lib/pdcp/pdcp_entity_tx.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/support/executors/task_worker_pool.h"
 #include <getopt.h>
 
 using namespace srsran;
@@ -59,7 +61,7 @@ public:
 };
 
 struct bench_params {
-  unsigned nof_repetitions   = 1000;
+  unsigned nof_repetitions   = 10;
   bool     print_timing_info = false;
 };
 
@@ -111,7 +113,8 @@ static void parse_args(int argc, char** argv, bench_params& params, app_params& 
   }
 }
 
-std::vector<byte_buffer_chain> gen_pdu_list(bench_params                  params,
+std::vector<byte_buffer_chain> gen_pdu_list(int                           nof_sdus,
+                                            int                           sdu_len,
                                             security::integrity_enabled   int_enabled,
                                             security::ciphering_enabled   ciph_enabled,
                                             security::integrity_algorithm int_algo,
@@ -154,11 +157,9 @@ std::vector<byte_buffer_chain> gen_pdu_list(bench_params                  params
   pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
   // Prepare SDU list for benchmark
-  int num_sdus  = params.nof_repetitions;
-  int num_bytes = 1500;
-  for (int i = 0; i < num_sdus; i++) {
+  for (int i = 0; i < nof_sdus; i++) {
     byte_buffer sdu_buf = {};
-    for (int j = 0; j < num_bytes; ++j) {
+    for (int j = 0; j < sdu_len; ++j) {
       report_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
     }
     pdcp_tx->handle_sdu(std::move(sdu_buf));
@@ -179,12 +180,21 @@ void benchmark_pdcp_rx(bench_params                  params,
     fmt::format_to(buffer, "Benchmark PDCP RX. NIA0 NEA0");
   }
 
-  std::vector<byte_buffer_chain> pdu_list = gen_pdu_list(params, int_enabled, ciph_enabled, int_algo, ciph_algo);
+  std::vector<byte_buffer_chain> pdu_list;
 
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
-  timer_manager      timers;
-  manual_task_worker worker{64};
+  timer_manager        timers;
+  task_worker          ul_worker{"ul_worker", 512};
+  task_worker_executor ul_exec{ul_worker};
+
+  unsigned nof_crypto_threads = 8;
+  unsigned crypto_queue_size  = 128;
+
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc> crypto_worker_pool{
+      "crypto", nof_crypto_threads, crypto_queue_size};
+  task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_exec =
+      task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
 
   // Set TX config
   pdcp_rx_config config = {};
@@ -207,35 +217,37 @@ void benchmark_pdcp_rx(bench_params                  params,
   sec_cfg.integ_algo  = int_algo;
   sec_cfg.cipher_algo = ciph_algo;
 
-  // Create test frame
-  pdcp_rx_test_frame frame = {};
+  std::unique_ptr<pdcp_rx_test_frame> frame;
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
+  std::unique_ptr<pdcp_entity_rx>          pdcp_rx;
 
-  // Create PDCP entities
-  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
-      std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
-  std::unique_ptr<pdcp_entity_rx> pdcp_rx = std::make_unique<pdcp_entity_rx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
-  pdcp_rx->configure_security(sec_cfg, int_enabled, ciph_enabled);
+  int nof_sdus = 1024;
+  int sdu_len  = 1500;
 
-  // Prepare SDU list for benchmark
-  std::vector<byte_buffer> sdu_list  = {};
-  int                      num_sdus  = params.nof_repetitions;
-  int                      num_bytes = 1500;
-  for (int i = 0; i < num_sdus; i++) {
-    byte_buffer sdu_buf = {};
-    for (int j = 0; j < num_bytes; ++j) {
-      report_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
-    }
-    sdu_list.push_back(std::move(sdu_buf));
-  }
+  // Prepare
+  auto prepare = [&]() mutable {
+    pdcp_rx.release();
+    pdu_list = gen_pdu_list(nof_sdus, sdu_len, int_enabled, ciph_enabled, int_algo, ciph_algo);
+    frame    = std::make_unique<pdcp_rx_test_frame>();
+    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, ul_exec);
+    pdcp_rx  = std::make_unique<pdcp_entity_rx>(
+        0, drb_id_t::drb1, config, *frame, *frame, timer_factory{timers, ul_exec}, ul_exec, crypto_exec, *metrics_agg);
+    pdcp_rx->configure_security(sec_cfg, int_enabled, ciph_enabled);
+  };
 
   // Run benchmark.
-  int  pdcp_sn = 0;
-  auto measure = [&pdcp_rx, pdcp_sn, &pdu_list]() mutable {
-    pdcp_rx->handle_pdu(std::move(pdu_list[pdcp_sn]));
-    pdcp_sn++;
+  auto measure = [&pdcp_rx, &pdu_list, &ul_worker, &crypto_worker_pool]() mutable {
+    for (auto& pdu : pdu_list) {
+      pdcp_rx->handle_pdu(std::move(pdu));
+    }
+
+    // Wait for crypto and reordering
+    crypto_worker_pool.wait_pending_tasks();
+    ul_worker.wait_pending_tasks();
   };
-  bm->new_measure("RX PDU", 1500 * 8, measure);
+
+  prepare();
+  bm->new_measure("RX PDU", nof_sdus * sdu_len * 8, measure, prepare);
 
   // Output results.
   if (params.print_timing_info) {

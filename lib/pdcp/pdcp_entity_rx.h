@@ -18,6 +18,7 @@
 #include "pdcp_rx_metrics_impl.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/byte_buffer_chain.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_rx.h"
 #include "srsran/security/security_engine.h"
@@ -113,7 +114,12 @@ private:
   const pdcp_rx_config cfg;
   bool                 stopped = false;
 
-  std::unique_ptr<security::security_engine_rx> sec_engine;
+  using sec_engine_list = concurrent_queue<std::unique_ptr<security::security_engine_rx>,
+                                           concurrent_queue_policy::lockfree_mpmc,
+                                           concurrent_queue_wait_policy::non_blocking>;
+  sec_engine_list sec_engine_pool;
+  bool            sec_configured  = false; ///< Flags whether the sec engine pool was populated.
+  const uint32_t  max_nof_retries = 5;     ///< Maximum number of retries to push/pop to/from sec engine pool.
 
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
