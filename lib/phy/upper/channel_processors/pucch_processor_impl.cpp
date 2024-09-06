@@ -65,8 +65,8 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&  grid,
                                                      const format1_configuration& config)
 {
-  // Check that the PUCCH Format 1 configuration is valid.
-  assert_format1_config(config);
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdu_validator->is_valid(config)), "{}", msg);
 
   // Prepare channel estimation.
   dmrs_pucch_processor::config_t estimator_config;
@@ -221,52 +221,6 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   return result;
 }
 
-void pucch_processor_impl::assert_format1_config(const pucch_processor::format1_configuration& config)
-{
-  // Assert BWP allocation.
-  srsran_assert(config.bwp_start_rb + config.bwp_size_rb <= max_sizes.nof_prb,
-                "BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
-                config.bwp_start_rb + config.bwp_size_rb,
-                max_sizes.nof_prb);
-
-  // Assert that the PRB allocation is constrained to the BWP. Recall that PUCCH Format 1 occupies a single PRB.
-  srsran_assert(config.starting_prb < config.bwp_size_rb,
-                "PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
-                config.starting_prb + 1,
-                config.bwp_size_rb);
-
-  if (config.second_hop_prb.has_value()) {
-    srsran_assert(config.second_hop_prb.value() < config.bwp_size_rb,
-                  "Second hop PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
-                  config.second_hop_prb.value() + 1,
-                  config.bwp_size_rb);
-  }
-
-  // Assert that the OFDM symbols are constrained to the slot dimensions given by the CP.
-  srsran_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
-                "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
-                "{} CP, i.e., {}.",
-                config.start_symbol_index + config.nof_symbols,
-                config.cp.to_string(),
-                get_nsymb_per_slot(config.cp));
-
-  // Assert that the OFDM symbols are within the configured maximum slot dimensions.
-  srsran_assert(
-      config.start_symbol_index + config.nof_symbols <= max_sizes.nof_symbols,
-      "OFDM symbol allocation goes up to symbol {}, exceeding the configured maximum number of slot symbols, i.e., {}.",
-      config.start_symbol_index + config.nof_symbols,
-      max_sizes.nof_symbols);
-
-  // Assert the number of receive ports.
-  srsran_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
-
-  srsran_assert(
-      config.ports.size() <= max_sizes.nof_rx_ports,
-      "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
-      config.ports.size(),
-      max_sizes.nof_rx_ports);
-}
-
 void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_configuration& config)
 {
   // Assert BWP allocation.
@@ -404,37 +358,61 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
   return default_success_t();
 }
 
-bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format1_configuration& config) const
+error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor::format1_configuration& config) const
 {
   // The BWP size exceeds the grid dimensions.
   if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
-    return false;
+    return make_unexpected(
+        fmt::format("BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
+                    config.bwp_start_rb + config.bwp_size_rb,
+                    ce_dims.nof_prb));
   }
 
   // PRB allocation goes beyond the BWP. Recall that PUCCH Format 1 occupies a single PRB.
   if (config.starting_prb >= config.bwp_size_rb) {
-    return false;
+    return make_unexpected(fmt::format("PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
+                                       config.starting_prb + 1,
+                                       config.bwp_size_rb));
   }
 
   // Second hop PRB allocation goes beyond the BWP.
   if (config.second_hop_prb.has_value()) {
     if (config.second_hop_prb.value() >= config.bwp_size_rb) {
-      return false;
+      return make_unexpected(
+          fmt::format("Second hop PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
+                      config.second_hop_prb.value() + 1,
+                      config.bwp_size_rb));
     }
   }
 
   // None of the occupied symbols can exceed the configured maximum slot size, or the slot size given by the CP.
-  if ((config.start_symbol_index + config.nof_symbols > get_nsymb_per_slot(config.cp)) ||
-      (config.start_symbol_index + config.nof_symbols > ce_dims.nof_symbols)) {
-    return false;
+  if (config.start_symbol_index + config.nof_symbols > get_nsymb_per_slot(config.cp)) {
+    return make_unexpected(fmt::format(
+        "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
+        "{} CP, i.e., {}.",
+        config.start_symbol_index + config.nof_symbols,
+        config.cp.to_string(),
+        get_nsymb_per_slot(config.cp)));
+  }
+  if (config.start_symbol_index + config.nof_symbols > ce_dims.nof_symbols) {
+    return make_unexpected(fmt::format("OFDM symbol allocation goes up to symbol {}, exceeding the configured maximum "
+                                       "number of slot symbols, i.e., {}.",
+                                       config.start_symbol_index + config.nof_symbols,
+                                       ce_dims.nof_symbols));
   }
 
   // The number of receive ports is either zero or exceeds the configured maximum number of receive ports.
-  if (config.ports.empty() || (config.ports.size() > ce_dims.nof_rx_ports)) {
-    return false;
+  if (config.ports.empty()) {
+    return make_unexpected(fmt::format("The number of receive ports cannot be zero."));
+  }
+  if (config.ports.size() > ce_dims.nof_rx_ports) {
+    return make_unexpected(fmt::format(
+        "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
+        config.ports.size(),
+        ce_dims.nof_rx_ports));
   }
 
-  return true;
+  return default_success_t();
 }
 
 bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configuration& config) const

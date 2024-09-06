@@ -37,7 +37,7 @@ public:
 
   // See interface for documentation.
   error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override;
-  bool                    is_valid(const pucch_processor::format1_configuration& config) const override;
+  error_type<std::string> is_valid(const pucch_processor::format1_configuration& config) const override;
   bool                    is_valid(const pucch_processor::format2_configuration& config) const override;
   bool                    is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
   bool                    is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
@@ -67,14 +67,14 @@ public:
   pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) override
   {
     // TBD.
-    return pucch_processor_result();
+    return {};
   }
 
   // See interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) override
   {
     // TBD.
-    return pucch_processor_result();
+    return {};
   }
 
   /// PUCCH processor constructor.
@@ -102,8 +102,6 @@ public:
   }
 
 private:
-  /// Validates PUCCH Format 1 configuration.
-  void assert_format1_config(const pucch_processor::format1_configuration& config);
   /// Validates PUCCH Format 2 configuration.
   void assert_format2_config(const pucch_processor::format2_configuration& config);
 

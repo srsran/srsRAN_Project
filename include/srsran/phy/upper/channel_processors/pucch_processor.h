@@ -234,8 +234,8 @@ public:
   virtual error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 1 configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format1_configuration& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pucch_processor::format1_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 2 configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
