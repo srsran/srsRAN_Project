@@ -108,7 +108,7 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
     });
   }
 
-  return launch_async<ue_context_release_procedure>(msg, ue_ctxt_list[msg.ue_index], tx_pdu_notifier, cfg.proc_timeout);
+  return launch_async<ue_context_release_procedure>(cfg, msg, ue_ctxt_list[msg.ue_index], tx_pdu_notifier);
 }
 
 async_task<f1ap_ue_context_modification_response>
