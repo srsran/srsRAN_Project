@@ -123,7 +123,7 @@ f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modif
     });
   }
 
-  return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], tx_pdu_notifier);
+  return launch_async<ue_context_modification_procedure>(cfg, request, ue_ctxt_list[request.ue_index], tx_pdu_notifier);
 }
 
 bool f1ap_cu_impl::handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index)

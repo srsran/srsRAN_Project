@@ -18,8 +18,6 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
-constexpr std::chrono::milliseconds bearer_context_mod_response_timeout{1000};
-
 /// \brief Convert the UE Context Modification Request from common type to ASN.1.
 /// \param[out] asn1_request The ASN.1 struct to store the result.
 /// \param[in] request The common type UE Context Modification Request.
@@ -39,10 +37,15 @@ static void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
                                                        const asn1::f1ap::ue_context_mod_fail_s& asn1_fail);
 
 ue_context_modification_procedure::ue_context_modification_procedure(
+    const f1ap_configuration&                   f1ap_cfg_,
     const f1ap_ue_context_modification_request& request_,
     f1ap_ue_context&                            ue_ctxt_,
     f1ap_message_notifier&                      f1ap_notif_) :
-  request(request_), ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(srslog::fetch_basic_logger("CU-CP-F1"))
+  f1ap_cfg(f1ap_cfg_),
+  request(request_),
+  ue_ctxt(ue_ctxt_),
+  f1ap_notifier(f1ap_notif_),
+  logger(srslog::fetch_basic_logger("CU-CP-F1"))
 {
 }
 
@@ -53,7 +56,7 @@ void ue_context_modification_procedure::operator()(coro_context<async_task<f1ap_
   logger.debug("{}: Procedure started...", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
 
   // Subscribe to respective publisher to receive UE CONTEXT MODIFICATION RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_modification_outcome, bearer_context_mod_response_timeout);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_modification_outcome, f1ap_cfg.proc_timeout);
 
   // Send command to DU.
   send_ue_context_modification_request();
