@@ -22,6 +22,8 @@ e2sm_kpm_cu_meas_provider_impl::e2sm_kpm_cu_meas_provider_impl() : logger(srslog
           NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_cu_meas_provider_impl::get_pdcp_reordering_delay_ul});
 }
 
+void e2sm_kpm_cu_meas_provider_impl::report_metrics(const pdcp_metrics_container& metrics) {}
+
 bool e2sm_kpm_cu_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metric_defs)
 {
   std::string metric_name;

@@ -50,6 +50,13 @@ private:
 class e2_pdcp_metrics_notifier : public e2_cu_metrics_notifier, public e2_cu_metrics_interface
 {
 public:
+  void report_metrics(const pdcp_metrics_container& metrics) override
+  {
+    if (e2_meas_provider) {
+      e2_meas_provider->report_metrics(metrics);
+    }
+  }
+
   void connect_e2_cu_meas_provider(std::unique_ptr<e2_cu_metrics_notifier> meas_provider) override {}
 
   void connect_e2_cu_meas_provider(e2_cu_metrics_notifier* meas_provider) { e2_meas_provider = meas_provider; }

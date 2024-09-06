@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+add_subdirectory(metrics)
+
 set(SOURCES
         cu_cp_application_unit_impl.cpp
         cu_cp_builder.cpp
