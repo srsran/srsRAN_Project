@@ -14,8 +14,8 @@
 #include "tests/test_doubles/f1u/dummy_f1u_du_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
-#include "srsran/du_high/du_high.h"
-#include "srsran/du_high/du_high_configuration.h"
+#include "srsran/du/du_high/du_high.h"
+#include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../lib/du_manager/ran_resource_management/du_pucch_resource_manager.h"
+#include "../lib/du/du_high/du_manager/ran_resource_management/du_pucch_resource_manager.h"
 #include "srsran/du/du_cell_config.h"
 
 namespace srsran {

@@ -17,7 +17,7 @@
 #include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "os_sched_affinity_manager.h"
 #include "srsran/cu_up/cu_up_executor_pool.h"
-#include "srsran/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
 

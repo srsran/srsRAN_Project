@@ -10,9 +10,9 @@
 
 #include "dynamic_du_impl.h"
 
+#include "srsran/du/du_low/du_low.h"
+#include "srsran/du/du_low/du_low_wrapper.h"
 #include "srsran/du/du_wrapper.h"
-#include "srsran/du_low/du_low.h"
-#include "srsran/du_low/du_low_wrapper.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/ru/ru.h"
 #include "srsran/ru/ru_controller.h"

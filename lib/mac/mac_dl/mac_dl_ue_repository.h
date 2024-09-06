@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "../rnti_value_table.h"
 #include "cell_dl_harq_buffer_pool.h"
-#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/ran/du_types.h"

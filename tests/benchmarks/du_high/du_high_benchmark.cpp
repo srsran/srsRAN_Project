@@ -27,8 +27,8 @@
 /// which will instantiate 6 threads running in cores 2-7 (assuming du_cell is pinned to 0-1), with high priority
 /// and a CPU load of 90%.
 
-#include "lib/du_high/du_high_executor_strategies.h"
-#include "lib/du_high/du_high_impl.h"
+#include "lib/du/du_high/du_high_executor_strategies.h"
+#include "lib/du/du_high/du_high_impl.h"
 #include "lib/mac/mac_ul/ul_bsr.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
@@ -37,8 +37,8 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du/du_qos_config_helpers.h"
-#include "srsran/du_high/du_high_configuration.h"
+#include "srsran/du/du_high/du_high_configuration.h"
+#include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/event_tracing.h"

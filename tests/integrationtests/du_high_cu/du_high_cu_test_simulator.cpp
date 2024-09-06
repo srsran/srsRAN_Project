@@ -9,14 +9,14 @@
  */
 
 #include "du_high_cu_test_simulator.h"
-#include "lib/du_high/du_high_executor_strategies.h"
+#include "lib/du/du_high/du_high_executor_strategies.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du_high/du_high_factory.h"
+#include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

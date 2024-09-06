@@ -10,8 +10,8 @@
 
 #include "srsran/du/du_wrapper_factory.h"
 #include "du_wrapper_impl.h"
-#include "srsran/du/du_high_wrapper_factory.h"
-#include "srsran/du_low/du_low_wrapper_factory.h"
+#include "srsran/du/du_high/du_high_wrapper_factory.h"
+#include "srsran/du/du_low/du_low_wrapper_factory.h"
 
 using namespace srsran;
 

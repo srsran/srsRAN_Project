@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/du_manager/ran_resource_management/du_pucch_resource_manager.h"
+#include "lib/du/du_high/du_manager/ran_resource_management/du_pucch_resource_manager.h"
 #include "scheduler_test_doubles.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/adt/circular_array.h"

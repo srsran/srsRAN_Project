@@ -79,7 +79,7 @@ if (DOXYGEN_FOUND)
                           ${CMAKE_HOME_DIRECTORY}/include/srsran/rlc
                           ${CMAKE_HOME_DIRECTORY}/include/srsran/f1ap/common
                           ${CMAKE_HOME_DIRECTORY}/include/srsran/f1ap/du
-                          ${CMAKE_HOME_DIRECTORY}/include/srsran/du_manager
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/du/du_manager
                           ${CMAKE_HOME_DIRECTORY}/lib/mac
                           ${CMAKE_HOME_DIRECTORY}/lib/scheduler
                           ${CMAKE_HOME_DIRECTORY}/lib/rlc

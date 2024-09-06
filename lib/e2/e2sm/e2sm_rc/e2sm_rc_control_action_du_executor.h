@@ -12,7 +12,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/du_manager/du_configurator.h"
+#include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include <map>

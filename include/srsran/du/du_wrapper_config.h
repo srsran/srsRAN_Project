@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran//du_low/du_low_wrapper_config.h"
-#include "srsran/du/du_high_wrapper_config.h"
+#include "srsran/du/du_high/du_high_wrapper_config.h"
+#include "srsran/du/du_low/du_low_wrapper_config.h"
 
 namespace srsran {
 

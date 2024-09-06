@@ -9,7 +9,7 @@
  */
 
 #include "srsran/du/du_cell_config_validation.h"
-#include "../du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "srsran/asn1/rrc_nr/serving_cell.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"

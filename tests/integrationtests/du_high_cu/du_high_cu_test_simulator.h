@@ -17,8 +17,8 @@
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp.h"
-#include "srsran/du_high/du_high.h"
-#include "srsran/du_high/du_high_configuration.h"
+#include "srsran/du/du_high/du_high.h"
+#include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
 

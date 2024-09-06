@@ -9,8 +9,8 @@
  */
 
 #include "du_wrapper_impl.h"
-#include "srsran/du/du_high_wrapper.h"
-#include "srsran/du_low/du_low.h"
+#include "srsran/du/du_high/du_high_wrapper.h"
+#include "srsran/du/du_low/du_low.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;

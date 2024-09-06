@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "lib/du/du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/test_utils.h"

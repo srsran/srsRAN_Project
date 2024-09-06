@@ -8,9 +8,9 @@
  *
  */
 
-#include "lib/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
+#include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du/du_qos_config_helpers.h"
+#include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

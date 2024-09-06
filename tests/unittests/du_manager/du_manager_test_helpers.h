@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "lib/du_manager/ran_resource_management/du_ran_resource_manager.h"
-#include "srsran/du_manager/du_manager_params.h"
+#include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager.h"
+#include "srsran/du/du_high/du_manager/du_manager_params.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_test_utils.h"

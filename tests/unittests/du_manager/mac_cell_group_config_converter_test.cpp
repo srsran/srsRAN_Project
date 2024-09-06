@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/du_manager/converters/asn1_rrc_config_helpers.h"
+#include "lib/du/du_high/du_manager/converters/asn1_rrc_config_helpers.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include <gtest/gtest.h>

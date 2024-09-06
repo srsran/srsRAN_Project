@@ -12,8 +12,8 @@
 
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config.h"
-#include "srsran/du/du_qos_config.h"
-#include "srsran/du/du_srb_config.h"
+#include "srsran/du/du_high/du_qos_config.h"
+#include "srsran/du/du_high/du_srb_config.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/ran/lcid.h"

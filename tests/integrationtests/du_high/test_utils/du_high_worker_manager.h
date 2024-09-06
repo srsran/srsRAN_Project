@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/du_high/du_high_executor_strategies.h"
+#include "lib/du/du_high/du_high_executor_strategies.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/executors/task_worker.h"

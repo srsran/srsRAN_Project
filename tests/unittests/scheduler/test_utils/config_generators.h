@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/du_manager/converters/scheduler_configuration_helpers.h"
+#include "lib/du/du_high/du_manager/converters/scheduler_configuration_helpers.h"
 #include "lib/scheduler/config/sched_config_manager.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/duplex_mode.h"

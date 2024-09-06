@@ -10,7 +10,7 @@
 
 #include "du_manager_test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du/du_qos_config_helpers.h"
+#include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"

@@ -9,7 +9,7 @@
  */
 
 #include "srsran/du/du_update_config_helpers.h"
-#include "../du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 
 using namespace srsran;
 

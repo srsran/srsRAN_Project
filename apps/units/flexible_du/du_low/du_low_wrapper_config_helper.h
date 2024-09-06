@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/du_low/du_low_wrapper_config.h"
+#include "srsran/du/du_low/du_low_wrapper_config.h"
 
 namespace srsran {
 

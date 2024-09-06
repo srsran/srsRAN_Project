@@ -9,7 +9,7 @@
  */
 
 #include "worker_manager.h"
-#include "../../lib/du_high/du_high_executor_strategies.h"
+#include "../../lib/du/du_high/du_high_executor_strategies.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 

@@ -14,7 +14,7 @@
 #include "procedures/e2_setup_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
-#include "srsran/du_manager/du_configurator.h"
+#include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_connection_client.h"
 #include "srsran/e2/e2ap_configuration.h"

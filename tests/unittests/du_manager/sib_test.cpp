@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/du_manager/converters/f1ap_configuration_helpers.h"
+#include "lib/du/du_high/du_manager/converters/f1ap_configuration_helpers.h"
 #include "srsran/asn1/rrc_nr/sys_info.h"
 #include "srsran/ran/sib/system_info_config.h"
 #include <gtest/gtest.h>

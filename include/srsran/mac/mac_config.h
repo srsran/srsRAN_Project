@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/du/du_test_config.h"
-#include "srsran/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_high/du_test_mode_config.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_pdu_handler.h"
 #include "srsran/pcap/mac_pcap.h"

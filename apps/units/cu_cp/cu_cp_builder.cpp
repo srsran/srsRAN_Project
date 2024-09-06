@@ -9,7 +9,6 @@
  */
 
 #include "cu_cp_builder.h"
-#include "apps/services/worker_manager.h"
 #include "cu_cp_commands.h"
 #include "cu_cp_config_translators.h"
 #include "srsran/cu_cp/cu_cp_factory.h"

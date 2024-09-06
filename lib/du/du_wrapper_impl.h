@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsran/du/du_high_wrapper.h"
+#include "srsran/du/du_high/du_high_wrapper.h"
+#include "srsran/du/du_low/du_low_wrapper.h"
 #include "srsran/du/du_wrapper.h"
-#include "srsran/du_low/du_low_wrapper.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include <memory>
 

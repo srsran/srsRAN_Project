@@ -9,7 +9,7 @@
  */
 
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
-#include "../../du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "../../du/du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/support/error_handling.h"
 

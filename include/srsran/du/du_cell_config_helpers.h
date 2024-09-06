@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "du_cell_config.h"
-#include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_cell_config.h"
+#include "srsran/du/du_high/du_qos_config.h"
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -21,8 +21,6 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <map>
-
-// TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.
 
 namespace srsran {
 namespace config_helpers {

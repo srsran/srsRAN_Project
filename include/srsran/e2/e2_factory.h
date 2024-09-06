@@ -15,7 +15,7 @@
 #include "e2ap_configuration.h"
 #include "e2sm/e2sm_manager.h"
 #include "subscription/e2_subscription.h"
-#include "srsran/du_manager/du_configurator.h"
+#include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"

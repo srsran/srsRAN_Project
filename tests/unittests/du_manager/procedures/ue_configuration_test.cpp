@@ -12,7 +12,7 @@
 /// \brief Unit tests for the DU UE configuration procedure.
 
 #include "du_manager_procedure_test_helpers.h"
-#include "lib/du_manager/procedures/ue_configuration_procedure.h"
+#include "lib/du/du_high/du_manager/procedures/ue_configuration_procedure.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
