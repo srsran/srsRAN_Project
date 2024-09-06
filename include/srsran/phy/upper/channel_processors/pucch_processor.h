@@ -243,12 +243,12 @@ public:
   virtual error_type<std::string> is_valid(const pucch_processor::format2_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 3 configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format3_configuration& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pucch_processor::format3_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 4 configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format4_configuration& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pucch_processor::format4_configuration& config) const = 0;
 };
 
 } // namespace srsran

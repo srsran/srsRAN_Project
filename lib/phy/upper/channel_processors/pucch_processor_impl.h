@@ -39,8 +39,14 @@ public:
   error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override;
   error_type<std::string> is_valid(const pucch_processor::format1_configuration& config) const override;
   error_type<std::string> is_valid(const pucch_processor::format2_configuration& config) const override;
-  bool                    is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
-  bool                    is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
+  error_type<std::string> is_valid(const pucch_processor::format3_configuration& config) const override
+  {
+    return default_success_t();
+  }
+  error_type<std::string> is_valid(const pucch_processor::format4_configuration& config) const override
+  {
+    return default_success_t();
+  }
 
 private:
   /// Maximum transmit and receive resource grid dimensions handled by the PUCCH processor.

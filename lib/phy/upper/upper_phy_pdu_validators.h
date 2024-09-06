@@ -47,8 +47,14 @@ public:
   {
     return pucch->is_valid(config).has_value();
   }
-  bool is_valid(const pucch_processor::format3_configuration& config) const override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format4_configuration& config) const override { return pucch->is_valid(config); }
+  bool is_valid(const pucch_processor::format3_configuration& config) const override
+  {
+    return pucch->is_valid(config).has_value();
+  }
+  bool is_valid(const pucch_processor::format4_configuration& config) const override
+  {
+    return pucch->is_valid(config).has_value();
+  }
   bool is_valid(const pusch_processor::pdu_t& config) const override { return pusch->is_valid(config); }
   bool is_valid(const srs_estimator_configuration& config) const override { return srs->is_valid(config); }
 
