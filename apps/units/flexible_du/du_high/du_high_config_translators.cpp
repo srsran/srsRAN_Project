@@ -163,6 +163,14 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
   csi_params.nof_ports     = cell_cfg.nof_antennas_dl;
   csi_params.csi_rs_period = static_cast<csi_resource_periodicity>(csi_cfg.csi_rs_period_msec *
                                                                    get_nof_slots_per_subframe(cell_cfg.common_scs));
+
+  // [Implementation-defined] The default CSI symbols are in symbols 4 and 8, the DM-RS for PDSCH might collide in
+  // symbol index 8 when the number of DM-RS additional positions is 3.
+  if (uint_to_dmrs_additional_positions(cell_cfg.pdsch_cfg.dmrs_add_pos) == dmrs_additional_positions::pos3) {
+    csi_params.csi_ofdm_symbol_index            = 9;
+    csi_params.tracking_csi_ofdm_symbol_indexes = {4, 9, 4, 9};
+  }
+
   if (cell_cfg.tdd_ul_dl_cfg.has_value()) {
     if (not csi_helper::derive_valid_csi_rs_slot_offsets(
             csi_params,
