@@ -17,6 +17,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pucch/pucch_context.h"
 #include "srsran/ran/slot_point.h"
+#include <string>
 
 namespace srsran {
 
@@ -238,8 +239,8 @@ public:
   virtual error_type<std::string> is_valid(const pucch_processor::format1_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 2 configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format2_configuration& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pucch_processor::format2_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 3 configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.

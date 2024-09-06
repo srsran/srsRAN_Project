@@ -38,7 +38,7 @@ public:
   // See interface for documentation.
   error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override;
   error_type<std::string> is_valid(const pucch_processor::format1_configuration& config) const override;
-  bool                    is_valid(const pucch_processor::format2_configuration& config) const override;
+  error_type<std::string> is_valid(const pucch_processor::format2_configuration& config) const override;
   bool                    is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
   bool                    is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
 
@@ -102,9 +102,6 @@ public:
   }
 
 private:
-  /// Validates PUCCH Format 2 configuration.
-  void assert_format2_config(const pucch_processor::format2_configuration& config);
-
   /// PUCCH PDU validator for all formats.
   std::unique_ptr<pucch_pdu_validator> pdu_validator;
   /// Channel estimator for PUCCH Format 1.

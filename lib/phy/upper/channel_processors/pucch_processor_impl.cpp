@@ -137,7 +137,8 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
                                                      const format2_configuration& config)
 {
   // Check that the PUCCH Format 2 configuration is valid.
-  assert_format2_config(config);
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdu_validator->is_valid(config)), "{}", msg);
 
   pucch_processor_result result;
 
@@ -219,65 +220,6 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
                 expected_nof_uci_bits);
 
   return result;
-}
-
-void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_configuration& config)
-{
-  // Assert BWP allocation.
-  srsran_assert(config.bwp_start_rb + config.bwp_size_rb <= max_sizes.nof_prb,
-                "BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
-                config.bwp_start_rb + config.bwp_size_rb,
-                max_sizes.nof_prb);
-
-  // Assert that the PRB set is constrained to the BWP.
-  srsran_assert(config.starting_prb + config.nof_prb <= config.bwp_size_rb,
-                "PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
-                config.starting_prb + config.nof_prb,
-                config.bwp_size_rb);
-
-  // Assert that the OFDM symbols are constrained to the slot dimensions given by the CP.
-  srsran_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
-                "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
-                "{} CP, i.e., {}.",
-                config.start_symbol_index + config.nof_symbols,
-                config.cp.to_string(),
-                get_nsymb_per_slot(config.cp));
-
-  // Assert that the OFDM symbols are within the configured maximum slot dimensions.
-  srsran_assert(
-      config.start_symbol_index + config.nof_symbols <= max_sizes.nof_symbols,
-      "OFDM symbol allocation goes up to symbol {}, exceeding the configured maximum number of slot symbols, i.e., {}.",
-      config.start_symbol_index + config.nof_symbols,
-      max_sizes.nof_symbols);
-
-  // Assert the number of receive ports.
-  srsran_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
-
-  srsran_assert(
-      config.ports.size() <= max_sizes.nof_rx_ports,
-      "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
-      config.ports.size(),
-      max_sizes.nof_rx_ports);
-
-  // CSI is not currently supported.
-  srsran_assert(config.nof_csi_part2 == 0, "CSI Part 2 is not currently supported.");
-
-  // Expected UCI payload length.
-  unsigned uci_payload_len = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
-
-  // Calculate effective code rate.
-  float effective_code_rate = pucch_format2_code_rate(config.nof_prb, config.nof_symbols, uci_payload_len);
-  srsran_assert(effective_code_rate <= pucch_constants::MAX_CODE_RATE,
-                "The effective code rate (i.e., {}) exceeds the maximum allowed {}.",
-                effective_code_rate,
-                static_cast<float>(pucch_constants::MAX_CODE_RATE));
-
-  srsran_assert((uci_payload_len >= pucch_constants::FORMAT2_MIN_UCI_NBITS) &&
-                    (uci_payload_len <= FORMAT2_MAX_UCI_NBITS),
-                "UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
-                uci_payload_len,
-                pucch_constants::FORMAT2_MIN_UCI_NBITS,
-                static_cast<unsigned>(FORMAT2_MAX_UCI_NBITS));
 }
 
 error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor::format0_configuration& config) const
@@ -415,50 +357,79 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
   return default_success_t();
 }
 
-bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configuration& config) const
+error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configuration& config) const
 {
+  // The BWP size exceeds the grid dimensions.
+  if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
+    return make_unexpected(
+        fmt::format("BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
+                    config.bwp_start_rb + config.bwp_size_rb,
+                    ce_dims.nof_prb));
+  }
+
+  // None of the occupied PRB within the BWP can exceed the BWP dimensions.
+  if (config.starting_prb + config.nof_prb > config.bwp_size_rb) {
+    return make_unexpected(fmt::format("PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
+                                       config.starting_prb + config.nof_prb,
+                                       config.bwp_size_rb));
+  }
+
+  // None of the occupied symbols can exceed the configured maximum slot size, or the slot size given by the CP.
+  if (config.start_symbol_index + config.nof_symbols > get_nsymb_per_slot(config.cp)) {
+    return make_unexpected(fmt::format(
+        "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
+        "{} CP, i.e., {}.",
+        config.start_symbol_index + config.nof_symbols,
+        config.cp.to_string(),
+        get_nsymb_per_slot(config.cp)));
+  }
+
+  if (config.start_symbol_index + config.nof_symbols > ce_dims.nof_symbols) {
+    return make_unexpected(fmt::format("OFDM symbol allocation goes up to symbol {}, exceeding the configured maximum "
+                                       "number of slot symbols, i.e., {}.",
+                                       config.start_symbol_index + config.nof_symbols,
+                                       ce_dims.nof_symbols));
+  }
+
+  // The number of receive ports is either zero or exceeds the configured maximum number of receive ports.
+  if (config.ports.empty()) {
+    return make_unexpected(fmt::format("The number of receive ports cannot be zero."));
+  }
+
+  if (config.ports.size() > ce_dims.nof_rx_ports) {
+    return make_unexpected(fmt::format(
+        "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
+        config.ports.size(),
+        ce_dims.nof_rx_ports));
+  }
+
+  // CSI Part 2 is not supported.
+  if (config.nof_csi_part2 != 0) {
+    return make_unexpected(fmt::format("CSI Part 2 is not currently supported."));
+  }
+
   // Count total number of payload bits.
   unsigned nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
 
   // Calculate effective code rate.
   float effective_code_rate = pucch_format2_code_rate(config.nof_prb, config.nof_symbols, nof_uci_bits);
 
-  // The BWP size exceeds the grid dimensions.
-  if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
-    return false;
-  }
-
-  // None of the occupied PRB within the BWP can exceed the BWP dimensions.
-  if (config.starting_prb + config.nof_prb > config.bwp_size_rb) {
-    return false;
-  }
-
-  // None of the occupied symbols can exceed the configured maximum slot size, or the slot size given by the CP.
-  if ((config.start_symbol_index + config.nof_symbols > get_nsymb_per_slot(config.cp)) ||
-      (config.start_symbol_index + config.nof_symbols > ce_dims.nof_symbols)) {
-    return false;
-  }
-
-  // The number of receive ports is either zero or exceeds the configured maximum number of receive ports.
-  if (config.ports.empty() || (config.ports.size() > ce_dims.nof_rx_ports)) {
-    return false;
-  }
-
-  // CSI Part 2 is not supported.
-  if (config.nof_csi_part2 != 0) {
-    return false;
-  }
-
   // The code rate shall not exceed the maximum.
   if (effective_code_rate > pucch_constants::MAX_CODE_RATE) {
-    return false;
+    return make_unexpected(fmt::format("The effective code rate (i.e., {}) exceeds the maximum allowed {}.",
+                                       effective_code_rate,
+                                       static_cast<float>(pucch_constants::MAX_CODE_RATE)));
   }
 
   // UCI payload exceeds the UCI payload size boundaries.
   if (nof_uci_bits < pucch_constants::FORMAT2_MIN_UCI_NBITS ||
       nof_uci_bits > pucch_processor_impl::FORMAT2_MAX_UCI_NBITS) {
-    return false;
+    return make_unexpected(
+        fmt::format("UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
+                    nof_uci_bits,
+                    pucch_constants::FORMAT2_MIN_UCI_NBITS,
+                    static_cast<unsigned>(pucch_processor_impl::FORMAT2_MAX_UCI_NBITS)));
   }
 
-  return true;
+  return default_success_t();
 }

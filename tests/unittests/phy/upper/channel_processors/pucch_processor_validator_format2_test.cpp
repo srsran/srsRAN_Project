@@ -15,6 +15,7 @@
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
+#include <regex>
 
 using namespace srsran;
 
@@ -144,7 +145,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           test_params entry    = {};
           entry.config         = base_format_2_config;
           entry.config.ports   = {};
-          entry.assert_message = fmt::format(R"(The number of receive ports cannot be zero\.)");
+          entry.assert_message = R"(The number of receive ports cannot be zero\.)";
           return entry;
         },
     },
@@ -165,7 +166,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           test_params entry          = {};
           entry.config               = base_format_2_config;
           entry.config.nof_csi_part2 = 1;
-          entry.assert_message       = fmt::format(R"(CSI Part 2 is not currently supported\.)");
+          entry.assert_message       = R"(CSI Part 2 is not currently supported\.)";
           return entry;
         },
     },
@@ -191,7 +192,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           entry.config              = base_format_2_config;
           entry.config.nof_harq_ack = uci_constants::MAX_NOF_HARQ_BITS;
           entry.assert_message =
-              R"(The effective code rate \(i\.e\., [0-9]*\.[0-9]*) exceeds the maximum allowed 0\.8\.)";
+              R"(The effective code rate \(i\.e\., [0-9]*\.[0-9]*\) exceeds the maximum allowed 0\.8\.)";
           return entry;
         },
     },
@@ -317,7 +318,10 @@ TEST_P(PucchProcessorFormat2Fixture, PucchProcessorValidatortest)
   const test_case_t& param = GetParam();
 
   // Make sure the configuration is invalid.
-  ASSERT_FALSE(pucch_validator->is_valid(param.get_test_params().config));
+  error_type<std::string> validator_out = pucch_validator->is_valid(param.get_test_params().config);
+  ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
+  ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.get_test_params().assert_message)))
+      << "The assertion message doesn't match the expected pattern.";
 
   // Prepare resource grid.
   resource_grid_reader_spy grid;
