@@ -285,8 +285,10 @@ struct du_high_unit_pucch_config {
 };
 
 struct du_high_unit_srs_config {
-  /// Enable Sound Reference Signals (SRS) for the UEs within this cell.
-  bool srs_enabled = false;
+  /// If set, enables periodic Sound Reference Signals (SRS) for the UEs within this cell. If not present, SRS are
+  /// aperiodic.
+  /// Values: {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560}.
+  std::optional<unsigned> srs_period = std::nullopt;
   /// \brief Defines the maximum number of symbols dedicated to the cell SRS resources in a slot.  Values: {1,...,6}.
   /// This is the space that the GNB reserves for all the cell SRS resources in the UL slots, not to be confused with
   /// the symbols per SRS resource configured in the UE dedicated configuration.

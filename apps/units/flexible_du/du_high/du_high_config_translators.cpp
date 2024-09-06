@@ -543,8 +543,10 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Parameters for SRS-Config.
     srs_du::srs_builder_params&    du_srs_cfg   = out_cell.srs_cfg;
     const du_high_unit_srs_config& user_srs_cfg = base_cell.srs_cfg;
-    du_srs_cfg.srs_enabled                      = user_srs_cfg.srs_enabled;
-    du_srs_cfg.max_nof_symbols                  = user_srs_cfg.max_nof_symbols_per_slot;
+    if (user_srs_cfg.srs_period.has_value()) {
+      du_srs_cfg.srs_period.emplace(static_cast<srs_periodicity>(*user_srs_cfg.srs_period));
+    }
+    du_srs_cfg.max_nof_symbols = user_srs_cfg.max_nof_symbols_per_slot;
 
     // Parameters for PUSCH-Config.
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.has_value()) {
