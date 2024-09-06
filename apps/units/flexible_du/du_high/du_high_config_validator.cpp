@@ -830,6 +830,19 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
       fmt::print("Invalid Sector ID {}, for a gNB Id of {} bits\n", cell.cell.sector_id.value(), gnb_id.bit_length);
       return false;
     }
+    const auto   band          = cell.cell.band.value_or(band_helper::get_band_from_dl_arfcn(cell.cell.dl_f_ref_arfcn));
+    bool         is_unlicensed = band_helper::is_unlicensed_band(band);
+    unsigned int max_ra_resp_window = is_unlicensed ? 40 : 10;
+    unsigned int ra_resp_window_ms =
+        cell.cell.prach_cfg.ra_resp_window.value() >> to_numerology_value(cell.cell.common_scs);
+    if (ra_resp_window_ms > max_ra_resp_window) {
+      fmt::print("RA Response Window ({}sl -> {}ms) must be smaller than {}ms in {} bands.\n",
+                 cell.cell.prach_cfg.ra_resp_window,
+                 ra_resp_window_ms,
+                 max_ra_resp_window,
+                 is_unlicensed ? "unlicensed" : "licensed");
+      return false;
+    }
   }
 
   // Checks parameter collisions between cells that can lead to problems.

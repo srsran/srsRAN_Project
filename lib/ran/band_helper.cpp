@@ -951,6 +951,21 @@ bool srsran::band_helper::is_paired_spectrum(nr_band band)
   return mode == duplex_mode::FDD;
 }
 
+bool srsran::band_helper::is_unlicensed_band(nr_band band)
+{
+  srsran_assert(band != nr_band::invalid, "Band must be a valid NR band.");
+  switch (band) {
+    case nr_band::n46:
+    case nr_band::n48:
+    case nr_band::n96:
+    case nr_band::n102:
+    case nr_band::n104:
+      return true;
+    default:
+      return false;
+  }
+}
+
 frequency_range srsran::band_helper::get_freq_range(nr_band band)
 {
   srsran_assert(band != nr_band::invalid, "Band must be a valid NR band.");
