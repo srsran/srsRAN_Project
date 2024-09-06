@@ -282,8 +282,8 @@ int main(int argc, char** argv)
       du_f1u_gw_config,
       *epoll_broker,
       workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)));
-  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn =
-      srs_du::create_split_f1u_gw({du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT});
+  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn = srs_du::create_split_f1u_gw(
+      {du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT, du_cfg.nru_cfg.ext_addr});
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
