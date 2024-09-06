@@ -13,7 +13,7 @@ ru_ofh:
   t1a_min_cp_ul: 150                                              
   t1a_max_up: 200                                                 
   t1a_min_up: 80                                                  
-  ta4_max: 300                                                    
+  ta4_max: 500
   ta4_min: 10                                                     
   is_prach_cp_enabled: false                                      
   compr_method_ul: bfp                                            

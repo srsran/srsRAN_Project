@@ -39,7 +39,7 @@ struct ru_ofh_unit_base_cell_config {
   /// T1a minimum parameter for downlink User-Plane in microseconds.
   std::chrono::microseconds T1a_min_up{85};
   /// Ta4 maximum parameter for uplink User-Plane in microseconds.
-  std::chrono::microseconds Ta4_max{300};
+  std::chrono::microseconds Ta4_max{500};
   /// Ta4 minimum parameter for uplink User-Plane in microseconds.
   std::chrono::microseconds Ta4_min{85};
   /// Enables the Control-Plane PRACH message signalling.
