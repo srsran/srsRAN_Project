@@ -124,7 +124,7 @@ metrics version check in retina:
   tags:
     - amd64-avx2
   timeout: 2h
-  before_script:
+  before_script: &docker_setup
     - dockerd-entrypoint.sh &
     - |
       while ! ( nc -zv localhost 2376 2>&1 >/dev/null )
@@ -132,7 +132,7 @@ metrics version check in retina:
           sleep 1
       done
 
-gnb docker compose:
+.gnb docker compose:
   extends: .docker compose
   variables: &build_in_compose_variables
     KUBERNETES_CPU_REQUEST: 6
@@ -149,15 +149,26 @@ gnb docker compose:
           - docker/docker-compose.yml
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       interruptible: false
-  script:
+  before_script:
+    - *docker_setup
     - docker compose -f docker/docker-compose.yml build --build-arg NUM_CORES=${KUBERNETES_CPU_LIMIT} --build-arg LIB=${LIB} --build-arg LIB_VERSION=${LIB_VERSION} gnb
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb ${TEST_CMD}"
-  parallel:
-    matrix:
-      - <<: *uhd_params
-        TEST_CMD: gnb amf --no_core=true ru_sdr --device_driver uhd | grep 'Failed to open device with address'
-      - <<: *dpdk_params
-        TEST_CMD: gnb amf --no_core=true hal --eal_args='--help'
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srscu"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srsdu"
+
+gnb docker compose uhd:
+  extends: .gnb docker compose
+  variables:
+    <<: *uhd_params
+  script:
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb amf --no_core=true ru_sdr --device_driver uhd | grep 'Failed to open device with address'"
+
+gnb docker compose dpdk:
+  extends: .gnb docker compose
+  variables:
+    <<: *dpdk_params
+  script:
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which ru_emulator"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb amf --no_core=true hal --eal_args='--help'"  
 
 5gc docker compose:
   extends: .docker compose
@@ -296,10 +307,6 @@ grafana server image latest:
       export NAME="srsran-project"
       export VERSION="${SPLIT}_${SUFFIX}"
       export BUILD_ARGS="LIB=${LIB};LIB_VERSION=${LIB_VERSION};MARCH=${MARCH};NUM_CORES=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
-  needs:
-    - job: gnb docker compose
-      optional: true
-      artifacts: false
 
 srsran image split72:
   extends: .srsran image
@@ -338,6 +345,10 @@ srsran image split72:
         MARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64
+  needs:
+    - job: gnb docker compose dpdk
+      optional: true
+      artifacts: false
 
 srsran image split8:
   extends: .srsran image
@@ -366,3 +377,7 @@ srsran image split8:
         MARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64
+  needs:
+    - job: gnb docker compose uhd
+      optional: true
+      artifacts: false
