@@ -66,9 +66,7 @@ public:
       notifier = nullptr;
       dl_tnl_info.reset();
     } else {
-      logger.log_info("Cannot dettach DU bearer, DL-FTEID does not match. F-TEID={}, requested F-TEID={}",
-                      dl_tnl_info,
-                      dl_tnl_info_);
+      logger.log_info("Skipped detach of DU bearer from old F-TEID={}. Current F-TEID={}", dl_tnl_info_, dl_tnl_info);
     }
   }
 
