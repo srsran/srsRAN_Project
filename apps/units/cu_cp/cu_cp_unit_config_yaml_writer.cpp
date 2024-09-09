@@ -19,8 +19,7 @@ static void fill_cu_cp_amf_section(YAML::Node node, const cu_cp_unit_amf_config&
   node["addr"]                   = config.ip_addr;
   node["port"]                   = config.port;
   node["bind_addr"]              = config.bind_addr;
-  node["n2_bind_addr"]           = config.n2_bind_addr;
-  node["n2_bind_interface"]      = config.n2_bind_interface;
+  node["bind_interface"]         = config.bind_interface;
   node["sctp_rto_initial"]       = config.sctp_rto_initial;
   node["sctp_rto_min"]           = config.sctp_rto_min;
   node["sctp_rto_max"]           = config.sctp_rto_max;

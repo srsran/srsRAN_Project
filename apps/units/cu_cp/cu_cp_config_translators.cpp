@@ -439,12 +439,8 @@ srsran::generate_n2_client_config(const cu_cp_unit_amf_config& amf_cfg, dlt_pcap
     network_mode_t& nw_mode = std::get<network_mode_t>(mode);
     nw_mode.amf_address     = amf_cfg.ip_addr;
     nw_mode.amf_port        = amf_cfg.port;
-    if (amf_cfg.n2_bind_addr == "auto") {
-      nw_mode.bind_address = amf_cfg.bind_addr;
-    } else {
-      nw_mode.bind_address = amf_cfg.n2_bind_addr;
-    }
-    nw_mode.bind_interface = amf_cfg.n2_bind_interface;
+    nw_mode.bind_address    = amf_cfg.bind_addr;
+    nw_mode.bind_interface  = amf_cfg.bind_interface;
     if (amf_cfg.sctp_rto_initial >= 0) {
       nw_mode.rto_initial = amf_cfg.sctp_rto_initial;
     }
