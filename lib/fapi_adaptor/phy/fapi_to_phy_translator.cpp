@@ -354,7 +354,8 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 }
 
 /// Returns true if the given PUCCH PDU is valid, otherwise false.
-static bool is_pucch_pdu_valid(const uplink_pdu_validator& ul_pdu_validator, const uplink_processor::pucch_pdu& ul_pdu)
+static error_type<std::string> is_pucch_pdu_valid(const uplink_pdu_validator&        ul_pdu_validator,
+                                                  const uplink_processor::pucch_pdu& ul_pdu)
 {
   switch (ul_pdu.context.format) {
     case pucch_format::FORMAT_0:
@@ -371,7 +372,7 @@ static bool is_pucch_pdu_valid(const uplink_pdu_validator& ul_pdu_validator, con
       break;
   }
 
-  return false;
+  return make_unexpected("Unknown PUCCH format.");
 }
 
 /// Returns a PRACH detector slot configuration using the given PRACH buffer context.
@@ -424,8 +425,11 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
       case fapi::ul_pdu_type::PUCCH: {
         uplink_processor::pucch_pdu& ul_pdu = pdus.pucch.emplace_back();
         convert_pucch_fapi_to_phy(ul_pdu, pdu.pucch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
-        if (!is_pucch_pdu_valid(ul_pdu_validator, ul_pdu)) {
-          logger.warning("Upper PHY flagged a PUCCH PDU as having an invalid configuration. Skipping UL_TTI.request");
+        error_type<std::string> phy_pucch_validation = is_pucch_pdu_valid(ul_pdu_validator, ul_pdu);
+        if (!phy_pucch_validation.has_value()) {
+          logger.warning(
+              "Skipping UL_TTI.request: PUCCH PDU flagged as invalid by the Upper PHY with the following error\n    {}",
+              phy_pucch_validation.error());
 
           return make_unexpected(default_error_t{});
         }

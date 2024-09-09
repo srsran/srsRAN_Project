@@ -58,12 +58,27 @@ public:
 class uplink_pdu_validator_dummy : public uplink_pdu_validator
 {
 public:
-  bool is_valid(const prach_detector::configuration& config) const override { return true; }
-  bool is_valid(const pucch_processor::format0_configuration& config) const override { return true; }
-  bool is_valid(const pucch_processor::format1_configuration& config) const override { return true; }
-  bool is_valid(const pucch_processor::format2_configuration& config) const override { return true; }
-  bool is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
-  bool is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
+  bool                    is_valid(const prach_detector::configuration& config) const override { return true; }
+  error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override
+  {
+    return default_success_t();
+  }
+  error_type<std::string> is_valid(const pucch_processor::format1_configuration& config) const override
+  {
+    return default_success_t();
+  }
+  error_type<std::string> is_valid(const pucch_processor::format2_configuration& config) const override
+  {
+    return default_success_t();
+  }
+  error_type<std::string> is_valid(const pucch_processor::format3_configuration& config) const override
+  {
+    return default_success_t();
+  }
+  error_type<std::string> is_valid(const pucch_processor::format4_configuration& config) const override
+  {
+    return default_success_t();
+  }
   bool is_valid(const pusch_processor::pdu_t& pdu) const override { return true; }
   bool is_valid(const srs_estimator_configuration& config) const override { return true; }
 };
