@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../common/f1ap_ue_id.h"
 #include "du_setup_notifier.h"
 #include "f1ap_cu_ue_context_update.h"
 #include "srsran/adt/byte_buffer.h"
@@ -18,6 +17,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/f1ap/cu_cp/f1ap_du_context.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_task.h"
