@@ -202,8 +202,10 @@ public:
   [[nodiscard]] bool timeout_rrc_reconfiguration_and_await_pdu_session_setup_response()
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for PDU Session Resource Setup Response
-    if (tick_until(std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
-                   [&]() { return false; })) {
+    if (tick_until(
+            std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
+            [&]() { return false; },
+            false)) {
       return false;
     }
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),

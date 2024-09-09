@@ -192,6 +192,17 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
     cu_cp_cfg.mobility.meas_manager_config = meas_mng_cfg;
   }
 
+  // > RRC config
+  cu_cp_cfg.rrc.rrc_procedure_timeout_ms =
+      std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
+
+  // > F1AP config
+  cu_cp_cfg.f1ap.proc_timeout = std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
+
+  // > UE config
+  cu_cp_cfg.ue.pdu_session_setup_timeout =
+      std::chrono::seconds(10); // procedure timeouts should only occur intentionally
+
   // create CU-CP instance.
   cu_cp_inst = create_cu_cp(cu_cp_cfg);
 }
@@ -212,7 +223,9 @@ void cu_cp_test_environment::tick()
   cu_cp_workers->worker.push_task_blocking([this]() { timers.tick(); });
 }
 
-bool cu_cp_test_environment::tick_until(std::chrono::milliseconds timeout, const std::function<bool()>& stop_condition)
+bool cu_cp_test_environment::tick_until(std::chrono::milliseconds    timeout,
+                                        const std::function<bool()>& stop_condition,
+                                        bool                         real_time)
 {
   std::mutex              mutex;
   std::condition_variable cvar;
@@ -240,7 +253,9 @@ bool cu_cp_test_environment::tick_until(std::chrono::milliseconds timeout, const
       std::unique_lock<std::mutex> lock(mutex);
       cvar.wait(lock, [&done]() { return done; });
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    if (real_time) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
   }
 
   return stop_condition();

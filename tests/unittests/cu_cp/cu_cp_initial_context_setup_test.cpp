@@ -317,8 +317,8 @@ TEST_F(cu_cp_initial_context_setup_test, when_ue_capability_enquiry_fails_then_i
   ASSERT_TRUE(send_security_mode_complete_and_await_ue_capability_enquiry());
 
   // Fail UE Capability Enquiry (UE doesn't respond)
-  ASSERT_FALSE(tick_until(std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
-                          [&]() { return false; }));
+  ASSERT_FALSE(tick_until(
+      std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms), [&]() { return false; }, false));
 
   // Wait for NGAP Initial Context Setup Failure
   ASSERT_TRUE(await_initial_context_setup_failure());

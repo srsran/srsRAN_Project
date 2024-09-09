@@ -246,13 +246,18 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response()
+  [[nodiscard]] bool
+  send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(unsigned rrc_recfg_transaction_id = 1,
+                                                                         uint8_t  rrc_recfg_count          = 9)
   {
     // Inject UL RRC Message (containing RRC Reconfiguration Complete) and wait for PDU Session Resource Release
     // Response
     get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
-        du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, generate_rrc_reconfiguration_complete_pdu(3, 7)));
-    report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
+        du_ue_id,
+        ue_ctx->cu_ue_id.value(),
+        srb_id_t::srb1,
+        generate_rrc_reconfiguration_complete_pdu(rrc_recfg_transaction_id, rrc_recfg_count)));
+    report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds(10000)),
                               "Failed to receive PDU Session Resource Release Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_release_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
@@ -326,5 +331,5 @@ TEST_F(cu_cp_pdu_session_resource_release_test, when_only_pdu_session_released_t
   ASSERT_TRUE(send_ue_context_modification_response_and_await_rrc_reconfiguration());
 
   // Inject RRC Reconfiguration Complete and await PDU Session Resource Release Response
-  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(0, 8));
 }

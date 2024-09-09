@@ -141,7 +141,8 @@ public:
   void tick();
 
   /// Keep ticking the CU-CP clock until the condition provided returns true.
-  bool tick_until(std::chrono::milliseconds timeout, const std::function<bool()>& stop_condition);
+  bool
+  tick_until(std::chrono::milliseconds timeout, const std::function<bool()>& stop_condition, bool real_time = true);
 
   /// Tick CU-CP timer until a NGAP PDU is sent.
   bool wait_for_ngap_tx_pdu(ngap_message&             ngap_pdu,
