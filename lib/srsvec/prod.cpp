@@ -9,7 +9,7 @@
  */
 
 #include "srsran/srsvec/prod.h"
-#include "simd.h"
+#include "srsran/srsvec/simd.h"
 #include <cmath>
 
 using namespace srsran;
