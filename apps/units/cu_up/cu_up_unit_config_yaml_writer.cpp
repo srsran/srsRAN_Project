@@ -16,12 +16,11 @@ using namespace srsran;
 
 static void fill_cu_up_upf_section(YAML::Node node, const cu_up_unit_upf_config& config)
 {
-  node["bind_addr"]         = config.bind_addr;
-  node["n3_bind_addr"]      = config.n3_bind_addr;
-  node["n3_bind_interface"] = config.n3_bind_interface;
-  node["n3_ext_addr"]       = config.n3_ext_addr;
-  node["udp_max_rx_msgs"]   = config.udp_rx_max_msgs;
-  node["no_core"]           = config.no_core;
+  node["bind_addr"]       = config.bind_addr;
+  node["bind_interface"]  = config.bind_interface;
+  node["ext_addr"]        = config.ext_addr;
+  node["udp_max_rx_msgs"] = config.udp_rx_max_msgs;
+  node["no_core"]         = config.no_core;
 }
 
 static void fill_cu_up_metrics_section(YAML::Node node, const cu_up_unit_metrics_config& config)
