@@ -114,6 +114,8 @@ struct cu_cp_configuration {
   mobility_configuration mobility;
   /// Parameters related with CU-CP metrics.
   metrics_params metrics;
+  /// Plugins parameters
+  bool load_plugins;
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
 };

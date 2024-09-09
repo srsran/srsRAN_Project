@@ -373,16 +373,22 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
                  cu_cfg.security_config.confidentiality_protection);
   }
 
+  // Timers
   out_cfg.ue.inactivity_timer              = std::chrono::seconds{cu_cfg.inactivity_timer};
   out_cfg.ue.pdu_session_setup_timeout     = std::chrono::seconds{cu_cfg.pdu_session_setup_timeout};
   out_cfg.metrics.statistics_report_period = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
 
+  // Mobility
   out_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements =
       cu_cfg.mobility_config.trigger_handover_from_measurements;
+  out_cfg.mobility.mobility_manager_config.enable_ng_handover = cu_cfg.load_plugins;
 
   // F1AP-CU config.
   out_cfg.f1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.f1ap_config.procedure_timeout};
   out_cfg.f1ap.json_log_enabled = cu_cfg.loggers.f1ap_json_enabled;
+
+  // Plugins
+  out_cfg.load_plugins = cu_cfg.load_plugins;
 
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {

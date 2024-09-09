@@ -262,6 +262,8 @@ struct cu_cp_unit_config {
   uint64_t max_nof_ues = 8192;
   /// Inactivity timer in seconds.
   int inactivity_timer = 120;
+  /// Load enterprise plugins.
+  bool load_plugins = false;
   /// PDU session setup timeout in seconds (must be larger than T310).
   unsigned pdu_session_setup_timeout = 3;
   /// Loggers configuration.

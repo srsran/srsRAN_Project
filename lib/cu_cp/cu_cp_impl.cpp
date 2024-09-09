@@ -67,7 +67,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 {
   assert_cu_cp_configuration_valid(cfg);
 
-  if (not load_plugins()) {
+  if (cfg.load_plugins && not load_plugins()) {
     logger.error("Could not load CU-CP plugins");
     report_fatal_error("Could not load CU-CP plugins");
   }
