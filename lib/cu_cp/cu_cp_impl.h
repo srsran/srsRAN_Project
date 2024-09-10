@@ -27,11 +27,22 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ran/plmn_identity.h"
+#include <dlfcn.h>
 #include <memory>
 #include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// Dynamic library handler deleter - closes the dynamic library upon destruction.
+struct dynamic_library_deleter {
+  void operator()(void* handler) const
+  {
+    if (handler != nullptr) {
+      ::dlclose(handler);
+    }
+  }
+};
 
 class cu_cp_common_task_scheduler : public common_task_scheduler
 {
@@ -206,6 +217,7 @@ private:
   // Plug-ins
   [[nodiscard]] bool                             load_plugins();
   start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
+  void*                                          dl_handle          = nullptr;
 };
 
 } // namespace srs_cu_cp

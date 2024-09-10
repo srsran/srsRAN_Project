@@ -99,6 +99,16 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 cu_cp_impl::~cu_cp_impl()
 {
   stop();
+
+  if (dl_handle != nullptr) {
+    if (::dlclose(dl_handle) != 0) {
+      char* err = ::dlerror();
+      if (err != nullptr) {
+        fmt::print("Failed to close DL handle: {}\n", err);
+        logger.error("Failed to close DL handle: {}", err);
+      }
+    }
+  }
 }
 
 bool cu_cp_impl::start()
@@ -144,7 +154,7 @@ bool cu_cp_impl::load_plugins()
   char*       err         = nullptr;
   std::string plugin_name = "libsrsran_plugin_ng_handover.so";
 
-  void* dl_handle = ::dlopen(plugin_name.c_str(), RTLD_NOW + RTLD_DEEPBIND + RTLD_GLOBAL);
+  dl_handle = ::dlopen(plugin_name.c_str(), RTLD_NOW + RTLD_DEEPBIND + RTLD_GLOBAL);
   if (dl_handle == nullptr) {
     err = ::dlerror();
     if (err != nullptr) {
@@ -158,7 +168,7 @@ bool cu_cp_impl::load_plugins()
 
   // Load symbol.
   start_ho_prep_func = reinterpret_cast<start_ngap_handover_preparation_procedure_func>(
-      ::dlsym(dl_handle, "_ZN6srsran9srs_cu_cp15testing_funtionERNS_25fifo_async_task_schedulerE"));
+      ::dlsym(dl_handle, "start_ngap_preparation_procedure_func"));
 
   // Handle an error loading the symbol.
   if (start_ho_prep_func == nullptr) {
