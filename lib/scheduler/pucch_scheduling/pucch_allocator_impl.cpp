@@ -1200,7 +1200,7 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
   }
 
   if (pucch_grants_alloc_grid[sl_tx.to_uint()].full()) {
-    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
+    logger.info("rnti={}: PUCCH CSI allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
                 crnti,
                 pucch_slot_alloc.slot);
     return;

@@ -832,7 +832,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.nof_cell_sr_resources,
              "Number of PUCCH F1 resources available per cell for SR")
       ->capture_default_str()
-      ->check(CLI::Range(1, 50));
+      ->check(CLI::Range(1, 100));
   add_option(app,
              "--f0_intraslot_freq_hop",
              pucch_params.f0_intraslot_freq_hopping,
@@ -862,7 +862,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.nof_cell_csi_resources,
              "Number of PUCCH F2 resources available per cell for CSI")
       ->capture_default_str()
-      ->check(CLI::Range(0, 50));
+      ->check(CLI::Range(0, 100));
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));

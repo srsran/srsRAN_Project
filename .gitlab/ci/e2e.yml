@@ -68,6 +68,7 @@ load retina variables:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
     - if: $ON_WEB
     - if: $ON_API
+    - if: $CI_DESCRIPTION =~ /Weekly/
   script:
     - cat .gitlab/ci/e2e/.env
   artifacts:

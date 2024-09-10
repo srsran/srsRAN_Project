@@ -25,6 +25,7 @@
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
+#include <array>
 
 namespace srsran {
 namespace csi_helper {
@@ -38,6 +39,10 @@ struct csi_builder_params {
   unsigned nof_rbs;
   /// Number of ports set for the CSI-RS.
   unsigned nof_ports = 1;
+  /// Symbol index for the CSI measurement.
+  unsigned csi_ofdm_symbol_index = 8;
+  /// Symbol indexes for tracking signals.
+  std::array<unsigned, 4> tracking_csi_ofdm_symbol_indexes = {4, 8, 4, 8};
   /// Period of the CSI-RS resources.
   csi_resource_periodicity csi_rs_period = csi_resource_periodicity::slots80;
   /// Slot offset for measurement CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.

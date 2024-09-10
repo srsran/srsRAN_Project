@@ -177,7 +177,7 @@ static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_para
   res.res_mapping.fd_alloc.resize(3);
   res.res_mapping.fd_alloc.set(2, true);
   res.res_mapping.cdm                     = csi_rs_cdm_type::fd_CDM2;
-  res.res_mapping.first_ofdm_symbol_in_td = 8;
+  res.res_mapping.first_ofdm_symbol_in_td = params.csi_ofdm_symbol_index;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
   res.res_mapping.freq_band_rbs           = get_csi_freq_occupation_rbs(params.nof_rbs, params.nof_rbs);
   res.period                              = params.csi_rs_period;
@@ -329,11 +329,10 @@ fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource> tracking_csi_rs,
   res.res_mapping.cdm          = csi_rs_cdm_type::no_CDM;
   res.res_mapping.freq_density = csi_rs_freq_density_type::three;
 
-  static constexpr unsigned symbol_offsets[]  = {4, 8, 4, 8};
   static constexpr unsigned rel_slot_offset[] = {0, 0, 1, 1};
   for (unsigned i = 0; i != NOF_TRACKING_RESOURCES; ++i) {
     res.res_id                              = static_cast<nzp_csi_rs_res_id_t>(first_csi_res_id + i);
-    res.res_mapping.first_ofdm_symbol_in_td = symbol_offsets[i];
+    res.res_mapping.first_ofdm_symbol_in_td = params.tracking_csi_ofdm_symbol_indexes[i];
     res.csi_res_offset                      = params.tracking_csi_slot_offset + rel_slot_offset[i];
     tracking_csi_rs[i]                      = res;
   }
