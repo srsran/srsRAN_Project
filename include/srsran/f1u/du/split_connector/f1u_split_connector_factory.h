@@ -35,6 +35,7 @@ struct f1u_du_split_gateway_creation_msg {
   gtpu_demux*             demux;
   dlt_pcap&               gtpu_pcap;
   uint16_t                peer_port;
+  std::string             f1u_ext_addr = "auto";
 };
 
 std::unique_ptr<f1u_du_udp_gateway> create_split_f1u_gw(f1u_du_split_gateway_creation_msg msg);

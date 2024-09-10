@@ -436,6 +436,54 @@ static const auto all_threshold_and_margins = to_array<threshold_and_margin_find
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz30, prach_format_type::A1, /* ZCZ */ 13, /* combine symbols */ true}, {0.195F, 12}, th_flag::green},
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz30, prach_format_type::A1, /* ZCZ */ 14, /* combine symbols */ true}, {0.195F, 12}, th_flag::orange},
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz30, prach_format_type::A1, /* ZCZ */ 15, /* combine symbols */ true}, {0.195F, 12}, th_flag::orange},
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 0, /* combine symbols */ true}, {0.605F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 1, /* combine symbols */ true}, {1.000F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 2, /* combine symbols */ true}, {1.000F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 3, /* combine symbols */ true}, {1.000F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 4, /* combine symbols */ true}, {0.980F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 5, /* combine symbols */ true}, {0.879F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 6, /* combine symbols */ true}, {0.785F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 7, /* combine symbols */ true}, {0.760F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 8, /* combine symbols */ true}, {0.692F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 9, /* combine symbols */ true}, {0.631F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 10, /* combine symbols */ true}, {0.598F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 11, /* combine symbols */ true}, {0.602F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 12, /* combine symbols */ true}, {0.611F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 13, /* combine symbols */ true}, {0.607F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 14, /* combine symbols */ true}, {0.605F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 15, /* combine symbols */ true}, {0.607F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 0, /* combine symbols */ true}, {0.322F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 1, /* combine symbols */ true}, {0.686F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 2, /* combine symbols */ true}, {0.617F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 3, /* combine symbols */ true}, {0.554F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 4, /* combine symbols */ true}, {0.516F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 5, /* combine symbols */ true}, {0.460F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 6, /* combine symbols */ true}, {0.416F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 7, /* combine symbols */ true}, {0.406F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 8, /* combine symbols */ true}, {0.374F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 9, /* combine symbols */ true}, {0.342F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 10, /* combine symbols */ true}, {0.323F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 11, /* combine symbols */ true}, {0.325F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 12, /* combine symbols */ true}, {0.326F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 13, /* combine symbols */ true}, {0.326F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 14, /* combine symbols */ true}, {0.324F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 15, /* combine symbols */ true}, {0.321F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 0, /* combine symbols */ true}, {0.195F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 1, /* combine symbols */ true}, {0.401F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 2, /* combine symbols */ true}, {0.358F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 3, /* combine symbols */ true}, {0.325F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 4, /* combine symbols */ true}, {0.302F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 5, /* combine symbols */ true}, {0.271F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 6, /* combine symbols */ true}, {0.244F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 7, /* combine symbols */ true}, {0.241F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 8, /* combine symbols */ true}, {0.222F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 9, /* combine symbols */ true}, {0.204F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 10, /* combine symbols */ true}, {0.194F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 11, /* combine symbols */ true}, {0.195F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 12, /* combine symbols */ true}, {0.195F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 13, /* combine symbols */ true}, {0.195F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 14, /* combine symbols */ true}, {0.195F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::A1, /* ZCZ */ 15, /* combine symbols */ true}, {0.195F, 12}, th_flag::orange}, // provisional
     {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz15, prach_format_type::A2, /* ZCZ */ 0, /* combine symbols */ true}, {0.352F, 12}, th_flag::orange},
     {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz15, prach_format_type::A2, /* ZCZ */ 1, /* combine symbols */ true}, {1.000F, 12}, th_flag::red},
     {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz15, prach_format_type::A2, /* ZCZ */ 2, /* combine symbols */ true}, {1.000F, 12}, th_flag::red},
@@ -631,6 +679,54 @@ static const auto all_threshold_and_margins = to_array<threshold_and_margin_find
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 13, /* combine symbols */ true}, {0.131F, 12}, th_flag::green},
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 14, /* combine symbols */ true}, {0.105F, 12}, th_flag::green},
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 15, /* combine symbols */ true}, {0.081F, 12}, th_flag::green},
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 0, /* combine symbols */ true}, {0.458F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 1, /* combine symbols */ true}, {1.000F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 2, /* combine symbols */ true}, {1.000F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 3, /* combine symbols */ true}, {1.000F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 4, /* combine symbols */ true}, {0.986F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 5, /* combine symbols */ true}, {0.883F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 6, /* combine symbols */ true}, {0.783F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 7, /* combine symbols */ true}, {0.770F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 8, /* combine symbols */ true}, {0.700F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 9, /* combine symbols */ true}, {0.637F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 10, /* combine symbols */ true}, {0.599F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 11, /* combine symbols */ true}, {0.516F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 12, /* combine symbols */ true}, {0.464F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 13, /* combine symbols */ true}, {0.385F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 14, /* combine symbols */ true}, {0.304F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 15, /* combine symbols */ true}, {0.232F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 0, /* combine symbols */ true}, {0.131F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 1, /* combine symbols */ true}, {0.677F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 2, /* combine symbols */ true}, {0.622F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 3, /* combine symbols */ true}, {0.553F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 4, /* combine symbols */ true}, {0.511F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 5, /* combine symbols */ true}, {0.458F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 6, /* combine symbols */ true}, {0.414F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 7, /* combine symbols */ true}, {0.409F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 8, /* combine symbols */ true}, {0.374F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 9, /* combine symbols */ true}, {0.345F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 10, /* combine symbols */ true}, {0.325F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 11, /* combine symbols */ true}, {0.283F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 12, /* combine symbols */ true}, {0.255F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 13, /* combine symbols */ true}, {0.213F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 14, /* combine symbols */ true}, {0.171F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 2, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 15, /* combine symbols */ true}, {0.132F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 0, /* combine symbols */ true}, {0.081F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 1, /* combine symbols */ true}, {0.404F, 12}, th_flag::red}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 2, /* combine symbols */ true}, {0.363F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 3, /* combine symbols */ true}, {0.322F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 4, /* combine symbols */ true}, {0.298F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 5, /* combine symbols */ true}, {0.268F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 6, /* combine symbols */ true}, {0.246F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 7, /* combine symbols */ true}, {0.241F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 8, /* combine symbols */ true}, {0.219F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 9, /* combine symbols */ true}, {0.205F, 12}, th_flag::orange}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 10, /* combine symbols */ true}, {0.197F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 11, /* combine symbols */ true}, {0.171F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 12, /* combine symbols */ true}, {0.155F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 13, /* combine symbols */ true}, {0.131F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 14, /* combine symbols */ true}, {0.105F, 12}, th_flag::green}, // provisional
+    {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz120, prach_format_type::B4, /* ZCZ */ 15, /* combine symbols */ true}, {0.081F, 12}, th_flag::green}, // provisional
     // clang-format on
 });
 

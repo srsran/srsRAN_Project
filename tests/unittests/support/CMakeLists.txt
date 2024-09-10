@@ -104,3 +104,7 @@ add_test(event_tracer_test event_tracer_test)
 add_executable(complex_normal_random_test complex_normal_random_test.cpp)
 target_link_libraries(complex_normal_random_test srslog gtest gtest_main)
 add_test(complex_normal_random_test complex_normal_random_test)
+
+add_executable(transform_optional_test transform_optional_test.cpp)
+target_link_libraries(transform_optional_test srslog gtest gtest_main)
+add_test(transform_optional_test transform_optional_test)

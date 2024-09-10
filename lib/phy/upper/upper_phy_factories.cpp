@@ -780,8 +780,8 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   } else if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
     const pdsch_processor_concurrent_configuration& pdsch_processor_config =
         std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
-    report_fatal_error_if_not(pdsch_processor_config.nof_pdsch_codeblock_threads >= 2,
-                              "The number of threads (i.e., {}) must be equal to or greater than 2.");
+    report_fatal_error_if_not(pdsch_processor_config.nof_pdsch_codeblock_threads >= 1,
+                              "The number of threads (i.e., {}) must be equal to or greater than 1.");
     report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
                               "Invalid codeblock executor.");
 

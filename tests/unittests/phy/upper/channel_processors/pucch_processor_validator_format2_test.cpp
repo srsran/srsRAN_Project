@@ -183,15 +183,6 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
     },
     {
         [] {
-          test_params entry           = {};
-          entry.config                = base_format_2_config;
-          entry.config.second_hop_prb = 0;
-          entry.assert_message        = fmt::format(R"(PUCCH Format 2 frequency hopping not supported\.)");
-          return entry;
-        },
-    },
-    {
-        [] {
           test_params entry          = {};
           entry.config               = base_format_2_config;
           entry.config.nof_harq_ack  = pucch_constants::FORMAT2_MIN_UCI_NBITS - 1;

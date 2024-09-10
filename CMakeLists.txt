@@ -38,11 +38,24 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 include(version) # sets version information
 
-if(NOT CMAKE_BUILD_TYPE)
-   set(CMAKE_BUILD_TYPE Release)
-   message(STATUS "Build type not specified: defaulting to Release.")
-endif(NOT CMAKE_BUILD_TYPE)
-set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
+# Configure supported build types and default build type
+set(supported_build_types "Release" "RelWithDebInfo" "Debug")
+set(default_build_type "Release")
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Build type not specified, using default: ${default_build_type}")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Select build type" FORCE)
+else()
+  # Check if build type is supported
+  if(NOT "${CMAKE_BUILD_TYPE}" IN_LIST supported_build_types)
+    message(SEND_ERROR "Unsupported build type '${CMAKE_BUILD_TYPE}'. Supported build types: ${supported_build_types}")
+  else()
+    message(STATUS "The build type is ${CMAKE_BUILD_TYPE}")
+  endif()
+endif()
+
+# Add possible values for build type in cmake-gui (drop-down widget, for convenience only)
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${supported_build_types})
 
 # Generate CMake to include build information
 configure_file(

@@ -24,7 +24,6 @@
 
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 
@@ -40,6 +39,11 @@ public:
     static_vector<uint8_t, MAX_PORTS> rx_ports;
     /// Lowest PRB index used for the PUCCH transmission within the resource grid {0, ..., 274}.
     unsigned first_prb;
+    /// \brief Index of the first PRB after frequency hopping as per TS38.213 Section 9.2.1.
+    ///
+    /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
+    /// enabled, empty otherwise.
+    std::optional<unsigned> second_hop_prb;
     /// Number of PRB allocated to PUCCH Format 2 {1, ..., 16}.
     unsigned nof_prb;
     /// Start symbol index within the slot {0, ..., 13}.

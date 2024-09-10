@@ -67,6 +67,45 @@ TEST_P(pdu_session_manager_test_set_n3_ext_addr, when_valid_pdu_session_setup_it
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
 }
 
+TEST_P(pdu_session_manager_test_set_f1u_ext_addr, when_valid_pdu_session_setup_item_session_can_be_added)
+{
+  // no sessions added yet
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  // prepare request
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
+
+  // attempt to add session
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+
+  // check successful outcome
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(setup_result.gtp_tunnel.gtp_teid.value(), 1);
+  ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 1);
+  const std::string tp_address_expect = net_config.f1u_ext_addr.empty() || net_config.f1u_ext_addr == "auto"
+                                            ? net_config.f1u_bind_addr
+                                            : net_config.f1u_ext_addr;
+  ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.tp_address.to_string(), tp_address_expect);
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+
+  // attempt to remove non-existing session
+  pdu_session_mng->remove_pdu_session(uint_to_pdu_session_id(2));
+
+  // check successful outcome (unchanged)
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+
+  // attempt to remove existing session
+  pdu_session_mng->remove_pdu_session(uint_to_pdu_session_id(1));
+
+  // check successful outcome (unchanged)
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+}
+
 TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_cant_be_added)
 {
   // no sessions added yet
@@ -406,6 +445,10 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
 INSTANTIATE_TEST_SUITE_P(pdu_session_manager_test_n3_ext_addr,
                          pdu_session_manager_test_set_n3_ext_addr,
                          ::testing::Values("", "auto", "1.2.3.4"));
+
+INSTANTIATE_TEST_SUITE_P(pdu_session_manager_test_f1u_ext_addr,
+                         pdu_session_manager_test_set_f1u_ext_addr,
+                         ::testing::Values("", "auto", "5.6.7.8"));
 
 int main(int argc, char** argv)
 {

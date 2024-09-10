@@ -31,6 +31,22 @@ void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
     return;
   }
 
+  // Avoid creating a bounded bitset if the allocation is contiguous.
+  int      i_prb_lowest  = prb_mask.find_lowest();
+  int      i_prb_highest = prb_mask.find_highest();
+  unsigned prb_count     = prb_mask.count();
+  srsran_assert((i_prb_lowest <= i_prb_highest) && (i_prb_highest >= 0), "Invalid PRB allocation.");
+  if ((static_cast<unsigned>(i_prb_highest + 1 - i_prb_lowest) == prb_count) && re_mask.all()) {
+    unsigned i_re_begin = i_prb_lowest * NRE;
+    unsigned i_re_end   = std::min(NRE * (i_prb_highest + 1), static_cast<unsigned>(mask.size()));
+
+    if (i_re_begin < mask.size()) {
+      mask.fill(i_re_begin, i_re_end, true);
+    }
+
+    return;
+  }
+
   // Generate a RE mask for the entire bandwidth.
   bounded_bitset<MAX_RB* NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
 
@@ -47,6 +63,22 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
 {
   // Skip if the symbol is not used.
   if (!symbols.test(symbol)) {
+    return;
+  }
+
+  // Avoid creating a bounded bitset if the allocation is contiguous.
+  int      i_prb_lowest  = prb_mask.find_lowest();
+  int      i_prb_highest = prb_mask.find_highest();
+  unsigned prb_count     = prb_mask.count();
+  srsran_assert((i_prb_lowest <= i_prb_highest) && (i_prb_highest >= 0), "Invalid PRB allocation.");
+  if ((static_cast<unsigned>(i_prb_highest + 1 - i_prb_lowest) == prb_count) && re_mask.all()) {
+    unsigned i_re_begin = i_prb_lowest * NRE;
+    unsigned i_re_end   = std::min(NRE * (i_prb_highest + 1), static_cast<unsigned>(mask.size()));
+
+    if (i_re_begin < mask.size()) {
+      mask.fill(i_re_begin, i_re_end, false);
+    }
+
     return;
   }
 

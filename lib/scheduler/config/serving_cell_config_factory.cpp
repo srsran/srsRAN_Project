@@ -488,19 +488,19 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
 {
   srs_config cfg{};
 
-  cfg.srs_res.emplace_back();
+  cfg.srs_res_list.emplace_back();
   // TODO: Verify correctness of the config based on what we support.
-  srs_config::srs_resource& res = cfg.srs_res.back();
-  res.id                        = static_cast<srs_config::srs_res_id>(0);
-  res.nof_ports                 = srs_config::srs_resource::nof_srs_ports::port1;
-  res.trans_comb_value          = 2;
-  res.trans_comb_offset         = 0;
-  res.trans_comb_cyclic_shift   = 0;
-  res.res_mapping.start_pos     = 0;
-  res.res_mapping.nof_symb      = srs_config::srs_resource::resource_mapping::nof_symbols::n1;
-  res.res_mapping.re_factor     = srs_config::srs_resource::resource_mapping::repetition_factor::n1;
-  res.freq_domain_pos           = 0;
-  res.freq_domain_shift         = 5;
+  srs_config::srs_resource& res    = cfg.srs_res_list.back();
+  res.id.ue_res_id                 = static_cast<srs_config::srs_res_id>(0);
+  res.nof_ports                    = srs_config::srs_resource::nof_srs_ports::port1;
+  res.tx_comb.size                 = tx_comb_size::n2;
+  res.tx_comb.tx_comb_offset       = 0;
+  res.tx_comb.tx_comb_cyclic_shift = 0;
+  res.res_mapping.start_pos        = 0;
+  res.res_mapping.nof_symb         = srs_nof_symbols::n1;
+  res.res_mapping.rept_factor      = srs_nof_symbols::n1;
+  res.freq_domain_pos              = 0;
+  res.freq_domain_shift            = 0;
   // NOTE: C_SRS, B_SRS and B_hop are chosen to disable SRS frequency hopping and to monitor SRS over smallest
   // possible BW i.e. 4 RBs. See TS 38.211, Table 6.4.1.4.3-1.
   // This is done to cater to setups of all BWs until SRS is supported in scheduler.
@@ -508,13 +508,13 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
   res.freq_hop.c_srs = 0;
   res.freq_hop.b_srs = 0;
   res.freq_hop.b_hop = 0;
-  res.grp_or_seq_hop = srs_config::srs_resource::group_or_sequence_hopping::neither;
-  res.res_type       = srs_config::srs_resource::aperiodic;
+  res.grp_or_seq_hop = srs_group_or_sequence_hopping::neither;
+  res.res_type       = srs_resource_type::aperiodic;
   res.sequence_id    = params.pci;
 
-  cfg.srs_res_set.emplace_back();
+  cfg.srs_res_set_list.emplace_back();
   // TODO: Verify correctness of the config based on what we support.
-  srs_config::srs_resource_set& res_set = cfg.srs_res_set.back();
+  srs_config::srs_resource_set& res_set = cfg.srs_res_set_list.back();
   res_set.id                            = static_cast<srs_config::srs_res_set_id>(0);
   res_set.srs_res_id_list.emplace_back(static_cast<srs_config::srs_res_id>(0));
   res_set.res_type =

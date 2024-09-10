@@ -93,6 +93,7 @@ static void fill_du_appconfig_nru_section(YAML::Node node, const srs_du::nru_app
 {
   node["queue_size"] = config.pdu_queue_size;
   node["bind_addr"]  = config.bind_address;
+  node["ext_addr"]   = config.ext_addr;
 }
 
 static void fill_du_appconfig_f1ap_section(YAML::Node node, const srs_du::f1ap_appconfig& config)

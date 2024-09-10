@@ -31,10 +31,10 @@
 #include "srsran/ran/pdsch/pdsch_prb_bundling.h"
 #include "srsran/ran/pdsch/pdsch_rate_match_pattern.h"
 #include "srsran/ran/pucch/pucch_tpc.h"
-#include "srsran/ran/pucch/srs_configuration.h"
 #include "srsran/ran/pucch/srs_tpc.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/ran/pusch/pusch_tpc.h"
+#include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tci.h"
 

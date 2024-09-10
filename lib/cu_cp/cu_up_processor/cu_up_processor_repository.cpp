@@ -43,8 +43,12 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
 {
   cu_up_index_t cu_up_index = allocate_cu_up_index();
   if (cu_up_index == cu_up_index_t::invalid) {
-    logger.warning("CU-UP connection failed - maximum number of CU-UPs connected ({})",
+    logger.warning("CU-UP connection failed. Cause: Maximum number of CU-UPs connected ({})",
                    cfg.cu_cp.admission.max_nof_cu_ups);
+    fmt::print(
+        "CU-UP connection failed. Cause: Maximum number of CU-UPs connected ({}). To increase the number of allowed "
+        "CU-UPs change the \"--max_nof_cu_ups\" in the CU-CP configuration\n",
+        cfg.cu_cp.admission.max_nof_cu_ups);
     return cu_up_index_t::invalid;
   }
 

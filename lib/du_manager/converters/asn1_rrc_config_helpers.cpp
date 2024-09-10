@@ -2249,83 +2249,87 @@ asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_
 static void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_periodicity_and_offset_c&   out,
                                                              const srs_config::srs_periodicity_and_offset& cfg)
 {
-  switch (cfg.type) {
-    case srs_config::srs_periodicity_and_offset::type_t::sl1:
+  if (cfg.period != srs_periodicity::sl1) {
+    srsran_sanity_check(cfg.offset < static_cast<uint16_t>(cfg.period), "Offset must be smaller than the periodicity");
+  }
+
+  switch (cfg.period) {
+    case srs_periodicity::sl1:
       out.set_sl1();
       break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl2: {
+    case srs_periodicity::sl2: {
       auto& p_and_o = out.set_sl2();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl4: {
+    case srs_periodicity::sl4: {
       auto& p_and_o = out.set_sl4();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl5: {
+    case srs_periodicity::sl5: {
       auto& p_and_o = out.set_sl5();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl8: {
+    case srs_periodicity::sl8: {
       auto& p_and_o = out.set_sl8();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl10: {
+    case srs_periodicity::sl10: {
       auto& p_and_o = out.set_sl10();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl16: {
+    case srs_periodicity::sl16: {
       auto& p_and_o = out.set_sl16();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl20: {
+    case srs_periodicity::sl20: {
       auto& p_and_o = out.set_sl20();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl32: {
+    case srs_periodicity::sl32: {
       auto& p_and_o = out.set_sl32();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl40: {
+    case srs_periodicity::sl40: {
       auto& p_and_o = out.set_sl40();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl64: {
+    case srs_periodicity::sl64: {
       auto& p_and_o = out.set_sl64();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl80: {
+    case srs_periodicity::sl80: {
       auto& p_and_o = out.set_sl80();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl160: {
+    case srs_periodicity::sl160: {
       auto& p_and_o = out.set_sl160();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl320: {
+    case srs_periodicity::sl320: {
       auto& p_and_o = out.set_sl320();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl640: {
+    case srs_periodicity::sl640: {
       auto& p_and_o = out.set_sl640();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl1280: {
+    case srs_periodicity::sl1280: {
       auto& p_and_o = out.set_sl1280();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
-    case srs_config::srs_periodicity_and_offset::type_t::sl2560: {
+    case srs_periodicity::sl2560: {
       auto& p_and_o = out.set_sl2560();
-      p_and_o       = cfg.value;
+      p_and_o       = cfg.offset;
     } break;
     default:
-      srsran_assertion_failure("Invalid periodicity and offset={}", cfg.type);
+      srsran_assertion_failure("Invalid periodicity and offset={}", cfg.period);
   }
 }
 
 asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg)
 {
   srs_res_s res;
-  res.srs_res_id = cfg.id;
+  res.srs_res_id = cfg.id.ue_res_id;
 
   switch (cfg.nof_ports) {
     case srs_config::srs_resource::nof_srs_ports::port1:
@@ -2355,42 +2359,42 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
     }
   }
 
-  if (cfg.trans_comb_value == 2) {
+  if (cfg.tx_comb.size == tx_comb_size::n2) {
     auto& n2           = res.tx_comb.set_n2();
-    n2.comb_offset_n2  = cfg.trans_comb_offset;
-    n2.cyclic_shift_n2 = cfg.trans_comb_cyclic_shift;
-  } else if (cfg.trans_comb_value == 4) {
+    n2.comb_offset_n2  = cfg.tx_comb.tx_comb_offset;
+    n2.cyclic_shift_n2 = cfg.tx_comb.tx_comb_cyclic_shift;
+  } else {
     auto& n4           = res.tx_comb.set_n4();
-    n4.comb_offset_n4  = cfg.trans_comb_offset;
-    n4.cyclic_shift_n4 = cfg.trans_comb_cyclic_shift;
+    n4.comb_offset_n4  = cfg.tx_comb.tx_comb_offset;
+    n4.cyclic_shift_n4 = cfg.tx_comb.tx_comb_cyclic_shift;
   }
 
   res.res_map.start_position = cfg.res_mapping.start_pos;
   switch (cfg.res_mapping.nof_symb) {
-    case srs_config::srs_resource::resource_mapping::nof_symbols::n1:
+    case srs_nof_symbols::n1:
       res.res_map.nrof_symbols = srs_res_s::res_map_s_::nrof_symbols_opts::n1;
       break;
-    case srs_config::srs_resource::resource_mapping::nof_symbols::n2:
+    case srs_nof_symbols::n2:
       res.res_map.nrof_symbols = srs_res_s::res_map_s_::nrof_symbols_opts::n2;
       break;
-    case srs_config::srs_resource::resource_mapping::nof_symbols::n4:
+    case srs_nof_symbols::n4:
       res.res_map.nrof_symbols = srs_res_s::res_map_s_::nrof_symbols_opts::n4;
       break;
     default:
       srsran_assertion_failure("Invalid number of OFDM symb={}", cfg.res_mapping.nof_symb);
   }
-  switch (cfg.res_mapping.re_factor) {
-    case srs_config::srs_resource::resource_mapping::repetition_factor::n1:
+  switch (cfg.res_mapping.rept_factor) {
+    case srs_nof_symbols::n1:
       res.res_map.repeat_factor = srs_res_s::res_map_s_::repeat_factor_opts::n1;
       break;
-    case srs_config::srs_resource::resource_mapping::repetition_factor::n2:
+    case srs_nof_symbols::n2:
       res.res_map.repeat_factor = srs_res_s::res_map_s_::repeat_factor_opts::n2;
       break;
-    case srs_config::srs_resource::resource_mapping::repetition_factor::n4:
+    case srs_nof_symbols::n4:
       res.res_map.repeat_factor = srs_res_s::res_map_s_::repeat_factor_opts::n4;
       break;
     default:
-      srsran_assertion_failure("Invalid repetition factor={}", cfg.res_mapping.re_factor);
+      srsran_assertion_failure("Invalid repetition factor={}", cfg.res_mapping.rept_factor);
   }
 
   res.freq_domain_position = cfg.freq_domain_pos;
@@ -2401,13 +2405,13 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
   res.freq_hop.c_srs = cfg.freq_hop.c_srs;
 
   switch (cfg.grp_or_seq_hop) {
-    case srs_config::srs_resource::group_or_sequence_hopping::neither:
+    case srs_group_or_sequence_hopping::neither:
       res.group_or_seq_hop = srs_res_s::group_or_seq_hop_opts::neither;
       break;
-    case srs_config::srs_resource::group_or_sequence_hopping::groupHopping:
+    case srs_group_or_sequence_hopping::groupHopping:
       res.group_or_seq_hop = srs_res_s::group_or_seq_hop_opts::group_hop;
       break;
-    case srs_config::srs_resource::group_or_sequence_hopping::sequenceHopping:
+    case srs_group_or_sequence_hopping::sequenceHopping:
       res.group_or_seq_hop = srs_res_s::group_or_seq_hop_opts::seq_hop;
       break;
     default:
@@ -2415,18 +2419,21 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
   }
 
   switch (cfg.res_type) {
-    case srs_config::srs_resource::resource_type::aperiodic: {
+    case srs_resource_type::aperiodic: {
       res.res_type.set_aperiodic();
     } break;
-    case srs_config::srs_resource::resource_type::semi_persistent: {
+    case srs_resource_type::semi_persistent: {
       auto& sp_res = res.res_type.set_semi_persistent();
+      srsran_assert(cfg.periodicity_and_offset.has_value(),
+                    "Semi-persistent resource must have periodicity and offset");
       make_asn1_rrc_srs_config_perioidicity_and_offset(sp_res.periodicity_and_offset_sp,
-                                                       cfg.semi_pers_res_type_periodicity_and_offset);
+                                                       cfg.periodicity_and_offset.value());
     } break;
-    case srs_config::srs_resource::resource_type::periodic: {
+    case srs_resource_type::periodic: {
+      srsran_assert(cfg.periodicity_and_offset.has_value(), "Periodic resource must have periodicity and offset");
       auto& p_res = res.res_type.set_semi_persistent();
       make_asn1_rrc_srs_config_perioidicity_and_offset(p_res.periodicity_and_offset_sp,
-                                                       cfg.semi_pers_res_type_periodicity_and_offset);
+                                                       cfg.periodicity_and_offset.value());
     } break;
     default:
       srsran_assertion_failure("Invalid resource type={}", cfg.res_type);
@@ -2464,18 +2471,18 @@ static void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_co
   calculate_addmodremlist_diff(
       out.srs_res_set_to_add_mod_list,
       out.srs_res_set_to_release_list,
-      src.srs_res_set,
-      dest.srs_res_set,
+      src.srs_res_set_list,
+      dest.srs_res_set_list,
       [](const srs_config::srs_resource_set& res) { return make_asn1_rrc_srs_res_set(res); },
       [](const srs_config::srs_resource_set& res) { return res.id; });
 
   calculate_addmodremlist_diff(
       out.srs_res_to_add_mod_list,
       out.srs_res_to_release_list,
-      src.srs_res,
-      dest.srs_res,
+      src.srs_res_list,
+      dest.srs_res_list,
       [](const srs_config::srs_resource& res) { return make_asn1_rrc_srs_res(res); },
-      [](const srs_config::srs_resource& res) { return res.id; });
+      [](const srs_config::srs_resource& res) { return res.id.ue_res_id; });
 
   if (dest.is_tpc_accum_disabled) {
     out.tpc_accumulation_present = true;

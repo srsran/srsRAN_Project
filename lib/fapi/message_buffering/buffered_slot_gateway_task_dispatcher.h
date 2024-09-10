@@ -32,7 +32,7 @@ class task_executor;
 namespace fapi {
 
 /// Buffered slot gateway task dispatcher.
-class buffered_slot_gateway_task_dispatcher : public slot_message_gateway, public slot_time_message_notifier
+class buffered_slot_gateway_task_dispatcher : public slot_message_gateway
 {
 public:
   buffered_slot_gateway_task_dispatcher(unsigned              l2_nof_slots_ahead,
@@ -40,8 +40,11 @@ public:
                                         slot_message_gateway& gateway,
                                         task_executor&        executor_);
 
-  // See interface for documentation.
-  void on_slot_indication(const slot_indication_message& msg) override;
+  /// Updates the current slot of the buffered slot gateway.
+  void update_current_slot(slot_point slot);
+
+  /// Forwards cached messages for the given slot.
+  void forward_cached_messages(slot_point slot);
 
   // See interface for documentation.
   void dl_tti_request(const dl_tti_request_message& msg) override;

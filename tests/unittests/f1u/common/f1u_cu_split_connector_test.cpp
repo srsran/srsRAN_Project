@@ -57,12 +57,15 @@ public:
   }
 
   expected<nru_ul_message> get_rx_pdu_blocking(manual_task_worker&       ue_worker,
-                                               std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(10))
+                                               std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(5000))
   {
+    const int                 nof_attempts       = 100;
+    std::chrono::milliseconds attempt_timeout_ms = timeout_ms / nof_attempts;
+
     // wait until at least one PDU is received
     std::unique_lock<std::mutex> lock(rx_mutex);
-    for (int i = 0; i < 100; i++) {
-      if (!rx_cvar.wait_for(lock, timeout_ms, [this]() { return !msg_queue.empty(); })) {
+    for (int i = 0; i < nof_attempts; i++) {
+      if (!rx_cvar.wait_for(lock, attempt_timeout_ms, [this]() { return !msg_queue.empty(); })) {
         if (not msg_queue.empty()) {
           break;
         }
@@ -451,7 +454,7 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   send_to_server(std::move(du_buf2.value()), "127.0.0.1", cu_gw_bind_port.value());
 
   // Blocking waiting for RX
-  expected<nru_ul_message> rx_sdu2 = cu_rx.get_rx_pdu_blocking(ue_worker);
+  expected<nru_ul_message> rx_sdu2 = cu_rx.get_rx_pdu_blocking(ue_worker, std::chrono::milliseconds(200));
   ASSERT_FALSE(rx_sdu2.has_value());
 }
 

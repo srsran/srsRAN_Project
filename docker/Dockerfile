@@ -60,17 +60,18 @@ RUN /src/docker/scripts/build_${LIB}.sh ${LIB_VERSION} ${MARCH} ${NUM_CORES}
 ARG EXTRA_CMAKE_ARGS=""
 RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
     LIB_UPPER=$(echo $LIB | tr '[:lower:]' '[:upper:]') && \
-    export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" && \
-    /src/docker/scripts/builder.sh \
-    -m "-j${NUM_CORES} install" \
-    -DBUILD_TESTS=True \
-    -DENABLE_${LIB_UPPER}=On \
-    -DMARCH=${MARCH} \
-    -DCMAKE_INSTALL_PREFIX=/opt/srs \
+    export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" \
+    && \
+    /src/docker/scripts/builder.sh -m "-j${NUM_CORES} install" \
+    -DBUILD_TESTS=False -DENABLE_${LIB_UPPER}=On -DMARCH=${MARCH} -DCMAKE_INSTALL_PREFIX=/opt/srs \
+    ${EXTRA_CMAKE_ARGS} /src \
+    && \
+    /src/docker/scripts/builder.sh -m "-j${NUM_CORES} ru_emulator" \
+    -DBUILD_TESTS=True -DENABLE_${LIB_UPPER}=On -DMARCH=${MARCH} \
     ${EXTRA_CMAKE_ARGS} /src
 
 # Copy extra binaries
-RUN cp /src/build/tests/integrationtests/ofh/ru_emulator /usr/local/bin/ru_emulator
+RUN cp /src/build/tests/integrationtests/ofh/ru_emulator /opt/srs/bin/ru_emulator
 
 ################
 # Stage 2: Run #

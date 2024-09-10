@@ -42,9 +42,9 @@ public:
     slot_point slot;
     /// Reference point for PDSCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;
-    /// DL DMRS config type (dmrsConfigType).
+    /// DM-RS config type (\e dmrsConfigType).
     dmrs_type type;
-    /// PDSCH DMRS-Scrambling-ID (pdschDmrsScramblingId).
+    /// PDSCH DMRS-Scrambling-ID (\e pdschDmrsScramblingId).
     unsigned scrambling_id;
     /// DMRS sequence initialization (\f$n_{SCID}\f$).
     bool n_scid;
@@ -62,8 +62,8 @@ public:
   virtual ~dmrs_pdsch_processor() = default;
 
   /// \brief Generates and maps DMRS for PDSCH.
-  /// \param [out] grid Provides the destination resource grid.
-  /// \param [in] config Provides the required configuration to generate and map the signal.
+  /// \param [out] grid  Destination resource grid.
+  /// \param [in] config PT-RS configuration.
   virtual void map(resource_grid_mapper& mapper, const config_t& config) = 0;
 };
 

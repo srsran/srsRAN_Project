@@ -129,6 +129,18 @@ helm:
     - job: trigger docker
       artifacts: false
 
+enterprise:
+  stage: ci
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      variables:
+        CI_DESCRIPTION: Nightly
+        SRSRAN_COMMIT: $CI_COMMIT_SHA
+        NOTIFY_SLACK: "true"
+  trigger:
+    project: softwareradiosystems/srsran_5g_enterprise
+    branch: main
+
 ################################################################################
 ## Static
 ################################################################################

@@ -36,7 +36,6 @@ public:
                    const rlc_rx_tm_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                    rlc_metrics_aggregator&           metrics_agg_,
-                   bool                              metrics_enabled,
                    rlc_pcap&                         pcap_,
                    task_executor&                    ue_executor,
                    timer_manager&                    timers);

@@ -111,7 +111,6 @@ protected:
                                              config,
                                              *tester,
                                              *metrics_agg,
-                                             true,
                                              pcap,
                                              ue_worker,
                                              timers);

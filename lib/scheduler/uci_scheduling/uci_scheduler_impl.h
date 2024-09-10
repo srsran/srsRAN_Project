@@ -38,8 +38,6 @@ class uci_scheduler_impl final : public uci_scheduler
 public:
   explicit uci_scheduler_impl(const cell_configuration& cell_cfg_, uci_allocator& uci_alloc_, ue_repository& ues_);
 
-  ~uci_scheduler_impl() override;
-
   void run_slot(cell_resource_allocator& res_alloc) override;
 
   void add_ue(const ue_cell_configuration& ue_cfg);

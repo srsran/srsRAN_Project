@@ -93,7 +93,7 @@ srs_config make_initial_srs_config()
 {
   srs_config cfg{};
 
-  cfg.srs_res_set.push_back(srs_config::srs_resource_set{
+  cfg.srs_res_set_list.push_back(srs_config::srs_resource_set{
       .id              = static_cast<srs_config::srs_res_set_id>(0),
       .srs_res_id_list = {static_cast<srs_config::srs_res_id>(0)},
       .res_type =
@@ -101,22 +101,20 @@ srs_config make_initial_srs_config()
       .srs_res_set_usage  = srs_config::srs_resource_set::usage::codebook,
       .srs_pwr_ctrl_alpha = alpha::alpha1,
       .p0                 = -80});
-  cfg.srs_res.push_back(srs_config::srs_resource{
-      .id                      = static_cast<srs_config::srs_res_id>(0),
-      .nof_ports               = srs_config::srs_resource::nof_srs_ports::port1,
-      .trans_comb_value        = 2,
-      .trans_comb_offset       = 0,
-      .trans_comb_cyclic_shift = 0,
-      .res_mapping =
-          srs_config::srs_resource::resource_mapping{
-              .start_pos = 2,
-              .nof_symb  = srs_config::srs_resource::resource_mapping::nof_symbols::n1,
-              .re_factor = srs_config::srs_resource::resource_mapping::repetition_factor::n1},
+  srs_config::srs_resource::tx_comb_params tx_comb{
+      .size = tx_comb_size::n2, .tx_comb_offset = 0, .tx_comb_cyclic_shift = 0};
+  cfg.srs_res_list.push_back(srs_config::srs_resource{
+      .id                    = srs_config::srs_res_id_t{0U, static_cast<srs_config::srs_res_id>(0)},
+      .nof_ports             = srs_config::srs_resource::nof_srs_ports::port1,
+      .tx_comb               = tx_comb,
+      .res_mapping           = srs_config::srs_resource::resource_mapping{.start_pos   = 2,
+                                                                          .nof_symb    = srs_nof_symbols::n1,
+                                                                          .rept_factor = srs_nof_symbols::n1},
       .freq_domain_pos       = 0,
       .freq_domain_shift     = 0,
       .freq_hop              = srs_config::srs_resource::frequency_hopping{.c_srs = 0, .b_srs = 0, .b_hop = 0},
-      .grp_or_seq_hop        = srs_config::srs_resource::group_or_sequence_hopping::neither,
-      .res_type              = srs_config::srs_resource::aperiodic,
+      .grp_or_seq_hop        = srs_group_or_sequence_hopping::neither,
+      .res_type              = srs_resource_type::aperiodic,
       .sequence_id           = 40,
       .spatial_relation_info = srs_config::srs_resource::srs_spatial_relation_info{
           .reference_signal = static_cast<nzp_csi_rs_res_id_t>(0)}});
@@ -728,11 +726,11 @@ TEST(serving_cell_config_converter_test, test_initial_srs_cfg_conversion)
 
   if (dest_sp_cell_cfg_ded.ul_config.value().init_ul_bwp.srs_cfg.has_value()) {
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.srs_cfg.setup().srs_res_set_to_add_mod_list.size(),
-              dest_sp_cell_cfg_ded.ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_set.size());
+              dest_sp_cell_cfg_ded.ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_set_list.size());
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.srs_cfg.setup().srs_res_set_to_release_list.size(), 0);
 
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.srs_cfg.setup().srs_res_to_add_mod_list.size(),
-              dest_sp_cell_cfg_ded.ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_set.size());
+              dest_sp_cell_cfg_ded.ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_set_list.size());
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.srs_cfg.setup().srs_res_to_release_list.size(), 0);
   }
 }
@@ -747,7 +745,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
   // Add new/remove configurations.
   srs_config::srs_resource_set::semi_persistent_resource_type semi_persistent_resource;
   semi_persistent_resource.associated_csi_rs = static_cast<nzp_csi_rs_res_id_t>(1);
-  dest_pusch_cfg.srs_res_set.push_back(
+  dest_pusch_cfg.srs_res_set_list.push_back(
       srs_config::srs_resource_set{.id                 = static_cast<srs_config::srs_res_set_id>(1),
                                    .srs_res_id_list    = {static_cast<srs_config::srs_res_id>(1)},
                                    .res_type           = semi_persistent_resource,
@@ -755,33 +753,32 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
                                    .srs_pwr_ctrl_alpha = alpha::alpha07,
                                    .p0                 = -70});
   // Release.
-  dest_pusch_cfg.srs_res_set.erase(dest_pusch_cfg.srs_res_set.begin());
+  dest_pusch_cfg.srs_res_set_list.erase(dest_pusch_cfg.srs_res_set_list.begin());
 
-  dest_pusch_cfg.srs_res.push_back(srs_config::srs_resource{
-      .id                      = static_cast<srs_config::srs_res_id>(1),
-      .nof_ports               = srs_config::srs_resource::nof_srs_ports::port1,
-      .trans_comb_value        = 4,
-      .trans_comb_offset       = 0,
-      .trans_comb_cyclic_shift = 0,
-      .res_mapping =
-          srs_config::srs_resource::resource_mapping{
-              .start_pos = 50,
-              .nof_symb  = srs_config::srs_resource::resource_mapping::nof_symbols::n1,
-              .re_factor = srs_config::srs_resource::resource_mapping::repetition_factor::n1},
-      .freq_domain_pos   = 0,
-      .freq_domain_shift = 0,
-      .freq_hop          = srs_config::srs_resource::frequency_hopping{.c_srs = 0, .b_srs = 0, .b_hop = 0},
-      .grp_or_seq_hop    = srs_config::srs_resource::group_or_sequence_hopping::groupHopping,
-      .res_type          = srs_config::srs_resource::semi_persistent,
-      .semi_pers_res_type_periodicity_and_offset =
-          srs_config::srs_periodicity_and_offset{.type  = srsran::srs_config::srs_periodicity_and_offset::type_t::sl10,
-                                                 .value = 30},
+  srs_config::srs_resource::tx_comb_params tx_comb = {
+      .size = srsran::tx_comb_size::n4, .tx_comb_offset = 0, .tx_comb_cyclic_shift = 0};
+  dest_pusch_cfg.srs_res_list.push_back(srs_config::srs_resource{
+      .id                    = srs_config::srs_res_id_t{0U, static_cast<srs_config::srs_res_id>(1)},
+      .nof_ports             = srs_config::srs_resource::nof_srs_ports::port1,
+      .tx_comb               = tx_comb,
+      .res_mapping           = srs_config::srs_resource::resource_mapping{.start_pos   = 50,
+                                                                          .nof_symb    = srs_nof_symbols::n1,
+                                                                          .rept_factor = srs_nof_symbols::n1},
+      .freq_domain_pos       = 0,
+      .freq_domain_shift     = 0,
+      .freq_hop              = srs_config::srs_resource::frequency_hopping{.c_srs = 0, .b_srs = 0, .b_hop = 0},
+      .grp_or_seq_hop        = srs_group_or_sequence_hopping::groupHopping,
+      .res_type              = srs_resource_type::semi_persistent,
       .sequence_id           = 41,
       .spatial_relation_info = srs_config::srs_resource::srs_spatial_relation_info{
           .reference_signal = srs_config::srs_resource::srs_spatial_relation_info::srs_ref_signal{
               .res_id = static_cast<srs_config::srs_res_id>(1), .ul_bwp = static_cast<bwp_id_t>(1)}}});
+
+  dest_pusch_cfg.srs_res_list.back().periodicity_and_offset.emplace(
+      srs_config::srs_periodicity_and_offset{.period = srsran::srs_periodicity::sl10, .offset = 5});
+
   // Release.
-  dest_pusch_cfg.srs_res.erase(dest_pusch_cfg.srs_res.begin());
+  dest_pusch_cfg.srs_res_list.erase(dest_pusch_cfg.srs_res_list.begin());
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);

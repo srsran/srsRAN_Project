@@ -1851,6 +1851,7 @@ basic avx512 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Weekly/
   retry: 2
   interruptible: false
   variables:

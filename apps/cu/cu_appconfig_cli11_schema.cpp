@@ -41,6 +41,8 @@ static void configure_cli11_nru_args(CLI::App& app, srs_cu::cu_nru_appconfig& nr
              nru_cfg.bind_addr,
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
+  app.add_option(
+      "--ext_addr", nru_cfg.ext_addr, "External IP address that is advertised to receive F1-U packets from the DU");
   add_option(app, "--udp_max_rx_msgs", nru_cfg.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
   add_option(app,
              "--pool_threshold",

@@ -28,6 +28,7 @@
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/dci_packing.h"
+#include "srsran/ran/ptrs/ptrs.h"
 #include "srsran/support/math_utils.h"
 #include <algorithm>
 
@@ -2487,8 +2488,8 @@ public:
   /// Adds optional PUSCH PTRS information to the PUSCH PDU and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH PTRS information.
   ul_pusch_pdu_builder& add_optional_pusch_ptrs(span<const ul_pusch_ptrs::ptrs_port_info> port_info,
-                                                uint8_t                                   ptrs_time_density,
-                                                uint8_t                                   ptrs_freq_density,
+                                                ptrs_time_density                         ptrs_time_density,
+                                                ptrs_frequency_density                    ptrs_freq_density,
                                                 ul_ptrs_power_type                        ul_ptrs_power)
   {
     pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_PTRS_BIT);
@@ -2497,8 +2498,8 @@ public:
 
     ptrs.port_info.assign(port_info.begin(), port_info.end());
     ptrs.ul_ptrs_power     = ul_ptrs_power;
-    ptrs.ptrs_time_density = ptrs_time_density / 2U;
-    ptrs.ptrs_freq_density = ptrs_freq_density / 4U;
+    ptrs.ptrs_time_density = static_cast<uint8_t>(ptrs_time_density) / 2U;
+    ptrs.ptrs_freq_density = static_cast<uint8_t>(ptrs_freq_density) / 4U;
 
     return *this;
   }

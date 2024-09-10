@@ -89,8 +89,13 @@ void f1u_split_connector::remove_du_bearer(const up_transport_layer_info& dl_up_
 expected<std::string> f1u_split_connector::get_du_bind_address(gnb_du_id_t gnb_du_id) const
 {
   std::string ip_address;
-  if (not udp_session->get_bind_address(ip_address)) {
-    return make_unexpected(default_error_t{});
+
+  if (f1u_ext_addr == "auto") {
+    if (not udp_session->get_bind_address(ip_address)) {
+      return make_unexpected(default_error_t{});
+    }
+  } else {
+    ip_address = f1u_ext_addr;
   }
   return ip_address;
 }

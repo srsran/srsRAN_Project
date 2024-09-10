@@ -34,17 +34,29 @@ void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>      
                                         const srsran::pucch_demodulator::format2_configuration& config)
 {
   // Number of receive antenna ports.
-  unsigned nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
+  auto nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
 
   // Number of data Resource Elements in a slot for a single Rx port.
-  unsigned nof_re_port =
-      static_cast<unsigned>(pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols);
+  auto nof_re_port = static_cast<unsigned>(pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols);
 
   // Assert that allocations are valid.
   srsran_assert(config.nof_prb && config.nof_prb <= pucch_constants::FORMAT2_MAX_NPRB,
                 "Invalid Number of PRB allocated to PUCCH Format 2, i.e., {}. Valid range is 1 to {}.",
                 config.nof_prb,
                 pucch_constants::FORMAT2_MAX_NPRB);
+
+  srsran_assert((config.first_prb + config.nof_prb) * NRE <= grid.get_nof_subc(),
+                "PUCCH Format 2: PRB allocation outside grid (first hop). Requested [{}, {}), grid has {} PRBs.",
+                config.first_prb,
+                config.first_prb + config.nof_prb,
+                grid.get_nof_subc() / NRE);
+
+  srsran_assert(!config.second_hop_prb.has_value() ||
+                    ((config.second_hop_prb.value() + config.nof_prb) * NRE <= grid.get_nof_subc()),
+                "PUCCH Format 2: PRB allocation outside grid (second hop). Requested [{}, {}), grid has {} PRBs.",
+                config.second_hop_prb.value(),
+                config.second_hop_prb.value() + config.nof_prb,
+                grid.get_nof_subc() / NRE);
 
   srsran_assert(config.nof_symbols && config.nof_symbols <= pucch_constants::FORMAT2_MAX_NSYMB,
                 "Invalid Number of OFDM symbols allocated to PUCCH Format 2, i.e., {}. Valid range is 1 to {}.",
@@ -113,9 +125,6 @@ void pucch_demodulator_impl::get_data_re_ests(const resource_grid_reader&       
   // Prepare RE mask.
   bounded_bitset<MAX_RB* NRE> re_mask = prb_mask.kronecker_product<NRE>(format2_prb_re_mask);
 
-  // First OFDM subcarrier containing PUCCH Format 2.
-  unsigned first_subc = config.first_prb * NRE;
-
   for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
     // Get a view of the data RE destination buffer for a single Rx port.
     span<cbf16_t> re_port_buffer = ch_re.get_slice(i_port);
@@ -123,9 +132,16 @@ void pucch_demodulator_impl::get_data_re_ests(const resource_grid_reader&       
     // Get a view of the channel estimates destination buffer for a single Rx port and Tx layer.
     span<cbf16_t> ests_port_buffer = ch_estimates.get_channel(i_port, 0);
 
+    // First OFDM subcarrier containing PUCCH Format 2.
+    unsigned first_subc = config.first_prb * NRE;
+
     for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.nof_symbols;
          i_symbol != i_symbol_end;
          ++i_symbol) {
+      if ((i_symbol > config.start_symbol_index) && config.second_hop_prb.has_value()) {
+        first_subc = config.second_hop_prb.value() * NRE;
+      }
+
       // Extract data RE from the resource grid.
       re_port_buffer = resource_grid.get(re_port_buffer, i_port, i_symbol, first_subc, re_mask);
 

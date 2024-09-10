@@ -77,11 +77,14 @@ public:
     }
 
     // Queue write request.
-    if (not worker.push_task([this, context, &grid]() {
+    if (not worker.push_task([this, context, rg = grid.copy()]() {
+          // Obtain reference to the resource grid reader.
+          const resource_grid_reader& rg_reader = rg.get_reader();
+
           // Save the resource grid.
           for (unsigned i_port = start_port; i_port != end_port; ++i_port) {
             for (unsigned symbol_idx = 0; symbol_idx != nof_symbols; ++symbol_idx) {
-              grid.get_reader().get(temp_buffer, i_port, symbol_idx, 0);
+              rg_reader.get(temp_buffer, i_port, symbol_idx, 0);
               file.write(reinterpret_cast<const char*>(temp_buffer.data()), temp_buffer.size() * sizeof(cf_t));
             }
           }

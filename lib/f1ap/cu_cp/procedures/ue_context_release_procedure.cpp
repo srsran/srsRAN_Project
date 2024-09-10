@@ -30,14 +30,11 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
-ue_context_release_procedure::ue_context_release_procedure(const f1ap_ue_context_release_command& cmd_,
+ue_context_release_procedure::ue_context_release_procedure(const f1ap_configuration&              f1ap_cfg_,
+                                                           const f1ap_ue_context_release_command& cmd_,
                                                            f1ap_ue_context&                       ue_ctxt_,
-                                                           f1ap_message_notifier&                 f1ap_notif_,
-                                                           std::chrono::milliseconds              proc_timeout_) :
-  ue_ctxt(ue_ctxt_),
-  f1ap_notifier(f1ap_notif_),
-  proc_timeout(proc_timeout_),
-  logger(srslog::fetch_basic_logger("CU-CP-F1"))
+                                                           f1ap_message_notifier&                 f1ap_notif_) :
+  f1ap_cfg(f1ap_cfg_), ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(srslog::fetch_basic_logger("CU-CP-F1"))
 {
   command->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
   command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id);
@@ -59,7 +56,7 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 
   logger.debug("{}: Procedure started...", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
 
-  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete, proc_timeout);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete, f1ap_cfg.proc_timeout);
 
   ue_ctxt.marked_for_release = true;
 

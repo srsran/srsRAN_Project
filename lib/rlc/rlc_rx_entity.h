@@ -40,23 +40,23 @@ protected:
                 rb_id_t                           rb_id,
                 rlc_rx_upper_layer_data_notifier& upper_dn_,
                 rlc_metrics_aggregator&           metrics_agg_,
-                bool                              metrics_enabled,
                 rlc_pcap&                         pcap_,
                 task_executor&                    ue_executor_,
                 timer_manager&                    timers) :
     logger("RLC", {gnb_du_id, ue_index, rb_id, "UL"}),
     upper_dn(upper_dn_),
-    metrics(metrics_enabled),
+    metrics(metrics_agg_.get_metrics_period().count()),
     pcap(pcap_),
     ue_timer_factory{timers, ue_executor_},
     high_metrics_timer(ue_timer_factory.create_timer()),
     metrics_agg(metrics_agg_)
   {
-    if (metrics_enabled) {
-      high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
-        metrics_agg.push_rx_high_metrics(metrics.get_and_reset_metrics());
-        high_metrics_timer.run();
-      });
+    if (metrics_agg.get_metrics_period().count()) {
+      high_metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()),
+                             [this](timer_id_t tid) {
+                               metrics_agg.push_rx_high_metrics(metrics.get_and_reset_metrics());
+                               high_metrics_timer.run();
+                             });
       high_metrics_timer.run();
     }
   }

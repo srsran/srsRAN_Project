@@ -28,5 +28,5 @@ using namespace srs_du;
 
 std::unique_ptr<f1u_du_udp_gateway> srsran::srs_du::create_split_f1u_gw(f1u_du_split_gateway_creation_msg msg)
 {
-  return std::make_unique<f1u_split_connector>(msg.udp_gw, msg.demux, msg.gtpu_pcap, msg.peer_port);
+  return std::make_unique<f1u_split_connector>(msg.udp_gw, msg.demux, msg.gtpu_pcap, msg.peer_port, msg.f1u_ext_addr);
 }

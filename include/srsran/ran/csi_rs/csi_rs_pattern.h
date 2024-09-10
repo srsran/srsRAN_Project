@@ -56,15 +56,15 @@ struct csi_rs_pattern_port {
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern
   /// within the PRB.
   bounded_bitset<12> re_mask;
-  /// Symbol mask. True entries indicate the symbols affected by the pattern with the slot.
+  /// Symbol mask. True entries indicate the symbols affected by the pattern within the slot.
   bounded_bitset<14> symbol_mask;
 };
 
 /// Describes the CSI-RS pattern in the resource grid
 struct csi_rs_pattern {
-  /// Resource block where the pattern begins in frequency domain, the range is (0, ..., 274).
+  /// Resource block where the pattern begins in frequency domain, the range is {0, ..., 274}.
   unsigned rb_begin;
-  /// Resource block where the pattern ends in frequency domain (excluded), the range is (1, ..., 275).
+  /// Resource block where the pattern ends in frequency domain (excluded), the range is {1, ..., 275}.
   unsigned rb_end;
   /// Resource block index jump.
   unsigned rb_stride;

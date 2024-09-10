@@ -73,6 +73,10 @@ const byte_buffer& srsran::test_helpers::get_rrc_container(const f1ap_message& m
     return msg.pdu.init_msg().value.ue_context_setup_request()->rrc_container;
   }
 
+  if (msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_UE_CONTEXT_MOD) {
+    return msg.pdu.init_msg().value.ue_context_mod_request()->rrc_container;
+  }
+
   return msg.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container;
 }
 

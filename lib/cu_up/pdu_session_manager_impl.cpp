@@ -336,8 +336,15 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                               ue_inactivity_timer,
                                               ue_ul_exec);
 
-  new_drb->f1u_ul_teid  = f1u_ul_teid;
-  drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
+  new_drb->f1u_ul_teid = f1u_ul_teid;
+
+  // Advertise either local or external IP address of F1-U interface
+  if (net_config.f1u_ext_addr.empty() || net_config.f1u_ext_addr == "auto") {
+    drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
+  } else {
+    drb_result.gtp_tunnel =
+        up_transport_layer_info{transport_layer_address::create_from_string(net_config.f1u_ext_addr), f1u_ul_teid};
+  }
 
   // Connect F1-U GW bearer RX adapter to NR-U bearer
   new_drb->f1u_gateway_rx_to_nru_adapter.connect_nru_bearer(new_drb->f1u->get_rx_pdu_handler());
@@ -434,6 +441,14 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                               ue_ul_exec);
 
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
+
+      // Advertise either local or external IP address of F1-U interface
+      if (net_config.f1u_ext_addr.empty() || net_config.f1u_ext_addr == "auto") {
+        drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
+      } else {
+        drb_result.gtp_tunnel = up_transport_layer_info{
+            transport_layer_address::create_from_string(net_config.f1u_ext_addr), drb->f1u_ul_teid};
+      }
 
       drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
 

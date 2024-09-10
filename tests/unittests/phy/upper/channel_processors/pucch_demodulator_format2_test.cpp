@@ -142,8 +142,6 @@ protected:
     // Set noise variance.
     channel_est.set_noise_variance(test_case.context.noise_var, 0);
   }
-
-  ~PucchDemodulatorFixture() = default;
 };
 
 std::unique_ptr<pucch_demodulator> PucchDemodulatorFixture::demodulator = nullptr;

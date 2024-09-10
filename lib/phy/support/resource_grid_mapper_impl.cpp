@@ -311,14 +311,13 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
     pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
     reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
 
-    // Find the highest used subcarrier. Skip symbol if no active subcarrier.
-    int i_highest_subc = symbol_re_mask.find_highest();
-    if (i_highest_subc < 0) {
+    // Get the number of active RE in the OFDM symbol.
+    unsigned nof_re_symbol = symbol_re_mask.count();
+    if (nof_re_symbol == 0) {
       continue;
     }
 
-    // Get the number of active RE in the OFDM symbol. Skip symbol if the number of active RE does not reach the skip.
-    unsigned nof_re_symbol = symbol_re_mask.count();
+    // Skip the current symbol if the number of active RE does not reach the skip size.
     if (re_count + nof_re_symbol < re_skip) {
       re_count += nof_re_symbol;
       continue;
@@ -334,15 +333,23 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
       unsigned i_subc = i_prg * prg_size;
 
       // Number of grid RE belonging to the current PRG for the provided allocation pattern dimensions.
-      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(i_highest_subc + 1) - i_subc);
+      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
+
+      // Find lowest and highest active subcarriers within the PRG range.
+      int lowest_i_subc  = symbol_re_mask.find_lowest(i_subc, i_subc + nof_subc_prg);
+      int highest_i_subc = symbol_re_mask.find_highest(i_subc, i_subc + nof_subc_prg);
+
+      // Skips the PRG if no active subcarrier is found.
+      if ((lowest_i_subc < 0) || (highest_i_subc < lowest_i_subc)) {
+        continue;
+      }
+
+      // Cuts the PRB to the active subcarriers.
+      i_subc += lowest_i_subc;
+      nof_subc_prg = highest_i_subc + 1 - lowest_i_subc;
 
       // Mask for the RE belonging to the current PRG.
       bounded_bitset<max_nof_subcarriers> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
-
-      // Skip PRG if no RE is selected.
-      if (prg_re_mask.none()) {
-        continue;
-      }
 
       // Get the number of active RE in the PRG. Skip PRG if the number of active RE does not reach the skip.
       unsigned nof_re_prg = prg_re_mask.count();
@@ -352,7 +359,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
       }
 
       // Advance subcarrier offset to reach the skip count.
-      unsigned subc_offset = prg_re_mask.find_lowest();
+      unsigned subc_offset = 0;
       while (re_count < re_skip) {
         // Calculate the maximum number of subcarriers that can be processed in one block.
         unsigned max_nof_subc_block = re_skip - re_count;

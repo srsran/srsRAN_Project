@@ -44,6 +44,7 @@ add_library(srsran_ran
         prach/prach_preamble_information.cpp
         prach/prach_helper.cpp
         precoding/precoding_codebooks.cpp
+        ptrs/ptrs_pattern.cpp
         pusch/pusch_mcs.cpp
         pusch/pusch_tpmi_select.cpp
         pusch/pusch_uci_beta_offset.cpp

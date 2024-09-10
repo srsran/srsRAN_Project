@@ -45,6 +45,7 @@ static void fill_cu_appconfig_nru_section(YAML::Node node, const srs_cu::cu_nru_
   YAML::Node nru_node         = cu_up_node["nru"];
   nru_node["udp_max_rx_msgs"] = config.udp_rx_max_msgs;
   nru_node["bind_addr"]       = config.bind_addr;
+  nru_node["ext_addr"]        = config.ext_addr;
 }
 
 void srsran::fill_cu_appconfig_in_yaml_schema(YAML::Node& node, const cu_appconfig& config)

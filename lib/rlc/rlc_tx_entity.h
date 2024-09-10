@@ -46,14 +46,13 @@ protected:
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
                 rlc_metrics_aggregator&              metrics_agg_,
-                bool                                 metrics_enabled,
                 rlc_pcap&                            pcap_,
                 task_executor&                       pcell_executor_,
                 task_executor&                       ue_executor_,
                 timer_manager&                       timers) :
     logger("RLC", {gnb_du_id, ue_index, rb_id_, "DL"}),
-    metrics_high(metrics_enabled),
-    metrics_low(metrics_enabled),
+    metrics_high(metrics_agg_.get_metrics_period().count()),
+    metrics_low(metrics_agg_.get_metrics_period().count()),
     rb_id(rb_id_),
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),
@@ -67,15 +66,17 @@ protected:
     low_metrics_timer(ue_timer_factory.create_timer()),
     metrics_agg(metrics_agg_)
   {
-    if (metrics_enabled) {
-      high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
-        metrics_agg.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
-        high_metrics_timer.run();
-      });
-      low_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
-        metrics_agg.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
-        low_metrics_timer.run();
-      });
+    if (metrics_agg.get_metrics_period().count()) {
+      high_metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()),
+                             [this](timer_id_t tid) {
+                               metrics_agg.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
+                               high_metrics_timer.run();
+                             });
+      low_metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()),
+                            [this](timer_id_t tid) {
+                              metrics_agg.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
+                              low_metrics_timer.run();
+                            });
 
       high_metrics_timer.run();
       low_metrics_timer.run();

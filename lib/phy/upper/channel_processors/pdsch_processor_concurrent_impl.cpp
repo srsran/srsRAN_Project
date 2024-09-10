@@ -304,7 +304,7 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
   for (unsigned i_task = 0; i_task != nof_cb_tasks; ++i_task) {
     // Try to execute task asynchronously.
     bool successful = false;
-    if (nof_cb_tasks != 0) {
+    if (nof_cb_tasks > 1) {
       successful = executor.execute(async_task);
     }
 

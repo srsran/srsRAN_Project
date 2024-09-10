@@ -148,7 +148,6 @@ public:
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
                    rlc_metrics_aggregator&              metrics_aggregator_,
-                   bool                                 metrics_enabled_,
                    rlc_pcap&                            pcap_,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,

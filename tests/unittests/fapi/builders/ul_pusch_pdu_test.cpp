@@ -20,6 +20,7 @@
  *
  */
 
+#include "srsran/adt/to_array.h"
 #include "srsran/fapi/message_builders.h"
 #include <gtest/gtest.h>
 
@@ -281,10 +282,12 @@ TEST(ul_pusch_pdu_builder, valid_uci_csi2_parameters_passes)
 
 TEST(ul_pusch_pdu_builder, valid_pusch_ptrs_parameters_passes)
 {
-  static_vector<ul_pusch_ptrs::ptrs_port_info, 2> ptr_ports              = {{1, 3, 4}};
-  std::vector<unsigned>                           ptrs_time_density_vect = {1, 2, 4};
-  std::vector<unsigned>                           ptrs_freq_density_vect = {2, 4};
-  ul_ptrs_power_type                              ptrs_power             = ul_ptrs_power_type::dB4_77;
+  static_vector<ul_pusch_ptrs::ptrs_port_info, 2> ptr_ports = {{1, 3, 4}};
+  const auto                                      ptrs_time_density_vect =
+      to_array<ptrs_time_density>({ptrs_time_density::one, ptrs_time_density::two, ptrs_time_density::four});
+  std::vector<ptrs_frequency_density> ptrs_freq_density_vect = {ptrs_frequency_density::two,
+                                                                ptrs_frequency_density::four};
+  ul_ptrs_power_type                  ptrs_power             = ul_ptrs_power_type::dB4_77;
 
   for (auto ptrs_time : ptrs_time_density_vect)
     for (auto ptrs_freq : ptrs_freq_density_vect) {
@@ -294,11 +297,34 @@ TEST(ul_pusch_pdu_builder, valid_pusch_ptrs_parameters_passes)
 
         builder.add_optional_pusch_ptrs({ptr_ports}, ptrs_time, ptrs_freq, ptrs_power);
 
+        uint8_t expected_ptrs_freq = 0;
+        switch (ptrs_freq) {
+          case ptrs_frequency_density::two:
+            expected_ptrs_freq = 0;
+            break;
+          case ptrs_frequency_density::four:
+            expected_ptrs_freq = 1;
+            break;
+        }
+
+        uint8_t expected_ptrs_time = 0;
+        switch (ptrs_time) {
+          case ptrs_time_density::one:
+            expected_ptrs_time = 0;
+            break;
+          case ptrs_time_density::two:
+            expected_ptrs_time = 1;
+            break;
+          case ptrs_time_density::four:
+            expected_ptrs_time = 2;
+            break;
+        }
+
         ASSERT_TRUE(pdu.pdu_bitmap[ul_pusch_pdu::PUSCH_PTRS_BIT]);
         const auto& ptrs = pdu.pusch_ptrs;
         ASSERT_EQ(ptrs_power, ptrs.ul_ptrs_power);
-        ASSERT_EQ(ptrs_freq / 4, ptrs.ptrs_freq_density);
-        ASSERT_EQ(ptrs_time / 2, ptrs.ptrs_time_density);
+        ASSERT_EQ(expected_ptrs_freq, ptrs.ptrs_freq_density);
+        ASSERT_EQ(expected_ptrs_time, ptrs.ptrs_time_density);
         const auto& info = ptrs.port_info.back();
         ASSERT_EQ(1U, ptrs.port_info.size());
         ASSERT_EQ(4, info.ptrs_re_offset);

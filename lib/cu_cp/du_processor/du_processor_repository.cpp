@@ -44,7 +44,11 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
 {
   du_index_t du_index = get_next_du_index();
   if (du_index == du_index_t::invalid) {
-    logger.warning("DU connection failed - maximum number of DUs connected ({})", cfg.cu_cp.admission.max_nof_dus);
+    logger.warning("DU connection failed. Cause: Maximum number of DUs connected ({})",
+                   cfg.cu_cp.admission.max_nof_dus);
+    fmt::print("DU connection failed. Cause: Maximum number of DUs connected ({}). To increase the number of allowed "
+               "DUs change the \"--max_nof_dus\" in the CU-CP configuration\n",
+               cfg.cu_cp.admission.max_nof_dus);
     return du_index_t::invalid;
   }
 

@@ -77,8 +77,13 @@ ue_index_t ue_manager::add_ue(du_index_t                     du_index,
   }
 
   if (ues.size() == max_nof_ues) {
-    logger.warning("CU-CP UE creation Failed. Cause: Maximum number of UEs {} supported by the CU-CP has been reached",
-                   max_nof_ues);
+    logger.warning(
+        "CU-CP UE creation Failed. Cause: Maximum number of UEs supported by the CU-CP ({}) has been reached",
+        max_nof_ues);
+    fmt::print("CU-CP UE creation failed. Cause: Maximum number of UEs supported by the CU-CP ({}) has been reached. "
+               "To increase the number of supported "
+               "UEs change the \"--max_nof_ues\" in the CU-CP configuration\n",
+               max_nof_ues);
     return ue_index_t::invalid;
   }
 

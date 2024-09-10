@@ -503,7 +503,7 @@ public:
   /// \return The result of the bitset product.
   /// \remark The current implementation supports only a bitset containing one word. An assertion is triggered if \c
   /// other contains more than one word.
-  template <unsigned Factor>
+  template <unsigned long Factor>
   bounded_bitset<Factor * N> kronecker_product(const bounded_bitset<Factor>& other) const
   {
     static_assert(Factor <= bits_per_word,

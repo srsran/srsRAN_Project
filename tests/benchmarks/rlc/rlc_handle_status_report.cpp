@@ -128,7 +128,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
   null_rlc_pcap pcap;
 
   auto metrics_agg = std::make_unique<rlc_metrics_aggregator>(
-      gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1000}, tester.get(), ue_worker);
+      gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{0}, tester.get(), ue_worker);
 
   // Run benchmark
   auto context = [&rlc, &tester, &metrics_agg, config, &timers, &pcell_worker, &ue_worker, &pcap]() {
@@ -140,7 +140,6 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
                                              *tester,
                                              *tester,
                                              *metrics_agg,
-                                             false,
                                              pcap,
                                              pcell_worker,
                                              ue_worker,

@@ -67,11 +67,13 @@ void buffered_slot_gateway_task_dispatcher::tx_data_request(const tx_data_reques
   }
 }
 
-void buffered_slot_gateway_task_dispatcher::on_slot_indication(const slot_indication_message& msg)
+void buffered_slot_gateway_task_dispatcher::update_current_slot(slot_point slot)
 {
-  slot_point slot = slot_point(scs, msg.sfn, msg.slot);
   buffered_gateway.update_current_slot(slot);
+}
 
+void buffered_slot_gateway_task_dispatcher::forward_cached_messages(slot_point slot)
+{
   if (!executor.defer([this, slot]() { buffered_gateway.forward_cached_messages(slot); })) {
     logger.warning("Failed to dispatch cached messages for slot '{}'", slot);
   }

@@ -48,11 +48,12 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
     valid = false;
   }
 
+  // To run the concurrent PDSCH processor with a single thread isn't optimal, although possible.
   if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_dl_threads)) {
-    fmt::print("For concurrent PDSCH processor. Number of PHY DL threads (i.e., {}) must be in range {}.\n",
+    fmt::print("For concurrent PDSCH processor. Number of PHY DL threads (i.e., {}) must be in range {} for better "
+               "performance.\n",
                config.nof_dl_threads,
                nof_pdsch_threads_range);
-    valid = false;
   }
 
   if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {

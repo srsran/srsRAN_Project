@@ -129,7 +129,7 @@ def test_zmq(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        always_download_artifacts=False,
+        always_download_artifacts=True,
     )
 
 

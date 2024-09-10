@@ -204,7 +204,13 @@ public:
       // Convert value to cf and compare with the expected value.
       cf_t  value = to_cf(value_cbf16);
       float err   = std::abs(entry.value - value);
-      TESTASSERT(err < max_error, "Mismatched value {} but expected {}", value, entry.value);
+      TESTASSERT(err < max_error,
+                 "Mismatched value {} but expected {}. port={} symbol={} subcarrier={}.",
+                 value,
+                 entry.value,
+                 entry.port,
+                 entry.symbol,
+                 entry.subcarrier);
     }
   }
 
@@ -347,9 +353,14 @@ public:
 
   void write(span<const expected_entry_t> entries_)
   {
+    unsigned current_max_sc = max_prb * NRE;
     for (const expected_entry_t& e : entries_) {
       write(e);
+      if (e.subcarrier > current_max_sc) {
+        current_max_sc = e.subcarrier;
+      }
     }
+    max_prb = current_max_sc / NRE + 1;
   }
 
   void write(const expected_entry_t& entry)

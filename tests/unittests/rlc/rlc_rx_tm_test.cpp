@@ -75,7 +75,6 @@ protected:
                                              make_default_srb0_rlc_config().tm.rx,
                                              *tester,
                                              *metrics_agg,
-                                             true,
                                              pcap,
                                              ue_executor,
                                              timers);

@@ -214,20 +214,20 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
                                                             : srs_config::srs_resource_set::usage::codebook;
       // See TS 38.214, clause 6.1.1.1 and 6.1.1.2.
       const auto* srs_res_set = std::find_if(
-          opt_srs_cfg.value().srs_res_set.begin(),
-          opt_srs_cfg.value().srs_res_set.end(),
+          opt_srs_cfg.value().srs_res_set_list.begin(),
+          opt_srs_cfg.value().srs_res_set_list.end(),
           [usage](const srs_config::srs_resource_set& res_set) { return res_set.srs_res_set_usage == usage; });
-      srsran_assert(srs_res_set != opt_srs_cfg.value().srs_res_set.end(), "No valid SRS resource set found");
+      srsran_assert(srs_res_set != opt_srs_cfg.value().srs_res_set_list.end(), "No valid SRS resource set found");
       srsran_assert(not srs_res_set->srs_res_id_list.empty(), "No SRS resource configured in SRS resource set");
       // As per TS 38.214, clause 6.1.1.1, When multiple SRS resources are configured by SRS-ResourceSet with usage set
       // to 'codebook', the UE shall expect that higher layer parameters nrofSRS-Ports in SRS-Resource in
       // SRS-ResourceSet shall be configured with the same value for all these SRS resources.
       const auto  srs_resource_id = srs_res_set->srs_res_id_list.front();
-      const auto* srs_res =
-          std::find_if(opt_srs_cfg.value().srs_res.begin(),
-                       opt_srs_cfg.value().srs_res.end(),
-                       [srs_resource_id](const srs_config::srs_resource& res) { return res.id == srs_resource_id; });
-      srsran_assert(srs_res != opt_srs_cfg.value().srs_res.end(), "No valid SRS resource found");
+      const auto* srs_res         = std::find_if(
+          opt_srs_cfg.value().srs_res_list.begin(),
+          opt_srs_cfg.value().srs_res_list.end(),
+          [srs_resource_id](const srs_config::srs_resource& res) { return res.id.ue_res_id == srs_resource_id; });
+      srsran_assert(srs_res != opt_srs_cfg.value().srs_res_list.end(), "No valid SRS resource found");
       if (not dci_sz_cfg.tx_config_non_codebook) {
         dci_sz_cfg.nof_srs_ports = static_cast<unsigned>(srs_res->nof_ports);
       }

@@ -42,8 +42,6 @@ uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_,
   updated_ues.reserve(MAX_NOF_DU_UES);
 }
 
-uci_scheduler_impl::~uci_scheduler_impl() {}
-
 void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc)
 {
   // Initial allocation: we allocate opportunities all over the grid.
@@ -61,7 +59,7 @@ void uci_scheduler_impl::add_resource(rnti_t crnti, unsigned res_offset, unsigne
     auto& slot_wheel = periodic_uci_slot_wheel[wheel_offset];
 
     // Check if the UE is already in the slot wheel.
-    auto it = std::find_if(slot_wheel.begin(), slot_wheel.end(), [crnti](const auto& r) { return r.rnti == crnti; });
+    auto* it = std::find_if(slot_wheel.begin(), slot_wheel.end(), [crnti](const auto& r) { return r.rnti == crnti; });
 
     if (it == slot_wheel.end()) {
       // New UE. Create a new element in the list with either SR or CSI resource.
@@ -91,7 +89,7 @@ void uci_scheduler_impl::rem_resource(rnti_t crnti, unsigned res_offset, unsigne
   for (unsigned wheel_offset = res_offset; wheel_offset < periodic_uci_slot_wheel.size(); wheel_offset += res_period) {
     auto& slot_wheel = periodic_uci_slot_wheel[wheel_offset];
 
-    auto it = std::find_if(slot_wheel.begin(), slot_wheel.end(), [crnti](const auto& r) { return r.rnti == crnti; });
+    auto* it = std::find_if(slot_wheel.begin(), slot_wheel.end(), [crnti](const auto& r) { return r.rnti == crnti; });
     if (it != slot_wheel.end()) {
       if (is_sr) {
         if (it->sr_counter == 0) {
@@ -110,7 +108,7 @@ void uci_scheduler_impl::rem_resource(rnti_t crnti, unsigned res_offset, unsigne
       if (it->sr_counter == 0 and it->csi_counter == 0) {
         // Move resource to last position and delete it to avoid O(N) removal.
         if (it != slot_wheel.end() - 1) {
-          auto last_it = slot_wheel.end() - 1;
+          auto* last_it = slot_wheel.end() - 1;
           std::swap(*it, *last_it);
         }
         slot_wheel.pop_back();
@@ -217,7 +215,7 @@ void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_a
 {
   // For the provided slot, check if there are any pending UCI resources to allocate, and allocate them.
   auto& slot_ucis = periodic_uci_slot_wheel[slot_alloc.slot.to_uint() % periodic_uci_slot_wheel.size()];
-  for (auto it = slot_ucis.begin(); it != slot_ucis.end();) {
+  for (auto* it = slot_ucis.begin(); it != slot_ucis.end();) {
     const periodic_uci_info&     uci_info = *it;
     const ue_cell_configuration* ue_cfg   = get_ue_cfg(uci_info.rnti);
 

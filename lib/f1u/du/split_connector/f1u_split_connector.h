@@ -182,12 +182,14 @@ public:
   f1u_split_connector(srs_cu_up::ngu_gateway* udp_gw_,
                       gtpu_demux*             demux_,
                       dlt_pcap&               gtpu_pcap_,
-                      uint16_t                peer_port_ = GTPU_PORT) :
+                      uint16_t                peer_port_    = GTPU_PORT,
+                      std::string             f1u_ext_addr_ = "auto") :
     logger_du(srslog::fetch_basic_logger("DU-F1-U")),
     udp_gw(udp_gw_),
     demux(demux_),
     gtpu_pcap(gtpu_pcap_),
-    peer_port(peer_port_)
+    peer_port(peer_port_),
+    f1u_ext_addr(std::move(f1u_ext_addr_))
   {
     udp_session = udp_gw->create(gw_data_gtpu_demux_adapter);
     gw_data_gtpu_demux_adapter.connect_gtpu_demux(*demux);
@@ -222,7 +224,8 @@ private:
   network_gateway_data_gtpu_demux_adapter         gw_data_gtpu_demux_adapter;
   dlt_pcap&                                       gtpu_pcap;
 
-  uint16_t peer_port;
+  uint16_t    peer_port;
+  std::string f1u_ext_addr = "auto"; // External address advertised by the F1-U interface
 };
 
 } // namespace srsran::srs_du

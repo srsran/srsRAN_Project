@@ -363,7 +363,6 @@ public:
     srsran_assert(prg_factory, "Invalid PRG factory.");
     srsran_assert(modulator_factory, "Invalid modulator factory.");
     srsran_assert(dmrs_factory, "Invalid DM-RS factory.");
-    srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
 
     // Create vector of codeblock processors.
     std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processors;
