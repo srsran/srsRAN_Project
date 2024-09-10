@@ -31,7 +31,7 @@ tests:
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP bidirectional - Debug"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_high

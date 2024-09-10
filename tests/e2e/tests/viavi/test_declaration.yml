@@ -48,7 +48,7 @@ tests:
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP bidirectional"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_high
@@ -104,7 +104,7 @@ tests:
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal TCP downlink"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
@@ -132,7 +132,7 @@ tests:
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE fading TCP bidirectional"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1
@@ -146,7 +146,7 @@ tests:
     gnb_extra_commands: "log --ngap_level=debug --rrc_level=debug"
     id: "32UE ideal UDP attach-detach with traffic"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
@@ -160,7 +160,7 @@ tests:
   #   gnb_extra_commands: *gnb_extra_commands
   #   id: "32UE fading UDP attach-detach with traffic"
   #   max_pdschs_per_slot: 1
-  #   max_puschs_per_slot: 1
+  #   max_puschs_per_slot: 4
   #   enable_qos_viavi: false
   #   # test/fail criteria
   #   expected_dl_bitrate: *expected_dl_bitrate_low
@@ -188,7 +188,7 @@ tests:
   #   gnb_extra_commands: *gnb_extra_commands
   #   id: "32UE birth-death UDP bidirectional"
   #   max_pdschs_per_slot: 1
-  #   max_puschs_per_slot: 1
+  #   max_puschs_per_slot: 4
   #   enable_qos_viavi: false
   #   # test/fail criteria
   #   expected_dl_bitrate: *expected_dl_bitrate_low
@@ -202,7 +202,7 @@ tests:
     gnb_extra_commands: "log --all_level=info"
     id: "32UE ideal ping"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
@@ -216,7 +216,7 @@ tests:
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal ping with traffic"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
@@ -230,7 +230,7 @@ tests:
     gnb_extra_commands: *gnb_extra_commands
     id: "experimental 32UE ideal UDP bidirectional Long"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_high
@@ -244,7 +244,7 @@ tests:
     gnb_extra_commands: *gnb_extra_commands
     id: "experimental 32UE ideal UDP bidirectional Long extended"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_high
