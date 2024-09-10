@@ -946,7 +946,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
 
   ue_ctxt.logger.log_info("Starting HO preparation");
 
-  return (*start_ho_prep_func)();
+  return (*start_ho_prep_func)(logger);
 }
 
 void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,

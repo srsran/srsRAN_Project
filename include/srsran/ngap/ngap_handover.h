@@ -154,8 +154,11 @@ struct ngap_handover_resource_allocation_response {
   std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
-// Function pointer prototype for starting handover from plugin
-using start_ngap_handover_preparation_procedure_func = async_task<ngap_handover_preparation_response> (*)();
+// Function prototype for starting handover from plugin
+async_task<ngap_handover_preparation_response>
+start_ngap_handover_preperation(srslog::basic_logger& logger) asm("start_ngap_preparation_procedure_func");
+using start_ngap_handover_preparation_procedure_func =
+    async_task<ngap_handover_preparation_response> (*)(srslog::basic_logger& logger);
 
 } // namespace srs_cu_cp
 } // namespace srsran

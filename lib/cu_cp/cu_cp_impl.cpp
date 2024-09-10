@@ -69,7 +69,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   if (cfg.load_plugins && not load_plugins()) {
     logger.error("Could not load CU-CP plugins");
-    report_fatal_error("Could not load CU-CP plugins");
+    report_error("Could not load CU-CP plugins");
   }
 
   // connect event notifiers to layers
@@ -104,7 +104,6 @@ cu_cp_impl::~cu_cp_impl()
     if (::dlclose(dl_handle) != 0) {
       char* err = ::dlerror();
       if (err != nullptr) {
-        fmt::print("Failed to close DL handle: {}\n", err);
         logger.error("Failed to close DL handle: {}", err);
       }
     }
@@ -158,13 +157,12 @@ bool cu_cp_impl::load_plugins()
   if (dl_handle == nullptr) {
     err = ::dlerror();
     if (err != nullptr) {
-      fmt::print("Failed to load HO plugin {}: {}\n", plugin_name, err);
+      logger.error("Failed to load HO plugin {}: {}", plugin_name, err);
     } else {
-      fmt::print("Failed to load HO plugin {}\n", plugin_name);
+      logger.error("Failed to load HO plugin {}", plugin_name);
     }
     return false;
   }
-  fmt::print("loaded plugin\n");
 
   // Load symbol.
   start_ho_prep_func = reinterpret_cast<start_ngap_handover_preparation_procedure_func>(
@@ -174,13 +172,12 @@ bool cu_cp_impl::load_plugins()
   if (start_ho_prep_func == nullptr) {
     err = ::dlerror();
     if (err != nullptr) {
-      fmt::print("Error loading symbol {}: {}\n", "testing_function", err);
+      logger.error("Error loading symbol {}: {}\n", "start_ngap_preparation_procedure_func", err);
     } else {
-      fmt::print("Error loading symbol {}:\n", "testing_function");
+      logger.error("Error loading symbol {}:\n", "start_ngap_preparation_procedure_func");
     }
     return false;
   }
-  fmt::print("loaded start function\n");
   return true;
 }
 

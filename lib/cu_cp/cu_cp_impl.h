@@ -34,16 +34,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Dynamic library handler deleter - closes the dynamic library upon destruction.
-struct dynamic_library_deleter {
-  void operator()(void* handler) const
-  {
-    if (handler != nullptr) {
-      ::dlclose(handler);
-    }
-  }
-};
-
 class cu_cp_common_task_scheduler : public common_task_scheduler
 {
 public:
