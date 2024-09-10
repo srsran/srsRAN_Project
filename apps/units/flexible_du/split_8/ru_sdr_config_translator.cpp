@@ -20,9 +20,9 @@ using namespace srsran;
 static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
 /// Fills the given low PHY configuration from the given gnb configuration.
-static lower_phy_configuration generate_low_phy_config(const du_cell_config&     config,
-                                                       const ru_sdr_unit_config& ru_cfg,
-                                                       unsigned                  max_processing_delay_slot)
+static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_config& config,
+                                                       const ru_sdr_unit_config&     ru_cfg,
+                                                       unsigned                      max_processing_delay_slot)
 {
   lower_phy_configuration out_cfg;
 
@@ -152,9 +152,9 @@ static double calibrate_center_freq_Hz(double center_freq_Hz, double freq_offset
   return (center_freq_Hz + freq_offset_Hz) * (1.0 + calibration_ppm * 1e-6);
 }
 
-static void generate_radio_config(radio_configuration::radio& out_cfg,
-                                  const ru_sdr_unit_config&   ru_cfg,
-                                  span<const du_cell_config>  du_cells)
+static void generate_radio_config(radio_configuration::radio&        out_cfg,
+                                  const ru_sdr_unit_config&          ru_cfg,
+                                  span<const srs_du::du_cell_config> du_cells)
 {
   out_cfg.args             = ru_cfg.device_arguments;
   out_cfg.log_level        = ru_cfg.loggers.radio_level;
@@ -171,7 +171,7 @@ static void generate_radio_config(radio_configuration::radio& out_cfg,
   // For each sector...
   for (unsigned sector_id = 0; sector_id != du_cells.size(); ++sector_id) {
     // Select cell configuration.
-    const du_cell_config& cell = du_cells[sector_id];
+    const srs_du::du_cell_config& cell = du_cells[sector_id];
 
     // Each cell is mapped to a different stream.
     radio_configuration::stream tx_stream_config;
@@ -243,9 +243,9 @@ static void generate_radio_config(radio_configuration::radio& out_cfg,
   }
 }
 
-ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config&  ru_cfg,
-                                                        span<const du_cell_config> du_cells,
-                                                        unsigned                   max_processing_delay_slots)
+ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config&          ru_cfg,
+                                                        span<const srs_du::du_cell_config> du_cells,
+                                                        unsigned                           max_processing_delay_slots)
 {
   ru_generic_configuration out_cfg;
   out_cfg.device_driver = ru_cfg.device_driver;

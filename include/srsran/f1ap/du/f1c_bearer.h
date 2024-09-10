@@ -14,7 +14,16 @@
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
+
+class task_executor;
+
 namespace srs_du {
+
+class f1ap_du;
+class du_high_ue_executor_mapper;
+class f1ap_du_configurator;
+class f1ap_du_paging_notifier;
+class f1c_connection_client;
 
 /// \brief This interface represents the data entry point of the transmitting side of a F1-C bearer of the DU.
 /// The lower layer will use this class to pass F1AP SDUs (e.g. PDCP PDUs/RLC SDUs) into the F1-C bearer towards CU-CP.
@@ -68,5 +77,10 @@ public:
 class f1c_bearer : public f1c_tx_sdu_handler, public f1c_tx_delivery_handler, public f1c_rx_pdu_handler
 {};
 
+std::unique_ptr<f1ap_du> create_f1ap(f1c_connection_client&      f1c_client_handler,
+                                     f1ap_du_configurator&       du_mng,
+                                     task_executor&              ctrl_exec,
+                                     du_high_ue_executor_mapper& ue_exec_mapper,
+                                     f1ap_du_paging_notifier&    paging_notifier);
 } // namespace srs_du
 } // namespace srsran

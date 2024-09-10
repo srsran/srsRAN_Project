@@ -20,7 +20,7 @@ namespace srsran {
 
 class radio_unit;
 
-class dynamic_du_impl : public du
+class dynamic_du_impl : public srs_du::du
 {
 public:
   explicit dynamic_du_impl(unsigned nof_cells);
@@ -35,7 +35,7 @@ public:
   void add_ru(std::unique_ptr<radio_unit> active_ru);
 
   /// Adds the given DUs to this dynamic DU.
-  void add_dus(std::vector<std::unique_ptr<du_wrapper>> active_du);
+  void add_dus(std::vector<std::unique_ptr<srs_du::du_wrapper>> active_du);
 
   /// Getters to the adaptors.
   upper_ru_ul_adapter&         get_upper_ru_ul_adapter() { return ru_ul_adapt; }
@@ -45,13 +45,13 @@ public:
   upper_ru_ul_request_adapter& get_upper_ru_ul_request_adapter() { return ru_ul_request_adapt; }
 
 private:
-  upper_ru_ul_adapter                      ru_ul_adapt;
-  upper_ru_timing_adapter                  ru_timing_adapt;
-  upper_ru_error_adapter                   ru_error_adapt;
-  std::vector<std::unique_ptr<du_wrapper>> du_list;
-  std::unique_ptr<radio_unit>              ru;
-  upper_ru_dl_rg_adapter                   ru_dl_rg_adapt;
-  upper_ru_ul_request_adapter              ru_ul_request_adapt;
+  upper_ru_ul_adapter                              ru_ul_adapt;
+  upper_ru_timing_adapter                          ru_timing_adapt;
+  upper_ru_error_adapter                           ru_error_adapt;
+  std::vector<std::unique_ptr<srs_du::du_wrapper>> du_list;
+  std::unique_ptr<radio_unit>                      ru;
+  upper_ru_dl_rg_adapter                           ru_dl_rg_adapt;
+  upper_ru_ul_request_adapter                      ru_ul_request_adapt;
 };
 
 } // namespace srsran

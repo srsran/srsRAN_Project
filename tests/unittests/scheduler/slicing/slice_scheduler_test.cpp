@@ -171,13 +171,13 @@ TEST_F(default_slice_scheduler_test, when_grant_gets_allocated_then_number_of_av
 
 TEST_F(default_slice_scheduler_test, returns_only_dl_pending_bytes_of_bearers_belonging_to_a_slice)
 {
-  constexpr static ran_slice_id_t default_srb_slice_id{0};
-  constexpr static ran_slice_id_t default_drb_slice_id{1};
+  static constexpr ran_slice_id_t default_srb_slice_id{0};
+  static constexpr ran_slice_id_t default_drb_slice_id{1};
 
-  constexpr static unsigned srb_pending_bytes{200};
-  constexpr static unsigned drb_pending_bytes{5000};
+  static constexpr unsigned srb_pending_bytes{200};
+  static constexpr unsigned drb_pending_bytes{5000};
 
-  constexpr static du_ue_index_t ue_idx{to_du_ue_index(0)};
+  static constexpr du_ue_index_t ue_idx{to_du_ue_index(0)};
 
   ASSERT_NE(this->add_ue(ue_idx), nullptr);
   // Push buffer state indication for DRB.
@@ -209,18 +209,18 @@ TEST_F(default_slice_scheduler_test, returns_only_dl_pending_bytes_of_bearers_be
 TEST_F(default_slice_scheduler_test, returns_only_ul_pending_bytes_of_bearers_belonging_to_a_slice)
 {
   // Estimate of the number of bytes required for the upper layer header.
-  constexpr static unsigned RLC_HEADER_SIZE_ESTIMATE = 3U;
+  static constexpr unsigned RLC_HEADER_SIZE_ESTIMATE = 3U;
 
-  constexpr static ran_slice_id_t default_srb_slice_id{0};
-  constexpr static ran_slice_id_t default_drb_slice_id{1};
+  static constexpr ran_slice_id_t default_srb_slice_id{0};
+  static constexpr ran_slice_id_t default_drb_slice_id{1};
 
-  constexpr static unsigned srb_pending_bytes{200};
-  constexpr static unsigned drb_pending_bytes{5000};
+  static constexpr unsigned srb_pending_bytes{200};
+  static constexpr unsigned drb_pending_bytes{5000};
 
   const lcg_id_t srb_lcg_id = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1).lc_group;
   const lcg_id_t drb_lcg_id = config_helpers::create_default_logical_channel_config(lcid_t::LCID_MIN_DRB).lc_group;
 
-  constexpr static du_ue_index_t ue_idx{to_du_ue_index(0)};
+  static constexpr du_ue_index_t ue_idx{to_du_ue_index(0)};
 
   ASSERT_NE(this->add_ue(ue_idx), nullptr);
   // Push UL BSR for DRB.
@@ -259,13 +259,13 @@ TEST_F(default_slice_scheduler_test, returns_only_ul_pending_bytes_of_bearers_be
 class rb_ratio_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
 {
 protected:
-  constexpr static unsigned MIN_SLICE_RB = 10;
-  constexpr static unsigned MAX_SLICE_RB = 20;
+  static constexpr unsigned MIN_SLICE_RB = 10;
+  static constexpr unsigned MAX_SLICE_RB = 20;
 
-  constexpr static ran_slice_id_t default_srb_slice_id{0};
-  constexpr static ran_slice_id_t default_drb_slice_id{1};
-  constexpr static ran_slice_id_t drb1_slice_id{2};
-  constexpr static ran_slice_id_t drb2_slice_id{3};
+  static constexpr ran_slice_id_t default_srb_slice_id{0};
+  static constexpr ran_slice_id_t default_drb_slice_id{1};
+  static constexpr ran_slice_id_t drb1_slice_id{2};
+  static constexpr ran_slice_id_t drb2_slice_id{3};
 
   rb_ratio_slice_scheduler_test() :
     slice_scheduler_test({{{plmn_identity::test_value(), s_nssai_t{1}}, MIN_SLICE_RB, MAX_SLICE_RB},

@@ -15,16 +15,19 @@
 
 namespace srsran {
 
+namespace srs_du {
 struct du_cell_config;
 struct du_low_config;
+} // namespace srs_du
+
 struct du_low_unit_config;
 
-void generate_du_low_wrapper_config(du_low_wrapper_config&              out_config,
-                                    const du_low_unit_config&           du_low_unit_cfg,
-                                    const hal_upper_phy_config&         hal_config,
-                                    std::vector<cell_prach_ports_entry> prach_ports,
-                                    span<const du_cell_config>          du_cells,
-                                    span<const unsigned>                max_puschs_per_slot,
-                                    unsigned                            du_id);
+void generate_du_low_wrapper_config(srs_du::du_low_wrapper_config&              out_config,
+                                    const du_low_unit_config&                   du_low_unit_cfg,
+                                    const hal_upper_phy_config&                 hal_config,
+                                    std::vector<srs_du::cell_prach_ports_entry> prach_ports,
+                                    span<const srs_du::du_cell_config>          du_cells,
+                                    span<const unsigned>                        max_puschs_per_slot,
+                                    unsigned                                    du_id);
 
 } // namespace srsran

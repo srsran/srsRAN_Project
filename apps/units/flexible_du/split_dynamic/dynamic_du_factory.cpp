@@ -38,7 +38,7 @@ static std::unique_ptr<radio_unit> create_dummy_radio_unit(const ru_dummy_unit_c
                                                            unsigned                    max_processing_delay_slots,
                                                            unsigned                    nof_prach_ports,
                                                            worker_manager&             workers,
-                                                           span<const du_cell_config>  du_cells,
+                                                           span<const srs_du::du_cell_config>  du_cells,
                                                            ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                            ru_timing_notifier&                 timing_notifier,
                                                            ru_error_notifier&                  error_notifier)
@@ -56,7 +56,7 @@ static std::unique_ptr<radio_unit> create_dummy_radio_unit(const ru_dummy_unit_c
 static std::unique_ptr<radio_unit>
 create_radio_unit(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
                   worker_manager&                                                                          workers,
-                  span<const du_cell_config>                                                               du_cells,
+                  span<const srs_du::du_cell_config>                                                       du_cells,
                   ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                   ru_timing_notifier&                 timing_notifier,
                   ru_error_notifier&                  error_notifier,
@@ -146,11 +146,11 @@ du_unit srsran::create_du(const dynamic_du_unit_config& dyn_du_cfg, du_unit_depe
 
   auto du_cells = generate_du_cell_config(du_hi);
 
-  std::vector<std::unique_ptr<du_wrapper>> du_insts;
-  auto                                     du_impl = std::make_unique<dynamic_du_impl>(du_cells.size());
+  std::vector<std::unique_ptr<srs_du::du_wrapper>> du_insts;
+  auto                                             du_impl = std::make_unique<dynamic_du_impl>(du_cells.size());
 
-  std::vector<cell_prach_ports_entry> prach_ports;
-  std::vector<unsigned>               max_pusch_per_slot;
+  std::vector<srs_du::cell_prach_ports_entry> prach_ports;
+  std::vector<unsigned>                       max_pusch_per_slot;
   for (const auto& high : du_hi.cells_cfg) {
     prach_ports.push_back(high.cell.prach_cfg.ports);
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
@@ -233,8 +233,8 @@ du_unit srsran::create_du(const dynamic_du_unit_config& dyn_du_cfg, du_unit_depe
 
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create one DU per cell.
-    du_wrapper_config   du_cfg  = {};
-    du_high_unit_config tmp_cfg = du_hi;
+    srs_du::du_wrapper_config du_cfg  = {};
+    du_high_unit_config       tmp_cfg = du_hi;
     tmp_cfg.cells_cfg.resize(1);
     tmp_cfg.cells_cfg[0] = du_hi.cells_cfg[i];
 
@@ -242,7 +242,7 @@ du_unit srsran::create_du(const dynamic_du_unit_config& dyn_du_cfg, du_unit_depe
                                                 du_lo,
                                                 hal_config,
                                                 {prach_ports[i]},
-                                                span<const du_cell_config>(&du_cells[i], 1),
+                                                span<const srs_du::du_cell_config>(&du_cells[i], 1),
                                                 span<const unsigned>(&max_pusch_per_slot[i], 1),
                                                 du_impl->get_upper_ru_dl_rg_adapter(),
                                                 du_impl->get_upper_ru_ul_request_adapter(),

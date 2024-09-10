@@ -13,6 +13,7 @@
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
+using namespace srs_du;
 
 du_low_wrapper_impl::du_low_wrapper_impl(std::unique_ptr<du_low>                                      du_lo_,
                                          std::vector<std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>> fapi_adaptors_) :

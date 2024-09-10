@@ -14,6 +14,7 @@
 #include "srsran/support/config/validator_result.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// \brief Checks whether the provided DU cell configuration is valid.
 ///
@@ -21,4 +22,5 @@ namespace srsran {
 /// \return in case an invalid parameter is detected, returns a string containing an error message.
 validator_result is_du_cell_config_valid(const du_cell_config& cell_cfg);
 
+} // namespace srs_du
 } // namespace srsran

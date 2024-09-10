@@ -11,6 +11,7 @@
 #include "du_high_wrapper_impl.h"
 
 using namespace srsran;
+using namespace srs_du;
 
 namespace {
 /// Dummy implementation of the mac_result_notifier.

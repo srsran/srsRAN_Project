@@ -27,7 +27,7 @@ static constexpr unsigned MAX_NODE_SIZE_NEON = divide_ceil(ldpc::MAX_LIFTING_SIZ
 template <unsigned NODE_SIZE_NEON_PH>
 ldpc_encoder_neon::strategy_method ldpc_encoder_neon::select_hr_strategy(ldpc_base_graph_type current_bg,
                                                                          uint8_t              current_ls_index,
-                                                                         unsigned int         node_size_neon)
+                                                                         unsigned             node_size_neon)
 {
   if (node_size_neon != NODE_SIZE_NEON_PH) {
     return select_hr_strategy<NODE_SIZE_NEON_PH - 1>(current_bg, current_ls_index, node_size_neon);

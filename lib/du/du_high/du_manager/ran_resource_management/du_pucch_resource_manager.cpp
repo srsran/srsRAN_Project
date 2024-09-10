@@ -142,7 +142,7 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
   // [Implementation-defined] Given that it takes some time for a UE to process a CSI-RS and integrate its estimate
   // in the following CSI report, we consider a minimum slot distance before which CSI report slot offsets should be
   // avoided.
-  constexpr static unsigned MINIMUM_CSI_RS_REPORT_DISTANCE = 4;
+  static constexpr unsigned MINIMUM_CSI_RS_REPORT_DISTANCE = 4;
 
   // TODO: Support more than one nzp-CSI-RS resource for measurement.
   const csi_res_config_id_t  csi_res_cfg_id = csi_meas_cfg.csi_report_cfg_list[0].res_for_channel_meas;
@@ -308,7 +308,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   // Update the PUCCH max payload.
   // As per TS 38.231, Section 9.2.1, with PUCCH Format 1, we can have up to 2 HARQ-ACK bits (SR doesn't count as part
   // of the payload).
-  constexpr static unsigned pucch_f1_max_harq_payload = 2U;
+  static constexpr unsigned pucch_f1_max_harq_payload = 2U;
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
       pucch_format::FORMAT_1)]                        = pucch_f1_max_harq_payload;
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
@@ -456,7 +456,7 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
                               user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets);
 }
 
-void du_pucch_resource_manager::disable_pucch_cfg(srsran::srs_du::cell_group_config& cell_grp_cfg)
+void du_pucch_resource_manager::disable_pucch_cfg(cell_group_config& cell_grp_cfg)
 {
   auto& serv_cell = cell_grp_cfg.cells[0].serv_cell_cfg;
 

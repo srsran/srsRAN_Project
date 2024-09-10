@@ -14,13 +14,16 @@
 
 namespace srsran {
 
+namespace srs_du {
 struct du_cell_config;
+}
+
 struct ru_ofh_unit_config;
 
 /// Converts and returns the given Open Fronthaul Radio Unit application unit configuration to a Open Fronthaul Radio
 /// Unit configuration.
-ru_ofh_configuration generate_ru_ofh_config(const ru_ofh_unit_config&  ru_cfg,
-                                            span<const du_cell_config> du_cells,
-                                            unsigned                   max_processing_delay_slots);
+ru_ofh_configuration generate_ru_ofh_config(const ru_ofh_unit_config&          ru_cfg,
+                                            span<const srs_du::du_cell_config> du_cells,
+                                            unsigned                           max_processing_delay_slots);
 
 } // namespace srsran

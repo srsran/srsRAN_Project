@@ -16,7 +16,7 @@
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
-using namespace srsran::srs_du;
+using namespace srs_du;
 
 ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_update_request& request_,
                                                        du_ue_manager_repository&             ue_mng_,

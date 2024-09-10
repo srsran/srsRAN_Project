@@ -121,14 +121,14 @@ class harq_process
 public:
   /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
   /// (implementation-defined).
-  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
+  static constexpr unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
   /// \brief Timeout value to use when the HARQ has been ACKed/NACKed, but it is expecting another PUCCH before being
   /// cleared (implementation-defined).
-  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 8U;
+  static constexpr unsigned SHORT_ACK_TIMEOUT_DTX = 8U;
 
   /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
-  constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
+  static constexpr size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
 
   struct transport_block {
     /// State of the Transport Block.

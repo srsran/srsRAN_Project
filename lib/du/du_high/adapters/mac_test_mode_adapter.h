@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 namespace srsran {
+namespace srs_du {
 
 class phy_test_mode_adapter : public mac_result_notifier
 {
@@ -246,4 +247,5 @@ private:
   test_ue_info_manager ue_info_mgr;
 };
 
+} // namespace srs_du
 } // namespace srsran

@@ -22,12 +22,12 @@
 namespace srsran {
 
 struct mac_ul_config {
-  task_executor&                 ctrl_exec;
-  du_high_ue_executor_mapper&    ue_exec_mapper;
-  mac_ul_ccch_notifier&          ul_ccch_notifier;
-  mac_scheduler_ce_info_handler& sched;
-  du_rnti_table&                 rnti_table;
-  mac_pcap&                      pcap;
+  task_executor&                      ctrl_exec;
+  srs_du::du_high_ue_executor_mapper& ue_exec_mapper;
+  mac_ul_ccch_notifier&               ul_ccch_notifier;
+  mac_scheduler_ce_info_handler&      sched;
+  du_rnti_table&                      rnti_table;
+  mac_pcap&                           pcap;
 };
 
 class mac_ul_processor final : public mac_ul_configurator, public mac_pdu_handler

@@ -15,12 +15,12 @@
 namespace srsran {
 
 namespace fapi {
-
 class slot_data_message_notifier;
 class slot_error_message_notifier;
 class slot_time_message_notifier;
-
 } // namespace fapi
+
+namespace srs_du {
 
 class du_high;
 
@@ -43,4 +43,5 @@ public:
   virtual fapi::slot_time_message_notifier& get_slot_time_message_notifier(unsigned cell_id) = 0;
 };
 
+} // namespace srs_du
 } // namespace srsran

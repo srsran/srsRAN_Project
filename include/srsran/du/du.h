@@ -11,7 +11,9 @@
 #pragma once
 
 namespace srsran {
+namespace srs_du {
 
+/// Public DU interface.
 class du
 {
 public:
@@ -24,4 +26,5 @@ public:
   virtual void stop() = 0;
 };
 
+} // namespace srs_du
 } // namespace srsran

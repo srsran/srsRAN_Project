@@ -14,10 +14,11 @@
 #include <gtest/gtest.h>
 #include <string>
 
+using namespace srsran;
+using namespace srs_du;
+
 TEST(srs_sib19_test, make_asn1_rrc_cell_sib19_buffer)
 {
-  using namespace srsran;
-
   sib19_info sib19;
   sib19.cell_specific_koffset.emplace();
   sib19.cell_specific_koffset.value() = 260;
@@ -30,7 +31,7 @@ TEST(srs_sib19_test, make_asn1_rrc_cell_sib19_buffer)
   std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vz = 6;
   // Call the function being tested
   std::string js_str;
-  auto        buf = srsran::srs_du::make_asn1_rrc_cell_sib19_buffer(sib19, &js_str);
+  auto        buf = make_asn1_rrc_cell_sib19_buffer(sib19, &js_str);
 
   // Check that the buffer is not empty
   EXPECT_FALSE(buf.empty());

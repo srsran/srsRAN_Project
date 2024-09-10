@@ -51,16 +51,16 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
 }
 
 void srsran::make_du_low_wrapper_config_and_dependencies(
-    du_low_wrapper_config&                out_cfg,
-    const du_low_unit_config&             du_low_unit_cfg,
-    const hal_upper_phy_config&           hal_config,
-    std::vector<cell_prach_ports_entry>   prach_ports,
-    span<const du_cell_config>            du_cells,
-    span<const unsigned>                  max_puschs_per_slot,
-    upper_phy_rg_gateway&                 rg_gateway,
-    upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-    worker_manager&                       workers,
-    unsigned                              du_id)
+    srs_du::du_low_wrapper_config&              out_cfg,
+    const du_low_unit_config&                   du_low_unit_cfg,
+    const hal_upper_phy_config&                 hal_config,
+    std::vector<srs_du::cell_prach_ports_entry> prach_ports,
+    span<const srs_du::du_cell_config>          du_cells,
+    span<const unsigned>                        max_puschs_per_slot,
+    upper_phy_rg_gateway&                       rg_gateway,
+    upper_phy_rx_symbol_request_notifier&       rx_symbol_request_notifier,
+    worker_manager&                             workers,
+    unsigned                                    du_id)
 {
   out_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
 
@@ -69,7 +69,7 @@ void srsran::make_du_low_wrapper_config_and_dependencies(
 
   // Fill the workers information.
   for (unsigned i = 0, e = out_cfg.du_low_cfg.cells.size(); i != e; ++i) {
-    du_low_cell_config& cell = out_cfg.du_low_cfg.cells[i];
+    srs_du::du_low_cell_config& cell = out_cfg.du_low_cfg.cells[i];
 
     generate_dl_processor_config(cell.dl_proc_cfg,
                                  du_low_unit_cfg,

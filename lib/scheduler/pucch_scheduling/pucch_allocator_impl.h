@@ -246,7 +246,7 @@ private:
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_array<slot_pucch_grants, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_grants_alloc_grid;
 
-  constexpr static unsigned PUCCH_FORMAT_0_1_NOF_PRBS{1};
+  static constexpr unsigned PUCCH_FORMAT_0_1_NOF_PRBS{1};
   const cell_configuration& cell_cfg;
   const unsigned            max_pucch_grants_per_slot;
   const unsigned            max_ul_grants_per_slot;

@@ -424,7 +424,7 @@ int main(int argc, char** argv)
 
   auto du_inst_and_cmds = create_du(du_unit_cfg, du_dependencies);
 
-  du& du_inst = *du_inst_and_cmds.unit;
+  srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
   // Only DU has metrics now. When CU returns metrics, create the vector of metrics as it is done for the commands.
   app_services::metrics_manager metrics_mngr(

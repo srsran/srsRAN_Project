@@ -16,6 +16,7 @@
 #include "srsran/support/format_utils.h"
 
 namespace srsran {
+namespace srs_du {
 
 class du_procedure_logger
 {
@@ -104,4 +105,5 @@ private:
   rnti_t                rnti;
 };
 
+} // namespace srs_du
 } // namespace srsran

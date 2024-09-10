@@ -21,7 +21,7 @@
 namespace srsran {
 
 // Array of bytes used to store the UE Contention Resolution Id.
-constexpr static size_t UE_CON_RES_ID_LEN = 6;
+static constexpr size_t UE_CON_RES_ID_LEN = 6;
 using ue_con_res_id_t                     = std::array<uint8_t, UE_CON_RES_ID_LEN>;
 
 // Table for conversion between RNTI and ue indexes.

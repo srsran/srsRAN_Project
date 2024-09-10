@@ -320,7 +320,7 @@ struct formatter<rx_order> {
   template <typename FormatContext>
   auto format(rx_order order, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"in order", "swapped edges", "reverse order", "even odd"};
+    static constexpr const char* options[] = {"in order", "swapped edges", "reverse order", "even odd"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(order)]);
   }
 };

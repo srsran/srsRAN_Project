@@ -14,8 +14,10 @@
 #include "srsran/du/du_high/du_high_configuration.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// Create a DU-high instance, which comprises MAC, RLC and F1 layers.
 std::unique_ptr<du_high> make_du_high(const srs_du::du_high_configuration& du_hi_cfg);
 
+} // namespace srs_du
 } // namespace srsran

@@ -23,6 +23,7 @@
 #include <gtest/gtest.h>
 
 using namespace srsran;
+using namespace srs_du;
 
 // Dummy classes required by DU
 struct phy_cell_dummy : public mac_cell_result_notifier {
@@ -68,7 +69,7 @@ protected:
     // create and start DU
     phy_dummy phy;
 
-    srsran::srs_du::du_high_configuration du_cfg{};
+    du_high_configuration du_cfg{};
     du_cfg.exec_mapper     = &workers.exec_mapper;
     du_cfg.f1c_client      = &f1c_gw;
     du_cfg.f1u_gw          = &f1u_gw;

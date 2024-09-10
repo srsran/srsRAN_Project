@@ -51,9 +51,9 @@ struct scheduler_ue_metrics {
 /// \brief Snapshot of the metrics for a cell and its UEs.
 struct scheduler_cell_metrics {
   /// Latency histogram number of bins.
-  constexpr static unsigned latency_hist_bins = 10;
+  static constexpr unsigned latency_hist_bins = 10;
   /// Distance between histogram bins.
-  constexpr static unsigned nof_usec_per_bin = 50;
+  static constexpr unsigned nof_usec_per_bin = 50;
   /// Number of cell PRBs.
   unsigned nof_prbs = 0;
 

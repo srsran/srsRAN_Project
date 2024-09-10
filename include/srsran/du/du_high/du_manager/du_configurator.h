@@ -15,6 +15,7 @@
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
+namespace srs_du {
 
 struct control_config_params {
   // Sets the number of HARQ processes to be used.
@@ -45,4 +46,5 @@ public:
   configure_ue_mac_scheduler(du_mac_sched_control_config reconf) = 0;
 };
 
+} // namespace srs_du
 } // namespace srsran

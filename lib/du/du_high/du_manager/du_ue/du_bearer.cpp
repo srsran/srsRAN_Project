@@ -161,13 +161,13 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   }
 
   // > Create F1-U bearer.
-  srsran::srs_du::f1u_bearer_creation_message f1u_msg = {};
-  f1u_msg.ue_index                                    = ue_index;
-  f1u_msg.drb_id                                      = drb->drb_id;
-  f1u_msg.config                                      = drb_info.f1u_cfg;
-  f1u_msg.dl_tnl_info                                 = drb->dluptnl_info_list[0];
-  f1u_msg.rx_sdu_notifier                             = &drb->connector.f1u_rx_sdu_notif;
-  f1u_msg.tx_pdu_notifier                             = drb->f1u_gw_bearer.get();
+  f1u_bearer_creation_message f1u_msg = {};
+  f1u_msg.ue_index                    = ue_index;
+  f1u_msg.drb_id                      = drb->drb_id;
+  f1u_msg.config                      = drb_info.f1u_cfg;
+  f1u_msg.dl_tnl_info                 = drb->dluptnl_info_list[0];
+  f1u_msg.rx_sdu_notifier             = &drb->connector.f1u_rx_sdu_notif;
+  f1u_msg.tx_pdu_notifier             = drb->f1u_gw_bearer.get();
   f1u_msg.timers =
       timer_factory{drb_info.du_params.services.timers, drb_info.du_params.services.ue_execs.ctrl_executor(ue_index)};
   f1u_msg.ue_executor  = &drb_info.du_params.services.ue_execs.f1u_dl_pdu_executor(ue_index);

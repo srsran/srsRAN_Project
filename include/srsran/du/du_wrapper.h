@@ -13,6 +13,7 @@
 #include "srsran/du/du.h"
 
 namespace srsran {
+namespace srs_du {
 
 class du_high_wrapper;
 class du_low_wrapper;
@@ -30,4 +31,5 @@ public:
   virtual du_low_wrapper& get_du_low_wrapper() = 0;
 };
 
+} // namespace srs_du
 } // namespace srsran

@@ -140,7 +140,7 @@ class multi_ue_harq_manager_test : public base_harq_manager_test, public ::testi
 protected:
   multi_ue_harq_manager_test() : base_harq_manager_test(max_ues) {}
 
-  constexpr static unsigned max_ues   = 4;
+  static constexpr unsigned max_ues   = 4;
   const unsigned            nof_harqs = 8;
 };
 

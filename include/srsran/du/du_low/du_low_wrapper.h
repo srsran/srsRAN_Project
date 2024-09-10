@@ -20,6 +20,8 @@ class slot_message_gateway;
 class slot_time_message_notifier;
 } // namespace fapi
 
+namespace srs_du {
+
 class du_low;
 
 /// DU low wrapper interface. Wraps the DU low with the PHY-FAPI adatpor.
@@ -51,4 +53,5 @@ public:
                                               fapi::slot_data_message_notifier& fapi_data_notifier) = 0;
 };
 
+} // namespace srs_du
 } // namespace srsran

@@ -16,7 +16,7 @@
 #include "srsran/rlc/rlc_srb_config_factory.h"
 
 using namespace srsran;
-using namespace srsran::srs_du;
+using namespace srs_du;
 
 ue_creation_procedure::ue_creation_procedure(const du_ue_creation_request& req_,
                                              du_ue_manager_repository&     ue_mng_,

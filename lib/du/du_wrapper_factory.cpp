@@ -14,8 +14,9 @@
 #include "srsran/du/du_low/du_low_wrapper_factory.h"
 
 using namespace srsran;
+using namespace srs_du;
 
-std::unique_ptr<du_wrapper> srsran::make_du_wrapper(const du_wrapper_config& du_cfg)
+std::unique_ptr<du_wrapper> srsran::srs_du::make_du_wrapper(const du_wrapper_config& du_cfg)
 {
   du_wrapper_impl_dependencies dependencies;
 

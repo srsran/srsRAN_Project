@@ -16,7 +16,6 @@
 #include "srsran/ran/ntn.h"
 
 namespace srsran {
-
 namespace srs_du {
 
 /// \brief Derive packed cell MIB from DU cell configuration.
@@ -51,5 +50,4 @@ void fill_f1_setup_request(f1_setup_request_message&            req,
                            std::vector<std::string>*            sib1_jsons = nullptr);
 
 } // namespace srs_du
-
 } // namespace srsran

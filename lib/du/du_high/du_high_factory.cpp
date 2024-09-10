@@ -12,8 +12,9 @@
 #include "du_high_impl.h"
 
 using namespace srsran;
+using namespace srs_du;
 
-std::unique_ptr<du_high> srsran::make_du_high(const srs_du::du_high_configuration& du_hi_cfg)
+std::unique_ptr<du_high> srsran::srs_du::make_du_high(const srs_du::du_high_configuration& du_hi_cfg)
 {
   return std::make_unique<srs_du::du_high_impl>(du_hi_cfg);
 }

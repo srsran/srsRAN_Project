@@ -318,7 +318,7 @@ int main(int argc, char** argv)
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
-  du& du_inst = *du_inst_and_cmds.unit;
+  srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
   // Register the commands.
   app_services::stdin_command_dispatcher command_parser(*epoll_broker, du_inst_and_cmds.commands);

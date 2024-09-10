@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 using namespace srsran;
+using namespace srs_du;
 
 struct mac_event_interceptor {
   std::optional<mac_ul_sched_result> next_ul_sched_res;

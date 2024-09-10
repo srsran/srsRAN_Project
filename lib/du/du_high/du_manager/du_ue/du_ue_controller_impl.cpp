@@ -19,11 +19,11 @@ namespace {
 const char* get_rlf_cause_str(rlf_cause cause)
 {
   switch (cause) {
-    case srsran::srs_du::rlf_cause::max_mac_kos_reached:
+    case rlf_cause::max_mac_kos_reached:
       return "MAC max KOs reached";
-    case srsran::srs_du::rlf_cause::max_rlc_retxs_reached:
+    case rlf_cause::max_rlc_retxs_reached:
       return "RLC max ReTxs reached";
-    case srsran::srs_du::rlf_cause::rlc_protocol_failure:
+    case rlf_cause::rlc_protocol_failure:
       return "RLC protocol failure";
     default:
       break;

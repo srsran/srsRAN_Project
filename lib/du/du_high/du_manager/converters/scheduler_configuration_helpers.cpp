@@ -19,9 +19,9 @@ using namespace srs_du;
 
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
 sched_cell_configuration_request_message
-srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
-                                           const du_cell_config&    du_cfg,
-                                           span<const units::bytes> si_payload_sizes)
+srsran::srs_du::make_sched_cell_config_req(du_cell_index_t               cell_index,
+                                           const srs_du::du_cell_config& du_cfg,
+                                           span<const units::bytes>      si_payload_sizes)
 {
   srsran_assert(si_payload_sizes.size() >= 1, "SIB1 payload size needs to be set");
   srsran_assert(si_payload_sizes.size() - 1 ==

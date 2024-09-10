@@ -41,7 +41,7 @@ e1ap_message srsran::srs_cu_up::generate_cu_up_e1_setup_response(unsigned transa
   return e1_setup_response;
 }
 
-e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
+e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned cu_cp_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_request = {};
 
@@ -123,7 +123,7 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned i
   return bearer_context_setup_request;
 }
 
-e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
+e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_setup_request(unsigned cu_cp_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_request = {};
 
@@ -145,7 +145,7 @@ e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_setup_request(un
 }
 
 e1ap_message
-srsran::srs_cu_up::generate_invalid_bearer_context_setup_request_inactivity_timer(unsigned int cu_cp_ue_e1ap_id)
+srsran::srs_cu_up::generate_invalid_bearer_context_setup_request_inactivity_timer(unsigned cu_cp_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_request = {};
   bearer_context_setup_request              = generate_bearer_context_setup_request(cu_cp_ue_e1ap_id);
@@ -155,8 +155,8 @@ srsran::srs_cu_up::generate_invalid_bearer_context_setup_request_inactivity_time
   return bearer_context_setup_request;
 }
 
-e1ap_message srsran::srs_cu_up::generate_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
-                                                                             unsigned int cu_up_ue_e1ap_id)
+e1ap_message srsran::srs_cu_up::generate_bearer_context_modification_request(unsigned cu_cp_ue_e1ap_id,
+                                                                             unsigned cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_modification_request = {};
 
@@ -193,8 +193,8 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_modification_request(uns
   return bearer_context_modification_request;
 }
 
-e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
-                                                                                     unsigned int cu_up_ue_e1ap_id)
+e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_modification_request(unsigned cu_cp_ue_e1ap_id,
+                                                                                     unsigned cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_modification_request = {};
 
@@ -211,8 +211,8 @@ e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_modification_req
   return bearer_context_modification_request;
 }
 
-e1ap_message srsran::srs_cu_up::generate_bearer_context_release_command(unsigned int cu_cp_ue_e1ap_id,
-                                                                        unsigned int cu_up_ue_e1ap_id)
+e1ap_message srsran::srs_cu_up::generate_bearer_context_release_command(unsigned cu_cp_ue_e1ap_id,
+                                                                        unsigned cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_release_command = {};
 

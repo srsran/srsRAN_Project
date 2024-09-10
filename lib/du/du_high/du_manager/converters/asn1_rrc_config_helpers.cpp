@@ -368,13 +368,13 @@ asn1::rrc_nr::bwp_dl_common_s srsran::srs_du::make_asn1_init_dl_bwp(const dl_con
   pdcch.coreset_zero_present   = false;
   pdcch.common_coreset_present = cfg.init_dl_bwp.pdcch_common.common_coreset.has_value();
   if (pdcch.common_coreset_present) {
-    pdcch.common_coreset = srsran::srs_du::make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
+    pdcch.common_coreset = make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
   }
   // Sent by MIB.
   pdcch.search_space_zero_present = false;
   for (size_t ss_idx = 1; ss_idx < cfg.init_dl_bwp.pdcch_common.search_spaces.size(); ++ss_idx) {
     const search_space_configuration& ss = cfg.init_dl_bwp.pdcch_common.search_spaces[ss_idx];
-    pdcch.common_search_space_list.push_back(srsran::srs_du::make_asn1_rrc_search_space(ss));
+    pdcch.common_search_space_list.push_back(make_asn1_rrc_search_space(ss));
   }
   pdcch.search_space_sib1_present   = true;
   pdcch.search_space_sib1           = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;

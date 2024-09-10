@@ -22,7 +22,7 @@ class slice_scheduler
 {
   using priority_type                      = uint32_t;
   using slot_count_type                    = uint32_t;
-  constexpr static priority_type skip_prio = 0;
+  static constexpr priority_type skip_prio = 0;
 
 public:
   slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_);

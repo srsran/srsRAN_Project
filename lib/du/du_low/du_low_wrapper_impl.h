@@ -17,6 +17,7 @@
 #include <vector>
 
 namespace srsran {
+namespace srs_du {
 
 class du_low_wrapper_impl final : public du_low_wrapper
 {
@@ -48,4 +49,5 @@ private:
   std::vector<std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>> fapi_adaptors;
 };
 
+} // namespace srs_du
 } // namespace srsran

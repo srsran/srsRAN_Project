@@ -18,6 +18,7 @@
 #include <utility>
 
 using namespace srsran;
+using namespace srs_du;
 
 // Buffer state that the fake RLC will report to the MAC. This value should be large enough for the scheduler to fill
 // the largest TB possible.
@@ -679,8 +680,8 @@ void mac_test_mode_adapter::handle_ue_config_applied(du_ue_index_t ue_idx)
   mac_adapted->get_ue_configurator().handle_ue_config_applied(ue_idx);
 }
 
-std::unique_ptr<mac_interface> srsran::create_du_high_mac(const mac_config&                  mac_cfg,
-                                                          const srs_du::du_test_mode_config& test_cfg)
+std::unique_ptr<mac_interface> srsran::srs_du::create_du_high_mac(const mac_config&                  mac_cfg,
+                                                                  const srs_du::du_test_mode_config& test_cfg)
 {
   if (not test_cfg.test_ue.has_value()) {
     return create_mac(mac_cfg);

@@ -17,6 +17,7 @@
 #include <memory>
 
 namespace srsran {
+namespace srs_du {
 
 /// DU wrapper implementation dependencies.
 struct du_wrapper_impl_dependencies {
@@ -47,4 +48,5 @@ private:
   std::unique_ptr<du_high_wrapper> du_hi;
 };
 
+} // namespace srs_du
 } // namespace srsran

@@ -39,19 +39,23 @@ struct du_manager_params {
     std::map<srb_id_t, du_srb_config>  srbs;
     std::map<five_qi_t, du_qos_config> qos;
   };
+
   struct service_params {
     timer_manager&                timers;
     task_executor&                du_mng_exec;
     du_high_ue_executor_mapper&   ue_execs;
     du_high_cell_executor_mapper& cell_execs;
   };
+
   struct f1ap_config_params {
     f1ap_connection_manager& conn_mng;
     f1ap_ue_context_manager& ue_mng;
   };
+
   struct f1u_config_params {
     f1u_du_gateway& f1u_gw;
   };
+
   struct rlc_config_params {
     mac_ue_control_information_handler&          mac_ue_info_handler;
     f1ap_message_handler&                        f1ap_rx_msg_handler;
@@ -59,6 +63,7 @@ struct du_manager_params {
     rlc_pcap&                                    pcap_writer;
     rlc_metrics_notifier*                        rlc_metrics_notif = nullptr;
   };
+
   struct mac_config_params {
     mac_cell_manager&       cell_mng;
     mac_ue_configurator&    ue_cfg;

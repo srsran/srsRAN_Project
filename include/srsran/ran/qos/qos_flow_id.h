@@ -16,7 +16,7 @@
 namespace srsran {
 
 // See TS 38.463 Section 9.3.1.24: QoS Flow ID valid values: (0..63)
-constexpr static uint8_t MAX_NOF_QOS_FLOWS = 64;
+static constexpr uint8_t MAX_NOF_QOS_FLOWS = 64;
 
 /// \brief QoS Flow ID.
 /// \remark See TS 38.463 Section 9.3.1.21: QoS Flow ID valid values: (0..63)

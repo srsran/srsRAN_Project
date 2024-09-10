@@ -23,6 +23,7 @@
 #include "srsran/scheduler/config/slice_rrm_policy_config.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// \brief Options for the number of Initial Cyclic Shifts that can be set for PUCCH Format 1.
 ///
@@ -192,4 +193,5 @@ struct du_cell_config {
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 };
 
+} // namespace srs_du
 } // namespace srsran

@@ -234,7 +234,7 @@ TEST_F(ue_config_tester, when_du_manager_completes_ue_configuration_procedure_th
 
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1c_bearers_are_connected)
 {
-  const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
+  static const std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
   byte_buffer                         test_payload     = test_helpers::create_pdcp_pdu(
       pdcp_sn_size::size12bits, /* is_srb = */ true, 0, test_rgen::uniform_int<unsigned>(3, 100), 0);
 
@@ -267,7 +267,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
 
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1u_bearers_are_connected)
 {
-  const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
+  static const std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
   byte_buffer                         test_payload     = test_helpers::create_pdcp_pdu(
       pdcp_sn_size::size12bits, /* is_srb = */ false, 0, test_rgen::uniform_int<unsigned>(3, 100), 0);
 
@@ -308,7 +308,7 @@ TEST_F(ue_config_tester,
   std::string f1u_ext_addr = "5.6.7.8";
   f1u_gw.set_f1u_ext_addr(f1u_ext_addr);
 
-  const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
+  static const std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
   byte_buffer                         test_payload     = test_helpers::create_pdcp_pdu(
       pdcp_sn_size::size12bits, /* is_srb = */ false, 0, test_rgen::uniform_int<unsigned>(3, 100), 0);
 

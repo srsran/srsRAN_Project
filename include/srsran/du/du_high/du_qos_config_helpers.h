@@ -42,14 +42,15 @@ namespace config_helpers {
 ///  Default value for RLC SDU queue limit in bytes are chosen such that it allows for 4096 PDCP pdus of 1500 of payload
 ///  and 7 bytes of PDCP overhead. The SDU limit should be much larger then this, so that the limit is the number of
 ///  bytes in the queue, not the number of SDUs, even in the case of small PDUs
-const uint32_t                            default_rlc_queue_size_sdus  = 16384;
-const uint32_t                            default_rlc_queue_size_bytes = 4096 * (1500 + 7);
-inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool warn_on_drop, int rlc_metrics_report)
+const uint32_t                                    default_rlc_queue_size_sdus  = 16384;
+const uint32_t                                    default_rlc_queue_size_bytes = 4096 * (1500 + 7);
+inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_list(bool warn_on_drop,
+                                                                                  int  rlc_metrics_report)
 {
-  std::map<five_qi_t, du_qos_config> qos_list = {};
+  std::map<five_qi_t, srs_du::du_qos_config> qos_list = {};
   {
     // 5QI=1
-    du_qos_config cfg{};
+    srs_du::du_qos_config cfg{};
     // RLC
     cfg.rlc.mode                   = rlc_mode::um_bidir;
     cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
@@ -70,7 +71,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
   }
   {
     // 5QI=2
-    du_qos_config cfg{};
+    srs_du::du_qos_config cfg{};
     // RLC
     cfg.rlc.mode                   = rlc_mode::um_bidir;
     cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
@@ -91,7 +92,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
   }
   {
     // 5QI=5
-    du_qos_config cfg{};
+    srs_du::du_qos_config cfg{};
     // RLC
     cfg.rlc.mode                    = rlc_mode::am;
     cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
@@ -117,7 +118,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
   }
   {
     // 5QI=7
-    du_qos_config cfg{};
+    srs_du::du_qos_config cfg{};
     // RLC
     cfg.rlc.mode                   = rlc_mode::um_bidir;
     cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
@@ -139,7 +140,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
   }
   {
     // 5QI=9
-    du_qos_config cfg{};
+    srs_du::du_qos_config cfg{};
     // RLC
     cfg.rlc.mode                    = rlc_mode::am;
     cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;

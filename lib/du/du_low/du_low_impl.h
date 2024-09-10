@@ -14,6 +14,7 @@
 #include "srsran/phy/upper/upper_phy.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// DU low implementation.
 class du_low_impl final : public du_low
@@ -35,4 +36,5 @@ private:
   std::vector<upper_phy*>                 upper_ptrs;
 };
 
+} // namespace srs_du
 } // namespace srsran

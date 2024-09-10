@@ -85,7 +85,7 @@ public:
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
 };
 
-class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
+class dummy_ue_executor_mapper : public srs_du::du_high_ue_executor_mapper
 {
 public:
   dummy_ue_executor_mapper(task_executor& exec_) : exec(exec_) {}
@@ -98,7 +98,7 @@ public:
   task_executor& exec;
 };
 
-class dummy_dl_executor_mapper : public du_high_cell_executor_mapper
+class dummy_dl_executor_mapper : public srs_du::du_high_cell_executor_mapper
 {
 public:
   dummy_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) : execs(execs_.begin(), execs_.end()) {}

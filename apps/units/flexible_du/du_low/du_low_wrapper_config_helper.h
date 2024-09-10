@@ -15,19 +15,22 @@
 
 namespace srsran {
 
-struct worker_manager;
+namespace srs_du {
 struct du_cell_config;
-struct du_low_unit_config;
+}
 
-void make_du_low_wrapper_config_and_dependencies(du_low_wrapper_config&                out_cfg,
-                                                 const du_low_unit_config&             du_low_unit_cfg,
-                                                 const hal_upper_phy_config&           hal_config,
-                                                 std::vector<cell_prach_ports_entry>   prach_ports,
-                                                 span<const du_cell_config>            du_cells,
-                                                 span<const unsigned>                  max_puschs_per_slot,
-                                                 upper_phy_rg_gateway&                 rg_gateway,
-                                                 upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                                 worker_manager&                       workers,
-                                                 unsigned                              du_id);
+struct du_low_unit_config;
+struct worker_manager;
+
+void make_du_low_wrapper_config_and_dependencies(srs_du::du_low_wrapper_config&              out_cfg,
+                                                 const du_low_unit_config&                   du_low_unit_cfg,
+                                                 const hal_upper_phy_config&                 hal_config,
+                                                 std::vector<srs_du::cell_prach_ports_entry> prach_ports,
+                                                 span<const srs_du::du_cell_config>          du_cells,
+                                                 span<const unsigned>                        max_puschs_per_slot,
+                                                 upper_phy_rg_gateway&                       rg_gateway,
+                                                 upper_phy_rx_symbol_request_notifier&       rx_symbol_request_notifier,
+                                                 worker_manager&                             workers,
+                                                 unsigned                                    du_id);
 
 } // namespace srsran

@@ -66,9 +66,9 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
 }
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
-inline du_cell_config make_default_du_cell_config(const cell_config_builder_params_extended& params = {})
+inline srs_du::du_cell_config make_default_du_cell_config(const cell_config_builder_params_extended& params = {})
 {
-  du_cell_config cfg{};
+  srs_du::du_cell_config cfg{};
   cfg.pci            = params.pci;
   cfg.tac            = 1;
   cfg.nr_cgi.plmn_id = plmn_identity::test_value();

@@ -16,6 +16,7 @@
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// DU high wrapper implementation dependencies.
 struct du_high_wrapper_impl_dependencies {
@@ -60,4 +61,5 @@ private:
   std::unique_ptr<du_high>                                     du_hi;
 };
 
+} // namespace srs_du
 } // namespace srsran

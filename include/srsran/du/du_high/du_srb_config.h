@@ -14,6 +14,7 @@
 #include "srsran/rlc/rlc_config.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// \brief SRB Configuration, i.e. associated RLC and MAC configuration for SRBs in the DU
 struct du_srb_config {
@@ -21,4 +22,5 @@ struct du_srb_config {
   mac_lc_config mac;
 };
 
+} // namespace srs_du
 } // namespace srsran

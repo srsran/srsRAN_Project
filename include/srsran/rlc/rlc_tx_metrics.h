@@ -90,7 +90,7 @@ struct rlc_tx_metrics_lower {
 
   // Histogram of pull pdus
   static constexpr unsigned                   pdu_latency_hist_bins = 8;
-  constexpr static unsigned                   nof_usec_per_bin      = 10;
+  static constexpr unsigned                   nof_usec_per_bin      = 10;
   std::array<uint32_t, pdu_latency_hist_bins> pdu_latency_hist_ns;
   uint32_t                                    max_pdu_latency_ns;
 

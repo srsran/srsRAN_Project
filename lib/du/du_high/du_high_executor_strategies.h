@@ -14,6 +14,7 @@
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// L2 UL executor mapper that maps UEs based on their RNTI.
 class index_based_ue_executor_mapper final : public du_high_ue_executor_mapper
@@ -216,4 +217,5 @@ private:
   task_executor*                                du_e2_exec;
 };
 
+} // namespace srs_du
 } // namespace srsran

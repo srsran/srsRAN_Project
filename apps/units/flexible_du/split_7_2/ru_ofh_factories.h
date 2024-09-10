@@ -20,13 +20,15 @@ class ru_uplink_plane_rx_symbol_notifier;
 class ru_timing_notifier;
 class ru_error_notifier;
 
+namespace srs_du {
 struct du_cell_config;
+}
 
 /// Open Fronthaul RU factory configuration.
 struct ru_ofh_factory_config {
-  ru_ofh_unit_config         ru_cfg;
-  unsigned                   max_processing_delay_slots;
-  span<const du_cell_config> du_cells;
+  ru_ofh_unit_config                 ru_cfg;
+  unsigned                           max_processing_delay_slots;
+  span<const srs_du::du_cell_config> du_cells;
 };
 
 /// Open Fronthaul RU factory dependencies.

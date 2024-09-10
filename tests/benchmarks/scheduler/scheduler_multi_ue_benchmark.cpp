@@ -223,7 +223,7 @@ private:
   sched_dummy_metric_notifier                      metric_notif;
   scheduler_expert_config                          expert_cfg;
   cell_config_builder_params                       builder_params;
-  std::vector<du_cell_config>                      du_cell_cfgs;
+  std::vector<srs_du::du_cell_config>              du_cell_cfgs;
   srslog::basic_logger&                            logger;
   std::optional<srs_du::du_pucch_resource_manager> pucch_res_mng;
 

@@ -15,6 +15,7 @@
 #include "srsran/rlc/rlc_config.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// \brief QoS Configuration, i.e. 5QI and the associated RLC configuration for DRBs
 struct du_qos_config {
@@ -23,4 +24,5 @@ struct du_qos_config {
   mac_lc_config      mac;
 };
 
+} // namespace srs_du
 } // namespace srsran

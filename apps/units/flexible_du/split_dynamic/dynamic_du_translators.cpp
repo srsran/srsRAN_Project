@@ -14,14 +14,14 @@
 
 using namespace srsran;
 
-ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_config& ru_cfg,
-                                                        span<const du_cell_config>  du_cells,
-                                                        unsigned                    max_processing_delay_slots,
-                                                        unsigned                    nof_prach_ports)
+ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_config&        ru_cfg,
+                                                        span<const srs_du::du_cell_config> du_cells,
+                                                        unsigned                           max_processing_delay_slots,
+                                                        unsigned                           nof_prach_ports)
 {
   ru_dummy_configuration out_cfg;
 
-  const du_cell_config& cell = du_cells.front();
+  const srs_du::du_cell_config& cell = du_cells.front();
 
   // Derive parameters.
   unsigned channel_bw_prb = band_helper::get_n_rbs_from_bw(

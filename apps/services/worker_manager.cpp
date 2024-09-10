@@ -285,17 +285,17 @@ void worker_manager::create_du_executors(bool                      is_blocking_m
 
     // DU-high executor mapper.
     using exec_list       = std::initializer_list<task_executor*>;
-    auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
-                                                                   exec_list{exec_map.at("slot_exec#" + cell_id_str)});
+    auto cell_exec_mapper = std::make_unique<srs_du::cell_executor_mapper>(
+        exec_list{exec_map.at("cell_exec#" + cell_id_str)}, exec_list{exec_map.at("slot_exec#" + cell_id_str)});
     auto ue_exec_mapper =
-        std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at(fmt::format("du_rb_prio_exec#{}", i))},
-                                                   exec_list{exec_map.at(fmt::format("du_rb_ul_exec#{}", i))},
-                                                   exec_list{exec_map.at(fmt::format("du_rb_dl_exec#{}", i))});
-    du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
-                                                                                 std::move(ue_exec_mapper),
-                                                                                 *exec_map.at("ctrl_exec"),
-                                                                                 *exec_map.at("timer_exec"),
-                                                                                 *exec_map.at("ctrl_exec"));
+        std::make_unique<srs_du::pcell_ue_executor_mapper>(exec_list{exec_map.at(fmt::format("du_rb_prio_exec#{}", i))},
+                                                           exec_list{exec_map.at(fmt::format("du_rb_ul_exec#{}", i))},
+                                                           exec_list{exec_map.at(fmt::format("du_rb_dl_exec#{}", i))});
+    du_item.du_high_exec_mapper = std::make_unique<srs_du::du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
+                                                                                         std::move(ue_exec_mapper),
+                                                                                         *exec_map.at("ctrl_exec"),
+                                                                                         *exec_map.at("timer_exec"),
+                                                                                         *exec_map.at("ctrl_exec"));
   }
 
   const du_low_unit_expert_threads_config& upper_phy_threads_cfg = du_low.expert_execution_cfg.threads;
@@ -784,7 +784,7 @@ void worker_manager::create_ru_executors(
   radio_exec = exec_mng.executors().at("ru_dummy");
 }
 
-du_high_executor_mapper& worker_manager::get_du_high_executor_mapper(unsigned du_index)
+srs_du::du_high_executor_mapper& worker_manager::get_du_high_executor_mapper(unsigned du_index)
 {
   srsran_assert(du_index < du_high_executors.size(), "Invalid DU index");
   return *du_high_executors[du_index].du_high_exec_mapper;

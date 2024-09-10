@@ -18,6 +18,7 @@
 #include "srsran/ran/du_types.h"
 
 namespace srsran {
+namespace srs_du {
 
 class du_configurator;
 
@@ -51,4 +52,5 @@ public:
   virtual du_configurator& get_du_configurator() = 0;
 };
 
+} // namespace srs_du
 } // namespace srsran

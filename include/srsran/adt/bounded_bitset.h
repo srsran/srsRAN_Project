@@ -1079,7 +1079,7 @@ private:
   friend struct fmt::formatter<bounded_bitset<N, LowestInfoBitIsMSB>>;
 
   // Capacity of the underlying array in number of words.
-  constexpr static size_t max_nof_words_() noexcept { return (N + bits_per_word - 1) / bits_per_word; }
+  static constexpr size_t max_nof_words_() noexcept { return (N + bits_per_word - 1) / bits_per_word; }
 
   std::array<word_t, max_nof_words_()> buffer   = {0};
   size_t                               cur_size = 0;

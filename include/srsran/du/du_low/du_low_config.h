@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/upper_phy_factories.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// DU low cell configuration
 struct du_low_cell_config {
@@ -30,4 +31,5 @@ struct du_low_config {
   std::vector<du_low_cell_config> cells;
 };
 
+} // namespace srs_du
 } // namespace srsran

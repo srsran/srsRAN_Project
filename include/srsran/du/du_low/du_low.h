@@ -16,6 +16,8 @@ namespace srsran {
 
 class upper_phy;
 
+namespace srs_du {
+
 /// DU low interface.
 class du_low
 {
@@ -33,4 +35,5 @@ public:
   virtual span<upper_phy*> get_all_upper_phys() = 0;
 };
 
+} // namespace srs_du
 } // namespace srsran

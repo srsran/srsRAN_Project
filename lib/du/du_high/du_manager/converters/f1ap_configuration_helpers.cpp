@@ -16,6 +16,7 @@
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
+using namespace srs_du;
 
 byte_buffer srsran::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& du_cfg)
 {

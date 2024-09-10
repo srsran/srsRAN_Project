@@ -13,6 +13,7 @@
 #include "srsran/du/du_low/du_low_config.h"
 
 namespace srsran {
+namespace srs_du {
 
 struct du_cell_config;
 
@@ -25,4 +26,5 @@ struct du_low_wrapper_config {
   std::vector<cell_prach_ports_entry> prach_ports;
 };
 
+} // namespace srs_du
 } // namespace srsran

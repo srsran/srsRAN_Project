@@ -19,6 +19,7 @@
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 
 using namespace srsran;
+using namespace srs_du;
 
 static fapi::prach_config generate_prach_config_tlv(const du_cell_config& cell_cfg)
 {
@@ -114,8 +115,8 @@ static std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> create_phy_fapi_adaptor(u
   return adaptor_factory->create(phy_fapi_config, std::move(phy_fapi_dependencies));
 }
 
-std::unique_ptr<du_low_wrapper> srsran::make_du_low_wrapper(const du_low_wrapper_config& config,
-                                                            span<const du_cell_config>   du_cells)
+std::unique_ptr<du_low_wrapper> srsran::srs_du::make_du_low_wrapper(const du_low_wrapper_config& config,
+                                                                    span<const du_cell_config>   du_cells)
 {
   srsran_assert(config.du_low_cfg.cells.size() == du_cells.size(),
                 "Number of cells mismatch between upper PHY '{}' and DU high '{}'",

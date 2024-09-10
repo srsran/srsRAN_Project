@@ -15,11 +15,11 @@
 namespace srsran {
 
 namespace fapi {
-
 class slot_message_gateway;
 class slot_last_message_notifier;
-
 } // namespace fapi
+
+namespace srs_du {
 
 /// FAPI configuration for the DU high wrapper.
 struct du_high_wrapper_fapi_config {
@@ -47,4 +47,5 @@ struct du_high_wrapper_dependencies {
   std::vector<du_high_wrapper_sector_dependencies> sectors;
 };
 
+} // namespace srs_du
 } // namespace srsran

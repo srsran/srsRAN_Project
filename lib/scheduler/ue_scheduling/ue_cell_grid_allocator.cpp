@@ -487,7 +487,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
 {
   srsran_assert(ues.contains(grant.user->ue_index()), "Invalid UE candidate index={}", grant.user->ue_index());
   srsran_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
-  constexpr static unsigned pdcch_delay_in_slots = 0;
+  static constexpr unsigned pdcch_delay_in_slots = 0;
 
   if (ul_attempts_count++ >= expert_cfg.max_pdcch_alloc_attempts_per_slot) {
     logger.debug("Stopping UL allocations. Cause: Max number of UL PDCCH allocation attempts {} reached.",

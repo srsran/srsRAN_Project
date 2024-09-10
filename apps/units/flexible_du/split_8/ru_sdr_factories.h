@@ -16,7 +16,10 @@
 
 namespace srsran {
 
+namespace srs_du {
 struct du_cell_config;
+} // namespace srs_du
+
 struct du_high_unit_config;
 class ru_uplink_plane_rx_symbol_notifier;
 class ru_timing_notifier;
@@ -25,9 +28,9 @@ struct worker_manager;
 
 /// SDR RU factory configuration.
 struct ru_sdr_factory_config {
-  ru_sdr_unit_config         ru_cfg;
-  unsigned                   max_processing_delay_slots;
-  span<const du_cell_config> du_cells;
+  ru_sdr_unit_config                 ru_cfg;
+  unsigned                           max_processing_delay_slots;
+  span<const srs_du::du_cell_config> du_cells;
 };
 
 /// SDR RU factory dependencies.

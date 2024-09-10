@@ -19,6 +19,7 @@
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 
 using namespace srsran;
+using namespace srs_du;
 
 static std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>
 build_mac_fapi_adaptor(unsigned                                                       sector_id,
@@ -223,8 +224,9 @@ private:
 
 } // namespace
 
-std::unique_ptr<du_high_wrapper> srsran::make_du_high_wrapper(const du_high_wrapper_config&  config,
-                                                              du_high_wrapper_dependencies&& wrapper_dependencies)
+std::unique_ptr<du_high_wrapper>
+srsran::srs_du::make_du_high_wrapper(const du_high_wrapper_config&  config,
+                                     du_high_wrapper_dependencies&& wrapper_dependencies)
 {
   srsran_assert(config.du_hi.ran.cells.size() == wrapper_dependencies.sectors.size(),
                 "DU high number of cells '{}' does not match number sectors '{}' in wrapper dependencies",

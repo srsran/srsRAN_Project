@@ -14,12 +14,13 @@
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
+using namespace srs_du;
 
 static std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_config&                     upper_config,
                                                    const downlink_processor_factory_sw_config& dl_fact_config)
 {
   // Create downlink processor factory.
-  std::shared_ptr<downlink_processor_factory> dl_proc_factory = nullptr;
+  std::shared_ptr<downlink_processor_factory> dl_proc_factory;
   // Check if a hardware-accelerated PDSCH processor is requested.
   if (!upper_config.hal_config.hwacc_pdsch_processor) {
     dl_proc_factory = create_downlink_processor_factory_sw(dl_fact_config);
@@ -50,7 +51,7 @@ static std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_config&      
   return upper_phy_factory->create(upper_config);
 }
 
-std::unique_ptr<du_low> srsran::make_du_low(const du_low_config& config)
+std::unique_ptr<du_low> srsran::srs_du::make_du_low(const du_low_config& config)
 {
   std::vector<std::unique_ptr<upper_phy>> upper;
   for (const auto& cell_cfg : config.cells) {

@@ -64,12 +64,12 @@ tx_timing_window_params_us_to_symbols(std::chrono::microseconds                T
   return tx_window_timing_params;
 }
 
-static void generate_config(ru_ofh_configuration&      out_cfg,
-                            const ru_ofh_unit_config&  ru_cfg,
-                            span<const du_cell_config> du_cells,
-                            unsigned                   max_processing_delay_slots)
+static void generate_config(ru_ofh_configuration&              out_cfg,
+                            const ru_ofh_unit_config&          ru_cfg,
+                            span<const srs_du::du_cell_config> du_cells,
+                            unsigned                           max_processing_delay_slots)
 {
-  /// Individual Open Fronthaul sector configurations.
+  // Individual Open Fronthaul sector configurations.
   std::vector<ru_ofh_sector_configuration> sector_configs;
 
   out_cfg.gps_Alpha                  = ru_cfg.gps_Alpha;
@@ -81,7 +81,7 @@ static void generate_config(ru_ofh_configuration&      out_cfg,
   // Add one cell.
   for (unsigned i = 0, e = ru_cfg.cells.size(); i != e; ++i) {
     const ru_ofh_unit_cell_config& cell_cfg    = ru_cfg.cells[i];
-    const du_cell_config&          du_cell_cfg = du_cells[i];
+    const srs_du::du_cell_config&  du_cell_cfg = du_cells[i];
     out_cfg.sector_configs.emplace_back();
     ru_ofh_sector_configuration& sector_cfg = out_cfg.sector_configs.back();
 
@@ -143,9 +143,9 @@ static void generate_config(ru_ofh_configuration&      out_cfg,
   }
 }
 
-ru_ofh_configuration srsran::generate_ru_ofh_config(const ru_ofh_unit_config&  ru_cfg,
-                                                    span<const du_cell_config> du_cells,
-                                                    unsigned                   max_processing_delay_slots)
+ru_ofh_configuration srsran::generate_ru_ofh_config(const ru_ofh_unit_config&          ru_cfg,
+                                                    span<const srs_du::du_cell_config> du_cells,
+                                                    unsigned                           max_processing_delay_slots)
 {
   ru_ofh_configuration out_cfg;
   generate_config(out_cfg, ru_cfg, du_cells, max_processing_delay_slots);

@@ -36,7 +36,7 @@ struct worker_manager;
 
 /// Wraps the DU and its supported application commands.
 struct du_unit {
-  std::unique_ptr<du>                                             unit;
+  std::unique_ptr<srs_du::du>                                     unit;
   std::vector<std::unique_ptr<app_services::application_command>> commands;
   std::vector<app_services::metrics_config>                       metrics;
 };

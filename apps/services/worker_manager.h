@@ -71,7 +71,7 @@ struct worker_manager : public worker_manager_executor_getter {
 
   std::unique_ptr<srs_cu_up::cu_up_executor_pool> cu_up_exec_mapper;
 
-  du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
+  srs_du::du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
   // Gets the DU-low downlink executors.
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
@@ -91,7 +91,7 @@ private:
   static const unsigned nof_cu_up_ue_strands = 16;
 
   struct du_high_executor_storage {
-    std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
+    std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
   };
   std::vector<du_high_executor_storage>    du_high_executors;
   std::vector<std::vector<task_executor*>> du_low_dl_executors;

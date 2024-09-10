@@ -14,6 +14,7 @@
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// This interface is used to allow the DU to choose between different cell-specific task executors.
 class du_high_cell_executor_mapper
@@ -85,4 +86,5 @@ public:
   virtual task_executor& du_e2_executor() = 0;
 };
 
+} // namespace srs_du
 } // namespace srsran

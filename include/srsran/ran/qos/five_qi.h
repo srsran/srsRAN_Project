@@ -16,7 +16,7 @@
 namespace srsran {
 
 // See TS 38.463: Five QI valid values: (0..255)
-constexpr static uint16_t MAX_FIVEQI = 255;
+static constexpr uint16_t MAX_FIVEQI = 255;
 
 /// \brief Five QI.
 enum class five_qi_t : uint16_t { min = 0, max = MAX_FIVEQI, invalid = MAX_FIVEQI + 1 };

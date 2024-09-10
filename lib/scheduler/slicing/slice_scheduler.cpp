@@ -277,11 +277,11 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
   // 3. round-robin based on slot indication count (8 least significant bits).
 
   // Priority when slice has already reached its minimum RB ratio agreement.
-  constexpr static priority_type default_prio = 0x1U;
+  static constexpr priority_type default_prio = 0x1U;
   // Priority when slice still needs to reach its minimum RB ratio agreement.
-  constexpr static priority_type high_prio     = 0x2U;
-  constexpr static priority_type delay_bitsize = 8U;
-  constexpr static priority_type rr_bitsize    = 8U;
+  static constexpr priority_type high_prio     = 0x2U;
+  static constexpr priority_type delay_bitsize = 8U;
+  static constexpr priority_type rr_bitsize    = 8U;
 
   unsigned rb_count = is_dl ? inst.pdsch_rb_count : inst.pusch_rb_count_per_slot[slot_tx.to_uint()];
   if (not inst.active() or rb_count >= inst.cfg.max_prb) {

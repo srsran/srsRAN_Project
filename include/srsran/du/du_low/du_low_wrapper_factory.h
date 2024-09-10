@@ -12,10 +12,10 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/du/du_low/du_low_wrapper.h"
-
 #include <memory>
 
 namespace srsran {
+namespace srs_du {
 
 struct du_cell_config;
 struct du_low_wrapper_config;
@@ -24,4 +24,5 @@ struct du_low_wrapper_config;
 std::unique_ptr<du_low_wrapper> make_du_low_wrapper(const du_low_wrapper_config& config,
                                                     span<const du_cell_config>   du_cells);
 
+} // namespace srs_du
 } // namespace srsran

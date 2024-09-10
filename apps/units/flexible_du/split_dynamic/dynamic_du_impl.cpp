@@ -51,7 +51,7 @@ void dynamic_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
   ru_ul_request_adapt.connect(ru->get_uplink_plane_handler());
 }
 
-void dynamic_du_impl::add_dus(std::vector<std::unique_ptr<du_wrapper>> active_du)
+void dynamic_du_impl::add_dus(std::vector<std::unique_ptr<srs_du::du_wrapper>> active_du)
 {
   du_list = std::move(active_du);
   srsran_assert(!du_list.empty(), "Cannot set an empty DU list");

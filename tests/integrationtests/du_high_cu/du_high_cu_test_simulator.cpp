@@ -61,16 +61,17 @@ du_high_cu_cp_worker_manager::du_high_cu_cp_worker_manager(unsigned nof_dus) : t
     make_worker_and_executor(prefix_str + "-CELL");
     make_worker_and_executor(prefix_str + "-UE");
 
-    auto du_hi_cell_mapper =
-        std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{executors[prefix_str + "-CELL"]});
-    auto du_hi_ue_mapper = std::make_unique<pcell_ue_executor_mapper>(
+    auto du_hi_cell_mapper = std::make_unique<srs_du::cell_executor_mapper>(
+        std::initializer_list<task_executor*>{executors[prefix_str + "-CELL"]});
+    auto du_hi_ue_mapper = std::make_unique<srs_du::pcell_ue_executor_mapper>(
         std::initializer_list<task_executor*>{executors[prefix_str + "-UE"]});
 
-    du_hi_exec_mappers.push_back(std::make_unique<du_high_executor_mapper_impl>(std::move(du_hi_cell_mapper),
-                                                                                std::move(du_hi_ue_mapper),
-                                                                                *executors[prefix_str + "-CTRL"],
-                                                                                *executors[prefix_str + "-CTRL"],
-                                                                                *executors[prefix_str + "-CTRL"]));
+    du_hi_exec_mappers.push_back(
+        std::make_unique<srs_du::du_high_executor_mapper_impl>(std::move(du_hi_cell_mapper),
+                                                               std::move(du_hi_ue_mapper),
+                                                               *executors[prefix_str + "-CTRL"],
+                                                               *executors[prefix_str + "-CTRL"],
+                                                               *executors[prefix_str + "-CTRL"]));
   }
 }
 
@@ -170,7 +171,7 @@ void du_high_cu_test_simulator::start_dus()
 void du_high_cu_test_simulator::run_slot()
 {
   for (unsigned i = 0; i != dus.size(); ++i) {
-    du_high& du_hi = *dus[i]->du_high_inst;
+    srs_du::du_high& du_hi = *dus[i]->du_high_inst;
 
     // Signal slot indication to l2.
     du_hi.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(dus[i]->next_slot);

@@ -17,7 +17,7 @@ using namespace srsran;
 using namespace srsran::config_helpers;
 
 std::vector<sched_grid_resource>
-srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& user_params, unsigned bwp_size)
+srsran::config_helpers::build_pucch_guardbands_list(const srs_du::pucch_builder_params& user_params, unsigned bwp_size)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
   std::vector<pucch_resource> res_list = srs_du::generate_cell_pucch_res_list(

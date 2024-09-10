@@ -16,9 +16,11 @@
 #include <memory>
 
 namespace srsran {
+namespace srs_du {
 
 /// Creates a DU high wrapper with the given configuration and dependencies.
 std::unique_ptr<du_high_wrapper> make_du_high_wrapper(const du_high_wrapper_config&  config,
                                                       du_high_wrapper_dependencies&& dependencies);
 
+} // namespace srs_du
 } // namespace srsran
