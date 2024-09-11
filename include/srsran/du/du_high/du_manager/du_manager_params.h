@@ -70,12 +70,13 @@ struct du_manager_params {
     scheduler_expert_config sched_cfg;
   };
 
-  ran_params         ran;
-  service_params     services;
-  f1ap_config_params f1ap;
-  f1u_config_params  f1u;
-  rlc_config_params  rlc;
-  mac_config_params  mac;
+  ran_params          ran;
+  service_params      services;
+  f1ap_config_params  f1ap;
+  f1u_config_params   f1u;
+  rlc_config_params   rlc;
+  mac_config_params   mac;
+  du_test_mode_config test_cfg;
 };
 
 } // namespace srs_du

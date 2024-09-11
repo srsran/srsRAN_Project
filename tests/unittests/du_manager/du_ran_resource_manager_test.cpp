@@ -32,7 +32,8 @@ protected:
         cell_cfg_list,
         scheduler_expert_config{.ue = {.max_pucchs_per_slot = max_pucch_grants}},
         srb_cfg_list,
-        qos_cfg_list))
+        qos_cfg_list,
+        dummy_test_mode_cfg))
   {
     if (params.csi_rs_enabled) {
       default_csi_pucch_res_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
@@ -139,6 +140,7 @@ protected:
 
   cell_config_builder_params                                             params;
   du_cell_config                                                         du_cfg_param;
+  du_test_mode_config                                                    dummy_test_mode_cfg{};
   std::vector<du_cell_config>                                            cell_cfg_list;
   std::map<srb_id_t, du_srb_config>                                      srb_cfg_list;
   std::map<five_qi_t, du_qos_config>                                     qos_cfg_list;

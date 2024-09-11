@@ -23,7 +23,7 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   params(params_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
   cell_mng(params),
-  cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos),
+  cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),
   ue_mng(params, cell_res_alloc),
   main_ctrl_loop(128)
 {

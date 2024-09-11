@@ -41,9 +41,11 @@ du_ue_ran_resource_updater_impl::update(du_cell_index_t                       pc
 du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
                                                            const scheduler_expert_config&            scheduler_cfg,
                                                            const std::map<srb_id_t, du_srb_config>&  srb_config,
-                                                           const std::map<five_qi_t, du_qos_config>& qos_config) :
+                                                           const std::map<five_qi_t, du_qos_config>& qos_config,
+                                                           const du_test_mode_config&                test_cfg_) :
   cell_cfg_list(cell_cfg_list_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
+  test_cfg(test_cfg_),
   pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot),
   bearer_res_mng(srb_config, qos_config, logger)
 {
@@ -110,8 +112,10 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
   }
 
-  // > Process UE NR capabilities and update UE dedicated configuration.
-  u.ue_cap_manager.update(ue_mcg, upd_req.ue_cap_rat_list);
+  // > Process UE NR capabilities and update UE dedicated configuration only if test mode is not configured.
+  if (not test_cfg.test_ue.has_value() or test_cfg.test_ue->rnti == rnti_t::INVALID_RNTI) {
+    u.ue_cap_manager.update(ue_mcg, upd_req.ue_cap_rat_list);
+  }
 
   // > Update UE SRBs and DRBs.
   du_ue_bearer_resource_update_response bearer_resp =

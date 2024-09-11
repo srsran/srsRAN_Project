@@ -51,7 +51,8 @@ public:
   du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
                                const scheduler_expert_config&            scheduler_cfg,
                                const std::map<srb_id_t, du_srb_config>&  srbs,
-                               const std::map<five_qi_t, du_qos_config>& qos);
+                               const std::map<five_qi_t, du_qos_config>& qos,
+                               const du_test_mode_config&                test_cfg_);
   du_ran_resource_manager_impl(du_ran_resource_manager_impl&&)                 = delete;
   du_ran_resource_manager_impl(const du_ran_resource_manager_impl&)            = delete;
   du_ran_resource_manager_impl& operator=(du_ran_resource_manager_impl&&)      = delete;
@@ -87,6 +88,7 @@ private:
 
   span<const du_cell_config> cell_cfg_list;
   srslog::basic_logger&      logger;
+  const du_test_mode_config& test_cfg;
 
   struct ue_resource_context {
     du_ue_resource_config cg_cfg;

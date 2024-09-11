@@ -129,7 +129,8 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
       {*f1ap, *f1ap},
       {*config_.f1u_gw},
       {mac->get_ue_control_info_handler(), *f1ap, *f1ap, *cfg.rlc_p, cfg.rlc_metrics_notif},
-      {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.ran.sched_cfg}});
+      {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.ran.sched_cfg},
+      cfg.test_cfg});
 
   // Connect Layer<->DU manager adapters.
   adapters->connect(*du_manager, *mac);
