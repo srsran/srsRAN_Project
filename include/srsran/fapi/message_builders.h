@@ -17,6 +17,7 @@
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/ptrs/ptrs.h"
+#include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/support/math_utils.h"
 #include <algorithm>
 
@@ -2520,6 +2521,97 @@ public:
   }
 };
 
+/// Uplink SRS PDU builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.3.3.
+class ul_srs_pdu_builder
+{
+  ul_srs_pdu& pdu;
+
+public:
+  explicit ul_srs_pdu_builder(ul_srs_pdu& pdu_) : pdu(pdu_) {}
+
+  /// Sets the SRS PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
+  ul_srs_pdu_builder& set_basic_parameters(rnti_t rnti, uint32_t handle)
+  {
+    pdu.rnti   = rnti;
+    pdu.handle = handle;
+
+    return *this;
+  }
+
+  /// Sets the SRS PDU BWP parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
+  ul_srs_pdu_builder&
+  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix cp)
+  {
+    pdu.bwp_size  = bwp_size;
+    pdu.bwp_start = bwp_start;
+    pdu.scs       = scs;
+    pdu.cp        = cp;
+
+    return *this;
+  }
+
+  /// Sets the SRS PDU timing parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
+  ul_srs_pdu_builder& set_timing_params(unsigned time_start_position, srs_periodicity t_srs, unsigned t_offset)
+  {
+    pdu.time_start_position = time_start_position;
+    pdu.t_srs               = t_srs;
+    pdu.t_offset            = t_offset;
+
+    return *this;
+  }
+
+  /// Sets the SRS PDU comb parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
+  ul_srs_pdu_builder& set_comb_params(tx_comb_size comb_size, unsigned comb_offset)
+  {
+    pdu.comb_size   = comb_size;
+    pdu.comb_offset = comb_offset;
+
+    return *this;
+  }
+
+  /// Sets the SRS PDU frequency parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
+  ul_srs_pdu_builder& set_frequency_params(unsigned                      frequency_position,
+                                           unsigned                      frequency_shift,
+                                           unsigned                      frequency_hopping,
+                                           srs_group_or_sequence_hopping group_or_sequence_hopping)
+  {
+    pdu.frequency_position        = frequency_position;
+    pdu.frequency_shift           = frequency_shift;
+    pdu.frequency_hopping         = frequency_hopping;
+    pdu.group_or_sequence_hopping = group_or_sequence_hopping;
+
+    return *this;
+  }
+
+  /// Sets the SRS PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
+  ul_srs_pdu_builder& set_srs_params(unsigned          nof_antenna_ports,
+                                     unsigned          nof_symbols,
+                                     srs_nof_symbols   nof_repetitions,
+                                     unsigned          config_index,
+                                     unsigned          sequence_id,
+                                     unsigned          bandwidth_index,
+                                     unsigned          cyclic_shift,
+                                     srs_resource_type resource_type)
+  {
+    pdu.num_ant_ports   = nof_antenna_ports;
+    pdu.num_symbols     = nof_symbols;
+    pdu.num_repetitions = nof_repetitions;
+    pdu.config_index    = config_index;
+    pdu.sequence_id     = sequence_id;
+    pdu.bandwidth_index = bandwidth_index;
+    pdu.cyclic_shift    = cyclic_shift;
+    pdu.resource_type   = resource_type;
+
+    return *this;
+  }
+};
+
 /// UL_TTI.request message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.3.
 class ul_tti_request_message_builder
 {
@@ -2623,6 +2715,20 @@ public:
   {
     ul_pusch_pdu_builder builder = add_pusch_pdu();
     builder.set_basic_parameters(rnti, handle);
+
+    return builder;
+  }
+
+  /// Adds a SRS PDU to the message and returns a builder that helps to fill the parameters.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
+  ul_srs_pdu_builder add_srs_pdu()
+  {
+    auto& pdu    = msg.pdus.emplace_back();
+    pdu.pdu_type = ul_pdu_type::SRS;
+
+    ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::SRS)];
+
+    ul_srs_pdu_builder builder(pdu.srs_pdu);
 
     return builder;
   }

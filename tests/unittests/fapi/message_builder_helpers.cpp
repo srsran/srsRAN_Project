@@ -1078,6 +1078,37 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
 
   return pdu;
 }
+
+ul_srs_pdu unittest::build_valid_ul_srs_pdu()
+{
+  ul_srs_pdu pdu;
+  pdu.rnti                      = to_rnti(23);
+  pdu.handle                    = 8;
+  pdu.bwp_size                  = 230;
+  pdu.bwp_start                 = 10;
+  pdu.scs                       = subcarrier_spacing::kHz30;
+  pdu.cp                        = cyclic_prefix::NORMAL;
+  pdu.num_ant_ports             = 2;
+  pdu.num_symbols               = 1;
+  pdu.num_repetitions           = n1;
+  pdu.time_start_position       = 3;
+  pdu.config_index              = 4;
+  pdu.sequence_id               = 6;
+  pdu.bandwidth_index           = 1;
+  pdu.comb_size                 = tx_comb_size::n2;
+  pdu.comb_offset               = 1;
+  pdu.cyclic_shift              = 0;
+  pdu.frequency_position        = 3;
+  pdu.frequency_shift           = 10;
+  pdu.frequency_hopping         = 2;
+  pdu.group_or_sequence_hopping = srs_group_or_sequence_hopping::neither;
+  pdu.resource_type             = srs_resource_type::periodic;
+  pdu.t_srs                     = srs_periodicity::sl4;
+  pdu.t_offset                  = 2;
+
+  return pdu;
+}
+
 ul_tti_request_message unittest::build_valid_ul_tti_request()
 {
   ul_tti_request_message msg;
