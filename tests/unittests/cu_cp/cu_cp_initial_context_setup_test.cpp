@@ -29,7 +29,7 @@ using namespace srs_cu_cp;
 class cu_cp_initial_context_setup_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_initial_context_setup_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, create_mock_amf()})
+  cu_cp_initial_context_setup_test() : cu_cp_test_environment(cu_cp_test_env_params{})
   {
     // Run NG setup to completion.
     run_ng_setup();
