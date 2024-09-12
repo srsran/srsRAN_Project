@@ -146,8 +146,6 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
 inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 {
   srs_cu_cp::cu_cp_configuration cfg{};
-  // Supported TAs (this default entry will be removed if supported TAs are provided in the config)
-  cfg.node.supported_tas.push_back(srsran::srs_cu_cp::supported_tracking_area{7, plmn_identity::test_value(), {{1}}});
   // DRBs
   cfg.bearers.drb_config = config_helpers::make_default_cu_cp_qos_config_list();
   // Security.
@@ -190,13 +188,18 @@ inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
 }
 
 inline std::vector<plmn_identity>
-get_supported_plmns(const std::vector<srs_cu_cp::supported_tracking_area>& supported_tas)
+get_supported_plmns(const std::vector<srs_cu_cp::cu_cp_configuration::ngap_params>& ngaps)
 {
   std::vector<plmn_identity> plmns;
-  plmns.reserve(supported_tas.size());
-  for (const auto& ta : supported_tas) {
-    plmns.push_back(ta.plmn);
+
+  for (const auto& ngap : ngaps) {
+    for (const auto& ta : ngap.supported_tas) {
+      for (const auto& plmn_item : ta.plmn_list) {
+        plmns.push_back(plmn_item.plmn_id);
+      }
+    }
   }
+
   return plmns;
 }
 

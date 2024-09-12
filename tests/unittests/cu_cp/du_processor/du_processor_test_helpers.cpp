@@ -14,6 +14,7 @@
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/ran/plmn_identity.h"
 #include <memory>
 
 using namespace srsran;
@@ -31,7 +32,7 @@ private:
 };
 
 struct dummy_cu_cp_ue_admission_controller : public cu_cp_ue_admission_controller {
-  bool request_ue_setup() const override { return true; }
+  bool request_ue_setup(plmn_identity plmn) const override { return true; }
 };
 
 struct dummy_cu_cp_measurement_handler : public cu_cp_measurement_handler {
@@ -105,11 +106,13 @@ du_processor_test::du_processor_test() :
     cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
+    cu_cp_cfg.ngaps.push_back(cu_cp_configuration::ngap_params{nullptr, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
+
     return cucfg;
   }()),
   common_task_sched(std::make_unique<dummy_task_sched>()),
 
-  du_cfg_mgr{cu_cp_cfg.node.gnb_id, config_helpers::get_supported_plmns(cu_cp_cfg.node.supported_tas)}
+  du_cfg_mgr{cu_cp_cfg.node.gnb_id, config_helpers::get_supported_plmns(cu_cp_cfg.ngaps)}
 {
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);

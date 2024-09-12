@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "../../../test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"

@@ -350,8 +350,9 @@ public:
   virtual ~rrc_ue_context_update_notifier() = default;
 
   /// \brief Notifies that a new RRC UE needs to be setup.
+  /// \param[in] plmn The PLMN of the UE.
   /// \return True if the UE is accepted.
-  virtual bool on_ue_setup_request() = 0;
+  virtual bool on_ue_setup_request(plmn_identity plmn) = 0;
 
   /// \brief Notify about the reception of an RRC Reestablishment Request.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.

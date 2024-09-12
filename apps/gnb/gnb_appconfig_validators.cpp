@@ -46,11 +46,25 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
 
 bool srsran::validate_plmn_and_tacs(const du_high_unit_config& du_hi_cfg, const cu_cp_unit_config& cu_cp_cfg)
 {
+  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+
+  for (const auto& supported_ta : cu_cp_cfg.amf_config.amf.supported_tas) {
+    supported_tas.push_back(supported_ta);
+  }
+
+  for (const auto& amf : cu_cp_cfg.extra_amfs) {
+    for (const auto& supported_ta : amf.supported_tas) {
+      supported_tas.push_back(supported_ta);
+    }
+  }
+
   bool ret_val = false;
   for (const auto& cell : du_hi_cfg.cells_cfg) {
-    for (const auto& supported_ta : cu_cp_cfg.supported_tas) {
-      if (supported_ta.tac == cell.cell.tac && supported_ta.plmn == cell.cell.plmn) {
-        ret_val = true;
+    for (const auto& supported_ta : supported_tas) {
+      for (const auto& plmn_item : supported_ta.plmn_list) {
+        if (plmn_item.plmn_id == cell.cell.plmn && supported_ta.tac == cell.cell.tac) {
+          ret_val = true;
+        }
       }
     }
 

@@ -10,23 +10,44 @@
 
 #pragma once
 
+#include "../e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "test_doubles/mock_amf.h"
 #include "test_doubles/mock_cu_up.h"
 #include "test_doubles/mock_du.h"
-#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/plmn_identity.h"
+#include <optional>
 #include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
 
-struct cu_cp_test_env_params {
-  unsigned max_nof_cu_ups = 4;
-  unsigned max_nof_dus    = 4;
-  unsigned max_nof_ues    = 8192;
+struct cu_cp_test_amf_config {
+  std::vector<supported_tracking_area> supported_tas;
   /// Injected AMF stub to handle CU-CP PDUs.
-  std::unique_ptr<mock_amf> amf_stub = create_mock_amf();
+  std::unique_ptr<mock_amf> amf_stub;
+};
+
+struct cu_cp_test_env_params {
+  cu_cp_test_env_params(unsigned                                                 max_nof_cu_ups_ = 8,
+                        unsigned                                                 max_nof_dus_    = 8,
+                        unsigned                                                 max_nof_ues_    = 8192,
+                        const std::vector<std::vector<supported_tracking_area>>& amf_config_ =
+                            {{supported_tracking_area{7, {{plmn_identity::test_value(), {{1}}}}}}}) :
+    max_nof_cu_ups(max_nof_cu_ups_), max_nof_dus(max_nof_dus_), max_nof_ues(max_nof_ues_)
+  {
+    uint16_t amf_idx = 0;
+    for (const auto& supported_tas : amf_config_) {
+      amf_configs.emplace(amf_idx, cu_cp_test_amf_config{supported_tas, create_mock_amf()});
+      amf_idx++;
+    }
+  }
+  unsigned                                  max_nof_cu_ups;
+  unsigned                                  max_nof_dus;
+  unsigned                                  max_nof_ues;
+  std::map<unsigned, cu_cp_test_amf_config> amf_configs;
 };
 
 class cu_cp_test_environment
@@ -49,7 +70,7 @@ public:
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
   cu_cp&      get_cu_cp() { return *cu_cp_inst; }
-  mock_amf&   get_amf() { return *amf_stub; }
+  mock_amf&   get_amf(size_t amf_index = 0) { return *amf_configs.at(amf_index).amf_stub; }
   mock_du&    get_du(size_t du_index) { return *dus.at(du_index); }
   mock_cu_up& get_cu_up(size_t cu_up_index) { return *cu_ups.at(cu_up_index); }
 
@@ -123,7 +144,9 @@ public:
   bool tick_until(std::chrono::milliseconds timeout, const std::function<bool()>& stop_condition);
 
   /// Tick CU-CP timer until a NGAP PDU is sent.
-  bool wait_for_ngap_tx_pdu(ngap_message& ngap_pdu, std::chrono::milliseconds timeout = std::chrono::milliseconds{500});
+  bool wait_for_ngap_tx_pdu(ngap_message&             ngap_pdu,
+                            std::chrono::milliseconds timeout = std::chrono::milliseconds{500},
+                            unsigned                  amf_idx = 0);
 
   bool wait_for_e1ap_tx_pdu(unsigned                  cu_up_idx,
                             e1ap_message&             e1ap_pdu,
@@ -202,7 +225,7 @@ private:
   timer_manager timers;
 
   /// Notifiers for the CU-CP interface.
-  std::unique_ptr<mock_amf> amf_stub;
+  std::map<unsigned, cu_cp_test_amf_config> amf_configs;
 
   // emulated CU-UP nodes.
   std::unordered_map<unsigned, std::unique_ptr<mock_cu_up>> cu_ups;

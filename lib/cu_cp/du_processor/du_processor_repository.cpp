@@ -22,9 +22,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_),
-  logger(cfg.logger),
-  du_cfg_mng(cfg.cu_cp.node.gnb_id, config_helpers::get_supported_plmns(cfg.cu_cp.node.supported_tas))
+  cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.node.gnb_id, config_helpers::get_supported_plmns(cfg.cu_cp.ngaps))
 {
 }
 

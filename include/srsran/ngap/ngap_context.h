@@ -33,9 +33,10 @@ struct ngap_context_t {
   std::vector<plmn_identity> get_supported_plmns() const
   {
     std::vector<plmn_identity> supported_plmns;
-    supported_plmns.reserve(supported_tas.size());
     for (const auto& ta : supported_tas) {
-      supported_plmns.push_back(ta.plmn);
+      for (const auto& plmn : ta.plmn_list) {
+        supported_plmns.push_back(plmn.plmn_id);
+      }
     }
 
     return supported_plmns;

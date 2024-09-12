@@ -17,6 +17,7 @@
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/ran/plmn_identity.h"
 #include <vector>
 
 using namespace srsran;
@@ -59,7 +60,7 @@ bool srsran::srs_cu_cp::is_pdu_type(const ngap_message&                         
   return pdu.pdu.successful_outcome().value.type().value == type;
 }
 
-ngap_message srsran::srs_cu_cp::generate_ng_setup_response()
+ngap_message srsran::srs_cu_cp::generate_ng_setup_response(plmn_identity plmn)
 {
   ngap_message ng_setup_response = {};
 
@@ -70,7 +71,7 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_response()
   setup_res->amf_name.from_string("open5gs-amf0");
 
   served_guami_item_s served_guami_item;
-  served_guami_item.guami.plmn_id.from_string("00f110");
+  served_guami_item.guami.plmn_id = plmn.to_bytes();
   served_guami_item.guami.amf_region_id.from_number(2);
   served_guami_item.guami.amf_set_id.from_number(1);
   served_guami_item.guami.amf_pointer.from_number(0);
@@ -79,7 +80,7 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_response()
   setup_res->relative_amf_capacity = 255;
 
   plmn_support_item_s plmn_support_item = {};
-  plmn_support_item.plmn_id.from_string("00f110");
+  plmn_support_item.plmn_id             = plmn.to_bytes();
 
   slice_support_item_s slice_support_item = {};
   slice_support_item.s_nssai.sst.from_number(1);

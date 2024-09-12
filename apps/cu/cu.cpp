@@ -200,11 +200,9 @@ int main(int argc, char** argv)
 
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &cu_cp_config, &cu_up_config]() {
-    // Create the PLMN and TAC list from the cells.
-    std::vector<cu_cp_unit_supported_ta_item> supported_tas;
-    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(supported_tas));
+    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config);
     autoderive_cu_up_parameters_after_parsing(
-        cu_cp_config.amf_cfg.bind_addr, cu_cp_config.amf_cfg.no_core, cu_up_config);
+        cu_cp_config.amf_config.amf.bind_addr, cu_cp_config.amf_config.no_core, cu_up_config);
   });
 
   // Parse arguments.
@@ -312,16 +310,20 @@ int main(int argc, char** argv)
   // Create time source that ticks the timers
   io_timer_source time_source{app_timers, *epoll_broker, std::chrono::milliseconds{1}};
 
-  // Create N2 Client Gateway.
-  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client = srs_cu_cp::create_n2_connection_client(
-      generate_n2_client_config(cu_cp_config.amf_cfg, *cu_cp_dlt_pcaps.ngap, *epoll_broker));
-
   // Create CU-CP config.
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
   cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.n2_client      = n2_client.get();
   cu_cp_dependencies.timers         = cu_timers;
+
+  // Create N2 Client Gateways.
+  cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(generate_n2_client_config(
+      cu_cp_config.amf_config.no_core, cu_cp_config.amf_config.amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
+
+  for (const auto& amf : cu_cp_config.extra_amfs) {
+    cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(
+        generate_n2_client_config(cu_cp_config.amf_config.no_core, amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
+  }
 
   // create CU-CP.
   auto              cu_cp_obj_and_cmds = build_cu_cp(cu_cp_config, cu_cp_dependencies);
@@ -339,7 +341,7 @@ int main(int argc, char** argv)
   cu_logger.info("CU-CP started successfully");
 
   // Check connection to AMF
-  if (not cu_cp_obj.get_ng_handler().amf_is_connected()) {
+  if (not cu_cp_obj.get_ng_handler().amfs_are_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
 

@@ -31,6 +31,7 @@
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/security/integrity.h"
 #include "srsran/support/executors/task_worker.h"
 
@@ -56,7 +57,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   params(std::move(params_)),
   cu_cp_workers(std::make_unique<worker_manager>()),
   timers(64),
-  amf_stub(std::move(params.amf_stub))
+  amf_configs(std::move(params.amf_configs))
 {
   // Initialize logging
   test_logger.set_level(srslog::basic_levels::debug);
@@ -70,12 +71,15 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   // Create CU-CP config
   cu_cp_cfg                          = config_helpers::make_default_cu_cp_config();
   cu_cp_cfg.services.cu_cp_executor  = cu_cp_workers->exec.get();
-  cu_cp_cfg.services.n2_gw           = &*amf_stub;
   cu_cp_cfg.services.timers          = &timers;
   cu_cp_cfg.admission.max_nof_dus    = params.max_nof_dus;
   cu_cp_cfg.admission.max_nof_cu_ups = params.max_nof_cu_ups;
   cu_cp_cfg.admission.max_nof_ues    = params.max_nof_ues;
   cu_cp_cfg.bearers.drb_config       = config_helpers::make_default_cu_cp_qos_config_list();
+  // > NGAP config
+  for (const auto& [amf_index, amf_config] : amf_configs) {
+    cu_cp_cfg.ngaps.push_back(cu_cp_configuration::ngap_params{&*amf_config.amf_stub, amf_config.supported_tas});
+  }
   // > Security config.
   cu_cp_cfg.security.int_algo_pref_list = {security::integrity_algorithm::nia2,
                                            security::integrity_algorithm::nia1,
@@ -242,9 +246,11 @@ bool cu_cp_test_environment::tick_until(std::chrono::milliseconds timeout, const
   return stop_condition();
 }
 
-bool cu_cp_test_environment::wait_for_ngap_tx_pdu(ngap_message& pdu, std::chrono::milliseconds timeout)
+bool cu_cp_test_environment::wait_for_ngap_tx_pdu(ngap_message&             pdu,
+                                                  std::chrono::milliseconds timeout,
+                                                  unsigned                  amf_idx)
 {
-  return tick_until(timeout, [&]() { return amf_stub->try_pop_rx_pdu(pdu); });
+  return tick_until(timeout, [&]() { return amf_configs.at(amf_idx).amf_stub->try_pop_rx_pdu(pdu); });
 }
 
 bool cu_cp_test_environment::wait_for_e1ap_tx_pdu(unsigned                  cu_up_idx,
@@ -278,14 +284,19 @@ const cu_cp_test_environment::ue_context* cu_cp_test_environment::find_ue_contex
 
 void cu_cp_test_environment::run_ng_setup()
 {
-  ngap_message ng_setup_resp = srs_cu_cp::generate_ng_setup_response();
-  get_amf().enqueue_next_tx_pdu(ng_setup_resp);
+  for (const auto& [amf_index, amf_config] : amf_configs) {
+    get_amf(amf_index).enqueue_next_tx_pdu(srs_cu_cp::generate_ng_setup_response());
+  }
   report_fatal_error_if_not(get_cu_cp().start(), "Failed to start CU-CP");
 
   ngap_message ngap_pdu;
-  report_fatal_error_if_not(get_amf().try_pop_rx_pdu(ngap_pdu), "CU-CP did not send the NG Setup Request to the AMF");
-  report_fatal_error_if_not(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request),
-                            "CU-CP did not setup the AMF connection");
+  for (const auto& [amf_index, amf_config] : amf_configs) {
+    report_fatal_error_if_not(get_amf(amf_index).try_pop_rx_pdu(ngap_pdu),
+                              "CU-CP did not send the NG Setup Request to the AMF {}",
+                              amf_index);
+    report_fatal_error_if_not(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request),
+                              "CU-CP did not setup the AMF connection");
+  }
 }
 
 std::optional<unsigned> cu_cp_test_environment::connect_new_du()

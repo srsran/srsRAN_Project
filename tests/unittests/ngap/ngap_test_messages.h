@@ -85,7 +85,7 @@ static const uint8_t ng_setup_request_packed[] = {
     0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};
 
 /// \brief Generate a dummy NG Setup Response.
-ngap_message generate_ng_setup_response();
+ngap_message generate_ng_setup_response(plmn_identity plmn = plmn_identity::test_value());
 
 /// \brief Generate a dummy NG Setup Failure.
 ngap_message generate_ng_setup_failure();

@@ -94,8 +94,9 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   // Prepare CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();
   cu_cfg.services.cu_cp_executor        = workers.executors["CU-CP"];
-  cu_cfg.services.n2_gw                 = &n2_gw;
   cu_cfg.services.timers                = &timers;
+  cu_cfg.ngaps.push_back(
+      srs_cu_cp::cu_cp_configuration::ngap_params{&n2_gw, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
 
   // Instatiate CU-CP.
   cu_cp_inst = create_cu_cp(cu_cfg);
@@ -104,7 +105,9 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   cu_cp_inst->start();
 
   // Connect AMF by injecting a ng_setup_response
-  cu_cp_inst->get_ng_handler().get_ngap_message_handler().handle_message(srs_cu_cp::generate_ng_setup_response());
+  cu_cp_inst->get_ng_handler()
+      .get_ngap_message_handler(plmn_identity::test_value())
+      ->handle_message(srs_cu_cp::generate_ng_setup_response());
 
   // Connect F1-C to CU-CP.
   f1c_gw.attach_cu_cp_du_repo(cu_cp_inst->get_f1c_handler());

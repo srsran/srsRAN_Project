@@ -28,6 +28,7 @@ set(SOURCES
       metrics_handler/metrics_handler_impl.cpp
       ngap_repository.cpp
       routines/amf_connection_setup_routine.cpp
+      routines/amf_connection_removal_routine.cpp
       routines/initial_context_setup_routine.cpp
       routines/pdu_session_routine_helpers.cpp
       routines/pdu_session_resource_setup_routine.cpp

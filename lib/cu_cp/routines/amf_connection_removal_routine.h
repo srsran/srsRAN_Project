@@ -10,9 +10,7 @@
 
 #pragma once
 
-#include "../cu_cp_impl_interface.h"
 #include "../ngap_repository.h"
-#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
 
@@ -20,24 +18,17 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Handles the setup of the connection between the CU-CP and AMF, handling in particular the NG Setup procedure.
-class amf_connection_setup_routine
+class amf_connection_removal_routine
 {
 public:
-  amf_connection_setup_routine(ngap_repository& ngap_db_, std::atomic<bool>& amf_connected_);
+  amf_connection_removal_routine(ngap_interface* ngap_, std::atomic<bool>& amf_connected_);
 
-  void operator()(coro_context<async_task<bool>>& ctx);
+  void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  void handle_connection_setup_result();
-
-  ngap_repository&      ngap_db;
+  ngap_interface*       ngap = nullptr;
   std::atomic<bool>&    amf_connected;
-  amf_index_t           amf_index = amf_index_t::invalid;
-  ngap_interface*       ngap      = nullptr;
   srslog::basic_logger& logger;
-
-  ngap_ng_setup_result result_msg = {};
-  bool                 success    = false;
 };
 
 } // namespace srs_cu_cp

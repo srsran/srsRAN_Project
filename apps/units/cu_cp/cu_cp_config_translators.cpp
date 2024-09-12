@@ -328,14 +328,32 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.node.gnb_id        = cu_cfg.gnb_id;
   out_cfg.node.ran_node_name = cu_cfg.ran_node_name;
 
-  if (!cu_cfg.supported_tas.empty()) {
-    // Clear default supported TAs if any are provided in the config.
-    out_cfg.node.supported_tas.clear();
+  {
+    std::vector<srs_cu_cp::supported_tracking_area> supported_tas;
+    for (const auto& supported_ta : cu_cfg.amf_config.amf.supported_tas) {
+      std::vector<srs_cu_cp::plmn_item> plmn_list;
+      for (const auto& plmn_item : supported_ta.plmn_list) {
+        expected<plmn_identity> plmn = plmn_identity::parse(plmn_item.plmn_id);
+        srsran_assert(plmn.has_value(), "Invalid PLMN: {}", plmn_item.plmn_id);
+        plmn_list.push_back({plmn.value(), plmn_item.tai_slice_support_list});
+      }
+      supported_tas.push_back({supported_ta.tac, plmn_list});
+    }
+    out_cfg.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_params{nullptr, supported_tas});
   }
-  for (const auto& supported_ta : cu_cfg.supported_tas) {
-    expected<plmn_identity> plmn = plmn_identity::parse(supported_ta.plmn);
-    srsran_assert(plmn.has_value(), "Invalid PLMN: {}", supported_ta.plmn);
-    out_cfg.node.supported_tas.push_back({supported_ta.tac, plmn.value(), supported_ta.tai_slice_support_list});
+
+  for (const auto& cfg : cu_cfg.extra_amfs) {
+    std::vector<srs_cu_cp::supported_tracking_area> supported_tas;
+    for (const auto& supported_ta : cfg.supported_tas) {
+      std::vector<srs_cu_cp::plmn_item> plmn_list;
+      for (const auto& plmn_item : supported_ta.plmn_list) {
+        expected<plmn_identity> plmn = plmn_identity::parse(plmn_item.plmn_id);
+        srsran_assert(plmn.has_value(), "Invalid PLMN: {}", plmn_item.plmn_id);
+        plmn_list.push_back({plmn.value(), plmn_item.tai_slice_support_list});
+      }
+      supported_tas.push_back({supported_ta.tac, plmn_list});
+    }
+    out_cfg.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_params{nullptr, supported_tas});
   }
 
   out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
@@ -427,15 +445,17 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   return out_cfg;
 }
 
-srs_cu_cp::n2_connection_client_config
-srsran::generate_n2_client_config(const cu_cp_unit_amf_config& amf_cfg, dlt_pcap& pcap_writer, io_broker& broker)
+srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool                              no_core,
+                                                                         const cu_cp_unit_amf_config_item& amf_cfg,
+                                                                         dlt_pcap&                         pcap_writer,
+                                                                         io_broker&                        broker)
 {
   using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
   using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
   using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
 
-  ngap_mode_t mode = amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}} : ngap_mode_t{network_mode_t{broker}};
-  if (not amf_cfg.no_core) {
+  ngap_mode_t mode = no_core ? ngap_mode_t{no_core_mode_t{}} : ngap_mode_t{network_mode_t{broker}};
+  if (not no_core) {
     network_mode_t& nw_mode = std::get<network_mode_t>(mode);
     nw_mode.amf_address     = amf_cfg.ip_addr;
     nw_mode.amf_port        = amf_cfg.port;

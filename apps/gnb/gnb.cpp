@@ -234,27 +234,14 @@ int main(int argc, char** argv)
     autoderive_slicing_args(du_unit_cfg, cu_cp_config);
     autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
 
-    // Create the supported tracking areas list from the cells.
-    // These will only be used if no supported TAs are provided in the CU-CP configuration.
-    std::vector<cu_cp_unit_supported_ta_item> supported_tas;
-    supported_tas.reserve(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
-    for (const auto& cell : du_unit_cfg.du_high_cfg.config.cells_cfg) {
-      // Make sure supported tracking areas are unique.
-      if (std::find_if(supported_tas.begin(), supported_tas.end(), [&cell](const auto& ta) {
-            return ta.tac == cell.cell.tac && ta.plmn == cell.cell.plmn;
-          }) == supported_tas.end()) {
-        supported_tas.push_back({cell.cell.tac, cell.cell.plmn, {{1}}});
-      }
-    }
-
     // If test mode is enabled, we auto-enable "no_core" option
     if (du_unit_cfg.du_high_cfg.config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
-      cu_cp_config.amf_cfg.no_core = true;
+      cu_cp_config.amf_config.no_core = true;
     }
 
-    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(supported_tas));
+    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config);
     autoderive_cu_up_parameters_after_parsing(
-        cu_cp_config.amf_cfg.bind_addr, cu_cp_config.amf_cfg.no_core, cu_up_config);
+        cu_cp_config.amf_config.amf.bind_addr, cu_cp_config.amf_config.no_core, cu_up_config);
   });
 
   // Parse arguments.
@@ -380,22 +367,26 @@ int main(int argc, char** argv)
 
   e2_metric_connector_manager e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
-  // Create N2 Gateway.
-  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client = srs_cu_cp::create_n2_connection_client(
-      generate_n2_client_config(cu_cp_config.amf_cfg, *cu_cp_dlt_pcaps.ngap, *epoll_broker));
+  // Create CU-CP config.
+  cu_cp_build_dependencies cu_cp_dependencies;
+  cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
+  cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
+  cu_cp_dependencies.timers         = cu_timers;
+
+  // Create N2 Client Gateways.
+  cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(generate_n2_client_config(
+      cu_cp_config.amf_config.no_core, cu_cp_config.amf_config.amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
+
+  for (const auto& amf : cu_cp_config.extra_amfs) {
+    cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(
+        generate_n2_client_config(cu_cp_config.amf_config.no_core, amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
+  }
 
   // E2AP configuration.
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
-
-  // Create CU-CP config.
-  cu_cp_build_dependencies cu_cp_dependencies;
-  cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
-  cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.n2_client      = n2_client.get();
-  cu_cp_dependencies.timers         = cu_timers;
 
   // create CU-CP.
   auto cu_cp_obj_and_cmds = build_cu_cp(cu_cp_config, cu_cp_dependencies);
@@ -453,7 +444,7 @@ int main(int argc, char** argv)
   cu_cp_obj.start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (not cu_cp_obj.get_ng_handler().amf_is_connected()) {
+  if (not cu_cp_obj.get_ng_handler().amfs_are_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
 

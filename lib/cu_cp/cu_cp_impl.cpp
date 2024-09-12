@@ -25,7 +25,6 @@
 #include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/ngap/ngap_factory.h"
 #include "srsran/rrc/rrc_du.h"
 #include <chrono>
 #include <future>
@@ -37,21 +36,14 @@ using namespace srs_cu_cp;
 static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsran_assert(cfg.services.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsran_assert(cfg.services.n2_gw != nullptr, "Invalid N2 GW client handler");
+  srsran_assert(!cfg.ngaps.empty(), "No NGAPs configured");
+  for (const auto& ngap : cfg.ngaps) {
+    srsran_assert(ngap.n2_gw != nullptr, "Invalid N2 GW client handler");
+  }
   srsran_assert(cfg.services.timers != nullptr, "Invalid timers");
 
   report_error_if_not(cfg.admission.max_nof_dus <= MAX_NOF_DUS, "Invalid max number of DUs");
   report_error_if_not(cfg.admission.max_nof_cu_ups <= MAX_NOF_CU_UPS, "Invalid max number of CU-UPs");
-}
-
-ngap_configuration create_ngap_cfg(const cu_cp_configuration& cfg)
-{
-  ngap_configuration ngap_cfg;
-  ngap_cfg.gnb_id                    = cfg.node.gnb_id;
-  ngap_cfg.ran_node_name             = cfg.node.ran_node_name;
-  ngap_cfg.supported_tas             = cfg.node.supported_tas;
-  ngap_cfg.pdu_session_setup_timeout = cfg.ue.pdu_session_setup_timeout;
-  return ngap_cfg;
 }
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
@@ -71,6 +63,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   paging_handler(du_db),
+  ngap_db(ngap_repository_config{cfg, get_cu_cp_ngap_handler(), paging_handler, srslog::fetch_basic_logger("CU-CP")}),
+  rrc_ue_ngap_notifier(ngap_db),
   metrics_hdlr(
       std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor, *cfg.services.timers, ue_mng, du_db))
 {
@@ -82,28 +76,12 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
 
-  // Create NGAP.
-  ngap_entity = create_ngap(create_ngap_cfg(cfg),
-                            ngap_cu_cp_ev_notifier,
-                            *cfg.services.n2_gw,
-                            *cfg.services.timers,
-                            *cfg.services.cu_cp_executor);
-  rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
-                                    ngap_entity->get_ngap_control_message_handler());
-
-  controller = std::make_unique<cu_cp_controller>(cfg,
-                                                  common_task_sched,
-                                                  ngap_entity->get_ngap_connection_manager(),
-                                                  cu_up_db,
-                                                  du_db,
-                                                  *cfg.services.cu_cp_executor);
+  controller = std::make_unique<cu_cp_controller>(
+      cfg, common_task_sched, ngap_db, cu_up_db, du_db, *cfg.services.cu_cp_executor);
   conn_notifier.connect_node_connection_handler(*controller);
 
-  mobility_mng = create_mobility_manager(cfg.mobility.mobility_manager_config,
-                                         mobility_manager_ev_notifier,
-                                         ngap_entity->get_ngap_control_message_handler(),
-                                         du_db,
-                                         ue_mng);
+  mobility_mng = create_mobility_manager(
+      cfg.mobility.mobility_manager_config, mobility_manager_ev_notifier, ngap_db, du_db, ue_mng);
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng);
 
   // Start statistics report timer
@@ -127,7 +105,7 @@ bool cu_cp_impl::start()
         // start AMF connection procedure.
         controller->amf_connection_handler().connect_to_amf(&p);
       })) {
-    report_fatal_error("Failed to initiate CU-CP setup.");
+    report_fatal_error("Failed to initiate CU-CP setup");
   }
 
   // Block waiting for CU-CP setup to complete.
@@ -156,15 +134,21 @@ void cu_cp_impl::stop()
   logger.info("CU-CP stopped successfully.");
 }
 
-ngap_message_handler& cu_cp_impl::get_ngap_message_handler()
+ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& plmn)
 {
-  return *ngap_entity;
+  return ngap_db.find_ngap(plmn);
 };
 
-ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
+bool cu_cp_impl::amfs_are_connected()
 {
-  return *ngap_entity;
-}
+  for (const auto& [amf_index, ngap] : ngap_db.get_ngaps()) {
+    if (not controller->amf_connection_handler().is_amf_connected(amf_index)) {
+      return false;
+    }
+  }
+
+  return true;
+};
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
@@ -309,9 +293,14 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
       }
     }
 
+    auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+    if (ngap == nullptr) {
+      logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
+      return false;
+    }
+
     // Transfer NGAP UE Context to new UE and remove the old context
-    if (not ngap_entity->update_ue_index(
-            ue_index, old_ue_index, ue_mng.find_ue(ue_index)->get_ngap_cu_cp_ue_notifier())) {
+    if (not ngap->update_ue_index(ue_index, old_ue_index, ue_mng.find_ue(ue_index)->get_ngap_cu_cp_ue_notifier())) {
       return false;
     }
 
@@ -379,9 +368,16 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
                 uint_to_cu_up_index(0));
   srsran_assert(ue_mng.find_ue(target_ue_index) != nullptr, "ue={} not found", target_ue_index);
 
+  auto* ue = ue_mng.find_ue(target_ue_index);
+
+  auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+  if (ngap == nullptr) {
+    logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
+    return;
+  }
+
   // Transfer NGAP UE Context to new UE and remove the old context
-  if (!ngap_entity->update_ue_index(
-          target_ue_index, source_ue_index, ue_mng.find_ue(target_ue_index)->get_ngap_cu_cp_ue_notifier())) {
+  if (!ngap->update_ue_index(target_ue_index, source_ue_index, ue->get_ngap_cu_cp_ue_notifier())) {
     return;
   }
   // Transfer E1AP UE Context to new UE and remove old context
@@ -390,8 +386,26 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
 
 async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_release_request& request)
 {
+  auto* ue = ue_mng.find_ue(request.ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: Could not find UE", request.ue_index);
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+  if (ngap == nullptr) {
+    logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   return launch_async<ue_amf_context_release_request_routine>(
-      request, ngap_entity->get_ngap_control_message_handler(), *this, logger);
+      request, ngap->get_ngap_control_message_handler(), *this, logger);
 }
 
 bool cu_cp_impl::handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt)
@@ -412,9 +426,19 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
   rrc_ue_interface* rrc_ue = ue->get_rrc_ue();
   srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", request.ue_index);
 
+  auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+  if (ngap == nullptr) {
+    logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
+    return launch_async(
+        [](coro_context<async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_RETURN(make_unexpected(ngap_init_context_setup_failure{}));
+        });
+  }
+
   return launch_async<initial_context_setup_routine>(request,
                                                      *rrc_ue,
-                                                     ngap_entity->get_ngap_ue_radio_cap_management_handler(),
+                                                     ngap->get_ngap_ue_radio_cap_management_handler(),
                                                      ue->get_security_manager(),
                                                      du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
                                                      get_cu_cp_ngap_handler(),
@@ -623,8 +647,9 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
       CORO_RETURN();
     });
   }
+  auto* ue = ue_mng.find_ue(ue_index);
 
-  du_index_t    du_index    = ue_mng.find_du_ue(ue_index)->get_du_index();
+  du_index_t    du_index    = ue->get_du_index();
   cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
 
   e1ap_bearer_context_removal_handler* e1ap_removal_handler = nullptr;
@@ -632,11 +657,20 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
     e1ap_removal_handler = &cu_up_db.find_cu_up_processor(cu_up_index)->get_e1ap_bearer_context_removal_handler();
   }
 
+  auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+  if (ngap == nullptr) {
+    logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   return launch_async<ue_removal_routine>(ue_index,
                                           du_db.get_du_processor(du_index).get_rrc_du_handler(),
                                           e1ap_removal_handler,
                                           du_db.get_du_processor(du_index).get_f1ap_handler(),
-                                          ngap_entity->get_ngap_ue_context_removal_handler(),
+                                          ngap->get_ngap_ue_context_removal_handler(),
                                           ue_mng,
                                           logger);
 }
@@ -712,7 +746,7 @@ void cu_cp_impl::on_statistics_report_timer_expired()
   unsigned nof_rrc_ues = du_db.get_nof_rrc_ues();
 
   // Get number of NGAP UEs
-  unsigned nof_ngap_ues = ngap_entity->get_ngap_statistics_handler().get_nof_ues();
+  unsigned nof_ngap_ues = ngap_db.get_nof_ngap_ues();
 
   // Get number of E1AP UEs
   unsigned nof_e1ap_ues = cu_up_db.get_nof_e1ap_ues();

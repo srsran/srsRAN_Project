@@ -42,7 +42,7 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
   global_gnb.gnb_id.set_gnb_id();
   global_gnb.gnb_id.gnb_id().from_number(ngap_ctxt.gnb_id.id, ngap_ctxt.gnb_id.bit_length);
   // TODO: Which PLMN do we need to use here?
-  global_gnb.plmn_id = ngap_ctxt.supported_tas.front().plmn.to_bytes();
+  global_gnb.plmn_id = ngap_ctxt.supported_tas.front().plmn_list.front().plmn_id.to_bytes();
 
   // fill ran node name
   asn1_request->ran_node_name_present = true;
@@ -56,21 +56,22 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
     asn1_supported_ta_item.tac.from_number(supported_ta_item.tac);
 
     // fill broadcast plmn list
-    // TODO: add support for multiple plmn per ta
-    asn1::ngap::broadcast_plmn_item_s asn1_broadcast_plmn_item = {};
+    for (const auto& plmn_item : supported_ta_item.plmn_list) {
+      asn1::ngap::broadcast_plmn_item_s asn1_broadcast_plmn_item = {};
 
-    // fill plmn id
-    asn1_broadcast_plmn_item.plmn_id = supported_ta_item.plmn.to_bytes();
+      // fill plmn id
+      asn1_broadcast_plmn_item.plmn_id = plmn_item.plmn_id.to_bytes();
 
-    // fill tai slice support list
-    for (const auto& slice_support_item : supported_ta_item.supported_slices) {
-      // fill s_nssai
-      asn1::ngap::slice_support_item_s asn1_slice_support_item = {};
-      asn1_slice_support_item.s_nssai                          = s_nssai_to_asn1(slice_support_item);
+      // fill tai slice support list
+      for (const auto& slice_support_item : plmn_item.slice_support_list) {
+        // fill s_nssai
+        asn1::ngap::slice_support_item_s asn1_slice_support_item = {};
+        asn1_slice_support_item.s_nssai                          = s_nssai_to_asn1(slice_support_item);
 
-      asn1_broadcast_plmn_item.tai_slice_support_list.push_back(asn1_slice_support_item);
+        asn1_broadcast_plmn_item.tai_slice_support_list.push_back(asn1_slice_support_item);
+      }
+      asn1_supported_ta_item.broadcast_plmn_list.push_back(asn1_broadcast_plmn_item);
     }
-    asn1_supported_ta_item.broadcast_plmn_list.push_back(asn1_broadcast_plmn_item);
 
     asn1_request->supported_ta_list.push_back(asn1_supported_ta_item);
   }

@@ -108,15 +108,27 @@ class ngap_integration_test : public ::testing::Test
 protected:
   ngap_integration_test() :
     cu_cp_cfg([this]() {
+      sctp_network_connector_config nw_config;
+      nw_config.dest_name         = "AMF";
+      nw_config.if_name           = "N2";
+      nw_config.connect_address   = "10.12.1.105";
+      nw_config.connect_port      = 38412;
+      nw_config.bind_address      = "10.8.1.10";
+      nw_config.bind_port         = 0;
+      nw_config.non_blocking_mode = true;
+      adapter                     = std::make_unique<ngap_network_adapter>(nw_config);
+
       cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
       cucfg.services.timers         = &timers;
       cucfg.services.cu_cp_executor = &ctrl_worker;
+      cucfg.ngaps.push_back(
+          cu_cp_configuration::ngap_params{adapter.get(), {{7, {{plmn_identity::test_value(), {{1}}}}}}});
       return cucfg;
     }())
   {
     cfg.gnb_id                    = cu_cp_cfg.node.gnb_id;
     cfg.ran_node_name             = cu_cp_cfg.node.ran_node_name;
-    cfg.supported_tas             = cu_cp_cfg.node.supported_tas;
+    cfg.supported_tas             = cu_cp_cfg.ngaps.front().supported_tas;
     cfg.pdu_session_setup_timeout = cu_cp_cfg.ue.pdu_session_setup_timeout;
   }
 
@@ -125,17 +137,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    sctp_network_connector_config nw_config;
-    nw_config.dest_name         = "AMF";
-    nw_config.if_name           = "N2";
-    nw_config.connect_address   = "10.12.1.105";
-    nw_config.connect_port      = 38412;
-    nw_config.bind_address      = "10.8.1.10";
-    nw_config.bind_port         = 0;
-    nw_config.non_blocking_mode = true;
-    adapter                     = std::make_unique<ngap_network_adapter>(nw_config);
-
-    ngap = create_ngap(cfg, cu_cp_notifier, *adapter, timers, ctrl_worker);
+    ngap = create_ngap(cfg, cu_cp_notifier, *cu_cp_cfg.ngaps.front().n2_gw, timers, ctrl_worker);
   }
 
   timer_manager       timers;

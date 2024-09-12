@@ -59,7 +59,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
 void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
 {
   // Perform various checks to make sure we can serve the RRC Setup Request
-  if (not cu_cp_notifier.on_ue_setup_request()) {
+  if (not cu_cp_notifier.on_ue_setup_request(context.cell.cgi.plmn_id)) {
     logger.log_error("Sending Connection Reject. Cause: RRC connections not allowed");
     on_ue_release_required(ngap_cause_radio_network_t::unspecified);
     return;
@@ -218,6 +218,7 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 {
   cu_cp_ul_nas_transport ul_nas_msg         = {};
   ul_nas_msg.ue_index                       = context.ue_index;
+  ul_nas_msg.plmn                           = context.cell.cgi.plmn_id;
   ul_nas_msg.nas_pdu                        = ul_info_transfer.ded_nas_msg.copy();
   ul_nas_msg.user_location_info.nr_cgi      = context.cell.cgi;
   ul_nas_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_id;

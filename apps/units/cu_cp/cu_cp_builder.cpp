@@ -24,8 +24,11 @@ cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_bu
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(cu_cp_unit_cfg);
   cu_cp_cfg.services.cu_cp_executor        = dependencies.cu_cp_executor;
   cu_cp_cfg.services.cu_cp_e2_exec         = dependencies.cu_cp_e2_exec;
-  cu_cp_cfg.services.n2_gw                 = dependencies.n2_client;
   cu_cp_cfg.services.timers                = dependencies.timers;
+
+  for (unsigned pos = 0; pos < dependencies.n2_clients.size(); pos++) {
+    cu_cp_cfg.ngaps[pos].n2_gw = dependencies.n2_clients[pos].get();
+  }
 
   cu_cp_unit cu_cmd_wrapper;
   cu_cmd_wrapper.unit = create_cu_cp(cu_cp_cfg);

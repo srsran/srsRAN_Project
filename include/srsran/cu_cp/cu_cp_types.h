@@ -189,6 +189,7 @@ private:
 
 struct cu_cp_initial_ue_message {
   ue_index_t                         ue_index = ue_index_t::invalid;
+  plmn_identity                      plmn     = plmn_identity::test_value();
   byte_buffer                        nas_pdu;
   establishment_cause_t              establishment_cause;
   cu_cp_user_location_info_nr        user_location_info;
@@ -198,6 +199,7 @@ struct cu_cp_initial_ue_message {
 
 struct cu_cp_ul_nas_transport {
   ue_index_t                  ue_index = ue_index_t::invalid;
+  plmn_identity               plmn     = plmn_identity::test_value();
   byte_buffer                 nas_pdu;
   cu_cp_user_location_info_nr user_location_info;
 };
