@@ -87,7 +87,8 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   // Spans through the PUCCH grant list and update the HARQ-ACK PUCCH grant counter for the corresponding RNTI and HARQ
   // process id.
   for (const auto& pucch : slot_alloc.result.ul.pucchs) {
-    if ((pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
+    if ((pucch.format == pucch_format::FORMAT_0 and pucch.format_0.harq_ack_nof_bits > 0) or
+        (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
         (pucch.format == pucch_format::FORMAT_2 and pucch.format_2.harq_ack_nof_bits > 0)) {
       ue* user = ue_db.find_by_rnti(pucch.crnti);
       // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
@@ -99,11 +100,20 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
             slot_alloc.slot);
         continue;
       }
-      srsran_assert(pucch.format == pucch_format::FORMAT_1 or pucch.format == pucch_format::FORMAT_2,
-                    "rnti={}: Only PUCCH format 1 and format 2 are supported",
-                    pucch.crnti);
-      const unsigned nof_harqs_per_rnti_per_slot =
-          pucch.format == pucch_format::FORMAT_1 ? pucch.format_1.harq_ack_nof_bits : pucch.format_2.harq_ack_nof_bits;
+      unsigned nof_harqs_per_rnti_per_slot = 0;
+      switch (pucch.format) {
+        case pucch_format::FORMAT_0:
+          nof_harqs_per_rnti_per_slot = pucch.format_0.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_1:
+          nof_harqs_per_rnti_per_slot = pucch.format_1.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_2:
+          nof_harqs_per_rnti_per_slot = pucch.format_2.harq_ack_nof_bits;
+          break;
+        default:
+          srsran_assertion_failure("rnti={}: Only PUCCH format 0, 1 and 2 are supported", pucch.crnti);
+      }
       // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
       // expecting to be acknowledged on the same slot.
       for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
