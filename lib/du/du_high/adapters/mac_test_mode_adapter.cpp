@@ -14,6 +14,7 @@
 #include "srsran/mac/mac_factory.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/scheduler/harq_id.h"
+#include "srsran/scheduler/resource_grid_util.h"
 #include <functional>
 #include <utility>
 
@@ -90,11 +91,13 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
   logger(srslog::fetch_basic_logger("MAC")),
   ue_info_mgr(ue_info_mgr_)
 {
-  // Note: The history ring size has to be a multiple of the TDD frame size in slots.
-  const size_t HISTORY_RING_SIZE =
-      100 * (cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value()
-                 ? nof_slots_per_tdd_period(cell_cfg.sched_req.tdd_ul_dl_cfg_common.value())
-                 : 10U);
+  /// \brief Number of previous slot results to keep in history before they get deleted.
+  ///
+  /// Having access to past decisions is useful during the handling of error indications.
+  static const size_t RING_MAX_HISTORY_SIZE = 8;
+  /// Number of slots managed by this container.
+  static const size_t HISTORY_RING_SIZE = get_allocator_ring_size_gt_min(
+      RING_MAX_HISTORY_SIZE + get_max_slot_ul_alloc_delay(NTN_CELL_SPECIFIC_KOFFSET_MAX));
   sched_decision_history.resize(HISTORY_RING_SIZE);
 }
 
