@@ -13,7 +13,7 @@
 #include "srs_resource_generator.h"
 #include "srsran/adt/optional.h"
 #include "srsran/du/du_cell_config.h"
-#include "srsran/ran/srs/srs_configuration.h"
+#include "srsran/ran/srs/srs_bandwidth_configuration.h"
 
 namespace srsran {
 namespace srs_du {
@@ -51,7 +51,7 @@ public:
 
 private:
   struct cell_context {
-    cell_context(const du_cell_config& cfg) : cell_cfg(cfg){};
+    cell_context(const du_cell_config& cfg);
 
     using pair_res_id_offset = std::pair<unsigned, unsigned>;
 
@@ -82,8 +82,15 @@ private:
 
     using pair_cnt_max = std::pair<unsigned, const unsigned>;
 
+    // Maximum number of SRS resources that can be generated in a cell.
+    // [Implementation-defined] We assume each UE has one and only one resource.
+    static const unsigned max_nof_srs_res = MAX_NOF_DU_UES;
+    // We need to save an object with the cell configuration parameters (not a reference), as this config is a modified
+    // version of the default cell config.
     const du_cell_config& cell_cfg;
-    srs_cell_common       srs_common_params;
+    // Default SRS configuration for the cell.
+    const srs_config default_srs_cfg;
+    srs_cell_common  srs_common_params;
     // List of all SRS resources available to the cell; these resources can be allocated over to different UEs over
     // different offsets.
     std::vector<du_srs_resource> cell_srs_res_list;

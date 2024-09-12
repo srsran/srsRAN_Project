@@ -48,8 +48,6 @@ struct cell_config_builder_params {
   std::optional<ssb_subcarrier_offset> k_ssb;
   /// Whether to enable CSI-RS in the cell.
   bool csi_rs_enabled = true;
-  /// Defines whether the default SRS configuration has periodic vs aperiodic SRS.
-  bool srs_periodic_enabled = false;
   /// Number of DL ports for the cell.
   unsigned nof_dl_ports = 1;
   /// \brief Minimum k1 value used in the generation of the UE "dl-DataToUl-Ack", as per TS38.213, 9.1.2.1.

@@ -113,7 +113,7 @@ struct srs_builder_params {
   /// \c Transmission comb number , as per TS 38.211, Section 6.4.1.4.2, or TS 38.331, "SRS-Resource".
   tx_comb_size tx_comb = tx_comb_size::n4;
   /// Defines the number of symbols per SRS resource.
-  srs_nof_symbols nof_symbols = n1;
+  srs_nof_symbols nof_symbols = srs_nof_symbols::n1;
   /// Defines the CS reuse factor for the SRS resources.
   /// \remark With 2 or 4 antenna ports, different cyclic shifts are used by the different antennas. This parameter
   /// defines how many UEs can be multiplexed in the same symbols and RBs by exploiting different cyclic shifts.
