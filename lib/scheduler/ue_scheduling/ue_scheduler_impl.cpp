@@ -134,13 +134,13 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   }
 }
 
-void ue_scheduler_impl::puxch_grant_sanitizer(cell_resource_allocator& cell_alloc)
+[[maybe_unused]] static bool puxch_grant_sanitizer(cell_resource_allocator& cell_alloc, srslog::basic_logger& logger)
 {
   const unsigned HARQ_SLOT_DELAY = 0;
   const auto&    slot_alloc      = cell_alloc[HARQ_SLOT_DELAY];
 
   if (not cell_alloc.cfg.is_ul_enabled(slot_alloc.slot)) {
-    return;
+    return true;
   }
 
   // Spans through the PUCCH grant list and check if there is any PUCCH grant scheduled for a UE that has a PUSCH.
@@ -170,8 +170,10 @@ void ue_scheduler_impl::puxch_grant_sanitizer(cell_resource_allocator& cell_allo
                    harq_bits,
                    csi_bits,
                    sr_bits);
+      return false;
     }
   }
+  return true;
 }
 
 void ue_scheduler_impl::run_slot(slot_point slot_tx)
@@ -214,8 +216,8 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
     // Update the PUCCH counter after the UE DL and UL scheduler.
     update_harq_pucch_counter(*group_cell.cell_res_alloc);
 
-    // TODO: remove this.
-    puxch_grant_sanitizer(*group_cell.cell_res_alloc);
+    srsran_sanity_check(puxch_grant_sanitizer(*group_cell.cell_res_alloc, logger),
+                        "PUCCH and PUSCH found for the same UE in the same slot");
   }
 }
 
