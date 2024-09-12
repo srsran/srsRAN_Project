@@ -9,7 +9,7 @@
  */
 
 #include "ue_repository.h"
-#include "../cell/resource_grid_util.h"
+#include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;

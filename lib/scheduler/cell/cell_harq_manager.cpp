@@ -9,7 +9,7 @@
  */
 
 #include "cell_harq_manager.h"
-#include "resource_grid_util.h"
+#include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 
 using namespace srsran;
