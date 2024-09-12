@@ -146,6 +146,7 @@ e2e request and config validation:
   script:
     - |
       # Print E2E parameters
+      echo "GROUP=${GROUP}"
       echo "TESTBED=${TESTBED}"
       echo "MARKERS=${MARKERS}"
       echo "KEYWORDS=${KEYWORDS}"

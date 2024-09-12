@@ -9,21 +9,22 @@
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  labels:
+    - kubernetes.io/hostname=skinny-beast
   requirements:
     arch: amd64
     cpu:
-      requests: 20
-      limits: 20
+      requests: 28
+      limits: 28
     memory:
-      requests: "64G"
-      limits: "64G"
+      requests: "56G"
+      limits: "56G"
     hugepages-1Gi:
-      requests: 4Gi
-      limits: 4Gi
+      requests: 2Gi
+      limits: 2Gi
     ephemeral-storage:
       requests: "50G"
       limits: "50G"
-  taints: ["purpose=ci-amd64-avx512-onprem"]
   resources:
     - type: emulator
       model: viavi

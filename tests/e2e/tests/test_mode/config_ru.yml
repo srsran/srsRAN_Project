@@ -46,6 +46,9 @@ test_mode:
 expert_execution:
   affinities:
     low_priority_cpus: {{low_priority_cpus}}
+    {% if ru_timing_cpu %}
+    ru_timing_cpu: {{ ru_timing_cpu }}
+    {% endif %}
   cell_affinities:
     - l1_dl_cpus: {{l1_dl_cpus}}
       l1_ul_cpus: {{l1_ul_cpus}}
