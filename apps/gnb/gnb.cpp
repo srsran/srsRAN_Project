@@ -72,6 +72,7 @@
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_yaml_writer.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
+#include "srsran/du/du_power_controller.h"
 #include "srsran/support/cli11_utils.h"
 
 #include <yaml-cpp/node/convert.h>
@@ -460,7 +461,7 @@ int main(int argc, char** argv)
   cu_up_obj->start();
 
   // Start processing.
-  du_inst.start();
+  du_inst.get_power_controller().start();
 
   {
     app_services::application_message_banners app_banner(app_name);
@@ -471,7 +472,7 @@ int main(int argc, char** argv)
   }
 
   // Stop DU activity.
-  du_inst.stop();
+  du_inst.get_power_controller().stop();
 
   // Stop CU-UP activity.
   cu_up_obj->stop();

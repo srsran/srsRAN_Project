@@ -56,6 +56,8 @@
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_yaml_writer.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
 
+#include "srsran/du/du_power_controller.h"
+
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #endif
@@ -324,7 +326,7 @@ int main(int argc, char** argv)
   app_services::stdin_command_dispatcher command_parser(*epoll_broker, du_inst_and_cmds.commands);
 
   // Start processing.
-  du_inst.start();
+  du_inst.get_power_controller().start();
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -334,7 +336,7 @@ int main(int argc, char** argv)
   }
 
   // Stop DU activity.
-  du_inst.stop();
+  du_inst.get_power_controller().stop();
 
   if (du_cfg.e2_cfg.enable_du_e2) {
     du_logger.info("Closing E2 network connections...");

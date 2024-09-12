@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/du/du.h"
+#include "srsran/du/du_power_controller.h"
 #include "srsran/du/du_wrapper.h"
 #include "srsran/ru/ru_adapters.h"
 #include <memory>
@@ -20,10 +21,13 @@ namespace srsran {
 
 class radio_unit;
 
-class dynamic_du_impl : public srs_du::du
+class dynamic_du_impl : public srs_du::du, public du_power_controller
 {
 public:
   explicit dynamic_du_impl(unsigned nof_cells);
+
+  // See interface for documentation.
+  du_power_controller& get_power_controller() override { return *this; }
 
   // See interface for documentation.
   void start() override;

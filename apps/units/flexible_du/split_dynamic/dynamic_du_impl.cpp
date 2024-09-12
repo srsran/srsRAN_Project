@@ -27,7 +27,7 @@ dynamic_du_impl::dynamic_du_impl(unsigned nof_cells) :
 void dynamic_du_impl::start()
 {
   for (auto& du_obj : du_list) {
-    du_obj->start();
+    du_obj->get_power_controller().start();
   }
 
   ru->get_controller().start();
@@ -38,7 +38,7 @@ void dynamic_du_impl::stop()
   ru->get_controller().stop();
 
   for (auto& du_obj : du_list) {
-    du_obj->stop();
+    du_obj->get_power_controller().stop();
   }
 }
 

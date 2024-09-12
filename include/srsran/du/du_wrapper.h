@@ -13,16 +13,22 @@
 #include "srsran/du/du.h"
 
 namespace srsran {
+
+class du_power_controller;
+
 namespace srs_du {
 
 class du_high_wrapper;
 class du_low_wrapper;
 
-/// Distributed Unit wrapper interface. Wraps the DU high wrapper and DU low wrapper in an object.
-class du_wrapper : public du
+/// Distributed Unit wrapper interface. Wraps the DU high wrapper, DU low wrapper and a power controller in an object.
+class du_wrapper
 {
 public:
   virtual ~du_wrapper() = default;
+
+  /// Returns the power controller of this DU wrapper.
+  virtual du_power_controller& get_power_controller() = 0;
 
   /// Returns the DU high wrapper of this DU wrapper.
   virtual du_high_wrapper& get_du_high_wrapper() = 0;

@@ -36,7 +36,7 @@ split6_du_impl::split6_du_impl(std::vector<std::unique_ptr<fapi::fapi_adaptor>> 
 void split6_du_impl::start()
 {
   for (auto& du_obj : du_list) {
-    du_obj->start();
+    du_obj->get_power_controller().start();
   }
 
   for (auto& adaptor : adaptors) {
@@ -47,7 +47,7 @@ void split6_du_impl::start()
 void split6_du_impl::stop()
 {
   for (auto& du_obj : du_list) {
-    du_obj->stop();
+    du_obj->get_power_controller().stop();
   }
 
   for (auto& adaptor : adaptors) {

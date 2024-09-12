@@ -12,19 +12,17 @@
 
 namespace srsran {
 
-class du_power_controller;
-
-namespace srs_du {
-
-/// Public DU interface.
-class du
+/// DU power controller interface that allows to start/stop a DU.
+class du_power_controller
 {
 public:
-  virtual ~du() = default;
+  virtual ~du_power_controller() = default;
 
-  /// Returns the power controller of this DU.
-  virtual du_power_controller& get_power_controller() = 0;
+  /// Starts the DU.
+  virtual void start() = 0;
+
+  /// Stops the DU.
+  virtual void stop() = 0;
 };
 
-} // namespace srs_du
 } // namespace srsran

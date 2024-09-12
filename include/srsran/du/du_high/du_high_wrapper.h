@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsran/du/du.h"
-
 namespace srsran {
+
+class du_power_controller;
 
 namespace fapi {
 class slot_data_message_notifier;
@@ -25,10 +25,13 @@ namespace srs_du {
 class du_high;
 
 /// Distributed Unit high wrapper interface. Wraps a DU high with the MAC FAPI adaptor.
-class du_high_wrapper : public du
+class du_high_wrapper
 {
 public:
   virtual ~du_high_wrapper() = default;
+
+  /// Returns the power controller of this DU high wrapper.
+  virtual du_power_controller& get_power_controller() = 0;
 
   /// Returns the DU high from this DU wrapper.
   virtual du_high& get_du_high() = 0;

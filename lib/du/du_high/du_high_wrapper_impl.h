@@ -12,6 +12,7 @@
 
 #include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/du_high_wrapper.h"
+#include "srsran/du/du_power_controller.h"
 #include "srsran/du/du_wrapper_config.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
 
@@ -25,10 +26,13 @@ struct du_high_wrapper_impl_dependencies {
 };
 
 /// DU high wrapper implementation.
-class du_high_wrapper_impl : public du_high_wrapper
+class du_high_wrapper_impl : public du_high_wrapper, public du_power_controller
 {
 public:
   explicit du_high_wrapper_impl(du_high_wrapper_impl_dependencies&& du_dependencies);
+
+  // See interface for documentation.
+  du_power_controller& get_power_controller() override { return *this; }
 
   // See interface for documentation.
   void start() override;

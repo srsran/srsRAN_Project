@@ -25,13 +25,13 @@ du_wrapper_impl::du_wrapper_impl(du_wrapper_impl_dependencies&& dependencies) :
 
 void du_wrapper_impl::start()
 {
-  du_hi->start();
+  du_hi->get_power_controller().start();
 }
 
 void du_wrapper_impl::stop()
 {
-  du_lo->get_du_low().stop();
-  du_hi->stop();
+  du_lo->get_du_low().get_power_controller().stop();
+  du_hi->get_power_controller().stop();
 }
 
 du_high_wrapper& du_wrapper_impl::get_du_high_wrapper()
