@@ -64,4 +64,6 @@ target_link_libraries(srsran_cu_cp
         srsran_ran
         srslog
         srsran_support
-        srsran_security)
+        srsran_security
+        ${CMAKE_DL_LIBS}
+)
