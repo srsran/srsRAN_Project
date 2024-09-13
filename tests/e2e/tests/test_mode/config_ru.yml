@@ -25,7 +25,6 @@ cell_cfg:
   pdsch:
     min_ue_mcs: 27
     mcs_table: qam256
-    max_rb_size: 16
   pusch:
     min_ue_mcs: 27
     mcs_table: qam256
