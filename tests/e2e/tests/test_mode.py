@@ -233,7 +233,7 @@ def _test_ru(
                 fivegc_definition=FiveGCDefinition(amf_ip=gnb_def.zmq_ip, amf_port=38412),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
-                    post_commands=("amf --no_core 1",),
+                    post_commands=("cu_cp amf --no_core 1",),
                 ),
             )
         )
