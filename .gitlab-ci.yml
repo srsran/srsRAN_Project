@@ -419,7 +419,7 @@ unit coverage dev:
 pages:
   stage: documentation
   rules:
-    - if: $CI_DESCRIPTION =~ /ightly Build + Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: always # Even if previous stages/required jobs fail
       allow_failure: true
   image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.9.8-1.2023.7
