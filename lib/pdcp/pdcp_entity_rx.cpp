@@ -58,9 +58,18 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   }
   logger.log_info("PDCP configured. {}", cfg);
 
-  // TODO: implement usage of crypto_executor
-  (void)ue_ul_executor;
-  (void)crypto_executor;
+  // Populate null security engines
+  for (int i = 0; i < 8; i++) {
+    std::unique_ptr<security::security_engine_impl> null_engine;
+    uint32_t                                        nof_retries = 0;
+    while (!sec_engine_pool.try_push(std::move(null_engine))) {
+      if (nof_retries++ < max_nof_retries) {
+        logger.log_info("Retrying to add null security engine to pool. nof_retries={} sec_engine={}", nof_retries, i);
+      } else {
+        logger.log_error("Failed to add null security engine to pool. nof_retries={} sec_engine={}", nof_retries, i);
+      }
+    }
+  }
 }
 
 pdcp_entity_rx::~pdcp_entity_rx()
@@ -463,6 +472,16 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
       }
       buf.trim_tail(security::sec_mac_len);
     }
+
+    nof_retries = 0;
+    while (!sec_engine_pool.try_push(std::move(sec_engine))) {
+      if (nof_retries++ < max_nof_retries) {
+        logger.log_info("Retrying to return null security engine. count={} nof_retries={}", count, nof_retries);
+      } else {
+        logger.log_error("Failed to return null security engine to pool. count={} nof_retries={}", count, nof_retries);
+      }
+    }
+
     return buf;
   }
 
@@ -561,16 +580,14 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
                                                                     : security::security_direction::downlink;
 
   // Remove previous security engines
-  if (sec_configured) {
-    std::unique_ptr<security::security_engine_rx> old_sec_engine;
-    for (int i = 0; i < 8; i++) {
-      uint32_t nof_retries = 0;
-      while (!sec_engine_pool.try_pop(old_sec_engine)) {
-        if (nof_retries++ < max_nof_retries) {
-          logger.log_info("Retrying to remove security engine from pool. nof_retries={} sec_engine={}", nof_retries, i);
-        } else {
-          logger.log_error("Failed to remove security engine from pool. nof_retries={} sec_engine={}", nof_retries, i);
-        }
+  std::unique_ptr<security::security_engine_rx> old_sec_engine;
+  for (int i = 0; i < 8; i++) {
+    uint32_t nof_retries = 0;
+    while (!sec_engine_pool.try_pop(old_sec_engine)) {
+      if (nof_retries++ < max_nof_retries) {
+        logger.log_info("Retrying to remove security engine from pool. nof_retries={} sec_engine={}", nof_retries, i);
+      } else {
+        logger.log_error("Failed to remove security engine from pool. nof_retries={} sec_engine={}", nof_retries, i);
       }
     }
   }
@@ -589,7 +606,6 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
     }
   }
 
-  sec_configured = true;
   logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
                   sec_cfg.integ_algo,
                   integrity_enabled,
