@@ -167,6 +167,9 @@ struct pdcp_custom_config {
   pdcp_custom_config_rx  rx               = {};
 };
 
+/// Number of PDCP crypto workers that can run in parallel.
+constexpr uint32_t pdcp_nof_crypto_workers = 8;
+
 /// \brief Configurable parameters for PDCP that are common
 /// for both TX and RX.
 ///

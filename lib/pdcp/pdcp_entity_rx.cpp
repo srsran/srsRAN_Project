@@ -28,7 +28,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
-  sec_engine_pool(8),
+  sec_engine_pool(pdcp_nof_crypto_workers),
   rx_window(logger, pdcp_window_size(pdcp_sn_size_to_uint(cfg.sn_size))),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
@@ -59,7 +59,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger.log_info("PDCP configured. {}", cfg);
 
   // Populate null security engines
-  for (int i = 0; i < 8; i++) {
+  for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
     std::unique_ptr<security::security_engine_impl> null_engine;
     uint32_t                                        nof_retries = 0;
     while (!sec_engine_pool.try_push(std::move(null_engine))) {
@@ -581,7 +581,7 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
 
   // Remove previous security engines
   std::unique_ptr<security::security_engine_rx> old_sec_engine;
-  for (int i = 0; i < 8; i++) {
+  for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
     uint32_t nof_retries = 0;
     while (!sec_engine_pool.try_pop(old_sec_engine)) {
       if (nof_retries++ < max_nof_retries) {
@@ -593,7 +593,7 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
   }
 
   // Populate new security engines
-  for (int i = 0; i < 8; i++) {
+  for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
     auto sec_engine = std::make_unique<security::security_engine_impl>(
         sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
     uint32_t nof_retries = 0;

@@ -157,7 +157,7 @@ protected:
   manual_task_worker                  worker{64};
   std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
 
-  unsigned nof_crypto_threads = 4;
+  unsigned nof_crypto_threads = pdcp_nof_crypto_workers;
   unsigned crypto_queue_size  = 128;
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc>          crypto_worker_pool{"crypto",

@@ -188,7 +188,7 @@ void benchmark_pdcp_rx(bench_params                  params,
   task_worker          ul_worker{"ul_worker", 512};
   task_worker_executor ul_exec{ul_worker};
 
-  unsigned nof_crypto_threads = 8;
+  unsigned nof_crypto_threads = pdcp_nof_crypto_workers;
   unsigned crypto_queue_size  = 128;
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc> crypto_worker_pool{
