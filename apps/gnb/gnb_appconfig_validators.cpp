@@ -46,6 +46,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
 
 bool srsran::validate_plmn_and_tacs(const du_high_unit_config& du_hi_cfg, const cu_cp_unit_config& cu_cp_cfg)
 {
+  if (cu_cp_cfg.amf_config.no_core) {
+    return true;
+  }
+
   std::vector<cu_cp_unit_supported_ta_item> supported_tas;
 
   for (const auto& supported_ta : cu_cp_cfg.amf_config.amf.supported_tas) {
