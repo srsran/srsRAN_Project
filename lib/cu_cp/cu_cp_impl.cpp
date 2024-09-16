@@ -248,7 +248,7 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
     return reest_context;
   }
 
-  auto srbs = old_ue->get_rrc_ue_notifier().get_srbs();
+  auto srbs = old_ue->get_rrc_ue()->get_srbs();
   if (std::find(srbs.begin(), srbs.end(), srb_id_t::srb2) == srbs.end()) {
     logger.debug("ue={}: SRB2 not setup for this UE - rejecting RRC reestablishment", old_ue_index);
     reest_context.ue_index = old_ue_index;
@@ -283,7 +283,7 @@ async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_req
       ue->get_security_manager().get_up_as_config(),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
-      ue->get_rrc_ue_notifier(),
+      ue->get_rrc_ue(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
       ue->get_up_resource_manager(),
@@ -401,8 +401,8 @@ async_task<bool> cu_cp_impl::handle_handover_reconfiguration_sent(ue_index_t tar
     // Notify RRC UE to await ReconfigurationComplete.
     CORO_AWAIT_VALUE(bool result,
                      ue_mng.find_du_ue(target_ue_index)
-                         ->get_rrc_ue_notifier()
-                         .on_handover_reconfiguration_complete_expected(transaction_id));
+                         ->get_rrc_ue()
+                         ->handle_handover_reconfiguration_complete_expected(transaction_id));
 
     CORO_RETURN(result);
   });
@@ -508,7 +508,7 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
       cfg.security.default_security_indication,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
-      ue->get_rrc_ue_notifier(),
+      ue->get_rrc_ue(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
       ue->get_up_resource_manager(),
@@ -528,7 +528,7 @@ cu_cp_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_sessi
       request,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
-      ue->get_rrc_ue_notifier(),
+      ue->get_rrc_ue(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
       ue->get_up_resource_manager(),
@@ -548,7 +548,7 @@ cu_cp_impl::handle_new_pdu_session_resource_release_command(const cu_cp_pdu_sess
       command,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
-      ue->get_rrc_ue_notifier(),
+      ue->get_rrc_ue(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
       ue->get_up_resource_manager(),
@@ -609,8 +609,7 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
     }
 
     // Unpack Handover Command PDU at RRC, to get RRC Reconfig PDU
-    ho_reconfig_pdu =
-        ue_mng.find_du_ue(ue_index)->get_rrc_ue_notifier().on_new_rrc_handover_command(std::move(command));
+    ho_reconfig_pdu = ue_mng.find_du_ue(ue_index)->get_rrc_ue()->handle_rrc_handover_command(std::move(command));
     if (ho_reconfig_pdu.empty()) {
       logger.warning("ue={}: Could not unpack Handover Command PDU", ue_index);
       CORO_EARLY_RETURN(false);

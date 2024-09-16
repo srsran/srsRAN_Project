@@ -19,7 +19,7 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd_,
     e1ap_bearer_context_manager&                      e1ap_bearer_ctxt_mng_,
     f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng_,
-    du_processor_rrc_ue_notifier&                     rrc_ue_notifier_,
+    rrc_ue_interface*                                 rrc_ue_,
     cu_cp_rrc_ue_interface&                           cu_cp_notifier_,
     ue_task_scheduler&                                task_sched_,
     up_resource_manager&                              up_resource_mng_,
@@ -27,7 +27,7 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
   release_cmd(release_cmd_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
-  rrc_ue_notifier(rrc_ue_notifier_),
+  rrc_ue(rrc_ue_),
   cu_cp_notifier(cu_cp_notifier_),
   task_sched(task_sched_),
   up_resource_mng(up_resource_mng_),
@@ -131,7 +131,7 @@ void pdu_session_resource_release_routine::operator()(
                                   next_config.drb_to_remove_list,
                                   ue_context_modification_response.du_to_cu_rrc_info,
                                   nas_pdus,
-                                  rrc_ue_notifier.generate_meas_config(),
+                                  rrc_ue->generate_meas_config(),
                                   false,
                                   false,
                                   false,
@@ -142,7 +142,7 @@ void pdu_session_resource_release_routine::operator()(
       }
     }
 
-    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
+    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue->handle_rrc_reconfiguration_request(rrc_reconfig_args));
 
     // Handle RRC Reconfiguration result.
     if (not handle_procedure_response(response_msg, release_cmd, rrc_reconfig_result, logger)) {

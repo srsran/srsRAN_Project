@@ -78,13 +78,6 @@ void cu_cp_ue::update_meas_context(cell_meas_manager_ue_context meas_ctxt)
   meas_context = std::move(meas_ctxt);
 }
 
-/// \brief Set the RRC UE notifier of the UE.
-/// \param[in] rrc_ue_notifier_ RRC UE notifier of the UE.
-void cu_cp_ue::set_rrc_ue_notifier(du_processor_rrc_ue_notifier& rrc_ue_notifier_)
-{
-  rrc_ue_notifier = &rrc_ue_notifier_;
-}
-
 /// \brief Set the RRC UE of the UE.
 /// \param[in] rrc_ue_ RRC UE of the UE.
 void cu_cp_ue::set_rrc_ue(rrc_ue_interface& rrc_ue_)
@@ -96,11 +89,4 @@ void cu_cp_ue::set_rrc_ue(rrc_ue_interface& rrc_ue_)
 ngap_rrc_ue_notifier& cu_cp_ue::get_ngap_rrc_ue_notifier()
 {
   return ngap_rrc_ue_ev_notifier;
-}
-
-/// \brief Get the RRC UE notifier of the UE.
-du_processor_rrc_ue_notifier& cu_cp_ue::get_rrc_ue_notifier()
-{
-  srsran_assert(rrc_ue_notifier != nullptr, "ue={}: RRC UE notifier was not set", ue_index);
-  return *rrc_ue_notifier;
 }

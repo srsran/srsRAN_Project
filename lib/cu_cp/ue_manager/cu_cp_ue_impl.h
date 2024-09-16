@@ -99,10 +99,6 @@ public:
   /// \return True if the DU UE context is created, false otherwise.
   [[nodiscard]] bool du_ue_created() const { return ue_ctxt.du_idx != du_index_t::invalid; }
 
-  /// \brief Set the RRC UE notifier of the UE.
-  /// \param[in] rrc_ue_notifier_ RRC UE notifier of the UE.
-  void set_rrc_ue_notifier(du_processor_rrc_ue_notifier& rrc_ue_notifier_);
-
   /// \brief Set the RRC UE of the UE.
   void set_rrc_ue(rrc_ue_interface& rrc_ue_);
 
@@ -114,9 +110,6 @@ public:
 
   /// \brief Get the RRC UE CU-CP UE notifier of the UE.
   rrc_ue_cu_cp_ue_notifier& get_rrc_ue_cu_cp_ue_notifier() { return rrc_ue_cu_cp_ue_ev_notifier; }
-
-  /// \brief Get the RRC UE notifier of the UE.
-  du_processor_rrc_ue_notifier& get_rrc_ue_notifier();
 
   rrc_ue_context_update_notifier& get_rrc_ue_context_update_notifier() { return rrc_ue_cu_cp_ev_notifier; }
 
@@ -147,8 +140,7 @@ private:
   du_cell_index_t  pcell_index = du_cell_index_t::invalid;
   pci_t            pci         = INVALID_PCI;
 
-  rrc_ue_cu_cp_ue_adapter       rrc_ue_cu_cp_ue_ev_notifier;
-  du_processor_rrc_ue_notifier* rrc_ue_notifier = nullptr;
+  rrc_ue_cu_cp_ue_adapter rrc_ue_cu_cp_ue_ev_notifier;
 
   // rrc ue
   rrc_ue_interface*   rrc_ue = nullptr;
