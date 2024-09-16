@@ -2,64 +2,72 @@
 # with the Foxconn RPQN O-RU. This config will create a single TDD cell transmitting in band n78, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing.
 # The parameters used to configure the RU are found in the `ru_ofh` sub-section. This configuration makes used of the OFH Lib from SRS to enable split 7.2.
 
-amf:
-  addr: 127.0.1.100                                              
-  bind_addr: 127.0.0.1                                           
+cu_cp:
+  amf:
+    addr: 127.0.1.100
+    port: 38412
+    bind_addr: 127.0.0.1
+    supported_tracking_areas:
+      - tac: 7
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
 
 ru_ofh:
-  t1a_max_cp_dl: 420                                             
-  t1a_min_cp_dl: 250                                             
-  t1a_max_cp_ul: 420                                             
-  t1a_min_cp_ul: 250                                             
-  t1a_max_up: 196                                                
-  t1a_min_up: 80                                                 
-  ta4_max: 500                                                   
-  ta4_min: 25                                                    
-  is_prach_cp_enabled: true                                      
-  ignore_ecpri_payload_size: true                                
-  compr_method_ul: bfp                                           
-  compr_bitwidth_ul: 9                                           
-  compr_method_dl: bfp                                           
-  compr_bitwidth_dl: 9                                           
-  compr_method_prach: bfp                                        
-  compr_bitwidth_prach: 9                                        
-  enable_ul_static_compr_hdr: false                              
-  enable_dl_static_compr_hdr: false                              
-  iq_scaling: 1.0                                                
+  t1a_max_cp_dl: 420
+  t1a_min_cp_dl: 250
+  t1a_max_cp_ul: 420
+  t1a_min_cp_ul: 250
+  t1a_max_up: 196
+  t1a_min_up: 80
+  ta4_max: 500
+  ta4_min: 25
+  is_prach_cp_enabled: true
+  ignore_ecpri_payload_size: true
+  compr_method_ul: bfp
+  compr_bitwidth_ul: 9
+  compr_method_dl: bfp
+  compr_bitwidth_dl: 9
+  compr_method_prach: bfp
+  compr_bitwidth_prach: 9
+  enable_ul_static_compr_hdr: false
+  enable_dl_static_compr_hdr: false
+  iq_scaling: 1.0
   cells:
-    - network_interface: 0000:01:00.1                            
-      ru_mac_addr: 6c:ad:ad:00:xx:xx                             
-      du_mac_addr: 50:7c:6f:55:xx:xx                             
-      vlan_tag_cp: 2                                             
-      vlan_tag_up: 2                                             
-      prach_port_id: [4, 5, 6, 7]                                
-      dl_port_id: [0, 1]                                         
-      ul_port_id: [0, 1, 2, 3]                                   
+    - network_interface: 0000:01:00.1
+      ru_mac_addr: 6c:ad:ad:00:xx:xx
+      du_mac_addr: 50:7c:6f:55:xx:xx
+      vlan_tag_cp: 2
+      vlan_tag_up: 2
+      prach_port_id: [4, 5, 6, 7]
+      dl_port_id: [0, 1]
+      ul_port_id: [0, 1, 2, 3]
 
 cell_cfg:
-  dl_arfcn: 640000                                               
-  band: 78                                                       
-  channel_bandwidth_MHz: 20                                      
-  common_scs: 30                                                 
-  plmn: "00101"                                                  
-  tac: 7                                                         
-  pci: 1                                                         
-  nof_antennas_dl: 2                                             
-  nof_antennas_ul: 2                                             
+  dl_arfcn: 640000
+  band: 78
+  channel_bandwidth_MHz: 20
+  common_scs: 30
+  plmn: "00101"
+  tac: 7
+  pci: 1
+  nof_antennas_dl: 2
+  nof_antennas_ul: 2
   prach:
-    prach_config_index: 159                                      
-    prach_root_sequence_index: 1                                 
-    zero_correlation_zone: 0                                     
-    prach_frequency_start: 12                                    
+    prach_config_index: 159
+    prach_root_sequence_index: 1
+    zero_correlation_zone: 0
+    prach_frequency_start: 12
   pdsch:
     mcs_table: qam256
 
 log:
-  filename: /tmp/gnb.log                                         
-  all_level: warning                                             
+  filename: /tmp/gnb.log
+  all_level: warning
 
 pcap:
-  mac_enable: false                                              
-  mac_filename: /tmp/gnb_mac.pcap                                
-  ngap_enable: false                                             
-  ngap_filename: /tmp/gnb_ngap.pcap                              
+  mac_enable: false
+  mac_filename: /tmp/gnb_mac.pcap
+  ngap_enable: false
+  ngap_filename: /tmp/gnb_ngap.pcap
