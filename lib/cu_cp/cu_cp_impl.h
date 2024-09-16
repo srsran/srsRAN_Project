@@ -205,9 +205,7 @@ private:
   std::atomic<bool> stopped{false};
 
   // Plug-ins
-  [[nodiscard]] bool                             load_plugins();
   start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
-  void*                                          dl_handle          = nullptr;
 };
 
 } // namespace srs_cu_cp

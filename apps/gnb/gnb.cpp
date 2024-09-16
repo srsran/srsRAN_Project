@@ -29,6 +29,7 @@
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
+#include "gnb_appconfig_yaml_writer.h"
 
 #include "apps/services/worker_manager.h"
 
@@ -42,8 +43,6 @@
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.
-#include "gnb_appconfig_yaml_writer.h"
-
 #include "srsran/support/tsan_options.h"
 
 #include "apps/units/cu_cp/cu_cp_config_translators.h"

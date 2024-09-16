@@ -67,7 +67,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 {
   assert_cu_cp_configuration_valid(cfg);
 
-  if (cfg.load_plugins && not load_plugins()) {
+  if (cfg.load_plugins) {
     logger.error("Could not load CU-CP plugins");
     report_error("Could not load CU-CP plugins");
   }
@@ -99,15 +99,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 cu_cp_impl::~cu_cp_impl()
 {
   stop();
-
-  if (dl_handle != nullptr) {
-    if (::dlclose(dl_handle) != 0) {
-      char* err = ::dlerror();
-      if (err != nullptr) {
-        logger.error("Failed to close DL handle: {}", err);
-      }
-    }
-  }
 }
 
 bool cu_cp_impl::start()
@@ -146,39 +137,6 @@ void cu_cp_impl::stop()
   controller->stop();
 
   logger.info("CU-CP stopped successfully.");
-}
-
-bool cu_cp_impl::load_plugins()
-{
-  char*       err         = nullptr;
-  std::string plugin_name = "libsrsran_plugin_ng_handover.so";
-
-  dl_handle = ::dlopen(plugin_name.c_str(), RTLD_NOW + RTLD_DEEPBIND + RTLD_GLOBAL);
-  if (dl_handle == nullptr) {
-    err = ::dlerror();
-    if (err != nullptr) {
-      logger.error("Failed to load HO plugin {}: {}", plugin_name, err);
-    } else {
-      logger.error("Failed to load HO plugin {}", plugin_name);
-    }
-    return false;
-  }
-
-  // Load symbol.
-  start_ho_prep_func = reinterpret_cast<start_ngap_handover_preparation_procedure_func>(
-      ::dlsym(dl_handle, "start_ngap_preparation_procedure_func"));
-
-  // Handle an error loading the symbol.
-  if (start_ho_prep_func == nullptr) {
-    err = ::dlerror();
-    if (err != nullptr) {
-      logger.error("Error loading symbol {}: {}\n", "start_ngap_preparation_procedure_func", err);
-    } else {
-      logger.error("Error loading symbol {}:\n", "start_ngap_preparation_procedure_func");
-    }
-    return false;
-  }
-  return true;
 }
 
 ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& plmn)
