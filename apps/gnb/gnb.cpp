@@ -234,9 +234,10 @@ int main(int argc, char** argv)
     autoderive_slicing_args(du_unit_cfg, cu_cp_config);
     autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
 
-    // If test mode is enabled, we auto-enable "no_core" option
+    // If test mode is enabled, we auto-enable "no_core" option and generate a amf config with no core.
     if (du_unit_cfg.du_high_cfg.config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
-      cu_cp_config.amf_config.no_core = true;
+      cu_cp_config.amf_config.no_core           = true;
+      cu_cp_config.amf_config.amf.supported_tas = {{7, {{"00101", {s_nssai_t{1}}}}}};
     }
 
     autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config);
