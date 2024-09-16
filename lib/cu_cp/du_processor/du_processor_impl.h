@@ -60,9 +60,8 @@ public:
 
   metrics_report::du_info handle_du_metrics_report_request() const override;
 
-  du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
-  du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override { return f1ap_ue_context_notifier; }
-  du_metrics_handler&                    get_metrics_handler() override { return *this; }
+  du_processor_mobility_handler& get_mobility_handler() override { return *this; }
+  du_metrics_handler&            get_metrics_handler() override { return *this; }
 
 private:
   class f1ap_du_processor_adapter;
@@ -91,10 +90,9 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;
 
-  du_processor_cu_cp_notifier&         cu_cp_notifier;
-  f1ap_message_notifier&               f1ap_pdu_notifier;
-  ue_manager&                          ue_mng;
-  du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
+  du_processor_cu_cp_notifier& cu_cp_notifier;
+  f1ap_message_notifier&       f1ap_pdu_notifier;
+  ue_manager&                  ue_mng;
 
   // F1AP to DU processor adapter
   std::unique_ptr<f1ap_du_processor_notifier> f1ap_ev_notifier;

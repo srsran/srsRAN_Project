@@ -68,37 +68,6 @@ private:
   cu_cp_ue_context_manipulation_handler* ue_context_handler = nullptr;
 };
 
-// Adapter between DU processor and F1AP for UE context
-class du_processor_f1ap_ue_context_adapter : public du_processor_f1ap_ue_context_notifier
-{
-public:
-  du_processor_f1ap_ue_context_adapter() = default;
-
-  void connect_f1(f1ap_ue_context_manager& handler_) { handler = &handler_; }
-
-  async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) override
-  {
-    srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
-    return handler->handle_ue_context_release_command(msg);
-  }
-
-  async_task<f1ap_ue_context_modification_response>
-  on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override
-  {
-    srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
-    return handler->handle_ue_context_modification_request(request);
-  }
-
-  bool on_intra_du_reestablishment(ue_index_t ue_index, ue_index_t old_ue_index) override
-  {
-    srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
-    return handler->handle_ue_id_update(ue_index, old_ue_index);
-  }
-
-private:
-  f1ap_ue_context_manager* handler = nullptr;
-};
-
 class du_processor_cu_cp_connection_adapter final : public du_connection_notifier
 {
 public:

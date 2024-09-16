@@ -331,9 +331,8 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
 
     // Notify old F1AP UE context to F1AP.
     if (old_ue->get_du_index() == ue->get_du_index()) {
-      const bool result = du_db.get_du_processor(old_ue->get_du_index())
-                              .get_f1ap_ue_context_notifier()
-                              .on_intra_du_reestablishment(ue_index, old_ue_index);
+      const bool result =
+          du_db.get_du_processor(old_ue->get_du_index()).get_f1ap_handler().handle_ue_id_update(ue_index, old_ue_index);
       if (not result) {
         logger.warning("The F1AP UE context of the old UE index {} does not exist", old_ue_index);
         return false;

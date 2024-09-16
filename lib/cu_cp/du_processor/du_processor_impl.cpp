@@ -91,7 +91,6 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
                      *f1ap_ev_notifier,
                      *cfg.cu_cp_cfg.services.timers,
                      *cfg.cu_cp_cfg.services.cu_cp_executor);
-  f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
   // create RRC
   rrc_du_creation_message du_creation_req{create_rrc_config(cfg.cu_cp_cfg), rrc_du_cu_cp_notifier};

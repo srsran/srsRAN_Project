@@ -129,10 +129,6 @@ public:
 
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 
-  /// \brief Get the F1AP message handler interface of the DU processor object.
-  /// \return The F1AP message handler interface of the DU processor object.
-  virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
-
   /// \brief Retrieve the DU-specific metrics handler.
   virtual du_metrics_handler& get_metrics_handler() = 0;
 };
