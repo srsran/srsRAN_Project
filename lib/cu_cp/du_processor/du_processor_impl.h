@@ -105,9 +105,6 @@ private:
   // RRC UE to F1AP adapters
   std::unordered_map<ue_index_t, rrc_ue_f1ap_pdu_adapter> rrc_ue_f1ap_adapters;
 
-  // DU processor to RRC DU adapter
-  du_processor_rrc_du_adapter rrc_du_adapter;
-
   // DU processor to RRC UE adapters
   std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
 

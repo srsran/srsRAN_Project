@@ -99,47 +99,6 @@ private:
   f1ap_ue_context_manager* handler = nullptr;
 };
 
-// Adapter between DU processor and RRC DU
-class du_processor_rrc_du_adapter : public du_processor_rrc_du_ue_notifier
-{
-public:
-  du_processor_rrc_du_adapter() = default;
-
-  void connect_rrc_du(rrc_du_cell_manager& rrc_du_cell_handler_, rrc_du_ue_repository& rrc_du_handler_)
-  {
-    rrc_du_cell_handler = &rrc_du_cell_handler_;
-    rrc_du_handler      = &rrc_du_handler_;
-  }
-
-  bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override
-  {
-    srsran_assert(rrc_du_cell_handler != nullptr, "RRC DU cell handler must not be nullptr");
-    return rrc_du_cell_handler->handle_served_cell_list(served_cell_list);
-  }
-
-  byte_buffer on_rrc_reject_required() override
-  {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
-    return rrc_du_handler->get_rrc_reject();
-  }
-
-  rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
-  {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
-    return rrc_du_handler->add_ue(msg);
-  }
-
-  void on_release_ues() override
-  {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
-    return rrc_du_handler->release_ues();
-  }
-
-private:
-  rrc_du_cell_manager*  rrc_du_cell_handler = nullptr;
-  rrc_du_ue_repository* rrc_du_handler      = nullptr;
-};
-
 // Adapter between DU processor and RRC UE
 class du_processor_rrc_ue_adapter : public du_processor_rrc_ue_notifier
 {

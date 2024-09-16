@@ -74,30 +74,6 @@ public:
   virtual const du_configuration_context* get_context() const = 0;
 };
 
-/// Interface to notify RRC DU about UE management procedures.
-class du_processor_rrc_du_ue_notifier
-{
-public:
-  virtual ~du_processor_rrc_du_ue_notifier() = default;
-
-  /// \brief Notify RRC DU about served cells.
-  /// \param[in] served_cell_list The list of served cells.
-  /// \return Returns true on success, false otherwise.
-  virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
-
-  /// \brief Notify RRC DU about a required RRCReject.
-  /// \return Returns a RRC Container containing the RRCReject.
-  virtual byte_buffer on_rrc_reject_required() = 0;
-
-  /// \brief Notify RRC DU to create a UE.
-  /// \param[in] msg The UE creation message.
-  /// \return Returns a handle to the created UE.
-  virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) = 0;
-
-  /// Send RRC Release to all UEs connected to this DU.
-  virtual void on_release_ues() = 0;
-};
-
 /// Interface to notify an RRC UE about control and srb messages.
 class du_processor_rrc_ue_notifier
 {

@@ -618,29 +618,6 @@ private:
   static_vector<srb_id_t, MAX_NOF_SRBS> srb_vec;
 };
 
-struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_notifier {
-public:
-  dummy_du_processor_rrc_du_ue_notifier() = default;
-
-  bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override
-  {
-    logger.info("Received a served cell list");
-    return true;
-  }
-
-  rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
-  {
-    logger.info("Received a UE creation request");
-    return nullptr;
-  }
-
-  /// Send RRC Release to all UEs connected to this DU.
-  void on_release_ues() override { logger.info("Releasing all UEs"); }
-
-private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
-};
-
 struct dummy_cu_up_processor_cu_up_management_notifier : public cu_up_processor_cu_up_management_notifier {
 public:
   dummy_cu_up_processor_cu_up_management_notifier() = default;

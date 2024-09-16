@@ -96,7 +96,6 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
   // create RRC
   rrc_du_creation_message du_creation_req{create_rrc_config(cfg.cu_cp_cfg), rrc_du_cu_cp_notifier};
   rrc = create_rrc_du(du_creation_req);
-  rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
 }
 
 du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_request& request)
@@ -119,7 +118,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
   // Forward serving cell list to RRC DU
   // TODO: How to handle missing optional freq and timing in meas timing config?
-  if (!rrc_du_adapter.on_new_served_cell_list(request.gnb_du_served_cells_list)) {
+  if (!rrc->handle_served_cell_list(request.gnb_du_served_cells_list)) {
     res.result =
         du_setup_result::rejected{f1ap_cause_transport_t::unspecified, "Could not establish served cell list in RRC"};
     return res;
@@ -168,7 +167,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   rrc_ue_create_msg.cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier();
   rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
   rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
-  auto* rrc_ue                            = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
+  auto* rrc_ue                            = rrc->add_ue(std::move(rrc_ue_create_msg));
   if (rrc_ue == nullptr) {
     logger.warning("Could not create RRC UE");
     return false;
@@ -195,7 +194,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   if (pcell == nullptr) {
     logger.warning("ue={} c-rnti={}: Could not find cell with NCI={}", req.ue_index, req.c_rnti, req.cgi.nci);
     // Return the RRCReject container
-    return make_unexpected(rrc_du_adapter.on_rrc_reject_required());
+    return make_unexpected(rrc->get_rrc_reject());
   }
   const pci_t pci = pcell->pci;
 
@@ -208,7 +207,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
         cfg.du_index, req.cgi.plmn_id, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti, pcell->cell_index);
     if (ue_index == ue_index_t::invalid) {
       logger.warning("CU-CP UE creation failed");
-      return make_unexpected(rrc_du_adapter.on_rrc_reject_required());
+      return make_unexpected(rrc->get_rrc_reject());
     }
     ue = ue_mng.find_ue(ue_index);
 
@@ -219,7 +218,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     if (ue == nullptr) {
       logger.warning("ue={}: Could not create UE context", ue_index);
       // A UE with the same PCI and RNTI already exists, so we don't remove it and only reject the new UE.
-      return make_unexpected(rrc_du_adapter.on_rrc_reject_required());
+      return make_unexpected(rrc->get_rrc_reject());
     }
   }
 
@@ -229,7 +228,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     // Remove the UE from the UE manager
     ue_mng.remove_ue(ue_index);
     // Return the RRCReject container
-    return make_unexpected(rrc_du_adapter.on_rrc_reject_required());
+    return make_unexpected(rrc->get_rrc_reject());
   }
   rrc_ue_interface* rrc_ue       = rrc->find_ue(ue_index);
   f1ap_rrc_ue_adapters[ue_index] = {};
