@@ -47,6 +47,7 @@ UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 2  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 90
+INTER_UE_START_PERIOD: int = 0
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -61,6 +62,7 @@ def start_and_attach(
     gnb_post_cmd: Tuple[str, ...] = tuple(),
     attach_timeout: int = ATTACH_TIMEOUT,
     plmn: Optional[PLMN] = None,
+    inter_ue_start_period=INTER_UE_START_PERIOD,
 ) -> Dict[UEStub, UEAttachedInfo]:
     """
     Start stubs & wait until attach
@@ -82,6 +84,7 @@ def start_and_attach(
         fivegc,
         ue_startup_timeout=ue_startup_timeout,
         attach_timeout=attach_timeout,
+        inter_ue_start_period=inter_ue_start_period,
     )
 
 
@@ -162,6 +165,7 @@ def ue_start_and_attach(
     fivegc: FiveGCStub,
     ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     attach_timeout: int = ATTACH_TIMEOUT,
+    inter_ue_start_period: int = INTER_UE_START_PERIOD,
 ) -> Dict[UEStub, UEAttachedInfo]:
     """
     Start an array of UEs and wait until attached to already running gnb and 5gc
@@ -176,6 +180,7 @@ def ue_start_and_attach(
                     start_info=StartInfo(timeout=ue_startup_timeout),
                 )
             )
+            sleep(inter_ue_start_period)
 
     # Attach in parallel
     ue_attach_task_dict: Dict[UEStub, grpc.Future] = {

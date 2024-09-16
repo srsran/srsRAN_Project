@@ -26,7 +26,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth, is_tdd
-from .steps.stub import iperf_parallel, start_and_attach, stop
+from .steps.stub import INTER_UE_START_PERIOD, iperf_parallel, start_and_attach, stop
 
 TINY_DURATION = 10
 SHORT_DURATION = 20
@@ -387,6 +387,7 @@ def test_zmq_2x2_mimo(
         enable_dddsu=True,
         nof_antennas_dl=2,
         nof_antennas_ul=2,
+        inter_ue_start_period=1.5,  # Due to uesim
     )
 
 
@@ -679,6 +680,7 @@ def _iperf(
     enable_dddsu: bool = False,
     nof_antennas_dl: int = 1,
     nof_antennas_ul: int = 1,
+    inter_ue_start_period=INTER_UE_START_PERIOD,
 ):
     wait_before_power_off = 5
 
@@ -705,7 +707,9 @@ def _iperf(
         always_download_artifacts=always_download_artifacts,
     )
 
-    ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn)
+    ue_attach_info_dict = start_and_attach(
+        ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn, inter_ue_start_period=inter_ue_start_period
+    )
 
     iperf_parallel(
         ue_attach_info_dict,
