@@ -91,7 +91,7 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 gnb_extra_commands=test_declaration["gnb_extra_commands"],
                 id=test_declaration["id"],
                 max_pdschs_per_slot=test_declaration["max_pdschs_per_slot"],
-                max_puschs_per_slot=test_declaration["max_pdschs_per_slot"],
+                max_puschs_per_slot=test_declaration["max_puschs_per_slot"],
                 enable_qos_viavi=test_declaration["enable_qos_viavi"],
                 expected_dl_bitrate=test_declaration["expected_dl_bitrate"],
                 expected_ul_bitrate=test_declaration["expected_ul_bitrate"],
