@@ -67,16 +67,15 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 {
   assert_cu_cp_configuration_valid(cfg);
 
-  if (cfg.load_plugins) {
-    logger.error("Could not load CU-CP plugins");
-    report_error("Could not load CU-CP plugins");
-  }
-
   // connect event notifiers to layers
   ngap_cu_cp_ev_notifier.connect_cu_cp(*this, paging_handler);
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
+
+  if (cfg.start_ng_ho_func != nullptr) {
+    start_ho_prep_func = reinterpret_cast<start_ngap_handover_preparation_procedure_func>(cfg.start_ng_ho_func);
+  }
 
   ngap_db = std::make_unique<ngap_repository>(ngap_repository_config{
       cfg, get_cu_cp_ngap_handler(), paging_handler, start_ho_prep_func, srslog::fetch_basic_logger("CU-CP")});

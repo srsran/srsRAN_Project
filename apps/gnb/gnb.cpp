@@ -9,6 +9,7 @@
  */
 
 #include "srsran/support/cpu_features.h"
+#include "srsran/support/dl_manager.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/versioning/build_info.h"
@@ -373,6 +374,21 @@ int main(int argc, char** argv)
   cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
   cu_cp_dependencies.timers         = cu_timers;
 
+  // Load CU-CP plugins if enabled
+  dl_manager ng_handover_plugin(gnb_logger);
+  if (cu_cp_config.load_plugins) {
+    if (not ng_handover_plugin.open("libsrsran_plugin_ng_handover.so")) {
+      gnb_logger.error("Could not open NG Handover plugin");
+      return -1;
+    }
+    expected<void*> ng_ho_func = ng_handover_plugin.load_symbol("start_ngap_preparation_procedure_func");
+    if (not ng_ho_func) {
+      gnb_logger.error("Could not open NG Handover function pointer");
+      return -1;
+    }
+    cu_cp_dependencies.start_ng_handover_func = ng_ho_func.value();
+  }
+
   // Create N2 Client Gateways.
   cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(generate_n2_client_config(
       cu_cp_config.amf_config.no_core, cu_cp_config.amf_config.amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
@@ -489,6 +505,9 @@ int main(int argc, char** argv)
   workers.stop();
   gnb_logger.info("Executors closed successfully.");
 
+  if (cu_cp_config.load_plugins and not ng_handover_plugin.close()) {
+    gnb_logger.error("Could not close plugin manager");
+  }
   srslog::flush();
 
   return 0;

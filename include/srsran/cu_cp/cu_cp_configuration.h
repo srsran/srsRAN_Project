@@ -115,7 +115,8 @@ struct cu_cp_configuration {
   /// Parameters related with CU-CP metrics.
   metrics_params metrics;
   /// Plugins parameters
-  bool load_plugins;
+  bool  load_plugins;
+  void* start_ng_ho_func = nullptr;
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
 };
