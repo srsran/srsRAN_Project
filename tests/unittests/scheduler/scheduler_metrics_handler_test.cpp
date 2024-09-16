@@ -43,6 +43,8 @@ protected:
   {
     metrics_notif.last_report = {};
     sched_result sched_res;
+    sched_res.dl.nof_dl_symbols = 14;
+    sched_res.ul.nof_ul_symbols = 14;
     while (metrics_notif.last_report.ue_metrics.empty()) {
       run_slot(sched_res);
     }
@@ -157,7 +159,9 @@ TEST_F(scheduler_metrics_handler_tester, compute_mcs)
   sch_mcs_index dl_mcs{test_rgen::uniform_int<uint8_t>(1, 28)};
   sch_mcs_index ul_mcs{test_rgen::uniform_int<uint8_t>(1, 28)};
 
-  sched_result  res;
+  sched_result res;
+  res.dl.nof_dl_symbols = 14;
+  res.ul.nof_ul_symbols = 14;
   dl_msg_alloc& dl_msg  = res.dl.ue_grants.emplace_back();
   dl_msg.pdsch_cfg.rnti = to_rnti(0x4601);
   auto&          cw     = dl_msg.pdsch_cfg.codewords.emplace_back();
@@ -230,6 +234,9 @@ TEST_F(scheduler_metrics_handler_tester, compute_latency_metric)
   samples.resize(report_period.count());
 
   sched_result sched_res;
+  sched_res.dl.nof_dl_symbols = 14;
+  sched_res.ul.nof_ul_symbols = 14;
+
   for (unsigned i = 0; i != samples.size(); ++i) {
     ASSERT_TRUE(metrics_notif.last_report.ue_metrics.empty());
     this->run_slot(sched_res, samples[i]);
