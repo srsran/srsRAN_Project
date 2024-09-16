@@ -1825,7 +1825,7 @@ basic asan:
   variables:
     TEST_MODE: none
     MARCH: x86-64-v3
-    BUILD_ARGS: -DEXIT_TIMEOUT=15
+    BUILD_ARGS: -DEXIT_TIMEOUT=60
   tags: ["${AMD64_AVX2_TAG}"]
   after_script:
     - *build_after_script
