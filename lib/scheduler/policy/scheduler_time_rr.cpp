@@ -158,27 +158,22 @@ static bool can_allocate_dl_newtx(const slice_ue& ue_ref, ue_cell_index_t cell_i
   return true;
 }
 
-/// \brief Fetches list of DL HARQ candidates to schedule.
-static static_vector<dl_harq_process_handle, MAX_NOF_HARQS>
-get_ue_dl_harq_candidates(const slice_ue& ue_ref, ue_cell_index_t cell_index, ran_slice_id_t slice_id)
+/// \brief Fetches list of HARQ candidates pending retransmission for a UE.
+template <bool IsDl>
+static static_vector<std::conditional_t<IsDl, dl_harq_process_handle, ul_harq_process_handle>, MAX_NOF_HARQS>
+get_ue_harq_candidates(du_ue_index_t                                                                  ue_index,
+                       span<std::conditional_t<IsDl, dl_harq_process_handle, ul_harq_process_handle>> retx_harqs)
 {
-  static_vector<dl_harq_process_handle, MAX_NOF_HARQS> dl_harq_candidates;
+  using handle_type = std::conditional_t<IsDl, dl_harq_process_handle, ul_harq_process_handle>;
 
-  const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
-  // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
-  for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
-    std::optional<dl_harq_process_handle> h = ue_cc.harqs.dl_harq(to_harq_id(i));
-    if (h.has_value() and h->has_pending_retx() and h->get_grant_params().slice_id == slice_id) {
-      dl_harq_candidates.push_back(*h);
+  static_vector<handle_type, MAX_NOF_HARQS> harq_candidates;
+  for (handle_type h : retx_harqs) {
+    if (h.ue_index() == ue_index) {
+      harq_candidates.push_back(h);
     }
   }
-  std::sort(dl_harq_candidates.begin(),
-            dl_harq_candidates.end(),
-            [](const dl_harq_process_handle& lhs, const dl_harq_process_handle& rhs) {
-              return lhs.uci_slot() < rhs.uci_slot();
-            });
 
-  return dl_harq_candidates;
+  return harq_candidates;
 }
 
 static bool can_allocate_ul_newtx(const slice_ue& ue_ref, ue_cell_index_t cell_index, srslog::basic_logger& logger)
@@ -208,28 +203,6 @@ static bool can_allocate_ul_newtx(const slice_ue& ue_ref, ue_cell_index_t cell_i
   }
 
   return true;
-}
-
-/// \brief Fetches list of UL HARQ candidates to schedule.
-static static_vector<ul_harq_process_handle, MAX_NOF_HARQS>
-get_ue_ul_harq_candidates(const slice_ue& ue_ref, ue_cell_index_t cell_index, ran_slice_id_t slice_id)
-{
-  static_vector<ul_harq_process_handle, MAX_NOF_HARQS> ul_harq_candidates;
-
-  const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
-  // Create list of UL HARQ processes with pending retx, sorted from oldest to newest.
-  for (unsigned i = 0; i != ue_cc.harqs.nof_ul_harqs(); ++i) {
-    std::optional<ul_harq_process_handle> h = ue_cc.harqs.ul_harq(to_harq_id(i));
-    if (h.has_value() and h->has_pending_retx() and h->get_grant_params().slice_id == slice_id) {
-      ul_harq_candidates.push_back(*h);
-    }
-  }
-  std::sort(ul_harq_candidates.begin(),
-            ul_harq_candidates.end(),
-            [](const ul_harq_process_handle& lhs, const ul_harq_process_handle& rhs) {
-              return lhs.pusch_slot() < rhs.pusch_slot();
-            });
-  return ul_harq_candidates;
 }
 
 /// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
@@ -271,13 +244,13 @@ round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index,
 }
 
 /// Allocate UE PDSCH grant.
-static alloc_result alloc_dl_ue(const slice_ue&              u,
-                                const ue_resource_grid_view& res_grid,
-                                ue_pdsch_allocator&          pdsch_alloc,
-                                bool                         is_retx,
-                                srslog::basic_logger&        logger,
-                                ran_slice_id_t               slice_id,
-                                std::optional<unsigned>      dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
+static alloc_result alloc_dl_ue(const slice_ue&                                      u,
+                                const ue_resource_grid_view&                         res_grid,
+                                ue_pdsch_allocator&                                  pdsch_alloc,
+                                bool                                                 is_retx,
+                                srslog::basic_logger&                                logger,
+                                static_vector<dl_harq_process_handle, MAX_NOF_HARQS> retx_harqs,
+                                std::optional<unsigned> dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   if (not is_retx) {
     if (not u.has_pending_dl_newtx_bytes()) {
@@ -300,7 +273,7 @@ static alloc_result alloc_dl_ue(const slice_ue&              u,
 
     if (is_retx) {
       // Get DL HARQ candidates.
-      const auto harq_candidates = get_ue_dl_harq_candidates(u, to_ue_cell_index(i), slice_id);
+      const auto harq_candidates = get_ue_harq_candidates<true>(u.ue_index(), retx_harqs);
       // Iterate through allocation parameter candidates.
       for (dl_harq_process_handle h_dl : harq_candidates) {
         ue_pdsch_grant     grant{&u, ue_cc.cell_index, h_dl.id()};
@@ -324,12 +297,12 @@ static alloc_result alloc_dl_ue(const slice_ue&              u,
 }
 
 /// Allocate UE PUSCH grant.
-static alloc_result alloc_ul_ue(const slice_ue&         u,
-                                ue_pusch_allocator&     pusch_alloc,
-                                bool                    is_retx,
-                                bool                    schedule_sr_only,
-                                srslog::basic_logger&   logger,
-                                ran_slice_id_t          slice_id,
+static alloc_result alloc_ul_ue(const slice_ue&                                      u,
+                                ue_pusch_allocator&                                  pusch_alloc,
+                                bool                                                 is_retx,
+                                bool                                                 schedule_sr_only,
+                                srslog::basic_logger&                                logger,
+                                static_vector<ul_harq_process_handle, MAX_NOF_HARQS> retx_harqs,
                                 std::optional<unsigned> ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   unsigned pending_newtx_bytes = 0;
@@ -352,7 +325,7 @@ static alloc_result alloc_ul_ue(const slice_ue&         u,
 
     if (is_retx) {
       // Get UL HARQ candidates.
-      const auto harq_candidates = get_ue_ul_harq_candidates(u, to_ue_cell_index(i), slice_id);
+      const auto harq_candidates = get_ue_harq_candidates<false>(u.ue_index(), retx_harqs);
       if (harq_candidates.empty()) {
         // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available HARQs).
         continue;
@@ -379,6 +352,23 @@ static alloc_result alloc_ul_ue(const slice_ue&         u,
   return {alloc_status::skip_ue};
 }
 
+/// \brief Fetches list of HARQs belonging to the slice and are pending retransmission.
+template <bool IsDl>
+static static_vector<std::conditional_t<IsDl, dl_harq_process_handle, ul_harq_process_handle>, MAX_NOF_HARQS>
+get_slice_harq_pending_retx_candidates(ran_slice_id_t slice_id, harq_utils::harq_pending_retx_list_impl<IsDl> harq_list)
+{
+  using handle_type = std::conditional_t<IsDl, dl_harq_process_handle, ul_harq_process_handle>;
+
+  static_vector<handle_type, MAX_NOF_HARQS> harq_candidates;
+  for (handle_type h : harq_list) {
+    if (h.get_grant_params().slice_id == slice_id) {
+      harq_candidates.push_back(h);
+    }
+  }
+
+  return harq_candidates;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 scheduler_time_rr::scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_) :
@@ -391,7 +381,8 @@ scheduler_time_rr::scheduler_time_rr(const scheduler_ue_expert_config& expert_cf
 
 void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 dl_ran_slice_candidate&      slice_candidate)
+                                 dl_ran_slice_candidate&      slice_candidate,
+                                 dl_harq_pending_retx_list    harq_pending_retx_list)
 {
   const slice_ue_repository& ues      = slice_candidate.get_slice_ues();
   const unsigned             max_rbs  = slice_candidate.remaining_rbs();
@@ -402,9 +393,12 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
     return;
   }
 
+  // Fetch HARQs pending retransmission for a slice.
+  auto retx_harqs = get_slice_harq_pending_retx_candidates<true>(slice_id, harq_pending_retx_list);
+
   // First, schedule UEs with re-transmissions.
-  auto retx_ue_function = [this, &res_grid, &pdsch_alloc, slice_id](const slice_ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, true, logger, slice_id);
+  auto retx_ue_function = [this, &res_grid, &pdsch_alloc, retx_harqs](const slice_ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, true, logger, retx_harqs);
   };
   auto result      = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
   next_dl_ue_index = result.first;
@@ -417,8 +411,8 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     // Then, schedule UEs with new transmissions.
     auto drb_newtx_ue_function =
-        [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot, slice_id](const slice_ue& u) {
-          return alloc_dl_ue(u, res_grid, pdsch_alloc, false, logger, slice_id, dl_new_tx_max_nof_rbs_per_ue_per_slot);
+        [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const slice_ue& u) {
+          return alloc_dl_ue(u, res_grid, pdsch_alloc, false, logger, {}, dl_new_tx_max_nof_rbs_per_ue_per_slot);
         };
     result           = round_robin_apply(ues, next_dl_ue_index, drb_newtx_ue_function);
     next_dl_ue_index = result.first;
@@ -427,7 +421,8 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 
 void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 ul_ran_slice_candidate&      slice_candidate)
+                                 ul_ran_slice_candidate&      slice_candidate,
+                                 ul_harq_pending_retx_list    harq_pending_retx_list)
 {
   const slice_ue_repository& ues      = slice_candidate.get_slice_ues();
   const unsigned             max_rbs  = slice_candidate.remaining_rbs();
@@ -442,8 +437,8 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, max_rbs);
   // First, schedule UEs with pending SR.
-  auto sr_ue_function = [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot, slice_id](const slice_ue& u) {
-    return alloc_ul_ue(u, pusch_alloc, false, true, logger, slice_id, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+  auto sr_ue_function = [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const slice_ue& u) {
+    return alloc_ul_ue(u, pusch_alloc, false, true, logger, {}, ul_new_tx_max_nof_rbs_per_ue_per_slot);
   };
   auto result      = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
   next_ul_ue_index = result.first;
@@ -451,9 +446,12 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
     return;
   }
 
+  // Fetch HARQs pending retransmission for a slice.
+  auto retx_harqs = get_slice_harq_pending_retx_candidates<false>(slice_id, harq_pending_retx_list);
+
   // Second, schedule UEs with re-transmissions.
-  auto data_retx_ue_function = [this, &pusch_alloc, slice_id](const slice_ue& u) {
-    return alloc_ul_ue(u, pusch_alloc, true, false, logger, slice_id);
+  auto data_retx_ue_function = [this, &pusch_alloc, retx_harqs](const slice_ue& u) {
+    return alloc_ul_ue(u, pusch_alloc, true, false, logger, retx_harqs);
   };
   result           = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
   next_ul_ue_index = result.first;
@@ -463,10 +461,9 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
 
   // Then, schedule UEs with new transmissions.
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
-    auto data_tx_ue_function =
-        [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot, slice_id](const slice_ue& u) {
-          return alloc_ul_ue(u, pusch_alloc, false, false, logger, slice_id, ul_new_tx_max_nof_rbs_per_ue_per_slot);
-        };
+    auto data_tx_ue_function = [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const slice_ue& u) {
+      return alloc_ul_ue(u, pusch_alloc, false, false, logger, {}, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+    };
     result           = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
     next_ul_ue_index = result.first;
   }
