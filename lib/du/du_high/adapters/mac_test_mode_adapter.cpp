@@ -91,13 +91,12 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
   logger(srslog::fetch_basic_logger("MAC")),
   ue_info_mgr(ue_info_mgr_)
 {
-  /// \brief Number of previous slot results to keep in history before they get deleted.
-  ///
-  /// Having access to past decisions is useful during the handling of error indications.
+  // Number of previous slot results to keep in history before they get deleted. Having access to past decisions is
+  // useful during the handling of error indications.
   static const size_t RING_MAX_HISTORY_SIZE = 8;
-  /// Number of slots managed by this container.
+  // Number of slots managed by this container.
   static const size_t HISTORY_RING_SIZE = get_allocator_ring_size_gt_min(
-      RING_MAX_HISTORY_SIZE + get_max_slot_ul_alloc_delay(NTN_CELL_SPECIFIC_KOFFSET_MAX));
+      RING_MAX_HISTORY_SIZE + get_max_slot_ul_alloc_delay(cell_cfg.sched_req.ntn_cs_koffset));
   sched_decision_history.resize(HISTORY_RING_SIZE);
 }
 
