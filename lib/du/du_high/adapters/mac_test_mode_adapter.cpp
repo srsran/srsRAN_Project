@@ -169,9 +169,9 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
       // Forward UCI indication to real MAC.
       forward_uci_ind_to_mac(uci_ind);
     } else {
-      logger.warning(
-          "Failed to generate UCI and CRC for slot={}. Cause: Overflow of the test mode internal storage detected",
-          sl_rx);
+      logger.warning("TEST_MODE: Failed to generate UCI and CRC for slot={}. Cause: Overflow of the test mode internal "
+                     "storage detected",
+                     sl_rx);
     }
   }
 
@@ -188,7 +188,9 @@ void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error
       entry.puschs.clear();
       entry.pucchs.clear();
     } else {
-      logger.warning("Failed to handle error indication. Cause: Overflow of the test mode internal storage detected");
+      logger.warning("TEST_MODE: Failed to handle error indication for slot={}. Cause: Overflow of the test mode "
+                     "internal storage detected",
+                     sl_tx);
     }
   }
 
@@ -199,8 +201,8 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
 {
   mac_crc_indication_message msg_copy = msg;
 
-  {
-    // Try to acquire history.
+  if (not test_ue_cfg.auto_ack_indication_delay.has_value()) {
+    // Acquire history.
     const slot_decision_history& entry = sched_decision_history[get_ring_idx(msg.sl_rx)];
     std::lock_guard<std::mutex>  lock(entry.mutex);
     if (entry.slot == msg.sl_rx) {
@@ -214,10 +216,10 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
             return pusch.pusch_cfg.rnti == crc.rnti and pusch.pusch_cfg.harq_id == crc.harq_id;
           });
           if (not found) {
-            logger.warning(
-                "c-rnti={}: Failed to set CRC. Cause: Mismatch between provided CRC and expected PUSCH for slot_rx={}",
-                crc.rnti,
-                msg.sl_rx);
+            logger.warning("TEST_MODE c-rnti={}: Failed to set CRC value for slot={}. Cause: Mismatch between provided "
+                           "CRC and expected PUSCH",
+                           crc.rnti,
+                           msg.sl_rx);
             continue;
           }
 
@@ -228,10 +230,16 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
       }
     } else {
       // Failed to lock entry in ring.
-      logger.warning(
-          "Unable to force CRC test mode value for slot={}. Cause: Overflow detected in test mode internal storage",
-          msg.sl_rx);
+      logger.warning("TEST_MODE: Unable to set CRC value for slot={}. Cause: Overflow detected in test "
+                     "mode internal storage",
+                     msg.sl_rx);
     }
+  } else {
+    // In case of auto-ACK mode, test mode UEs are removed from CRC.
+    msg_copy.crcs.erase(std::remove_if(msg_copy.crcs.begin(),
+                                       msg_copy.crcs.end(),
+                                       [this](const auto& crc) { return ue_info_mgr.is_test_ue(crc.rnti); }),
+                        msg_copy.crcs.end());
   }
 
   // Forward resulting CRC indication to real MAC.
@@ -379,7 +387,7 @@ void mac_test_mode_cell_adapter::forward_uci_ind_to_mac(const mac_uci_indication
         if (test_ue_cfg.pusch_active) {
           auto rx_pdu = create_test_pdu_with_bsr(uci_msg.sl_rx, pdu.rnti, to_harq_id(0));
           if (not rx_pdu.has_value()) {
-            logger.warning("Unable to create test PDU with BSR");
+            logger.warning("TEST_MODE c-rnti={}: Unable to create test PDU with BSR", pdu.rnti);
             continue;
           }
           // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
@@ -411,7 +419,7 @@ void mac_test_mode_cell_adapter::forward_crc_ind_to_mac(const mac_crc_indication
 
     auto rx_pdu = create_test_pdu_with_bsr(crc_msg.sl_rx, pdu.rnti, to_harq_id(pdu.harq_id));
     if (not rx_pdu.has_value()) {
-      logger.warning("Unable to create test PDU with BSR");
+      logger.warning("TEST_MODE c-rnti={}: Unable to create test PDU with BSR", pdu.rnti);
       continue;
     }
     // In case of test mode UE, auto-forward a positive BSR.
@@ -421,10 +429,10 @@ void mac_test_mode_cell_adapter::forward_crc_ind_to_mac(const mac_crc_indication
 
 void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& msg)
 {
-  mac_uci_indication_message   msg_copy{msg};
-  const slot_decision_history& entry = sched_decision_history[get_ring_idx(msg.sl_rx)];
+  mac_uci_indication_message msg_copy{msg};
 
-  {
+  if (not test_ue_cfg.auto_ack_indication_delay.has_value()) {
+    const slot_decision_history& entry = sched_decision_history[get_ring_idx(msg.sl_rx)];
     std::unique_lock<std::mutex> lock(entry.mutex);
     if (entry.slot == msg_copy.sl_rx) {
       // Forward UCI to MAC, but alter the UCI for the test mode UE.
@@ -454,19 +462,26 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
           }
 
           if (not entry_found) {
-            logger.warning("c-rnti={}: Failed to set UCI test mode value. Cause: Mismatch between provided UCI and "
-                           "expected UCI for slot_rx={}",
-                           test_uci.rnti,
-                           msg.sl_rx);
+            logger.warning(
+                "TEST_MODE c-rnti={}: Failed to set UCI value for slot={}. Cause: Mismatch between provided UCI and "
+                "expected UCI",
+                test_uci.rnti,
+                msg.sl_rx);
           }
         }
       }
     } else {
       // Failed to lock entry in history ring.
-      logger.warning(
-          "Unable to set UCI test mode value for slot={}. Cause: Overflow detected in test mode internal storage",
-          msg.sl_rx);
+      logger.warning("TEST_MODE: Unable to set UCI value for slot={}. Cause: Overflow detected in test mode "
+                     "internal storage",
+                     msg.sl_rx);
     }
+  } else {
+    // In case of auto-ACK mode, test mode UEs are removed from UCI.
+    msg_copy.ucis.erase(std::remove_if(msg_copy.ucis.begin(),
+                                       msg_copy.ucis.end(),
+                                       [this](const auto& u) { return ue_info_mgr.is_test_ue(u.rnti); }),
+                        msg_copy.ucis.end());
   }
 
   // Forward UCI indication to real MAC.
