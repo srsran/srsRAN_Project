@@ -199,7 +199,7 @@ tests:
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal ping"
     test_timeout: *test_timeout
-    gnb_extra_commands: "log --all_level=info"
+    gnb_extra_commands: "log --all_level=info --rlc_level=warning"
     id: "32UE ideal ping"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 4
