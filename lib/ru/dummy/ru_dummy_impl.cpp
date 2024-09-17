@@ -30,12 +30,11 @@ static inline uint64_t get_current_system_slot(std::chrono::microseconds slot_du
   return (time_since_epoch / slot_duration) % nof_slots_per_system_frame;
 }
 
-ru_dummy_impl::ru_dummy_impl(const srsran::ru_dummy_configuration& config, ru_dummy_dependencies dependencies) noexcept
-  :
+ru_dummy_impl::ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_dependencies dependencies) noexcept :
   logger(*dependencies.logger),
   executor(*dependencies.executor),
   timing_notifier(*dependencies.timing_notifier),
-  slot_duration(1000 / pow2(to_numerology_value(config.scs))),
+  slot_duration(static_cast<unsigned>(config.time_scaling * 1000.0 / pow2(to_numerology_value(config.scs)))),
   max_processing_delay_slots(config.max_processing_delay_slots),
   current_slot(config.scs, config.max_processing_delay_slots)
 {

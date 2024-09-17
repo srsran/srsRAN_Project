@@ -32,6 +32,16 @@ struct ru_dummy_unit_config {
   /// It is the number of slots that the RU expects the downlink resource grid in advance for having enough time margin
   /// for processing.
   unsigned dl_processing_delay = 1;
+  /// \brief Time scaling factor applied to the slot duration based on the subcarrier spacing.
+  ///
+  /// This attribute adjusts the slot duration by scaling it:
+  ///
+  /// - A value below one shortens the slot duration.
+  /// - A value above one increases the slot duration.
+  /// - A value of one maintains the default slot duration.
+  ///
+  /// The default value of 1.0 corresponds to the standard slot duration with no scaling applied.
+  float time_scaling = 1.0F;
   /// \brief CPU affinities per cell of the SDR Radio Unit.
   ///
   /// \note Add one cell by default.
