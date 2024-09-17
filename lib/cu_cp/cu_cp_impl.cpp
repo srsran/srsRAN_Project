@@ -73,8 +73,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
 
-  if (cfg.start_ng_ho_func != nullptr) {
-    start_ho_prep_func = reinterpret_cast<start_ngap_handover_preparation_procedure_func>(cfg.start_ng_ho_func);
+  if (cfg.plugin.start_ng_ho_func != nullptr) {
+    start_ho_prep_func = reinterpret_cast<start_ngap_handover_preparation_procedure_func>(cfg.plugin.start_ng_ho_func);
   }
 
   ngap_db = std::make_unique<ngap_repository>(ngap_repository_config{

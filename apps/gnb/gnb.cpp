@@ -386,7 +386,7 @@ int main(int argc, char** argv)
       gnb_logger.error("Could not open NG Handover function pointer");
       return -1;
     }
-    cu_cp_dependencies.start_ng_handover_func = ng_ho_func.value();
+    cu_cp_config.start_ng_ho_func = ng_ho_func.value();
   }
 
   // Create N2 Client Gateways.

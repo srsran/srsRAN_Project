@@ -388,7 +388,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.f1ap.json_log_enabled = cu_cfg.loggers.f1ap_json_enabled;
 
   // Plugins
-  out_cfg.load_plugins = cu_cfg.load_plugins;
+  out_cfg.plugin.load_plugins     = cu_cfg.load_plugins;
+  out_cfg.plugin.start_ng_ho_func = cu_cfg.start_ng_ho_func;
 
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {

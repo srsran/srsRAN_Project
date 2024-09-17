@@ -94,6 +94,13 @@ struct cu_cp_configuration {
     std::chrono::seconds statistics_report_period{1};
   };
 
+  struct plugin_params {
+    /// Try to load CU-CP plugins.
+    bool load_plugins;
+    /// Loaded function pointer to trigger NG Handover
+    void* start_ng_ho_func = nullptr;
+  };
+
   /// NG-RAN node parameters.
   ran_node_configuration node;
   /// Parameters to determine the admission of new CU-UP, DU and UE connections.
@@ -115,8 +122,7 @@ struct cu_cp_configuration {
   /// Parameters related with CU-CP metrics.
   metrics_params metrics;
   /// Plugins parameters
-  bool  load_plugins;
-  void* start_ng_ho_func = nullptr;
+  plugin_params plugin;
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
 };

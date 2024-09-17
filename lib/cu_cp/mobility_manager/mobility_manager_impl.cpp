@@ -140,7 +140,7 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t       source_ue_index
                                                 nr_cell_identity target_nci)
 {
   if (not cfg.enable_ng_handover) {
-    logger.error("ue={}: trying to use NG handover without HO plugin loaded.", source_ue_index);
+    logger.warning("ue={}: trying to use NG handover without HO plugin loaded.", source_ue_index);
     return;
   }
 
