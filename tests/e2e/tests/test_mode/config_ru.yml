@@ -34,6 +34,7 @@ cells:
   - pci: 1
 
 ru_dummy:
+  time_scaling: 10
 
 test_mode:
   test_ue:
