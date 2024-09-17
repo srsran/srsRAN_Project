@@ -108,8 +108,12 @@ static YAML::Node build_ru_ofh_cell_section(const ru_ofh_unit_cell_config& confi
   node["mtu"]                        = config.mtu_size.value();
   node["ru_mac_addr"]                = config.ru_mac_address;
   node["du_mac_addr"]                = config.du_mac_address;
-  node["vlan_tag_cp"]                = config.vlan_tag_cp;
-  node["vlan_tag_up"]                = config.vlan_tag_up;
+  if (config.vlan_tag_cp.has_value()) {
+    node["vlan_tag_cp"] = config.vlan_tag_cp.value();
+  }
+  if (config.vlan_tag_up.has_value()) {
+    node["vlan_tag_up"] = config.vlan_tag_up.value();
+  }
   for (auto id : config.ru_prach_port_id) {
     node["prach_port_id"] = id;
   }

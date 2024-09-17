@@ -37,7 +37,7 @@ struct receiver_config {
   /// Source MAC address.
   ether::mac_address mac_src_address;
   /// Tag control information field.
-  uint16_t tci;
+  std::optional<uint16_t> tci;
   /// Reception window timing parameters.
   rx_window_timing_parameters rx_timing_params;
   /// \brief RU operating bandwidth.

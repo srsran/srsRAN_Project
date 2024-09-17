@@ -15,7 +15,7 @@
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/compression/iq_compressor.h"
 #include "srsran/ofh/ecpri/ecpri_packet_builder.h"
-#include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
+#include "srsran/ofh/ethernet/ethernet_frame_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srslog/srslog.h"
@@ -37,8 +37,6 @@ struct data_flow_uplane_downlink_data_impl_config {
   unsigned ru_nof_prbs;
   /// Downlink eAxCs.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
-  /// VLAN frame parameters.
-  ether::vlan_frame_params vlan_params;
   /// Compression parameters.
   ru_compression_params compr_params;
 };
@@ -50,7 +48,7 @@ struct data_flow_uplane_downlink_data_impl_dependencies {
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
   /// VLAN frame builder.
-  std::unique_ptr<ether::vlan_frame_builder> eth_builder;
+  std::unique_ptr<ether::frame_builder> eth_builder;
   /// eCPRI packet builder.
   std::unique_ptr<ecpri::packet_builder> ecpri_builder;
   /// IQ compressor.
@@ -109,18 +107,17 @@ private:
                                                  span<uint8_t>                buffer);
 
 private:
-  srslog::basic_logger&                      logger;
-  const unsigned                             nof_symbols_per_slot;
-  const unsigned                             ru_nof_prbs;
-  const ether::vlan_frame_params             vlan_params;
-  const ru_compression_params                compr_params;
-  sequence_identifier_generator              up_seq_gen;
-  std::shared_ptr<ether::eth_frame_pool>     frame_pool;
-  std::unique_ptr<iq_compressor>             compressor_sel;
-  std::unique_ptr<ether::vlan_frame_builder> eth_builder;
-  std::unique_ptr<ecpri::packet_builder>     ecpri_builder;
-  std::unique_ptr<uplane_message_builder>    up_builder;
-  ofh_uplane_trace_names<OFH_TRACE_ENABLED>  formatted_trace_names;
+  srslog::basic_logger&                     logger;
+  const unsigned                            nof_symbols_per_slot;
+  const unsigned                            ru_nof_prbs;
+  const ru_compression_params               compr_params;
+  sequence_identifier_generator             up_seq_gen;
+  std::shared_ptr<ether::eth_frame_pool>    frame_pool;
+  std::unique_ptr<iq_compressor>            compressor_sel;
+  std::unique_ptr<ether::frame_builder>     eth_builder;
+  std::unique_ptr<ecpri::packet_builder>    ecpri_builder;
+  std::unique_ptr<uplane_message_builder>   up_builder;
+  ofh_uplane_trace_names<OFH_TRACE_ENABLED> formatted_trace_names;
 };
 
 } // namespace ofh
