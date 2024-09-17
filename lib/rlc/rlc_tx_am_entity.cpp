@@ -28,6 +28,7 @@
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
+#include "rlc_arq_retransmission.h"
 
 using namespace srsran;
 
@@ -732,6 +733,11 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       for (uint32_t range_sn = status.get_nacks()[nack_idx].nack_sn;
            range_sn != (status.get_nacks()[nack_idx].nack_sn + status.get_nacks()[nack_idx].nack_range) % mod;
            range_sn = (range_sn + 1) % mod) {
+
+            /* Section 5.3.2 - check if there are some packets for the retransmission */
+            rlc_rx_am_status_provider status_provider(status);
+            rlc_arq_retransmit(st.tx_next_ack, tx_window.get(), &status_provider);
+
         // Sanity check
         if (range_sn == status.ack_sn) {
           logger.log_warning(
