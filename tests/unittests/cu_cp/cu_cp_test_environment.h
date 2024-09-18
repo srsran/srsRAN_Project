@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../../../lib/cu_cp/cu_cp_controller/amf_connection_manager.h"
 #include "../e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "test_doubles/mock_amf.h"
 #include "test_doubles/mock_cu_up.h"
@@ -35,8 +36,18 @@ struct cu_cp_test_env_params {
                         unsigned                                                 max_nof_dus_    = 8,
                         unsigned                                                 max_nof_ues_    = 8192,
                         const std::vector<std::vector<supported_tracking_area>>& amf_config_ =
-                            {{supported_tracking_area{7, {{plmn_identity::test_value(), {{1}}}}}}}) :
-    max_nof_cu_ups(max_nof_cu_ups_), max_nof_dus(max_nof_dus_), max_nof_ues(max_nof_ues_)
+                            {{supported_tracking_area{7, {{plmn_identity::test_value(), {{1}}}}}}},
+                        bool                 load_plugins_     = false,
+                        void*                start_ng_ho_func_ = nullptr,
+                        connect_amfs_func    connect_amfs_     = nullptr,
+                        disconnect_amfs_func disconnect_amfs_  = nullptr) :
+    max_nof_cu_ups(max_nof_cu_ups_),
+    max_nof_dus(max_nof_dus_),
+    max_nof_ues(max_nof_ues_),
+    load_plugins(load_plugins_),
+    start_ng_ho_func(start_ng_ho_func_),
+    connect_amfs(connect_amfs_),
+    disconnect_amfs(disconnect_amfs_)
   {
     uint16_t amf_idx = 0;
     for (const auto& supported_tas : amf_config_) {
@@ -47,6 +58,10 @@ struct cu_cp_test_env_params {
   unsigned                                  max_nof_cu_ups;
   unsigned                                  max_nof_dus;
   unsigned                                  max_nof_ues;
+  bool                                      load_plugins;
+  void*                                     start_ng_ho_func;
+  connect_amfs_func                         connect_amfs;
+  disconnect_amfs_func                      disconnect_amfs;
   std::map<unsigned, cu_cp_test_amf_config> amf_configs;
 };
 
