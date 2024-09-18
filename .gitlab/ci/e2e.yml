@@ -602,7 +602,6 @@ viavi:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
-  allow_failure: true
   parallel:
     matrix:
       - KEYWORDS: [
@@ -619,7 +618,6 @@ viavi-extended:
   extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
-  allow_failure: true
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
@@ -634,7 +632,6 @@ viavi-debug:
   extends: .viavi
   variables:
     MARKERS: "viavi_debug"
-  allow_failure: true
   needs:
     - job: "basic avx512 dpdk withassert"
       artifacts: true
