@@ -377,6 +377,8 @@ int main(int argc, char** argv)
   // Load CU-CP plugins if enabled
   std::optional<dynlink_manager> ng_handover_plugin =
       cu_cp_config.load_plugins ? dynlink_manager::create("libsrsran_plugin_ng_handover.so", gnb_logger) : std::nullopt;
+  std::optional<dynlink_manager> mocn_plugin =
+      cu_cp_config.load_plugins ? dynlink_manager::create("libsrsran_plugin_mocn.so", gnb_logger) : std::nullopt;
   if (cu_cp_config.load_plugins) {
     if (not ng_handover_plugin) {
       gnb_logger.error("Could not open NG Handover plugin");
@@ -388,6 +390,23 @@ int main(int argc, char** argv)
       return -1;
     }
     cu_cp_config.start_ng_ho_func = ng_ho_func.value();
+
+    if (not mocn_plugin) {
+      gnb_logger.error("Could not open MOCN plugin");
+      return -1;
+    }
+    expected<void*> connect_amfs = mocn_plugin->load_symbol("connect_amfs_func");
+    if (not connect_amfs) {
+      gnb_logger.error("Could not open MOCN function pointer");
+      return -1;
+    }
+    cu_cp_config.connect_amfs_func_ptr = connect_amfs.value();
+    expected<void*> disconnect_amfs    = mocn_plugin->load_symbol("disconnect_amfs_func");
+    if (not disconnect_amfs) {
+      gnb_logger.error("Could not open MOCN function pointer");
+      return -1;
+    }
+    cu_cp_config.disconnect_amfs_func_ptr = disconnect_amfs.value();
   }
 
   // Create N2 Client Gateways.

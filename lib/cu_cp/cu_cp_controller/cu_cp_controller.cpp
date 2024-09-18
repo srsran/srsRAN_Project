@@ -21,11 +21,13 @@ cu_cp_controller::cu_cp_controller(const cu_cp_configuration&  config_,
                                    ngap_repository&            ngaps_,
                                    cu_up_processor_repository& cu_ups_,
                                    du_processor_repository&    dus_,
+                                   connect_amfs_func           connect_amfs_,
+                                   disconnect_amfs_func        disconnect_amfs_,
                                    task_executor&              ctrl_exec_) :
   cfg(config_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("CU-CP")),
-  amf_mng(ngaps_, ctrl_exec_, common_task_sched_),
+  amf_mng(ngaps_, connect_amfs_, disconnect_amfs_, ctrl_exec_, common_task_sched_),
   du_mng(cfg.admission.max_nof_dus, dus_, ctrl_exec, common_task_sched_),
   cu_up_mng(cfg.admission.max_nof_cu_ups, cu_ups_, ctrl_exec, common_task_sched_)
 {

@@ -266,6 +266,10 @@ struct cu_cp_unit_config {
   bool load_plugins = false;
   /// Function pointer to start NG handover from plugin
   void* start_ng_ho_func;
+  /// Function pointer to connect to AMFs from plugin
+  void* connect_amfs_func_ptr;
+  /// Function pointer to disconnect from AMFs from plugin
+  void* disconnect_amfs_func_ptr;
   /// PDU session setup timeout in seconds (must be larger than T310).
   unsigned pdu_session_setup_timeout = 3;
   /// Loggers configuration.

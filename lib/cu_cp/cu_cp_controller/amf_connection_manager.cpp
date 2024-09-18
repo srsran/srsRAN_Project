@@ -20,10 +20,24 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+// Function prototype for connecting to AMFs from plugin
+async_task<bool>
+connect_amfs(ngap_repository&                                    ngap_db,
+             std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected) asm("connect_amfs_func");
+
+// Function prototype for disconnecting from AMFs from plugin
+async_task<void>
+disconnect_amfs(ngap_repository&                                    ngap_db,
+                std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected) asm("disconnect_amfs_func");
+
 amf_connection_manager::amf_connection_manager(ngap_repository&       ngaps_,
+                                               connect_amfs_func      connect_amfs_,
+                                               disconnect_amfs_func   disconnect_amfs_,
                                                task_executor&         cu_cp_exec_,
                                                common_task_scheduler& common_task_sched_) :
   ngaps(ngaps_),
+  connect_amfs(connect_amfs_),
+  disconnect_amfs(disconnect_amfs_),
   cu_cp_exec(cu_cp_exec_),
   common_task_sched(common_task_sched_),
   logger(srslog::fetch_basic_logger("CU-CP"))
@@ -33,21 +47,25 @@ amf_connection_manager::amf_connection_manager(ngap_repository&       ngaps_,
 void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signal)
 {
   // Schedules setup routine to be executed in sequence with other CU-CP procedures.
-  common_task_sched.schedule_async_task(launch_async([this, p = completion_signal](
-                                                         coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
+  common_task_sched.schedule_async_task(
+      launch_async([this, success = false, p = completion_signal](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
 
-    // Launch procedure to initiate AMF connection.
-    amfs_connected.emplace(ngaps.get_ngaps().begin()->first, false);
-    CORO_AWAIT_VALUE(bool success, launch_async<amf_connection_setup_routine>(ngaps, amfs_connected.begin()->second));
+        if (connect_amfs != nullptr) {
+          CORO_AWAIT_VALUE(success, (*connect_amfs)(ngaps, amfs_connected));
+        } else {
+          // Launch procedure to initiate AMF connection.
+          amfs_connected.emplace(ngaps.get_ngaps().begin()->first, false);
+          CORO_AWAIT_VALUE(success, launch_async<amf_connection_setup_routine>(ngaps, amfs_connected.begin()->second));
+        }
 
-    // Signal through the promise the result of the connection setup.
-    if (p != nullptr) {
-      p->set_value(success);
-    }
+        // Signal through the promise the result of the connection setup.
+        if (p != nullptr) {
+          p->set_value(success);
+        }
 
-    CORO_RETURN();
-  }));
+        CORO_RETURN();
+      }));
 }
 
 async_task<void> amf_connection_manager::disconnect_amf()
@@ -58,6 +76,10 @@ async_task<void> amf_connection_manager::disconnect_amf()
       CORO_BEGIN(ctx);
       CORO_RETURN();
     });
+  }
+
+  if (disconnect_amfs != nullptr) {
+    return (*disconnect_amfs)(ngaps, amfs_connected);
   }
 
   return launch_async<amf_connection_removal_routine>(ngaps.get_ngaps().begin()->second,

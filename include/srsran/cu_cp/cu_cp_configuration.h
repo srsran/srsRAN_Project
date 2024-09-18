@@ -15,12 +15,20 @@
 #include "srsran/cu_cp/ue_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/rrc/rrc_ue_config.h"
+#include "srsran/support/async/async_task.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
 class n2_connection_client;
+class ngap_repository;
+
+using connect_amfs_func = async_task<bool> (*)(ngap_repository&                                    ngap_db,
+                                               std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected);
+
+using disconnect_amfs_func = async_task<void> (*)(ngap_repository&                                    ngap_db,
+                                                  std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected);
 
 struct plmn_item {
   plmn_identity plmn_id;
@@ -99,6 +107,10 @@ struct cu_cp_configuration {
     bool load_plugins;
     /// Loaded function pointer to trigger NG Handover
     void* start_ng_ho_func = nullptr;
+    /// Loaded function pointer to connect to AMFs
+    connect_amfs_func connect_amfs = nullptr;
+    /// Loaded function pointer to disconnect from AMFs
+    disconnect_amfs_func disconnect_amfs = nullptr;
   };
 
   /// NG-RAN node parameters.

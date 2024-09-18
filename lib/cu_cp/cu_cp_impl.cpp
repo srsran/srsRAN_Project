@@ -77,11 +77,19 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
     start_ho_prep_func = reinterpret_cast<start_ngap_handover_preparation_procedure_func>(cfg.plugin.start_ng_ho_func);
   }
 
+  if (cfg.plugin.connect_amfs != nullptr) {
+    connect_amfs = reinterpret_cast<connect_amfs_func>(cfg.plugin.connect_amfs);
+  }
+
+  if (cfg.plugin.disconnect_amfs != nullptr) {
+    disconnect_amfs = reinterpret_cast<disconnect_amfs_func>(cfg.plugin.disconnect_amfs);
+  }
+
   ngap_db = std::make_unique<ngap_repository>(ngap_repository_config{
       cfg, get_cu_cp_ngap_handler(), paging_handler, start_ho_prep_func, srslog::fetch_basic_logger("CU-CP")});
 
   controller = std::make_unique<cu_cp_controller>(
-      cfg, common_task_sched, *ngap_db, cu_up_db, du_db, *cfg.services.cu_cp_executor);
+      cfg, common_task_sched, *ngap_db, cu_up_db, du_db, connect_amfs, disconnect_amfs, *cfg.services.cu_cp_executor);
   conn_notifier.connect_node_connection_handler(*controller);
 
   mobility_mng = create_mobility_manager(

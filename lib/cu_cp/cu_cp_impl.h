@@ -206,6 +206,8 @@ private:
 
   // Plug-ins
   start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
+  connect_amfs_func                              connect_amfs       = nullptr;
+  disconnect_amfs_func                           disconnect_amfs    = nullptr;
 };
 
 } // namespace srs_cu_cp
