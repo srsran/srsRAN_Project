@@ -98,7 +98,7 @@ push_sdus(bench_params params, const rlc_tx_am_config& config, rlc_tx_am_entity*
   std::vector<std::vector<uint8_t>> pdus;
 
   // Prepare SDU list for benchmark
-  int num_sdus  = params.nof_repetitions; // +1 to expire t_reassembly on setup
+  int num_sdus  = params.nof_repetitions;
   int num_bytes = params.sdu_size;
   pdus.resize(num_sdus);
   for (int i = 0; i < num_sdus; i++) {
@@ -124,8 +124,8 @@ void benchmark_tx_pdu(const bench_params& params)
   config.max_retx_thresh  = 4;
   config.poll_pdu         = 4;
   config.poll_byte        = 25;
-  config.queue_size       = 4096;
-  config.queue_size_bytes = 4096 * 1507;
+  config.queue_size       = params.nof_repetitions;
+  config.queue_size_bytes = params.nof_repetitions * 1507;
   config.max_window       = 0;
 
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
@@ -165,7 +165,7 @@ void benchmark_tx_pdu(const bench_params& params)
     rlc_tx->pull_pdu(pdus[i]);
     i++;
   };
-  bm->new_measure("RX RLC AM PDU", 1500 * 8, measure);
+  bm->new_measure("TX RLC AM PDU", params.sdu_size * 8, measure);
 
   // Output results.
   bm->print_percentiles_time();
@@ -174,7 +174,7 @@ void benchmark_tx_pdu(const bench_params& params)
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::error);
+  srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::warning);
 
   srslog::init();
 
