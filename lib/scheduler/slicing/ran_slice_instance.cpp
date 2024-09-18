@@ -15,7 +15,10 @@ using namespace srsran;
 ran_slice_instance::ran_slice_instance(ran_slice_id_t                 id_,
                                        const cell_configuration&      cell_cfg_,
                                        const slice_rrm_policy_config& cfg_) :
-  id(id_), cell_cfg(&cell_cfg_), cfg(cfg_)
+  id(id_),
+  cell_cfg(&cell_cfg_),
+  cfg(cfg_),
+  pusch_rb_count_per_slot(get_allocator_ring_size_gt_min(SCHEDULER_MAX_K2 + cell_cfg->ntn_cs_koffset))
 {
   std::fill(pusch_rb_count_per_slot.begin(), pusch_rb_count_per_slot.end(), 0);
 }
@@ -25,7 +28,16 @@ void ran_slice_instance::slot_indication(slot_point slot_tx)
   pdsch_rb_count = 0;
   // Clear RB count in previous slots.
   for (unsigned count = 0; count < nof_slots_to_clear; ++count) {
-    pusch_rb_count_per_slot[(slot_tx - 1 - count).to_uint()] = 0;
+    pusch_rb_count_per_slot[(slot_tx - 1 - count).to_uint() % pusch_rb_count_per_slot.size()] = 0;
+  }
+}
+
+void ran_slice_instance::skipped_slot_indication(slot_point prev_slot, slot_point current_slot)
+{
+  slot_point sl = current_slot - 1;
+  while (sl > prev_slot) {
+    slot_indication(sl);
+    sl -= nof_slots_to_clear;
   }
 }
 

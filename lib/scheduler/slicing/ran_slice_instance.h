@@ -22,14 +22,13 @@ namespace srsran {
 /// This class stores all the internal information relative to a RAN slice instantiation.
 class ran_slice_instance
 {
-  /// Number of slots for which allocated PUSCH grant is maintained.
-  static const size_t RING_ALLOCATOR_SIZE =
-      get_allocator_ring_size_gt_min(SCHEDULER_MAX_K2 + NTN_CELL_SPECIFIC_KOFFSET_MAX);
-
 public:
   ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
 
   void slot_indication(slot_point slot_tx);
+
+  /// \brief Handle skipped slot indication.
+  void skipped_slot_indication(slot_point prev_slot, slot_point current_slot);
 
   bool active() const { return not slice_ues.empty(); }
 
@@ -39,7 +38,7 @@ public:
   /// Save PUSCH grant.
   void store_pusch_grant(unsigned crbs, slot_point pusch_slot)
   {
-    pusch_rb_count_per_slot[pusch_slot.to_uint()] += crbs;
+    pusch_rb_count_per_slot[pusch_slot.to_uint() % pusch_rb_count_per_slot.size()] += crbs;
   }
 
   /// Determine if at least one bearer of the given UE is currently managed by this slice.
@@ -74,7 +73,7 @@ public:
   /// Counter of how many RBs have been scheduled for PDSCH in the current slot for this slice.
   unsigned pdsch_rb_count = 0;
   /// Ring of counters of how many RBs have been scheduled for PUSCH in a particular slot for this slice.
-  circular_array<unsigned, RING_ALLOCATOR_SIZE> pusch_rb_count_per_slot;
+  std::vector<unsigned> pusch_rb_count_per_slot;
 
   /// Nof. of previous slots in which RB count needs to be cleared in \c pusch_rb_count_per_slot upon receiving slot
   /// indication.

@@ -61,6 +61,13 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_reposit
 
 void slice_scheduler::slot_indication(slot_point slot_tx)
 {
+  // If there are skipped slots, handle them.
+  if ((current_slot + 1) != slot_tx) {
+    for (auto& slice : slices) {
+      slice.inst.skipped_slot_indication(current_slot, slot_tx);
+    }
+  }
+  // Update current slot.
   current_slot = slot_tx;
 
   slot_count++;
@@ -88,14 +95,14 @@ void slice_scheduler::slot_indication(slot_point slot_tx)
     for (const unsigned pusch_td_res_idx :
          valid_pusch_td_list_per_slot[slot_tx.to_uint() % valid_pusch_td_list_per_slot.size()]) {
       slot_point pusch_slot = slot_tx + pusch_time_domain_list[pusch_td_res_idx].k2;
-      max_rbs               = slice.inst.pusch_rb_count_per_slot[pusch_slot.to_uint()] <= slice.inst.cfg.min_prb and
-                        slice.inst.cfg.min_prb > 0
-                                  ? slice.inst.cfg.min_prb
-                                  : slice.inst.cfg.max_prb;
+      unsigned   pusch_rb_count =
+          slice.inst.pusch_rb_count_per_slot[pusch_slot.to_uint() % slice.inst.pusch_rb_count_per_slot.size()];
+      max_rbs = pusch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0 ? slice.inst.cfg.min_prb
+                                                                                        : slice.inst.cfg.max_prb;
       ul_prio_queue.push(
           slice_candidate_context{slice.inst.id,
                                   slice.get_prio(false, slot_count, slot_tx, pusch_slot, slices.size(), false),
-                                  {slice.inst.pusch_rb_count_per_slot[pusch_slot.to_uint()], max_rbs},
+                                  {pusch_rb_count, max_rbs},
                                   pusch_slot});
     }
   }
@@ -232,7 +239,10 @@ slice_scheduler::get_next_candidate()
     prio_queue.pop();
 
     unsigned rb_count =
-        IsDownlink ? chosen_slice.inst.pdsch_rb_count : chosen_slice.inst.pusch_rb_count_per_slot[pxsch_slot.to_uint()];
+        IsDownlink
+            ? chosen_slice.inst.pdsch_rb_count
+            : chosen_slice.inst
+                  .pusch_rb_count_per_slot[pxsch_slot.to_uint() % chosen_slice.inst.pusch_rb_count_per_slot.size()];
     if (not rb_lims.contains(rb_count)) {
       // The slice has been scheduled in this slot with a number of RBs that is not within the limits for this
       // candidate. This could happen, for instance, if the scheduler could not schedule all RBs of a candidate
@@ -294,7 +304,8 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
   static constexpr priority_type delay_bitsize = 8U;
   static constexpr priority_type rr_bitsize    = 8U;
 
-  unsigned rb_count = is_dl ? inst.pdsch_rb_count : inst.pusch_rb_count_per_slot[pxsch_slot.to_uint()];
+  unsigned rb_count = is_dl ? inst.pdsch_rb_count
+                            : inst.pusch_rb_count_per_slot[pxsch_slot.to_uint() % inst.pusch_rb_count_per_slot.size()];
   if (not inst.active() or rb_count >= inst.cfg.max_prb) {
     // If the slice is not in a state to be scheduled in this slot, return skip priority level.
     return skip_prio;
