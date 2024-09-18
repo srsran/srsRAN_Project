@@ -137,7 +137,7 @@ void benchmark_tx_pdu(const bench_params& params)
   null_rlc_pcap pcap;
 
   auto metrics_agg = std::make_unique<rlc_metrics_aggregator>(
-      gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{0}, tester.get(), ue_worker);
+      gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1}, tester.get(), ue_worker);
 
   // Create RLC AM TX entity
   auto rlc_tx = std::make_unique<rlc_tx_am_entity>(gnb_du_id_t::min,
@@ -161,7 +161,7 @@ void benchmark_tx_pdu(const bench_params& params)
   unsigned i = 0;
 
   // Push first PDU and expire reassembly timer to advance rx_highest_status
-  auto measure = [&rlc_tx, &i, &pdus]() mutable {
+  auto measure = [&rlc_tx, &i, &pdus]() {
     rlc_tx->pull_pdu(pdus[i]);
     i++;
   };
@@ -170,6 +170,12 @@ void benchmark_tx_pdu(const bench_params& params)
   // Output results.
   bm->print_percentiles_time();
   bm->print_percentiles_throughput(" bps");
+
+  uint64_t                 bm_duration_ns = bm->get_total_meas_time_ns();
+  std::chrono::nanoseconds bm_duration(bm_duration_ns);
+  rlc_tx_metrics           tx_metrics = rlc_tx->get_metrics();
+  fmt::print("RLC TX metrics: {}\n",
+             format_rlc_tx_metrics(std::chrono::duration_cast<std::chrono::milliseconds>(bm_duration), tx_metrics));
 }
 
 int main(int argc, char** argv)
