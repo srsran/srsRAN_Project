@@ -17,6 +17,11 @@
 #include "split6_du_unit_cli11_schema.h"
 #include "split6_du_unit_config_validator.h"
 #include "split6_du_unit_logger_registrator.h"
+#include "split6_du_unit_config_validator.h"
+#include "apps/units/flexible_du/du_high/du_high_config_yaml_writer.h"
+#include "apps/units/flexible_du/fapi/fapi_config_yaml_writer.h"
+#include "apps/units/flexible_du/du_high/du_high_config_translators.h"
+#include "apps/units/flexible_du/fapi/fapi_config_translator.h"
 
 using namespace srsran;
 

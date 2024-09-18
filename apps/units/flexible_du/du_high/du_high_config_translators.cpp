@@ -11,6 +11,7 @@
 #include "du_high_config_translators.h"
 #include "apps/services/worker_manager_config.h"
 #include "du_high_config.h"
+
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
