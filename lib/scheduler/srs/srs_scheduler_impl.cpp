@@ -19,8 +19,8 @@ using namespace srsran;
 srs_scheduler_impl::srs_scheduler_impl(const cell_configuration& cell_cfg_, ue_repository& ues_) :
   cell_cfg(cell_cfg_), ues(ues_), logger(srslog::fetch_basic_logger("SCHED"))
 {
-  // Max size of the SRS resource slot wheel, dimensioned based on the SRS periods.
-  periodic_srs_slot_wheel.resize(std::max(MAX_SR_PERIOD, MAX_CSI_REPORT_PERIOD));
+  // Max size of the SRS resource slot wheel, dimensioned based on the maximum SRS periods.
+  periodic_srs_slot_wheel.resize(static_cast<unsigned>(srs_periodicity::sl2560));
 
   // Pre-reserve space for the UEs that will be added.
   updated_ues.reserve(MAX_NOF_DU_UES);
@@ -78,6 +78,9 @@ void srs_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
                    srs_res->id.ue_res_id);
     }
   }
+
+  // Register the UE in the list of recently configured UEs.
+  updated_ues.push_back(ue_cfg.crnti);
 }
 
 void srs_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
@@ -158,6 +161,7 @@ void srs_scheduler_impl::schedule_updated_ues_srs(cell_resource_allocator& cell_
     // Schedule SRS up to the farthest slot.
     for (unsigned n = 0; n != cell_alloc.max_ul_slot_alloc_delay; ++n) {
       auto& slot_srss = periodic_srs_slot_wheel[(cell_alloc.slot_tx() + n).to_uint() % periodic_srs_slot_wheel.size()];
+
       // For all the periodic SRS info element at this slot, allocate only those that belong to the UE updated_ues.
       for (const periodic_srs_info& srs : slot_srss) {
         const bool rnti_in_updated_ues =
