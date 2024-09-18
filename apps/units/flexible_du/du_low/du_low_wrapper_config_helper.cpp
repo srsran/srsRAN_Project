@@ -10,8 +10,10 @@
 
 #include "du_low_wrapper_config_helper.h"
 #include "apps/services/worker_manager.h"
+#include "du_low_config.h"
 #include "du_low_config_translator.h"
 #include "srsran/du/du_low/du_low_wrapper_factory.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 
 using namespace srsran;
 

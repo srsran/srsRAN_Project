@@ -9,6 +9,7 @@
  */
 
 #include "ru_ofh_config_translator.h"
+#include "apps/services/worker_manager_config.h"
 #include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "ru_ofh_config.h"
 #include "srsran/du/du_cell_config.h"
@@ -151,4 +152,32 @@ ru_ofh_configuration srsran::generate_ru_ofh_config(const ru_ofh_unit_config&   
   generate_config(out_cfg, ru_cfg, du_cells, max_processing_delay_slots);
 
   return out_cfg;
+}
+
+void srsran::fill_ofh_worker_manager_config(worker_manager_config&             config,
+                                            const ru_ofh_unit_config&          ru_cfg,
+                                            span<const srs_du::du_cell_config> du_cells)
+{
+  auto& ofh_cfg                    = config.ru_ofh_cfg.emplace();
+  ofh_cfg.is_downlink_parallelized = ru_cfg.expert_execution_cfg.threads.is_downlink_parallelized;
+  for (const auto& du_cell : du_cells) {
+    ofh_cfg.nof_downlink_antennas.push_back(du_cell.dl_carrier.nof_ant);
+  }
+  ofh_cfg.ru_timing_cpu   = ru_cfg.expert_execution_cfg.ru_timing_cpu;
+  ofh_cfg.txrx_affinities = ru_cfg.expert_execution_cfg.txrx_affinities;
+
+  // If ru_txrx_cpus parameters are not specified, use the affinities of ru_cpus parameters of the cells.
+  if (ofh_cfg.txrx_affinities.empty()) {
+    for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
+      auto affinity_cfg = ru_cfg.expert_execution_cfg.cell_affinities[i].ru_cpu_cfg;
+      ofh_cfg.txrx_affinities.emplace_back(affinity_cfg.mask);
+    }
+  }
+
+  srsran_assert(config.config_affinities.size() == ru_cfg.expert_execution_cfg.cell_affinities.size(),
+                "Invalid number of cell affinities");
+
+  for (unsigned i = 0, e = ru_cfg.expert_execution_cfg.cell_affinities.size(); i != e; ++i) {
+    config.config_affinities[i].push_back(ru_cfg.expert_execution_cfg.cell_affinities[i].ru_cpu_cfg);
+  }
 }

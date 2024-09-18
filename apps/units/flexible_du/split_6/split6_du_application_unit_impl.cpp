@@ -9,8 +9,13 @@
  */
 
 #include "split6_du_application_unit_impl.h"
+#include "apps/units/flexible_du/du_high/du_high_config_translators.h"
+#include "apps/units/flexible_du/du_high/du_high_config_yaml_writer.h"
+#include "apps/units/flexible_du/fapi/fapi_config_translator.h"
+#include "apps/units/flexible_du/fapi/fapi_config_yaml_writer.h"
 #include "split6_du_factory.h"
 #include "split6_du_unit_cli11_schema.h"
+#include "split6_du_unit_config_validator.h"
 #include "split6_du_unit_logger_registrator.h"
 
 using namespace srsran;
@@ -21,13 +26,18 @@ void split6_du_application_unit_impl::on_loggers_registration()
   plugin->on_loggers_registration();
 }
 
-bool split6_du_application_unit_impl::on_configuration_validation() const
+void split6_du_application_unit_impl::on_configuration_parameters_autoderivation(CLI::App& app)
+{
+  autoderive_split6_du_parameters_after_parsing(app, unit_cfg);
+}
+
+bool split6_du_application_unit_impl::on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const
 {
   if (!plugin->on_configuration_validation()) {
     return false;
   }
 
-  return true;
+  return validate_split6_du_unit_config(unit_cfg, available_cpus);
 }
 
 void split6_du_application_unit_impl::on_parsing_configuration_registration(CLI::App& app)
@@ -36,7 +46,7 @@ void split6_du_application_unit_impl::on_parsing_configuration_registration(CLI:
   plugin->on_parsing_configuration_registration(app);
 }
 
-du_unit split6_du_application_unit_impl::create_unit(const du_unit_dependencies& dependencies)
+du_unit split6_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies)
 {
   auto fapi_ctrl = plugin->create_fapi_adaptor(dependencies);
   report_error_if_not(!fapi_ctrl.empty(), "Could not create FAPI adaptor");
@@ -44,4 +54,19 @@ du_unit split6_du_application_unit_impl::create_unit(const du_unit_dependencies&
   report_error_if_not(du_impl.unit, "Could not create split 6 DU");
 
   return du_impl;
+}
+
+void split6_du_application_unit_impl::dump_config(YAML::Node& node) const
+{
+  fill_du_high_config_in_yaml_schema(node, unit_cfg.du_high_cfg.config);
+  fill_fapi_config_in_yaml_schema(node, unit_cfg.fapi_cfg);
+}
+
+void split6_du_application_unit_impl::fill_worker_manager_config(worker_manager_config& config)
+{
+  // Split 6 always runs in non blocking mode.
+  bool     is_blocking_mode_enable = false;
+  unsigned nof_cells               = unit_cfg.du_high_cfg.config.cells_cfg.size();
+  fill_du_high_worker_manager_config(config, unit_cfg.du_high_cfg.config, is_blocking_mode_enable);
+  fill_fapi_worker_manager_config(config, unit_cfg.fapi_cfg, nof_cells);
 }

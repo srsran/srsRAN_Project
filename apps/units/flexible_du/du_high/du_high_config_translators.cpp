@@ -9,6 +9,7 @@
  */
 
 #include "du_high_config_translators.h"
+#include "apps/services/worker_manager_config.h"
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
@@ -933,5 +934,37 @@ void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_
     } else {
       srb.second.rlc.am.tx.t_poll_retx = 50;
     }
+  }
+}
+
+void srsran::fill_du_high_worker_manager_config(worker_manager_config&     config,
+                                                const du_high_unit_config& unit_cfg,
+                                                bool                       is_blocking_mode_enabled)
+{
+  auto& du_hi_cfg = config.du_hi_cfg;
+
+  du_hi_cfg.is_rt_mode_enabled = !is_blocking_mode_enabled;
+  du_hi_cfg.nof_cells          = unit_cfg.cells_cfg.size();
+  // Set the number of cells of the affinities vector.
+  config.config_affinities.resize(du_hi_cfg.nof_cells);
+  for (unsigned i = 0; i != du_hi_cfg.nof_cells; ++i) {
+    config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l2_cell_cpu_cfg);
+  }
+
+  auto& pcap_cfg = config.pcap_cfg;
+  if (unit_cfg.pcaps.e2ap.enabled) {
+    pcap_cfg.is_e2ap_enabled = true;
+  }
+  if (unit_cfg.pcaps.f1ap.enabled) {
+    pcap_cfg.is_f1ap_enabled = true;
+  }
+  if (unit_cfg.pcaps.f1u.enabled) {
+    pcap_cfg.is_f1u_enabled = true;
+  }
+  if (unit_cfg.pcaps.mac.enabled) {
+    pcap_cfg.is_mac_enabled = true;
+  }
+  if (unit_cfg.pcaps.rlc.enabled) {
+    pcap_cfg.is_rlc_enabled = true;
   }
 }

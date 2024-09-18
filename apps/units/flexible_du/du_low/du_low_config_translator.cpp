@@ -9,6 +9,7 @@
  */
 
 #include "du_low_config_translator.h"
+#include "apps/services/worker_manager_config.h"
 #include "du_low_config.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
@@ -169,4 +170,27 @@ void srsran::generate_du_low_wrapper_config(srs_du::du_low_wrapper_config&      
 {
   generate_du_low_config(out_config.du_low_cfg, du_low_unit_cfg, hal_config, du_cells, max_puschs_per_slot, du_id);
   out_config.prach_ports = std::move(prach_ports);
+}
+
+void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
+                                               const du_low_unit_config& unit_cfg,
+                                               unsigned                  is_blocking_mode_active,
+                                               unsigned                  nof_cells)
+{
+  auto& du_low_cfg = config.du_low_cfg.emplace();
+
+  du_low_cfg.is_blocking_mode_active = is_blocking_mode_active;
+  du_low_cfg.nof_cells               = nof_cells;
+
+  du_low_cfg.nof_dl_threads            = unit_cfg.expert_execution_cfg.threads.nof_dl_threads;
+  du_low_cfg.nof_ul_threads            = unit_cfg.expert_execution_cfg.threads.nof_ul_threads;
+  du_low_cfg.nof_pusch_decoder_threads = unit_cfg.expert_execution_cfg.threads.nof_pusch_decoder_threads;
+
+  srsran_assert(config.config_affinities.size() == unit_cfg.expert_execution_cfg.cell_affinities.size(),
+                "Invalid number of cell affinities");
+
+  for (unsigned i = 0, e = nof_cells; i != e; ++i) {
+    config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l1_dl_cpu_cfg);
+    config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l1_ul_cpu_cfg);
+  }
 }

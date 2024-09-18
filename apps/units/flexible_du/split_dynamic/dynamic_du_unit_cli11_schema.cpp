@@ -12,7 +12,7 @@
 #include "apps/units/flexible_du/du_high/du_high_config_cli11_schema.h"
 #include "apps/units/flexible_du/du_low/du_low_config_cli11_schema.h"
 #include "apps/units/flexible_du/fapi/fapi_config_cli11_schema.h"
-#include "apps/units/flexible_du/split_7_2/ru_ofh_config_cli11_schema.h"
+#include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_cli11_schema.h"
 #include "apps/units/flexible_du/split_8/ru_sdr_config_cli11_schema.h"
 #include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
 #include "dynamic_du_unit_config.h"

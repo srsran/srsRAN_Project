@@ -851,6 +851,9 @@ struct du_high_unit_config {
   std::map<srb_id_t, du_high_unit_srb_config> srb_cfg;
   /// E2 configuration.
   du_high_unit_e2_config e2_cfg;
+
+  /// Returns true if testmode is enabled, false otherwise.
+  bool is_testmode_enabled() const { return test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI; }
 };
 
 /// DU high configuration.

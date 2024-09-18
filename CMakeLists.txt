@@ -349,7 +349,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH} -mtune=${MTUNE}")
 # DU split setup
 ########################################################################
 # Public variable to select the DU split.
-set(DU_SPLIT_TYPE "DYNAMIC" CACHE STRING "DU split type. Default value is 'DYNAMIC'. Allowed values: DYNAMIC, SPLIT_6")
+set(DU_SPLIT_TYPE "DYNAMIC" CACHE STRING "DU split type. Default value is 'DYNAMIC'. Allowed values: DYNAMIC, SPLIT_6, SPLIT_7_2")
 
 # Internal private booleans to represent the selected DU split type. Values auto-derived from DU_SPLIT_TYPE variable.
 set(DU_SPLIT_DYNAMIC OFF CACHE BOOL "DU dynamic split enabled boolean")
@@ -361,6 +361,8 @@ if (DU_SPLIT_TYPE STREQUAL "DYNAMIC")
     set(DU_SPLIT_DYNAMIC ON)
 elseif (DU_SPLIT_TYPE STREQUAL "SPLIT_6")
     set(DU_SPLIT_6 ON)
+elseif (DU_SPLIT_TYPE STREQUAL "SPLIT_7_2")
+    set(DU_SPLIT_7_2 ON)
 else ()
     message(WARNING "DU split value '${DU_SPLIT_TYPE}' is not supported. Defaulting to 'DYNAMIC'")
     set(DU_SPLIT_TYPE "DYNAMIC")

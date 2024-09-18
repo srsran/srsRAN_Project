@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_unit_config_translators.h"
+#include "apps/services/worker_manager_config.h"
 #include "cu_up_unit_config.h"
 #include "srsran/cu_up/cu_up_configuration_helpers.h"
 #include "srsran/rlc/rlc_config.h"
@@ -62,4 +63,20 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
     f1u_cfg.warn_on_drop           = cu_up_config.warn_on_drop;
   }
   return out_cfg;
+}
+
+void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, const cu_up_unit_config& unit_cfg)
+{
+  config.gtpu_queue_size = unit_cfg.gtpu_queue_size;
+
+  auto& pcap_cfg = config.pcap_cfg;
+  if (unit_cfg.pcap_cfg.e1ap.enabled) {
+    pcap_cfg.is_e1ap_enabled = true;
+  }
+  if (unit_cfg.pcap_cfg.n3.enabled) {
+    pcap_cfg.is_n3_enabled = true;
+  }
+  if (unit_cfg.pcap_cfg.f1u.enabled) {
+    pcap_cfg.is_f1u_enabled = true;
+  }
 }

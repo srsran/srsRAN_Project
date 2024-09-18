@@ -9,6 +9,7 @@
  */
 
 #include "ru_sdr_config_translator.h"
+#include "apps/services/worker_manager_config.h"
 #include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "apps/units/flexible_du/du_low/du_low_config.h"
 #include "ru_sdr_config.h"
@@ -256,4 +257,22 @@ ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config
   }
 
   return out_cfg;
+}
+
+void srsran::fill_sdr_worker_manager_config(worker_manager_config& config, const ru_sdr_unit_config& ru_cfg)
+{
+  auto& sdr_cfg = config.ru_sdr_cfg.emplace();
+
+  sdr_cfg.nof_cells = ru_cfg.expert_execution_cfg.cell_affinities.size();
+  sdr_cfg.profile   = (ru_cfg.device_driver != "zmq")
+                          ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
+                              ru_cfg.expert_execution_cfg.threads.execution_profile)
+                          : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::blocking;
+
+  srsran_assert(config.config_affinities.size() == ru_cfg.expert_execution_cfg.cell_affinities.size(),
+                "Invalid number of cell affinities");
+
+  for (unsigned i = 0; i != sdr_cfg.nof_cells; ++i) {
+    config.config_affinities[i].push_back(ru_cfg.expert_execution_cfg.cell_affinities[i].ru_cpu_cfg);
+  }
 }

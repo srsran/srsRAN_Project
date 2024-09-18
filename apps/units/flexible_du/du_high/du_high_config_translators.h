@@ -24,6 +24,7 @@
 namespace srsran {
 
 struct du_high_unit_config;
+struct worker_manager_config;
 
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<srs_du::du_cell_config> generate_du_cell_config(const du_high_unit_config& config);
@@ -51,5 +52,10 @@ std::vector<slice_rrm_policy_config>
 generate_du_slicing_rrm_policy_config(span<const std::string>                    plmns,
                                       span<const du_high_unit_cell_slice_config> slice_cfg,
                                       unsigned                                   nof_cell_crbs);
+
+/// Fills the DU high worker manager parameters of the given worker manager configuration.
+void fill_du_high_worker_manager_config(worker_manager_config&     config,
+                                        const du_high_unit_config& unit_cfg,
+                                        bool                       is_blocking_mode_enabled = false);
 
 } // namespace srsran

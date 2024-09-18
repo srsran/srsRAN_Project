@@ -65,13 +65,13 @@
 #include "apps/units/cu_cp/cu_cp_unit_config_yaml_writer.h"
 #include "apps/units/cu_cp/pcap_factory.h"
 #include "apps/units/cu_up/cu_up_builder.h"
+#include "apps/units/cu_up/cu_up_unit_config_translators.h"
 #include "apps/units/cu_up/cu_up_unit_config_yaml_writer.h"
 #include "apps/units/cu_up/pcap_factory.h"
+#include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "apps/units/flexible_du/du_high/pcap_factory.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_yaml_writer.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
+#include "apps/units/flexible_du/flexible_du_application_unit.h"
+
 #include "srsran/du/du_power_controller.h"
 #include "srsran/support/cli11_utils.h"
 
@@ -137,7 +137,7 @@ static void initialize_log(const std::string& filename)
 static void register_app_logs(const logger_appconfig&         log_cfg,
                               const cu_cp_unit_logger_config& cu_cp_loggers,
                               const cu_up_unit_logger_config& cu_up_loggers,
-                              const dynamic_du_unit_config&   du_loggers)
+                              flexible_du_application_unit&   du_app_unit)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
@@ -167,13 +167,13 @@ static void register_app_logs(const logger_appconfig&         log_cfg,
   // Register units logs.
   register_cu_cp_loggers(cu_cp_loggers);
   register_cu_up_loggers(cu_up_loggers);
-  register_dynamic_du_loggers(du_loggers);
+  du_app_unit.on_loggers_registration();
 }
 
-static void autoderive_slicing_args(dynamic_du_unit_config& du_unit_cfg, cu_cp_unit_config& cu_cp_config)
+static void autoderive_slicing_args(du_high_unit_config& du_hi_cfg, cu_cp_unit_config& cu_cp_config)
 {
   std::vector<s_nssai_t> du_slices;
-  for (const auto& cell_cfg : du_unit_cfg.du_high_cfg.config.cells_cfg) {
+  for (const auto& cell_cfg : du_hi_cfg.cells_cfg) {
     for (const auto& slice : cell_cfg.cell.slice_cfg) {
       if (du_slices.end() == std::find(du_slices.begin(), du_slices.end(), slice.s_nssai)) {
         du_slices.push_back(slice.s_nssai);
@@ -224,18 +224,18 @@ int main(int argc, char** argv)
   cu_up_config.pcap_cfg.set_default_filename("/tmp/gnb");
   configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
 
-  dynamic_du_unit_config du_unit_cfg;
-  du_unit_cfg.du_high_cfg.config.pcaps.set_default_filename("/tmp/gnb");
-  configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
+  auto du_app_unit = create_flexible_du_application_unit();
+  du_app_unit->get_du_high_unit_config().pcaps.set_default_filename("/tmp/gnb");
+  du_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &gnb_cfg, &du_unit_cfg, &cu_cp_config, &cu_up_config]() {
+  app.callback([&app, &gnb_cfg, &du_app_unit, &cu_cp_config, &cu_up_config]() {
     autoderive_gnb_parameters_after_parsing(app, gnb_cfg);
-    autoderive_slicing_args(du_unit_cfg, cu_cp_config);
-    autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
+    autoderive_slicing_args(du_app_unit->get_du_high_unit_config(), cu_cp_config);
+    du_app_unit->on_configuration_parameters_autoderivation(app);
 
     // If test mode is enabled, we auto-enable "no_core" option and generate a amf config with no core.
-    if (du_unit_cfg.du_high_cfg.config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
+    if (du_app_unit->get_du_high_unit_config().is_testmode_enabled()) {
       cu_cp_config.amf_config.no_core           = true;
       cu_cp_config.amf_config.amf.supported_tas = {{7, {{"00101", {s_nssai_t{1}}}}}};
     }
@@ -251,17 +251,16 @@ int main(int argc, char** argv)
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg) || !validate_cu_cp_unit_config(cu_cp_config) ||
       !validate_cu_up_unit_config(cu_up_config) ||
-      !validate_dynamic_du_unit_config(du_unit_cfg,
-                                       (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
-                                           ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                           : os_sched_affinity_bitmask::available_cpus()) ||
-      !validate_plmn_and_tacs(du_unit_cfg.du_high_cfg.config, cu_cp_config)) {
+      !du_app_unit->on_configuration_validation((gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
+                                                    ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
+                                                    : os_sched_affinity_bitmask::available_cpus()) ||
+      !validate_plmn_and_tacs(du_app_unit->get_du_high_unit_config(), cu_cp_config)) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(gnb_cfg.log_cfg.filename);
-  register_app_logs(gnb_cfg.log_cfg, cu_cp_config.loggers, cu_up_config.loggers, du_unit_cfg);
+  register_app_logs(gnb_cfg.log_cfg, cu_cp_config.loggers, cu_up_config.loggers, *du_app_unit);
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
@@ -270,7 +269,7 @@ int main(int argc, char** argv)
     fill_gnb_appconfig_in_yaml_schema(node, gnb_cfg);
     fill_cu_up_config_in_yaml_schema(node, cu_up_config);
     fill_cu_cp_config_in_yaml_schema(node, cu_cp_config);
-    fill_dynamic_du_unit_config_in_yaml_schema(node, du_unit_cfg);
+    du_app_unit->dump_config(node);
     config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
@@ -319,11 +318,14 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
-  worker_manager workers{du_unit_cfg,
-                         gnb_cfg.expert_execution_cfg,
-                         cu_cp_config.pcap_cfg,
-                         cu_up_config.pcap_cfg,
-                         cu_up_config.gtpu_queue_size};
+  // Instantiate worker manager.
+  worker_manager_config worker_manager_cfg;
+  fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
+  fill_cu_cp_worker_manager_config(worker_manager_cfg, cu_cp_config);
+  fill_cu_up_worker_manager_config(worker_manager_cfg, cu_up_config);
+  du_app_unit->fill_worker_manager_config(worker_manager_cfg);
+
+  worker_manager workers{worker_manager_cfg};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -336,13 +338,13 @@ int main(int argc, char** argv)
   // In the gNB app, there is no point in instantiating two pcaps for each node of E1 and F1.
   // We disable one accordingly.
   cu_up_config.pcap_cfg.disable_e1_pcaps();
-  du_unit_cfg.du_high_cfg.config.pcaps.disable_f1_pcaps();
+  du_app_unit->get_du_high_unit_config().pcaps.disable_f1_pcaps();
   srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
   srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_dlt_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
   srsran::modules::flexible_du::du_pcaps du_pcaps =
-      modules::flexible_du::create_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+      modules::flexible_du::create_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
@@ -353,7 +355,7 @@ int main(int argc, char** argv)
   timer_manager                  app_timers{256};
   timer_manager*                 cu_timers = &app_timers;
   std::unique_ptr<timer_manager> dummy_timers;
-  if (du_unit_cfg.du_high_cfg.config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
+  if (du_app_unit->get_du_high_unit_config().is_testmode_enabled()) {
     // In case test mode is enabled, we pass dummy timers to the upper layers.
     dummy_timers = std::make_unique<timer_manager>(256);
     cu_timers    = dummy_timers.get();
@@ -366,7 +368,7 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-  e2_metric_connector_manager e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
+  e2_metric_connector_manager e2_metric_connectors(du_app_unit->get_du_high_unit_config().cells_cfg.size());
 
   // Create CU-CP config.
   cu_cp_build_dependencies cu_cp_dependencies;
@@ -452,7 +454,7 @@ int main(int argc, char** argv)
   du_dependencies.json_sink            = &json_sink;
   du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
 
-  auto du_inst_and_cmds = create_du(du_unit_cfg, du_dependencies);
+  auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
 
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 

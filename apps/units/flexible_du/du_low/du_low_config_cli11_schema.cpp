@@ -312,7 +312,7 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
                                                         du_low_unit_config& parsed_cfg,
                                                         duplex_mode         mode,
-                                                        bool                is_zmq_rf_driver,
+                                                        bool                is_blocking_mode_enabled,
                                                         unsigned            nof_cells)
 {
   // If max proc delay property is not present in the config, configure the default value.
@@ -336,7 +336,7 @@ void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
   }
 
   // Ignore the default settings based in the number of CPU cores for ZMQ.
-  if (is_zmq_rf_driver) {
+  if (is_blocking_mode_enabled) {
     du_low_unit_expert_threads_config& upper = parsed_cfg.expert_execution_cfg.threads;
     upper.nof_pusch_decoder_threads          = 0;
     upper.nof_ul_threads                     = 1;

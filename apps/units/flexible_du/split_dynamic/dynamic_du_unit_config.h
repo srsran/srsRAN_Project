@@ -13,7 +13,7 @@
 #include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "apps/units/flexible_du/du_low/du_low_config.h"
 #include "apps/units/flexible_du/fapi/fapi_config.h"
-#include "apps/units/flexible_du/split_7_2/ru_ofh_config.h"
+#include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config.h"
 #include "apps/units/flexible_du/split_8/ru_sdr_config.h"
 #include <variant>
 

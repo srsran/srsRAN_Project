@@ -50,11 +50,9 @@
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/stdin_command_dispatcher.h"
+#include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "apps/units/flexible_du/du_high/pcap_factory.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_yaml_writer.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
+#include "apps/units/flexible_du/flexible_du_application_unit.h"
 
 #include "srsran/du/du_power_controller.h"
 
@@ -110,7 +108,7 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const logger_appconfig& log_cfg, const dynamic_du_unit_config& du_loggers)
+static void register_app_logs(const logger_appconfig& log_cfg, flexible_du_application_unit& du_app_unit)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
@@ -138,7 +136,7 @@ static void register_app_logs(const logger_appconfig& log_cfg, const dynamic_du_
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Register units logs.
-  register_dynamic_du_loggers(du_loggers);
+  du_app_unit.on_loggers_registration();
 }
 
 int main(int argc, char** argv)
@@ -167,14 +165,14 @@ int main(int argc, char** argv)
   // Configure CLI11 with the DU application configuration schema.
   configure_cli11_with_du_appconfig_schema(app, du_cfg);
 
-  dynamic_du_unit_config du_unit_cfg;
-  du_unit_cfg.du_high_cfg.config.pcaps.set_default_filename("/tmp/du");
-  configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
+  auto du_app_unit = create_flexible_du_application_unit();
+  du_app_unit->get_du_high_unit_config().pcaps.set_default_filename("/tmp/du");
+  du_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &du_cfg, &du_unit_cfg]() {
+  app.callback([&app, &du_cfg, &du_app_unit]() {
     autoderive_du_parameters_after_parsing(app, du_cfg);
-    autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
+    du_app_unit->on_configuration_parameters_autoderivation(app);
   });
 
   // Parse arguments.
@@ -182,23 +180,22 @@ int main(int argc, char** argv)
 
   // Check the modified configuration.
   if (!validate_appconfig(du_cfg) ||
-      !validate_dynamic_du_unit_config(du_unit_cfg,
-                                       (du_cfg.expert_execution_cfg.affinities.isolated_cpus)
-                                           ? du_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                           : os_sched_affinity_bitmask::available_cpus())) {
+      !du_app_unit->on_configuration_validation((du_cfg.expert_execution_cfg.affinities.isolated_cpus)
+                                                    ? du_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
+                                                    : os_sched_affinity_bitmask::available_cpus())) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(du_cfg.log_cfg.filename);
-  register_app_logs(du_cfg.log_cfg, du_unit_cfg);
+  register_app_logs(du_cfg.log_cfg, *du_app_unit);
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
     YAML::Node node;
     fill_du_appconfig_in_yaml_schema(node, du_cfg);
-    fill_dynamic_du_unit_config_in_yaml_schema(node, du_unit_cfg);
+    du_app_unit->dump_config(node);
     config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
@@ -247,10 +244,12 @@ int main(int argc, char** argv)
   check_cpu_governor(du_logger);
   check_drm_kms_polling(du_logger);
 
-  cu_cp_unit_pcap_config dummy_cu_cp_pcap{};
-  cu_up_unit_pcap_config dummy_cu_up_pcap{};
-  worker_manager         workers{
-      du_unit_cfg, du_cfg.expert_execution_cfg, dummy_cu_cp_pcap, dummy_cu_up_pcap, du_cfg.nru_cfg.pdu_queue_size};
+  // Instantiate worker manager.
+  worker_manager_config worker_manager_cfg;
+  fill_du_worker_manager_config(worker_manager_cfg, du_cfg);
+  du_app_unit->fill_worker_manager_config(worker_manager_cfg);
+
+  worker_manager workers{worker_manager_cfg};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = du_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -260,7 +259,7 @@ int main(int argc, char** argv)
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   srsran::modules::flexible_du::du_pcaps du_pcaps =
-      modules::flexible_du::create_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+      modules::flexible_du::create_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
 
   // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(
@@ -291,7 +290,7 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(du_cfg.metrics_cfg.addr, du_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-  e2_metric_connector_manager e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
+  e2_metric_connector_manager e2_metric_connectors(du_app_unit->get_du_high_unit_config().cells_cfg.size());
 
   // E2AP configuration.
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg, E2_DU_PPID);
@@ -312,7 +311,7 @@ int main(int argc, char** argv)
   du_dependencies.json_sink            = &json_sink;
   du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
 
-  auto du_inst_and_cmds = create_du(du_unit_cfg, du_dependencies);
+  auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
 
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(

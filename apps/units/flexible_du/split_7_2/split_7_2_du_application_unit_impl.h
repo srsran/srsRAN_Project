@@ -11,13 +11,12 @@
 #pragma once
 
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
-#include "split6_du_unit_config.h"
-#include "split6_plugin.h"
+#include "split_7_2_du_unit_config.h"
 
 namespace srsran {
 
-/// DU Split6 application unit implementation.
-class split6_du_application_unit_impl : public flexible_du_application_unit
+/// Split 7.2 DU application unit implementation.
+class split_7_2_du_application_unit_impl : public flexible_du_application_unit
 {
 public:
   // See interface for documentation.
@@ -46,8 +45,7 @@ public:
   void fill_worker_manager_config(worker_manager_config& config) override;
 
 private:
-  split6_du_unit_config          unit_cfg;
-  std::unique_ptr<split6_plugin> plugin;
+  split_7_2_du_unit_config unit_cfg;
 };
 
 } // namespace srsran

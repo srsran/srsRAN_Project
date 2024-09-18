@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_config_translators.h"
+#include "apps/services/worker_manager_config.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/plmn_identity.h"
@@ -487,4 +488,18 @@ srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool   
   }
 
   return srs_cu_cp::n2_connection_client_config{pcap_writer, mode};
+}
+
+void srsran::fill_cu_cp_worker_manager_config(worker_manager_config& config, const cu_cp_unit_config& unit_cfg)
+{
+  auto& pcap_cfg = config.pcap_cfg;
+  if (unit_cfg.pcap_cfg.e1ap.enabled) {
+    pcap_cfg.is_e1ap_enabled = true;
+  }
+  if (unit_cfg.pcap_cfg.f1ap.enabled) {
+    pcap_cfg.is_f1ap_enabled = true;
+  }
+  if (unit_cfg.pcap_cfg.ngap.enabled) {
+    pcap_cfg.is_ngap_enabled = true;
+  }
 }
