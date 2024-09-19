@@ -27,6 +27,8 @@ void ran_slice_instance::slot_indication(slot_point slot_tx)
 {
   pdsch_rb_count = 0;
   // Clear RB count in previous slots.
+  // NOTE: RB count in \c nof_slots_to_clear number of slots are cleared because \c slot_indication() is called only
+  // during DL slots.
   for (unsigned count = 0; count < nof_slots_to_clear; ++count) {
     pusch_rb_count_per_slot[(slot_tx - 1 - count).to_uint() % pusch_rb_count_per_slot.size()] = 0;
   }
@@ -34,11 +36,12 @@ void ran_slice_instance::slot_indication(slot_point slot_tx)
 
 void ran_slice_instance::skipped_slot_indication(slot_point prev_slot, slot_point current_slot)
 {
-  slot_point sl = current_slot - 1;
-  while (sl > prev_slot) {
-    slot_indication(sl);
-    sl -= nof_slots_to_clear;
-  }
+  slot_point sl = prev_slot;
+  do {
+    sl += nof_slots_to_clear;
+    // Clear only until current slot so that RB count in future slots are not lost.
+    slot_indication(std::min(sl, current_slot));
+  } while (sl < current_slot);
 }
 
 void ran_slice_instance::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
