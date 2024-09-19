@@ -332,14 +332,24 @@ public:
 
   void write(span<const expected_entry_t> entries_)
   {
-    unsigned current_max_sc = max_prb * NRE;
+    unsigned current_max_sc   = max_prb * NRE;
+    unsigned current_max_symb = max_symb;
+    unsigned current_max_port = max_ports;
     for (const expected_entry_t& e : entries_) {
       write(e);
       if (e.subcarrier > current_max_sc) {
         current_max_sc = e.subcarrier;
       }
+      if (e.symbol > current_max_symb) {
+        current_max_symb = e.symbol;
+      }
+      if (e.port > current_max_port) {
+        current_max_port = e.port;
+      }
     }
-    max_prb = current_max_sc / NRE + 1;
+    max_prb   = current_max_sc / NRE + 1;
+    max_symb  = current_max_symb + 1;
+    max_ports = current_max_port + 1;
   }
 
   void write(const expected_entry_t& entry)
