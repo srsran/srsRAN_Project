@@ -253,7 +253,7 @@ void srs_scheduler_impl::fill_srs_pdu(srs_info&                       pdu,
 {
   pdu.crnti             = ue_cfg.crnti;
   pdu.bwp_cfg           = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pdu.nof_antenna_ports = cell_cfg.ul_carrier.nof_ant;
+  pdu.nof_antenna_ports = static_cast<uint8_t>(srs_res_cfg.nof_ports);
 
   const unsigned nof_symbs_per_slot = get_nsymb_per_slot(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp);
   const unsigned starting_symb      = nof_symbs_per_slot - srs_res_cfg.res_mapping.start_pos - 1;
