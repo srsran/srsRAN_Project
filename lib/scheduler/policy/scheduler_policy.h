@@ -109,7 +109,7 @@ public:
   ///                            gNB resource grid.
   /// \param[in] res_grid View of the current resource grid occupancy state for all gnb cells.
   /// \param[in] slice_candidate Slice candidate to be scheduled in the given slot.
-  /// \param[in] harq_pending_retx_list List of DL HARQs pending retransmission.
+  /// \param[in] harq_pending_retx_list List of DL HARQs pending retransmissions.
   virtual void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                         const ue_resource_grid_view& res_grid,
                         dl_ran_slice_candidate&      slice_candidate,
@@ -120,7 +120,7 @@ public:
   ///                            gNB resource grid.
   /// \param[in] res_grid View of the current resource grid occupancy state for all gnb cells.
   /// \param[in] slice_candidate Slice candidate to be scheduled in the given slot.
-  /// \param[in] harq_pending_retx_list List of UL HARQs pending retransmission.
+  /// \param[in] harq_pending_retx_list List of UL HARQs pending retransmissions.
   virtual void ul_sched(ue_pusch_allocator&          pusch_alloc,
                         const ue_resource_grid_view& res_grid,
                         ul_ran_slice_candidate&      slice_candidate,

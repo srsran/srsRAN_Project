@@ -240,12 +240,18 @@ static alloc_result alloc_dl_retxs(const slice_ue_repository&   ue_db,
 
       ue_pdsch_grant     grant{&u, ue_cc.cell_index, h.id()};
       const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
-      // If the allocation failed due to invalid parameters, we continue iteration.
+      // Continue iteration until skip slot indication is received.
+      // NOTE: Allocation status other than skip_slot can be ignored because allocation of reTxs is done from oldest
+      // HARQ pending to newest. Hence, other allocation status are redundant.
       if (result.status == alloc_status::skip_slot) {
         return result;
       }
     }
   }
+  // Return successful outcome in all other cases.
+  // Other cases:
+  //  - No pending HARQs to allocate.
+  //  - At the end of pending HARQs iteration.
   return {alloc_status::success};
 }
 
@@ -306,12 +312,18 @@ static alloc_result alloc_ul_retxs(const slice_ue_repository& ue_db,
 
       ue_pusch_grant     grant{&u, ue_cc.cell_index, h.id()};
       const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
-      // If the allocation failed due to invalid parameters, we continue iteration.
+      // Continue iteration until skip slot indication is received.
+      // NOTE: Allocation status other than skip_slot can be ignored because allocation of reTxs is done from oldest
+      // HARQ pending to newest. Hence, other allocation status are redundant.
       if (result.status == alloc_status::skip_slot) {
         return result;
       }
     }
   }
+  // Return successful outcome in all other cases.
+  // Other cases:
+  //  - No pending HARQs to allocate.
+  //  - At the end of pending HARQs iteration.
   return {alloc_status::success};
 }
 
