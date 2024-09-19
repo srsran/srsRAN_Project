@@ -459,7 +459,7 @@ static bool validate_srs_cell_unit_config(const du_high_unit_srs_config& config,
         static_cast<float>(srs_period_slots)) {
       fmt::print(
           "SRS period (i.e., {}ms) times the number of slots per subframe (i.e., {}) must be an integer number of "
-          "slots.\n",
+          "slots\n",
           config.srs_period_ms.has_value(),
           get_nof_slots_per_subframe(scs_common));
       return false;
@@ -472,8 +472,9 @@ static bool validate_srs_cell_unit_config(const du_high_unit_srs_config& config,
   }
 
   if (config.nof_symbols > config.max_nof_symbols_per_slot) {
-    fmt::print("The number of SRS symbols ({}) should be less than or equal to the maximum number of symbols per slot "
-               "({}).\n",
+    fmt::print("The number of symbols per SRS resource ({}) should be less than or equal to the maximum number of "
+               "SRS symbols per slot"
+               "({})\n",
                config.nof_symbols,
                config.max_nof_symbols_per_slot);
     return false;

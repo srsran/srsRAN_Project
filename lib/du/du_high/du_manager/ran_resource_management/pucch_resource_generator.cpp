@@ -383,6 +383,11 @@ srsran::srs_du::pucch_parameters_validator(unsigned                             
         static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f0_f1) / static_cast<float>(nof_f0_per_block)));
   } else {
     const auto& f1_params = std::get<pucch_f1_params>(f0_f1_params);
+    if (f1_params.nof_symbols.to_uint() > max_nof_symbols.to_uint()) {
+      return make_unexpected("The number of symbols for PUCCH Format 1 exceeds the maximum number of symbols available "
+                             "for PUCCH resources");
+    }
+
     // > Compute the number of RBs required for the PUCCH Format 1 resources.
     const unsigned nof_occ_codes =
         f1_params.occ_supported ? format1_symb_to_spreading_factor(f1_params.nof_symbols) : 1;
