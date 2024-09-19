@@ -335,6 +335,7 @@ def _test_viavi(
                 "enable_qos_viavi": test_declaration.enable_qos_viavi,
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
+                "rlc_metrics": True,
             },
         },
     }

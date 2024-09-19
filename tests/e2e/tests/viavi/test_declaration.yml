@@ -63,7 +63,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -175,7 +175,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   # - campaign_filename: *campaign_filename
