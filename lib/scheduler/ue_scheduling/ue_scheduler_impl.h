@@ -15,6 +15,7 @@
 #include "../policy/scheduler_policy.h"
 #include "../pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "../slicing/slice_scheduler.h"
+#include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
@@ -71,6 +72,9 @@ private:
 
     /// Slice scheduler.
     slice_scheduler slice_sched;
+
+    /// SRS scheduler
+    srs_scheduler_impl srs_sched;
 
     cell(const scheduler_ue_expert_config& expert_cfg,
          const ue_scheduler_cell_params&   params,

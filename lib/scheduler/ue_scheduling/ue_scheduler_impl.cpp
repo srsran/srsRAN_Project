@@ -30,6 +30,7 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
                                          cells[params.cell_index].fallback_sched,
                                          cells[params.cell_index].uci_sched,
                                          cells[params.cell_index].slice_sched,
+                                         cells[params.cell_index].srs_sched,
                                          *params.cell_metrics,
                                          *params.ev_logger});
   ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc);
@@ -201,6 +202,9 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
     // Schedule periodic UCI (SR and CSI) before any UL grants.
     group_cell.uci_sched.run_slot(*group_cell.cell_res_alloc);
 
+    // Schedule periodic SRS before any UE grants.
+    cells[cell_index].srs_sched.run_slot(*group_cell.cell_res_alloc);
+
     // Run cell-specific SRB0 scheduler.
     group_cell.fallback_sched.run_slot(*group_cell.cell_res_alloc);
 
@@ -241,6 +245,7 @@ ue_scheduler_impl::cell::cell(const scheduler_ue_expert_config& expert_cfg,
   cell_harqs(MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<harq_manager_timeout_notifier>(metrics_handler)),
   uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
   fallback_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues),
-  slice_sched(params.cell_res_alloc->cfg, ues)
+  slice_sched(params.cell_res_alloc->cfg, ues),
+  srs_sched(params.cell_res_alloc->cfg, ues)
 {
 }

@@ -25,6 +25,7 @@ class cell_metrics_handler;
 class scheduler_event_logger;
 class uci_scheduler_impl;
 class cell_harq_manager;
+class srs_scheduler;
 
 struct cell_creation_event {
   cell_resource_allocator& cell_res_grid;
@@ -32,6 +33,7 @@ struct cell_creation_event {
   ue_fallback_scheduler&   fallback_sched;
   uci_scheduler_impl&      uci_sched;
   slice_scheduler&         slice_sched;
+  srs_scheduler&           srs_sched;
   cell_metrics_handler&    metrics;
   scheduler_event_logger&  ev_logger;
 };
@@ -131,6 +133,7 @@ private:
     ue_fallback_scheduler*    fallback_sched = nullptr;
     uci_scheduler_impl*       uci_sched      = nullptr;
     slice_scheduler*          slice_sched    = nullptr;
+    srs_scheduler*            srs_sched      = nullptr;
     cell_metrics_handler*     metrics        = nullptr;
     scheduler_event_logger*   ev_logger      = nullptr;
   };
