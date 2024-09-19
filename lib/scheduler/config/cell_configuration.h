@@ -155,6 +155,21 @@ public:
                : dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value();
   }
 
+  /// \brief Determines the use of transform precoding according to the parameter \e msg3-transformPrecoder.
+  ///
+  /// The UE determines the use of the transform precoder in TS 38.214 Section 6.1.3. It uses this parameter when a
+  /// PUSCH is scheduled by:
+  /// - a RAR UL grant;
+  /// - DCI Format 0_0; or
+  /// - DCI Format 0_1 and the parameter \e transformPrecoder in \e pusch-Config is not present.
+  bool use_msg3_transform_precoder() const
+  {
+    if (!ul_cfg_common.init_ul_bwp.rach_cfg_common) {
+      return false;
+    }
+    return ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
+  }
+
 private:
   /// Vector circularly indexed by slot with the list of nof active DL/UL symbols per slot.
   std::vector<unsigned> dl_symbols_per_slot_lst;

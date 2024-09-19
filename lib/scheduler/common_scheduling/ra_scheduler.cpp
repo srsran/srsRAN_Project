@@ -157,7 +157,8 @@ void ra_scheduler::precompute_msg3_pdus()
   static const unsigned nof_oh_prb = 0;
   static const unsigned nof_layers = 1;
 
-  msg3_mcs_config = pusch_mcs_get_config(pusch_mcs_table::qam64, sched_cfg.msg3_mcs_index, false);
+  msg3_mcs_config = pusch_mcs_get_config(
+      pusch_mcs_table::qam64, sched_cfg.msg3_mcs_index, cell_cfg.use_msg3_transform_precoder(), false);
 
   const auto& pusch_td_alloc_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
 

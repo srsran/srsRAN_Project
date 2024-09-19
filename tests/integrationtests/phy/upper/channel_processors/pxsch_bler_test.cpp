@@ -74,10 +74,6 @@ const char* to_string(pusch_mcs_table table)
       return "qam256";
     case pusch_mcs_table::qam64LowSe:
       return "qam64LowSe";
-    case pusch_mcs_table::qam64_tp:
-      return "qam64_tp";
-    case pusch_mcs_table::qam64LowSe_tp:
-      return "qam64LowSe_tp";
   }
   return "invalid";
 }
@@ -207,7 +203,7 @@ private:
     srslog::fetch_basic_logger("ALL").set_level(srslog::basic_levels::warning);
 
     // Compute modulation and code scheme.
-    sch_mcs_description mcs_descr = pusch_mcs_get_config(mcs_table, mcs_index, false);
+    sch_mcs_description mcs_descr = pusch_mcs_get_config(mcs_table, mcs_index, false, false);
 
     // Frequency allocation equal to bandwidth part.
     static prb_interval freq_allocation = {bwp_start_rb, bwp_size_rb};

@@ -341,15 +341,18 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
     return false;
   }
 
+  // Modulation and Code Scheme MCS ranges are given in TS38.214 Section 6.1.4.2.
   unsigned max_ue_mcs = 28;
-  if (config.mcs_table == pusch_mcs_table::qam256) {
+  if ((config.mcs_table == pusch_mcs_table::qam256) || config.enable_transform_precoding) {
     max_ue_mcs = 27;
   }
 
   if (config.min_ue_mcs > max_ue_mcs) {
-    fmt::print("Invalid PUSCH min_ue_mcs (i.e., {}) for the selected MCS table (i.e., {}).\n",
-               config.min_ue_mcs,
-               (config.mcs_table == pusch_mcs_table::qam256) ? "qam256" : "qam64");
+    fmt::print(
+        "Invalid PUSCH min_ue_mcs (i.e., {}) for the selected MCS table (i.e., {}) with transform precoding {}.\n",
+        config.min_ue_mcs,
+        (config.mcs_table == pusch_mcs_table::qam256) ? "qam256" : "qam64",
+        config.enable_transform_precoding ? "enabled" : "disabled");
     return false;
   }
 
@@ -370,15 +373,6 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
                config.min_rb_size,
                get_transform_precoding_nearest_lower_nof_prb_valid(config.min_rb_size),
                get_transform_precoding_nearest_higher_nof_prb_valid(config.min_rb_size));
-    return false;
-  }
-
-  if (config.enable_transform_precoding && !is_transform_precoding_nof_prb_valid(config.max_rb_size)) {
-    fmt::print("Invalid maximum UE PUSCH RB (i.e., {}) with transform precoding. The nearest lower number of PRB is {} "
-               "and the higher is {}.\n",
-               config.max_rb_size,
-               get_transform_precoding_nearest_lower_nof_prb_valid(config.max_rb_size),
-               get_transform_precoding_nearest_higher_nof_prb_valid(config.max_rb_size));
     return false;
   }
 
