@@ -232,16 +232,20 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
   auto&          only_ue_srs_res = ue_srs_cfg.srs_res_list.front();
   const unsigned srs_offset      = srs_res_id_offset->second;
   // NOTE: given that there is only 1 SRS resource per UE, we can assume that the SRS resource ID is 0.
-  only_ue_srs_res.id.cell_res_id                        = du_res.cell_res_id;
-  only_ue_srs_res.id.ue_res_id                          = static_cast<srs_config::srs_res_id>(0U);
-  only_ue_srs_res.periodicity_and_offset.value().offset = srs_offset;
-  only_ue_srs_res.tx_comb.size                          = cells[0].cell_cfg.srs_cfg.tx_comb;
-  only_ue_srs_res.tx_comb.tx_comb_offset                = du_res.tx_comb_offset.to_uint();
-  only_ue_srs_res.tx_comb.tx_comb_cyclic_shift          = du_res.cs;
-  only_ue_srs_res.freq_domain_pos                       = du_res.freq_dom_position;
-  only_ue_srs_res.res_mapping.start_pos                 = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - du_res.symbols.start() - 1;
-  only_ue_srs_res.res_mapping.nof_symb                  = static_cast<srs_nof_symbols>(du_res.symbols.length());
-  only_ue_srs_res.sequence_id                           = du_res.sequence_id;
+  only_ue_srs_res.id.cell_res_id = du_res.cell_res_id;
+  only_ue_srs_res.id.ue_res_id   = static_cast<srs_config::srs_res_id>(0U);
+  srsran_assert(cells[0].cell_cfg.ul_carrier.nof_ant == 1 or cells[0].cell_cfg.ul_carrier.nof_ant == 2 or
+                    cells[0].cell_cfg.ul_carrier.nof_ant == 4,
+                "The number of UL antenna ports is not valid");
+  only_ue_srs_res.nof_ports =
+      static_cast<srs_config::srs_resource::nof_srs_ports>(cells[0].cell_cfg.ul_carrier.nof_ant);
+  only_ue_srs_res.tx_comb.size                 = cells[0].cell_cfg.srs_cfg.tx_comb;
+  only_ue_srs_res.tx_comb.tx_comb_offset       = du_res.tx_comb_offset.to_uint();
+  only_ue_srs_res.tx_comb.tx_comb_cyclic_shift = du_res.cs;
+  only_ue_srs_res.freq_domain_pos              = du_res.freq_dom_position;
+  only_ue_srs_res.res_mapping.start_pos        = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - du_res.symbols.start() - 1;
+  only_ue_srs_res.res_mapping.nof_symb         = static_cast<srs_nof_symbols>(du_res.symbols.length());
+  only_ue_srs_res.sequence_id                  = du_res.sequence_id;
 
   // Update the SRS configuration with the parameters that are common to the cell.
   only_ue_srs_res.freq_hop.c_srs = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].srs_common_params.c_srs;
