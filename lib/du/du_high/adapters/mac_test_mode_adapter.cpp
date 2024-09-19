@@ -366,37 +366,6 @@ void mac_test_mode_cell_adapter::forward_uci_ind_to_mac(const mac_uci_indication
 
   // Forward UCI indication to real MAC.
   adapted.handle_uci(uci_msg);
-
-  // Update buffer states.
-  for (const mac_uci_pdu& pdu : uci_msg.ucis) {
-    if (ue_info_mgr.is_test_ue(pdu.rnti) and std::holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu)) {
-      const auto& f1_ind = std::get<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu);
-
-      if (not f1_ind.harq_info.has_value()) {
-        continue;
-      }
-
-      // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 has been received. At this point, we
-      // update the test UE with positive DL buffer states and BSR.
-      if (not ue_info_mgr.is_msg4_rxed(pdu.rnti)) {
-        if (test_ue_cfg.pdsch_active) {
-          // Update DL buffer state automatically.
-          dl_bs_notifier(pdu.rnti);
-        }
-
-        if (test_ue_cfg.pusch_active) {
-          auto rx_pdu = create_test_pdu_with_bsr(uci_msg.sl_rx, pdu.rnti, to_harq_id(0));
-          if (not rx_pdu.has_value()) {
-            logger.warning("TEST_MODE c-rnti={}: Unable to create test PDU with BSR", pdu.rnti);
-            continue;
-          }
-          // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
-          pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
-        }
-        ue_info_mgr.msg4_rxed(pdu.rnti, true);
-      }
-    }
-  }
 }
 
 void mac_test_mode_cell_adapter::forward_crc_ind_to_mac(const mac_crc_indication_message& crc_msg)
@@ -513,6 +482,37 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
     }
   }
 
+  if (ul_res.ul_res != nullptr and not ul_res.ul_res->pucchs.empty()) {
+    for (const pucch_info& pucch : ul_res.ul_res->pucchs) {
+      if (not ue_info_mgr.is_test_ue(pucch.crnti) or ue_info_mgr.is_msg4_rxed(pucch.crnti)) {
+        // UE is not test mode or it has already received Msg4.
+        continue;
+      }
+      if ((pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
+          (pucch.format == pucch_format::FORMAT_0 and pucch.format_0.harq_ack_nof_bits > 0)) {
+        // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 is received. At this point, we
+        // update the test UE with positive DL buffer states and BSR.
+        if (test_ue_cfg.pdsch_active) {
+          // Update DL buffer state automatically.
+          dl_bs_notifier(pucch.crnti);
+        }
+
+        if (test_ue_cfg.pusch_active) {
+          auto rx_pdu = create_test_pdu_with_bsr(ul_res.slot, pucch.crnti, to_harq_id(0));
+          if (not rx_pdu.has_value()) {
+            logger.warning("TEST_MODE c-rnti={}: Unable to create test PDU with BSR", pucch.crnti);
+            continue;
+          }
+          // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
+          pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
+        }
+
+        // Mark Msg4 received for the UE.
+        ue_info_mgr.msg4_rxed(pucch.crnti, true);
+      }
+    }
+  }
+
   // Forward results to PHY.
   result_notifier.on_new_uplink_scheduler_results(ul_res);
 }
@@ -576,6 +576,7 @@ void phy_test_mode_adapter::phy_cell::on_new_downlink_data(const mac_dl_data_res
 {
   ptr->on_new_downlink_data(dl_data);
 }
+
 void phy_test_mode_adapter::phy_cell::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {
   ptr->on_new_uplink_scheduler_results(ul_res);
@@ -590,8 +591,8 @@ void phy_test_mode_adapter::phy_cell::on_cell_results_completion(slot_point slot
 mac_test_mode_adapter::mac_test_mode_adapter(const srs_du::du_test_mode_config::test_mode_ue_config& test_ue_cfg_,
                                              mac_result_notifier&                                    phy_notifier_) :
   test_ue(test_ue_cfg_),
-  phy_notifier(std::make_unique<phy_test_mode_adapter>(phy_notifier_)),
-  ue_info_mgr(test_ue.rnti, test_ue.nof_ues)
+  ue_info_mgr(test_ue.rnti, test_ue.nof_ues),
+  phy_notifier(std::make_unique<phy_test_mode_adapter>(phy_notifier_))
 {
 }
 

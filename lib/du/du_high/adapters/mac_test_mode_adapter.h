@@ -20,34 +20,6 @@
 namespace srsran {
 namespace srs_du {
 
-class phy_test_mode_adapter : public mac_result_notifier
-{
-public:
-  phy_test_mode_adapter(mac_result_notifier& phy_notifier_) : adapted_phy(phy_notifier_), cells(MAX_NOF_DU_CELLS) {}
-
-  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override;
-
-  void connect(du_cell_index_t cell_index, mac_cell_result_notifier& test_mode_cell_notifier);
-
-  void disconnect(du_cell_index_t cell_index);
-
-  mac_result_notifier& adapted_phy;
-
-private:
-  class phy_cell final : public mac_cell_result_notifier
-  {
-  public:
-    mac_cell_result_notifier* ptr = nullptr;
-
-    void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
-    void on_new_downlink_data(const mac_dl_data_result& dl_data) override;
-    void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override;
-    void on_cell_results_completion(slot_point slot) override;
-  };
-
-  std::vector<phy_cell> cells;
-};
-
 /// \brief Handles information related to the test UE(s).
 class test_ue_info_manager
 {
@@ -82,7 +54,7 @@ public:
     }
   }
 
-  sched_ue_config_request get_sched_ue_cfg_request(rnti_t rnti) const
+  const sched_ue_config_request& get_sched_ue_cfg_request(rnti_t rnti) const
   {
     return rnti_to_ue_info_lookup.at(rnti).sched_ue_cfg_req;
   }
@@ -109,12 +81,40 @@ private:
     bool                    msg4_rx_flag;
   };
 
-  /// Parameters received from configuration.
+  // Parameters received from configuration.
   rnti_t   rnti_start;
   uint16_t nof_ues;
 
-  /// Mapping between UE RNTI and test UE information.
+  // Mapping between UE RNTI and test UE information.
   std::unordered_map<rnti_t, test_ue_info> rnti_to_ue_info_lookup;
+};
+
+class phy_test_mode_adapter : public mac_result_notifier
+{
+public:
+  phy_test_mode_adapter(mac_result_notifier& phy_notifier_) : adapted_phy(phy_notifier_), cells(MAX_NOF_DU_CELLS) {}
+
+  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override;
+
+  void connect(du_cell_index_t cell_index, mac_cell_result_notifier& test_mode_cell_notifier);
+
+  void disconnect(du_cell_index_t cell_index);
+
+  mac_result_notifier& adapted_phy;
+
+private:
+  class phy_cell final : public mac_cell_result_notifier
+  {
+  public:
+    mac_cell_result_notifier* ptr = nullptr;
+
+    void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
+    void on_new_downlink_data(const mac_dl_data_result& dl_data) override;
+    void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override;
+    void on_cell_results_completion(slot_point slot) override;
+  };
+
+  std::vector<phy_cell> cells;
 };
 
 /// \brief Adapter of MAC cell for testing purposes. It automatically forces ACK/CRC=OK for the test UE.
@@ -248,11 +248,11 @@ private:
   srs_du::du_test_mode_config::test_mode_ue_config test_ue;
   std::unique_ptr<mac_interface>                   mac_adapted;
 
+  test_ue_info_manager ue_info_mgr;
+
   std::unique_ptr<phy_test_mode_adapter> phy_notifier;
 
   std::vector<std::unique_ptr<mac_test_mode_cell_adapter>> cell_info_handler;
-
-  test_ue_info_manager ue_info_mgr;
 };
 
 } // namespace srs_du
