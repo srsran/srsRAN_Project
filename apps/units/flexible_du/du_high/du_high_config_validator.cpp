@@ -446,6 +446,66 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   return true;
 }
 
+static bool validate_srs_cell_unit_config(const du_high_unit_srs_config& config,
+                                          subcarrier_spacing             scs_common,
+                                          unsigned                       nof_ul_ports)
+{
+  if (config.srs_period_ms.has_value()) {
+    const auto srs_period_slots =
+        static_cast<unsigned>(get_nof_slots_per_subframe(scs_common) * config.srs_period_ms.value());
+
+    // Check that the SR period in milliseconds leads to an integer number of slots.
+    if (static_cast<float>(get_nof_slots_per_subframe(scs_common) * config.srs_period_ms.value()) !=
+        static_cast<float>(srs_period_slots)) {
+      fmt::print(
+          "SRS period (i.e., {}ms) times the number of slots per subframe (i.e., {}) must be an integer number of "
+          "slots.\n",
+          config.srs_period_ms.has_value(),
+          get_nof_slots_per_subframe(scs_common));
+      return false;
+    }
+
+    if (scs_common == srsran::subcarrier_spacing::kHz30 and config.srs_period_ms.value() > 1280) {
+      fmt::print("With 30kHz SCS the maximum SRS period is 1280ms\n");
+      return false;
+    }
+  }
+
+  if (config.nof_symbols > config.max_nof_symbols_per_slot) {
+    fmt::print("The number of SRS symbols ({}) should be less than or equal to the maximum number of symbols per slot "
+               "({}).\n",
+               config.nof_symbols,
+               config.max_nof_symbols_per_slot);
+    return false;
+  }
+
+  if (config.tx_comb == 2U) {
+    if (nof_ul_ports == 2 and (config.cyclic_shift_reuse_factor == 3 or config.cyclic_shift_reuse_factor == 6)) {
+      fmt::print("With TX comb n2 and 2 UL antenna ports, valid cyclic-reuse-factor values are 1, 2, 4\n",
+                 config.nof_symbols,
+                 config.max_nof_symbols_per_slot);
+      return false;
+    }
+    if (nof_ul_ports == 4 and (config.cyclic_shift_reuse_factor == 3 or config.cyclic_shift_reuse_factor == 4 or
+                               config.cyclic_shift_reuse_factor == 6)) {
+      fmt::print("With TX comb n2 and 4 UL antenna ports, valid cyclic-reuse-factor values are 1, 2\n",
+                 config.nof_symbols,
+                 config.max_nof_symbols_per_slot);
+      return false;
+    }
+  } else {
+    if (nof_ul_ports == 4 and (config.cyclic_shift_reuse_factor == 2 or config.cyclic_shift_reuse_factor == 4 or
+                               config.cyclic_shift_reuse_factor == 6)) {
+      fmt::print("With TX comb n4 and 4 UL antenna ports, valid cyclic-reuse-factor values are 1, 3\n",
+                 config.nof_symbols,
+                 config.max_nof_symbols_per_slot);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_ul_common_unit_config(const du_high_unit_ul_common_config& config)
 {
@@ -788,6 +848,10 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   }
 
   if (!validate_pucch_cell_unit_config(config, config.common_scs)) {
+    return false;
+  }
+
+  if (!validate_srs_cell_unit_config(config.srs_cfg, config.common_scs, config.nof_antennas_ul)) {
     return false;
   }
 

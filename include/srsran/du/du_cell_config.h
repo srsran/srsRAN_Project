@@ -110,7 +110,7 @@ struct srs_builder_params {
   /// \remark The SRS resources are always placed at the end of the slot.
   /// \remark As per TS 38.211, Section 6.4.1.4.1, SRS resource can only be placed in the last 6 symbols of a slot.
   bounded_integer<unsigned, 1, 6> max_nof_symbols = 2U;
-  /// \c Transmission comb number , as per TS 38.211, Section 6.4.1.4.2, or TS 38.331, "SRS-Resource".
+  /// \c Transmission comb number, as per TS 38.211, Section 6.4.1.4.2, or TS 38.331, "SRS-Resource".
   tx_comb_size tx_comb = tx_comb_size::n4;
   /// Defines the number of symbols per SRS resource.
   srs_nof_symbols nof_symbols = srs_nof_symbols::n1;
