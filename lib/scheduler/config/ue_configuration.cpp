@@ -620,8 +620,16 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
   // Compute DCI sizes
   for (search_space_info& ss : search_spaces) {
     ss.dci_sz_cfg = get_dci_size_config(*this, multi_cells_configured, ss.cfg->get_id());
-    srsran_assert(
-        validate_dci_size_config(ss.dci_sz_cfg), "Invalid DCI size configuration for SearchSpace={}", ss.cfg->get_id());
+
+    // Verify the DCI size configuration is valid.
+    const error_type<std::string> dci_size_valid = validate_dci_size_config(ss.dci_sz_cfg);
+    if (!dci_size_valid.has_value()) {
+      srsran_assert(!dci_size_valid.has_value(),
+                    "Invalid DCI size configuration for SearchSpace={}: {}",
+                    ss.cfg->get_id(),
+                    dci_size_valid.error());
+    }
+
     ss.dci_sz = get_dci_sizes(ss.dci_sz_cfg);
   }
 

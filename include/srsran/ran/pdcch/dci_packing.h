@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/expected.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/dmrs.h"
@@ -1133,6 +1134,6 @@ struct dci_rar_configuration {
 dci_payload dci_rar_pack(const dci_rar_configuration& config);
 
 /// Validates a DCI configuration for the DCI size alignment procedure.
-bool validate_dci_size_config(const dci_size_config& config);
+error_type<std::string> validate_dci_size_config(const dci_size_config& config);
 
 } // namespace srsran
