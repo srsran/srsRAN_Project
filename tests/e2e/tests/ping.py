@@ -47,7 +47,7 @@ from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop
     reruns=2,
     only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
 )
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_android(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -101,7 +101,7 @@ def test_android(
     reruns=2,
     only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
 )
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_android_hp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -160,7 +160,7 @@ def test_android_hp(
         "5GC crashed",
     ],
 )
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -199,7 +199,7 @@ def test_zmq(
     (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_valgrind
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_valgrind(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -255,7 +255,7 @@ def test_zmq_valgrind(
     ),
 )
 @mark.rf
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_rf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -292,7 +292,7 @@ def test_rf(
     (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.rf_not_crash
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_rf_does_not_crash(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -328,7 +328,7 @@ def test_rf_does_not_crash(
     stop(ue_4, gnb, fivegc, retina_data, log_search=False)
 
 
-# pylint: disable=too-many-arguments, too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def _ping(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,

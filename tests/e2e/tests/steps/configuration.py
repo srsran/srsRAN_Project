@@ -20,7 +20,7 @@ from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.public import MetricServerInfo
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 # pylint: disable=too-many-locals
 def configure_test_parameters(
     retina_manager: RetinaTestManager,

@@ -50,7 +50,7 @@ ATTACH_TIMEOUT: int = 90
 INTER_UE_START_PERIOD: int = 0
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def start_and_attach(
     ue_array: Sequence[UEStub],
     gnb: GNBStub,
@@ -98,7 +98,7 @@ def _get_hplmn(imsi: str) -> PLMN:
     return hplmn
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def start_network(
     ue_array: Sequence[UEStub],
     gnb: GNBStub,

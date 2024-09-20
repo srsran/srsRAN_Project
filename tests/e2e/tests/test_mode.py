@@ -44,7 +44,7 @@ _POD_ERROR = "Error creating the pod"
     ),
 )
 @mark.test_mode
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_ue(
     # Retina
     retina_manager: RetinaTestManager,
@@ -177,7 +177,7 @@ def test_ru_not_crash(
     _test_ru(retina_manager, retina_data, gnb, gnb_stop_timeout=150, warning_as_errors=False, fail_if_kos=False)
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def _test_ru(
     # Retina
     retina_manager: RetinaTestManager,

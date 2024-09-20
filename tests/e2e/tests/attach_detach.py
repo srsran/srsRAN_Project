@@ -84,7 +84,7 @@ def test_smoke(
 )
 @mark.zmq
 @mark.flaky(reruns=3, only_rerun=["failed to start", "IPerf Data Invalid"])
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -137,7 +137,7 @@ def test_zmq(
     ),
 )
 @mark.rf
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_rf_udp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -175,7 +175,7 @@ def test_rf_udp(
     )
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _attach_and_detach_multi_ues(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,

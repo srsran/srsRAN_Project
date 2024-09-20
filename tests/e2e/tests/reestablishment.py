@@ -80,7 +80,7 @@ def test_smoke_sequentially(
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_reestablishment_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -110,7 +110,7 @@ def test_zmq_reestablishment_sequentially(
     )
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _reestablishment_sequentially_ping(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -179,7 +179,7 @@ def _reestablishment_sequentially_ping(
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_zmq_reestablishment_sequentially_full_rate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -248,7 +248,7 @@ def test_zmq_reestablishment_sequentially_full_rate(
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_zmq_reestablishment_parallel(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -314,7 +314,7 @@ def test_zmq_reestablishment_parallel(
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_zmq_reestablishment_parallel_full_rate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -375,7 +375,7 @@ def test_zmq_reestablishment_parallel_full_rate(
         )
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _iterator_over_attached_ues(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -431,7 +431,7 @@ def _iterator_over_attached_ues(
         yield {}, ue_attach_info_dict
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 @contextmanager
 def _test_reestablishments(
     retina_manager: RetinaTestManager,

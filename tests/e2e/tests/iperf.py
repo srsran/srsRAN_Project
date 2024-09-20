@@ -166,7 +166,7 @@ def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, proto
     (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_srsue
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_srsue(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -232,7 +232,7 @@ def test_srsue(
     reruns=2,
     only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
 )
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_android(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -297,7 +297,7 @@ def test_android(
     reruns=2,
     only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
 )
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_android_hp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -349,7 +349,7 @@ def test_android_hp(
 )
 @mark.zmq_2x2_mimo
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_2x2_mimo(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -412,7 +412,7 @@ def test_zmq_2x2_mimo(
 )
 @mark.zmq_4x4_mimo
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -469,7 +469,7 @@ def test_zmq_4x4_mimo(
 )
 @mark.zmq
 @mark.smoke
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -549,7 +549,7 @@ def test_smoke(
         "5GC crashed",
     ],
 )
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -613,7 +613,7 @@ def test_zmq(
     ),
 )
 @mark.rf
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_rf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -651,7 +651,7 @@ def test_rf(
     )
 
 
-# pylint: disable=too-many-arguments, too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def _iperf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,

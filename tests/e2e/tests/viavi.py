@@ -130,7 +130,7 @@ def viavi_manual_test_timeout(request):
 
 
 @mark.viavi_manual
-# pylint: disable=too-many-arguments, too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def test_viavi_manual(
     capsys: pytest.CaptureFixture[str],
     # Retina
@@ -193,7 +193,7 @@ def test_viavi_manual(
     reruns=2,
     only_rerun=_FLAKY_ERROR_LIST,
 )
-# pylint: disable=too-many-arguments, too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def test_viavi(
     capsys: pytest.CaptureFixture[str],
     # Retina
@@ -249,7 +249,7 @@ def test_viavi(
     reruns=2,
     only_rerun=_FLAKY_ERROR_LIST,
 )
-# pylint: disable=too-many-arguments, too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def test_viavi_debug(
     capsys: pytest.CaptureFixture[str],
     # Retina
@@ -293,7 +293,7 @@ def test_viavi_debug(
     )
 
 
-# pylint: disable=too-many-arguments, too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def _test_viavi(
     capsys: pytest.CaptureFixture[str],
     # Retina
@@ -335,7 +335,6 @@ def _test_viavi(
                 "enable_qos_viavi": test_declaration.enable_qos_viavi,
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
-                "rlc_metrics": True,
             },
         },
     }
