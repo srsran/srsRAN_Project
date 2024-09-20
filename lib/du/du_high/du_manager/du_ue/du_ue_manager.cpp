@@ -153,35 +153,12 @@ async_task<void> du_ue_manager::stop()
 
     proc_logger.log_proc_started();
 
-    // Disconnect all UEs RLC->MAC buffer state adapters.
-    for (du_ue_controller_impl& u : ue_db) {
-      for (auto& srb : u.bearers.srbs()) {
-        srb.connector.rlc_tx_buffer_state_notif.disconnect();
-      }
-      for (auto& drb_pair : u.bearers.drbs()) {
-        du_ue_drb& drb = *drb_pair.second;
-        drb.connector.rlc_tx_buffer_state_notif.disconnect();
-      }
-    }
-
     // Disconnect notifiers of all UEs bearers from within the ue_executors context.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_it->ue_index)));
-
-      for (auto& srb : ue_it->bearers.srbs()) {
-        srb.stop();
-      }
-
-      for (auto& drb_pair : ue_it->bearers.drbs()) {
-        du_ue_drb& drb = *drb_pair.second;
-
-        drb.stop();
-      }
+      CORO_AWAIT(ue_it->handle_traffic_stop_request());
     }
 
     proc_logger.log_progress("All UEs are disconnected");
-
-    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
 
     // Cancel all pending procedures.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
