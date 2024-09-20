@@ -10,7 +10,7 @@
 
 #include "ue_context_release_procedure.h"
 #include "../f1ap_asn1_converters.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/support/srsran_assert.h"
 

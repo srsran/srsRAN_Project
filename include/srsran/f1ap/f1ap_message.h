@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-/// \brief F1AP message transferred between a CU-CP and a DU.
+/// F1AP message definition which is transferred between a CU-CP and a DU.
 struct f1ap_message {
   asn1::f1ap::f1ap_pdu_c pdu;
 };

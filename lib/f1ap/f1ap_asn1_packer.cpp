@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_asn1_packer.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 
 namespace srsran {
 

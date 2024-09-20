@@ -28,7 +28,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/common/e1ap_types.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/plmn_identity.h"

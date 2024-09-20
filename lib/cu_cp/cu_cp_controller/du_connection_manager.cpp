@@ -10,7 +10,7 @@
 
 #include "du_connection_manager.h"
 #include "../du_processor/du_processor_repository.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include <thread>
 

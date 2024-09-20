@@ -18,8 +18,8 @@
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/e1ap/common/e1ap_types.h"
-#include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/f1ap/f1ap_message.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 

@@ -11,7 +11,7 @@
 #include "f1ap_du_ue_context_release_procedure.h"
 #include "proc_logger.h"
 #include "srsran/asn1/f1ap/common.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/async_timer.h"
 

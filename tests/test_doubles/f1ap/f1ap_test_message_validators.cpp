@@ -9,11 +9,11 @@
  */
 
 #include "f1ap_test_message_validators.h"
-#include "../lib/f1ap/common/asn1_helpers.h"
+#include "../../../lib/f1ap/asn1_helpers.h"
 #include "../tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;

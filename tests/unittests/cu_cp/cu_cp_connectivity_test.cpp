@@ -19,7 +19,7 @@
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/e1ap/common/e1ap_message.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 

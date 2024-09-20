@@ -15,8 +15,8 @@
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "srsran/e1ap/common/e1ap_types.h"
-#include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/f1ap/f1ap_message.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>

@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_du_test_helpers.h"
-#include "lib/f1ap/common/f1ap_asn1_utils.h"
+#include "lib/f1ap/f1ap_asn1_utils.h"
 #include "test_doubles/f1ap/f1ap_test_messages.h"
 #include "unittests/f1ap/common/f1ap_du_test_messages.h"
 #include "srsran/asn1/f1ap/common.h"

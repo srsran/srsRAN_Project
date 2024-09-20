@@ -12,27 +12,16 @@
 
 namespace srsran {
 
-// Forward declaration.
 struct f1ap_message;
 
-/// Interface for the handler of received F1AP PDUs.
+/// Handles incoming F1AP messages.
 class f1ap_message_handler
 {
 public:
   virtual ~f1ap_message_handler() = default;
 
-  /// Handle the incoming F1AP message.
+  /// Handles the given F1AP message.
   virtual void handle_message(const f1ap_message& msg) = 0;
-};
-
-/// Notifier interface used to forward F1AP PDUs to either the CU-CP or DU.
-class f1ap_message_notifier
-{
-public:
-  virtual ~f1ap_message_notifier() = default;
-
-  /// This callback is invoked on each forwarded F1AP message.
-  virtual void on_new_message(const f1ap_message& msg) = 0;
 };
 
 } // namespace srsran

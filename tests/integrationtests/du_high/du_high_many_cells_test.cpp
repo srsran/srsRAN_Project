@@ -14,7 +14,7 @@
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

@@ -11,12 +11,12 @@
 /// \file
 /// \brief Tests that check the transmission of Paging messages by the DU-high class.
 
-#include "lib/f1ap/common/f1ap_asn1_packer.h"
+#include "lib/f1ap/f1ap_asn1_packer.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ran/bcd_helper.h"
 #include "srsran/support/test_utils.h"
 

@@ -16,7 +16,7 @@
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/du_high_configuration.h"
-#include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 
 namespace srsran {

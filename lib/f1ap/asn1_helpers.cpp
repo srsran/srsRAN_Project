@@ -9,7 +9,7 @@
  */
 
 #include "asn1_helpers.h"
-#include "../cu_cp/f1ap_asn1_converters.h"
+#include "cu_cp/f1ap_asn1_converters.h"
 #include "srsran/asn1/f1ap/common.h"
 
 using namespace srsran;

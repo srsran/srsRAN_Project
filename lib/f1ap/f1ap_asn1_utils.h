@@ -13,7 +13,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/paging_information.h"
 #include "srsran/support/error_handling.h"
 

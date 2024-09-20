@@ -29,11 +29,11 @@ struct f1ap_srb_to_setup {
 /// Parameters of a failed SRB setup in the DU UE context.
 struct f1ap_srb_failed_to_setup {
   srb_id_t srb_id = srb_id_t::nulltype;
-  /// Reason for the failure
+  /// Reason for the failure.
   std::optional<f1ap_cause_t> cause;
 };
 
-/// \brief Used to activate notification control for a given DRB.
+/// Used to activate notification control for a given DRB.
 enum class drb_notification_control { active = 0, not_active };
 
 struct flow_mapped_to_drb {
@@ -44,7 +44,8 @@ struct flow_mapped_to_drb {
 struct f1ap_drb_info {
   qos_flow_level_qos_parameters drb_qos;
   s_nssai_t                     s_nssai;
-  /// \brief Sets whether notification control is active.
+  /// \brief Establishes whether notification control is active.
+  ///
   /// [TS 38.473 8.3.1.2] If the Notification Control IE is included in the DRB to Be Setup List IE and it is set to
   /// active, the gNB-DU shall, if supported, monitor the QoS of the DRB and notify the gNB-CU if the QoS cannot be
   /// fulfilled any longer or if the QoS can be fulfilled again. The Notification Control IE can only be applied to GBR
@@ -92,7 +93,7 @@ struct f1ap_drb_setupmod {
 struct f1ap_drb_failed_to_setupmod {
   /// DRB-Id of the failed to setup/modify DRB.
   drb_id_t drb_id = drb_id_t::invalid;
-  /// Reason for the failure
+  /// Reason for the failure.
   std::optional<f1ap_cause_t> cause;
 };
 

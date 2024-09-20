@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../common/asn1_helpers.h"
+#include "../asn1_helpers.h"
 #include "f1ap_asn1_converters.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/f1ap/f1ap.h"

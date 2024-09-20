@@ -9,10 +9,10 @@
  */
 
 #include "f1ap_cu_impl.h"
-#include "../common/asn1_helpers.h"
-#include "../common/f1ap_asn1_utils.h"
-#include "../common/log_helpers.h"
+#include "asn1_helpers.h"
 #include "f1ap_asn1_helpers.h"
+#include "f1ap_asn1_utils.h"
+#include "log_helpers.h"
 #include "procedures/f1_removal_procedure.h"
 #include "procedures/f1_setup_procedure.h"
 #include "procedures/f1ap_stop_procedure.h"
@@ -21,7 +21,7 @@
 #include "procedures/ue_context_setup_procedure.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;
