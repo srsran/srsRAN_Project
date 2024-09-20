@@ -161,7 +161,10 @@ bool pdu_rx_handler::handle_rx_subpdus(const decoded_mac_rx_pdu& ctx)
 bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue_context* ue)
 {
   if (ue == nullptr) {
-    logger.warning("{}: Discarding SDU. Cause: Non-existent C-RNTI", create_prefix(ctx, sdu));
+    // MAC PDUs can be processed after the UE has been removed, due to processing delays.
+    // TODO: Handle Msg3 SDUs that doesn't have UL-CCCH or C-RNTI CE.
+    srslog::log_channel& log_ch = ctx.ue_index == INVALID_DU_UE_INDEX ? logger.info : logger.warning;
+    log_ch("{}: Discarding SDU. Cause: Non-existent C-RNTI", create_prefix(ctx, sdu));
     return false;
   }
 
