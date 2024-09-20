@@ -318,6 +318,23 @@ async_task<void> du_ue_controller_impl::create_stop_traffic_task()
 
 async_task<void> du_ue_controller_impl::run_in_ue_executor(unique_task task)
 {
+  return launch_async([this, task = std::move(task)](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    // Sync with UE control executor to run provided task.
+    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+    task();
+    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+
+    // Sync with remaining UE executors, as there might be still pending tasks dispatched to those.
+    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.mac_ul_pdu_executor(ue_index)));
+    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.f1u_dl_pdu_executor(ue_index)));
+    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+
+    CORO_RETURN();
+  });
+
   return execute_and_continue_on_blocking(
       cfg.services.ue_execs.ctrl_executor(ue_index), cfg.services.du_mng_exec, std::move(task));
 }
