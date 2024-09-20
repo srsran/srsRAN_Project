@@ -221,7 +221,10 @@ static alloc_result alloc_dl_retxs(const slice_ue_repository&   ue_db,
                                    ran_slice_id_t               slice_id,
                                    dl_harq_pending_retx_list    harq_list)
 {
-  for (auto h : harq_list) {
+  for (auto it = harq_list.begin(); it != harq_list.end();) {
+    // Note: During retx alloc, the pending HARQ list will mutate. So, we prefetch the next node.
+    auto prev_it = it++;
+    auto h       = *prev_it;
     if (h.get_grant_params().slice_id != slice_id or not ue_db.contains(h.ue_index())) {
       continue;
     }
@@ -298,7 +301,10 @@ static alloc_result alloc_ul_retxs(const slice_ue_repository& ue_db,
                                    ran_slice_id_t             slice_id,
                                    ul_harq_pending_retx_list  harq_list)
 {
-  for (auto h : harq_list) {
+  for (auto it = harq_list.begin(); it != harq_list.end();) {
+    // Note: During retx alloc, the pending HARQ list will mutate. So, we prefetch the next node.
+    auto prev_it = it++;
+    auto h       = *prev_it;
     if (h.get_grant_params().slice_id != slice_id or not ue_db.contains(h.ue_index())) {
       continue;
     }
