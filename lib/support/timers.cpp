@@ -73,8 +73,9 @@ timer_manager::timer_manager(size_t capacity) : logger(srslog::fetch_basic_logge
   for (auto i = timer_list.rbegin(), e = timer_list.rend(); i != e; ++i) {
     free_list.emplace_back(i->frontend.get());
   }
-  pending_cmds.reserve(16384);
-  cmds_to_process.reserve(16384);
+  const uint16_t cmds_capacity = 16384;
+  pending_cmds.reserve(cmds_capacity);
+  cmds_to_process.reserve(cmds_capacity);
 }
 
 void timer_manager::tick()

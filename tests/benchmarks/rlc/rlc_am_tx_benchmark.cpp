@@ -174,7 +174,8 @@ void benchmark_tx_pdu(const bench_params& params)
   uint64_t                 bm_duration_ns = bm->get_total_meas_time_ns();
   std::chrono::nanoseconds bm_duration(bm_duration_ns);
   rlc_tx_metrics           tx_metrics = rlc_tx->get_metrics();
-  fmt::print("RLC TX metrics: {}\n",
+  fmt::print("\nRLC TX metrics:\n");
+  fmt::print(" - {}\n",
              format_rlc_tx_metrics(std::chrono::duration_cast<std::chrono::milliseconds>(bm_duration), tx_metrics));
 }
 
