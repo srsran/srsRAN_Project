@@ -7,15 +7,32 @@
  * the distribution.
  *
  */
-#include "srsran/support/dl_manager.h"
+#include "srsran/support/dynlink_manager.h"
 #include <dlfcn.h>
 #include <string>
 
 using namespace srsran;
 
-dl_manager::dl_manager(srslog::basic_logger& logger_) : logger(logger_) {}
+std::optional<dynlink_manager> dynlink_manager::create(const std::string& dl_name, srslog::basic_logger& logger)
+{
+  dynlink_manager mng(dl_name, logger);
+  if (not mng.open()) {
+    return {};
+  }
+  return mng;
+}
 
-bool dl_manager::open(const std::string& dl_name)
+dynlink_manager::dynlink_manager(const std::string& dl_name_, srslog::basic_logger& logger_) :
+  dl_name(dl_name_), logger(logger_)
+{
+}
+
+dynlink_manager::~dynlink_manager()
+{
+  close();
+}
+
+bool dynlink_manager::open()
 {
   char* err = nullptr;
 
@@ -33,7 +50,7 @@ bool dl_manager::open(const std::string& dl_name)
   return true;
 }
 
-expected<void*> dl_manager::load_symbol(const std::string& symbol_name)
+expected<void*> dynlink_manager::load_symbol(const std::string& symbol_name)
 {
   if (dl_handle == nullptr) {
     return make_unexpected(default_error_t{});
@@ -46,9 +63,9 @@ expected<void*> dl_manager::load_symbol(const std::string& symbol_name)
   if (symb == nullptr) {
     err = ::dlerror();
     if (err != nullptr) {
-      logger.error("Error loading symbol {}: {}\n", "start_ngap_preparation_procedure_func", err);
+      logger.error("Error loading symbol {} in {}: {}\n", symbol_name, dl_name, err);
     } else {
-      logger.error("Error loading symbol {}:\n", "start_ngap_preparation_procedure_func");
+      logger.error("Error loading symbol {} in {}:\n", symbol_name, dl_name);
     }
     return make_unexpected(default_error_t{});
   }
@@ -56,7 +73,7 @@ expected<void*> dl_manager::load_symbol(const std::string& symbol_name)
   return symb;
 }
 
-bool dl_manager::close()
+bool dynlink_manager::close()
 {
   if (dl_handle == nullptr) {
     return false;
@@ -65,9 +82,9 @@ bool dl_manager::close()
   if (::dlclose(dl_handle) != 0) {
     char* err = ::dlerror();
     if (err != nullptr) {
-      logger.error("Failed to close DL handle: {}", err);
+      logger.error("Failed to close dynamic link handle: {}", err);
     } else {
-      logger.error("Failed to close DL handle");
+      logger.error("Failed to close dynamic link handle");
     }
     return false;
   }

@@ -27,7 +27,7 @@ set(SOURCES
         sysinfo.cpp
         timers.cpp
         math_utils.cpp
-	dl_manager.cpp
+	dynlink_manager.cpp
         )
 
 add_library(srsran_support STATIC ${SOURCES})

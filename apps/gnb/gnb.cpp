@@ -9,7 +9,7 @@
  */
 
 #include "srsran/support/cpu_features.h"
-#include "srsran/support/dl_manager.h"
+#include "srsran/support/dynlink_manager.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/versioning/build_info.h"
@@ -375,13 +375,14 @@ int main(int argc, char** argv)
   cu_cp_dependencies.timers         = cu_timers;
 
   // Load CU-CP plugins if enabled
-  dl_manager ng_handover_plugin(gnb_logger);
+  std::optional<dynlink_manager> ng_handover_plugin =
+      cu_cp_config.load_plugins ? dynlink_manager::create("libsrsran_plugin_ng_handover.so", gnb_logger) : std::nullopt;
   if (cu_cp_config.load_plugins) {
-    if (not ng_handover_plugin.open("libsrsran_plugin_ng_handover.so")) {
+    if (not ng_handover_plugin) {
       gnb_logger.error("Could not open NG Handover plugin");
       return -1;
     }
-    expected<void*> ng_ho_func = ng_handover_plugin.load_symbol("start_ngap_preparation_procedure_func");
+    expected<void*> ng_ho_func = ng_handover_plugin->load_symbol("start_ngap_preparation_procedure_func");
     if (not ng_ho_func) {
       gnb_logger.error("Could not open NG Handover function pointer");
       return -1;
@@ -505,9 +506,6 @@ int main(int argc, char** argv)
   workers.stop();
   gnb_logger.info("Executors closed successfully.");
 
-  if (cu_cp_config.load_plugins and not ng_handover_plugin.close()) {
-    gnb_logger.error("Could not close plugin manager");
-  }
   srslog::flush();
 
   return 0;
