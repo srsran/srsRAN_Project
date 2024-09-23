@@ -9,7 +9,6 @@
  */
 
 #include "du_low_wrapper_config_helper.h"
-
 #include "apps/services/worker_manager.h"
 #include "du_low_config.h"
 #include "du_low_config_translator.h"

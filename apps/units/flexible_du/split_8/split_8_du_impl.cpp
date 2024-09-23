@@ -8,7 +8,7 @@
  *
  */
 
-#include "dynamic_du_impl.h"
+#include "split_8_du_impl.h"
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_low/du_low_wrapper.h"
 #include "srsran/du/du_wrapper.h"
@@ -18,12 +18,12 @@
 
 using namespace srsran;
 
-dynamic_du_impl::dynamic_du_impl(unsigned nof_cells) :
+split_8_du_impl::split_8_du_impl(unsigned nof_cells) :
   ru_ul_adapt(nof_cells), ru_timing_adapt(nof_cells), ru_error_adapt(nof_cells)
 {
 }
 
-void dynamic_du_impl::start()
+void split_8_du_impl::start()
 {
   for (auto& du_obj : du_list) {
     du_obj->get_power_controller().start();
@@ -32,7 +32,7 @@ void dynamic_du_impl::start()
   ru->get_controller().start();
 }
 
-void dynamic_du_impl::stop()
+void split_8_du_impl::stop()
 {
   ru->get_controller().stop();
 
@@ -41,7 +41,7 @@ void dynamic_du_impl::stop()
   }
 }
 
-void dynamic_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
+void split_8_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
 {
   ru = std::move(active_ru);
   srsran_assert(ru, "Invalid Radio Unit");
@@ -50,7 +50,7 @@ void dynamic_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
   ru_ul_request_adapt.connect(ru->get_uplink_plane_handler());
 }
 
-void dynamic_du_impl::add_dus(std::vector<std::unique_ptr<srs_du::du_wrapper>> active_du)
+void split_8_du_impl::add_dus(std::vector<std::unique_ptr<srs_du::du_wrapper>> active_du)
 {
   du_list = std::move(active_du);
   srsran_assert(!du_list.empty(), "Cannot set an empty DU list");

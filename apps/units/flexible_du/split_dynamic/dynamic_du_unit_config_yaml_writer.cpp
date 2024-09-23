@@ -13,7 +13,7 @@
 #include "apps/units/flexible_du/du_low/du_low_config_yaml_writer.h"
 #include "apps/units/flexible_du/fapi/fapi_config_yaml_writer.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_yaml_writer.h"
-#include "apps/units/flexible_du/split_8/ru_sdr_config_yaml_writer.h"
+#include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_yaml_writer.h"
 #include "dynamic_du_unit_config.h"
 
 using namespace srsran;

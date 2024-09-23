@@ -8,12 +8,12 @@
  *
  */
 
-#include "dynamic_du_unit_config_validator.h"
+#include "split_8_du_unit_config_validator.h"
 #include "apps/units/flexible_du/du_high/du_high_config_validator.h"
 #include "apps/units/flexible_du/du_low/du_low_config_validator.h"
-#include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_validator.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_validator.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 
 using namespace srsran;
 
@@ -49,24 +49,6 @@ static std::vector<du_low_prach_validation_config> get_du_low_validation_depende
   return out_cfg;
 }
 
-static std::vector<ru_ofh_cell_validation_config> get_ru_ofh_validation_dependencies(const du_high_unit_config& config)
-{
-  std::vector<ru_ofh_cell_validation_config> out_cfg(config.cells_cfg.size());
-
-  for (unsigned i = 0, e = config.cells_cfg.size(); i != e; ++i) {
-    ru_ofh_cell_validation_config&       out_cell = out_cfg[i];
-    const du_high_unit_base_cell_config& in_cell  = config.cells_cfg[i].cell;
-
-    // Validates the sampling rate is compatible with the PRACH sequence.
-    out_cell.scs             = in_cell.common_scs;
-    out_cell.nof_prach_ports = in_cell.prach_cfg.ports.size();
-    out_cell.nof_antennas_dl = in_cell.nof_antennas_dl;
-    out_cell.nof_antennas_ul = in_cell.nof_antennas_ul;
-  }
-
-  return out_cfg;
-}
-
 static std::vector<ru_sdr_cell_validation_config> get_ru_sdr_validation_dependencies(const du_high_unit_config& config)
 {
   std::vector<ru_sdr_cell_validation_config> out_cfg(config.cells_cfg.size());
@@ -91,31 +73,7 @@ static std::vector<ru_sdr_cell_validation_config> get_ru_sdr_validation_dependen
 
   return out_cfg;
 }
-
-static bool validate_expert_execution_unit_config(const ru_dummy_unit_config&      config,
-                                                  const os_sched_affinity_bitmask& available_cpus)
-{
-  auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
-                               const os_sched_affinity_bitmask& mask,
-                               const std::string&               name) {
-    auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
-    if (not invalid_cpu_ids.empty()) {
-      fmt::print("CPU cores {} selected in '{}' option doesn't belong to available cpuset.\n", invalid_cpu_ids, name);
-      return false;
-    }
-
-    return true;
-  };
-
-  for (const auto& cell : config.cell_affinities) {
-    if (!validate_cpu_range(available_cpus, cell.ru_cpu_cfg.mask, "ru_cpus")) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool srsran::validate_dynamic_du_unit_config(const dynamic_du_unit_config&    config,
+bool srsran::validate_split_8_du_unit_config(const split_8_du_unit_config&    config,
                                              const os_sched_affinity_bitmask& available_cpus)
 {
   if (!validate_du_high_config(config.du_high_cfg.config, available_cpus)) {
@@ -127,20 +85,6 @@ bool srsran::validate_dynamic_du_unit_config(const dynamic_du_unit_config&    co
     return false;
   }
 
-  if (std::holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
-    auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.du_high_cfg.config);
-    return validate_ru_ofh_config(
-        std::get<ru_ofh_unit_parsed_config>(config.ru_cfg).config, ru_ofh_dependencies, available_cpus);
-  }
-
-  if (std::holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
-    auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config.du_high_cfg.config);
-    return validate_ru_sdr_config(std::get<ru_sdr_unit_config>(config.ru_cfg), ru_sdr_dependencies, available_cpus);
-  }
-
-  if (!validate_expert_execution_unit_config(std::get<ru_dummy_unit_config>(config.ru_cfg), available_cpus)) {
-    return false;
-  }
-
-  return true;
+  auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config.du_high_cfg.config);
+  return validate_ru_sdr_config(config.ru_cfg, ru_sdr_dependencies, available_cpus);
 }

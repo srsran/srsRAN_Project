@@ -11,7 +11,6 @@
 #include "du_low_config_translator.h"
 #include "apps/services/worker_manager_config.h"
 #include "du_low_config.h"
-
 #include "srsran/du/du_cell_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "srsran/ran/duplex_mode.h"

@@ -13,7 +13,6 @@
 #include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "apps/units/flexible_du/du_low/du_low_config.h"
 #include "ru_sdr_config.h"
-
 #include "srsran/du/du_cell_config.h"
 
 using namespace srsran;
