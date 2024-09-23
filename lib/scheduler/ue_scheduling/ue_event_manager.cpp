@@ -359,6 +359,9 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
     if (not cell_specific_events[crc_ind.cell_index].try_push(cell_event_t{
             crc_ind.crcs[i].ue_index,
             [this, sl_rx = crc_ind.sl_rx, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
+              double delay_ms =
+                  static_cast<double>(last_sl - sl_rx) * (10 / du_cells[ue_cc.cell_index].cfg->nof_slots_per_frame);
+
               const int tbs = ue_cc.handle_crc_pdu(sl_rx, crc);
               if (tbs < 0) {
                 return;
@@ -376,7 +379,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
               // Notify metrics handler.
               du_cells[ue_cc.cell_index].metrics->handle_crc_indication(crc, units::bytes{(unsigned)tbs});
-              du_cells[ue_cc.cell_index].metrics->handle_ul_delay(crc.ue_index, last_sl - sl_rx);
+              du_cells[ue_cc.cell_index].metrics->handle_ul_delay(crc.ue_index, delay_ms);
             },
             "CRC",
             true})) {

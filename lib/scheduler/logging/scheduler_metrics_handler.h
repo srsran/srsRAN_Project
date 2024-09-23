@@ -62,7 +62,6 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
 
     pci_t                                  pci;
     unsigned                               nof_prbs;
-    unsigned                               num_slots_per_frame;
     du_ue_index_t                          ue_index;
     rnti_t                                 rnti;
     unsigned                               last_bsr = 0;
@@ -109,11 +108,7 @@ public:
   explicit cell_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
 
   /// \brief Register creation of a UE.
-  void handle_ue_creation(du_ue_index_t ue_index,
-                          rnti_t        rnti,
-                          pci_t         pcell_pci,
-                          unsigned      num_prbs,
-                          unsigned      num_slots_per_frame) override;
+  void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci, unsigned num_prbs) override;
 
   /// \brief Register UE reconfiguration.
   void handle_ue_reconfiguration(du_ue_index_t ue_index) override;

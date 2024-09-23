@@ -21,18 +21,13 @@ cell_metrics_handler::cell_metrics_handler(msecs metrics_report_period, schedule
   next_report.events.reserve(MAX_NOF_DU_UES);
 }
 
-void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
-                                              rnti_t        rnti,
-                                              pci_t         pcell_pci,
-                                              unsigned      num_prbs,
-                                              unsigned      num_slots_per_frame)
+void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci, unsigned num_prbs)
 {
   ues.emplace(ue_index);
   ues[ue_index].rnti                = rnti;
   ues[ue_index].ue_index            = ue_index;
   ues[ue_index].pci                 = pcell_pci;
   ues[ue_index].nof_prbs            = num_prbs;
-  ues[ue_index].num_slots_per_frame = num_slots_per_frame;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
   nof_prbs = num_prbs;
 
@@ -296,7 +291,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
 void cell_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay)
 {
   if (ues.contains(ue_index)) {
-    ues[ue_index].data.sum_ul_delay_ms += delay * (10 / (ues[ue_index].num_slots_per_frame));
+    ues[ue_index].data.sum_ul_delay_ms += delay;
   }
 }
 
