@@ -413,7 +413,13 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
-  static constexpr std::array<unsigned, 12> valid_sr_period_slots{1, 2, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320};
+  // See \c periodicityAndOffset in \c SchedulingRequestResourceConfig of TS 38.331.
+  static const std::map<unsigned, std::vector<unsigned>> mu_to_valid_sr_period_slots_lookup{
+      {0, {1, 2, 4, 5, 8, 10, 16, 20, 40, 80}},
+      {1, {1, 2, 4, 8, 10, 16, 20, 40, 80, 160}},
+      {2, {1, 2, 4, 8, 16, 20, 40, 80, 160, 320}},
+      {3, {1, 2, 4, 8, 16, 40, 80, 160, 320, 640}},
+  };
   const auto sr_period_slots = static_cast<unsigned>(get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec);
 
   // Check that the SR period in milliseconds leads to an integer number of slots.
@@ -424,10 +430,13 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                get_nof_slots_per_subframe(scs_common));
     return false;
   }
-
+  span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
   if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
       valid_sr_period_slots.end()) {
-    fmt::print("SR period of {}ms is not valid for {}kHz SCS.\n", pucch_cfg.sr_period_msec, scs_to_khz(scs_common));
+    fmt::print("SR period of {}ms (i.e. {} slots) is not valid for {}kHz SCS.\n",
+               pucch_cfg.sr_period_msec,
+               sr_period_slots,
+               scs_to_khz(scs_common));
     return false;
   }
 
