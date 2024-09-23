@@ -324,17 +324,15 @@ async_task<void> du_ue_controller_impl::run_in_ue_executor(unique_task task)
     // Sync with UE control executor to run provided task.
     CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
     task();
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
 
     // Sync with remaining UE executors, as there might be still pending tasks dispatched to those.
+    // TODO: use when_all awaiter
     CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.mac_ul_pdu_executor(ue_index)));
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
     CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.f1u_dl_pdu_executor(ue_index)));
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
 
     CORO_RETURN();
   });
-
-  return execute_and_continue_on_blocking(
-      cfg.services.ue_execs.ctrl_executor(ue_index), cfg.services.du_mng_exec, std::move(task));
 }
