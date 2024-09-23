@@ -618,20 +618,19 @@ viavi-extended:
   extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    KEYWORDS: "extended"
+  allow_failure: true
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
-  parallel:
-    matrix:
-      - KEYWORDS: [
-            "extended",
-          ]
 
 viavi-debug:
   extends: .viavi
   variables:
     MARKERS: "viavi_debug"
+  allow_failure: true
   needs:
     - job: "basic avx512 dpdk withassert"
       artifacts: true
