@@ -16,6 +16,7 @@ using namespace srsran;
 cell_metrics_handler::cell_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier_) :
   notifier(notifier_), report_period(metrics_report_period)
 {
+  next_report.ue_metrics.reserve(MAX_NOF_DU_UES);
 }
 
 void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
