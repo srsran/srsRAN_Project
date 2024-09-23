@@ -503,10 +503,18 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
   return sizes;
 }
 
-static void assert_dci_size_config(const dci_size_config& config)
+static void assert_dci_size_config(const dci_size_config& dci_sz_cfg)
 {
-  error_type<std::string> error = validate_dci_size_config(config);
-  srsran_assert(error.has_value(), "Invalid DCI size configuration: {}", error.error());
+  [[maybe_unused]] std::string error_msg;
+  [[maybe_unused]] auto        validate_dci_sz_cfg = [&dci_sz_cfg, &error_msg]() {
+    error_type<std::string> dci_size_valid = validate_dci_size_config(dci_sz_cfg);
+    bool                    is_success     = dci_size_valid.has_value();
+    if (!is_success) {
+      error_msg = dci_size_valid.error();
+    }
+    return is_success;
+  };
+  srsran_assert(validate_dci_sz_cfg(), "Invalid DCI size configuration: {}", error_msg);
 }
 
 dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
