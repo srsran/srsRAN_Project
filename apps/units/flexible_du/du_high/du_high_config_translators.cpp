@@ -888,7 +888,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
 
   // Logging and tracing.
   out_cfg.log_broadcast_messages = config.loggers.broadcast_enabled;
-  out_cfg.metrics_report_period  = std::chrono::milliseconds{config.metrics.stdout_metrics_period};
+  out_cfg.metrics_report_period  = std::chrono::milliseconds{config.metrics.sched_report_period};
 
   const error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {

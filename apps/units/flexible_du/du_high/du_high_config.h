@@ -639,11 +639,13 @@ struct du_high_unit_cell_config {
 /// Metrics report configuration.
 struct du_high_unit_metrics_config {
   struct rlc_metrics {
-    unsigned report_period = 0; // RLC report period in ms
+    /// RLC report period in ms.
+    unsigned report_period = 0;
     bool     json_enabled  = false;
   } rlc;
-  bool     enable_json_metrics      = false;
-  unsigned stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+  bool enable_json_metrics = false;
+  /// Scheduler report period in milliseconds.
+  unsigned sched_report_period      = 1000;
   bool     autostart_stdout_metrics = false;
 };
 

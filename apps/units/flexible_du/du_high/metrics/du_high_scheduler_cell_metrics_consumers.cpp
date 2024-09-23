@@ -32,6 +32,8 @@ DECLARE_METRIC("dl_nof_ok", metric_dl_nof_ok, unsigned, "");
 DECLARE_METRIC("dl_nof_nok", metric_dl_nof_nok, unsigned, "");
 DECLARE_METRIC("dl_bs", metric_dl_bs, unsigned, "");
 DECLARE_METRIC("pusch_snr_db", metric_pusch_snr_db, float, "");
+DECLARE_METRIC("pucch_snr_db", metric_pucch_snr_db, float, "");
+DECLARE_METRIC("ta_ns", metric_ta_ns, std::string, "");
 DECLARE_METRIC("ul_mcs", metric_ul_mcs, uint8_t, "");
 DECLARE_METRIC("ul_brate", metric_ul_brate, double, "");
 DECLARE_METRIC("ul_nof_ok", metric_ul_nof_ok, unsigned, "");
@@ -49,6 +51,8 @@ DECLARE_METRIC_SET("ue_container",
                    metric_dl_nof_nok,
                    metric_dl_bs,
                    metric_pusch_snr_db,
+                   metric_pucch_snr_db,
+                   metric_ta_ns,
                    metric_ul_mcs,
                    metric_ul_brate,
                    metric_ul_nof_ok,
@@ -216,6 +220,10 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
       output.write<metric_pusch_snr_db>(std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
     }
+    if (!std::isnan(ue.pucch_snr_db) && !iszero(ue.pucch_snr_db)) {
+      output.write<metric_pucch_snr_db>(std::clamp(ue.pucch_snr_db, -99.9f, 99.9f));
+    }
+    output.write<metric_ta_ns>(ue.last_ta ? std::to_string(ue.last_ta->to_seconds<float>() * 1e9) : "n/a");
     output.write<metric_ul_mcs>(ue.ul_mcs.to_uint());
     output.write<metric_ul_brate>(ue.ul_brate_kbps * 1e3);
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);

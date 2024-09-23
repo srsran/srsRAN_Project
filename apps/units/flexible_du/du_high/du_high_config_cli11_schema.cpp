@@ -1435,8 +1435,8 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
       ->capture_default_str();
 
   add_option(app,
-             "--stdout_metrics_period",
-             metrics_params.stdout_metrics_period,
+             "--sched_report_period",
+             metrics_params.sched_report_period,
              "DU statistics report period in milliseconds. This metrics sets the console output period.")
       ->capture_default_str();
 }
