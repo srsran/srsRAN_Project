@@ -75,8 +75,10 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
 
   scheduler_metrics_notifier&     notifier;
   const std::chrono::milliseconds report_period;
-  /// Derived value.
+  // Derived value.
   unsigned report_period_slots = 0;
+
+  slot_point last_slot_tx;
 
   unsigned                                                        error_indication_counter = 0;
   std::chrono::microseconds                                       decision_latency_sum{0};
@@ -110,6 +112,9 @@ public:
                           pci_t         pcell_pci,
                           unsigned      num_prbs,
                           unsigned      num_slots_per_frame) override;
+
+  /// \brief Register UE reconfiguration.
+  void handle_ue_reconfiguration(du_ue_index_t ue_index, rnti_t rnti) override;
 
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index) override;

@@ -17,6 +17,7 @@ cell_metrics_handler::cell_metrics_handler(msecs metrics_report_period, schedule
   notifier(notifier_), report_period(metrics_report_period)
 {
   next_report.ue_metrics.reserve(MAX_NOF_DU_UES);
+  next_report.events.reserve(MAX_NOF_DU_UES);
 }
 
 void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
@@ -33,12 +34,22 @@ void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
   ues[ue_index].num_slots_per_frame = num_slots_per_frame;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
   nof_prbs = num_prbs;
+
+  next_report.events.push_back(scheduler_cell_event{last_slot_tx, scheduler_cell_event::event_type::ue_add, rnti});
+}
+
+void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index, rnti_t rnti)
+{
+  next_report.events.push_back(scheduler_cell_event{last_slot_tx, scheduler_cell_event::event_type::ue_reconf, rnti});
 }
 
 void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
 {
   if (ues.contains(ue_index)) {
-    rnti_to_ue_index_lookup.erase(ues[ue_index].rnti);
+    rnti_t rnti = ues[ue_index].rnti;
+    next_report.events.push_back(scheduler_cell_event{last_slot_tx, scheduler_cell_event::event_type::ue_rem, rnti});
+
+    rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);
   }
 }
@@ -188,8 +199,6 @@ void cell_metrics_handler::handle_error_indication()
 
 void cell_metrics_handler::report_metrics()
 {
-  next_report.ue_metrics.clear();
-
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
     scheduler_ue_metrics sched_ue_metrics = ue.compute_report(report_period);
@@ -216,6 +225,10 @@ void cell_metrics_handler::report_metrics()
 
   // Report all UE metrics in a batch.
   notifier.report_metrics(next_report);
+
+  // Clear lists in preparation for the next report.
+  next_report.ue_metrics.clear();
+  next_report.events.clear();
 }
 
 void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
@@ -294,6 +307,8 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
     usecs slot_dur      = usecs{1000U >> sl_tx.numerology()};
     report_period_slots = usecs{report_period} / slot_dur;
   }
+
+  last_slot_tx = sl_tx;
 
   handle_slot_result(slot_result, slot_decision_latency);
 

@@ -15,6 +15,7 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sch/sch_mcs.h"
+#include "srsran/ran/slot_point.h"
 #include "srsran/support/stats.h"
 #include <optional>
 
@@ -50,6 +51,15 @@ struct scheduler_ue_metrics {
   sample_statistics<unsigned> ri_stats;
 };
 
+/// \brief Event that occurred in the cell of the scheduler.
+struct scheduler_cell_event {
+  enum class event_type { ue_add, ue_reconf, ue_rem };
+
+  slot_point slot;
+  event_type type;
+  rnti_t     rnti = rnti_t::INVALID_RNTI;
+};
+
 /// \brief Snapshot of the metrics for a cell and its UEs.
 struct scheduler_cell_metrics {
   /// Latency histogram number of bins.
@@ -66,6 +76,7 @@ struct scheduler_cell_metrics {
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
   std::array<unsigned, latency_hist_bins> latency_histogram{0};
+  std::vector<scheduler_cell_event>       events;
   std::vector<scheduler_ue_metrics>       ue_metrics;
 };
 
