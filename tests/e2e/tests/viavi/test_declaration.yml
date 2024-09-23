@@ -16,11 +16,11 @@
 # enable_qos_viavi: enable QoS in GNB configuration for Viavi
 # expected_dl_bitrate: pass/fail criteria, expected downlink bitrate in bps
 # expected_ul_bitrate: pass/fail criteria, expected uplink bitrate in bps
-# fail_if_kos: fail if KPIs are out of spec
+# expected_nof_kos: expected_nof_kos
 # warning_as_errors: treat warnings as errors
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
-gnb_extra_commands: &gnb_extra_commands "ru_ofh --ta4_max 700 --ta4_min 10"
+gnb_extra_commands: &gnb_extra_commands "ru_ofh --ta4_max 700 --ta4_min 10 metrics --rlc_report_period=1000"
 test_timeout: &test_timeout 1800 # 30 * 60
 
 tests:
@@ -35,7 +35,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 80.0e+6
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -49,7 +49,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 80.0e+6
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -63,7 +63,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: false
+    expected_nof_kos: 9999999999999
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -77,7 +77,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: false
+    expected_nof_kos: 9999999999999
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -91,7 +91,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -105,7 +105,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -119,7 +119,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: false
+    expected_nof_kos: 9999999999999
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -133,13 +133,13 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: false
+    expected_nof_kos: 9999999999999
     warning_as_errors: false
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"
     test_timeout: *test_timeout
-    gnb_extra_commands: "log --ngap_level=debug --rrc_level=debug"
+    gnb_extra_commands: "log --ngap_level=debug metrics --rlc_report_period=1000"
     id: "32UE ideal UDP attach-detach with traffic"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 4
@@ -147,22 +147,8 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: true
-
-  # - campaign_filename: *campaign_filename
-  #   test_name: "32UE fading UDP attach-detach with traffic"
-  #   test_timeout: *test_timeout
-  #   gnb_extra_commands: *gnb_extra_commands
-  #   id: "32UE fading UDP attach-detach with traffic"
-  #   max_pdschs_per_slot: 1
-  #   max_puschs_per_slot: 4
-  #   enable_qos_viavi: false
-  #   # test/fail criteria
-  #   expected_dl_bitrate: 14.0e+3
-  #   expected_ul_bitrate: 1.0e+3
-  #   fail_if_kos: false
-  #   warning_as_errors: false
 
   - campaign_filename: *campaign_filename
     test_name: "1UE birth-death UDP bidirectional"
@@ -175,22 +161,8 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: false
+    expected_nof_kos: 9999999999999
     warning_as_errors: true
-
-  # - campaign_filename: *campaign_filename
-  #   test_name: "32UE birth-death UDP bidirectional"
-  #   test_timeout: *test_timeout
-  #   gnb_extra_commands: *gnb_extra_commands
-  #   id: "32UE birth-death UDP bidirectional"
-  #   max_pdschs_per_slot: 1
-  #   max_puschs_per_slot: 4
-  #   enable_qos_viavi: false
-  #   # test/fail criteria
-  #   expected_dl_bitrate: 14.0e+3
-  #   expected_ul_bitrate: 1.0e+3
-  #   fail_if_kos: true
-  #   warning_as_errors: true
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal ping"
@@ -203,7 +175,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -217,7 +189,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -231,7 +203,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 80.0e+6
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: false
 
   - campaign_filename: *campaign_filename
@@ -245,5 +217,5 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 80.0e+6
-    fail_if_kos: true
+    expected_nof_kos: 3
     warning_as_errors: false

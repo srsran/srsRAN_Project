@@ -587,29 +587,29 @@ def stop(
     # Stop
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
-        error_msg_array.append(
-            _stop_stub(
-                ue_stub,
-                f"UE_{index+1}",
-                retina_data,
-                ue_stop_timeout,
-                log_search,
-                warning_as_errors,
-            )
+        error_message, _ = _stop_stub(
+            ue_stub,
+            f"UE_{index+1}",
+            retina_data,
+            ue_stop_timeout,
+            log_search,
+            warning_as_errors,
         )
+        error_msg_array.append(error_message)
+
     if gnb is not None:
-        error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
+        error_message, _ = _stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors)
+        error_msg_array.append(error_message)
     if fivegc is not None:
-        error_msg_array.append(
-            _stop_stub(
-                fivegc,
-                "5GC",
-                retina_data,
-                fivegc_stop_timeout,
-                log_search,
-                warning_as_errors,
-            )
+        error_message, _ = _stop_stub(
+            fivegc,
+            "5GC",
+            retina_data,
+            fivegc_stop_timeout,
+            log_search,
+            warning_as_errors,
         )
+        error_msg_array.append(error_message)
 
     # Fail if stop errors
     error_msg_array = list(filter(bool, error_msg_array))
@@ -649,16 +649,15 @@ def ue_stop(
     """
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
-        error_msg_array.append(
-            _stop_stub(
-                ue_stub,
-                f"UE_{index+1}",
-                retina_data,
-                ue_stop_timeout,
-                log_search,
-                warning_as_errors,
-            )
+        error_message, _ = _stop_stub(
+            ue_stub,
+            f"UE_{index+1}",
+            retina_data,
+            ue_stop_timeout,
+            log_search,
+            warning_as_errors,
         )
+        error_msg_array.append(error_message)
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:
         pytest.fail(
@@ -674,7 +673,7 @@ def _stop_stub(
     timeout: int = 0,
     log_search: bool = True,
     warning_as_errors: bool = True,
-) -> str:
+) -> Tuple[str, int]:
     """
     Stop a stub in the defined timeout (0=auto).
     It uses retina_data to save artifacts in case of failure
@@ -707,7 +706,7 @@ def _stop_stub(
         else:
             logging.info("%s has stopped", name)
 
-    return error_msg
+    return error_msg, stop_info.warning_count
 
 
 def _get_metrics_msg(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:

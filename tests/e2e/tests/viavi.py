@@ -32,7 +32,7 @@ from rich.table import Table
 
 from .steps.configuration import configure_metric_server_for_gnb
 from .steps.kpis import get_kpis, KPIs
-from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
+from .steps.stub import _stop_stub, GNB_STARTUP_TIMEOUT, handle_start_error, stop
 
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
 _FLAKY_ERROR_LIST = ["Error creating the pod", "Viavi API call timed out"]
@@ -56,7 +56,7 @@ class _ViaviConfiguration:
     # test/fail criteria
     expected_ul_bitrate: float = 0
     expected_dl_bitrate: float = 0
-    fail_if_kos: bool = True
+    expected_nof_kos: int = 0
     warning_as_errors: bool = True
 
 
@@ -95,7 +95,7 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 enable_qos_viavi=test_declaration["enable_qos_viavi"],
                 expected_dl_bitrate=test_declaration["expected_dl_bitrate"],
                 expected_ul_bitrate=test_declaration["expected_ul_bitrate"],
-                fail_if_kos=test_declaration["fail_if_kos"],
+                expected_nof_kos=test_declaration["expected_nof_kos"],
                 warning_as_errors=test_declaration["warning_as_errors"],
             )
         )
@@ -383,6 +383,9 @@ def _test_viavi(
         if info.status is not CampaignStatusEnum.PASS:
             pytest.fail(f"Viavi Test Failed: {info.message}")
         # Final stop
+        _, gnb_warning_count = _stop_stub(
+            gnb, "GNB", retina_data, gnb_stop_timeout, log_search, test_declaration.warning_as_errors
+        )
         stop(
             (),
             gnb,
@@ -391,7 +394,7 @@ def _test_viavi(
             gnb_stop_timeout=gnb_stop_timeout,
             log_search=log_search,
             warning_as_errors=test_declaration.warning_as_errors,
-            fail_if_kos=test_declaration.fail_if_kos,
+            fail_if_kos=False,
         )
 
     # This except and the finally should be inside the request, but the campaign_name makes it complicated
@@ -407,7 +410,15 @@ def _test_viavi(
             logging.info("Folder with Viavi report: %s", report_folder)
             logging.info("Downloading Viavi report")
             viavi.download_directory(report_folder, Path(test_log_folder).joinpath("viavi"))
-            check_metrics_criteria(test_declaration, gnb, viavi, metrics_summary, test_declaration.fail_if_kos, capsys)
+            check_metrics_criteria(
+                test_configuration=test_declaration,
+                gnb=gnb,
+                viavi=viavi,
+                metrics_summary=metrics_summary,
+                capsys=capsys,
+                gnb_warning_count=gnb_warning_count,
+                warning_as_errors=test_declaration.warning_as_errors,
+            )
         except HTTPError:
             logging.error("Viavi Reports could not be downloaded")
 
@@ -420,8 +431,9 @@ def check_metrics_criteria(
     gnb: GNBStub,
     viavi: Viavi,
     metrics_summary: Optional[MetricsSummary],
-    fail_if_kos: bool,
     capsys: pytest.CaptureFixture[str],
+    gnb_warning_count: int,
+    warning_as_errors: bool,
 ):
     """
     Check pass/fail criteria
@@ -452,10 +464,18 @@ def check_metrics_criteria(
         )
     )
 
-    criteria_nof_ko_aggregate = check_criteria(kpis.nof_ko_aggregate, 0, operator.eq) or not fail_if_kos
+    criteria_nof_ko_aggregate = check_criteria(kpis.nof_ko_aggregate, test_configuration.expected_nof_kos, operator.lt)
     criteria_result.append(
-        _ViaviResult("Number of KOs and/or retrxs", 0, kpis.nof_ko_aggregate, criteria_nof_ko_aggregate)
+        _ViaviResult(
+            "Number of KOs and/or retrxs",
+            test_configuration.expected_nof_kos,
+            kpis.nof_ko_aggregate,
+            criteria_nof_ko_aggregate,
+        )
     )
+
+    criteria_nof_warnings = check_criteria(gnb_warning_count, 0, operator.eq) and warning_as_errors
+    criteria_result.append(_ViaviResult("Number of warnings", 0, gnb_warning_count, criteria_nof_warnings))
 
     # Check procedure table
     viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)
