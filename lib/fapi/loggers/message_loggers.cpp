@@ -397,6 +397,26 @@ static void log_pucch_pdu(const ul_pucch_pdu& pdu, fmt::memory_buffer& buffer)
   }
 }
 
+static void log_srs_pdu(const ul_srs_pdu& pdu, fmt::memory_buffer& buffer)
+{
+  fmt::format_to(
+      buffer,
+      "\n\t- SRS rnti={} bwp={}:{} nof_ports={} symb={}:{} config_idx={} comb=(size={} offset={} cyclic_shift={}) "
+      "freq_shift={} type={}",
+      pdu.rnti,
+      pdu.bwp_start,
+      pdu.bwp_size,
+      pdu.num_ant_ports,
+      pdu.time_start_position,
+      pdu.num_symbols,
+      pdu.config_index,
+      static_cast<uint8_t>(pdu.comb_size),
+      pdu.comb_offset,
+      pdu.cyclic_shift,
+      pdu.frequency_shift,
+      to_string(pdu.resource_type));
+}
+
 void srsran::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
@@ -414,6 +434,8 @@ void srsran::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog:
         log_pusch_pdu(pdu.pusch_pdu, buffer);
         break;
       case fapi::ul_pdu_type::SRS:
+        log_srs_pdu(pdu.srs_pdu, buffer);
+        break;
       default:
         srsran_assert(0, "UL_TTI.request PDU type value ({}) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
