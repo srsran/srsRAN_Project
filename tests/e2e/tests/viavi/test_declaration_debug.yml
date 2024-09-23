@@ -25,7 +25,7 @@ gnb_extra_commands: &gnb_extra_commands ""
 tests:
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP bidirectional"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: 1800 # 30 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP bidirectional - Debug"
     max_pdschs_per_slot: 1
