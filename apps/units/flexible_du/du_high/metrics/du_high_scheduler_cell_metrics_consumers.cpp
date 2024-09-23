@@ -62,10 +62,7 @@ DECLARE_METRIC_SET("ue_container",
 /// cell-wide metrics.
 DECLARE_METRIC("error_indication_count", metric_error_indication_count, unsigned, "");
 DECLARE_METRIC("average_latency", metric_average_latency, unsigned, "");
-DECLARE_METRIC("latency_bin_start_usec", latency_bin_start_usec, unsigned, "");
-DECLARE_METRIC("latency_bin_count", latency_bin_count, unsigned, "");
-DECLARE_METRIC_SET("latency_bin", latency_bin, latency_bin_start_usec, latency_bin_count);
-DECLARE_METRIC_LIST("latency_histogram", latency_histogram, std::vector<latency_bin>);
+DECLARE_METRIC("latency_histogram", latency_histogram, std::vector<unsigned>, "");
 DECLARE_METRIC_SET("cell_metrics",
                    cell_metrics,
                    metric_error_indication_count,
@@ -234,14 +231,8 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
   auto& cell_output = ctx.get<cell_metrics>();
   cell_output.write<metric_error_indication_count>(metrics.nof_error_indications);
   cell_output.write<metric_average_latency>(metrics.average_decision_latency.count());
-  unsigned bin_idx = 0;
-  for (unsigned bin_count : metrics.latency_histogram) {
-    cell_output.get<latency_histogram>().emplace_back();
-    auto& elem = cell_output.get<latency_histogram>().back();
-    elem.write<latency_bin_start_usec>(bin_idx * scheduler_cell_metrics::nof_usec_per_bin);
-    elem.write<latency_bin_count>(bin_count);
-    bin_idx++;
-  }
+  cell_output.write<latency_histogram>(
+      std::vector<unsigned>(metrics.latency_histogram.begin(), metrics.latency_histogram.end()));
 
   // Log the context.
   ctx.write<metric_timestamp_tag>(get_time_stamp());
