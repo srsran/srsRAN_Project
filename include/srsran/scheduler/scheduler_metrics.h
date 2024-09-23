@@ -56,8 +56,8 @@ struct scheduler_cell_event {
   enum class event_type { ue_add, ue_reconf, ue_rem };
 
   slot_point slot;
-  event_type type;
   rnti_t     rnti = rnti_t::INVALID_RNTI;
+  event_type type;
 };
 
 /// \brief Snapshot of the metrics for a cell and its UEs.

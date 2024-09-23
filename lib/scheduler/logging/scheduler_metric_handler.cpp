@@ -35,19 +35,20 @@ void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
   nof_prbs = num_prbs;
 
-  next_report.events.push_back(scheduler_cell_event{last_slot_tx, scheduler_cell_event::event_type::ue_add, rnti});
+  next_report.events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
 }
 
-void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index, rnti_t rnti)
+void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
 {
-  next_report.events.push_back(scheduler_cell_event{last_slot_tx, scheduler_cell_event::event_type::ue_reconf, rnti});
+  next_report.events.push_back(
+      scheduler_cell_event{last_slot_tx, ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
 }
 
 void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
 {
   if (ues.contains(ue_index)) {
     rnti_t rnti = ues[ue_index].rnti;
-    next_report.events.push_back(scheduler_cell_event{last_slot_tx, scheduler_cell_event::event_type::ue_rem, rnti});
+    next_report.events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
 
     rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);

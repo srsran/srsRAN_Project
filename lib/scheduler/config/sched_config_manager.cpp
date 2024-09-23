@@ -197,7 +197,7 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std
           next_cfg->pcell_common_cfg().nof_slots_per_frame);
     } else {
       // Reconfiguration case.
-      cell_metrics[next_cfg->pcell_common_cfg().cell_index]->handle_ue_reconfiguration(ue_index, next_cfg->crnti);
+      cell_metrics[next_cfg->pcell_common_cfg().cell_index]->handle_ue_reconfiguration(ue_index);
     }
 
     // Stores new UE config and deletes old config.

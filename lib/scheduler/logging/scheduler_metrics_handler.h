@@ -114,7 +114,7 @@ public:
                           unsigned      num_slots_per_frame) override;
 
   /// \brief Register UE reconfiguration.
-  void handle_ue_reconfiguration(du_ue_index_t ue_index, rnti_t rnti) override;
+  void handle_ue_reconfiguration(du_ue_index_t ue_index) override;
 
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index) override;
