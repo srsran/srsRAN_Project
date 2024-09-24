@@ -16,6 +16,8 @@
 
 using namespace srsran;
 
+std::atomic<int> pdcp_entity_rx::next_worker_id{0};
+
 pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                rb_id_t                         rb_id_,
                                pdcp_rx_config                  cfg_,
@@ -28,7 +30,6 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
-  sec_engine_pool(pdcp_nof_crypto_workers),
   rx_window(logger, pdcp_window_size(pdcp_sn_size_to_uint(cfg.sn_size))),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
@@ -59,16 +60,12 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger.log_info("PDCP configured. {}", cfg);
 
   // Populate null security engines
+  worker_id_pool.reserve(pdcp_nof_crypto_workers);
+  sec_engine_pool.reserve(pdcp_nof_crypto_workers);
   for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
     std::unique_ptr<security::security_engine_impl> null_engine;
-    uint32_t                                        nof_retries = 0;
-    while (!sec_engine_pool.try_push(std::move(null_engine))) {
-      if (nof_retries++ < max_nof_retries) {
-        logger.log_info("Retrying to add null security engine to pool. nof_retries={} sec_engine={}", nof_retries, i);
-      } else {
-        logger.log_error("Failed to add null security engine to pool. nof_retries={} sec_engine={}", nof_retries, i);
-      }
-    }
+    sec_engine_pool.push_back(std::move(null_engine));
+    worker_id_pool.push_back(unused_worker_id);
   }
 }
 
@@ -448,21 +445,31 @@ byte_buffer pdcp_entity_rx::compile_status_report()
  */
 expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
 {
-  std::unique_ptr<security::security_engine_rx> sec_engine;
-  uint32_t                                      nof_retries = 0;
-  while (!sec_engine_pool.try_pop(sec_engine)) {
-    if (nof_retries++ < max_nof_retries) {
-      logger.log_info(
-          "Retrying to get security engine. count={} pdu_len={} nof_retries={}", count, buf.length(), nof_retries);
-    } else {
-      logger.log_error("Dropped PDU: Failed to get security engine. count={} pdu_len={} nof_retries={}",
-                       count,
-                       buf.length(),
-                       nof_retries);
-      return make_unexpected(default_error_t{});
+  // obtain the thread-specific ID of the worker
+  thread_local int worker_id = next_worker_id.fetch_add(1, std::memory_order_relaxed);
+
+  // find (or add) the worker ID in the worker ID pool and get the index inside the pool
+  uint32_t idx = 0;
+  for (; idx < worker_id_pool.size(); idx++) {
+    if (worker_id_pool[idx] == unused_worker_id) {
+      worker_id_pool[idx] = worker_id;
+      logger.log_debug("Added new worker_id={} to worker_id_pool at idx={}", worker_id, idx);
+    }
+    if (worker_id_pool[idx] == worker_id) {
+      break;
     }
   }
+  if (idx == worker_id_pool.size()) {
+    logger.log_error("Dropped PDU: More unique worker IDs than security engines. pool_size={} count={} pdu_len={}",
+                     worker_id_pool.size(),
+                     count,
+                     buf.length());
+    return make_unexpected(default_error_t{});
+  }
+  logger.log_debug(
+      "Using sec_engine with idx={} for worker_id={}. count={} pdu_len={}", idx, worker_id, count, buf.length());
 
+  security::security_engine_rx* sec_engine = sec_engine_pool[idx].get();
   if (sec_engine == nullptr) {
     // Security is not configured. Pass through for DRBs; trim zero MAC-I for SRBs.
     if (is_srb()) {
@@ -472,16 +479,6 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
       }
       buf.trim_tail(security::sec_mac_len);
     }
-
-    nof_retries = 0;
-    while (!sec_engine_pool.try_push(std::move(sec_engine))) {
-      if (nof_retries++ < max_nof_retries) {
-        logger.log_info("Retrying to return null security engine. count={} nof_retries={}", count, nof_retries);
-      } else {
-        logger.log_error("Failed to return null security engine to pool. count={} nof_retries={}", count, nof_retries);
-      }
-    }
-
     return buf;
   }
 
@@ -497,19 +494,10 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
   unsigned                  hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
   security::security_result result   = sec_engine->decrypt_and_verify_integrity(std::move(buf), hdr_size, count);
 
-  nof_retries = 0;
-  while (!sec_engine_pool.try_push(std::move(sec_engine))) {
-    if (nof_retries++ < max_nof_retries) {
-      logger.log_info("Retrying to return security engine. count={} nof_retries={}", count, nof_retries);
-    } else {
-      logger.log_error("Failed to return security engine to pool. count={} nof_retries={}", count, nof_retries);
-    }
-  }
-
   if (!result.buf.has_value()) {
     switch (result.buf.error()) {
       case srsran::security::security_error::integrity_failure:
-        logger.log_warning("Integrity failed, dropping PDU. count={}", result.count);
+        logger.log_warning("Integrity failed, dropping PDU. count={} idx={} wid={}", result.count, idx, worker_id);
         metrics.add_integrity_failed_pdus(1);
         upper_cn.on_integrity_failure();
         break;
@@ -580,30 +568,17 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
                                                                     : security::security_direction::downlink;
 
   // Remove previous security engines
-  std::unique_ptr<security::security_engine_rx> old_sec_engine;
-  for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
-    uint32_t nof_retries = 0;
-    while (!sec_engine_pool.try_pop(old_sec_engine)) {
-      if (nof_retries++ < max_nof_retries) {
-        logger.log_info("Retrying to remove security engine from pool. nof_retries={} sec_engine={}", nof_retries, i);
-      } else {
-        logger.log_error("Failed to remove security engine from pool. nof_retries={} sec_engine={}", nof_retries, i);
-      }
-    }
-  }
+  worker_id_pool.clear();
+  worker_id_pool.reserve(pdcp_nof_crypto_workers);
+  sec_engine_pool.clear();
+  sec_engine_pool.reserve(pdcp_nof_crypto_workers);
 
   // Populate new security engines
   for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
     auto sec_engine = std::make_unique<security::security_engine_impl>(
         sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
-    uint32_t nof_retries = 0;
-    while (!sec_engine_pool.try_push(std::move(sec_engine))) {
-      if (nof_retries++ < max_nof_retries) {
-        logger.log_info("Retrying to add security engine to pool. nof_retries={} sec_engine={}", nof_retries, i);
-      } else {
-        logger.log_error("Failed to add security engine to pool. nof_retries={} sec_engine={}", nof_retries, i);
-      }
-    }
+    sec_engine_pool.push_back(std::move(sec_engine));
+    worker_id_pool.push_back(unused_worker_id);
   }
 
   logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
