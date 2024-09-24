@@ -134,12 +134,21 @@ protected:
     sched_ue_creation_request_message req = test_helpers::create_default_sched_ue_creation_request();
     req.ue_index                          = ue_index;
     req.crnti                             = rnti;
-    auto default_lc_cfg                   = config_helpers::create_default_logical_channel_config(uint_to_lcid(0));
-    default_lc_cfg.lc_group               = lcg_id;
-    req.cfg.lc_config_list.emplace();
+    // Set LCG ID for SRBs provided in the LCIDs to activate list.
+    for (auto& lc_cfg : *req.cfg.lc_config_list) {
+      if (lc_cfg.lcid < lcid_t::LCID_SRB2 and
+          std::find(lcids_to_activate.begin(), lcids_to_activate.end(), lc_cfg.lcid) != lcids_to_activate.end()) {
+        lc_cfg.lc_group = lcg_id;
+      }
+    }
+    auto default_lc_cfg     = config_helpers::create_default_logical_channel_config(uint_to_lcid(0));
+    default_lc_cfg.lc_group = lcg_id;
+    // Add DRBs if any in the LCIDs to activate list.
     for (lcid_t lcid : lcids_to_activate) {
-      default_lc_cfg.lcid = lcid;
-      req.cfg.lc_config_list->push_back(default_lc_cfg);
+      if (lcid >= lcid_t::LCID_SRB2) {
+        default_lc_cfg.lcid = lcid;
+        req.cfg.lc_config_list->push_back(default_lc_cfg);
+      }
     }
     return req;
   }

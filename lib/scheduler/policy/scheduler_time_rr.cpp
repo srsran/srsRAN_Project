@@ -336,15 +336,11 @@ static alloc_result alloc_ul_retxs(const slice_ue_repository& ue_db,
 /// Allocate UE PUSCH grant for new transmissions.
 static alloc_result alloc_ul_ue_newtx(const slice_ue&         u,
                                       ue_pusch_allocator&     pusch_alloc,
-                                      bool                    schedule_sr_only,
                                       srslog::basic_logger&   logger,
                                       std::optional<unsigned> ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   unsigned pending_newtx_bytes = 0;
-  if (schedule_sr_only and not u.has_pending_sr()) {
-    return {alloc_status::skip_ue};
-  }
-  pending_newtx_bytes = u.pending_ul_newtx_bytes();
+  pending_newtx_bytes          = u.pending_ul_newtx_bytes();
   if (pending_newtx_bytes == 0) {
     return {alloc_status::skip_ue};
   }
@@ -426,31 +422,20 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
     return;
   }
 
-  // Prioritize UEs with pending SRs.
-  const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
-      compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, max_rbs);
-  // First, schedule UEs with pending SR.
-  auto sr_ue_function = [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const slice_ue& u) {
-    return alloc_ul_ue_newtx(u, pusch_alloc, true, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
-  };
-  auto result      = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
-  next_ul_ue_index = result.first;
-  if (result.second == alloc_status::skip_slot) {
-    return;
-  }
-
-  // Second, schedule UEs with re-transmissions.
+  // First, schedule UEs with re-transmissions.
   auto retx_result = alloc_ul_retxs(ues, pusch_alloc, slice_id, harq_pending_retx_list);
   if (retx_result.status == alloc_status::skip_slot) {
     return;
   }
 
   // Then, schedule UEs with new transmissions.
+  const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
+      compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, max_rbs);
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     auto data_tx_ue_function = [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const slice_ue& u) {
-      return alloc_ul_ue_newtx(u, pusch_alloc, false, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+      return alloc_ul_ue_newtx(u, pusch_alloc, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
     };
-    result           = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
+    auto result      = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
     next_ul_ue_index = result.first;
   }
 }
