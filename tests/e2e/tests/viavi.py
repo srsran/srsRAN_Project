@@ -368,8 +368,9 @@ def _test_viavi(
 
     # Create campaign
     logging.info(
-        f"Starting Campaign {test_declaration.campaign_filename}"
-        + (f" - Test {test_declaration.test_name}" if test_declaration.test_name is not None else "")
+        "Starting Campaign %s%s",
+        test_declaration.campaign_filename,
+        (f" - Test {test_declaration.test_name}" if test_declaration.test_name is not None else ""),
     )
     campaign_name = viavi.schedule_campaign(test_declaration.campaign_filename, test_declaration.test_name)
 
@@ -383,9 +384,6 @@ def _test_viavi(
         if info.status is not CampaignStatusEnum.PASS:
             pytest.fail(f"Viavi Test Failed: {info.message}")
         # Final stop
-        _, gnb_warning_count = _stop_stub(
-            gnb, "GNB", retina_data, gnb_stop_timeout, log_search, test_declaration.warning_as_errors
-        )
         stop(
             (),
             gnb,
@@ -410,6 +408,9 @@ def _test_viavi(
             logging.info("Folder with Viavi report: %s", report_folder)
             logging.info("Downloading Viavi report")
             viavi.download_directory(report_folder, Path(test_log_folder).joinpath("viavi"))
+            _, gnb_warning_count = _stop_stub(
+                gnb, "GNB", retina_data, gnb_stop_timeout, log_search, test_declaration.warning_as_errors
+            )
             check_metrics_criteria(
                 test_configuration=test_declaration,
                 gnb=gnb,

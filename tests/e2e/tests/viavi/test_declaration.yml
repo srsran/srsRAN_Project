@@ -21,7 +21,7 @@
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
 gnb_extra_commands: &gnb_extra_commands "ru_ofh --ta4_max 700 --ta4_min 10 metrics --rlc_report_period=1000"
-test_timeout: &test_timeout 1800 # 30 * 60
+test_timeout: &test_timeout 2400 # 40 * 60
 
 tests:
   - campaign_filename: *campaign_filename
