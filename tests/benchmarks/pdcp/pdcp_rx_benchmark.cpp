@@ -185,11 +185,11 @@ void benchmark_pdcp_rx(bench_params                  params,
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   timer_manager        timers;
-  task_worker          ul_worker{"ul_worker", 512};
+  task_worker          ul_worker{"ul_worker", 4096};
   task_worker_executor ul_exec{ul_worker};
 
   unsigned nof_crypto_threads = pdcp_nof_crypto_workers;
-  unsigned crypto_queue_size  = 128;
+  unsigned crypto_queue_size  = 4096;
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc> crypto_worker_pool{
       "crypto", nof_crypto_threads, crypto_queue_size};
