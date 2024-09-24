@@ -325,6 +325,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.admission.max_nof_dus          = cu_cfg.max_nof_dus;
   out_cfg.admission.max_nof_cu_ups       = cu_cfg.max_nof_cu_ups;
   out_cfg.admission.max_nof_ues          = cu_cfg.max_nof_ues;
+  out_cfg.admission.max_nof_drbs_per_ue  = cu_cfg.max_nof_drbs_per_ue;
 
   out_cfg.node.gnb_id        = cu_cfg.gnb_id;
   out_cfg.node.ran_node_name = cu_cfg.ran_node_name;

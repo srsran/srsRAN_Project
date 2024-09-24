@@ -32,9 +32,10 @@ struct cu_cp_test_amf_config {
 };
 
 struct cu_cp_test_env_params {
-  cu_cp_test_env_params(unsigned                                                 max_nof_cu_ups_ = 8,
-                        unsigned                                                 max_nof_dus_    = 8,
-                        unsigned                                                 max_nof_ues_    = 8192,
+  cu_cp_test_env_params(unsigned                                                 max_nof_cu_ups_      = 8,
+                        unsigned                                                 max_nof_dus_         = 8,
+                        unsigned                                                 max_nof_ues_         = 8192,
+                        unsigned                                                 max_nof_drbs_per_ue_ = 8,
                         const std::vector<std::vector<supported_tracking_area>>& amf_config_ =
                             {{supported_tracking_area{7, {{plmn_identity::test_value(), {{1}}}}}}},
                         bool                 load_plugins_     = false,
@@ -44,6 +45,7 @@ struct cu_cp_test_env_params {
     max_nof_cu_ups(max_nof_cu_ups_),
     max_nof_dus(max_nof_dus_),
     max_nof_ues(max_nof_ues_),
+    max_nof_drbs_per_ue(max_nof_drbs_per_ue_),
     load_plugins(load_plugins_),
     start_ng_ho_func(start_ng_ho_func_),
     connect_amfs(connect_amfs_),
@@ -58,6 +60,7 @@ struct cu_cp_test_env_params {
   unsigned                                  max_nof_cu_ups;
   unsigned                                  max_nof_dus;
   unsigned                                  max_nof_ues;
+  unsigned                                  max_nof_drbs_per_ue;
   bool                                      load_plugins;
   void*                                     start_ng_ho_func;
   connect_amfs_func                         connect_amfs;

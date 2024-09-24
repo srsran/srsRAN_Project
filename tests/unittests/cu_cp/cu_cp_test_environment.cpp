@@ -69,13 +69,14 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   srslog::init();
 
   // Create CU-CP config
-  cu_cp_cfg                          = config_helpers::make_default_cu_cp_config();
-  cu_cp_cfg.services.cu_cp_executor  = cu_cp_workers->exec.get();
-  cu_cp_cfg.services.timers          = &timers;
-  cu_cp_cfg.admission.max_nof_dus    = params.max_nof_dus;
-  cu_cp_cfg.admission.max_nof_cu_ups = params.max_nof_cu_ups;
-  cu_cp_cfg.admission.max_nof_ues    = params.max_nof_ues;
-  cu_cp_cfg.bearers.drb_config       = config_helpers::make_default_cu_cp_qos_config_list();
+  cu_cp_cfg                               = config_helpers::make_default_cu_cp_config();
+  cu_cp_cfg.services.cu_cp_executor       = cu_cp_workers->exec.get();
+  cu_cp_cfg.services.timers               = &timers;
+  cu_cp_cfg.admission.max_nof_dus         = params.max_nof_dus;
+  cu_cp_cfg.admission.max_nof_cu_ups      = params.max_nof_cu_ups;
+  cu_cp_cfg.admission.max_nof_ues         = params.max_nof_ues;
+  cu_cp_cfg.admission.max_nof_drbs_per_ue = params.max_nof_drbs_per_ue;
+  cu_cp_cfg.bearers.drb_config            = config_helpers::make_default_cu_cp_qos_config_list();
   // > NGAP config
   for (const auto& [amf_index, amf_config] : amf_configs) {
     cu_cp_cfg.ngaps.push_back(cu_cp_configuration::ngap_params{&*amf_config.amf_stub, amf_config.supported_tas});

@@ -21,7 +21,7 @@ void cu_cp_ue::stop()
 
 ue_manager::ue_manager(const cu_cp_configuration& cu_cp_cfg) :
   ue_config(cu_cp_cfg.ue),
-  up_config(up_resource_manager_cfg{cu_cp_cfg.bearers.drb_config}),
+  up_config(up_resource_manager_cfg{cu_cp_cfg.bearers.drb_config, cu_cp_cfg.admission.max_nof_drbs_per_ue}),
   sec_config(security_manager_config{cu_cp_cfg.security.int_algo_pref_list, cu_cp_cfg.security.enc_algo_pref_list}),
   max_nof_ues(cu_cp_cfg.admission.max_nof_ues),
   ue_task_scheds(*cu_cp_cfg.services.timers, *cu_cp_cfg.services.cu_cp_executor, logger)

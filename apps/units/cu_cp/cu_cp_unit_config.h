@@ -260,8 +260,12 @@ struct cu_cp_unit_config {
   uint16_t max_nof_cu_ups = 6;
   /// Maximum number of UEs.
   uint64_t max_nof_ues = 8192;
+  /// Maximum number of DRBs per UE.
+  uint8_t max_nof_drbs_per_ue = 8;
   /// Inactivity timer in seconds.
   int inactivity_timer = 120;
+  /// PDU session setup timeout in seconds (must be larger than T310).
+  unsigned pdu_session_setup_timeout = 3;
   /// Load enterprise plugins.
   bool load_plugins = false;
   /// Function pointer to start NG handover from plugin
@@ -270,8 +274,6 @@ struct cu_cp_unit_config {
   void* connect_amfs_func_ptr;
   /// Function pointer to disconnect from AMFs from plugin
   void* disconnect_amfs_func_ptr;
-  /// PDU session setup timeout in seconds (must be larger than T310).
-  unsigned pdu_session_setup_timeout = 3;
   /// Loggers configuration.
   cu_cp_unit_logger_config loggers;
   /// PCAPs configuration.

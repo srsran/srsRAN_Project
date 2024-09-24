@@ -231,6 +231,7 @@ static YAML::Node build_cu_cp_section(const cu_cp_unit_config& config)
   node["max_nof_dus"]               = config.max_nof_dus;
   node["max_nof_cu_ups"]            = config.max_nof_cu_ups;
   node["max_nof_ues"]               = config.max_nof_ues;
+  node["max_nof_drbs_per_ue"]       = config.max_nof_drbs_per_ue;
   node["inactivity_timer"]          = config.inactivity_timer;
   node["pdu_session_setup_timeout"] = config.pdu_session_setup_timeout;
 

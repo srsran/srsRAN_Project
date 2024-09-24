@@ -31,10 +31,13 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+static constexpr uint8_t MAX_NOF_DRBS_PER_UE = 29;
+
 class cu_cp_pdu_session_resource_modify_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_pdu_session_resource_modify_test() : cu_cp_test_environment(cu_cp_test_env_params{})
+  cu_cp_pdu_session_resource_modify_test() :
+    cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, MAX_NOF_DRBS_PER_UE})
   {
     // Run NG setup to completion.
     run_ng_setup();
@@ -462,7 +465,7 @@ TEST_F(cu_cp_pdu_session_resource_modify_test, when_many_qos_flows_are_added_pdu
   // Add QoS flows until maximum number of DRBs is reached
   unsigned transaction_id = 0;
   unsigned count          = 8;
-  for (unsigned i = 2; i <= MAX_NOF_DRBS; ++i) {
+  for (unsigned i = 2; i <= MAX_NOF_DRBS_PER_UE; ++i) {
     ASSERT_TRUE(modify_pdu_session_and_add_qos_flow(psi,
                                                     uint_to_drb_id(i),
                                                     uint_to_qos_flow_id(i),
@@ -480,7 +483,7 @@ TEST_F(cu_cp_pdu_session_resource_modify_test, when_one_to_many_qos_flows_are_ad
   // Add QoS flows until maximum number of DRBs is reached
   unsigned transaction_id = 0;
   unsigned count          = 8;
-  for (unsigned i = 2; i <= MAX_NOF_DRBS; ++i) {
+  for (unsigned i = 2; i <= MAX_NOF_DRBS_PER_UE; ++i) {
     ASSERT_TRUE(modify_pdu_session_and_add_qos_flow(psi,
                                                     uint_to_drb_id(i),
                                                     uint_to_qos_flow_id(i),

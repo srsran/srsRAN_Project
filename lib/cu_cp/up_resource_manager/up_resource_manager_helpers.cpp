@@ -52,10 +52,13 @@ bool contains_drb(const up_pdu_session_context_update& new_session_context, drb_
 drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_pdu_session_context_update& new_session_context,
                                             const up_context&                    context,
                                             const up_config_update&              config_update,
+                                            uint8_t                              max_nof_drbs_per_ue,
                                             const srslog::basic_logger&          logger)
 {
-  if (context.drb_map.size() >= MAX_NOF_DRBS) {
-    logger.warning("No more DRBs available");
+  if (context.drb_map.size() >= max_nof_drbs_per_ue) {
+    logger.warning("DRB creation failed. Cause: Maximum number of DRBs per UE already created ({}). To increase the "
+                   "number of allowed DRBs per UE change the \"--max_nof_drbs_per_ue\" in the CU-CP configuration\n",
+                   max_nof_drbs_per_ue);
     return drb_id_t::invalid;
   }
 
@@ -65,8 +68,11 @@ drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_pdu_session_context_update&
          contains_drb(new_session_context, new_drb_id)) {
     /// try next
     new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
-    if (new_drb_id == drb_id_t::invalid) {
-      logger.warning("No more DRBs available");
+
+    if (drb_id_to_uint(new_drb_id) > max_nof_drbs_per_ue) {
+      logger.warning("DRB creation failed. Cause: Maximum number of DRBs per UE already created ({}). To increase the "
+                     "number of allowed DRBs per UE change the \"--max_nof_drbs_per_ue\" in the CU-CP configuration\n",
+                     max_nof_drbs_per_ue);
       return drb_id_t::invalid;
     }
   }
@@ -209,7 +215,14 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
 
   // Note: We map QoS flows to DRBs in a 1:1 manner meaning that each flow gets it's own DRB.
   // potential optimization to support more QoS flows is to map non-GPB flows onto existing DRBs.
-  drb_id_t drb_id = allocate_drb_id(new_session_context, full_context, config_update, logger);
+  if (full_context.drb_map.size() >= cfg.max_nof_drbs_per_ue) {
+    logger.warning("DRB creation failed. Cause: Maximum number of DRBs per UE already created ({}). To increase the "
+                   "number of allowed DRBs per UE change the \"--max_nof_drbs_per_ue\" in the CU-CP configuration\n",
+                   cfg.max_nof_drbs_per_ue);
+    return drb_id_t::invalid;
+  }
+
+  drb_id_t drb_id = allocate_drb_id(new_session_context, full_context, config_update, cfg.max_nof_drbs_per_ue, logger);
   if (drb_id == drb_id_t::invalid) {
     logger.warning("No more DRBs available");
     return drb_id;

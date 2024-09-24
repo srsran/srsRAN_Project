@@ -21,6 +21,7 @@ namespace srs_cu_cp {
 /// \brief List of all supported 5QIs and their corresponding PDCP/SDAP configs
 struct up_resource_manager_cfg {
   std::map<five_qi_t, cu_cp_qos_config> five_qi_config; ///< Configuration for available 5QI.
+  uint8_t                               max_nof_drbs_per_ue;
 };
 
 struct up_qos_flow_context {
