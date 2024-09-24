@@ -48,16 +48,22 @@ class pdcp_rx_test_frame : public pdcp_tx_status_handler,
                            public pdcp_rx_upper_control_notifier
 {
 public:
+  uint32_t num_status_reports     = 0;
+  uint32_t num_sdus               = 0;
+  uint32_t num_integrity_failures = 0;
+  uint32_t num_protocol_failures  = 0;
+  uint32_t num_max_count_reached  = 0;
+
   /// PDCP TX status handler
-  void on_status_report(byte_buffer_chain status) override {}
+  void on_status_report(byte_buffer_chain status) override { num_status_reports++; }
 
   /// PDCP RX upper layer data notifier
-  void on_new_sdu(byte_buffer sdu) override {}
+  void on_new_sdu(byte_buffer sdu) override { num_sdus++; }
 
   /// PDCP RX upper layer control notifier
-  void on_integrity_failure() override {}
-  void on_protocol_failure() override {}
-  void on_max_count_reached() override {}
+  void on_integrity_failure() override { num_integrity_failures++; }
+  void on_protocol_failure() override { num_protocol_failures++; }
+  void on_max_count_reached() override { num_max_count_reached++; }
 };
 
 struct bench_params {
@@ -174,11 +180,7 @@ void benchmark_pdcp_rx(bench_params                  params,
                        security::ciphering_algorithm ciph_algo)
 {
   fmt::memory_buffer buffer;
-  if (int_enabled == security::integrity_enabled::on || ciph_enabled == security::ciphering_enabled::on) {
-    fmt::format_to(buffer, "Benchmark PDCP RX. NIA{} NEA{}", int_algo, ciph_algo);
-  } else {
-    fmt::format_to(buffer, "Benchmark PDCP RX. NIA0 NEA0");
-  }
+  fmt::format_to(buffer, "Benchmark PDCP RX. NIA{} ({}) NEA{} ({})", int_algo, int_enabled, ciph_algo, ciph_enabled);
 
   std::vector<byte_buffer_chain> pdu_list;
 
@@ -226,6 +228,24 @@ void benchmark_pdcp_rx(bench_params                  params,
 
   // Prepare
   auto prepare = [&]() mutable {
+    // Print errors if statistics are different than expected
+    if (frame != nullptr) {
+      if (frame->num_sdus < (uint32_t)nof_sdus) {
+        srslog::fetch_basic_logger("PDCP").error("Received only {} of {} SDUs", frame->num_sdus, nof_sdus);
+      }
+      if (frame->num_status_reports > 0) {
+        srslog::fetch_basic_logger("PDCP").error("Unexpected num_status_reports={}", frame->num_status_reports);
+      }
+      if (frame->num_integrity_failures > 0) {
+        srslog::fetch_basic_logger("PDCP").error("Unexpected num_integrity_failures={}", frame->num_integrity_failures);
+      }
+      if (frame->num_protocol_failures > 0) {
+        srslog::fetch_basic_logger("PDCP").error("Unexpected num_protocol_failures={}", frame->num_protocol_failures);
+      }
+      if (frame->num_max_count_reached > 0) {
+        srslog::fetch_basic_logger("PDCP").error("Unexpected num_max_count_reached={}", frame->num_max_count_reached);
+      }
+    }
     pdcp_rx.release();
     pdu_list = gen_pdu_list(nof_sdus, sdu_len, int_enabled, ciph_enabled, int_algo, ciph_algo);
     frame    = std::make_unique<pdcp_rx_test_frame>();
