@@ -196,10 +196,7 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std
     cell_metrics_handler& cell_metrics = metrics_handler.at(next_cfg->pcell_common_cfg().cell_index);
     if (ue_cfg_list[ue_index] == nullptr) {
       // UE creation case.
-      cell_metrics.handle_ue_creation(ue_index,
-                                      next_cfg->crnti,
-                                      next_cfg->pcell_common_cfg().pci,
-                                      next_cfg->pcell_common_cfg().nof_dl_prbs);
+      cell_metrics.handle_ue_creation(ue_index, next_cfg->crnti, next_cfg->pcell_common_cfg().pci);
     } else {
       // Reconfiguration case.
       cell_metrics.handle_ue_reconfiguration(ue_index);

@@ -8,7 +8,9 @@
  *
  */
 
+#include "lib/scheduler/config/cell_configuration.h"
 #include "lib/scheduler/logging/scheduler_metrics_handler.h"
+#include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -27,9 +29,12 @@ class scheduler_metrics_handler_tester : public ::testing::Test
 protected:
   scheduler_metrics_handler_tester(
       std::chrono::milliseconds period = std::chrono::milliseconds{test_rgen::uniform_int<unsigned>(2, 100)}) :
-    report_period(period), metrics(period, metrics_notif)
+    report_period(period),
+    cell_cfg(config_helpers::make_default_scheduler_expert_config(),
+             test_helpers::make_default_sched_cell_configuration_request()),
+    metrics(period, metrics_notif, cell_cfg)
   {
-    metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0}, nof_prbs);
+    metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
   }
 
   void run_slot(const sched_result& sched_res, std::chrono::microseconds latency = std::chrono::microseconds{0})
@@ -52,12 +57,12 @@ protected:
 
   std::chrono::milliseconds          report_period;
   test_scheduler_ue_metrics_notifier metrics_notif;
+  cell_configuration                 cell_cfg;
   cell_metrics_handler               metrics;
   du_ue_index_t test_ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_NOF_DU_UES - 1));
 
   slot_point next_sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10239)};
-  unsigned   slot_count          = 0;
-  unsigned   nof_prbs            = 100;
+  unsigned   slot_count = 0;
 };
 
 TEST_F(scheduler_metrics_handler_tester, metrics_sent_with_defined_periodicity)
