@@ -158,12 +158,17 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
         // Handle TDD and FDD configurations separately, as we treat partially-UL slots differently from
         // fully-UL slots.
         if (cell_cfg_list_[0].tdd_ul_dl_cfg_common.has_value()) {
+          const auto& tdd_cfg = cell_cfg_list_[0].tdd_ul_dl_cfg_common.value();
           // For partially-UL slots, we need to check if the SRS can be placed in the UL symbols of the
           // slot.
           if (is_partually_ul_slot(offset, cell_cfg_list_[0].tdd_ul_dl_cfg_common.value())) {
-            // TODO: Fix check for pattern 2.
-            if (res.symbols.start() < NOF_OFDM_SYM_PER_SLOT_NORMAL_CP -
-                                          cell_cfg_list_[0].tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols) {
+            const unsigned slot_index =
+                offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+            static constexpr unsigned max_srs_symbols = 6U;
+            const unsigned            nof_ul_symbols_for_srs =
+                std::min(srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length(),
+                         max_srs_symbols);
+            if (res.symbols.start() < NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - nof_ul_symbols_for_srs) {
               continue;
             }
           }
@@ -191,13 +196,15 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
 {
   // TODO: Adapt this to the case of UEs with multiple cells configs.
   srsran_assert(
-      cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].cell_cfg.ue_ded_serv_cell_cfg.ul_config.has_value(),
-      "UE UL config is empty");
+      cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].cell_cfg.ue_ded_serv_cell_cfg.ul_config.has_value() and
+          not cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value(),
+      "UE UL config should be non-empty but with an empty SRS config");
+
+  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.emplace(
+      cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].default_srs_cfg);
 
   // If periodic SRS is not enabled, don't allocate anything and exit with success.
-  if (not cells[0].cell_cfg.srs_cfg.srs_period.has_value() or not cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index]
-                                                                      .cell_cfg.ue_ded_serv_cell_cfg.ul_config.value()
-                                                                      .init_ul_bwp.srs_cfg.has_value()) {
+  if (not cells[0].cell_cfg.srs_cfg.srs_period.has_value()) {
     return true;
   }
 
@@ -210,6 +217,8 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
 
   // Verify where there are SRS resources to allocate a new UE.
   if (free_srs_list.empty()) {
+    // If the allocation failed, reset the SRS configuration.
+    cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
     return false;
   }
 
@@ -217,12 +226,16 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
   auto srs_res_id_offset = cells[0].find_optimal_ue_srs_resource();
 
   if (srs_res_id_offset == free_srs_list.end()) {
+    // If the allocation failed, reset the SRS configuration.
+    cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
     return false;
   }
 
   const auto& du_res_it = cells[0].get_du_srs_res_cfg(srs_res_id_offset->first);
 
   if (du_res_it == cells[0].cell_srs_res_list.end()) {
+    // If the allocation failed, reset the SRS configuration.
+    cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
     return false;
   }
 
@@ -255,6 +268,9 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
   only_ue_srs_res.freq_hop.b_hop = 0U;
   only_ue_srs_res.freq_domain_shift =
       cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].srs_common_params.freq_shift;
+
+  only_ue_srs_res.periodicity_and_offset.emplace(srs_config::srs_periodicity_and_offset{
+      .period = cells[0].cell_cfg.srs_cfg.srs_period.value(), .offset = static_cast<uint16_t>(srs_offset)});
 
   // Update the SRS resource set with the SRS id.
   ue_srs_cfg.srs_res_set_list.front().srs_res_id_list.front() = only_ue_srs_res.id.ue_res_id;
@@ -294,7 +310,8 @@ du_srs_policy_max_ul_th::cell_context::find_optimal_ue_srs_resource()
 
     // Give priority to the last symbols within a slot. This reduces the space used for the SRS in a slot.
     const unsigned symb_weight =
-        (NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_res_cfg_it->symbols.start()) * symbol_weight_base;
+        symbol_weight_base *
+        ((NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_res_cfg_it->symbols.start()) / srs_res_cfg_it->symbols.length());
 
     // We consider a discount if the offset is already used but not full; this way, we give an incentive
     // to the SRS resources not to be allocated on a new slot, to avoid taking PUSCH symbols on a new
@@ -332,4 +349,8 @@ void du_srs_policy_max_ul_th::dealloc_resources(cell_group_config& cell_grp_cfg)
     srsran_assert(cells[0].slot_resource_cnt[offset_to_deallocate].first != 0, "The offset is expected to be non-zero");
     --cells[0].slot_resource_cnt[offset_to_deallocate].first;
   }
+
+  // Reset the SRS configuration in this UE. This makes sure the DU will exit this function immediately when it gets
+  // call again for the same UE (upon destructor's call).
+  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
 }

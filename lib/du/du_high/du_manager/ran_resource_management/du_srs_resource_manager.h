@@ -36,10 +36,10 @@ public:
   virtual void dealloc_resources(cell_group_config& cell_grp_cfg) = 0;
 };
 
-/// This class implements the MAX UL throughput policy for the SRS allocation. The SRS resources are allocated to
-/// minimize the number of slots that contains the SRS resources; furthermore, within a given slot, the SRS resources
-/// are allocated to minimize the number of symbols that are used for SRS. The drawback of this policy is that it can
-/// increase the inter slot SRS interference among different UEs.
+/// This class implements the MAX UL throughput policy for the SRS allocation. The SRS resources are allocated with the
+/// objective to minimize the number of slots that contains the SRS resources; furthermore, within a given slot, the SRS
+/// resources are allocated to minimize the number of symbols that are used for SRS. The drawback of this policy is that
+/// it can increase the inter slot SRS interference among different UEs.
 class du_srs_policy_max_ul_th : public du_srs_resource_manager
 {
 public:
@@ -58,9 +58,11 @@ private:
     // Returns the DU SRS resource with the given cell resource ID from the cell list of resources.
     std::vector<du_srs_resource>::const_iterator get_du_srs_res_cfg(unsigned cell_res_id)
     {
-      return std::find_if(cell_srs_res_list.begin(),
-                          cell_srs_res_list.end(),
-                          [cell_res_id](const du_srs_resource& res) { return res.cell_res_id == cell_res_id; });
+      if (cell_res_id >= cell_srs_res_list.size() or cell_srs_res_list[cell_res_id].cell_res_id != cell_res_id) {
+        srsran_assertion_failure("Cell resource ID out of range or invalid");
+        return cell_srs_res_list.end();
+      }
+      return cell_srs_res_list.cbegin() + cell_res_id;
     }
 
     // Returns the best SRS resource ID and offset for this UE, according to the policy defined in this class.
@@ -85,8 +87,6 @@ private:
     // Maximum number of SRS resources that can be generated in a cell.
     // [Implementation-defined] We assume each UE has one and only one resource.
     static const unsigned max_nof_srs_res = MAX_NOF_DU_UES;
-    // We need to save an object with the cell configuration parameters (not a reference), as this config is a modified
-    // version of the default cell config.
     const du_cell_config& cell_cfg;
     // Default SRS configuration for the cell.
     const srs_config default_srs_cfg;

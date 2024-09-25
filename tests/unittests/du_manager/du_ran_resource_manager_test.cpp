@@ -12,6 +12,7 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/support/test_utils.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -786,14 +787,33 @@ INSTANTIATE_TEST_SUITE_P(
     // clang-format on
 );
 
+/////////     Test DU RAN resource manager for SRS resources      /////////
+
+namespace {
+
 struct srs_params {
   // If set, it's a TDD cell and the parameters indicates the number of UL symbols in the flexible slot.
-  std::optional<unsigned> nof_ul_symbols;
+  std::optional<unsigned> nof_ul_symbols_p1;
+  bool                    test_optimality = false;
 };
+
+std::ostream& operator<<(std::ostream& out, const srs_params& params)
+{
+  if (params.nof_ul_symbols_p1.has_value()) {
+    out << fmt::format("TDD_nof_ul_symbols_p1_{}_test_optimality_{}",
+                       params.nof_ul_symbols_p1.value(),
+                       params.test_optimality ? "true" : "false");
+  } else {
+    out << fmt::format("FDD_test_optimality_{}", params.test_optimality ? "true" : "false");
+  }
+  return out;
+}
+
+} // namespace
 
 static cell_config_builder_params make_cell_cfg_params(const srs_params& params)
 {
-  const bool                 is_tdd      = params.nof_ul_symbols.has_value();
+  const bool                 is_tdd      = params.nof_ul_symbols_p1.has_value();
   cell_config_builder_params cell_params = {.dl_f_ref_arfcn = not is_tdd ? 365000U : 520002U};
   if (is_tdd) {
     auto& tdd_cfg                              = cell_params.tdd_ul_dl_cfg_common.emplace();
@@ -801,23 +821,18 @@ static cell_config_builder_params make_cell_cfg_params(const srs_params& params)
     tdd_cfg.pattern1.nof_dl_slots              = 7;
     tdd_cfg.pattern1.nof_dl_symbols            = 2;
     tdd_cfg.pattern1.nof_ul_slots              = 2;
-    tdd_cfg.pattern1.nof_ul_symbols            = params.nof_ul_symbols.value();
+    tdd_cfg.pattern1.nof_ul_symbols            = params.nof_ul_symbols_p1.value();
+    tdd_cfg.ref_scs                            = subcarrier_spacing::kHz30;
   }
 
   return cell_params;
 }
 
-static du_cell_config make_srs_du_cell_config(const cell_config_builder_params& params)
+static du_cell_config make_srs_base_du_cell_config(const cell_config_builder_params& params)
 {
+  // This function generates a configuration which would potentially allow for very large number of SRS resources.
   du_cell_config du_cfg  = config_helpers::make_default_du_cell_config(params);
   auto&          srs_cfg = du_cfg.srs_cfg;
-
-  auto& tdd_cfg                              = du_cfg.tdd_ul_dl_cfg_common.emplace();
-  tdd_cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
-  tdd_cfg.pattern1.nof_dl_slots              = 7;
-  tdd_cfg.pattern1.nof_dl_symbols            = 8;
-  tdd_cfg.pattern1.nof_ul_slots              = 2;
-  tdd_cfg.pattern1.nof_ul_symbols            = 4;
 
   // Generates a random SRS configuration.
   srs_cfg.tx_comb         = test_rgen::bernoulli(0.5) ? tx_comb_size::n2 : tx_comb_size::n4;
@@ -828,6 +843,7 @@ static du_cell_config make_srs_du_cell_config(const cell_config_builder_params& 
   while (srs_cfg.nof_symbols > srs_cfg.max_nof_symbols) {
     srs_cfg.nof_symbols = nof_symb_values[test_rgen::uniform_int<unsigned>(0, nof_symb_values.size() - 1)];
   }
+
   // The TX comb cyclic shift value depends on the TX comb size.
   if (srs_cfg.tx_comb == srsran::tx_comb_size::n2) {
     std::array<nof_cyclic_shifts, 3> srs_cyclic_shift_values = {
@@ -850,11 +866,14 @@ static du_cell_config make_srs_du_cell_config(const cell_config_builder_params& 
       srs_seq_id_values[test_rgen::uniform_int<unsigned>(0, srs_seq_id_values.size() - 1)];
 
   if (du_cfg.tdd_ul_dl_cfg_common.has_value()) {
-    std::array<srs_periodicity, 5> period_values = {srs_periodicity::sl10,
+    std::array<srs_periodicity, 8> period_values = {srs_periodicity::sl10,
                                                     srs_periodicity::sl20,
                                                     srs_periodicity::sl40,
                                                     srs_periodicity::sl80,
-                                                    srs_periodicity::sl160};
+                                                    srs_periodicity::sl160,
+                                                    srs_periodicity::sl320,
+                                                    srs_periodicity::sl640,
+                                                    srs_periodicity::sl1280};
     srs_cfg.srs_period.emplace(period_values[test_rgen::uniform_int<unsigned>(0, period_values.size() - 1)]);
   } else {
     std::array<srs_periodicity, 10> period_values = {srs_periodicity::sl1,
@@ -873,12 +892,67 @@ static du_cell_config make_srs_du_cell_config(const cell_config_builder_params& 
   return du_cfg;
 }
 
+static du_cell_config make_srs_du_cell_config(const cell_config_builder_params& params, bool limit_srs_res)
+{
+  auto du_cfg = make_srs_base_du_cell_config(params);
+
+  // For the optimality test, we to have a configuration that doesn't allow more than 1024 SRS resources.
+  if (not limit_srs_res) {
+    return du_cfg;
+  }
+
+  // This function calculates the total number of SRS resources that can be potentially allocated in the cell with the
+  // given SRS parameters.
+  auto tot_num_srs_res = [&du_cfg]() {
+    auto& tdd_cfg = du_cfg.tdd_ul_dl_cfg_common;
+    auto& srs_cfg = du_cfg.srs_cfg;
+    // This is the number of SRS resources per symbol interval.
+    const unsigned nof_res_per_symb_interval = srs_cfg.sequence_id_reuse_factor *
+                                               static_cast<unsigned>(srs_cfg.cyclic_shift_reuse_factor) *
+                                               static_cast<unsigned>(srs_cfg.tx_comb);
+
+    // A symbol interval is an interval where the SRS resource can be placed within a slot and its width (or length) is
+    // given by the corresponding SRS parameter \c nof_symb in the SRS configuration. This "number of symbols intervals"
+    // counts all the symbols intervals within the SRS period.
+    unsigned nof_symb_intervals = 0;
+
+    // The number of symbols interval per slot depends on whether it's FDD or TDD.
+    if (not tdd_cfg.has_value()) {
+      // In FDD, in an SRS period we can "max_nof_symbols / nof_symbols" intervals per slot.
+      nof_symb_intervals = srs_cfg.max_nof_symbols.to_uint() / static_cast<unsigned>(srs_cfg.nof_symbols) *
+                           static_cast<unsigned>(srs_cfg.srs_period.value());
+    } else {
+      // In TDD, in an SRS period we can "max_nof_symbols / nof_symbols" intervals per UL slot; in addition to this, the
+      // partially-UL slots can have extra symbols intervals, up to a maximum of 6U, which is the max number of symbols
+      // usable for SRS resources.
+      nof_symb_intervals =
+          (srs_cfg.max_nof_symbols.to_uint() / static_cast<unsigned>(srs_cfg.nof_symbols)) *
+          tdd_cfg->pattern1.nof_ul_slots *
+          (static_cast<unsigned>(srs_cfg.srs_period.value()) / tdd_cfg->pattern1.dl_ul_tx_period_nof_slots);
+      if (tdd_cfg->pattern1.nof_ul_symbols != 0) {
+        nof_symb_intervals +=
+            (std::min(tdd_cfg->pattern1.nof_ul_symbols, srs_cfg.max_nof_symbols.max()) /
+             static_cast<unsigned>(srs_cfg.nof_symbols)) *
+            (static_cast<unsigned>(srs_cfg.srs_period.value()) / tdd_cfg->pattern1.dl_ul_tx_period_nof_slots);
+      }
+    }
+
+    return nof_symb_intervals * nof_res_per_symb_interval;
+  };
+
+  while (tot_num_srs_res() > static_cast<unsigned>(MAX_NOF_DU_UES)) {
+    du_cfg = make_srs_base_du_cell_config(params);
+  }
+
+  return du_cfg;
+}
+
 class du_srs_resource_manager_tester : public ::testing::TestWithParam<srs_params>
 {
 protected:
   explicit du_srs_resource_manager_tester(cell_config_builder_params params_ = make_cell_cfg_params(GetParam())) :
     params(params_),
-    cell_cfg_list({make_srs_du_cell_config(params_)}),
+    cell_cfg_list({make_srs_du_cell_config(params_, GetParam().test_optimality)}),
     srs_params(cell_cfg_list[0].srs_cfg),
     du_srs_res_mng(cell_cfg_list)
   {
@@ -899,7 +973,11 @@ protected:
     ues.insert(ue_idx, cell_grp_cfg);
     auto& ue = ues[ue_idx];
 
-    if (du_srs_res_mng.alloc_resources(ue)) {
+    // Reset the SRS config before allocating resources.
+    ue.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
+
+    bool res = du_srs_res_mng.alloc_resources(ue);
+    if (res) {
       return ue;
     }
     // If the allocation was not possible, remove the UE.
@@ -907,6 +985,7 @@ protected:
     return std::nullopt;
   }
 
+  // Helper struct that keeps track of the SRS resource parameter assigned to the UEs.
   struct srs_res_params {
     unsigned          offset;
     unsigned          tx_comb_offset;
@@ -926,6 +1005,8 @@ protected:
     {
     }
 
+    // Returns true is SRS resource collides with another SRS resource; it is used to check if the SRS resources are
+    // orthogonal.
     bool collides(const srs_res_params& rhs) const
     {
       return offset == rhs.offset and tx_comb_offset == rhs.tx_comb_offset and symbols.overlaps(rhs.symbols) and
@@ -941,6 +1022,7 @@ protected:
     bool operator!=(const srs_res_params& rhs) const { return not operator==(rhs); }
   };
 
+  // Helper that computes the C_SRS parameter (see Section 6.4.1.4.3, TS 38.211).
   unsigned compute_c_srs() const
   {
     // In this test, we only consider the case where B_SRS is 0.
@@ -961,8 +1043,10 @@ protected:
     return candidate_c_srs;
   }
 
+  // Helper that computes the Frequency Shift parameter (see Section 6.4.1.4.3, TS 38.211).
   unsigned compute_freq_shift() const
   {
+    // The function computes the frequency shift so that the SRS resources are placed in the center of the bandwidth.
     unsigned   c_srs         = compute_c_srs();
     unsigned   ul_bw_nof_rbs = cell_cfg_list[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
     const auto srs_cfg       = srs_configuration_get(c_srs, 0U);
@@ -984,7 +1068,7 @@ static bool is_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
   return srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() != 0;
 }
 
-static bool is_partually_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
+static bool is_partially_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
 {
   const unsigned slot_index  = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
   const unsigned nof_symbols = srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length();
@@ -1055,6 +1139,7 @@ TEST_P(du_srs_resource_manager_tester, srs_resources_parameters_are_valid)
       break;
     }
 
+    // Verify all parameters of the SRS resource are as expected.
     ASSERT_TRUE(ue.value().cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
     const auto& ue_srs_config = ue.value().cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
     // Verify first the SRS resource set list.
@@ -1085,7 +1170,7 @@ TEST_P(du_srs_resource_manager_tester, srs_resources_parameters_are_valid)
     // Verify the symbols, depending on whether it's FDD, or TDD.
     ASSERT_EQ(srs_res.res_mapping.nof_symb, srs_params.nof_symbols);
     if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value() and
-        is_partually_ul_slot(srs_res.periodicity_and_offset->offset, cell_cfg_list[0].tdd_ul_dl_cfg_common.value())) {
+        is_partially_ul_slot(srs_res.periodicity_and_offset->offset, cell_cfg_list[0].tdd_ul_dl_cfg_common.value())) {
       ASSERT_LT(srs_res.res_mapping.start_pos, cell_cfg_list[0].tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols);
     } else {
       ASSERT_LT(srs_res.res_mapping.start_pos, srs_params.max_nof_symbols.to_uint());
@@ -1095,12 +1180,289 @@ TEST_P(du_srs_resource_manager_tester, srs_resources_parameters_are_valid)
 
 INSTANTIATE_TEST_SUITE_P(test_du_srs_res_mng_for_different_ul_symbols,
                          du_srs_resource_manager_tester,
-                         ::testing::Values(srs_params{.nof_ul_symbols = std::nullopt},
-                                           srs_params{.nof_ul_symbols = 0U},
-                                           srs_params{.nof_ul_symbols = 1U},
-                                           srs_params{.nof_ul_symbols = 2U},
-                                           srs_params{.nof_ul_symbols = 3U},
-                                           srs_params{.nof_ul_symbols = 4U},
-                                           srs_params{.nof_ul_symbols = 5U},
-                                           srs_params{.nof_ul_symbols = 6U},
-                                           srs_params{.nof_ul_symbols = 7U}));
+                         ::testing::Values(srs_params{.nof_ul_symbols_p1 = std::nullopt},
+                                           srs_params{.nof_ul_symbols_p1 = 0U},
+                                           srs_params{.nof_ul_symbols_p1 = 1U},
+                                           srs_params{.nof_ul_symbols_p1 = 2U},
+                                           srs_params{.nof_ul_symbols_p1 = 3U},
+                                           srs_params{.nof_ul_symbols_p1 = 4U},
+                                           srs_params{.nof_ul_symbols_p1 = 5U},
+                                           srs_params{.nof_ul_symbols_p1 = 6U},
+                                           srs_params{.nof_ul_symbols_p1 = 7U}),
+                         [](const testing::TestParamInfo<srs_params>& params_item) {
+                           return fmt::format("{}", params_item.param);
+                         });
+
+/////////     Test the optimality of DU SRS resource manager policy      /////////
+
+class du_srs_resource_manager_tester_optimality : public du_srs_resource_manager_tester
+{
+protected:
+  explicit du_srs_resource_manager_tester_optimality()
+  {
+    nof_srs_res_per_symb_interval = static_cast<unsigned>(srs_params.tx_comb) *
+                                    static_cast<unsigned>(srs_params.cyclic_shift_reuse_factor) *
+                                    static_cast<unsigned>(srs_params.sequence_id_reuse_factor);
+    srs_res_tracker.reserve(static_cast<unsigned>(srs_params.srs_period.value()));
+
+    // Build the SRS resource tracker.
+    for (unsigned offset = 0; offset != static_cast<unsigned>(srs_params.srs_period.value()); ++offset) {
+      if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value()) {
+        const auto& tdd_cfg = cell_cfg_list[0].tdd_ul_dl_cfg_common.value();
+
+        if (not is_ul_slot(offset, cell_cfg_list[0].tdd_ul_dl_cfg_common.value())) {
+          // In TDD, no SRS resources can be allocated in DL slots.
+          srs_res_tracker.emplace_back(0U);
+        } else if (is_partially_ul_slot(offset, cell_cfg_list[0].tdd_ul_dl_cfg_common.value())) {
+          const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+          const unsigned nof_ul_symbols =
+              srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length();
+          // The number of symbols intervals is limited by the number of symbols where the SRS can be placed.
+          const unsigned nof_intervals = std::min(nof_ul_symbols / static_cast<unsigned>(srs_params.nof_symbols),
+                                                  srs_params.max_nof_symbols.max());
+          srs_res_tracker.emplace_back(nof_intervals);
+        } else {
+          const unsigned nof_intervals =
+              srs_params.max_nof_symbols.to_uint() / static_cast<unsigned>(srs_params.nof_symbols);
+          srs_res_tracker.emplace_back(nof_intervals);
+        }
+      }
+      // FDD case.
+      else {
+        const unsigned nof_intervals =
+            srs_params.max_nof_symbols.to_uint() / static_cast<unsigned>(srs_params.nof_symbols);
+        srs_res_tracker.emplace_back(nof_intervals);
+      }
+    }
+  }
+
+  // Helper struct that keeps track of the number of SRS resources per symbol interval for a given offset.
+  struct res_per_slot_tracker {
+    explicit res_per_slot_tracker(unsigned nof_srs_symb_intervals_per_slot_) :
+      nof_srs_symb_intervals_per_slot(nof_srs_symb_intervals_per_slot_)
+    {
+      // Initialize the vector with zeros, as at the beginning no SRS resources have been allocated.
+      res_per_symb_interval.assign(nof_srs_symb_intervals_per_slot, 0U);
+    }
+
+    const unsigned nof_srs_symb_intervals_per_slot;
+    // This vector keeps track of the number of SRS resources per symbol interval. The symbol interval with index 0 is
+    // the last one in the slot; the symbol interval with index 1 is the second to last, and so on.
+    std::vector<unsigned> res_per_symb_interval;
+  };
+
+  // The number of SRS resources per symbol interval, which depends on the TX comb size, on the cyclic shift reuse
+  // factor, and on the sequence ID reuse factor.
+  unsigned nof_srs_res_per_symb_interval = 0;
+  // This vector keeps track of the number of SRS resources per symbol interval for each offset.
+  std::vector<res_per_slot_tracker> srs_res_tracker;
+
+  // Save the SRS resource allocation in the tracker.
+  void track_srs_res_alloc(const srs_config::srs_resource& srs_res)
+  {
+    srsran_assert(srs_res.periodicity_and_offset.has_value(), "SRS resource must have a periodicity and offset");
+    const unsigned srs_offset   = srs_res.periodicity_and_offset->offset;
+    const unsigned interval_idx = srs_res.res_mapping.start_pos / static_cast<uint8_t>(srs_res.res_mapping.nof_symb);
+    srsran_assert(interval_idx < srs_res_tracker[srs_offset].res_per_symb_interval.size(),
+                  "SRS resource must have a periodicity and offset");
+    ++srs_res_tracker[srs_offset].res_per_symb_interval[interval_idx];
+  }
+
+  // Check if there is any partially-UL slot that has not completely filled with SRS resources.
+  bool has_free_partial_ul_slots()
+  {
+    for (unsigned n = 0; n != srs_res_tracker.size(); ++n) {
+      if (not is_partially_ul_slot(n, params.tdd_ul_dl_cfg_common.value())) {
+        continue;
+      }
+      if (std::any_of(srs_res_tracker[n].res_per_symb_interval.begin(),
+                      srs_res_tracker[n].res_per_symb_interval.end(),
+                      [this](unsigned cnt) { return cnt < nof_srs_res_per_symb_interval; })) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Check if all the symbol intervals with index lower than the one of the given SRS resource have
+  // been used (in fully-UL slots).
+  bool all_lower_intervals_used(const srs_config::srs_resource& srs_res)
+  {
+    const unsigned interval_idx = srs_res.res_mapping.start_pos / static_cast<uint8_t>(srs_res.res_mapping.nof_symb);
+    if (interval_idx == 0) {
+      return true;
+    }
+
+    for (unsigned n = 0; n != srs_res_tracker.size(); ++n) {
+      if (params.tdd_ul_dl_cfg_common.has_value() and (not is_ul_slot(n, params.tdd_ul_dl_cfg_common.value()) or
+                                                       is_partially_ul_slot(n, params.tdd_ul_dl_cfg_common.value()))) {
+        continue;
+      }
+      if (std::any_of(srs_res_tracker[n].res_per_symb_interval.begin(),
+                      srs_res_tracker[n].res_per_symb_interval.begin() + interval_idx,
+                      [this](unsigned cnt) { return cnt < nof_srs_res_per_symb_interval; })) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Check if there is any symbol interval of the same index of the one of the given SRS resource that is not empty, but
+  // not full either.
+  bool non_empty_non_full_interval(const srs_config::srs_resource& srs_res)
+  {
+    const unsigned interval_idx = srs_res.res_mapping.start_pos / static_cast<uint8_t>(srs_res.res_mapping.nof_symb);
+    for (unsigned n = 0; n != srs_res_tracker.size(); ++n) {
+      // Skip the slot where the SRS resource has been allocated, otherwise this will always return true.
+      if (n == srs_res.periodicity_and_offset->offset) {
+        continue;
+      }
+      if (params.tdd_ul_dl_cfg_common.has_value() and (not is_ul_slot(n, params.tdd_ul_dl_cfg_common.value()) or
+                                                       is_partially_ul_slot(n, params.tdd_ul_dl_cfg_common.value()))) {
+        continue;
+      }
+      srsran_assert(interval_idx < srs_res_tracker[n].res_per_symb_interval.size(),
+                    "Interval index exceeds the size of the vector");
+      if (srs_res_tracker[n].res_per_symb_interval[interval_idx] > 0U and
+          srs_res_tracker[n].res_per_symb_interval[interval_idx] < nof_srs_res_per_symb_interval) {
+        return true;
+      }
+    }
+    return false;
+  }
+};
+
+TEST_P(du_srs_resource_manager_tester_optimality, srs_are_assigned_according_to_class_policy)
+{
+  // > Created UEs have unique SRS resources.
+  for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
+    std::optional<cell_group_config> ue = add_ue(to_du_ue_index(i));
+    if (not ue.has_value()) {
+      break;
+    }
+
+    // Verify all parameters of the SRS resource are as expected.
+    ASSERT_TRUE(ue.value().cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
+    const auto& ue_srs_config = ue.value().cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
+    const auto& srs_res       = ue_srs_config.srs_res_list[0];
+
+    // Save the SRS resource allocation in the tracker.
+    track_srs_res_alloc(srs_res);
+
+    // The SRS allocation assigns resources according to the policy:
+    // - If there is a partially-UL slot available, then the SRS resources are allocated in the partially-UL slots.
+    // - If there are no partially-UL slots, then the SRS resources are allocated in the fully-UL slots.
+    // - If there are no fully-UL slots with a symbol interval of index i available, then the SRS resources are
+    // allocated in a symbol interval of index i+1, in any slot.
+    // - If there is a fully-UL slots with a symbol interval of index i available that has already SRS resources
+    // allocated, but has not been completely filled, then the SRS resources are allocated in that slot.
+    if (params.tdd_ul_dl_cfg_common.has_value()) {
+      if (not is_partially_ul_slot(srs_res.periodicity_and_offset.value().offset,
+                                   params.tdd_ul_dl_cfg_common.value())) {
+        ASSERT_FALSE(has_free_partial_ul_slots());
+        ASSERT_TRUE(all_lower_intervals_used(srs_res));
+        ASSERT_FALSE(non_empty_non_full_interval(srs_res));
+      }
+    } else {
+      ASSERT_TRUE(all_lower_intervals_used(srs_res));
+      ASSERT_FALSE(non_empty_non_full_interval(srs_res));
+    }
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(test_du_srs_res_mng_for_different_ul_symbols,
+                         du_srs_resource_manager_tester_optimality,
+                         ::testing::Values(srs_params{.nof_ul_symbols_p1 = std::nullopt, .test_optimality = true},
+                                           srs_params{.nof_ul_symbols_p1 = 0U, .test_optimality = true},
+                                           srs_params{.nof_ul_symbols_p1 = 1U, .test_optimality = true},
+                                           srs_params{.nof_ul_symbols_p1 = 2U, .test_optimality = true},
+                                           srs_params{.nof_ul_symbols_p1 = 3U, .test_optimality = true},
+                                           srs_params{.nof_ul_symbols_p1 = 4U, .test_optimality = true},
+                                           srs_params{.nof_ul_symbols_p1 = 5U, .test_optimality = true},
+                                           srs_params{.nof_ul_symbols_p1 = 6U, .test_optimality = true},
+                                           srs_params{.nof_ul_symbols_p1 = 7U, .test_optimality = true}),
+                         [](const testing::TestParamInfo<srs_params>& params_item) {
+                           return fmt::format("{}", params_item.param);
+                         });
+
+/////////     Test the DU RAN resource manager for both PUCCH and SRS resources      /////////
+
+// This helper builds a DU cell configuration with a custom PUCCH and SRS configuration. The input parameter
+// pucch_has_more_res_than_srs indicates whether the PUCCH or SRS configuration allows more resources than the other.
+// This way, we can test the allocation and de-allocation of resources when the DU rejects a UE due to lack of PUCCH or
+// SRS resources.
+static du_cell_config make_custom_pucch_srs_du_cell_config(bool pucch_has_more_res_than_srs)
+{
+  du_cell_config du_cfg                       = config_helpers::make_default_du_cell_config();
+  auto&          pucch_params                 = du_cfg.pucch_cfg;
+  pucch_params.nof_ue_pucch_f0_or_f1_res_harq = 6U;
+  pucch_params.nof_ue_pucch_f2_res_harq       = 6U;
+  pucch_params.nof_sr_resources               = pucch_has_more_res_than_srs ? 10U : 1U;
+  pucch_params.nof_csi_resources              = pucch_has_more_res_than_srs ? 10U : 1U;
+  pucch_params.nof_cell_harq_pucch_res_sets   = 1U;
+  auto& f1_params                             = std::get<pucch_f1_params>(pucch_params.f0_or_f1_params);
+  f1_params.nof_cyc_shifts                    = nof_cyclic_shifts::no_cyclic_shift;
+  f1_params.occ_supported                     = false;
+
+  auto& tdd_cfg                              = du_cfg.tdd_ul_dl_cfg_common.emplace();
+  tdd_cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
+  tdd_cfg.pattern1.nof_dl_slots              = 7;
+  tdd_cfg.pattern1.nof_dl_symbols            = 10;
+  tdd_cfg.pattern1.nof_ul_slots              = 2;
+  tdd_cfg.pattern1.nof_ul_symbols            = 0;
+
+  du_cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list.front().period =
+      srsran::sr_periodicity::sl_10;
+
+  auto& srs_cfg = du_cfg.srs_cfg;
+
+  // Generates a random SRS configuration.
+  srs_cfg.tx_comb                   = tx_comb_size::n2;
+  srs_cfg.max_nof_symbols           = 1U;
+  srs_cfg.nof_symbols               = srs_nof_symbols::n1;
+  srs_cfg.cyclic_shift_reuse_factor = nof_cyclic_shifts::no_cyclic_shift;
+  srs_cfg.sequence_id_reuse_factor  = 1U;
+  srs_cfg.srs_period.emplace(du_cfg.tdd_ul_dl_cfg_common.has_value() ? srs_periodicity::sl10 : srs_periodicity::sl1);
+
+  pucch_params.max_nof_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_cfg.max_nof_symbols.to_uint();
+  f1_params.nof_symbols        = std::min(f1_params.nof_symbols.to_uint(), pucch_params.max_nof_symbols.to_uint());
+
+  return du_cfg;
+}
+
+class du_ran_res_mng_pucch_srs_tester : public du_ran_resource_manager_tester_base,
+                                        public ::testing::TestWithParam<bool>
+{
+protected:
+  explicit du_ran_res_mng_pucch_srs_tester() :
+    du_ran_resource_manager_tester_base(cell_config_builder_params{}, make_custom_pucch_srs_du_cell_config(GetParam()))
+  {
+    srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
+                      not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
+                      std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                          default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
+                  "CSI report configuration is required for this unittest;");
+  }
+};
+
+TEST_P(du_ran_res_mng_pucch_srs_tester, when_alloc_fail_ue_has_no_srs_and_no_pucch_cfgs)
+{
+  // This tests how the DU handles the RAN resource allocation failure due to lack of PUCCH or SRS resources.
+  for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
+    du_ue_index_t                       next_ue_index = to_du_ue_index(i);
+    const ue_ran_resource_configurator* ue_res        = create_ue(next_ue_index);
+    ASSERT_NE(ue_res, nullptr);
+    if (ue_res->resource_alloc_failed()) {
+      ASSERT_FALSE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value());
+      ASSERT_TRUE(ue_res->value().cell_group.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list.empty());
+      ASSERT_FALSE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
+      break;
+    } else {
+      ASSERT_TRUE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value());
+      ASSERT_FALSE(ue_res->value().cell_group.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list.empty());
+      ASSERT_TRUE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
+    }
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(different_f1_f2_resources, du_ran_res_mng_pucch_srs_tester, ::testing::Values(true, false));

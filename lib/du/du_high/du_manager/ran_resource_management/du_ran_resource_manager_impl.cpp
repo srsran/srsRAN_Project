@@ -38,6 +38,21 @@ du_ue_ran_resource_updater_impl::update(du_cell_index_t                       pc
 
 ///////////////////////////
 
+static void initialize_serv_cell_cfg(serving_cell_config& serv_cell_cfg)
+{
+  srsran_assert(serv_cell_cfg.ul_config.has_value() and
+                    serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
+                    serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.has_value(),
+                "UL configuration in Serving cell config not configured");
+
+  serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.reset();
+  if (serv_cell_cfg.csi_meas_cfg.has_value()) {
+    serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.clear();
+  }
+
+  serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
+}
+
 du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
                                                            const scheduler_expert_config&            scheduler_cfg,
                                                            const std::map<srb_id_t, du_srb_config>&  srb_config,
@@ -64,7 +79,6 @@ du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_i
   // UE initialized PCell.
   // Note: In case of lack of RAN resource availability, the return will be error type.
   error_type<std::string> err = allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX);
-
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index),
                                       err.has_value() ? std::string{} : err.error()};
 }
@@ -163,6 +177,10 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
       ue_res.cell_group.pcg_cfg.p_nr_fr1 = cell_cfg_cmn.pcg_params.p_nr_fr1->to_int();
     }
     ue_res.cell_group.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
+
+    // Start with removing PUCCH and SRS configurations. This step simplifies the handling of the allocation failure
+    // path.
+    initialize_serv_cell_cfg(ue_res.cell_group.cells[0].serv_cell_cfg);
 
     if (not srs_res_mng->alloc_resources(ue_res.cell_group)) {
       // Deallocate dedicated Search Spaces.
