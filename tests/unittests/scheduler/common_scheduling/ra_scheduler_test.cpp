@@ -10,6 +10,7 @@
 
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "lib/scheduler/logging/scheduler_event_logger.h"
+#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
@@ -45,7 +46,10 @@ protected:
   static constexpr unsigned tx_rx_delay = 2U;
 
   base_ra_scheduler_test(duplex_mode dplx_mode, const test_params& params_) :
-    params(params_), cell_cfg(sched_cfg, get_sched_req(dplx_mode, params)), ev_logger(to_du_cell_index(0), cell_cfg.pci)
+    params(params_),
+    cell_cfg(sched_cfg, get_sched_req(dplx_mode, params)),
+    ev_logger(to_du_cell_index(0), cell_cfg.pci),
+    metrics_hdlr(std::chrono::milliseconds{0}, metrics_notifier, cell_cfg)
   {
     mac_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_level(srslog::basic_levels::info);
@@ -432,13 +436,15 @@ protected:
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  scheduler_expert_config        sched_cfg{config_helpers::make_default_scheduler_expert_config()};
-  cell_configuration             cell_cfg;
-  scheduler_event_logger         ev_logger;
-  cell_resource_allocator        res_grid{cell_cfg};
-  dummy_pdcch_resource_allocator pdcch_sch;
-  ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch, ev_logger};
-  scheduler_result_logger        result_logger{false, cell_cfg.pci};
+  scheduler_expert_config             sched_cfg{config_helpers::make_default_scheduler_expert_config()};
+  cell_configuration                  cell_cfg;
+  scheduler_event_logger              ev_logger;
+  scheduler_ue_metrics_dummy_notifier metrics_notifier;
+  cell_metrics_handler                metrics_hdlr;
+  cell_resource_allocator             res_grid{cell_cfg};
+  dummy_pdcch_resource_allocator      pdcch_sch;
+  ra_scheduler                        ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch, ev_logger, metrics_hdlr};
+  scheduler_result_logger             result_logger{false, cell_cfg.pci};
 
   slot_point next_slot{to_numerology_value(params.scs),
                        test_rgen::uniform_int<unsigned>(0, (10240 << to_numerology_value(params.scs)) - 1)};

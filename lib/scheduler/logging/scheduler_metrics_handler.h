@@ -21,6 +21,7 @@
 namespace srsran {
 
 class cell_configuration;
+struct rach_indication_message;
 
 ///\brief Handler of scheduler slot metrics for a given cell.
 class cell_metrics_handler final : public harq_timeout_handler, public sched_metrics_ue_configurator
@@ -93,6 +94,9 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
 
   /// Number of full uplink slots.
   unsigned nof_ul_slots = 0;
+  // Number of PRACH preambles
+
+  unsigned nof_prach_preambles = 0;
 
   /// Counter of number of slots elapsed since the last report.
   unsigned slot_counter = 0;
@@ -114,6 +118,9 @@ public:
 
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index) override;
+
+  /// \brief Register detected PRACH.
+  void handle_rach_indication(const rach_indication_message& msg);
 
   /// \brief Register CRC indication.
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);

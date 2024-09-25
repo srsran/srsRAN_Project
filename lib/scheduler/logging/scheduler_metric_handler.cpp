@@ -10,6 +10,7 @@
 
 #include "../config/cell_configuration.h"
 #include "scheduler_metrics_handler.h"
+#include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -48,6 +49,13 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
 
     rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);
+  }
+}
+
+void cell_metrics_handler::handle_rach_indication(const rach_indication_message& msg)
+{
+  for (auto& occ : msg.occasions) {
+    nof_prach_preambles += occ.preambles.size();
   }
 }
 
@@ -212,6 +220,7 @@ void cell_metrics_handler::report_metrics()
   next_report.nof_prbs                 = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
   next_report.nof_dl_slots             = nof_dl_slots;
   next_report.nof_ul_slots             = nof_ul_slots;
+  next_report.nof_prach_preambles      = nof_prach_preambles;
 
   // Reset cell-wide metric counters.
   error_indication_counter = 0;
@@ -219,6 +228,7 @@ void cell_metrics_handler::report_metrics()
   decision_latency_hist    = {};
   nof_dl_slots             = 0;
   nof_ul_slots             = 0;
+  nof_prach_preambles      = 0;
 
   // Report all UE metrics in a batch.
   notifier.report_metrics(next_report);
