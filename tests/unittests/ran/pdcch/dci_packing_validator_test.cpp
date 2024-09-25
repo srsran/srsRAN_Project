@@ -614,6 +614,16 @@ TEST_F(DciValidatorNonFallbackFixture, CodebookTransmissionInvalidConfig)
     dci_size_config config        = get_base_dci_config();
     config.tx_config_non_codebook = false;
     config.nof_srs_ports          = 2;
+    config.cb_subset              = tx_scheme_codebook_subset::partial_and_non_coherent;
+    std::string assert_message =
+        fmt::format("Codebook subset \"partial and non-coherent\" is not supported for 2 SRS ports.");
+
+    test_validator(config, assert_message);
+  }
+  {
+    dci_size_config config        = get_base_dci_config();
+    config.tx_config_non_codebook = false;
+    config.nof_srs_ports          = 2;
     config.max_rank               = 3;
     std::string assert_message =
         fmt::format("Maximum rank {} cannot be larger than the number of SRS antenna ports {}.",

@@ -155,6 +155,98 @@ static unsigned freq_resource_assignment_size(resource_allocation     res_alloca
   return freq_resource_size;
 }
 
+// Computes the UL precoding information field size for DCI format 0_1 from TS38.212 Table 7.3.1.1.2-2.
+static units::bits ul_precoding_info_size_4port(tx_scheme_codebook_subset codebook_subset)
+{
+  using namespace units::literals;
+  switch (codebook_subset) {
+    case tx_scheme_codebook_subset::fully_and_partial_and_non_coherent:
+      return 6_bits;
+    case tx_scheme_codebook_subset::partial_and_non_coherent:
+      return 5_bits;
+    case tx_scheme_codebook_subset::non_coherent:
+    default:
+      return 4_bits;
+  }
+}
+
+// Computes the UL precoding information field size for DCI format 0_1 from TS38.212 Table 7.3.1.1.2-3.
+static units::bits ul_precoding_info_size_4port_maxrank1(tx_scheme_codebook_subset codebook_subset)
+{
+  using namespace units::literals;
+  switch (codebook_subset) {
+    case tx_scheme_codebook_subset::fully_and_partial_and_non_coherent:
+      return 5_bits;
+    case tx_scheme_codebook_subset::partial_and_non_coherent:
+      return 4_bits;
+    case tx_scheme_codebook_subset::non_coherent:
+    default:
+      return 2_bits;
+  }
+}
+
+// Computes the UL precoding information field size for DCI format 0_1 from TS38.212 Table 7.3.1.1.2-4.
+static units::bits ul_precoding_info_size_2port(tx_scheme_codebook_subset codebook_subset)
+{
+  using namespace units::literals;
+  srsran_assert(codebook_subset != tx_scheme_codebook_subset::partial_and_non_coherent,
+                "Codebook subset \"partial and non-coherent\" is not supported with two ports.",
+                codebook_subset);
+
+  if (codebook_subset == tx_scheme_codebook_subset::fully_and_partial_and_non_coherent) {
+    return 4_bits;
+  }
+
+  return 2_bits;
+}
+
+// Computes the UL precoding information field size for DCI format 0_1 from TS38.212 Table 7.3.1.1.2-5.
+static units::bits ul_precoding_info_size_2port_maxrank1(tx_scheme_codebook_subset codebook_subset)
+{
+  using namespace units::literals;
+  srsran_assert(codebook_subset != tx_scheme_codebook_subset::partial_and_non_coherent,
+                "Codebook subset \"partial and non-coherent\" is not supported with two ports.",
+                codebook_subset);
+
+  if (codebook_subset == tx_scheme_codebook_subset::fully_and_partial_and_non_coherent) {
+    return 3_bits;
+  }
+
+  return 2_bits;
+}
+
+// Computes the UL precoding information field size for DCI format 0_1.
+static units::bits ul_precoding_info_size(bool                                     tx_config_non_codebook,
+                                          unsigned                                 nof_antenna_ports,
+                                          bool                                     transform_precoding_enabled,
+                                          unsigned                                 max_rank,
+                                          std::optional<tx_scheme_codebook_subset> codebook_subset)
+{
+  using namespace units::literals;
+
+  if (tx_config_non_codebook) {
+    return 0_bits;
+  }
+
+  if (nof_antenna_ports == 1) {
+    return 0_bits;
+  }
+
+  if ((nof_antenna_ports == 4) && (max_rank == 1)) {
+    return ul_precoding_info_size_4port_maxrank1(codebook_subset.value());
+  }
+
+  if (nof_antenna_ports == 4) {
+    return ul_precoding_info_size_4port(codebook_subset.value());
+  }
+
+  if ((nof_antenna_ports == 2) && (max_rank == 1)) {
+    return ul_precoding_info_size_2port_maxrank1(codebook_subset.value());
+  }
+
+  return ul_precoding_info_size_2port(codebook_subset.value());
+}
+
 // Computes the UL antenna ports field size for a specific DM-RS configuration.
 static unsigned ul_dmrs_ports_size(dmrs_config_type dmrs_type, dmrs_max_length dmrs_len, bool transform_precoding)
 {
@@ -343,7 +435,14 @@ static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_conf
   sizes.total += sizes.srs_resource_indicator;
 
   // Precoding information and number of layers - 0, 1, 2, 3, 4, 5 or 6 bits.
-  // ... Not implemented.
+  if (dci_config.nof_srs_ports.has_value()) {
+    sizes.precoding_info_nof_layers = ul_precoding_info_size(dci_config.tx_config_non_codebook,
+                                                             dci_config.nof_srs_ports.value(),
+                                                             dci_config.transform_precoding_enabled,
+                                                             dci_config.max_rank.value(),
+                                                             dci_config.cb_subset);
+    sizes.total += sizes.precoding_info_nof_layers;
+  }
 
   // Antenna ports - 2, 3, 4 or 5 bits.
   sizes.antenna_ports = ul_ports_size(dci_config.pusch_dmrs_A_type,
@@ -688,7 +787,9 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
 
 dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
 {
-  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+  srsran_assert(config.payload_size.total.value() >= 12,
+                "DCI total payload size is {}, it must be at least 12 bit long for DCI Format 0_0 and C-RNTI.",
+                config.payload_size.total);
 
   dci_payload payload;
   units::bits frequency_resource_nof_bits = config.payload_size.frequency_resource;
@@ -769,7 +870,9 @@ dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
 
 dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config)
 {
-  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+  srsran_assert(config.payload_size.total.value() >= 12,
+                "DCI total payload size is {}, it must be at least 12 bit long for DCI Format 0_0 and TC-RNTI.",
+                config.payload_size.total);
 
   units::bits frequency_resource_nof_bits = config.payload_size.frequency_resource;
   dci_payload payload;
@@ -846,7 +949,9 @@ dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
 
 dci_payload srsran::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config)
 {
-  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+  srsran_assert(config.payload_size.total.value() >= 12,
+                "DCI total payload size is {}, it must be at least 12 bit long for DCI Format 1_0 and C-RNTI.",
+                config.payload_size.total);
 
   dci_payload payload;
 
@@ -1051,12 +1156,12 @@ dci_payload srsran::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
 
 dci_payload srsran::dci_0_1_pack(const dci_0_1_configuration& config)
 {
-  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+  srsran_assert(config.payload_size.total.value() >= 12,
+                "DCI total payload size is {}, it must be at least 12 bit long for DCI Format 0_1.",
+                config.payload_size.total);
 
   // Assertions for unsupported fields.
   srsran_assert(!config.ul_sul_indicator.has_value(), "UL/SUL indicator field is not currently supported.");
-  srsran_assert(!config.precoding_info_nof_layers.has_value(),
-                "Precoding information and number of layers field is not currently supported.");
   srsran_assert(!config.ptrs_dmrs_association.has_value(), "PT-RS/DM-RS association field is not currently supported.");
 
   dci_payload payload;
@@ -1156,9 +1261,7 @@ dci_payload srsran::dci_0_1_pack(const dci_0_1_configuration& config)
   payload.push_back(config.srs_resource_indicator, config.payload_size.srs_resource_indicator.value());
 
   // Precoding information and number of layers - 0 to 6 bits.
-  if (config.precoding_info_nof_layers.has_value()) {
-    payload.push_back(config.precoding_info_nof_layers.value(), config.payload_size.precoding_info_nof_layers.value());
-  }
+  payload.push_back(config.precoding_info_nof_layers, config.payload_size.precoding_info_nof_layers.value());
 
   // Antenna ports for PUSCH transmission - 2, 3, 4 or 5 bits.
   payload.push_back(config.antenna_ports, config.payload_size.antenna_ports.value());
@@ -1602,6 +1705,12 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
         default:
           return make_unexpected(
               fmt::format("The number of SRS ports {} is neither 1, 2, nor 4.", config.nof_srs_ports));
+      }
+
+      // Codebook subset transmission with two ports does not support partial and non-coherent.
+      if ((config.nof_srs_ports.value() == 2) &&
+          (config.cb_subset.value() == tx_scheme_codebook_subset::partial_and_non_coherent)) {
+        return make_unexpected("Codebook subset \"partial and non-coherent\" is not supported for 2 SRS ports.");
       }
     }
 
