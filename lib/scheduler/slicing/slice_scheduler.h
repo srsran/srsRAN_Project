@@ -28,7 +28,7 @@ public:
   slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_);
 
   /// Reset the state of the slices.
-  void slot_indication(slot_point slot_tx);
+  void slot_indication(slot_point slot_tx, const cell_resource_allocator& res_grid);
 
   /// Update the state of the slice with the provided UE configs.
   void add_ue(du_ue_index_t ue_idx);

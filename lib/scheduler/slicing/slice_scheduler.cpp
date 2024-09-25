@@ -25,20 +25,26 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_reposit
   // DRB slice).
   slices.reserve(cell_cfg.rrm_policy_members.size() + 2);
 
+  // NOTE: We assume nof. CRBs in a cell for both DL and UL are same.
+  const unsigned cell_max_rbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
+
   // Create RAN slice instances.
   // Default SRB slice.
   // NOTE: We set \c min_prb for default SRB slice to maximum nof. PRBs of a UE carrier to give maximum priority to this
   // slice.
-  slices.emplace_back(default_srb_ran_slice_id, cell_cfg, slice_rrm_policy_config{.min_prb = MAX_NOF_PRBS});
+  slices.emplace_back(
+      default_srb_ran_slice_id, cell_cfg, slice_rrm_policy_config{.min_prb = cell_max_rbs, .max_prb = cell_max_rbs});
   slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
   // Default DRB slice.
-  slices.emplace_back(default_drb_ran_slice_id, cell_cfg, slice_rrm_policy_config{});
+  slices.emplace_back(default_drb_ran_slice_id, cell_cfg, slice_rrm_policy_config{.max_prb = cell_max_rbs});
   slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
   // NOTE: RAN slice IDs 0 and 1 are reserved for default SRB and default DRB slice respectively.
   ran_slice_id_t id_count{2};
   // Configured RRM policy members.
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     slices.emplace_back(id_count, cell_cfg, rrm);
+    // Adjust maximum PRBs per slice based on the number of PRBs in a cell.
+    slices.back().inst.cfg.max_prb = std::min(slices.back().inst.cfg.max_prb, cell_max_rbs);
     // Set policy scheduler based on slice configuration.
     scheduler_ue_expert_config slice_scheduler_ue_expert_cfg{cell_cfg.expert_cfg.ue};
     slice_scheduler_ue_expert_cfg.strategy_cfg = rrm.policy_sched_cfg;
@@ -59,7 +65,7 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_reposit
   }
 }
 
-void slice_scheduler::slot_indication(slot_point slot_tx)
+void slice_scheduler::slot_indication(slot_point slot_tx, const cell_resource_allocator& res_grid)
 {
   // If there are skipped slots, handle them.
   if ((current_slot + 1) != slot_tx) {
@@ -94,6 +100,15 @@ void slice_scheduler::slot_indication(slot_point slot_tx)
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
     for (const unsigned pusch_td_res_idx :
          valid_pusch_td_list_per_slot[slot_tx.to_uint() % valid_pusch_td_list_per_slot.size()]) {
+      const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_time_domain_list[pusch_td_res_idx].k2];
+      const crb_bitmap                    pusch_used_crbs =
+          pusch_alloc.ul_res_grid.used_crbs(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
+                                            cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+                                            pusch_time_domain_list[pusch_td_res_idx].symbols);
+      if (pusch_used_crbs.all()) {
+        // No more RBs left to allocated so skip adding slice candidate.
+        continue;
+      }
       slot_point pusch_slot = slot_tx + pusch_time_domain_list[pusch_td_res_idx].k2;
       unsigned   pusch_rb_count =
           slice.inst.pusch_rb_count_per_slot[pusch_slot.to_uint() % slice.inst.pusch_rb_count_per_slot.size()];

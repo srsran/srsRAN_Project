@@ -66,14 +66,14 @@ protected:
   {
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
-    grid_alloc.slot_indication(next_slot);
-    slice_sched.slot_indication(next_slot);
-
     res_grid.slot_indication(next_slot);
+    grid_alloc.slot_indication(next_slot);
     cell_harqs.slot_indication(next_slot);
     pdcch_alloc.slot_indication(next_slot);
     pucch_alloc.slot_indication(next_slot);
     uci_alloc.slot_indication(next_slot);
+
+    slice_sched.slot_indication(next_slot, ue_res_grid.get_grid(to_du_cell_index(0)));
 
     if (cell_cfg.is_dl_enabled(next_slot)) {
       auto dl_slice_candidate = slice_sched.get_next_dl_candidate();
