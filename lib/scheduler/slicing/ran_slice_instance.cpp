@@ -32,6 +32,14 @@ void ran_slice_instance::slot_indication(slot_point slot_tx)
   for (unsigned count = 0; count < nof_slots_to_clear; ++count) {
     pusch_rb_count_per_slot[(slot_tx - 1 - count).to_uint() % pusch_rb_count_per_slot.size()] = 0;
   }
+
+  // Reset last alloc slot if the different becomes to large, to avoid ambiguity.
+  if (last_pdsch_alloc_slot.valid() and slot_tx > last_pdsch_alloc_slot + MAX_SLOTS_SINCE_LAST_PXSCH) {
+    last_pdsch_alloc_slot.clear();
+  }
+  if (last_pusch_alloc_slot.valid() and slot_tx > last_pusch_alloc_slot + MAX_SLOTS_SINCE_LAST_PXSCH) {
+    last_pdsch_alloc_slot.clear();
+  }
 }
 
 void ran_slice_instance::skipped_slot_indication(slot_point prev_slot, slot_point current_slot)

@@ -56,9 +56,6 @@ private:
   struct ran_slice_sched_context {
     ran_slice_instance                inst;
     std::unique_ptr<scheduler_policy> policy;
-    // Counter tracking the last time this slice was scheduled as a candidate.
-    slot_count_type last_dl_slot = 0;
-    slot_count_type last_ul_slot = 0;
 
     ran_slice_sched_context(ran_slice_id_t id, const cell_configuration& cell_cfg, const slice_rrm_policy_config& cfg) :
       inst(id, cell_cfg, cfg)

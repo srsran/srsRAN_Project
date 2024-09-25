@@ -22,6 +22,9 @@ namespace srsran {
 /// This class stores all the internal information relative to a RAN slice instantiation.
 class ran_slice_instance
 {
+  // Const for the max difference in number of slots between the current slot and the last allocation slot.
+  static constexpr unsigned MAX_SLOTS_SINCE_LAST_PXSCH = 512;
+
 public:
   ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
 
@@ -33,12 +36,17 @@ public:
   bool active() const { return not slice_ues.empty(); }
 
   /// Save PDSCH grant.
-  void store_pdsch_grant(unsigned crbs) { pdsch_rb_count += crbs; }
+  void store_pdsch_grant(unsigned crbs, slot_point pdsch_slot)
+  {
+    pdsch_rb_count += crbs;
+    last_pdsch_alloc_slot = pdsch_slot;
+  }
 
   /// Save PUSCH grant.
   void store_pusch_grant(unsigned crbs, slot_point pusch_slot)
   {
     pusch_rb_count_per_slot[pusch_slot.to_uint() % pusch_rb_count_per_slot.size()] += crbs;
+    last_pusch_alloc_slot = pusch_slot;
   }
 
   /// Determine if at least one bearer of the given UE is currently managed by this slice.
@@ -66,6 +74,20 @@ public:
   /// Returns UEs belonging to this slice.
   const slice_ue_repository& get_ues();
 
+  /// Number of slots elapsed between the provided PDSCH slot and the last time this slice was scheduled.
+  unsigned nof_slots_since_last_pdsch(slot_point pdsch_slot) const
+  {
+    return last_pdsch_alloc_slot.valid()
+               ? (pdsch_slot >= last_pdsch_alloc_slot ? pdsch_slot - last_pdsch_alloc_slot : 0)
+               : MAX_SLOTS_SINCE_LAST_PXSCH;
+  }
+  unsigned nof_slots_since_last_pusch(slot_point pusch_slot) const
+  {
+    return last_pusch_alloc_slot.valid()
+               ? (pusch_slot >= last_pusch_alloc_slot ? pusch_slot - last_pusch_alloc_slot : 0)
+               : MAX_SLOTS_SINCE_LAST_PXSCH;
+  }
+
   ran_slice_id_t            id;
   const cell_configuration* cell_cfg;
   slice_rrm_policy_config   cfg;
@@ -82,6 +104,12 @@ public:
       cell_cfg->tdd_cfg_common.has_value() ? nof_slots_per_tdd_period(*cell_cfg->tdd_cfg_common) : 1;
 
 private:
+  // Last slot that the PDSCH was allocated.
+  slot_point last_pdsch_alloc_slot;
+
+  // Last slot that the PUSCH was allocated.
+  slot_point last_pusch_alloc_slot;
+
   slice_ue_repository slice_ues;
 };
 

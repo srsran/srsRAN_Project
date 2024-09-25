@@ -246,6 +246,8 @@ template <bool IsDownlink>
 std::optional<std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>>
 slice_scheduler::get_next_candidate()
 {
+  using candidate_type = std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>;
+
   slice_prio_queue& prio_queue = IsDownlink ? dl_prio_queue : ul_prio_queue;
   while (not prio_queue.empty()) {
     ran_slice_sched_context& chosen_slice = slices[prio_queue.top().id.value()];
@@ -276,13 +278,8 @@ slice_scheduler::get_next_candidate()
       prio_queue.push(slice_candidate_context{chosen_slice.inst.id, prio, {min_rbs, cfg.max_prb}, pxsch_slot});
     }
 
-    // Save current slot count.
-    unsigned& count_to_set = IsDownlink ? chosen_slice.last_dl_slot : chosen_slice.last_ul_slot;
-    count_to_set           = slot_count;
-
     // Return the candidate.
-    return std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>{
-        chosen_slice.inst, pxsch_slot, rb_lims.stop()};
+    return candidate_type{chosen_slice.inst, pxsch_slot, rb_lims.stop()};
   }
   return std::nullopt;
 }
@@ -331,8 +328,9 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
       not slice_resched and inst.cfg.min_prb > 0 and rb_count < inst.cfg.min_prb ? high_prio : default_prio;
 
   // Increase priorities of slices that have not been scheduled for a long time.
-  unsigned      last_count = is_dl ? last_dl_slot : last_ul_slot;
-  priority_type delay_prio = (current_slot_count - last_count) & ((1U << delay_bitsize) - 1U);
+  priority_type delay_prio =
+      is_dl ? inst.nof_slots_since_last_pdsch(pxsch_slot) : inst.nof_slots_since_last_pusch(pxsch_slot);
+  delay_prio = delay_prio & ((1U << delay_bitsize) - 1U);
 
   // Round-robin across slices with the same slice and delay priorities.
   priority_type rr_prio = (current_slot_count % nof_slices) == inst.id.value() ? 1 : 0;

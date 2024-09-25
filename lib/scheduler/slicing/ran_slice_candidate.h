@@ -38,7 +38,7 @@ public:
   void store_grant(unsigned nof_rbs)
   {
     if constexpr (IsDl) {
-      inst->store_pdsch_grant(nof_rbs);
+      inst->store_pdsch_grant(nof_rbs, slot_tx);
     } else {
       inst->store_pusch_grant(nof_rbs, slot_tx);
     }
