@@ -15,6 +15,8 @@
 #include "../support/slot_event_list.h"
 #include "ue.h"
 #include "ue_fallback_scheduler.h"
+#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/ran/du_types.h"
 
@@ -34,7 +36,7 @@ class ue_event_manager final : public sched_ue_configuration_handler,
 {
 public:
   ue_event_manager(ue_repository& ue_db, cell_metrics_handler& metrics_handler);
-  ~ue_event_manager();
+  ~ue_event_manager() override;
 
   void add_cell(cell_resource_allocator& cell_res_grid,
                 cell_harq_manager&       cell_harqs,
@@ -93,6 +95,13 @@ private:
     }
   };
 
+  using common_event_queue = concurrent_queue<common_event_t,
+                                              concurrent_queue_policy::lockfree_mpmc,
+                                              concurrent_queue_wait_policy::non_blocking>;
+  using cell_event_queue   = concurrent_queue<cell_event_t,
+                                            concurrent_queue_policy::lockfree_mpmc,
+                                            concurrent_queue_wait_policy::non_blocking>;
+
   void process_common(slot_point sl, du_cell_index_t cell_index);
   void process_cell_specific(du_cell_index_t cell_index);
   bool cell_exists(du_cell_index_t cell_index) const;
@@ -133,12 +142,13 @@ private:
   std::array<du_cell, MAX_NOF_DU_CELLS> du_cells{};
 
   /// Pending Events list per cell.
-  std::array<slot_event_list<cell_event_t>, MAX_NOF_DU_CELLS> cell_specific_events;
+  static_vector<cell_event_queue, MAX_NOF_DU_CELLS> cell_specific_events;
 
   /// Pending Events list common to all cells. We use this list for events that require synchronization across
   /// UE carriers when CA is enabled (e.g. SR, BSR, reconfig).
-  slot_event_list<common_event_t> common_events;
-  slot_point                      last_sl;
+  common_event_queue common_events;
+
+  slot_point last_sl;
 
   std::unique_ptr<ue_dl_buffer_occupancy_manager> dl_bo_mng;
 };
