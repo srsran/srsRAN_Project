@@ -99,6 +99,7 @@ private:
   bool fill_highest_retransmitted_pdcp_sn(nru_dl_data_delivery_status& status);
   bool fill_highest_delivered_retransmitted_pdcp_sn(nru_dl_data_delivery_status& status);
   void fill_data_delivery_status(nru_ul_message& msg);
+  bool send_data_delivery_status();
 
   void handle_pdu_impl(nru_dl_message msg);
 
