@@ -28,8 +28,15 @@ set(SOURCES
     )
 
 add_library(srsran_ngap STATIC ${SOURCES})
-target_link_libraries(srsran_ngap ngap_asn1 srsran_cu_cp srsran_support)
+target_link_libraries(srsran_ngap
+	ngap_asn1
+	srsran_cu_cp
+	srsran_support)
 
+if(SRSRAN_ENTERPRISE_FOUND)
+target_link_libraries(srsran_ngap
+            srsran_enterprise::srsran_plugin_ng_handover)
+endif(SRSRAN_ENTERPRISE_FOUND)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_to_exported_libs(srsran_ngap)

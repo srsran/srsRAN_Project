@@ -318,6 +318,12 @@ else (ENABLE_DPDK)
     unset(DPDK_FOUND CACHE)
 endif (ENABLE_DPDK)
 
+# srsRAN Enterprise
+if (ENABLE_SRSRAN_ENTERPRISE)
+    find_package(SRSRAN_ENTERPRISE MODULE REQUIRED)
+    include(${SRSRAN_ENTERPRISE_BINARY_DIR}/srsran_enterprise.cmake)
+endif (ENABLE_SRSRAN_ENTERPRISE)
+
 ########################################################################
 # Instruction Set Architecture setup
 ########################################################################
