@@ -57,7 +57,8 @@ static std::optional<unsigned> compute_srs_bw_param(unsigned nof_ul_rbs)
 // are placed at the center of the band.
 static unsigned compute_freq_shift(unsigned c_srs, unsigned nof_ul_rbs)
 {
-  // As per Section 6.4.1.4.3, the parameter \f$C_{SRS}\f$ = 0 provides the bandwidth of the SRS resources.
+  // As per Section 6.4.1.4.3, the parameter \f$m_{SRS}\f$ = 0 is an index that, along with \f$C_{SRS}\f$, maps to the
+  // bandwidth of the SRS resources.
   constexpr uint8_t                        b_srs_0    = 0;
   std::optional<srsran::srs_configuration> srs_params = srs_configuration_get(c_srs, b_srs_0);
   srsran_sanity_check(srs_params.has_value() and nof_ul_rbs >= srs_params.value().m_srs,
@@ -137,8 +138,12 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
     cell.cell_srs_res_list = generate_cell_srs_list(cell.cell_cfg);
 
     const auto srs_period_slots = static_cast<unsigned>(cell.cell_cfg.srs_cfg.srs_period.value());
-    cell.slot_resource_cnt.reserve(srs_period_slots);
+    // Reserve the size of the vector and set the SRS counter of each offset to 0.
+    cell.slot_resource_cnt.assign(srs_period_slots, 0U);
     cell.srs_res_offset_free_list.reserve(du_srs_policy_max_ul_th::cell_context::max_nof_srs_res);
+    cell.nof_res_per_symb_interval = static_cast<unsigned>(cell.cell_cfg.srs_cfg.tx_comb) *
+                                     static_cast<unsigned>(cell.cell_cfg.srs_cfg.cyclic_shift_reuse_factor) *
+                                     static_cast<unsigned>(cell.cell_cfg.srs_cfg.sequence_id_reuse_factor);
 
     for (unsigned offset = 0; offset != srs_period_slots; ++offset) {
       // We don't generate more than the maximum number of SRS resources per cell.
@@ -146,11 +151,9 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
         break;
       }
 
-      unsigned offset_res_cnt = 0U;
       // Verify whether the offset maps to a partially- or fully-UL slot.
       if (cell_cfg_list_[0].tdd_ul_dl_cfg_common.has_value() and
           not is_ul_slot(offset, cell_cfg_list_[0].tdd_ul_dl_cfg_common.value())) {
-        cell.slot_resource_cnt.emplace_back(0U, offset_res_cnt);
         continue;
       }
 
@@ -164,6 +167,8 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
           if (is_partually_ul_slot(offset, cell_cfg_list_[0].tdd_ul_dl_cfg_common.value())) {
             const unsigned slot_index =
                 offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+            // As per Section 6.4.1.4.1, TS 38.211, the SRS resources can only be placed in the last 6 symbols of the
+            // slot.
             static constexpr unsigned max_srs_symbols = 6U;
             const unsigned            nof_ul_symbols_for_srs =
                 std::min(srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length(),
@@ -185,9 +190,7 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
           }
         }
         cell.srs_res_offset_free_list.emplace_back(res.cell_res_id, offset);
-        ++offset_res_cnt;
       }
-      cell.slot_resource_cnt.emplace_back(0U, offset_res_cnt);
     }
   }
 }
@@ -208,8 +211,8 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
     return true;
   }
 
-  // The UE SRS configuration is taken from a base configuration, saved in the GNB. The details that are
-  // UE specific will be added later on in this function.
+  // The UE SRS configuration is taken from a base configuration, saved in the GNB. The UE specific parameters will be
+  // added later on in this function.
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.emplace(
       cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].default_srs_cfg);
   srs_config& ue_srs_cfg    = cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
@@ -222,7 +225,7 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
     return false;
   }
 
-  // Find the best resource ID and offset for this UE.
+  // Find the best resource ID and offset for this UE, according to the class policy.
   auto srs_res_id_offset = cells[0].find_optimal_ue_srs_resource();
 
   if (srs_res_id_offset == free_srs_list.end()) {
@@ -278,8 +281,8 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
   // Remove the allocated SRS resource from the free list.
   free_srs_list.erase(srs_res_id_offset);
 
-  // Update the used_not_full slot vector.
-  ++cells[0].slot_resource_cnt[srs_offset].first;
+  // Update the SRS resource per slot counter.
+  ++cells[0].slot_resource_cnt[srs_offset];
 
   return true;
 }
@@ -287,13 +290,14 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
 std::vector<std::pair<unsigned, unsigned>>::const_iterator
 du_srs_policy_max_ul_th::cell_context::find_optimal_ue_srs_resource()
 {
-  // The weights assigned here can be set to any value, as long as:
+  // The weights assigned here can be set to arbitrarily value, as long as:
   // - symbol_weight_base is greater than 0;
-  // - reuse_slot_discount less than symbol_weight_base;
-  // - max_weight is > symbol_weight_base * (srs_builder_params::max_nof_symbols /
-  // srs_builder_params::nof_symbols).
+  // - reuse_slot_discount is less than symbol_weight_base;
+  // - max_weight > symbol_weight_base * (srs_builder_params::max_nof_symbols / srs_builder_params::nof_symbols).
   static constexpr unsigned max_weight         = 100U;
   static constexpr unsigned symbol_weight_base = 10U;
+  // We give a discount to the symbol weight if the offset is already used but not full.
+  static const unsigned partial_symb_interval_discount = symbol_weight_base / 2U;
 
   const auto weight_function = [&](const pair_res_id_offset& srs_res) {
     if (cell_cfg.tdd_ul_dl_cfg_common.has_value() and
@@ -308,7 +312,7 @@ du_srs_policy_max_ul_th::cell_context::find_optimal_ue_srs_resource()
       return max_weight;
     }
 
-    // Give priority to the last symbols within a slot. This reduces the space used for the SRS in a slot.
+    // Give priority to the last symbol intervals within a slot. This reduces the space used for the SRS in a slot.
     const unsigned symb_weight =
         symbol_weight_base *
         ((NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_res_cfg_it->symbols.start()) / srs_res_cfg_it->symbols.length());
@@ -316,7 +320,8 @@ du_srs_policy_max_ul_th::cell_context::find_optimal_ue_srs_resource()
     // We consider a discount if the offset is already used but not full; this way, we give an incentive
     // to the SRS resources not to be allocated on a new slot, to avoid taking PUSCH symbols on a new
     // slot.
-    const unsigned reuse_slot_discount = offset_used_not_full(srs_res.second) ? symbol_weight_base / 2U : 0U;
+    const unsigned reuse_slot_discount =
+        offset_interval_used_not_full(srs_res.second) ? partial_symb_interval_discount : 0U;
 
     return symb_weight - reuse_slot_discount;
   };
@@ -346,11 +351,11 @@ void du_srs_policy_max_ul_th::dealloc_resources(cell_group_config& cell_grp_cfg)
     free_srs_list.emplace_back(srs_res.id.cell_res_id, offset_to_deallocate);
 
     // Update the used_not_full slot vector.
-    srsran_assert(cells[0].slot_resource_cnt[offset_to_deallocate].first != 0, "The offset is expected to be non-zero");
-    --cells[0].slot_resource_cnt[offset_to_deallocate].first;
+    srsran_assert(cells[0].slot_resource_cnt[offset_to_deallocate] != 0, "The offset is expected to be non-zero");
+    --cells[0].slot_resource_cnt[offset_to_deallocate];
   }
 
   // Reset the SRS configuration in this UE. This makes sure the DU will exit this function immediately when it gets
-  // call again for the same UE (upon destructor's call).
+  // called again for the same UE (upon destructor's call).
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
 }

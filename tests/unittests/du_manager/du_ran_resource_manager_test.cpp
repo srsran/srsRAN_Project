@@ -830,14 +830,13 @@ static cell_config_builder_params make_cell_cfg_params(const srs_params& params)
 
 static du_cell_config make_srs_base_du_cell_config(const cell_config_builder_params& params)
 {
-  // This function generates a configuration which would potentially allow for very large number of SRS resources.
+  // This function generates a configuration which would potentially allow for a very large number of SRS resources.
   du_cell_config du_cfg  = config_helpers::make_default_du_cell_config(params);
   auto&          srs_cfg = du_cfg.srs_cfg;
 
   // Generates a random SRS configuration.
-  srs_cfg.tx_comb         = test_rgen::bernoulli(0.5) ? tx_comb_size::n2 : tx_comb_size::n4;
-  srs_cfg.max_nof_symbols = test_rgen::uniform_int<unsigned>(1U, 6U);
-  // The number of SRS symbols cannot exceed the number of
+  srs_cfg.tx_comb                                = test_rgen::bernoulli(0.5) ? tx_comb_size::n2 : tx_comb_size::n4;
+  srs_cfg.max_nof_symbols                        = test_rgen::uniform_int<unsigned>(1U, 6U);
   std::array<srs_nof_symbols, 3> nof_symb_values = {srs_nof_symbols::n1, srs_nof_symbols::n2, srs_nof_symbols::n4};
   srs_cfg.nof_symbols = nof_symb_values[test_rgen::uniform_int<unsigned>(0, nof_symb_values.size() - 1)];
   while (srs_cfg.nof_symbols > srs_cfg.max_nof_symbols) {
@@ -896,7 +895,7 @@ static du_cell_config make_srs_du_cell_config(const cell_config_builder_params& 
 {
   auto du_cfg = make_srs_base_du_cell_config(params);
 
-  // For the optimality test, we to have a configuration that doesn't allow more than 1024 SRS resources.
+  // For the optimality test, we to have a configuration that doesn't allow for more than 1024 SRS resources.
   if (not limit_srs_res) {
     return du_cfg;
   }
@@ -906,14 +905,14 @@ static du_cell_config make_srs_du_cell_config(const cell_config_builder_params& 
   auto tot_num_srs_res = [&du_cfg]() {
     auto& tdd_cfg = du_cfg.tdd_ul_dl_cfg_common;
     auto& srs_cfg = du_cfg.srs_cfg;
-    // This is the number of SRS resources per symbol interval.
+    // This is the number of SRS resources per symbol interval. A symbol interval is an interval where the SRS resource
+    // can be placed within a slot and its width (or length) is given by the corresponding SRS parameter \c nof_symb in
+    // the SRS configuration.
     const unsigned nof_res_per_symb_interval = srs_cfg.sequence_id_reuse_factor *
                                                static_cast<unsigned>(srs_cfg.cyclic_shift_reuse_factor) *
                                                static_cast<unsigned>(srs_cfg.tx_comb);
 
-    // A symbol interval is an interval where the SRS resource can be placed within a slot and its width (or length) is
-    // given by the corresponding SRS parameter \c nof_symb in the SRS configuration. This "number of symbols intervals"
-    // counts all the symbols intervals within the SRS period.
+    // This "number of symbols intervals" counts all the symbols intervals within the SRS period.
     unsigned nof_symb_intervals = 0;
 
     // The number of symbols interval per slot depends on whether it's FDD or TDD.
@@ -937,6 +936,7 @@ static du_cell_config make_srs_du_cell_config(const cell_config_builder_params& 
       }
     }
 
+    // Return the total number of SRS resources.
     return nof_symb_intervals * nof_res_per_symb_interval;
   };
 
@@ -1046,7 +1046,7 @@ protected:
   // Helper that computes the Frequency Shift parameter (see Section 6.4.1.4.3, TS 38.211).
   unsigned compute_freq_shift() const
   {
-    // The function computes the frequency shift so that the SRS resources are placed in the center of the bandwidth.
+    // The function computes the frequency shift so that the SRS resources are placed in the center of the band.
     unsigned   c_srs         = compute_c_srs();
     unsigned   ul_bw_nof_rbs = cell_cfg_list[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
     const auto srs_cfg       = srs_configuration_get(c_srs, 0U);

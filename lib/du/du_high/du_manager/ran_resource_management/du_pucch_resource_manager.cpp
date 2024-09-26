@@ -350,7 +350,7 @@ void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cf
   }
 
   // Disable the PUCCH configuration in this UE. This makes sure the DU will exit this function immediately when it gets
-  // call again for the same UE (upon destructor's call).
+  // called again for the same UE (upon destructor's call).
   disable_pucch_cfg(cell_grp_cfg);
 }
 
