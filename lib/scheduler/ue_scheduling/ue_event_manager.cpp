@@ -131,150 +131,154 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
       ue_creation_command{ev.next_config(),
                           ev.get_fallback_command().has_value() and ev.get_fallback_command().value(),
                           *du_cells[ev.next_config().pcell_common_cfg().cell_index].cell_harqs});
+  const du_ue_index_t ue_idx = u->ue_index;
+
+  auto handle_ue_creation_impl = [this, u = std::move(u), ev = std::move(ev)]() mutable {
+    if (ue_db.contains(u->ue_index)) {
+      logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
+                   u->ue_index,
+                   u->crnti);
+      ev.abort();
+      return;
+    }
+
+    // Insert UE in UE repository.
+    du_ue_index_t   ueidx       = u->ue_index;
+    rnti_t          rnti        = u->crnti;
+    du_cell_index_t pcell_index = u->get_pcell().cell_index;
+    ue_db.add_ue(std::move(u));
+
+    const auto& added_ue = ue_db[ueidx];
+    for (unsigned i = 0, e = added_ue.nof_cells(); i != e; ++i) {
+      // Update UCI scheduler with new UE UCI resources.
+      du_cells[pcell_index].uci_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
+
+      // Add UE to slice scheduler.
+      // Note: This action only has effect when UE is created in non-fallback mode.
+      du_cells[pcell_index].slice_sched->add_ue(ueidx);
+    }
+
+    // Log Event.
+    du_cells[pcell_index].ev_logger->enqueue(scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
+  };
 
   // Defer UE object addition to ue list to the slot indication handler.
-  if (not common_events.try_push(common_event_t{
-          INVALID_DU_UE_INDEX, [this, u = std::move(u), ev = std::move(ev)]() mutable {
-            if (ue_db.contains(u->ue_index)) {
-              logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
-                           u->ue_index,
-                           u->crnti);
-              ev.abort();
-              return;
-            }
-
-            // Insert UE in UE repository.
-            du_ue_index_t   ueidx       = u->ue_index;
-            rnti_t          rnti        = u->crnti;
-            du_cell_index_t pcell_index = u->get_pcell().cell_index;
-            ue_db.add_ue(std::move(u));
-
-            const auto& added_ue = ue_db[ueidx];
-            for (unsigned i = 0, e = added_ue.nof_cells(); i != e; ++i) {
-              // Update UCI scheduler with new UE UCI resources.
-              du_cells[pcell_index].uci_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
-
-              // Add UE to slice scheduler.
-              // Note: This action only has effect when UE is created in non-fallback mode.
-              du_cells[pcell_index].slice_sched->add_ue(ueidx);
-            }
-
-            // Log Event.
-            du_cells[pcell_index].ev_logger->enqueue(
-                scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
-          }})) {
-    logger.warning("Discarding UE creation. Cause: Event queue is full");
+  if (not common_events.try_push(common_event_t{INVALID_DU_UE_INDEX, std::move(handle_ue_creation_impl)})) {
+    logger.warning("ue={}: Discarding UE creation. Cause: Event queue is full", ue_idx);
   }
 }
 
 void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
 {
-  du_ue_index_t ue_index = ev.get_ue_index();
-  if (not common_events.try_push(
-          common_event_t{ue_index, [this, ev = std::move(ev)]() mutable {
-                           const du_ue_index_t ue_idx = ev.get_ue_index();
-                           if (not ue_db.contains(ue_idx)) {
-                             log_invalid_ue_index(ue_idx, "UE Reconfig Request");
-                             ev.abort();
-                             return;
-                           }
-                           auto& u = ue_db[ue_idx];
+  const du_ue_index_t ue_index = ev.get_ue_index();
 
-                           // If a UE carrier has been removed, remove the UE from the respective slice scheduler.
-                           // Update UCI scheduler with cell changes.
-                           for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
-                             auto& ue_cc = u.get_cell(to_ue_cell_index(i));
-                             if (not ev.next_config().contains(ue_cc.cell_index)) {
-                               // UE carrier is being removed.
-                               // Update UE UCI resources in UCI scheduler.
-                               du_cells[ue_cc.cell_index].uci_sched->rem_ue(ue_cc.cfg());
-                               // Schedule removal of UE in slice scheduler.
-                               du_cells[ue_cc.cell_index].slice_sched->rem_ue(ue_idx);
-                             } else {
-                               // UE carrier is being reconfigured.
-                               du_cells[ue_cc.cell_index].uci_sched->reconf_ue(
-                                   ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
-                             }
-                           }
-                           for (unsigned i = 0, e = ev.next_config().nof_cells(); i != e; ++i) {
-                             const auto& new_ue_cc_cfg = ev.next_config().ue_cell_cfg(to_ue_cell_index(i));
-                             auto*       ue_cc         = u.find_cell(new_ue_cc_cfg.cell_cfg_common.cell_index);
-                             if (ue_cc == nullptr) {
-                               // New UE carrier is being added.
-                               du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].uci_sched->add_ue(new_ue_cc_cfg);
-                             }
-                           }
+  auto handle_ue_reconf_impl = [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.get_ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      log_invalid_ue_index(ue_idx, "UE Reconfig Request");
+      ev.abort();
+      return;
+    }
+    auto& u = ue_db[ue_idx];
 
-                           // Configure existing UE.
-                           ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()});
+    // If a UE carrier has been removed, remove the UE from the respective slice scheduler.
+    // Update UCI scheduler with cell changes.
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
+      auto& ue_cc = u.get_cell(to_ue_cell_index(i));
+      if (not ev.next_config().contains(ue_cc.cell_index)) {
+        // UE carrier is being removed.
+        // Update UE UCI resources in UCI scheduler.
+        du_cells[ue_cc.cell_index].uci_sched->rem_ue(ue_cc.cfg());
+        // Schedule removal of UE in slice scheduler.
+        du_cells[ue_cc.cell_index].slice_sched->rem_ue(ue_idx);
+      } else {
+        // UE carrier is being reconfigured.
+        du_cells[ue_cc.cell_index].uci_sched->reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
+      }
+    }
+    for (unsigned i = 0, e = ev.next_config().nof_cells(); i != e; ++i) {
+      const auto& new_ue_cc_cfg = ev.next_config().ue_cell_cfg(to_ue_cell_index(i));
+      auto*       ue_cc         = u.find_cell(new_ue_cc_cfg.cell_cfg_common.cell_index);
+      if (ue_cc == nullptr) {
+        // New UE carrier is being added.
+        du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].uci_sched->add_ue(new_ue_cc_cfg);
+      }
+    }
 
-                           // Update slice scheduler.
-                           for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
-                             const auto& ue_cc = u.get_cell(to_ue_cell_index(i));
-                             // Reconfigure UE in slice scheduler.
-                             du_cells[ue_cc.cell_index].slice_sched->reconf_ue(u.ue_index);
-                           }
+    // Configure existing UE.
+    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()});
 
-                           // Log event.
-                           du_cells[u.get_pcell().cell_index].ev_logger->enqueue(
-                               scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
-                         }})) {
-    logger.warning("Discarding UE reconfiguration. Cause: Event queue is full");
+    // Update slice scheduler.
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
+      const auto& ue_cc = u.get_cell(to_ue_cell_index(i));
+      // Reconfigure UE in slice scheduler.
+      du_cells[ue_cc.cell_index].slice_sched->reconf_ue(u.ue_index);
+    }
+
+    // Log event.
+    du_cells[u.get_pcell().cell_index].ev_logger->enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
+  };
+
+  if (not common_events.try_push(common_event_t{ue_index, std::move(handle_ue_reconf_impl)})) {
+    logger.warning("ue={}: Discarding UE reconfiguration. Cause: Event queue is full", ue_index);
   }
 }
 
 void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
 {
   const du_ue_index_t ue_index = ev.ue_index();
-  if (not common_events.try_push(common_event_t{
-          ue_index, [this, ev = std::move(ev)]() mutable {
-            const du_ue_index_t ue_idx = ev.ue_index();
-            if (not ue_db.contains(ue_idx)) {
-              logger.warning("Received request to delete ue={} that does not exist", ue_idx);
-              return;
-            }
-            const auto&     u         = ue_db[ue_idx];
-            const rnti_t    rnti      = u.crnti;
-            du_cell_index_t pcell_idx = u.get_pcell().cell_index;
 
-            for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
-              // Update UCI scheduling by removing existing UE UCI resources.
-              du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].uci_sched->rem_ue(u.get_pcell().cfg());
-              // Schedule removal of UE from slice scheduler.
-              du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].slice_sched->rem_ue(ue_idx);
-            }
+  auto handle_ue_deletion_impl = [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      logger.warning("Received request to delete ue={} that does not exist", ue_idx);
+      return;
+    }
+    const auto&     u         = ue_db[ue_idx];
+    const rnti_t    rnti      = u.crnti;
+    du_cell_index_t pcell_idx = u.get_pcell().cell_index;
 
-            // Schedule UE removal from repository.
-            ue_db.schedule_ue_rem(std::move(ev));
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
+      // Update UCI scheduling by removing existing UE UCI resources.
+      du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].uci_sched->rem_ue(u.get_pcell().cfg());
+      // Schedule removal of UE from slice scheduler.
+      du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].slice_sched->rem_ue(ue_idx);
+    }
 
-            // Log UE removal event.
-            du_cells[pcell_idx].ev_logger->enqueue(sched_ue_delete_message{ue_idx, rnti});
-          }})) {
-    logger.warning("Discarding UE deletion. Cause: Event queue is full");
+    // Schedule UE removal from repository.
+    ue_db.schedule_ue_rem(std::move(ev));
+
+    // Log UE removal event.
+    du_cells[pcell_idx].ev_logger->enqueue(sched_ue_delete_message{ue_idx, rnti});
+  };
+
+  if (not common_events.try_push(common_event_t{ue_index, std::move(handle_ue_deletion_impl)})) {
+    logger.warning("ue={}: Discarding UE deletion. Cause: Event queue is full", ue_index);
   }
 }
 
 void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
 {
-  if (not common_events.try_push(common_event_t{
-          ue_idx, [this, ue_idx]() {
-            if (not ue_db.contains(ue_idx)) {
-              logger.warning("Received config application confirmation for ue={} that does not exist", ue_idx);
-              return;
-            }
-            ue&   u     = ue_db[ue_idx];
-            auto& pcell = du_cells[u.get_pcell().cell_index];
+  auto handle_ue_config_applied_impl = [this, ue_idx]() {
+    if (not ue_db.contains(ue_idx)) {
+      logger.warning("Received config application confirmation for ue={} that does not exist", ue_idx);
+      return;
+    }
+    ue&   u     = ue_db[ue_idx];
+    auto& pcell = du_cells[u.get_pcell().cell_index];
 
-            // Log UE config applied event.
-            pcell.ev_logger->enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, u.crnti});
+    // Log UE config applied event.
+    pcell.ev_logger->enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, u.crnti});
 
-            // Remove UE from fallback mode.
-            u.get_pcell().set_fallback_state(false);
+    // Remove UE from fallback mode.
+    u.get_pcell().set_fallback_state(false);
 
-            // Add UE to slice scheduler, once it leaves fallback mode.
-            pcell.slice_sched->config_applied(ue_idx);
-          }})) {
-    logger.warning("Discarding UE config applied. Cause: Event queue is full");
+    // Add UE to slice scheduler, once it leaves fallback mode.
+    pcell.slice_sched->config_applied(ue_idx);
+  };
+
+  if (not common_events.try_push(common_event_t{ue_idx, handle_ue_config_applied_impl})) {
+    logger.warning("ue={}: Discarding UE config applied event. Cause: Event queue is full", ue_idx);
   }
 }
 
@@ -282,38 +286,39 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 {
   srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
-  if (not common_events.try_push(
-          common_event_t{bsr_ind.ue_index, [this, bsr_ind]() {
-                           if (not ue_db.contains(bsr_ind.ue_index)) {
-                             log_invalid_ue_index(bsr_ind.ue_index, "BSR");
-                             return;
-                           }
-                           auto&           u         = ue_db[bsr_ind.ue_index];
-                           du_cell_index_t pcell_idx = u.get_pcell().cell_index;
+  auto handle_ul_bsr_ind_impl = [this, bsr_ind]() {
+    if (not ue_db.contains(bsr_ind.ue_index)) {
+      log_invalid_ue_index(bsr_ind.ue_index, "BSR");
+      return;
+    }
+    auto&           u         = ue_db[bsr_ind.ue_index];
+    du_cell_index_t pcell_idx = u.get_pcell().cell_index;
 
-                           // Handle event.
-                           u.handle_bsr_indication(bsr_ind);
+    // Handle event.
+    u.handle_bsr_indication(bsr_ind);
 
-                           if (u.get_pcell().is_in_fallback_mode()) {
-                             // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-                             du_cells[pcell_idx].fallback_sched->handle_ul_bsr_indication(bsr_ind.ue_index, bsr_ind);
-                           }
+    if (u.get_pcell().is_in_fallback_mode()) {
+      // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
+      du_cells[pcell_idx].fallback_sched->handle_ul_bsr_indication(bsr_ind.ue_index, bsr_ind);
+    }
 
-                           // Log event.
-                           if (du_cells[pcell_idx].ev_logger->enabled()) {
-                             scheduler_event_logger::bsr_event event{};
-                             event.ue_index             = bsr_ind.ue_index;
-                             event.rnti                 = bsr_ind.crnti;
-                             event.type                 = bsr_ind.type;
-                             event.reported_lcgs        = bsr_ind.reported_lcgs;
-                             event.tot_ul_pending_bytes = units::bytes{u.pending_ul_newtx_bytes()};
-                             du_cells[pcell_idx].ev_logger->enqueue(event);
-                           }
+    // Log event.
+    if (du_cells[pcell_idx].ev_logger->enabled()) {
+      scheduler_event_logger::bsr_event event{};
+      event.ue_index             = bsr_ind.ue_index;
+      event.rnti                 = bsr_ind.crnti;
+      event.type                 = bsr_ind.type;
+      event.reported_lcgs        = bsr_ind.reported_lcgs;
+      event.tot_ul_pending_bytes = units::bytes{u.pending_ul_newtx_bytes()};
+      du_cells[pcell_idx].ev_logger->enqueue(event);
+    }
 
-                           // Notify metrics handler.
-                           metrics_handler.handle_ul_bsr_indication(bsr_ind);
-                         }})) {
-    logger.warning("Discarding UE BSR. Cause: Event queue is full");
+    // Notify metrics handler.
+    metrics_handler.handle_ul_bsr_indication(bsr_ind);
+  };
+
+  if (not common_events.try_push(common_event_t{bsr_ind.ue_index, handle_ul_bsr_ind_impl})) {
+    logger.warning("ue={}: Discarding UE BSR. Cause: Event queue is full", bsr_ind.ue_index);
   }
 }
 
@@ -510,24 +515,25 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
 void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
-  if (not common_events.try_push(common_event_t{
-          ce.ue_index, [this, ce]() {
-            if (not ue_db.contains(ce.ue_index)) {
-              log_invalid_ue_index(ce.ue_index, "DL MAC CE");
-              return;
-            }
-            auto& u = ue_db[ce.ue_index];
-            u.handle_dl_mac_ce_indication(ce);
+  auto handle_mac_ce_impl = [this, ce]() {
+    if (not ue_db.contains(ce.ue_index)) {
+      log_invalid_ue_index(ce.ue_index, "DL MAC CE");
+      return;
+    }
+    auto& u = ue_db[ce.ue_index];
+    u.handle_dl_mac_ce_indication(ce);
 
-            // Notify SRB fallback scheduler upon receiving ConRes CE indication.
-            if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
-              du_cells[ue_db[ce.ue_index].get_pcell().cell_index].fallback_sched->handle_conres_indication(ce.ue_index);
-            }
+    // Notify SRB fallback scheduler upon receiving ConRes CE indication.
+    if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+      du_cells[ue_db[ce.ue_index].get_pcell().cell_index].fallback_sched->handle_conres_indication(ce.ue_index);
+    }
 
-            // Log event.
-            du_cells[u.get_pcell().cell_index].ev_logger->enqueue(ce);
-          }})) {
-    logger.warning("DL MAC CE discarded. Cause: Event queue is full");
+    // Log event.
+    du_cells[u.get_pcell().cell_index].ev_logger->enqueue(ce);
+  };
+
+  if (not common_events.try_push(common_event_t{ce.ue_index, handle_mac_ce_impl})) {
+    logger.warning("ue={} lcid={}: DL MAC CE discarded. Cause: Event queue is full", ce.ue_index, ce.ce_lcid);
   }
 }
 
@@ -608,53 +614,53 @@ void ue_event_manager::handle_error_indication(slot_point                       
                                                du_cell_index_t                       cell_index,
                                                scheduler_slot_handler::error_outcome event)
 {
-  if (not common_events.try_push(common_event_t{
-          INVALID_DU_UE_INDEX, [this, sl_tx, cell_index, event]() {
-            // Handle Error Indication.
+  auto handle_error_impl = [this, sl_tx, cell_index, event]() {
+    // Handle Error Indication.
 
-            const cell_slot_resource_allocator* prev_slot_result = du_cells[cell_index].res_grid->get_history(sl_tx);
-            if (prev_slot_result == nullptr) {
-              logger.warning(
-                  "cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
-                  "of the error indication have already been erased",
-                  cell_index,
-                  sl_tx);
-              return;
-            }
+    const cell_slot_resource_allocator* prev_slot_result = du_cells[cell_index].res_grid->get_history(sl_tx);
+    if (prev_slot_result == nullptr) {
+      logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
+                     "of the error indication have already been erased",
+                     cell_index,
+                     sl_tx);
+      return;
+    }
 
-            // In case DL PDCCHs were skipped, there will be the following consequences:
-            // - The UE will not decode the PDSCH and will not send the respective UCI.
-            // - The UE won't update the HARQ NDI, if new HARQ TB.
-            // - The UCI indication coming later from the lower layers will likely contain a HARQ-ACK=DTX.
-            // In case UL PDCCHs were skipped, there will be the following consequences:
-            // - The UE will not decode the PUSCH.
-            // - The UE won't update the HARQ NDI, if new HARQ TB.
-            // - The CRC indication coming from the lower layers will likely be CRC=KO.
-            // - Any UCI in the respective PUSCH will be likely reported as HARQ-ACK=DTX.
-            // In neither of the cases, the HARQs will timeout, because we did not lose the UCI/CRC indications in the
-            // lower layers. We do not need to cancel associated PUSCH grant (in UL PDCCH case) because it is important
-            // that the PUSCH "new_data" flag reaches the lower layers, telling them whether the UL HARQ buffer needs to
-            // be reset or not. Cancelling HARQ retransmissions is dangerous as it increases the chances of NDI
-            // ambiguity.
+    // In case DL PDCCHs were skipped, there will be the following consequences:
+    // - The UE will not decode the PDSCH and will not send the respective UCI.
+    // - The UE won't update the HARQ NDI, if new HARQ TB.
+    // - The UCI indication coming later from the lower layers will likely contain a HARQ-ACK=DTX.
+    // In case UL PDCCHs were skipped, there will be the following consequences:
+    // - The UE will not decode the PUSCH.
+    // - The UE won't update the HARQ NDI, if new HARQ TB.
+    // - The CRC indication coming from the lower layers will likely be CRC=KO.
+    // - Any UCI in the respective PUSCH will be likely reported as HARQ-ACK=DTX.
+    // In neither of the cases, the HARQs will timeout, because we did not lose the UCI/CRC indications in the
+    // lower layers. We do not need to cancel associated PUSCH grant (in UL PDCCH case) because it is important
+    // that the PUSCH "new_data" flag reaches the lower layers, telling them whether the UL HARQ buffer needs to
+    // be reset or not. Cancelling HARQ retransmissions is dangerous as it increases the chances of NDI
+    // ambiguity.
 
-            // In case of PDSCH grants being discarded, there will be the following consequences:
-            // - If the PDCCH was not discarded,the UE will fail to decode the PDSCH and will send an HARQ-ACK=NACK. The
-            // scheduler will retransmit the respective DL HARQ. No actions required.
+    // In case of PDSCH grants being discarded, there will be the following consequences:
+    // - If the PDCCH was not discarded,the UE will fail to decode the PDSCH and will send an HARQ-ACK=NACK. The
+    // scheduler will retransmit the respective DL HARQ. No actions required.
 
-            // In case of PUCCH and PUSCH grants being discarded.
-            if (event.pusch_and_pucch_discarded) {
-              handle_discarded_pusch(*prev_slot_result, ue_db);
+    // In case of PUCCH and PUSCH grants being discarded.
+    if (event.pusch_and_pucch_discarded) {
+      handle_discarded_pusch(*prev_slot_result, ue_db);
 
-              handle_discarded_pucch(*prev_slot_result, ue_db);
-            }
+      handle_discarded_pucch(*prev_slot_result, ue_db);
+    }
 
-            // Log event.
-            du_cells[cell_index].ev_logger->enqueue(scheduler_event_logger::error_indication_event{sl_tx, event});
+    // Log event.
+    du_cells[cell_index].ev_logger->enqueue(scheduler_event_logger::error_indication_event{sl_tx, event});
 
-            // Report metrics.
-            metrics_handler.handle_error_indication();
-          }})) {
-    logger.warning("Discarding error indication. Cause: Event queue is full");
+    // Report metrics.
+    metrics_handler.handle_error_indication();
+  };
+
+  if (not common_events.try_push(common_event_t{INVALID_DU_UE_INDEX, handle_error_impl})) {
+    logger.warning("Discarding error indication for slot={}. Cause: Event queue is full", sl_tx);
   }
 }
 
