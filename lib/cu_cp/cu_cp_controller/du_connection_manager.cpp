@@ -134,7 +134,10 @@ du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_not
 
   // Verify that there is space for new DU connection.
   if (du_count.load(std::memory_order_acquire) >= max_nof_dus) {
-    logger.warning("Rejecting new DU connection. Cause: Maximum number of DUs {} reached.", max_nof_dus);
+    logger.warning("Rejecting new DU connection. Cause: Maximum number of DUs connected ({})", max_nof_dus);
+    fmt::print("DU connection failed. Cause: Maximum number of DUs connected ({}). To increase the number of allowed "
+               "DUs change the \"--max_nof_dus\" in the CU-CP configuration\n",
+               max_nof_dus);
     return nullptr;
   }
 
@@ -147,7 +150,7 @@ du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_not
     // Create a new DU processor.
     du_index_t du_index = dus.add_du(std::move(sender_notifier));
     if (du_index == du_index_t::invalid) {
-      logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU.");
+      logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU");
       return;
     }
 
