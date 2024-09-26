@@ -130,6 +130,9 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   result.message          = detection_result.uci_message;
   result.detection_metric = detection_result.detection_metric;
 
+  // Time alignment measurements are unreliable for PUCCH Format 1.
+  result.csi.reset_time_alignment();
+
   return result;
 }
 
