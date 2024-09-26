@@ -87,7 +87,8 @@ private:
   const scheduler_ue_expert_config& expert_cfg;
   cell_metrics_handler&             metrics_handler;
 
-  std::array<std::unique_ptr<cell>, MAX_NOF_DU_CELLS> cells;
+  // List of cells of the UE scheduler.
+  slotted_array<cell, MAX_NOF_DU_CELLS> cells;
 
   /// Scheduling Strategy.
   ue_resource_grid_view ue_res_grid_view;
@@ -101,8 +102,8 @@ private:
   /// Processor of UE input events.
   ue_event_manager event_mng;
 
-  /// Mutex used to lock carriers for joint carrier scheduling.
-  slot_sync_point sync_point;
+  // Mutex to lock cells of the same cell group (when CA enabled) for joint carrier scheduling
+  std::mutex cell_group_mutex;
 
   srslog::basic_logger& logger;
 };
