@@ -339,12 +339,9 @@ int main(int argc, char** argv)
   // We disable one accordingly.
   cu_up_config.pcap_cfg.disable_e1_pcaps();
   du_app_unit->get_du_high_unit_config().pcaps.disable_f1_pcaps();
-  srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
-      modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
-  srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_dlt_pcaps =
-      modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
-  srsran::modules::flexible_du::du_pcaps du_pcaps =
-      modules::flexible_du::create_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
+  cu_cp_dlt_pcaps   cu_cp_dlt_pcaps = create_cu_cp_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
+  cu_up_dlt_pcaps   cu_up_dlt_pcaps = create_cu_up_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
+  flexible_du_pcaps du_pcaps        = create_du_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});

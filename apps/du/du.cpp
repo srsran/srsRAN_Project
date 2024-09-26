@@ -258,8 +258,7 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  srsran::modules::flexible_du::du_pcaps du_pcaps =
-      modules::flexible_du::create_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
+  flexible_du_pcaps du_pcaps = create_du_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
 
   // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(

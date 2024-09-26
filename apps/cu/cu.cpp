@@ -264,10 +264,8 @@ int main(int argc, char** argv)
   cu_worker_manager workers{cu_cfg, cu_cp_config.pcap_cfg, cu_up_config.pcap_cfg, cu_up_config.gtpu_queue_size};
 
   // Create layer specific PCAPs.
-  srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
-      modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
-  srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_dlt_pcaps =
-      modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
+  cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_cu_cp_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
+  cu_up_dlt_pcaps cu_up_dlt_pcaps = create_cu_up_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
 
   // Create IO broker.
   const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
