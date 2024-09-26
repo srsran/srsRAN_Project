@@ -114,6 +114,7 @@ protected:
     for (const auto& lc_cfg : *ue_creation_req.cfg.lc_config_list) {
       slice_ues[ue_creation_req.ue_index].add_logical_channel(lc_cfg.lcid, lc_cfg.lc_group);
     }
+    ev.notify_completion();
     return ues[ue_creation_req.ue_index];
   }
 

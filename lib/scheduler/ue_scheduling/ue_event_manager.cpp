@@ -138,7 +138,6 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
       logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
                    u->ue_index,
                    u->crnti);
-      ev.abort();
       return;
     }
 
@@ -160,6 +159,9 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
 
     // Log Event.
     du_cells[pcell_index].ev_logger->enqueue(scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
+
+    // Notify config manager that creation is complete with success.
+    ev.notify_completion();
   };
 
   // Defer UE object addition to ue list to the slot indication handler.
@@ -176,7 +178,6 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
     const du_ue_index_t ue_idx = ev.get_ue_index();
     if (not ue_db.contains(ue_idx)) {
       log_invalid_ue_index(ue_idx, "UE Reconfig Request");
-      ev.abort();
       return;
     }
     auto& u = ue_db[ue_idx];
@@ -217,6 +218,9 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
 
     // Log event.
     du_cells[u.get_pcell().cell_index].ev_logger->enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
+
+    // Notify config manager that creation is complete with success.
+    ev.notify_completion();
   };
 
   if (not common_events.try_push(common_event_t{ue_index, std::move(handle_ue_reconf_impl)})) {

@@ -39,7 +39,7 @@ public:
   const ue_configuration& next_config() const { return *next_ded_cfg; }
   std::optional<bool>     get_fallback_command() const { return set_fallback_mode; }
 
-  void abort();
+  void notify_completion();
 
 private:
   du_ue_index_t ue_index = INVALID_DU_UE_INDEX;

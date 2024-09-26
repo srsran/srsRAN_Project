@@ -27,14 +27,16 @@ ue_config_update_event::ue_config_update_event(du_ue_index_t                    
 ue_config_update_event::~ue_config_update_event()
 {
   if (parent != nullptr) {
-    // Event completed with success or failure.
-    parent->handle_ue_config_complete(ue_index, std::move(next_ded_cfg));
+    // Event completed with failure.
+    parent->handle_ue_config_complete(ue_index, nullptr);
   }
 }
 
-void ue_config_update_event::abort()
+void ue_config_update_event::notify_completion()
 {
-  next_ded_cfg = nullptr;
+  // Event completed with success.
+  parent->handle_ue_config_complete(ue_index, std::move(next_ded_cfg));
+  parent.reset();
 }
 
 ue_config_delete_event::ue_config_delete_event(du_ue_index_t ue_index_, sched_config_manager& parent_) :

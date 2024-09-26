@@ -68,7 +68,12 @@ const cell_configuration* test_sched_config_manager::add_cell(const sched_cell_c
 const ue_configuration* test_sched_config_manager::add_ue(const sched_ue_creation_request_message& cfg_req)
 {
   auto ue_ev = cfg_mng.add_ue(cfg_req);
-  return ue_ev.valid() ? &ue_ev.next_config() : nullptr;
+  if (ue_ev.valid()) {
+    const ue_configuration* ret = &ue_ev.next_config();
+    ue_ev.notify_completion();
+    return ret;
+  }
+  return nullptr;
 }
 
 bool test_sched_config_manager::rem_ue(du_ue_index_t ue_index)
