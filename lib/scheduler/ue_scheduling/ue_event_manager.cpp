@@ -27,9 +27,8 @@ class ue_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_
   static lcid_t        get_lcid(bearer_key key) { return uint_to_lcid(key / MAX_NOF_DU_UES); }
 
 public:
-  ue_dl_buffer_occupancy_manager(ue_event_manager& parent_) : parent(parent_)
+  ue_dl_buffer_occupancy_manager(ue_event_manager& parent_) : parent(parent_), pending_evs(NOF_BEARER_KEYS)
   {
-    pending_evs.reserve(NOF_BEARER_KEYS);
     std::fill(ue_dl_bo_table.begin(), ue_dl_bo_table.end(), -1);
   }
 
@@ -45,17 +44,18 @@ public:
     }
 
     // Signal that this bearer needs its BO state updated.
-    pending_evs.push(key);
+    if (not pending_evs.try_push(key)) {
+      parent.logger.warning("ue={} lcid={}: Discarding DL buffer occupancy update. Cause: Event queue is full",
+                            rlc_dl_bo.ue_index,
+                            rlc_dl_bo.lcid);
+    }
   }
 
   void slot_indication(slot_point sl)
   {
-    // Retrieve pending UEs.
-    pending_evs.slot_indication();
-    span<bearer_key> ues_to_process = pending_evs.get_events();
-
     // Process RLC buffer updates of pending UEs.
-    for (bearer_key key : ues_to_process) {
+    bearer_key key;
+    while (pending_evs.try_pop(key)) {
       // Recreate latest DL BO update.
       dl_buffer_state_indication_message dl_bo;
       // > Extract UE index and LCID.
@@ -93,12 +93,16 @@ public:
   }
 
 private:
+  using ue_event_queue =
+      concurrent_queue<bearer_key, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
+
   ue_event_manager& parent;
 
   // Table of pending DL Buffer Occupancy values. -1 means that no DL Buffer Occupancy is set.
   std::array<std::atomic<int>, NOF_BEARER_KEYS> ue_dl_bo_table;
 
-  slot_event_list<bearer_key> pending_evs;
+  // Queue of {UE Id, LCID} pairs with pending DL Buffer Occupancy updates.
+  ue_event_queue pending_evs;
 };
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
@@ -657,10 +661,11 @@ void ue_event_manager::handle_error_indication(slot_point                       
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
 {
   bool new_slot_detected = last_sl != sl;
-  if (new_slot_detected) {
-    // Pop pending common events.
-    last_sl = sl;
+  if (not new_slot_detected) {
+    // This slot has already been processed.
+    return;
   }
+  last_sl = sl;
 
   // Process events for UEs whose PCell matches cell_index argument.
   common_event_t ev{MAX_NOF_DU_UES, []() {}};
@@ -674,16 +679,12 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
         log_invalid_ue_index(ev.ue_index);
         continue;
       }
-      if (ue_db[ev.ue_index].get_pcell().cell_index == cell_index) {
-        // If we are currently processing PCell.
-        ev.callback();
-      }
+      ev.callback();
     }
   }
 
-  if (new_slot_detected) {
-    dl_bo_mng->slot_indication(sl);
-  }
+  // Process pending DL Buffer Occupancy reports.
+  dl_bo_mng->slot_indication(sl);
 }
 
 void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)

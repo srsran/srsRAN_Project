@@ -12,7 +12,6 @@
 
 #include "../config/sched_config_manager.h"
 #include "../slicing/slice_scheduler.h"
-#include "../support/slot_event_list.h"
 #include "ue.h"
 #include "ue_fallback_scheduler.h"
 #include "srsran/adt/concurrent_queue.h"
