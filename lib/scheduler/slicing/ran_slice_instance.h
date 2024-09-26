@@ -74,6 +74,11 @@ public:
   /// Returns UEs belonging to this slice.
   const slice_ue_repository& get_ues();
 
+  unsigned nof_pusch_rbs_allocated(slot_point pusch_slot) const
+  {
+    return pusch_rb_count_per_slot[pusch_slot.to_uint() % pusch_rb_count_per_slot.size()];
+  }
+
   /// Number of slots elapsed between the provided PDSCH slot and the last time this slice was scheduled.
   unsigned nof_slots_since_last_pdsch(slot_point pdsch_slot) const
   {

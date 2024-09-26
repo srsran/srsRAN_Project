@@ -33,7 +33,7 @@ void ran_slice_instance::slot_indication(slot_point slot_tx)
     pusch_rb_count_per_slot[(slot_tx - 1 - count).to_uint() % pusch_rb_count_per_slot.size()] = 0;
   }
 
-  // Reset last alloc slot if the different becomes to large, to avoid ambiguity.
+  // Reset last alloc slot if the difference becomes too large, to avoid ambiguity.
   if (last_pdsch_alloc_slot.valid() and slot_tx > last_pdsch_alloc_slot + MAX_SLOTS_SINCE_LAST_PXSCH) {
     last_pdsch_alloc_slot.clear();
   }

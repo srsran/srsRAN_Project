@@ -109,9 +109,9 @@ void slice_scheduler::slot_indication(slot_point slot_tx, const cell_resource_al
         // No more RBs left to allocated so skip adding slice candidate.
         continue;
       }
-      slot_point pusch_slot = slot_tx + pusch_time_domain_list[pusch_td_res_idx].k2;
-      unsigned   pusch_rb_count =
-          slice.inst.pusch_rb_count_per_slot[pusch_slot.to_uint() % slice.inst.pusch_rb_count_per_slot.size()];
+
+      slot_point pusch_slot     = slot_tx + pusch_time_domain_list[pusch_td_res_idx].k2;
+      unsigned   pusch_rb_count = slice.inst.nof_pusch_rbs_allocated(pusch_slot);
       max_rbs = pusch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0 ? slice.inst.cfg.min_prb
                                                                                         : slice.inst.cfg.max_prb;
       ul_prio_queue.push(
@@ -312,16 +312,19 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
   // Priority when slice has already reached its minimum RB ratio agreement.
   static constexpr priority_type default_prio = 0x1U;
   // Priority when slice still needs to reach its minimum RB ratio agreement.
-  static constexpr priority_type high_prio     = 0x2U;
-  static constexpr priority_type delay_bitsize = 8U;
-  static constexpr priority_type rr_bitsize    = 8U;
+  static constexpr priority_type high_prio          = 0x2U;
+  static constexpr priority_type slice_prio_bitsize = 4U;
+  static constexpr priority_type delay_bitsize      = 8U;
+  static constexpr priority_type rr_bitsize         = 8U;
 
-  unsigned rb_count = is_dl ? inst.pdsch_rb_count
-                            : inst.pusch_rb_count_per_slot[pxsch_slot.to_uint() % inst.pusch_rb_count_per_slot.size()];
+  unsigned rb_count = is_dl ? inst.pdsch_rb_count : inst.nof_pusch_rbs_allocated(pxsch_slot);
   if (not inst.active() or rb_count >= inst.cfg.max_prb) {
     // If the slice is not in a state to be scheduled in this slot, return skip priority level.
     return skip_prio;
   }
+
+  // Prioritize closer slots over slots further away into the future. This is relevant for UL-heavy cases.
+  unsigned slot_dist = 0xfU - ((pxsch_slot - pdcch_slot) & 0xfU);
 
   // In case minRB > 0 and minimum RB ratio agreement is not yet reached, we give it a higher priority.
   priority_type slice_prio =
@@ -336,10 +339,6 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
   priority_type rr_prio = (current_slot_count % nof_slices) == inst.id.value() ? 1 : 0;
   rr_prio               = rr_prio & ((1U << rr_bitsize) - 1U);
 
-  // Give higher priority to slice with PxSCH slot closer to PDCCH slot. This is done to ensure that PxSCH does not get
-  // allocated too far in future such that no PxSCH can be allocated in the slots between current PDCCH slot and the
-  // slot at which PxSCH is allocated.
-  unsigned slot_diff = pxsch_slot - pdcch_slot;
-
-  return (slice_prio << (delay_bitsize + rr_bitsize)) + (delay_prio << rr_bitsize) + rr_prio - slot_diff;
+  return (slot_dist << (delay_bitsize + rr_bitsize + slice_prio_bitsize)) +
+         (slice_prio << (delay_bitsize + rr_bitsize)) + (delay_prio << rr_bitsize) + rr_prio;
 }
