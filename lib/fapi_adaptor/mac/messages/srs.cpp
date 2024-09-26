@@ -40,8 +40,7 @@ void fapi_adaptor::convert_srs_mac_to_fapi(fapi::ul_srs_pdu_builder& builder, co
   builder.set_comb_params(mac_pdu.tx_comb, mac_pdu.comb_offset);
 
   // Timing parameters.
-  static constexpr unsigned time_start_position = 0;
-  builder.set_timing_params(time_start_position, mac_pdu.t_srs_period, mac_pdu.t_offset);
+  builder.set_timing_params(mac_pdu.symbols.start(), mac_pdu.t_srs_period, mac_pdu.t_offset);
 
   // Rest of the parameters.
   builder.set_srs_params(mac_pdu.nof_antenna_ports,
