@@ -214,16 +214,16 @@ bool f1u_bearer_impl::fill_highest_delivered_retransmitted_pdcp_sn(nru_dl_data_d
 
 void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
 {
-  nru_dl_data_delivery_status status         = {};
-  bool                        status_changed = false;
+  nru_dl_data_delivery_status status      = {};
+  bool                        value_added = false;
 
-  status_changed |= fill_desired_buffer_size_of_data_radio_bearer(status);
-  status_changed |= fill_highest_transmitted_pdcp_sn(status);
-  status_changed |= fill_highest_delivered_pdcp_sn(status);
-  status_changed |= fill_highest_retransmitted_pdcp_sn(status);
-  status_changed |= fill_highest_delivered_retransmitted_pdcp_sn(status);
+  value_added |= fill_desired_buffer_size_of_data_radio_bearer(status);
+  value_added |= fill_highest_transmitted_pdcp_sn(status);
+  value_added |= fill_highest_delivered_pdcp_sn(status);
+  value_added |= fill_highest_retransmitted_pdcp_sn(status);
+  value_added |= fill_highest_delivered_retransmitted_pdcp_sn(status);
 
-  if (status_changed) {
+  if (value_added) {
     logger.log_debug("Adding data delivery status to NR-U message");
     msg.data_delivery_status = std::move(status);
   }
