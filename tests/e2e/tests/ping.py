@@ -25,7 +25,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop
+from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop, validate_ue_registered_via_ims
 
 
 @mark.parametrize(
@@ -78,6 +78,60 @@ def test_android(
         warning_as_errors=False,
         always_download_artifacts=True,
         reattach_count=reattach_count,
+    )
+
+
+@mark.parametrize(
+    "ims_mode",
+    (
+        param(""),
+        param("enabled"),
+        param("not_registering"),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
+    ),
+)
+@mark.android
+@mark.flaky(
+    reruns=2,
+    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_android_ims(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    ims_mode: str,
+):
+    """
+    Android IMS Pings
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        warning_as_errors=False,
+        always_download_artifacts=True,
+        ims_mode=ims_mode,
     )
 
 
@@ -352,6 +406,7 @@ def _ping(
     ue_stop_timeout: int = 0,
     plmn: Optional[PLMN] = None,
     enable_security_mode: bool = False,
+    ims_mode: str = "",
 ):
     logging.info("Ping Test")
 
@@ -367,6 +422,7 @@ def _ping(
         n3_enable=True,
         log_ip_level="debug",
         enable_security_mode=enable_security_mode,
+        ims_mode=ims_mode,
     )
     configure_artifacts(
         retina_data=retina_data,
@@ -375,13 +431,21 @@ def _ping(
 
     start_network(ue_array, gnb, fivegc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command, plmn=plmn)
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
-    ping(ue_attach_info_dict, fivegc, ping_count)
 
-    # reattach and repeat if requested
-    for _ in range(reattach_count):
-        ue_stop(ue_array, retina_data)
-        ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+    try:
         ping(ue_attach_info_dict, fivegc, ping_count)
+
+        # reattach and repeat if requested
+        for _ in range(reattach_count):
+            ue_stop(ue_array, retina_data)
+            ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+            ping(ue_attach_info_dict, fivegc, ping_count)
+    except Failed as err:
+        if not ims_mode or ims_mode == "enabled":
+            raise err from None
+
+    if ims_mode:
+        validate_ue_registered_via_ims(ue_array if ims_mode == "enabled" else tuple(), fivegc)
 
     # final stop
     stop(

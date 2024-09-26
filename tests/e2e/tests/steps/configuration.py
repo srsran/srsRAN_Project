@@ -44,6 +44,7 @@ def configure_test_parameters(
     enable_dddsu: bool = False,
     nof_antennas_dl: int = 1,
     nof_antennas_ul: int = 1,
+    ims_mode: str = "",
 ):
     """
     Configure test parameters
@@ -85,6 +86,7 @@ def configure_test_parameters(
                 "nof_antennas_ul": nof_antennas_ul,
             },
         },
+        "5gc": {"parameters": {"ims_mode": ims_mode}},
     }
     if n3_enable is not None and n3_enable:
         retina_data.test_config["gnb"]["parameters"]["pcap"] = True

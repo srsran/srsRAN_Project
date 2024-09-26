@@ -556,6 +556,23 @@ android b200:
     GROUP: "rf"
     TESTBED: "android_b200"
     MARKERS: "android"
+    KEYWORDS: "not ims"
+    E2E_LOG_LEVEL: "warning"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *retina-needs
+
+android b200 IMS:
+  stage: rf
+  extends: .e2e-run
+  variables:
+    GROUP: "rf"
+    TESTBED: "android_callbox"
+    MARKERS: "android"
+    KEYWORDS: "ims"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"

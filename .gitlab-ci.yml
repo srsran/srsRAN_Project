@@ -321,9 +321,6 @@ e2e tests tox:
   before_script:
     - apk add build-base
   extends: .tox
-  parallel:
-    matrix:
-      - PYTHON_VERSION: ["3.9", "3.10", "3.11", "3.12"]
 
 ################################################################################
 ## Build + Unit Tests + Integration tests

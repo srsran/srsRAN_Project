@@ -569,6 +569,22 @@ def ue_validate_no_reattaches(ue_stub: UEStub):
         logging.error("UE [%s] had multiples rrc setups:\n%s", id(ue_stub), MessageToString(messages, indent=2))
 
 
+def validate_ue_registered_via_ims(ue_stub_array: Sequence[UEStub], core: FiveGCStub) -> None:
+    """
+    Fails if the UEs are not registered in IMS
+    """
+    expected_subscriber_array = tuple(
+        sorted([ue_stub.GetDefinition(Empty()).subscriber.imsi for ue_stub in ue_stub_array])
+    )
+    logging.info("IMSI of expected UEs in IMS: %s", expected_subscriber_array)
+    registered_subscriber_array = tuple(
+        sorted([subscriber.imsi for subscriber in core.GetImsRegisteredUESubscriberArray(Empty()).value])
+    )
+    logging.info("IMSI of registered UEs in IMS: %s", registered_subscriber_array)
+    if expected_subscriber_array != registered_subscriber_array:
+        pytest.fail("IMS Registered Subscriber array mismatch!")
+
+
 def stop(
     ue_array: Sequence[UEStub],
     gnb: Optional[GNBStub],
