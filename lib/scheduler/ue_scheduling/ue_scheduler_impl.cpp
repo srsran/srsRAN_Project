@@ -176,37 +176,46 @@ void ue_scheduler_impl::puxch_grant_sanitizer(cell_resource_allocator& cell_allo
   }
 }
 
-void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
+void ue_scheduler_impl::run_slot(slot_point slot_tx)
 {
   std::unique_lock<std::mutex> lock(cell_group_mutex, std::defer_lock);
   if (cells.size() > 1) {
     // Only mutex if the cell group has more than one cell (Carrier Aggregation case).
     lock.lock();
   }
+  if (last_sl_ind == slot_tx) {
+    // This slot has already been processed by a cell of the same cell group.
+    return;
+  }
+  last_sl_ind = slot_tx;
 
-  // Process any pending events that are directed at UEs.
-  event_mng.run(slot_tx, cell_index);
+  for (auto& group_cell : cells) {
+    du_cell_index_t cell_index = group_cell.cell_res_alloc->cfg.cell_index;
 
-  // Mark the start of a new slot in the UE grid allocator.
-  ue_alloc.slot_indication(slot_tx);
+    // Process any pending events that are directed at UEs.
+    event_mng.run(slot_tx, cell_index);
 
-  // Check for timeouts in the cell HARQ processes.
-  cells[cell_index].cell_harqs.slot_indication(slot_tx);
+    // Mark the start of a new slot in the UE grid allocator.
+    ue_alloc.slot_indication(slot_tx);
 
-  // Schedule periodic UCI (SR and CSI) before any UL grants.
-  cells[cell_index].uci_sched.run_slot(*cells[cell_index].cell_res_alloc);
+    // Check for timeouts in the cell HARQ processes.
+    group_cell.cell_harqs.slot_indication(slot_tx);
 
-  // Run cell-specific SRB0 scheduler.
-  cells[cell_index].fallback_sched.run_slot(*cells[cell_index].cell_res_alloc);
+    // Schedule periodic UCI (SR and CSI) before any UL grants.
+    group_cell.uci_sched.run_slot(*group_cell.cell_res_alloc);
 
-  // Run slice scheduler policies.
-  run_sched_strategy(slot_tx, cell_index);
+    // Run cell-specific SRB0 scheduler.
+    group_cell.fallback_sched.run_slot(*group_cell.cell_res_alloc);
 
-  // Update the PUCCH counter after the UE DL and UL scheduler.
-  update_harq_pucch_counter(*cells[cell_index].cell_res_alloc);
+    // Run slice scheduler policies.
+    run_sched_strategy(slot_tx, cell_index);
 
-  // TODO: remove this.
-  puxch_grant_sanitizer(*cells[cell_index].cell_res_alloc);
+    // Update the PUCCH counter after the UE DL and UL scheduler.
+    update_harq_pucch_counter(*group_cell.cell_res_alloc);
+
+    // TODO: remove this.
+    puxch_grant_sanitizer(*group_cell.cell_res_alloc);
+  }
 }
 
 namespace {

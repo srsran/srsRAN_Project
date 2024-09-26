@@ -15,7 +15,6 @@
 #include "../policy/scheduler_policy.h"
 #include "../pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "../slicing/slice_scheduler.h"
-#include "../support/slot_sync_point.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
@@ -38,7 +37,7 @@ public:
   void add_cell(const ue_scheduler_cell_params& params) override;
 
   /// Schedule UE DL grants for a given {slot, cell}.
-  void run_slot(slot_point slot_tx, du_cell_index_t cell_index) override;
+  void run_slot(slot_point slot_tx) override;
 
   void handle_error_indication(slot_point                            sl_tx,
                                du_cell_index_t                       cell_index,
@@ -104,6 +103,9 @@ private:
 
   // Mutex to lock cells of the same cell group (when CA enabled) for joint carrier scheduling
   std::mutex cell_group_mutex;
+
+  // Last slot run.
+  slot_point last_sl_ind;
 
   srslog::basic_logger& logger;
 };

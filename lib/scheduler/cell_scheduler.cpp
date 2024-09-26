@@ -116,7 +116,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   pg_sch.schedule_paging(res_grid);
 
   // > Schedule UE DL and UL data.
-  ue_sched.run_slot(sl_tx, cell_cfg.cell_index);
+  ue_sched.run_slot(sl_tx);
 
   // > Mark stop of the slot processing
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();

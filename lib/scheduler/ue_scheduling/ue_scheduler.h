@@ -40,7 +40,7 @@ public:
   virtual void add_cell(const ue_scheduler_cell_params& params) = 0;
 
   /// Schedule UE DL and UL grants for a given {slot, cell}.
-  virtual void run_slot(slot_point slot_tx, du_cell_index_t cell_index) = 0;
+  virtual void run_slot(slot_point slot_tx) = 0;
 
   /// Handle error in the lower layers.
   virtual void handle_error_indication(slot_point                            sl_tx,
