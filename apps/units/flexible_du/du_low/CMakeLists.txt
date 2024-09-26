@@ -24,4 +24,5 @@ if (DPDK_FOUND)
         hal_hwacc_pdsch
         hal_bbdev_factory)
 endif (DPDK_FOUND)
+
 target_link_libraries(srsran_du_low_unit_helpers PUBLIC ${DU_LOW_UNIT_HELPERS_LIBRARIES})

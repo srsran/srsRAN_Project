@@ -8,8 +8,6 @@
  *
  */
 
-#include "srsran/cu_up/cu_up.h"
-#include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gateways/udp_network_gateway.h"
@@ -33,13 +31,9 @@
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
 #include "apps/cu/cu_worker_manager.h"
-#include "apps/units/cu_cp/cu_cp_builder.h"
+#include "apps/units/cu_cp/cu_cp_application_unit.h"
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
-#include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
-#include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
-#include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
-#include "apps/units/cu_cp/cu_cp_unit_logger_config.h"
 #include "apps/units/cu_cp/pcap_factory.h"
 #include "apps/units/cu_up/cu_up_builder.h"
 #include "apps/units/cu_up/cu_up_logger_registrator.h"
@@ -47,8 +41,11 @@
 #include "apps/units/cu_up/cu_up_unit_config_cli11_schema.h"
 #include "apps/units/cu_up/cu_up_unit_config_translators.h"
 #include "apps/units/cu_up/cu_up_unit_config_validator.h"
+#include "apps/units/cu_up/cu_up_unit_config_yaml_writer.h"
 #include "apps/units/cu_up/cu_up_wrapper.h"
 #include "apps/units/cu_up/pcap_factory.h"
+#include "srsran/cu_up/cu_up.h"
+#include "srsran/cu_up/cu_up_factory.h"
 
 // TODO remove apps/gnb/*.h
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
@@ -60,8 +57,6 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/stdin_command_dispatcher.h"
-#include "apps/units/cu_cp/cu_cp_unit_config_yaml_writer.h"
-#include "apps/units/cu_up/cu_up_unit_config_yaml_writer.h"
 #include "cu_appconfig.h"
 #include "cu_appconfig_validator.h"
 #include "cu_appconfig_yaml_writer.h"
@@ -124,7 +119,7 @@ static void initialize_log(const std::string& filename)
 }
 
 static void register_app_logs(const logger_appconfig&         log_cfg,
-                              const cu_cp_unit_logger_config& cu_cp_loggers,
+                              cu_cp_application_unit&         cu_cp_app_unit,
                               const cu_up_unit_logger_config& cu_up_loggers)
 {
   // Set log-level of app and all non-layer specific components to app level.
@@ -149,7 +144,7 @@ static void register_app_logs(const logger_appconfig&         log_cfg,
   metrics_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Register units logs.
-  register_cu_cp_loggers(cu_cp_loggers);
+  cu_cp_app_unit.on_loggers_registration();
   register_cu_up_loggers(cu_up_loggers);
 }
 
@@ -190,33 +185,36 @@ int main(int argc, char** argv)
   cu_appconfig cu_cfg;
   configure_cli11_with_cu_appconfig_schema(app, cu_cfg);
 
-  cu_cp_unit_config cu_cp_config;
-  cu_cp_config.pcap_cfg.set_default_filename("/tmp/cu");
-  configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
+  auto cu_cp_app_unit = create_cu_cp_application_unit();
+  cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg.set_default_filename("/tmp/cu");
+  cu_cp_app_unit->on_parsing_configuration_registration(app);
 
   cu_up_unit_config cu_up_config;
   cu_up_config.pcap_cfg.set_default_filename("/tmp/cu");
   configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &cu_cp_config, &cu_up_config]() {
-    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config);
-    autoderive_cu_up_parameters_after_parsing(
-        cu_cp_config.amf_config.amf.bind_addr, cu_cp_config.amf_config.no_core, cu_up_config);
+  app.callback([&app, &cu_cp_app_unit, &cu_up_config]() {
+    cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
+
+    autoderive_cu_up_parameters_after_parsing(cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf.bind_addr,
+                                              cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core,
+                                              cu_up_config);
   });
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
   // Check the modified configuration.
-  if (!validate_cu_appconfig(cu_cfg) || !validate_cu_cp_unit_config(cu_cp_config) ||
+  if (!validate_cu_appconfig(cu_cfg) ||
+      !cu_cp_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus()) ||
       !validate_cu_up_unit_config(cu_up_config)) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(cu_cfg.log_cfg.filename);
-  register_app_logs(cu_cfg.log_cfg, cu_cp_config.loggers, cu_up_config.loggers);
+  register_app_logs(cu_cfg.log_cfg, *cu_cp_app_unit, cu_up_config.loggers);
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
@@ -224,7 +222,7 @@ int main(int argc, char** argv)
     YAML::Node node;
     fill_cu_appconfig_in_yaml_schema(node, cu_cfg);
     fill_cu_up_config_in_yaml_schema(node, cu_up_config);
-    fill_cu_cp_config_in_yaml_schema(node, cu_cp_config);
+    cu_cp_app_unit->dump_config(node);
     config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
@@ -261,10 +259,12 @@ int main(int argc, char** argv)
   check_drm_kms_polling(cu_logger);
 
   // Create worker manager.
-  cu_worker_manager workers{cu_cfg, cu_cp_config.pcap_cfg, cu_up_config.pcap_cfg, cu_up_config.gtpu_queue_size};
+  cu_worker_manager workers{
+      cu_cfg, cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg, cu_up_config.pcap_cfg, cu_up_config.gtpu_queue_size};
 
   // Create layer specific PCAPs.
-  cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_cu_cp_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
+  cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
+      create_cu_cp_dlt_pcap(cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg, *workers.get_executor_getter());
   cu_up_dlt_pcaps cu_up_dlt_pcaps = create_cu_up_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
 
   // Create IO broker.
@@ -315,16 +315,19 @@ int main(int argc, char** argv)
   cu_cp_dependencies.timers         = cu_timers;
 
   // Create N2 Client Gateways.
-  cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(generate_n2_client_config(
-      cu_cp_config.amf_config.no_core, cu_cp_config.amf_config.amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
+  cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(
+      generate_n2_client_config(cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core,
+                                cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf,
+                                *cu_cp_dlt_pcaps.ngap,
+                                *epoll_broker)));
 
-  for (const auto& amf : cu_cp_config.extra_amfs) {
-    cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(
-        generate_n2_client_config(cu_cp_config.amf_config.no_core, amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
+  for (const auto& amf : cu_cp_app_unit->get_cu_cp_unit_config().extra_amfs) {
+    cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(generate_n2_client_config(
+        cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core, amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
   }
 
   // create CU-CP.
-  auto              cu_cp_obj_and_cmds = build_cu_cp(cu_cp_config, cu_cp_dependencies);
+  auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
   srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
 
   // Create console helper object for commands and metrics printing.
