@@ -84,6 +84,10 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       e2sm_kpm_supported_metric_t{
           NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency});
 
+  supported_metrics.emplace(
+      "RACH.PreambleDedCell",
+      e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_prach_cell_count});
+
   // Check if the supported metrics are matching e2sm_kpm metrics definitions.
   check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_28_552_metrics());
   check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_oran_metrics());
@@ -129,10 +133,10 @@ bool e2sm_kpm_du_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<con
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const scheduler_cell_metrics& cell_metrics)
 {
   last_ue_metrics.clear();
-  nof_cell_prbs = cell_metrics.nof_prbs;
-  nof_dl_slots  = cell_metrics.nof_dl_slots;
-  nof_ul_slots  = cell_metrics.nof_ul_slots;
-
+  nof_cell_prbs          = cell_metrics.nof_prbs;
+  nof_dl_slots           = cell_metrics.nof_dl_slots;
+  nof_ul_slots           = cell_metrics.nof_ul_slots;
+  nof_ded_cell_preambles = cell_metrics.nof_prach_preambles;
   for (auto& ue_metric : cell_metrics.ue_metrics) {
     last_ue_metrics.push_back(ue_metric);
   }
@@ -501,6 +505,28 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
   meas_record_item.set_real().value = ue_metrics.ul_delay_ms;
   items.push_back(meas_record_item);
   meas_collected = true;
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_prach_cell_count(const asn1::e2sm::label_info_list_l          label_info_list,
+                                                          const std::vector<asn1::e2sm::ue_id_c>&      ues,
+                                                          const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+                                                          std::vector<asn1::e2sm::meas_record_item_c>& items)
+{
+  bool meas_collected = false;
+  if (last_ue_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+  }
+
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: RACH.PreambleDedCell supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_integer() = nof_ded_cell_preambles;
+  items.push_back(meas_record_item);
+
   return meas_collected;
 }
 

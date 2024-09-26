@@ -104,12 +104,14 @@ private:
   metric_meas_getter_func_t get_drb_ul_mean_throughput;
   metric_meas_getter_func_t get_drb_dl_rlc_sdu_latency;
   metric_meas_getter_func_t get_drb_ul_rlc_sdu_latency;
+  metric_meas_getter_func_t get_prach_cell_count;
 
   srslog::basic_logger&                              logger;
   srs_du::f1ap_ue_id_translator&                     f1ap_ue_id_provider;
   unsigned                                           nof_cell_prbs;
   unsigned                                           nof_dl_slots;
   unsigned                                           nof_ul_slots;
+  unsigned                                           nof_ded_cell_preambles;
   std::vector<scheduler_ue_metrics>                  last_ue_metrics;
   std::map<uint16_t, std::deque<rlc_metrics>>        ue_aggr_rlc_metrics;
   size_t                                             max_rlc_metrics = 1;
