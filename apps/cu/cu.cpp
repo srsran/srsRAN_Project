@@ -30,36 +30,31 @@
 #include "srsran/support/versioning/version.h"
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
-#include "apps/cu/cu_worker_manager.h"
 #include "apps/units/cu_cp/cu_cp_application_unit.h"
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/cu_cp/pcap_factory.h"
-#include "apps/units/cu_up/cu_up_builder.h"
-#include "apps/units/cu_up/cu_up_logger_registrator.h"
+#include "apps/units/cu_up/cu_up_application_unit.h"
 #include "apps/units/cu_up/cu_up_unit_config.h"
-#include "apps/units/cu_up/cu_up_unit_config_cli11_schema.h"
-#include "apps/units/cu_up/cu_up_unit_config_translators.h"
-#include "apps/units/cu_up/cu_up_unit_config_validator.h"
-#include "apps/units/cu_up/cu_up_unit_config_yaml_writer.h"
-#include "apps/units/cu_up/cu_up_wrapper.h"
 #include "apps/units/cu_up/pcap_factory.h"
 #include "srsran/cu_up/cu_up.h"
-#include "srsran/cu_up/cu_up_factory.h"
 
 // TODO remove apps/gnb/*.h
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/gnb/gnb_appconfig_translators.h"
-#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
-#include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/stdin_command_dispatcher.h"
+#include "apps/services/worker_manager.h"
+#include "apps/services/worker_manager_config.h"
 #include "cu_appconfig.h"
 #include "cu_appconfig_validator.h"
 #include "cu_appconfig_yaml_writer.h"
+
+#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
+#include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
 #include <atomic>
 #include <thread>
@@ -118,9 +113,9 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const logger_appconfig&         log_cfg,
-                              cu_cp_application_unit&         cu_cp_app_unit,
-                              const cu_up_unit_logger_config& cu_up_loggers)
+static void register_app_logs(const logger_appconfig& log_cfg,
+                              cu_cp_application_unit& cu_cp_app_unit,
+                              cu_up_application_unit& cu_up_app_unit)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
@@ -145,19 +140,23 @@ static void register_app_logs(const logger_appconfig&         log_cfg,
 
   // Register units logs.
   cu_cp_app_unit.on_loggers_registration();
-  register_cu_up_loggers(cu_up_loggers);
+  cu_up_app_unit.on_loggers_registration();
 }
 
-// Temporary helper to create CU-UP.
-// TODO remove
-std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&         unit_cfg,
-                                                            cu_worker_manager&               workers,
-                                                            const std::string&               f1u_bind_addr,
-                                                            srs_cu_up::e1_connection_client& e1_conn_client,
-                                                            f1u_cu_up_gateway&               f1u_gateway,
-                                                            dlt_pcap&                        gtpu_pcap,
-                                                            timer_manager&                   timers,
-                                                            io_broker&                       io_brk);
+static void fill_cu_worker_manager_config(worker_manager_config& config, const cu_appconfig& unit_cfg)
+{
+  config.nof_low_prio_threads  = unit_cfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads;
+  config.low_prio_sched_config = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
+}
+
+static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_cfg, const cu_cp_unit_config& cu_cp_cfg)
+{
+  // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
+  if (cu_up_cfg.upf_cfg.bind_addr == "auto") {
+    cu_up_cfg.upf_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+  }
+  cu_up_cfg.upf_cfg.no_core = cu_cp_cfg.amf_config.no_core;
+}
 
 int main(int argc, char** argv)
 {
@@ -189,17 +188,16 @@ int main(int argc, char** argv)
   cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg.set_default_filename("/tmp/cu");
   cu_cp_app_unit->on_parsing_configuration_registration(app);
 
-  cu_up_unit_config cu_up_config;
-  cu_up_config.pcap_cfg.set_default_filename("/tmp/cu");
-  configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
+  auto cu_up_app_unit = create_cu_up_application_unit();
+  cu_up_app_unit->get_cu_up_unit_config().pcap_cfg.set_default_filename("/tmp/cu");
+  cu_up_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &cu_cp_app_unit, &cu_up_config]() {
+  app.callback([&app, &cu_cp_app_unit, &cu_up_app_unit]() {
     cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
 
-    autoderive_cu_up_parameters_after_parsing(cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf.bind_addr,
-                                              cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core,
-                                              cu_up_config);
+    autoderive_cu_up_parameters_after_parsing(cu_up_app_unit->get_cu_up_unit_config(),
+                                              cu_cp_app_unit->get_cu_cp_unit_config());
   });
 
   // Parse arguments.
@@ -208,21 +206,21 @@ int main(int argc, char** argv)
   // Check the modified configuration.
   if (!validate_cu_appconfig(cu_cfg) ||
       !cu_cp_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus()) ||
-      !validate_cu_up_unit_config(cu_up_config)) {
+      !cu_up_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus())) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(cu_cfg.log_cfg.filename);
-  register_app_logs(cu_cfg.log_cfg, *cu_cp_app_unit, cu_up_config.loggers);
+  register_app_logs(cu_cfg.log_cfg, *cu_cp_app_unit, *cu_up_app_unit);
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
     YAML::Node node;
     fill_cu_appconfig_in_yaml_schema(node, cu_cfg);
-    fill_cu_up_config_in_yaml_schema(node, cu_up_config);
     cu_cp_app_unit->dump_config(node);
+    cu_up_app_unit->dump_config(node);
     config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
@@ -259,13 +257,17 @@ int main(int argc, char** argv)
   check_drm_kms_polling(cu_logger);
 
   // Create worker manager.
-  cu_worker_manager workers{
-      cu_cfg, cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg, cu_up_config.pcap_cfg, cu_up_config.gtpu_queue_size};
+  worker_manager_config worker_manager_cfg;
+  fill_cu_worker_manager_config(worker_manager_cfg, cu_cfg);
+  cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
+  cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
+  worker_manager workers{worker_manager_cfg};
 
   // Create layer specific PCAPs.
   cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       create_cu_cp_dlt_pcap(cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg, *workers.get_executor_getter());
-  cu_up_dlt_pcaps cu_up_dlt_pcaps = create_cu_up_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
+  cu_up_dlt_pcaps cu_up_dlt_pcaps =
+      create_cu_up_dlt_pcaps(cu_up_app_unit->get_cu_up_unit_config().pcap_cfg, *workers.get_executor_getter());
 
   // Create IO broker.
   const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -294,7 +296,7 @@ int main(int argc, char** argv)
   std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
       srs_cu_up::create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
-      srs_cu_up::create_split_f1u_gw({cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_dlt_pcaps.f1u, GTPU_PORT});
+      srs_cu_up::create_split_f1u_gw({*cu_f1u_gw, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT});
 
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =
@@ -350,14 +352,15 @@ int main(int argc, char** argv)
   cu_f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
   // Create and start CU-UP
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = app_build_cu_up(cu_up_config,
-                                                                          workers,
-                                                                          cu_cfg.nru_cfg.bind_addr,
-                                                                          *e1_gw,
-                                                                          *cu_f1u_conn,
-                                                                          *cu_up_dlt_pcaps.n3,
-                                                                          *cu_timers,
-                                                                          *epoll_broker);
+  cu_up_unit_dependencies cu_up_unit_deps;
+  cu_up_unit_deps.workers          = &workers;
+  cu_up_unit_deps.e1ap_conn_client = e1_gw.get();
+  cu_up_unit_deps.f1u_gateway      = cu_f1u_conn.get();
+  cu_up_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();
+  cu_up_unit_deps.timers           = cu_timers;
+  cu_up_unit_deps.io_brk           = epoll_broker.get();
+
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
   cu_up_obj->start();
 
   {
@@ -388,46 +391,4 @@ int main(int argc, char** argv)
   srslog::flush();
 
   return 0;
-}
-
-// Temporary helper to create CU-UP.
-// TODO remove
-std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&         unit_cfg,
-                                                            cu_worker_manager&               workers,
-                                                            const std::string&               f1u_bind_address,
-                                                            srs_cu_up::e1_connection_client& e1_conn_client,
-                                                            f1u_cu_up_gateway&               f1u_gateway,
-                                                            dlt_pcap&                        gtpu_pcap,
-                                                            timer_manager&                   timers,
-                                                            io_broker&                       io_brk)
-{
-  srs_cu_up::cu_up_configuration config = generate_cu_up_config(unit_cfg);
-  config.ctrl_executor                  = workers.cu_up_ctrl_exec;
-  config.cu_up_e2_exec                  = workers.cu_up_e2_exec;
-  config.ue_exec_pool                   = workers.cu_up_exec_mapper.get();
-  config.io_ul_executor                 = workers.cu_up_io_ul_exec; // Optionally select separate exec for UL IO
-  config.e1ap.e1_conn_client            = &e1_conn_client;
-  config.f1u_gateway                    = &f1u_gateway;
-  config.gtpu_pcap                      = &gtpu_pcap;
-  config.timers                         = &timers;
-  config.qos                            = generate_cu_up_qos_config(unit_cfg);
-
-  config.net_cfg.f1u_bind_addr = f1u_bind_address; // TODO remove this parameter and make sure that the CU-UP gets the
-                                                   // bind address directly from the gateway.
-
-  // Create NG-U gateway.
-  std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
-  if (not unit_cfg.upf_cfg.no_core) {
-    udp_network_gateway_config ngu_gw_config = {};
-    ngu_gw_config.bind_address               = config.net_cfg.n3_bind_addr;
-    ngu_gw_config.bind_port                  = config.net_cfg.n3_bind_port;
-    ngu_gw_config.bind_interface             = config.net_cfg.n3_bind_interface;
-    ngu_gw_config.rx_max_mmsg                = config.net_cfg.n3_rx_max_mmsg;
-    ngu_gw = srs_cu_up::create_udp_ngu_gateway(ngu_gw_config, io_brk, *workers.cu_up_io_ul_exec);
-  } else {
-    ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
-  }
-  config.ngu_gw = ngu_gw.get();
-
-  return std::make_unique<cu_up_wrapper>(std::move(ngu_gw), create_cu_up(config));
 }

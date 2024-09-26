@@ -19,7 +19,4 @@ struct cu_up_unit_config;
 /// Configures the given CLI11 application with the CU-UP application unit configuration schema.
 void configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_unit_config& unit_cfg);
 
-/// Auto derive CU-UP parameters after the parsing.
-void autoderive_cu_up_parameters_after_parsing(const std::string& bind_addr, bool no_core, cu_up_unit_config& unit_cfg);
-
 } // namespace srsran

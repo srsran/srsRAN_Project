@@ -186,14 +186,3 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, unit_cfg.test_mode_cfg);
 }
-
-void srsran::autoderive_cu_up_parameters_after_parsing(const std::string& n2_bind_addr,
-                                                       bool               no_core,
-                                                       cu_up_unit_config& unit_cfg)
-{
-  // If no UPF is configured, we autoderive the UPF configuration from the CU-CP AMF configuration.
-  if (unit_cfg.upf_cfg.bind_addr == "auto") {
-    unit_cfg.upf_cfg.bind_addr = n2_bind_addr;
-  }
-  unit_cfg.upf_cfg.no_core = no_core;
-}

@@ -66,7 +66,7 @@ struct worker_manager_config {
   /// DU high worker configuration.
   struct du_high_config {
     unsigned nof_cells;
-    bool     is_rt_mode_enabled = true;
+    bool     is_rt_mode_enabled;
   };
 
   /// PCAP worker configuration.
@@ -85,14 +85,14 @@ struct worker_manager_config {
   unsigned nof_low_prio_threads;
   /// Low priority CPU bitmasks.
   os_sched_affinity_config low_prio_sched_config;
-  /// DU high configuration.
-  du_high_config du_hi_cfg;
   /// PCAP configuration.
   pcap_config pcap_cfg;
   /// GTPU queue size.
   unsigned gtpu_queue_size;
   /// Vector of affinities mask indexed by cell.
   std::vector<std::vector<os_sched_affinity_config>> config_affinities;
+  /// DU high configuration.
+  std::optional<du_high_config> du_hi_cfg;
   /// FAPI configuration.
   std::optional<fapi_config> fapi_cfg;
   /// DU low configuration
