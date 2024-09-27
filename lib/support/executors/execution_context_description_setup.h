@@ -8,6 +8,8 @@
  *
  */
 
+#pragma once
+
 namespace srsran {
 namespace execution_context {
 
