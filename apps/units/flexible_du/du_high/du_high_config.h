@@ -547,6 +547,10 @@ struct du_high_unit_base_cell_config {
   std::optional<unsigned> sector_id;
   /// DL ARFCN of "F_REF", which is the RF reference frequency, as per TS 38.104, Section 5.4.2.1.
   unsigned dl_f_ref_arfcn = 536020;
+  /// UL ARFCN of "F_REF", which is the RF reference frequency, as per TS 38.104, Section 5.4.2.1.
+  /// \remark Only relevant for FDD bands. If set with TDD bands, it will be ignored.
+  /// For FDD bands, if not set, the UL ARFCN will be computed automatically.
+  std::optional<unsigned> ul_f_ref_arfcn = std::nullopt;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// NR band.

@@ -601,7 +601,7 @@ static bool validate_tdd_ul_dl_unit_config(const du_high_unit_tdd_ul_dl_config& 
   return true;
 }
 
-static bool validate_dl_arfcn_and_band(const du_high_unit_base_cell_config& config)
+static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& config)
 {
   nr_band band =
       config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn);
@@ -643,13 +643,21 @@ static bool validate_dl_arfcn_and_band(const du_high_unit_base_cell_config& conf
     return false;
   }
 
-  // Check whether the DL-ARFCN is within the band and follows the Raster step.
+  // Check whether the DL-ARFCN (and optionally the UL-ARFCN) is within the band and follows the Raster step.
   if (config.band.has_value()) {
     error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(
         *config.band, config.dl_f_ref_arfcn, config.common_scs, config.channel_bw_mhz);
     if (not ret.has_value()) {
       fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
       return false;
+    }
+    if (config.ul_f_ref_arfcn.has_value()) {
+      ret =
+          band_helper::is_ul_arfcn_valid_given_band(*config.band, config.ul_f_ref_arfcn.value(), config.channel_bw_mhz);
+      if (not ret.has_value()) {
+        fmt::print("Invalid UL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
+        return false;
+      }
     }
   } else {
     if (band == nr_band::invalid) {
@@ -757,7 +765,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     fmt::print("Maximum Channel BW with SCS common 120kHz is 400MHz.\n");
     return false;
   }
-  if (!validate_dl_arfcn_and_band(config)) {
+  if (!validate_dl_ul_arfcn_and_band(config)) {
     return false;
   }
 

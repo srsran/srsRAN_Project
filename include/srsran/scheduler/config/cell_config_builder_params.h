@@ -31,6 +31,11 @@ struct cell_config_builder_params {
   /// This ARFCN represents "f_ref" for DL, as per TS 38.104, Section 5.4.2.1. As per TS 38.104, Section 5.4.2.2,
   /// "f_ref" maps to the central frequency of the band.
   unsigned dl_f_ref_arfcn = 365000;
+  /// This ARFCN represents "f_ref" for UL, as per TS 38.104, Section 5.4.2.1. As per TS 38.104, Section 5.4.2.2,
+  /// "f_ref" maps to the central frequency of the band.
+  /// \remark Only relevant for FDD bands.
+  /// If set, this value has been set by the application user.
+  std::optional<unsigned> ul_f_ref_arfcn = std::nullopt;
   /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2, TS 38.104. If not specified, a valid band for the
   /// provided DL ARFCN is automatically derived.
   std::optional<nr_band> band;

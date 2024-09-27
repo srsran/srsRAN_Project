@@ -1114,6 +1114,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
       ->capture_default_str()
       ->check(CLI::Range(0U, (1U << 14) - 1U));
   add_option(app, "--dl_arfcn", cell_params.dl_f_ref_arfcn, "Downlink ARFCN")->capture_default_str();
+  add_option(app, "--ul_arfcn", cell_params.ul_f_ref_arfcn, "Uplink ARFCN")->capture_default_str();
   add_auto_enum_option(app, "--band", cell_params.band, "NR band");
   add_option_function<std::string>(
       app,

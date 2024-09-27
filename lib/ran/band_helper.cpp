@@ -56,7 +56,7 @@ struct nr_band_raster {
 // NOTE: FR2 bands have two different Freq raster, we only consider raster 120kHz.
 const uint32_t                                               nof_nr_DL_bands = 83;
 static constexpr std::array<nr_band_raster, nof_nr_DL_bands> nr_band_table   = {{
-      // clang-format off
+    // clang-format off
     {nr_band::n1,    delta_freq_raster::kHz100, 384000, 20,  396000,  422000, 20,  434000},
     {nr_band::n2,    delta_freq_raster::kHz100, 370000, 20,  382000,  386000, 20,  398000},
     {nr_band::n3,    delta_freq_raster::kHz100, 342000, 20,  357000,  361000, 20,  376000},
@@ -150,7 +150,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                 nof_nr_operating_band = 68;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band> nr_operating_bands    = {{
-       // clang-format off
+    // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
     {nr_band::n2,  duplex_mode::FDD},
     {nr_band::n3,  duplex_mode::FDD},
@@ -456,7 +456,7 @@ static bool is_valid_raster_param(const nr_raster_params& raster)
 
 // Validates band n28, which has an additional ARFCN value to the given interval, as per Table 5.4.2.3-1, TS 38.104,
 // version 17.8.0.
-static error_type<std::string> validate_band_n28(uint32_t arfcn, bs_channel_bandwidth bw)
+static error_type<std::string> validate_band_n28(uint32_t arfcn, bs_channel_bandwidth bw, bool is_dl = true)
 {
   const nr_band_raster band_raster = fetch_band_raster(nr_band::n28, {});
   if (band_raster.band == srsran::nr_band::invalid) {
@@ -464,22 +464,25 @@ static error_type<std::string> validate_band_n28(uint32_t arfcn, bs_channel_band
   }
 
   // Try first if the ARFCN matches any value of the interval for 100kHz channel raster.
-  if (arfcn >= band_raster.dl_nref_first and arfcn <= band_raster.dl_nref_last and
-      ((arfcn - band_raster.dl_nref_first) % band_raster.dl_nref_step) == 0) {
+  uint32_t nref_first = is_dl ? band_raster.dl_nref_first : band_raster.ul_nref_first;
+  uint32_t nref_last  = is_dl ? band_raster.dl_nref_last : band_raster.ul_nref_last;
+  uint32_t nref_step  = is_dl ? band_raster.dl_nref_step : band_raster.ul_nref_step;
+  if (arfcn >= nref_first and arfcn <= nref_last and ((arfcn - nref_first) % nref_step) == 0) {
     return error_type<std::string>{};
   }
 
   // Extra ARFCN value as per Table 5.4.2.3-1, TS 38.104, version 17.8.0 (see NOTE 4 in the table).
-  const uint32_t dl_arfnc_40MHz = 155608U;
-  if (bw == srsran::bs_channel_bandwidth::MHz40 and arfcn == dl_arfnc_40MHz) {
+  const uint32_t arfnc_40MHz = is_dl ? 155608U : 144608U;
+  if (bw == srsran::bs_channel_bandwidth::MHz40 and arfcn == arfnc_40MHz) {
     return error_type<std::string>{};
   }
 
   return make_unexpected(
-      fmt::format("DL ARFCN must be within the interval [{},{}], in steps of {}, for the chosen band",
-                  band_raster.dl_nref_first,
-                  band_raster.dl_nref_last,
-                  band_raster.dl_nref_step));
+      fmt::format("{} ARFCN must be within the interval [{},{}], in steps of {}, for the chosen band",
+                  is_dl ? "DL" : "UL",
+                  nref_first,
+                  nref_last,
+                  nref_step));
 }
 
 // Validates band n46, whose valid ARFCN values depend on the channel BW, as per Table 5.4.2.3-1, TS 38.104,
@@ -743,7 +746,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
 {
   // Validates first the bands with non-standard ARFCN values.
   if (band == nr_band::n28) {
-    return validate_band_n28(arfcn_f_ref, bw);
+    return validate_band_n28(arfcn_f_ref, bw, true);
   }
 
   if (band == nr_band::n46) {
@@ -791,6 +794,37 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
                       raster_band.dl_nref_first,
                       raster_band.dl_nref_last,
                       raster_band.dl_nref_step));
+    }
+  }
+  return make_unexpected(fmt::format("Band {} is not valid", band));
+}
+
+error_type<std::string>
+srsran::band_helper::is_ul_arfcn_valid_given_band(nr_band band, uint32_t arfcn_f_ref, bs_channel_bandwidth bw)
+{
+  if (get_duplex_mode(band) != duplex_mode::FDD) {
+    return {};
+  }
+
+  // Validates first the bands with non-standard ARFCN values.
+  if (band == nr_band::n28) {
+    return validate_band_n28(arfcn_f_ref, bw, false);
+  }
+
+  // Assume standard Delta freq raster of 100kHz.
+  const delta_freq_raster band_delta_freq_raster = delta_freq_raster::kHz100;
+
+  for (const nr_band_raster& raster_band : nr_band_table) {
+    if (raster_band.band == band and raster_band.delta_f_rast == band_delta_freq_raster) {
+      if (arfcn_f_ref >= raster_band.ul_nref_first and arfcn_f_ref <= raster_band.ul_nref_last and
+          ((arfcn_f_ref - raster_band.ul_nref_first) % raster_band.ul_nref_step) == 0) {
+        return {};
+      }
+      return make_unexpected(
+          fmt::format("UL ARFCN must be within the interval [{},{}], in steps of {}, for the chosen band",
+                      raster_band.ul_nref_first,
+                      raster_band.ul_nref_last,
+                      raster_band.ul_nref_step));
     }
   }
   return make_unexpected(fmt::format("Band {} is not valid", band));
