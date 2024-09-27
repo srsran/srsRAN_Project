@@ -16,6 +16,7 @@ set(SOURCES
         executors/task_worker.cpp
         executors/task_worker_pool.cpp
         executors/unique_thread.cpp
+        executors/execution_context_description.cpp
         backtrace.cpp
         bit_encoding.cpp
         byte_buffer.cpp
