@@ -21,7 +21,7 @@ if (DU_SPLIT_7_2)
 
     add_library(srsran_flexible_du STATIC ${SOURCES})
     target_include_directories(srsran_flexible_du PRIVATE ${CMAKE_SOURCE_DIR})
-    set(FLEXIBLE_DU_LIBRARIES
+    target_link_libraries(srsran_flexible_du
             srsran_du_wrapper
             srsran_pcap
             srsran_app_services
@@ -29,14 +29,5 @@ if (DU_SPLIT_7_2)
             srsran_du_low_unit_helpers
             srsran_split_7_2_app_unit_helpers
             srsran_du_high_unit_helpers)
-
-    # Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
-    if (DPDK_FOUND)
-       set_source_files_properties(split_7_2_du_factory.cpp PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND; HWACC_PDSCH_ENABLED; HWACC_PUSCH_ENABLED")
-       list(APPEND FLEXIBLE_DU_LIBRARIES hal_hwacc_pusch
-            hal_hwacc_pdsch
-            hal_bbdev_factory)
-    endif (DPDK_FOUND)
-    target_link_libraries(srsran_flexible_du ${FLEXIBLE_DU_LIBRARIES})
 
 endif ()

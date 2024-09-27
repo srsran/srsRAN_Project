@@ -23,13 +23,6 @@
 #include "srsran/du/du_wrapper_factory.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/ru/ru_dummy_factory.h"
-#ifdef DPDK_FOUND
-#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
-#include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
-#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_factories.h"
-#include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
-#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
-#endif // DPDK_FOUND
 
 using namespace srsran;
 
@@ -108,81 +101,6 @@ du_unit srsran::create_split_7_2_du(const split_7_2_du_unit_config& du_72_cfg, c
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
   }
 
-  // Initialize hardware-accelerator (only if needed).
-  hal_upper_phy_config hal_config  = {};
-  hal_config.hwacc_pdsch_processor = false;
-  hal_config.hwacc_pusch_processor = false;
-#ifdef DPDK_FOUND
-  hal::bbdev_hwacc_pdsch_enc_factory_configuration         hwacc_pdsch_enc_cfg = {};
-  hal::bbdev_hwacc_pusch_dec_factory_configuration         hwacc_pusch_dec_cfg = {};
-  std::shared_ptr<hal::ext_harq_buffer_context_repository> harq_buffer_context = nullptr;
-  unsigned                                                 nof_hwacc_dus       = du_cells.size();
-  if (!du_lo.hal_config->bbdev_hwacc->hwacc_type.empty()) {
-    srslog::basic_logger& hwacc_logger = srslog::fetch_basic_logger("HWACC", false);
-    hwacc_logger.set_level(du_lo.loggers.hal_level);
-
-    // Create a bbdev accelerator factory.
-    std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory =
-        srsran::dpdk::create_bbdev_acc_factory(du_lo.hal_config->bbdev_hwacc->bbdev_acc_type);
-    report_error_if_not(bbdev_acc_factory,
-                        "Unable to create the {} bbdev hardware-accelerator interface factory.",
-                        du_lo.hal_config->bbdev_hwacc->bbdev_acc_type);
-
-    // Intefacing to the bbdev-based hardware-accelerator.
-    dpdk::bbdev_acc_configuration bbdev_config;
-    bbdev_config.id = du_lo.hal_config->bbdev_hwacc->id;
-    if (du_lo.hal_config->bbdev_hwacc->pdsch_enc->nof_hwacc > 0) {
-      bbdev_config.nof_ldpc_enc_lcores = nof_hwacc_dus * du_lo.hal_config->bbdev_hwacc->pdsch_enc->nof_hwacc;
-    }
-    if (du_lo.hal_config->bbdev_hwacc->pusch_dec->nof_hwacc > 0) {
-      bbdev_config.nof_ldpc_dec_lcores = nof_hwacc_dus * du_lo.hal_config->bbdev_hwacc->pusch_dec->nof_hwacc;
-    }
-    // If no msg_mbuf size is defined, a worst-case value will be used.
-    bbdev_config.msg_mbuf_size = du_lo.hal_config->bbdev_hwacc->msg_mbuf_size.value_or(RTE_BBDEV_LDPC_E_MAX_MBUF);
-    // If no rm_mbuf size is defined, a worst-case value will be used.
-    bbdev_config.rm_mbuf_size = du_lo.hal_config->bbdev_hwacc->rm_mbuf_size.value_or(RTE_BBDEV_LDPC_E_MAX_MBUF);
-    // If no number of mbufs is defined, a worst-case value will be used.
-    bbdev_config.nof_mbuf =
-        du_lo.hal_config->bbdev_hwacc->nof_mbuf.value_or(static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS))));
-    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, hwacc_logger);
-    report_error_if_not(
-        bbdev_accelerator, "Unable to open the {} hardware-accelerator.", du_lo.hal_config->bbdev_hwacc->hwacc_type);
-
-    // Configure the hardware-accelerated PDSCH encoding factory (only if needed).
-    if (du_lo.hal_config->bbdev_hwacc->pdsch_enc->nof_hwacc > 0) {
-      hwacc_pdsch_enc_cfg.acc_type          = du_lo.hal_config->bbdev_hwacc->hwacc_type;
-      hwacc_pdsch_enc_cfg.bbdev_accelerator = bbdev_accelerator;
-      hwacc_pdsch_enc_cfg.cb_mode           = du_lo.hal_config->bbdev_hwacc->pdsch_enc->cb_mode;
-      // If no maximum buffer size is defined, a worst-case value will be used.
-      hwacc_pdsch_enc_cfg.max_tb_size =
-          du_lo.hal_config->bbdev_hwacc->pdsch_enc->max_buffer_size.value_or(RTE_BBDEV_LDPC_E_MAX_MBUF);
-      hwacc_pdsch_enc_cfg.dedicated_queue = du_lo.hal_config->bbdev_hwacc->pdsch_enc->dedicated_queue;
-      hal_config.hwacc_pdsch_processor    = true;
-      hal_config.hwacc_pdsch_enc_cfg      = hwacc_pdsch_enc_cfg;
-    }
-
-    // Configure the hardware-accelerated PUSCH decoding factory (only if needed).
-    if (du_lo.hal_config->bbdev_hwacc->pusch_dec->nof_hwacc > 0) {
-      hwacc_pusch_dec_cfg.acc_type          = du_lo.hal_config->bbdev_hwacc->hwacc_type;
-      hwacc_pusch_dec_cfg.bbdev_accelerator = bbdev_accelerator;
-      hwacc_pusch_dec_cfg.ext_softbuffer    = du_lo.hal_config->bbdev_hwacc->pusch_dec->ext_softbuffer;
-      if (hwacc_pusch_dec_cfg.ext_softbuffer) {
-        // Set up an external HARQ buffer context repository.
-        unsigned nof_cbs = du_lo.hal_config->bbdev_hwacc->pusch_dec->harq_context_size.value_or(MAX_NOF_SEGMENTS);
-        uint64_t ext_harq_buff_size = bbdev_accelerator->get_harq_buff_size_bytes();
-        harq_buffer_context = hal::create_ext_harq_buffer_context_repository(nof_cbs, ext_harq_buff_size, false);
-        report_error_if_not(harq_buffer_context,
-                            "Unable to create the external HARQ buffer context for the {} hardware-accelerator.",
-                            du_lo.hal_config->bbdev_hwacc->hwacc_type);
-        hwacc_pusch_dec_cfg.harq_buffer_context = harq_buffer_context;
-      }
-      hwacc_pusch_dec_cfg.dedicated_queue = du_lo.hal_config->bbdev_hwacc->pusch_dec->dedicated_queue;
-      hal_config.hwacc_pusch_processor    = true;
-      hal_config.hwacc_pusch_dec_cfg      = hwacc_pusch_dec_cfg;
-    }
-  }
-#endif // DPDK_FOUND
-
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create one DU per cell.
     srs_du::du_wrapper_config du_cfg  = {};
@@ -192,7 +110,6 @@ du_unit srsran::create_split_7_2_du(const split_7_2_du_unit_config& du_72_cfg, c
 
     make_du_low_wrapper_config_and_dependencies(du_cfg.du_low_cfg,
                                                 du_lo,
-                                                hal_config,
                                                 {prach_ports[i]},
                                                 span<const srs_du::du_cell_config>(&du_cells[i], 1),
                                                 span<const unsigned>(&max_pusch_per_slot[i], 1),
