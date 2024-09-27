@@ -84,9 +84,9 @@ def test_android(
 @mark.parametrize(
     "ims_mode",
     (
-        param(""),
-        param("enabled"),
-        param("not_registering"),
+        param("", id="ims:disabled"),
+        param("enabled", id="ims:%s"),
+        param("not_registering", id="ims:%s"),
     ),
 )
 @mark.parametrize(
@@ -99,7 +99,7 @@ def test_android(
 @mark.android
 @mark.flaky(
     reruns=2,
-    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+    only_rerun=["failed to start", "Exception calling application"],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_android_ims(

@@ -27,21 +27,21 @@
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
-  host_network: true
   requirements:
     arch: amd64
     cpu:
-      requests: 6
-      limits: 6
+      requests: 12
+      limits: 12
     memory:
-      requests: "10G"
-      limits: "10G"
+      requests: "20G"
+      limits: "20G"
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
+  taints: ["purpose=manual-testing"]
   resources:
     - type: sdr
-      model: b200
+      model: x300
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:

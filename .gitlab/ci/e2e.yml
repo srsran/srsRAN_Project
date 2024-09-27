@@ -565,7 +565,7 @@ android b200:
       artifacts: true
     - *retina-needs
 
-android b200 IMS:
+android IMS:
   stage: rf
   extends: .e2e-run
   variables:
