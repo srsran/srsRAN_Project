@@ -12,6 +12,7 @@
 #include "../security/security_engine_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
+#include "srsran/support/executors/execution_context_description.h"
 #include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
@@ -58,7 +59,6 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger.log_info("PDCP configured. {}", cfg);
 
   // Populate null security engines
-  next_worker_id.store(0, std::memory_order_relaxed);
   sec_engine_pool.reserve(pdcp_nof_crypto_workers);
   for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
     std::unique_ptr<security::security_engine_impl> null_engine;
@@ -443,7 +443,8 @@ byte_buffer pdcp_entity_rx::compile_status_report()
 expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
 {
   // obtain the thread-specific ID of the worker
-  thread_local uint32_t worker_idx = next_worker_id.fetch_add(1, std::memory_order_relaxed);
+
+  uint32_t worker_idx = execution_context::get_current_worker_index();
 
   if (worker_idx >= pdcp_nof_crypto_workers) {
     srsran_assertion_failure("Worker index exceeds number of crypto workers. worker_idx={} pdcp_nof_crypto_workers={}",

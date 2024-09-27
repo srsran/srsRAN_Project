@@ -114,8 +114,7 @@ private:
   bool                 stopped = false;
 
   using sec_engine_vec = std::vector<std::unique_ptr<security::security_engine_rx>>;
-  sec_engine_vec   sec_engine_pool;
-  std::atomic<int> next_worker_id; ///< Atomic worker ID of the next worker; incremented on each access
+  sec_engine_vec sec_engine_pool;
 
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
