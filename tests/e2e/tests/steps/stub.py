@@ -696,7 +696,7 @@ def _stop_stub(
     """
 
     error_msg = ""
-    warning_count = 0
+    error_count = 0
 
     with suppress(grpc.RpcError):
         stop_info: StopResponse = stub.Stop(UInt32Value(value=timeout))
@@ -723,9 +723,11 @@ def _stop_stub(
         else:
             logging.info("%s has stopped", name)
 
-        warning_count = stop_info.warning_count
+        error_count += stop_info.error_count
+        if warning_as_errors:
+            error_count += stop_info.warning_count
 
-    return error_msg, warning_count
+    return error_msg, error_count
 
 
 def _get_metrics_msg(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:

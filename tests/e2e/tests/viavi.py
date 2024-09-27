@@ -409,7 +409,7 @@ def _test_viavi(
             logging.info("Folder with Viavi report: %s", report_folder)
             logging.info("Downloading Viavi report")
             viavi.download_directory(report_folder, Path(test_log_folder).joinpath("viavi"))
-            _, gnb_warning_count = _stop_stub(
+            _, gnb_error_count = _stop_stub(
                 gnb, "GNB", retina_data, gnb_stop_timeout, log_search, test_declaration.warning_as_errors
             )
             check_metrics_criteria(
@@ -418,7 +418,7 @@ def _test_viavi(
                 viavi=viavi,
                 metrics_summary=metrics_summary,
                 capsys=capsys,
-                gnb_warning_count=gnb_warning_count,
+                gnb_error_count=gnb_error_count,
                 warning_as_errors=test_declaration.warning_as_errors,
             )
         except HTTPError:
@@ -434,7 +434,7 @@ def check_metrics_criteria(
     viavi: Viavi,
     metrics_summary: Optional[MetricsSummary],
     capsys: pytest.CaptureFixture[str],
-    gnb_warning_count: int,
+    gnb_error_count: int,
     warning_as_errors: bool,
 ):
     """
@@ -469,15 +469,19 @@ def check_metrics_criteria(
     criteria_nof_ko_aggregate = check_criteria(kpis.nof_ko_aggregate, test_configuration.expected_nof_kos, operator.lt)
     criteria_result.append(
         _ViaviResult(
-            "Number of KOs and/or retrxs",
+            "Number of KOs & retrxs",
             test_configuration.expected_nof_kos,
             kpis.nof_ko_aggregate,
             criteria_nof_ko_aggregate,
         )
     )
 
-    criteria_nof_warnings = check_criteria(gnb_warning_count, 0, operator.eq) and warning_as_errors
-    criteria_result.append(_ViaviResult("Number of warnings", 0, gnb_warning_count, criteria_nof_warnings))
+    criteria_nof_errors = check_criteria(gnb_error_count, 0, operator.eq)
+    criteria_result.append(
+        _ViaviResult(
+            "Number of errors" + (" & warnings" if warning_as_errors else ""), 0, gnb_error_count, criteria_nof_errors
+        )
+    )
 
     # Check procedure table
     viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)
