@@ -443,20 +443,20 @@ byte_buffer pdcp_entity_rx::compile_status_report()
 expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
 {
   // obtain the thread-specific ID of the worker
-  thread_local uint32_t widx = next_worker_id.fetch_add(1, std::memory_order_relaxed);
+  thread_local uint32_t worker_idx = next_worker_id.fetch_add(1, std::memory_order_relaxed);
 
-  if (widx >= pdcp_nof_crypto_workers) {
-    srsran_assertion_failure("Worker index exceeds number of crypto workers. widx={} pdcp_nof_crypto_workers={}",
-                             widx,
+  if (worker_idx >= pdcp_nof_crypto_workers) {
+    srsran_assertion_failure("Worker index exceeds number of crypto workers. worker_idx={} pdcp_nof_crypto_workers={}",
+                             worker_idx,
                              pdcp_nof_crypto_workers);
-    logger.log_error("Worker index exceeds number of crypto workers. widx={} pdcp_nof_crypto_workers={}",
-                     widx,
+    logger.log_error("Worker index exceeds number of crypto workers. worker_idx={} pdcp_nof_crypto_workers={}",
+                     worker_idx,
                      pdcp_nof_crypto_workers);
     return make_unexpected(default_error_t{});
   }
-  logger.log_debug("Using sec_engine with widx={}. count={} pdu_len={}", widx, count, buf.length());
+  logger.log_debug("Using sec_engine with worker_idx={}. count={} pdu_len={}", worker_idx, count, buf.length());
 
-  security::security_engine_rx* sec_engine = sec_engine_pool[widx].get();
+  security::security_engine_rx* sec_engine = sec_engine_pool[worker_idx].get();
   if (sec_engine == nullptr) {
     // Security is not configured. Pass through for DRBs; trim zero MAC-I for SRBs.
     if (is_srb()) {
@@ -484,7 +484,7 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
   if (!result.buf.has_value()) {
     switch (result.buf.error()) {
       case srsran::security::security_error::integrity_failure:
-        logger.log_warning("Integrity failed, dropping PDU. count={} widx={}", result.count, widx);
+        logger.log_warning("Integrity failed, dropping PDU. count={} worker_idx={}", result.count, worker_idx);
         metrics.add_integrity_failed_pdus(1);
         upper_cn.on_integrity_failure();
         break;
