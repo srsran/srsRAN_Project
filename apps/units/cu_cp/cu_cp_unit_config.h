@@ -298,7 +298,7 @@ struct cu_cp_unit_config {
   /// Network slice configuration.
   std::vector<s_nssai_t> slice_cfg = {s_nssai_t{1}};
   /// E2 configuration.
-  unit_e2_config e2_cfg;
+  e2_config e2_cfg;
 };
 
 } // namespace srsran

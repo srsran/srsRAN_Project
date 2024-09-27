@@ -141,7 +141,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
     e2ap_entity = create_e2_du_entity(cfg.e2ap_config,
                                       cfg.e2_client,
                                       cfg.e2_du_metric_iface,
-                                      &(*f1ap),
+                                      f1ap.get(),
                                       &(get_du_configurator()),
                                       timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
                                       cfg.exec_mapper->du_e2_executor());

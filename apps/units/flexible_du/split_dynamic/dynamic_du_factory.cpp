@@ -9,7 +9,7 @@
  */
 
 #include "dynamic_du_factory.h"
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/worker_manager.h"
 #include "apps/units/flexible_du/du_high/du_high_commands.h"
 #include "apps/units/flexible_du/du_high/du_high_config_translators.h"

@@ -9,7 +9,7 @@
  */
 
 #include "du_high_wrapper_config_helper.h"
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "du_high_commands.h"
 #include "du_high_config.h"
 #include "du_high_config_translators.h"
@@ -145,6 +145,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   return out;
 }
 
+
 std::pair<std::vector<app_services::metrics_config>, std::vector<std::unique_ptr<app_services::application_command>>>
 
 srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
@@ -157,8 +158,7 @@ srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
                                     mac_pcap&                        mac_p,
                                     rlc_pcap&                        rlc_p,
                                     e2_connection_client&            e2_client_handler,
-                                    e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>&
-                 e2_metric_connectors,
+                                    e2_du_metrics_connector_manager& e2_metric_connectors,
                                     srslog::sink&                    json_sink,
                                     app_services::metrics_notifier&  metrics_notifier)
 {

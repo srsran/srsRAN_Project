@@ -35,13 +35,14 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/core_isolation_manager.h"
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/services/worker_manager.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.

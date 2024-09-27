@@ -529,7 +529,7 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_e2_args(CLI::App& app, unit_e2_config& e2_params)
+static void configure_cli11_e2_args(CLI::App& app, e2_config& e2_params)
 {
   add_option(app, "--enable_cu_e2", e2_params.enable_unit_e2, "Enable DU E2 agent")->capture_default_str();
   add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();

@@ -48,8 +48,7 @@ cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config&  cu_cp_unit_cfg,
   for (unsigned pos = 0; pos < n2_clients.size(); pos++) {
     cu_cp_cfg.ngaps[pos].n2_gw = n2_clients[pos].get();
   }
-  auto e2_metric_connectors = std::make_unique<
-      e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>>(1);
+  auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
 
   if (cu_cp_unit_cfg.e2_cfg.enable_unit_e2) {
     cu_cp_cfg.e2_client          = dependencies.e2_gw;

@@ -33,7 +33,7 @@
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.

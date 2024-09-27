@@ -24,8 +24,7 @@ class e2_cu_metrics_connector : public e2_cu_metrics_notifier, public e2_cu_metr
 {
 public:
   e2_cu_metrics_connector();
-  ~e2_cu_metrics_connector() = default;
-  
+
   void connect_e2_cu_meas_provider(std::unique_ptr<e2_cu_metrics_notifier> meas_provider) override;
 
 private:
