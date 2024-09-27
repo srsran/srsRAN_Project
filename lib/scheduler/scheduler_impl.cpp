@@ -16,7 +16,6 @@ using namespace srsran;
 
 scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
   expert_params(sched_cfg_.expert_params),
-  config_notifier(sched_cfg_.config_notifier),
   logger(srslog::fetch_basic_logger("SCHED")),
   metrics(expert_params.metrics_report_period, sched_cfg_.metrics_notifier),
   cfg_mng(sched_cfg_)
