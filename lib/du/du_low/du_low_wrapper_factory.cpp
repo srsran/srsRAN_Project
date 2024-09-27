@@ -139,7 +139,7 @@ std::unique_ptr<du_low_wrapper> srsran::srs_du::make_du_low_wrapper(const du_low
     fapi_adaptors[i] = create_phy_fapi_adaptor(
         du_lo->get_upper_phy(i), config.du_low_cfg.cells[i].upper_phy_cfg, du_cells[i], config.prach_ports[i]);
 
-    report_error_if_not(fapi_adaptors.back(), "Unable to create PHY adaptor for cell '{}'", i);
+    report_error_if_not(fapi_adaptors[i], "Unable to create PHY adaptor for cell '{}'", i);
   }
 
   logger.debug("DU-low wrapper created successfully");

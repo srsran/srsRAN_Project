@@ -100,23 +100,22 @@ du_unit srsran::create_du_split6(const split6_du_unit_config&                   
         du_cmd_wrapper.commands.push_back(std::move(command));
     }
 
+    srs_du::du_high_wrapper_dependencies wrapper_deps;
+    wrapper_deps.du_high_deps.sectors.resize(tmp_cfg.cells_cfg.size());
+    auto& du_hi_cell_deps = wrapper_deps.du_high_deps.sectors.front();
+
     // FAPI configuration.
-    du_cfg.fapi.log_level = fapi_cfg.fapi_level;
+    du_cfg.du_high_cfg.fapi.log_level = fapi_cfg.fapi_level;
     if (fapi_cfg.l2_nof_slots_ahead != 0) {
       // As the temporal configuration contains only one cell, pick the data from that cell.
-      du_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
-      du_cfg.fapi.executor.emplace(du_dependencies.workers->fapi_exec[i]);
-    } else {
-      report_error_if_not(du_dependencies.workers->fapi_exec[i] == nullptr,
-                          "FAPI buffered worker created for a cell with no MAC delay configured");
+      du_cfg.du_high_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
+      du_hi_cell_deps.fapi_executor.emplace(du_dependencies.workers->fapi_exec[i]);
     }
 
-    du_high_wrapper_dependencies sector_dependencies;
-    sector_dependencies.sectors.push_back(
-        {&fapi_adaptors[i]->get_message_interface_collection().get_slot_message_gateway(),
-         &fapi_adaptors[i]->get_message_interface_collection().get_slot_last_message_notifier()});
+    du_hi_cell_deps.gateway  = &fapi_adaptors[i]->get_message_interface_collection().get_slot_message_gateway();
+    du_hi_cell_deps.notifier = &fapi_adaptors[i]->get_message_interface_collection().get_slot_last_message_notifier();
 
-    du_insts.push_back(make_du_high_wrapper(du_cfg, std::move(sector_dependencies)));
+    du_insts.push_back(make_du_high_wrapper(du_cfg, std::move(wrapper_deps)));
     report_error_if_not(du_insts.back(), "Invalid Distributed Unit wrapper");
   }
 

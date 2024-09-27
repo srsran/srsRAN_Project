@@ -22,5 +22,10 @@ struct du_wrapper_config {
   du_low_wrapper_config  du_low_cfg;
 };
 
+/// DU wrapper dependencies.
+struct du_wrapper_dependencies {
+  du_high_wrapper_dependencies du_high_deps;
+};
+
 } // namespace srs_du
 } // namespace srsran

@@ -25,7 +25,7 @@ public:
   virtual ~flexible_du_application_unit() = default;
 
   /// Creates a flexible DU using the given dependencies.
-  virtual du_unit create_flexible_du_unit(const du_unit_dependencies& dependencies) = 0;
+  virtual du_unit create_flexible_du_unit(const du_unit_dependencies& dependencies, bool use_multicell = false) = 0;
 
   /// Returns the DU high unit configuration of this flexible DU.
   virtual du_high_unit_config&       get_du_high_unit_config()       = 0;

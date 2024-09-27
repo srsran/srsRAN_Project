@@ -49,7 +49,9 @@ build_mac_fapi_adaptor(unsigned                                                 
 }
 
 static std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>
-build_fapi_adaptors(const du_cell_config& du_cell, du_high_wrapper_sector_dependencies& dependencies, unsigned sector)
+build_fapi_adaptors(const du_cell_config&                      du_cell,
+                    const du_high_wrapper_sector_dependencies& dependencies,
+                    unsigned                                   sector)
 {
   srsran_assert(dependencies.gateway, "Invalid gateway");
   srsran_assert(dependencies.last_msg_notifier, "Invalid last message notifier");
@@ -74,14 +76,14 @@ namespace {
 class mac_fapi_adaptor_with_logger_impl : public fapi_adaptor::mac_fapi_adaptor
 {
 public:
-  mac_fapi_adaptor_with_logger_impl(const du_cell_config&                du_cell,
-                                    du_high_wrapper_sector_dependencies& dependencies,
-                                    unsigned                             sector) :
+  mac_fapi_adaptor_with_logger_impl(const du_cell_config&                      du_cell,
+                                    const du_high_wrapper_sector_dependencies& dependencies,
+                                    unsigned                                   sector) :
     logging_slot_gateway(fapi::create_logging_slot_gateway(*dependencies.gateway)),
-    adaptor([](const du_cell_config&                du_cell_adapt,
-               du_high_wrapper_sector_dependencies& dependencies_adapt,
-               unsigned                             sector_id,
-               fapi::slot_message_gateway&          gateway) {
+    adaptor([](const du_cell_config&                      du_cell_adapt,
+               const du_high_wrapper_sector_dependencies& dependencies_adapt,
+               unsigned                                   sector_id,
+               fapi::slot_message_gateway&                gateway) {
       du_high_wrapper_sector_dependencies adaptor_dependencies;
       adaptor_dependencies.last_msg_notifier = dependencies_adapt.last_msg_notifier;
       adaptor_dependencies.gateway           = &gateway;
@@ -122,17 +124,18 @@ private:
 class mac_fapi_adaptor_with_message_buffering_impl : public fapi_adaptor::mac_fapi_adaptor
 {
 public:
-  mac_fapi_adaptor_with_message_buffering_impl(const du_cell_config&                du_cell,
-                                               du_high_wrapper_sector_dependencies& dependencies,
-                                               unsigned                             sector,
-                                               task_executor&                       executor,
-                                               unsigned                             l2_nof_slots_ahead) :
-    buffered_modules(
-        fapi::create_buffered_decorator(l2_nof_slots_ahead, du_cell.scs_common, *dependencies.gateway, executor)),
-    adaptor([](const du_cell_config&                du_cell_adapt,
-               du_high_wrapper_sector_dependencies& dependencies_adapt,
-               unsigned                             sector_id,
-               fapi::slot_message_gateway&          gateway) {
+  mac_fapi_adaptor_with_message_buffering_impl(const du_cell_config&                      du_cell,
+                                               const du_high_wrapper_sector_dependencies& dependencies,
+                                               unsigned                                   sector,
+                                               unsigned                                   l2_nof_slots_ahead) :
+    buffered_modules(fapi::create_buffered_decorator(l2_nof_slots_ahead,
+                                                     du_cell.scs_common,
+                                                     *dependencies.gateway,
+                                                     *dependencies.fapi_executor.value())),
+    adaptor([](const du_cell_config&                      du_cell_adapt,
+               const du_high_wrapper_sector_dependencies& dependencies_adapt,
+               unsigned                                   sector_id,
+               fapi::slot_message_gateway&                gateway) {
       du_high_wrapper_sector_dependencies adaptor_dependencies;
       adaptor_dependencies.last_msg_notifier = dependencies_adapt.last_msg_notifier;
       adaptor_dependencies.gateway           = &gateway;
@@ -171,18 +174,19 @@ private:
 class mac_fapi_adaptor_with_logger_and_message_buffering_impl : public fapi_adaptor::mac_fapi_adaptor
 {
 public:
-  mac_fapi_adaptor_with_logger_and_message_buffering_impl(const du_cell_config&                du_cell,
-                                                          du_high_wrapper_sector_dependencies& dependencies,
-                                                          unsigned                             sector,
-                                                          task_executor&                       executor,
-                                                          unsigned                             l2_nof_slots_ahead) :
+  mac_fapi_adaptor_with_logger_and_message_buffering_impl(const du_cell_config&                      du_cell,
+                                                          const du_high_wrapper_sector_dependencies& dependencies,
+                                                          unsigned                                   sector,
+                                                          unsigned l2_nof_slots_ahead) :
     logging_slot_gateway(fapi::create_logging_slot_gateway(*dependencies.gateway)),
-    buffered_modules(
-        fapi::create_buffered_decorator(l2_nof_slots_ahead, du_cell.scs_common, *logging_slot_gateway, executor)),
-    adaptor([](const du_cell_config&                du_cell_adapt,
-               du_high_wrapper_sector_dependencies& dependencies_adapt,
-               unsigned                             sector_id,
-               fapi::slot_message_gateway&          gateway) {
+    buffered_modules(fapi::create_buffered_decorator(l2_nof_slots_ahead,
+                                                     du_cell.scs_common,
+                                                     *logging_slot_gateway,
+                                                     *dependencies.fapi_executor.value())),
+    adaptor([](const du_cell_config&                      du_cell_adapt,
+               const du_high_wrapper_sector_dependencies& dependencies_adapt,
+               unsigned                                   sector_id,
+               fapi::slot_message_gateway&                gateway) {
       du_high_wrapper_sector_dependencies adaptor_dependencies;
       adaptor_dependencies.last_msg_notifier = dependencies_adapt.last_msg_notifier;
       adaptor_dependencies.gateway           = &gateway;
@@ -241,24 +245,21 @@ srsran::srs_du::make_du_high_wrapper(const du_high_wrapper_config&  config,
         dependencies.du_high_adaptor.push_back(std::make_unique<mac_fapi_adaptor_with_logger_impl>(
             config.du_hi.ran.cells[i], wrapper_dependencies.sectors[i], i));
       } else {
+        srsran_assert(wrapper_dependencies.sectors[i].fapi_executor,
+                      "Invalid executor for the FAPI buffered decorator");
         dependencies.du_high_adaptor.push_back(
-            std::make_unique<mac_fapi_adaptor_with_logger_and_message_buffering_impl>(config.du_hi.ran.cells[i],
-                                                                                      wrapper_dependencies.sectors[i],
-                                                                                      i,
-                                                                                      *config.fapi.executor.value(),
-                                                                                      config.fapi.l2_nof_slots_ahead));
+            std::make_unique<mac_fapi_adaptor_with_logger_and_message_buffering_impl>(
+                config.du_hi.ran.cells[i], wrapper_dependencies.sectors[i], i, config.fapi.l2_nof_slots_ahead));
       }
     } else {
       if (config.fapi.l2_nof_slots_ahead == 0) {
         dependencies.du_high_adaptor.push_back(
             build_fapi_adaptors(config.du_hi.ran.cells[i], wrapper_dependencies.sectors[i], i));
       } else {
-        dependencies.du_high_adaptor.push_back(
-            std::make_unique<mac_fapi_adaptor_with_message_buffering_impl>(config.du_hi.ran.cells[i],
-                                                                           wrapper_dependencies.sectors[i],
-                                                                           i,
-                                                                           *config.fapi.executor.value(),
-                                                                           config.fapi.l2_nof_slots_ahead));
+        srsran_assert(wrapper_dependencies.sectors[i].fapi_executor,
+                      "Invalid executor for the FAPI buffered decorator");
+        dependencies.du_high_adaptor.push_back(std::make_unique<mac_fapi_adaptor_with_message_buffering_impl>(
+            config.du_hi.ran.cells[i], wrapper_dependencies.sectors[i], i, config.fapi.l2_nof_slots_ahead));
       }
     }
   }

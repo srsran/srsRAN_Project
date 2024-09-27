@@ -305,7 +305,8 @@ int main(int argc, char** argv)
   du_dependencies.json_sink          = &json_sink;
   du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
-  auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
+  auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies, du_cfg.du_multicell_enabled);
+
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
       srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, du_inst_and_cmds.metrics);

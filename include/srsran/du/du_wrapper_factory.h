@@ -17,8 +17,8 @@
 namespace srsran {
 namespace srs_du {
 
-/// Instantiates a Distributed Unit (DU) wrapper object with the given configuration.
-std::unique_ptr<du_wrapper> make_du_wrapper(const du_wrapper_config& du_cfg);
+/// Instantiates a Distributed Unit (DU) wrapper object with the given configuration and dependencies.
+std::unique_ptr<du_wrapper> make_du_wrapper(const du_wrapper_config& du_cfg, du_wrapper_dependencies&& dependencies);
 
 } // namespace srs_du
 } // namespace srsran

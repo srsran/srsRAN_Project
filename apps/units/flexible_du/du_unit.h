@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/services/application_command.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_config.h"
 #include "srsran/du/du.h"
 #include <memory>
@@ -28,8 +29,6 @@ class f1c_connection_client;
 } // namespace srs_du
 
 class e2_connection_client;
-template <typename ConnectorType, typename NotifierType, typename InterfaceType>
-class e2_metric_connector_manager;
 class e2_du_metrics_connector;
 class e2_du_metrics_notifier;
 class e2_du_metrics_interface;

@@ -25,7 +25,7 @@
 namespace srsran {
 
 /// Upper PHY - Radio Unit downlink adapter.
-class upper_ru_dl_rg_adapter : public upper_phy_rg_gateway
+class upper_phy_ru_dl_rg_adapter : public upper_phy_rg_gateway
 {
 public:
   // See interface for documentation.
@@ -43,7 +43,7 @@ private:
 };
 
 /// Upper PHY - Radio Unit uplink request adapter.
-class upper_ru_ul_request_adapter : public upper_phy_rx_symbol_request_notifier
+class upper_phy_ru_ul_request_adapter : public upper_phy_rx_symbol_request_notifier
 {
 public:
   // See interface for documentation.
@@ -68,10 +68,10 @@ private:
 };
 
 /// Upper PHY - Radio Unit uplink adapter.
-class upper_ru_ul_adapter : public ru_uplink_plane_rx_symbol_notifier
+class upper_phy_ru_ul_adapter : public ru_uplink_plane_rx_symbol_notifier
 {
 public:
-  explicit upper_ru_ul_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
+  explicit upper_phy_ru_ul_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
 
   // See interface for documentation.
   void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid) override
@@ -100,10 +100,10 @@ private:
 };
 
 /// Upper PHY - Radio Unit timing adapter.
-class upper_ru_timing_adapter : public ru_timing_notifier
+class upper_phy_ru_timing_adapter : public ru_timing_notifier
 {
 public:
-  explicit upper_ru_timing_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
+  explicit upper_phy_ru_timing_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
 
   // See interface for documentation.
   void on_tti_boundary(slot_point slot) override
@@ -145,10 +145,10 @@ private:
 };
 
 /// Upper PHY - Radio Unit error adapter.
-class upper_ru_error_adapter : public ru_error_notifier
+class upper_phy_ru_error_adapter : public ru_error_notifier
 {
 public:
-  explicit upper_ru_error_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
+  explicit upper_phy_ru_error_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
 
   // See interface for documentation.
   void on_late_downlink_message(const ru_error_context& context) override
