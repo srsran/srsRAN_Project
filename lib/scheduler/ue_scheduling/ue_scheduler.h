@@ -20,6 +20,7 @@ class pdcch_resource_allocator;
 struct cell_resource_allocator;
 class sched_ue_configuration_handler;
 class scheduler_event_logger;
+class cell_metrics_handler;
 
 struct ue_scheduler_cell_params {
   du_cell_index_t           cell_index;
@@ -27,6 +28,7 @@ struct ue_scheduler_cell_params {
   pucch_allocator*          pucch_alloc;
   uci_allocator*            uci_alloc;
   cell_resource_allocator*  cell_res_alloc;
+  cell_metrics_handler*     cell_metrics;
   scheduler_event_logger*   ev_logger;
 };
 

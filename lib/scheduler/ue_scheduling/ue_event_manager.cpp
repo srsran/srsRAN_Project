@@ -78,17 +78,18 @@ public:
 
       // Forward DL BO update to UE.
       u.handle_dl_buffer_state_indication(dl_bo);
+      auto& du_pcell = parent.du_cells[u.get_pcell().cell_index];
       if (dl_bo.lcid == LCID_SRB0 or (u.get_pcell().is_in_fallback_mode() and dl_bo.lcid == LCID_SRB1)) {
         // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-        parent.du_cells[u.get_pcell().cell_index].fallback_sched->handle_dl_buffer_state_indication_srb(
+        du_pcell.fallback_sched->handle_dl_buffer_state_indication_srb(
             dl_bo.ue_index, dl_bo.lcid == LCID_SRB0, sl, dl_bo.bs);
       }
 
       // Log event.
-      parent.du_cells[u.get_pcell().cell_index].ev_logger->enqueue(dl_bo);
+      du_pcell.ev_logger->enqueue(dl_bo);
 
       // Report event.
-      parent.metrics_handler.handle_dl_buffer_state_indication(dl_bo);
+      du_pcell.metrics->handle_dl_buffer_state_indication(dl_bo);
     }
   }
 
@@ -110,16 +111,12 @@ private:
 static constexpr size_t COMMON_EVENT_LIST_SIZE = MAX_NOF_DU_UES * 2;
 static constexpr size_t CELL_EVENT_LIST_SIZE   = MAX_NOF_DU_UES * 2;
 
-ue_event_manager::ue_event_manager(ue_repository& ue_db_, cell_metrics_handler& metrics_handler_) :
+ue_event_manager::ue_event_manager(ue_repository& ue_db_) :
   ue_db(ue_db_),
-  metrics_handler(metrics_handler_),
   logger(srslog::fetch_basic_logger("SCHED")),
   common_events(COMMON_EVENT_LIST_SIZE),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
-  for (unsigned i = 0; i != MAX_NOF_DU_CELLS; ++i) {
-    cell_specific_events.emplace_back(CELL_EVENT_LIST_SIZE);
-  }
 }
 
 ue_event_manager::~ue_event_manager() {}
@@ -318,7 +315,7 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
     }
 
     // Notify metrics handler.
-    metrics_handler.handle_ul_bsr_indication(bsr_ind);
+    du_cells[pcell_idx].metrics->handle_ul_bsr_indication(bsr_ind);
   };
 
   if (not common_events.try_push(common_event_t{bsr_ind.ue_index, handle_ul_bsr_ind_impl})) {
@@ -346,7 +343,7 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
                            du_cells[cell_phr.serv_cell_id].ev_logger->enqueue(event);
 
                            // Notify metrics handler.
-                           metrics_handler.handle_ul_phr_indication(phr_ind);
+                           du_cells[cell_phr.serv_cell_id].metrics->handle_ul_phr_indication(phr_ind);
                          },
                          "UL PHR",
                          true})) {
@@ -378,8 +375,8 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
                   crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_dB});
 
               // Notify metrics handler.
-              metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
-              metrics_handler.handle_ul_delay(crc.ue_index, last_sl - sl_rx);
+              du_cells[ue_cc.cell_index].metrics->handle_crc_indication(crc, units::bytes{(unsigned)tbs});
+              du_cells[ue_cc.cell_index].metrics->handle_ul_delay(crc.ue_index, last_sl - sl_rx);
             },
             "CRC",
             true})) {
@@ -407,7 +404,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       if (result->update == dl_harq_process::status_update::acked or
           result->update == dl_harq_process::status_update::nacked) {
         // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
-        metrics_handler.handle_dl_harq_ack(
+        du_cells[ue_cc.cell_index].metrics->handle_dl_harq_ack(
             ue_cc.ue_index, result->update == dl_harq_process::status_update::acked, tbs);
       }
     }
@@ -504,7 +501,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               }
 
               // Report the UCI PDU to the metrics handler.
-              metrics_handler.handle_uci_pdu_indication(uci_pdu);
+              du_cells[ue_cc.cell_index].metrics->handle_uci_pdu_indication(uci_pdu);
             },
             "UCI",
             // Note: We do not warn if the UE is not found, because there is this transient period when the UE
@@ -660,7 +657,7 @@ void ue_event_manager::handle_error_indication(slot_point                       
     du_cells[cell_index].ev_logger->enqueue(scheduler_event_logger::error_indication_event{sl_tx, event});
 
     // Report metrics.
-    metrics_handler.handle_error_indication();
+    du_cells[cell_index].metrics->handle_error_indication();
   };
 
   if (not common_events.try_push(common_event_t{INVALID_DU_UE_INDEX, handle_error_impl})) {
@@ -728,23 +725,23 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
   process_cell_specific(cell_index);
 }
 
-void ue_event_manager::add_cell(cell_resource_allocator& cell_res_grid,
-                                cell_harq_manager&       cell_harqs,
-                                ue_fallback_scheduler&   fallback_sched,
-                                uci_scheduler_impl&      uci_sched,
-                                scheduler_event_logger&  ev_logger,
-                                slice_scheduler&         slice_sched)
+void ue_event_manager::add_cell(const cell_creation_event& cell_ev)
 {
-  const du_cell_index_t cell_index = cell_res_grid.cell_index();
+  const du_cell_index_t cell_index = cell_ev.cell_res_grid.cell_index();
   srsran_assert(not cell_exists(cell_index), "Overwriting cell configurations not supported");
 
-  du_cells[cell_index].cfg            = &cell_res_grid.cfg;
-  du_cells[cell_index].res_grid       = &cell_res_grid;
-  du_cells[cell_index].cell_harqs     = &cell_harqs;
-  du_cells[cell_index].fallback_sched = &fallback_sched;
-  du_cells[cell_index].uci_sched      = &uci_sched;
-  du_cells[cell_index].ev_logger      = &ev_logger;
-  du_cells[cell_index].slice_sched    = &slice_sched;
+  du_cells[cell_index].cfg            = &cell_ev.cell_res_grid.cfg;
+  du_cells[cell_index].res_grid       = &cell_ev.cell_res_grid;
+  du_cells[cell_index].cell_harqs     = &cell_ev.cell_harqs;
+  du_cells[cell_index].fallback_sched = &cell_ev.fallback_sched;
+  du_cells[cell_index].uci_sched      = &cell_ev.uci_sched;
+  du_cells[cell_index].slice_sched    = &cell_ev.slice_sched;
+  du_cells[cell_index].metrics        = &cell_ev.metrics;
+  du_cells[cell_index].ev_logger      = &cell_ev.ev_logger;
+
+  while (cell_specific_events.size() <= cell_index) {
+    cell_specific_events.emplace_back(CELL_EVENT_LIST_SIZE);
+  }
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const

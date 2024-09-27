@@ -11,7 +11,6 @@
 #include "scheduler_impl.h"
 #include "ue_scheduling/ue_scheduler_impl.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
-#include "srsran/scheduler/config/scheduler_ue_config_validator.h"
 
 using namespace srsran;
 
@@ -39,8 +38,7 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
     // If it is a new group, create a new instance.
-    groups.emplace(msg.cell_group_index,
-                   std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, *cell_metrics));
+    groups.emplace(msg.cell_group_index, std::make_unique<ue_scheduler_impl>(expert_params.ue));
   }
 
   // Create a new cell scheduler instance.

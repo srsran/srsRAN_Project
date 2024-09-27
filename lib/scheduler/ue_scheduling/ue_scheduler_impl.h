@@ -30,9 +30,7 @@ namespace srsran {
 class ue_scheduler_impl final : public ue_scheduler
 {
 public:
-  explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_,
-                             sched_configuration_notifier&     mac_notif,
-                             cell_metrics_handler&             metric_handler);
+  explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_);
 
   void add_cell(const ue_scheduler_cell_params& params) override;
 
@@ -84,7 +82,6 @@ private:
   void puxch_grant_sanitizer(cell_resource_allocator& cell_alloc);
 
   const scheduler_ue_expert_config& expert_cfg;
-  cell_metrics_handler&             metrics_handler;
 
   // List of cells of the UE scheduler.
   slotted_array<cell, MAX_NOF_DU_CELLS> cells;

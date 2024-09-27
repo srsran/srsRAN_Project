@@ -26,6 +26,16 @@ class scheduler_event_logger;
 class uci_scheduler_impl;
 class cell_harq_manager;
 
+struct cell_creation_event {
+  cell_resource_allocator& cell_res_grid;
+  cell_harq_manager&       cell_harqs;
+  ue_fallback_scheduler&   fallback_sched;
+  uci_scheduler_impl&      uci_sched;
+  slice_scheduler&         slice_sched;
+  cell_metrics_handler&    metrics;
+  scheduler_event_logger&  ev_logger;
+};
+
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
 /// of the UEs and logging in a thread-safe manner.
@@ -34,15 +44,10 @@ class ue_event_manager final : public sched_ue_configuration_handler,
                                public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_repository& ue_db, cell_metrics_handler& metrics_handler);
+  ue_event_manager(ue_repository& ue_db);
   ~ue_event_manager() override;
 
-  void add_cell(cell_resource_allocator& cell_res_grid,
-                cell_harq_manager&       cell_harqs,
-                ue_fallback_scheduler&   fallback_sched,
-                uci_scheduler_impl&      uci_sched,
-                scheduler_event_logger&  ev_logger,
-                slice_scheduler&         slice_sched);
+  void add_cell(const cell_creation_event& cell_ev);
 
   /// UE Add/Mod/Remove interface.
   void handle_ue_creation(ue_config_update_event ev) override;
@@ -116,27 +121,18 @@ private:
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
   ue_repository&        ue_db;
-  cell_metrics_handler& metrics_handler;
   srslog::basic_logger& logger;
 
   /// List of added and configured cells.
   struct du_cell {
-    const cell_configuration* cfg = nullptr;
-
-    cell_resource_allocator* res_grid = nullptr;
-
-    cell_harq_manager* cell_harqs = nullptr;
-
-    // Reference to fallback scheduler.
-    ue_fallback_scheduler* fallback_sched = nullptr;
-
-    // Reference to the CSI and SR UCI scheduler.
-    uci_scheduler_impl* uci_sched = nullptr;
-
-    // Reference to the slice scheduler.
-    slice_scheduler* slice_sched = nullptr;
-
-    scheduler_event_logger* ev_logger = nullptr;
+    const cell_configuration* cfg            = nullptr;
+    cell_resource_allocator*  res_grid       = nullptr;
+    cell_harq_manager*        cell_harqs     = nullptr;
+    ue_fallback_scheduler*    fallback_sched = nullptr;
+    uci_scheduler_impl*       uci_sched      = nullptr;
+    slice_scheduler*          slice_sched    = nullptr;
+    cell_metrics_handler*     metrics        = nullptr;
+    scheduler_event_logger*   ev_logger      = nullptr;
   };
   std::array<du_cell, MAX_NOF_DU_CELLS> du_cells{};
 

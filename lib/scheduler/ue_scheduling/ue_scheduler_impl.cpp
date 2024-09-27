@@ -10,17 +10,13 @@
 
 #include "ue_scheduler_impl.h"
 #include "../logging/scheduler_metrics_handler.h"
-#include "../policy/scheduler_policy_factory.h"
 
 using namespace srsran;
 
-ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_,
-                                     sched_configuration_notifier&     mac_notif,
-                                     cell_metrics_handler&             metric_handler_) :
+ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_) :
   expert_cfg(expert_cfg_),
-  metrics_handler(metric_handler_),
   ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
-  event_mng(ue_db, metrics_handler),
+  event_mng(ue_db),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
@@ -28,13 +24,14 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
 void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
   ue_res_grid_view.add_cell(*params.cell_res_alloc);
-  cells.emplace(params.cell_index, expert_cfg, params, ue_db, metrics_handler);
-  event_mng.add_cell(*params.cell_res_alloc,
-                     cells[params.cell_index].cell_harqs,
-                     cells[params.cell_index].fallback_sched,
-                     cells[params.cell_index].uci_sched,
-                     *params.ev_logger,
-                     cells[params.cell_index].slice_sched);
+  cells.emplace(params.cell_index, expert_cfg, params, ue_db, *params.cell_metrics);
+  event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
+                                         cells[params.cell_index].cell_harqs,
+                                         cells[params.cell_index].fallback_sched,
+                                         cells[params.cell_index].uci_sched,
+                                         cells[params.cell_index].slice_sched,
+                                         *params.cell_metrics,
+                                         *params.ev_logger});
   ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc);
 }
 
