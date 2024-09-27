@@ -88,8 +88,11 @@ private:
 // (Implementation-defined) limit for maximum number of concurrent Msg3s.
 static constexpr size_t MAX_NOF_MSG3 = 1024;
 
+// (Implementation-defined) limit for maximum number of pending RACH indications.
+static constexpr size_t RACH_IND_QUEUE_SIZE = MAX_PRACH_OCCASIONS_PER_SLOT * 2;
+
 // (Implementation-defined) limit for maximum number of pending CRC indications.
-static constexpr size_t CRC_IND_QUEUE_SIZE = MAX_PUCCH_PDUS_PER_SLOT;
+static constexpr size_t CRC_IND_QUEUE_SIZE = MAX_PUCCH_PDUS_PER_SLOT * 2;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -111,6 +114,7 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
                               cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format)),
   msg3_harqs(MAX_NOF_MSG3, 1, std::make_unique<msg3_harq_timeout_notifier>(pending_msg3s)),
+  pending_rachs(RACH_IND_QUEUE_SIZE),
   pending_crcs(CRC_IND_QUEUE_SIZE),
   pending_msg3s(MAX_NOF_MSG3)
 {
@@ -208,7 +212,10 @@ void ra_scheduler::precompute_msg3_pdus()
 void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
 {
   // Buffer detected RACHs to be handled in next slot.
-  pending_rachs.push(msg);
+  if (not pending_rachs.try_push(msg)) {
+    logger.warning(
+        "cell={}: Discarding RACH indication for slot={}. Cause: Event queue is full", msg.cell_index, msg.slot_rx);
+  }
 }
 
 void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg)
@@ -345,9 +352,8 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   handle_pending_crc_indications_impl(res_alloc);
 
   // Pop pending RACHs and process them.
-  pending_rachs.slot_indication();
-  const span<const rach_indication_message> new_rachs = pending_rachs.get_events();
-  for (const rach_indication_message& rach : new_rachs) {
+  rach_indication_message rach;
+  while (pending_rachs.try_pop(rach)) {
     handle_rach_indication_impl(rach);
   }
 

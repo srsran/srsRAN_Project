@@ -14,7 +14,6 @@
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/prbs_calculator.h"
-#include "../support/slot_event_list.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/ran/prach/prach_configuration.h"
@@ -84,7 +83,10 @@ private:
     crb_interval crbs;
   };
 
-  using crc_indication_queue = concurrent_queue<ul_crc_indication,
+  using rach_indication_queue = concurrent_queue<rach_indication_message,
+                                                 concurrent_queue_policy::lockfree_mpmc,
+                                                 concurrent_queue_wait_policy::non_blocking>;
+  using crc_indication_queue  = concurrent_queue<ul_crc_indication,
                                                 concurrent_queue_policy::lockfree_mpmc,
                                                 concurrent_queue_wait_policy::non_blocking>;
 
@@ -176,11 +178,11 @@ private:
   sch_mcs_description                 msg3_mcs_config;
 
   // variables
-  cell_harq_manager                        msg3_harqs;
-  slot_event_list<rach_indication_message> pending_rachs;
-  crc_indication_queue                     pending_crcs;
-  std::deque<pending_rar_t>                pending_rars;
-  std::vector<pending_msg3_t>              pending_msg3s;
+  cell_harq_manager           msg3_harqs;
+  rach_indication_queue       pending_rachs;
+  crc_indication_queue        pending_crcs;
+  std::deque<pending_rar_t>   pending_rars;
+  std::vector<pending_msg3_t> pending_msg3s;
 };
 
 } // namespace srsran
