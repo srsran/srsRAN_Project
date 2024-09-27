@@ -114,10 +114,10 @@ static srs_config build_default_srs_cfg(const du_cell_config& default_cell_cfg)
   return srs_cfg;
 }
 
-du_srs_policy_max_ul_th::cell_context::cell_context(const du_cell_config& cfg) :
+du_srs_policy_max_ul_rate::cell_context::cell_context(const du_cell_config& cfg) :
   cell_cfg(cfg), default_srs_cfg(build_default_srs_cfg(cfg)){};
 
-du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell_cfg_list_) :
+du_srs_policy_max_ul_rate::du_srs_policy_max_ul_rate(span<const du_cell_config> cell_cfg_list_) :
   cells(cell_cfg_list_.begin(), cell_cfg_list_.end())
 {
   for (auto& cell : cells) {
@@ -140,14 +140,14 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
     const auto srs_period_slots = static_cast<unsigned>(cell.cell_cfg.srs_cfg.srs_period.value());
     // Reserve the size of the vector and set the SRS counter of each offset to 0.
     cell.slot_resource_cnt.assign(srs_period_slots, 0U);
-    cell.srs_res_offset_free_list.reserve(du_srs_policy_max_ul_th::cell_context::max_nof_srs_res);
+    cell.srs_res_offset_free_list.reserve(du_srs_policy_max_ul_rate::cell_context::max_nof_srs_res);
     cell.nof_res_per_symb_interval = static_cast<unsigned>(cell.cell_cfg.srs_cfg.tx_comb) *
                                      static_cast<unsigned>(cell.cell_cfg.srs_cfg.cyclic_shift_reuse_factor) *
                                      static_cast<unsigned>(cell.cell_cfg.srs_cfg.sequence_id_reuse_factor);
 
     for (unsigned offset = 0; offset != srs_period_slots; ++offset) {
       // We don't generate more than the maximum number of SRS resources per cell.
-      if (cell.srs_res_offset_free_list.size() >= du_srs_policy_max_ul_th::cell_context::max_nof_srs_res) {
+      if (cell.srs_res_offset_free_list.size() >= du_srs_policy_max_ul_rate::cell_context::max_nof_srs_res) {
         break;
       }
 
@@ -195,7 +195,7 @@ du_srs_policy_max_ul_th::du_srs_policy_max_ul_th(span<const du_cell_config> cell
   }
 }
 
-bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
+bool du_srs_policy_max_ul_rate::alloc_resources(cell_group_config& cell_grp_cfg)
 {
   // TODO: Adapt this to the case of UEs with multiple cells configs.
   srsran_assert(
@@ -288,7 +288,7 @@ bool du_srs_policy_max_ul_th::alloc_resources(cell_group_config& cell_grp_cfg)
 }
 
 std::vector<std::pair<unsigned, unsigned>>::const_iterator
-du_srs_policy_max_ul_th::cell_context::find_optimal_ue_srs_resource()
+du_srs_policy_max_ul_rate::cell_context::find_optimal_ue_srs_resource()
 {
   // The weights assigned here can be set to arbitrarily value, as long as:
   // - symbol_weight_base is greater than 0;
@@ -336,7 +336,7 @@ du_srs_policy_max_ul_th::cell_context::find_optimal_ue_srs_resource()
   return optimal_res_it;
 }
 
-void du_srs_policy_max_ul_th::dealloc_resources(cell_group_config& cell_grp_cfg)
+void du_srs_policy_max_ul_rate::dealloc_resources(cell_group_config& cell_grp_cfg)
 {
   if (not cells[0].cell_cfg.srs_cfg.srs_period.has_value() or
       not cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {

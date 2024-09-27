@@ -38,7 +38,8 @@ du_ue_ran_resource_updater_impl::update(du_cell_index_t                       pc
 
 ///////////////////////////
 
-static void initialize_serv_cell_cfg(serving_cell_config& serv_cell_cfg)
+// Helper that resets the PUCCH and SRS configurations in the serving cell configuration.
+static void reset_serv_cell_cfg(serving_cell_config& serv_cell_cfg)
 {
   srsran_assert(serv_cell_cfg.ul_config.has_value() and
                     serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
@@ -63,7 +64,7 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   test_cfg(test_cfg_),
   pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot),
   bearer_res_mng(srb_config, qos_config, logger),
-  srs_res_mng(std::make_unique<du_srs_policy_max_ul_th>(cell_cfg_list))
+  srs_res_mng(std::make_unique<du_srs_policy_max_ul_rate>(cell_cfg_list))
 {
 }
 
@@ -180,7 +181,7 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
 
     // Start with removing PUCCH and SRS configurations. This step simplifies the handling of the allocation failure
     // path.
-    initialize_serv_cell_cfg(ue_res.cell_group.cells[0].serv_cell_cfg);
+    reset_serv_cell_cfg(ue_res.cell_group.cells[0].serv_cell_cfg);
 
     if (not srs_res_mng->alloc_resources(ue_res.cell_group)) {
       // Deallocate dedicated Search Spaces.

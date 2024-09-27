@@ -40,10 +40,10 @@ public:
 /// objective to minimize the number of slots and symbols that contain the SRS resources, to reduce as much as possible
 /// the slots and symbols resources taken from the PUSCH. The drawback of this policy is that it can increase the
 /// inter-slot SRS interference among different UEs.
-class du_srs_policy_max_ul_th : public du_srs_resource_manager
+class du_srs_policy_max_ul_rate : public du_srs_resource_manager
 {
 public:
-  explicit du_srs_policy_max_ul_th(span<const du_cell_config> cell_cfg_list_);
+  explicit du_srs_policy_max_ul_rate(span<const du_cell_config> cell_cfg_list_);
 
   /// The SRS resources are allocate according to the following policy:
   /// - Give priority to resources that are placed on partially-UL slots, first.

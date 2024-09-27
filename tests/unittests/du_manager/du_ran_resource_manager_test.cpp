@@ -1058,7 +1058,7 @@ protected:
   std::vector<du_cell_config> cell_cfg_list;
   // This is a reference to the first element of cell_cfg_list's SRS config.
   const srs_builder_params&                        srs_params;
-  du_srs_policy_max_ul_th                          du_srs_res_mng;
+  du_srs_policy_max_ul_rate                        du_srs_res_mng;
   slotted_array<cell_group_config, MAX_NOF_DU_UES> ues;
 };
 
