@@ -116,7 +116,7 @@ public:
 
     bench->res_grid.slot_indication(current_slot);
     bench->pdcch_sch.slot_indication(current_slot);
-    bench->pg_sch.schedule_paging(bench->res_grid);
+    bench->pg_sch.run_slot(bench->res_grid);
 
     // Log scheduling results.
     sched_res_logger.on_scheduler_result(bench->res_grid[0].result);
