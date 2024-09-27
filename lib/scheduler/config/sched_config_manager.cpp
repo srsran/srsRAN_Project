@@ -9,6 +9,7 @@
  */
 
 #include "sched_config_manager.h"
+#include "../logging/scheduler_metrics_handler.h"
 #include "../logging/scheduler_metrics_ue_configurator.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
@@ -57,16 +58,17 @@ void ue_config_delete_event::reset()
   }
 }
 
-sched_config_manager::sched_config_manager(const scheduler_config& sched_cfg) :
+sched_config_manager::sched_config_manager(const scheduler_config&    sched_cfg,
+                                           scheduler_metrics_handler& metrics_handler_) :
   expert_params(sched_cfg.expert_params),
+  metrics_handler(metrics_handler_),
   config_notifier(sched_cfg.config_notifier),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   std::fill(ue_to_cell_group_index.begin(), ue_to_cell_group_index.end(), INVALID_DU_CELL_GROUP_INDEX);
 }
 
-const cell_configuration* sched_config_manager::add_cell(const sched_cell_configuration_request_message& msg,
-                                                         sched_metrics_ue_configurator& metrics_handler_)
+const cell_configuration* sched_config_manager::add_cell(const sched_cell_configuration_request_message& msg)
 {
   srsran_assert(msg.cell_index < MAX_NOF_DU_CELLS, "cell index={} is not valid", msg.cell_index);
   srsran_assert(not added_cells.contains(msg.cell_index), "cell={} already exists", msg.cell_index);
@@ -76,7 +78,9 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
   srsran_assert(ret.has_value(), "Invalid cell configuration request message. Cause: {}", ret.error().c_str());
 
   added_cells.emplace(msg.cell_index, std::make_unique<cell_configuration>(expert_params, msg));
-  cell_metrics.emplace(msg.cell_index, &metrics_handler_);
+
+  cell_metrics_handler* cell_metrics = metrics_handler.add_cell(*added_cells[msg.cell_index]);
+  srsran_assert(cell_metrics != nullptr, "Unable to create metrics handler");
 
   return added_cells[msg.cell_index].get();
 }
@@ -189,17 +193,17 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std
   if (next_cfg != nullptr) {
     // Creation/Reconfig succeeded.
 
+    cell_metrics_handler& cell_metrics = metrics_handler.at(next_cfg->pcell_common_cfg().cell_index);
     if (ue_cfg_list[ue_index] == nullptr) {
       // UE creation case.
-      cell_metrics[next_cfg->pcell_common_cfg().cell_index]->handle_ue_creation(
-          ue_index,
-          next_cfg->crnti,
-          next_cfg->pcell_common_cfg().pci,
-          next_cfg->pcell_common_cfg().nof_dl_prbs,
-          next_cfg->pcell_common_cfg().nof_slots_per_frame);
+      cell_metrics.handle_ue_creation(ue_index,
+                                      next_cfg->crnti,
+                                      next_cfg->pcell_common_cfg().pci,
+                                      next_cfg->pcell_common_cfg().nof_dl_prbs,
+                                      next_cfg->pcell_common_cfg().nof_slots_per_frame);
     } else {
       // Reconfiguration case.
-      cell_metrics[next_cfg->pcell_common_cfg().cell_index]->handle_ue_reconfiguration(ue_index);
+      cell_metrics.handle_ue_reconfiguration(ue_index);
     }
 
     // Stores new UE config and deletes old config.
@@ -227,7 +231,8 @@ void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
   ue_cfg_list[ue_index].reset();
 
   // Remove UE from metrics.
-  cell_metrics[pcell_idx]->handle_ue_deletion(ue_index);
+  cell_metrics_handler& cell_metrics = metrics_handler.at(pcell_idx);
+  cell_metrics.handle_ue_deletion(ue_index);
 
   // Mark the UE as released.
   ue_to_cell_group_index[ue_index].store(INVALID_DU_CELL_GROUP_INDEX, std::memory_order_release);

@@ -37,8 +37,7 @@ protected:
           GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
       cfg_builder_params.band           = band_helper::get_band_from_dl_arfcn(cfg_builder_params.dl_f_ref_arfcn);
       cfg_builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
-      auto* cfg = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(cfg_builder_params),
-                                   metrics_ue_handler);
+      auto* cfg = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(cfg_builder_params));
       srsran_assert(cfg != nullptr, "Cell configuration failed");
       return cfg;
     }()),
@@ -124,9 +123,10 @@ protected:
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
   scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
+  scheduler_metrics_handler               metrics{std::chrono::milliseconds{0}, metrics_notif};
 
   cell_config_builder_params cfg_builder_params;
-  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}};
+  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}, metrics};
   const cell_configuration&  cell_cfg;
 
   cell_harq_manager       cell_harqs{MAX_NOF_DU_UES,

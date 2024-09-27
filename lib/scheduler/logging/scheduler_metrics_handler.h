@@ -20,6 +20,8 @@
 
 namespace srsran {
 
+class cell_configuration;
+
 ///\brief Handler of scheduler slot metrics for a given cell.
 class cell_metrics_handler final : public harq_timeout_handler, public sched_metrics_ue_configurator
 {
@@ -167,7 +169,9 @@ public:
   /// \brief Creates a scheduler metrics handler. In case the metrics_report_period is zero, no metrics are reported.
   explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
 
-  cell_metrics_handler* add_cell(du_cell_index_t cell_idx);
+  cell_metrics_handler* add_cell(const cell_configuration& cell_cfg);
+
+  cell_metrics_handler& at(du_cell_index_t cell_idx) { return cells[cell_idx]; }
 
 private:
   scheduler_metrics_notifier&     notifier;

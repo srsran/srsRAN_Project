@@ -18,7 +18,7 @@
 namespace srsran {
 
 class sched_config_manager;
-class sched_metrics_ue_configurator;
+class scheduler_metrics_handler;
 
 /// Event to create/reconfigure a UE in the scheduler.
 class ue_config_update_event
@@ -98,10 +98,9 @@ public:
 class sched_config_manager
 {
 public:
-  sched_config_manager(const scheduler_config& sched_cfg_);
+  sched_config_manager(const scheduler_config& sched_cfg_, scheduler_metrics_handler& metrics_handler_);
 
-  const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg,
-                                     sched_metrics_ue_configurator&                  metrics_handler_);
+  const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg);
 
   ue_config_update_event add_ue(const sched_ue_creation_request_message& cfg_req);
 
@@ -132,14 +131,12 @@ private:
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 
   const scheduler_expert_config expert_params;
+  scheduler_metrics_handler&    metrics_handler;
   sched_configuration_notifier& config_notifier;
   srslog::basic_logger&         logger;
 
   // List of common configs for the scheduler cells.
   cell_common_configuration_list added_cells;
-
-  // List of metrics handlers for each cell.
-  slotted_id_table<du_cell_index_t, sched_metrics_ue_configurator*, MAX_NOF_DU_CELLS> cell_metrics;
 
   std::array<std::unique_ptr<ue_configuration>, MAX_NOF_DU_UES> ue_cfg_list;
 

@@ -8,6 +8,7 @@
  *
  */
 
+#include "../config/cell_configuration.h"
 #include "scheduler_metrics_handler.h"
 #include "srsran/srslog/srslog.h"
 
@@ -373,14 +374,14 @@ scheduler_metrics_handler::scheduler_metrics_handler(msecs                      
 {
 }
 
-cell_metrics_handler* scheduler_metrics_handler::add_cell(du_cell_index_t cell_idx)
+cell_metrics_handler* scheduler_metrics_handler::add_cell(const cell_configuration& cell_cfg)
 {
-  if (cells.contains(cell_idx)) {
-    srslog::fetch_basic_logger("SCHED").warning("Cell={} already exists", cell_idx);
+  if (cells.contains(cell_cfg.cell_index)) {
+    srslog::fetch_basic_logger("SCHED").warning("Cell={} already exists", cell_cfg.cell_index);
     return nullptr;
   }
 
-  cells.emplace(cell_idx, report_period, notifier);
+  cells.emplace(cell_cfg.cell_index, report_period, notifier);
 
-  return &cells[cell_idx];
+  return &cells[cell_cfg.cell_index];
 }
