@@ -403,21 +403,21 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
 validator_result srsran::config_validators::validate_srs_cfg(const serving_cell_config& ue_cell_cfg)
 {
   VERIFY(ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.has_value(),
-         "Missing configuration for uplinkConfig or pucch-Config in spCellConfig");
+         "Missing configuration for uplinkConfig or srs-Config in spCellConfig");
 
   const auto& srs_cfg = ue_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value();
 
   VERIFY(srs_cfg.srs_res_set_list.size() == 1 and srs_cfg.srs_res_set_list.front().id == srs_config::MIN_SRS_RES_SET_ID,
-         "The SRS resource set list is expected to have a size of 1 and the SRS resource set ID to be 0");
+         "The SRS resource set list is expected to have size 1 and its only set is expected to have ID 0");
   VERIFY(srs_cfg.srs_res_set_list.front().srs_res_id_list.size() == 1,
-         "The SRS resource set list is expected to have a size of 1");
+         "The SRS resource list of the SRS resource set ID 0 is expected to have size 1");
   VERIFY(srs_cfg.srs_res_list.size() == 1 and srs_cfg.srs_res_list.front().id.ue_res_id == srs_config::MIN_SRS_RES_ID,
-         "The SRS resource lits is expected to have a size of 1 and the SRS resource ID to be 0");
+         "The SRS resource list is expected to have size 1 and its only resource is expected to have ID 0");
   VERIFY(srs_cfg.srs_res_set_list.front().srs_res_id_list.front() == srs_cfg.srs_res_list.front().id.ue_res_id,
-         "The SRS resource set list should point to the SRS resource list");
+         "The SRS resource set ID 0's resource should point to the SRS resource ID 0");
   const auto& srs_res_set = srs_cfg.srs_res_set_list.front();
   VERIFY(srs_res_set.srs_res_set_usage == srs_config::srs_resource_set::usage::codebook,
-         "Only SRS resource set usage of codebook is supported");
+         "Only SRS resource set usage \"codebook\" is supported");
 
   const auto& srs_res = srs_cfg.srs_res_list.front();
   VERIFY(
@@ -427,7 +427,7 @@ validator_result srsran::config_validators::validate_srs_cfg(const serving_cell_
            srs_res.res_type == srs_resource_type::periodic) or
           (std::holds_alternative<srs_config::srs_resource_set::semi_persistent_resource_type>(srs_res_set.res_type) and
            srs_res.res_type == srs_resource_type::semi_persistent),
-      "The SRS resource set and resource should have the same type");
+      "The SRS resource set and its resource should be of the same type");
   if (srs_res.res_type == srs_resource_type::periodic) {
     VERIFY(srs_res.periodicity_and_offset.has_value(),
            "The SRS resource should have a periodicity and offset when the resource type is periodic");
@@ -443,6 +443,11 @@ validator_result srsran::config_validators::validate_srs_cfg(const serving_cell_
          "11 for n4");
   VERIFY(srs_res.res_mapping.rept_factor <= srs_res.res_mapping.nof_symb,
          "The SRS resource repetition factor should be less than or equal to the number of symbols");
+  // NOTE: The parameter \c start_pos indicates the distance from the last symbol of the slot. The actual starting
+  // OFDM symbol is NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - (srs_res.res_mapping.start_pos + 1).
+  // The final symbol =
+  //         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - (srs_res.res_mapping.start_pos + 1) + srs_res.res_mapping.nof_symb
+  // needs to be less than or equal to NOF_OFDM_SYM_PER_SLOT_NORMAL_CP.
   VERIFY(static_cast<uint8_t>(srs_res.res_mapping.nof_symb) <= srs_res.res_mapping.start_pos + 1,
          "The SRS resource number of symbols and start position should be such that the SRS resource fits within the "
          "slot symbols");
