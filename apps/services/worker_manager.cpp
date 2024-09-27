@@ -482,20 +482,7 @@ void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
 void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_config& config)
 {
   using namespace execution_config_helper;
-
-  // Maximum number of threads per cell. Implementation defined. The 3 threads are: transmission, reception and
-  // codification.
-  static constexpr unsigned MAX_NUM_THREADS_PER_CELL = 3U;
-  const unsigned            nof_cells                = config.nof_downlink_antennas.size();
-
-  unsigned nof_host_threads = std::max(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
-
-  if (nof_host_threads < (nof_cells * MAX_NUM_THREADS_PER_CELL) + 1) {
-    fmt::print(
-        "Detected {} threads for Open Fronthaul, but a minimum of {} are needed to achieve a good performance.\n",
-        nof_host_threads,
-        (nof_cells * MAX_NUM_THREADS_PER_CELL) + 1);
-  }
+  const unsigned nof_cells = config.nof_downlink_antennas.size();
 
   // Timing executor.
   {
