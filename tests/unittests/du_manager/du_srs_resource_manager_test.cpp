@@ -39,6 +39,18 @@ std::ostream& operator<<(std::ostream& out, const srs_params& params)
 
 } // namespace
 
+static bool is_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
+{
+  const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+  return has_active_tdd_ul_symbols(tdd_cfg, slot_index);
+}
+
+static bool is_partially_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
+{
+  const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+  return is_tdd_partial_ul_slot(tdd_cfg, slot_index);
+}
+
 static cell_config_builder_params make_cell_cfg_params(const srs_params& params)
 {
   const bool                 is_tdd      = params.nof_ul_symbols_p1.has_value();
@@ -289,19 +301,6 @@ protected:
   du_srs_policy_max_ul_rate                        du_srs_res_mng;
   slotted_array<cell_group_config, MAX_NOF_DU_UES> ues;
 };
-
-static bool is_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
-{
-  const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-  return srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() != 0;
-}
-
-static bool is_partially_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
-{
-  const unsigned slot_index  = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-  const unsigned nof_symbols = srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length();
-  return nof_symbols != 0 and nof_symbols != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
-}
 
 TEST_P(du_srs_resource_manager_tester, ue_are_assigned_orthogonal_srs_resources)
 {

@@ -498,8 +498,7 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
   res.freq_hop.b_hop = 0;
   res.grp_or_seq_hop = srs_group_or_sequence_hopping::neither;
   res.res_type       = srs_resource_type::aperiodic;
-
-  res.sequence_id = params.pci;
+  res.sequence_id    = params.pci;
 
   cfg.srs_res_set_list.emplace_back();
   // TODO: Verify correctness of the config based on what we support.
