@@ -114,12 +114,8 @@ private:
   bool                 stopped = false;
 
   using sec_engine_vec = std::vector<std::unique_ptr<security::security_engine_rx>>;
-  using worker_id_vec  = std::vector<int>;
-  sec_engine_vec sec_engine_pool;
-  worker_id_vec  worker_id_pool;
-
-  static constexpr int    unused_worker_id = -1; ///< Reserved value for an unused worker ID
-  static std::atomic<int> next_worker_id;        ///< Atomic worker ID of the next worker; incremented on each access
+  sec_engine_vec   sec_engine_pool;
+  std::atomic<int> next_worker_id; ///< Atomic worker ID of the next worker; incremented on each access
 
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;

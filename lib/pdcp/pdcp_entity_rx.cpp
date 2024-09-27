@@ -16,8 +16,6 @@
 
 using namespace srsran;
 
-std::atomic<int> pdcp_entity_rx::next_worker_id{0};
-
 pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                rb_id_t                         rb_id_,
                                pdcp_rx_config                  cfg_,
@@ -60,12 +58,11 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger.log_info("PDCP configured. {}", cfg);
 
   // Populate null security engines
-  worker_id_pool.reserve(pdcp_nof_crypto_workers);
+  next_worker_id.store(0, std::memory_order_relaxed);
   sec_engine_pool.reserve(pdcp_nof_crypto_workers);
   for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
     std::unique_ptr<security::security_engine_impl> null_engine;
     sec_engine_pool.push_back(std::move(null_engine));
-    worker_id_pool.push_back(unused_worker_id);
   }
 }
 
@@ -446,30 +443,20 @@ byte_buffer pdcp_entity_rx::compile_status_report()
 expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
 {
   // obtain the thread-specific ID of the worker
-  thread_local int worker_id = next_worker_id.fetch_add(1, std::memory_order_relaxed);
+  thread_local uint32_t widx = next_worker_id.fetch_add(1, std::memory_order_relaxed);
 
-  // find (or add) the worker ID in the worker ID pool and get the index inside the pool
-  uint32_t idx = 0;
-  for (; idx < worker_id_pool.size(); idx++) {
-    if (worker_id_pool[idx] == unused_worker_id) {
-      worker_id_pool[idx] = worker_id;
-      logger.log_debug("Added new worker_id={} to worker_id_pool at idx={}", worker_id, idx);
-    }
-    if (worker_id_pool[idx] == worker_id) {
-      break;
-    }
-  }
-  if (idx == worker_id_pool.size()) {
-    logger.log_error("Dropped PDU: More unique worker IDs than security engines. pool_size={} count={} pdu_len={}",
-                     worker_id_pool.size(),
-                     count,
-                     buf.length());
+  if (widx >= pdcp_nof_crypto_workers) {
+    srsran_assertion_failure("Worker index exceeds number of crypto workers. widx={} pdcp_nof_crypto_workers={}",
+                             widx,
+                             pdcp_nof_crypto_workers);
+    logger.log_error("Worker index exceeds number of crypto workers. widx={} pdcp_nof_crypto_workers={}",
+                     widx,
+                     pdcp_nof_crypto_workers);
     return make_unexpected(default_error_t{});
   }
-  logger.log_debug(
-      "Using sec_engine with idx={} for worker_id={}. count={} pdu_len={}", idx, worker_id, count, buf.length());
+  logger.log_debug("Using sec_engine with widx={}. count={} pdu_len={}", widx, count, buf.length());
 
-  security::security_engine_rx* sec_engine = sec_engine_pool[idx].get();
+  security::security_engine_rx* sec_engine = sec_engine_pool[widx].get();
   if (sec_engine == nullptr) {
     // Security is not configured. Pass through for DRBs; trim zero MAC-I for SRBs.
     if (is_srb()) {
@@ -497,7 +484,7 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
   if (!result.buf.has_value()) {
     switch (result.buf.error()) {
       case srsran::security::security_error::integrity_failure:
-        logger.log_warning("Integrity failed, dropping PDU. count={} idx={} wid={}", result.count, idx, worker_id);
+        logger.log_warning("Integrity failed, dropping PDU. count={} widx={}", result.count, widx);
         metrics.add_integrity_failed_pdus(1);
         upper_cn.on_integrity_failure();
         break;
@@ -568,8 +555,6 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
                                                                     : security::security_direction::downlink;
 
   // Remove previous security engines
-  worker_id_pool.clear();
-  worker_id_pool.reserve(pdcp_nof_crypto_workers);
   sec_engine_pool.clear();
   sec_engine_pool.reserve(pdcp_nof_crypto_workers);
 
@@ -578,7 +563,6 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
     auto sec_engine = std::make_unique<security::security_engine_impl>(
         sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
     sec_engine_pool.push_back(std::move(sec_engine));
-    worker_id_pool.push_back(unused_worker_id);
   }
 
   logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
