@@ -17,17 +17,18 @@ using namespace srsran;
 thread_local unsigned nof_concurrent_workers = 1;
 thread_local unsigned worker_index           = 0;
 
-unsigned srsran::execution_context::get_nof_concurrent_workers()
+unsigned srsran::execution_context::get_current_nof_concurrent_workers()
 {
   return nof_concurrent_workers;
 }
 
-unsigned srsran::execution_context::get_worker_index()
+unsigned srsran::execution_context::get_current_worker_index()
 {
   return worker_index;
 }
 
-void srsran::execution_context::set_worker_description(unsigned nof_concurrent_workers_, unsigned worker_index_)
+void srsran::execution_context::set_execution_context_description(unsigned nof_concurrent_workers_,
+                                                                  unsigned worker_index_)
 {
   srsran_sanity_check(nof_concurrent_workers_ > 0, "Invalid number of workers");
   nof_concurrent_workers = nof_concurrent_workers_;

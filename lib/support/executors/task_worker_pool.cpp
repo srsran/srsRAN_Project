@@ -22,7 +22,7 @@ std::function<void()> worker_task_factory(Queue& queue, unsigned nof_workers, un
 {
   return [&queue, nof_workers, worker_idx]() {
     // setup worker execution context.
-    execution_context::set_worker_description(nof_workers, worker_idx);
+    execution_context::set_execution_context_description(nof_workers, worker_idx);
 
     // start worker pop loop.
     while (true) {

@@ -11,7 +11,8 @@
 namespace srsran {
 namespace execution_context {
 
-void set_worker_description(unsigned nof_concurrent_workers, unsigned worker_index);
+/// Set number of workers and worker index of the current execution context.
+void set_execution_context_description(unsigned nof_concurrent_workers, unsigned worker_index);
 
-}
+} // namespace execution_context
 } // namespace srsran
