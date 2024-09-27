@@ -22,6 +22,7 @@
 #include "ue_repository.h"
 #include "ue_scheduler.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
+#include <mutex>
 
 namespace srsran {
 
