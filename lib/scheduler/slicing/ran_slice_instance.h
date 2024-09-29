@@ -23,7 +23,8 @@ namespace srsran {
 class ran_slice_instance
 {
   // Const for the max difference in number of slots between the current slot and the last allocation slot.
-  static constexpr unsigned MAX_SLOTS_SINCE_LAST_PXSCH = 512;
+  // This limit ensures lack of ambiguity in the slot point comparison
+  static constexpr unsigned MAX_SLOTS_SINCE_LAST_PXSCH = 256;
 
 public:
   ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
