@@ -53,6 +53,9 @@ static unsigned get_max_ues_to_be_sched(const slice_ue_repository& ues, bool is_
       }
     }
   }
+  if (nof_ue_with_new_tx == 0) {
+    return 0;
+  }
   return scheduler_alloc_limits_lookup[lookup_idx].nof_ues_to_be_scheduled_per_slot;
 }
 
@@ -69,11 +72,10 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&  
                                                     const scheduler_ue_expert_config& expert_cfg,
                                                     unsigned                          slice_max_rbs)
 {
-  if (ues.empty()) {
+  unsigned nof_ues_to_be_scheduled_per_slot = get_max_ues_to_be_sched(ues, is_dl);
+  if (nof_ues_to_be_scheduled_per_slot == 0) {
     return 0;
   }
-
-  unsigned nof_ues_to_be_scheduled_per_slot = get_max_ues_to_be_sched(ues, is_dl);
 
   // > Apply limits if passed to scheduler.
   if (is_dl) {
