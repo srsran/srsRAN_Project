@@ -110,6 +110,8 @@ helm:
       variables:
         CI_DESCRIPTION: Synchronization with srsGNB
         NOTIFY_SLACK: "true"
+  inherit:
+    variables: false        
   trigger:
     project: softwareradiosystems/ci/srsgnb_k8s
     branch: main
@@ -125,6 +127,8 @@ enterprise:
         CI_DESCRIPTION: Nightly
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
+  inherit:
+    variables: false
   trigger:
     project: softwareradiosystems/srsran_5g_enterprise
     branch: main
