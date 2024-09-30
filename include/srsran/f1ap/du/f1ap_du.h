@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "f1ap_du_ue_config.h"
-#include "f1c_bearer.h"
 #include "srsran/adt/expected.h"
 #include "srsran/f1ap/du/f1ap_du_connection_manager.h"
+#include "srsran/f1ap/du/f1ap_du_ue_config.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
+#include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/f1ap/f1ap_message_handler.h"
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/mac/mac_paging_information_handler.h"

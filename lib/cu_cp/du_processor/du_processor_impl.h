@@ -98,7 +98,8 @@ private:
   std::unique_ptr<f1ap_du_processor_notifier> f1ap_ev_notifier;
 
   // F1AP to RRC UE adapters
-  std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;
+  std::unordered_map<ue_index_t, f1ap_rrc_ul_ccch_adapter>            f1ap_rrc_ccch_adapters;
+  std::unordered_map<ue_index_t, f1ap_rrc_ul_dcch_adapter_collection> f1ap_rrc_dcch_adapters;
 
   // RRC UE to F1AP adapters
   std::unordered_map<ue_index_t, rrc_ue_f1ap_pdu_adapter> rrc_ue_f1ap_adapters;

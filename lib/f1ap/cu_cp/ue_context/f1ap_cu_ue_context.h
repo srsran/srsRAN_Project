@@ -12,7 +12,9 @@
 
 #include "f1ap_cu_ue_transaction_manager.h"
 #include "f1ap_ue_logger.h"
+#include "ue_ul_bearer_manager.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/f1ap/f1ap_message_notifier.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include <unordered_map>
 
@@ -20,9 +22,8 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct f1ap_ue_context {
-  f1ap_ue_ids                ue_ids;
-  f1ap_rrc_message_notifier* rrc_notifier       = nullptr;
-  bool                       marked_for_release = false;
+  f1ap_ue_ids ue_ids;
+  bool        marked_for_release = false;
   /// Whether the old gNB-DU UE F1AP UE ID IE needs to be notified back to the DU, due to reestablishment.
   std::optional<gnb_du_ue_f1ap_id_t> pending_old_ue_id;
   f1ap_ue_transaction_manager        ev_mng;
@@ -32,6 +33,16 @@ struct f1ap_ue_context {
     ue_ids({ue_index_, cu_ue_f1ap_id_}), ev_mng(timers_), logger("CU-CP-F1", {ue_ids}, ": ")
   {
   }
+
+  /// Returns the instance of the Uplink bearer manager of this UE.
+  ue_ul_bearer_manager&       get_ul_bearer_manager() { return bearer_manager; }
+  const ue_ul_bearer_manager& get_ul_bearer_manager() const { return bearer_manager; }
+
+  /// Handles Downlink RRC messages.
+  void handle_dl_rrc_message(const f1ap_dl_rrc_message& msg, f1ap_message_notifier& msg_notifier);
+
+private:
+  ue_ul_bearer_manager bearer_manager;
 };
 
 class f1ap_ue_context_list
@@ -81,6 +92,11 @@ public:
   }
 
   const f1ap_ue_context* find(gnb_cu_ue_f1ap_id_t cu_ue_id) const
+  {
+    auto it = ues.find(cu_ue_id);
+    return it != ues.end() ? &it->second : nullptr;
+  }
+  f1ap_ue_context* find(gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
     auto it = ues.find(cu_ue_id);
     return it != ues.end() ? &it->second : nullptr;
@@ -144,7 +160,7 @@ public:
     ues.erase(cu_ue_id);
   }
 
-  void add_rrc_notifier(ue_index_t ue_index, f1ap_rrc_message_notifier* notifier)
+  void add_srb0_rrc_notifier(ue_index_t ue_index, f1ap_ul_ccch_notifier* srb0_notifier)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
     srsran_assert(ue_index_to_ue_f1ap_id.find(ue_index) != ue_index_to_ue_f1ap_id.end(),
@@ -153,7 +169,37 @@ public:
     srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_index)) != ues.end(),
                   "cu_ue={}: F1AP UE context not found",
                   ue_index_to_ue_f1ap_id.at(ue_index));
-    ues.at(ue_index_to_ue_f1ap_id.at(ue_index)).rrc_notifier = notifier;
+    srsran_assert(srb0_notifier, "Invalid SRB0 notifier");
+
+    ues.at(ue_index_to_ue_f1ap_id.at(ue_index)).get_ul_bearer_manager().activate_srb0(*srb0_notifier);
+  }
+
+  void add_srb1_rrc_notifier(ue_index_t ue_index, f1ap_ul_dcch_notifier* srb1_notifier)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ue_index_to_ue_f1ap_id.find(ue_index) != ue_index_to_ue_f1ap_id.end(),
+                  "ue={}: gNB-CU-UE-F1AP-ID not found",
+                  ue_index);
+    srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_index)) != ues.end(),
+                  "cu_ue={}: F1AP UE context not found",
+                  ue_index_to_ue_f1ap_id.at(ue_index));
+    srsran_assert(srb1_notifier, "Invalid SRB1 notifier");
+
+    ues.at(ue_index_to_ue_f1ap_id.at(ue_index)).get_ul_bearer_manager().activate_srb1(*srb1_notifier);
+  }
+
+  void add_srb2_rrc_notifier(ue_index_t ue_index, f1ap_ul_dcch_notifier* srb2_notifier)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ue_index_to_ue_f1ap_id.find(ue_index) != ue_index_to_ue_f1ap_id.end(),
+                  "ue={}: gNB-CU-UE-F1AP-ID not found",
+                  ue_index);
+    srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_index)) != ues.end(),
+                  "cu_ue={}: F1AP UE context not found",
+                  ue_index_to_ue_f1ap_id.at(ue_index));
+    srsran_assert(srb2_notifier, "Invalid SRB2 notifier");
+
+    ues.at(ue_index_to_ue_f1ap_id.at(ue_index)).get_ul_bearer_manager().activate_srb2(*srb2_notifier);
   }
 
   size_t size() const { return ues.size(); }
@@ -209,7 +255,7 @@ private:
   timer_factory         timers;
   srslog::basic_logger& logger;
 
-  inline void increase_next_cu_ue_f1ap_id()
+  void increase_next_cu_ue_f1ap_id()
   {
     if (next_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::max) {
       // reset cu ue f1ap id counter
