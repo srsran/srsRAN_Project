@@ -139,6 +139,41 @@ rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
   return rlc_metric;
 }
 
+scheduler_cell_metrics generate_sched_metrics(uint32_t                           nof_prbs,
+                                              uint32_t                           nof_slots,
+                                              std::vector<std::vector<uint32_t>> dl_grants,
+                                              std::vector<std::vector<uint32_t>> ul_grants)
+{
+  scheduler_cell_metrics sched_metric;
+  sched_metric.nof_prbs     = nof_prbs;
+  sched_metric.nof_dl_slots = nof_slots;
+  sched_metric.nof_ul_slots = nof_slots;
+
+  assert(dl_grants[0].size() == nof_slots);
+  assert(ul_grants[0].size() == nof_slots);
+
+  for (uint32_t ue_idx = 0; ue_idx < nof_slots; ++ue_idx) {
+    scheduler_ue_metrics ue_metrics = {0};
+    ue_metrics.pci                  = 1;
+    ue_metrics.rnti                 = static_cast<rnti_t>(0x1000 + ue_idx);
+    ue_metrics.tot_dl_prbs_used =
+        (ue_idx < dl_grants.size()) ? std::accumulate(dl_grants[ue_idx].begin(), dl_grants[ue_idx].end(), 0) : 0;
+    ue_metrics.mean_dl_prbs_used =
+        sched_metric.nof_dl_slots > 0
+            ? static_cast<double>(1.0 * ue_metrics.tot_dl_prbs_used / sched_metric.nof_dl_slots)
+            : 0;
+    ue_metrics.tot_ul_prbs_used =
+        (ue_idx < ul_grants.size()) ? std::accumulate(ul_grants[ue_idx].begin(), ul_grants[ue_idx].end(), 0) : 0;
+    ue_metrics.mean_ul_prbs_used =
+        sched_metric.nof_ul_slots > 0
+            ? static_cast<double>(1.0 * ue_metrics.tot_ul_prbs_used / sched_metric.nof_ul_slots)
+            : 0;
+    sched_metric.ue_metrics.push_back(ue_metrics);
+  }
+
+  return sched_metric;
+}
+
 #if PCAP_OUTPUT
 TEST_F(e2_entity_test, e2sm_kpm_generates_ran_func_desc)
 {
@@ -377,6 +412,113 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
     TESTASSERT_EQ((i + 1) * expected_dl_vol, meas_record[1].integer());
     TESTASSERT_EQ((i + 1) * expected_ul_vol, meas_record[2].integer());
   }
+
+#if PCAP_OUTPUT
+  e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
+  packer->handle_message(e2_msg);
+  save_msg_pcap(gw->last_pdu);
+#endif
+}
+
+TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
+{
+  std::vector<uint32_t>              grants_ue0 = {1, 0, 3, 4, 5, 6, 7, 8, 9, 0};
+  std::vector<uint32_t>              grants_ue1 = {0, 0, 8, 7, 6, 5, 4, 3, 2, 1};
+  std::vector<uint32_t>              grants_ue2 = {5, 0, 5, 0, 5, 0, 5, 0, 5, 0};
+  std::vector<uint32_t>              grants_ue3 = {0, 0, 0, 0, 0, 5, 5, 5, 5, 5};
+  std::vector<std::vector<uint32_t>> dl_grants  = {grants_ue0, grants_ue1, grants_ue2, grants_ue3};
+  std::vector<std::vector<uint32_t>> ul_grants  = {grants_ue0, grants_ue1};
+
+  uint32_t nof_prbs      = 25;
+  uint32_t nof_slots     = grants_ue0.size();
+  uint32_t nof_meas_data = 1;
+  uint32_t nof_records   = 6;
+
+  uint32_t tot_dl_prbs = 0;
+  uint32_t tot_ul_prbs = 0;
+  for (const auto& grants : dl_grants) {
+    tot_dl_prbs += std::accumulate(grants.begin(), grants.end(), 0);
+  }
+  for (const auto& grants : ul_grants) {
+    tot_ul_prbs += std::accumulate(grants.begin(), grants.end(), 0);
+  }
+
+  uint32_t expected_dl_used_prbs  = tot_dl_prbs / nof_slots;
+  uint32_t expected_ul_used_prbs  = tot_ul_prbs / nof_slots;
+  uint32_t expected_dl_avail_prbs = nof_prbs - expected_dl_used_prbs;
+  uint32_t expected_ul_avail_prbs = nof_prbs - expected_ul_used_prbs;
+  uint32_t expected_dl_tot_prbs   = 100.0 * expected_dl_used_prbs / nof_prbs;
+  uint32_t expected_ul_tot_prbs   = 100.0 * expected_ul_used_prbs / nof_prbs;
+
+  // Define E2SM_KPM action format 1.
+  asn1::e2sm::e2sm_kpm_action_definition_s action_def;
+  action_def.ric_style_type = 1;
+  asn1::e2sm::e2sm_kpm_action_definition_format1_s& action_def_f1 =
+      action_def.action_definition_formats.set_action_definition_format1();
+  action_def_f1.cell_global_id_present = false;
+  action_def_f1.granul_period          = 100;
+
+  asn1::e2sm::meas_info_item_s  meas_info_item{};
+  asn1::e2sm::label_info_item_s label_info_item{};
+  label_info_item.meas_label.no_label_present = true;
+  label_info_item.meas_label.no_label         = asn1::e2sm::meas_label_s::no_label_opts::true_value;
+  meas_info_item.label_info_list.push_back(label_info_item);
+
+  meas_info_item.meas_type.set_meas_name().from_string("RRU.PrbUsedDl");
+  action_def_f1.meas_info_list.push_back(meas_info_item);
+  meas_info_item.meas_type.set_meas_name().from_string("RRU.PrbUsedUl");
+  action_def_f1.meas_info_list.push_back(meas_info_item);
+  meas_info_item.meas_type.set_meas_name().from_string("RRU.PrbAvailDl");
+  action_def_f1.meas_info_list.push_back(meas_info_item);
+  meas_info_item.meas_type.set_meas_name().from_string("RRU.PrbAvailUl");
+  action_def_f1.meas_info_list.push_back(meas_info_item);
+  meas_info_item.meas_type.set_meas_name().from_string("RRU.PrbTotDl");
+  action_def_f1.meas_info_list.push_back(meas_info_item);
+  meas_info_item.meas_type.set_meas_name().from_string("RRU.PrbTotUl");
+  action_def_f1.meas_info_list.push_back(meas_info_item);
+
+  asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+
+#if PCAP_OUTPUT
+  // Save E2 Subscription Request.
+  e2_message e2_subscript_req = generate_e2sm_kpm_subscription_request(ric_action);
+  packer->handle_message(e2_subscript_req);
+  save_msg_pcap(gw->last_pdu);
+#endif
+
+  ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
+  auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
+
+  // Push dummy metric measurements.
+  scheduler_cell_metrics sched_metrics;
+  sched_metrics = generate_sched_metrics(nof_prbs, nof_slots, dl_grants, ul_grants);
+  du_metrics->report_metrics(sched_metrics);
+
+  // Trigger measurement collection.
+  report_service->collect_measurements();
+
+  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
+  // Get RIC indication msg content.
+  byte_buffer ind_hdr_bytes = report_service->get_indication_header();
+  byte_buffer ind_msg_bytes = report_service->get_indication_message();
+
+  // Decode RIC Indication and check the content.
+  asn1::e2sm::e2sm_kpm_ind_msg_s ric_ind_msg;
+  asn1::cbit_ref                 ric_ind_bref(ind_msg_bytes);
+  if (ric_ind_msg.unpack(ric_ind_bref) != asn1::SRSASN_SUCCESS) {
+    test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
+    return;
+  }
+
+  TESTASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
+  auto& meas_record = ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[0].meas_record;
+  TESTASSERT_EQ(nof_records, meas_record.size());
+  TESTASSERT_EQ(expected_dl_used_prbs, meas_record[0].integer());
+  TESTASSERT_EQ(expected_ul_used_prbs, meas_record[1].integer());
+  TESTASSERT_EQ(expected_dl_avail_prbs, meas_record[2].integer());
+  TESTASSERT_EQ(expected_ul_avail_prbs, meas_record[3].integer());
+  TESTASSERT_EQ(expected_dl_tot_prbs, meas_record[4].integer());
+  TESTASSERT_EQ(expected_ul_tot_prbs, meas_record[5].integer());
 
 #if PCAP_OUTPUT
   e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
