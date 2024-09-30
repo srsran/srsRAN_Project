@@ -47,11 +47,26 @@ public:
 
   // See interface for documentation.
   bool is_valid(const prach_detector::configuration& config) const override { return prach->is_valid(config); }
-  bool is_valid(const pucch_processor::format0_configuration& config) const override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format1_configuration& config) const override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format2_configuration& config) const override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format3_configuration& config) const override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format4_configuration& config) const override { return pucch->is_valid(config); }
+  error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override
+  {
+    return pucch->is_valid(config);
+  }
+  error_type<std::string> is_valid(const pucch_processor::format1_configuration& config) const override
+  {
+    return pucch->is_valid(config);
+  }
+  error_type<std::string> is_valid(const pucch_processor::format2_configuration& config) const override
+  {
+    return pucch->is_valid(config);
+  }
+  error_type<std::string> is_valid(const pucch_processor::format3_configuration& config) const override
+  {
+    return pucch->is_valid(config);
+  }
+  error_type<std::string> is_valid(const pucch_processor::format4_configuration& config) const override
+  {
+    return pucch->is_valid(config);
+  }
   bool is_valid(const pusch_processor::pdu_t& config) const override { return pusch->is_valid(config); }
   bool is_valid(const srs_estimator_configuration& config) const override { return srs->is_valid(config); }
 

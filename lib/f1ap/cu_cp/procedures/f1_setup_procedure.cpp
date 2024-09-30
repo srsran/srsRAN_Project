@@ -21,13 +21,13 @@
  */
 
 #include "f1_setup_procedure.h"
-#include "../../common/asn1_helpers.h"
 #include "../f1ap_asn1_converters.h"
+#include "asn1_helpers.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_du_context.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 

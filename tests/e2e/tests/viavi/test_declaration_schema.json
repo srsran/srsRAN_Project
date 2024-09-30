@@ -37,8 +37,8 @@
                     "expected_ul_bitrate": {
                         "type": "integer"
                     },
-                    "fail_if_kos": {
-                        "type": "boolean"
+                    "expected_nof_kos": {
+                        "type": "integer"
                     },
                     "warning_as_errors": {
                         "type": "boolean"
@@ -55,7 +55,7 @@
                     "enable_qos_viavi",
                     "expected_dl_bitrate",
                     "expected_ul_bitrate",
-                    "fail_if_kos",
+                    "expected_nof_kos",
                     "warning_as_errors"
                 ],
                 "additionalProperties": false

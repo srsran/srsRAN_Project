@@ -30,16 +30,15 @@
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
-
 namespace detail {
 
 // Pool of workers with no associated task enqueueing policy.
 class base_worker_pool
 {
 public:
-  base_worker_pool(unsigned                              nof_workers_,
-                   const std::string&                    worker_pool_name,
-                   const std::function<void()>&          run_tasks_job,
+  base_worker_pool(unsigned                                              nof_workers_,
+                   const std::string&                                    worker_pool_name,
+                   const std::function<std::function<void()>(unsigned)>& worker_task_factory,
                    os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                    span<const os_sched_affinity_bitmask> cpu_masks = {});
   base_worker_pool(const base_worker_pool&)            = delete;
@@ -60,6 +59,9 @@ public:
 
   // List of workers belonging to the worker pool.
   std::vector<unique_thread> worker_threads;
+
+protected:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
 };
 
 class base_priority_task_queue
@@ -153,11 +155,6 @@ public:
   /// \brief Wait for all the currently enqueued tasks to complete. If more tasks get enqueued after this function call
   /// those tasks are not accounted for in the waiting.
   void wait_pending_tasks();
-
-private:
-  std::function<void()> create_pop_loop_task();
-
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
 };
 
 /// \brief Simple pool of task workers/threads. The workers share the same queue of task and do not perform
@@ -177,11 +174,7 @@ public:
                    unsigned                              qsize_,
                    std::chrono::microseconds             wait_sleep_time = std::chrono::microseconds{100},
                    os_thread_realtime_priority           prio            = os_thread_realtime_priority::no_realtime(),
-                   span<const os_sched_affinity_bitmask> cpu_masks       = {}) :
-    detail::base_task_queue<QueuePolicy>(qsize_, wait_sleep_time),
-    detail::base_worker_pool(nof_workers_, std::move(worker_pool_name), create_pop_loop_task(), prio, cpu_masks)
-  {
-  }
+                   span<const os_sched_affinity_bitmask> cpu_masks       = {});
   ~task_worker_pool();
 
   /// \brief Push a new task to be processed by the worker pool. If the task queue is full, it skips the task and
@@ -206,11 +199,6 @@ public:
   /// \brief Wait for all the currently enqueued tasks to complete. If more tasks get enqueued after this function call
   /// those tasks are not accounted for in the waiting.
   void wait_pending_tasks();
-
-private:
-  std::function<void()> create_pop_loop_task();
-
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
 };
 
 extern template class task_worker_pool<concurrent_queue_policy::lockfree_mpmc>;

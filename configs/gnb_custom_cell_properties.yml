@@ -1,42 +1,50 @@
-# This example configuration outlines how to use the 'cells' subcommand. The base cell configuration is 
-# for all cells using the 'cell_cfg' subcommand, with the 'cell' subcommand being used to overwrite this 
-# base configuration for a single cell. 
+# This example configuration outlines how to use the 'cells' subcommand. The base cell configuration is
+# for all cells using the 'cell_cfg' subcommand, with the 'cell' subcommand being used to overwrite this
+# base configuration for a single cell.
 
-amf:
-  addr: 127.0.1.100                                    
-  bind_addr: 127.0.0.1                                       
+cu_cp:
+  amf:
+    addr: 127.0.1.100
+    port: 38412
+    bind_addr: 127.0.0.1
+    supported_tracking_areas:
+      - tac: 7
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
 
 ru_sdr:
-  device_driver: uhd                                          
-  device_args: type=b200,num_recv_frames=64,num_send_frames=64 
-  clock:                                                      
-  sync:                                                       
-  srate: 23.04                                                 
+  device_driver: uhd
+  device_args: type=b200,num_recv_frames=64,num_send_frames=64
+  clock:
+  sync:
+  srate: 23.04
   otw_format: sc12
-  tx_gain: 50                                             
-  rx_gain: 60                                                  
+  tx_gain: 50
+  rx_gain: 60
 
 # Properties set in this section are inherited for all cells unless overridden inside the cells section.
 cell_cfg:
-  dl_arfcn: 632628                                       
-  band: 78                                                 
-  channel_bandwidth_MHz: 20                             
-  common_scs: 30                                         
-  plmn: "00101"                                                 
-  tac: 7                                                           
-  pci: 1                                                         
+  dl_arfcn: 632628
+  band: 78
+  channel_bandwidth_MHz: 20
+  common_scs: 30
+  plmn: "00101"
+  tac: 7
+  pci: 1
 
 # This section is represented as an array of cells. For this example, a single cell is declared that overrides the PCI and channel bandwidth properties from the default values.
 cells:
-  - pci: 10                                                       
-    channel_bandwidth_MHz: 10                                    
+  - pci: 10
+    channel_bandwidth_MHz: 10
 
 log:
   filename: /tmp/gnb.log
-  all_level: warning                                              
+  all_level: warning
 
 pcap:
-  mac_enable: false                                               
-  mac_filename: /tmp/gnb_mac.pcap                                 
-  ngap_enable: false                                              
-  ngap_filename: /tmp/gnb_ngap.pcap                               
+  mac_enable: false
+  mac_filename: /tmp/gnb_mac.pcap
+  ngap_enable: false
+  ngap_filename: /tmp/gnb_ngap.pcap

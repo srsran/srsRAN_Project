@@ -28,7 +28,7 @@
 namespace srsran {
 
 // See TS 38.473: QoS Priority Level valid values: (0..127)
-constexpr static uint8_t MAX_QOS_PRIO_LEVEL = 127;
+static constexpr uint8_t MAX_QOS_PRIO_LEVEL = 127;
 
 /// \brief QoS Priority Level.
 enum class qos_prio_level_t : uint8_t { min = 0, max = MAX_QOS_PRIO_LEVEL, invalid = MAX_QOS_PRIO_LEVEL + 1 };

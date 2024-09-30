@@ -26,7 +26,8 @@
 /// The benchmark compares the latency of a hardware-accelerated PDSCH encoder implementation to that of the generic
 /// one.
 
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/srsran_test.h"

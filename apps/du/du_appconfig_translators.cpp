@@ -21,6 +21,7 @@
  */
 
 #include "du_appconfig_translators.h"
+#include "apps/services/worker_manager_config.h"
 #include "du_appconfig.h"
 
 using namespace srsran;
@@ -54,4 +55,11 @@ srsran::sctp_network_connector_config srsran::generate_e2ap_nw_config(const du_a
   }
 
   return out_cfg;
+}
+
+void srsran::fill_du_worker_manager_config(worker_manager_config& config, const du_appconfig& unit_cfg)
+{
+  config.gtpu_queue_size       = unit_cfg.nru_cfg.pdu_queue_size;
+  config.nof_low_prio_threads  = unit_cfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads;
+  config.low_prio_sched_config = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
 }

@@ -178,11 +178,11 @@ public:
   virtual void on_new_as_security_context() = 0;
 };
 
-/// Interface to notify about NAS messages.
-class rrc_ue_nas_notifier
+/// Interface to notify about NGAP messages.
+class rrc_ue_ngap_notifier
 {
 public:
-  virtual ~rrc_ue_nas_notifier() = default;
+  virtual ~rrc_ue_ngap_notifier() = default;
 
   /// \brief Notify about the Initial UE Message.
   /// \param[in] msg The initial UE message.
@@ -191,23 +191,16 @@ public:
   /// \brief Notify about an Uplink NAS Transport message.
   /// \param[in] msg The Uplink NAS Transport message.
   virtual void on_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) = 0;
-};
-
-struct rrc_reconfiguration_response_message {
-  ue_index_t ue_index = ue_index_t::invalid;
-  bool       success  = false;
-};
-
-/// Interface to notify about control messages.
-class rrc_ue_control_notifier
-{
-public:
-  virtual ~rrc_ue_control_notifier() = default;
 
   /// \brief Notify about the reception of an inter CU handove related RRC Reconfiguration Complete.
   virtual void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
                                                           const nr_cell_global_id_t& cgi,
                                                           const unsigned             tac) = 0;
+};
+
+struct rrc_reconfiguration_response_message {
+  ue_index_t ue_index = ue_index_t::invalid;
+  bool       success  = false;
 };
 
 struct rrc_ue_security_mode_command_context {
@@ -283,7 +276,7 @@ public:
   /// \brief Get the RRC measurement config for the current serving cell of the UE.
   /// \params[in] current_meas_config The current meas config of the UE (if applicable).
   /// \return The measurement config, if present.
-  virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) = 0;
+  virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   /// \brief Handle the handover command RRC PDU.
   /// \param[in] cmd The handover command RRC PDU.
@@ -362,8 +355,9 @@ public:
   virtual ~rrc_ue_context_update_notifier() = default;
 
   /// \brief Notifies that a new RRC UE needs to be setup.
+  /// \param[in] plmn The PLMN of the UE.
   /// \return True if the UE is accepted.
-  virtual bool on_ue_setup_request() = 0;
+  virtual bool on_ue_setup_request(plmn_identity plmn) = 0;
 
   /// \brief Notify about the reception of an RRC Reestablishment Request.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.

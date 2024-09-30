@@ -154,6 +154,12 @@ subcarrier_spacing get_most_suitable_ssb_scs(nr_band band, subcarrier_spacing sc
 /// \return    true for paired spectrum, false otherwise.
 bool is_paired_spectrum(nr_band band);
 
+/// \brief     Returns boolean indicating whether the band is an unlicensed band.
+/// \remark    Unlicensed bands are CBRS and U-NII-x.
+/// \param[in] band Given band.
+/// \return    true for unlicensed band, false otherwise.
+bool is_unlicensed_band(nr_band band);
+
 /// \brief     Returns boolean indicating whether the band belongs to FR1 or FR2.
 /// \param[in] band Given band.
 /// \remark    The input band must be a valid NR band; the function does not return an error in case of invalid band.

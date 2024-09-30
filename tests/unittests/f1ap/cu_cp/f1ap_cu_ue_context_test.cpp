@@ -22,7 +22,7 @@
 
 #include "f1ap_cu_test_helpers.h"
 #include "lib/f1ap/cu_cp/ue_context/f1ap_cu_ue_context.h"
-#include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 

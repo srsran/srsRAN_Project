@@ -70,7 +70,7 @@ struct formatter<srsran::rlc_mode> {
   template <typename FormatContext>
   auto format(srsran::rlc_mode mode, FormatContext& ctx)
   {
-    constexpr static const char* options[] = {"TM", "UM Bi-dir", "UM Uni-dir-UL", "UM Uni-dir-DL", "AM"};
+    static constexpr const char* options[] = {"TM", "UM Bi-dir", "UM Uni-dir-UL", "UM Uni-dir-DL", "AM"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
   }
 };

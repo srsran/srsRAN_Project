@@ -77,10 +77,12 @@ protected:
 TEST_F(ngap_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
 {
   // Populate message
+  ngap_context_t ngap_ctxt = {{411, 22}, "srsgnb01", {{7, {{plmn_identity::test_value(), {{1}}}}}}, {}, 256};
+
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
-  fill_asn1_ng_setup_request(ngap_msg.pdu.init_msg().value.ng_setup_request(), generate_ng_setup_request());
+  fill_asn1_ng_setup_request(ngap_msg.pdu.init_msg().value.ng_setup_request(), ngap_ctxt);
 
   // Pack message and forward to gateway
   packer->handle_message(ngap_msg);

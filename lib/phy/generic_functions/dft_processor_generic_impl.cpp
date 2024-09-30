@@ -21,7 +21,7 @@
  */
 
 #include "dft_processor_generic_impl.h"
-#include "../../srsvec/simd.h"
+#include "srsran/srsvec/simd.h"
 #include "srsran/support/math_utils.h"
 
 using namespace srsran;

@@ -21,14 +21,14 @@
  */
 
 #include "du_high_cu_test_simulator.h"
-#include "lib/du_high/du_high_executor_strategies.h"
+#include "lib/du/du_high/du_high_executor_strategies.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du_high/du_high_factory.h"
+#include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -73,16 +73,17 @@ du_high_cu_cp_worker_manager::du_high_cu_cp_worker_manager(unsigned nof_dus) : t
     make_worker_and_executor(prefix_str + "-CELL");
     make_worker_and_executor(prefix_str + "-UE");
 
-    auto du_hi_cell_mapper =
-        std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{executors[prefix_str + "-CELL"]});
-    auto du_hi_ue_mapper = std::make_unique<pcell_ue_executor_mapper>(
+    auto du_hi_cell_mapper = std::make_unique<srs_du::cell_executor_mapper>(
+        std::initializer_list<task_executor*>{executors[prefix_str + "-CELL"]});
+    auto du_hi_ue_mapper = std::make_unique<srs_du::pcell_ue_executor_mapper>(
         std::initializer_list<task_executor*>{executors[prefix_str + "-UE"]});
 
-    du_hi_exec_mappers.push_back(std::make_unique<du_high_executor_mapper_impl>(std::move(du_hi_cell_mapper),
-                                                                                std::move(du_hi_ue_mapper),
-                                                                                *executors[prefix_str + "-CTRL"],
-                                                                                *executors[prefix_str + "-CTRL"],
-                                                                                *executors[prefix_str + "-CTRL"]));
+    du_hi_exec_mappers.push_back(
+        std::make_unique<srs_du::du_high_executor_mapper_impl>(std::move(du_hi_cell_mapper),
+                                                               std::move(du_hi_ue_mapper),
+                                                               *executors[prefix_str + "-CTRL"],
+                                                               *executors[prefix_str + "-CTRL"],
+                                                               *executors[prefix_str + "-CTRL"]));
   }
 }
 
@@ -105,8 +106,9 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   // Prepare CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();
   cu_cfg.services.cu_cp_executor        = workers.executors["CU-CP"];
-  cu_cfg.services.n2_gw                 = &n2_gw;
   cu_cfg.services.timers                = &timers;
+  cu_cfg.ngaps.push_back(
+      srs_cu_cp::cu_cp_configuration::ngap_params{&n2_gw, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
 
   // Instatiate CU-CP.
   cu_cp_inst = create_cu_cp(cu_cfg);
@@ -115,7 +117,9 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   cu_cp_inst->start();
 
   // Connect AMF by injecting a ng_setup_response
-  cu_cp_inst->get_ng_handler().get_ngap_message_handler().handle_message(srs_cu_cp::generate_ng_setup_response());
+  cu_cp_inst->get_ng_handler()
+      .get_ngap_message_handler(plmn_identity::test_value())
+      ->handle_message(srs_cu_cp::generate_ng_setup_response());
 
   // Connect F1-C to CU-CP.
   f1c_gw.attach_cu_cp_du_repo(cu_cp_inst->get_f1c_handler());
@@ -182,7 +186,7 @@ void du_high_cu_test_simulator::start_dus()
 void du_high_cu_test_simulator::run_slot()
 {
   for (unsigned i = 0; i != dus.size(); ++i) {
-    du_high& du_hi = *dus[i]->du_high_inst;
+    srs_du::du_high& du_hi = *dus[i]->du_high_inst;
 
     // Signal slot indication to l2.
     du_hi.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(dus[i]->next_slot);

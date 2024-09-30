@@ -109,7 +109,7 @@ public:
 
   std::optional<test_recv_data> receive()
   {
-    constexpr static uint32_t network_gateway_sctp_max_len = 9100;
+    static constexpr uint32_t network_gateway_sctp_max_len = 9100;
 
     test_recv_data data;
 

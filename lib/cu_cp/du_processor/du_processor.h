@@ -86,93 +86,6 @@ public:
   virtual const du_configuration_context* get_context() const = 0;
 };
 
-/// Interface to notify RRC DU about UE management procedures.
-class du_processor_rrc_du_ue_notifier
-{
-public:
-  virtual ~du_processor_rrc_du_ue_notifier() = default;
-
-  /// \brief Notify RRC DU about served cells.
-  /// \param[in] served_cell_list The list of served cells.
-  /// \return Returns true on success, false otherwise.
-  virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
-
-  /// \brief Notify RRC DU about a required RRCReject.
-  /// \return Returns a RRC Container containing the RRCReject.
-  virtual byte_buffer on_rrc_reject_required() = 0;
-
-  /// \brief Notify RRC DU to create a UE.
-  /// \param[in] msg The UE creation message.
-  /// \return Returns a handle to the created UE.
-  virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) = 0;
-
-  /// Send RRC Release to all UEs connected to this DU.
-  virtual void on_release_ues() = 0;
-};
-
-/// Interface to notify an RRC UE about control and srb messages.
-class du_processor_rrc_ue_notifier
-{
-public:
-  virtual ~du_processor_rrc_ue_notifier() = default;
-
-  /// \brief Notify the RRC UE to trigger a UE capability transfer procedure.
-  /// \param[in] msg The new request msg containing the RAT type, etc.
-  virtual async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
-
-  /// \brief Notify the RRC UE about an RRC Reconfiguration Request.
-  /// \param[in] msg The new RRC Reconfiguration Request.
-  /// \returns The result of the rrc reconfiguration.
-  virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
-
-  /// \brief Get the packed UE Capability RAT Container List.
-  /// \returns The packed UE Capability RAT Container List.
-  virtual byte_buffer get_packed_ue_capability_rat_container_list() = 0;
-
-  /// \brief Request the RRC Handover Reconfiguration Context.
-  /// \returns The RRC Handover Reconfiguration Context.
-  virtual rrc_ue_handover_reconfiguration_context
-  get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) = 0;
-
-  /// \brief Notify the target RRC UE to await a RRC Reconfiguration Complete for a handover.
-  /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
-  /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
-  virtual async_task<bool> on_handover_reconfiguration_complete_expected(uint8_t transaction_id) = 0;
-
-  /// \brief Get the RRC UE release context.
-  /// \returns The release context of the UE.
-  virtual rrc_ue_release_context get_rrc_ue_release_context(bool requires_rrc_message) = 0;
-
-  /// \brief Get all mobility related information of an UE required for reestablishment, handover, etc.
-  /// \returns The mobility context of the UE.
-  virtual rrc_ue_transfer_context get_transfer_context() = 0;
-
-  /// \brief (Re-)generate the RRC measurement config for the current serving cell of the UE.
-  /// \params[in] current_meas_config The current meas config of the UE (if applicable).
-  /// \return The measurement config, if present.
-  virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
-
-  /// \brief Request the packed Handover Preparation Message.
-  virtual byte_buffer get_packed_handover_preparation_message() = 0;
-
-  /// \brief Notify about the reception of a new Handover Command PDU.
-  /// \param[in] cmd The handover command RRC PDU.
-  /// \returns The RRC Handover Reconfiguration PDU. If the Handover Command PDU is invalid, an empty buffer is
-  /// returned.
-  virtual byte_buffer on_new_rrc_handover_command(byte_buffer cmd) = 0;
-
-  /// \brief Request the RRC Handover Command PDU.
-  /// \returns The RRC Handover Command PDU.
-  virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
-                                                       unsigned                                     transaction_id) = 0;
-
-  /// \brief Create an SRB at the target RRC UE.
-  virtual void create_srb(const srb_creation_message& msg) = 0;
-
-  /// \brief Get all SRBs of the UE.
-  virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() = 0;
-};
-
 /// Interface used by mobility manager to trigger handover routines.
 class du_processor_mobility_handler
 {
@@ -227,10 +140,6 @@ public:
   virtual rrc_du& get_rrc_du_handler() = 0;
 
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
-
-  /// \brief Get the F1AP message handler interface of the DU processor object.
-  /// \return The F1AP message handler interface of the DU processor object.
-  virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
 
   /// \brief Retrieve the DU-specific metrics handler.
   virtual du_metrics_handler& get_metrics_handler() = 0;

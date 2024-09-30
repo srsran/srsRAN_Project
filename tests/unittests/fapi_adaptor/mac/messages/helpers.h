@@ -94,6 +94,14 @@ struct ul_sched_info_test_helper {
 /// Builds and returns a valid PUSCH PDU.
 ul_sched_info_test_helper build_valid_pusch_pdu();
 
+struct srs_info_helper {
+  bwp_configuration bwp_cfg;
+  srs_info          pdu;
+};
+
+/// Builds and returns a valid SRS PDU.
+srs_info_helper build_valid_srs_pdu();
+
 /// Helper struct to manage the pointer life cycle of a PUCCH info.
 struct pucch_info_test_helper {
   bwp_configuration bwp_cfg;

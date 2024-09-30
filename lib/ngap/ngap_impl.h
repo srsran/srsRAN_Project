@@ -23,7 +23,6 @@
 #pragma once
 
 #include "ngap_connection_handler.h"
-#include "ngap_context.h"
 #include "ngap_error_indication_helper.h"
 #include "procedures/ngap_transaction_manager.h"
 #include "ue_context/ngap_ue_context.h"
@@ -42,11 +41,12 @@ namespace srs_cu_cp {
 class ngap_impl final : public ngap_interface
 {
 public:
-  ngap_impl(const ngap_configuration& ngap_cfg_,
-            ngap_cu_cp_notifier&      cu_cp_notifier_,
-            n2_connection_client&     n2_gateway,
-            timer_manager&            timers_,
-            task_executor&            ctrl_exec_);
+  ngap_impl(const ngap_configuration&                      ngap_cfg_,
+            ngap_cu_cp_notifier&                           cu_cp_notifier_,
+            start_ngap_handover_preparation_procedure_func start_ho_prep_func_,
+            n2_connection_client&                          n2_gateway,
+            timer_manager&                                 timers_,
+            task_executor&                                 ctrl_exec_);
   ~ngap_impl();
 
   bool
@@ -55,7 +55,7 @@ public:
   // ngap connection manager functions
   bool                             handle_amf_tnl_connection_request() override;
   async_task<void>                 handle_amf_disconnection_request() override;
-  async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) override;
+  async_task<ngap_ng_setup_result> handle_ng_setup_request(unsigned max_setup_retries) override;
   async_task<void>                 handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
 
   // ngap_nas_message_handler
@@ -73,10 +73,11 @@ public:
   // ngap_control_message_handler
   async_task<bool> handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
   async_task<ngap_handover_preparation_response>
-       handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
-  void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
-                                             const nr_cell_global_id_t& cgi,
-                                             const unsigned             tac) override;
+                        handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
+  void                  handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                                              const nr_cell_global_id_t& cgi,
+                                                              const unsigned             tac) override;
+  const ngap_context_t& get_ngap_context() const override { return context; };
 
   // ngap_statistics_handler
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
@@ -188,6 +189,9 @@ private:
   ngap_connection_handler conn_handler;
 
   std::unique_ptr<tx_pdu_notifier_with_logging> tx_pdu_notifier;
+
+  // Plugins
+  start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
 };
 
 } // namespace srs_cu_cp

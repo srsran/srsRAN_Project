@@ -22,7 +22,7 @@
 
 #include "srsran/phy/constants.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
@@ -32,6 +32,7 @@
 #include "srsran/ran/pdsch/dlsch_info.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pusch/pusch_constants.h"
+#include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/srsvec/bit.h"

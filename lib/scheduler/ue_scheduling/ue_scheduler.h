@@ -32,6 +32,7 @@ class pdcch_resource_allocator;
 struct cell_resource_allocator;
 class sched_ue_configuration_handler;
 class scheduler_event_logger;
+class cell_metrics_handler;
 
 struct ue_scheduler_cell_params {
   du_cell_index_t           cell_index;
@@ -39,6 +40,7 @@ struct ue_scheduler_cell_params {
   pucch_allocator*          pucch_alloc;
   uci_allocator*            uci_alloc;
   cell_resource_allocator*  cell_res_alloc;
+  cell_metrics_handler*     cell_metrics;
   scheduler_event_logger*   ev_logger;
 };
 
@@ -52,7 +54,7 @@ public:
   virtual void add_cell(const ue_scheduler_cell_params& params) = 0;
 
   /// Schedule UE DL and UL grants for a given {slot, cell}.
-  virtual void run_slot(slot_point slot_tx, du_cell_index_t cell_index) = 0;
+  virtual void run_slot(slot_point slot_tx) = 0;
 
   /// Handle error in the lower layers.
   virtual void handle_error_indication(slot_point                            sl_tx,

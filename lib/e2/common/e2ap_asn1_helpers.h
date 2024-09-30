@@ -115,9 +115,29 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
   list[0].load_info_obj(ASN1_E2AP_ID_E2NODE_COMPONENT_CFG_ADDITION_ITEM);
   e2node_component_cfg_addition_item_s& e2node_cfg_item = list[0].value().e2node_component_cfg_addition_item();
   e2node_cfg_item.e2node_component_interface_type       = e2node_component_interface_type_opts::ng;
-  e2node_cfg_item.e2node_component_id.set_e2node_component_interface_type_ng().amf_name.from_string("nginterf");
-  e2node_cfg_item.e2node_component_cfg.e2node_component_request_part.from_string("72657170617274");
-  e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.from_string("72657370617274");
+  e2node_cfg_item.e2node_component_id.set_e2node_component_interface_type_ng().amf_name.from_string("test_amf_name");
+
+  uint8_t ngap_request[] = {0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1,
+                            0x10, 0x00, 0x00, 0x06, 0x6c, 0x00, 0x52, 0x40, 0x0a, 0x03, 0x80, 0x63, 0x75, 0x5f,
+                            0x63, 0x70, 0x5f, 0x30, 0x31, 0x00, 0x66, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x07,
+                            0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};
+
+  uint8_t     ngap_resp[] = {0x20, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x01, 0x00, 0x0f, 0x06, 0x00, 0x74,
+                             0x65, 0x73, 0x74, 0x5f, 0x61, 0x6d, 0x66, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x00, 0x60,
+                             0x00, 0x08, 0x00, 0x00, 0x00, 0xf1, 0x10, 0x02, 0x00, 0x40, 0x00, 0x56, 0x40, 0x01,
+                             0xff, 0x00, 0x50, 0x00, 0x08, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08};
+  byte_buffer request_buf = byte_buffer::create(ngap_request, ngap_request + sizeof(ngap_request)).value();
+  byte_buffer resp_buf    = byte_buffer::create(ngap_resp, ngap_resp + sizeof(ngap_resp)).value();
+
+  if (e2node_cfg_item.e2node_component_cfg.e2node_component_request_part.resize(request_buf.length())) {
+    std::copy(request_buf.begin(),
+              request_buf.end(),
+              e2node_cfg_item.e2node_component_cfg.e2node_component_request_part.begin());
+  }
+  if (e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.resize(resp_buf.length())) {
+    std::copy(
+        resp_buf.begin(), resp_buf.end(), e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.begin());
+  }
 }
 
 } // namespace srsran

@@ -24,8 +24,8 @@
 
 #include "f1ap_cu_ue_transaction_manager.h"
 #include "f1ap_ue_logger.h"
-#include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include <unordered_map>
 
 namespace srsran {

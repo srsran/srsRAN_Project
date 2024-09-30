@@ -1,35 +1,43 @@
 # This example configuration outlines how to configure the srsRAN Project gNB to create a single FDD cell
-# transmitting in band 3, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing. A USRP N3XX is configured 
+# transmitting in band 3, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing. A USRP N3XX is configured
 # as the RF frontend using split 8. Note in this example the internal GPDSO of the N310 is used.
 
-amf:
-  addr: 127.0.1.100                   
-  bind_addr: 127.0.0.1                
+cu_cp:
+  amf:
+    addr: 127.0.1.100
+    port: 38412
+    bind_addr: 127.0.0.1
+    supported_tracking_areas:
+      - tac: 7
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
 
 ru_sdr:
-  device_driver: uhd                  
-  device_args: type=n3xx              
-  clock: gpsdo                        
-  sync: gpsdo                         
-  srate: 30.72                        
-  tx_gain: 35                         
-  rx_gain: 60                         
+  device_driver: uhd
+  device_args: type=n3xx
+  clock: gpsdo
+  sync: gpsdo
+  srate: 30.72
+  tx_gain: 35
+  rx_gain: 60
 
 cell_cfg:
-  dl_arfcn: 368640                    
-  band: 3                             
-  channel_bandwidth_MHz: 20           
-  common_scs: 15                      
-  plmn: "00101"                       
-  tac: 7                              
-  pci: 1                              
+  dl_arfcn: 368640
+  band: 3
+  channel_bandwidth_MHz: 20
+  common_scs: 15
+  plmn: "00101"
+  tac: 7
+  pci: 1
 
 log:
-  filename: /tmp/gnb.log              
-  all_level: info                     
+  filename: /tmp/gnb.log
+  all_level: info
 
 pcap:
-  mac_enable: false                   
-  mac_filename: /tmp/gnb_mac.pcap     
-  ngap_enable: false                  
-  ngap_filename: /tmp/gnb_ngap.pcap   
+  mac_enable: false
+  mac_filename: /tmp/gnb_mac.pcap
+  ngap_enable: false
+  ngap_filename: /tmp/gnb_ngap.pcap

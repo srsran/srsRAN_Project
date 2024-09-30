@@ -23,27 +23,20 @@
 #include "scheduler_impl.h"
 #include "ue_scheduling/ue_scheduler_impl.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
-#include "srsran/scheduler/config/scheduler_ue_config_validator.h"
 
 using namespace srsran;
 
 scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
   expert_params(sched_cfg_.expert_params),
-  config_notifier(sched_cfg_.config_notifier),
   logger(srslog::fetch_basic_logger("SCHED")),
   metrics(expert_params.metrics_report_period, sched_cfg_.metrics_notifier),
-  cfg_mng(sched_cfg_)
+  cfg_mng(sched_cfg_, metrics)
 {
 }
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  cell_metrics_handler* cell_metrics = metrics.add_cell(msg.cell_index);
-  if (cell_metrics == nullptr) {
-    return false;
-  }
-
-  const cell_configuration* cell_cfg = cfg_mng.add_cell(msg, *cell_metrics);
+  const cell_configuration* cell_cfg = cfg_mng.add_cell(msg);
   if (cell_cfg == nullptr) {
     return false;
   }
@@ -51,14 +44,13 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
     // If it is a new group, create a new instance.
-    groups.emplace(msg.cell_group_index,
-                   std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, *cell_metrics));
+    groups.emplace(msg.cell_group_index, std::make_unique<ue_scheduler_impl>(expert_params.ue));
   }
 
   // Create a new cell scheduler instance.
-  cells.emplace(
-      msg.cell_index,
-      std::make_unique<cell_scheduler>(expert_params, msg, *cell_cfg, *groups[msg.cell_group_index], *cell_metrics));
+  cells.emplace(msg.cell_index,
+                std::make_unique<cell_scheduler>(
+                    expert_params, msg, *cell_cfg, *groups[msg.cell_group_index], metrics.at(msg.cell_index)));
 
   return true;
 }

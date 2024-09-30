@@ -136,8 +136,11 @@ public:
   /// \return The measured EVM if present, otherwise \c std::nullopt.
   std::optional<float> get_evm() const { return evm; }
 
-  /// \brief Sets the time alignment measurement in PHY time units.
+  /// Sets the time alignment measurement in PHY time units.
   void set_time_alignment(const phy_time_unit& time_alignment_) { time_alignment.emplace(time_alignment_); }
+
+  /// Resets the time alignment.
+  void reset_time_alignment() { time_alignment.reset(); }
 
   /// \brief Gets the time alignment.
   ///

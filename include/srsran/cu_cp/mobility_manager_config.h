@@ -29,6 +29,7 @@ namespace srs_cu_cp {
 /// \brief Mobility manager configuration.
 struct mobility_manager_cfg {
   bool trigger_handover_from_measurements = false; ///< Set to true to trigger HO when neighbor becomes stronger.
+  bool enable_ng_handover                 = false; ///< Set to true if plugins are loaded to enable NG handover.
 };
 
 } // namespace srs_cu_cp

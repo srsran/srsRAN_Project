@@ -27,18 +27,30 @@
 #include "srsran/cu_cp/ue_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/rrc/rrc_ue_config.h"
+#include "srsran/support/async/async_task.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
 class n2_connection_client;
+class ngap_repository;
+
+using connect_amfs_func = async_task<bool> (*)(ngap_repository&                                    ngap_db,
+                                               std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected);
+
+using disconnect_amfs_func = async_task<void> (*)(ngap_repository&                                    ngap_db,
+                                                  std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected);
+
+struct plmn_item {
+  plmn_identity plmn_id;
+  /// Supported Slices by the RAN node.
+  std::vector<s_nssai_t> slice_support_list;
+};
 
 struct supported_tracking_area {
-  unsigned      tac;
-  plmn_identity plmn;
-  /// Supported Slices by the RAN node.
-  std::vector<s_nssai_t> supported_slices;
+  unsigned               tac;
+  std::vector<plmn_item> plmn_list;
 };
 
 /// Parameters of the CU-CP that will reported to the 5G core.
@@ -46,8 +58,6 @@ struct ran_node_configuration {
   /// The gNodeB identifier.
   gnb_id_t    gnb_id{411, 22};
   std::string ran_node_name = "srsgnb01";
-  // Supported TAs in the NG RAN node.
-  std::vector<supported_tracking_area> supported_tas;
 };
 
 struct mobility_configuration {
@@ -64,13 +74,21 @@ struct cu_cp_configuration {
     unsigned max_nof_cu_ups = 6;
     /// Maximum number of UEs that the CU-CP may accept.
     unsigned max_nof_ues = 8192;
+    /// Maximum number of DRBs per UE that the CU-CP will configure.
+    uint8_t max_nof_drbs_per_ue = 8;
   };
   struct service_params {
-    task_executor*        cu_cp_executor = nullptr;
-    task_executor*        cu_cp_e2_exec  = nullptr;
-    n2_connection_client* n2_gw          = nullptr;
-    timer_manager*        timers         = nullptr;
+    task_executor* cu_cp_executor = nullptr;
+    task_executor* cu_cp_e2_exec  = nullptr;
+    timer_manager* timers         = nullptr;
   };
+
+  struct ngap_params {
+    n2_connection_client* n2_gw = nullptr;
+    // Supported TAs for each AMF.
+    std::vector<supported_tracking_area> supported_tas;
+  };
+
   struct rrc_params {
     /// Force re-establishment fallback.
     bool force_reestablishment_fallback = false;
@@ -98,10 +116,23 @@ struct cu_cp_configuration {
     std::chrono::seconds statistics_report_period{1};
   };
 
+  struct plugin_params {
+    /// Try to load CU-CP plugins.
+    bool load_plugins;
+    /// Loaded function pointer to trigger NG Handover
+    void* start_ng_ho_func = nullptr;
+    /// Loaded function pointer to connect to AMFs
+    connect_amfs_func connect_amfs = nullptr;
+    /// Loaded function pointer to disconnect from AMFs
+    disconnect_amfs_func disconnect_amfs = nullptr;
+  };
+
   /// NG-RAN node parameters.
   ran_node_configuration node;
   /// Parameters to determine the admission of new CU-UP, DU and UE connections.
   admission_params admission;
+  /// NGAP layer-specific parameters.
+  std::vector<ngap_params> ngaps;
   /// RRC layer-specific parameters.
   rrc_params rrc;
   /// F1AP layer-specific parameters.
@@ -116,6 +147,8 @@ struct cu_cp_configuration {
   mobility_configuration mobility;
   /// Parameters related with CU-CP metrics.
   metrics_params metrics;
+  /// Plugins parameters
+  plugin_params plugin;
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
 };

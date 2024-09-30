@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../ngap_repository.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_command_handler.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
@@ -65,7 +66,7 @@ class mobility_manager final : public mobility_manager_measurement_handler, publ
 public:
   mobility_manager(const mobility_manager_cfg&      cfg,
                    mobility_manager_cu_cp_notifier& cu_cp_notifier_,
-                   ngap_control_message_handler&    ngap_handler_,
+                   ngap_repository&                 ngap_db_,
                    du_processor_repository&         du_db_,
                    ue_manager&                      ue_mng_);
 
@@ -88,7 +89,7 @@ private:
 
   mobility_manager_cfg             cfg;
   mobility_manager_cu_cp_notifier& cu_cp_notifier;
-  ngap_control_message_handler&    ngap_handler;
+  ngap_repository&                 ngap_db;
   du_processor_repository&         du_db;
   ue_manager&                      ue_mng;
 

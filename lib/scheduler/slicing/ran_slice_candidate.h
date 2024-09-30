@@ -50,7 +50,7 @@ public:
   void store_grant(unsigned nof_rbs)
   {
     if constexpr (IsDl) {
-      inst->store_pdsch_grant(nof_rbs);
+      inst->store_pdsch_grant(nof_rbs, slot_tx);
     } else {
       inst->store_pusch_grant(nof_rbs, slot_tx);
     }
@@ -62,9 +62,9 @@ public:
     if constexpr (IsDl) {
       return max_rbs < inst->pdsch_rb_count ? 0 : max_rbs - inst->pdsch_rb_count;
     }
-    return max_rbs < inst->pusch_rb_count_per_slot[slot_tx.to_uint()]
+    return max_rbs < inst->pusch_rb_count_per_slot[slot_tx.to_uint() % inst->pusch_rb_count_per_slot.size()]
                ? 0
-               : max_rbs - inst->pusch_rb_count_per_slot[slot_tx.to_uint()];
+               : max_rbs - inst->pusch_rb_count_per_slot[slot_tx.to_uint() % inst->pusch_rb_count_per_slot.size()];
   }
 
   /// Returns slot at which PUSCH/PDSCH needs to be scheduled for this slice candidate.

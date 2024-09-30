@@ -28,6 +28,7 @@
 #include "ue_pdsch_alloc_param_candidate_searcher.h"
 #include "ue_pusch_alloc_param_candidate_searcher.h"
 #include "srsran/ran/pdcch/coreset.h"
+#include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/support/error_handling.h"
 
@@ -500,7 +501,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
 {
   srsran_assert(ues.contains(grant.user->ue_index()), "Invalid UE candidate index={}", grant.user->ue_index());
   srsran_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
-  constexpr static unsigned pdcch_delay_in_slots = 0;
+  static constexpr unsigned pdcch_delay_in_slots = 0;
 
   if (ul_attempts_count++ >= expert_cfg.max_pdcch_alloc_attempts_per_slot) {
     logger.debug("Stopping UL allocations. Cause: Max number of UL PDCCH allocation attempts {} reached.",
@@ -720,6 +721,15 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       // Re-apply nof. PUSCH RBs to allocate limits.
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.start());
       mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.stop());
+      // Ensure the number of PRB is valid if the transform precoder is used. The condition the PUSCH bandwidth with
+      // transform precoder is defined in TS 38.211 Section 6.1.3. The number of PRB must be lower than or equal to
+      // current number of PRB.
+      if ((dci_type == dci_ul_rnti_config_type::c_rnti_f0_1)
+              ? ue_cell_cfg.use_pusch_transform_precoding_dci_0_1()
+              : ue_cell_cfg.cell_cfg_common.use_msg3_transform_precoder()) {
+        mcs_prbs.n_prbs =
+            get_transform_precoding_nearest_lower_nof_prb_valid(mcs_prbs.n_prbs).value_or(mcs_prbs.n_prbs);
+      }
     }
 
     // NOTE: This should never happen, but it's safe not to proceed if we get n_prbs == 0.

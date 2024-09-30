@@ -963,6 +963,21 @@ bool srsran::band_helper::is_paired_spectrum(nr_band band)
   return mode == duplex_mode::FDD;
 }
 
+bool srsran::band_helper::is_unlicensed_band(nr_band band)
+{
+  srsran_assert(band != nr_band::invalid, "Band must be a valid NR band.");
+  switch (band) {
+    case nr_band::n46:
+    case nr_band::n48:
+    case nr_band::n96:
+    case nr_band::n102:
+    case nr_band::n104:
+      return true;
+    default:
+      return false;
+  }
+}
+
 frequency_range srsran::band_helper::get_freq_range(nr_band band)
 {
   srsran_assert(band != nr_band::invalid, "Band must be a valid NR band.");
@@ -972,7 +987,7 @@ frequency_range srsran::band_helper::get_freq_range(nr_band band)
 
 double srsran::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq)
 {
-  constexpr static unsigned NRE = 12;
+  static constexpr unsigned NRE = 12;
 
   // For FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
   // TODO: add offset_to_carrier.
@@ -986,7 +1001,7 @@ uint32_t srsran::band_helper::get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint3
 
 double srsran::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_point_a_arfcn)
 {
-  constexpr static unsigned NRE = 12;
+  static constexpr unsigned NRE = 12;
   // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
   // TODO: add offset_to_carrier
   const double abs_freq_point_a_freq = nr_arfcn_to_freq(freq_point_a_arfcn);
@@ -1002,7 +1017,7 @@ double srsran::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32
   // supported by the BS.<\em>. Therefore, the correct SCS to be used in this procedure still needs to determined.
 
   // Half of the number of subcarriers in a RE.
-  constexpr static unsigned NRE_half = 6;
+  static constexpr unsigned NRE_half = 6;
 
   // The procedure, which is explained in TS 38.104, Section 5.4.2.2, gives the position of f_ref in terms of subcarrier
   // and CRB index, depending on the size of N_RB. Below we compute the value in unit of subcarriers, meaning we don't
@@ -1017,7 +1032,7 @@ srsran::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, ui
   // See notes in \ref get_abs_freq_point_a_from_f_ref.
 
   // Half of the number of subcarriers in a RE.
-  constexpr static unsigned NRE_half = 6;
+  static constexpr unsigned NRE_half = 6;
   // The procedure used in this function is the inverse of what explained in TS 38.104, Section 5.4.2.2.
   const unsigned delta_point_a_f_ref = nof_rbs * NRE_half;
   return abs_freq_point_a + static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * KHZ_TO_HZ);

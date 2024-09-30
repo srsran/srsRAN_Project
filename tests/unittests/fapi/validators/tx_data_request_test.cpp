@@ -42,7 +42,7 @@ TEST_P(validate_tx_data_request_field, with_value)
                build_valid_tx_data_request,
                validate_tx_data_request,
                srsran::fapi::message_type_id::tx_data_request);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(sfn,
                          validate_tx_data_request_field,

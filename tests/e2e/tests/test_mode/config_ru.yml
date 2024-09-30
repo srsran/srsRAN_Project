@@ -37,7 +37,6 @@ cell_cfg:
   pdsch:
     min_ue_mcs: 27
     mcs_table: qam256
-    max_rb_size: 16
   pusch:
     min_ue_mcs: 27
     mcs_table: qam256
@@ -47,6 +46,7 @@ cells:
   - pci: 1
 
 ru_dummy:
+  time_scaling: 10
 
 test_mode:
   test_ue:
@@ -59,6 +59,9 @@ test_mode:
 expert_execution:
   affinities:
     low_priority_cpus: {{low_priority_cpus}}
+    {% if ru_timing_cpu %}
+    ru_timing_cpu: {{ ru_timing_cpu }}
+    {% endif %}
   cell_affinities:
     - l1_dl_cpus: {{l1_dl_cpus}}
       l1_ul_cpus: {{l1_ul_cpus}}

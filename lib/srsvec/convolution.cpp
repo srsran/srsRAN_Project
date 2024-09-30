@@ -22,7 +22,7 @@
  */
 
 #include "srsran/srsvec/convolution.h"
-#include "simd.h"
+#include "srsran/srsvec/simd.h"
 
 using namespace srsran;
 using namespace srsvec;

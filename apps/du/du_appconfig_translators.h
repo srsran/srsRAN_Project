@@ -28,8 +28,12 @@
 namespace srsran {
 
 struct du_appconfig;
+struct worker_manager_config;
 
 /// Converts and returns the given gnb application configuration to a E2AP Network Gateway configuration.
 sctp_network_connector_config generate_e2ap_nw_config(const du_appconfig& config, int ppid);
+
+/// Fills the DU worker manager parameters of the given worker manager configuration.
+void fill_du_worker_manager_config(worker_manager_config& config, const du_appconfig& unit_cfg);
 
 } // namespace srsran

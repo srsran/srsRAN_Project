@@ -21,11 +21,12 @@
  */
 
 #include "du_wrapper_impl.h"
-#include "srsran/du/du_high_wrapper.h"
-#include "srsran/du_low/du_low.h"
+#include "srsran/du/du_high/du_high_wrapper.h"
+#include "srsran/du/du_low/du_low.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
+using namespace srs_du;
 
 du_wrapper_impl::du_wrapper_impl(du_wrapper_impl_dependencies&& dependencies) :
   du_lo(std::move(dependencies.du_lo)), du_hi(std::move(dependencies.du_hi))
@@ -36,13 +37,13 @@ du_wrapper_impl::du_wrapper_impl(du_wrapper_impl_dependencies&& dependencies) :
 
 void du_wrapper_impl::start()
 {
-  du_hi->start();
+  du_hi->get_power_controller().start();
 }
 
 void du_wrapper_impl::stop()
 {
-  du_lo->get_du_low().stop();
-  du_hi->stop();
+  du_lo->get_du_low().get_power_controller().stop();
+  du_hi->get_power_controller().stop();
 }
 
 du_high_wrapper& du_wrapper_impl::get_du_high_wrapper()

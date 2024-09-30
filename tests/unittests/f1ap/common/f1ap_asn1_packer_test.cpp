@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/f1ap/common/f1ap_asn1_packer.h"
+#include "lib/f1ap/f1ap_asn1_packer.h"
 #include "test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"

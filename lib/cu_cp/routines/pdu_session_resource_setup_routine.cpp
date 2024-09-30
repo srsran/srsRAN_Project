@@ -71,7 +71,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const security_indication_t&                    default_security_indication_,
     e1ap_bearer_context_manager&                    e1ap_bearer_ctxt_mng_,
     f1ap_ue_context_manager&                        f1ap_ue_ctxt_mng_,
-    du_processor_rrc_ue_notifier&                   rrc_ue_notifier_,
+    rrc_ue_interface*                               rrc_ue_,
     cu_cp_rrc_ue_interface&                         cu_cp_notifier_,
     ue_task_scheduler&                              ue_task_sched_,
     up_resource_manager&                            up_resource_mng_,
@@ -82,7 +82,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
   default_security_indication(default_security_indication_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
-  rrc_ue_notifier(rrc_ue_notifier_),
+  rrc_ue(rrc_ue_),
   cu_cp_notifier(cu_cp_notifier_),
   ue_task_sched(ue_task_sched_),
   up_resource_mng(up_resource_mng_),
@@ -162,7 +162,7 @@ void pdu_session_resource_setup_routine::operator()(
     ue_context_mod_request.ue_index = setup_msg.ue_index;
     ue_context_mod_request.cu_to_du_rrc_info.emplace();
     ue_context_mod_request.cu_to_du_rrc_info.value().ue_cap_rat_container_list =
-        rrc_ue_notifier.get_packed_ue_capability_rat_container_list();
+        rrc_ue->get_packed_ue_capability_rat_container_list();
 
     // DRB setup have already added above.
     CORO_AWAIT_VALUE(ue_context_modification_response,
@@ -226,7 +226,7 @@ void pdu_session_resource_setup_routine::operator()(
                                   {} /* No extra DRB to be removed */,
                                   ue_context_modification_response.du_to_cu_rrc_info,
                                   nas_pdus,
-                                  next_config.initial_context_creation ? rrc_ue_notifier.generate_meas_config()
+                                  next_config.initial_context_creation ? rrc_ue->generate_meas_config()
                                                                        : std::optional<rrc_meas_cfg>{},
                                   false,
                                   false,
@@ -238,7 +238,7 @@ void pdu_session_resource_setup_routine::operator()(
       }
     }
 
-    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
+    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue->handle_rrc_reconfiguration_request(rrc_reconfig_args));
 
     // Handle RRC Reconfiguration Response
     if (!handle_procedure_response(response_msg, setup_msg, rrc_reconfig_result, logger)) {

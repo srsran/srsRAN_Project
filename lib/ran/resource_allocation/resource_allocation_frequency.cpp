@@ -26,7 +26,7 @@
 
 using namespace srsran;
 
-unsigned int srsran::ra_frequency_type1_get_riv(const ra_frequency_type1_configuration& config)
+unsigned srsran::ra_frequency_type1_get_riv(const ra_frequency_type1_configuration& config)
 {
   srsran_assert(config.length_vrb >= 1,
                 "The number of contiguous allocated blocks must be greater than or equal to 1.");

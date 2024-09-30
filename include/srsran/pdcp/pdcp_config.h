@@ -279,7 +279,7 @@ struct formatter<srsran::pdcp_rb_type> {
   template <typename FormatContext>
   auto format(srsran::pdcp_rb_type type, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"SRB", "DRB"};
+    static constexpr const char* options[] = {"SRB", "DRB"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(type)]);
   }
 };
@@ -296,7 +296,7 @@ struct formatter<srsran::pdcp_rlc_mode> {
   template <typename FormatContext>
   auto format(srsran::pdcp_rlc_mode mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"UM", "AM"};
+    static constexpr const char* options[] = {"UM", "AM"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
   }
 };

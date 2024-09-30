@@ -160,7 +160,7 @@ gnb docker compose uhd:
   variables:
     <<: *uhd_params
   script:
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb amf --no_core=true ru_sdr --device_driver uhd | grep 'Failed to open device with address'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb cu_cp amf --no_core=true ru_sdr --device_driver uhd | grep 'Failed to open device with address'"
 
 gnb docker compose dpdk:
   extends: .gnb docker compose
@@ -168,7 +168,7 @@ gnb docker compose dpdk:
     <<: *dpdk_params
   script:
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which ru_emulator"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb amf --no_core=true hal --eal_args='--help'"  
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb cu_cp amf --no_core=true hal --eal_args='--help'"
 
 5gc docker compose:
   extends: .docker compose

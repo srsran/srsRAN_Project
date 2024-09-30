@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/asn1/f1ap/f1ap.h"
-#include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
+#include "srsran/f1ap/f1ap_message_notifier.h"
 
 namespace srsran {
 namespace srs_cu_cp {

@@ -32,7 +32,8 @@ scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cf
 
 void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 dl_ran_slice_candidate&      slice_candidate)
+                                 dl_ran_slice_candidate&      slice_candidate,
+                                 dl_harq_pending_retx_list    harq_pending_retx_list)
 {
   // Clear the existing contents of the queue.
   dl_queue.clear();
@@ -77,7 +78,8 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 
 void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 ul_ran_slice_candidate&      slice_candidate)
+                                 ul_ran_slice_candidate&      slice_candidate,
+                                 ul_harq_pending_retx_list    harq_pending_retx_list)
 {
   // Clear the existing contents of the queue.
   ul_queue.clear();

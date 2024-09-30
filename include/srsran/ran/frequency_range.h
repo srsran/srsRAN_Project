@@ -36,7 +36,7 @@ enum class frequency_range {
 
 inline const char* to_string(frequency_range freq_range)
 {
-  constexpr static const char* names[] = {"FR1", "FR2", "invalid"};
+  static constexpr const char* names[] = {"FR1", "FR2", "invalid"};
   return names[std::min(static_cast<unsigned>(freq_range), static_cast<unsigned>(frequency_range::FR2) + 1U)];
 }
 

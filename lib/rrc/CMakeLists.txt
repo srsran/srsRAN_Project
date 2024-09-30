@@ -40,3 +40,5 @@ add_library(srsran_rrc STATIC ${SOURCES})
 target_link_libraries(srsran_rrc srsran_up_resource_manager srsran_ue_security_manager srsran_security srsran_pdcp rrc_nr_asn1)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+add_to_exported_libs(srsran_rrc)

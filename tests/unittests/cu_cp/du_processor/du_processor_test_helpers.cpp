@@ -26,6 +26,7 @@
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/ran/plmn_identity.h"
 #include <memory>
 
 using namespace srsran;
@@ -43,7 +44,7 @@ private:
 };
 
 struct dummy_cu_cp_ue_admission_controller : public cu_cp_ue_admission_controller {
-  bool request_ue_setup() const override { return true; }
+  bool request_ue_setup(plmn_identity plmn) const override { return true; }
 };
 
 struct dummy_cu_cp_measurement_handler : public cu_cp_measurement_handler {
@@ -117,11 +118,13 @@ du_processor_test::du_processor_test() :
     cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
+    cu_cp_cfg.ngaps.push_back(cu_cp_configuration::ngap_params{nullptr, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
+
     return cucfg;
   }()),
   common_task_sched(std::make_unique<dummy_task_sched>()),
 
-  du_cfg_mgr{cu_cp_cfg.node.gnb_id, config_helpers::get_supported_plmns(cu_cp_cfg.node.supported_tas)}
+  du_cfg_mgr{cu_cp_cfg.node.gnb_id, config_helpers::get_supported_plmns(cu_cp_cfg.ngaps)}
 {
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
@@ -133,14 +136,8 @@ du_processor_test::du_processor_test() :
                                   srslog::fetch_basic_logger("CU-CP"),
                                   &du_conn_notifier,
                                   du_cfg_mgr.create_du_handler()};
-  du_processor_obj             = create_du_processor(std::move(du_cfg),
-                                         cu_cp_notifier,
-                                         f1ap_pdu_notifier,
-                                         rrc_ue_ngap_notifier,
-                                         rrc_ue_ngap_notifier,
-                                         rrc_du_cu_cp_notifier,
-                                         *common_task_sched,
-                                         ue_mng);
+  du_processor_obj             = create_du_processor(
+      std::move(du_cfg), cu_cp_notifier, f1ap_pdu_notifier, rrc_du_cu_cp_notifier, *common_task_sched, ue_mng);
 
   cu_cp_event_handler = std::make_unique<dummy_cu_cp_du_event_handler>(ue_mng);
   cu_cp_notifier.attach_handler(&*cu_cp_event_handler, nullptr);

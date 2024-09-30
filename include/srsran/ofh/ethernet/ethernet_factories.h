@@ -22,10 +22,10 @@
 
 #pragma once
 
+#include "srsran/ofh/ethernet/ethernet_frame_builder.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_gw_config.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
-#include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/srslog/logger.h"
 #include <memory>
@@ -47,8 +47,11 @@ std::unique_ptr<receiver> create_receiver(const std::string&    interface,
                                           task_executor&        executor,
                                           srslog::basic_logger& logger);
 
-/// Creates an Ethernet VLAN frame builder.
-std::unique_ptr<vlan_frame_builder> create_vlan_frame_builder();
+/// Creates an Ethernet frame builder with VLAN tag insertion.
+std::unique_ptr<frame_builder> create_vlan_frame_builder(const vlan_frame_params& eth_params);
+
+/// Creates an Ethernet frame builder without VLAN tag insertion.
+std::unique_ptr<frame_builder> create_frame_builder(const vlan_frame_params& eth_params);
 
 /// Creates an Ethernet VLAN frame decoder.
 std::unique_ptr<vlan_frame_decoder> create_vlan_frame_decoder(srslog::basic_logger& logger);

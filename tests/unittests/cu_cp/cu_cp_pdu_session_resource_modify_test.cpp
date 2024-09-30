@@ -32,7 +32,7 @@
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_types.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
@@ -43,11 +43,13 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+static constexpr uint8_t MAX_NOF_DRBS_PER_UE = 29;
+
 class cu_cp_pdu_session_resource_modify_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
   cu_cp_pdu_session_resource_modify_test() :
-    cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, create_mock_amf()})
+    cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, MAX_NOF_DRBS_PER_UE})
   {
     // Run NG setup to completion.
     run_ng_setup();
@@ -293,8 +295,10 @@ public:
   [[nodiscard]] bool timeout_rrc_reconfiguration_and_await_pdu_session_modify_response()
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for PDU Session Resource Setup Response
-    if (tick_until(std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
-                   [&]() { return false; })) {
+    if (tick_until(
+            std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
+            [&]() { return false; },
+            false)) {
       return false;
     }
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
@@ -473,7 +477,7 @@ TEST_F(cu_cp_pdu_session_resource_modify_test, when_many_qos_flows_are_added_pdu
   // Add QoS flows until maximum number of DRBs is reached
   unsigned transaction_id = 0;
   unsigned count          = 8;
-  for (unsigned i = 2; i <= MAX_NOF_DRBS; ++i) {
+  for (unsigned i = 2; i <= MAX_NOF_DRBS_PER_UE; ++i) {
     ASSERT_TRUE(modify_pdu_session_and_add_qos_flow(psi,
                                                     uint_to_drb_id(i),
                                                     uint_to_qos_flow_id(i),
@@ -491,7 +495,7 @@ TEST_F(cu_cp_pdu_session_resource_modify_test, when_one_to_many_qos_flows_are_ad
   // Add QoS flows until maximum number of DRBs is reached
   unsigned transaction_id = 0;
   unsigned count          = 8;
-  for (unsigned i = 2; i <= MAX_NOF_DRBS; ++i) {
+  for (unsigned i = 2; i <= MAX_NOF_DRBS_PER_UE; ++i) {
     ASSERT_TRUE(modify_pdu_session_and_add_qos_flow(psi,
                                                     uint_to_drb_id(i),
                                                     uint_to_qos_flow_id(i),

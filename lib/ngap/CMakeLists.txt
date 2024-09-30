@@ -43,3 +43,5 @@ add_library(srsran_ngap STATIC ${SOURCES})
 target_link_libraries(srsran_ngap ngap_asn1 srsran_cu_cp srsran_support)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+add_to_exported_libs(srsran_ngap)

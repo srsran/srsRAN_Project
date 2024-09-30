@@ -46,7 +46,7 @@ constexpr inline psup_pdu_type uint_to_psup_pdu_type(uint8_t num)
 }
 
 // See TS 38.415 Sec. 5.5.3.7: Pagin Policy Indicator (PPI) - value range: (0..7)
-constexpr static uint8_t MAX_NOF_PPI = 8;
+static constexpr uint8_t MAX_NOF_PPI = 8;
 
 /// PSUP Paging Policy Indicator (PPI)
 ///

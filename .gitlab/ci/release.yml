@@ -111,10 +111,10 @@ generate testvector tar gz:
   interruptible: false
   image: ubuntu:24.04
   script:
-    - find . -name "*.tar.gz" -exec tar -rvf phy_testvectors.tar.gz {} \;
+    - find . -name "*.tar.gz" -exec tar -rvf phy_testvectors.tar {} \;
   artifacts:
     paths:
-      - phy_testvectors.tar.gz
+      - phy_testvectors.tar
     expire_in: "30 days"
 
 coverity-agpl:
@@ -266,7 +266,7 @@ release public:
       artifacts: true
   variables:
     GIT_STRATEGY: none
-    ARTIFACT: phy_testvectors.tar.gz
+    ARTIFACT: phy_testvectors.tar
     PUBLIC_NAME: ""
     PUBLIC_REPO: ""
     PUBLIC_BRANCH: ""
@@ -299,7 +299,7 @@ release public:
         https://api.github.com/repos/${PUBLIC_REPO}/releases \
         -d "{\"tag_name\":\"${PUBLIC_TAG}\",\"target_commitish\":\"${PUBLIC_BRANCH}\",\"name\":\"${PUBLIC_RELEASE_NAME}\",\"body\":\"${PUBLIC_RELEASE_NOTES}\",\"draft\":false,\"prerelease\":false,\"generate_release_notes\":false}" | jq '.id')
 
-    # Push testvector.tar.gz to release
+    # Push ${ARTIFACT} to release
     - |
       curl -L \
         -X POST \

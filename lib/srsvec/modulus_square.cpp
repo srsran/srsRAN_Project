@@ -21,7 +21,7 @@
  */
 
 #include "srsran/srsvec/modulus_square.h"
-#include "simd.h"
+#include "srsran/srsvec/simd.h"
 
 using namespace srsran;
 using namespace srsvec;

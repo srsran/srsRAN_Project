@@ -23,10 +23,10 @@
 /// \file
 /// \brief In this file, we test the correct behaviour of the scheduler when removing UEs.
 
-#include "lib/scheduler/cell/resource_grid_util.h"
 #include "test_utils/config_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_bench.h"
+#include "srsran/scheduler/resource_grid_util.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

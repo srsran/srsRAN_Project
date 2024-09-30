@@ -42,17 +42,6 @@ struct ngap_supported_ta_item {
   std::vector<ngap_broadcast_plmn_item> broadcast_plmn_list;
 };
 
-struct ngap_ng_setup_request {
-  unsigned                            max_setup_retries = 1;
-  cu_cp_global_gnb_id                 global_ran_node_id;
-  std::string                         ran_node_name;
-  std::vector<ngap_supported_ta_item> supported_ta_list;
-  uint16_t                            default_paging_drx;
-  // TODO: Add optional ue_retention_info;
-  // TODO: Add optional nb_iot_default_paging_drx
-  // TODO: Add optional extended_ran_node_name
-};
-
 struct ngap_served_guami_item {
   guami_t                    guami;
   std::optional<std::string> backup_amf_name;

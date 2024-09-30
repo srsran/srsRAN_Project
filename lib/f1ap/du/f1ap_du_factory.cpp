@@ -22,7 +22,7 @@
 
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "f1ap_du_impl.h"
-#include "srsran/du_manager/du_manager.h"
+#include "srsran/du/du_high/du_manager/du_manager.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 

@@ -22,6 +22,7 @@
 
 #include "lib/scheduler/common_scheduling/csi_rs_scheduler.h"
 #include "lib/scheduler/config/sched_config_manager.h"
+#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
@@ -92,8 +93,9 @@ struct test_bench {
   scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
   cell_config_builder_params              builder_params;
+  scheduler_metrics_handler               metrics{std::chrono::milliseconds{0}, metrics_notif};
 
-  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif, metrics_notif}};
+  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif, metrics_notif}, metrics};
   const cell_configuration& cell_cfg;
 
   cell_resource_allocator       res_grid{cell_cfg};
@@ -113,7 +115,7 @@ struct test_bench {
                       const sched_cell_configuration_request_message& cell_req) :
     sched_cfg{sched_cfg_},
     builder_params{builder_params_},
-    cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req, metrics_ue_handler); }()},
+    cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
     ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
     fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db),
     csi_rs_sched(cell_cfg)
@@ -132,12 +134,12 @@ struct test_bench {
     auto u = std::make_unique<ue>(ue_creation_command{ev.next_config(), create_req.starts_in_fallback, cell_harqs});
     if (ue_db.contains(create_req.ue_index)) {
       // UE already exists.
-      ev.abort();
       return false;
     }
     ue_db.add_ue(std::move(u));
     auto& ue = ue_db[create_req.ue_index];
     ue.get_pcell().set_fallback_state(true);
+    ev.notify_completion();
     return true;
   }
 };

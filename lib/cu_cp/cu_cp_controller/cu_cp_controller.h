@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../ngap_repository.h"
 #include "amf_connection_manager.h"
 #include "cu_cp_ue_admission_controller.h"
 #include "cu_up_connection_manager.h"
@@ -48,9 +49,11 @@ class cu_cp_controller : public cu_cp_ue_admission_controller
 public:
   cu_cp_controller(const cu_cp_configuration&  config_,
                    common_task_scheduler&      common_task_sched_,
-                   ngap_connection_manager&    ngap_conn_mng_,
+                   ngap_repository&            ngaps_,
                    cu_up_processor_repository& cu_ups_,
                    du_processor_repository&    dus_,
+                   connect_amfs_func           connect_amfs_,
+                   disconnect_amfs_func        disconnect_amfs_,
                    task_executor&              ctrl_exec);
 
   void stop();
@@ -59,17 +62,14 @@ public:
 
   bool handle_du_setup_request(du_index_t du_idx, const du_setup_request& req);
 
-  /// \brief Determines whether the CU-CP should accept a new UE connection.
-  bool request_ue_setup() const override;
+  /// \brief Determines whether the CU-CP should accept a new UE connection for a given PLMN.
+  bool request_ue_setup(plmn_identity plmn) const override;
 
   cu_cp_f1c_handler& get_f1c_handler() { return du_mng; }
   cu_cp_e1_handler&  get_e1_handler() { return cu_up_mng; }
 
 private:
-  void stop_impl();
-
   const cu_cp_configuration& cfg;
-  common_task_scheduler&     common_task_sched;
   task_executor&             ctrl_exec;
   srslog::basic_logger&      logger;
 
@@ -77,9 +77,8 @@ private:
   du_connection_manager    du_mng;
   cu_up_connection_manager cu_up_mng;
 
-  std::mutex              mutex;
-  std::condition_variable cvar;
-  bool                    running = true;
+  std::mutex mutex;
+  bool       running = true;
 };
 
 } // namespace srs_cu_cp

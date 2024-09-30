@@ -28,7 +28,7 @@ using namespace srsran;
 class unbounded_object_pool_test : public ::testing::Test
 {
 protected:
-  constexpr static size_t    init_capacity = 8;
+  static constexpr size_t    init_capacity = 8;
   unbounded_object_pool<int> pool{init_capacity};
 };
 

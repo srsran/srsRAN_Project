@@ -24,7 +24,7 @@
 
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/f1ap_message_notifier.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {

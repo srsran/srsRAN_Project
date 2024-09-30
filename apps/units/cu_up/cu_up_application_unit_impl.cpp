@@ -32,7 +32,7 @@ void cu_up_application_unit_impl::on_parsing_configuration_registration(CLI::App
   configure_cli11_with_cu_up_unit_config_schema(app, unit_cfg);
 }
 
-bool cu_up_application_unit_impl::on_configuration_validation() const
+bool cu_up_application_unit_impl::on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const
 {
   return validate_cu_up_unit_config(unit_cfg);
 }

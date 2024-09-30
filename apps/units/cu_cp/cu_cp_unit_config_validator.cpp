@@ -444,34 +444,58 @@ static bool validate_qos_appconfig(span<const cu_cp_unit_qos_config> config)
 }
 
 /// Validates the given AMF configuration. Returns true on success, otherwise false.
-static bool validate_amf_appconfig(const cu_cp_unit_amf_config& config)
+static bool validate_amf_appconfig(const cu_cp_unit_amf_config&                   amf_config,
+                                   const std::vector<cu_cp_unit_amf_config_item>& extra_amfs)
 {
-  // only check for non-empty AMF address and default port
-  if (config.ip_addr.empty() or config.port != 38412) {
-    return false;
-  }
-  return true;
-}
+  std::vector<std::string> plmns;
 
-/// Validates the given supported tracking areas configuration. Returns true on success, otherwise false.
-static bool validate_supported_tas_appconfig(const std::vector<cu_cp_unit_supported_ta_item>& config)
-{
-  if (config.size() > 1) {
-    for (unsigned outer_ta_idx = 0; outer_ta_idx < config.size(); outer_ta_idx++) {
-      for (unsigned inner_ta_idx = outer_ta_idx + 1; inner_ta_idx < config.size(); inner_ta_idx++) {
-        if (config[outer_ta_idx].plmn == config[inner_ta_idx].plmn &&
-            config[outer_ta_idx].tac == config[inner_ta_idx].tac) {
-          fmt::print("Supported tracking areas must be unique\n");
-          return false;
+  std::vector<cu_cp_unit_amf_config_item> amfs;
+
+  amfs.push_back(amf_config.amf);
+
+  amfs.insert(amfs.end(), extra_amfs.begin(), extra_amfs.end());
+
+  for (const auto& config : amfs) {
+    // check for non-empty AMF address
+    if (config.ip_addr.empty()) {
+      return false;
+    }
+
+    // check supported tracking areas
+    if (config.supported_tas.size() > 1) {
+      for (unsigned outer_ta_idx = 0; outer_ta_idx < config.supported_tas.size(); outer_ta_idx++) {
+        std::vector<std::string> outer_plmns;
+        for (const auto& plmn_item : config.supported_tas[outer_ta_idx].plmn_list) {
+          outer_plmns.push_back(plmn_item.plmn_id);
+        }
+
+        for (unsigned inner_ta_idx = outer_ta_idx + 1; inner_ta_idx < config.supported_tas.size(); inner_ta_idx++) {
+          if (config.supported_tas[outer_ta_idx].tac == config.supported_tas[inner_ta_idx].tac) {
+            for (const auto& plmn_item : config.supported_tas[inner_ta_idx].plmn_list) {
+              if (std::find(outer_plmns.begin(), outer_plmns.end(), plmn_item.plmn_id) != outer_plmns.end()) {
+                fmt::print("Supported tracking areas of a AMF must be unique\n");
+                return false;
+              }
+            }
+          }
         }
       }
     }
-  }
 
-  for (const auto& ta : config) {
-    if (ta.tai_slice_support_list.empty()) {
-      fmt::print("TAI slice support list for PLMN={} and TAC={} is empty\n", ta.plmn, ta.tac);
-      return false;
+    for (const auto& ta : config.supported_tas) {
+      for (const auto& plmn_item : ta.plmn_list) {
+        if (std::find(plmns.begin(), plmns.end(), plmn_item.plmn_id) == plmns.end()) {
+          plmns.push_back(plmn_item.plmn_id);
+        } else {
+          fmt::print("PLMN={} is already supported by another AMF\n", plmn_item.plmn_id);
+          return false;
+        }
+
+        if (plmn_item.tai_slice_support_list.empty()) {
+          fmt::print("TAI slice support list for PLMN={} and TAC={} is empty\n", plmn_item.plmn_id, ta.tac);
+          return false;
+        }
+      }
     }
   }
 
@@ -481,12 +505,8 @@ static bool validate_supported_tas_appconfig(const std::vector<cu_cp_unit_suppor
 /// Validates the given CU-CP configuration. Returns true on success, otherwise false.
 static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_config& config)
 {
-  if (!validate_amf_appconfig(config.amf_cfg)) {
-    return false;
-  }
-
-  // validate supported tracking area config
-  if (!validate_supported_tas_appconfig(config.supported_tas)) {
+  // validate AMF config
+  if (!validate_amf_appconfig(config.amf_config, config.extra_amfs)) {
     return false;
   }
 

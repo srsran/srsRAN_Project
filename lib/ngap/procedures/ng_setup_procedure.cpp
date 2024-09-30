@@ -91,12 +91,12 @@ bool ng_setup_procedure::retry_required()
   }
 
   const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
-  logger.warning("\"{}\" failed. AMF NGAP cause: \"{}\"", name(), get_cause_str(ng_fail->cause));
-  fmt::print("\"{}\" failed. AMF NGAP cause: \"{}\"\n", name(), get_cause_str(ng_fail->cause));
 
   if (not ng_fail->time_to_wait_present) {
     // AMF didn't command a waiting time.
     logger.warning("\"{}\": Stopping procedure. Cause: AMF did not set any retry waiting time", name());
+    logger.warning("\"{}\" failed. AMF NGAP cause: \"{}\"", name(), get_cause_str(ng_fail->cause));
+    fmt::print("\"{}\" failed. AMF NGAP cause: \"{}\"\n", name(), get_cause_str(ng_fail->cause));
     return false;
   }
   if (ng_setup_retry_no++ >= max_setup_retries) {
@@ -104,6 +104,8 @@ bool ng_setup_procedure::retry_required()
     logger.warning("\"{}\": Stopping procedure. Cause: Reached maximum number of NG Setup connection retries ({})",
                    name(),
                    max_setup_retries);
+    logger.warning("\"{}\" failed. AMF NGAP cause: \"{}\"", name(), get_cause_str(ng_fail->cause));
+    fmt::print("\"{}\" failed. AMF NGAP cause: \"{}\"\n", name(), get_cause_str(ng_fail->cause));
     return false;
   }
 

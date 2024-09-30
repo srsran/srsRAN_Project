@@ -28,7 +28,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
-#include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cell_identity.h"

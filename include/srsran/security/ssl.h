@@ -34,7 +34,7 @@ using aes_context = mbedtls_aes_context;
 constexpr int aes_encrypt = 1;
 constexpr int aes_decrypt = 0;
 
-inline int aes_setkey_enc(aes_context* ctx, const unsigned char* key, unsigned int keysize)
+inline int aes_setkey_enc(aes_context* ctx, const unsigned char* key, unsigned keysize)
 {
   return mbedtls_aes_setkey_enc(ctx, key, keysize);
 }

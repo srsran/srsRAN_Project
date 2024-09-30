@@ -74,6 +74,7 @@ def test_smoke_sequentially(
         common_scs=30,
         bandwidth=50,
         noise_spd=0,
+        sleep_between_movement_steps=2,
         always_download_artifacts=False,
     )
 
@@ -89,7 +90,7 @@ def test_smoke_sequentially(
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_handover_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -116,10 +117,11 @@ def test_zmq_handover_sequentially(
         common_scs=common_scs,
         bandwidth=bandwidth,
         noise_spd=noise_spd,
+        sleep_between_movement_steps=10,
     )
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _handover_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -131,6 +133,7 @@ def _handover_sequentially(
     common_scs: int,
     bandwidth: int,
     noise_spd: int,
+    sleep_between_movement_steps,
     always_download_artifacts: bool = True,
 ):
     with _handover_multi_ues(
@@ -148,6 +151,7 @@ def _handover_sequentially(
         time_alignment_calibration=0,
         always_download_artifacts=always_download_artifacts,
         noise_spd=noise_spd,
+        sleep_between_movement_steps=sleep_between_movement_steps,
         warning_as_errors=True,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
 
@@ -160,8 +164,8 @@ def _handover_sequentially(
 
             ping_task_array = ping_start(ue_attach_info_dict, fivegc, traffic_seconds)
 
-            for from_position, to_position, movement_steps, sleep_between_movement_steps in movements:
-                _do_ho((ue_stub,), from_position, to_position, movement_steps, sleep_between_movement_steps)
+            for _from_position, _to_position, _movement_steps, _sleep_between_movement_steps in movements:
+                _do_ho((ue_stub,), _from_position, _to_position, _movement_steps, _sleep_between_movement_steps)
 
             ping_wait_until_finish(ping_task_array)
 
@@ -177,7 +181,7 @@ def _handover_sequentially(
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_zmq_handover_parallel(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -208,6 +212,7 @@ def test_zmq_handover_parallel(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
+        sleep_between_movement_steps=10,
         warning_as_errors=True,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
 
@@ -223,7 +228,7 @@ def test_zmq_handover_parallel(
         ping_wait_until_finish(ping_task_array)
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 @contextmanager
 def _handover_multi_ues(
     retina_manager: RetinaTestManager,

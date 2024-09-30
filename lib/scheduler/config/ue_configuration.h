@@ -160,6 +160,20 @@ public:
   /// Get the number of active DL ports for this UE.
   unsigned get_nof_dl_ports() const { return nof_dl_ports; }
 
+  /// Determines the use of transform precoding for DCI Format 0_1 for C-RNTI.
+  bool use_pusch_transform_precoding_dci_0_1() const
+  {
+    // If the UE is not configured with the higher layer parameter transformPrecoder in pusch-Config, determine the
+    // transform precoder use according to parameter msg3-transformPrecoder.
+    if (!cell_cfg_ded.ul_config or !cell_cfg_ded.ul_config->init_ul_bwp.pusch_cfg or
+        cell_cfg_ded.ul_config->init_ul_bwp.pusch_cfg->trans_precoder == pusch_config::transform_precoder::not_set) {
+      return cell_cfg_common.use_msg3_transform_precoder();
+    }
+
+    // Otherwise, determine the use of transform pecoding according to transformPrecoder in pusch-Config.
+    return cell_cfg_ded.ul_config->init_ul_bwp.pusch_cfg->trans_precoder == pusch_config::transform_precoder::enabled;
+  }
+
 private:
   void configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common);
   void configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_uplink_common& bwp_ul_common);

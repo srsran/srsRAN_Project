@@ -232,6 +232,15 @@ private:
 
 } // namespace srsran
 
+namespace std {
+
+template <>
+struct hash<srsran::plmn_identity> {
+  size_t operator()(const srsran::plmn_identity& s) const noexcept { return hash<std::string>{}(s.to_string()); }
+};
+
+} // namespace std
+
 namespace fmt {
 
 template <>

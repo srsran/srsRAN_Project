@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "lib/du/du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "uci_test_utils.h"
 #include <gtest/gtest.h>
@@ -624,8 +624,8 @@ protected:
     cell_pucch_res_list =
         srs_du::generate_cell_pucch_res_list((nof_res_per_ue + 1) * nof_configurations,
                                              (nof_res_per_ue + 1) * nof_configurations,
-                                             pucch_f1_params{},
-                                             pucch_f2_params{},
+                                             srs_du::pucch_f1_params{},
+                                             srs_du::pucch_f2_params{},
                                              cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
                                              NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     for (unsigned ue_idx = 0; ue_idx != nof_ues; ++ue_idx) {

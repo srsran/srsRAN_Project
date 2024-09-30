@@ -22,16 +22,14 @@
 
 #pragma once
 
-#include "../../../services/worker_manager.h"
+#include "apps/services/worker_manager.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/mac_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"
 
 namespace srsran {
-namespace modules {
-namespace flexible_du {
 
-struct du_pcaps {
+struct flexible_du_pcaps {
   // DLT PCAPs
   std::unique_ptr<dlt_pcap> f1ap;
   std::unique_ptr<dlt_pcap> f1u;
@@ -50,10 +48,10 @@ struct du_pcaps {
   }
 };
 
-/// Creates the DLT PCAP of the DU.
-inline du_pcaps create_pcaps(const du_high_unit_pcap_config& pcap_cfg, worker_manager& workers)
+/// Creates the PCAPs of the DU.
+inline flexible_du_pcaps create_du_pcaps(const du_high_unit_pcap_config& pcap_cfg, worker_manager& workers)
 {
-  du_pcaps pcaps;
+  flexible_du_pcaps pcaps;
 
   pcaps.f1ap = pcap_cfg.f1ap.enabled ? create_f1ap_pcap(pcap_cfg.f1ap.filename, workers.get_executor("pcap_exec"))
                                      : create_null_dlt_pcap();
@@ -85,6 +83,4 @@ inline du_pcaps create_pcaps(const du_high_unit_pcap_config& pcap_cfg, worker_ma
   return pcaps;
 }
 
-} // namespace flexible_du
-} // namespace modules
 } // namespace srsran

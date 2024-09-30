@@ -21,7 +21,7 @@
  */
 
 #include "srsran/srsvec/subtract.h"
-#include "simd.h"
+#include "srsran/srsvec/simd.h"
 
 using namespace srsran;
 using namespace srsvec;

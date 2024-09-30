@@ -28,10 +28,10 @@ using namespace srsran;
 
 static void fill_du_high_metrics_section(YAML::Node node, const du_high_unit_metrics_config& config)
 {
-  node["rlc_report_period"]     = config.rlc.report_period;
-  node["rlc_json_enable"]       = config.rlc.json_enabled;
-  node["enable_json_metrics"]   = config.enable_json_metrics;
-  node["stdout_metrics_period"] = config.stdout_metrics_period;
+  node["rlc_report_period"]   = config.rlc.report_period;
+  node["rlc_json_enable"]     = config.rlc.json_enabled;
+  node["enable_json_metrics"] = config.enable_json_metrics;
+  node["sched_report_period"] = config.sched_report_period;
 }
 
 static void fill_du_high_pcap_section(YAML::Node node, const du_high_unit_pcap_config& config)
@@ -470,6 +470,9 @@ static YAML::Node build_du_high_prach_section(const du_high_unit_prach_config& c
     node["ports"].push_back(static_cast<unsigned>(id));
   }
   node["ports"].SetStyle(YAML::EmitterStyle::Flow);
+  if (config.ra_resp_window.has_value()) {
+    node["ra_resp_window"] = config.ra_resp_window.value();
+  }
 
   return node;
 }

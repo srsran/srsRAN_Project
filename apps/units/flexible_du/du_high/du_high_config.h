@@ -297,8 +297,10 @@ struct du_high_unit_pucch_config {
 };
 
 struct du_high_unit_srs_config {
-  /// Enable Sound Reference Signals (SRS) for the UEs within this cell.
-  bool srs_enabled = false;
+  /// If set, enables periodic Sound Reference Signals (SRS) for the UEs within this cell. If not present, SRS are
+  /// aperiodic.
+  /// Values: {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560}.
+  std::optional<unsigned> srs_period = std::nullopt;
   /// \brief Defines the maximum number of symbols dedicated to the cell SRS resources in a slot.  Values: {1,...,6}.
   /// This is the space that the GNB reserves for all the cell SRS resources in the UL slots, not to be confused with
   /// the symbols per SRS resource configured in the UE dedicated configuration.
@@ -526,6 +528,9 @@ struct du_high_unit_prach_config {
   /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
   /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.
   uint8_t nof_cb_preambles_per_ssb = 64;
+  /// RA-Response (MSG2) window length in number of slots. Values: {1, 2, 4, 8, 10, 20, 40, 80}.  If not specified, it
+  /// is automatically derived to be equal to 10ms.
+  std::optional<unsigned> ra_resp_window;
 };
 
 /// Slice scheduling configuration for a cell.
@@ -646,11 +651,13 @@ struct du_high_unit_cell_config {
 /// Metrics report configuration.
 struct du_high_unit_metrics_config {
   struct rlc_metrics {
-    unsigned report_period = 0; // RLC report period in ms
+    /// RLC report period in ms.
+    unsigned report_period = 0;
     bool     json_enabled  = false;
   } rlc;
-  bool     enable_json_metrics      = false;
-  unsigned stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+  bool enable_json_metrics = false;
+  /// Scheduler report period in milliseconds.
+  unsigned sched_report_period      = 1000;
   bool     autostart_stdout_metrics = false;
 };
 
@@ -856,6 +863,9 @@ struct du_high_unit_config {
   std::map<srb_id_t, du_high_unit_srb_config> srb_cfg;
   /// E2 configuration.
   du_high_unit_e2_config e2_cfg;
+
+  /// Returns true if testmode is enabled, false otherwise.
+  bool is_testmode_enabled() const { return test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI; }
 };
 
 /// DU high configuration.

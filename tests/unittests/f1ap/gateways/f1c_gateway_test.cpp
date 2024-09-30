@@ -24,7 +24,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/io/io_broker_factory.h"

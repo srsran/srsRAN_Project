@@ -21,7 +21,7 @@
  */
 
 #include "srsran/du/du_cell_config_validation.h"
-#include "../du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "srsran/asn1/rrc_nr/serving_cell.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
@@ -34,6 +34,7 @@
 #include <numeric>
 
 using namespace srsran;
+using namespace srs_du;
 
 #define CHECK_TRUE(cond, ...)                                                                                          \
   if (not(cond)) {                                                                                                     \
@@ -707,7 +708,7 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
   return {};
 }
 
-check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
+check_outcome srs_du::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.pci, MAX_PCI, "cell PCI");
   CHECK_EQ_OR_BELOW(cell_cfg.scs_common, subcarrier_spacing::kHz120, "SCS common");

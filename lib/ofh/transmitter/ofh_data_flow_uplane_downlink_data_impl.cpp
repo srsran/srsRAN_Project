@@ -77,7 +77,6 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   logger(*dependencies.logger),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   ru_nof_prbs(config.ru_nof_prbs),
-  vlan_params(config.vlan_params),
   compr_params(config.compr_params),
   frame_pool(std::move(dependencies.frame_pool)),
   compressor_sel(std::move(dependencies.compressor_sel)),
@@ -204,7 +203,7 @@ unsigned data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_sym
 
   // Add Ethernet header.
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_header_size.value() + bytes_written);
-  eth_builder->build_vlan_frame(eth_buffer, vlan_params);
+  eth_builder->build_frame(eth_buffer);
 
   logger.debug("Packing a downlink User-Plane message for slot '{}' and eAxC '{}', symbol_id '{}', PRB range '{}:{}', "
                "size '{}' bytes",

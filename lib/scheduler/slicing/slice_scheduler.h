@@ -34,13 +34,13 @@ class slice_scheduler
 {
   using priority_type                      = uint32_t;
   using slot_count_type                    = uint32_t;
-  constexpr static priority_type skip_prio = 0;
+  static constexpr priority_type skip_prio = 0;
 
 public:
   slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_);
 
   /// Reset the state of the slices.
-  void slot_indication(slot_point slot_tx);
+  void slot_indication(slot_point slot_tx, const cell_resource_allocator& res_grid);
 
   /// Update the state of the slice with the provided UE configs.
   void add_ue(du_ue_index_t ue_idx);
@@ -68,9 +68,6 @@ private:
   struct ran_slice_sched_context {
     ran_slice_instance                inst;
     std::unique_ptr<scheduler_policy> policy;
-    // Counter tracking the last time this slice was scheduled as a candidate.
-    slot_count_type last_dl_slot = 0;
-    slot_count_type last_ul_slot = 0;
 
     ran_slice_sched_context(ran_slice_id_t id, const cell_configuration& cell_cfg, const slice_rrm_policy_config& cfg) :
       inst(id, cell_cfg, cfg)
@@ -78,7 +75,12 @@ private:
     }
 
     /// Determines the slice candidate priority.
-    priority_type get_prio(bool is_dl, slot_count_type current_slot_count, slot_point slot_tx) const;
+    priority_type get_prio(bool            is_dl,
+                           slot_count_type current_slot_count,
+                           slot_point      pdcch_slot,
+                           slot_point      pxsch_slot,
+                           unsigned        nof_slices,
+                           bool            slice_resched) const;
   };
 
   struct slice_candidate_context {
@@ -133,6 +135,9 @@ private:
 
   const cell_configuration& cell_cfg;
   srslog::basic_logger&     logger;
+
+  // Represents current slot in the scheduler. This is updated on each slot indication.
+  slot_point current_slot;
 
   ue_repository& ues;
 

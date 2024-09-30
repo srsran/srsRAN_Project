@@ -47,8 +47,10 @@ struct formatter<srsran::srs_resource_configuration> {
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_if_verbose(ctx, "nof_antenna_ports={}", resource.nof_antenna_ports);
-    helper.format_if_verbose(ctx, "nof_symbols={}", resource.nof_symbols);
-    helper.format_if_verbose(ctx, "start_symbol={}", resource.start_symbol);
+    helper.format_if_verbose(ctx,
+                             "symb=[{}, {})",
+                             resource.start_symbol,
+                             resource.start_symbol.value() + static_cast<unsigned>(resource.nof_symbols));
     helper.format_if_verbose(ctx, "configuration_index={}", resource.configuration_index);
     helper.format_if_verbose(ctx, "sequence_id={}", resource.sequence_id);
     helper.format_if_verbose(ctx, "bandwidth_index={}", resource.bandwidth_index);

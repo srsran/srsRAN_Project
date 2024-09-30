@@ -28,25 +28,24 @@
 # enable_qos_viavi: enable QoS in GNB configuration for Viavi
 # expected_dl_bitrate: pass/fail criteria, expected downlink bitrate in bps
 # expected_ul_bitrate: pass/fail criteria, expected uplink bitrate in bps
-# fail_if_kos: fail if KPIs are out of spec
+# expected_nof_kos: expected_nof_kos
 # warning_as_errors: treat warnings as errors
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
-gnb_extra_commands: &gnb_extra_commands ""
-expected_dl_bitrate_high: &expected_dl_bitrate_high 80000000
-expected_ul_bitrate_high: &expected_ul_bitrate_high 80000000
+gnb_extra_commands: &gnb_extra_commands "metrics --rlc_report_period=1000"
+test_timeout: &test_timeout 2400 # 40 * 60
 
 tests:
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP bidirectional"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP bidirectional - Debug"
     max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
+    max_puschs_per_slot: 4
     enable_qos_viavi: false
     # test/fail criteria
-    expected_dl_bitrate: *expected_dl_bitrate_high
-    expected_ul_bitrate: *expected_ul_bitrate_high
-    fail_if_kos: false
+    expected_dl_bitrate: 1.2e+9
+    expected_ul_bitrate: 80.0e+6
+    expected_nof_kos: 3
     warning_as_errors: false

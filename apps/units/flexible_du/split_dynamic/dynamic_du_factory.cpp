@@ -22,16 +22,19 @@
 
 #include "dynamic_du_factory.h"
 #include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/worker_manager.h"
 #include "apps/units/flexible_du/du_high/du_high_commands.h"
 #include "apps/units/flexible_du/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_du/du_high/du_high_wrapper_config_helper.h"
+#include "apps/units/flexible_du/du_low/du_low_config.h"
 #include "apps/units/flexible_du/du_low/du_low_config_translator.h"
 #include "apps/units/flexible_du/du_low/du_low_wrapper_config_helper.h"
 #include "apps/units/flexible_du/flexible_du_commands.h"
-#include "apps/units/flexible_du/split_7_2/ru_ofh_factories.h"
-#include "apps/units/flexible_du/split_8/ru_sdr_factories.h"
+#include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_factories.h"
+#include "apps/units/flexible_du/split_8/helpers/ru_sdr_factories.h"
 #include "dynamic_du_impl.h"
 #include "dynamic_du_translators.h"
+#include "dynamic_du_unit_config.h"
 #include "srsran/du/du_wrapper.h"
 #include "srsran/du/du_wrapper_factory.h"
 #include "srsran/pcap/rlc_pcap.h"
@@ -50,7 +53,7 @@ static std::unique_ptr<radio_unit> create_dummy_radio_unit(const ru_dummy_unit_c
                                                            unsigned                    max_processing_delay_slots,
                                                            unsigned                    nof_prach_ports,
                                                            worker_manager&             workers,
-                                                           span<const du_cell_config>  du_cells,
+                                                           span<const srs_du::du_cell_config>  du_cells,
                                                            ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                            ru_timing_notifier&                 timing_notifier,
                                                            ru_error_notifier&                  error_notifier)
@@ -68,7 +71,7 @@ static std::unique_ptr<radio_unit> create_dummy_radio_unit(const ru_dummy_unit_c
 static std::unique_ptr<radio_unit>
 create_radio_unit(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
                   worker_manager&                                                                          workers,
-                  span<const du_cell_config>                                                               du_cells,
+                  span<const srs_du::du_cell_config>                                                       du_cells,
                   ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                   ru_timing_notifier&                 timing_notifier,
                   ru_error_notifier&                  error_notifier,
@@ -117,8 +120,8 @@ create_radio_unit(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_conf
 
 /// \brief Update the Flexible DU metrics configuration with the given local DU configuration and E2 configuration.
 ///
-/// This function manages the multicell workaround for the DU high metrics. To have multicell, now one DU is
-/// instantiated per cell, so the this would create multiple consumers that does not make sense, for example stdout.
+/// This function manages the multi cell workaround for the DU high metrics. To have multi cell, now one DU is
+/// instantiated per cell, so this would create multiple consumers that does not make sense, for example stdout.
 /// With this we avoid having 2 different objects that write in the stdout.
 static void update_du_metrics(std::vector<app_services::metrics_config>& flexible_du_cfg,
                               std::vector<app_services::metrics_config>  local_du_cfg,
@@ -148,17 +151,7 @@ static void update_du_metrics(std::vector<app_services::metrics_config>& flexibl
   }
 }
 
-du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
-                          worker_manager&                 workers,
-                          srs_du::f1c_connection_client&  f1c_client_handler,
-                          srs_du::f1u_du_gateway&         f1u_gw,
-                          timer_manager&                  timer_mng,
-                          mac_pcap&                       mac_p,
-                          rlc_pcap&                       rlc_p,
-                          e2_connection_client&           e2_client_handler,
-                          e2_metric_connector_manager&    e2_metric_connectors,
-                          srslog::sink&                   json_sink,
-                          app_services::metrics_notifier& metrics_notifier)
+du_unit srsran::create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, const du_unit_dependencies& dependencies)
 {
   du_unit du_cmd_wrapper;
 
@@ -168,11 +161,11 @@ du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
 
   auto du_cells = generate_du_cell_config(du_hi);
 
-  std::vector<std::unique_ptr<du_wrapper>> du_insts;
-  auto                                     du_impl = std::make_unique<dynamic_du_impl>(du_cells.size());
+  std::vector<std::unique_ptr<srs_du::du_wrapper>> du_insts;
+  auto                                             du_impl = std::make_unique<dynamic_du_impl>(du_cells.size());
 
-  std::vector<cell_prach_ports_entry> prach_ports;
-  std::vector<unsigned>               max_pusch_per_slot;
+  std::vector<srs_du::cell_prach_ports_entry> prach_ports;
+  std::vector<unsigned>                       max_pusch_per_slot;
   for (const auto& high : du_hi.cells_cfg) {
     prach_ports.push_back(high.cell.prach_cfg.ports);
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
@@ -255,8 +248,8 @@ du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
 
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create one DU per cell.
-    du_wrapper_config   du_cfg  = {};
-    du_high_unit_config tmp_cfg = du_hi;
+    srs_du::du_wrapper_config du_cfg  = {};
+    du_high_unit_config       tmp_cfg = du_hi;
     tmp_cfg.cells_cfg.resize(1);
     tmp_cfg.cells_cfg[0] = du_hi.cells_cfg[i];
 
@@ -264,26 +257,26 @@ du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
                                                 du_lo,
                                                 hal_config,
                                                 {prach_ports[i]},
-                                                span<const du_cell_config>(&du_cells[i], 1),
+                                                span<const srs_du::du_cell_config>(&du_cells[i], 1),
                                                 span<const unsigned>(&max_pusch_per_slot[i], 1),
                                                 du_impl->get_upper_ru_dl_rg_adapter(),
                                                 du_impl->get_upper_ru_ul_request_adapter(),
-                                                workers,
+                                                *dependencies.workers,
                                                 i);
 
     auto cell_services_cfg = fill_du_high_wrapper_config(du_cfg.du_high_cfg,
                                                          tmp_cfg,
                                                          i,
-                                                         workers.get_du_high_executor_mapper(i),
-                                                         f1c_client_handler,
-                                                         f1u_gw,
-                                                         timer_mng,
-                                                         mac_p,
-                                                         rlc_p,
-                                                         e2_client_handler,
-                                                         e2_metric_connectors,
-                                                         json_sink,
-                                                         metrics_notifier);
+                                                         dependencies.workers->get_du_high_executor_mapper(i),
+                                                         *dependencies.f1c_client_handler,
+                                                         *dependencies.f1u_gw,
+                                                         *dependencies.timer_mng,
+                                                         *dependencies.mac_p,
+                                                         *dependencies.rlc_p,
+                                                         *dependencies.e2_client_handler,
+                                                         *dependencies.e2_metric_connectors,
+                                                         *dependencies.json_sink,
+                                                         *dependencies.metrics_notifier);
 
     update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_du_e2);
 
@@ -298,10 +291,7 @@ du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
     if (fapi_cfg.l2_nof_slots_ahead != 0) {
       // As the temporal configuration contains only one cell, pick the data from that cell.
       du_cfg.du_high_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
-      du_cfg.du_high_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
-    } else {
-      report_error_if_not(workers.fapi_exec[i] == nullptr,
-                          "FAPI buffered worker created for a cell with no MAC delay configured");
+      du_cfg.du_high_cfg.fapi.executor.emplace(dependencies.workers->fapi_exec[i]);
     }
 
     du_insts.push_back(make_du_wrapper(du_cfg));
@@ -309,7 +299,7 @@ du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
   }
 
   std::unique_ptr<radio_unit> ru = create_radio_unit(dyn_du_cfg.ru_cfg,
-                                                     workers,
+                                                     *dependencies.workers,
                                                      du_cells,
                                                      du_impl->get_upper_ru_ul_adapter(),
                                                      du_impl->get_upper_ru_timing_adapter(),

@@ -49,7 +49,7 @@ e2_entity::e2_entity(e2ap_configuration&            cfg_,
                      e2_connection_client*          e2_client_,
                      e2_du_metrics_interface&       e2_du_metrics_iface_,
                      srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
-                     du_configurator&               du_configurator_,
+                     srs_du::du_configurator&       du_configurator_,
                      timer_factory                  timers_,
                      task_executor&                 task_exec_) :
   logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)

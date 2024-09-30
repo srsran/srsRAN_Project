@@ -22,12 +22,7 @@
 
 #pragma once
 
-#include "apps/gnb/gnb_appconfig.h"
-#include "apps/services/application_command.h"
-#include "apps/services/metrics/metrics_config.h"
-#include "apps/services/worker_manager.h"
-#include "srsran/du/du.h"
-#include "srsran/pcap/rlc_pcap.h"
+#include "apps/units/flexible_du/du_unit.h"
 
 namespace srsran {
 
@@ -35,6 +30,12 @@ namespace app_services {
 class metrics_notifier;
 }
 
+namespace srs_du {
+class f1c_connection_client;
+class f1u_du_gateway;
+} // namespace srs_du
+
+struct dynamic_du_unit_config;
 class e2_connection_client;
 class e2_metric_connector_manager;
 class f1ap_message_notifier;
@@ -47,28 +48,6 @@ class timer_manager;
 class upper_phy_rg_gateway;
 class upper_phy_rx_symbol_request_notifier;
 
-namespace srs_du {
-class f1c_connection_client;
-class f1u_du_gateway;
-} // namespace srs_du
-
-/// Wraps the DU and its supported application commands.
-struct du_unit {
-  std::unique_ptr<du>                                             unit;
-  std::vector<std::unique_ptr<app_services::application_command>> commands;
-  std::vector<app_services::metrics_config>                       metrics;
-};
-
-du_unit create_du(const dynamic_du_unit_config&   dyn_du_cfg,
-                  worker_manager&                 workers,
-                  srs_du::f1c_connection_client&  f1c_client_handler,
-                  srs_du::f1u_du_gateway&         f1u_gw,
-                  timer_manager&                  timer_mng,
-                  mac_pcap&                       mac_p,
-                  rlc_pcap&                       rlc_p,
-                  e2_connection_client&           e2_client_handler,
-                  e2_metric_connector_manager&    e2_metric_connectors,
-                  srslog::sink&                   json_sink,
-                  app_services::metrics_notifier& metrics_notifier);
+du_unit create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, const du_unit_dependencies& dependencies);
 
 } // namespace srsran

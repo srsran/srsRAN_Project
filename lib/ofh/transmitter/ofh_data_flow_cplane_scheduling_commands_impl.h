@@ -26,8 +26,8 @@
 #include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "sequence_identifier_generator.h"
 #include "srsran/ofh/ecpri/ecpri_packet_builder.h"
+#include "srsran/ofh/ethernet/ethernet_frame_builder.h"
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
-#include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
 #include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
 
 namespace srsran {
@@ -39,8 +39,6 @@ struct data_flow_cplane_scheduling_commands_impl_config {
   unsigned ru_nof_prbs;
   /// Cyclic prefix.
   cyclic_prefix cp;
-  /// VLAN frame parameters.
-  ether::vlan_frame_params vlan_params;
   /// Downlink compression parameters.
   ru_compression_params dl_compr_params;
   /// Uplink compression parameters.
@@ -58,7 +56,7 @@ struct data_flow_cplane_scheduling_commands_impl_dependencies {
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
   /// VLAN frame builder.
-  std::unique_ptr<ether::vlan_frame_builder> eth_builder;
+  std::unique_ptr<ether::frame_builder> eth_builder;
   /// eCPRI packet builder.
   std::unique_ptr<ecpri::packet_builder> ecpri_builder;
   /// Control-Plane message builder.
@@ -86,12 +84,11 @@ private:
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;
   const ru_compression_params                       prach_compr_params;
-  const ether::vlan_frame_params                    vlan_params;
   sequence_identifier_generator                     cp_dl_seq_gen;
   sequence_identifier_generator                     cp_ul_seq_gen;
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
   std::shared_ptr<ether::eth_frame_pool>            frame_pool;
-  std::unique_ptr<ether::vlan_frame_builder>        eth_builder;
+  std::unique_ptr<ether::frame_builder>             eth_builder;
   std::unique_ptr<ecpri::packet_builder>            ecpri_builder;
   std::unique_ptr<cplane_message_builder>           cp_builder;
 };

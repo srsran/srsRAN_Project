@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "../common/e1ap_types.h"
 #include "e1ap_cu_up_bearer_context_update.h"
 #include "srsran/adt/expected.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {

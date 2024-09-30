@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/du_high/rnti_value_table.h"
+#include "rnti_value_table.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
 

@@ -51,8 +51,8 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
 {
   // Register new cell in the UE scheduler.
-  ue_sched.add_cell(
-      ue_scheduler_cell_params{msg.cell_index, &pdcch_sch, &pucch_alloc, &uci_alloc, &res_grid, &event_logger});
+  ue_sched.add_cell(ue_scheduler_cell_params{
+      msg.cell_index, &pdcch_sch, &pucch_alloc, &uci_alloc, &res_grid, &metrics, &event_logger});
 }
 
 void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
@@ -128,7 +128,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   pg_sch.schedule_paging(res_grid);
 
   // > Schedule UE DL and UL data.
-  ue_sched.run_slot(sl_tx, cell_cfg.cell_index);
+  ue_sched.run_slot(sl_tx);
 
   // > Mark stop of the slot processing
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();

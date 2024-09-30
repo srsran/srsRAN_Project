@@ -31,6 +31,7 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/security_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
+#include "srsran/ran/plmn_identity.h"
 #include <optional>
 #include <unordered_map>
 
@@ -79,12 +80,14 @@ public:
 
   /// \brief Allocate resources for the UE in the CU-CP.
   /// \param[in] du_index Index of the DU the UE is connected to.
+  /// \param[in] plmn The PLMN of the UE.
   /// \param[in] du_id The gNB-DU ID of the DU the UE is connected to.
   /// \param[in] pci The PCI of the cell the UE is connected to.
   /// \param[in] rnti The RNTI of the UE.
   /// \param[in] pcell_index The index of the PCell the UE is connected to.
   /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
   ue_index_t add_ue(du_index_t                     du_index,
+                    plmn_identity                  plmn,
                     std::optional<gnb_du_id_t>     du_id       = std::nullopt,
                     std::optional<pci_t>           pci         = std::nullopt,
                     std::optional<rnti_t>          rnti        = std::nullopt,
@@ -119,6 +122,14 @@ public:
     srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
 
     return ues.at(ue_index).get_ngap_rrc_ue_adapter();
+  }
+
+  rrc_ue_ngap_adapter& get_rrc_ue_ngap_adapter(ue_index_t ue_index)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
+
+    return ues.at(ue_index).get_rrc_ue_ngap_adapter();
   }
 
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter(ue_index_t ue_index)

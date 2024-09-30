@@ -41,7 +41,7 @@ using pdcch_candidate_list = static_vector<pdcch_candidate_type, PDCCH_MAX_NOF_C
 /// serving cell, as per TS 38.213, Table 10.1-2.
 inline unsigned max_nof_monitored_pdcch_candidates(subcarrier_spacing scs)
 {
-  const static std::array<uint8_t, 4> max_monitored_pdcch_candidates_per_slot = {44, 36, 22, 20};
+  static const std::array<uint8_t, 4> max_monitored_pdcch_candidates_per_slot = {44, 36, 22, 20};
   return max_monitored_pdcch_candidates_per_slot[to_numerology_value(scs)];
 }
 

@@ -50,6 +50,7 @@ struct pusch_config_params {
   unsigned          tb_scaling_field;
   unsigned          nof_layers;
   bool              tp_pi2bpsk_present;
+  bool              use_transform_precoder;
   dmrs_information  dmrs;
   unsigned          nof_harq_ack_bits{0};
   unsigned          nof_csi_part1_bits{0};

@@ -19,4 +19,7 @@
 #
 
 add_subdirectory(dpdk)
-add_subdirectory(phy)
+if (NOT DU_SPLIT_6)
+    add_subdirectory(phy)
+endif ()
+

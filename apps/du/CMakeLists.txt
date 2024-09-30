@@ -40,7 +40,7 @@ target_link_libraries(srsdu
         srsran_pcap
         srsran_support
         srsran_versioning
-        srsran_flexible_du_dynamic
+        srsran_flexible_du
         srsran_f1c_gateway
         srsran_cu_up # TODO: Delete
 )

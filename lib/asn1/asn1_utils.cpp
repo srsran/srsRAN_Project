@@ -1550,7 +1550,7 @@ json_writer::json_writer() : ident(""), sep(NONE) {}
 
 void json_writer::write_fieldname(const char* fieldname)
 {
-  constexpr static const char* septable[] = {",\n", "\n", ""};
+  static constexpr const char* septable[] = {",\n", "\n", ""};
 
   fmt::format_to(buffer, "{}{}", septable[sep], sep != NONE ? ident : "");
   if (strlen(fieldname) != 0) {

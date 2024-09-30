@@ -78,8 +78,22 @@ struct formatter<srsran::srs_estimator_result> {
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "t_align={:.1}us", config.time_alignment.time_alignment * 1e6);
-    helper.format_always(ctx, "noise_var={}", config.noise_variance);
-    helper.format_if_verbose(ctx, "H={}", config.channel_matrix);
+    helper.format_always(ctx, "noise_var={:.3e}", config.noise_variance);
+
+    // Get matrix Frobenius norm.
+    float frobenius_norm = config.channel_matrix.frobenius_norm();
+
+    if (std::isnormal(frobenius_norm)) {
+      // Normalize matrix.
+      srsran::srs_channel_matrix norm_matrix = config.channel_matrix;
+      norm_matrix *= 1.0F / frobenius_norm;
+
+      // Print norm and matrix.
+      helper.format_if_verbose(ctx, "H={:.3e} * {}", frobenius_norm, norm_matrix);
+    } else {
+      // Do not print anything if there are no coefficients.
+      helper.format_if_verbose(ctx, "H=[]");
+    }
 
     return ctx.out();
   }

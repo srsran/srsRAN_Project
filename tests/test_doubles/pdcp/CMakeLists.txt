@@ -21,3 +21,5 @@
 add_library(pdcp_test_doubles pdcp_pdu_generator.cpp)
 set_target_properties(pdcp_test_doubles PROPERTIES UNITY_BUILD ON)
 target_link_libraries(pdcp_test_doubles srsran_support srslog)
+
+add_to_exported_libs(pdcp_test_doubles)

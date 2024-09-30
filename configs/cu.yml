@@ -1,9 +1,16 @@
 # Example config for a locally deployed CU listening on the localhost interface for a DU connection
-amf:
-  addr: 127.0.1.100
-  bind_addr: 127.0.10.2
 
 cu_cp:
+  amf:
+    addr: 127.0.1.100
+    port: 38412
+    bind_addr: 127.0.10.2
+    supported_tracking_areas:
+      - tac: 7
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
   f1ap:
     bind_addr: 127.0.10.1
 

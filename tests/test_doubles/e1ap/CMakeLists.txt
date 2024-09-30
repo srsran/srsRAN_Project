@@ -21,3 +21,5 @@
 add_library(e1ap_test_doubles e1ap_test_message_validators.cpp)
 set_target_properties(e1ap_test_doubles PROPERTIES UNITY_BUILD ON)
 target_link_libraries(e1ap_test_doubles srsran_support srslog e1ap_asn1)
+
+add_to_exported_libs(e1ap_test_doubles)

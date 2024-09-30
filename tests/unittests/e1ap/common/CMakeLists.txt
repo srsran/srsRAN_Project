@@ -35,3 +35,5 @@ target_link_libraries(e1ap_asn1_packer_test
                       gtest_main)
 target_include_directories(e1ap_asn1_packer_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(e1ap_asn1_packer_test)
+
+add_to_exported_libs(e1ap_test_helpers)

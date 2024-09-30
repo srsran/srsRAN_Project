@@ -139,7 +139,7 @@ void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> r
 
 TEST(rar_assembler_test, multiple_random_ul_grants)
 {
-  constexpr static size_t MAX_RAR_GRANT_SIZE = 64;
+  static constexpr size_t MAX_RAR_GRANT_SIZE = 64;
   test_delimit_logger     test_delim{"MAC assembler for multiple UL grants"};
 
   rar_information          rar_info = make_random_rar_info(nof_ul_grants_per_rar(gen));
@@ -155,7 +155,7 @@ TEST(rar_assembler_test, multiple_random_ul_grants)
 /// so that the output PDUs can be referenced by lower layers without risking dangling pointers.
 TEST(rar_assembler_test, rar_assembler_maintains_old_results)
 {
-  constexpr static size_t MAX_RAR_GRANT_SIZE = 64;
+  static constexpr size_t MAX_RAR_GRANT_SIZE = 64;
 
   test_delimit_logger test_delim{"MAC assembler maintains previous results"};
 

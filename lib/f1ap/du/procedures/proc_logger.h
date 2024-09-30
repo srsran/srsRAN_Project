@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../../common/proc_logger.h"
+#include "../../proc_logger.h"
 #include "../ue_context/f1ap_ue_context.h"
 
 namespace srsran {

@@ -223,10 +223,10 @@ test_bench::test_bench(const test_bench_params& params,
   csi_report.report_slot_offset = params.csi_offset;
 
   if (use_format_0) {
-    pucch_builder_params pucch_params{};
+    srs_du::pucch_builder_params pucch_params{};
     pucch_params.nof_ue_pucch_f0_or_f1_res_harq = 6;
     pucch_params.nof_ue_pucch_f2_res_harq       = 6;
-    pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
+    pucch_params.f0_or_f1_params.emplace<srs_du::pucch_f0_params>();
     pucch_builder.setup(
         cell_cfg.ul_cfg_common.init_ul_bwp, params.is_tdd ? cell_cfg.tdd_cfg_common : std::nullopt, pucch_params);
     bool new_ue_added = pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg);

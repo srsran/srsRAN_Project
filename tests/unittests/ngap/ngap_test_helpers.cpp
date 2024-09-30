@@ -26,6 +26,7 @@
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <chrono>
@@ -38,6 +39,7 @@ ngap_test::ngap_test() :
     cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
+    cucfg.ngaps.push_back(cu_cp_configuration::ngap_params{&n2_gw, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
     return cucfg;
   }())
 {
@@ -48,9 +50,9 @@ ngap_test::ngap_test() :
   ngap_configuration ngap_cfg{};
   ngap_cfg.gnb_id                    = cu_cp_cfg.node.gnb_id;
   ngap_cfg.ran_node_name             = cu_cp_cfg.node.ran_node_name;
-  ngap_cfg.supported_tas             = cu_cp_cfg.node.supported_tas;
+  ngap_cfg.supported_tas             = cu_cp_cfg.ngaps.front().supported_tas;
   ngap_cfg.pdu_session_setup_timeout = cu_cp_cfg.ue.pdu_session_setup_timeout;
-  ngap                               = create_ngap(ngap_cfg, cu_cp_notifier, n2_gw, timers, ctrl_worker);
+  ngap = create_ngap(ngap_cfg, cu_cp_notifier, nullptr, *cu_cp_cfg.ngaps.front().n2_gw, timers, ctrl_worker);
 
   cu_cp_notifier.connect_ngap(ngap->get_ngap_ue_context_removal_handler());
 
@@ -67,7 +69,8 @@ ngap_test::~ngap_test()
 ue_index_t ngap_test::create_ue(rnti_t rnti)
 {
   // Create UE in UE manager
-  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min, int_to_gnb_du_id(0), MIN_PCI, rnti, du_cell_index_t::min);
+  ue_index_t ue_index = ue_mng.add_ue(
+      du_index_t::min, plmn_identity::test_value(), int_to_gnb_du_id(0), MIN_PCI, rnti, du_cell_index_t::min);
   if (ue_index == ue_index_t::invalid) {
     test_logger.error(
         "Failed to create UE with pci={} rnti={} pcell_index={}", MIN_PCI, rnti_t::MIN_CRNTI, du_cell_index_t::min);
@@ -93,7 +96,8 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
 ue_index_t ngap_test::create_ue_without_init_ue_message(rnti_t rnti)
 {
   // Create UE in UE manager
-  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min, int_to_gnb_du_id(0), MIN_PCI, rnti, du_cell_index_t::min);
+  ue_index_t ue_index = ue_mng.add_ue(
+      du_index_t::min, plmn_identity::test_value(), int_to_gnb_du_id(0), MIN_PCI, rnti, du_cell_index_t::min);
   if (ue_index == ue_index_t::invalid) {
     test_logger.error(
         "Failed to create UE with pci={} rnti={} pcell_index={}", MIN_PCI, rnti_t::MIN_CRNTI, du_cell_index_t::min);

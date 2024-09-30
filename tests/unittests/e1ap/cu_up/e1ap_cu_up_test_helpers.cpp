@@ -84,7 +84,7 @@ e1ap_cu_up_test::~e1ap_cu_up_test()
   srslog::flush();
 }
 
-void e1ap_cu_up_test::setup_bearer(unsigned int cu_cp_ue_e1ap_id)
+void e1ap_cu_up_test::setup_bearer(unsigned cu_cp_ue_e1ap_id)
 {
   // Generate BearerContextSetupRequest
   e1ap_message bearer_context_setup = generate_bearer_context_setup_request(cu_cp_ue_e1ap_id);

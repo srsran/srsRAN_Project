@@ -83,6 +83,9 @@ bool is_tdd_full_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned slot_index
 /// \brief Checks if all symbols in the current slot index are active for UL.
 bool is_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned slot_index);
 
+/// \brief Checks if some symbols in the current slot index, but not all of them, are active for UL.
+bool is_tdd_partial_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned slot_index);
+
 /// \brief Calculates the number of active DL symbols in the current slot_index.
 ofdm_symbol_range get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp);
 

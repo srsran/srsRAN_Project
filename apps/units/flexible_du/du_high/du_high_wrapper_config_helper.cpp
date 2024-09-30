@@ -30,7 +30,7 @@
 #include "metrics/du_high_rlc_metrics_producer.h"
 #include "metrics/du_high_scheduler_cell_metrics_consumers.h"
 #include "metrics/du_high_scheduler_cell_metrics_producer.h"
-#include "srsran/du/du_high_wrapper_factory.h"
+#include "srsran/du/du_high/du_high_wrapper_factory.h"
 
 using namespace srsran;
 
@@ -141,19 +141,19 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
 }
 
 std::pair<std::vector<app_services::metrics_config>, std::vector<std::unique_ptr<app_services::application_command>>>
-srsran::fill_du_high_wrapper_config(du_high_wrapper_config&         out_cfg,
-                                    const du_high_unit_config&      du_high_unit_cfg,
-                                    unsigned                        du_idx,
-                                    du_high_executor_mapper&        execution_mapper,
-                                    srs_du::f1c_connection_client&  f1c_client_handler,
-                                    srs_du::f1u_du_gateway&         f1u_gw,
-                                    timer_manager&                  timer_mng,
-                                    mac_pcap&                       mac_p,
-                                    rlc_pcap&                       rlc_p,
-                                    e2_connection_client&           e2_client_handler,
-                                    e2_metric_connector_manager&    e2_metric_connectors,
-                                    srslog::sink&                   json_sink,
-                                    app_services::metrics_notifier& metrics_notifier)
+srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
+                                    const du_high_unit_config&       du_high_unit_cfg,
+                                    unsigned                         du_idx,
+                                    srs_du::du_high_executor_mapper& execution_mapper,
+                                    srs_du::f1c_connection_client&   f1c_client_handler,
+                                    srs_du::f1u_du_gateway&          f1u_gw,
+                                    timer_manager&                   timer_mng,
+                                    mac_pcap&                        mac_p,
+                                    rlc_pcap&                        rlc_p,
+                                    e2_connection_client&            e2_client_handler,
+                                    e2_metric_connector_manager&     e2_metric_connectors,
+                                    srslog::sink&                    json_sink,
+                                    app_services::metrics_notifier&  metrics_notifier)
 {
   // DU-high configuration.
   srs_du::du_high_configuration& du_hi_cfg = out_cfg.du_hi;
@@ -199,18 +199,18 @@ srsran::fill_du_high_wrapper_config(du_high_wrapper_config&         out_cfg,
 
   // Configure test mode
   if (du_high_unit_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
-    du_hi_cfg.test_cfg.test_ue =
-        srs_du::du_test_config::test_ue_config{du_high_unit_cfg.test_mode_cfg.test_ue.rnti,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.nof_ues,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.auto_ack_indication_delay,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.pdsch_active,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.pusch_active,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.cqi,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.ri,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.pmi,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.i_1_1,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.i_1_3,
-                                               du_high_unit_cfg.test_mode_cfg.test_ue.i_2};
+    du_hi_cfg.test_cfg.test_ue = srs_du::du_test_mode_config::test_mode_ue_config{
+        du_high_unit_cfg.test_mode_cfg.test_ue.rnti,
+        du_high_unit_cfg.test_mode_cfg.test_ue.nof_ues,
+        du_high_unit_cfg.test_mode_cfg.test_ue.auto_ack_indication_delay,
+        du_high_unit_cfg.test_mode_cfg.test_ue.pdsch_active,
+        du_high_unit_cfg.test_mode_cfg.test_ue.pusch_active,
+        du_high_unit_cfg.test_mode_cfg.test_ue.cqi,
+        du_high_unit_cfg.test_mode_cfg.test_ue.ri,
+        du_high_unit_cfg.test_mode_cfg.test_ue.pmi,
+        du_high_unit_cfg.test_mode_cfg.test_ue.i_1_1,
+        du_high_unit_cfg.test_mode_cfg.test_ue.i_1_3,
+        du_high_unit_cfg.test_mode_cfg.test_ue.i_2};
   }
 
   return du_services_cfg;

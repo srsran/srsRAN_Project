@@ -35,7 +35,7 @@
 namespace srsran {
 
 // See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
-constexpr static uint16_t MAX_NOF_PDU_SESSIONS = 256;
+static constexpr uint16_t MAX_NOF_PDU_SESSIONS = 256;
 
 /// \brief PDU Session ID.
 /// \remark See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
@@ -55,7 +55,7 @@ constexpr inline pdu_session_id_t uint_to_pdu_session_id(uint16_t idx)
 
 /// \brief RAN_UE_ID (non ASN1 type of RAN_UE_NGAP_ID).
 /// \remark See TS 38.413 Section 9.3.3.2: RAN_UE_NGAP_ID valid values: (0..2^32-1)
-constexpr static uint64_t MAX_NOF_RAN_UES = ((uint64_t)1 << 32);
+static constexpr uint64_t MAX_NOF_RAN_UES = ((uint64_t)1 << 32);
 enum class ran_ue_id_t : uint64_t { min = 0, max = MAX_NOF_RAN_UES - 1, invalid = 0x1ffffffff };
 
 /// Convert RAN_UE_ID type to integer.

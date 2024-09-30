@@ -53,7 +53,7 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
   logger.debug("source_ue={} target_ue={}: \"{}\" initialized", source_ue.get_ue_index(), target_ue_index, name());
 
   // Get RRC handover reconfiguration context
-  ho_reconf_ctxt = source_ue.get_rrc_ue_notifier().get_rrc_ue_handover_reconfiguration_context(request);
+  ho_reconf_ctxt = source_ue.get_rrc_ue()->get_rrc_ue_handover_reconfiguration_context(request);
 
   generate_ue_context_modification_request();
 

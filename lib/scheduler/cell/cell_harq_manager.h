@@ -254,7 +254,7 @@ class dl_harq_process_handle : public harq_utils::base_harq_process_handle<true>
 public:
   /// \brief Timeout value to use when the HARQ has been ACKed/NACKed, but it is expecting another PUCCH before being
   /// cleared (implementation-defined).
-  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 8U;
+  static constexpr unsigned SHORT_ACK_TIMEOUT_DTX = 8U;
 
   using status_update = harq_utils::dl_harq_process_impl::status_update;
   using grant_params  = harq_utils::dl_harq_process_impl::alloc_params;
@@ -406,7 +406,7 @@ class cell_harq_manager
 public:
   /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
   /// (implementation-defined).
-  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
+  static constexpr unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
   cell_harq_manager(unsigned                               max_ues              = MAX_NOF_DU_UES,
                     unsigned                               max_harqs_per_ue     = MAX_NOF_HARQS,

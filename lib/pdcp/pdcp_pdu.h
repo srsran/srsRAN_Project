@@ -103,7 +103,7 @@ struct formatter<srsran::pdcp_dc_field> {
   template <typename FormatContext>
   auto format(srsran::pdcp_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"ctrl", "data"};
+    static constexpr const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
   }
 };
@@ -119,7 +119,7 @@ struct formatter<srsran::pdcp_control_pdu_type> {
   template <typename FormatContext>
   auto format(srsran::pdcp_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"status_report", "rohc_feedback", "ehc_feedback"};
+    static constexpr const char* options[] = {"status_report", "rohc_feedback", "ehc_feedback"};
     return format_to(ctx.out(), "{}", options[to_number(cpt)]);
   }
 };

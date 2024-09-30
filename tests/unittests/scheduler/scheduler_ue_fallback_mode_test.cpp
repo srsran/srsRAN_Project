@@ -136,7 +136,7 @@ public:
 TEST_P(scheduler_con_res_msg4_test,
        when_conres_ce_and_srb_pdu_are_enqueued_then_tc_rnti_is_used_and_multiplexing_with_csi_rs_is_avoided)
 {
-  const static unsigned msg4_size = 128;
+  static const unsigned msg4_size = 128;
 
   // Enqueue several RACH indications, so that RARs that need to be scheduled may fight for RB space with the Msg4.
   enqueue_random_number_of_rach_indications();
@@ -174,10 +174,10 @@ TEST_P(scheduler_con_res_msg4_test,
 
 TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is_used)
 {
-  const static unsigned msg4_size = 128;
+  static const unsigned msg4_size = 128;
   // TODO: Increase the crnti message size, once PUCCH scheduler handles multiple HARQ-ACKs falling in the same slot
   //  in fallback mode.
-  const static unsigned crnti_msg_size = 8;
+  static const unsigned crnti_msg_size = 8;
 
   // Enqueue ConRes CE + Msg4.
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
@@ -280,7 +280,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
 
 TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_ss_is_used)
 {
-  const static unsigned msg4_size = 128;
+  static const unsigned msg4_size = 128;
 
   // Enqueue ConRes CE + Msg4.
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});

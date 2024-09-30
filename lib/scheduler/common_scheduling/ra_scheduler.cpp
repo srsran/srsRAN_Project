@@ -169,7 +169,8 @@ void ra_scheduler::precompute_msg3_pdus()
   static const unsigned nof_oh_prb = 0;
   static const unsigned nof_layers = 1;
 
-  msg3_mcs_config = pusch_mcs_get_config(pusch_mcs_table::qam64, sched_cfg.msg3_mcs_index, false);
+  msg3_mcs_config = pusch_mcs_get_config(
+      pusch_mcs_table::qam64, sched_cfg.msg3_mcs_index, cell_cfg.use_msg3_transform_precoder(), false);
 
   const auto& pusch_td_alloc_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
 
@@ -217,7 +218,7 @@ void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
 
 void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg)
 {
-  const static unsigned prach_duration = 1; // TODO: Take from config
+  static const unsigned prach_duration = 1; // TODO: Take from config
 
   for (const auto& prach_occ : msg.occasions) {
     // As per Section 5.1.3, TS 38.321, and from Section 5.3.2, TS 38.211, slot_idx uses as the numerology of reference
@@ -624,7 +625,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   rar_crbs.resize(get_nof_pdsch_prbs_required(pdsch_time_res_index, max_nof_allocs).nof_prbs);
 
   // > Find space in PDCCH for RAR.
-  const static aggregation_level aggr_lvl = aggregation_level::n4;
+  static const aggregation_level aggr_lvl = aggregation_level::n4;
   const search_space_id          ss_id    = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
   pdcch_dl_information*          pdcch    = pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, rar.ra_rnti, ss_id, aggr_lvl);
   if (pdcch == nullptr) {

@@ -1440,7 +1440,7 @@ TEST_P(rlc_rx_am_test, rx_reverse_with_reversed_segmentation)
 
 std::string test_param_info_to_string(const ::testing::TestParamInfo<rlc_rx_am_config>& info)
 {
-  constexpr static const char* options[] = {"12bit", "18bit"};
+  static constexpr const char* options[] = {"12bit", "18bit"};
   return options[info.index];
 }
 
@@ -1451,7 +1451,7 @@ INSTANTIATE_TEST_SUITE_P(rlc_rx_am_test_each_sn_size,
 
 std::string test_param_info_to_string_status_limit(const ::testing::TestParamInfo<rlc_rx_am_config>& info)
 {
-  constexpr static const char* options[] = {"12bit", "18bit", "12bit_status_limit", "18bit_status_limit"};
+  static constexpr const char* options[] = {"12bit", "18bit", "12bit_status_limit", "18bit_status_limit"};
   return options[info.index];
 }
 

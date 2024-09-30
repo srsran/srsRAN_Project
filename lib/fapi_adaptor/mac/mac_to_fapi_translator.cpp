@@ -29,6 +29,7 @@
 #include "srsran/fapi_adaptor/mac/messages/prach.h"
 #include "srsran/fapi_adaptor/mac/messages/pucch.h"
 #include "srsran/fapi_adaptor/mac/messages/pusch.h"
+#include "srsran/fapi_adaptor/mac/messages/srs.h"
 #include "srsran/fapi_adaptor/mac/messages/ssb.h"
 
 using namespace srsran;
@@ -299,6 +300,11 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   for (const auto& pdu : ul_res.ul_res->pucchs) {
     fapi::ul_pucch_pdu_builder pdu_builder = builder.add_pucch_pdu(pdu.format);
     convert_pucch_mac_to_fapi(pdu_builder, pdu);
+  }
+
+  for (const auto& pdu : ul_res.ul_res->srss) {
+    fapi::ul_srs_pdu_builder pdu_builder = builder.add_srs_pdu();
+    convert_srs_mac_to_fapi(pdu_builder, pdu);
   }
 
   // Validate the UL_TTI.request message.

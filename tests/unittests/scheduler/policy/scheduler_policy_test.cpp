@@ -78,28 +78,28 @@ protected:
   {
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
-    grid_alloc.slot_indication(next_slot);
-    slice_sched.slot_indication(next_slot);
-
     res_grid.slot_indication(next_slot);
+    grid_alloc.slot_indication(next_slot);
     cell_harqs.slot_indication(next_slot);
     pdcch_alloc.slot_indication(next_slot);
     pucch_alloc.slot_indication(next_slot);
     uci_alloc.slot_indication(next_slot);
+
+    slice_sched.slot_indication(next_slot, ue_res_grid.get_grid(to_du_cell_index(0)));
 
     if (cell_cfg.is_dl_enabled(next_slot)) {
       auto dl_slice_candidate = slice_sched.get_next_dl_candidate();
       while (dl_slice_candidate.has_value()) {
         auto&                           policy = slice_sched.get_policy(dl_slice_candidate->id());
         dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{grid_alloc, *dl_slice_candidate};
-        policy.dl_sched(slice_pdsch_alloc, ue_res_grid, *dl_slice_candidate);
+        policy.dl_sched(slice_pdsch_alloc, ue_res_grid, *dl_slice_candidate, cell_harqs.pending_dl_retxs());
         dl_slice_candidate = slice_sched.get_next_dl_candidate();
       }
       auto ul_slice_candidate = slice_sched.get_next_ul_candidate();
       while (ul_slice_candidate.has_value()) {
         auto&                           policy = slice_sched.get_policy(ul_slice_candidate->id());
         ul_slice_ue_cell_grid_allocator slice_pusch_alloc{grid_alloc, *ul_slice_candidate};
-        policy.ul_sched(slice_pusch_alloc, ue_res_grid, *ul_slice_candidate);
+        policy.ul_sched(slice_pusch_alloc, ue_res_grid, *ul_slice_candidate, cell_harqs.pending_ul_retxs());
         ul_slice_candidate = slice_sched.get_next_ul_candidate();
       }
     }
@@ -146,12 +146,21 @@ protected:
     sched_ue_creation_request_message req = test_helpers::create_default_sched_ue_creation_request();
     req.ue_index                          = ue_index;
     req.crnti                             = rnti;
-    auto default_lc_cfg                   = config_helpers::create_default_logical_channel_config(uint_to_lcid(0));
-    default_lc_cfg.lc_group               = lcg_id;
-    req.cfg.lc_config_list.emplace();
+    // Set LCG ID for SRBs provided in the LCIDs to activate list.
+    for (auto& lc_cfg : *req.cfg.lc_config_list) {
+      if (lc_cfg.lcid < lcid_t::LCID_SRB2 and
+          std::find(lcids_to_activate.begin(), lcids_to_activate.end(), lc_cfg.lcid) != lcids_to_activate.end()) {
+        lc_cfg.lc_group = lcg_id;
+      }
+    }
+    auto default_lc_cfg     = config_helpers::create_default_logical_channel_config(uint_to_lcid(0));
+    default_lc_cfg.lc_group = lcg_id;
+    // Add DRBs if any in the LCIDs to activate list.
     for (lcid_t lcid : lcids_to_activate) {
-      default_lc_cfg.lcid = lcid;
-      req.cfg.lc_config_list->push_back(default_lc_cfg);
+      if (lcid >= lcid_t::LCID_SRB2) {
+        default_lc_cfg.lcid = lcid;
+        req.cfg.lc_config_list->push_back(default_lc_cfg);
+      }
     }
     return req;
   }

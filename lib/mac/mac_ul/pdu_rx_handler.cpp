@@ -66,12 +66,12 @@ struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
   }
 };
 
-pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&          ccch_notifier_,
-                               du_high_ue_executor_mapper&    ue_exec_mapper_,
-                               mac_scheduler_ce_info_handler& sched_,
-                               mac_ul_ue_manager&             ue_manager_,
-                               du_rnti_table&                 rnti_table_,
-                               mac_pcap&                      pcap_) :
+pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&               ccch_notifier_,
+                               srs_du::du_high_ue_executor_mapper& ue_exec_mapper_,
+                               mac_scheduler_ce_info_handler&      sched_,
+                               mac_ul_ue_manager&                  ue_manager_,
+                               du_rnti_table&                      rnti_table_,
+                               mac_pcap&                           pcap_) :
   ccch_notifier(ccch_notifier_),
   ue_exec_mapper(ue_exec_mapper_),
   logger(srslog::fetch_basic_logger("MAC")),
@@ -173,7 +173,10 @@ bool pdu_rx_handler::handle_rx_subpdus(const decoded_mac_rx_pdu& ctx)
 bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue_context* ue)
 {
   if (ue == nullptr) {
-    logger.warning("{}: Discarding SDU. Cause: Non-existent C-RNTI", create_prefix(ctx, sdu));
+    // MAC PDUs can be processed after the UE has been removed, due to processing delays.
+    // TODO: Handle Msg3 SDUs that doesn't have UL-CCCH or C-RNTI CE.
+    srslog::log_channel& log_ch = ctx.ue_index == INVALID_DU_UE_INDEX ? logger.info : logger.warning;
+    log_ch("{}: Discarding SDU. Cause: Non-existent C-RNTI", create_prefix(ctx, sdu));
     return false;
   }
 

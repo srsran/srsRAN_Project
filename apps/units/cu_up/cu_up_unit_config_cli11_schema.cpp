@@ -84,18 +84,13 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
 
 static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_params)
 {
-  add_option(app,
-             "--bind_addr",
-             upf_params.bind_addr,
-             "Default local IP address interfaces bind to, unless a specific bind address is specified")
-      ->check(CLI::ValidIPV4);
-  add_option(app, "--n3_bind_addr", upf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
+  add_option(app, "--bind_addr", upf_params.bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--n3_bind_interface", upf_params.n3_bind_interface, "Network device to bind for N3 interface")
+  add_option(app, "--bind_interface", upf_params.bind_interface, "Network device to bind for N3 interface")
       ->capture_default_str();
   add_option(app,
-             "--n3_ext_addr",
-             upf_params.n3_ext_addr,
+             "--ext_addr",
+             upf_params.ext_addr,
              "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
   add_option(app, "--udp_max_rx_msgs", upf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
@@ -178,9 +173,9 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
 
-  // AMF section.
-  CLI::App* amf_subcmd = add_subcommand(app, "amf", "AMF parameters")->configurable();
-  configure_cli11_upf_args(*amf_subcmd, unit_cfg.upf_cfg);
+  // UPF section.
+  CLI::App* upf_subcmd = add_subcommand(app, "upf", "UPF parameters")->configurable();
+  configure_cli11_upf_args(*upf_subcmd, unit_cfg.upf_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {
@@ -202,4 +197,15 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   // Test mode section.
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, unit_cfg.test_mode_cfg);
+}
+
+void srsran::autoderive_cu_up_parameters_after_parsing(const std::string& n2_bind_addr,
+                                                       bool               no_core,
+                                                       cu_up_unit_config& unit_cfg)
+{
+  // If no UPF is configured, we autoderive the UPF configuration from the CU-CP AMF configuration.
+  if (unit_cfg.upf_cfg.bind_addr == "auto") {
+    unit_cfg.upf_cfg.bind_addr = n2_bind_addr;
+  }
+  unit_cfg.upf_cfg.no_core = no_core;
 }

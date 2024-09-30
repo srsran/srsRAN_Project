@@ -122,7 +122,7 @@ public:
   direction get_direction() const override { return dir; }
 
   // See interface for documentation.
-  unsigned int get_size() const override { return input.size(); }
+  unsigned get_size() const override { return input.size(); }
 
   // See interface for documentation.
   span<cf_t> get_input() override { return input; }

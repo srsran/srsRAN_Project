@@ -353,15 +353,18 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
     return false;
   }
 
+  // Modulation and Code Scheme MCS ranges are given in TS38.214 Section 6.1.4.2.
   unsigned max_ue_mcs = 28;
-  if (config.mcs_table == pusch_mcs_table::qam256) {
+  if ((config.mcs_table == pusch_mcs_table::qam256) || config.enable_transform_precoding) {
     max_ue_mcs = 27;
   }
 
   if (config.min_ue_mcs > max_ue_mcs) {
-    fmt::print("Invalid PUSCH min_ue_mcs (i.e., {}) for the selected MCS table (i.e., {}).\n",
-               config.min_ue_mcs,
-               (config.mcs_table == pusch_mcs_table::qam256) ? "qam256" : "qam64");
+    fmt::print(
+        "Invalid PUSCH min_ue_mcs (i.e., {}) for the selected MCS table (i.e., {}) with transform precoding {}.\n",
+        config.min_ue_mcs,
+        (config.mcs_table == pusch_mcs_table::qam256) ? "qam256" : "qam64",
+        config.enable_transform_precoding ? "enabled" : "disabled");
     return false;
   }
 
@@ -382,15 +385,6 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
                config.min_rb_size,
                get_transform_precoding_nearest_lower_nof_prb_valid(config.min_rb_size),
                get_transform_precoding_nearest_higher_nof_prb_valid(config.min_rb_size));
-    return false;
-  }
-
-  if (config.enable_transform_precoding && !is_transform_precoding_nof_prb_valid(config.max_rb_size)) {
-    fmt::print("Invalid maximum UE PUSCH RB (i.e., {}) with transform precoding. The nearest lower number of PRB is {} "
-               "and the higher is {}.\n",
-               config.max_rb_size,
-               get_transform_precoding_nearest_lower_nof_prb_valid(config.max_rb_size),
-               get_transform_precoding_nearest_higher_nof_prb_valid(config.max_rb_size));
     return false;
   }
 
@@ -425,7 +419,13 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
-  static constexpr std::array<unsigned, 12> valid_sr_period_slots{1, 2, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320};
+  // See \c periodicityAndOffset in \c SchedulingRequestResourceConfig of TS 38.331.
+  static const std::map<unsigned, std::vector<unsigned>> mu_to_valid_sr_period_slots_lookup{
+      {0, {1, 2, 4, 5, 8, 10, 16, 20, 40, 80}},
+      {1, {1, 2, 4, 8, 10, 16, 20, 40, 80, 160}},
+      {2, {1, 2, 4, 8, 16, 20, 40, 80, 160, 320}},
+      {3, {1, 2, 4, 8, 16, 40, 80, 160, 320, 640}},
+  };
   const auto sr_period_slots = static_cast<unsigned>(get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec);
 
   // Check that the SR period in milliseconds leads to an integer number of slots.
@@ -436,10 +436,13 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                get_nof_slots_per_subframe(scs_common));
     return false;
   }
-
+  span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
   if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
       valid_sr_period_slots.end()) {
-    fmt::print("SR period of {}ms is not valid for {}kHz SCS.\n", pucch_cfg.sr_period_msec, scs_to_khz(scs_common));
+    fmt::print("SR period of {}ms (i.e. {} slots) is not valid for {}kHz SCS.\n",
+               pucch_cfg.sr_period_msec,
+               sr_period_slots,
+               scs_to_khz(scs_common));
     return false;
   }
 
@@ -840,6 +843,19 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
     if (cell.cell.sector_id.has_value() and
         not nr_cell_identity::create(gnb_id, cell.cell.sector_id.value()).has_value()) {
       fmt::print("Invalid Sector ID {}, for a gNB Id of {} bits\n", cell.cell.sector_id.value(), gnb_id.bit_length);
+      return false;
+    }
+    const auto   band          = cell.cell.band.value_or(band_helper::get_band_from_dl_arfcn(cell.cell.dl_f_ref_arfcn));
+    bool         is_unlicensed = band_helper::is_unlicensed_band(band);
+    unsigned int max_ra_resp_window = is_unlicensed ? 40 : 10;
+    unsigned int ra_resp_window_ms =
+        cell.cell.prach_cfg.ra_resp_window.value() >> to_numerology_value(cell.cell.common_scs);
+    if (ra_resp_window_ms > max_ra_resp_window) {
+      fmt::print("RA Response Window ({}sl -> {}ms) must be smaller than {}ms in {} bands.\n",
+                 cell.cell.prach_cfg.ra_resp_window,
+                 ra_resp_window_ms,
+                 max_ra_resp_window,
+                 is_unlicensed ? "unlicensed" : "licensed");
       return false;
     }
   }

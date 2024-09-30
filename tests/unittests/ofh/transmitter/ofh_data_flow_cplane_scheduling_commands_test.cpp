@@ -114,7 +114,6 @@ private:
     data_flow_cplane_scheduling_commands_impl_config config;
 
     config.ru_nof_prbs        = ru_nof_prbs;
-    config.vlan_params        = vlan_params;
     config.dl_compr_params    = dl_compr_params;
     config.ul_compr_params    = ul_compr_params;
     config.prach_compr_params = prach_compr_params;
@@ -135,7 +134,7 @@ private:
       dependencies.cp_builder = std::move(temp);
     }
     {
-      auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+      auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>(vlan_params);
       vlan_builder             = temp.get();
       dependencies.eth_builder = std::move(temp);
     }

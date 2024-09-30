@@ -1825,7 +1825,7 @@ basic asan:
   variables:
     TEST_MODE: none
     MARCH: x86-64-v3
-    BUILD_ARGS: -DEXIT_TIMEOUT=15
+    BUILD_ARGS: -DEXIT_TIMEOUT=60
   tags: ["${AMD64_AVX2_TAG}"]
   after_script:
     - *build_after_script
@@ -1865,7 +1865,7 @@ basic avx512 dpdk:
     DPDK_VERSION: "23.11.1_avx512"
     MARCH: x86-64-v4
     FORCE_DEBUG_INFO: "True"
-    ASSERT_LEVEL: MINIMAL
+    ASSERT_LEVEL: AUTO
   tags: ["${AMD64_AVX512_TAG}"]
   after_script:
     - *build_after_script
@@ -1875,8 +1875,10 @@ basic avx512 dpdk:
 
 basic avx512 dpdk withassert:
   extends: basic avx512 dpdk
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/  
   variables:
-    ASSERT_LEVEL: NORMAL
+    ASSERT_LEVEL: PARANOID
 
 #######
 # Web #

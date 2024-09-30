@@ -30,6 +30,7 @@
 #include "../support/pusch/pusch_td_resource_indices.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/sch/tbs_calculator.h"
+#include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -1488,7 +1489,8 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
   } else {
     pusch_mcs_table     fallback_mcs_table = pusch_mcs_table::qam64;
     sch_mcs_index       mcs                = ue_pcell.get_ul_mcs(fallback_mcs_table);
-    sch_mcs_description ul_mcs_cfg         = pusch_mcs_get_config(fallback_mcs_table, mcs, false);
+    sch_mcs_description ul_mcs_cfg =
+        pusch_mcs_get_config(fallback_mcs_table, mcs, cell_cfg.use_msg3_transform_precoder(), false);
 
     unsigned pending_bytes = u.pending_ul_newtx_bytes();
 
@@ -1509,6 +1511,25 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     const unsigned      min_allocable_prbs = 1U;
     if (mcs < min_mcs_for_1_prb and prbs_tbs.nof_prbs <= min_allocable_prbs) {
       ++prbs_tbs.nof_prbs;
+    }
+
+    // Checks if the grant size is correct if transform precoding is enabled.
+    if (cell_cfg.use_msg3_transform_precoder()) {
+      // Obtain a valid suggestion of a valid number of PRB.
+      std::optional<unsigned> corrected_nof_prbs =
+          get_transform_precoding_nearest_higher_nof_prb_valid(prbs_tbs.nof_prbs);
+
+      // If no suggestion is available, skip the slot.
+      if (!corrected_nof_prbs) {
+        logger.debug(
+            "ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: not possible to select a valid number of PRBs",
+            u.ue_index,
+            u.crnti);
+        return ul_srb_sched_outcome::next_slot;
+      }
+
+      // Overwrite the number of PRBs with the valid number of PRB.
+      prbs_tbs.nof_prbs = corrected_nof_prbs.value();
     }
 
     ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);

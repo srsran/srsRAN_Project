@@ -193,7 +193,7 @@ class byte_buffer
   };
 
   /// Headroom given to the first segment of the byte_buffer.
-  constexpr static size_t DEFAULT_FIRST_SEGMENT_HEADROOM = 16;
+  static constexpr size_t DEFAULT_FIRST_SEGMENT_HEADROOM = 16;
 
 public:
   using value_type     = uint8_t;

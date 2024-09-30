@@ -41,6 +41,22 @@ enum class srs_group_or_sequence_hopping { neither, groupHopping, sequenceHoppin
 /// \brief \c resourceType, as per TS 38.331, "SRS-Resource".
 enum class srs_resource_type { aperiodic, semi_persistent, periodic };
 
+/// Convert SRS resource type to string.
+inline std::string_view to_string(srs_resource_type res_type)
+{
+  switch (res_type) {
+    case srs_resource_type::aperiodic:
+      return "aperiodic";
+    case srs_resource_type::semi_persistent:
+      return "semi-persistent";
+    case srs_resource_type::periodic:
+      return "periodic";
+    default:
+      break;
+  }
+  return "Invalid srs resource type";
+}
+
 enum srs_nof_symbols : uint8_t {
   n1 = 1,
   n2 = 2,

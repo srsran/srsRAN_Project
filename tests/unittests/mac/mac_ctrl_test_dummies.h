@@ -25,7 +25,7 @@
 #include "lib/mac/mac_config_interfaces.h"
 #include "lib/mac/mac_ctrl/mac_scheduler_configurator.h"
 #include "srsran/adt/optional.h"
-#include "srsran/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -97,7 +97,7 @@ public:
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
 };
 
-class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
+class dummy_ue_executor_mapper : public srs_du::du_high_ue_executor_mapper
 {
 public:
   dummy_ue_executor_mapper(task_executor& exec_) : exec(exec_) {}
@@ -110,7 +110,7 @@ public:
   task_executor& exec;
 };
 
-class dummy_dl_executor_mapper : public du_high_cell_executor_mapper
+class dummy_dl_executor_mapper : public srs_du::du_high_cell_executor_mapper
 {
 public:
   dummy_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) : execs(execs_.begin(), execs_.end()) {}

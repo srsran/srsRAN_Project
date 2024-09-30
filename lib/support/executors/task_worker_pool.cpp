@@ -21,15 +21,39 @@
  */
 
 #include "srsran/support/executors/task_worker_pool.h"
+#include "execution_context_description_setup.h"
 #include <future>
 
 using namespace srsran;
 
-detail::base_worker_pool::base_worker_pool(unsigned                              nof_workers_,
-                                           const std::string&                    worker_pool_name,
-                                           const std::function<void()>&          run_tasks_job,
-                                           os_thread_realtime_priority           prio,
-                                           span<const os_sched_affinity_bitmask> cpu_masks) :
+namespace {
+
+// Creates the task that will be run by each instantiated worker
+template <typename Queue>
+std::function<void()> worker_task_factory(Queue& queue, unsigned nof_workers, unsigned worker_idx)
+{
+  return [&queue, nof_workers, worker_idx]() {
+    // setup worker execution context.
+    execution_context::set_execution_context_description(nof_workers, worker_idx);
+
+    // start worker pop loop.
+    while (true) {
+      unique_task job;
+      if (not queue.pop_blocking(job)) {
+        break;
+      }
+      job();
+    }
+  };
+}
+
+} // namespace
+
+detail::base_worker_pool::base_worker_pool(unsigned                                              nof_workers_,
+                                           const std::string&                                    worker_pool_name,
+                                           const std::function<std::function<void()>(unsigned)>& worker_task_factory,
+                                           os_thread_realtime_priority                           prio,
+                                           span<const os_sched_affinity_bitmask>                 cpu_masks) :
   pool_name(worker_pool_name)
 {
   worker_threads.reserve(nof_workers_);
@@ -42,11 +66,11 @@ detail::base_worker_pool::base_worker_pool(unsigned                             
   // Task dispatched to workers of the pool.
   for (unsigned i = 0; i != nof_workers_; ++i) {
     if (cpu_masks.empty()) {
-      worker_threads.emplace_back(fmt::format("{}#{}", worker_pool_name, i), prio, run_tasks_job);
+      worker_threads.emplace_back(fmt::format("{}#{}", worker_pool_name, i), prio, worker_task_factory(i));
     } else {
       // Check whether a single mask for all workers should be used.
       os_sched_affinity_bitmask cpu_mask = (cpu_masks.size() == 1) ? cpu_masks[0] : cpu_masks[i];
-      worker_threads.emplace_back(fmt::format("{}#{}", worker_pool_name, i), prio, cpu_mask, run_tasks_job);
+      worker_threads.emplace_back(fmt::format("{}#{}", worker_pool_name, i), prio, cpu_mask, worker_task_factory(i));
     }
   }
 }
@@ -67,7 +91,12 @@ priority_task_worker_pool::priority_task_worker_pool(std::string                
                                                      os_thread_realtime_priority           prio,
                                                      span<const os_sched_affinity_bitmask> cpu_masks) :
   detail::base_priority_task_queue(queue_params, wait_sleep_time),
-  detail::base_worker_pool(nof_workers_, std::move(worker_pool_name), create_pop_loop_task(), prio, cpu_masks)
+  detail::base_worker_pool(
+      nof_workers_,
+      std::move(worker_pool_name),
+      [this, nof_workers_](unsigned worker_idx) { return worker_task_factory(this->queue, nof_workers_, worker_idx); },
+      prio,
+      cpu_masks)
 {
   report_fatal_error_if_not(nof_workers_ > 0, "Number of workers of a thread pool must be greater than 0");
   srsran_assert(queue_params.size() >= 2, "Number of queues in a prioritized thread pool must be greater than 1");
@@ -141,20 +170,24 @@ void priority_task_worker_pool::wait_pending_tasks()
   cvar_caller_return.wait(lock, [&counter_caller]() { return counter_caller == 0; });
 }
 
-std::function<void()> priority_task_worker_pool::create_pop_loop_task()
-{
-  return [this]() {
-    unique_task job;
-    while (true) {
-      if (not this->queue.pop_blocking(job)) {
-        break;
-      }
-      job();
-    }
-  };
-}
-
 // ---- non-prioritized task worker pool
+
+template <concurrent_queue_policy QueuePolicy>
+task_worker_pool<QueuePolicy>::task_worker_pool(std::string                           worker_pool_name,
+                                                unsigned                              nof_workers_,
+                                                unsigned                              qsize_,
+                                                std::chrono::microseconds             wait_sleep_time,
+                                                os_thread_realtime_priority           prio,
+                                                span<const os_sched_affinity_bitmask> cpu_masks) :
+  detail::base_task_queue<QueuePolicy>(qsize_, wait_sleep_time),
+  detail::base_worker_pool(
+      nof_workers_,
+      std::move(worker_pool_name),
+      [this, nof_workers_](unsigned worker_idx) { return worker_task_factory(this->queue, nof_workers_, worker_idx); },
+      prio,
+      cpu_masks)
+{
+}
 
 template <concurrent_queue_policy QueuePolicy>
 task_worker_pool<QueuePolicy>::~task_worker_pool()
@@ -174,20 +207,6 @@ void task_worker_pool<QueuePolicy>::stop()
     }
     count++;
   }
-}
-
-template <concurrent_queue_policy QueuePolicy>
-std::function<void()> task_worker_pool<QueuePolicy>::create_pop_loop_task()
-{
-  return [this]() {
-    while (true) {
-      unique_task job;
-      if (not this->queue.pop_blocking(job)) {
-        break;
-      }
-      job();
-    }
-  };
 }
 
 template <concurrent_queue_policy QueuePolicy>

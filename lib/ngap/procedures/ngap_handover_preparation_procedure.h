@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../ngap_context.h"
 #include "../ue_context/ngap_ue_context.h"
 #include "ngap_transaction_manager.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"

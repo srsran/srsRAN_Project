@@ -311,7 +311,7 @@ struct formatter<srsran::security::security_direction> {
   auto format(srsran::security::security_direction dir, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"UL", "DL"};
+    static constexpr const char* options[] = {"UL", "DL"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(dir)]);
   }
 };
@@ -329,7 +329,7 @@ struct formatter<srsran::security::integrity_enabled> {
   auto format(srsran::security::integrity_enabled integrity_flag, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"off", "on"};
+    static constexpr const char* options[] = {"off", "on"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(integrity_flag)]);
   }
 };
@@ -347,7 +347,7 @@ struct formatter<srsran::security::ciphering_enabled> {
   auto format(srsran::security::ciphering_enabled ciphering_flag, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"off", "on"};
+    static constexpr const char* options[] = {"off", "on"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(ciphering_flag)]);
   }
 };
@@ -415,7 +415,7 @@ struct formatter<srsran::security::sec_domain> {
   template <typename FormatContext>
   auto format(srsran::security::sec_domain domain, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"RRC", "UP"};
+    static constexpr const char* options[] = {"RRC", "UP"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(domain)]);
   }
 };

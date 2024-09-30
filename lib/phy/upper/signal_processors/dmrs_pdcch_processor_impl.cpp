@@ -38,7 +38,7 @@ unsigned dmrs_pdcch_processor_impl::c_init(unsigned symbol, const dmrs_pdcch_pro
 }
 
 void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                            sequence,
-                                                    unsigned int                          symbol,
+                                                    unsigned                              symbol,
                                                     const dmrs_pdcch_processor::config_t& config) const
 {
   // Initialize pseudo-random generator.

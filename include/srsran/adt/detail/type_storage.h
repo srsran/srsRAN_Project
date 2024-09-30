@@ -64,8 +64,8 @@ struct type_storage {
     return addr();
   }
 
-  constexpr static size_t obj_size   = sizeof(T) > MinSize ? sizeof(T) : MinSize;
-  constexpr static size_t align_size = alignof(T) > AlignSize ? alignof(T) : AlignSize;
+  static constexpr size_t obj_size   = sizeof(T) > MinSize ? sizeof(T) : MinSize;
+  static constexpr size_t align_size = alignof(T) > AlignSize ? alignof(T) : AlignSize;
 
   alignas(align_size) char buffer[obj_size]; ///< Embedded memory buffer.
 };

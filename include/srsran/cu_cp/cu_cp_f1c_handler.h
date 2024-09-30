@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/f1ap_message_notifier.h"
 #include <memory>
 
 namespace srsran {

@@ -78,7 +78,7 @@ unsigned slice_ue::pending_dl_newtx_bytes() const
 
 unsigned slice_ue::pending_ul_newtx_bytes() const
 {
-  constexpr static unsigned SR_GRANT_BYTES = 512;
+  static constexpr unsigned SR_GRANT_BYTES = 512;
 
   unsigned pending_bytes = 0;
   for (unsigned lcg_id = 0, e = lcg_ids.size(); lcg_id != e; ++lcg_id) {

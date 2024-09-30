@@ -48,6 +48,8 @@ struct ru_dummy_configuration {
   unsigned max_processing_delay_slots;
   /// DL processing processing delay in slots. See \ref ru_dummy_appconfig::dl_processing_delay for more information.
   unsigned dl_processing_delay;
+  /// Time scaling, \ref ru_dummy_unit_config::time_scaling for more details.
+  float time_scaling;
 };
 
 /// Collects the necessary dependencies for the dummy radio unit.

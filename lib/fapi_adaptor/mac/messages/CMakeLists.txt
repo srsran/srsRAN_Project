@@ -24,6 +24,7 @@ set(SOURCES
         prach.cpp
         pucch.cpp
         pusch.cpp
+        srs.cpp
         ssb.cpp)
 
 add_library(srsran_mac_fapi_adaptors STATIC ${SOURCES})

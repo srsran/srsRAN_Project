@@ -51,7 +51,7 @@ from .steps.stub import iperf_parallel, start_and_attach, stop
     (param("log --hex_max_size=32", id="hex_max_size"),),
 )
 @mark.zmq_single_ue
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_multiple_configs_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,

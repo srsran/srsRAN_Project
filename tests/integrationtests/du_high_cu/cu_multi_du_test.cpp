@@ -44,7 +44,7 @@ class cu_multi_du_test : public du_high_cu_test_simulator, public ::testing::Tes
 public:
   cu_multi_du_test() : du_high_cu_test_simulator(create_test_sim_config(nof_dus)) {}
 
-  constexpr static unsigned nof_dus = 2;
+  static constexpr unsigned nof_dus = 2;
 };
 constexpr unsigned cu_multi_du_test::nof_dus;
 

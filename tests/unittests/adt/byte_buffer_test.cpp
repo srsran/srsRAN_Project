@@ -797,7 +797,7 @@ TEST_F(byte_buffer_tester, append_rvalue_byte_buffer)
 
 TEST_P(byte_buffer_stress_tester, concurrent_alloc_dealloc_test)
 {
-  const static unsigned   MAX_COUNT   = 100000;
+  static const unsigned   MAX_COUNT   = 100000;
   const unsigned          NOF_THREADS = 4;
   std::mutex              mutex;
   std::condition_variable cvar;

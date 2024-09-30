@@ -43,7 +43,7 @@ TEST_P(validate_csi_pdu_field, WithValue)
                validate_dl_csi_pdu,
                srsran::fapi::message_type_id::dl_tti_request,
                dl_pdu_type::CSI_RS);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(Subcarrier_spacing,
                          validate_csi_pdu_field,

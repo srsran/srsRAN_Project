@@ -23,8 +23,8 @@
 #pragma once
 
 #include "../du_manager_test_helpers.h"
-#include "lib/du_manager/du_ue/du_ue.h"
-#include "lib/du_manager/du_ue/du_ue_manager_repository.h"
+#include "lib/du/du_high/du_manager/du_ue/du_ue.h"
+#include "lib/du/du_high/du_manager/du_ue/du_ue_manager_repository.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {

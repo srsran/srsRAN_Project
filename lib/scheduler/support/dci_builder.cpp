@@ -414,9 +414,15 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
   f0_1.srs_request             = 0;
   f0_1.dmrs_seq_initialization = 0;
   // TODO: Set proper value based on nof. layers used. See TS 38.212, clause 7.3.1.1.2.
-  // PHY does not support nof. DMRS CDM groups(s) without data other than 2, hence selected antenna port value from
-  // Table 7.3.1.1.2-8 in TS 38.212 based on assumption of max. rank 1 and DMRS max. length 1.
-  f0_1.antenna_ports = 2;
+  if (ue_cell_cfg.use_pusch_transform_precoding_dci_0_1()) {
+    // PHY does not support DM-RS in ports other than 0, hence the selected antenna port value is chosen from Table
+    // 7.3.1.1.2-6 in TS 38.212 based on assumption of max. rank 1 and DMRS max. length 1.
+    f0_1.antenna_ports = 0;
+  } else {
+    // PHY does not support nof. DMRS CDM groups(s) without data other than 2, hence the selected antenna port value
+    // is chosen from Table 7.3.1.1.2-8 in TS 38.212 based on assumption of max. rank 1 and DMRS max. length 1.
+    f0_1.antenna_ports = 2;
+  }
 
   // See 38.212, clause 7.3.1.1.2 - N^{UL,BWP}_RB for C-RNTI.
   const vrb_interval vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());

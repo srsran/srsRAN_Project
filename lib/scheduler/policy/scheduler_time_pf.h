@@ -34,11 +34,13 @@ public:
 
   void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                 const ue_resource_grid_view& res_grid,
-                dl_ran_slice_candidate&      slice_candidate) override;
+                dl_ran_slice_candidate&      slice_candidate,
+                dl_harq_pending_retx_list    harq_pending_retx_list) override;
 
   void ul_sched(ue_pusch_allocator&          pusch_alloc,
                 const ue_resource_grid_view& res_grid,
-                ul_ran_slice_candidate&      slice_candidate) override;
+                ul_ran_slice_candidate&      slice_candidate,
+                ul_harq_pending_retx_list    harq_pending_retx_list) override;
 
 private:
   /// Fairness parameters.

@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/f1ap/common/f1ap_ue_id.h"
-#include "srsran/f1ap/common/ue_context_config.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
+#include "srsran/f1ap/ue_context_management_configs.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"

@@ -58,7 +58,7 @@ protected:
 
   cell_configuration            cell_cfg;
   cell_config_dedicated         cell_cfg_dedicated;
-  pucch_builder_params          pucch_params;
+  srs_du::pucch_builder_params  pucch_params;
   std::vector<ue_info>          ues;
   unsigned                      ue_cnt = 0;
   pucch_res_builder_test_helper pucch_builder;

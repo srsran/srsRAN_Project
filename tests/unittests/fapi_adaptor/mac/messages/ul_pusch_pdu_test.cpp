@@ -30,7 +30,7 @@ using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 
-TEST(mac_to_fapi_pusch_pdu_test, valid_pusch_pdu_shoul_pass)
+TEST(mac_to_fapi_pusch_pdu_test, valid_pusch_pdu_should_pass)
 {
   const ul_sched_info_test_helper& pdu_test = build_valid_pusch_pdu();
   const ul_sched_info&             mac_pdu  = pdu_test.info;

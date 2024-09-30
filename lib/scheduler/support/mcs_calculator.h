@@ -45,9 +45,11 @@ std::optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_ta
 sch_mcs_index map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table);
 
 /// \brief Retrieves the maximum MCS value for a given MCS table.
-inline sch_mcs_index get_max_mcs_ul(pusch_mcs_table mcs_table)
+///
+/// The MCS value ranges are given in TS 38.214 Section 6.1.4.2.
+inline sch_mcs_index get_max_mcs_ul(pusch_mcs_table mcs_table, bool transform_precoding)
 {
-  return mcs_table == pusch_mcs_table::qam256 ? 27 : 28;
+  return ((mcs_table == pusch_mcs_table::qam256) or transform_precoding) ? 27 : 28;
 }
 
 } // namespace srsran

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../cu_cp_impl_interface.h"
+#include "../ngap_repository.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
@@ -34,18 +34,21 @@ namespace srs_cu_cp {
 class amf_connection_setup_routine
 {
 public:
-  amf_connection_setup_routine(const cu_cp_configuration& cu_cp_cfg_, ngap_connection_manager& ngap_conn_mng_);
+  amf_connection_setup_routine(ngap_repository& ngap_db_, std::atomic<bool>& amf_connected_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
 private:
-  ngap_ng_setup_request            fill_ng_setup_request();
-  async_task<ngap_ng_setup_result> send_ng_setup_request();
+  void handle_connection_setup_result();
 
-  const cu_cp_configuration& cu_cp_cfg;
-  ngap_connection_manager&   ngap_conn_mng;
+  ngap_repository&      ngap_db;
+  std::atomic<bool>&    amf_connected;
+  amf_index_t           amf_index = amf_index_t::invalid;
+  ngap_interface*       ngap      = nullptr;
+  srslog::basic_logger& logger;
 
   ngap_ng_setup_result result_msg = {};
+  bool                 success    = false;
 };
 
 } // namespace srs_cu_cp

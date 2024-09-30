@@ -26,7 +26,7 @@
 #include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 
-namespace srsran::modules::cu_up {
+namespace srsran {
 
 struct cu_up_dlt_pcaps {
   std::unique_ptr<dlt_pcap> n3;
@@ -41,8 +41,8 @@ struct cu_up_dlt_pcaps {
 };
 
 /// Creates the DLT PCAPs of the CU-UP.
-inline cu_up_dlt_pcaps create_dlt_pcaps(const cu_up_unit_pcap_config&   pcap_cfg,
-                                        worker_manager_executor_getter& exec_getter)
+inline cu_up_dlt_pcaps create_cu_up_dlt_pcaps(const cu_up_unit_pcap_config&   pcap_cfg,
+                                              worker_manager_executor_getter& exec_getter)
 {
   cu_up_dlt_pcaps pcaps;
 
@@ -58,4 +58,4 @@ inline cu_up_dlt_pcaps create_dlt_pcaps(const cu_up_unit_pcap_config&   pcap_cfg
   return pcaps;
 }
 
-} // namespace srsran::modules::cu_up
+} // namespace srsran

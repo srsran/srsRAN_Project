@@ -57,7 +57,7 @@ public:
   }
 
   // See interface for documentation.
-  unsigned int get_max_nof_ports() const override { return data.get_dimension_size(dims::port); }
+  unsigned get_max_nof_ports() const override { return data.get_dimension_size(dims::port); }
 
   // See interface for documentation.
   unsigned get_max_nof_td_occasions() const override { return data.get_dimension_size(dims::td_occasion); }

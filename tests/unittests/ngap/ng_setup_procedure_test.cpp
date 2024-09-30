@@ -32,9 +32,8 @@ using namespace srs_cu_cp;
 TEST_F(ngap_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Action 1: Launch NG setup procedure
-  ngap_ng_setup_request request_msg = generate_ng_setup_request();
   test_logger.info("Launch ng setup request procedure...");
-  async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(request_msg);
+  async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(1);
   lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
 
   // Status: AMF received NG Setup Request.
@@ -59,9 +58,8 @@ TEST_F(ngap_test, when_ng_setup_response_received_then_amf_connected)
 TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_with_success)
 {
   // Action 1: Launch NG setup procedure
-  ngap_ng_setup_request request_msg = generate_ng_setup_request();
   test_logger.info("Launch ng setup request procedure...");
-  async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(request_msg);
+  async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(1);
   lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
 
   // Status: AMF received NG Setup Request.
@@ -102,9 +100,8 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
 TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_without_success)
 {
   // Action 1: Launch NG setup procedure
-  ngap_ng_setup_request request_msg = generate_ng_setup_request();
   test_logger.info("Launch ng setup request procedure...");
-  async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(request_msg);
+  async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(1);
   lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
 
   // Status: AMF received NG Setup Request.
@@ -144,9 +141,9 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
 TEST_F(ngap_test, when_retry_limit_reached_then_amf_not_connected)
 {
   // Action 1: Launch NG setup procedure
-  ngap_ng_setup_request request_msg = generate_ng_setup_request();
-  test_logger.info("Launch f1 setup request procedure...");
-  async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(request_msg);
+  test_logger.info("Launch ng setup request procedure...");
+  unsigned                                 max_setup_retries = 1;
+  async_task<ngap_ng_setup_result>         t                 = ngap->handle_ng_setup_request(max_setup_retries);
   lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
 
   // Status: AMF received NG Setup Request.
@@ -158,7 +155,7 @@ TEST_F(ngap_test, when_retry_limit_reached_then_amf_not_connected)
   ngap_message ng_setup_response_msg = generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wait_opts::v10s);
   ngap->handle_message(ng_setup_response_msg);
 
-  for (unsigned i = 0; i < request_msg.max_setup_retries; i++) {
+  for (unsigned i = 0; i < max_setup_retries; i++) {
     // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
     for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
       ASSERT_FALSE(t.ready());

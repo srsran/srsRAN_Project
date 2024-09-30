@@ -485,3 +485,129 @@ TEST_F(f1u_du_test, tx_delivery_notification)
 
   EXPECT_TRUE(tester->tx_msg_list.empty());
 }
+
+TEST_F(f1u_du_test, rx_with_poll_triggers_ddds_when_transmit_was_notified)
+{
+  constexpr uint32_t highest_pdcp_sn = 123;
+
+  // Notify transmit
+  f1u->handle_transmit_notification(highest_pdcp_sn, 0);
+  f1u->handle_transmit_notification(highest_pdcp_sn + 1, 0);
+
+  EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
+  EXPECT_TRUE(tester->rx_sdu_list.empty());
+
+  // DL message with poll for DL Data Delivery Status Report
+  constexpr uint32_t pdu_size      = 10;
+  byte_buffer        rx_pdcp_pdu1  = create_sdu_byte_buffer(pdu_size, 0);
+  nru_dl_message     msg1          = {};
+  msg1.t_pdu                       = rx_pdcp_pdu1.deep_copy().value();
+  msg1.dl_user_data.report_polling = true;
+  f1u->handle_pdu(std::move(msg1));
+
+  // This should immediately trigger a DDDS
+  ASSERT_FALSE(tester->tx_msg_list.empty());
+  EXPECT_FALSE(tester->tx_msg_list.front().t_pdu.has_value());
+  EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
+  ASSERT_TRUE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  {
+    nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
+    EXPECT_FALSE(status.final_frame_ind);
+    EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
+    EXPECT_FALSE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_FALSE(status.cause_value.has_value());
+    EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());
+    ASSERT_TRUE(status.highest_transmitted_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_transmitted_pdcp_sn.value(), highest_pdcp_sn + 1);
+  }
+  tester->tx_msg_list.pop_front();
+
+  EXPECT_TRUE(tester->tx_msg_list.empty());
+
+  // Also check that the DL PDU was properly forwarded
+  ASSERT_FALSE(tester->rx_sdu_list.empty());
+  EXPECT_EQ(tester->rx_sdu_list.front().first, rx_pdcp_pdu1);
+  EXPECT_FALSE(tester->rx_sdu_list.front().second);
+
+  tester->rx_sdu_list.pop_front();
+
+  EXPECT_TRUE(tester->rx_sdu_list.empty());
+}
+
+TEST_F(f1u_du_test, rx_with_poll_triggers_ddds_when_delivery_was_notified)
+{
+  constexpr uint32_t highest_pdcp_sn = 123;
+
+  // Notify delivery
+  f1u->handle_delivery_notification(highest_pdcp_sn);
+  f1u->handle_delivery_notification(highest_pdcp_sn + 1);
+
+  EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
+  EXPECT_TRUE(tester->rx_sdu_list.empty());
+
+  // DL message with poll for DL Data Delivery Status Report
+  constexpr uint32_t pdu_size      = 10;
+  byte_buffer        rx_pdcp_pdu1  = create_sdu_byte_buffer(pdu_size, 0);
+  nru_dl_message     msg1          = {};
+  msg1.t_pdu                       = rx_pdcp_pdu1.deep_copy().value();
+  msg1.dl_user_data.report_polling = true;
+  f1u->handle_pdu(std::move(msg1));
+
+  // This should immediately trigger a DDDS
+  ASSERT_FALSE(tester->tx_msg_list.empty());
+  EXPECT_FALSE(tester->tx_msg_list.front().t_pdu.has_value());
+  EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
+  ASSERT_TRUE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  {
+    nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
+    EXPECT_FALSE(status.final_frame_ind);
+    EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
+    EXPECT_FALSE(status.highest_transmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.cause_value.has_value());
+    EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());
+    ASSERT_TRUE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_delivered_pdcp_sn.value(), highest_pdcp_sn + 1);
+  }
+  tester->tx_msg_list.pop_front();
+
+  EXPECT_TRUE(tester->tx_msg_list.empty());
+
+  // Also check that the DL PDU was properly forwarded
+  ASSERT_FALSE(tester->rx_sdu_list.empty());
+  EXPECT_EQ(tester->rx_sdu_list.front().first, rx_pdcp_pdu1);
+  EXPECT_FALSE(tester->rx_sdu_list.front().second);
+
+  tester->rx_sdu_list.pop_front();
+
+  EXPECT_TRUE(tester->rx_sdu_list.empty());
+}
+
+TEST_F(f1u_du_test, rx_with_poll_triggers_no_ddds_when_nothing_was_notified)
+{
+  // Do not notify any transmit or delivery
+
+  EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
+  EXPECT_TRUE(tester->rx_sdu_list.empty());
+
+  // DL message with poll for DL Data Delivery Status Report
+  constexpr uint32_t pdu_size      = 10;
+  byte_buffer        rx_pdcp_pdu1  = create_sdu_byte_buffer(pdu_size, 0);
+  nru_dl_message     msg1          = {};
+  msg1.t_pdu                       = rx_pdcp_pdu1.deep_copy().value();
+  msg1.dl_user_data.report_polling = true;
+  f1u->handle_pdu(std::move(msg1));
+
+  // This should not trigger a DDDS, because no data is available yet
+  EXPECT_TRUE(tester->tx_msg_list.empty());
+
+  // Also check that the DL PDU was properly forwarded
+  ASSERT_FALSE(tester->rx_sdu_list.empty());
+  EXPECT_EQ(tester->rx_sdu_list.front().first, rx_pdcp_pdu1);
+  EXPECT_FALSE(tester->rx_sdu_list.front().second);
+
+  tester->rx_sdu_list.pop_front();
+
+  EXPECT_TRUE(tester->rx_sdu_list.empty());
+}

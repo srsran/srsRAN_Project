@@ -27,8 +27,10 @@
 #include <memory>
 
 namespace srsran {
+namespace srs_du {
 
 /// Instantiates a Distributed Unit (DU) wrapper object with the given configuration.
 std::unique_ptr<du_wrapper> make_du_wrapper(const du_wrapper_config& du_cfg);
 
+} // namespace srs_du
 } // namespace srsran

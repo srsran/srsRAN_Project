@@ -68,7 +68,6 @@ public:
 
 private:
   const scheduler_expert_config expert_params;
-  sched_configuration_notifier& config_notifier;
 
   srslog::basic_logger& logger;
 

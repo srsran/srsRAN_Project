@@ -43,10 +43,10 @@ unsigned channel_emulator::concurrent_channel_emulator::seed = 0;
 using tdl_tap = std::pair<unsigned, float>;
 
 /// Single-tap profile.
-constexpr static std::array<tdl_tap, 1> taps_single = {{{0, 0.0}}};
+static constexpr std::array<tdl_tap, 1> taps_single = {{{0, 0.0}}};
 
 /// TDLA fading profile.
-constexpr static std::array<tdl_tap, 12> taps_tdla = {{{0, -15.5},
+static constexpr std::array<tdl_tap, 12> taps_tdla = {{{0, -15.5},
                                                        {10, 0.0},
                                                        {15, -5.1},
                                                        {20, -5.1},
@@ -60,7 +60,7 @@ constexpr static std::array<tdl_tap, 12> taps_tdla = {{{0, -15.5},
                                                        {290, -26.2}}};
 
 /// TDLB fading profile.
-constexpr static std::array<tdl_tap, 12> taps_tdlb = {{{0, 0},
+static constexpr std::array<tdl_tap, 12> taps_tdlb = {{{0, 0},
                                                        {10, -2.2},
                                                        {20, -0.6},
                                                        {30, -0.6},
@@ -74,7 +74,7 @@ constexpr static std::array<tdl_tap, 12> taps_tdlb = {{{0, 0},
                                                        {480, -7.1}}};
 
 /// TDLC fading profile.
-constexpr static std::array<tdl_tap, 12> taps_tdlc = {{{0, -6.9},
+static constexpr std::array<tdl_tap, 12> taps_tdlc = {{{0, -6.9},
                                                        {65, 0},
                                                        {70, -7.7},
                                                        {190, -2.5},

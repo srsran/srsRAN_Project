@@ -58,7 +58,7 @@ def test_rf_b200_config(
     gnb: GNBStub,
     config_file: str,
     timeout: int = RF_MAX_TIMEOUT,
-):  # pylint: disable=too-many-arguments
+):  # pylint: disable=too-many-arguments,too-many-positional-arguments
     """
     Run gnb with B200 example config and validate it doesn't crash.
     """
@@ -80,7 +80,7 @@ def test_rf_n300_config(
     run_config(retina_manager, retina_data, fivegc, gnb, timeout, N300_CONFIG_FILE, extra_config)
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def run_config(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,

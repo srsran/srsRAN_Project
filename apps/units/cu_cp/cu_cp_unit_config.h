@@ -33,17 +33,42 @@
 
 namespace srsran {
 
-struct cu_cp_unit_supported_ta_item {
-  unsigned    tac;
-  std::string plmn;
+struct cu_cp_unit_plmn_item {
+  std::string plmn_id;
   /// Supported Slices by the RAN node.
   std::vector<s_nssai_t> tai_slice_support_list;
+};
+
+struct cu_cp_unit_supported_ta_item {
+  unsigned                          tac;
+  std::vector<cu_cp_unit_plmn_item> plmn_list;
 };
 
 /// All tracking area related configuration parameters.
 struct cu_cp_unit_ta_config {
   /// List of all tracking areas supported by the CU-CP.
   std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+};
+
+struct cu_cp_unit_amf_config_item {
+  std::string ip_addr                = "127.0.0.1";
+  uint16_t    port                   = 38412;
+  std::string bind_addr              = "127.0.0.1";
+  std::string bind_interface         = "auto";
+  int         sctp_rto_initial       = 120;
+  int         sctp_rto_min           = 120;
+  int         sctp_rto_max           = 500;
+  int         sctp_init_max_attempts = 3;
+  int         sctp_max_init_timeo    = 500;
+  bool        sctp_nodelay           = false;
+  /// List of all tracking areas supported by the AMF.
+  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+};
+
+struct cu_cp_unit_amf_config {
+  cu_cp_unit_amf_config_item amf;
+  /// Allow CU-CP to run without a core, e.g. for test mode.
+  bool no_core = false;
 };
 
 /// Report configuration, for now only supporting the A3 event.
@@ -235,21 +260,6 @@ struct cu_cp_unit_metrics_config {
   unsigned cu_cp_statistics_report_period = 1;
 };
 
-struct cu_cp_unit_amf_config {
-  std::string ip_addr                = "127.0.0.1";
-  uint16_t    port                   = 38412;
-  std::string bind_addr              = "127.0.0.1";
-  std::string n2_bind_addr           = "auto";
-  std::string n2_bind_interface      = "auto";
-  int         sctp_rto_initial       = 120;
-  int         sctp_rto_min           = 120;
-  int         sctp_rto_max           = 500;
-  int         sctp_init_max_attempts = 3;
-  int         sctp_max_init_timeo    = 500;
-  bool        sctp_nodelay           = false;
-  bool        no_core                = false;
-};
-
 /// CU-CP application unit configuration.
 struct cu_cp_unit_config {
   /// Node name.
@@ -262,10 +272,20 @@ struct cu_cp_unit_config {
   uint16_t max_nof_cu_ups = 6;
   /// Maximum number of UEs.
   uint64_t max_nof_ues = 8192;
+  /// Maximum number of DRBs per UE.
+  uint8_t max_nof_drbs_per_ue = 8;
   /// Inactivity timer in seconds.
   int inactivity_timer = 120;
   /// PDU session setup timeout in seconds (must be larger than T310).
   unsigned pdu_session_setup_timeout = 3;
+  /// Load enterprise plugins.
+  bool load_plugins = false;
+  /// Function pointer to start NG handover from plugin
+  void* start_ng_ho_func;
+  /// Function pointer to connect to AMFs from plugin
+  void* connect_amfs_func_ptr;
+  /// Function pointer to disconnect from AMFs from plugin
+  void* disconnect_amfs_func_ptr;
   /// Loggers configuration.
   cu_cp_unit_logger_config loggers;
   /// PCAPs configuration.
@@ -273,9 +293,9 @@ struct cu_cp_unit_config {
   /// Metrics configuration.
   cu_cp_unit_metrics_config metrics;
   /// AMF configuration.
-  cu_cp_unit_amf_config amf_cfg;
-  /// List of all tracking areas supported by the CU-CP.
-  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+  cu_cp_unit_amf_config amf_config;
+  // List of all AMFs the CU-CP should connect to.
+  std::vector<cu_cp_unit_amf_config_item> extra_amfs;
   /// Mobility configuration.
   cu_cp_unit_mobility_config mobility_config;
   /// RRC configuration.

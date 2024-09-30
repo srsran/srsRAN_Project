@@ -21,19 +21,25 @@
  */
 
 #include "dynamic_du_translators.h"
+#include "apps/services/worker_manager_config.h"
+#include "apps/units/flexible_du/du_high/du_high_config_translators.h"
+#include "apps/units/flexible_du/du_low/du_low_config_translator.h"
+#include "apps/units/flexible_du/fapi/fapi_config_translator.h"
+#include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_translator.h"
+#include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_translator.h"
 #include "dynamic_du_unit_config.h"
 #include "srsran/du/du_cell_config.h"
 
 using namespace srsran;
 
-ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_config& ru_cfg,
-                                                        span<const du_cell_config>  du_cells,
-                                                        unsigned                    max_processing_delay_slots,
-                                                        unsigned                    nof_prach_ports)
+ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_config&        ru_cfg,
+                                                        span<const srs_du::du_cell_config> du_cells,
+                                                        unsigned                           max_processing_delay_slots,
+                                                        unsigned                           nof_prach_ports)
 {
   ru_dummy_configuration out_cfg;
 
-  const du_cell_config& cell = du_cells.front();
+  const srs_du::du_cell_config& cell = du_cells.front();
 
   // Derive parameters.
   unsigned channel_bw_prb = band_helper::get_n_rbs_from_bw(
@@ -47,6 +53,44 @@ ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_conf
   out_cfg.rx_prach_nof_ports         = nof_prach_ports;
   out_cfg.max_processing_delay_slots = max_processing_delay_slots;
   out_cfg.dl_processing_delay        = ru_cfg.dl_processing_delay;
+  out_cfg.time_scaling               = ru_cfg.time_scaling;
 
   return out_cfg;
+}
+
+static void fill_dummy_worker_manager_config(worker_manager_config& config, const ru_dummy_unit_config& ru_cfg)
+{
+  config.ru_dummy_cfg.emplace();
+
+  srsran_assert(config.config_affinities.size() == ru_cfg.cell_affinities.size(), "Invalid number of cell affinities");
+
+  for (unsigned i = 0, e = ru_cfg.cell_affinities.size(); i != e; ++i) {
+    config.config_affinities[i].push_back(ru_cfg.cell_affinities[i].ru_cpu_cfg);
+  }
+}
+
+void srsran::fill_dynamic_du_worker_manager_config(worker_manager_config&        config,
+                                                   const dynamic_du_unit_config& unit_cfg)
+{
+  bool is_blocking_mode_enable = false;
+  if (std::holds_alternative<ru_sdr_unit_config>(unit_cfg.ru_cfg)) {
+    is_blocking_mode_enable = std::get<ru_sdr_unit_config>(unit_cfg.ru_cfg).device_driver == "zmq";
+  }
+  unsigned nof_cells = unit_cfg.du_high_cfg.config.cells_cfg.size();
+  fill_du_high_worker_manager_config(config, unit_cfg.du_high_cfg.config, is_blocking_mode_enable);
+  fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_cells);
+  fill_fapi_worker_manager_config(config, unit_cfg.fapi_cfg, nof_cells);
+
+  if (std::holds_alternative<ru_sdr_unit_config>(unit_cfg.ru_cfg)) {
+    fill_sdr_worker_manager_config(config, std::get<ru_sdr_unit_config>(unit_cfg.ru_cfg));
+  }
+
+  if (std::holds_alternative<ru_ofh_unit_parsed_config>(unit_cfg.ru_cfg)) {
+    auto cells = generate_du_cell_config(unit_cfg.du_high_cfg.config);
+    fill_ofh_worker_manager_config(config, std::get<ru_ofh_unit_parsed_config>(unit_cfg.ru_cfg).config, cells);
+  }
+
+  if (std::holds_alternative<ru_dummy_unit_config>(unit_cfg.ru_cfg)) {
+    fill_dummy_worker_manager_config(config, std::get<ru_dummy_unit_config>(unit_cfg.ru_cfg));
+  }
 }

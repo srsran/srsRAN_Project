@@ -23,7 +23,7 @@
 #pragma once
 
 #include "f1ap_du_ue.h"
-#include "srsran/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_high/du_high_executor_mapper.h"
 #include <mutex>
 #include <unordered_map>
 

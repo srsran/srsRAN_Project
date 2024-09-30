@@ -45,8 +45,6 @@ public:
   du_processor_impl(du_processor_config_t               du_processor_config_,
                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
                     f1ap_message_notifier&              f1ap_pdu_notifier_,
-                    rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
-                    rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                     common_task_scheduler&              common_task_sched_,
                     ue_manager&                         ue_mng_);
@@ -74,9 +72,8 @@ public:
 
   metrics_report::du_info handle_du_metrics_report_request() const override;
 
-  du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
-  du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override { return f1ap_ue_context_notifier; }
-  du_metrics_handler&                    get_metrics_handler() override { return *this; }
+  du_processor_mobility_handler& get_mobility_handler() override { return *this; }
+  du_metrics_handler&            get_metrics_handler() override { return *this; }
 
 private:
   class f1ap_du_processor_adapter;
@@ -105,11 +102,9 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;
 
-  du_processor_cu_cp_notifier&         cu_cp_notifier;
-  f1ap_message_notifier&               f1ap_pdu_notifier;
-  rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
-  ue_manager&                          ue_mng;
-  du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
+  du_processor_cu_cp_notifier& cu_cp_notifier;
+  f1ap_message_notifier&       f1ap_pdu_notifier;
+  ue_manager&                  ue_mng;
 
   // F1AP to DU processor adapter
   std::unique_ptr<f1ap_du_processor_notifier> f1ap_ev_notifier;
@@ -119,12 +114,6 @@ private:
 
   // RRC UE to F1AP adapters
   std::unordered_map<ue_index_t, rrc_ue_f1ap_pdu_adapter> rrc_ue_f1ap_adapters;
-
-  // DU processor to RRC DU adapter
-  du_processor_rrc_du_adapter rrc_du_adapter;
-
-  // DU processor to RRC UE adapters
-  std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
 
   // Components
   std::unique_ptr<f1ap_cu> f1ap;

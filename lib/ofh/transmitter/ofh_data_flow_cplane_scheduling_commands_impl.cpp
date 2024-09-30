@@ -148,7 +148,6 @@ data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_
   dl_compr_params(config.dl_compr_params),
   ul_compr_params(config.ul_compr_params),
   prach_compr_params(config.prach_compr_params),
-  vlan_params(config.vlan_params),
   ul_cplane_context_repo(std::move(dependencies.ul_cplane_context_repo)),
   frame_pool(std::move(dependencies.frame_pool)),
   eth_builder(std::move(dependencies.eth_builder)),
@@ -218,7 +217,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
 
   // Add Ethernet header.
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_hdr_size.value() + bytes_written);
-  eth_builder->build_vlan_frame(eth_buffer, vlan_params);
+  eth_builder->build_frame(eth_buffer);
 
   frame_buffer.set_size(eth_buffer.size());
 }
@@ -281,7 +280,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
 
   // Add Ethernet header.
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_hdr_size.value() + bytes_written);
-  eth_builder->build_vlan_frame(eth_buffer, vlan_params);
+  eth_builder->build_frame(eth_buffer);
 
   frame_buffer.set_size(eth_buffer.size());
 }

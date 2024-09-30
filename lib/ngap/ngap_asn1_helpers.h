@@ -23,13 +23,12 @@
 #pragma once
 
 #include "ngap_asn1_converters.h"
-#include "ngap_context.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_nas.h"
@@ -47,50 +46,50 @@ namespace srs_cu_cp {
 
 /// \brief Fills ASN.1 NGSetupRequest struct.
 /// \param[out] asn1_request The NGSetupRequest ASN.1 struct to fill.
-/// \param[in] request The common type NGSetupRequest.
-inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_request,
-                                       const ngap_ng_setup_request&    request)
+/// \param[in] ngap_ctxt The NGAP context.
+inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_request, const ngap_context_t& ngap_ctxt)
 {
   // fill global ran node id
   auto& global_gnb = asn1_request->global_ran_node_id.set_global_gnb_id();
   global_gnb.gnb_id.set_gnb_id();
-  global_gnb.gnb_id.gnb_id().from_number(request.global_ran_node_id.gnb_id.id,
-                                         request.global_ran_node_id.gnb_id.bit_length);
-  global_gnb.plmn_id = request.global_ran_node_id.plmn_id.to_bytes();
+  global_gnb.gnb_id.gnb_id().from_number(ngap_ctxt.gnb_id.id, ngap_ctxt.gnb_id.bit_length);
+  // TODO: Which PLMN do we need to use here?
+  global_gnb.plmn_id = ngap_ctxt.supported_tas.front().plmn_list.front().plmn_id.to_bytes();
 
   // fill ran node name
   asn1_request->ran_node_name_present = true;
-  asn1_request->ran_node_name.from_string(request.ran_node_name);
+  asn1_request->ran_node_name.from_string(ngap_ctxt.ran_node_name);
 
   // fill supported ta list
-  for (const auto& supported_ta_item : request.supported_ta_list) {
+  for (const auto& supported_ta_item : ngap_ctxt.supported_tas) {
     asn1::ngap::supported_ta_item_s asn1_supported_ta_item = {};
 
     // fill tac
     asn1_supported_ta_item.tac.from_number(supported_ta_item.tac);
 
     // fill broadcast plmn list
-    for (const auto& broadcast_plmn_item : supported_ta_item.broadcast_plmn_list) {
+    for (const auto& plmn_item : supported_ta_item.plmn_list) {
       asn1::ngap::broadcast_plmn_item_s asn1_broadcast_plmn_item = {};
 
       // fill plmn id
-      asn1_broadcast_plmn_item.plmn_id = broadcast_plmn_item.plmn_id.to_bytes();
+      asn1_broadcast_plmn_item.plmn_id = plmn_item.plmn_id.to_bytes();
 
       // fill tai slice support list
-      for (const auto& slice_support_item : broadcast_plmn_item.tai_slice_support_list) {
+      for (const auto& slice_support_item : plmn_item.slice_support_list) {
         // fill s_nssai
         asn1::ngap::slice_support_item_s asn1_slice_support_item = {};
-        asn1_slice_support_item.s_nssai                          = s_nssai_to_asn1(slice_support_item.s_nssai);
+        asn1_slice_support_item.s_nssai                          = s_nssai_to_asn1(slice_support_item);
 
         asn1_broadcast_plmn_item.tai_slice_support_list.push_back(asn1_slice_support_item);
       }
       asn1_supported_ta_item.broadcast_plmn_list.push_back(asn1_broadcast_plmn_item);
     }
+
     asn1_request->supported_ta_list.push_back(asn1_supported_ta_item);
   }
 
   // fill paging drx
-  asn1::number_to_enum(asn1_request->default_paging_drx, request.default_paging_drx);
+  asn1::number_to_enum(asn1_request->default_paging_drx, ngap_ctxt.default_paging_drx);
 }
 
 /// \brief Fills the common type \c ngap_ng_setup_result struct.

@@ -41,7 +41,7 @@ struct dummy_f1u_cu_up_rx_notifier final : public f1u_cu_up_gateway_bearer_rx_no
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
-struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_gateway_bearer_rx_notifier {
+struct dummy_f1u_du_gateway_bearer_rx_notifier final : srs_du::f1u_du_gateway_bearer_rx_notifier {
   void on_new_pdu(nru_dl_message msg) override
   {
     logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. sdu_len={}", msg.t_pdu.length());

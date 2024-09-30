@@ -32,6 +32,8 @@
 
 namespace srsran {
 
+class cell_configuration;
+
 ///\brief Handler of scheduler slot metrics for a given cell.
 class cell_metrics_handler final : public harq_timeout_handler, public sched_metrics_ue_configurator
 {
@@ -58,8 +60,8 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
       unsigned nof_pucch_snr_reports  = 0;
       unsigned nof_pusch_snr_reports  = 0;
       unsigned nof_pusch_rsrp_reports = 0;
-      unsigned dl_prbs_used           = 0;
-      unsigned ul_prbs_used           = 0;
+      unsigned tot_dl_prbs_used       = 0;
+      unsigned tot_ul_prbs_used       = 0;
       /// CQI statistics over the metrics report interval.
       sample_statistics<unsigned> cqi;
       /// RI statistics over the metrics report interval.
@@ -87,8 +89,10 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
 
   scheduler_metrics_notifier&     notifier;
   const std::chrono::milliseconds report_period;
-  /// Derived value.
+  // Derived value.
   unsigned report_period_slots = 0;
+
+  slot_point last_slot_tx;
 
   unsigned                                                        error_indication_counter = 0;
   std::chrono::microseconds                                       decision_latency_sum{0};
@@ -99,6 +103,12 @@ class cell_metrics_handler final : public harq_timeout_handler, public sched_met
 
   /// Number of the cell PRBs.
   unsigned nof_prbs = 0;
+
+  /// Number of full downlink slots.
+  unsigned nof_dl_slots = 0;
+
+  /// Number of full uplink slots.
+  unsigned nof_ul_slots = 0;
 
   /// Counter of number of slots elapsed since the last report.
   unsigned slot_counter = 0;
@@ -116,6 +126,9 @@ public:
                           pci_t         pcell_pci,
                           unsigned      num_prbs,
                           unsigned      num_slots_per_frame) override;
+
+  /// \brief Register UE reconfiguration.
+  void handle_ue_reconfiguration(du_ue_index_t ue_index) override;
 
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index) override;
@@ -168,7 +181,9 @@ public:
   /// \brief Creates a scheduler metrics handler. In case the metrics_report_period is zero, no metrics are reported.
   explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
 
-  cell_metrics_handler* add_cell(du_cell_index_t cell_idx);
+  cell_metrics_handler* add_cell(const cell_configuration& cell_cfg);
+
+  cell_metrics_handler& at(du_cell_index_t cell_idx) { return cells[cell_idx]; }
 
 private:
   scheduler_metrics_notifier&     notifier;

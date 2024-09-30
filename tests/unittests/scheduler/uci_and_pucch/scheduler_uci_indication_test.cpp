@@ -141,8 +141,8 @@ protected:
     });
   }
 
-  constexpr static du_ue_index_t ue_id   = to_du_ue_index(0);
-  constexpr static rnti_t        ue_rnti = to_rnti(0x4601);
+  static constexpr du_ue_index_t ue_id   = to_du_ue_index(0);
+  static constexpr rnti_t        ue_rnti = to_rnti(0x4601);
 
   srslog::basic_logger&               logger = srslog::fetch_basic_logger("SCHED", true);
   sched_cfg_dummy_notifier            notif;

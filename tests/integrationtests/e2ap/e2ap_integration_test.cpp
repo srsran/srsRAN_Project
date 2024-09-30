@@ -106,7 +106,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
     sctp_network_connector_config nw_config;
@@ -184,7 +184,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
     cfg.gnb_id           = {123, 22};
 
@@ -215,7 +215,7 @@ protected:
   std::unique_ptr<dummy_e2ap_pcap>             pcap;
   std::unique_ptr<e2_du_metrics_interface>     du_metrics;
   std::unique_ptr<dummy_f1ap_ue_id_translator> f1ap_ue_id_mapper;
-  std::unique_ptr<du_configurator>             du_param_configurator;
+  std::unique_ptr<srs_du::du_configurator>     du_param_configurator;
   std::unique_ptr<e2_gateway_remote_connector> e2_client;
   std::unique_ptr<e2_interface>                e2ap;
   srslog::basic_logger&                        test_logger = srslog::fetch_basic_logger("TEST");

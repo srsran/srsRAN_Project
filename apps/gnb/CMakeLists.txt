@@ -43,7 +43,7 @@ target_link_libraries(gnb
         srsran_pcap
         srsran_support
         srsran_versioning
-        srsran_flexible_du_dynamic
+        srsran_flexible_du
         srsran_f1c_gateway
         srsran_e1_gateway
         srsran_cu_cp_app_unit

@@ -41,6 +41,9 @@ public:
                                   unsigned      num_prbs,
                                   unsigned      num_slots_per_frame) = 0;
 
+  /// Handle a reconfiguration of an existing UE.
+  virtual void handle_ue_reconfiguration(du_ue_index_t ue_index) = 0;
+
   /// Removes a UE from the reported metrics.
   virtual void handle_ue_deletion(du_ue_index_t ue_index) = 0;
 };

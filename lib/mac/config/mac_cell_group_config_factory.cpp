@@ -29,7 +29,8 @@
 
 using namespace srsran;
 
-mac_cell_group_config config_helpers::make_initial_mac_cell_group_config(const mac_cell_group_params& mcg_params)
+mac_cell_group_config
+config_helpers::make_initial_mac_cell_group_config(const srs_du::mac_cell_group_params& mcg_params)
 {
   mac_cell_group_config        mcg_cfg{};
   scheduling_request_to_addmod sr_0{.sr_id          = scheduling_request_id::SR_ID_MIN,

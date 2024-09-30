@@ -24,8 +24,8 @@
 #include "../ue_context/f1ap_cu_ue_context.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

@@ -92,7 +92,7 @@ protected:
   void init()
   {
     // add UE to UE manager
-    allocated_ue_index = ue_mng.add_ue(du_index_t::min);
+    allocated_ue_index = ue_mng.add_ue(du_index_t::min, plmn_identity::test_value());
 
     // create RRC UE
     rrc_ue_creation_message rrc_ue_create_msg{};
@@ -120,7 +120,6 @@ protected:
     ue_cfg.meas_timings.push_back(meas_timing);
     ue_cfg.rrc_procedure_timeout_ms = cu_cp_cfg.rrc.rrc_procedure_timeout_ms;
     rrc_ue                          = std::make_unique<rrc_ue_impl>(*rrc_ue_create_msg.f1ap_pdu_notifier,
-                                           rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
                                            *rrc_ue_create_msg.rrc_ue_cu_cp_notifier,
                                            *rrc_ue_create_msg.measurement_notifier,

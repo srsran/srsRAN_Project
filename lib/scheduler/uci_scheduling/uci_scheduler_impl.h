@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "../cell/resource_grid_util.h"
 #include "../ue_scheduling/ue_repository.h"
 #include "uci_scheduler.h"
+#include "srsran/scheduler/resource_grid_util.h"
 
 namespace srsran {
 

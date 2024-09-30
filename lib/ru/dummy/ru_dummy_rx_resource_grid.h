@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "../../phy/support/resource_grid_dimensions.h"
 #include "srsran/adt/tensor.h"
+#include "srsran/phy/support/resource_grid_dimensions.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"

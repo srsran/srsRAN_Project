@@ -26,7 +26,7 @@
 using namespace srsran;
 using namespace fapi;
 
-buffered_slot_gateway_impl::buffered_slot_gateway_impl(unsigned int          l2_nof_slots_ahead_,
+buffered_slot_gateway_impl::buffered_slot_gateway_impl(unsigned              l2_nof_slots_ahead_,
                                                        subcarrier_spacing    scs_,
                                                        slot_message_gateway& gateway_) :
   l2_nof_slots_ahead(l2_nof_slots_ahead_), scs(scs_), gateway(gateway_), logger(srslog::fetch_basic_logger("FAPI"))

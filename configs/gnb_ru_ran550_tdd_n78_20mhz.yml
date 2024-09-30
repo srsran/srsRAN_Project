@@ -2,61 +2,69 @@
 # with the Benetel R550 RU. This config will create a single TDD MIMO cell transmitting in band 78, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing.
 # The parameters used to configure the RU are found in the `ru_ofh` sub-section. This configuration makes used of the OFH Lib from SRS to enable split 7.2.
 
-amf:
-  addr: 127.0.1.100                                              
-  bind_addr: 127.0.0.1                                           
+cu_cp:
+  amf:
+    addr: 127.0.1.100
+    port: 38412
+    bind_addr: 127.0.0.1
+    supported_tracking_areas:
+      - tac: 7
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
 
 ru_ofh:
-  ru_bandwidth_MHz: 100                                          
-  t1a_max_cp_dl: 535                                             
-  t1a_min_cp_dl: 286                                             
-  t1a_max_cp_ul: 535                                             
-  t1a_min_cp_ul: 286                                             
-  t1a_max_up: 390                                                
-  t1a_min_up: 80                                                 
-  ta4_max: 500                                                   
-  ta4_min: 25                                                    
-  is_prach_cp_enabled: false                                     
-  is_dl_broadcast_enabled: true                                  
-  compr_method_ul: bfp                                           
-  compr_bitwidth_ul: 9                                           
-  compr_method_dl: bfp                                           
-  compr_method_prach: bfp                                        
-  compr_bitwidth_prach: 9                                        
-  compr_bitwidth_dl: 9                                           
-  enable_ul_static_compr_hdr: true                               
-  enable_dl_static_compr_hdr: true                               
-  iq_scaling: 5.5                                                
+  ru_bandwidth_MHz: 100
+  t1a_max_cp_dl: 535
+  t1a_min_cp_dl: 286
+  t1a_max_cp_ul: 535
+  t1a_min_cp_ul: 286
+  t1a_max_up: 390
+  t1a_min_up: 80
+  ta4_max: 500
+  ta4_min: 25
+  is_prach_cp_enabled: false
+  is_dl_broadcast_enabled: true
+  compr_method_ul: bfp
+  compr_bitwidth_ul: 9
+  compr_method_dl: bfp
+  compr_method_prach: bfp
+  compr_bitwidth_prach: 9
+  compr_bitwidth_dl: 9
+  enable_ul_static_compr_hdr: true
+  enable_dl_static_compr_hdr: true
+  iq_scaling: 5.5
   cells:
-    - network_interface: enp1s0f0                                
-      ru_mac_addr: 70:b3:d5:e1:5b:06                             
-      du_mac_addr: 80:61:5f:0d:df:aa                             
-      vlan_tag_cp: 5                                             
-      vlan_tag_up: 5                                             
-      prach_port_id: [4]                                         
-      dl_port_id: [0, 1]                                         
-      ul_port_id: [0]                                            
+    - network_interface: enp1s0f0
+      ru_mac_addr: 70:b3:d5:e1:5b:06
+      du_mac_addr: 80:61:5f:0d:df:aa
+      vlan_tag_cp: 5
+      vlan_tag_up: 5
+      prach_port_id: [4]
+      dl_port_id: [0, 1]
+      ul_port_id: [0]
 
 cell_cfg:
-  dl_arfcn: 634548                                               
-  band: 78                                                       
-  channel_bandwidth_MHz: 20                                      
-  common_scs: 30                                                 
-  plmn: "00101"                                                  
-  tac: 7                                                         
-  pci: 1                                                         
+  dl_arfcn: 634548
+  band: 78
+  channel_bandwidth_MHz: 20
+  common_scs: 30
+  plmn: "00101"
+  tac: 7
+  pci: 1
   prach:
-    prach_config_index: 7                                        
-    prach_root_sequence_index: 1                                 
-    zero_correlation_zone: 0                                     
-    prach_frequency_start: 0                                     
+    prach_config_index: 7
+    prach_root_sequence_index: 1
+    zero_correlation_zone: 0
+    prach_frequency_start: 0
 
 log:
-  filename: /tmp/gnb.log                                         
-  all_level: warning                                             
+  filename: /tmp/gnb.log
+  all_level: warning
 
 pcap:
-  mac_enable: false                                              
-  mac_filename: /tmp/gnb_mac.pcap                                
-  ngap_enable: false                                             
-  ngap_filename: /tmp/gnb_ngap.pcap                              
+  mac_enable: false
+  mac_filename: /tmp/gnb_mac.pcap
+  ngap_enable: false
+  ngap_filename: /tmp/gnb_ngap.pcap

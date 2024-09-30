@@ -21,10 +21,11 @@
  */
 
 #include "du_high_config_translators.h"
+#include "apps/services/worker_manager_config.h"
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
-#include "srsran/du/du_qos_config_helpers.h"
+#include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/ran/duplex_mode.h"
@@ -227,11 +228,11 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
   out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
 }
 
-std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_config& config)
+std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_high_unit_config& config)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
 
-  std::vector<du_cell_config> out_cfg;
+  std::vector<srs_du::du_cell_config> out_cfg;
   out_cfg.reserve(config.cells_cfg.size());
 
   for (const auto& cell : config.cells_cfg) {
@@ -294,7 +295,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
 
     // Create the configuration.
     out_cfg.push_back(config_helpers::make_default_du_cell_config(param));
-    du_cell_config& out_cell = out_cfg.back();
+    srs_du::du_cell_config& out_cell = out_cfg.back();
 
     // Set the rest of the parameters.
     out_cell.nr_cgi.plmn_id   = plmn_identity::parse(base_cell.plmn).value();
@@ -374,6 +375,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     // PRACH config.
     rach_config_common& rach_cfg                    = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
     rach_cfg.rach_cfg_generic.prach_config_index    = base_cell.prach_cfg.prach_config_index.value();
+    rach_cfg.rach_cfg_generic.ra_resp_window        = base_cell.prach_cfg.ra_resp_window.value();
     rach_cfg.rach_cfg_generic.preamble_trans_max    = base_cell.prach_cfg.preamble_trans_max;
     rach_cfg.rach_cfg_generic.power_ramping_step_db = base_cell.prach_cfg.power_ramping_step_db;
     rach_cfg.msg3_transform_precoder                = cell.cell.pusch_cfg.enable_transform_precoding;
@@ -527,25 +529,25 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     }
 
     // Parameters for PUCCH-Config builder (these parameters will be used later on to generate the PUCCH resources).
-    pucch_builder_params&            du_pucch_cfg   = out_cell.pucch_cfg;
+    srs_du::pucch_builder_params&    du_pucch_cfg   = out_cell.pucch_cfg;
     const du_high_unit_pucch_config& user_pucch_cfg = base_cell.pucch_cfg;
     du_pucch_cfg.nof_cell_harq_pucch_res_sets       = user_pucch_cfg.nof_cell_harq_pucch_sets;
     du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
     du_pucch_cfg.nof_csi_resources                  = user_pucch_cfg.nof_cell_csi_resources;
     if (user_pucch_cfg.use_format_0) {
-      auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();
+      auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<srs_du::pucch_f0_params>();
       // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
       // allocator when the DU create the UE configuration.
       du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
       du_pucch_cfg.nof_ue_pucch_f2_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
       f0_params.intraslot_freq_hopping            = user_pucch_cfg.f0_intraslot_freq_hopping;
     } else {
-      auto& f1_params                             = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
+      auto& f1_params                             = du_pucch_cfg.f0_or_f1_params.emplace<srs_du::pucch_f1_params>();
       du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
       du_pucch_cfg.nof_ue_pucch_f2_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
       f1_params.occ_supported                     = user_pucch_cfg.f1_enable_occ;
-      f1_params.nof_cyc_shifts                    = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
-      f1_params.intraslot_freq_hopping            = user_pucch_cfg.f1_intraslot_freq_hopping;
+      f1_params.nof_cyc_shifts         = static_cast<srs_du::nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
+      f1_params.intraslot_freq_hopping = user_pucch_cfg.f1_intraslot_freq_hopping;
     }
     du_pucch_cfg.f2_params.max_code_rate          = user_pucch_cfg.max_code_rate;
     du_pucch_cfg.f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
@@ -553,10 +555,12 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     du_pucch_cfg.f2_params.max_payload_bits       = user_pucch_cfg.max_payload_bits;
 
     // Parameters for SRS-Config.
-    srs_builder_params&            du_srs_cfg   = out_cell.srs_cfg;
+    srs_du::srs_builder_params&    du_srs_cfg   = out_cell.srs_cfg;
     const du_high_unit_srs_config& user_srs_cfg = base_cell.srs_cfg;
-    du_srs_cfg.srs_enabled                      = user_srs_cfg.srs_enabled;
-    du_srs_cfg.max_nof_symbols                  = user_srs_cfg.max_nof_symbols_per_slot;
+    if (user_srs_cfg.srs_period.has_value()) {
+      du_srs_cfg.srs_period.emplace(static_cast<srs_periodicity>(*user_srs_cfg.srs_period));
+    }
+    du_srs_cfg.max_nof_symbols = user_srs_cfg.max_nof_symbols_per_slot;
 
     // Parameters for PUSCH-Config.
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.has_value()) {
@@ -571,6 +575,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
         uint_to_dmrs_additional_positions(base_cell.pusch_cfg.dmrs_add_pos);
     // Set UL MCS table.
     out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = base_cell.pusch_cfg.mcs_table;
+    // Configure PUSCH transform precoding.
+    if (base_cell.pusch_cfg.enable_transform_precoding) {
+      pusch_config& pusch_cfg  = out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value();
+      pusch_cfg.trans_precoder = pusch_config::transform_precoder::enabled;
+      pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_enabled.emplace(
+          dmrs_uplink_config::transform_precoder_enabled{std::nullopt, false, false});
+    }
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.emplace();
     }
@@ -725,9 +736,9 @@ srsran::generate_du_slicing_rrm_policy_config(span<const std::string>           
   return rrm_policy_cfgs;
 }
 
-std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const du_high_unit_config& config)
+std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const du_high_unit_config& config)
 {
-  std::map<five_qi_t, du_qos_config> out_cfg = {};
+  std::map<five_qi_t, srs_du::du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
     out_cfg = config_helpers::make_default_du_qos_config_list(config.warn_on_drop, config.metrics.rlc.report_period);
     return out_cfg;
@@ -777,12 +788,12 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const du_high_
   return out_cfg;
 }
 
-std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const du_high_unit_config& config)
+std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const du_high_unit_config& config)
 {
-  std::map<srb_id_t, du_srb_config> srb_cfg;
+  std::map<srb_id_t, srs_du::du_srb_config> srb_cfg;
 
   // SRB1
-  srb_cfg.insert(std::make_pair(srb_id_t::srb1, du_srb_config{}));
+  srb_cfg.insert(std::make_pair(srb_id_t::srb1, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb1].rlc;
     auto& out_mac = srb_cfg[srb_id_t::srb1].mac;
@@ -795,7 +806,7 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const du_high_u
   }
 
   // SRB2
-  srb_cfg.insert(std::make_pair(srb_id_t::srb2, du_srb_config{}));
+  srb_cfg.insert(std::make_pair(srb_id_t::srb2, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb2) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb2].rlc;
     auto& out_mac = srb_cfg[srb_id_t::srb2].mac;
@@ -808,7 +819,7 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const du_high_u
   }
 
   // SRB3
-  srb_cfg.insert(std::make_pair(srb_id_t::srb3, du_srb_config{}));
+  srb_cfg.insert(std::make_pair(srb_id_t::srb3, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb3) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb3].rlc;
     auto& out_mac = srb_cfg[srb_id_t::srb3].mac;
@@ -897,7 +908,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
 
   // Logging and tracing.
   out_cfg.log_broadcast_messages = config.loggers.broadcast_enabled;
-  out_cfg.metrics_report_period  = std::chrono::milliseconds{config.metrics.stdout_metrics_period};
+  out_cfg.metrics_report_period  = std::chrono::milliseconds{config.metrics.sched_report_period};
 
   const error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {
@@ -909,7 +920,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
 
 e2ap_configuration srsran::generate_e2_config(const du_high_unit_config& du_high)
 {
-  e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
+  e2ap_configuration out_cfg = config_helpers::make_default_e2ap_config();
   out_cfg.gnb_id             = du_high.gnb_id;
   out_cfg.plmn               = du_high.cells_cfg.front().cell.plmn;
   out_cfg.gnb_du_id          = du_high.gnb_du_id;
@@ -919,7 +930,7 @@ e2ap_configuration srsran::generate_e2_config(const du_high_unit_config& du_high
   return out_cfg;
 }
 
-void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, du_srb_config>& srb_cfgs)
+void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, srs_du::du_srb_config>& srb_cfgs)
 {
   // NTN is enabled, so we need to augment the RLC parameters for the NTN cell.
   for (auto& srb : srb_cfgs) {
@@ -942,5 +953,37 @@ void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_
     } else {
       srb.second.rlc.am.tx.t_poll_retx = 50;
     }
+  }
+}
+
+void srsran::fill_du_high_worker_manager_config(worker_manager_config&     config,
+                                                const du_high_unit_config& unit_cfg,
+                                                bool                       is_blocking_mode_enabled)
+{
+  auto& du_hi_cfg = config.du_hi_cfg;
+
+  du_hi_cfg.is_rt_mode_enabled = !is_blocking_mode_enabled;
+  du_hi_cfg.nof_cells          = unit_cfg.cells_cfg.size();
+  // Set the number of cells of the affinities vector.
+  config.config_affinities.resize(du_hi_cfg.nof_cells);
+  for (unsigned i = 0; i != du_hi_cfg.nof_cells; ++i) {
+    config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l2_cell_cpu_cfg);
+  }
+
+  auto& pcap_cfg = config.pcap_cfg;
+  if (unit_cfg.pcaps.e2ap.enabled) {
+    pcap_cfg.is_e2ap_enabled = true;
+  }
+  if (unit_cfg.pcaps.f1ap.enabled) {
+    pcap_cfg.is_f1ap_enabled = true;
+  }
+  if (unit_cfg.pcaps.f1u.enabled) {
+    pcap_cfg.is_f1u_enabled = true;
+  }
+  if (unit_cfg.pcaps.mac.enabled) {
+    pcap_cfg.is_mac_enabled = true;
+  }
+  if (unit_cfg.pcaps.rlc.enabled) {
+    pcap_cfg.is_rlc_enabled = true;
   }
 }

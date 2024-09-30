@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/expected.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/dmrs.h"
@@ -907,8 +908,8 @@ struct dci_0_1_configuration {
   /// transform precoding is enabled or disabled, and the values of the higher layer parameters \e maxRank (see
   /// dci_size_config::max_rank) and \e codebookSubset (see dci_size_config::cb_subset). It is required for codebook
   /// based transmission with more than one antenna port, i.e., if \ref dci_size_config::cb_subset is set when computing
-  /// the DCI sizes. Otherwise, leave it unset.
-  std::optional<unsigned> precoding_info_nof_layers;
+  /// the DCI sizes.
+  unsigned precoding_info_nof_layers;
   /// \brief Antenna ports for PUSCH transmission - 2, 3, 4 or 5 bits.
   ///
   /// Indicates the antenna ports the UE must use to transmit the PUSCH and the corresponding DM-RS, as per TS38.212
@@ -1145,6 +1146,6 @@ struct dci_rar_configuration {
 dci_payload dci_rar_pack(const dci_rar_configuration& config);
 
 /// Validates a DCI configuration for the DCI size alignment procedure.
-bool validate_dci_size_config(const dci_size_config& config);
+error_type<std::string> validate_dci_size_config(const dci_size_config& config);
 
 } // namespace srsran

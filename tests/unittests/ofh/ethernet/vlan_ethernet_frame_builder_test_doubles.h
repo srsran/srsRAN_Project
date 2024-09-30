@@ -22,28 +22,26 @@
 
 #pragma once
 
-#include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
+#include "srsran/ofh/ethernet/ethernet_frame_builder.h"
 
 namespace srsran {
 namespace ether {
 namespace testing {
 
 /// Spy VLAN frame builder implementation.
-class vlan_frame_builder_spy : public vlan_frame_builder
+class vlan_frame_builder_spy : public frame_builder
 {
   bool              build_vlan_frame_method_called = false;
   vlan_frame_params params;
 
 public:
+  explicit vlan_frame_builder_spy(const vlan_frame_params& eth_params) : params(eth_params) {}
+
   // See interface for documentation.
   units::bytes get_header_size() const override { return units::bytes(18); }
 
   // See interface for documentation.
-  void build_vlan_frame(span<uint8_t> buffer, const vlan_frame_params& eth_params) override
-  {
-    build_vlan_frame_method_called = true;
-    params                         = eth_params;
-  }
+  void build_frame(span<uint8_t> buffer) override { build_vlan_frame_method_called = true; }
 
   /// Returns true if the build VLAN frame has been called, otherwise false.
   bool has_build_vlan_frame_method_been_called() const { return build_vlan_frame_method_called; }

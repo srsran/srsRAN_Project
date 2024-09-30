@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "../ngap_context.h"
 #include "ngap_transaction_manager.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/support/async/async_task.h"
 

@@ -26,7 +26,7 @@
 #include "f1ap_du_connection_handler.h"
 #include "f1ap_du_context.h"
 #include "srsran/asn1/f1ap/f1ap.h"
-#include "srsran/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include <memory>
 

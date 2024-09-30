@@ -41,7 +41,7 @@ enum class duplex_mode {
 
 inline const char* to_string(duplex_mode mode)
 {
-  constexpr static const char* names[] = {"FDD", "TDD", "SDL", "SUL", "invalid"};
+  static constexpr const char* names[] = {"FDD", "TDD", "SDL", "SUL", "invalid"};
   return names[std::min((unsigned)mode, (unsigned)duplex_mode::INVALID)];
 }
 

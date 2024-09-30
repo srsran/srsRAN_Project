@@ -81,12 +81,14 @@ public:
     std::lock_guard<std::mutex> lock(dl_request_mutex);
     request_information         info = {context, grid.copy()};
     std::swap(info, dl_request[context.slot.system_slot()]);
+    ++total_dl_request_count;
 
     // If the previous slot is valid, it is a late.
     if (info.context.slot.valid()) {
       logger.warning("Real-time failure in RU: received late DL request from slot {} in sector {}.",
                      info.context.slot,
                      info.context.sector);
+      ++late_dl_request_count;
     }
   }
 
@@ -95,6 +97,7 @@ public:
   {
     std::lock_guard<std::mutex> lock(prach_request_mutex);
     prach_buffer_context        info = std::exchange(prach_request[context.slot.system_slot()], context);
+    ++total_prach_request_count;
 
     // Detect if there is an unhandled request from a different slot.
     if (info.slot.valid()) {
@@ -103,6 +106,7 @@ public:
                      "Real-time failure in RU: received late PRACH request from slot {} in sector {}.",
                      info.slot,
                      info.sector);
+      ++late_prach_request_count;
     }
   }
 
@@ -112,6 +116,7 @@ public:
     std::lock_guard<std::mutex> lock(ul_request_mutex);
     request_information         info = {context, grid.copy()};
     std::swap(info, ul_request[context.slot.system_slot()]);
+    ++total_ul_request_count;
 
     // Detect if there is an unhandled request from a different slot.
     if (info.context.slot.valid()) {
@@ -120,6 +125,7 @@ public:
                      "Real-time failure in RU: received late UL request from slot {} in sector {}.",
                      info.context.slot,
                      info.context.sector);
+      ++late_ul_request_count;
     }
   }
 
@@ -142,6 +148,7 @@ public:
                      "Real-time failure in RU: detected late DL request from slot {} in sector {}.",
                      dl_info.context.slot,
                      dl_info.context.sector);
+      ++late_dl_request_count;
     }
 
     // Process UL request for this slot.
@@ -162,7 +169,7 @@ public:
         // Notify received resource grid for each symbol.
         for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
           rx_context.symbol_id = i_symbol;
-          symbol_notifier.on_new_uplink_symbol(rx_context, std::move(ul_info.grid));
+          symbol_notifier.on_new_uplink_symbol(rx_context, ul_info.grid);
         }
 
       } else {
@@ -172,6 +179,7 @@ public:
                        "Real-time failure in RU: detected late UL request from slot {} in sector {}.",
                        ul_info.context.slot,
                        ul_info.context.sector);
+        ++late_ul_request_count;
       }
     }
 
@@ -194,8 +202,21 @@ public:
                        "Real-time failure in RU: detected late PRACH request from slot {} in sector {}.",
                        prach_context.slot,
                        prach_context.sector);
+        ++late_prach_request_count;
       }
     }
+  }
+
+  /// Prints in \c stdout the current gathered metrics. It does not reset the metrics.
+  void print_metrics() const
+  {
+    fmt::print("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |\n",
+               total_dl_request_count.load(),
+               late_dl_request_count.load(),
+               total_ul_request_count.load(),
+               late_ul_request_count.load(),
+               total_prach_request_count.load(),
+               late_prach_request_count.load());
   }
 
 private:
@@ -229,6 +250,23 @@ private:
   circular_array<request_information, max_nof_request> dl_request;
   /// Protects the circular buffer containing the DL requests.
   std::mutex dl_request_mutex;
+  /// \name  Group of event counters.
+  ///
+  /// These counters are informative and printed when print_metrics() is called.
+  /// @{
+  /// Total number of UL receive requests.
+  std::atomic<uint64_t> total_ul_request_count = {};
+  /// Total number of DL transmit requests.
+  std::atomic<uint64_t> total_dl_request_count = {};
+  /// Total number of PRACH receive requests.
+  std::atomic<uint64_t> total_prach_request_count = {};
+  /// Number of late UL receive request.
+  std::atomic<uint64_t> late_ul_request_count = {};
+  /// Number of late DL transmit request.
+  std::atomic<uint64_t> late_dl_request_count = {};
+  /// Number of late PRACH receive request.
+  std::atomic<uint64_t> late_prach_request_count = {};
+  /// @}
 };
 
 } // namespace srsran

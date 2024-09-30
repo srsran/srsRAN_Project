@@ -359,7 +359,7 @@ void pusch_decoder_hw_impl::run_asynch_hw_decoder()
 
 void pusch_decoder_hw_impl::check_hw_results(span<bool>                     cb_crcs,
                                              hal::hw_accelerator_pusch_dec& decoder,
-                                             unsigned int                   cb_id,
+                                             unsigned                       cb_id,
                                              hal::hw_dec_cb_crc_type        crc_type,
                                              srsran::bit_buffer             data)
 {

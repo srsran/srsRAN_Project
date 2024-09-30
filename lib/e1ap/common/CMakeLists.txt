@@ -20,3 +20,5 @@
 
 add_library(srsran_e1ap_common e1ap_asn1_packer.cpp log_helpers.cpp)
 target_link_libraries(srsran_e1ap_common e1ap_asn1)
+
+add_to_exported_libs(srsran_e1ap_common)

@@ -21,8 +21,8 @@
  */
 
 #include "du_manager_procedure_test_helpers.h"
-#include "lib/du_manager/procedures/ue_configuration_procedure.h"
-#include "lib/du_manager/procedures/ue_creation_procedure.h"
+#include "lib/du/du_high/du_manager/procedures/ue_configuration_procedure.h"
+#include "lib/du/du_high/du_manager/procedures/ue_creation_procedure.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/support/test_utils.h"
 

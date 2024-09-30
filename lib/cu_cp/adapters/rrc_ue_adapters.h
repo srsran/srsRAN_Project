@@ -24,12 +24,14 @@
 
 #include "../cu_cp_controller/cu_cp_ue_admission_controller.h"
 #include "../cu_cp_impl_interface.h"
+#include "../ngap_repository.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -59,40 +61,33 @@ private:
 };
 
 // Adapter between RRC UE and NGAP
-class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
+class rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
 {
 public:
-  void connect_ngap(ngap_nas_message_handler&     ngap_nas_msg_handler_,
-                    ngap_control_message_handler& ngap_ctrl_msg_handler_)
-  {
-    ngap_nas_msg_handler  = &ngap_nas_msg_handler_;
-    ngap_ctrl_msg_handler = &ngap_ctrl_msg_handler_;
-  }
+  void connect_ngap(ngap_interface* ngap_) { ngap = ngap_; }
 
   void on_initial_ue_message(const cu_cp_initial_ue_message& msg) override
   {
-    srsran_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
-    ngap_nas_msg_handler->handle_initial_ue_message(msg);
+    srsran_assert(ngap != nullptr, "ue={}: NGAP for not found", msg.ue_index);
+    ngap->get_ngap_nas_message_handler().handle_initial_ue_message(msg);
   }
 
   void on_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override
   {
-    srsran_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
-    ngap_nas_msg_handler->handle_ul_nas_transport_message(msg);
+    srsran_assert(ngap != nullptr, "ue={}: NGAP for not found", msg.ue_index);
+    ngap->get_ngap_nas_message_handler().handle_ul_nas_transport_message(msg);
   }
 
   void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
                                                   const nr_cell_global_id_t& cgi,
                                                   const unsigned             tac) override
   {
-    srsran_assert(ngap_ctrl_msg_handler != nullptr, "NGAP handler must not be nullptr");
-
-    ngap_ctrl_msg_handler->handle_inter_cu_ho_rrc_recfg_complete(ue_index, cgi, tac);
+    srsran_assert(ngap != nullptr, "ue={}: NGAP for not found", ue_index);
+    ngap->get_ngap_control_message_handler().handle_inter_cu_ho_rrc_recfg_complete(ue_index, cgi, tac);
   }
 
 private:
-  ngap_nas_message_handler*     ngap_nas_msg_handler  = nullptr;
-  ngap_control_message_handler* ngap_ctrl_msg_handler = nullptr;
+  ngap_interface* ngap = nullptr;
 };
 
 /// Adapter between RRC UE and CU-CP UE
@@ -195,10 +190,10 @@ public:
     meas_handler         = &meas_handler_;
   }
 
-  bool on_ue_setup_request() override
+  bool on_ue_setup_request(plmn_identity plmn) override
   {
     srsran_assert(controller != nullptr, "CU-CP controller must not be nullptr");
-    return controller->request_ue_setup();
+    return controller->request_ue_setup(plmn);
   }
 
   rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) override

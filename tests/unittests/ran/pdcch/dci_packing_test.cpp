@@ -1149,7 +1149,7 @@ static dci_payload build_dci_0_1_expected(const dci_0_1_configuration& config)
 
   // Precoding information and number of layers.
   if (payload_size.precoding_info_nof_layers.value() != 0) {
-    expected_pack(expected, config.precoding_info_nof_layers.value(), payload_size.precoding_info_nof_layers.value());
+    expected_pack(expected, config.precoding_info_nof_layers, payload_size.precoding_info_nof_layers.value());
   }
 
   // Antenna ports for PUSCH transmission - 2, 3, 4 or 5 bits.

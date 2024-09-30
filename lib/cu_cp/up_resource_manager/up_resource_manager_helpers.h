@@ -74,6 +74,7 @@ up_config_update calculate_update(const cu_cp_pdu_session_resource_release_comma
 drb_id_t allocate_drb_id(const up_pdu_session_context_update& new_session_context,
                          const up_context&                    context,
                          const up_config_update&              config_update,
+                         uint8_t                              max_nof_drbs_per_ue,
                          const srslog::basic_logger&          logger);
 
 // \brief Returns valid RRC PDCP config for a given FiveQI

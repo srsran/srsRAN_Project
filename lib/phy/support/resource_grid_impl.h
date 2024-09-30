@@ -22,13 +22,13 @@
 
 #pragma once
 
-#include "resource_grid_dimensions.h"
 #include "resource_grid_mapper_impl.h"
 #include "resource_grid_reader_impl.h"
 #include "resource_grid_writer_impl.h"
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/generic_functions/precoding/channel_precoder.h"
 #include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/resource_grid_dimensions.h"
 
 namespace srsran {
 

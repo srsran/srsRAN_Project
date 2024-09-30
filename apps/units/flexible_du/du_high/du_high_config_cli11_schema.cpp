@@ -995,6 +995,9 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
              "Number of Contention Based preambles per SSB")
       ->default_function([&value = prach_params.nof_cb_preambles_per_ssb]() { return std::to_string(value); })
       ->check(CLI::Range(1, 64));
+  add_option(app, "--ra_resp_window", prach_params.ra_resp_window, "RA-Response window length in number of slots.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 4, 8, 10, 20, 40, 80}));
 }
 
 static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib_params)
@@ -1444,8 +1447,8 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
       ->capture_default_str();
 
   add_option(app,
-             "--stdout_metrics_period",
-             metrics_params.stdout_metrics_period,
+             "--sched_report_period",
+             metrics_params.sched_report_period,
              "DU statistics report period in milliseconds. This metrics sets the console output period.")
       ->capture_default_str();
 }
@@ -1769,6 +1772,11 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
       // Valid for TDD period of 5 ms. And, PRACH index 159 is well tested.
       cell_cfg.prach_cfg.prach_config_index = 159;
     }
+  }
+
+  // If PRACH RA Response Window not set, a default one is assigned.
+  if (not cell_cfg.prach_cfg.ra_resp_window.has_value()) {
+    cell_cfg.prach_cfg.ra_resp_window = 10U << to_numerology_value(cell_cfg.common_scs);
   }
 }
 

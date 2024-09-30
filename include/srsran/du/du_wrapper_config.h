@@ -22,10 +22,11 @@
 
 #pragma once
 
-#include "srsran//du_low/du_low_wrapper_config.h"
-#include "srsran/du/du_high_wrapper_config.h"
+#include "srsran/du/du_high/du_high_wrapper_config.h"
+#include "srsran/du/du_low/du_low_wrapper_config.h"
 
 namespace srsran {
+namespace srs_du {
 
 /// DU wrapper configuration.
 struct du_wrapper_config {
@@ -33,4 +34,5 @@ struct du_wrapper_config {
   du_low_wrapper_config  du_low_cfg;
 };
 
+} // namespace srs_du
 } // namespace srsran

@@ -24,9 +24,9 @@
 
 #include "f1ap_ue_context.h"
 #include "srsran/adt/slotted_array.h"
-#include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/f1ap/du/f1c_rx_sdu_notifier.h"
+#include "srsran/f1ap/f1ap_message_notifier.h"
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"

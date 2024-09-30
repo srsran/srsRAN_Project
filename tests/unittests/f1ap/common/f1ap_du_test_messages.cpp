@@ -23,7 +23,7 @@
 #include "f1ap_du_test_messages.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ngap/ngap.h"
+#include "srsran/ran/plmn_identity.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -36,16 +37,13 @@ public:
   virtual ~cu_cp_ng_handler() = default;
 
   /// \brief Get the NG message handler interface.
-  /// \return The NG message handler interface.
-  virtual ngap_message_handler& get_ngap_message_handler() = 0;
+  /// \param[in] plmn The PLMN of the NGAP.
+  /// \return A pointer to the NG message handler interface if it was found, nullptr otherwise.
+  virtual ngap_message_handler* get_ngap_message_handler(const plmn_identity& plmn) = 0;
 
-  /// \brief Get the NG event handler interface.
-  /// \return The NG event handler interface.
-  virtual ngap_event_handler& get_ngap_event_handler() = 0;
-
-  /// \brief Get the state of the AMF connection.
-  /// \return True if AMF is connected, false otherwise.
-  virtual bool amf_is_connected() = 0;
+  /// \brief Get the state of the AMF connections.
+  /// \return True if all AMFs are connected, false otherwise.
+  virtual bool amfs_are_connected() = 0;
 };
 
 } // namespace srs_cu_cp

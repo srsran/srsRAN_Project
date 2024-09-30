@@ -22,8 +22,8 @@
 
 #pragma once
 
+#include "../rnti_value_table.h"
 #include "rlf_detector.h"
-#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac_cell_control_information_handler.h"
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/scheduler/scheduler_configurator.h"

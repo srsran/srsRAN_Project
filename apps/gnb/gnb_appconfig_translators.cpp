@@ -21,6 +21,7 @@
  */
 
 #include "gnb_appconfig_translators.h"
+#include "apps/services/worker_manager_config.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "gnb_appconfig.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -55,4 +56,10 @@ srsran::sctp_network_connector_config srsran::generate_e2ap_nw_config(const gnb_
   }
 
   return out_cfg;
+}
+
+void srsran::fill_gnb_worker_manager_config(worker_manager_config& config, const gnb_appconfig& unit_cfg)
+{
+  config.nof_low_prio_threads  = unit_cfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads;
+  config.low_prio_sched_config = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
 }

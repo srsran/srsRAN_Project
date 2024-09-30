@@ -24,8 +24,8 @@
 #include "apps/units/flexible_du/du_high/du_high_config_cli11_schema.h"
 #include "apps/units/flexible_du/du_low/du_low_config_cli11_schema.h"
 #include "apps/units/flexible_du/fapi/fapi_config_cli11_schema.h"
-#include "apps/units/flexible_du/split_7_2/ru_ofh_config_cli11_schema.h"
-#include "apps/units/flexible_du/split_8/ru_sdr_config_cli11_schema.h"
+#include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_cli11_schema.h"
+#include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_cli11_schema.h"
 #include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
 #include "dynamic_du_unit_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -41,6 +41,13 @@ static void configure_cli11_ru_dummy_args(CLI::App& app, ru_dummy_unit_config& c
 {
   add_option(app, "--dl_processing_delay", config.dl_processing_delay, "DL processing processing delay in slots")
       ->capture_default_str();
+  add_option(app,
+             "--time_scaling",
+             config.time_scaling,
+             "Time scaling factor applied to the slot duration. Must be greater than zero. "
+             "A value greater than one slows down the RU, while a value between zero and one speeds it up.")
+      ->capture_default_str()
+      ->check(CLI::NonNegativeNumber);
 }
 
 static void configure_cli11_cell_affinity_args(CLI::App& app, ru_dummy_cpu_affinities_cell_unit_config& config)

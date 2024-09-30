@@ -24,8 +24,8 @@
 #include "apps/units/flexible_du/du_high/du_high_config_yaml_writer.h"
 #include "apps/units/flexible_du/du_low/du_low_config_yaml_writer.h"
 #include "apps/units/flexible_du/fapi/fapi_config_yaml_writer.h"
-#include "apps/units/flexible_du/split_7_2/ru_ofh_config_yaml_writer.h"
-#include "apps/units/flexible_du/split_8/ru_sdr_config_yaml_writer.h"
+#include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_yaml_writer.h"
+#include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_yaml_writer.h"
 #include "dynamic_du_unit_config.h"
 
 using namespace srsran;
@@ -34,6 +34,7 @@ static void fill_ru_dummy_config(YAML::Node node, const ru_dummy_unit_config& co
 {
   auto ru_dummy_node                   = node["ru_dummy"];
   ru_dummy_node["dl_processing_delay"] = config.dl_processing_delay;
+  ru_dummy_node["time_scaling"]        = config.time_scaling;
 
   auto expert_exec_node = node["expert_execution"];
 

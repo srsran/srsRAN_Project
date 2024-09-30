@@ -21,9 +21,9 @@
  */
 
 #include "ue_context_modification_procedure.h"
-#include "../../common/asn1_helpers.h"
 #include "../f1ap_asn1_converters.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "asn1_helpers.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ran/cause/ngap_cause.h"
 
 using namespace srsran;

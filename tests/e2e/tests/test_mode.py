@@ -56,7 +56,7 @@ _POD_ERROR = "Error creating the pod"
     ),
 )
 @mark.test_mode
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_ue(
     # Retina
     retina_manager: RetinaTestManager,
@@ -189,7 +189,7 @@ def test_ru_not_crash(
     _test_ru(retina_manager, retina_data, gnb, gnb_stop_timeout=150, warning_as_errors=False, fail_if_kos=False)
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def _test_ru(
     # Retina
     retina_manager: RetinaTestManager,
@@ -245,7 +245,7 @@ def _test_ru(
                 fivegc_definition=FiveGCDefinition(amf_ip=gnb_def.zmq_ip, amf_port=38412),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
-                    post_commands=("amf --no_core 1",),
+                    post_commands=("cu_cp amf --no_core 1",),
                 ),
             )
         )

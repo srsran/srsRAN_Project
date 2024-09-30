@@ -36,10 +36,7 @@ namespace srs_cu_cp {
 class rrc_du_impl : public rrc_du
 {
 public:
-  rrc_du_impl(const rrc_cfg_t&                    cfg_,
-              rrc_ue_nas_notifier&                nas_notif_,
-              rrc_ue_control_notifier&            ngap_ctrl_notif_,
-              rrc_du_measurement_config_notifier& meas_config_notifier_);
+  rrc_du_impl(const rrc_cfg_t& cfg_, rrc_du_measurement_config_notifier& meas_config_notifier_);
   ~rrc_du_impl() = default;
 
   // rrc_du_cell_manager
@@ -72,8 +69,6 @@ private:
   // helpers
   const rrc_cfg_t cfg;
 
-  rrc_ue_nas_notifier&                nas_notifier;         // PDU notifier to the NGAP
-  rrc_ue_control_notifier&            ngap_ctrl_notifier;   // Control notifier to the NGAP
   rrc_du_measurement_config_notifier& meas_config_notifier; // notifier to the CU-CP
   srslog::basic_logger&               logger;
 

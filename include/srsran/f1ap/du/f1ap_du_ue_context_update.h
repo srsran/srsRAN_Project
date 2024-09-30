@@ -24,7 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
-#include "srsran/f1ap/common/ue_context_config.h"
+#include "srsran/f1ap/ue_context_management_configs.h"
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/qos/five_qi.h"

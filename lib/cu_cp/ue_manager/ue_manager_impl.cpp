@@ -33,7 +33,7 @@ void cu_cp_ue::stop()
 
 ue_manager::ue_manager(const cu_cp_configuration& cu_cp_cfg) :
   ue_config(cu_cp_cfg.ue),
-  up_config(up_resource_manager_cfg{cu_cp_cfg.bearers.drb_config}),
+  up_config(up_resource_manager_cfg{cu_cp_cfg.bearers.drb_config, cu_cp_cfg.admission.max_nof_drbs_per_ue}),
   sec_config(security_manager_config{cu_cp_cfg.security.int_algo_pref_list, cu_cp_cfg.security.enc_algo_pref_list}),
   max_nof_ues(cu_cp_cfg.admission.max_nof_ues),
   ue_task_scheds(*cu_cp_cfg.services.timers, *cu_cp_cfg.services.cu_cp_executor, logger)
@@ -46,6 +46,7 @@ void ue_manager::stop()
 }
 
 ue_index_t ue_manager::add_ue(du_index_t                     du_index,
+                              plmn_identity                  plmn,
                               std::optional<gnb_du_id_t>     du_id,
                               std::optional<pci_t>           pci,
                               std::optional<rnti_t>          rnti,
@@ -97,18 +98,21 @@ ue_index_t ue_manager::add_ue(du_index_t                     du_index,
   ue_task_scheduler_impl ue_sched = ue_task_scheds.create_ue_task_sched(new_ue_index);
 
   // Create UE object
-  ues.emplace(std::piecewise_construct,
-              std::forward_as_tuple(new_ue_index),
-              std::forward_as_tuple(
-                  new_ue_index, du_index, up_config, sec_config, std::move(ue_sched), du_id, pci, rnti, pcell_index));
+  ues.emplace(
+      std::piecewise_construct,
+      std::forward_as_tuple(new_ue_index),
+      std::forward_as_tuple(
+          new_ue_index, du_index, up_config, sec_config, std::move(ue_sched), plmn, du_id, pci, rnti, pcell_index));
 
   // Add PCI and RNTI to lookup.
   if (pci.has_value() && rnti.has_value()) {
     pci_rnti_to_ue_index.emplace(std::make_tuple(pci.value(), rnti.value()), new_ue_index);
   }
 
-  logger.info("ue={}{}{}{}{}: Created new CU-CP UE",
+  logger.info("ue={} du_index={} plmn={}{}{}{}{}: Created new CU-CP UE",
               new_ue_index,
+              du_index,
+              plmn,
               du_id.has_value() ? fmt::format(" gnb_du_id={}", du_id.value()) : "",
               pci.has_value() ? fmt::format(" pci={}", pci.value()) : "",
               rnti.has_value() ? fmt::format(" rnti={}", rnti.value()) : "",

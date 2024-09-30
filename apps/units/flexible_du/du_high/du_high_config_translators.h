@@ -24,8 +24,8 @@
 
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config.h"
-#include "srsran/du/du_qos_config.h"
-#include "srsran/du/du_srb_config.h"
+#include "srsran/du/du_high/du_qos_config.h"
+#include "srsran/du/du_high/du_srb_config.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/ran/lcid.h"
@@ -36,15 +36,16 @@
 namespace srsran {
 
 struct du_high_unit_config;
+struct worker_manager_config;
 
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
-std::vector<du_cell_config> generate_du_cell_config(const du_high_unit_config& config);
+std::vector<srs_du::du_cell_config> generate_du_cell_config(const du_high_unit_config& config);
 
 /// Converts and returns the given gnb application QoS configuration to a DU QoS list configuration.
-std::map<five_qi_t, du_qos_config> generate_du_qos_config(const du_high_unit_config& config);
+std::map<five_qi_t, srs_du::du_qos_config> generate_du_qos_config(const du_high_unit_config& config);
 
 /// Converts and returns the given gnb application QoS configuration to a DU SRB list configuration.
-std::map<srb_id_t, du_srb_config> generate_du_srb_config(const du_high_unit_config& config);
+std::map<srb_id_t, srs_du::du_srb_config> generate_du_srb_config(const du_high_unit_config& config);
 
 /// Converts and returns the given gnb application configuration to a mac expert configuration.
 mac_expert_config generate_mac_expert_config(const du_high_unit_config& config);
@@ -56,12 +57,17 @@ scheduler_expert_config generate_scheduler_expert_config(const du_high_unit_conf
 e2ap_configuration generate_e2_config(const du_high_unit_config& du_high);
 
 /// Augments RLC parameters based on NTN configuration.
-void ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, du_srb_config>& srb_cfgs);
+void ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, srs_du::du_srb_config>& srb_cfgs);
 
 /// Converts and returns the given gnb application configuration to a DU slice RRM policy configuration list.
 std::vector<slice_rrm_policy_config>
 generate_du_slicing_rrm_policy_config(span<const std::string>                    plmns,
                                       span<const du_high_unit_cell_slice_config> slice_cfg,
                                       unsigned                                   nof_cell_crbs);
+
+/// Fills the DU high worker manager parameters of the given worker manager configuration.
+void fill_du_high_worker_manager_config(worker_manager_config&     config,
+                                        const du_high_unit_config& unit_cfg,
+                                        bool                       is_blocking_mode_enabled = false);
 
 } // namespace srsran

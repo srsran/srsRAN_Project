@@ -34,14 +34,14 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context
                                          const byte_buffer&              du_to_cu_container_,
                                          rrc_ue_setup_proc_notifier&     rrc_ue_notifier_,
                                          rrc_ue_control_message_handler& srb_notifier_,
-                                         rrc_ue_nas_notifier&            nas_notifier_,
+                                         rrc_ue_ngap_notifier&           ngap_notifier_,
                                          rrc_ue_event_manager&           event_mng_,
                                          rrc_ue_logger&                  logger_) :
   context(context_),
   du_to_cu_container(du_to_cu_container_),
   rrc_ue(rrc_ue_notifier_),
   srb_notifier(srb_notifier_),
-  nas_notifier(nas_notifier_),
+  ngap_notifier(ngap_notifier_),
   event_mng(event_mng_),
   logger(logger_)
 {
@@ -144,5 +144,5 @@ void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_comp
     // TODO: Handle PLMN ID
   }
 
-  nas_notifier.on_initial_ue_message(init_ue_msg);
+  ngap_notifier.on_initial_ue_message(init_ue_msg);
 }

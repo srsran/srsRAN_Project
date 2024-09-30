@@ -21,9 +21,10 @@
  */
 
 #include "srsran/du/du_update_config_helpers.h"
-#include "../du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 
 using namespace srsran;
+using namespace config_helpers;
 
 /// Helper that computes the greatest RB index used by the PUCCH resources on the BWP's left side. Note that the PUCCH
 /// resources are located at in 2 separate blocks, at both sides of the BWP, i.e., 1 block on the left side (where
@@ -71,9 +72,9 @@ static unsigned greatest_used_rb_on_bwp_left_side(const pucch_resource& res, uns
   return max_rb_idx_on_left_side;
 }
 
-unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_builder_params& user_params,
-                                                               unsigned                    bwp_size,
-                                                               bool                        is_long_prach)
+unsigned srsran::config_helpers::compute_prach_frequency_start(const srs_du::pucch_builder_params& user_params,
+                                                               unsigned                            bwp_size,
+                                                               bool                                is_long_prach)
 {
   // This is to preserve a guardband between the PUCCH and PRACH.
   const unsigned pucch_to_prach_guardband = is_long_prach ? 0U : 3U;
@@ -100,10 +101,10 @@ unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_build
   return prach_f_start + pucch_to_prach_guardband;
 }
 
-void srsran::config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_params,
-                                                          unsigned                max_pucch_grants_per_slot,
-                                                          float                   sr_period_msec,
-                                                          std::optional<unsigned> csi_period_msec)
+void srsran::config_helpers::compute_nof_sr_csi_pucch_res(srs_du::pucch_builder_params& user_params,
+                                                          unsigned                      max_pucch_grants_per_slot,
+                                                          float                         sr_period_msec,
+                                                          std::optional<unsigned>       csi_period_msec)
 {
   // [Implementation-defined] In the following, we compute the estimated number of PUCCH resources that are needed for
   // SR and CSI; we assume we cannot allocate more than max_pucch_grants_per_slot - 1U (1 is reserved for HARQ-ACK)
@@ -132,11 +133,12 @@ void srsran::config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params& 
 }
 
 bounded_integer<unsigned, 1, 14>
-srsran::config_helpers::compute_max_nof_pucch_symbols(const srs_builder_params& user_srs_params)
+srsran::config_helpers::compute_max_nof_pucch_symbols(const srs_du::srs_builder_params& user_srs_params)
 {
   // [Implementation-defined] In the following, we compute the maximum number of PUCCH symbols that can be used in a
   // slot based on the PUCCH and SRS configurations. The maximum number of PUCCH symbols is computed so that PUCCH and
   // SRS resources occupy all symbols in a slot and in such a way that they do not overlap each other.
-  return user_srs_params.srs_enabled ? NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - user_srs_params.max_nof_symbols.to_uint()
-                                     : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  return user_srs_params.srs_period.has_value()
+             ? NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - user_srs_params.max_nof_symbols.to_uint()
+             : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 }

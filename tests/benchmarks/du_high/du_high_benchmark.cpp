@@ -39,8 +39,8 @@
 /// which will instantiate 6 threads running in cores 2-7 (assuming du_cell is pinned to 0-1), with high priority
 /// and a CPU load of 90%.
 
-#include "lib/du_high/du_high_executor_strategies.h"
-#include "lib/du_high/du_high_impl.h"
+#include "lib/du/du_high/du_high_executor_strategies.h"
+#include "lib/du/du_high/du_high_impl.h"
 #include "lib/mac/mac_ul/ul_bsr.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
@@ -49,8 +49,8 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du/du_qos_config_helpers.h"
-#include "srsran/du_high/du_high_configuration.h"
+#include "srsran/du/du_high/du_high_configuration.h"
+#include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/event_tracing.h"
@@ -676,7 +676,7 @@ public:
     cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = 8;
     cfg.ran.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets   = 4;
     auto& f1_params                             = cfg.ran.cells[0].pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
-    f1_params.nof_cyc_shifts                    = srsran::nof_cyclic_shifts::six;
+    f1_params.nof_cyc_shifts                    = nof_cyclic_shifts::six;
     f1_params.occ_supported                     = true;
     cfg.ran.sched_cfg.ue.max_pucchs_per_slot    = 61;
     cfg.ran.sched_cfg.ue.max_puschs_per_slot    = 61;

@@ -22,8 +22,9 @@
 
 #pragma once
 
-#include "lib/du_manager/converters/scheduler_configuration_helpers.h"
+#include "lib/du/du_high/du_manager/converters/scheduler_configuration_helpers.h"
 #include "lib/scheduler/config/sched_config_manager.h"
+#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pucch/pucch_info.h"
@@ -36,6 +37,9 @@
 #include "srsran/support/test_utils.h"
 
 namespace srsran {
+
+class sched_metrics_ue_configurator;
+
 namespace test_helpers {
 
 inline sched_cell_configuration_request_message
@@ -65,7 +69,7 @@ make_default_sched_cell_configuration_request(const config_helpers::cell_config_
   sched_req.searchspace0      = params.search_space0_index;
   sched_req.sib1_payload_size = 101; // Random size.
 
-  pucch_builder_params default_pucch_builder_params           = du_cell_config{}.pucch_cfg;
+  srs_du::pucch_builder_params default_pucch_builder_params   = srs_du::du_cell_config{}.pucch_cfg;
   default_pucch_builder_params.nof_ue_pucch_f0_or_f1_res_harq = 3;
   default_pucch_builder_params.nof_ue_pucch_f2_res_harq       = 6;
   default_pucch_builder_params.nof_sr_resources               = 2;
@@ -353,6 +357,7 @@ private:
   std::unique_ptr<sched_configuration_notifier>  cfg_notifier;
   std::unique_ptr<scheduler_metrics_notifier>    metric_notifier;
   std::unique_ptr<sched_metrics_ue_configurator> ue_metrics_configurator;
+  scheduler_metrics_handler                      metrics_handler;
 
   sched_cell_configuration_request_message default_cell_req;
   sched_ue_creation_request_message        default_ue_req;

@@ -142,6 +142,10 @@ srsran::fapi::ul_pucch_pdu build_valid_ul_pucch_f4_pdu();
 /// Section 3.4.3.2.
 srsran::fapi::ul_pusch_pdu build_valid_ul_pusch_pdu();
 
+/// Builds and returns a valid UL SRS PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.3.
+srsran::fapi::ul_srs_pdu build_valid_ul_srs_pdu();
+
 /// Builds and returns a valid UL_TTI.request. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.
 srsran::fapi::ul_tti_request_message build_valid_ul_tti_request();

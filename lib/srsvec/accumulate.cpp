@@ -20,7 +20,7 @@
  *
  */
 #include "srsran/srsvec/accumulate.h"
-#include "simd.h"
+#include "srsran/srsvec/simd.h"
 #include "srsran/support/srsran_assert.h"
 #include <numeric>
 

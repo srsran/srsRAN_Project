@@ -42,7 +42,7 @@ TEST_P(validate_dl_tti_request_field, with_value)
                build_valid_dl_tti_request,
                validate_dl_tti_request,
                srsran::fapi::message_type_id::dl_tti_request);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(sfn,
                          validate_dl_tti_request_field,

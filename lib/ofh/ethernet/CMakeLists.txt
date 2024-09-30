@@ -20,6 +20,7 @@
 
 set(SOURCES
         ethernet_factories.cpp
+        ethernet_frame_builder_impl.cpp
         ethernet_transmitter_impl.cpp
         ethernet_receiver_impl.cpp
         ethernet_rx_buffer_impl.cpp

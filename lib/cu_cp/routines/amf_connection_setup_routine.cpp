@@ -21,14 +21,20 @@
  */
 
 #include "amf_connection_setup_routine.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_setup.h"
+#include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-amf_connection_setup_routine::amf_connection_setup_routine(const cu_cp_configuration& cu_cp_cfg_,
-                                                           ngap_connection_manager&   ngap_conn_mng_) :
-  cu_cp_cfg(cu_cp_cfg_), ngap_conn_mng(ngap_conn_mng_)
+amf_connection_setup_routine::amf_connection_setup_routine(ngap_repository&   ngap_db_,
+                                                           std::atomic<bool>& amf_connected_) :
+  ngap_db(ngap_db_),
+  amf_connected(amf_connected_),
+  amf_index(ngap_db_.get_ngaps().begin()->first),
+  ngap(ngap_db_.get_ngaps().begin()->second),
+  logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
@@ -36,61 +42,38 @@ void amf_connection_setup_routine::operator()(coro_context<async_task<bool>>& ct
 {
   CORO_BEGIN(ctx);
 
-  if (not ngap_conn_mng.handle_amf_tnl_connection_request()) {
+  if (not ngap->handle_amf_tnl_connection_request()) {
     CORO_EARLY_RETURN(false);
   }
 
   // Initiate NG Setup.
-  CORO_AWAIT_VALUE(result_msg, send_ng_setup_request());
+  CORO_AWAIT_VALUE(result_msg, ngap->handle_ng_setup_request(/*max_setup_retries*/ 1));
 
-  CORO_RETURN(std::holds_alternative<ngap_ng_setup_response>(result_msg));
-}
+  success = std::holds_alternative<ngap_ng_setup_response>(result_msg);
 
-ngap_ng_setup_request amf_connection_setup_routine::fill_ng_setup_request()
-{
-  ngap_ng_setup_request request;
+  // Handle result of NG setup.
+  handle_connection_setup_result();
 
-  // fill global ran node id
-  request.global_ran_node_id.gnb_id = cu_cp_cfg.node.gnb_id;
-  // TODO: Which PLMN do we need to use here?
-  request.global_ran_node_id.plmn_id = cu_cp_cfg.node.supported_tas.front().plmn;
-  // fill ran node name
-  request.ran_node_name = cu_cp_cfg.node.ran_node_name;
-  // fill supported ta list
-  for (const auto& supported_ta : cu_cp_cfg.node.supported_tas) {
-    // TODO: add support for more items
-    ngap_supported_ta_item supported_ta_item;
+  if (success) {
+    // Update PLMN lookups in NGAP repository after successful NGSetup.
+    ngap_db.update_plmn_lookup(amf_index);
 
-    ngap_broadcast_plmn_item broadcast_plmn_item;
-    broadcast_plmn_item.plmn_id = supported_ta.plmn;
-
-    for (const auto& slice_config : supported_ta.supported_slices) {
-      slice_support_item_t slice_support_item;
-      slice_support_item.s_nssai.sst = slice_config.sst;
-      if (slice_config.sd.has_value()) {
-        slice_support_item.s_nssai.sd = slice_config.sd.value();
-      }
-      broadcast_plmn_item.tai_slice_support_list.push_back(slice_support_item);
+    std::string plmn_list;
+    for (const auto& plmn : ngap->get_ngap_context().get_supported_plmns()) {
+      plmn_list += plmn.to_string() + " ";
     }
 
-    supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
-    supported_ta_item.tac = supported_ta.tac;
-
-    request.supported_ta_list.push_back(supported_ta_item);
+    logger.info("Connected to AMF. Supported PLMNs: {}", plmn_list);
+  } else {
+    logger.error("Failed to connect to AMF");
+    CORO_EARLY_RETURN(false);
   }
 
-  // fill paging drx
-  request.default_paging_drx = 256;
-
-  return request;
+  CORO_RETURN(success);
 }
 
-async_task<ngap_ng_setup_result> amf_connection_setup_routine::send_ng_setup_request()
+void amf_connection_setup_routine::handle_connection_setup_result()
 {
-  // Prepare request to send to ng.
-  ngap_ng_setup_request request = fill_ng_setup_request();
-  request.max_setup_retries     = 1;
-
-  // Initiate NG Setup Request.
-  return ngap_conn_mng.handle_ng_setup_request(request);
+  // Update AMF connection handler state.
+  amf_connected = success;
 }

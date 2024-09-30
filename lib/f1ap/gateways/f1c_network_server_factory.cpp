@@ -22,7 +22,7 @@
 
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
 #include "srsran/asn1/f1ap/f1ap.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/error_handling.h"

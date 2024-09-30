@@ -170,7 +170,7 @@ void inter_cu_handover_target_routine::operator()(
                                 {} /* No DRB to be removed */,
                                 ue_context_setup_response.du_to_cu_rrc_info,
                                 {} /* No NAS PDUs required */,
-                                ue->get_rrc_ue_notifier().generate_meas_config(),
+                                ue->get_rrc_ue()->generate_meas_config(),
                                 false,
                                 false,
                                 false,
@@ -187,8 +187,7 @@ void inter_cu_handover_target_routine::operator()(
     unsigned transaction_id = 0;
 
     // Get RRC Handover Command container
-    handover_command_pdu =
-        ue->get_rrc_ue_notifier().on_rrc_handover_command_required(rrc_reconfig_args, transaction_id);
+    handover_command_pdu = ue->get_rrc_ue()->get_rrc_handover_command(rrc_reconfig_args, transaction_id);
   }
 
   CORO_RETURN(generate_handover_resource_allocation_response(true));
@@ -285,7 +284,7 @@ void inter_cu_handover_target_routine::create_srb1()
   srb1_msg.srb_id          = srb_id_t::srb1;
   srb1_msg.pdcp_cfg        = {};
   srb1_msg.enable_security = true;
-  ue_mng.find_du_ue(request.ue_index)->get_rrc_ue_notifier().create_srb(srb1_msg);
+  ue_mng.find_du_ue(request.ue_index)->get_rrc_ue()->create_srb(srb1_msg);
 }
 
 ngap_handover_resource_allocation_response

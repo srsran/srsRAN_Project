@@ -21,9 +21,9 @@
  */
 
 #include "f1ap_du_ue_context_modification_procedure.h"
-#include "../../common/asn1_helpers.h"
+#include "../../asn1_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;
 using namespace srs_du;

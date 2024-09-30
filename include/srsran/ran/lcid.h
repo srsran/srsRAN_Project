@@ -86,7 +86,7 @@ inline lcid_t srb_id_to_lcid(srb_id_t srb_id)
 
 inline const char* srb_id_to_string(srb_id_t srb_id)
 {
-  constexpr static const char* names[] = {"SRB0", "SRB1", "SRB2", "SRB3", "invalid"};
+  static constexpr const char* names[] = {"SRB0", "SRB1", "SRB2", "SRB3", "invalid"};
   return names[srb_id_to_uint(srb_id < srb_id_t::nulltype ? srb_id : srb_id_t::nulltype)];
 }
 
@@ -123,7 +123,7 @@ enum class drb_id_t : uint8_t {
   invalid
 };
 
-constexpr static std::size_t MAX_NOF_DRBS = 29;
+static constexpr std::size_t MAX_NOF_DRBS = 29;
 
 constexpr inline uint8_t drb_id_to_uint(drb_id_t id)
 {

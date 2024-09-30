@@ -31,7 +31,7 @@
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_types.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 
@@ -41,7 +41,7 @@ using namespace srs_cu_cp;
 class cu_cp_initial_context_setup_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_initial_context_setup_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, create_mock_amf()})
+  cu_cp_initial_context_setup_test() : cu_cp_test_environment(cu_cp_test_env_params{})
   {
     // Run NG setup to completion.
     run_ng_setup();
@@ -329,8 +329,8 @@ TEST_F(cu_cp_initial_context_setup_test, when_ue_capability_enquiry_fails_then_i
   ASSERT_TRUE(send_security_mode_complete_and_await_ue_capability_enquiry());
 
   // Fail UE Capability Enquiry (UE doesn't respond)
-  ASSERT_FALSE(tick_until(std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
-                          [&]() { return false; }));
+  ASSERT_FALSE(tick_until(
+      std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms), [&]() { return false; }, false));
 
   // Wait for NGAP Initial Context Setup Failure
   ASSERT_TRUE(await_initial_context_setup_failure());

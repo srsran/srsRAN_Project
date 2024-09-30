@@ -101,7 +101,7 @@ public:
     static_assert(sizeof(rx_buffer_wrapper) <= storage_capacity.value(),
                   "Pre-allocated storage does not have enough space to store passed rx buffer");
 
-    const static detail::storage_helper_impl<T> helper{};
+    static const detail::storage_helper_impl<T> helper{};
     storage_ptr = &helper;
     ::new (&buffer) T(std::forward<T>(rx_buffer_wrapper));
   }

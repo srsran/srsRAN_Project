@@ -21,7 +21,7 @@
  */
 
 #include "srsran/srsvec/aligned_vec.h"
-#include "simd.h"
+#include "srsran/srsvec/simd.h"
 #include "srsran/support/error_handling.h"
 #include <cstdlib>
 

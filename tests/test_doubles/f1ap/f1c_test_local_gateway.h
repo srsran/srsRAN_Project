@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 

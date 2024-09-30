@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/ran/plmn_identity.h"
+
 namespace srsran {
 namespace srs_cu_cp {
 
@@ -30,8 +32,8 @@ class cu_cp_ue_admission_controller
 public:
   virtual ~cu_cp_ue_admission_controller() = default;
 
-  /// Determines whether the CU-CP is in a condition to accept new UEs.
-  virtual bool request_ue_setup() const = 0;
+  /// Determines whether the CU-CP is in a condition to accept new UEs for a given PLMN.
+  virtual bool request_ue_setup(plmn_identity plmn) const = 0;
 };
 
 } // namespace srs_cu_cp

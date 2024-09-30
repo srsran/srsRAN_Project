@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "../../../srsvec/simd.h"
 #include "srsran/phy/constants.h"
 #include "srsran/srsvec/fill.h"
+#include "srsran/srsvec/simd.h"
 #include "srsran/srsvec/zero.h"
 
 namespace srsran {

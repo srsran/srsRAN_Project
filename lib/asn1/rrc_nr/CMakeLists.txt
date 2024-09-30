@@ -49,3 +49,5 @@ add_library(rrc_nr_asn1 STATIC
         rrc_nr.cpp)
 target_compile_options(rrc_nr_asn1 PRIVATE -Os -fno-exceptions)
 target_link_libraries(rrc_nr_asn1 asn1_utils)
+
+add_to_exported_libs(rrc_nr_asn1)

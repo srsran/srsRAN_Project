@@ -149,7 +149,7 @@ unsigned ue::pending_ul_srb_newtx_bytes() const
 
 unsigned ue::pending_ul_newtx_bytes() const
 {
-  constexpr static unsigned SR_GRANT_BYTES = 512;
+  static constexpr unsigned SR_GRANT_BYTES = 512;
 
   // Sum the last BSRs.
   unsigned pending_bytes = ul_lc_ch_mgr.pending_bytes();

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "../../../srsvec/simd.h"
+#include "srsran/srsvec/simd.h"
 #include "srsran/srsvec/zero.h"
 
 namespace srsran {
@@ -78,7 +78,7 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
 
 #if SRSRAN_SIMD_CF_SIZE
   simd_f_t tx_scaling_simd    = srsran_simd_f_set1(tx_scaling);
-  simd_f_t noise_var_est_simd = srsran_simd_f_set1(noise_var_est);
+  simd_f_t noise_var_est_simd = srsran_simd_f_set1(noise_var_est / tx_scaling);
   simd_f_t zero_simd          = srsran_simd_f_zero();
   simd_f_t infinity_simd      = srsran_simd_f_set1(std::numeric_limits<float>::infinity());
 
@@ -128,13 +128,11 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
     }
 
     // Calculate the denominators.
-    simd_f_t d_pinv  = srsran_simd_f_mul(tx_scaling_simd,
+    simd_f_t d_pinv = srsran_simd_f_mul(tx_scaling_simd,
                                         srsran_simd_f_sub(srsran_simd_f_mul(norm_sq_ch[0], norm_sq_ch[1]), xi_mod_sq));
-    simd_f_t d_nvars = srsran_simd_f_mul(tx_scaling_simd, d_pinv);
 
     // Calculate the reciprocal of the denominators.
-    simd_f_t d_pinv_rcp  = srsran_simd_f_rcp(d_pinv);
-    simd_f_t d_nvars_rcp = srsran_simd_f_rcp(d_nvars);
+    simd_f_t d_pinv_rcp = srsran_simd_f_rcp(d_pinv);
 
     // Apply Zero Forcing algorithm. This is equivalent to multiplying the input signal with the pseudo-inverse of the
     // channel matrix.
@@ -146,8 +144,8 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
     symbols_out_l1           = srsran_simd_cf_mul(symbols_out_l1, d_pinv_rcp);
 
     // Calculate post-equalization noise variances.
-    simd_f_t eq_noise_vars_l0 = srsran_simd_f_mul(srsran_simd_f_mul(norm_sq_ch[1], noise_var_est_simd), d_nvars_rcp);
-    simd_f_t eq_noise_vars_l1 = srsran_simd_f_mul(srsran_simd_f_mul(norm_sq_ch[0], noise_var_est_simd), d_nvars_rcp);
+    simd_f_t eq_noise_vars_l0 = srsran_simd_f_mul(srsran_simd_f_mul(norm_sq_ch[1], noise_var_est_simd), d_pinv_rcp);
+    simd_f_t eq_noise_vars_l1 = srsran_simd_f_mul(srsran_simd_f_mul(norm_sq_ch[0], noise_var_est_simd), d_pinv_rcp);
 
     // Return values in case of abnormal computation parameters. These include negative, zero, NAN or INF noise
     // variances and zero, NAN or INF channel estimation coefficients.

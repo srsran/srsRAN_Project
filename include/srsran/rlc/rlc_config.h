@@ -795,7 +795,7 @@ struct formatter<srsran::rlc_dc_field> {
   template <typename FormatContext>
   auto format(srsran::rlc_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"ctrl", "data"};
+    static constexpr const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
   }
 };
@@ -811,7 +811,7 @@ struct formatter<srsran::rlc_si_field> {
   template <typename FormatContext>
   auto format(srsran::rlc_si_field si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"full", "first", "last", "mid"};
+    static constexpr const char* options[] = {"full", "first", "last", "mid"};
     return format_to(ctx.out(), "{}", options[to_number(si)]);
   }
 };

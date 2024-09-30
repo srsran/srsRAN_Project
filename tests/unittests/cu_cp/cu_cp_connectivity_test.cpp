@@ -31,7 +31,7 @@
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/e1ap/common/e1ap_message.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 
@@ -41,7 +41,7 @@ using namespace srs_cu_cp;
 class cu_cp_connectivity_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, create_mock_amf()}) {}
+  cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{}) {}
 };
 
 //----------------------------------------------------------------------------------//
@@ -54,7 +54,7 @@ TEST_F(cu_cp_connectivity_test, when_cu_cp_is_created_then_it_is_not_connected_t
   ASSERT_FALSE(get_amf().try_pop_rx_pdu(ngap_pdu))
       << "The CU-CP should not send a message to the NG interface before being started";
 
-  ASSERT_FALSE(get_cu_cp().get_ng_handler().amf_is_connected());
+  ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
 }
 
 TEST_F(cu_cp_connectivity_test, when_cu_cp_starts_then_it_initiates_ng_setup_procedure_and_blocks_waiting_for_response)
@@ -71,7 +71,7 @@ TEST_F(cu_cp_connectivity_test, when_cu_cp_starts_then_it_initiates_ng_setup_pro
   ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request))
       << "CU-CP did not setup the AMF connection";
 
-  ASSERT_TRUE(get_cu_cp().get_ng_handler().amf_is_connected());
+  ASSERT_TRUE(get_cu_cp().get_ng_handler().amfs_are_connected());
 }
 
 TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_in_amf_connected_state)
@@ -88,7 +88,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_in_amf_con
   ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request))
       << "CU-CP did not setup the AMF connection";
 
-  ASSERT_FALSE(get_cu_cp().get_ng_handler().amf_is_connected());
+  ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
 }
 
 //----------------------------------------------------------------------------------//

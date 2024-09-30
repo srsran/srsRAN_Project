@@ -56,7 +56,7 @@ protected:
   void run_e1_setup_procedure();
 
   /// \brief Helper method to setup a bearer at the CU-UP
-  void setup_bearer(unsigned int cu_cp_ue_e1ap_id);
+  void setup_bearer(unsigned cu_cp_ue_e1ap_id);
 
   /// Dummy E1AP gateway to connect to CU-CP and send E1AP PDUs.
   dummy_e1_connection_client e1ap_gw;

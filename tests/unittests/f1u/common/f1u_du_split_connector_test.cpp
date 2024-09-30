@@ -34,7 +34,7 @@ using namespace srs_du;
 
 namespace {
 
-struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_gateway_bearer_rx_notifier {
+struct dummy_f1u_du_gateway_bearer_rx_notifier final : f1u_du_gateway_bearer_rx_notifier {
   void on_new_pdu(nru_dl_message msg) override
   {
     logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. sdu_len={}", msg.t_pdu.length());

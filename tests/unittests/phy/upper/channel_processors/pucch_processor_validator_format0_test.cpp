@@ -21,19 +21,21 @@
  */
 
 #include "../../support/resource_grid_test_doubles.h"
+#include "srsran/adt/expected.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "fmt/ostream.h"
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+#include <regex>
 
 using namespace srsran;
 
 namespace {
 
 // Maximum channel dimensions used to construct the PUCCH processor. It is irrelevant for Format 0.
-static channel_estimate::channel_estimate_dimensions max_dimensions = {1, 1, 1, 1};
+channel_estimate::channel_estimate_dimensions max_dimensions = {1, 1, 1, 1};
 
 // Valid PUCCH Format 0 configuration.
 const pucch_processor::format0_configuration base_format_0_config = {
@@ -298,7 +300,10 @@ TEST_P(PucchProcessorFormat0Fixture, PucchProcessorValidatortest)
   const test_case_t& param = GetParam();
 
   // Make sure the configuration is invalid.
-  ASSERT_FALSE(pucch_validator->is_valid(param.get_test_params().config));
+  error_type<std::string> validator_out = pucch_validator->is_valid(param.get_test_params().config);
+  ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
+  ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.get_test_params().assert_message)))
+      << "The assertion message doesn't match the expected pattern.";
 
   // Prepare resource grid.
   resource_grid_reader_spy grid;

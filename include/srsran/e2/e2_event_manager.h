@@ -37,7 +37,7 @@ class e2_event_manager
 {
 public:
   /// Transaction Response Container, which gets indexed by transaction_id.
-  constexpr static size_t                    MAX_NOF_TRANSACTIONS = 256;
+  static constexpr size_t                    MAX_NOF_TRANSACTIONS = 256;
   protocol_transaction_manager<e2ap_outcome> transactions;
 
   std::map<std::tuple<uint32_t, uint32_t>,

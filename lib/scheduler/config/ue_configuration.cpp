@@ -580,6 +580,20 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void assert_dci_size_config(search_space_id ss_id, const dci_size_config& dci_sz_cfg)
+{
+  [[maybe_unused]] std::string error_msg;
+  [[maybe_unused]] auto        validate_dci_sz_cfg = [&dci_sz_cfg, &error_msg]() {
+    error_type<std::string> dci_size_valid = validate_dci_size_config(dci_sz_cfg);
+    bool                    is_success     = dci_size_valid.has_value();
+    if (!is_success) {
+      error_msg = dci_size_valid.error();
+    }
+    return is_success;
+  };
+  srsran_assert(validate_dci_sz_cfg(), "Invalid DCI size configuration for SearchSpace={}: {}", ss_id, error_msg);
+}
+
 ue_cell_configuration::ue_cell_configuration(rnti_t                     crnti_,
                                              const cell_configuration&  cell_cfg_common_,
                                              const serving_cell_config& serv_cell_cfg_,
@@ -631,9 +645,13 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
 
   // Compute DCI sizes
   for (search_space_info& ss : search_spaces) {
+    // Generate DCI size calculation parameters.
     ss.dci_sz_cfg = get_dci_size_config(*this, multi_cells_configured, ss.cfg->get_id());
-    srsran_assert(
-        validate_dci_size_config(ss.dci_sz_cfg), "Invalid DCI size configuration for SearchSpace={}", ss.cfg->get_id());
+
+    // Verify the DCI size configuration is valid.
+    assert_dci_size_config(ss.cfg->get_id(), ss.dci_sz_cfg);
+
+    // Calculate DCI sizes.
     ss.dci_sz = get_dci_sizes(ss.dci_sz_cfg);
   }
 

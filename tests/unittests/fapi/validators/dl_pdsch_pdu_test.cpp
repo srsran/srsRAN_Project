@@ -43,7 +43,7 @@ TEST_P(validate_pdsch_pdu_field, WithValue)
                validate_dl_pdsch_pdu,
                srsran::fapi::message_type_id::dl_tti_request,
                dl_pdu_type::PDSCH);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(rnti,
                          validate_pdsch_pdu_field,

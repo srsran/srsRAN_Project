@@ -61,7 +61,7 @@ struct formatter<srsran::sdap_hdr_ul_cfg> {
   template <typename FormatContext>
   auto format(srsran::sdap_hdr_ul_cfg hdr_cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"present", "absent"};
+    static constexpr const char* options[] = {"present", "absent"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(hdr_cfg)]);
   }
 };
@@ -78,7 +78,7 @@ struct formatter<srsran::sdap_hdr_dl_cfg> {
   template <typename FormatContext>
   auto format(srsran::sdap_hdr_dl_cfg hdr_cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"present", "absent"};
+    static constexpr const char* options[] = {"present", "absent"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(hdr_cfg)]);
   }
 };

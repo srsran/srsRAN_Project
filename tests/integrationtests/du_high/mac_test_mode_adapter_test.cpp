@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/du_high/adapters/mac_test_mode_adapter.h"
+#include "lib/du/du_high/adapters/mac_test_mode_adapter.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
@@ -29,6 +29,7 @@
 #include <gtest/gtest.h>
 
 using namespace srsran;
+using namespace srs_du;
 
 struct mac_event_interceptor {
   std::optional<mac_ul_sched_result> next_ul_sched_res;
@@ -117,8 +118,8 @@ public:
 };
 
 struct test_params {
-  unsigned                               nof_ports;
-  srs_du::du_test_config::test_ue_config test_ue_cfg;
+  unsigned                                         nof_ports;
+  srs_du::du_test_mode_config::test_mode_ue_config test_ue_cfg;
 };
 
 /// Formatter for test params.
@@ -133,10 +134,27 @@ void PrintTo(const test_params& value, ::std::ostream* os)
   }
 }
 
-class mac_test_mode_adapter_test : public ::testing::TestWithParam<test_params>
+static mac_uci_pdu make_random_uci_with_csi(rnti_t test_rnti = to_rnti(0x4601))
+{
+  mac_uci_pdu pdu;
+  pdu.rnti = test_rnti;
+
+  mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2;
+  f2.csi_part1_info.emplace();
+  f2.csi_part1_info->is_valid = false;
+  f2.csi_part1_info->payload.resize(test_rgen::uniform_int<unsigned>(0, 11));
+  for (unsigned i = 0; i != f2.csi_part1_info->payload.size(); ++i) {
+    f2.csi_part1_info->payload.set(i, test_rgen::uniform_int<unsigned>(0, 1));
+  }
+
+  pdu.pdu = f2;
+  return pdu;
+}
+
+class base_mac_test_mode_test
 {
 protected:
-  mac_test_mode_adapter_test() : params(GetParam()), adapter{params.test_ue_cfg, phy}
+  base_mac_test_mode_test(const test_params& params_) : params(params_), adapter{params.test_ue_cfg, phy}
   {
     adapter.connect(std::make_unique<mac_dummy>(mac_events, adapter.get_phy_notifier()));
 
@@ -174,24 +192,93 @@ protected:
   slot_point next_slot{0, 0};
 };
 
-mac_uci_pdu make_random_uci_with_csi(rnti_t test_rnti = to_rnti(0x4601))
+class mac_test_mode_test : public base_mac_test_mode_test, public ::testing::Test
 {
-  mac_uci_pdu pdu;
-  pdu.rnti = test_rnti;
+protected:
+  mac_test_mode_test() : base_mac_test_mode_test(test_params{1, {to_rnti(0x4444), 1, std::nullopt, true, true, 12}}) {}
+};
 
-  mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2;
-  f2.csi_part1_info.emplace();
-  f2.csi_part1_info->is_valid = false;
-  f2.csi_part1_info->payload.resize(test_rgen::uniform_int<unsigned>(0, 11));
-  for (unsigned i = 0; i != f2.csi_part1_info->payload.size(); ++i) {
-    f2.csi_part1_info->payload.set(i, test_rgen::uniform_int<unsigned>(0, 1));
-  }
+TEST_F(mac_test_mode_test, when_test_mode_ue_has_pucch_grants_then_uci_indications_are_auto_forwarded_to_mac)
+{
+  // PUCCH got scheduled for test mode UE.
+  ul_sched_result ul_res{};
+  pucch_info&     pucch            = ul_res.pucchs.emplace_back();
+  pucch.crnti                      = this->params.test_ue_cfg.rnti;
+  pucch.format                     = srsran::pucch_format::FORMAT_1;
+  pucch.format_1.harq_ack_nof_bits = 1;
+  pucch.format_1.sr_bits           = sr_nof_bits::no_sr;
+  mac_events.next_ul_sched_res.emplace();
+  mac_events.next_ul_sched_res->slot   = next_slot;
+  mac_events.next_ul_sched_res->ul_res = &ul_res;
 
-  pdu.pdu = f2;
-  return pdu;
+  // Run the slot with PUCCH scheduled.
+  slot_point sl_rx = next_slot;
+  this->run_slot();
+
+  // Forward UCI indication.
+  mac_uci_indication_message uci;
+  uci.sl_rx                                = sl_rx;
+  mac_uci_pdu& pdu                         = uci.ucis.emplace_back();
+  pdu.rnti                                 = this->params.test_ue_cfg.rnti;
+  mac_uci_pdu::pucch_f0_or_f1_type& f1_uci = pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>();
+  f1_uci.harq_info.emplace();
+  f1_uci.harq_info->harqs.resize(1);
+  f1_uci.harq_info->harqs[0] = uci_pucch_f0_or_f1_harq_values::nack;
+  this->adapter.get_control_info_handler(to_du_cell_index(0)).handle_uci(uci);
+
+  ASSERT_TRUE(mac_events.last_uci.has_value());
+  ASSERT_EQ(mac_events.last_uci->sl_rx, sl_rx);
+  ASSERT_EQ(mac_events.last_uci->ucis.size(), 1);
+  ASSERT_EQ(mac_events.last_uci->ucis[0].rnti, this->params.test_ue_cfg.rnti);
+  ASSERT_TRUE(std::holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(mac_events.last_uci->ucis[0].pdu));
+  const auto& f1 = std::get<mac_uci_pdu::pucch_f0_or_f1_type>(mac_events.last_uci->ucis[0].pdu);
+  ASSERT_FALSE(f1.sr_info.has_value());
+  ASSERT_TRUE(f1.harq_info.has_value());
+  ASSERT_EQ(f1.harq_info->harqs.size(), 1);
+  ASSERT_EQ(f1.harq_info->harqs[0], uci_pucch_f0_or_f1_harq_values::ack);
+  ASSERT_TRUE(f1.ul_sinr_dB.value() > 0);
 }
 
-TEST_P(mac_test_mode_adapter_test, when_uci_is_only_for_test_mode_ue_then_it_is_ignored)
+TEST_F(mac_test_mode_test, when_test_mode_ue_has_pusch_grants_then_crc_indications_are_auto_forwarded_to_mac)
+{
+  // PUCCH got scheduled for test mode UE.
+  ul_sched_result ul_res{};
+  ul_sched_info&  ulgrant   = ul_res.puschs.emplace_back();
+  ulgrant.pusch_cfg.rnti    = this->params.test_ue_cfg.rnti;
+  ulgrant.pusch_cfg.harq_id = to_harq_id(test_rgen::uniform_int(0, 15));
+  mac_events.next_ul_sched_res.emplace();
+  mac_events.next_ul_sched_res->slot   = next_slot;
+  mac_events.next_ul_sched_res->ul_res = &ul_res;
+
+  // Run the slot with PUSCH scheduled.
+  slot_point sl_rx = next_slot;
+  this->run_slot();
+
+  // Forward CRC indication.
+  mac_crc_indication_message crc;
+  crc.sl_rx          = sl_rx;
+  mac_crc_pdu& pdu   = crc.crcs.emplace_back();
+  pdu.rnti           = this->params.test_ue_cfg.rnti;
+  pdu.harq_id        = ulgrant.pusch_cfg.harq_id;
+  pdu.tb_crc_success = false;
+  this->adapter.get_control_info_handler(to_du_cell_index(0)).handle_crc(crc);
+
+  ASSERT_TRUE(mac_events.last_crc.has_value());
+  ASSERT_EQ(mac_events.last_crc->sl_rx, sl_rx);
+  ASSERT_EQ(mac_events.last_crc->crcs.size(), 1);
+  ASSERT_EQ(mac_events.last_crc->crcs[0].rnti, this->params.test_ue_cfg.rnti);
+  ASSERT_EQ(mac_events.last_crc->crcs[0].harq_id, ulgrant.pusch_cfg.harq_id);
+  ASSERT_TRUE(mac_events.last_crc->crcs[0].tb_crc_success);
+  ASSERT_TRUE(mac_events.last_crc->crcs[0].ul_sinr_dB.value() > 0);
+}
+
+class mac_test_mode_auto_uci_test : public base_mac_test_mode_test, public ::testing::TestWithParam<test_params>
+{
+protected:
+  mac_test_mode_auto_uci_test() : base_mac_test_mode_test(GetParam()) {}
+};
+
+TEST_P(mac_test_mode_auto_uci_test, when_uci_is_only_for_test_mode_ue_then_it_is_ignored)
 {
   mac_uci_indication_message uci_ind;
   uci_ind.sl_rx = {0, 0};
@@ -201,7 +288,7 @@ TEST_P(mac_test_mode_adapter_test, when_uci_is_only_for_test_mode_ue_then_it_is_
   ASSERT_FALSE(mac_events.last_uci.has_value());
 }
 
-TEST_P(mac_test_mode_adapter_test, when_uci_is_also_for_other_ues_then_test_mode_ue_is_cropped)
+TEST_P(mac_test_mode_auto_uci_test, when_uci_is_also_for_other_ues_then_test_mode_ue_is_cropped)
 {
   mac_uci_indication_message uci_ind;
   uci_ind.sl_rx = {0, 0};
@@ -215,7 +302,7 @@ TEST_P(mac_test_mode_adapter_test, when_uci_is_also_for_other_ues_then_test_mode
   ASSERT_EQ(mac_events.last_uci->ucis[0].rnti, to_rnti(0x4602));
 }
 
-TEST_P(mac_test_mode_adapter_test, when_test_mode_ue_has_pucch_grants_then_uci_indications_are_auto_forwarded_to_mac)
+TEST_P(mac_test_mode_auto_uci_test, when_test_mode_ue_has_pucch_grants_then_uci_indications_are_auto_forwarded_to_mac)
 {
   // PUCCH got scheduled for test mode UE.
   ul_sched_result ul_res{};
@@ -253,7 +340,7 @@ TEST_P(mac_test_mode_adapter_test, when_test_mode_ue_has_pucch_grants_then_uci_i
   ASSERT_TRUE(f1.ul_sinr_dB.value() > 0);
 }
 
-TEST_P(mac_test_mode_adapter_test, when_test_mode_ue_has_pusch_grants_then_crc_indications_are_auto_forwarded_to_mac)
+TEST_P(mac_test_mode_auto_uci_test, when_test_mode_ue_has_pusch_grants_then_crc_indications_are_auto_forwarded_to_mac)
 {
   // PUCCH got scheduled for test mode UE.
   ul_sched_result ul_res{};
@@ -285,7 +372,7 @@ TEST_P(mac_test_mode_adapter_test, when_test_mode_ue_has_pusch_grants_then_crc_i
   ASSERT_TRUE(mac_events.last_crc->crcs[0].ul_sinr_dB.value() > 0);
 }
 
-TEST_P(mac_test_mode_adapter_test, when_uci_is_forwarded_to_mac_then_test_mode_csi_params_are_enforced)
+TEST_P(mac_test_mode_auto_uci_test, when_uci_is_forwarded_to_mac_then_test_mode_csi_params_are_enforced)
 {
   // PUCCH got scheduled for test mode UE.
   ul_sched_result ul_res{};
@@ -363,7 +450,7 @@ TEST_P(mac_test_mode_adapter_test, when_uci_is_forwarded_to_mac_then_test_mode_c
 }
 
 INSTANTIATE_TEST_SUITE_P(test_configs,
-                         mac_test_mode_adapter_test,
+                         mac_test_mode_auto_uci_test,
                          // clang-format off
 ::testing::Values(
 //           ports rnti           nof_ues            CQI RI PMI i1_1 i1_3  i2

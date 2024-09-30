@@ -21,11 +21,11 @@
  */
 
 #include "du_processor_test_messages.h"
-#include "lib/f1ap/common/asn1_helpers.h"
+#include "lib/f1ap/asn1_helpers.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include "lib/f1ap/cu_cp/procedures/f1_setup_procedure.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

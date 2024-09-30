@@ -29,7 +29,7 @@
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 
@@ -39,7 +39,7 @@ using namespace srs_cu_cp;
 class cu_cp_reestablishment_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_reestablishment_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, create_mock_amf()})
+  cu_cp_reestablishment_test() : cu_cp_test_environment(cu_cp_test_env_params{})
   {
     // Run NG setup to completion.
     run_ng_setup();

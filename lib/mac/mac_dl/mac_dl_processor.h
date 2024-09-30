@@ -33,11 +33,11 @@
 namespace srsran {
 
 struct mac_dl_config {
-  du_high_ue_executor_mapper&   ue_exec_mapper;
-  du_high_cell_executor_mapper& cell_exec_mapper;
-  task_executor&                ctrl_exec;
-  mac_result_notifier&          phy_notifier;
-  mac_pcap&                     pcap;
+  srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
+  srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
+  task_executor&                        ctrl_exec;
+  mac_result_notifier&                  phy_notifier;
+  mac_pcap&                             pcap;
 };
 
 class mac_dl_processor final : public mac_dl_configurator

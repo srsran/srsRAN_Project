@@ -21,7 +21,7 @@
  */
 
 #include "worker_manager.h"
-#include "../../lib/du_high/du_high_executor_strategies.h"
+#include "../../lib/du/du_high/du_high_executor_strategies.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 
@@ -29,94 +29,49 @@ using namespace srsran;
 
 static const uint32_t task_worker_queue_size = 2048;
 
-static std::vector<os_sched_affinity_config>
-build_affinity_manager_dependencies(const du_high_unit_cpu_affinities_cell_config&                du_high_affinities,
-                                    const du_low_unit_cpu_affinities_cell_config&                 du_low_affinities,
-                                    const std::variant<ru_sdr_unit_cpu_affinities_cell_config,
-                                                       ru_ofh_unit_cpu_affinities_cell_config,
-                                                       ru_dummy_cpu_affinities_cell_unit_config>& ru_affinities)
+worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
+  low_prio_affinity_mng({worker_cfg.low_prio_sched_config})
 {
-  std::vector<os_sched_affinity_config> out;
-  out.push_back(du_low_affinities.l1_ul_cpu_cfg);
-  out.push_back(du_low_affinities.l1_dl_cpu_cfg);
-  out.push_back(du_high_affinities.l2_cell_cpu_cfg);
-
-  if (std::holds_alternative<ru_sdr_unit_cpu_affinities_cell_config>(ru_affinities)) {
-    out.push_back(std::get<ru_sdr_unit_cpu_affinities_cell_config>(ru_affinities).ru_cpu_cfg);
-  }
-
-  else if (std::holds_alternative<ru_ofh_unit_cpu_affinities_cell_config>(ru_affinities)) {
-    out.push_back(std::get<ru_ofh_unit_cpu_affinities_cell_config>(ru_affinities).ru_cpu_cfg);
-  } else {
-    out.push_back(std::get<ru_dummy_cpu_affinities_cell_unit_config>(ru_affinities).ru_cpu_cfg);
-  }
-
-  return out;
-}
-
-worker_manager::worker_manager(const dynamic_du_unit_config&     du_cfg,
-                               const expert_execution_appconfig& expert_appcfg,
-                               cu_cp_unit_pcap_config&           cu_cp_pcap_cfg,
-                               cu_up_unit_pcap_config&           cu_up_pcap_cfg,
-                               unsigned                          gtpu_queue_size) :
-  low_prio_affinity_mng({expert_appcfg.affinities.low_priority_cpu_cfg})
-{
-  if (std::holds_alternative<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg)) {
-    ru_timing_mask = std::get<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg).config.expert_execution_cfg.ru_timing_cpu;
-  }
-
-  const unsigned nof_cells = du_cfg.du_high_cfg.config.expert_execution_cfg.cell_affinities.size();
-  for (unsigned i = 0, e = nof_cells; i != e; ++i) {
-    std::variant<ru_sdr_unit_cpu_affinities_cell_config,
-                 ru_ofh_unit_cpu_affinities_cell_config,
-                 ru_dummy_cpu_affinities_cell_unit_config>
-        ru;
-    if (std::holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
-      ru = std::get<ru_sdr_unit_config>(du_cfg.ru_cfg).expert_execution_cfg.cell_affinities[i];
-    } else if (std::holds_alternative<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg)) {
-      ru = std::get<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg).config.expert_execution_cfg.cell_affinities[i];
-    } else {
-      ru = std::get<ru_dummy_unit_config>(du_cfg.ru_cfg).cell_affinities[i];
+  // Check configuration.
+  {
+    unsigned ru_config_count = 0;
+    if (worker_cfg.ru_ofh_cfg) {
+      ++ru_config_count;
+    }
+    if (worker_cfg.ru_sdr_cfg) {
+      ++ru_config_count;
+    }
+    if (worker_cfg.ru_dummy_cfg) {
+      ++ru_config_count;
     }
 
-    affinity_mng.emplace_back(
-        build_affinity_manager_dependencies(du_cfg.du_high_cfg.config.expert_execution_cfg.cell_affinities[i],
-                                            du_cfg.du_low_cfg.expert_execution_cfg.cell_affinities[i],
-                                            ru));
+    srsran_assert(ru_config_count <= 1, "Worker manager received configuration for more than one RU type");
   }
 
-  if (std::holds_alternative<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg)) {
-    auto exec_cfg = std::get<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg).config.expert_execution_cfg;
-    for (auto& affinity_mask : exec_cfg.txrx_affinities) {
-      ru_txrx_affinity_masks.emplace_back(affinity_mask);
-    }
-    // If ru_txrx_cpus parameters are not specified, use the affinities of ru_cpus parameters of the cells.
-    if (ru_txrx_affinity_masks.empty()) {
-      for (unsigned i = 0, e = nof_cells; i != e; ++i) {
-        auto affinity_cfg = exec_cfg.cell_affinities[i].ru_cpu_cfg;
-        ru_txrx_affinity_masks.emplace_back(affinity_cfg.mask);
-      }
-    }
+  if (worker_cfg.ru_ofh_cfg) {
+    ru_timing_mask = worker_cfg.ru_ofh_cfg.value().ru_timing_cpu;
   }
 
-  // Determine whether the gnb app is running in realtime or in simulated environment.
-  bool is_blocking_mode_active = false;
-  if (std::holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
-    const auto& sdr_cfg     = std::get<ru_sdr_unit_config>(du_cfg.ru_cfg);
-    is_blocking_mode_active = sdr_cfg.device_driver == "zmq";
+  for (const auto& cell_affinities : worker_cfg.config_affinities) {
+    affinity_mng.emplace_back(cell_affinities);
   }
 
-  create_low_prio_executors(expert_appcfg,
-                            cu_cp_pcap_cfg,
-                            cu_up_pcap_cfg,
-                            du_cfg.du_high_cfg.config.pcaps,
-                            du_cfg.du_high_cfg.config.cells_cfg.size(),
-                            gtpu_queue_size,
-                            not is_blocking_mode_active);
+  create_low_prio_executors(worker_cfg);
   associate_low_prio_executors();
 
-  create_du_executors(is_blocking_mode_active, nof_cells, du_cfg.du_low_cfg, du_cfg.fapi_cfg);
-  create_ru_executors(du_cfg.ru_cfg, du_cfg.du_high_cfg.config);
+  create_du_executors(worker_cfg.du_hi_cfg, worker_cfg.du_low_cfg, worker_cfg.fapi_cfg);
+
+  if (worker_cfg.ru_ofh_cfg) {
+    ru_txrx_affinity_masks = worker_cfg.ru_ofh_cfg.value().txrx_affinities;
+    create_ofh_executors(worker_cfg.ru_ofh_cfg.value());
+  }
+  if (worker_cfg.ru_sdr_cfg) {
+    create_lower_phy_executors(worker_cfg.ru_sdr_cfg.value());
+  }
+
+  if (worker_cfg.ru_dummy_cfg) {
+    create_ru_dummy_executors();
+  }
 }
 
 void worker_manager::stop()
@@ -163,9 +118,7 @@ void worker_manager::create_prio_worker(const std::string&                      
 }
 
 void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_list,
-                         const cu_cp_unit_pcap_config&                 cu_cp_pcap_cfg,
-                         const cu_up_unit_pcap_config&                 cu_up_pcap_cfg,
-                         const du_high_unit_pcap_config&               du_pcaps)
+                         const worker_manager_config::pcap_config&     config)
 {
   using namespace execution_config_helper;
 
@@ -174,27 +127,26 @@ void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_li
 
   // These layers have very low throughput, so no point in instantiating more than one strand.
   // This means that there is no parallelization in pcap writing across these layers.
-  if (cu_cp_pcap_cfg.f1ap.enabled or cu_cp_pcap_cfg.ngap.enabled or cu_cp_pcap_cfg.e1ap.enabled or
-      cu_up_pcap_cfg.e1ap.enabled or du_pcaps.f1ap.enabled or du_pcaps.e2ap.enabled) {
+  if (config.is_f1ap_enabled or config.is_ngap_enabled or config.is_e1ap_enabled or config.is_e2ap_enabled) {
     strand_list.emplace_back(base_strand_cfg);
   }
 
-  if (cu_up_pcap_cfg.n3.enabled) {
+  if (config.is_n3_enabled) {
     base_strand_cfg.queues[0].name = "n3_pcap_exec";
     strand_list.emplace_back(base_strand_cfg);
   }
 
-  if (cu_up_pcap_cfg.f1u.enabled or du_pcaps.f1u.enabled) {
+  if (config.is_f1u_enabled) {
     base_strand_cfg.queues[0].name = "f1u_pcap_exec";
     strand_list.emplace_back(base_strand_cfg);
   }
 
-  if (du_pcaps.mac.enabled) {
+  if (config.is_mac_enabled) {
     base_strand_cfg.queues[0].name = "mac_pcap_exec";
     strand_list.emplace_back(base_strand_cfg);
   }
 
-  if (du_pcaps.rlc.enabled) {
+  if (config.is_rlc_enabled) {
     base_strand_cfg.queues[0].name = "rlc_pcap_exec";
     strand_list.emplace_back(base_strand_cfg);
   }
@@ -246,22 +198,21 @@ worker_manager::create_du_hi_slot_workers(unsigned nof_cells, bool rt_mode)
   return workers;
 }
 
-void worker_manager::create_du_executors(bool                      is_blocking_mode_active,
-                                         unsigned                  nof_cells,
-                                         const du_low_unit_config& du_low,
-                                         const fapi_unit_config&   fapi_cfg)
+void worker_manager::create_du_executors(const worker_manager_config::du_high_config&        du_hi,
+                                         std::optional<worker_manager_config::du_low_config> du_low,
+                                         std::optional<worker_manager_config::fapi_config>   fapi_cfg)
 {
   using namespace execution_config_helper;
   const auto& exec_map = exec_mng.executors();
 
   // FAPI message buffering executors.
-  fapi_exec.resize(nof_cells);
-  std::fill(fapi_exec.begin(), fapi_exec.end(), nullptr);
-  if (fapi_cfg.l2_nof_slots_ahead) {
+  if (fapi_cfg) {
+    fapi_exec.resize(fapi_cfg.value().nof_cells);
+    std::fill(fapi_exec.begin(), fapi_exec.end(), nullptr);
     // Create workers.
-    auto workers = create_fapi_workers(nof_cells);
+    auto workers = create_fapi_workers(fapi_cfg.value().nof_cells);
 
-    for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
+    for (unsigned cell_id = 0; cell_id != fapi_cfg.value().nof_cells; ++cell_id) {
       const std::string exec_name = "fapi_exec#" + std::to_string(cell_id);
       workers[cell_id].executors.emplace_back(exec_name);
       // Create executor and associated workers.
@@ -275,14 +226,14 @@ void worker_manager::create_du_executors(bool                      is_blocking_m
   }
 
   // Workers for handling cell slot indications of different cells.
-  auto slot_workers = create_du_hi_slot_workers(nof_cells, not is_blocking_mode_active);
-  for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
+  auto slot_workers = create_du_hi_slot_workers(du_hi.nof_cells, du_hi.is_rt_mode_enabled);
+  for (unsigned cell_id = 0; cell_id != du_hi.nof_cells; ++cell_id) {
     const std::string cell_id_str = std::to_string(cell_id);
 
     slot_workers[cell_id].executors.push_back(
-        {"cell_exec#" + cell_id_str, task_priority::max - 1, {}, std::nullopt, is_blocking_mode_active});
+        {"cell_exec#" + cell_id_str, task_priority::max - 1, {}, std::nullopt, !du_hi.is_rt_mode_enabled});
     slot_workers[cell_id].executors.push_back(
-        {"slot_exec#" + cell_id_str, task_priority::max, {}, std::nullopt, is_blocking_mode_active});
+        {"slot_exec#" + cell_id_str, task_priority::max, {}, std::nullopt, !du_hi.is_rt_mode_enabled});
 
     if (not exec_mng.add_execution_context(create_execution_context(slot_workers[cell_id]))) {
       report_fatal_error("Failed to instantiate {} execution context", slot_workers[cell_id].name);
@@ -290,65 +241,61 @@ void worker_manager::create_du_executors(bool                      is_blocking_m
   }
 
   // Instantiate DU-high executor mapper.
-  du_high_executors.resize(nof_cells);
-  for (unsigned i = 0; i != nof_cells; ++i) {
+  du_high_executors.resize(du_hi.nof_cells);
+  for (unsigned i = 0; i != du_hi.nof_cells; ++i) {
     auto&             du_item     = du_high_executors[i];
     const std::string cell_id_str = std::to_string(i);
 
     // DU-high executor mapper.
     using exec_list       = std::initializer_list<task_executor*>;
-    auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
-                                                                   exec_list{exec_map.at("slot_exec#" + cell_id_str)});
+    auto cell_exec_mapper = std::make_unique<srs_du::cell_executor_mapper>(
+        exec_list{exec_map.at("cell_exec#" + cell_id_str)}, exec_list{exec_map.at("slot_exec#" + cell_id_str)});
     auto ue_exec_mapper =
-        std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at(fmt::format("du_rb_prio_exec#{}", i))},
-                                                   exec_list{exec_map.at(fmt::format("du_rb_ul_exec#{}", i))},
-                                                   exec_list{exec_map.at(fmt::format("du_rb_dl_exec#{}", i))});
-    du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
-                                                                                 std::move(ue_exec_mapper),
-                                                                                 *exec_map.at("ctrl_exec"),
-                                                                                 *exec_map.at("timer_exec"),
-                                                                                 *exec_map.at("ctrl_exec"));
+        std::make_unique<srs_du::pcell_ue_executor_mapper>(exec_list{exec_map.at(fmt::format("du_rb_prio_exec#{}", i))},
+                                                           exec_list{exec_map.at(fmt::format("du_rb_ul_exec#{}", i))},
+                                                           exec_list{exec_map.at(fmt::format("du_rb_dl_exec#{}", i))});
+    du_item.du_high_exec_mapper = std::make_unique<srs_du::du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
+                                                                                         std::move(ue_exec_mapper),
+                                                                                         *exec_map.at("ctrl_exec"),
+                                                                                         *exec_map.at("timer_exec"),
+                                                                                         *exec_map.at("ctrl_exec"));
   }
 
-  const du_low_unit_expert_threads_config& upper_phy_threads_cfg = du_low.expert_execution_cfg.threads;
-  create_du_low_executors(is_blocking_mode_active,
-                          upper_phy_threads_cfg.nof_ul_threads,
-                          upper_phy_threads_cfg.nof_dl_threads,
-                          upper_phy_threads_cfg.nof_pusch_decoder_threads,
-                          nof_cells);
+  if (du_low) {
+    create_du_low_executors(du_low.value().is_blocking_mode_active,
+                            du_low.value().nof_ul_threads,
+                            du_low.value().nof_dl_threads,
+                            du_low.value().nof_pusch_decoder_threads,
+                            du_low.value().nof_cells);
+  }
 }
 
-execution_config_helper::worker_pool
-worker_manager::create_low_prio_workers(const expert_execution_appconfig& expert_appcfg)
+execution_config_helper::worker_pool worker_manager::create_low_prio_workers(unsigned nof_low_prio_threads,
+                                                                             os_sched_affinity_bitmask low_prio_mask)
 {
   using namespace execution_config_helper;
 
   // Configure non-RT worker pool.
   worker_pool non_rt_pool{
       "non_rt_pool",
-      expert_appcfg.threads.non_rt_threads.nof_non_rt_threads,
+      nof_low_prio_threads,
       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}, // two task priority levels.
        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
       // Left empty, is filled later.
       {},
       std::chrono::microseconds{100},
       os_thread_realtime_priority::no_realtime(),
-      std::vector<os_sched_affinity_bitmask>{expert_appcfg.affinities.low_priority_cpu_cfg.mask}};
+      std::vector<os_sched_affinity_bitmask>{low_prio_mask}};
 
   return non_rt_pool;
 }
 
-void worker_manager::create_low_prio_executors(const expert_execution_appconfig& expert_appcfg,
-                                               const cu_cp_unit_pcap_config&     cu_cp_pcaps,
-                                               const cu_up_unit_pcap_config&     cu_up_pcaps,
-                                               const du_high_unit_pcap_config&   du_pcaps,
-                                               unsigned                          nof_cells,
-                                               unsigned                          gtpu_queue_size,
-                                               bool                              rt_mode)
+void worker_manager::create_low_prio_executors(const worker_manager_config& worker_cfg)
 {
   using namespace execution_config_helper;
   // TODO: split executor creation and association to workers
-  worker_pool non_rt_pool = create_low_prio_workers(expert_appcfg);
+  worker_pool non_rt_pool =
+      create_low_prio_workers(worker_cfg.nof_low_prio_threads, worker_cfg.low_prio_sched_config.mask);
 
   // Associate executors to the worker pool.
   // Used for PCAP writing.
@@ -366,39 +313,42 @@ void worker_manager::create_low_prio_executors(const expert_execution_appconfig&
   std::vector<strand>& cu_up_strands     = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
-  append_pcap_strands(low_prio_strands, cu_cp_pcaps, cu_up_pcaps, du_pcaps);
+  append_pcap_strands(low_prio_strands, worker_cfg.pcap_cfg);
 
   // Configuration of strand for the control plane handling (CU-CP and DU-high control plane).
   // This strand will support two priority levels, the highest being for timer management.
   // Note: In case of non-RT operation, we make the timer_exec synchronous. This will have the effect of stopping
   // the lower layers from running faster than this strand.
-  strand cp_strand{{{"timer_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size, not rt_mode},
+  strand cp_strand{{{"timer_exec",
+                     concurrent_queue_policy::lockfree_spsc,
+                     task_worker_queue_size,
+                     not worker_cfg.du_hi_cfg.is_rt_mode_enabled},
                     {"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
   high_prio_strands.push_back(cp_strand);
 
   // Setup strands for the data plane of all the instantiated DUs.
   // One strand per DU, each with multiple priority levels.
-  for (unsigned i = 0; i != nof_cells; ++i) {
-    low_prio_strands.push_back(
-        strand{{{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, gtpu_queue_size},
-                {fmt::format("du_rb_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, gtpu_queue_size}}});
+  for (unsigned i = 0; i != worker_cfg.du_hi_cfg.nof_cells; ++i) {
+    low_prio_strands.push_back(strand{
+        {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+         {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size},
+         {fmt::format("du_rb_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size}}});
   }
 
   // Configuration of strands for user plane handling (CU-UP and DU-low user plane). Given that the CU-UP doesn't
-  // currently support multithreading, these strands will point to a strand that interfaces with the non-RT thread pool.
-  // Each UE strand will have three queues, one for timer management and configuration, one for DL data plane and one
-  // for UL data plane.
+  // currently support multithreading, these strands will point to a strand that interfaces with the non-RT thread
+  // pool. Each UE strand will have three queues, one for timer management and configuration, one for DL data plane
+  // and one for UL data plane.
   cu_up_strands.push_back(
       strand{{{"cu_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
               {"cu_up_io_ul_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}});
   for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
-    cu_up_strands.push_back(
-        strand{{{fmt::format("ue_up_ctrl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                {fmt::format("ue_up_ul_exec#{}", i),
-                 concurrent_queue_policy::lockfree_mpmc,
-                 gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
-                {fmt::format("ue_up_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, gtpu_queue_size}}});
+    cu_up_strands.push_back(strand{
+        {{fmt::format("ue_up_ctrl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+         {fmt::format("ue_up_ul_exec#{}", i),
+          concurrent_queue_policy::lockfree_mpmc,
+          worker_cfg.gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
+         {fmt::format("ue_up_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size}}});
   }
 
   // Create non-RT worker pool.
@@ -541,24 +491,10 @@ void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
   }
 }
 
-void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_config& ru_cfg,
-                                          span<const unsigned>                       cell_dl_antennas)
+void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_config& config)
 {
   using namespace execution_config_helper;
-
-  // Maximum number of threads per cell. Implementation defined. The 3 threads are: transmission, reception and
-  // codification.
-  static constexpr unsigned MAX_NUM_THREADS_PER_CELL = 3U;
-  const unsigned            nof_cells                = ru_cfg.cell_affinities.size();
-
-  unsigned nof_host_threads = std::max(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
-
-  if (nof_host_threads < (nof_cells * MAX_NUM_THREADS_PER_CELL) + 1) {
-    fmt::print(
-        "Detected {} threads for Open Fronthaul, but a minimum of {} are needed to achieve a good performance.\n",
-        nof_host_threads,
-        (nof_cells * MAX_NUM_THREADS_PER_CELL) + 1);
-  }
+  const unsigned nof_cells = config.nof_downlink_antennas.size();
 
   // Timing executor.
   {
@@ -587,7 +523,7 @@ void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_con
     {
       ru_dl_exec.emplace_back();
       unsigned nof_ofh_dl_workers =
-          (ru_cfg.threads.is_downlink_parallelized) ? std::max(cell_dl_antennas[i] / 2U, 1U) : 1U;
+          (config.is_downlink_parallelized) ? std::max(config.nof_downlink_antennas[i] / 2U, 1U) : 1U;
       const std::string name      = "ru_dl_#" + std::to_string(i);
       const std::string exec_name = "ru_dl_exec_#" + std::to_string(i);
 
@@ -639,7 +575,7 @@ void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_con
   }
 }
 
-void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile, unsigned nof_cells)
+void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_sdr_config& config)
 {
   using namespace execution_config_helper;
 
@@ -657,9 +593,9 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
                      low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority));
   ru_printer_exec = exec_mng.executors().at("ru_printer_exec");
 
-  for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
-    switch (lower_phy_profile) {
-      case lower_phy_thread_profile::blocking: {
+  for (unsigned cell_id = 0; cell_id != config.nof_cells; ++cell_id) {
+    switch (config.profile) {
+      case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::blocking: {
         fmt::print("Lower PHY in executor blocking mode.\n");
         std::string name      = "phy_worker";
         std::string exec_name = "phy_exec";
@@ -672,7 +608,7 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
         lower_phy_ul_exec.push_back(phy_exec);
         break;
       }
-      case lower_phy_thread_profile::single: {
+      case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::single: {
         fmt::print("Lower PHY in single executor mode.\n");
         const std::string name      = "lower_phy#" + std::to_string(cell_id);
         const std::string exec_name = "lower_phy_exec#" + std::to_string(cell_id);
@@ -692,7 +628,7 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
         lower_prach_exec.push_back(exec_mng.executors().at("prach_exec#" + std::to_string(cell_id)));
         break;
       }
-      case lower_phy_thread_profile::dual: {
+      case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::dual: {
         fmt::print("Lower PHY in dual executor mode.\n");
         const std::string name_dl = "lower_phy_dl#" + std::to_string(cell_id);
         const std::string exec_dl = "lower_phy_dl_exec#" + std::to_string(cell_id);
@@ -718,7 +654,7 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
         lower_prach_exec.push_back(exec_mng.executors().at("prach_exec#" + std::to_string(cell_id)));
         break;
       }
-      case lower_phy_thread_profile::quad: {
+      case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::quad: {
         fmt::print("Lower PHY in quad executor mode.\n");
         const std::string name_dl = "lower_phy_dl#" + std::to_string(cell_id);
         const std::string exec_dl = "lower_phy_dl_exec#" + std::to_string(cell_id);
@@ -762,31 +698,8 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
   }
 }
 
-void worker_manager::create_ru_executors(
-    const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
-    const du_high_unit_config&                                                               du_high)
+void worker_manager::create_ru_dummy_executors()
 {
-  if (std::holds_alternative<ru_ofh_unit_parsed_config>(ru_cfg)) {
-    std::vector<unsigned> cell_antennas_dl;
-    for (const auto& cell : du_high.cells_cfg) {
-      cell_antennas_dl.push_back(cell.cell.nof_antennas_dl);
-    }
-
-    create_ofh_executors(std::get<ru_ofh_unit_parsed_config>(ru_cfg).config.expert_execution_cfg, cell_antennas_dl);
-
-    return;
-  }
-
-  if (std::holds_alternative<ru_sdr_unit_config>(ru_cfg)) {
-    const ru_sdr_unit_config& sdr_cfg = std::get<ru_sdr_unit_config>(ru_cfg);
-    std::string               driver  = sdr_cfg.device_driver;
-
-    create_lower_phy_executors((driver != "zmq") ? sdr_cfg.expert_execution_cfg.threads.execution_profile
-                                                 : lower_phy_thread_profile::blocking,
-                               sdr_cfg.expert_execution_cfg.cell_affinities.size());
-    return;
-  }
-
   // Use the first cell of the affinity manager for the dummy RU.
   create_prio_worker("ru_dummy",
                      task_worker_queue_size,
@@ -796,7 +709,7 @@ void worker_manager::create_ru_executors(
   radio_exec = exec_mng.executors().at("ru_dummy");
 }
 
-du_high_executor_mapper& worker_manager::get_du_high_executor_mapper(unsigned du_index)
+srs_du::du_high_executor_mapper& worker_manager::get_du_high_executor_mapper(unsigned du_index)
 {
   srsran_assert(du_index < du_high_executors.size(), "Invalid DU index");
   return *du_high_executors[du_index].du_high_exec_mapper;

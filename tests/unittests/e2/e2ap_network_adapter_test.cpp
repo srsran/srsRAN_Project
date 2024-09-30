@@ -81,7 +81,7 @@ protected:
     e2agent_config.bind_address    = "127.0.0.101";
     e2agent_config.bind_port       = 0;
 
-    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
     pcap             = std::make_unique<dummy_e2ap_pcap>();

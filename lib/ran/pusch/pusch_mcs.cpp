@@ -26,7 +26,10 @@
 
 using namespace srsran;
 
-sch_mcs_description srsran::pusch_mcs_get_config(pusch_mcs_table table, sch_mcs_index index, bool tp_pi2bpsk_present)
+sch_mcs_description srsran::pusch_mcs_get_config(pusch_mcs_table table,
+                                                 sch_mcs_index   index,
+                                                 bool            use_transform_precoder,
+                                                 bool            tp_pi2bpsk_present)
 {
   // TS38.214 Table 6.1.4.1-1.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_1_TP = {
@@ -62,27 +65,30 @@ sch_mcs_description srsran::pusch_mcs_get_config(pusch_mcs_table table, sch_mcs_
        {modulation_scheme::QAM16, 616.0F},     {modulation_scheme::QAM16, 658.0F},
        {modulation_scheme::QAM16, 699.0F},     {modulation_scheme::QAM16, 772.0F},
        {modulation_scheme::QAM64, 567.0F},     {modulation_scheme::QAM64, 616.0F},
-       {modulation_scheme::QAM64, 666.5F},     {modulation_scheme::QAM64, 772.0F},
+       {modulation_scheme::QAM64, 666.0F},     {modulation_scheme::QAM64, 772.0F},
        {modulation_scheme::PI_2_BPSK, 0.0F},   {modulation_scheme::QPSK, 0.0F},
        {modulation_scheme::QAM16, 0.0F},       {modulation_scheme::QAM64, 0.0F}}};
+
+  // Use PDSCH tables if no transform precoding is selected.
+  if (!use_transform_precoder || (table == pusch_mcs_table::qam256)) {
+    return pdsch_mcs_get_config(static_cast<pdsch_mcs_table>(table), index);
+  }
 
   // Return the MCS configuration from the selected table.
   sch_mcs_description result = {};
   switch (table) {
     case pusch_mcs_table::qam64:
-    case pusch_mcs_table::qam256:
-    case pusch_mcs_table::qam64LowSe:
-      // Reuses PDSCH tables.
-      return pdsch_mcs_get_config(static_cast<pdsch_mcs_table>(table), index);
-    case pusch_mcs_table::qam64_tp:
       result = MCS_INDEX_TABLE_1_TP[index.to_uint()];
       break;
-    case pusch_mcs_table::qam64LowSe_tp:
+    case pusch_mcs_table::qam64LowSe:
       result = MCS_INDEX_TABLE_2_TP[index.to_uint()];
+      break;
+    default:
       break;
   }
 
   if (result.modulation == modulation_scheme::PI_2_BPSK && !tp_pi2bpsk_present) {
+    result.modulation = modulation_scheme::QPSK;
     result.target_code_rate /= 2;
   }
 

@@ -110,7 +110,6 @@ protected:
   {
     data_flow_uplane_downlink_data_impl_config config;
     config.ru_nof_prbs  = ru_nof_prbs;
-    config.vlan_params  = vlan_params;
     config.compr_params = compr_params;
 
     return config;
@@ -129,7 +128,7 @@ protected:
       dependencies.up_builder = std::move(temp);
     }
     {
-      auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+      auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>(vlan_params);
       vlan_builder             = temp.get();
       dependencies.eth_builder = std::move(temp);
     }
@@ -240,8 +239,10 @@ TEST(ofh_data_flow_uplane_downlink_data_impl,
   data_flow_uplane_downlink_data_impl_config config;
 
   config.ru_nof_prbs  = 273;
-  config.vlan_params  = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
   config.compr_params = {compression_type::BFP, 9};
+
+  ether::vlan_frame_params vlan_params = {
+      {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
 
   data_flow_uplane_downlink_data_impl_dependencies dependencies;
   dependencies.logger         = &srslog::fetch_basic_logger("TEST");
@@ -259,7 +260,7 @@ TEST(ofh_data_flow_uplane_downlink_data_impl,
     dependencies.up_builder = std::move(temp);
   }
   {
-    auto temp = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+    auto temp = std::make_unique<ether::testing::vlan_frame_builder_spy>(vlan_params);
     frame_size += temp->get_header_size().value();
     dependencies.eth_builder = std::move(temp);
   }
@@ -301,8 +302,10 @@ TEST(ofh_data_flow_uplane_downlink_data_impl, frame_buffer_size_of_nof_prbs_gene
   data_flow_uplane_downlink_data_impl_config config;
 
   config.ru_nof_prbs  = 273;
-  config.vlan_params  = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
   config.compr_params = {compression_type::BFP, 9};
+
+  ether::vlan_frame_params vlan_params = {
+      {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
 
   data_flow_uplane_downlink_data_impl_dependencies dependencies;
   dependencies.logger         = &srslog::fetch_basic_logger("TEST");
@@ -320,7 +323,7 @@ TEST(ofh_data_flow_uplane_downlink_data_impl, frame_buffer_size_of_nof_prbs_gene
     dependencies.up_builder = std::move(temp);
   }
   {
-    auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+    auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>(vlan_params);
     dependencies.eth_builder = std::move(temp);
   }
   {

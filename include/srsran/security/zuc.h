@@ -26,7 +26,7 @@ namespace srsran {
 namespace security {
 
 typedef unsigned char u8;
-typedef unsigned int  u32;
+typedef unsigned      u32;
 
 /* the state registers of LFSR */
 typedef struct {

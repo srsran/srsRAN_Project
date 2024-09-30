@@ -30,7 +30,7 @@
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/e1ap/common/e1ap_types.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
@@ -43,7 +43,7 @@ using namespace srs_cu_cp;
 class cu_cp_pdu_session_resource_setup_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_pdu_session_resource_setup_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, create_mock_amf()})
+  cu_cp_pdu_session_resource_setup_test() : cu_cp_test_environment(cu_cp_test_env_params{})
   {
     // Run NG setup to completion.
     run_ng_setup();
@@ -214,8 +214,10 @@ public:
   [[nodiscard]] bool timeout_rrc_reconfiguration_and_await_pdu_session_setup_response()
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for PDU Session Resource Setup Response
-    if (tick_until(std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
-                   [&]() { return false; })) {
+    if (tick_until(
+            std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
+            [&]() { return false; },
+            false)) {
       return false;
     }
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),

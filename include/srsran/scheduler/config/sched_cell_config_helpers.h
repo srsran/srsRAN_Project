@@ -29,7 +29,8 @@ namespace srsran {
 namespace config_helpers {
 
 /// Builds the list of PUCCH guardbands.
-std::vector<sched_grid_resource> build_pucch_guardbands_list(const pucch_builder_params& ul_cfg, unsigned bwp_size);
+std::vector<sched_grid_resource> build_pucch_guardbands_list(const srs_du::pucch_builder_params& ul_cfg,
+                                                             unsigned                            bwp_size);
 
 } // namespace config_helpers
 } // namespace srsran

@@ -42,6 +42,7 @@
 #include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"
+#include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/uci/uci_configuration.h"
@@ -746,29 +747,29 @@ struct ul_srs_params_v4 {
 
 /// SRS PDU.
 struct ul_srs_pdu {
-  rnti_t             rnti;
-  uint32_t           handle;
-  uint16_t           bwp_size;
-  uint16_t           bwp_start;
-  subcarrier_spacing scs;
-  cyclic_prefix      cp;
-  uint8_t            num_ant_ports;
-  uint8_t            num_symbols;
-  uint8_t            num_repetitions;
-  uint8_t            time_start_position;
-  uint8_t            config_index;
-  uint16_t           sequence_id;
-  uint8_t            bandwidth_index;
-  uint8_t            comb_size;
-  uint8_t            comb_offset;
-  uint8_t            cyclic_shift;
-  uint8_t            frequency_position;
-  uint16_t           frequency_shift;
-  uint8_t            frequency_hopping;
-  uint8_t            group_or_sequence_hopping;
-  uint8_t            resource_type;
-  uint16_t           t_srs;
-  uint16_t           t_offset;
+  rnti_t                        rnti;
+  uint32_t                      handle;
+  uint16_t                      bwp_size;
+  uint16_t                      bwp_start;
+  subcarrier_spacing            scs;
+  cyclic_prefix                 cp;
+  uint8_t                       num_ant_ports;
+  uint8_t                       num_symbols;
+  srs_nof_symbols               num_repetitions;
+  uint8_t                       time_start_position;
+  uint8_t                       config_index;
+  uint16_t                      sequence_id;
+  uint8_t                       bandwidth_index;
+  tx_comb_size                  comb_size;
+  uint8_t                       comb_offset;
+  uint8_t                       cyclic_shift;
+  uint8_t                       frequency_position;
+  uint16_t                      frequency_shift;
+  uint8_t                       frequency_hopping;
+  srs_group_or_sequence_hopping group_or_sequence_hopping;
+  srs_resource_type             resource_type;
+  srs_periodicity               t_srs;
+  uint16_t                      t_offset;
   // :TODO: beamforming.
   ul_srs_params_v4 srs_params_v4;
 };

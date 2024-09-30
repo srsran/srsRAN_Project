@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "../../common/proc_logger.h"
+#include "../../proc_logger.h"
 #include "f1ap_ue_ids.h"
 #include "srsran/support/prefixed_logger.h"
 

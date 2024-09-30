@@ -44,7 +44,7 @@ public:
   srb_id_t    last_srb_id;
 };
 
-class dummy_rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
+class dummy_rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
 {
 public:
   void set_ue_context_release_outcome(bool outcome) { ue_context_release_outcome = outcome; }
@@ -81,7 +81,7 @@ public:
 
   bool next_ue_setup_response = true;
 
-  bool on_ue_setup_request() override { return next_ue_setup_response; }
+  bool on_ue_setup_request(plmn_identity plmn) override { return next_ue_setup_response; }
 
   rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) override
   {

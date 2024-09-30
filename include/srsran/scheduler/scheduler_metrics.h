@@ -27,6 +27,7 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sch/sch_mcs.h"
+#include "srsran/ran/slot_point.h"
 #include "srsran/support/stats.h"
 #include <optional>
 
@@ -37,7 +38,8 @@ struct scheduler_ue_metrics {
   pci_t                        pci;
   rnti_t                       rnti;
   sch_mcs_index                dl_mcs;
-  double                       dl_prbs_used;
+  unsigned                     tot_dl_prbs_used;
+  double                       mean_dl_prbs_used;
   double                       dl_brate_kbps;
   unsigned                     dl_nof_ok;
   unsigned                     dl_nof_nok;
@@ -45,7 +47,8 @@ struct scheduler_ue_metrics {
   float                        pusch_rsrp_db;
   float                        pucch_snr_db;
   sch_mcs_index                ul_mcs;
-  double                       ul_prbs_used;
+  unsigned                     tot_ul_prbs_used;
+  double                       mean_ul_prbs_used;
   double                       ul_brate_kbps;
   double                       ul_delay_ms;
   unsigned                     ul_nof_ok;
@@ -60,18 +63,32 @@ struct scheduler_ue_metrics {
   sample_statistics<unsigned> ri_stats;
 };
 
+/// \brief Event that occurred in the cell of the scheduler.
+struct scheduler_cell_event {
+  enum class event_type { ue_add, ue_reconf, ue_rem };
+
+  slot_point slot;
+  rnti_t     rnti = rnti_t::INVALID_RNTI;
+  event_type type;
+};
+
 /// \brief Snapshot of the metrics for a cell and its UEs.
 struct scheduler_cell_metrics {
   /// Latency histogram number of bins.
-  constexpr static unsigned latency_hist_bins = 10;
+  static constexpr unsigned latency_hist_bins = 10;
   /// Distance between histogram bins.
-  constexpr static unsigned nof_usec_per_bin = 50;
+  static constexpr unsigned nof_usec_per_bin = 50;
   /// Number of cell PRBs.
   unsigned nof_prbs = 0;
+  /// Number of full downlink slots.
+  unsigned nof_dl_slots = 0;
+  /// Number of full uplink slots.
+  unsigned nof_ul_slots = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
   std::array<unsigned, latency_hist_bins> latency_histogram{0};
+  std::vector<scheduler_cell_event>       events;
   std::vector<scheduler_ue_metrics>       ue_metrics;
 };
 

@@ -92,6 +92,14 @@ void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
     logger.log_debug("Delivering T-PDU. size={}", msg.t_pdu.length());
     rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu), msg.dl_user_data.retransmission_flag);
   }
+  // handle polling of delivery status report
+  if (msg.dl_user_data.report_polling) {
+    if (send_data_delivery_status()) {
+      logger.log_debug("Report polling flag is set. Sent data delivery status");
+    } else {
+      logger.log_warning("Report polling flag is set. No data to be sent in data delivery status");
+    }
+  }
   // handle discard notifications
   if (msg.dl_user_data.discard_blocks.has_value()) {
     nru_pdcp_sn_discard_blocks& blocks     = msg.dl_user_data.discard_blocks.value();
@@ -217,16 +225,16 @@ bool f1u_bearer_impl::fill_highest_delivered_retransmitted_pdcp_sn(nru_dl_data_d
 
 void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
 {
-  nru_dl_data_delivery_status status         = {};
-  bool                        status_changed = false;
+  nru_dl_data_delivery_status status      = {};
+  bool                        value_added = false;
 
-  status_changed |= fill_desired_buffer_size_of_data_radio_bearer(status);
-  status_changed |= fill_highest_transmitted_pdcp_sn(status);
-  status_changed |= fill_highest_delivered_pdcp_sn(status);
-  status_changed |= fill_highest_retransmitted_pdcp_sn(status);
-  status_changed |= fill_highest_delivered_retransmitted_pdcp_sn(status);
+  value_added |= fill_desired_buffer_size_of_data_radio_bearer(status);
+  value_added |= fill_highest_transmitted_pdcp_sn(status);
+  value_added |= fill_highest_delivered_pdcp_sn(status);
+  value_added |= fill_highest_retransmitted_pdcp_sn(status);
+  value_added |= fill_highest_delivered_retransmitted_pdcp_sn(status);
 
-  if (status_changed) {
+  if (value_added) {
     logger.log_debug("Adding data delivery status to NR-U message");
     msg.data_delivery_status = std::move(status);
   }
@@ -235,12 +243,22 @@ void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
   ul_notif_timer.run();
 }
 
-void f1u_bearer_impl::on_expired_ul_notif_timer()
+bool f1u_bearer_impl::send_data_delivery_status()
 {
   nru_ul_message msg = {};
   fill_data_delivery_status(msg);
-  if (msg.data_delivery_status.has_value()) {
-    logger.log_debug("Sending data delivery status due to expired UL notification timer");
-    tx_pdu_notifier.on_new_pdu(std::move(msg));
+  if (!msg.data_delivery_status.has_value()) {
+    return false;
+  }
+  tx_pdu_notifier.on_new_pdu(std::move(msg));
+  return true;
+}
+
+void f1u_bearer_impl::on_expired_ul_notif_timer()
+{
+  if (send_data_delivery_status()) {
+    logger.log_debug("UL notification timer expired. Sent data delivery status");
+  } else {
+    logger.log_debug("UL notification timer expired. No data to be sent in data delivery status");
   }
 }

@@ -24,7 +24,7 @@
 
 #include "mac.h"
 #include "mac_cell_result.h"
-#include "srsran/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <memory>

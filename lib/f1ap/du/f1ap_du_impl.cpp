@@ -21,9 +21,9 @@
  */
 
 #include "f1ap_du_impl.h"
-#include "../common/asn1_helpers.h"
-#include "../common/log_helpers.h"
+#include "asn1_helpers.h"
 #include "f1ap_du_connection_handler.h"
+#include "log_helpers.h"
 #include "procedures/f1ap_du_removal_procedure.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
@@ -32,7 +32,7 @@
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/event_signal.h"

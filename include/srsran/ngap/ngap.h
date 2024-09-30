@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_reset.h"
@@ -77,11 +78,11 @@ public:
   virtual async_task<void> handle_amf_disconnection_request() = 0;
 
   /// \brief Initiates the NG Setup procedure.
-  /// \param[in] request The NGSetupRequest message to transmit.
+  /// \param[in] max_setup_retries The maximum number of setup retries.
   /// \return Returns a ngap_ng_setup_result struct.
   /// \remark The CU transmits the NGSetupRequest as per TS 38.413 section 8.7.1
   /// and awaits the response. If a NGSetupFailure is received the NGAP will handle the failure.
-  virtual async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) = 0;
+  virtual async_task<ngap_ng_setup_result> handle_ng_setup_request(unsigned max_setup_retries) = 0;
 
   /// \brief Initiates NG Reset procedure as per TS 38.413 section 8.7.4.2.2.
   /// \param[in] msg The ng reset message to transmit.
@@ -259,6 +260,9 @@ public:
   virtual void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
                                                      const nr_cell_global_id_t& cgi,
                                                      const unsigned             tac) = 0;
+
+  /// \brief Get the supported PLMNs.
+  virtual const ngap_context_t& get_ngap_context() const = 0;
 };
 
 /// Interface to control the NGAP.

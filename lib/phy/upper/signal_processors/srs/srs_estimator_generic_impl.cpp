@@ -189,5 +189,8 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
     }
   }
 
+  // Set noise variance to zero.
+  result.noise_variance = near_zero;
+
   return result;
 }

@@ -487,7 +487,7 @@ TEST_F(test_uci_allocator, uci_multiplexing_3_bit_harq_sr_csi_on_pusch)
 class test_tdd_uci_allocator : public test_uci_allocator
 {
 protected:
-  constexpr static size_t DAI_MOD = 4;
+  static constexpr size_t DAI_MOD = 4;
 
   test_tdd_uci_allocator() : test_uci_allocator(test_bench_params{.is_tdd = true}) {}
 };

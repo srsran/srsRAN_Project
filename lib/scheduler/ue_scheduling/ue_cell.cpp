@@ -218,8 +218,9 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  sch_mcs_index       mcs        = ue_mcs_calculator.calculate_ul_mcs(pusch_cfg.mcs_table);
-  sch_mcs_description mcs_config = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
+  sch_mcs_index       mcs = ue_mcs_calculator.calculate_ul_mcs(pusch_cfg.mcs_table);
+  sch_mcs_description mcs_config =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, false);
 
   const unsigned nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
 
@@ -555,9 +556,10 @@ double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_
 {
   static constexpr unsigned NOF_BITS_PER_BYTE = 8U;
 
-  const unsigned      dmrs_prbs   = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
-  sch_mcs_description mcs_info    = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.tp_pi2bpsk_present);
-  unsigned            nof_symbols = pusch_cfg.symbols.length();
+  const unsigned      dmrs_prbs = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  sch_mcs_description mcs_info =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  unsigned nof_symbols = pusch_cfg.symbols.length();
 
   unsigned tbs_bits =
       tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,

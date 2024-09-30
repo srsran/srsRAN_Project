@@ -244,8 +244,9 @@ std::optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&
   // but we consider the same value for UL.
   static const double max_supported_code_rate = 0.95;
   const unsigned      dmrs_prbs               = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
-  sch_mcs_description mcs_info    = pusch_mcs_get_config(pusch_cfg.mcs_table, max_mcs, pusch_cfg.tp_pi2bpsk_present);
-  unsigned            nof_symbols = pusch_cfg.symbols.length();
+  sch_mcs_description mcs_info                = pusch_mcs_get_config(
+      pusch_cfg.mcs_table, max_mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  unsigned nof_symbols = pusch_cfg.symbols.length();
 
   unsigned tbs_bytes =
       tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
@@ -265,7 +266,7 @@ std::optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&
   sch_mcs_index mcs = max_mcs;
   while (effective_code_rate > max_supported_code_rate and mcs > 0) {
     --mcs;
-    mcs_info  = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
+    mcs_info  = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, false);
     tbs_bytes = tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
                                                                       .nof_dmrs_prb     = dmrs_prbs,
                                                                       .nof_oh_prb       = pusch_cfg.nof_oh_prb,

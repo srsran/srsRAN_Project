@@ -21,10 +21,9 @@
  */
 
 #include "dynamic_du_impl.h"
-
+#include "srsran/du/du_low/du_low.h"
+#include "srsran/du/du_low/du_low_wrapper.h"
 #include "srsran/du/du_wrapper.h"
-#include "srsran/du_low/du_low.h"
-#include "srsran/du_low/du_low_wrapper.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/ru/ru.h"
 #include "srsran/ru/ru_controller.h"
@@ -39,7 +38,7 @@ dynamic_du_impl::dynamic_du_impl(unsigned nof_cells) :
 void dynamic_du_impl::start()
 {
   for (auto& du_obj : du_list) {
-    du_obj->start();
+    du_obj->get_power_controller().start();
   }
 
   ru->get_controller().start();
@@ -50,7 +49,7 @@ void dynamic_du_impl::stop()
   ru->get_controller().stop();
 
   for (auto& du_obj : du_list) {
-    du_obj->stop();
+    du_obj->get_power_controller().stop();
   }
 }
 
@@ -63,7 +62,7 @@ void dynamic_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
   ru_ul_request_adapt.connect(ru->get_uplink_plane_handler());
 }
 
-void dynamic_du_impl::add_dus(std::vector<std::unique_ptr<du_wrapper>> active_du)
+void dynamic_du_impl::add_dus(std::vector<std::unique_ptr<srs_du::du_wrapper>> active_du)
 {
   du_list = std::move(active_du);
   srsran_assert(!du_list.empty(), "Cannot set an empty DU list");

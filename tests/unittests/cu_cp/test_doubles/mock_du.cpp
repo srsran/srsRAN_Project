@@ -21,12 +21,12 @@
  */
 
 #include "mock_du.h"
-#include "lib/f1ap/common/f1ap_asn1_utils.h"
+#include "lib/f1ap/f1ap_asn1_utils.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/support/error_handling.h"
 #include <future>
 #include <unordered_map>

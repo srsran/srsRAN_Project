@@ -21,6 +21,7 @@
  */
 
 #include "cu_up_unit_config_translators.h"
+#include "apps/services/worker_manager_config.h"
 #include "cu_up_unit_config.h"
 #include "srsran/cu_up/cu_up_configuration_helpers.h"
 #include "srsran/rlc/rlc_config.h"
@@ -34,13 +35,9 @@ srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const cu_up_unit_co
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
   out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;
 
-  if (config.upf_cfg.n3_bind_addr == "auto") {
-    out_cfg.net_cfg.n3_bind_addr = config.upf_cfg.bind_addr;
-  } else {
-    out_cfg.net_cfg.n3_bind_addr = config.upf_cfg.n3_bind_addr;
-  }
-  out_cfg.net_cfg.n3_ext_addr       = config.upf_cfg.n3_ext_addr;
-  out_cfg.net_cfg.n3_bind_interface = config.upf_cfg.n3_bind_interface;
+  out_cfg.net_cfg.n3_bind_addr      = config.upf_cfg.bind_addr;
+  out_cfg.net_cfg.n3_ext_addr       = config.upf_cfg.ext_addr;
+  out_cfg.net_cfg.n3_bind_interface = config.upf_cfg.bind_interface;
   out_cfg.net_cfg.n3_rx_max_mmsg    = config.upf_cfg.udp_rx_max_msgs;
   out_cfg.net_cfg.pool_threshold    = config.upf_cfg.pool_threshold;
 
@@ -78,4 +75,20 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
     f1u_cfg.warn_on_drop           = cu_up_config.warn_on_drop;
   }
   return out_cfg;
+}
+
+void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, const cu_up_unit_config& unit_cfg)
+{
+  config.gtpu_queue_size = unit_cfg.gtpu_queue_size;
+
+  auto& pcap_cfg = config.pcap_cfg;
+  if (unit_cfg.pcap_cfg.e1ap.enabled) {
+    pcap_cfg.is_e1ap_enabled = true;
+  }
+  if (unit_cfg.pcap_cfg.n3.enabled) {
+    pcap_cfg.is_n3_enabled = true;
+  }
+  if (unit_cfg.pcap_cfg.f1u.enabled) {
+    pcap_cfg.is_f1u_enabled = true;
+  }
 }

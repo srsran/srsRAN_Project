@@ -80,6 +80,12 @@ bool srsran::is_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned sl
   return nof_active_symbols(cfg, slot_index, cyclic_prefix::NORMAL, false) == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 }
 
+bool srsran::is_tdd_partial_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned slot_index)
+{
+  const unsigned nof_symbols = nof_active_symbols(cfg, slot_index, cyclic_prefix::NORMAL, false);
+  return nof_symbols != 0U and nof_symbols != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+}
+
 ofdm_symbol_range
 srsran::get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp)
 {

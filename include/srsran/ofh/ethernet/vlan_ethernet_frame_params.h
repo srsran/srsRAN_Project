@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
+#include <optional>
 
 namespace srsran {
 namespace ether {
@@ -34,7 +35,7 @@ struct vlan_frame_params {
   /// Source MAC address.
   mac_address mac_src_address;
   /// Tag control information field.
-  uint16_t tci;
+  std::optional<uint16_t> tci;
   /// Ethernet type field.
   uint16_t eth_type;
 };

@@ -42,8 +42,9 @@ ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configur
                     cell_cfg.expert_cfg.ue.olla_ul_snr_inc,
                     cell_cfg.expert_cfg.ue.olla_max_ul_snr_offset);
 
-    last_ul_mcs_table = pusch_mcs_table::qam64LowSe_tp; // Set a different value to force update.
-    update_ul_mcs_lims(pusch_mcs_table::qam64);
+    // Set a different value to force update.
+    last_ul_mcs_table = pusch_mcs_table::qam64LowSe;
+    update_ul_mcs_lims(pusch_mcs_table::qam64, cell_cfg.use_msg3_transform_precoder());
   }
 }
 
@@ -85,7 +86,7 @@ void ue_link_adaptation_controller::handle_ul_crc_info(bool                     
   }
 
   // Update the MCS boundaries based on the chosen MCS table.
-  update_ul_mcs_lims(mcs_table);
+  update_ul_mcs_lims(mcs_table, cell_cfg.use_msg3_transform_precoder());
 
   // Finally, run OLLA algorithm.
   ul_olla->update(crc, used_mcs, ul_mcs_lims);
@@ -148,7 +149,7 @@ sch_mcs_index ue_link_adaptation_controller::calculate_ul_mcs(pusch_mcs_table mc
 
   // Derive MCS using the combination of estimated UL SNR + outer loop link adaptation.
   sch_mcs_index mcs = map_snr_to_mcs_ul(get_effective_snr(), mcs_table);
-  mcs = std::min(std::max(mcs, cell_cfg.expert_cfg.ue.ul_mcs.start()), cell_cfg.expert_cfg.ue.ul_mcs.stop());
+  mcs               = std::min(std::max(mcs, ul_mcs_lims.start()), ul_mcs_lims.stop());
 
   return mcs;
 }
@@ -165,13 +166,16 @@ void ue_link_adaptation_controller::update_dl_mcs_lims(pdsch_mcs_table mcs_table
                                                               std::min(cell_cfg.expert_cfg.ue.dl_mcs.stop(), max_mcs)};
 }
 
-void ue_link_adaptation_controller::update_ul_mcs_lims(pusch_mcs_table mcs_table)
+void ue_link_adaptation_controller::update_ul_mcs_lims(pusch_mcs_table mcs_table, bool transform_precoder)
 {
-  if (last_ul_mcs_table == mcs_table) {
+  if (last_ul_mcs_table == mcs_table and last_transform_precoder == transform_precoder) {
     return;
   }
 
-  last_ul_mcs_table = mcs_table;
-  ul_mcs_lims       = interval<sch_mcs_index, true>{
-            cell_cfg.expert_cfg.ue.ul_mcs.start(), std::min(cell_cfg.expert_cfg.ue.ul_mcs.stop(), get_max_mcs_ul(mcs_table))};
+  last_ul_mcs_table       = mcs_table;
+  last_transform_precoder = transform_precoder;
+
+  ul_mcs_lims = interval<sch_mcs_index, true>{
+      cell_cfg.expert_cfg.ue.ul_mcs.start(),
+      std::min(cell_cfg.expert_cfg.ue.ul_mcs.stop(), get_max_mcs_ul(mcs_table, transform_precoder))};
 }

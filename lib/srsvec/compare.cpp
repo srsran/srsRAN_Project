@@ -21,7 +21,7 @@
  */
 
 #include "srsran/srsvec/compare.h"
-#include "simd.h"
+#include "srsran/srsvec/simd.h"
 #include "srsran/support/math_utils.h"
 #include <numeric>
 

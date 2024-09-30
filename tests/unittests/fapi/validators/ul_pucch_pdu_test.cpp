@@ -45,7 +45,7 @@ TEST_P(validate_pucch_pdu_common_field, WithValue)
                validate_ul_pucch_pdu,
                srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(pci,
                          validate_pucch_pdu_common_field,

@@ -21,6 +21,7 @@
  */
 
 #include "cu_cp_config_translators.h"
+#include "apps/services/worker_manager_config.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/plmn_identity.h"
@@ -336,18 +337,37 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.admission.max_nof_dus          = cu_cfg.max_nof_dus;
   out_cfg.admission.max_nof_cu_ups       = cu_cfg.max_nof_cu_ups;
   out_cfg.admission.max_nof_ues          = cu_cfg.max_nof_ues;
+  out_cfg.admission.max_nof_drbs_per_ue  = cu_cfg.max_nof_drbs_per_ue;
 
   out_cfg.node.gnb_id        = cu_cfg.gnb_id;
   out_cfg.node.ran_node_name = cu_cfg.ran_node_name;
 
-  if (!cu_cfg.supported_tas.empty()) {
-    // Clear default supported TAs if any are provided in the config.
-    out_cfg.node.supported_tas.clear();
+  {
+    std::vector<srs_cu_cp::supported_tracking_area> supported_tas;
+    for (const auto& supported_ta : cu_cfg.amf_config.amf.supported_tas) {
+      std::vector<srs_cu_cp::plmn_item> plmn_list;
+      for (const auto& plmn_item : supported_ta.plmn_list) {
+        expected<plmn_identity> plmn = plmn_identity::parse(plmn_item.plmn_id);
+        srsran_assert(plmn.has_value(), "Invalid PLMN: {}", plmn_item.plmn_id);
+        plmn_list.push_back({plmn.value(), plmn_item.tai_slice_support_list});
+      }
+      supported_tas.push_back({supported_ta.tac, plmn_list});
+    }
+    out_cfg.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_params{nullptr, supported_tas});
   }
-  for (const auto& supported_ta : cu_cfg.supported_tas) {
-    expected<plmn_identity> plmn = plmn_identity::parse(supported_ta.plmn);
-    srsran_assert(plmn.has_value(), "Invalid PLMN: {}", supported_ta.plmn);
-    out_cfg.node.supported_tas.push_back({supported_ta.tac, plmn.value(), supported_ta.tai_slice_support_list});
+
+  for (const auto& cfg : cu_cfg.extra_amfs) {
+    std::vector<srs_cu_cp::supported_tracking_area> supported_tas;
+    for (const auto& supported_ta : cfg.supported_tas) {
+      std::vector<srs_cu_cp::plmn_item> plmn_list;
+      for (const auto& plmn_item : supported_ta.plmn_list) {
+        expected<plmn_identity> plmn = plmn_identity::parse(plmn_item.plmn_id);
+        srsran_assert(plmn.has_value(), "Invalid PLMN: {}", plmn_item.plmn_id);
+        plmn_list.push_back({plmn.value(), plmn_item.tai_slice_support_list});
+      }
+      supported_tas.push_back({supported_ta.tac, plmn_list});
+    }
+    out_cfg.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_params{nullptr, supported_tas});
   }
 
   out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
@@ -367,16 +387,23 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
                  cu_cfg.security_config.confidentiality_protection);
   }
 
+  // Timers
   out_cfg.ue.inactivity_timer              = std::chrono::seconds{cu_cfg.inactivity_timer};
   out_cfg.ue.pdu_session_setup_timeout     = std::chrono::seconds{cu_cfg.pdu_session_setup_timeout};
   out_cfg.metrics.statistics_report_period = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
 
+  // Mobility
   out_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements =
       cu_cfg.mobility_config.trigger_handover_from_measurements;
+  out_cfg.mobility.mobility_manager_config.enable_ng_handover = cu_cfg.load_plugins;
 
   // F1AP-CU config.
   out_cfg.f1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.f1ap_config.procedure_timeout};
   out_cfg.f1ap.json_log_enabled = cu_cfg.loggers.f1ap_json_enabled;
+
+  // Plugins
+  out_cfg.plugin.load_plugins     = cu_cfg.load_plugins;
+  out_cfg.plugin.start_ng_ho_func = cu_cfg.start_ng_ho_func;
 
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {
@@ -439,24 +466,22 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   return out_cfg;
 }
 
-srs_cu_cp::n2_connection_client_config
-srsran::generate_n2_client_config(const cu_cp_unit_amf_config& amf_cfg, dlt_pcap& pcap_writer, io_broker& broker)
+srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool                              no_core,
+                                                                         const cu_cp_unit_amf_config_item& amf_cfg,
+                                                                         dlt_pcap&                         pcap_writer,
+                                                                         io_broker&                        broker)
 {
   using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
   using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
   using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
 
-  ngap_mode_t mode = amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}} : ngap_mode_t{network_mode_t{broker}};
-  if (not amf_cfg.no_core) {
+  ngap_mode_t mode = no_core ? ngap_mode_t{no_core_mode_t{}} : ngap_mode_t{network_mode_t{broker}};
+  if (not no_core) {
     network_mode_t& nw_mode = std::get<network_mode_t>(mode);
     nw_mode.amf_address     = amf_cfg.ip_addr;
     nw_mode.amf_port        = amf_cfg.port;
-    if (amf_cfg.n2_bind_addr == "auto") {
-      nw_mode.bind_address = amf_cfg.bind_addr;
-    } else {
-      nw_mode.bind_address = amf_cfg.n2_bind_addr;
-    }
-    nw_mode.bind_interface = amf_cfg.n2_bind_interface;
+    nw_mode.bind_address    = amf_cfg.bind_addr;
+    nw_mode.bind_interface  = amf_cfg.bind_interface;
     if (amf_cfg.sctp_rto_initial >= 0) {
       nw_mode.rto_initial = amf_cfg.sctp_rto_initial;
     }
@@ -476,4 +501,18 @@ srsran::generate_n2_client_config(const cu_cp_unit_amf_config& amf_cfg, dlt_pcap
   }
 
   return srs_cu_cp::n2_connection_client_config{pcap_writer, mode};
+}
+
+void srsran::fill_cu_cp_worker_manager_config(worker_manager_config& config, const cu_cp_unit_config& unit_cfg)
+{
+  auto& pcap_cfg = config.pcap_cfg;
+  if (unit_cfg.pcap_cfg.e1ap.enabled) {
+    pcap_cfg.is_e1ap_enabled = true;
+  }
+  if (unit_cfg.pcap_cfg.f1ap.enabled) {
+    pcap_cfg.is_f1ap_enabled = true;
+  }
+  if (unit_cfg.pcap_cfg.ngap.enabled) {
+    pcap_cfg.is_ngap_enabled = true;
+  }
 }

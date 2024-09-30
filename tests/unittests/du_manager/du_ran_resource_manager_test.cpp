@@ -20,10 +20,11 @@
  *
  */
 
-#include "lib/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
+#include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du/du_qos_config_helpers.h"
+#include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/support/test_utils.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -44,7 +45,8 @@ protected:
         cell_cfg_list,
         scheduler_expert_config{.ue = {.max_pucchs_per_slot = max_pucch_grants}},
         srb_cfg_list,
-        qos_cfg_list))
+        qos_cfg_list,
+        dummy_test_mode_cfg))
   {
     if (params.csi_rs_enabled) {
       default_csi_pucch_res_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
@@ -151,6 +153,7 @@ protected:
 
   cell_config_builder_params                                             params;
   du_cell_config                                                         du_cfg_param;
+  du_test_mode_config                                                    dummy_test_mode_cfg{};
   std::vector<du_cell_config>                                            cell_cfg_list;
   std::map<srb_id_t, du_srb_config>                                      srb_cfg_list;
   std::map<five_qi_t, du_qos_config>                                     qos_cfg_list;
@@ -339,7 +342,7 @@ static du_cell_config make_custom_du_cell_config(const pucch_cfg_builder_params&
   pucch_params.nof_csi_resources              = pucch_params_.nof_res_csi;
   pucch_params.nof_cell_harq_pucch_res_sets   = pucch_params_.nof_harq_cfg;
   auto& f1_params                             = std::get<pucch_f1_params>(pucch_params.f0_or_f1_params);
-  f1_params.nof_cyc_shifts                    = srsran::nof_cyclic_shifts::six;
+  f1_params.nof_cyc_shifts                    = nof_cyclic_shifts::six;
   f1_params.occ_supported                     = true;
 
   return du_cfg;
@@ -593,15 +596,15 @@ INSTANTIATE_TEST_SUITE_P(different_f1_f2_resources,
 );
 
 static du_cell_config
-make_custom_du_cell_config_for_pucch_cnt(const pucch_cnt_builder_params& pucch_params_,
-                                         const srsran::config_helpers::cell_config_builder_params_extended& params = {})
+make_custom_du_cell_config_for_pucch_cnt(const pucch_cnt_builder_params&                            pucch_params_,
+                                         const config_helpers::cell_config_builder_params_extended& params = {})
 {
   du_cell_config du_cfg          = config_helpers::make_default_du_cell_config(params);
   auto&          pucch_params    = du_cfg.pucch_cfg;
   pucch_params.nof_sr_resources  = pucch_params_.nof_res_sr;
   pucch_params.nof_csi_resources = pucch_params_.nof_res_csi;
   auto& f1_params                = std::get<pucch_f1_params>(pucch_params.f0_or_f1_params);
-  f1_params.nof_cyc_shifts       = srsran::nof_cyclic_shifts::six;
+  f1_params.nof_cyc_shifts       = nof_cyclic_shifts::six;
   f1_params.occ_supported        = true;
 
   du_cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = pucch_params_.sr_period;
@@ -795,3 +798,85 @@ INSTANTIATE_TEST_SUITE_P(
        )
     // clang-format on
 );
+
+/////////     Test the DU RAN resource manager for both PUCCH and SRS resources      /////////
+
+// This helper builds a DU cell configuration with a custom PUCCH and SRS configuration. The input parameter
+// pucch_has_more_res_than_srs indicates whether the PUCCH or SRS configuration allows more resources than the other.
+// This way, we can test the allocation and de-allocation of resources when the DU rejects a UE due to lack of PUCCH or
+// SRS resources.
+static du_cell_config make_custom_pucch_srs_du_cell_config(bool pucch_has_more_res_than_srs)
+{
+  du_cell_config du_cfg                       = config_helpers::make_default_du_cell_config();
+  auto&          pucch_params                 = du_cfg.pucch_cfg;
+  pucch_params.nof_ue_pucch_f0_or_f1_res_harq = 6U;
+  pucch_params.nof_ue_pucch_f2_res_harq       = 6U;
+  pucch_params.nof_sr_resources               = pucch_has_more_res_than_srs ? 10U : 1U;
+  pucch_params.nof_csi_resources              = pucch_has_more_res_than_srs ? 10U : 1U;
+  pucch_params.nof_cell_harq_pucch_res_sets   = 1U;
+  auto& f1_params                             = std::get<pucch_f1_params>(pucch_params.f0_or_f1_params);
+  f1_params.nof_cyc_shifts                    = nof_cyclic_shifts::no_cyclic_shift;
+  f1_params.occ_supported                     = false;
+
+  auto& tdd_cfg                              = du_cfg.tdd_ul_dl_cfg_common.emplace();
+  tdd_cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
+  tdd_cfg.pattern1.nof_dl_slots              = 7;
+  tdd_cfg.pattern1.nof_dl_symbols            = 10;
+  tdd_cfg.pattern1.nof_ul_slots              = 2;
+  tdd_cfg.pattern1.nof_ul_symbols            = 0;
+
+  du_cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list.front().period =
+      srsran::sr_periodicity::sl_10;
+
+  auto& srs_cfg = du_cfg.srs_cfg;
+
+  // Generates a random SRS configuration.
+  srs_cfg.tx_comb                   = tx_comb_size::n2;
+  srs_cfg.max_nof_symbols           = 1U;
+  srs_cfg.nof_symbols               = srs_nof_symbols::n1;
+  srs_cfg.cyclic_shift_reuse_factor = nof_cyclic_shifts::no_cyclic_shift;
+  srs_cfg.sequence_id_reuse_factor  = 1U;
+  srs_cfg.srs_period.emplace(du_cfg.tdd_ul_dl_cfg_common.has_value() ? srs_periodicity::sl10 : srs_periodicity::sl1);
+
+  pucch_params.max_nof_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_cfg.max_nof_symbols.to_uint();
+  f1_params.nof_symbols        = std::min(f1_params.nof_symbols.to_uint(), pucch_params.max_nof_symbols.to_uint());
+
+  return du_cfg;
+}
+
+class du_ran_res_mng_pucch_srs_tester : public du_ran_resource_manager_tester_base,
+                                        public ::testing::TestWithParam<bool>
+{
+protected:
+  explicit du_ran_res_mng_pucch_srs_tester() :
+    du_ran_resource_manager_tester_base(cell_config_builder_params{}, make_custom_pucch_srs_du_cell_config(GetParam()))
+  {
+    srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
+                      not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
+                      std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                          default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
+                  "CSI report configuration is required for this unittest;");
+  }
+};
+
+TEST_P(du_ran_res_mng_pucch_srs_tester, when_alloc_fail_ue_has_no_srs_and_no_pucch_cfgs)
+{
+  // This tests how the DU handles the RAN resource allocation failure due to lack of PUCCH or SRS resources.
+  for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
+    du_ue_index_t                       next_ue_index = to_du_ue_index(i);
+    const ue_ran_resource_configurator* ue_res        = create_ue(next_ue_index);
+    ASSERT_NE(ue_res, nullptr);
+    if (ue_res->resource_alloc_failed()) {
+      ASSERT_FALSE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value());
+      ASSERT_TRUE(ue_res->value().cell_group.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list.empty());
+      ASSERT_FALSE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
+      break;
+    } else {
+      ASSERT_TRUE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value());
+      ASSERT_FALSE(ue_res->value().cell_group.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list.empty());
+      ASSERT_TRUE(ue_res->value().cell_group.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
+    }
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(different_f1_f2_resources, du_ran_res_mng_pucch_srs_tester, ::testing::Values(true, false));

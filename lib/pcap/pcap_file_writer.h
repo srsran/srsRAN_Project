@@ -34,21 +34,21 @@ namespace srsran {
 
 /// This structure gets written to the start of the file
 struct pcap_hdr_t {
-  unsigned int   magic_number;  /// magic number
+  unsigned       magic_number;  /// magic number
   unsigned short version_major; /// major version number
   unsigned short version_minor; /// minor version number
-  unsigned int   thiszone;      /// GMT to local correction
-  unsigned int   sigfigs;       /// accuracy of timestamps
-  unsigned int   snaplen;       /// max length of captured packets, in octets
-  unsigned int   network;       /// data link type
+  unsigned       thiszone;      /// GMT to local correction
+  unsigned       sigfigs;       /// accuracy of timestamps
+  unsigned       snaplen;       /// max length of captured packets, in octets
+  unsigned       network;       /// data link type
 };
 
 /// This structure precedes each packet
 struct pcaprec_hdr_t {
-  unsigned int ts_sec;   /// timestamp seconds
-  unsigned int ts_usec;  /// timestamp microseconds
-  unsigned int incl_len; /// number of octets of packet saved in file
-  unsigned int orig_len; /// actual length of packet
+  unsigned ts_sec;   /// timestamp seconds
+  unsigned ts_usec;  /// timestamp microseconds
+  unsigned incl_len; /// number of octets of packet saved in file
+  unsigned orig_len; /// actual length of packet
 };
 
 /// @brief Base class for PCAP writing to files.

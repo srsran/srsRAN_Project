@@ -24,7 +24,7 @@
 
 #include "srsran/fapi/messages.h"
 #include "srsran/phy/support/re_pattern.h"
-#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 
 namespace srsran {
 namespace fapi_adaptor {

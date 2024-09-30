@@ -21,3 +21,5 @@
 add_library(rrc_test_doubles rrc_test_messages.cpp rrc_test_message_validators.cpp)
 set_target_properties(rrc_test_doubles PROPERTIES UNITY_BUILD ON)
 target_link_libraries(rrc_test_doubles rrc_nr_asn1 srsran_support srslog)
+
+add_to_exported_libs(rrc_test_doubles)

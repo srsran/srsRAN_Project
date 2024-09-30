@@ -29,12 +29,12 @@ using namespace srs_cu_cp;
 
 mobility_manager::mobility_manager(const mobility_manager_cfg&      cfg_,
                                    mobility_manager_cu_cp_notifier& cu_cp_notifier_,
-                                   ngap_control_message_handler&    ngap_handler_,
+                                   ngap_repository&                 ngap_db_,
                                    du_processor_repository&         du_db_,
                                    ue_manager&                      ue_mng_) :
   cfg(cfg_),
   cu_cp_notifier(cu_cp_notifier_),
-  ngap_handler(ngap_handler_),
+  ngap_db(ngap_db_),
   du_db(du_db_),
   ue_mng(ue_mng_),
   logger(srslog::fetch_basic_logger("CU-CP"))
@@ -151,6 +151,11 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t       source_ue_index
                                                 gnb_id_t         target_gnb_id,
                                                 nr_cell_identity target_nci)
 {
+  if (not cfg.enable_ng_handover) {
+    logger.warning("ue={}: trying to use NG handover without HO plugin loaded.", source_ue_index);
+    return;
+  }
+
   cu_cp_ue* u = ue_mng.find_du_ue(source_ue_index);
   if (u == nullptr) {
     logger.error("ue={}: Couldn't find UE", source_ue_index);
@@ -175,12 +180,20 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t       source_ue_index
     request.pdu_sessions.insert({pdu_session.first, qos_flows});
   }
 
+  cu_cp_ue_context& ue_ctxt = u->get_ue_context();
+
+  auto* ngap = ngap_db.find_ngap(ue_ctxt.plmn);
+  if (ngap == nullptr) {
+    logger.error("ue={}: Couldn't find NGAP", source_ue_index);
+    return;
+  }
+
   // Send handover preparation request to the NGAP handler.
-  auto ho_trigger =
-      [this, request, response = ngap_handover_preparation_response{}](coro_context<async_task<void>>& ctx) mutable {
-        CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(response, ngap_handler.handle_handover_preparation_request(request));
-        CORO_RETURN();
-      };
+  auto ho_trigger = [ngap, request, response = ngap_handover_preparation_response{}](
+                        coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(response, ngap->get_ngap_control_message_handler().handle_handover_preparation_request(request));
+    CORO_RETURN();
+  };
   u->get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
 }

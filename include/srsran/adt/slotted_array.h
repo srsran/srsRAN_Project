@@ -368,7 +368,7 @@ private:
 template <typename T>
 class slotted_vector
 {
-  constexpr static size_t absent_value = std::numeric_limits<size_t>::max();
+  static constexpr size_t absent_value = std::numeric_limits<size_t>::max();
 
 public:
   using value_type     = T;

@@ -770,18 +770,18 @@ private:
   dummy_e2_pdu_notifier* msg_notifier;
 };
 
-class dummy_du_configurator : public du_configurator
+class dummy_du_configurator : public srs_du::du_configurator
 {
 public:
   dummy_du_configurator(){};
-  async_task<du_mac_sched_control_config_response>
-  configure_ue_mac_scheduler(du_mac_sched_control_config reconf) override
+  async_task<srs_du::du_mac_sched_control_config_response>
+  configure_ue_mac_scheduler(srs_du::du_mac_sched_control_config reconf) override
   {
-    du_mac_sched_control_config config;
+    srs_du::du_mac_sched_control_config config;
     config = reconf;
-    return launch_async([](coro_context<async_task<du_mac_sched_control_config_response>>& ctx) {
+    return launch_async([](coro_context<async_task<srs_du::du_mac_sched_control_config_response>>& ctx) {
       CORO_BEGIN(ctx);
-      CORO_RETURN(du_mac_sched_control_config_response{true, true, true});
+      CORO_RETURN(srs_du::du_mac_sched_control_config_response{true, true, true});
     });
   }
 };
@@ -808,7 +808,7 @@ protected:
   std::unique_ptr<e2sm_control_action_executor>       rc_control_action_2_6_executor;
   std::unique_ptr<e2sm_handler>                       e2sm_kpm_packer;
   std::unique_ptr<e2sm_rc_asn1_packer>                e2sm_rc_packer;
-  std::unique_ptr<du_configurator>                    rc_param_configurator;
+  std::unique_ptr<srs_du::du_configurator>            rc_param_configurator;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   std::unique_ptr<srs_du::f1ap_ue_id_translator>      f1ap_ue_id_mapper;
@@ -859,7 +859,7 @@ class e2_external_test : public e2_test_base
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
     msg_notifier     = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
@@ -892,7 +892,7 @@ class e2_entity_test : public e2_test_base
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
     gw                    = std::make_unique<dummy_network_gateway_data_handler>();
@@ -920,7 +920,7 @@ class e2_test_subscriber : public e2_test_base
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
-    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
     factory          = timer_factory{timers, task_worker};
@@ -952,7 +952,7 @@ class e2_test_setup : public e2_test_base
 {
   void SetUp() override
   {
-    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
     factory                        = timer_factory{timers, task_worker};

@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "du_cell_config.h"
-#include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_cell_config.h"
+#include "srsran/du/du_high/du_qos_config.h"
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -33,8 +33,6 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <map>
-
-// TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.
 
 namespace srsran {
 namespace config_helpers {
@@ -80,9 +78,9 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
 }
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
-inline du_cell_config make_default_du_cell_config(const cell_config_builder_params_extended& params = {})
+inline srs_du::du_cell_config make_default_du_cell_config(const cell_config_builder_params_extended& params = {})
 {
-  du_cell_config cfg{};
+  srs_du::du_cell_config cfg{};
   cfg.pci            = params.pci;
   cfg.tac            = 1;
   cfg.nr_cgi.plmn_id = plmn_identity::test_value();

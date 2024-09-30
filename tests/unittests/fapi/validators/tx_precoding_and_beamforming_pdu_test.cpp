@@ -43,7 +43,7 @@ TEST_P(validate_tx_precoding_and_beamforming_pdu_field, WithValue)
                validate_tx_precoding_and_beamforming_pdu,
                srsran::fapi::message_type_id::dl_tti_request,
                dl_pdu_type::SSB);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(nof_prgs,
                          validate_tx_precoding_and_beamforming_pdu_field,

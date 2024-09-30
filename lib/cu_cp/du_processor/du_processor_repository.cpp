@@ -34,9 +34,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_),
-  logger(cfg.logger),
-  du_cfg_mng(cfg.cu_cp.node.gnb_id, config_helpers::get_supported_plmns(cfg.cu_cp.node.supported_tas))
+  cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.node.gnb_id, config_helpers::get_supported_plmns(cfg.cu_cp.ngaps))
 {
 }
 
@@ -63,8 +61,6 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   std::unique_ptr<du_processor> du = create_du_processor(std::move(du_cfg),
                                                          du_ctxt.du_to_cu_cp_notifier,
                                                          *du_ctxt.f1ap_tx_pdu_notifier,
-                                                         cfg.ue_nas_pdu_notifier,
-                                                         cfg.ue_ngap_ctrl_notifier,
                                                          cfg.meas_config_notifier,
                                                          cfg.common_task_sched,
                                                          cfg.ue_mng);

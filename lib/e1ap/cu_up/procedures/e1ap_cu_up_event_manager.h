@@ -39,7 +39,7 @@ using e1ap_transaction = protocol_transaction<e1ap_transaction_response>;
 class e1ap_event_manager
 {
   /// Transaction Response Container, which gets indexed by transaction_id.
-  constexpr static size_t MAX_NOF_TRANSACTIONS = 256;
+  static constexpr size_t MAX_NOF_TRANSACTIONS = 256;
 
 public:
   protocol_transaction_manager<e1ap_transaction_response> transactions;

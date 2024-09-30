@@ -48,7 +48,7 @@ TEST_P(validate_pdcch_pdu_field, WithValue)
                validator,
                srsran::fapi::message_type_id::dl_tti_request,
                dl_pdu_type::PDCCH);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(coreset_bwp_size,
                          validate_pdcch_pdu_field,

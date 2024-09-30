@@ -178,6 +178,18 @@ public:
 #endif
   }
 
+  /// Get the total measured execution time in nanoseconds.
+  uint64_t get_total_meas_time_ns() const
+  {
+    uint64_t total = 0;
+    for (const benchmark_result& res : benchmark_results) {
+      for (uint64_t mes : res.measurements) {
+        total += mes;
+      }
+    }
+    return total;
+  }
+
   /// Prints the time execution measurements in nanoseconds.
   void print_percentiles_time(const std::string& units = "nanoseconds", double scaling = 1.0) const
   {

@@ -41,6 +41,18 @@ DECLARE_METRIC("num_discarded_sdus", metric_tx_num_discarded_sdus, uint32_t, "")
 DECLARE_METRIC("num_discard_failures", metric_tx_num_discard_failures, uint32_t, "");
 DECLARE_METRIC("num_pdus", metric_tx_num_pdus, uint32_t, "");
 DECLARE_METRIC("num_pdu_bytes", metric_tx_num_pdu_bytes, uint32_t, "");
+DECLARE_METRIC("sum_sdu_latency_us", metric_tx_sum_sdu_latency_us, uint32_t, "");
+DECLARE_METRIC("sum_pdu_latency_ns", metric_tx_sum_pdu_latency_ns, uint32_t, "");
+DECLARE_METRIC("max_pdu_latency_ns", metric_tx_max_pdu_latency_ns, uint32_t, "");
+DECLARE_METRIC("pull_latency_bin_start_usec", metric_tx_pull_latency_bin_start_usec, unsigned, "");
+DECLARE_METRIC("pull_latency_bin_count", metric_tx_pull_latency_bin_count, unsigned, "");
+DECLARE_METRIC_SET("pull_latency_bin",
+                   metric_tx_pull_latency_bin,
+                   metric_tx_pull_latency_bin_start_usec,
+                   metric_tx_pull_latency_bin_count);
+DECLARE_METRIC_LIST("pull_latency_histogram",
+                    metric_tx_pull_latency_histogram,
+                    std::vector<metric_tx_pull_latency_bin>);
 DECLARE_METRIC_SET("tx",
                    mset_drb_tx_container,
                    metric_tx_num_sdus,
@@ -49,7 +61,11 @@ DECLARE_METRIC_SET("tx",
                    metric_tx_num_discarded_sdus,
                    metric_tx_num_discard_failures,
                    metric_tx_num_pdus,
-                   metric_tx_num_pdu_bytes);
+                   metric_tx_num_pdu_bytes,
+                   metric_tx_sum_sdu_latency_us,
+                   metric_tx_sum_pdu_latency_ns,
+                   metric_tx_max_pdu_latency_ns,
+                   metric_tx_pull_latency_histogram);
 
 DECLARE_METRIC("num_sdus", metric_rx_num_sdus, uint32_t, "");
 DECLARE_METRIC("num_sdu_bytes", metric_rx_num_sdu_bytes, uint32_t, "");
@@ -110,6 +126,17 @@ void rlc_metrics_consumer_json::handle_metric(const app_services::metrics_set& m
   tx_output.write<metric_tx_num_dropped_sdus>(drb.tx.tx_high.num_dropped_sdus);
   tx_output.write<metric_tx_num_discarded_sdus>(drb.tx.tx_high.num_discarded_sdus);
   tx_output.write<metric_tx_num_discard_failures>(drb.tx.tx_high.num_discarded_sdus);
+  tx_output.write<metric_tx_sum_sdu_latency_us>(drb.tx.tx_low.sum_sdu_latency_us);
+  tx_output.write<metric_tx_sum_pdu_latency_ns>(drb.tx.tx_low.sum_pdu_latency_ns);
+  tx_output.write<metric_tx_max_pdu_latency_ns>(drb.tx.tx_low.max_pdu_latency_ns);
+  unsigned bin_idx = 0;
+  for (unsigned bin_count : drb.tx.tx_low.pdu_latency_hist_ns) {
+    tx_output.get<metric_tx_pull_latency_histogram>().emplace_back();
+    auto& elem = tx_output.get<metric_tx_pull_latency_histogram>().back();
+    elem.write<metric_tx_pull_latency_bin_start_usec>(bin_idx * rlc_tx_metrics_lower::nof_usec_per_bin);
+    elem.write<metric_tx_pull_latency_bin_count>(bin_count);
+    bin_idx++;
+  }
 
   // RX metrics
   auto& rx_output = output.get<mset_drb_rx_container>();

@@ -22,8 +22,7 @@
 
 #include "gnb_cu_configuration_update_procedure.h"
 #include "srsran/asn1/f1ap/common.h"
-#include "srsran/f1ap/common/f1ap_common.h"
-#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;

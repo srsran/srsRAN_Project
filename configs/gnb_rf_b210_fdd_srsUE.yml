@@ -1,45 +1,53 @@
 # This example configuration outlines how to configure the srsRAN Project gNB to create a single FDD cell
-# transmitting in band 3, with 20 MHz bandwidth and 15 kHz sub-carrier-spacing. A USRP B200 is configured 
-# as the RF frontend using split 8, with a Leo Bodnar GPSDO as an external reference clock. 
+# transmitting in band 3, with 20 MHz bandwidth and 15 kHz sub-carrier-spacing. A USRP B200 is configured
+# as the RF frontend using split 8, with a Leo Bodnar GPSDO as an external reference clock.
 
-# This particular configuration is intended to be used with srsUE. Note the `pdcch` parameters set in the 
-# `cell_cfg` section. These are set to match the capabilities of srsUE. 
+# This particular configuration is intended to be used with srsUE. Note the `pdcch` parameters set in the
+# `cell_cfg` section. These are set to match the capabilities of srsUE.
 
-amf:
-  addr: 10.53.1.2                                                
-  bind_addr: 10.53.1.1                                           
+cu_cp:
+  amf:
+    addr: 10.53.1.2
+    port: 38412
+    bind_addr: 10.53.1.1
+    supported_tracking_areas:
+      - tac: 7
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
 
 ru_sdr:
-  device_driver: uhd                                              
-  device_args: type=b200                                          
+  device_driver: uhd
+  device_args: type=b200
   clock: external
-  srate: 23.04                                                   
-  tx_gain: 80                                                    
-  rx_gain: 40                                                    
+  srate: 23.04
+  tx_gain: 80
+  rx_gain: 40
 
 cell_cfg:
-  dl_arfcn: 368500                                                
-  band: 3                                                         
-  channel_bandwidth_MHz: 20                                       
-  common_scs: 15                                                  
-  plmn: "00101"                                                   
-  tac: 7                                                          
+  dl_arfcn: 368500
+  band: 3
+  channel_bandwidth_MHz: 20
+  common_scs: 15
+  plmn: "00101"
+  tac: 7
   pdcch:
     dedicated:
-      ss2_type: common                                            
-      dci_format_0_1_and_1_1: false                               
+      ss2_type: common
+      dci_format_0_1_and_1_1: false
     common:
-      ss0_index: 0                                                
-      coreset0_index: 12                                          
+      ss0_index: 0
+      coreset0_index: 12
   prach:
-    prach_config_index: 1                                         
+    prach_config_index: 1
 
 log:
-  filename: /tmp/gnb.log                                          
-  all_level: info                                                 
+  filename: /tmp/gnb.log
+  all_level: info
 
 pcap:
-  mac_enable: enable                                              
-  mac_filename: /tmp/gnb_mac.pcap                                 
-  ngap_enable: enable                                             
-  ngap_filename: /tmp/gnb_ngap.pcap                               
+  mac_enable: enable
+  mac_filename: /tmp/gnb_mac.pcap
+  ngap_enable: enable
+  ngap_filename: /tmp/gnb_ngap.pcap

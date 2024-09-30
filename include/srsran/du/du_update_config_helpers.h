@@ -36,7 +36,8 @@ namespace config_helpers {
 /// \param user_params parameters passed by the user for the generation the PUCCH resource list.
 /// \param bwp_size size of the BWP in RBs.
 /// \return PRACH frequency start.
-unsigned compute_prach_frequency_start(const pucch_builder_params& user_params, unsigned bwp_size, bool is_long_prach);
+unsigned
+compute_prach_frequency_start(const srs_du::pucch_builder_params& user_params, unsigned bwp_size, bool is_long_prach);
 
 /// \brief Compute the number of PUCCH resources that are used for SR and CSI.
 ///
@@ -46,12 +47,12 @@ unsigned compute_prach_frequency_start(const pucch_builder_params& user_params, 
 /// \param max_pucch_grants_per_slot maximum number of PUCCH grants that can be allocated per slot in the cell.
 /// \param sr_period_msec SR period in milliseconds.
 /// \param csi_period_msec CSI period in milliseconds.
-void compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_params,
-                                  unsigned                max_pucch_grants_per_slot,
-                                  float                   sr_period_msec,
-                                  std::optional<unsigned> csi_period_msec);
+void compute_nof_sr_csi_pucch_res(srs_du::pucch_builder_params& user_params,
+                                  unsigned                      max_pucch_grants_per_slot,
+                                  float                         sr_period_msec,
+                                  std::optional<unsigned>       csi_period_msec);
 
-bounded_integer<unsigned, 1, 14> compute_max_nof_pucch_symbols(const srs_builder_params& user_srs_params);
+bounded_integer<unsigned, 1, 14> compute_max_nof_pucch_symbols(const srs_du::srs_builder_params& user_srs_params);
 
 } // namespace config_helpers
 } // namespace srsran

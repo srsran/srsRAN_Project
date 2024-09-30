@@ -146,6 +146,7 @@ e2e request and config validation:
   script:
     - |
       # Print E2E parameters
+      echo "GROUP=${GROUP}"
       echo "TESTBED=${TESTBED}"
       echo "MARKERS=${MARKERS}"
       echo "KEYWORDS=${KEYWORDS}"
@@ -555,6 +556,23 @@ android b200:
     GROUP: "rf"
     TESTBED: "android_b200"
     MARKERS: "android"
+    KEYWORDS: "not ims"
+    E2E_LOG_LEVEL: "warning"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *retina-needs
+
+android IMS:
+  stage: rf
+  extends: .e2e-run
+  variables:
+    GROUP: "rf"
+    TESTBED: "android_callbox"
+    MARKERS: "android"
+    KEYWORDS: "ims"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
@@ -601,7 +619,6 @@ viavi:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
-  allow_failure: true
   parallel:
     matrix:
       - KEYWORDS: [
@@ -618,16 +635,13 @@ viavi-extended:
   extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    KEYWORDS: "extended"
   allow_failure: true
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
-  parallel:
-    matrix:
-      - KEYWORDS: [
-            "extended",
-          ]
 
 viavi-debug:
   extends: .viavi

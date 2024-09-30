@@ -34,23 +34,22 @@ cu_up_e1_setup_request generate_cu_up_e1_setup_request();
 e1ap_message generate_cu_up_e1_setup_response(unsigned transaction_id);
 
 /// \brief Generate a dummy bearer context setup request.
-e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id);
+e1ap_message generate_bearer_context_setup_request(unsigned cu_cp_ue_e1ap_id);
 
 /// \brief Generate an invalid dummy bearer context setup request.
-e1ap_message generate_invalid_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id);
+e1ap_message generate_invalid_bearer_context_setup_request(unsigned cu_cp_ue_e1ap_id);
 
 /// \brief Generate a dummy bearer context setup request, with an invalid inactivity timer.
-e1ap_message generate_invalid_bearer_context_setup_request_inactivity_timer(unsigned int cu_cp_ue_e1ap_id);
+e1ap_message generate_invalid_bearer_context_setup_request_inactivity_timer(unsigned cu_cp_ue_e1ap_id);
 
 /// \brief Generate a dummy bearer context modification request.
-e1ap_message generate_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id, unsigned int cu_up_ue_e1ap_id);
+e1ap_message generate_bearer_context_modification_request(unsigned cu_cp_ue_e1ap_id, unsigned cu_up_ue_e1ap_id);
 
 /// \brief Generate an invalid dummy bearer context modification request.
-e1ap_message generate_invalid_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
-                                                                  unsigned int cu_up_ue_e1ap_id);
+e1ap_message generate_invalid_bearer_context_modification_request(unsigned cu_cp_ue_e1ap_id, unsigned cu_up_ue_e1ap_id);
 
 /// \brief Generate a dummy bearer context release command.
-e1ap_message generate_bearer_context_release_command(unsigned int cu_cp_ue_e1ap_id, unsigned int cu_up_ue_e1ap_id);
+e1ap_message generate_bearer_context_release_command(unsigned cu_cp_ue_e1ap_id, unsigned cu_up_ue_e1ap_id);
 
 } // namespace srs_cu_up
 } // namespace srsran

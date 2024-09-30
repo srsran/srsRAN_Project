@@ -42,7 +42,7 @@ TEST_P(validate_crc_message_field, WithValue)
                build_valid_crc_indication,
                validate_crc_indication,
                srsran::fapi::message_type_id::crc_indication);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(SFN,
                          validate_crc_message_field,

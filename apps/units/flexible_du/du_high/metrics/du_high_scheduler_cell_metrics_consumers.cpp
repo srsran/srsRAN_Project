@@ -44,6 +44,8 @@ DECLARE_METRIC("dl_nof_ok", metric_dl_nof_ok, unsigned, "");
 DECLARE_METRIC("dl_nof_nok", metric_dl_nof_nok, unsigned, "");
 DECLARE_METRIC("dl_bs", metric_dl_bs, unsigned, "");
 DECLARE_METRIC("pusch_snr_db", metric_pusch_snr_db, float, "");
+DECLARE_METRIC("pucch_snr_db", metric_pucch_snr_db, float, "");
+DECLARE_METRIC("ta_ns", metric_ta_ns, std::string, "");
 DECLARE_METRIC("ul_mcs", metric_ul_mcs, uint8_t, "");
 DECLARE_METRIC("ul_brate", metric_ul_brate, double, "");
 DECLARE_METRIC("ul_nof_ok", metric_ul_nof_ok, unsigned, "");
@@ -61,19 +63,24 @@ DECLARE_METRIC_SET("ue_container",
                    metric_dl_nof_nok,
                    metric_dl_bs,
                    metric_pusch_snr_db,
+                   metric_pucch_snr_db,
+                   metric_ta_ns,
                    metric_ul_mcs,
                    metric_ul_brate,
                    metric_ul_nof_ok,
                    metric_ul_nof_nok,
                    metric_bsr);
 
+// Cell event metrics.
+DECLARE_METRIC("sfn", metric_sfn, uint16_t, "");
+DECLARE_METRIC("slot_index", metric_slot_index, uint16_t, "");
+DECLARE_METRIC("event_type", metric_event_type, std::string, "");
+DECLARE_METRIC_SET("cell_events", mset_cell_event, metric_sfn, metric_slot_index, metric_rnti, metric_event_type);
+
 /// cell-wide metrics.
 DECLARE_METRIC("error_indication_count", metric_error_indication_count, unsigned, "");
 DECLARE_METRIC("average_latency", metric_average_latency, unsigned, "");
-DECLARE_METRIC("latency_bin_start_usec", latency_bin_start_usec, unsigned, "");
-DECLARE_METRIC("latency_bin_count", latency_bin_count, unsigned, "");
-DECLARE_METRIC_SET("latency_bin", latency_bin, latency_bin_start_usec, latency_bin_count);
-DECLARE_METRIC_LIST("latency_histogram", latency_histogram, std::vector<latency_bin>);
+DECLARE_METRIC("latency_histogram", latency_histogram, std::vector<unsigned>, "");
 DECLARE_METRIC_SET("cell_metrics",
                    cell_metrics,
                    metric_error_indication_count,
@@ -83,9 +90,10 @@ DECLARE_METRIC_SET("cell_metrics",
 /// Metrics root object.
 DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
 DECLARE_METRIC_LIST("ue_list", mlist_ues, std::vector<mset_ue_container>);
+DECLARE_METRIC_LIST("event_list", mlist_events, std::vector<mset_cell_event>);
 
 /// Metrics context.
-using metric_context_t = srslog::build_context_type<metric_timestamp_tag, cell_metrics, mlist_ues>;
+using metric_context_t = srslog::build_context_type<metric_timestamp_tag, cell_metrics, mlist_ues, mlist_events>;
 
 } // namespace
 
@@ -97,6 +105,21 @@ static void print_header()
       "|--------------------DL---------------------|-------------------------UL------------------------------\n");
   fmt::print(" pci rnti | cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  rsrp  mcs  brate   ok  nok  (%)    bsr    "
              " ta  phr\n");
+}
+
+static const char* event_to_string(scheduler_cell_event::event_type ev)
+{
+  switch (ev) {
+    case scheduler_cell_event::event_type::ue_add:
+      return "ue_create";
+    case scheduler_cell_event::event_type::ue_reconf:
+      return "ue_reconf";
+    case scheduler_cell_event::event_type::ue_rem:
+      return "ue_rem";
+    default:
+      break;
+  }
+  return "invalid";
 }
 
 void scheduler_cell_metrics_consumer_stdout::handle_metric(const app_services::metrics_set& metric)
@@ -228,6 +251,10 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
       output.write<metric_pusch_snr_db>(std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
     }
+    if (!std::isnan(ue.pucch_snr_db) && !iszero(ue.pucch_snr_db)) {
+      output.write<metric_pucch_snr_db>(std::clamp(ue.pucch_snr_db, -99.9f, 99.9f));
+    }
+    output.write<metric_ta_ns>(ue.last_ta ? std::to_string(ue.last_ta->to_seconds<float>() * 1e9) : "n/a");
     output.write<metric_ul_mcs>(ue.ul_mcs.to_uint());
     output.write<metric_ul_brate>(ue.ul_brate_kbps * 1e3);
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);
@@ -235,17 +262,21 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     output.write<metric_bsr>(ue.bsr);
   }
 
+  for (const auto& event : metrics.events) {
+    ctx.get<mlist_events>().emplace_back();
+    auto& output = ctx.get<mlist_events>().back();
+
+    output.write<metric_sfn>(event.slot.sfn());
+    output.write<metric_slot_index>(event.slot.slot_index());
+    output.write<metric_rnti>(to_value(event.rnti));
+    output.write<metric_event_type>(event_to_string(event.type));
+  }
+
   auto& cell_output = ctx.get<cell_metrics>();
   cell_output.write<metric_error_indication_count>(metrics.nof_error_indications);
   cell_output.write<metric_average_latency>(metrics.average_decision_latency.count());
-  unsigned bin_idx = 0;
-  for (unsigned bin_count : metrics.latency_histogram) {
-    cell_output.get<latency_histogram>().emplace_back();
-    auto& elem = cell_output.get<latency_histogram>().back();
-    elem.write<latency_bin_start_usec>(bin_idx * scheduler_cell_metrics::nof_usec_per_bin);
-    elem.write<latency_bin_count>(bin_count);
-    bin_idx++;
-  }
+  cell_output.write<latency_histogram>(
+      std::vector<unsigned>(metrics.latency_histogram.begin(), metrics.latency_histogram.end()));
 
   // Log the context.
   ctx.write<metric_timestamp_tag>(get_time_stamp());
@@ -265,6 +296,20 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
                  metrics.nof_error_indications,
                  metrics.average_decision_latency.count(),
                  fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
+  if (not metrics.events.empty()) {
+    fmt::format_to(buffer, " events=[");
+    bool first = true;
+    for (const auto& event : metrics.events) {
+      fmt::format_to(buffer,
+                     "{}{{rnti={} slot={} type={}}}",
+                     first ? "" : ", ",
+                     event.rnti,
+                     event.slot,
+                     event_to_string(event.type));
+      first = false;
+    }
+    fmt::format_to(buffer, "]");
+  }
   logger.info("{}", to_c_str(buffer));
   buffer.clear();
 

@@ -115,7 +115,7 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
 static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg,
                                                                          uint8_t                        min_k1)
 {
-  const static unsigned MAX_K1_CANDIDATES = 8;
+  static const unsigned MAX_K1_CANDIDATES = 8;
   const unsigned        tdd_period        = nof_slots_per_tdd_period(tdd_cfg);
   unsigned              nof_dl_slots = tdd_cfg.pattern1.nof_dl_slots + (tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0);
   if (tdd_cfg.pattern2.has_value()) {
@@ -519,6 +519,7 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
   res_set.srs_res_id_list.emplace_back(static_cast<srs_config::srs_res_id>(0));
   res_set.res_type =
       srs_config::srs_resource_set::aperiodic_resource_type{.aperiodic_srs_res_trigger = 1, .slot_offset = 7};
+
   res_set.srs_res_set_usage = srs_config::srs_resource_set::usage::codebook;
   res_set.p0                = -84;
   res_set.pathloss_ref_rs   = static_cast<ssb_id_t>(0);
@@ -659,7 +660,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   // Compute the max UCI payload per format.
   // As per TS 38.231, Section 9.2.1, with PUCCH Format 1, we can have up to 2 HARQ-ACK bits (SR doesn't count as part
   // of the payload).
-  constexpr static unsigned pucch_f1_max_harq_payload                        = 2U;
+  static constexpr unsigned pucch_f1_max_harq_payload                        = 2U;
   pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_1)] = pucch_f1_max_harq_payload;
   const auto& res_f2 = std::get<pucch_format_2_3_cfg>(res_basic_f2.format_params);
   pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(

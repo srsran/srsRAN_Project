@@ -42,7 +42,7 @@ TEST_P(validate_rx_data_indication_field, WithValue)
                build_valid_rx_data_indication,
                validate_rx_data_indication,
                srsran::fapi::message_type_id::rx_data_indication);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(sfn,
                          validate_rx_data_indication_field,

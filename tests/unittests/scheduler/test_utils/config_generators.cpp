@@ -51,6 +51,7 @@ public:
                           unsigned      num_slots_per_frame) override
   {
   }
+  void handle_ue_reconfiguration(du_ue_index_t ue_index) override {}
   void handle_ue_deletion(du_ue_index_t ue_index) override {}
 };
 
@@ -63,7 +64,8 @@ test_sched_config_manager::test_sched_config_manager(const cell_config_builder_p
   cfg_notifier(std::make_unique<dummy_sched_configuration_notifier>()),
   metric_notifier(std::make_unique<dummy_scheduler_ue_metrics_notifier>()),
   ue_metrics_configurator(std::make_unique<dummy_sched_metrics_ue_configurator>()),
-  cfg_mng(scheduler_config{expert_cfg, *cfg_notifier, *metric_notifier})
+  metrics_handler(std::chrono::milliseconds{1000}, *metric_notifier),
+  cfg_mng(scheduler_config{expert_cfg, *cfg_notifier, *metric_notifier}, metrics_handler)
 {
   default_cell_req = test_helpers::make_default_sched_cell_configuration_request(builder_params);
   default_ue_req   = test_helpers::create_default_sched_ue_creation_request(builder_params, {lcid_t::LCID_MIN_DRB});
@@ -73,13 +75,18 @@ test_sched_config_manager::~test_sched_config_manager() {}
 
 const cell_configuration* test_sched_config_manager::add_cell(const sched_cell_configuration_request_message& msg)
 {
-  return cfg_mng.add_cell(msg, *ue_metrics_configurator);
+  return cfg_mng.add_cell(msg);
 }
 
 const ue_configuration* test_sched_config_manager::add_ue(const sched_ue_creation_request_message& cfg_req)
 {
   auto ue_ev = cfg_mng.add_ue(cfg_req);
-  return ue_ev.valid() ? &ue_ev.next_config() : nullptr;
+  if (ue_ev.valid()) {
+    const ue_configuration* ret = &ue_ev.next_config();
+    ue_ev.notify_completion();
+    return ret;
+  }
+  return nullptr;
 }
 
 bool test_sched_config_manager::rem_ue(du_ue_index_t ue_index)

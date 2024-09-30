@@ -28,10 +28,10 @@
 using namespace srsran;
 using namespace fapi;
 
-/// This validator checks a DL_TTI.request message.
+/// This validator checks a UL_TTI.request message.
 static constexpr message_type_id msg_type = message_type_id::ul_tti_request;
 
-/// This validator checks the PRACH PDU.
+/// This validator checks the PUCCH PDU.
 static constexpr unsigned pdu_type = static_cast<unsigned>(ul_pdu_type::PUCCH);
 
 /// Validates the RNTI property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.

@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#include "resource_grid_dimensions.h"
+#include "srsran/phy/support/resource_grid_dimensions.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 
 namespace srsran {

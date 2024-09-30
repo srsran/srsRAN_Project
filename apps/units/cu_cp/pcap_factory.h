@@ -26,13 +26,14 @@
 #include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 
-namespace srsran::modules::cu_cp {
+namespace srsran {
 
 struct cu_cp_dlt_pcaps {
   std::unique_ptr<dlt_pcap> ngap;
   std::unique_ptr<dlt_pcap> f1ap;
   std::unique_ptr<dlt_pcap> e1ap;
-  void                      close()
+
+  void close()
   {
     ngap.reset();
     f1ap.reset();
@@ -40,9 +41,9 @@ struct cu_cp_dlt_pcaps {
   }
 };
 
-/// Creates the DLT PCAP of the CU-CP.
-inline cu_cp_dlt_pcaps create_dlt_pcap(const cu_cp_unit_pcap_config&   pcap_cfg,
-                                       worker_manager_executor_getter& exec_getter)
+/// Creates the DLT PCAPs of the CU-CP.
+inline cu_cp_dlt_pcaps create_cu_cp_dlt_pcap(const cu_cp_unit_pcap_config&   pcap_cfg,
+                                             worker_manager_executor_getter& exec_getter)
 {
   cu_cp_dlt_pcaps pcaps;
   pcaps.ngap = pcap_cfg.ngap.enabled ? create_ngap_pcap(pcap_cfg.ngap.filename, exec_getter.get_executor("pcap_exec"))
@@ -54,4 +55,4 @@ inline cu_cp_dlt_pcaps create_dlt_pcap(const cu_cp_unit_pcap_config&   pcap_cfg,
   return pcaps;
 }
 
-} // namespace srsran::modules::cu_cp
+} // namespace srsran

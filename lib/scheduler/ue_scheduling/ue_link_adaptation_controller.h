@@ -76,7 +76,7 @@ private:
   void update_dl_mcs_lims(pdsch_mcs_table mcs_table);
 
   /// \brief Update the UL MCS boundaries based on the chosen MCS table.
-  void update_ul_mcs_lims(pusch_mcs_table mcs_table);
+  void update_ul_mcs_lims(pusch_mcs_table mcs_table, bool transform_precoder);
 
   const cell_configuration&       cell_cfg;
   const ue_channel_state_manager& ue_ch_st;
@@ -85,6 +85,7 @@ private:
   pdsch_mcs_table               last_dl_mcs_table;
   interval<sch_mcs_index, true> dl_mcs_lims;
   pusch_mcs_table               last_ul_mcs_table;
+  bool                          last_transform_precoder;
   interval<sch_mcs_index, true> ul_mcs_lims;
 
   std::optional<olla_algorithm> dl_olla;
