@@ -288,10 +288,10 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   decision_latency_hist[bin_idx]++;
 }
 
-void cell_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay)
+void cell_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay_ms)
 {
   if (ues.contains(ue_index)) {
-    ues[ue_index].data.sum_ul_delay_ms += delay;
+    ues[ue_index].data.sum_ul_delay_ms += delay_ms;
   }
 }
 
@@ -340,7 +340,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pusch_rsrp_db    = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
                                                          : -std::numeric_limits<float>::infinity();
   ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
-  ret.ul_delay_ms      = data.sum_ul_delay_ms / data.count_crc_pdus;
+  ret.ul_delay_ms      = data.count_crc_pdus > 0 ? data.sum_ul_delay_ms / data.count_crc_pdus : 0;
   ret.bsr              = last_bsr;
   ret.dl_bs            = 0;
   for (const unsigned value : last_dl_bs) {

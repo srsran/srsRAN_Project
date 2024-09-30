@@ -139,7 +139,7 @@ public:
   /// \brief Handle Error Indication reported to the scheduler for a given cell.
   void handle_error_indication();
 
-  void handle_ul_delay(du_ue_index_t ue_index, double delay);
+  void handle_ul_delay(du_ue_index_t ue_index, double delay_ms);
 
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point sl_tx, const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
