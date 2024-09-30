@@ -103,35 +103,75 @@ trigger docker:
   variables:
     PY_DIR: docker/metrics_server
 
-helm:
+matlab nightly:
+  stage: ci
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      variables:
+        ON_SCHEDULE: "true"
+        CI_DESCRIPTION: Nightly
+        SRSRAN_COMMIT: $CI_COMMIT_SHA
+        NOTIFY_SLACK: "true"
+      when: delayed
+      start_in: 3 hours
+  inherit:
+    variables: false
+  trigger:
+    project: softwareradiosystems/srsgnb_matlab
+    branch: master
+
+enterprise nightly:
+  stage: ci
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      variables:
+        ON_SCHEDULE: "true"
+        CI_DESCRIPTION: Nightly
+        SRSRAN_COMMIT: $CI_COMMIT_SHA
+        NOTIFY_SLACK: "true"
+      when: delayed
+      start_in: 3 hours
+  inherit:
+    variables: false
+  trigger:
+    project: softwareradiosystems/srsran_5g_enterprise
+    branch: main
+
+matlab weekly:
   stage: ci
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       variables:
+        ON_SCHEDULE: "true"
+        CI_DESCRIPTION: Nightly
+        SRSRAN_COMMIT: $CI_COMMIT_SHA
+        NOTIFY_SLACK: "true"
+      when: delayed
+      start_in: 20 hours
+  inherit:
+    variables: false
+  trigger:
+    project: softwareradiosystems/srsgnb_matlab
+    branch: master
+
+helm weekly:
+  stage: ci
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      variables:
+        ON_SCHEDULE: "true"
         CI_DESCRIPTION: Synchronization with srsGNB
         NOTIFY_SLACK: "true"
+      when: delayed
+      start_in: 20 hours
   inherit:
-    variables: false        
+    variables: false
   trigger:
     project: softwareradiosystems/ci/srsgnb_k8s
     branch: main
   needs:
     - job: trigger docker
       artifacts: false
-
-enterprise:
-  stage: ci
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      variables:
-        CI_DESCRIPTION: Nightly
-        SRSRAN_COMMIT: $CI_COMMIT_SHA
-        NOTIFY_SLACK: "true"
-  inherit:
-    variables: false
-  trigger:
-    project: softwareradiosystems/srsran_5g_enterprise
-    branch: main
 
 ################################################################################
 ## Static

@@ -6,9 +6,42 @@
 # the distribution.
 #
 
-builder version:
+.builder version:
   stage: ci
   image: ubuntu:22.04
+  script:
+    - |
+      hash_multiple() {
+          # Create a temporary tar archive of the folders
+          temp_archive=$(mktemp)
+          
+          # Create a tar archive with the provided folders
+          tar -cf "$temp_archive" \
+              --directory="${SRSRANDIR}" \
+              --mtime='1970-01-01' \
+              --sort=name \
+              --owner=0 --group=0 --numeric-owner \
+              --mode=go+rwX \
+              "$@"
+
+          # Generate the hash of the archive using sha256sum
+          hash=$(sha256sum "$temp_archive" | cut -c 1-32)
+          echo "$hash"
+
+          # Clean up the temporary archive
+          rm "$temp_archive"
+      }
+    - echo ${SRSRANDIR}
+    - ls -lah ${SRSRANDIR}
+    - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders docker/scripts)
+    - echo "DOCKER_BUILDER_VERSION=$DOCKER_BUILDER_VERSION" >> builder.env
+    - echo ${DOCKER_BUILDER_VERSION}
+  artifacts:
+    reports:
+      dotenv: builder.env
+
+builder version:
+  extends: .builder version
   rules:
     - if: $ON_MR
     - if: $ON_WEB
@@ -17,26 +50,6 @@ builder version:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
     - if: $CI_DESCRIPTION =~ /Weekly/
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
-  script:
-    - |
-      hash_multiple() {
-        # Create a temporary tar archive of the folders
-        temp_archive=$(mktemp)
-        
-        # Create a tar archive with the provided folders
-        tar -cf "$temp_archive" --directory="${CI_PROJECT_DIR}" --mtime='1970-01-01' --sort=name "$@"
-
-        # Generate the hash of the archive using sha256sum
-        hash=$(sha256sum "$temp_archive" | cut -c 1-32)
-        echo "$hash"
-
-        # Clean up the temporary archive
-        rm "$temp_archive"
-      }
-    - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders docker/scripts)
-    - echo "DOCKER_BUILDER_VERSION=$DOCKER_BUILDER_VERSION" >> builder.env
-    - echo ${DOCKER_BUILDER_VERSION}
-  artifacts:
-    reports:
-      dotenv: builder.env
+  variables:
+    SRSRANDIR: $CI_PROJECT_DIR
   needs: []
