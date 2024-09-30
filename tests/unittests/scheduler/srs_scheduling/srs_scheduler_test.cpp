@@ -127,10 +127,24 @@ create_sched_ue_creation_request_for_srs_cfg(srs_periodicity                    
   return ue_req;
 }
 
+namespace srs_periodicity_test {
+
 struct srs_test_params {
   bool            is_tdd;
   srs_periodicity period;
 };
+
+std::ostream& operator<<(std::ostream& os, const srs_test_params& params)
+{
+  // Make sure there are no spaces nor colons in this string, otherwise Gtest complains about the test name being
+  // invalid.
+  os << "Is_tdd_" << params.is_tdd << "_srs_period_slots_" << static_cast<unsigned>(params.period);
+  return os;
+}
+
+} // namespace srs_periodicity_test
+
+using namespace srs_periodicity_test;
 
 class test_bench
 {
@@ -278,9 +292,9 @@ protected:
 
 TEST_P(srs_scheduler_tester, test_different_periods)
 {
-  unsigned srs_period_uint = static_cast<unsigned>(GetParam().period);
+  auto srs_period_uint = static_cast<unsigned>(GetParam().period);
 
-  const unsigned add_ue_slot = test_rgen::uniform_int<unsigned>(0, res_grid.RING_ALLOCATOR_SIZE);
+  const auto add_ue_slot = test_rgen::uniform_int<unsigned>(0, res_grid.RING_ALLOCATOR_SIZE);
   // Check at the allocation for at least 4 the size of the resource grid.
   const unsigned nof_slots_to_test =
       add_ue_slot + std::max(srs_period_uint * 4, static_cast<unsigned>(res_grid.RING_ALLOCATOR_SIZE) * 4);
