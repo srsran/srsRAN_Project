@@ -362,8 +362,10 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     unsigned ul_total = ue.ul_nof_ok + ue.ul_nof_nok;
     if (ul_total > 0) {
       fmt::format_to(buffer, " ul_error_rate={}%", int((float)100 * ue.ul_nof_nok / ul_total));
+      fmt::format_to(buffer, " crc_delay_ms={}", ue.ul_delay_ms);
     } else {
       fmt::format_to(buffer, " ul_error_rate={}%", 0);
+      fmt::format_to(buffer, " crc_delay_ms=n/a");
     }
     fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr, false));
     if (ue.last_ta.has_value()) {
