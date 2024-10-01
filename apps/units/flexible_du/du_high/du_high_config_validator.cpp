@@ -195,10 +195,9 @@ static bool validate_srb_unit_config(const std::map<srb_id_t, du_high_unit_srb_c
   return true;
 }
 
-static bool validate_pdcch_unit_config(const du_high_unit_base_cell_config base_cell)
+static bool validate_pdcch_unit_config(const du_high_unit_base_cell_config& base_cell)
 {
-  const auto band =
-      base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_f_ref_arfcn);
+  const auto     band = base_cell.band.value_or(band_helper::get_band_from_dl_arfcn(base_cell.dl_f_ref_arfcn));
   const unsigned nof_crbs =
       band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, base_cell.common_scs, band_helper::get_freq_range(band));
   if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
@@ -603,8 +602,7 @@ static bool validate_tdd_ul_dl_unit_config(const du_high_unit_tdd_ul_dl_config& 
 
 static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& config)
 {
-  nr_band band =
-      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn);
+  const nr_band band = config.band.value_or(band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn));
 
   // Check if the band is supported with given SCS or band.
   // NOTE: Band n46 would be compatible with the 10MHz BW, but there is no sync raster that falls within the band
@@ -643,7 +641,7 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
     return false;
   }
 
-  // Check whether the DL-ARFCN (and optionally the UL-ARFCN) is within the band and follows the Raster step.
+  // Check whether the DL-ARFCN and the UL-ARFCN are within the band and follow the Raster step.
   if (config.band.has_value()) {
     error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(
         *config.band, config.dl_f_ref_arfcn, config.common_scs, config.channel_bw_mhz);
@@ -655,6 +653,7 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
     const uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(config.dl_f_ref_arfcn, config.band.value());
     ret                     = band_helper::is_ul_arfcn_valid_given_band(*config.band, ul_arfcn, config.channel_bw_mhz);
     if (not ret.has_value()) {
+      // NOTE: The message must say that it's the DL ARFCN that is invalid, as that is the parameters set by the user.
       fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
       return false;
     }
@@ -768,9 +767,8 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  const nr_band band =
-      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn);
-  const auto ssb_scs = band_helper::get_most_suitable_ssb_scs(band, config.common_scs);
+  const nr_band band    = config.band.value_or(band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn));
+  const auto    ssb_scs = band_helper::get_most_suitable_ssb_scs(band, config.common_scs);
   if (ssb_scs != config.common_scs) {
     fmt::print("Common SCS {}kHz is not equal to SSB SCS {}kHz. Different SCS for common and SSB is not supported.\n",
                scs_to_khz(config.common_scs),
@@ -840,8 +838,9 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
       fmt::print("Invalid Sector ID {}, for a gNB Id of {} bits\n", cell.cell.sector_id.value(), gnb_id.bit_length);
       return false;
     }
-    const auto   band          = cell.cell.band.value_or(band_helper::get_band_from_dl_arfcn(cell.cell.dl_f_ref_arfcn));
-    bool         is_unlicensed = band_helper::is_unlicensed_band(band);
+    const auto band          = cell.cell.band.value_or(band_helper::get_band_from_dl_arfcn(cell.cell.dl_f_ref_arfcn));
+    bool       is_unlicensed = band_helper::is_unlicensed_band(band);
+    // Check if the RA Response Window (in ms) is within the limits for licensed and unlicensed bands.
     unsigned int max_ra_resp_window = is_unlicensed ? 40 : 10;
     unsigned int ra_resp_window_ms =
         cell.cell.prach_cfg.ra_resp_window.value() >> to_numerology_value(cell.cell.common_scs);
