@@ -809,6 +809,16 @@ srsran::band_helper::is_ul_arfcn_valid_given_band(nr_band band, uint32_t arfcn_f
 
   for (const nr_band_raster& raster_band : nr_band_table) {
     if (raster_band.band == band and raster_band.delta_f_rast == band_delta_freq_raster) {
+      // Check if the ARFCN doesn't exceed the band upper-bound for bands that support asymmetrical UL and DL channel
+      // BWs.
+      if ((band == nr_band::n66 or band == nr_band::n70 or band == nr_band::n92 or band == nr_band::n94) and
+          (arfcn_f_ref < raster_band.ul_nref_first or arfcn_f_ref > raster_band.ul_nref_last)) {
+        return make_unexpected(
+            fmt::format("Asymmetrical UL and DL channel BWs are not supported. The UL ARFCN resulting from the DL "
+                        "ARFCN for band n{} must not exceed the band upper-bound={}",
+                        band,
+                        raster_band.ul_nref_last));
+      }
       if (arfcn_f_ref >= raster_band.ul_nref_first and arfcn_f_ref <= raster_band.ul_nref_last and
           ((arfcn_f_ref - raster_band.ul_nref_first) % raster_band.ul_nref_step) == 0) {
         return {};
@@ -845,9 +855,11 @@ uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, std:
     if (b_it.band == operating_band) {
       const uint32_t offset             = (dl_arfcn - b_it.dl_nref_first) / b_it.dl_nref_step;
       const uint32_t candidate_ul_arfcn = b_it.ul_nref_first + offset * b_it.ul_nref_step;
-      // For band n65, n66, n70, n92, n94, the UL spectrum is smaller than the corresponding DL spectrum, therefore we
-      // need to cap the UL ARFCN to its upper-bound.
-      return std::min(candidate_ul_arfcn, b_it.ul_nref_last);
+      // For band n66, n70, n92, n94, the UL spectrum is smaller than the corresponding DL spectrum, as these bands
+      // supports asymmetrical UL anc DL channel operations. However, the current GNB doesn't support this feature.
+      // If the resulting UL ARFCN is outside the valid range, return 0.
+      return (candidate_ul_arfcn >= b_it.ul_nref_first and candidate_ul_arfcn <= b_it.ul_nref_last) ? candidate_ul_arfcn
+                                                                                                    : 0U;
     }
   }
 

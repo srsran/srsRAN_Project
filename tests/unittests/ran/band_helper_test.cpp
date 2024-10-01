@@ -112,13 +112,16 @@ TEST(get_ul_arfcn_from_dl_arfcn, mixed_frequencies)
   ASSERT_EQ(142600, get_ul_arfcn_from_dl_arfcn(153600, nr_band::n28));
   ASSERT_EQ(144608, get_ul_arfcn_from_dl_arfcn(155608, nr_band::n28));
 
-  // For n65, m66, n70, n92, n94, the UL spectrum is smaller than the DL spectrum. When we convert the DL ARFCN
-  // upper-bound to the corresponding UL ARFCN, we need to cap the value to the UL spectrum upper-bound.
-  ASSERT_EQ(402000, get_ul_arfcn_from_dl_arfcn(440000, nr_band::n65));
-  ASSERT_EQ(356000, get_ul_arfcn_from_dl_arfcn(440000, nr_band::n66));
-  ASSERT_EQ(342000, get_ul_arfcn_from_dl_arfcn(404000, nr_band::n70));
-  ASSERT_EQ(172400, get_ul_arfcn_from_dl_arfcn(303400, nr_band::n92));
-  ASSERT_EQ(183000, get_ul_arfcn_from_dl_arfcn(303400, nr_band::n94));
+  // For n66, n70, n92, n94, the UL spectrum is smaller than the DL spectrum. When we convert the DL ARFCN
+  // to the corresponding UL ARFCN, if the UL ARFCN exceeds the band upper-bound, we return 0.
+  ASSERT_EQ(356000, get_ul_arfcn_from_dl_arfcn(436000, nr_band::n66));
+  ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(440000, nr_band::n66));
+  ASSERT_EQ(342000, get_ul_arfcn_from_dl_arfcn(402000, nr_band::n70));
+  ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(404000, nr_band::n70));
+  ASSERT_EQ(172400, get_ul_arfcn_from_dl_arfcn(292400, nr_band::n92));
+  ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(303400, nr_band::n92));
+  ASSERT_EQ(183000, get_ul_arfcn_from_dl_arfcn(293400, nr_band::n94));
+  ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(303400, nr_band::n94));
 }
 
 TEST(test_get_abs_freq_point_a_arfcn, mixed_frequencies)

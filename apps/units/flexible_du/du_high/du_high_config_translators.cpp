@@ -230,7 +230,6 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     param.scs_common                               = base_cell.common_scs;
     param.channel_bw_mhz                           = base_cell.channel_bw_mhz;
     param.dl_f_ref_arfcn                           = base_cell.dl_f_ref_arfcn;
-    param.ul_f_ref_arfcn                           = base_cell.ul_f_ref_arfcn;
     param.band                                     = *base_cell.band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled      = base_cell.csi_cfg.csi_rs_enabled;

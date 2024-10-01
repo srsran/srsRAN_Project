@@ -651,13 +651,12 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
       fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
       return false;
     }
-    if (config.ul_f_ref_arfcn.has_value()) {
-      ret =
-          band_helper::is_ul_arfcn_valid_given_band(*config.band, config.ul_f_ref_arfcn.value(), config.channel_bw_mhz);
-      if (not ret.has_value()) {
-        fmt::print("Invalid UL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
-        return false;
-      }
+    // Check if also the corresponding UL ARFCN is valid.
+    const uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(config.dl_f_ref_arfcn, config.band.value());
+    ret                     = band_helper::is_ul_arfcn_valid_given_band(*config.band, ul_arfcn, config.channel_bw_mhz);
+    if (not ret.has_value()) {
+      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
+      return false;
     }
   } else {
     if (band == nr_band::invalid) {
@@ -769,16 +768,16 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  const auto ssb_scs = band_helper::get_most_suitable_ssb_scs(
-      band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn), config.common_scs);
+  const nr_band band =
+      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn);
+  const auto ssb_scs = band_helper::get_most_suitable_ssb_scs(band, config.common_scs);
   if (ssb_scs != config.common_scs) {
     fmt::print("Common SCS {}kHz is not equal to SSB SCS {}kHz. Different SCS for common and SSB is not supported.\n",
                scs_to_khz(config.common_scs),
                scs_to_khz(ssb_scs));
     return false;
   }
-  const nr_band band =
-      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn);
+
   const unsigned nof_crbs =
       band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
 

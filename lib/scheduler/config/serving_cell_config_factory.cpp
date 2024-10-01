@@ -89,9 +89,7 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
     cfg.arfcn_f_ref = params.dl_f_ref_arfcn;
     cfg.nof_ant     = params.nof_dl_ports;
   } else {
-    cfg.arfcn_f_ref = params.ul_f_ref_arfcn.has_value()
-                          ? params.ul_f_ref_arfcn.value()
-                          : band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_f_ref_arfcn, cfg.band);
+    cfg.arfcn_f_ref = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_f_ref_arfcn, cfg.band);
     cfg.nof_ant     = 1;
   }
   const min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cfg.band, params.scs_common);
@@ -336,9 +334,7 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
 {
   ul_config_common cfg{};
   // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
-  const uint32_t ul_arfcn                 = params.ul_f_ref_arfcn.has_value()
-                                                ? params.ul_f_ref_arfcn.value()
-                                                : band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_f_ref_arfcn, params.band);
+  const uint32_t ul_arfcn                 = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_f_ref_arfcn, params.band);
   const double   ul_absolute_freq_point_a = band_helper::get_abs_freq_point_a_from_f_ref(
       band_helper::nr_arfcn_to_freq(ul_arfcn), params.cell_nof_crbs, params.scs_common);
   // \c absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
