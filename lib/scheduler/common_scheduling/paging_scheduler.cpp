@@ -113,9 +113,7 @@ void paging_scheduler::run_slot(cell_resource_allocator& res_grid)
   while (new_paging_notifications.try_pop(new_pg_info)) {
     // Check whether Paging information is already present or not. i.e. tackle repeated Paging attempt from upper
     // layers.
-    if (paging_pending_ues.find(new_pg_info.paging_identity) == paging_pending_ues.cend()) {
-      paging_pending_ues[new_pg_info.paging_identity] = ue_paging_info{.info = new_pg_info, .retry_count = 0};
-    }
+    paging_pending_ues.try_emplace(new_pg_info.paging_identity, ue_paging_info{.info = new_pg_info, .retry_count = 0});
   }
 
   // NOTE:
@@ -140,7 +138,7 @@ void paging_scheduler::run_slot(cell_resource_allocator& res_grid)
   // Check for maximum paging retries.
   auto it = paging_pending_ues.begin();
   while (it != paging_pending_ues.end()) {
-    if (paging_pending_ues[it->first].retry_count >= expert_cfg.pg.max_paging_retries) {
+    if (it->second.retry_count >= expert_cfg.pg.max_paging_retries) {
       it = paging_pending_ues.erase(it);
     } else {
       ++it;
