@@ -26,18 +26,18 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-__attribute__((weak)) void
-start_ng_handover_preparation(srslog::basic_logger& logger) asm("start_ng_handover_preparation");
+// Function prototype for starting handover from plugin
+__attribute__((weak)) async_task<ngap_handover_preparation_response>
+start_ngap_handover_preperation(srslog::basic_logger& logger) asm("start_ngap_preparation_procedure_func");
 
 class ngap_impl final : public ngap_interface
 {
 public:
-  ngap_impl(const ngap_configuration&                      ngap_cfg_,
-            ngap_cu_cp_notifier&                           cu_cp_notifier_,
-            start_ngap_handover_preparation_procedure_func start_ho_prep_func_,
-            n2_connection_client&                          n2_gateway,
-            timer_manager&                                 timers_,
-            task_executor&                                 ctrl_exec_);
+  ngap_impl(const ngap_configuration& ngap_cfg_,
+            ngap_cu_cp_notifier&      cu_cp_notifier_,
+            n2_connection_client&     n2_gateway,
+            timer_manager&            timers_,
+            task_executor&            ctrl_exec_);
   ~ngap_impl();
 
   bool
@@ -180,9 +180,6 @@ private:
   ngap_connection_handler conn_handler;
 
   std::unique_ptr<tx_pdu_notifier_with_logging> tx_pdu_notifier;
-
-  // Plugins
-  start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
 };
 
 } // namespace srs_cu_cp

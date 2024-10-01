@@ -16,7 +16,6 @@
 #include "procedures/ng_reset_procedure.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_dl_nas_message_transfer_procedure.h"
-#include "procedures/ngap_handover_preparation_procedure.h"
 #include "procedures/ngap_handover_resource_allocation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
 #include "procedures/ngap_pdu_session_resource_modify_procedure.h"
@@ -33,26 +32,23 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(const ngap_configuration&                      ngap_cfg_,
-                     ngap_cu_cp_notifier&                           cu_cp_notifier_,
-                     start_ngap_handover_preparation_procedure_func start_ho_prep_func_,
-                     n2_connection_client&                          n2_gateway,
-                     timer_manager&                                 timers_,
-                     task_executor&                                 ctrl_exec_) :
+ngap_impl::ngap_impl(const ngap_configuration& ngap_cfg_,
+                     ngap_cu_cp_notifier&      cu_cp_notifier_,
+                     n2_connection_client&     n2_gateway,
+                     timer_manager&            timers_,
+                     task_executor&            ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   ue_ctxt_list(logger),
   cu_cp_notifier(cu_cp_notifier_),
   timers(timers_),
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{timers, ctrl_exec}),
-  conn_handler(n2_gateway, *this, cu_cp_notifier, ctrl_exec),
-  start_ho_prep_func(start_ho_prep_func_)
+  conn_handler(n2_gateway, *this, cu_cp_notifier, ctrl_exec)
 {
   context.gnb_id                    = ngap_cfg_.gnb_id;
   context.ran_node_name             = ngap_cfg_.ran_node_name;
   context.supported_tas             = ngap_cfg_.supported_tas;
   context.pdu_session_setup_timeout = ngap_cfg_.pdu_session_setup_timeout;
-  start_ng_handover_preparation(logger);
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -918,7 +914,6 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
   });
 }
 
-// TODO make preparation result an async task
 async_task<ngap_handover_preparation_response>
 ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_request& msg)
 {
@@ -927,10 +922,6 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
     CORO_RETURN(ngap_handover_preparation_response{false});
   };
 
-  if (start_ho_prep_func == nullptr) {
-    logger.error("ue={}: Dropping HandoverPreparationRequest. NG handover plugin is not loaded", msg.ue_index);
-    return launch_async(std::move(err_function));
-  }
   if (!ue_ctxt_list.contains(msg.ue_index)) {
     logger.warning("ue={}: Dropping HandoverPreparationRequest. UE context does not exist", msg.ue_index);
     return launch_async(std::move(err_function));
@@ -947,7 +938,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
 
   ue_ctxt.logger.log_info("Starting HO preparation");
 
-  return (*start_ho_prep_func)(logger);
+  return start_ngap_handover_preperation(logger);
 }
 
 void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
@@ -1078,7 +1069,12 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
   decorated->on_new_message(msg);
 }
 
-void srs_cu_cp::start_ng_handover_preparation(srslog::basic_logger& logger)
+async_task<ngap_handover_preparation_response> start_ngap_handover_preperation(srslog::basic_logger& logger)
 {
-  fmt::print("NG handover is not supported\n");
+  logger.error("NG handover is not supported");
+  auto err_function = [](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_RETURN(ngap_handover_preparation_response{false});
+  };
+  return launch_async(std::move(err_function));
 }

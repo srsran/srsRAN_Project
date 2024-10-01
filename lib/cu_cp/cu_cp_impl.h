@@ -207,9 +207,9 @@ private:
   std::atomic<bool> stopped{false};
 
   // Plug-ins
-  start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
-  connect_amfs_func                              connect_amfs       = nullptr;
-  disconnect_amfs_func                           disconnect_amfs    = nullptr;
+  connect_amfs_func    connect_amfs    = nullptr;
+  disconnect_amfs_func disconnect_amfs = nullptr;
+
   // E2 interface
   std::unique_ptr<e2_interface> e2ap_entity;
 };

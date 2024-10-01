@@ -137,7 +137,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    ngap = create_ngap(cfg, cu_cp_notifier, nullptr, *cu_cp_cfg.ngaps.front().n2_gw, timers, ctrl_worker);
+    ngap = create_ngap(cfg, cu_cp_notifier, *cu_cp_cfg.ngaps.front().n2_gw, timers, ctrl_worker);
   }
 
   timer_manager       timers;
