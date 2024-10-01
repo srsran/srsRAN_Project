@@ -110,8 +110,6 @@ struct cu_cp_configuration {
   struct plugin_params {
     /// Try to load CU-CP plugins.
     bool load_plugins;
-    /// Loaded function pointer to trigger NG Handover
-    void* start_ng_ho_func = nullptr;
     /// Loaded function pointer to connect to AMFs
     connect_amfs_func connect_amfs = nullptr;
     /// Loaded function pointer to disconnect from AMFs

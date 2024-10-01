@@ -360,25 +360,10 @@ int main(int argc, char** argv)
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
   // Load CU-CP plugins if enabled
-  std::optional<dynlink_manager> ng_handover_plugin =
-      cu_cp_app_unit->get_cu_cp_unit_config().load_plugins
-          ? dynlink_manager::create("libsrsran_plugin_ng_handover.so", gnb_logger)
-          : std::nullopt;
   std::optional<dynlink_manager> mocn_plugin = cu_cp_app_unit->get_cu_cp_unit_config().load_plugins
                                                    ? dynlink_manager::create("libsrsran_plugin_mocn.so", gnb_logger)
                                                    : std::nullopt;
   if (cu_cp_app_unit->get_cu_cp_unit_config().load_plugins) {
-    if (not ng_handover_plugin) {
-      gnb_logger.error("Could not open NG Handover plugin");
-      return -1;
-    }
-    expected<void*> ng_ho_func = ng_handover_plugin->load_symbol("start_ngap_preparation_procedure_func");
-    if (not ng_ho_func) {
-      gnb_logger.error("Could not open NG Handover function pointer");
-      return -1;
-    }
-    cu_cp_app_unit->get_cu_cp_unit_config().start_ng_ho_func = ng_ho_func.value();
-
     if (not mocn_plugin) {
       gnb_logger.error("Could not open MOCN plugin");
       return -1;

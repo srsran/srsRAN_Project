@@ -139,11 +139,6 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t       source_ue_index
                                                 gnb_id_t         target_gnb_id,
                                                 nr_cell_identity target_nci)
 {
-  if (not cfg.enable_ng_handover) {
-    logger.warning("ue={}: trying to use NG handover without HO plugin loaded.", source_ue_index);
-    return;
-  }
-
   cu_cp_ue* u = ue_mng.find_du_ue(source_ue_index);
   if (u == nullptr) {
     logger.error("ue={}: Couldn't find UE", source_ue_index);

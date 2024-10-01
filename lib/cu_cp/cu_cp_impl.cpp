@@ -73,9 +73,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
 
-  if (cfg.plugin.start_ng_ho_func != nullptr) {
-  }
-
   if (cfg.plugin.connect_amfs != nullptr) {
     connect_amfs = reinterpret_cast<connect_amfs_func>(cfg.plugin.connect_amfs);
   }
