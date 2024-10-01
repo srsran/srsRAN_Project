@@ -11,25 +11,15 @@
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
-#define PCAP_OUTPUT 0
-
-#if PCAP_OUTPUT
-std::unique_ptr<dlt_pcap> g_pcap = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "E2AP");
-
-inline void save_msg_pcap(const byte_buffer& last_pdu)
-{
-  if (not g_pcap->is_write_enabled()) {
-    g_pcap->open("e2sm_kpm_meas_provider.pcap");
-  }
-  g_pcap->push_pdu(last_pdu.copy());
-  usleep(200);
-}
-#endif
+// Helper global variables to pass pcap_writer to all tests.
+bool      g_enable_pcap = false;
+dlt_pcap* g_pcap        = nullptr;
 
 class e2_rlc_metrics_notifier : public e2_du_metrics_notifier, public e2_du_metrics_interface
 {
@@ -56,10 +46,59 @@ private:
   e2_du_metrics_notifier* e2_meas_provider;
 };
 
-class e2sm_kpm_meas_provider_test : public ::testing::Test
+class e2_entity_test_with_pcap : public e2_test_base_with_pcap
 {
+protected:
+  dlt_pcap* external_pcap_writer;
+
   void SetUp() override
   {
+    external_pcap_writer = GetParam();
+
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+
+    cfg                  = config_helpers::make_default_e2ap_config();
+    cfg.e2sm_kpm_enabled = true;
+
+    gw   = std::make_unique<dummy_network_gateway_data_handler>();
+    pcap = std::make_unique<dummy_e2ap_pcap>();
+    if (external_pcap_writer) {
+      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
+    } else {
+      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    }
+    e2_client             = std::make_unique<dummy_e2_connection_client>();
+    du_metrics            = std::make_unique<dummy_e2_du_metrics>();
+    f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
+    factory               = timer_factory{timers, task_worker};
+    rc_param_configurator = std::make_unique<dummy_du_configurator>();
+    e2                    = create_e2_du_entity(cfg,
+                             e2_client.get(),
+                             du_metrics.get(),
+                             f1ap_ue_id_mapper.get(),
+                             rc_param_configurator.get(),
+                             factory,
+                             task_worker);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+    pcap->close();
+  }
+};
+
+class e2sm_kpm_meas_provider_test : public testing::TestWithParam<dlt_pcap*>
+{
+protected:
+  dlt_pcap* external_pcap_writer;
+
+  void SetUp() override
+  {
+    external_pcap_writer = GetParam();
+
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
@@ -73,8 +112,11 @@ class e2sm_kpm_meas_provider_test : public ::testing::Test
     e2sm_iface        = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
     gw                = std::make_unique<dummy_network_gateway_data_handler>();
     pcap              = std::make_unique<dummy_e2ap_pcap>();
-    packer            = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
-
+    if (external_pcap_writer) {
+      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
+    } else {
+      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    }
     du_metrics->connect_e2_du_meas_provider(du_meas_provider.get());
   }
 
@@ -174,30 +216,27 @@ scheduler_cell_metrics generate_sched_metrics(uint32_t                          
   return sched_metric;
 }
 
-#if PCAP_OUTPUT
-TEST_F(e2_entity_test, e2sm_kpm_generates_ran_func_desc)
+// E2 Setup Request is needed for Wireshark to correctly decode the subsequent Subscription Requests
+TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
 {
-  dummy_e2_pdu_notifier* dummy_msg_notifier = e2_client->get_e2_msg_notifier();
   // We need this test to generate E2 Setup Request, so Wireshark can decode the following RIC indication messages.
   test_logger.info("Launch e2 setup request procedure with task worker...");
   e2->start();
 
-  save_msg_pcap(gw->last_pdu);
-
   // Need to send setup response, so the transaction can be completed.
-  unsigned   transaction_id    = get_transaction_id(dummy_msg_notifier->last_e2_msg.pdu).value();
+  unsigned   transaction_id    = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   e2_setup_response.pdu.successful_outcome()
       .value.e2setup_resp()
-      ->ran_functions_accepted.value[0]
+      ->ran_functions_accepted[0]
       ->ran_function_id_item()
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
+  e2->stop();
 }
-#endif
 
-TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
+TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
 {
   std::vector<uint32_t> ue_ids        = {31, 23, 152};
   std::vector<uint32_t> nof_drbs      = {3, 1, 2};
@@ -255,12 +294,11 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
 
   asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
 
-#if PCAP_OUTPUT
-  // Save E2 Subscription Request.
-  e2_message e2_subscript_req = generate_e2sm_kpm_subscription_request(ric_action);
-  packer->handle_message(e2_subscript_req);
-  save_msg_pcap(gw->last_pdu);
-#endif
+  if (g_enable_pcap) {
+    // Save E2 Subscription Request.
+    e2_message e2_subscript_req = generate_e2sm_kpm_subscription_request(ric_action);
+    packer->handle_message(e2_subscript_req);
+  }
 
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
@@ -321,14 +359,14 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
       }
     }
   }
-#if PCAP_OUTPUT
-  e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
-  packer->handle_message(e2_msg);
-  save_msg_pcap(gw->last_pdu);
-#endif
+
+  if (g_enable_pcap) {
+    e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
+    packer->handle_message(e2_msg);
+  }
 }
 
-TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
+TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
 {
   std::vector<uint32_t> ue_ids        = {31, 23, 152};
   std::vector<uint32_t> nof_drbs      = {3, 1, 2};
@@ -367,12 +405,11 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
 
   asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
 
-#if PCAP_OUTPUT
-  // Save E2 Subscription Request.
-  e2_message e2_subscript_req = generate_e2sm_kpm_subscription_request(ric_action);
-  packer->handle_message(e2_subscript_req);
-  save_msg_pcap(gw->last_pdu);
-#endif
+  if (g_enable_pcap) {
+    // Save E2 Subscription Request.
+    e2_message e2_subscript_req = generate_e2sm_kpm_subscription_request(ric_action);
+    packer->handle_message(e2_subscript_req);
+  }
 
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
@@ -413,14 +450,13 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
     TESTASSERT_EQ((i + 1) * expected_ul_vol, meas_record[2].integer());
   }
 
-#if PCAP_OUTPUT
-  e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
-  packer->handle_message(e2_msg);
-  save_msg_pcap(gw->last_pdu);
-#endif
+  if (g_enable_pcap) {
+    e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
+    packer->handle_message(e2_msg);
+  }
 }
 
-TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
+TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
 {
   std::vector<uint32_t>              grants_ue0 = {1, 0, 3, 4, 5, 6, 7, 8, 9, 0};
   std::vector<uint32_t>              grants_ue1 = {0, 0, 8, 7, 6, 5, 4, 3, 2, 1};
@@ -479,12 +515,11 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
 
   asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
 
-#if PCAP_OUTPUT
-  // Save E2 Subscription Request.
-  e2_message e2_subscript_req = generate_e2sm_kpm_subscription_request(ric_action);
-  packer->handle_message(e2_subscript_req);
-  save_msg_pcap(gw->last_pdu);
-#endif
+  if (g_enable_pcap) {
+    // Save E2 Subscription Request.
+    e2_message e2_subscript_req = generate_e2sm_kpm_subscription_request(ric_action);
+    packer->handle_message(e2_subscript_req);
+  }
 
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
@@ -520,9 +555,39 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
   TESTASSERT_EQ(expected_dl_tot_prbs, meas_record[4].integer());
   TESTASSERT_EQ(expected_ul_tot_prbs, meas_record[5].integer());
 
-#if PCAP_OUTPUT
-  e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
-  packer->handle_message(e2_msg);
-  save_msg_pcap(gw->last_pdu);
-#endif
+  if (g_enable_pcap) {
+    e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
+    packer->handle_message(e2_msg);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(e2sm_kpm_tests, e2_entity_test_with_pcap, testing::Values(g_pcap));
+INSTANTIATE_TEST_SUITE_P(e2sm_kpm_meas_provider_test, e2sm_kpm_meas_provider_test, testing::Values(g_pcap));
+
+int main(int argc, char** argv)
+{
+  // Check for '--enable_pcap' cmd line argument, do not use getopt as it interferes with gtest.
+  for (int i = 1; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg == "--enable_pcap") {
+      g_enable_pcap = true;
+    }
+  }
+
+  srslog::init();
+
+  std::unique_ptr<task_worker_executor> pcap_exec;
+  std::unique_ptr<task_worker>          pcap_worker;
+  std::unique_ptr<dlt_pcap>             common_pcap_writer;
+
+  if (g_enable_pcap) {
+    pcap_worker        = std::make_unique<task_worker>("pcap_worker", 128);
+    pcap_exec          = std::make_unique<task_worker_executor>(*pcap_worker);
+    common_pcap_writer = create_e2ap_pcap("/tmp/e2sm_kpm_meas_provider_test.pcap", *pcap_exec);
+    g_pcap             = common_pcap_writer.get();
+  }
+
+  ::testing::InitGoogleTest(&argc, argv);
+  int ret = RUN_ALL_TESTS();
+  return ret;
 }
