@@ -37,6 +37,15 @@ bool split_7_2_du_application_unit_impl::on_configuration_validation(
   return validate_split_7_2_du_unit_config(unit_cfg, available_cpus);
 }
 
+split_7_2_du_application_unit_impl::split_7_2_du_application_unit_impl(std::string_view app_name)
+{
+  unit_cfg.du_high_cfg.config.pcaps.e2ap.filename = fmt::format("/tmp/{}_e2ap.pcap", app_name);
+  unit_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
+  unit_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
+  unit_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
+  unit_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
+}
+
 void split_7_2_du_application_unit_impl::on_parsing_configuration_registration(CLI::App& app)
 {
   configure_cli11_with_split_7_2_du_unit_config_schema(app, unit_cfg);
@@ -47,9 +56,9 @@ du_unit split_7_2_du_application_unit_impl::create_flexible_du_unit(const du_uni
   return create_split_7_2_du(unit_cfg, dependencies);
 }
 
-std::unique_ptr<flexible_du_application_unit> srsran::create_flexible_du_application_unit()
+std::unique_ptr<flexible_du_application_unit> srsran::create_flexible_du_application_unit(std::string_view app_name)
 {
-  return std::make_unique<split_7_2_du_application_unit_impl>();
+  return std::make_unique<split_7_2_du_application_unit_impl>(app_name);
 }
 
 void split_7_2_du_application_unit_impl::dump_config(YAML::Node& node) const

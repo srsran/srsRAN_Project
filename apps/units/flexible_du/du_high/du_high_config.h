@@ -672,17 +672,7 @@ struct du_high_unit_pcap_config {
     std::string type    = "udp";
     bool        enabled = false;
   } mac;
-  /// helper method to set the filename prefix for different apps.
-  /// This is used to provide different defaults depending on the app,
-  /// e.g.: "/tmp/gnb_f1ap.pcap", "/tmp/cu_f1ap.pcap" or "/tmp/du_f1ap.pcap"
-  void set_default_filename(std::string prefix)
-  {
-    e2ap.filename = fmt::format("{}_e2ap.pcap", prefix);
-    f1ap.filename = fmt::format("{}_f1ap.pcap", prefix);
-    f1u.filename  = fmt::format("{}_f1u.pcap", prefix);
-    rlc.filename  = fmt::format("{}_rlc.pcap", prefix);
-    mac.filename  = fmt::format("{}_mac.pcap", prefix);
-  }
+
   /// When using the gNB app, there is no point in instantiating
   /// F1 pcaps twice. This function force disables them.
   /// TODO: revisit

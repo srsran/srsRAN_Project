@@ -184,12 +184,10 @@ int main(int argc, char** argv)
   cu_appconfig cu_cfg;
   configure_cli11_with_cu_appconfig_schema(app, cu_cfg);
 
-  auto cu_cp_app_unit = create_cu_cp_application_unit();
-  cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg.set_default_filename("/tmp/cu");
+  auto cu_cp_app_unit = create_cu_cp_application_unit("cu");
   cu_cp_app_unit->on_parsing_configuration_registration(app);
 
-  auto cu_up_app_unit = create_cu_up_application_unit();
-  cu_up_app_unit->get_cu_up_unit_config().pcap_cfg.set_default_filename("/tmp/cu");
+  auto cu_up_app_unit = create_cu_up_application_unit("cu");
   cu_up_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.

@@ -20,6 +20,15 @@
 
 using namespace srsran;
 
+split6_du_application_unit_impl::split6_du_application_unit_impl(std::string_view app_name)
+{
+  unit_cfg.du_high_cfg.config.pcaps.e2ap.filename = fmt::format("/tmp/{}_e2ap.pcap", app_name);
+  unit_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
+  unit_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
+  unit_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
+  unit_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
+}
+
 void split6_du_application_unit_impl::on_loggers_registration()
 {
   register_split6_du_loggers(unit_cfg);

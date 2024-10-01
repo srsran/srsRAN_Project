@@ -39,6 +39,6 @@ public:
 };
 
 /// Creates a CU-UP application unit.
-std::unique_ptr<cu_up_application_unit> create_cu_up_application_unit();
+std::unique_ptr<cu_up_application_unit> create_cu_up_application_unit(std::string_view app_name);
 
 } // namespace srsran

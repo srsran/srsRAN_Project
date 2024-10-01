@@ -38,6 +38,6 @@ public:
 };
 
 /// Creates a CU-CP application unit.
-std::unique_ptr<cu_cp_application_unit> create_cu_cp_application_unit();
+std::unique_ptr<cu_cp_application_unit> create_cu_cp_application_unit(std::string_view app_name);
 
 } // namespace srsran

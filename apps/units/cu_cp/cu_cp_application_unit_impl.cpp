@@ -18,6 +18,13 @@
 
 using namespace srsran;
 
+cu_cp_application_unit_impl::cu_cp_application_unit_impl(std::string_view app_name)
+{
+  unit_cfg.pcap_cfg.ngap.filename = fmt::format("/tmp/{}_ngap.pcap", app_name);
+  unit_cfg.pcap_cfg.e1ap.filename = fmt::format("/tmp/{}_e1ap.pcap", app_name);
+  unit_cfg.pcap_cfg.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
+}
+
 void cu_cp_application_unit_impl::on_parsing_configuration_registration(CLI::App& app)
 {
   configure_cli11_with_cu_cp_unit_config_schema(app, unit_cfg);
@@ -53,7 +60,7 @@ void cu_cp_application_unit_impl::fill_worker_manager_config(worker_manager_conf
   fill_cu_cp_worker_manager_config(config, unit_cfg);
 }
 
-std::unique_ptr<cu_cp_application_unit> srsran::create_cu_cp_application_unit()
+std::unique_ptr<cu_cp_application_unit> srsran::create_cu_cp_application_unit(std::string_view app_name)
 {
-  return std::make_unique<cu_cp_application_unit_impl>();
+  return std::make_unique<cu_cp_application_unit_impl>(app_name);
 }

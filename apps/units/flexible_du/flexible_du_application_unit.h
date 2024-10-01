@@ -43,6 +43,6 @@ public:
 /// Different splits must provide an implementation of this free function so the applications can instantiate a flexible
 /// DU application unit. Only one of these implementations should be compiled, based on the DU_SPLIT_TYPE cmake
 /// definition.
-std::unique_ptr<flexible_du_application_unit> create_flexible_du_application_unit();
+std::unique_ptr<flexible_du_application_unit> create_flexible_du_application_unit(std::string_view app_name);
 
 } // namespace srsran

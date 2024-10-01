@@ -209,16 +209,13 @@ int main(int argc, char** argv)
   // Configure CLI11 with the gNB application configuration schema.
   configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
-  auto cu_cp_app_unit = create_cu_cp_application_unit();
-  cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg.set_default_filename("/tmp/gnb");
+  auto cu_cp_app_unit = create_cu_cp_application_unit("gnb");
   cu_cp_app_unit->on_parsing_configuration_registration(app);
 
-  auto cu_up_app_unit = create_cu_up_application_unit();
-  cu_up_app_unit->get_cu_up_unit_config().pcap_cfg.set_default_filename("/tmp/gnb");
+  auto cu_up_app_unit = create_cu_up_application_unit("gnb");
   cu_up_app_unit->on_parsing_configuration_registration(app);
 
-  auto du_app_unit = create_flexible_du_application_unit();
-  du_app_unit->get_du_high_unit_config().pcaps.set_default_filename("/tmp/gnb");
+  auto du_app_unit = create_flexible_du_application_unit("gnb");
   du_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.

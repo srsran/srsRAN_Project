@@ -19,6 +19,8 @@ namespace srsran {
 class cu_cp_application_unit_impl : public cu_cp_application_unit
 {
 public:
+  explicit cu_cp_application_unit_impl(std::string_view app_name);
+
   // See interface for documentation.
   void on_parsing_configuration_registration(CLI::App& app) override;
 
