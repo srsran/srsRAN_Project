@@ -26,6 +26,9 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
+__attribute__((weak)) void
+start_ng_handover_preparation(srslog::basic_logger& logger) asm("start_ng_handover_preparation");
+
 class ngap_impl final : public ngap_interface
 {
 public:

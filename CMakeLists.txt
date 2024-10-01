@@ -319,10 +319,10 @@ else (ENABLE_DPDK)
 endif (ENABLE_DPDK)
 
 # srsRAN Enterprise
-if (ENABLE_SRSRAN_ENTERPRISE)
+if (SRSRAN_ENTERPRISE_PATH)
     find_package(SRSRAN_ENTERPRISE MODULE REQUIRED)
     include(${SRSRAN_ENTERPRISE_BINARY_DIR}/srsran_enterprise.cmake)
-endif (ENABLE_SRSRAN_ENTERPRISE)
+endif (SRSRAN_ENTERPRISE_PATH)
 
 ########################################################################
 # Instruction Set Architecture setup

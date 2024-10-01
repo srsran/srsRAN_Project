@@ -52,6 +52,7 @@ ngap_impl::ngap_impl(const ngap_configuration&                      ngap_cfg_,
   context.ran_node_name             = ngap_cfg_.ran_node_name;
   context.supported_tas             = ngap_cfg_.supported_tas;
   context.pdu_session_setup_timeout = ngap_cfg_.pdu_session_setup_timeout;
+  start_ng_handover_preparation(logger);
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -1075,4 +1076,9 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
   log_pdu_helper(parent.logger, parent.logger.debug.enabled(), false, parent.ue_ctxt_list, msg.pdu);
 
   decorated->on_new_message(msg);
+}
+
+void srs_cu_cp::start_ng_handover_preparation(srslog::basic_logger& logger)
+{
+  fmt::print("NG handover is not supported\n");
 }
