@@ -938,7 +938,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
 
   ue_ctxt.logger.log_info("Starting HO preparation");
 
-  return start_ngap_handover_preperation(logger);
+  return start_ngap_handover_preparation(logger);
 }
 
 void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
@@ -1069,7 +1069,7 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
   decorated->on_new_message(msg);
 }
 
-async_task<ngap_handover_preparation_response> start_ngap_handover_preperation(srslog::basic_logger& logger)
+async_task<ngap_handover_preparation_response> srs_cu_cp::start_ngap_handover_preparation(srslog::basic_logger& logger)
 {
   logger.error("NG handover is not supported");
   auto err_function = [](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {

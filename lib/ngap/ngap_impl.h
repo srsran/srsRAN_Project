@@ -28,7 +28,7 @@ namespace srs_cu_cp {
 
 // Function prototype for starting handover from plugin
 __attribute__((weak)) async_task<ngap_handover_preparation_response>
-start_ngap_handover_preperation(srslog::basic_logger& logger) asm("start_ngap_preparation_procedure_func");
+start_ngap_handover_preparation(srslog::basic_logger& logger) asm("start_ngap_preparation_procedure_func");
 
 class ngap_impl final : public ngap_interface
 {
