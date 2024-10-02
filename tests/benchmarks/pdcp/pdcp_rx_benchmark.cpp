@@ -119,8 +119,8 @@ static void parse_args(int argc, char** argv, bench_params& params, app_params& 
   }
 }
 
-std::vector<byte_buffer_chain> gen_pdu_list(int                           nof_sdus,
-                                            int                           sdu_len,
+std::vector<byte_buffer_chain> gen_pdu_list(uint64_t                      nof_sdus,
+                                            uint32_t                      sdu_len,
                                             security::integrity_enabled   int_enabled,
                                             security::ciphering_enabled   ciph_enabled,
                                             security::integrity_algorithm int_algo,
@@ -163,9 +163,9 @@ std::vector<byte_buffer_chain> gen_pdu_list(int                           nof_sd
   pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
   // Prepare SDU list for benchmark
-  for (int i = 0; i < nof_sdus; i++) {
+  for (uint64_t i = 0; i < nof_sdus; i++) {
     byte_buffer sdu_buf = {};
-    for (int j = 0; j < sdu_len; ++j) {
+    for (uint32_t j = 0; j < sdu_len; ++j) {
       report_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
     }
     pdcp_tx->handle_sdu(std::move(sdu_buf));
@@ -223,8 +223,8 @@ void benchmark_pdcp_rx(bench_params                  params,
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
   std::unique_ptr<pdcp_entity_rx>          pdcp_rx;
 
-  int nof_sdus = 1024;
-  int sdu_len  = 1500;
+  uint64_t nof_sdus = 1024;
+  uint32_t sdu_len  = 1500;
 
   // Prepare
   auto prepare = [&]() mutable {
