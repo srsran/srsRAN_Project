@@ -36,13 +36,13 @@ namespace srsran {
 class rlc_sdu_queue_lockfree
 {
 public:
-  explicit rlc_sdu_queue_lockfree(uint16_t capacity_, uint32_t byte_limit_, rlc_bearer_logger& logger_) :
+  explicit rlc_sdu_queue_lockfree(uint32_t capacity_, uint32_t byte_limit_, rlc_bearer_logger& logger_) :
     logger(logger_), capacity(capacity_), byte_limit(byte_limit_)
   {
     sdu_states = std::make_unique<std::atomic<uint32_t>[]>(capacity);
     sdu_sizes  = std::make_unique<std::atomic<size_t>[]>(capacity);
 
-    for (uint16_t i = 0; i < capacity; i++) {
+    for (uint32_t i = 0; i < capacity; i++) {
       sdu_states[i].store(STATE_FREE, std::memory_order_relaxed);
     }
 
@@ -276,7 +276,7 @@ private:
 
   rlc_bearer_logger& logger;
 
-  const uint16_t capacity;
+  const uint32_t capacity;
   const uint32_t byte_limit;
 
   /// Combined atomic state of the queue reflecting the number of SDUs and the number of bytes.
