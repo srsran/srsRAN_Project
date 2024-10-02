@@ -26,14 +26,6 @@
 using namespace srsran;
 using namespace asn1::e2ap;
 
-e2_entity::e2_entity(e2ap_configuration&           cfg_,
-                     std::unique_ptr<e2_interface> decorated_e2_iface_,
-                     task_executor&                task_exec_) :
-  logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
-{
-  decorated_e2_iface = std::move(decorated_e2_iface_);
-}
-
 e2_entity::e2_entity(e2ap_configuration&                                              cfg_,
                      e2_connection_client*                                            e2_client_,
                      std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,

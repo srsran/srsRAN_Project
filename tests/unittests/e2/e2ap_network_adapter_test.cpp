@@ -18,6 +18,7 @@
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/timers.h"
@@ -84,8 +85,8 @@ protected:
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*net_adapter, *e2sm_mngr);
     factory              = timer_factory{timers, task_exec};
-    e2ap          = create_e2_with_task_exec(cfg, factory, *net_adapter, *e2_subscription_mngr, *e2sm_mngr, task_exec);
-    e2ap_rx_probe = std::make_unique<e2_decorator>(*e2ap, *this);
+    e2ap                 = create_e2(cfg, factory, *net_adapter, *e2_subscription_mngr, *e2sm_mngr);
+    e2ap_rx_probe        = std::make_unique<e2_decorator>(*e2ap, *this);
     net_adapter->connect_e2ap(e2ap_rx_probe.get(), e2ap_rx_probe.get());
   }
 
@@ -190,12 +191,19 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
 {
   // Action 1: Launch E2 setup procedure (sends E2 Setup Request to RIC).
   test_logger.info("Launching E2 setup procedure...");
-  e2ap->start();
-
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    cvar.wait(lock, [this]() { return ric_rx_e2_sniffer->msg_received; });
+  async_task<e2_setup_response_message>         t1 = e2ap->start_initial_e2_setup_routine();
+  lazy_task_launcher<e2_setup_response_message> t1_launcher(t1);
+  for (unsigned msec_elapsed = 0; msec_elapsed < 1000; ++msec_elapsed) {
+    {
+      std::unique_lock<std::mutex> lock(mutex);
+      if (cvar.wait_for(lock, std::chrono::milliseconds(1), [this]() { return ric_rx_e2_sniffer->msg_received; })) {
+        break;
+      }
+    }
+    // Execute tick if condition was not met
+    this->tick();
   }
+  ASSERT_FALSE(t1.ready());
 
   // Status: RIC received E2 Setup Request.
   ASSERT_EQ(ric_rx_e2_sniffer->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);

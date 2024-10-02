@@ -33,8 +33,6 @@ namespace srsran {
 class e2_entity final : public e2_interface
 {
 public:
-  e2_entity(e2ap_configuration& cfg_, std::unique_ptr<e2_interface> decorated_e2_iface_, task_executor& task_exec_);
-
   e2_entity(e2ap_configuration&                                              cfg_,
             e2_connection_client*                                            e2_client_,
             std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
