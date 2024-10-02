@@ -313,18 +313,8 @@ int main(int argc, char** argv)
   cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
   cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
   cu_cp_dependencies.timers         = cu_timers;
-
-  // Create N2 Client Gateways.
-  cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(
-      generate_n2_client_config(cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core,
-                                cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf,
-                                *cu_cp_dlt_pcaps.ngap,
-                                *epoll_broker)));
-
-  for (const auto& amf : cu_cp_app_unit->get_cu_cp_unit_config().extra_amfs) {
-    cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(generate_n2_client_config(
-        cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core, amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
-  }
+  cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
+  cu_cp_dependencies.broker         = epoll_broker.get();
 
   // create CU-CP.
   auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
