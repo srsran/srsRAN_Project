@@ -277,6 +277,7 @@ smoke zmq:
     GROUP: uesim
     TESTBED: zmq_uesim
     E2E_LOG_LEVEL: "info"
+    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   needs:
     - job: "basic relwithdeb"
       artifacts: true

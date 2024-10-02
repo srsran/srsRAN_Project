@@ -242,7 +242,7 @@ def test_zmq(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
-        ue_stop_timeout=1,
+        ue_stop_timeout=3,
         enable_security_mode=ciphering,
         post_command=("cu_cp --inactivity_timer=600", ""),
     )
