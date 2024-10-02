@@ -9,7 +9,6 @@
  */
 
 #include "du_high_wrapper_config_helper.h"
-
 #include "apps/services/e2_metric_connector_manager.h"
 #include "du_high_commands.h"
 #include "du_high_config.h"
@@ -24,6 +23,8 @@ using namespace srsran;
 
 void srsran::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
 {
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
+
   // Generate DU cells.
   auto cells = generate_du_cell_config(du_high_unit_cfg);
 
@@ -38,6 +39,21 @@ void srsran::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
                srsran::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn_f_ref) / 1e6,
                cell.dl_cfg_common.freq_info_dl.absolute_frequency_ssb,
                srsran::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn_f_ref) / 1e6);
+
+    logger.info(
+        "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, nof_crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
+        "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
+        cell.pci,
+        cell.dl_carrier.band,
+        cell.dl_carrier.arfcn_f_ref,
+        cell.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+        to_string(cell.dl_cfg_common.init_dl_bwp.generic_params.scs),
+        to_string(cell.ssb_cfg.scs),
+        cell.ssb_cfg.offset_to_point_A.to_uint(),
+        cell.ssb_cfg.k_ssb.to_uint(),
+        cell.dl_cfg_common.freq_info_dl.absolute_frequency_ssb,
+        cell.coreset0_idx,
+        cell.searchspace0_idx);
   }
 
   fmt::print("\n");

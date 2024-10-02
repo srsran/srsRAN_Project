@@ -223,8 +223,6 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
 
 std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_high_unit_config& config)
 {
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
-
   std::vector<srs_du::du_cell_config> out_cfg;
   out_cfg.reserve(config.cells_cfg.size());
 
@@ -644,21 +642,6 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Slicing configuration.
     std::vector<std::string> cell_plmns{base_cell.plmn};
     out_cell.rrm_policy_members = generate_du_slicing_rrm_policy_config(cell_plmns, base_cell.slice_cfg, nof_crbs);
-
-    logger.info(
-        "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
-        "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
-        base_cell.pci,
-        *param.band,
-        base_cell.dl_f_ref_arfcn,
-        nof_crbs,
-        to_string(base_cell.common_scs),
-        to_string(out_cfg.back().ssb_cfg.scs),
-        ssb_freq_loc->offset_to_point_A.to_uint(),
-        ssb_freq_loc->k_ssb.to_uint(),
-        ssb_freq_loc->ssb_arfcn,
-        ssb_freq_loc->coreset0_idx,
-        ssb_freq_loc->searchspace0_idx);
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {

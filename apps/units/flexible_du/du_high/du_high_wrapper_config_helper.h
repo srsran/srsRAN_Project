@@ -34,7 +34,7 @@ class rlc_pcap;
 class timer_manager;
 struct du_high_unit_config;
 
-/// Set up sources for the DU high metrics.
+/// Prints basic DU info in the stdout and in the GNB logs.
 void announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg);
 
 /// Fills the given DU high wrapper configuration.
