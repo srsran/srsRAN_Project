@@ -67,8 +67,10 @@ public:
 };
 
 struct bench_params {
-  unsigned nof_repetitions   = 10;
-  bool     print_timing_info = false;
+  unsigned nof_repetitions    = 10;
+  unsigned nof_crypto_threads = pdcp_nof_crypto_workers;
+  unsigned crypto_queue_size  = 4096;
+  bool     print_timing_info  = false;
 };
 
 struct app_params {
@@ -84,6 +86,8 @@ static void usage(const char* prog, const bench_params& params, const app_params
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
   fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", app.algo);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  fmt::print("\t-w Number of crypto workers [Default {}]\n", params.nof_crypto_threads);
+  fmt::print("\t-q Queue size of crypto worker pool [Default {}]\n", params.crypto_queue_size);
   fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n", app.log_level);
   fmt::print("\t-f Log filename to use [Default {}]\n", app.log_filename);
   fmt::print("\t-h Show this message\n");
@@ -92,10 +96,16 @@ static void usage(const char* prog, const bench_params& params, const app_params
 static void parse_args(int argc, char** argv, bench_params& params, app_params& app)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "a:R:l:f:th")) != -1) {
+  while ((opt = getopt(argc, argv, "a:R:w:q:l:f:th")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'w':
+        params.nof_crypto_threads = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'q':
+        params.crypto_queue_size = std::strtol(optarg, nullptr, 10);
         break;
       case 'a':
         app.algo = std::strtol(optarg, nullptr, 10);
@@ -190,11 +200,8 @@ void benchmark_pdcp_rx(bench_params                  params,
   task_worker          ul_worker{"ul_worker", 4096};
   task_worker_executor ul_exec{ul_worker};
 
-  unsigned nof_crypto_threads = pdcp_nof_crypto_workers;
-  unsigned crypto_queue_size  = 4096;
-
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc> crypto_worker_pool{
-      "crypto", nof_crypto_threads, crypto_queue_size};
+      "crypto", params.nof_crypto_threads, params.crypto_queue_size};
   task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_exec =
       task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
 
