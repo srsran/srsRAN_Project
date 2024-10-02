@@ -148,6 +148,13 @@ void scheduler_impl::handle_uci_indication(const uci_indication& uci)
   cells[uci.cell_index]->ue_sched.get_feedback_handler().handle_uci_indication(uci);
 }
 
+void scheduler_impl::handle_srs_indication(const srs_indication& srs)
+{
+  srsran_assert(cells.contains(srs.cell_index), "cell={} does not exist", srs.cell_index);
+
+  cells[srs.cell_index]->ue_sched.get_feedback_handler().handle_srs_indication(srs);
+}
+
 void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce)
 {
   du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(mac_ce.ue_index);

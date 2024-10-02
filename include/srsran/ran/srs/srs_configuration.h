@@ -29,6 +29,10 @@ enum class srs_group_or_sequence_hopping { neither, groupHopping, sequenceHoppin
 /// \brief \c resourceType, as per TS 38.331, "SRS-Resource".
 enum class srs_resource_type { aperiodic, semi_persistent, periodic };
 
+/// \brief SRS resource usage.
+/// \remark See TS 38.214, clause 6.2.1.
+enum class srs_usage : uint8_t { beam_management, codebook, non_codebook, antenna_switching };
+
 /// Convert SRS resource type to string.
 inline std::string_view to_string(srs_resource_type res_type)
 {
@@ -156,10 +160,6 @@ struct srs_config {
       bool operator!=(const periodic_resource_type& rhs) const { return !(rhs == *this); }
     };
 
-    /// \brief SRS resource usage.
-    /// \remark See TS 38.214, clause 6.2.1.
-    enum class usage { beam_management, codebook, non_codebook, antenna_switching };
-
     enum class srs_pwr_ctrl_adjustment_states { same_as_fci2, separate_closed_loop, not_set };
 
     /// The ID of this resource set. It is unique in the context of the BWP in which the parent SRS-Config is defined.
@@ -174,7 +174,7 @@ struct srs_config {
     std::variant<aperiodic_resource_type, semi_persistent_resource_type, periodic_resource_type> res_type;
     /// Indicates if the SRS resource set is used for beam management, codebook based or non-codebook based
     /// transmission or antenna switching.
-    usage srs_res_set_usage;
+    srs_usage srs_res_set_usage;
     /// When the field is not set the UE applies the value 1.
     alpha srs_pwr_ctrl_alpha{alpha::not_set};
     /// P0 value for SRS power control. The value is in dBm. Only even values (step size 2) are allowed. Values

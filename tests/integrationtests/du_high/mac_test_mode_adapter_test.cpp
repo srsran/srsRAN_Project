@@ -70,6 +70,10 @@ public:
   void handle_rach_indication(const mac_rach_indication& rach_ind) override {}
   void handle_crc(const mac_crc_indication_message& msg) override { events.last_crc = msg; }
   void handle_uci(const mac_uci_indication_message& msg) override { events.last_uci = msg; }
+  void handle_srs(const mac_srs_indication_message& msg) override
+  {
+    // TODO: Implement this.
+  }
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
   void handle_slot_indication(slot_point sl_tx) override
   {

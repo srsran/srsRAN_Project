@@ -197,9 +197,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       }
     }
     if (opt_srs_cfg.has_value()) {
-      const srs_config::srs_resource_set::usage usage = dci_sz_cfg.tx_config_non_codebook
-                                                            ? srs_config::srs_resource_set::usage::non_codebook
-                                                            : srs_config::srs_resource_set::usage::codebook;
+      const srs_usage usage = dci_sz_cfg.tx_config_non_codebook ? srs_usage::non_codebook : srs_usage::codebook;
       // See TS 38.214, clause 6.1.1.1 and 6.1.1.2.
       const auto* srs_res_set = std::find_if(
           opt_srs_cfg.value().srs_res_set_list.begin(),

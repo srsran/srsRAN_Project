@@ -457,6 +457,11 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
   forward_uci_ind_to_mac(msg_copy);
 }
 
+void mac_test_mode_cell_adapter::handle_srs(const mac_srs_indication_message& msg)
+{
+  // TODO: Implement this method.
+}
+
 // Intercepts the UL results coming from the MAC.
 void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {

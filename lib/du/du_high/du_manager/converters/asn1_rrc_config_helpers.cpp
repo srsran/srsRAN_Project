@@ -2179,16 +2179,16 @@ asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_
   }
 
   switch (cfg.srs_res_set_usage) {
-    case srs_config::srs_resource_set::usage::beam_management:
+    case srs_usage::beam_management:
       srs_res_set.usage = srs_res_set_s::usage_opts::beam_management;
       break;
-    case srs_config::srs_resource_set::usage::codebook:
+    case srs_usage::codebook:
       srs_res_set.usage = srs_res_set_s::usage_opts::codebook;
       break;
-    case srs_config::srs_resource_set::usage::non_codebook:
+    case srs_usage::non_codebook:
       srs_res_set.usage = srs_res_set_s::usage_opts::non_codebook;
       break;
-    case srs_config::srs_resource_set::usage::antenna_switching:
+    case srs_usage::antenna_switching:
       srs_res_set.usage = srs_res_set_s::usage_opts::ant_switching;
       break;
     default:

@@ -328,3 +328,25 @@ void srsran_scheduler_adapter::cell_handler::handle_uci(const mac_uci_indication
   // Forward UCI indication to the scheduler.
   parent->sched_impl->handle_uci_indication(uci_decoder.decode_uci(msg));
 }
+
+void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication_message& msg)
+{
+  srs_indication ind{};
+  ind.cell_index = cell_idx;
+  ind.slot_rx    = msg.sl_rx;
+  ind.srss.resize(msg.srss.size());
+  for (unsigned i = 0; i != msg.srss.size(); ++i) {
+    const mac_srs_pdu&                  mac_pdu = msg.srss[i];
+    srs_indication::srs_indication_pdu& pdu     = ind.srss[i];
+    pdu.rnti                                    = mac_pdu.rnti;
+    pdu.ue_index                                = parent->rnti_mng[mac_pdu.rnti];
+    pdu.time_advance_offset                     = mac_pdu.time_advance_offset;
+    if (std::holds_alternative<mac_srs_pdu::codebook_type>(mac_pdu.srs_report)) {
+      auto& codebook_type  = pdu.usage_report.emplace<srs_indication::srs_indication_pdu::codebook_type>();
+      codebook_type.matrix = std::get<mac_srs_pdu::codebook_type>(mac_pdu.srs_report).matrix;
+    }
+  }
+
+  // Forward SRS indication to the scheduler.
+  parent->sched_impl->handle_srs_indication(ind);
+}

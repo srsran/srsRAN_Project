@@ -21,6 +21,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/harq_id.h"
 #include <variant>
@@ -129,6 +130,47 @@ struct uci_indication {
   uci_pdu_list    ucis;
 };
 
+struct srs_indication {
+  struct srs_indication_pdu {
+    /// SRS indication with report for beam management.
+    struct beam_management_type {
+      // TODO: implement this type.
+    };
+
+    /// SRS indication with normalized Channel I/Q matrix for SRS codebook usage.
+    struct codebook_type {
+      srs_channel_matrix matrix;
+    };
+
+    /// SRS indication with normalized Channel I/Q matrix for SRS non-codebook usage.
+    struct non_codebook_type {
+      // TODO: implement this type.
+    };
+
+    /// SRS indication with Channel SVD representation for SRS antenna-switch usage.
+    struct antenna_switch_type {
+      // TODO: implement this type.
+    };
+
+    du_ue_index_t ue_index;
+    /// RNTI value corresponding to the UE that generated this PDU.
+    rnti_t rnti;
+    /// Timing Advance Offset measured for the UE.
+    std::optional<phy_time_unit> time_advance_offset;
+    /// Defines the SRS report type.
+    std::variant<beam_management_type, codebook_type, non_codebook_type, antenna_switch_type> usage_report;
+  };
+
+  using srs_pdu_list = static_vector<srs_indication_pdu, MAX_SRS_PDUS_PER_SRS_IND>;
+
+  // Note: user-defined ctor to avoid zero-initialization of srs_pdu_list.
+  srs_indication() {}
+
+  du_cell_index_t cell_index;
+  slot_point      slot_rx;
+  srs_pdu_list    srss;
+};
+
 struct dl_mac_ce_indication {
   du_ue_index_t ue_index;
   lcid_dl_sch_t ce_lcid;
@@ -149,6 +191,7 @@ public:
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
   virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;
+  virtual void handle_srs_indication(const srs_indication& srs)               = 0;
 
   /// \brief Handles PHR indication sent by MAC.
   ///

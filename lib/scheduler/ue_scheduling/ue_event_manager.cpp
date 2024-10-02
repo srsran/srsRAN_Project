@@ -529,6 +529,13 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
   }
 }
 
+void ue_event_manager::handle_srs_indication(const srs_indication& ind)
+{
+  srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
+
+  // TODO: Implement SRS handling.
+}
+
 void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
   auto handle_mac_ce_impl = [this, ce]() {

@@ -17,6 +17,8 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/ran/srs/srs_channel_matrix.h"
+#include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/ran/uci/uci_mapping.h"
 #include <variant>
@@ -240,6 +242,45 @@ struct mac_uci_indication_message {
   static_vector<mac_uci_pdu, MAX_UCI_PDUS_PER_UCI_IND> ucis;
 };
 
+struct mac_srs_pdu {
+  /// SRS indication with report for beam management.
+  struct beam_management_type {
+    // TODO: implement this type.
+  };
+
+  /// SRS indication with normalized Channel I/Q matrix for SRS codebook usage.
+  struct codebook_type {
+    srs_channel_matrix matrix;
+  };
+
+  /// SRS indication with normalized Channel I/Q matrix for SRS non-codebook usage.
+  struct non_codebook_type {
+    // TODO: implement this type.
+  };
+
+  /// SRS indication with Channel SVD representation for SRS antenna-switch usage.
+  struct antenna_switch_type {
+    // TODO: implement this type.
+  };
+
+  /// RNTI value corresponding to the UE that generated this PDU.
+  rnti_t rnti;
+  /// Timing Advance Offset measured for the UE.
+  std::optional<phy_time_unit> time_advance_offset;
+  // TODO: Check if we need to consider also the  timing_advance_offset_ns;
+
+  /// Defines the SRS report type.
+  std::variant<beam_management_type, codebook_type, non_codebook_type, antenna_switch_type> srs_report;
+};
+
+/// List of SRS indication PDUs for a given slot.
+struct mac_srs_indication_message {
+  /// Slot point corresponding to the reception of this indication.
+  slot_point sl_rx;
+  /// List of SRS PDUs carried in this indication.
+  static_vector<mac_srs_pdu, MAX_SRS_PDUS_PER_SRS_IND> srss;
+};
+
 /// Interface to handle feedback information from the PHY.
 class mac_cell_control_information_handler
 {
@@ -255,6 +296,11 @@ public:
   ///
   /// The UCI indication can be received on both PUSCH and PUCCH. There can be more than one UCI indication per slot.
   virtual void handle_uci(const mac_uci_indication_message& msg) = 0;
+
+  /// \brief Handles an SRS indication.
+  ///
+  /// There can be more than one SRS indication per slot.
+  virtual void handle_srs(const mac_srs_indication_message& msg) = 0;
 };
 
 } // namespace srsran
