@@ -45,14 +45,14 @@ protected:
     // simulate RIC side
     ric_rx_e2_sniffer = std::make_unique<e2_sniffer>(*this);
     ric_pcap          = std::make_unique<dummy_e2ap_pcap>();
-    e2_sctp_gateway_config e2_server_sctp_cfg{{}, *ric_broker, *ric_pcap};
-    e2_server_sctp_cfg.sctp.if_name      = "E2";
-    e2_server_sctp_cfg.sctp.ppid         = NGAP_PPID;
-    e2_server_sctp_cfg.sctp.bind_address = "127.0.0.1";
-    e2_server_sctp_cfg.sctp.bind_port    = 0;
-    e2_server_sctp_cfg.rx_sniffer        = ric_rx_e2_sniffer.get();
+    ric_sctp_gateway_config ric_server_sctp_cfg{{}, *ric_broker, *ric_pcap};
+    ric_server_sctp_cfg.sctp.if_name      = "E2";
+    ric_server_sctp_cfg.sctp.ppid         = NGAP_PPID;
+    ric_server_sctp_cfg.sctp.bind_address = "127.0.0.1";
+    ric_server_sctp_cfg.sctp.bind_port    = 0;
+    ric_server_sctp_cfg.rx_sniffer        = ric_rx_e2_sniffer.get();
 
-    ric_net_adapter = create_e2_gateway_server(e2_server_sctp_cfg);
+    ric_net_adapter = create_e2_gateway_server(ric_server_sctp_cfg);
     ric             = std::make_unique<near_rt_ric>();
     ric_net_adapter->attach_ric(ric->get_ric_e2_handler());
 
