@@ -12,7 +12,6 @@ add_executable(srsdu
     du_appconfig_validators.cpp
     du_appconfig_translators.cpp
     du_appconfig_yaml_writer.cpp
-    ../gnb/adapters/e2_gateway_remote_connector.cpp # TODO: Delete
 )
 
 install(TARGETS srsdu

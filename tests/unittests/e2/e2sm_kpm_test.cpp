@@ -47,7 +47,7 @@ protected:
     } else {
       packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
     }
-    e2_client             = std::make_unique<dummy_e2_connection_client>(*packer);
+    e2_client             = std::make_unique<dummy_e2_connection_client>();
     du_metrics            = std::make_unique<dummy_e2_du_metrics>();
     f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
     factory               = timer_factory{timers, task_worker};
@@ -158,13 +158,12 @@ std::vector<uint32_t> get_reported_ues(const std::vector<std::vector<uint32_t>>&
 // E2 Setup Request is needed for Wireshark to correctly decode the subsequent Subscription Requests
 TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
 {
-  dummy_e2_pdu_notifier* dummy_msg_notifier = e2_client->get_e2_msg_notifier();
   // We need this test to generate E2 Setup Request, so Wireshark can decode the following RIC indication messages.
   test_logger.info("Launch e2 setup request procedure with task worker...");
   e2->start();
 
   // Need to send setup response, so the transaction can be completed.
-  unsigned   transaction_id    = get_transaction_id(dummy_msg_notifier->last_e2_msg.pdu).value();
+  unsigned   transaction_id    = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   e2_setup_response.pdu.successful_outcome()
       .value.e2setup_resp()
@@ -173,6 +172,7 @@ TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
+  e2->stop();
 }
 
 TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)

@@ -32,8 +32,9 @@
 #include "apps/services/worker_manager.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
-#include "apps/gnb/adapters/e2_gateway_remote_connector.h"
+#include "apps/du/adapters/e2_gateways.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.
@@ -288,11 +289,9 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(du_cfg.metrics_cfg.addr, du_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-  // E2AP configuration.
-  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg.e2_cfg, E2_DU_PPID);
-
-  // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
+  // Instantiate E2AP client gateway.
+  std::unique_ptr<e2_connection_client> e2_gw =
+      create_du_e2_client_gateway(du_cfg.e2_cfg, *epoll_broker, *du_pcaps.e2ap);
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
   du_unit_dependencies                      du_dependencies;
@@ -302,7 +301,7 @@ int main(int argc, char** argv)
   du_dependencies.timer_mng          = &app_timers;
   du_dependencies.mac_p              = du_pcaps.mac.get();
   du_dependencies.rlc_p              = du_pcaps.rlc.get();
-  du_dependencies.e2_client_handler  = &e2_gw;
+  du_dependencies.e2_client_handler  = e2_gw.get();
   du_dependencies.json_sink          = &json_sink;
   du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
@@ -330,12 +329,6 @@ int main(int argc, char** argv)
 
   // Stop DU activity.
   du_inst.get_power_controller().stop();
-
-  if (du_cfg.e2_cfg.enable_du_e2) {
-    du_logger.info("Closing E2 network connections...");
-    e2_gw.close();
-    du_logger.info("E2 Network connections closed successfully");
-  }
 
   du_logger.info("Closing PCAP files...");
   du_pcaps.close();

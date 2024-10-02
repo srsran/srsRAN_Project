@@ -19,17 +19,16 @@ using namespace srsran;
 /// Test the initial e2ap setup procedure with own task worker
 TEST_F(e2_entity_test, on_start_send_e2ap_setup_request)
 {
-  dummy_e2_pdu_notifier* dummy_msg_notifier = e2_client->get_e2_msg_notifier();
   test_logger.info("Launch e2 setup request procedure with task worker...");
   e2->start();
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(dummy_msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(dummy_msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Action 2: E2 setup response received.
-  unsigned   transaction_id    = get_transaction_id(dummy_msg_notifier->last_e2_msg.pdu).value();
+  unsigned   transaction_id    = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   e2_setup_response.pdu.successful_outcome()
       .value.e2setup_resp()
@@ -38,6 +37,7 @@ TEST_F(e2_entity_test, on_start_send_e2ap_setup_request)
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
+  e2->stop();
 }
 
 /// Test successful cu-cp initiated e2 setup procedure

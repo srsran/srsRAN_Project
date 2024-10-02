@@ -40,7 +40,7 @@
 #include "srsran/cu_up/cu_up.h"
 
 // TODO remove apps/gnb/*.h
-#include "apps/gnb/adapters/e2_gateway_remote_connector.h"
+#include "apps/cu/adapters/e2_gateways.h"
 #include "apps/gnb/gnb_appconfig_translators.h"
 
 #include "apps/services/application_message_banners.h"
@@ -308,6 +308,10 @@ int main(int argc, char** argv)
   // Create time source that ticks the timers
   io_timer_source time_source{app_timers, *epoll_broker, std::chrono::milliseconds{1}};
 
+  // Instantiate E2AP client gateway.
+  std::unique_ptr<e2_connection_client> e2_gw_cu =
+      create_cu_e2_client_gateway(cu_cfg.e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap);
+
   // Create CU-CP config.
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
@@ -315,11 +319,7 @@ int main(int argc, char** argv)
   cu_cp_dependencies.timers         = cu_timers;
   cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
   cu_cp_dependencies.broker         = epoll_broker.get();
-  // E2AP configuration.
-  srsran::sctp_network_connector_config e2_cu_nw_config = generate_e2ap_nw_config(cu_cfg.e2_cfg, E2_CP_PPID);
-  // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw_cu{*epoll_broker, e2_cu_nw_config, *cu_cp_dlt_pcaps.e2ap};
-  cu_cp_dependencies.e2_gw = &e2_gw_cu;
+  cu_cp_dependencies.e2_gw          = e2_gw_cu.get();
   // create CU-CP.
   auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
   srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
