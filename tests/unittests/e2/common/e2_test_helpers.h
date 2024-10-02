@@ -839,39 +839,6 @@ class e2_test : public e2_test_base
   }
 };
 
-class e2_external_test : public e2_test_base
-{
-  void SetUp() override
-  {
-    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-    srslog::init();
-
-    cfg                  = config_helpers::make_default_e2ap_config();
-    cfg.e2sm_kpm_enabled = true;
-
-    msg_notifier     = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
-    du_metrics       = std::make_unique<dummy_e2_du_metrics>();
-    du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_kpm_packer  = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_kpm_iface   = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
-    e2sm_mngr        = std::make_unique<e2sm_manager>(test_logger);
-    e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
-    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier, *e2sm_mngr);
-    factory              = timer_factory{timers, task_worker};
-    e2     = create_e2_with_task_exec(cfg, factory, *msg_notifier, *e2_subscription_mngr, *e2sm_mngr, task_worker);
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
-    pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
-    msg_notifier->attach_handler(&(*packer));
-  }
-
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-};
-
 class e2_entity_test : public e2_test_base
 {
   void SetUp() override
