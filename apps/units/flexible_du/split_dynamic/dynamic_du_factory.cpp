@@ -177,7 +177,6 @@ du_unit srsran::create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, cons
                                                 i,
                                                 du_low_hal_cfg);
 
-
     auto cell_services_cfg = fill_du_high_wrapper_config(du_cfg.du_high_cfg,
                                                          tmp_cfg,
                                                          i,

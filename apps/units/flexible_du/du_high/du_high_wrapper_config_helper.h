@@ -40,7 +40,8 @@ class timer_manager;
 struct du_high_unit_config;
 struct du_high_wrapper_config;
 struct du_high_wrapper_dependencies;
-using e2_du_metrics_connector_manager = e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>;
+using e2_du_metrics_connector_manager =
+    e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>;
 
 /// Prints basic DU info in the stdout and in the GNB logs.
 void announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg);

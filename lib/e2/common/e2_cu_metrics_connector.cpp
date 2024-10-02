@@ -12,10 +12,7 @@
 
 using namespace srsran;
 
-e2_cu_metrics_connector::e2_cu_metrics_connector()
-{
-}
-
+e2_cu_metrics_connector::e2_cu_metrics_connector() {}
 
 void e2_cu_metrics_connector::connect_e2_cu_meas_provider(std::unique_ptr<e2_cu_metrics_notifier> meas_provider)
 {

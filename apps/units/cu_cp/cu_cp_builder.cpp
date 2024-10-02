@@ -19,8 +19,7 @@
 
 using namespace srsran;
 
-cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config&  cu_cp_unit_cfg,
-                               cu_cp_build_dependencies& dependencies)
+cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies)
 {
   srsran_assert(dependencies.cu_cp_executor, "Invalid CU-CP executor");
   srsran_assert(dependencies.cu_cp_e2_exec, "Invalid E2 executor");
@@ -57,8 +56,9 @@ cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config&  cu_cp_unit_cfg,
   }
 
   cu_cp_unit cu_cmd_wrapper;
-  cu_cmd_wrapper.unit = std::make_unique<cu_cp_wrapper>(std::move(n2_clients), create_cu_cp(cu_cp_cfg));
-  cu_cmd_wrapper.e2_metric_connector = std::move(e2_metric_connectors);
+  cu_cmd_wrapper.unit =
+      std::make_unique<cu_cp_wrapper>(std::move(n2_clients), std::move(e2_metric_connectors), create_cu_cp(cu_cp_cfg));
+
   // Add the commands;
   cu_cmd_wrapper.commands.push_back(std::make_unique<handover_app_command>(cu_cmd_wrapper.unit->get_command_handler()));
 

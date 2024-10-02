@@ -12,6 +12,7 @@
 
 #include "apps/services/application_command.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
+#include "cu_cp_wrapper.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
 
@@ -31,26 +32,23 @@ class e2_metric_connector_manager;
 class e2_connection_client;
 class e2_gateway_remote_connector;
 
-using e2_cu_metrics_connector_manager = e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
 /// CU-CP build dependencies.
 struct cu_cp_build_dependencies {
-  task_executor*               cu_cp_executor = nullptr;
-  task_executor*               cu_cp_e2_exec  = nullptr;
-  timer_manager*               timers         = nullptr;
-  dlt_pcap*                    ngap_pcap      = nullptr;
-  io_broker*                   broker         = nullptr;
-  e2_connection_client*        e2_gw          = nullptr;
+  task_executor*        cu_cp_executor = nullptr;
+  task_executor*        cu_cp_e2_exec  = nullptr;
+  timer_manager*        timers         = nullptr;
+  dlt_pcap*             ngap_pcap      = nullptr;
+  io_broker*            broker         = nullptr;
+  e2_connection_client* e2_gw          = nullptr;
 };
 
 /// Wraps the CU-CP and its supported application commands.
 struct cu_cp_unit {
-  std::unique_ptr<srs_cu_cp::cu_cp>                               unit;
+  std::unique_ptr<cu_cp_wrapper>                                  unit;
   std::vector<std::unique_ptr<app_services::application_command>> commands;
-  std::unique_ptr<e2_cu_metrics_connector_manager>                e2_metric_connector;
 };
 
 /// Builds a CU-CP object with the given configuration.
-cu_cp_unit build_cu_cp(const cu_cp_unit_config&  cu_cp_unit_cfg,
-                       cu_cp_build_dependencies& dependencies);
+cu_cp_unit build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies);
 
 } // namespace srsran

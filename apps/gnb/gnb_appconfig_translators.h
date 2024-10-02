@@ -10,12 +10,12 @@
 
 #pragma once
 
+#include "apps/services/e2/e2_appconfig.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_high/du_qos_config.h"
 #include "srsran/du/du_high/du_srb_config.h"
-#include "apps/services/e2/e2_appconfig.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"

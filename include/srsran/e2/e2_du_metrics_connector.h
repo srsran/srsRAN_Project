@@ -24,7 +24,7 @@ class e2_du_metrics_connector : public e2_du_metrics_notifier, public e2_du_metr
 {
 public:
   e2_du_metrics_connector();
-  ~e2_du_metrics_connector(){};
+  ~e2_du_metrics_connector() = default;
 
   void report_metrics(const scheduler_cell_metrics& metrics) override;
 

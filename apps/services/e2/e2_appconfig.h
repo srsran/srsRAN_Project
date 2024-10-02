@@ -7,7 +7,10 @@
  * the distribution.
  *
  */
+
 #pragma once
+
+#include <cstdint>
 #include <string>
 
 namespace srsran {

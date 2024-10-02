@@ -288,7 +288,6 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(du_cfg.metrics_cfg.addr, du_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-
   // E2AP configuration.
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg.e2_cfg, E2_DU_PPID);
 
@@ -297,15 +296,15 @@ int main(int argc, char** argv)
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
   du_unit_dependencies                      du_dependencies;
-  du_dependencies.workers              = &workers;
-  du_dependencies.f1c_client_handler   = f1c_gw.get();
-  du_dependencies.f1u_gw               = du_f1u_conn.get();
-  du_dependencies.timer_mng            = &app_timers;
-  du_dependencies.mac_p                = du_pcaps.mac.get();
-  du_dependencies.rlc_p                = du_pcaps.rlc.get();
-  du_dependencies.e2_client_handler    = &e2_gw;
-  du_dependencies.json_sink            = &json_sink;
-  du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
+  du_dependencies.workers            = &workers;
+  du_dependencies.f1c_client_handler = f1c_gw.get();
+  du_dependencies.f1u_gw             = du_f1u_conn.get();
+  du_dependencies.timer_mng          = &app_timers;
+  du_dependencies.mac_p              = du_pcaps.mac.get();
+  du_dependencies.rlc_p              = du_pcaps.rlc.get();
+  du_dependencies.e2_client_handler  = &e2_gw;
+  du_dependencies.json_sink          = &json_sink;
+  du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
   auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
   // Only DU has metrics now.

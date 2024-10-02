@@ -145,7 +145,6 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   return out;
 }
 
-
 std::pair<std::vector<app_services::metrics_config>, std::vector<std::unique_ptr<app_services::application_command>>>
 
 srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
@@ -191,12 +190,12 @@ srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
   // DU high metrics.
   std::pair<std::vector<app_services::metrics_config>, std::vector<std::unique_ptr<app_services::application_command>>>
       du_services_cfg;
-  du_hi_cfg.sched_ue_metrics_notifier =
-      build_scheduler_du_metrics(du_services_cfg,
-                                 metrics_notifier,
-                                 du_high_unit_cfg,
-                                 json_sink,
-                                 e2_metric_connectors.get_e2_metric_notifier(du_idx));
+
+  du_hi_cfg.sched_ue_metrics_notifier = build_scheduler_du_metrics(du_services_cfg,
+                                                                   metrics_notifier,
+                                                                   du_high_unit_cfg,
+                                                                   json_sink,
+                                                                   e2_metric_connectors.get_e2_metric_notifier(du_idx));
 
   du_hi_cfg.rlc_metrics_notif = build_rlc_du_metrics(du_services_cfg.first,
                                                      metrics_notifier,
