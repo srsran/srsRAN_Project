@@ -293,10 +293,9 @@ srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl
   static const unsigned SYMBOLS_PER_SLOT = get_nsymb_per_slot(cp);
 
   const unsigned tdd_period_slots = nof_slots_per_tdd_period(tdd_cfg);
-  const unsigned nof_dl_slots     = nof_full_dl_slots_per_tdd_period(tdd_cfg);
+  const unsigned nof_dl_slots     = nof_dl_slots_per_tdd_period(tdd_cfg);
   const unsigned nof_ul_slots     = nof_full_ul_slots_per_tdd_period(tdd_cfg);
 
-  // TODO: This algorithm may need to be revisited for partial UL slots to avoid that the partial slot is always picked.
   std::vector<pusch_time_domain_resource_allocation> result;
   for (unsigned idx = 0; idx < tdd_period_slots and result.size() < pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS;
        ++idx) {

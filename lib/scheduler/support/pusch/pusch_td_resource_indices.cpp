@@ -25,7 +25,7 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
   std::optional<unsigned> nof_full_dl_slots = std::nullopt;
   if (cell_cfg.is_tdd()) {
     nof_full_ul_slots = nof_full_ul_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
-    nof_full_dl_slots = nof_full_dl_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
+    nof_full_dl_slots = nof_dl_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
   }
 
   for (const pusch_time_domain_resource_allocation& pusch_td_res : pusch_time_domain_list) {
