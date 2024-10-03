@@ -13,7 +13,7 @@ cell_cfg:
   pucch:
     sr_period_ms: 20   # This can be set either 20 or 40 ms.
     nof_ue_res_harq_per_set: 8
-    nof_cell_harq_pucch_sets: 2    # Increase this if UEs are not scheduled PDSCH due to PUCCH resources starvation.
+    nof_cell_harq_pucch_res_sets: 2    # Increase this if UEs are not scheduled PDSCH due to PUCCH resources starvation.
     f0_or_f1_nof_cell_res_sr: 80
     f2_nof_cell_res_csi: 80
   csi:
