@@ -341,10 +341,7 @@ void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication
     pdu.rnti                                    = mac_pdu.rnti;
     pdu.ue_index                                = parent->rnti_mng[mac_pdu.rnti];
     pdu.time_advance_offset                     = mac_pdu.time_advance_offset;
-    if (std::holds_alternative<mac_srs_pdu::codebook_type>(mac_pdu.srs_report)) {
-      auto& codebook_type  = pdu.usage_report.emplace<srs_indication::srs_indication_pdu::codebook_type>();
-      codebook_type.matrix = std::get<mac_srs_pdu::codebook_type>(mac_pdu.srs_report).matrix;
-    }
+    pdu.channel_matrix                          = mac_pdu.channel_matrix;
   }
 
   // Forward SRS indication to the scheduler.

@@ -243,34 +243,14 @@ struct mac_uci_indication_message {
 };
 
 struct mac_srs_pdu {
-  /// SRS indication with report for beam management.
-  struct beam_management_type {
-    // TODO: implement this type.
-  };
-
-  /// SRS indication with normalized Channel I/Q matrix for SRS codebook usage.
-  struct codebook_type {
-    srs_channel_matrix matrix;
-  };
-
-  /// SRS indication with normalized Channel I/Q matrix for SRS non-codebook usage.
-  struct non_codebook_type {
-    // TODO: implement this type.
-  };
-
-  /// SRS indication with Channel SVD representation for SRS antenna-switch usage.
-  struct antenna_switch_type {
-    // TODO: implement this type.
-  };
-
   /// RNTI value corresponding to the UE that generated this PDU.
   rnti_t rnti;
   /// Timing Advance Offset measured for the UE.
   std::optional<phy_time_unit> time_advance_offset;
-  // TODO: Check if we need to consider also the  timing_advance_offset_ns;
-
-  /// Defines the SRS report type.
-  std::variant<beam_management_type, codebook_type, non_codebook_type, antenna_switch_type> srs_report;
+  /// Channel matrix reported in the SRS codebook-based report.
+  /// \remark This Channel matrix assumes that the SRS usage is codebook-based.
+  /// TODO: Refactor this to consider different SRS usages when needed.
+  srs_channel_matrix channel_matrix;
 };
 
 /// List of SRS indication PDUs for a given slot.
