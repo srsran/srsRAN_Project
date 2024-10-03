@@ -387,7 +387,7 @@ class ru_emulator : public frame_notifier
   // Pre-generated test data for each symbol for each configured eAxC.
   std::vector<eaxc_buffers> test_data;
   // Keeps track of last used seq_id for each eAxC.
-  circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
+  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
   // Stores the list of configured eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 

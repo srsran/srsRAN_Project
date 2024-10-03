@@ -24,15 +24,15 @@ class sequence_id_checker_impl : public sequence_id_checker
   static constexpr int NOF_SEQUENCES_IDENTIFIERS      = 1u << 8;
   static constexpr int HALF_NOF_SEQUENCES_IDENTIFIERS = NOF_SEQUENCES_IDENTIFIERS / 2;
 
-  bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                  initialized;
-  circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> counters;
+  bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                         initialized;
+  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> counters;
 
 public:
   /// Default constructor.
   sequence_id_checker_impl() : initialized(MAX_SUPPORTED_EAXC_ID_VALUE)
   {
     for (unsigned K = 0; K != MAX_SUPPORTED_EAXC_ID_VALUE; ++K) {
-      counters.insert(K, 0);
+      counters.emplace(K, 0);
     }
   }
 
@@ -44,19 +44,21 @@ public:
                   eaxc,
                   MAX_SUPPORTED_EAXC_ID_VALUE);
 
+    auto& counter = counters[eaxc];
+
     // First packet is always valid.
     if (!initialized.test(eaxc)) {
       initialized.set(eaxc);
-      counters[eaxc] = seq_id;
+      counter = seq_id;
 
       return 0;
     }
 
     // Get the expected sequence identifier and update its value.
-    uint8_t expected_seq_id = counters[eaxc] + 1;
+    uint8_t expected_seq_id = counter + 1;
 
     if (seq_id == expected_seq_id) {
-      ++counters[eaxc];
+      ++counter;
 
       return 0;
     }
@@ -65,7 +67,7 @@ public:
 
     // Update the expected sequence identifier when the sequence identifier is from the future.
     if (nof_skipped_seq_id > 0) {
-      counters[eaxc] = seq_id;
+      counter = seq_id;
     }
 
     return nof_skipped_seq_id;

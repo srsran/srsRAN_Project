@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/detail/type_traits.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/srslog/log_channel.h"
 #include "fmt/format.h"
@@ -33,13 +34,6 @@ struct is_span : std::false_type {
 };
 template <typename U>
 struct is_span<span<U>> : std::true_type {
-};
-
-template <typename U>
-struct is_std_array : std::false_type {
-};
-template <typename U, std::size_t N>
-struct is_std_array<std::array<U, N>> : std::true_type {
 };
 
 template <typename U>
