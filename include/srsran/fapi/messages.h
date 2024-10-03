@@ -1116,16 +1116,15 @@ struct srs_channel_svd_representation {
   std::array<srs_svd_prg, NUM_MAX_PRG> svd_prg;
 };
 
-/// Encodes the usage of the srs.
-enum class srs_usage_mode : uint8_t { beam_management, codebook, non_codebook, antenna_switching, reserved };
-
 /// SRS indication pdu.
 struct srs_indication_pdu {
-  uint32_t           handle;
-  rnti_t             rnti;
-  uint16_t           timing_advance_offset;
-  int16_t            timing_advance_offset_ns;
-  srs_usage_mode     srs_usage;
+  uint32_t handle;
+  rnti_t   rnti;
+  uint16_t timing_advance_offset;
+  int16_t  timing_advance_offset_ns;
+  /// \remark The enum doesn't contain the \c reserved value defined in the FAPI spec. This is because the value is
+  /// currently not used anywhere.
+  srs_usage          usage;
   uint8_t            report_type;
   tlv_info           report;
   srs_channel_matrix matrix;

@@ -29,7 +29,7 @@ TEST(srs_indication_builder, valid_srs_indication_passes)
 
   std::optional<unsigned> timing    = 0;
   std::optional<int32_t>  timing_ns = 0;
-  srs_usage_mode          srs_usage = srs_usage_mode::codebook;
+  srs_usage               usage     = srs_usage::codebook;
 
   pdu_builder.set_metrics_parameters(timing, timing_ns);
 
@@ -47,7 +47,7 @@ TEST(srs_indication_builder, valid_srs_indication_passes)
 
   ASSERT_EQ(timing ? timing.value() : std::numeric_limits<uint16_t>::max(), pdu.timing_advance_offset);
   ASSERT_EQ(timing_ns ? timing_ns.value() : std::numeric_limits<uint32_t>::max(), pdu.timing_advance_offset_ns);
-  ASSERT_EQ(srs_usage, pdu.srs_usage);
+  ASSERT_EQ(usage, pdu.usage);
   ASSERT_EQ(matrix.get_nof_rx_ports(), pdu.matrix.get_nof_rx_ports());
   ASSERT_EQ(matrix.get_nof_tx_ports(), pdu.matrix.get_nof_tx_ports());
 }

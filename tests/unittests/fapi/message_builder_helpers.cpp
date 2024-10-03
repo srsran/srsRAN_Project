@@ -1271,7 +1271,7 @@ srs_indication_message unittest::build_valid_srs_indication()
   pdu.rnti                     = generate_rnti();
   pdu.timing_advance_offset    = generate_timing_advance_offset();
   pdu.timing_advance_offset_ns = generate_timing_advance_offset_in_ns();
-  pdu.srs_usage                = srs_usage_mode::codebook;
+  pdu.usage                    = srs_usage::codebook;
 
   return msg;
 }

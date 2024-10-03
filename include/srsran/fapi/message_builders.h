@@ -1662,7 +1662,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.10 Table 3-132.
   srs_indication_pdu_builder& set_codebook_report_matrix(const srs_channel_matrix& matrix)
   {
-    pdu.srs_usage   = srs_usage_mode::codebook;
+    pdu.usage       = srs_usage::codebook;
     pdu.report_type = 1;
     pdu.matrix      = matrix;
 
