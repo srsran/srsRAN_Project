@@ -132,14 +132,22 @@ struct uci_indication {
 
 struct srs_indication {
   struct srs_indication_pdu {
+    srs_indication_pdu(const du_ue_index_t          ue_idx,
+                       const rnti_t                 ue_rnti_,
+                       std::optional<phy_time_unit> ta,
+                       const srs_channel_matrix&    matrix) :
+      ue_index(ue_idx), rnti(ue_rnti_), time_advance_offset(ta), channel_matrix(matrix)
+    {
+    }
+
     du_ue_index_t ue_index;
     /// RNTI value corresponding to the UE that generated this PDU.
     rnti_t rnti;
     /// Timing Advance Offset measured for the UE.
     std::optional<phy_time_unit> time_advance_offset;
     /// Channel matrix reported in the SRS codebook-based report.
-    /// \remark This Channel matrix assumes that the SRS usage is codebook-based.
-    /// TODO: Refactor this to consider different SRS usages when needed.
+    /// \remark This Channel matrix assumes that the SRS usage is codebook-based, which is the only usage currently
+    /// supported.
     srs_channel_matrix channel_matrix;
   };
 

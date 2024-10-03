@@ -9,7 +9,6 @@
  */
 
 #include "srsran_scheduler_adapter.h"
-#include "../mac_ul/ul_bsr.h"
 #include "srsran/scheduler/scheduler_factory.h"
 
 using namespace srsran;
@@ -298,7 +297,7 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
   ind.cell_index = cell_idx;
   ind.sl_rx      = msg.sl_rx;
   ind.crcs.resize(msg.crcs.size());
-  for (unsigned i = 0; i != msg.crcs.size(); ++i) {
+  for (unsigned i = 0, size = msg.crcs.size(); i != size; ++i) {
     const mac_crc_pdu&     mac_pdu = msg.crcs[i];
     ul_crc_pdu_indication& pdu     = ind.crcs[i];
     pdu.rnti                       = mac_pdu.rnti;
@@ -314,11 +313,11 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
   parent->sched_impl->handle_crc_indication(ind);
 
   // Report to RLF handler the CRC result.
-  for (unsigned i = 0; i != ind.crcs.size(); ++i) {
+  for (const auto& crc : ind.crcs) {
     // If Msg3, ignore the CRC result.
     // Note: UE index is invalid for Msg3 CRCs because no UE has been allocated yet.
-    if (ind.crcs[i].ue_index != INVALID_DU_UE_INDEX) {
-      parent->rlf_handler.handle_crc(ind.crcs[i].ue_index, cell_idx, ind.crcs[i].tb_crc_success);
+    if (crc.ue_index != INVALID_DU_UE_INDEX) {
+      parent->rlf_handler.handle_crc(crc.ue_index, cell_idx, crc.tb_crc_success);
     }
   }
 }
@@ -331,19 +330,13 @@ void srsran_scheduler_adapter::cell_handler::handle_uci(const mac_uci_indication
 
 void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication_message& msg)
 {
-  srs_indication ind{};
+  srs_indication ind;
   ind.cell_index = cell_idx;
   ind.slot_rx    = msg.sl_rx;
-  ind.srss.resize(msg.srss.size());
-  for (unsigned i = 0; i != msg.srss.size(); ++i) {
-    const mac_srs_pdu&                  mac_pdu = msg.srss[i];
-    srs_indication::srs_indication_pdu& pdu     = ind.srss[i];
-    pdu.rnti                                    = mac_pdu.rnti;
-    pdu.ue_index                                = parent->rnti_mng[mac_pdu.rnti];
-    pdu.time_advance_offset                     = mac_pdu.time_advance_offset;
-    pdu.channel_matrix                          = mac_pdu.channel_matrix;
+  for (const auto& mac_pdu : msg.srss) {
+    ind.srss.emplace_back(
+        parent->rnti_mng[mac_pdu.rnti], mac_pdu.rnti, mac_pdu.time_advance_offset, mac_pdu.channel_matrix);
   }
-
   // Forward SRS indication to the scheduler.
   parent->sched_impl->handle_srs_indication(ind);
 }

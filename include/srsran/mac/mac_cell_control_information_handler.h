@@ -243,13 +243,18 @@ struct mac_uci_indication_message {
 };
 
 struct mac_srs_pdu {
+  mac_srs_pdu(rnti_t rnti_, std::optional<phy_time_unit> ta, srs_channel_matrix& matrix) :
+    rnti(rnti_), time_advance_offset(ta), channel_matrix(matrix)
+  {
+  }
+
   /// RNTI value corresponding to the UE that generated this PDU.
   rnti_t rnti;
   /// Timing Advance Offset measured for the UE.
   std::optional<phy_time_unit> time_advance_offset;
   /// Channel matrix reported in the SRS codebook-based report.
-  /// \remark This Channel matrix assumes that the SRS usage is codebook-based.
-  /// TODO: Refactor this to consider different SRS usages when needed.
+  /// \remark This Channel matrix assumes that the SRS usage is codebook-based, which is the only usage currently
+  /// supported.
   srs_channel_matrix channel_matrix;
 };
 
