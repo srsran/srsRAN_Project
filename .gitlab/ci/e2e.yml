@@ -450,7 +450,6 @@ test mode ue:
   needs:
     - job: "basic relwithdeb"
       artifacts: true
-    - *txrx-lib
     - *retina-needs
 
 test mode ue asan:
@@ -458,7 +457,6 @@ test mode ue asan:
   needs:
     - job: "basic asan"
       artifacts: true
-    - *txrx-lib
     - *retina-needs
 
 test mode ue memcheck:
@@ -466,7 +464,6 @@ test mode ue memcheck:
   needs:
     - job: "basic memcheck"
       artifacts: true
-    - *txrx-lib
     - *retina-needs
 
 test mode ru:
