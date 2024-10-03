@@ -938,7 +938,15 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
 
   ue_ctxt.logger.log_info("Starting HO preparation");
 
-  return start_ngap_handover_preparation(logger);
+  return start_ngap_handover_preparation(msg,
+                                         ue_ctxt.serving_guami.plmn,
+                                         ue_ctxt.ue_ids,
+                                         *tx_pdu_notifier,
+                                         ue->get_ngap_rrc_ue_notifier(),
+                                         cu_cp_notifier,
+                                         ev_mng,
+                                         timer_factory{timers, ctrl_exec},
+                                         ue_ctxt.logger);
 }
 
 void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
@@ -1069,9 +1077,18 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
   decorated->on_new_message(msg);
 }
 
-async_task<ngap_handover_preparation_response> srs_cu_cp::start_ngap_handover_preparation(srslog::basic_logger& logger)
+async_task<ngap_handover_preparation_response>
+srs_cu_cp::start_ngap_handover_preparation(const ngap_handover_preparation_request& req_,
+                                           const plmn_identity&                     serving_plmn_,
+                                           const ngap_ue_ids&                       ue_ids_,
+                                           ngap_message_notifier&                   amf_notifier_,
+                                           ngap_rrc_ue_notifier&                    rrc_ue_notifier_,
+                                           ngap_cu_cp_notifier&                     cu_cp_notifier_,
+                                           ngap_transaction_manager&                ev_mng_,
+                                           timer_factory                            timers,
+                                           ngap_ue_logger&                          logger_)
 {
-  logger.error("NG Handover failed. Cause: NG handover not supported.");
+  logger_.log_error("NG Handover failed. Cause: NG handover not supported.");
   auto err_function = [](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_RETURN(ngap_handover_preparation_response{false});
