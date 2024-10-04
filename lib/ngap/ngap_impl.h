@@ -27,18 +27,6 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-// Function prototype for starting handover from plugin
-__attribute__((weak)) async_task<ngap_handover_preparation_response>
-                      start_ngap_handover_preparation(const ngap_handover_preparation_request& req_,
-                                                      const plmn_identity&                     serving_plmn_,
-                                                      const ngap_ue_ids&                       ue_ids_,
-                                                      ngap_message_notifier&                   amf_notifier_,
-                                                      ngap_rrc_ue_notifier&                    rrc_ue_notifier_,
-                                                      ngap_cu_cp_notifier&                     cu_cp_notifier_,
-                                                      ngap_transaction_manager&                ev_mng_,
-                                                      timer_factory                            timers,
-                                                      ngap_ue_logger& logger_) asm("start_ngap_preparation_procedure_func");
-
 class ngap_impl final : public ngap_interface
 {
 public:

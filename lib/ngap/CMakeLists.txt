@@ -22,6 +22,7 @@ set(SOURCES
         procedures/ngap_pdu_session_resource_setup_procedure.cpp
         procedures/ngap_pdu_session_resource_modify_procedure.cpp
         procedures/ngap_pdu_session_resource_release_procedure.cpp
+        procedures/ngap_handover_preparation_procedure.cpp
         procedures/ngap_handover_resource_allocation_procedure.cpp
         procedures/ngap_ue_context_release_procedure.cpp
     )
@@ -30,7 +31,6 @@ set(SOURCES
 add_library(srsran_ngap STATIC ${SOURCES})
 
 target_link_libraries(srsran_ngap
-	ngap_asn1
 	srsran_cu_cp
 	ngap_asn1
 	srsran_support)

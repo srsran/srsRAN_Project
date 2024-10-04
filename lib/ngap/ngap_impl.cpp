@@ -16,6 +16,7 @@
 #include "procedures/ng_reset_procedure.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_dl_nas_message_transfer_procedure.h"
+#include "procedures/ngap_handover_preparation_procedure.h"
 #include "procedures/ngap_handover_resource_allocation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
 #include "procedures/ngap_pdu_session_resource_modify_procedure.h"
@@ -1075,23 +1076,4 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
   log_pdu_helper(parent.logger, parent.logger.debug.enabled(), false, parent.ue_ctxt_list, msg.pdu);
 
   decorated->on_new_message(msg);
-}
-
-async_task<ngap_handover_preparation_response>
-srs_cu_cp::start_ngap_handover_preparation(const ngap_handover_preparation_request& req_,
-                                           const plmn_identity&                     serving_plmn_,
-                                           const ngap_ue_ids&                       ue_ids_,
-                                           ngap_message_notifier&                   amf_notifier_,
-                                           ngap_rrc_ue_notifier&                    rrc_ue_notifier_,
-                                           ngap_cu_cp_notifier&                     cu_cp_notifier_,
-                                           ngap_transaction_manager&                ev_mng_,
-                                           timer_factory                            timers,
-                                           ngap_ue_logger&                          logger_)
-{
-  logger_.log_error("NG Handover failed. Cause: NG handover not supported.");
-  auto err_function = [](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_RETURN(ngap_handover_preparation_response{false});
-  };
-  return launch_async(std::move(err_function));
 }
