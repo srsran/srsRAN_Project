@@ -152,6 +152,9 @@ du_unit srsran::create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, cons
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
   }
 
+  // Initialize and configure the HAL.
+  hal_upper_phy_config du_low_hal_cfg = make_du_low_hal_config_and_dependencies(du_lo, du_cells.size());
+
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create one DU per cell.
     srs_du::du_wrapper_config du_cfg  = {};
@@ -167,7 +170,8 @@ du_unit srsran::create_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, cons
                                                 du_impl->get_upper_ru_dl_rg_adapter(),
                                                 du_impl->get_upper_ru_ul_request_adapter(),
                                                 *dependencies.workers,
-                                                i);
+                                                i,
+                                                du_low_hal_cfg);
 
     auto cell_services_cfg = fill_du_high_wrapper_config(du_cfg.du_high_cfg,
                                                          tmp_cfg,

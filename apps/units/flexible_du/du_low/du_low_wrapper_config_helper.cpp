@@ -59,19 +59,9 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
   out_cfg.nof_concurrent_threads = upper_phy_threads_cfg.nof_dl_threads;
 }
 
-void srsran::make_du_low_wrapper_config_and_dependencies(
-    srs_du::du_low_wrapper_config&              out_cfg,
-    const du_low_unit_config&                   du_low_unit_cfg,
-    std::vector<srs_du::cell_prach_ports_entry> prach_ports,
-    span<const srs_du::du_cell_config>          du_cells,
-    span<const unsigned>                        max_puschs_per_slot,
-    upper_phy_rg_gateway&                       rg_gateway,
-    upper_phy_rx_symbol_request_notifier&       rx_symbol_request_notifier,
-    worker_manager&                             workers,
-    unsigned                                    du_id)
+hal_upper_phy_config srsran::make_du_low_hal_config_and_dependencies(const du_low_unit_config& du_low_unit_cfg,
+                                                                     unsigned                  nof_cells)
 {
-  out_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
-
   // Initialize hardware-accelerator (only if needed).
   hal_upper_phy_config hal_config  = {};
   hal_config.hwacc_pdsch_processor = false;
@@ -86,7 +76,7 @@ void srsran::make_du_low_wrapper_config_and_dependencies(
     hal::bbdev_hwacc_pdsch_enc_factory_configuration         hwacc_pdsch_enc_cfg = {};
     hal::bbdev_hwacc_pusch_dec_factory_configuration         hwacc_pusch_dec_cfg = {};
     std::shared_ptr<hal::ext_harq_buffer_context_repository> harq_buffer_context = nullptr;
-    unsigned                                                 nof_hwacc_dus       = du_cells.size();
+    unsigned                                                 nof_hwacc_dus       = nof_cells;
 
     // Create a bbdev accelerator factory.
     std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory =
@@ -147,11 +137,28 @@ void srsran::make_du_low_wrapper_config_and_dependencies(
   }
 #endif // DPDK_FOUND
 
+  return hal_config;
+}
+
+void srsran::make_du_low_wrapper_config_and_dependencies(
+    srs_du::du_low_wrapper_config&              out_cfg,
+    const du_low_unit_config&                   du_low_unit_cfg,
+    std::vector<srs_du::cell_prach_ports_entry> prach_ports,
+    span<const srs_du::du_cell_config>          du_cells,
+    span<const unsigned>                        max_puschs_per_slot,
+    upper_phy_rg_gateway&                       rg_gateway,
+    upper_phy_rx_symbol_request_notifier&       rx_symbol_request_notifier,
+    worker_manager&                             workers,
+    unsigned                                    du_id,
+    const hal_upper_phy_config&                 du_low_hal_config)
+{
+  out_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
+
   generate_du_low_wrapper_config(out_cfg, du_low_unit_cfg, du_cells, max_puschs_per_slot, du_id);
 
   // Fill the hal config.
   for (auto& cell : out_cfg.du_low_cfg.cells) {
-    cell.upper_phy_cfg.hal_config = hal_config;
+    cell.upper_phy_cfg.hal_config = du_low_hal_config;
   }
 
   // Fill the PRACH ports.
