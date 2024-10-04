@@ -30,18 +30,10 @@ set(SOURCES
 
 add_library(srsran_ngap STATIC ${SOURCES})
 
-set(NGAP_DEPS
+target_link_libraries(srsran_ngap
 	ngap_asn1
 	srsran_cu_cp
 	srsran_support)
-
-if(SRSRAN_ENTERPRISE_FOUND)
-  target_link_libraries(srsran_ngap
-    -Wl,--whole-archive srsran_enterprise::srsran_plugin_ng_handover -Wl,--no-whole-archive
-    ${NGAP_DEPS})	
-else(SRSRAN_ENTERPRISE_FOUND)
-    target_link_libraries(srsran_ngap ${NGAP_DEPS})
-endif(SRSRAN_ENTERPRISE_FOUND)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
