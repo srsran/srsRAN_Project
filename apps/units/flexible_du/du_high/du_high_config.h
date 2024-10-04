@@ -287,15 +287,18 @@ struct du_high_unit_pucch_config {
 struct du_high_unit_srs_config {
   /// If set, enables periodic Sound Reference Signals (SRS) for the UEs within this cell. If not present, SRS are
   /// aperiodic. The given value is the SRS period in milliseconds.
+  /// The available values are a subset of the values in \c SRS-PeriodicityAndOffset, \c SRS-Resource \c SRS-Config,
+  /// TS 38.331, converted to millisecond.
   /// Values: {1, 2, 2.5, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560}.
   std::optional<float> srs_period_ms = std::nullopt;
   /// \brief Defines the maximum number of symbols dedicated to (all) the cell SRS resources in a slot.
   /// This is the space that the GNB reserves for all the cell SRS resources in the UL slots, not to be confused with
   /// the symbols per SRS resource configured in the UE dedicated configuration. Values: {1,...,6}.
   unsigned max_nof_symbols_per_slot = 2;
-  /// Defines the number of symbols per SRS resource. Values: {1, 2, 4}
+  /// Defines the number of symbols per SRS resource as per \c nrofSymbols, \c resourceMapping, \c SRS-Resource \c
+  /// SRS-Config, TS 38.331. Values: {1, 2, 4}.
   unsigned nof_symbols = 1;
-  /// \c Transmission comb number, as per TS 38.331, "SRS-Resource". Values: {2, 4}.
+  /// \c Transmission comb number, \c transmissionComb, \c SRS-Resource \c SRS-Config, TS 38.331. Values: {2, 4}.
   unsigned tx_comb = 4;
   /// Defines the Cyclic Shift (CS) reuse factor for the SRS resources.
   /// \remark With 2 or 4 antenna ports, different cyclic shifts are used by the different antennas. This parameter
@@ -304,11 +307,13 @@ struct du_high_unit_srs_config {
   /// Values: {no_cyclic_shift, two, three, four, six} for 2 UL antenna ports and tx_comb == 4.
   /// Values: {no_cyclic_shift, two} for 4 UL antenna ports and tx_comb == 2.
   /// Values: {no_cyclic_shift, three} for 4 UL antenna ports and tx_comb == 4.
+  /// Refer to Section 6.4.1.4.2, TS 38.211 for the definition of "Cyclic Shift".
   unsigned cyclic_shift_reuse_factor = 1;
   /// Defines the reuse of the SRS sequence ID for different UEs within the same cell.
   /// \remark The goal of the SRS sequence ID would be to reduce the inter-cell interference. However, if the cell is
   /// not in a dense multi-cell environment, we can reuse different sequence ID for different cell UEs.
   /// Values: {1, 2, 3, 5, 6, 10, 15, 30}.
+  /// Refer to Section 6.4.1.4.2, TS 38.211 for the definition of "sequenceId".
   unsigned sequence_id_reuse_factor = 1;
 };
 

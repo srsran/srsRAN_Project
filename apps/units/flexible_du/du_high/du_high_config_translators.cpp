@@ -549,9 +549,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     srs_du::srs_builder_params&    du_srs_cfg   = out_cell.srs_cfg;
     const du_high_unit_srs_config& user_srs_cfg = base_cell.srs_cfg;
     if (user_srs_cfg.srs_period_ms.has_value()) {
-      const unsigned srs_period_slots =
-          static_cast<unsigned>(static_cast<float>(get_nof_slots_per_subframe(base_cell.common_scs)) *
-                                base_cell.srs_cfg.srs_period_ms.value());
+      const unsigned srs_period_slots = static_cast<unsigned>(
+          static_cast<float>(get_nof_slots_per_subframe(base_cell.common_scs)) * user_srs_cfg.srs_period_ms.value());
       du_srs_cfg.srs_period.emplace(static_cast<srs_periodicity>(srs_period_slots));
     }
     du_srs_cfg.max_nof_symbols = user_srs_cfg.max_nof_symbols_per_slot;
@@ -635,7 +634,10 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
                                                  base_cell.csi_cfg.csi_rs_enabled
                                                      ? std::optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec}
                                                      : std::nullopt);
-    // The maximum number of symbols for cell PUCCH resources is computed based on the SRS configuration.
+    // The maximum number of symbols for cell PUCCH resources is computed based on the SRS configuration, but only if
+    // the SRS are periodic. The aperiodic SRS resources are not currently supported and used only for the UE to accept
+    // the configuration; therefore, the maximum number of symbols for PUCCH resources is computed only for periodic
+    // SRS.
     du_pucch_cfg.max_nof_symbols = config_helpers::compute_max_nof_pucch_symbols(du_srs_cfg);
     if (user_srs_cfg.srs_period_ms.has_value() and
         std::holds_alternative<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params)) {
