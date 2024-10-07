@@ -17,7 +17,6 @@ include:
     ref: "20"
     file: .gitlab/ci-shared/tools/python.yml
   - local: .gitlab/ci/builders/version.yml
-  - local: .gitlab/ci/src_cache.yml
 
 ################################################################################
 # Stages
@@ -288,8 +287,6 @@ ubuntu-dpdk-builder arm64:
   rules:
     - if: $ON_MR
   before_script:
-    - !reference [.fetch_src_cache, before_script]
-    - !reference [.fetch_src_cache, script]
     - |
       export NAME=builder-$OS_NAME-$OS_VERSION
       export VERSION=${DOCKER_BUILDER_VERSION}-${PLATFORM}
@@ -304,8 +301,6 @@ ubuntu-dpdk-builder arm64:
       ls -lah $CONTEXT/uhd $CONTEXT/dpdk
   needs:
     - builder version
-  cache:
-    - !reference [.fetch_src_cache, cache]
 
 .alternative-tag:
   extends: .docker copy
@@ -348,8 +343,6 @@ image-build-publish [codechecker]:
   rules:
     - if: $ON_MR
   before_script:
-    - !reference [.fetch_src_cache, before_script]
-    - !reference [.fetch_src_cache, script]
     - |
       export NAME=codechecker
       export VERSION=$DOCKER_BUILDER_VERSION
@@ -360,8 +353,6 @@ image-build-publish [codechecker]:
       cp -r ${CI_PROJECT_DIR}/docker/scripts/. ${CI_PROJECT_DIR}/${CONTEXT}
   needs:
     - builder version
-  cache:
-    - !reference [.fetch_src_cache, cache]
 
 alternative-tag [codechecker]:
   extends: .docker copy

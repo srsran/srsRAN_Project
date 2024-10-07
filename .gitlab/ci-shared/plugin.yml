@@ -6,6 +6,7 @@ include:
     ref: "20"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci-shared/e2e.yml
+  - local: .gitlab/ci-shared/build.yml
   - local: .gitlab/ci/builders/version.yml
 
 variables:
@@ -149,70 +150,7 @@ load retina variables:
       policy: pull-push
 
 .build_and_unit:
-  image: ${CR_REGISTRY_URI}/srsgnb/builder-${OS}:${DOCKER_BUILDER_VERSION}
-  variables:
-    # CI
-    KUBERNETES_CPU_REQUEST: 6
-    KUBERNETES_CPU_LIMIT: 6
-    KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
-  tags:
-    - ${INFRASTRUCTURE_TAG}
-  before_script: &srs_functions
-    - |
-      echo "INFRASTRUCTURE_TAG=${INFRASTRUCTURE_TAG}"
-      echo "OS=${OS}"
-      echo "COMPILER=${COMPILER}"
-      echo "TEST_MODE=${TEST_MODE}"
-      echo "BUILD_ARGS=${BUILD_ARGS}"
-      echo "MAKE_ARGS=${MAKE_ARGS}"
-      echo "UHD_VERSION=${UHD_VERSION}"
-      echo "DPDK_VERSION=${DPDK_VERSION}"
-    - |
-      BUILD_CMD="${BUILD_ARGS}"
-      if [ -n "${DPDK_VERSION}" ]; then
-        BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
-        export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/:/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu/:${LD_LIBRARY_PATH}
-      fi
-      if [ -n "${UHD_VERSION}" ]; then
-        BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
-        export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
-      fi
-      if [ -n "${COMPILER}" ]; then
-        BUILD_CMD="-c ${COMPILER} ${BUILD_CMD}"
-      fi
-    - |
-      build_srsran() {
-        target="$1"
-        shift
-        set -x
-        builder.sh -m "-j${KUBERNETES_CPU_REQUEST} ${target}" ${BUILD_CMD} "$@" ${SRSRANDIR}
-        { set +x; } 2>/dev/null
-      }
-    - |
-      build_plugin() {
-        target="$1"
-        shift      
-        set -x
-        builder.sh -m "-j${KUBERNETES_CPU_REQUEST} ${target}" ${BUILD_CMD} "$@" ${CI_PROJECT_DIR}
-        { set +x; } 2>/dev/null
-      }
-    - |
-      launch_tests_srsran() {
-        cd ${SRSRANDIR}/build
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-        set -x
-        ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml "$@"
-        { set +x; } 2>/dev/null
-      }
-    - |
-      launch_tests_plugin() {
-        cd ${CI_PROJECT_DIR}/build
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-        set -x
-        ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml "$@"
-        { set +x; } 2>/dev/null
-      }
+  extends: .build_and_unit_template
   after_script:
     - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
     - |
@@ -252,7 +190,6 @@ load retina variables:
     CHECK_PER_FILE_TIMEOUT: 600
     COMPILER: clang
   before_script:
-    - *srs_functions
     - |
       export CC=/usr/bin/clang
       export CXX=/usr/bin/clang++
