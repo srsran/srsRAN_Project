@@ -19,6 +19,7 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
@@ -27,8 +28,8 @@ namespace srsran {
 namespace srs_cu_cp {
 
 // Function prototype for starting handover from plugin
-__attribute__((weak)) async_task<ngap_handover_preparation_response>
-start_ngap_handover_preparation(srslog::basic_logger& logger) asm("start_ngap_preparation_procedure_func");
+SRSRAN_WEAK_SYMB async_task<ngap_handover_preparation_response>
+                 start_ngap_handover_preparation(srslog::basic_logger& logger);
 
 class ngap_impl final : public ngap_interface
 {
