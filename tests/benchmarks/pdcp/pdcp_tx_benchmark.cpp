@@ -24,17 +24,22 @@ const std::array<uint8_t, 16> k_128_enc =
 class pdcp_tx_gen_frame : public pdcp_tx_lower_notifier, public pdcp_tx_upper_control_notifier
 {
 public:
+  uint32_t num_pdus              = 0;
+  uint32_t num_discards          = 0;
+  uint32_t num_protocol_failures = 0;
+  uint32_t num_max_count_reached = 0;
+
   /// PDCP TX upper layer control notifier
-  void on_max_count_reached() final {}
-  void on_protocol_failure() final {}
+  void on_max_count_reached() final { num_max_count_reached++; }
+  void on_protocol_failure() final { num_protocol_failures++; }
 
   /// PDCP TX lower layer data notifier
-  void on_new_pdu(byte_buffer pdu, bool is_retx) final {}
-  void on_discard_pdu(uint32_t pdcp_sn) final {}
+  void on_new_pdu(byte_buffer pdu, bool is_retx) final { num_pdus++; }
+  void on_discard_pdu(uint32_t pdcp_sn) final { num_discards++; }
 };
 
 struct bench_params {
-  unsigned nof_repetitions   = 1000;
+  unsigned nof_repetitions   = 10;
   bool     print_timing_info = false;
 };
 
@@ -92,16 +97,17 @@ void benchmark_pdcp_tx(bench_params                  params,
                        security::ciphering_algorithm ciph_algo)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer,
-                 "Benchmark PDCP TX. int={} ciph={} int_algo={} ciph_algo={}",
-                 int_enabled,
-                 ciph_enabled,
-                 int_algo,
-                 ciph_algo);
+  fmt::format_to(buffer, "Benchmark PDCP RX. NIA{} ({}) NEA{} ({})", int_algo, int_enabled, ciph_algo, ciph_enabled);
+
+  std::vector<byte_buffer> sdu_list;
+
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   timer_manager      timers;
   manual_task_worker worker{64};
+
+  int nof_sdus = 1024;
+  int sdu_len  = 1500;
 
   // Set TX config
   pdcp_tx_config config         = {};
@@ -127,38 +133,54 @@ void benchmark_pdcp_tx(bench_params                  params,
   sec_cfg.cipher_algo = ciph_algo;
 
   // Create test frame
-  pdcp_tx_gen_frame frame = {};
+  std::unique_ptr<pdcp_tx_gen_frame>       frame;
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
+  std::unique_ptr<pdcp_entity_tx>          pdcp_tx;
 
-  // Create PDCP entities
-  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
-      std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
-  std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
-  pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
-
-  const uint32_t sdu_size     = 1500;
-  const uint32_t max_pdu_size = sdu_size + 9;
-  pdcp_tx->handle_desired_buffer_size_notification(params.nof_repetitions * max_pdu_size);
-
-  // Prepare SDU list for benchmark
-  std::vector<byte_buffer> sdu_list  = {};
-  int                      num_sdus  = params.nof_repetitions;
-  int                      num_bytes = sdu_size;
-  for (int i = 0; i < num_sdus; i++) {
-    byte_buffer sdu_buf = {};
-    for (int j = 0; j < num_bytes; ++j) {
-      report_fatal_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU buffer");
+  // Prepare
+  auto prepare = [&]() mutable {
+    // Print errors if statistics are different than expected
+    if (frame != nullptr) {
+      if (frame->num_pdus < (uint32_t)nof_sdus) {
+        srslog::fetch_basic_logger("PDCP").error("Transmitted only {} of {} SDUs", frame->num_pdus, nof_sdus);
+      }
+      if (frame->num_protocol_failures > 0) {
+        srslog::fetch_basic_logger("PDCP").error("Unexpected num_protocol_failures={}", frame->num_protocol_failures);
+      }
+      if (frame->num_max_count_reached > 0) {
+        srslog::fetch_basic_logger("PDCP").error("Unexpected num_max_count_reached={}", frame->num_max_count_reached);
+      }
     }
-    sdu_list.push_back(std::move(sdu_buf));
-  }
+    pdcp_tx.release();
+
+    // Prepare SDU list for benchmark
+    sdu_list.clear();
+    for (int i = 0; i < nof_sdus; i++) {
+      byte_buffer sdu_buf = {};
+      for (int j = 0; j < sdu_len; ++j) {
+        report_fatal_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
+      }
+      sdu_list.push_back(std::move(sdu_buf));
+    }
+    frame       = std::make_unique<pdcp_tx_gen_frame>();
+    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
+    pdcp_tx     = std::make_unique<pdcp_entity_tx>(
+        0, drb_id_t::drb1, config, *frame, *frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
+    pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
+
+    const uint32_t max_pdu_size = sdu_len + 9;
+    pdcp_tx->handle_desired_buffer_size_notification(nof_sdus * max_pdu_size);
+  };
 
   // Run benchmark.
-  int  pdcp_sn = 0;
-  auto measure = [&pdcp_tx, &sdu_list, pdcp_sn]() mutable {
-    pdcp_tx->handle_sdu(sdu_list[pdcp_sn].copy());
-    pdcp_sn++;
+  auto measure = [&pdcp_tx, &sdu_list]() mutable {
+    for (auto& sdu : sdu_list) {
+      pdcp_tx->handle_sdu(std::move(sdu));
+    }
   };
-  bm->new_measure("PDCP TX", 1500 * 8, measure);
+
+  prepare();
+  bm->new_measure("TX SDU", nof_sdus * sdu_len * 8, measure, prepare);
 
   // Output results.
   if (params.print_timing_info) {
