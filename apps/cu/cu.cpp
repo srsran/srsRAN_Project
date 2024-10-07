@@ -257,6 +257,9 @@ int main(int argc, char** argv)
   cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   worker_manager workers{worker_manager_cfg};
 
+  // Adjust CU config according to worker manager
+  cu_up_app_unit->get_cu_up_unit_config().max_nof_crypto_workers = worker_manager_cfg.nof_low_prio_threads;
+
   // Create layer specific PCAPs.
   cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       create_cu_cp_dlt_pcap(cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg, *workers.get_executor_getter());

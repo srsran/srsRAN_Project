@@ -313,6 +313,9 @@ int main(int argc, char** argv)
 
   worker_manager workers{worker_manager_cfg};
 
+  // Adjust CU config according to worker manager
+  cu_up_app_unit->get_cu_up_unit_config().max_nof_crypto_workers = worker_manager_cfg.nof_low_prio_threads;
+
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 

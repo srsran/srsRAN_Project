@@ -73,11 +73,13 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
     return;
   } else if (msg.srb_id <= srb_id_t::srb2) {
     // create PDCP entity for this SRB
-    context.srbs.emplace(
-        std::piecewise_construct,
-        std::forward_as_tuple(msg.srb_id),
-        std::forward_as_tuple(
-            msg.ue_index, msg.srb_id, cu_cp_ue_notifier.get_timer_factory(), cu_cp_ue_notifier.get_executor()));
+    context.srbs.emplace(std::piecewise_construct,
+                         std::forward_as_tuple(msg.srb_id),
+                         std::forward_as_tuple(msg.ue_index,
+                                               msg.srb_id,
+                                               cu_cp_ue_notifier.get_timer_factory(),
+                                               cu_cp_ue_notifier.get_executor(),
+                                               msg.pdcp_cfg.max_nof_crypto_workers));
     auto& srb_context = context.srbs.at(msg.srb_id);
 
     if (msg.srb_id == srb_id_t::srb2 || msg.enable_security) {

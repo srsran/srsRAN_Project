@@ -45,13 +45,17 @@ struct srb_pdcp_context {
   pdcp_tx_control_rrc_ue_adapter rrc_tx_control_notifier;
   pdcp_rrc_ue_rx_adapter         rrc_rx_data_notifier;
 
-  srb_pdcp_context(const ue_index_t ue_index, const srb_id_t srb_id, timer_factory timers, task_executor& executor)
+  srb_pdcp_context(const ue_index_t ue_index,
+                   const srb_id_t   srb_id,
+                   timer_factory    timers,
+                   task_executor&   executor,
+                   uint32_t         max_nof_crypto_workers)
   {
     // prepare PDCP creation message
     pdcp_entity_creation_message srb_pdcp{};
-    srb_pdcp.ue_index    = ue_index_to_uint(ue_index);
-    srb_pdcp.rb_id       = srb_id;
-    srb_pdcp.config      = pdcp_make_default_srb_config(); // TODO: allow non-default PDCP SRB configs
+    srb_pdcp.ue_index = ue_index_to_uint(ue_index);
+    srb_pdcp.rb_id    = srb_id;
+    srb_pdcp.config = pdcp_make_default_srb_config(max_nof_crypto_workers); // TODO: allow non-default PDCP SRB configs
     srb_pdcp.tx_lower    = &pdcp_tx_notifier;
     srb_pdcp.tx_upper_cn = &rrc_tx_control_notifier;
     srb_pdcp.rx_upper_dn = &rrc_rx_data_notifier;
@@ -74,8 +78,12 @@ struct srb_pdcp_context {
 class ue_srb_context
 {
 public:
-  ue_srb_context(const ue_index_t ue_index, const srb_id_t srb_id, timer_factory timers, task_executor& executor) :
-    pdcp_context(ue_index, srb_id, timers, executor)
+  ue_srb_context(const ue_index_t ue_index,
+                 const srb_id_t   srb_id,
+                 timer_factory    timers,
+                 task_executor&   executor,
+                 uint32_t         max_nof_crypto_workers) :
+    pdcp_context(ue_index, srb_id, timers, executor, max_nof_crypto_workers)
   {
   }
 

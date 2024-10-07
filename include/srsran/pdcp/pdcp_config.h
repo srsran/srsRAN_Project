@@ -245,7 +245,7 @@ struct pdcp_config {
 
 /// \brief Make default SRB parameters for PDCP
 /// Ref: 3GPP TS 38.331, section 9.2.1
-inline pdcp_config pdcp_make_default_srb_config()
+inline pdcp_config pdcp_make_default_srb_config(uint32_t max_nof_crypto_workers)
 {
   pdcp_config config = {};
   // common TX/RX parameters
@@ -266,7 +266,9 @@ inline pdcp_config pdcp_make_default_srb_config()
   config.rx.t_reordering          = pdcp_t_reordering::infinity;
 
   // Custom config
-  config.custom = {};
+  config.custom                           = {};
+  config.custom.rx.max_nof_crypto_workers = max_nof_crypto_workers;
+
   return config;
 }
 } // namespace srsran
