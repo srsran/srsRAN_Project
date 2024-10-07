@@ -78,7 +78,6 @@ struct test_bench {
   const scheduler_ue_expert_config&       expert_cfg{sched_cfg.ue};
   sched_cfg_dummy_notifier                dummy_notif;
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
-  scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
   cell_config_builder_params              builder_params;
   scheduler_metrics_handler               metrics{std::chrono::milliseconds{0}, metrics_notif};
@@ -89,7 +88,7 @@ struct test_bench {
   cell_resource_allocator       res_grid{cell_cfg};
   cell_harq_manager             cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
   pdcch_resource_allocator_impl pdcch_sch{cell_cfg};
   pucch_allocator_impl          pucch_alloc{cell_cfg, 31U, 32U};
   uci_allocator_impl            uci_alloc{pucch_alloc};
@@ -1187,7 +1186,7 @@ protected:
     std::optional<slot_point>             latest_rlc_update_slot;
     const int                             max_rlc_update_delay = 40;
 
-    using h_state = srsran::dl_harq_process::harq_process::transport_block::state_t;
+    using h_state = harq_utils::harq_state_t;
     std::vector<h_state> latest_harq_states;
   };
 

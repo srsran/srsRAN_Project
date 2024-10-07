@@ -110,15 +110,7 @@ namespace {
 class dummy_harq_timeout_notifier : public harq_timeout_notifier
 {
 public:
-  dummy_harq_timeout_notifier(harq_timeout_handler& handler_) : handler(handler_) {}
-
-  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
-  {
-    handler.handle_harq_timeout(ue_idx, is_dl);
-  }
-
-private:
-  harq_timeout_handler& handler;
+  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override {}
 };
 
 } // namespace
@@ -138,7 +130,7 @@ test_bench::test_bench(const test_bench_params& params,
             expert_cfg, make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)));
     return *cell_cfg_list[to_du_cell_index(0)];
   }()},
-  cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>(harq_timeout_handler)},
+  cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   max_pucchs_per_slot{max_pucchs_per_slot_},

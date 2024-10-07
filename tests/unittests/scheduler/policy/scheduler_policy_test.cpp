@@ -180,15 +180,14 @@ protected:
   cell_common_configuration_list                 cell_cfg_list;
   std::vector<std::unique_ptr<ue_configuration>> ue_ded_cell_cfg_list;
 
-  const cell_configuration&            cell_cfg;
-  sched_cfg_dummy_notifier             dummy_mac_notif;
-  scheduler_ue_metrics_dummy_notifier  metrics_notif;
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
+  const cell_configuration&           cell_cfg;
+  sched_cfg_dummy_notifier            dummy_mac_notif;
+  scheduler_ue_metrics_dummy_notifier metrics_notif;
 
   cell_resource_allocator       res_grid{cell_cfg};
   cell_harq_manager             cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
   pdcch_resource_allocator_impl pdcch_alloc{cell_cfg};
   pucch_allocator_impl   pucch_alloc{cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot};
   uci_allocator_impl     uci_alloc{pucch_alloc};

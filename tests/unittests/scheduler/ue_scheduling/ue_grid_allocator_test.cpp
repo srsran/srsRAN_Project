@@ -122,7 +122,6 @@ protected:
   sched_cfg_dummy_notifier                mac_notif;
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
-  scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
   scheduler_metrics_handler               metrics{std::chrono::milliseconds{0}, metrics_notif};
 
   cell_config_builder_params cfg_builder_params;
@@ -131,7 +130,7 @@ protected:
 
   cell_harq_manager       cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
   cell_resource_allocator res_grid{cell_cfg};
 
   pdcch_resource_allocator_impl pdcch_alloc{cell_cfg};

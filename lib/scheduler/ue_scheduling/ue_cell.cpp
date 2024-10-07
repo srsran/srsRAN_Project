@@ -97,10 +97,10 @@ void ue_cell::set_fallback_state(bool set_fallback)
   logger.debug("ue={} rnti={}: {} fallback mode", ue_index, rnti(), in_fallback_mode ? "Entering" : "Leaving");
 }
 
-std::optional<dl_harq_process::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
-                                                                               mac_harq_ack_report_status ack_value,
-                                                                               unsigned                   harq_bit_idx,
-                                                                               std::optional<float>       pucch_snr)
+std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
+                                                                       mac_harq_ack_report_status ack_value,
+                                                                       unsigned                   harq_bit_idx,
+                                                                       std::optional<float>       pucch_snr)
 {
   std::optional<dl_harq_process_handle> h_dl = harqs.find_dl_harq_waiting_ack(uci_slot, harq_bit_idx);
   if (not h_dl.has_value()) {
@@ -109,23 +109,17 @@ std::optional<dl_harq_process::dl_ack_info_result> ue_cell::handle_dl_ack_info(s
   }
 
   dl_harq_process_handle::status_update outcome = h_dl->dl_ack_info(ack_value, pucch_snr);
-  dl_harq_process::dl_ack_info_result   result;
-  result.h_id         = h_dl->id();
-  result.tb.mcs_table = h_dl->get_grant_params().mcs_table;
-  result.tb.mcs       = h_dl->get_grant_params().mcs;
-  result.tb.tbs_bytes = h_dl->get_grant_params().tbs_bytes;
-  result.tb.slice_id  = h_dl->get_grant_params().slice_id;
-  result.tb.olla_mcs  = h_dl->get_grant_params().olla_mcs;
-  result.update       = (dl_harq_process::status_update)outcome;
 
-  if (result.update == dl_harq_process::status_update::acked or
-      result.update == dl_harq_process::status_update::nacked) {
+  if (outcome == dl_harq_process_handle::status_update::acked or
+      outcome == dl_harq_process_handle::status_update::nacked) {
     // HARQ is not expecting more ACK bits. Consider the feedback in the link adaptation controller.
-    ue_mcs_calculator.handle_dl_ack_info(
-        result.update == dl_harq_process::status_update::acked, result.tb.mcs, result.tb.mcs_table, result.tb.olla_mcs);
+    ue_mcs_calculator.handle_dl_ack_info(outcome == dl_harq_process_handle::status_update::acked,
+                                         h_dl->get_grant_params().mcs,
+                                         h_dl->get_grant_params().mcs_table,
+                                         h_dl->get_grant_params().olla_mcs);
   }
 
-  return result;
+  return dl_ack_info_result{outcome, h_dl.value()};
 }
 
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
