@@ -29,7 +29,7 @@
     - type: emulator
       model: viavi
     - type: ru
-      model: viavi
+      model: viavi-ru
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
     - LD_LIBRARY_PATH: /opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
