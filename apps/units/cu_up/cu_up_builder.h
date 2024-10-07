@@ -38,13 +38,18 @@ class f1u_cu_up_gateway;
 class io_broker;
 struct worker_manager;
 
+/// CU-UP unit dependencies.
+struct cu_up_unit_dependencies {
+  worker_manager*                  workers;
+  srs_cu_up::e1_connection_client* e1ap_conn_client;
+  f1u_cu_up_gateway*               f1u_gateway;
+  dlt_pcap*                        gtpu_pcap;
+  timer_manager*                   timers;
+  io_broker*                       io_brk;
+};
+
 /// Builds the CU UP using the given arguments.
-std::unique_ptr<srs_cu_up::cu_up_interface> build_cu_up(const cu_up_unit_config&         unit_cfg,
-                                                        worker_manager&                  workers,
-                                                        srs_cu_up::e1_connection_client& e1ap_conn_client,
-                                                        f1u_cu_up_gateway&               f1u_gateway,
-                                                        dlt_pcap&                        gtpu_pcap,
-                                                        timer_manager&                   timers,
-                                                        io_broker&                       io_brk);
+std::unique_ptr<srs_cu_up::cu_up_interface> build_cu_up(const cu_up_unit_config&       unit_cfg,
+                                                        const cu_up_unit_dependencies& dependencies);
 
 } // namespace srsran

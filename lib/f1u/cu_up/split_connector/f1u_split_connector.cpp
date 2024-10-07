@@ -121,8 +121,8 @@ void f1u_split_gateway_cu_bearer::stop()
   stopped = true;
 }
 
-f1u_split_connector::f1u_split_connector(ngu_gateway* udp_gw_,
-                                         gtpu_demux*  demux_,
+f1u_split_connector::f1u_split_connector(ngu_gateway& udp_gw_,
+                                         gtpu_demux&  demux_,
                                          dlt_pcap&    gtpu_pcap_,
                                          uint16_t     peer_port_) :
   logger_cu(srslog::fetch_basic_logger("CU-F1-U")),
@@ -132,8 +132,8 @@ f1u_split_connector::f1u_split_connector(ngu_gateway* udp_gw_,
   gtpu_pcap(gtpu_pcap_)
 {
   gw_data_gtpu_demux_adapter = std::make_unique<srs_cu_up::network_gateway_data_gtpu_demux_adapter>();
-  udp_session                = udp_gw->create(*gw_data_gtpu_demux_adapter);
-  gw_data_gtpu_demux_adapter->connect_gtpu_demux(*demux);
+  udp_session                = udp_gw.create(*gw_data_gtpu_demux_adapter);
+  gw_data_gtpu_demux_adapter->connect_gtpu_demux(demux);
 }
 
 f1u_split_connector::~f1u_split_connector() = default;
@@ -167,7 +167,7 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
   cu_bearer->attach_tunnel_rx(std::move(tunnel_rx));
 
   // attach tunnel rx to DEMUX
-  if (!demux->add_tunnel(ul_up_tnl_info.gtp_teid, cu_bearer->ul_exec, cu_bearer->get_tunnel_rx_interface())) {
+  if (!demux.add_tunnel(ul_up_tnl_info.gtp_teid, cu_bearer->ul_exec, cu_bearer->get_tunnel_rx_interface())) {
     logger_cu.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);
     // continue here; but the new tunnel won't be able to rx any data because the TEID was already registered at demux
   }
@@ -226,7 +226,7 @@ void f1u_split_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
   cu_bearer->gtpu_to_f1u_adapter->disconnect();
 
   // Remove UL from GTP-U demux
-  demux->remove_tunnel(ul_up_tnl_info.gtp_teid);
+  demux.remove_tunnel(ul_up_tnl_info.gtp_teid);
 
   // Remove DL path
   {
@@ -234,4 +234,15 @@ void f1u_split_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
     cu_map.erase(ul_up_tnl_info);
   }
   logger_cu.debug("Removed CU F1-U bearer with UL GTP Tunnel={}.", ul_up_tnl_info);
+}
+
+expected<std::string> f1u_split_connector::get_cu_bind_address() const
+{
+  std::string ip_address;
+
+  if (not udp_session->get_bind_address(ip_address)) {
+    return make_unexpected(default_error_t{});
+  }
+
+  return ip_address;
 }

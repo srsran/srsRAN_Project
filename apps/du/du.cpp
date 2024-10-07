@@ -177,8 +177,7 @@ int main(int argc, char** argv)
   // Configure CLI11 with the DU application configuration schema.
   configure_cli11_with_du_appconfig_schema(app, du_cfg);
 
-  auto du_app_unit = create_flexible_du_application_unit();
-  du_app_unit->get_du_high_unit_config().pcaps.set_default_filename("/tmp/du");
+  auto du_app_unit = create_flexible_du_application_unit("du");
   du_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.

@@ -114,7 +114,7 @@ public:
 class f1u_split_connector final : public f1u_cu_up_udp_gateway
 {
 public:
-  f1u_split_connector(ngu_gateway* udp_gw_, gtpu_demux* demux_, dlt_pcap& gtpu_pcap_, uint16_t peer_port_ = GTPU_PORT);
+  f1u_split_connector(ngu_gateway& udp_gw_, gtpu_demux& demux_, dlt_pcap& gtpu_pcap_, uint16_t peer_port_ = GTPU_PORT);
   ~f1u_split_connector() override;
 
   f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
@@ -133,6 +133,8 @@ public:
 
   void disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info) override;
 
+  expected<std::string> get_cu_bind_address() const override;
+
 private:
   srslog::basic_logger& logger_cu;
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)
@@ -140,9 +142,9 @@ private:
   std::mutex map_mutex; // shared mutex for access to cu_map
 
   uint16_t                                                 peer_port;
-  ngu_gateway*                                             udp_gw;
+  ngu_gateway&                                             udp_gw;
   std::unique_ptr<ngu_tnl_pdu_session>                     udp_session;
-  gtpu_demux*                                              demux;
+  gtpu_demux&                                              demux;
   std::unique_ptr<network_gateway_data_gtpu_demux_adapter> gw_data_gtpu_demux_adapter;
   dlt_pcap&                                                gtpu_pcap;
 };

@@ -326,7 +326,8 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
   // Priority when slice still needs to reach its minimum RB ratio agreement.
   static constexpr priority_type high_prio          = 0x2U;
   static constexpr priority_type slice_prio_bitsize = 4U;
-  static constexpr priority_type delay_bitsize      = 8U;
+  static constexpr priority_type delay_prio_bitsize = 8U;
+  static constexpr priority_type delay_prio_bitmask = (1U << delay_prio_bitsize) - 1U;
   static constexpr priority_type rr_bitsize         = 8U;
 
   unsigned rb_count = is_dl ? inst.pdsch_rb_count : inst.nof_pusch_rbs_allocated(pxsch_slot);
@@ -336,7 +337,7 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
   }
 
   // Prioritize closer slots over slots further away into the future. This is relevant for UL-heavy cases.
-  unsigned slot_dist = 0xfU - ((pxsch_slot - pdcch_slot) & 0xfU);
+  unsigned slot_dist = 0xfU - std::min(static_cast<unsigned>(pxsch_slot - pdcch_slot), 0xfU);
 
   // In case minRB > 0 and minimum RB ratio agreement is not yet reached, we give it a higher priority.
   priority_type slice_prio =
@@ -345,12 +346,11 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
   // Increase priorities of slices that have not been scheduled for a long time.
   priority_type delay_prio =
       is_dl ? inst.nof_slots_since_last_pdsch(pxsch_slot) : inst.nof_slots_since_last_pusch(pxsch_slot);
-  delay_prio = delay_prio & ((1U << delay_bitsize) - 1U);
+  delay_prio = std::min(delay_prio, delay_prio_bitmask);
 
   // Round-robin across slices with the same slice and delay priorities.
-  priority_type rr_prio = (current_slot_count % nof_slices) == inst.id.value() ? 1 : 0;
-  rr_prio               = rr_prio & ((1U << rr_bitsize) - 1U);
+  priority_type rr_prio = ((inst.id.value() + current_slot_count) % nof_slices) & ((1U << rr_bitsize) - 1U);
 
-  return (slot_dist << (delay_bitsize + rr_bitsize + slice_prio_bitsize)) +
-         (slice_prio << (delay_bitsize + rr_bitsize)) + (delay_prio << rr_bitsize) + rr_prio;
+  return (slot_dist << (delay_prio_bitsize + rr_bitsize + slice_prio_bitsize)) +
+         (slice_prio << (delay_prio_bitsize + rr_bitsize)) + (delay_prio << rr_bitsize) + rr_prio;
 }

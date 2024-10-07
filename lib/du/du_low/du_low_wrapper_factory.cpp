@@ -64,11 +64,11 @@ static fapi::prach_config generate_prach_config_tlv(const du_cell_config& cell_c
 static fapi::carrier_config generate_carrier_config_tlv(const du_cell_config& du_cell)
 {
   // Deduce common numerology and grid size for DL and UL.
-  unsigned numerology       = to_numerology_value(du_cell.scs_common);
-  unsigned grid_size_bw_prb = band_helper::get_n_rbs_from_bw(
-      MHz_to_bs_channel_bandwidth(du_cell.dl_carrier.carrier_bw_mhz),
-      du_cell.scs_common,
-      band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(du_cell.dl_carrier.arfcn_f_ref)));
+  unsigned numerology = to_numerology_value(du_cell.scs_common);
+  unsigned grid_size_bw_prb =
+      band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(du_cell.dl_carrier.carrier_bw_mhz),
+                                     du_cell.scs_common,
+                                     band_helper::get_freq_range(du_cell.dl_carrier.band));
 
   fapi::carrier_config fapi_config = {};
 

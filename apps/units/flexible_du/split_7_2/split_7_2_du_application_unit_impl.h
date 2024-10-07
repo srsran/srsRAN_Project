@@ -31,6 +31,8 @@ namespace srsran {
 class split_7_2_du_application_unit_impl : public flexible_du_application_unit
 {
 public:
+  explicit split_7_2_du_application_unit_impl(std::string_view app_name);
+
   // See interface for documentation.
   void on_parsing_configuration_registration(CLI::App& app) override;
 

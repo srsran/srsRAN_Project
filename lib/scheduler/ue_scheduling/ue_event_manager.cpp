@@ -23,6 +23,7 @@
 #include "ue_event_manager.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
+#include "../srs/srs_scheduler.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 
 using namespace srsran;
@@ -161,6 +162,9 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
       // Update UCI scheduler with new UE UCI resources.
       du_cells[pcell_index].uci_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
 
+      // Update SRS scheduler with new UE SRS resources.
+      du_cells[pcell_index].srs_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
+
       // Add UE to slice scheduler.
       // Note: This action only has effect when UE is created in non-fallback mode.
       du_cells[pcell_index].slice_sched->add_ue(ueidx);
@@ -199,11 +203,14 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
         // UE carrier is being removed.
         // Update UE UCI resources in UCI scheduler.
         du_cells[ue_cc.cell_index].uci_sched->rem_ue(ue_cc.cfg());
+        // Update UE SRS resources in SRS scheduler.
+        du_cells[ue_cc.cell_index].srs_sched->rem_ue(ue_cc.cfg());
         // Schedule removal of UE in slice scheduler.
         du_cells[ue_cc.cell_index].slice_sched->rem_ue(ue_idx);
       } else {
         // UE carrier is being reconfigured.
         du_cells[ue_cc.cell_index].uci_sched->reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
+        du_cells[ue_cc.cell_index].srs_sched->reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
       }
     }
     for (unsigned i = 0, e = ev.next_config().nof_cells(); i != e; ++i) {
@@ -212,6 +219,8 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
       if (ue_cc == nullptr) {
         // New UE carrier is being added.
         du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].uci_sched->add_ue(new_ue_cc_cfg);
+
+        du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].srs_sched->add_ue(new_ue_cc_cfg);
       }
     }
 
@@ -254,6 +263,8 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
     for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
       // Update UCI scheduling by removing existing UE UCI resources.
       du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].uci_sched->rem_ue(u.get_pcell().cfg());
+      // Update SRS scheduling by removing existing UE SRS resources.
+      du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].srs_sched->rem_ue(u.get_pcell().cfg());
       // Schedule removal of UE from slice scheduler.
       du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].slice_sched->rem_ue(ue_idx);
     }
@@ -371,6 +382,9 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
     if (not cell_specific_events[crc_ind.cell_index].try_push(cell_event_t{
             crc_ind.crcs[i].ue_index,
             [this, sl_rx = crc_ind.sl_rx, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
+              double delay_ms =
+                  static_cast<double>(last_sl - sl_rx) * (10 / du_cells[ue_cc.cell_index].cfg->nof_slots_per_frame);
+
               const int tbs = ue_cc.handle_crc_pdu(sl_rx, crc);
               if (tbs < 0) {
                 return;
@@ -388,7 +402,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
               // Notify metrics handler.
               du_cells[ue_cc.cell_index].metrics->handle_crc_indication(crc, units::bytes{(unsigned)tbs});
-              du_cells[ue_cc.cell_index].metrics->handle_ul_delay(crc.ue_index, last_sl - sl_rx);
+              du_cells[ue_cc.cell_index].metrics->handle_ul_delay(crc.ue_index, delay_ms);
             },
             "CRC",
             true})) {
@@ -748,6 +762,7 @@ void ue_event_manager::add_cell(const cell_creation_event& cell_ev)
   du_cells[cell_index].fallback_sched = &cell_ev.fallback_sched;
   du_cells[cell_index].uci_sched      = &cell_ev.uci_sched;
   du_cells[cell_index].slice_sched    = &cell_ev.slice_sched;
+  du_cells[cell_index].srs_sched      = &cell_ev.srs_sched;
   du_cells[cell_index].metrics        = &cell_ev.metrics;
   du_cells[cell_index].ev_logger      = &cell_ev.ev_logger;
 

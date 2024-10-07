@@ -254,7 +254,7 @@ static void configure_cli11_bbdev_hwacc_args(CLI::App& app, std::optional<bbdev_
 {
   config.emplace();
 
-  app.add_option("--bbdev_acc_type", config->hwacc_type, "Type of BBDEV implementation")->capture_default_str();
+  app.add_option("--bbdev_acc_type", config->bbdev_acc_type, "Type of BBDEV implementation")->capture_default_str();
   app.add_option("--hwacc_type", config->hwacc_type, "Type of BBDEV hardware-accelerator")->capture_default_str();
   app.add_option("--id", config->id, "ID of the BBDEV-based hardware-accelerator.")
       ->capture_default_str()

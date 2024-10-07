@@ -145,7 +145,7 @@ protected:
     nru_gw_config.reuse_addr                 = true;
     udp_gw = srs_cu_up::create_udp_ngu_gateway(nru_gw_config, *epoll_broker, io_tx_executor);
 
-    f1u_cu_up_split_gateway_creation_msg cu_create_msg{udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value()};
+    f1u_cu_up_split_gateway_creation_msg cu_create_msg{*udp_gw, *demux, dummy_pcap, tester_bind_port.value()};
     cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());

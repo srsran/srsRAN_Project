@@ -44,7 +44,12 @@ validator_result validate_pdsch_cfg(const serving_cell_config& ue_cell_cfg);
 /// \param[in] ue_cell_cfg UE serving cell configuration to be validated.
 /// \param[in] nof_dl_antennas Number of antennas used for DL tx.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
-error_type<std::string> validate_pucch_cfg(const serving_cell_config& ue_cell_cfg, unsigned nof_dl_antennas);
+validator_result validate_pucch_cfg(const serving_cell_config& ue_cell_cfg, unsigned nof_dl_antennas);
+
+/// \brief Validates SRS Config in \c sched_ue_creation_request_message used to create a UE.
+/// \param[in] ue_cell_cfg UE serving cell configuration to be validated.
+/// \return In case an invalid parameter is detected, returns a string containing an error message.
+validator_result validate_srs_cfg(const serving_cell_config& ue_cell_cfg);
 
 /// \brief Validates the NZP-CSI-RS Resource list in \c serving_cell_config passed to a UE.
 validator_result validate_nzp_csi_rs_list(span<const nzp_csi_rs_resource>               nzp_csi_rs_list,

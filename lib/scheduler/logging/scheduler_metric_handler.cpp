@@ -26,27 +26,22 @@
 
 using namespace srsran;
 
-cell_metrics_handler::cell_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier_) :
-  notifier(notifier_), report_period(metrics_report_period)
+cell_metrics_handler::cell_metrics_handler(msecs                       metrics_report_period,
+                                           scheduler_metrics_notifier& notifier_,
+                                           const cell_configuration&   cell_cfg_) :
+  notifier(notifier_), report_period(metrics_report_period), cell_cfg(cell_cfg_)
 {
   next_report.ue_metrics.reserve(MAX_NOF_DU_UES);
   next_report.events.reserve(MAX_NOF_DU_UES);
 }
 
-void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
-                                              rnti_t        rnti,
-                                              pci_t         pcell_pci,
-                                              unsigned      num_prbs,
-                                              unsigned      num_slots_per_frame)
+void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci)
 {
   ues.emplace(ue_index);
-  ues[ue_index].rnti                = rnti;
-  ues[ue_index].ue_index            = ue_index;
-  ues[ue_index].pci                 = pcell_pci;
-  ues[ue_index].nof_prbs            = num_prbs;
-  ues[ue_index].num_slots_per_frame = num_slots_per_frame;
+  ues[ue_index].rnti     = rnti;
+  ues[ue_index].ue_index = ue_index;
+  ues[ue_index].pci      = pcell_pci;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
-  nof_prbs = num_prbs;
 
   next_report.events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
 }
@@ -226,7 +221,7 @@ void cell_metrics_handler::report_metrics()
   next_report.nof_error_indications    = error_indication_counter;
   next_report.average_decision_latency = decision_latency_sum / report_period_slots;
   next_report.latency_histogram        = decision_latency_hist;
-  next_report.nof_prbs                 = nof_prbs;
+  next_report.nof_prbs                 = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
   next_report.nof_dl_slots             = nof_dl_slots;
   next_report.nof_ul_slots             = nof_ul_slots;
 
@@ -265,8 +260,8 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     }
     if (dl_grant.pdsch_cfg.rbs.is_type0()) {
       u.data.tot_dl_prbs_used += full_dl_slot ? convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(),
-                                                                     {0, u.nof_prbs},
-                                                                     get_nominal_rbg_size(u.nof_prbs, true))
+                                                                     {0, cell_cfg.nof_dl_prbs},
+                                                                     get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
                                                     .count()
                                               : 0;
     } else if (dl_grant.pdsch_cfg.rbs.is_type1()) {
@@ -283,8 +278,8 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     if (ul_grant.pusch_cfg.rbs.is_type0()) {
       ues[it->second].data.tot_ul_prbs_used +=
           full_ul_slot ? convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
-                                              {0, ues[it->second].nof_prbs},
-                                              get_nominal_rbg_size(ues[it->second].nof_prbs, true))
+                                              {0, cell_cfg.nof_dl_prbs},
+                                              get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
                              .count()
                        : 0;
     } else if (ul_grant.pusch_cfg.rbs.is_type1()) {
@@ -308,7 +303,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
 void cell_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay)
 {
   if (ues.contains(ue_index)) {
-    ues[ue_index].data.sum_ul_delay_ms += delay * (10 / (ues[ue_index].num_slots_per_frame));
+    ues[ue_index].data.sum_ul_delay_ms += delay;
   }
 }
 
@@ -393,7 +388,7 @@ cell_metrics_handler* scheduler_metrics_handler::add_cell(const cell_configurati
     return nullptr;
   }
 
-  cells.emplace(cell_cfg.cell_index, report_period, notifier);
+  cells.emplace(cell_cfg.cell_index, report_period, notifier, cell_cfg);
 
   return &cells[cell_cfg.cell_index];
 }

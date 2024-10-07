@@ -63,7 +63,7 @@ struct nr_band_raster {
 // lower-bound and upper-bound. (FDD, TDD or SDL).
 //
 // NOTE: It only includes FDD, TDD, and SDL bands.
-// NOTE: Band 2 is a subset of band 25
+// NOTE: Band 2 is a subset of band 25.
 // NOTE: Band 41 has two different Freq raster, we only consider raster 15kHz.
 // NOTE: FR2 bands have two different Freq raster, we only consider raster 120kHz.
 const uint32_t                                               nof_nr_DL_bands = 83;
@@ -93,6 +93,9 @@ static constexpr std::array<nr_band_raster, nof_nr_DL_bands> nr_band_table   = {
     {nr_band::n40,   delta_freq_raster::kHz100, 460000, 20,  480000,  460000, 20,  480000},
     {nr_band::n41,   delta_freq_raster::kHz15,  499200,  3,  537999,  499200,  3,  537999},
     {nr_band::n41,   delta_freq_raster::kHz30,  499200,  6,  537996,  499200,  6,  537996},
+    // Band n46 has a raster definded in Table 5.4.2.3-1, TS 38.104, but according to the table notes, only a few ARFCN
+    // values are valid. This range is reported below for completeness, but only the applicable ARFCN given in the
+    // notes will be used.
     {nr_band::n46,   delta_freq_raster::kHz15,  743334,  1,  795000,  743334,  1,  795000},
     {nr_band::n48,   delta_freq_raster::kHz15,  636667,  1,  646666,  636667,  1,  646666},
     {nr_band::n48,   delta_freq_raster::kHz30,  636668,  2,  646666,  636668,  2,  646666},
@@ -129,12 +132,18 @@ static constexpr std::array<nr_band_raster, nof_nr_DL_bands> nr_band_table   = {
     {nr_band::n93,   delta_freq_raster::kHz100, 176000, 20,  183000,  285400, 20,  286400},
     {nr_band::n94,   delta_freq_raster::kHz100, 176000, 20,  183000,  286400, 20,  303400},
     {nr_band::n95,   delta_freq_raster::kHz100, 402000, 20,  405000,       0,  0,       0},
+    // Band n96 has a raster definded in Table 5.4.2.3-1, TS 38.104, but according to the table notes, only a few ARFCN
+    // values are valid. This range is reported below for completeness, but only the applicable ARFCN given in the
+    // notes will be used.
     {nr_band::n96,   delta_freq_raster::kHz15,  795000,  1,  875000,  795000,  1,  875000},
     {nr_band::n97,   delta_freq_raster::kHz100, 460000, 20,  480000,       0,  0,       0},
     {nr_band::n98,   delta_freq_raster::kHz100, 376000, 20,  384000,       0,  0,       0},
     {nr_band::n99,   delta_freq_raster::kHz100, 325300, 20,  332100,       0,  0,       0},
     {nr_band::n100,  delta_freq_raster::kHz100, 174880, 20,  176000,  183880, 20,  185000},
     {nr_band::n101,  delta_freq_raster::kHz100, 380000, 20,  382000,  380000, 20,  382000},
+    // Band n102 has a raster definded in Table 5.4.2.3-1, TS 38.104, but according to the table notes, only a few
+    // ARFCN values are valid. This range is reported below for completeness, but only the applicable ARFCN given in
+    // the notes will be used.
     {nr_band::n102,  delta_freq_raster::kHz15,  796334, 1 ,  828333,  796334,  1,  828333},
     {nr_band::n104,  delta_freq_raster::kHz15,  828334, 1 ,  875000,  828334,  1,  875000},
     {nr_band::n104,  delta_freq_raster::kHz30,  828334, 2 ,  875000,  828334,  2,  875000},
@@ -458,17 +467,13 @@ static nr_raster_params get_raster_params(double freq)
 
 static bool is_valid_raster_param(const nr_raster_params& raster)
 {
-  for (const nr_raster_params& fr : nr_fr_params) {
-    if (fr == raster) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(
+      nr_fr_params.begin(), nr_fr_params.end(), [raster](const nr_raster_params& fr) { return fr == raster; });
 }
 
 // Validates band n28, which has an additional ARFCN value to the given interval, as per Table 5.4.2.3-1, TS 38.104,
 // version 17.8.0.
-static error_type<std::string> validate_band_n28(uint32_t arfcn, bs_channel_bandwidth bw)
+static error_type<std::string> validate_band_n28(uint32_t arfcn, bs_channel_bandwidth bw, bool is_dl = true)
 {
   const nr_band_raster band_raster = fetch_band_raster(nr_band::n28, {});
   if (band_raster.band == srsran::nr_band::invalid) {
@@ -476,63 +481,60 @@ static error_type<std::string> validate_band_n28(uint32_t arfcn, bs_channel_band
   }
 
   // Try first if the ARFCN matches any value of the interval for 100kHz channel raster.
-  if (arfcn >= band_raster.dl_nref_first and arfcn <= band_raster.dl_nref_last and
-      ((arfcn - band_raster.dl_nref_first) % band_raster.dl_nref_step) == 0) {
+  uint32_t nref_first = is_dl ? band_raster.dl_nref_first : band_raster.ul_nref_first;
+  uint32_t nref_last  = is_dl ? band_raster.dl_nref_last : band_raster.ul_nref_last;
+  uint32_t nref_step  = is_dl ? band_raster.dl_nref_step : band_raster.ul_nref_step;
+  if (arfcn >= nref_first and arfcn <= nref_last and ((arfcn - nref_first) % nref_step) == 0) {
     return error_type<std::string>{};
   }
 
   // Extra ARFCN value as per Table 5.4.2.3-1, TS 38.104, version 17.8.0 (see NOTE 4 in the table).
-  const uint32_t dl_arfnc_40MHz = 155608U;
-  if (bw == srsran::bs_channel_bandwidth::MHz40 and arfcn == dl_arfnc_40MHz) {
+  const uint32_t arfnc_40MHz = is_dl ? 155608U : 144608U;
+  if (bw == srsran::bs_channel_bandwidth::MHz40 and arfcn == arfnc_40MHz) {
     return error_type<std::string>{};
   }
 
   return make_unexpected(
-      fmt::format("DL ARFCN must be within the interval [{},{}], in steps of {}, for the chosen band",
-                  band_raster.dl_nref_first,
-                  band_raster.dl_nref_last,
-                  band_raster.dl_nref_step));
+      fmt::format("{} ARFCN must be within the interval [{},{}], in steps of {}, for the chosen band",
+                  is_dl ? "DL" : "UL",
+                  nref_first,
+                  nref_last,
+                  nref_step));
 }
 
 // Validates band n46, whose valid ARFCN values depend on the channel BW, as per Table 5.4.2.3-1, TS 38.104,
 // version 17.8.0.
 static error_type<std::string> validate_band_n46(uint32_t arfcn, bs_channel_bandwidth bw)
 {
-  const std::array<unsigned, 2>  n46_b_10_dlarfnc = {782000, 788668};
-  const std::array<unsigned, 32> n46_b_20_dlarfnc = {
+  constexpr std::array<unsigned, 2>  n46_b_10_dlarfnc = {782000, 788668};
+  constexpr std::array<unsigned, 32> n46_b_20_dlarfnc = {
       // clang-format off
       744000, 745332, 746668, 748000, 749332, 750668, 752000, 753332, 754668, 756000, 765332, 766668, 768000, 769332,
       770668, 772000, 773332, 774668, 776000, 777332, 778668, 780000, 781332, 783000, 784332, 785668, 787000, 788332,
       789668, 791000, 792332, 793668
       // clang-format on
   };
-  const std::array<unsigned, 18> n46_b_40_dlarfnc = {
+  constexpr std::array<unsigned, 18> n46_b_40_dlarfnc = {
       // clang-format off
       744668, 746000, 748668, 751332, 754000, 755332, 766000, 767332, 770000, 772668, 775332, 778000, 780668, 783668,
       786332, 787668, 790332, 793000
       // clang-format on
   };
-  const std::array<unsigned, 17> n46_b_60_dlarfnc = {
+  constexpr std::array<unsigned, 17> n46_b_60_dlarfnc = {
       // clang-format off
       745332, 746668, 748000,  752000, 753332, 754668, 766668, 768000, 769332, 773332, 774668, 778668, 780000, 784332,
       785668, 791000, 792332
       // clang-format on
   };
-  const std::array<unsigned, 10> n46_b_80_dlarfnc = {
+  constexpr std::array<unsigned, 10> n46_b_80_dlarfnc = {
       746000, 747332, 752668, 754000, 767332, 768668, 774000, 779332, 785000, 791668};
-  const std::array<unsigned, 4> n46_b_100_dlarfnc = {746668, 753332, 768000, 791000};
-
-  const nr_band_raster band_raster = fetch_band_raster(nr_band::n46, {});
-  if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
-      arfcn > band_raster.dl_nref_last) {
-    return make_unexpected(fmt::format("Band n46 channel raster not found"));
-  }
+  constexpr std::array<unsigned, 4> n46_b_100_dlarfnc = {746668, 753332, 768000, 791000};
+  const char*                       error_msg = {"Only a restricted set of DL-ARFCN values are allowed in band n46"};
 
   auto dl_arfcn_exist = [](span<const unsigned> band_list, unsigned dl_arfcn) {
     return std::find(band_list.begin(), band_list.end(), dl_arfcn) != band_list.end();
   };
 
-  const char* error_msg = {"Only a restricted set of DL-ARFCN values are allowed in band n46"};
   switch (bw) {
     case bs_channel_bandwidth::MHz10: {
       return dl_arfcn_exist(span<const unsigned>(n46_b_10_dlarfnc), arfcn) ? error_type<std::string>{}
@@ -567,7 +569,7 @@ static error_type<std::string> validate_band_n46(uint32_t arfcn, bs_channel_band
 // version 17.8.0.
 static error_type<std::string> validate_band_n96(uint32_t arfcn, bs_channel_bandwidth bw)
 {
-  const std::array<unsigned, 59> b_20_dlarfnc = {
+  constexpr std::array<unsigned, 59> b_20_dlarfnc = {
       // clang-format off
       797000, 798332, 799668, 801000, 802332, 803668, 805000, 806332, 807668, 809000, 810332, 811668, 813000, 814332,
       815668, 817000, 818332, 819668, 821000, 822332, 823668, 825000, 826332, 827668, 829000, 830332, 831668, 833000,
@@ -576,37 +578,31 @@ static error_type<std::string> validate_band_n96(uint32_t arfcn, bs_channel_band
       871668, 873000, 874332
       // clang-format on
   };
-  const std::array<unsigned, 29> b_40_dlarfnc = {
+  constexpr std::array<unsigned, 29> b_40_dlarfnc = {
       // clang-format off
       797668, 800332, 803000, 805668, 808332, 811000, 813668, 816332, 819000, 821668, 824332, 827000, 829668, 832332,
       835000, 837668, 840332, 843000, 845668, 848332, 851000, 853668, 856332, 859000, 861668, 864332, 867000, 869668,
       872332
       // clang-format on
   };
-  const std::array<unsigned, 29> b_60_dlarfnc = {
+  constexpr std::array<unsigned, 29> b_60_dlarfnc = {
       // clang-format off
       798332, 799668, 803668, 805000, 809000, 810332, 814332, 815668, 819668, 821000, 825000, 826332, 830332, 831668,
       835668, 837000, 841000, 842332, 846332, 847668, 851668, 853000, 857000, 858332, 862332, 863668, 867668, 869000,
       873000
       // clang-format on
   };
-  const std::array<unsigned, 14> b_80_dlarfnc = {
+  constexpr std::array<unsigned, 14> b_80_dlarfnc = {
       // clang-format off
       799000, 804332, 809668, 815000, 820332, 825668, 831000, 836332, 841668, 847000, 852332, 857668, 863000, 868332
       // clang-format on
   };
-  const std::array<unsigned, 17> b_100_dlarfnc = {
+  constexpr std::array<unsigned, 17> b_100_dlarfnc = {
       // clang-format off
       799668, 803668, 810332, 814332, 821000, 825000, 831668, 835668, 842332, 846332, 853000, 857000, 863668, 867668,
       869000, 870332, 871668
       // clang-format on
   };
-
-  const nr_band_raster band_raster = fetch_band_raster(nr_band::n96, {});
-  if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
-      arfcn > band_raster.dl_nref_last) {
-    return make_unexpected(fmt::format("Band n96 channel raster not found"));
-  }
 
   auto dl_arfcn_exist = [](span<const unsigned> band_list, unsigned dl_arfcn) {
     return std::find(band_list.begin(), band_list.end(), dl_arfcn) != band_list.end();
@@ -643,24 +639,24 @@ static error_type<std::string> validate_band_n96(uint32_t arfcn, bs_channel_band
 // version 17.8.0.
 static error_type<std::string> validate_band_n102(uint32_t arfcn, bs_channel_bandwidth bw)
 {
-  const std::array<unsigned, 24> b_20_dlarfnc = {
+  constexpr std::array<unsigned, 24> b_20_dlarfnc = {
       // clang-format off
       797000, 798332, 799668, 801000, 802332, 803668, 805000, 806332, 807668, 809000, 810332, 811668, 813000, 814332,
       815668, 817000, 818332, 819668, 821000, 822332, 823668, 825000, 826332, 827668
       // clang-format on
   };
-  const std::array<unsigned, 12> b_40_dlarfnc = {
+  constexpr std::array<unsigned, 12> b_40_dlarfnc = {
       // clang-format off
       797668, 800332, 803000, 805668, 808332, 811000, 813668, 816332, 819000, 821668, 824332, 827000
       // clang-format on
   };
-  const std::array<unsigned, 12> b_60_dlarfnc = {
+  constexpr std::array<unsigned, 12> b_60_dlarfnc = {
       // clang-format off
       798332, 799668, 803668, 805000, 809000, 810332, 814332, 815668, 819668, 821000, 825000, 826332
       // clang-format on
   };
-  const std::array<unsigned, 6> b_80_dlarfnc  = {799000, 804332, 809668, 815000, 820332, 825668};
-  const std::array<unsigned, 6> b_100_dlarfnc = {799668, 803668, 810332, 814332, 821000, 825000};
+  constexpr std::array<unsigned, 6> b_80_dlarfnc  = {799000, 804332, 809668, 815000, 820332, 825668};
+  constexpr std::array<unsigned, 6> b_100_dlarfnc = {799668, 803668, 810332, 814332, 821000, 825000};
 
   const nr_band_raster band_raster = fetch_band_raster(nr_band::n102, {});
   if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
@@ -755,7 +751,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
 {
   // Validates first the bands with non-standard ARFCN values.
   if (band == nr_band::n28) {
-    return validate_band_n28(arfcn_f_ref, bw);
+    return validate_band_n28(arfcn_f_ref, bw, true);
   }
 
   if (band == nr_band::n46) {
@@ -808,10 +804,51 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
   return make_unexpected(fmt::format("Band {} is not valid", band));
 }
 
+error_type<std::string>
+srsran::band_helper::is_ul_arfcn_valid_given_band(nr_band band, uint32_t arfcn_f_ref, bs_channel_bandwidth bw)
+{
+  if (get_duplex_mode(band) != duplex_mode::FDD) {
+    return {};
+  }
+
+  // Validates first the bands with non-standard ARFCN values.
+  if (band == nr_band::n28) {
+    return validate_band_n28(arfcn_f_ref, bw, false);
+  }
+
+  // Assume standard Delta freq raster of 100kHz.
+  const delta_freq_raster band_delta_freq_raster = delta_freq_raster::kHz100;
+
+  for (const nr_band_raster& raster_band : nr_band_table) {
+    if (raster_band.band == band and raster_band.delta_f_rast == band_delta_freq_raster) {
+      // Check if the ARFCN doesn't exceed the band upper-bound for bands that support asymmetrical UL and DL channel
+      // BWs.
+      if ((band == nr_band::n66 or band == nr_band::n70 or band == nr_band::n92 or band == nr_band::n94) and
+          (arfcn_f_ref < raster_band.ul_nref_first or arfcn_f_ref > raster_band.ul_nref_last)) {
+        return make_unexpected(
+            fmt::format("Asymmetrical UL and DL channel BWs are not supported. The UL ARFCN resulting from the DL "
+                        "ARFCN for band n{} must not exceed the band upper-bound={}",
+                        band,
+                        raster_band.ul_nref_last));
+      }
+      if (arfcn_f_ref >= raster_band.ul_nref_first and arfcn_f_ref <= raster_band.ul_nref_last and
+          ((arfcn_f_ref - raster_band.ul_nref_first) % raster_band.ul_nref_step) == 0) {
+        return {};
+      }
+      return make_unexpected(
+          fmt::format("UL ARFCN must be within the interval [{},{}], in steps of {}, for the chosen band",
+                      raster_band.ul_nref_first,
+                      raster_band.ul_nref_last,
+                      raster_band.ul_nref_step));
+    }
+  }
+  return make_unexpected(fmt::format("Band {} is not valid", band));
+}
+
 uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, std::optional<nr_band> band)
 {
   // NOTE: The procedure implemented in this function is implementation-defined.
-  const nr_band operating_band = band.has_value() ? band.value() : get_band_from_dl_arfcn(dl_arfcn);
+  const nr_band operating_band = band.value_or(get_band_from_dl_arfcn(dl_arfcn));
 
   // Return same ARFCN for TDD bands.
   if (get_duplex_mode(operating_band) == duplex_mode::TDD) {
@@ -827,9 +864,14 @@ uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, std:
 
   // Derive UL ARFCN for FDD bands.
   for (const nr_band_raster& b_it : nr_band_table) {
-    if (b_it.band == get_band_from_dl_arfcn(dl_arfcn)) {
-      const uint32_t offset = (dl_arfcn - b_it.dl_nref_first) / b_it.dl_nref_step;
-      return (b_it.ul_nref_first + offset * b_it.ul_nref_step);
+    if (b_it.band == operating_band) {
+      const uint32_t offset             = (dl_arfcn - b_it.dl_nref_first) / b_it.dl_nref_step;
+      const uint32_t candidate_ul_arfcn = b_it.ul_nref_first + offset * b_it.ul_nref_step;
+      // For band n66, n70, n92, n94, the UL spectrum is smaller than the corresponding DL spectrum, as these bands
+      // supports asymmetrical UL anc DL channel operations. However, the current GNB doesn't support this feature.
+      // If the resulting UL ARFCN is outside the valid range, return 0.
+      return (candidate_ul_arfcn >= b_it.ul_nref_first and candidate_ul_arfcn <= b_it.ul_nref_last) ? candidate_ul_arfcn
+                                                                                                    : 0U;
     }
   }
 

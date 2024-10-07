@@ -170,9 +170,6 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
   return (k_first_15kHz * 15) / ssb_scs_kHz;
 }
 
-/// Calculates SSB pattern from SSB subcarrier spacing and DL ARFCN.
-ssb_pattern_case ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arfcn);
-
 /// \brief Calculates L_max, ie max number of SSB occasions per SSB period. Possible values are {4, 8, 64}.
 /// \remark See TS 38.213, Section 4.1.
 /// \param ssb_scs SSB Subcarrier Spacing.

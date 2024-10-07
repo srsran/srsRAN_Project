@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "fmt/core.h"
 #include <string>
 
 namespace srsran {
@@ -42,15 +41,6 @@ struct cu_up_unit_pcap_config {
     bool        enabled = false;
   } e1ap;
 
-  /// helper method to set the filename prefix for different apps.
-  /// This is used to provide different defaults depending on the app,
-  /// e.g.: "/tmp/gnb_e1ap.pcap" or "/tmp/cu_e1ap.pcap"
-  void set_default_filename(std::string prefix)
-  {
-    n3.filename   = fmt::format("{}_n3.pcap", prefix);
-    f1u.filename  = fmt::format("{}_f1u.pcap", prefix);
-    e1ap.filename = fmt::format("{}_e1ap.pcap", prefix);
-  }
   /// When using the gNB app, there is no point in instantiating
   /// E1 pcaps twice. This function force disables them in the CU-UP.
   /// TODO: revisit

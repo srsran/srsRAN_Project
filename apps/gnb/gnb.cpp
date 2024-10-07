@@ -20,23 +20,22 @@
  *
  */
 
+#include "srsran/support/backtrace.h"
+#include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/dynlink_manager.h"
 #include "srsran/support/event_tracing.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
 
-#include "srsran/f1u/local_connector/f1u_local_connector.h"
-
-#include "srsran/ngap/gateways/n2_connection_client_factory.h"
-#include "srsran/support/io/io_broker_factory.h"
-
+#include "srsran/du/du_power_controller.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
+#include "srsran/f1u/local_connector/f1u_local_connector.h"
 #include "srsran/gtpu/ngu_gateway.h"
-#include "srsran/support/backtrace.h"
-#include "srsran/support/config_parsers.h"
+#include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
 #include "gnb_appconfig.h"
 #include "gnb_appconfig_cli11_schema.h"
@@ -44,49 +43,34 @@
 #include "gnb_appconfig_validators.h"
 #include "gnb_appconfig_yaml_writer.h"
 
+#include "apps/services/application_message_banners.h"
+#include "apps/services/application_tracer.h"
+#include "apps/services/buffer_pool/buffer_pool_manager.h"
+#include "apps/services/core_isolation_manager.h"
+#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/metrics/metrics_manager.h"
+#include "apps/services/metrics/metrics_notifier_proxy.h"
+#include "apps/services/stdin_command_dispatcher.h"
 #include "apps/services/worker_manager.h"
 
-#include "apps/services/application_tracer.h"
-#include "apps/services/stdin_command_dispatcher.h"
-
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
-
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
-#include "apps/services/e2_metric_connector_manager.h"
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.
 #include "srsran/support/tsan_options.h"
 
+#include "apps/units/cu_cp/cu_cp_application_unit.h"
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
-#include "apps/units/cu_cp/cu_cp_logger_registrator.h"
-#include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
-#include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
-#include "apps/units/cu_up/cu_up_logger_registrator.h"
-#include "apps/units/cu_up/cu_up_unit_config_cli11_schema.h"
-#include "apps/units/cu_up/cu_up_unit_config_validator.h"
-
-#include <atomic>
-
-#include "apps/services/application_message_banners.h"
-#include "apps/services/buffer_pool/buffer_pool_manager.h"
-#include "apps/services/core_isolation_manager.h"
-#include "apps/services/metrics/metrics_manager.h"
-#include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/units/cu_cp/cu_cp_builder.h"
-#include "apps/units/cu_cp/cu_cp_unit_config_yaml_writer.h"
+#include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/cu_cp/pcap_factory.h"
-#include "apps/units/cu_up/cu_up_builder.h"
-#include "apps/units/cu_up/cu_up_unit_config_translators.h"
-#include "apps/units/cu_up/cu_up_unit_config_yaml_writer.h"
+#include "apps/units/cu_up/cu_up_application_unit.h"
+#include "apps/units/cu_up/cu_up_unit_config.h"
 #include "apps/units/cu_up/pcap_factory.h"
 #include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
 
-#include "srsran/du/du_power_controller.h"
-#include "srsran/support/cli11_utils.h"
-
+#include <atomic>
 #include <yaml-cpp/node/convert.h>
 
 #ifdef DPDK_FOUND
@@ -146,10 +130,10 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const logger_appconfig&         log_cfg,
-                              const cu_cp_unit_logger_config& cu_cp_loggers,
-                              const cu_up_unit_logger_config& cu_up_loggers,
-                              flexible_du_application_unit&   du_app_unit)
+static void register_app_logs(const logger_appconfig&       log_cfg,
+                              cu_cp_application_unit&       cu_cp_app_unit,
+                              cu_up_application_unit&       cu_up_app_unit,
+                              flexible_du_application_unit& du_app_unit)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
@@ -177,8 +161,8 @@ static void register_app_logs(const logger_appconfig&         log_cfg,
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Register units logs.
-  register_cu_cp_loggers(cu_cp_loggers);
-  register_cu_up_loggers(cu_up_loggers);
+  cu_cp_app_unit.on_loggers_registration();
+  cu_up_app_unit.on_loggers_registration();
   du_app_unit.on_loggers_registration();
 }
 
@@ -200,6 +184,15 @@ static void autoderive_slicing_args(du_high_unit_config& du_hi_cfg, cu_cp_unit_c
       cu_cp_config.slice_cfg.push_back(slice);
     }
   }
+}
+
+static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_cfg, const cu_cp_unit_config& cu_cp_cfg)
+{
+  // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
+  if (cu_up_cfg.upf_cfg.bind_addr == "auto") {
+    cu_up_cfg.upf_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+  }
+  cu_up_cfg.upf_cfg.no_core = cu_cp_cfg.amf_config.no_core;
 }
 
 int main(int argc, char** argv)
@@ -228,59 +221,57 @@ int main(int argc, char** argv)
   // Configure CLI11 with the gNB application configuration schema.
   configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
-  cu_cp_unit_config cu_cp_config;
-  cu_cp_config.pcap_cfg.set_default_filename("/tmp/gnb");
-  configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
+  auto cu_cp_app_unit = create_cu_cp_application_unit("gnb");
+  cu_cp_app_unit->on_parsing_configuration_registration(app);
 
-  cu_up_unit_config cu_up_config;
-  cu_up_config.pcap_cfg.set_default_filename("/tmp/gnb");
-  configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
+  auto cu_up_app_unit = create_cu_up_application_unit("gnb");
+  cu_up_app_unit->on_parsing_configuration_registration(app);
 
-  auto du_app_unit = create_flexible_du_application_unit();
-  du_app_unit->get_du_high_unit_config().pcaps.set_default_filename("/tmp/gnb");
+  auto du_app_unit = create_flexible_du_application_unit("gnb");
   du_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &gnb_cfg, &du_app_unit, &cu_cp_config, &cu_up_config]() {
+  app.callback([&app, &gnb_cfg, &du_app_unit, &cu_cp_app_unit, &cu_up_app_unit]() {
     autoderive_gnb_parameters_after_parsing(app, gnb_cfg);
-    autoderive_slicing_args(du_app_unit->get_du_high_unit_config(), cu_cp_config);
+    autoderive_slicing_args(du_app_unit->get_du_high_unit_config(), cu_cp_app_unit->get_cu_cp_unit_config());
     du_app_unit->on_configuration_parameters_autoderivation(app);
 
     // If test mode is enabled, we auto-enable "no_core" option and generate a amf config with no core.
     if (du_app_unit->get_du_high_unit_config().is_testmode_enabled()) {
-      cu_cp_config.amf_config.no_core           = true;
-      cu_cp_config.amf_config.amf.supported_tas = {{7, {{"00101", {s_nssai_t{1}}}}}};
+      cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core           = true;
+      cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf.supported_tas = {{7, {{"00101", {s_nssai_t{1}}}}}};
     }
 
-    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config);
-    autoderive_cu_up_parameters_after_parsing(
-        cu_cp_config.amf_config.amf.bind_addr, cu_cp_config.amf_config.no_core, cu_up_config);
+    cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
+    autoderive_cu_up_parameters_after_parsing(cu_up_app_unit->get_cu_up_unit_config(),
+                                              cu_cp_app_unit->get_cu_cp_unit_config());
   });
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
+  auto available_cpu_mask = (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
+                                ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
+                                : os_sched_affinity_bitmask::available_cpus();
   // Check the modified configuration.
-  if (!validate_appconfig(gnb_cfg) || !validate_cu_cp_unit_config(cu_cp_config) ||
-      !validate_cu_up_unit_config(cu_up_config) ||
-      !du_app_unit->on_configuration_validation((gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
-                                                    ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                                    : os_sched_affinity_bitmask::available_cpus()) ||
-      !validate_plmn_and_tacs(du_app_unit->get_du_high_unit_config(), cu_cp_config)) {
+  if (!validate_appconfig(gnb_cfg) || !cu_cp_app_unit->on_configuration_validation(available_cpu_mask) ||
+      !cu_up_app_unit->on_configuration_validation(available_cpu_mask) ||
+      !du_app_unit->on_configuration_validation(available_cpu_mask) ||
+      !validate_plmn_and_tacs(du_app_unit->get_du_high_unit_config(), cu_cp_app_unit->get_cu_cp_unit_config())) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(gnb_cfg.log_cfg.filename);
-  register_app_logs(gnb_cfg.log_cfg, cu_cp_config.loggers, cu_up_config.loggers, *du_app_unit);
+  register_app_logs(gnb_cfg.log_cfg, *cu_cp_app_unit, *cu_up_app_unit, *du_app_unit);
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
     YAML::Node node;
     fill_gnb_appconfig_in_yaml_schema(node, gnb_cfg);
-    fill_cu_up_config_in_yaml_schema(node, cu_up_config);
-    fill_cu_cp_config_in_yaml_schema(node, cu_cp_config);
+    cu_cp_app_unit->dump_config(node);
+    cu_up_app_unit->dump_config(node);
     du_app_unit->dump_config(node);
     config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
@@ -333,8 +324,8 @@ int main(int argc, char** argv)
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
-  fill_cu_cp_worker_manager_config(worker_manager_cfg, cu_cp_config);
-  fill_cu_up_worker_manager_config(worker_manager_cfg, cu_up_config);
+  cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
+  cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   du_app_unit->fill_worker_manager_config(worker_manager_cfg);
 
   worker_manager workers{worker_manager_cfg};
@@ -349,11 +340,13 @@ int main(int argc, char** argv)
   // Create layer specific PCAPs.
   // In the gNB app, there is no point in instantiating two pcaps for each node of E1 and F1.
   // We disable one accordingly.
-  cu_up_config.pcap_cfg.disable_e1_pcaps();
+  cu_up_app_unit->get_cu_up_unit_config().pcap_cfg.disable_e1_pcaps();
   du_app_unit->get_du_high_unit_config().pcaps.disable_f1_pcaps();
-  cu_cp_dlt_pcaps   cu_cp_dlt_pcaps = create_cu_cp_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
-  cu_up_dlt_pcaps   cu_up_dlt_pcaps = create_cu_up_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
-  flexible_du_pcaps du_pcaps        = create_du_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
+  cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
+      create_cu_cp_dlt_pcap(cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg, *workers.get_executor_getter());
+  cu_up_dlt_pcaps cu_up_dlt_pcaps =
+      create_cu_up_dlt_pcaps(cu_up_app_unit->get_cu_up_unit_config().pcap_cfg, *workers.get_executor_getter());
+  flexible_du_pcaps du_pcaps = create_du_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
@@ -379,18 +372,15 @@ int main(int argc, char** argv)
 
   e2_metric_connector_manager e2_metric_connectors(du_app_unit->get_du_high_unit_config().cells_cfg.size());
 
-  // Create CU-CP config.
-  cu_cp_build_dependencies cu_cp_dependencies;
-  cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
-  cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.timers         = cu_timers;
-
   // Load CU-CP plugins if enabled
   std::optional<dynlink_manager> ng_handover_plugin =
-      cu_cp_config.load_plugins ? dynlink_manager::create("libsrsran_plugin_ng_handover.so", gnb_logger) : std::nullopt;
-  std::optional<dynlink_manager> mocn_plugin =
-      cu_cp_config.load_plugins ? dynlink_manager::create("libsrsran_plugin_mocn.so", gnb_logger) : std::nullopt;
-  if (cu_cp_config.load_plugins) {
+      cu_cp_app_unit->get_cu_cp_unit_config().load_plugins
+          ? dynlink_manager::create("libsrsran_plugin_ng_handover.so", gnb_logger)
+          : std::nullopt;
+  std::optional<dynlink_manager> mocn_plugin = cu_cp_app_unit->get_cu_cp_unit_config().load_plugins
+                                                   ? dynlink_manager::create("libsrsran_plugin_mocn.so", gnb_logger)
+                                                   : std::nullopt;
+  if (cu_cp_app_unit->get_cu_cp_unit_config().load_plugins) {
     if (not ng_handover_plugin) {
       gnb_logger.error("Could not open NG Handover plugin");
       return -1;
@@ -400,7 +390,7 @@ int main(int argc, char** argv)
       gnb_logger.error("Could not open NG Handover function pointer");
       return -1;
     }
-    cu_cp_config.start_ng_ho_func = ng_ho_func.value();
+    cu_cp_app_unit->get_cu_cp_unit_config().start_ng_ho_func = ng_ho_func.value();
 
     if (not mocn_plugin) {
       gnb_logger.error("Could not open MOCN plugin");
@@ -411,43 +401,44 @@ int main(int argc, char** argv)
       gnb_logger.error("Could not open MOCN function pointer");
       return -1;
     }
-    cu_cp_config.connect_amfs_func_ptr = connect_amfs.value();
-    expected<void*> disconnect_amfs    = mocn_plugin->load_symbol("disconnect_amfs_func");
+    cu_cp_app_unit->get_cu_cp_unit_config().connect_amfs_func_ptr = connect_amfs.value();
+    expected<void*> disconnect_amfs                               = mocn_plugin->load_symbol("disconnect_amfs_func");
     if (not disconnect_amfs) {
       gnb_logger.error("Could not open MOCN function pointer");
       return -1;
     }
-    cu_cp_config.disconnect_amfs_func_ptr = disconnect_amfs.value();
+    cu_cp_app_unit->get_cu_cp_unit_config().disconnect_amfs_func_ptr = disconnect_amfs.value();
   }
 
-  // Create N2 Client Gateways.
-  cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(generate_n2_client_config(
-      cu_cp_config.amf_config.no_core, cu_cp_config.amf_config.amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
-
-  for (const auto& amf : cu_cp_config.extra_amfs) {
-    cu_cp_dependencies.n2_clients.push_back(srs_cu_cp::create_n2_connection_client(
-        generate_n2_client_config(cu_cp_config.amf_config.no_core, amf, *cu_cp_dlt_pcaps.ngap, *epoll_broker)));
-  }
-
-  // E2AP configuration.
-  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
-
-  // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
+  // Create CU-CP dependencies.
+  cu_cp_build_dependencies cu_cp_dependencies;
+  cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
+  cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
+  cu_cp_dependencies.timers         = cu_timers;
+  cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
+  cu_cp_dependencies.broker         = epoll_broker.get();
 
   // create CU-CP.
-  auto cu_cp_obj_and_cmds = build_cu_cp(cu_cp_config, cu_cp_dependencies);
+  auto cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
 
   srs_cu_cp::cu_cp& cu_cp_obj = *cu_cp_obj_and_cmds.unit;
 
   // Create and start CU-UP
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = build_cu_up(cu_up_config,
-                                                                      workers,
-                                                                      *e1_gw,
-                                                                      *f1u_conn->get_f1u_cu_up_gateway(),
-                                                                      *cu_up_dlt_pcaps.n3,
-                                                                      *cu_timers,
-                                                                      *epoll_broker);
+  cu_up_unit_dependencies cu_up_unit_deps;
+  cu_up_unit_deps.workers          = &workers;
+  cu_up_unit_deps.e1ap_conn_client = e1_gw.get();
+  cu_up_unit_deps.f1u_gateway      = f1u_conn->get_f1u_cu_up_gateway();
+  cu_up_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();
+  cu_up_unit_deps.timers           = cu_timers;
+  cu_up_unit_deps.io_brk           = epoll_broker.get();
+
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
+
+  // E2AP configuration.
+  sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
+
+  // Create E2AP GW remote connector.
+  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
 
   // Instantiate one DU.
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;

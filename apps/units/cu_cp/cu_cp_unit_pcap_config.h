@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "fmt/core.h"
 #include <string>
 
 namespace srsran {
@@ -41,15 +40,6 @@ struct cu_cp_unit_pcap_config {
     std::string filename = "/tmp/cu_f1ap.pcap";
     bool        enabled  = false;
   } f1ap;
-
-  /// helper method to set the filename prefix for different apps.
-  /// This is used to provide different defaults depending on the app,
-  /// e.g.: "/tmp/gnb_e1ap.pcap" or "/tmp/cu_e1ap.pcap"
-  void set_default_filename(std::string prefix)
-  {
-    ngap.filename = fmt::format("{}_ngap.pcap", prefix);
-    e1ap.filename = fmt::format("{}_e1ap.pcap", prefix);
-    f1ap.filename = fmt::format("{}_f1ap.pcap", prefix);
-  }
 };
+
 } // namespace srsran

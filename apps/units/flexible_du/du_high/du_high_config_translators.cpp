@@ -960,7 +960,7 @@ void srsran::fill_du_high_worker_manager_config(worker_manager_config&     confi
                                                 const du_high_unit_config& unit_cfg,
                                                 bool                       is_blocking_mode_enabled)
 {
-  auto& du_hi_cfg = config.du_hi_cfg;
+  auto& du_hi_cfg = config.du_hi_cfg.emplace();
 
   du_hi_cfg.is_rt_mode_enabled = !is_blocking_mode_enabled;
   du_hi_cfg.nof_cells          = unit_cfg.cells_cfg.size();

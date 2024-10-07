@@ -48,10 +48,6 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
     srsran_assert(ru_config_count <= 1, "Worker manager received configuration for more than one RU type");
   }
 
-  if (worker_cfg.ru_ofh_cfg) {
-    ru_timing_mask = worker_cfg.ru_ofh_cfg.value().ru_timing_cpu;
-  }
-
   for (const auto& cell_affinities : worker_cfg.config_affinities) {
     affinity_mng.emplace_back(cell_affinities);
   }
@@ -59,9 +55,12 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   create_low_prio_executors(worker_cfg);
   associate_low_prio_executors();
 
-  create_du_executors(worker_cfg.du_hi_cfg, worker_cfg.du_low_cfg, worker_cfg.fapi_cfg);
+  if (worker_cfg.du_hi_cfg) {
+    create_du_executors(worker_cfg.du_hi_cfg.value(), worker_cfg.du_low_cfg, worker_cfg.fapi_cfg);
+  }
 
   if (worker_cfg.ru_ofh_cfg) {
+    ru_timing_mask         = worker_cfg.ru_ofh_cfg.value().ru_timing_cpu;
     ru_txrx_affinity_masks = worker_cfg.ru_ofh_cfg.value().txrx_affinities;
     create_ofh_executors(worker_cfg.ru_ofh_cfg.value());
   }
@@ -322,17 +321,19 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
   strand cp_strand{{{"timer_exec",
                      concurrent_queue_policy::lockfree_spsc,
                      task_worker_queue_size,
-                     not worker_cfg.du_hi_cfg.is_rt_mode_enabled},
+                     worker_cfg.du_hi_cfg ? !worker_cfg.du_hi_cfg->is_rt_mode_enabled : false},
                     {"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
   high_prio_strands.push_back(cp_strand);
 
   // Setup strands for the data plane of all the instantiated DUs.
   // One strand per DU, each with multiple priority levels.
-  for (unsigned i = 0; i != worker_cfg.du_hi_cfg.nof_cells; ++i) {
-    low_prio_strands.push_back(strand{
-        {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-         {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size},
-         {fmt::format("du_rb_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size}}});
+  if (worker_cfg.du_hi_cfg) {
+    for (unsigned i = 0; i != worker_cfg.du_hi_cfg->nof_cells; ++i) {
+      low_prio_strands.push_back(strand{
+          {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+           {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size},
+           {fmt::format("du_rb_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size}}});
+    }
   }
 
   // Configuration of strands for user plane handling (CU-UP and DU-low user plane). Given that the CU-UP doesn't

@@ -50,7 +50,7 @@ void ran_slice_instance::slot_indication(slot_point slot_tx)
     last_pdsch_alloc_slot.clear();
   }
   if (last_pusch_alloc_slot.valid() and slot_tx > last_pusch_alloc_slot + MAX_SLOTS_SINCE_LAST_PXSCH) {
-    last_pdsch_alloc_slot.clear();
+    last_pusch_alloc_slot.clear();
   }
 }
 

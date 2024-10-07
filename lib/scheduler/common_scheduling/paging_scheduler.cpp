@@ -33,6 +33,9 @@
 
 using namespace srsran;
 
+// (Implementation-defined) limit for maximum number of pending paging indications.
+static constexpr size_t PAGING_INFO_QUEUE_SIZE = 128;
+
 paging_scheduler::paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
                                    const cell_configuration&                       cell_cfg_,
                                    pdcch_resource_allocator&                       pdcch_sch_,
@@ -44,6 +47,7 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
   nof_pf_per_drx_cycle(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.nof_pf)),
   paging_frame_offset(cell_cfg.dl_cfg_common.pcch_cfg.paging_frame_offset),
   nof_po_per_pf(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.ns)),
+  new_paging_notifications(PAGING_INFO_QUEUE_SIZE),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value()) {
@@ -114,17 +118,14 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
   }
 }
 
-void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
+void paging_scheduler::run_slot(cell_resource_allocator& res_grid)
 {
   // Pop pending Paging notification and process them.
-  new_paging_notifications.slot_indication();
-  span<const sched_paging_information> new_paging_infos = new_paging_notifications.get_events();
-  for (const auto& pg_info : new_paging_infos) {
+  sched_paging_information new_pg_info;
+  while (new_paging_notifications.try_pop(new_pg_info)) {
     // Check whether Paging information is already present or not. i.e. tackle repeated Paging attempt from upper
     // layers.
-    if (paging_pending_ues.find(pg_info.paging_identity) == paging_pending_ues.cend()) {
-      paging_pending_ues[pg_info.paging_identity] = ue_paging_info{.info = pg_info, .retry_count = 0};
-    }
+    paging_pending_ues.try_emplace(new_pg_info.paging_identity, ue_paging_info{.info = new_pg_info, .retry_count = 0});
   }
 
   // NOTE:
@@ -149,7 +150,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   // Check for maximum paging retries.
   auto it = paging_pending_ues.begin();
   while (it != paging_pending_ues.end()) {
-    if (paging_pending_ues[it->first].retry_count >= expert_cfg.pg.max_paging_retries) {
+    if (it->second.retry_count >= expert_cfg.pg.max_paging_retries) {
       it = paging_pending_ues.erase(it);
     } else {
       ++it;
@@ -267,7 +268,10 @@ unsigned paging_scheduler::get_accumulated_paging_msg_size(span<const sched_pagi
 
 void paging_scheduler::handle_paging_information(const sched_paging_information& paging_info)
 {
-  new_paging_notifications.push(paging_info);
+  if (not new_paging_notifications.try_push(paging_info)) {
+    logger.warning("Discarding paging information for ue ID={}. Cause: Event queue is full",
+                   paging_info.ue_identity_index_value);
+  }
 }
 
 bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_slot, unsigned i_s)

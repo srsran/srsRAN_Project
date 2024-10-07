@@ -300,6 +300,19 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
     }
   }
 
+  for (const auto& srs : result.ul.srss) {
+    fmt::format_to(fmtbuf,
+                   "\n- SRS: c-rnti={} symb={} tx-comb=(n{} o={} cs={}) c_srs={} f_sh={} seq_id={}",
+                   srs.crnti,
+                   srs.symbols,
+                   static_cast<unsigned>(srs.tx_comb),
+                   srs.comb_offset,
+                   srs.cyclic_shift,
+                   srs.config_index,
+                   srs.freq_shift,
+                   srs.sequence_id);
+  }
+
   if (fmtbuf.size() > 0) {
     const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
                                 result.dl.ue_grants.size() + result.dl.bc.sibs.size();

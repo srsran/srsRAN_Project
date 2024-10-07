@@ -253,6 +253,8 @@ public:
     removed_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
   }
 
+  expected<std::string> get_cu_bind_address() const override { return "127.0.0.1"; }
+
   std::list<gtpu_teid_t> created_ul_teid_list  = {};
   std::list<gtpu_teid_t> attached_ul_teid_list = {};
   std::list<gtpu_teid_t> removed_ul_teid_list  = {};

@@ -97,6 +97,14 @@ error_type<std::string> is_dl_arfcn_valid_given_band(nr_band              band,
                                                      subcarrier_spacing   scs,
                                                      bs_channel_bandwidth bw = bs_channel_bandwidth::MHz10);
 
+/// \brief     Checks whether an Uplink ARFCN is valid for a given band.
+/// \param[in] band Given NR band.
+/// \param[in] arfcn_f_ref Given Uplink ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.
+/// \param[in] bw Channel Bandwidth in MHz, which is required only to validate n28.
+/// \return    If the UL ARFCN is invalid for the band, a std::string value is returned with the reason.
+error_type<std::string>
+is_ul_arfcn_valid_given_band(nr_band band, uint32_t arfcn_f_ref, bs_channel_bandwidth bw = bs_channel_bandwidth::MHz10);
+
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
 /// For paired spectrum (FDD) the function returns the respective ARFCN in the same band.

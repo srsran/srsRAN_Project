@@ -27,6 +27,8 @@
 
 namespace srsran {
 
+class dlt_pcap;
+class io_broker;
 struct cu_cp_unit_config;
 struct worker_manager;
 
@@ -36,10 +38,11 @@ class n2_connection_client;
 
 /// CU-CP build dependencies.
 struct cu_cp_build_dependencies {
-  task_executor*                                                cu_cp_executor = nullptr;
-  task_executor*                                                cu_cp_e2_exec  = nullptr;
-  std::vector<std::unique_ptr<srs_cu_cp::n2_connection_client>> n2_clients;
-  timer_manager*                                                timers = nullptr;
+  task_executor* cu_cp_executor = nullptr;
+  task_executor* cu_cp_e2_exec  = nullptr;
+  timer_manager* timers         = nullptr;
+  dlt_pcap*      ngap_pcap      = nullptr;
+  io_broker*     broker         = nullptr;
 };
 
 /// Wraps the CU-CP and its supported application commands.

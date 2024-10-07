@@ -27,6 +27,7 @@
 #include "../policy/scheduler_policy.h"
 #include "../pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "../slicing/slice_scheduler.h"
+#include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
@@ -34,6 +35,7 @@
 #include "ue_repository.h"
 #include "ue_scheduler.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
+#include <mutex>
 
 namespace srsran {
 
@@ -82,6 +84,9 @@ private:
 
     /// Slice scheduler.
     slice_scheduler slice_sched;
+
+    /// SRS scheduler
+    srs_scheduler_impl srs_sched;
 
     cell(const scheduler_ue_expert_config& expert_cfg,
          const ue_scheduler_cell_params&   params,

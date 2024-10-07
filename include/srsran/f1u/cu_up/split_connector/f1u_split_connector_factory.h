@@ -31,8 +31,8 @@
 namespace srsran::srs_cu_up {
 
 struct f1u_cu_up_split_gateway_creation_msg {
-  ngu_gateway* udp_gw;
-  gtpu_demux*  demux;
+  ngu_gateway& udp_gw;
+  gtpu_demux&  demux;
   dlt_pcap&    gtpu_pcap;
   uint16_t     peer_port;
 };
