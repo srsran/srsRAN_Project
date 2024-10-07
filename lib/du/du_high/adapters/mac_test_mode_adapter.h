@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/adt/mpmc_queue.h"
+#include "srsran/adt/unique_function.h"
 #include "srsran/du/du_high/du_test_mode_config.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
@@ -24,7 +26,7 @@ namespace srs_du {
 class test_ue_info_manager
 {
 public:
-  test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_) : rnti_start(rnti_start_), nof_ues(nof_ues_) {}
+  test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_);
 
   du_ue_index_t rnti_to_du_ue_idx(rnti_t rnti) const
   {
@@ -41,18 +43,9 @@ public:
     return (rnti >= rnti_start) and (rnti < to_rnti(to_value(rnti_start) + nof_ues));
   }
 
-  void add_ue(rnti_t rnti, du_ue_index_t ue_idx_, const sched_ue_config_request& sched_ue_cfg_req_)
-  {
-    rnti_to_ue_info_lookup[rnti] =
-        test_ue_info{.ue_idx = ue_idx_, .sched_ue_cfg_req = sched_ue_cfg_req_, .msg4_rx_flag = false};
-  }
+  void add_ue(rnti_t rnti, du_ue_index_t ue_idx_, const sched_ue_config_request& sched_ue_cfg_req_);
 
-  void remove_ue(rnti_t rnti)
-  {
-    if (rnti_to_ue_info_lookup.count(rnti) > 0) {
-      rnti_to_ue_info_lookup.erase(rnti);
-    }
-  }
+  void remove_ue(rnti_t rnti);
 
   const sched_ue_config_request& get_sched_ue_cfg_request(rnti_t rnti) const
   {
@@ -74,6 +67,8 @@ public:
     }
   }
 
+  void process_pending_tasks();
+
 private:
   struct test_ue_info {
     du_ue_index_t           ue_idx;
@@ -87,6 +82,9 @@ private:
 
   // Mapping between UE RNTI and test UE information.
   std::unordered_map<rnti_t, test_ue_info> rnti_to_ue_info_lookup;
+
+  concurrent_queue<unique_task, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
+      pending_tasks;
 };
 
 class phy_test_mode_adapter : public mac_result_notifier
@@ -132,10 +130,7 @@ public:
                              std::function<void(rnti_t)>                             dl_bs_notifier_,
                              test_ue_info_manager&                                   ue_info_mgr_);
 
-  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override
-  {
-    result_notifier.on_new_downlink_scheduler_results(dl_res);
-  }
+  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
 
   void on_new_downlink_data(const mac_dl_data_result& dl_data) override
   {
