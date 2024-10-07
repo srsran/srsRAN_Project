@@ -106,7 +106,7 @@ variables:
       done < <(git lfs ls-files | sed -r 's/^.{13}//')
       echo "srsGNB sources+build size is" $(du -hs .)
     # Remove any existing retina resource for this group
-    - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
+    - retina-delete-orchestration-network --user-name ci_${GROUP}
     # Add extra config env variables to the .env file
     - |
       echo "" >> .gitlab/ci/e2e/.env
@@ -117,7 +117,7 @@ variables:
     # Set username for retina
     - |
       cd tests/e2e
-      export LOGNAME=ci_${GROUP}_${GITLAB_USER_LOGIN}
+      export LOGNAME=ci_${GROUP}
     # Run Retina
     - |
       E2E_CMD="retina-launcher ${RETINA_LAUNCHER_ARGS} --retina-request=${SRSRANDIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
@@ -126,7 +126,7 @@ variables:
   after_script:
     # Remove any existing retina resource for this group
     - *setup_kube_config
-    - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
+    - retina-delete-orchestration-network --user-name ci_${GROUP}
     # Push test metrics
     - |
       find . -iname "test_metrics.csv" -exec \
