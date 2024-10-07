@@ -82,8 +82,8 @@ mme:
     integrity_order: [EIA2, EIA1, EIA0]
     ciphering_order: [EEA0, EEA1, EEA2]
   network_name:
-    full: SRS RAN
-    short: SRS RAN
+    full: ${NETWORK_NAME_FULL}
+    short: ${NETWORK_NAME_SHORT}
   time:
     t3412:
       value: 540
@@ -180,8 +180,8 @@ amf:
     integrity_order: [NIA2, NIA1, NIA0]
     ciphering_order: [NEA0, NEA1, NEA2]
   network_name:
-    full: SRS RAN
-    short: SRS RAN
+    full: ${NETWORK_NAME_FULL}
+    short: ${NETWORK_NAME_SHORT}
   amf_name: open5gs-amf0
   time:
     t3512:
