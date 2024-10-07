@@ -49,7 +49,16 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(dmrs_pucch_processor_test dmrs_pucch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pusch_estimator_test dmrs_pusch_estimator_test.cpp)
-    target_link_libraries(dmrs_pusch_estimator_test srsran_signal_processors srsran_sequence_generators srsran_phy_support srsvec srslog gtest gtest_main)
+    target_link_libraries(dmrs_pusch_estimator_test
+        srsran_signal_processors
+        srsran_sequence_generators
+        srsran_phy_support
+        srsran_pusch_processor
+        srsvec
+        srslog
+        gtest
+        gtest_main
+    )
     add_test_vector(dmrs_pusch_estimator_test dmrs_pusch_estimator_test_data.tar.gz "")
 
     add_executable(nzp_csi_rs_generator_test nzp_csi_rs_generator_test.cpp)
