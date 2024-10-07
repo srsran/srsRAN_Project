@@ -265,13 +265,20 @@ void benchmark_pdcp_rx(bench_params                  params,
   };
 
   // Run benchmark.
-  auto measure = [&pdcp_rx, &pdu_list, &ul_worker, &crypto_worker_pool]() mutable {
+  auto measure = [&pdcp_rx, &pdu_list, &ul_exec, &ul_worker, &crypto_worker_pool]() mutable {
     for (auto& pdu : pdu_list) {
-      pdcp_rx->handle_pdu(std::move(pdu));
+      if (!ul_exec.execute([&pdcp_rx, p = std::move(pdu)]() mutable { pdcp_rx->handle_pdu(std::move(p)); })) {
+        srslog::fetch_basic_logger("PDCP").error("Failed execute handle_pdu in UL executor");
+      }
     }
 
-    // Wait for crypto and reordering
+    // Wait for all handle_pdu tasks to be processed
+    ul_worker.wait_pending_tasks();
+
+    // Wait for crypto
     crypto_worker_pool.wait_pending_tasks();
+
+    // Wait for reordering
     ul_worker.wait_pending_tasks();
   };
 
