@@ -65,28 +65,28 @@ std::vector<std::string> e2sm_kpm_cu_meas_provider_impl::get_supported_metric_na
   return metrics;
 }
 
-bool e2sm_kpm_cu_meas_provider_impl::cell_supported(const asn1::e2sm::cgi_c& cell_global_id)
+bool e2sm_kpm_cu_meas_provider_impl::is_cell_supported(const asn1::e2sm::cgi_c& cell_global_id)
 {
   // TODO: check if CELL is supported
   return true;
 }
 
-bool e2sm_kpm_cu_meas_provider_impl::ue_supported(const asn1::e2sm::ue_id_c& ueid)
+bool e2sm_kpm_cu_meas_provider_impl::is_ue_supported(const asn1::e2sm::ue_id_c& ueid)
 {
   // TODO: check if UE is supported
   return true;
 }
 
-bool e2sm_kpm_cu_meas_provider_impl::test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type)
+bool e2sm_kpm_cu_meas_provider_impl::is_test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type)
 {
   // TODO: check if test condition is supported
   return true;
 }
 
-bool e2sm_kpm_cu_meas_provider_impl::metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
-                                                      const asn1::e2sm::meas_label_s&  label,
-                                                      const e2sm_kpm_metric_level_enum level,
-                                                      const bool&                      cell_scope)
+bool e2sm_kpm_cu_meas_provider_impl::is_metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
+                                                         const asn1::e2sm::meas_label_s&  label,
+                                                         const e2sm_kpm_metric_level_enum level,
+                                                         const bool&                      cell_scope)
 {
   if (!label.no_label_present) {
     logger.debug("Currently only NO_LABEL metric supported.");

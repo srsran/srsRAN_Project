@@ -330,9 +330,9 @@ public:
   {
     return supported_metrics;
   };
-  virtual bool cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override { return true; };
-  virtual bool ue_supported(const asn1::e2sm::ue_id_c& ueid) override { return true; };
-  virtual bool test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override { return true; };
+  virtual bool is_cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override { return true; };
+  virtual bool is_ue_supported(const asn1::e2sm::ue_id_c& ueid) override { return true; };
+  virtual bool is_test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override { return true; };
 
   virtual bool get_ues_matching_test_conditions(const asn1::e2sm::matching_cond_list_l& matching_cond_list,
                                                 std::vector<asn1::e2sm::ue_id_c>&       ues) override
@@ -347,10 +347,10 @@ public:
     return get_ues_matching_cond(ues);
   };
 
-  virtual bool metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
-                                const asn1::e2sm::meas_label_s&  label,
-                                const e2sm_kpm_metric_level_enum level,
-                                const bool&                      cell_scope) override
+  virtual bool is_metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
+                                   const asn1::e2sm::meas_label_s&  label,
+                                   const e2sm_kpm_metric_level_enum level,
+                                   const bool&                      cell_scope) override
   {
     if (std::find(supported_metrics.begin(), supported_metrics.end(), meas_type.meas_name().to_string()) !=
         supported_metrics.end()) {

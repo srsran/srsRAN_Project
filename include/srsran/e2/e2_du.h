@@ -13,6 +13,7 @@
 #include "e2.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"
+
 namespace srsran {
 
 class e2_du_metrics_notifier : public scheduler_metrics_notifier, public rlc_metrics_notifier

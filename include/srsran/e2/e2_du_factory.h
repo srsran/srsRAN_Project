@@ -7,11 +7,13 @@
  * the distribution.
  *
  */
+
+#pragma once
+
 #include "e2_du.h"
 #include "e2_factory.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/f1ap/du/f1ap_du.h"
-#pragma once
 
 namespace srsran {
 /// Creates a instance of an E2 interface (with subscription manager)

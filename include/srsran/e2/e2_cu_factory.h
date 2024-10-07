@@ -7,9 +7,11 @@
  * the distribution.
  *
  */
+
+#pragma once
+
 #include "e2_cu.h"
 #include "e2_factory.h"
-#pragma once
 
 namespace srsran {
 /// Creates a instance of an E2 interface (with subscription manager)
