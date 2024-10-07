@@ -99,6 +99,8 @@ struct worker_manager_config {
   unsigned nof_low_prio_threads;
   /// Low priority CPU bitmasks.
   os_sched_affinity_config low_prio_sched_config;
+  /// Number of crypto threads.
+  unsigned nof_crypto_threads;
   /// PCAP configuration.
   pcap_config pcap_cfg;
   /// Vector of affinities mask indexed by cell.

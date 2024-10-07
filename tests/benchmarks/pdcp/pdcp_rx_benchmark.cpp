@@ -68,7 +68,7 @@ public:
 
 struct bench_params {
   unsigned nof_repetitions    = 10;
-  unsigned nof_crypto_threads = pdcp_nof_crypto_workers;
+  unsigned nof_crypto_threads = 8;
   unsigned crypto_queue_size  = 4096;
   bool     print_timing_info  = false;
 };
@@ -212,6 +212,8 @@ void benchmark_pdcp_rx(bench_params                  params,
   config.sn_size        = pdcp_sn_size::size18bits;
   config.direction      = pdcp_security_direction::uplink;
   config.t_reordering   = pdcp_t_reordering::ms100;
+
+  config.custom.max_nof_crypto_workers = params.nof_crypto_threads;
 
   security::sec_128_as_config sec_cfg = {};
 

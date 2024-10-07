@@ -141,7 +141,9 @@ struct pdcp_max_count {
 };
 
 struct pdcp_custom_config_base {
-  pdcp_max_count max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+  /// Maximum number of concurrent crypto workers needing one security engine each.
+  uint32_t       max_nof_crypto_workers = 1;
+  pdcp_max_count max_count              = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
 };
 
 struct pdcp_custom_config_tx : public pdcp_custom_config_base {
@@ -166,9 +168,6 @@ struct pdcp_custom_config {
   pdcp_custom_config_tx  tx               = {};
   pdcp_custom_config_rx  rx               = {};
 };
-
-/// Number of PDCP crypto workers that can run in parallel.
-constexpr uint32_t pdcp_nof_crypto_workers = 8;
 
 /// \brief Configurable parameters for PDCP that are common
 /// for both TX and RX.

@@ -41,7 +41,8 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
   if (cu_up_config.qos_cfg.empty()) {
     out_cfg =
-        config_helpers::make_default_cu_up_qos_config_list(cu_up_config.warn_on_drop,
+        config_helpers::make_default_cu_up_qos_config_list(cu_up_config.nof_crypto_workers,
+                                                           cu_up_config.warn_on_drop,
                                                            timer_duration(cu_up_config.metrics.pdcp.report_period),
                                                            cu_up_config.test_mode_cfg.enabled);
     return out_cfg;
@@ -53,10 +54,11 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
     }
 
     // Convert PDCP custom config
-    pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
-    out_pdcp_custom.tx.warn_on_drop     = cu_up_config.warn_on_drop;
-    out_pdcp_custom.tx.test_mode        = cu_up_config.test_mode_cfg.enabled;
-    out_pdcp_custom.metrics_period      = timer_duration(cu_up_config.metrics.pdcp.report_period);
+    pdcp_custom_config& out_pdcp_custom       = out_cfg[qos.five_qi].pdcp_custom_cfg;
+    out_pdcp_custom.tx.max_nof_crypto_workers = cu_up_config.nof_crypto_workers;
+    out_pdcp_custom.tx.warn_on_drop           = cu_up_config.warn_on_drop;
+    out_pdcp_custom.tx.test_mode              = cu_up_config.test_mode_cfg.enabled;
+    out_pdcp_custom.metrics_period            = timer_duration(cu_up_config.metrics.pdcp.report_period);
 
     // Convert F1-U config
     srs_cu_up::f1u_config& f1u_cfg = out_cfg[qos.five_qi].f1u_cfg;
@@ -70,6 +72,7 @@ void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, con
   config.cu_up_cfg = worker_manager_config::cu_up_config{};
 
   config.cu_up_cfg.value().gtpu_queue_size = unit_cfg.gtpu_queue_size;
+  config.nof_crypto_threads                = unit_cfg.nof_crypto_workers;
 
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {

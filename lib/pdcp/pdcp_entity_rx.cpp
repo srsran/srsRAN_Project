@@ -59,8 +59,8 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger.log_info("PDCP configured. {}", cfg);
 
   // Populate null security engines
-  sec_engine_pool.reserve(pdcp_nof_crypto_workers);
-  for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
+  sec_engine_pool.reserve(cfg.custom.max_nof_crypto_workers);
+  for (uint32_t i = 0; i < cfg.custom.max_nof_crypto_workers; i++) {
     std::unique_ptr<security::security_engine_impl> null_engine;
     sec_engine_pool.push_back(std::move(null_engine));
   }
@@ -446,13 +446,13 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
 
   uint32_t worker_idx = execution_context::get_current_worker_index();
 
-  if (worker_idx >= pdcp_nof_crypto_workers) {
-    srsran_assertion_failure("Worker index exceeds number of crypto workers. worker_idx={} pdcp_nof_crypto_workers={}",
+  if (worker_idx >= cfg.custom.max_nof_crypto_workers) {
+    srsran_assertion_failure("Worker index exceeds number of crypto workers. worker_idx={} max_nof_crypto_workers={}",
                              worker_idx,
-                             pdcp_nof_crypto_workers);
-    logger.log_error("Worker index exceeds number of crypto workers. worker_idx={} pdcp_nof_crypto_workers={}",
+                             cfg.custom.max_nof_crypto_workers);
+    logger.log_error("Worker index exceeds number of crypto workers. worker_idx={} max_nof_crypto_workers={}",
                      worker_idx,
-                     pdcp_nof_crypto_workers);
+                     cfg.custom.max_nof_crypto_workers);
     return make_unexpected(default_error_t{});
   }
   logger.log_debug("Using sec_engine with worker_idx={}. count={} pdu_len={}", worker_idx, count, buf.length());
@@ -557,10 +557,10 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
 
   // Remove previous security engines
   sec_engine_pool.clear();
-  sec_engine_pool.reserve(pdcp_nof_crypto_workers);
+  sec_engine_pool.reserve(cfg.custom.max_nof_crypto_workers);
 
   // Populate new security engines
-  for (uint32_t i = 0; i < pdcp_nof_crypto_workers; i++) {
+  for (uint32_t i = 0; i < cfg.custom.max_nof_crypto_workers; i++) {
     auto sec_engine = std::make_unique<security::security_engine_impl>(
         sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
     sec_engine_pool.push_back(std::move(sec_engine));
