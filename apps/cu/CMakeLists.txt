@@ -36,7 +36,7 @@ target_link_libraries(srscu
 if(SRSRAN_ENTERPRISE_FOUND)
         target_link_libraries(srscu
                 -Wl,--whole-archive srsran_enterprise::srsran_plugin_ng_handover -Wl,--no-whole-archive)
-endif(SRSRAN_ENTERPRISE_FOUND)
+endif()
 
 add_backward(srscu)
 

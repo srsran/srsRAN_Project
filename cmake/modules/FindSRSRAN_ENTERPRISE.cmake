@@ -38,23 +38,19 @@ The following cache variables may also be set:
   Full path to the top level of the SRSRAN build tree.
 
 #]=======================================================================]
-if(NOT DEFINED SRSRAN_ENTERPRISE_PATH)
-	message(FATAL_ERROR "SRSRAN_ENTERPRISE_PATH not provided. Run with \'-DSRSRAN_ENTERPRISE_PATH=<path_to_repo>\'.")
+if(NOT DEFINED SRSRAN_ENTERPRISE_BINARY_DIR)
+    message(FATAL_ERROR "SRSRAN_ENTERPRISE_BUILD_PATH not provided. Run with \'-DSRSRAN_ENTERPRISE_BINARY_DIR=<path_to_repo_build_folder>\'.")
 endif()
-message(STATUS "srsRAN Enterprise provided paths: ${SRSRAN_ENTERPRISE_PATH}.")
-
-
-set(SRSRAN_ENTERPRISE_PATH_BUILD ${SRSRAN_ENTERPRISE_PATH})
-list(TRANSFORM SRSRAN_ENTERPRISE_PATH_BUILD APPEND "/build")
+message(STATUS "srsRAN Enterprise binaries provided path: ${SRSRAN_ENTERPRISE_BINARY_DIR}.")
 
 find_path(SRSRAN_ENTERPRISE_BINARY_DIR srsran_enterprise.cmake
-    HINTS ${SRSRAN_ENTERPRISE_PATH_BUILD}
+    HINTS ${SRSRAN_ENTERPRISE_BINARY_DIR}
     NO_DEFAULT_PATH
 )
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SRSRAN_ENTERPRISE
-	FOUND_VAR SRSRAN_ENTERPRISE_FOUND
+    FOUND_VAR SRSRAN_ENTERPRISE_FOUND
     REQUIRED_VARS
-        SRSRAN_ENTERPRISE_BINARY_DIR
+    SRSRAN_ENTERPRISE_BINARY_DIR
 )

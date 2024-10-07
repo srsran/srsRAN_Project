@@ -1071,7 +1071,7 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
 
 async_task<ngap_handover_preparation_response> srs_cu_cp::start_ngap_handover_preparation(srslog::basic_logger& logger)
 {
-  logger.error("NG handover is not supported");
+  logger.error("NG Handover failed. Cause: NG handover not supported in the open-source release.");
   auto err_function = [](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_RETURN(ngap_handover_preparation_response{false});
