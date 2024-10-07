@@ -57,12 +57,8 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
 span<const pusch_time_domain_resource_allocation>
 srsran::get_pusch_time_domain_resource_table(const cell_configuration& cell_cfg, const search_space_info* ss_info)
 {
-  span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
-      cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
-  if (ss_info != nullptr) {
-    pusch_time_domain_list = ss_info->pusch_time_domain_list;
-  }
-  return pusch_time_domain_list;
+  return ss_info != nullptr ? ss_info->pusch_time_domain_list
+                            : cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
 }
 
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
@@ -116,21 +112,25 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
       get_pusch_time_domain_resource_table(cell_cfg, ss_info);
 
-  unsigned nof_dl_slots = 0;
-  unsigned nof_ul_slots = 0;
+  unsigned nof_dl_slots      = 0;
+  unsigned nof_full_ul_slots = 0;
   if (cell_cfg.is_tdd()) {
-    nof_dl_slots = nof_dl_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
-    nof_ul_slots = nof_full_ul_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
+    nof_dl_slots      = nof_dl_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
+    nof_full_ul_slots = nof_full_ul_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
   }
 
   // Case of FDD or DL heavy TDD pattern.
-  if (not cell_cfg.is_tdd() or (nof_dl_slots >= nof_ul_slots)) {
+  if (not cell_cfg.is_tdd() or (nof_dl_slots >= nof_full_ul_slots)) {
     return initial_pusch_td_list_per_slot;
   }
 
+  // [Implementation-defined] Fairness is achieved by computing nof. UL PDCCHs to be scheduled per each PDCCH slot.
+  // Then, iterating over UL slots finding the nearest PDCCH slot to it such that nof. UL PDCCHs at each PDCCH slot more
+  // or less satisfies the earlier computed value.
+
   // Estimate the nof. UL PDCCHs that can be scheduled in each PDCCH slot.
   const auto nof_ul_pdcchs_per_dl_slot =
-      static_cast<unsigned>(std::round(static_cast<double>(nof_ul_slots) / static_cast<double>(nof_dl_slots)));
+      static_cast<unsigned>(std::round(static_cast<double>(nof_full_ul_slots) / static_cast<double>(nof_dl_slots)));
 
   // List circularly indexed by slot with the list of applicable PUSCH Time Domain resource indexes per slot fairly
   // distributed among all the PDCCH slots.
@@ -139,47 +139,50 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
   final_pusch_td_list_per_slot.resize(nof_slots);
 
   unsigned last_pdcch_slot_index_for_ul_slot = nof_slots;
-  // Iterate from latest UL slot to earliest and find the closest PDCCH slot.
+  // Iterate from latest UL slot to earliest and find the closest PDCCH slot to that UL slot.
   // NOTE: There can be scenarios where the closest PDCCH slot may not be able to schedule PUSCH in the chosen UL slot.
   // In this case we move on next closest PDCCH slot, so on and so forth.
-  for (int slot_idx1 = nof_slots; slot_idx1 >= 0; --slot_idx1) {
+  for (int ul_slot_idx = nof_slots; ul_slot_idx >= 0; --ul_slot_idx) {
     // Skip if it's not a UL slot.
     // TODO: Revisit when scheduling of PUSCH over partial UL slots is supported.
-    if (not is_tdd_full_ul_slot(cell_cfg.tdd_cfg_common.value(), slot_idx1)) {
+    if (not is_tdd_full_ul_slot(cell_cfg.tdd_cfg_common.value(), ul_slot_idx)) {
       continue;
     }
-    // Flag indicating whether a valid PDCCH slot for a given UL slot found or not.
+    // Flag indicating whether a valid PDCCH slot for a given UL slot is found or not.
     bool no_pdcch_slot_found = true;
-    for (int slot_idx2 = slot_idx1; slot_idx2 >= 0; --slot_idx2) {
+    for (int dl_slot_idx = ul_slot_idx; dl_slot_idx >= 0; --dl_slot_idx) {
       // Skip if it's not a DL slot.
-      if (not has_active_tdd_dl_symbols(cell_cfg.tdd_cfg_common.value(), slot_idx2)) {
+      if (not has_active_tdd_dl_symbols(cell_cfg.tdd_cfg_common.value(), dl_slot_idx)) {
         continue;
       }
       // Check whether there is a PUSCH time domain resource with required k2 value for the PDCCH slot.
-      unsigned required_k2 = slot_idx1 - slot_idx2;
-      auto*    it          = std::find_if(initial_pusch_td_list_per_slot[slot_idx2].begin(),
-                              initial_pusch_td_list_per_slot[slot_idx2].end(),
+      unsigned required_k2 = ul_slot_idx - dl_slot_idx;
+      auto*    it          = std::find_if(initial_pusch_td_list_per_slot[dl_slot_idx].begin(),
+                              initial_pusch_td_list_per_slot[dl_slot_idx].end(),
                               [&pusch_time_domain_list, required_k2](unsigned pusch_td_res_idx) {
                                 return pusch_time_domain_list[pusch_td_res_idx].k2 == required_k2;
                               });
-      if (it == initial_pusch_td_list_per_slot[slot_idx2].end()) {
+      if (it == initial_pusch_td_list_per_slot[dl_slot_idx].end()) {
         continue;
       }
       // Store PDCCH slot index at which a valid PUSCH time domain resource was found to schedule PUSCH at given UL
       // slot.
-      last_pdcch_slot_index_for_ul_slot = slot_idx2;
+      last_pdcch_slot_index_for_ul_slot = dl_slot_idx;
       // Skip if nof. PUSCH time domain resource indexes for this PDCCH slot exceed nof. UL PDCCHs that can be scheduled
       // in each PDCCH slot.
-      if (final_pusch_td_list_per_slot[slot_idx2].size() >= nof_ul_pdcchs_per_dl_slot) {
+      if (final_pusch_td_list_per_slot[dl_slot_idx].size() >= nof_ul_pdcchs_per_dl_slot) {
+        // Search for next PDCCH slot.
         continue;
       }
       // Store the nof. PUSCH time domain resource index for this PDCCH slot.
-      final_pusch_td_list_per_slot[slot_idx2].push_back(*it);
+      final_pusch_td_list_per_slot[dl_slot_idx].push_back(*it);
       no_pdcch_slot_found = false;
       break;
     }
+    // [Implementation-defined] If no PDCCH slot is found we pick the last valid PDCCH slot for this UL slot, regardless
+    // of the restriction to not allow more than \c nof_ul_pdcchs_per_dl_slot UL PDCCHs per PDCCH slot.
     if (no_pdcch_slot_found) {
-      unsigned required_k2 = slot_idx1 - last_pdcch_slot_index_for_ul_slot;
+      unsigned required_k2 = ul_slot_idx - last_pdcch_slot_index_for_ul_slot;
       auto*    it          = std::find_if(initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].begin(),
                               initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].end(),
                               [&pusch_time_domain_list, required_k2](unsigned pusch_td_res_idx) {

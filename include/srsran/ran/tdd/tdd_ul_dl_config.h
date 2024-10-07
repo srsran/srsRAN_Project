@@ -56,8 +56,9 @@ inline unsigned nof_full_dl_slots_per_tdd_period(const tdd_ul_dl_config_common& 
 /// \brief Calculates number of slots with DL symbols in the TDD UL-DL configuration.
 inline unsigned nof_dl_slots_per_tdd_period(const tdd_ul_dl_config_common& cfg)
 {
-  auto pattern1_additional_dl_slot = cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0;
-  auto pattern2_additional_dl_slot = cfg.pattern2.has_value() ? (cfg.pattern2.value().nof_dl_symbols > 0 ? 1 : 0) : 0;
+  const auto pattern1_additional_dl_slot = cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0;
+  const auto pattern2_additional_dl_slot =
+      cfg.pattern2.has_value() ? (cfg.pattern2.value().nof_dl_symbols > 0 ? 1 : 0) : 0;
   return cfg.pattern1.nof_dl_slots + pattern1_additional_dl_slot +
          (cfg.pattern2.has_value() ? cfg.pattern2->nof_dl_slots + pattern2_additional_dl_slot : 0U);
 }

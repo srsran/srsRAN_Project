@@ -26,8 +26,8 @@ class ue_cell_configuration;
 span<const pusch_time_domain_resource_allocation>
 get_pusch_time_domain_resource_table(const cell_configuration& cell_cfg, const search_space_info* ss_info);
 
-/// \brief Fetches a list of PUSCH Time Domain resource indexes based on cell, UE configuration and nof. symbols in
-/// PUSCH slot.
+/// \brief Returns the list of all applicable PUSCH Time Domain resource indexes based on cell, UE configuration and
+/// nof. symbols in PUSCH slot for a PDCCH slot.
 /// \param[in] cell_cfg Cell configuration.
 /// \param[in] pdcch_slot Slot at which the PDCCH is supposed to be scheduled.
 /// \param[in] ss_info SearchSpace information.
@@ -38,20 +38,23 @@ get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
                               slot_point                pdcch_slot,
                               const search_space_info*  ss_info = nullptr);
 
-/// \brief Fetches a list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource
+/// \brief Returns the list circularly indexed by slot containing the list of all applicable PUSCH Time Domain resource
 /// indexes per slot.
 /// \param[in] cell_cfg Cell configuration.
 /// \param[in] ss_info SearchSpace information.
-/// \return A list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource indexes per
-/// slot.
+/// \return A list circularly indexed by slot containing the list of all applicable PUSCH Time Domain resource indexes
+/// per slot.
+/// \remark The periodicity of the circularly indexed list is equal to nof. slots in a TDD period in case of TDD and 1
+/// slot in case of FDD.
 /// \remark If \c ss_info is nullptr, then minimum k1 is taken from \c cell_cfg.
-/// \remark The list of applicable PUSCH Time Domain resources would be empty for UL slots.
+/// \remark The list of applicable PUSCH Time Domain resources would be empty for UL slots as UL PDCCHs are scheduled
+/// only over DL slots.
 /// \remark In case of FDD, the list returned would contain applicable PUSCH Time Domain resource indexes for only one
 /// slot.
 std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>
 get_pusch_td_resource_indices_per_slot(const cell_configuration& cell_cfg, const search_space_info* ss_info = nullptr);
 
-/// Fetches a list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource indexes per
+/// Returns the list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource indexes per
 /// slot fairly distributed among all the PDCCH slots.
 ///
 /// In case of UL heavy TDD pattern, this function ensures that UL PDCCH scheduling the PUSCH are fairly
@@ -62,8 +65,11 @@ get_pusch_td_resource_indices_per_slot(const cell_configuration& cell_cfg, const
 /// \param[in] ss_info SearchSpace information.
 /// \return A list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource indexes per
 /// slot.
+/// \remark The periodicity of the circularly indexed list is equal to nof. slots in a TDD period in case of TDD and 1
+/// slot in case of FDD.
 /// \remark If \c ss_info is nullptr, then minimum k1 is taken from \c cell_cfg.
-/// \remark The list of applicable PUSCH Time Domain resources would be empty for UL slots.
+/// \remark The list of applicable PUSCH Time Domain resources would be empty for UL slots as UL PDCCHs are scheduled
+/// only over DL slots.
 /// \remark In case of FDD, the list returned would contain applicable PUSCH Time Domain resource indexes for only one
 /// slot.
 std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>

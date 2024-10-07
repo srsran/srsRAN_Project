@@ -292,9 +292,9 @@ srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl
 {
   static const unsigned SYMBOLS_PER_SLOT = get_nsymb_per_slot(cp);
 
-  const unsigned tdd_period_slots = nof_slots_per_tdd_period(tdd_cfg);
-  const unsigned nof_dl_slots     = nof_dl_slots_per_tdd_period(tdd_cfg);
-  const unsigned nof_ul_slots     = nof_full_ul_slots_per_tdd_period(tdd_cfg);
+  const unsigned tdd_period_slots  = nof_slots_per_tdd_period(tdd_cfg);
+  const unsigned nof_dl_slots      = nof_dl_slots_per_tdd_period(tdd_cfg);
+  const unsigned nof_full_ul_slots = nof_full_ul_slots_per_tdd_period(tdd_cfg);
 
   std::vector<pusch_time_domain_resource_allocation> result;
   for (unsigned idx = 0; idx < tdd_period_slots and result.size() < pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS;
@@ -314,7 +314,7 @@ srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl
           // k2 values are generated based on nof. DL slots i.e. one k2 value per DL slot. But in the case of UL
           // heavy TDD configuration we generate all applicable k2 value(s) for each DL slot to allow multiple UL PDCCH
           // allocations in the same slot for same UE.
-          if (nof_dl_slots > nof_ul_slots) {
+          if (nof_dl_slots > nof_full_ul_slots) {
             break;
           }
         }
