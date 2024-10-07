@@ -115,6 +115,31 @@ static void fill_ru_sdr_section(YAML::Node node, const ru_sdr_unit_config& confi
     expert_node["low_phy_dl_throttling"] = config.expert_cfg.lphy_dl_throttling;
     expert_node["tx_mode"]               = config.expert_cfg.transmission_mode;
     expert_node["power_ramping_time_us"] = config.expert_cfg.power_ramping_time_us;
+    expert_node["pps_time_offset_us"]    = config.expert_cfg.pps_time_offset_us;
+    expert_node["sample_offset"]         = config.expert_cfg.sample_offset;
+    auto gpio_tx_cells = expert_node["gpio_tx_cells"];
+    while (config.expert_cfg.gpio_tx_cells.size() > gpio_tx_cells.size()) {
+      gpio_tx_cells.push_back(YAML::Node());
+    }
+    for (unsigned i = 0; i != config.expert_cfg.gpio_tx_cells.size(); ++i) {
+      auto gpio_tx_sectors = gpio_tx_cells[i]["sectors"];
+      auto config_gpio_tx_sectors =
+          config.expert_cfg.gpio_tx_cells[i].sectors;
+
+      while (config_gpio_tx_sectors.size() > gpio_tx_sectors.size()) {
+        gpio_tx_cells.push_back(YAML::Node());
+      }
+
+      for (unsigned j = 0; j != config_gpio_tx_sectors.size(); ++j) {
+        if (config_gpio_tx_sectors[j].gpio_index.has_value()) {
+          gpio_tx_sectors[j]["gpio_index"] =
+              config_gpio_tx_sectors[j].gpio_index.value();
+          gpio_tx_sectors[j]["sense"] = config_gpio_tx_sectors[j].sense;
+          gpio_tx_sectors[j]["source"] = config_gpio_tx_sectors[j].source;
+          gpio_tx_sectors[j]["prelude"] = config_gpio_tx_sectors[j].prelude;
+        }
+      }
+    }
     expert_node["dl_buffer_size_policy"] = config.expert_cfg.dl_buffer_size_policy;
   }
 }

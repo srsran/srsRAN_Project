@@ -131,8 +131,9 @@ public:
     // Get transmit time offset between the UL and the DL.
     int tx_time_offset = get_tx_time_offset(config.time_alignment_calibration, config.ta_offset, config.srate);
 
-    // Maximum time delay between reception and transmission in samples (1ms plus the time offset).
-    unsigned rx_to_tx_max_delay = config.srate.to_kHz() + tx_time_offset;
+    // Maximum time delay between reception and transmission in samples (1ms
+    // plus, no time offset as the processor adds this after).
+    unsigned rx_to_tx_max_delay = config.srate.to_kHz();
 
     // Prepare downlink processor configuration.
     downlink_processor_configuration dl_proc_config;
@@ -140,6 +141,7 @@ public:
     dl_proc_config.scs                     = config.scs;
     dl_proc_config.cp                      = config.cp;
     dl_proc_config.rate                    = config.srate;
+    dl_proc_config.tdd_config              = sector.tdd_config;
     dl_proc_config.bandwidth_prb           = sector.bandwidth_rb;
     dl_proc_config.center_frequency_Hz     = sector.dl_freq_hz;
     dl_proc_config.nof_tx_ports            = sector.nof_tx_ports;
@@ -177,7 +179,7 @@ public:
     proc_bb_adaptor_config.nof_tx_ports           = config.sectors.back().nof_tx_ports;
     proc_bb_adaptor_config.nof_rx_ports           = config.sectors.back().nof_rx_ports;
     proc_bb_adaptor_config.tx_time_offset         = tx_time_offset;
-    proc_bb_adaptor_config.rx_to_tx_max_delay     = config.srate.to_kHz() + proc_bb_adaptor_config.tx_time_offset;
+    proc_bb_adaptor_config.rx_to_tx_max_delay     = config.srate.to_kHz();
     proc_bb_adaptor_config.rx_buffer_size         = rx_buffer_size;
     proc_bb_adaptor_config.nof_rx_buffers         = std::max(4U, rx_to_tx_max_delay / rx_buffer_size);
     proc_bb_adaptor_config.tx_buffer_size         = tx_buffer_size;

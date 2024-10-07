@@ -30,6 +30,7 @@
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_notification_handler.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/support/executors/task_executor.h"
 #include <mutex>
 
@@ -50,6 +51,8 @@ private:
   task_executor& async_executor;
   /// Radio notification interface.
   radio_notification_handler& notifier;
+  /// USRP pointer, used for setting GPIO
+  uhd::usrp::multi_usrp::sptr usrp;
   /// Owns the UHD Tx stream.
   uhd::tx_streamer::sptr stream;
   /// Maximum number of samples in a single packet.
@@ -58,14 +61,33 @@ private:
   std::mutex stream_transmit_mutex;
   /// Sampling rate in Hz.
   double srate_hz;
+  /// Number of samples to offset the tx/rx time by, used to compensate for
+  /// radio offsets. Positive means start tx later/report rx as being later.
+  int sample_offset;
   /// Indicates the number of channels.
   unsigned nof_channels;
   /// Indicates the current internal state.
   radio_uhd_tx_stream_fsm state_fsm;
+  /// What the last tdd state according to tdd_config is
+  bool last_tdd_config_state_tx = false;
+  /// What the last transmite state is according to start/end padding
+  bool last_sample_state_tx = false;
   /// Discontinous transmission mode flag.
   bool discontinuous_tx;
+  /// Use only config for determining TX/RX
+  bool discontinuous_config;
+  /// GPIO transmission mode flag, i.e. set GPIO bits when transmitting/not
+  bool gpio_tx;
   /// Number of samples to advance the burst start to protect agains power ramping effects.
   unsigned power_ramping_nof_samples;
+  /// Which bit of the GPIO should be toggled for TX
+  std::optional<unsigned> gpio_tx_index;
+  /// True if gpio should be high for TX, false if gpio should be low for TX
+  bool gpio_tx_sense;
+  /// True if gpio should be set based off config, false otherwise
+  bool gpio_tx_use_config;
+  /// Amount of time to put GPIO in TX mode early in samples.
+  unsigned gpio_tx_prelude_samples;
   /// Stores the time of the last transmitted sample.
   uhd::time_spec_t last_tx_timespec;
   /// Power ramping transmit buffer. It is filled with zeros, used to absorb power ramping when starting a transmission.
@@ -97,14 +119,27 @@ public:
     radio_configuration::over_the_wire_format otw_format;
     /// Sampling rate in Hz.
     double srate_hz;
+    /// Number of samples to offset the tx/rx time by, used to compensate for
+    /// radio offsets. Positive means start tx later/report rx as being later.
+    int sample_offset;
     /// Stream arguments.
     std::string args;
     /// Indicates the port indexes for the stream.
     std::vector<size_t> ports;
     /// Enables discontinuous transmission mode.
-    bool discontiuous_tx;
+    bool discontinuous_tx;
+    /// Use only config for determining TX/RX
+    bool discontinuous_config;
     /// Time by which to advance the burst start, using zero padding to protect against power ramping.
     float power_ramping_us;
+    /// If set, which bit of the GPIO should be toggled for TX
+    std::optional<unsigned> gpio_tx_index;
+    /// True if gpio should be high for TX, false if gpio should be low for TX
+    bool gpio_tx_sense;
+    /// True if gpio should be set based off config, false otherwise
+    bool gpio_tx_use_config;
+    /// Amount of time to put GPIO in TX mode early in microseconds.
+    float gpio_tx_prelude;
   };
 
   /// \brief Constructs an UHD transmit stream.
@@ -112,7 +147,7 @@ public:
   /// \param[in] description Provides the stream configuration parameters.
   /// \param[in] async_executor_ Provides the asynchronous task executor.
   /// \param[in] notifier_ Provides the radio event notification handler.
-  radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
+  radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp_,
                       const stream_description&    description,
                       task_executor&               async_executor_,
                       radio_notification_handler&  notifier_);

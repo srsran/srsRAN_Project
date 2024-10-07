@@ -54,6 +54,7 @@ public:
     baseband_config.scs                     = config.scs;
     baseband_config.cp                      = config.cp;
     baseband_config.rate                    = config.rate;
+    baseband_config.tdd_config              = config.tdd_config;
     baseband_config.nof_tx_ports            = config.nof_tx_ports;
     baseband_config.nof_slot_tti_in_advance = config.nof_slot_tti_in_advance;
 

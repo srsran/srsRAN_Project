@@ -58,6 +58,7 @@ class realtime_timing_worker : public controller, public ota_symbol_boundary_not
   std::vector<ota_symbol_boundary_notifier*>     ota_notifiers;
   task_executor&                                 executor;
   const subcarrier_spacing                       scs;
+  const cyclic_prefix                            cp;
   const unsigned                                 nof_symbols_per_slot;
   const unsigned                                 nof_symbols_per_sec;
   const std::chrono::duration<double, std::nano> symbol_duration;

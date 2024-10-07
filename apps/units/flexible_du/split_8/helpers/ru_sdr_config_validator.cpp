@@ -102,7 +102,9 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 
 
   const bool discontinuous_transmission = (config.expert_cfg.transmission_mode != "continuous");
   for (const auto& cell : cell_config) {
-    if ((config.expert_cfg.transmission_mode == "same-port") && (cell.dplx_mode == duplex_mode::FDD)) {
+    if ((config.expert_cfg.transmission_mode == "same-port-idle"
+         || config.expert_cfg.transmission_mode == "same-port-config")
+            && (cell.dplx_mode == duplex_mode::FDD)) {
       fmt::print("same-port transmission mode cannot be used with FDD cell configurations.\n");
       return false;
     }

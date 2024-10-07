@@ -24,6 +24,7 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/radio/radio_constants.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/error_handling.h"
 
@@ -73,6 +74,15 @@ struct channel {
   std::string args;
 };
 
+/// Source of a GPIO signal
+enum class gpio_source {
+  /// Take the value from whether the transmitter is idle or not together with
+  /// TDD config
+  idle = 0,
+  /// Only use TDD config mode to set the GPIO pin
+  config
+};
+
 /// Describes a stream configuration common for transmit and receive chains.
 struct stream {
   /// Provides the configuration for each channel. The number of elements indicates the number of channels for the
@@ -81,6 +91,21 @@ struct stream {
   /// \brief Indicates any device specific parameters to create the stream.
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
+  /// \brief GPIO pin to indicate TX status on (optional)
+  std::optional<unsigned> gpio_tx_index;
+  /// \brief Sense of the GPIO pin for indicating TX status
+  ///
+  /// True outputs a high when transmitting, false outputs a low when
+  /// transmitting.
+  ///
+  /// Ignored if gpio_tx_index not set
+  bool gpio_tx_sense;
+  /// \brief Source of the GPIO signal, either idle or config
+  gpio_source gpio_tx_source;
+  /// \brief Amount of time to put GPIO in TX mode early in microseconds.
+  ///
+  /// Ignored if gpio_tx_index not set
+  float gpio_tx_prelude;
 };
 
 /// \brief Over the wire format. Indicates the data format baseband samples are transported between the baseband unit
@@ -102,9 +127,13 @@ enum class transmission_mode {
   /// The radio continually transmits and the transmit chain is active even when there are no transmission requests.
   continuous = 0,
   /// The transmitter stops when there is no data to transmit.
-  discontinuous,
-  /// The radio transmits and receives from the same antenna port. It can only be used with TDD cell configurations.
-  same_port
+  discontinuous_idle,
+  /// The transmitter stops at the end of the TX period of TDD config.
+  discontinuous_config,
+  /// The radio transmits and receives from the same antenna port. Based on data to transmit. It can only be used with TDD cell configurations.
+  same_port_idle,
+  /// The radio transmits and receives from the same antenna port. Based on TDD config. It can only be used with TDD cell configurations.
+  same_port_config
 };
 
 /// Describes the necessary parameters to initialize a radio.
@@ -119,6 +148,9 @@ struct radio {
   static_vector<stream, RADIO_MAX_NOF_STREAMS> rx_streams;
   /// Sampling rate in Hz common for all transmit and receive chains.
   double sampling_rate_hz;
+  /// Number of samples to offset the tx/rx time by, used to compensate for
+  /// radio offsets. Positive means start tx later/report rx as being later.
+  int sample_offset;
   /// Indicates the baseband signal transport format between the device and the host.
   over_the_wire_format otw_format;
   /// \brief Transmission mode.
@@ -130,6 +162,10 @@ struct radio {
   /// transmit chain in order to achieve optimal performance.
   /// \remark Not all drivers and/or devices support this feature.
   float power_ramping_us;
+  /// \brief Time the PPS goes high. Usually 0.0, but on some radios later.
+  ///
+  /// E.g. on an N310 this can be 101.3 us.
+  float pps_time_offset_us = 0.0f;
   /// \brief Indicates any device specific parameters to create the session.
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
@@ -179,13 +215,32 @@ inline transmission_mode to_transmission_mode(const std::string& str)
   if (str == "continuous") {
     return transmission_mode::continuous;
   }
-  if (str == "discontinuous") {
-    return transmission_mode::discontinuous;
+  if (str == "discontinuous-idle") {
+    return transmission_mode::discontinuous_idle;
   }
-  if (str == "same-port") {
-    return transmission_mode::same_port;
+  if (str == "discontinuous-config") {
+    return transmission_mode::discontinuous_config;
+  }
+  if (str == "same-port-idle") {
+    return transmission_mode::same_port_idle;
+  }
+  if (str == "same-port-config") {
+    return transmission_mode::same_port_config;
   }
   report_error("Invalid transmission mode '{}'.", str);
+}
+
+
+/// Convers a string into a gpio source.
+inline gpio_source to_gpio_source(const std::string& str)
+{
+  if (str == "idle") {
+    return gpio_source::idle;
+  }
+  if (str == "config") {
+    return gpio_source::config;
+  }
+  report_error("Invalid gpio source '{}'.", str);
 }
 
 /// Interface for validating a given radio configuration.

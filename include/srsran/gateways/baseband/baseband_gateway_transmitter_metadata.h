@@ -48,6 +48,16 @@ struct baseband_gateway_transmitter_metadata {
   /// If present, it is the sample index in which there is no signal until the end of the buffer. Otherwise, the
   /// baseband buffer contains transmit signal until the last sample.
   std::optional<unsigned> tx_end;
+  /// \brief Downlink period start according to the TDD config in samples.
+  ///
+  /// If present, sample previous it was not part of the downlink period and it
+  /// is part of the downlink period.
+  std::optional<unsigned> dl_config_start;
+  /// \brief Downlink period end according to the TDD config in samples.
+  ///
+  /// If present, sample previous it was part of the downlink period and it is
+  /// not part of the downlink period.
+  std::optional<unsigned> dl_config_end;
 };
 
 } // namespace srsran

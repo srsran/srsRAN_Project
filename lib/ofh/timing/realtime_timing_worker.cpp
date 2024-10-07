@@ -76,6 +76,7 @@ realtime_timing_worker::realtime_timing_worker(srslog::basic_logger&      logger
   logger(logger_),
   executor(executor_),
   scs(cfg.scs),
+  cp(cfg.cp),
   nof_symbols_per_slot(get_nsymb_per_slot(cfg.cp)),
   nof_symbols_per_sec(nof_symbols_per_slot * get_nof_slots_per_subframe(scs) * NOF_SUBFRAMES_PER_FRAME * 100),
   symbol_duration(1e9 / nof_symbols_per_sec),

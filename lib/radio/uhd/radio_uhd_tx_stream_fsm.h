@@ -52,6 +52,8 @@ private:
     START_BURST,
     /// Indicates the stream is transmitting a burst.
     IN_BURST,
+    /// Like START_BURST, but when already running, i.e. tx zeroes
+    IDLE_BURST,
     /// Indicates an end-of-burst must be transmitted and abort any transmission.
     END_OF_BURST,
     /// Indicates wait for end-of-burst acknowledgement.
@@ -86,7 +88,7 @@ public:
   void async_event_late_underflow(const uhd::time_spec_t& time_spec)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (state == states::IN_BURST) {
+    if (state == states::IN_BURST || state == states::IDLE_BURST) {
       state            = states::END_OF_BURST;
       wait_eob_timeout = time_spec;
       wait_eob_timeout += WAIT_EOB_ACK_TIMEOUT_S;
@@ -104,12 +106,20 @@ public:
   }
 
   /// \brief Handles a new transmission.
-  /// \param[out] metadata     Destination of the required metadata.
-  /// \param[in]  time_spec    Transmission time of the first sample.
+  /// \param[in]  discontinuous_tx Whether or not in discontinuous tx mode.
+  /// \param[in]  time_spec        Transmission time of the first sample.
+  /// \param[out] start_of_tx      Whether TX is starting, used for SoB if in
+  ///                           discontinuous TX.
+  /// \param[out] end_of_tx        Whether TX is ending, used for EoB if in
+  ///                           discontinuous TX.
+  /// \param[out] end_of_burst     Whether to set end_of_burst.
   /// \param[in]  is_empty     Empty buffer flag.
   /// \param[in]  tail_padding Tail padding flag, indicating the last transmission in the burst.
   /// \return True if the block shall be transmitted. False if the block shall be ignored.
-  bool on_transmit(uhd::tx_metadata_t& metadata, uhd::time_spec_t& time_spec, bool is_empty, bool tail_padding)
+  bool on_transmit(bool discontinuous_tx, const uhd::time_spec_t& time_spec,
+                  bool& start_of_tx, bool& end_of_tx,
+                  bool& start_of_burst, bool& end_of_burst,
+                  bool is_empty, bool tail_padding)
   {
     std::unique_lock<std::mutex> lock(mutex);
     switch (state) {
@@ -123,32 +133,44 @@ public:
       case states::START_BURST:
         // Set start of burst flag and time spec.
         if (!is_empty) {
-          metadata.has_time_spec  = true;
-          metadata.start_of_burst = true;
-          metadata.end_of_burst   = tail_padding;
-          metadata.time_spec      = time_spec;
+          start_of_burst = true;
+          start_of_tx    = true;
+          end_of_tx      = tail_padding;
 
           // Transition to in-burst.
-          if (!tail_padding) {
+          if (!(end_of_tx && discontinuous_tx)) {
             state = states::IN_BURST;
           }
 
           return true;
         }
         return false;
+      case states::IDLE_BURST:
+        if (!is_empty) {
+          start_of_tx    = true;
+          end_of_tx      = tail_padding;
+
+          // Transition to in-burst.
+          if (!(end_of_tx && discontinuous_tx)) {
+            state = states::IN_BURST;
+          }
+
+          return true;
+        }
+        return !discontinuous_tx;
       case states::IN_BURST:
         if (is_empty || tail_padding) {
           // Signal end of burst to UHD.
-          metadata.end_of_burst = true;
+          end_of_tx    = true;
 
-          // Transition to start burst without waiting for the EOB ACK.
-          state = states::START_BURST;
+          state = states::IDLE_BURST;
         }
         break;
       case states::END_OF_BURST:
         // Flag end-of-burst.
-        metadata.end_of_burst = true;
-        state                 = states::WAIT_END_OF_BURST;
+        end_of_burst = true;
+        end_of_tx    = true;
+        state        = states::WAIT_END_OF_BURST;
         if (wait_eob_timeout == uhd::time_spec_t()) {
           wait_eob_timeout = time_spec;
           wait_eob_timeout += WAIT_EOB_ACK_TIMEOUT_S;

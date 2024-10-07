@@ -39,6 +39,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_slot_tti_in_advance(config.nof_slot_tti_in_advance),
   sector_id(config.sector_id),
   scs(config.scs),
+  tdd_config(config.tdd_config),
   nof_rx_ports(config.nof_tx_ports),
   nof_samples_per_subframe(config.rate.to_kHz()),
   nof_slots_per_subframe(get_nof_slots_per_subframe(config.scs)),
@@ -156,6 +157,16 @@ baseband_gateway_transmitter_metadata downlink_processor_baseband_impl::process(
       unsigned i_slot   = i_sf * nof_slots_per_subframe + i_symbol_sf / nof_symbols_per_slot;
       unsigned i_symbol = i_symbol_sf % nof_symbols_per_slot;
 
+      if (tdd_config.has_value()) {
+        if (is_first_tdd_dl_symbol(tdd_config.value(), i_slot, i_symbol, cp)) {
+          md.dl_config_start = proc_timestamp - i_sample_symbol - timestamp;
+        }
+        if (is_last_tdd_dl_symbol(tdd_config.value(), i_slot, i_symbol, cp)) {
+          hold_stop_time = proc_timestamp + symbol_sizes[i_symbol]
+                - i_sample_symbol - timestamp;
+        }
+      }
+
       // Create slot point.
       slot_point slot(to_numerology_value(scs), i_slot);
 
@@ -213,6 +224,12 @@ baseband_gateway_transmitter_metadata downlink_processor_baseband_impl::process(
 
     // Increment output writing index.
     writing_index += nof_advanced_samples;
+
+    if (hold_stop_time.has_value()
+            && timestamp + writing_index >= hold_stop_time.value()) {
+      md.dl_config_end = hold_stop_time.value();
+      hold_stop_time.reset();
+    }
   }
 
   // Fill the unprocessed regions of the buffer with zeros.

@@ -26,6 +26,7 @@
 #include "apps/units/flexible_du/du_low/du_low_config.h"
 #include "ru_sdr_config.h"
 #include "srsran/du/du_cell_config.h"
+#include "srsran/ran/duplex_mode.h"
 
 using namespace srsran;
 
@@ -112,6 +113,9 @@ static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_con
   sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(config.ul_carrier.arfcn_f_ref);
   sector_config.nof_rx_ports = config.ul_carrier.nof_ant;
   sector_config.nof_tx_ports = config.dl_carrier.nof_ant;
+  if (band_helper::get_duplex_mode(config.dl_carrier.band) == srsran::duplex_mode::TDD) {
+    sector_config.tdd_config.emplace(config.tdd_ul_dl_cfg_common.value());
+  }
   out_cfg.sectors.push_back(sector_config);
 
   if (!is_valid_lower_phy_config(out_cfg)) {
@@ -169,14 +173,16 @@ static void generate_radio_config(radio_configuration::radio&        out_cfg,
                                   const ru_sdr_unit_config&          ru_cfg,
                                   span<const srs_du::du_cell_config> du_cells)
 {
-  out_cfg.args             = ru_cfg.device_arguments;
-  out_cfg.log_level        = ru_cfg.loggers.radio_level;
-  out_cfg.sampling_rate_hz = ru_cfg.srate_MHz * 1e6;
-  out_cfg.otw_format       = radio_configuration::to_otw_format(ru_cfg.otw_format);
-  out_cfg.clock.clock      = radio_configuration::to_clock_source(ru_cfg.clock_source);
-  out_cfg.clock.sync       = radio_configuration::to_clock_source(ru_cfg.synch_source);
-  out_cfg.tx_mode          = radio_configuration::to_transmission_mode(ru_cfg.expert_cfg.transmission_mode);
-  out_cfg.power_ramping_us = ru_cfg.expert_cfg.power_ramping_time_us;
+  out_cfg.args               = ru_cfg.device_arguments;
+  out_cfg.log_level          = ru_cfg.loggers.radio_level;
+  out_cfg.sampling_rate_hz   = ru_cfg.srate_MHz * 1e6;
+  out_cfg.otw_format         = radio_configuration::to_otw_format(ru_cfg.otw_format);
+  out_cfg.clock.clock        = radio_configuration::to_clock_source(ru_cfg.clock_source);
+  out_cfg.clock.sync         = radio_configuration::to_clock_source(ru_cfg.synch_source);
+  out_cfg.tx_mode            = radio_configuration::to_transmission_mode(ru_cfg.expert_cfg.transmission_mode);
+  out_cfg.power_ramping_us   = ru_cfg.expert_cfg.power_ramping_time_us;
+  out_cfg.pps_time_offset_us = ru_cfg.expert_cfg.pps_time_offset_us;
+  out_cfg.sample_offset      = ru_cfg.expert_cfg.sample_offset;
 
   const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");
   const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(ru_cfg.device_arguments, "rx_port");
@@ -189,6 +195,15 @@ static void generate_radio_config(radio_configuration::radio&        out_cfg,
     // Each cell is mapped to a different stream.
     radio_configuration::stream tx_stream_config;
     radio_configuration::stream rx_stream_config;
+
+    std::vector<ru_sdr_unit_expert_config_gpio_tx_sector> gpio_tx_sectors;
+    if (sector_id < ru_cfg.expert_cfg.gpio_tx_cells.size()) {
+      gpio_tx_sectors = ru_cfg.expert_cfg.gpio_tx_cells[sector_id].sectors;
+    }
+
+    // When multiple sectors are supported outside of lower phy (see
+    // generate_low_phy_config) change this to support that
+    gpio_tx_sectors.resize(1);
 
     // Deduce center frequencies.
     const double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn_f_ref);
@@ -217,6 +232,15 @@ static void generate_radio_config(radio_configuration::radio&        out_cfg,
         tx_ch_config.freq.lo_frequency_hz = 0.0;
       }
       tx_ch_config.gain_dB = ru_cfg.tx_gain_dB;
+
+      // For now there's only one sector, in future have to work out sector to
+      // stream map
+      tx_stream_config.gpio_tx_index = gpio_tx_sectors[0].gpio_index;
+      tx_stream_config.gpio_tx_sense = gpio_tx_sectors[0].sense;
+      tx_stream_config.gpio_tx_source =
+          srsran::radio_configuration::
+            to_gpio_source(gpio_tx_sectors[0].source);
+      tx_stream_config.gpio_tx_prelude = gpio_tx_sectors[0].prelude;
 
       // Add the TX ports.
       if (ru_cfg.device_driver == "zmq") {

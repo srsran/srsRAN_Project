@@ -49,6 +49,9 @@ private:
   unsigned id;
   /// Sampling rate in hertz.
   double srate_Hz;
+  /// Number of samples to offset the tx/rx time by, used to compensate for
+  /// radio offsets. Positive means start tx later/report rx as being later.
+  int sample_offset;
   /// Radio notification interface.
   radio_notification_handler& notifier;
   /// Owns the UHD Tx stream.
@@ -78,6 +81,9 @@ public:
     unsigned id;
     /// Sampling rate in hertz.
     double srate_Hz;
+    /// Number of samples to offset the tx/rx time by, used to compensate for
+    /// radio offsets. Positive means start tx later/report rx as being later.
+    int sample_offset;
     /// Over-the-wire format.
     radio_configuration::over_the_wire_format otw_format;
     /// Stream arguments.

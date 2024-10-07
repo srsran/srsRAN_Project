@@ -26,6 +26,7 @@
 #include "srsran/phy/lower/processors/downlink/downlink_processor.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_factories.h"
 #include "srsran/phy/lower/sampling_rate.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include <memory>
 
 namespace srsran {
@@ -40,6 +41,8 @@ struct downlink_processor_configuration {
   cyclic_prefix cp;
   /// Baseband sampling rate.
   sampling_rate rate;
+  /// TDD Config
+  std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Bandwidth in PRB.
   unsigned bandwidth_prb;
   /// Center frequency in Hz.

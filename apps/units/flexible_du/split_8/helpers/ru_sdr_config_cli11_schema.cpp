@@ -41,6 +41,55 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
       ->capture_default_str();
 }
 
+static void configure_cli11_ru_sdr_expert_gpio_tx_sector_args(CLI::App& app, ru_sdr_unit_expert_config_gpio_tx_sector& config) {
+  add_option(app,
+             "--gpio_index",
+             config.gpio_index,
+             "GPIO pin to indicate TX status on (optional)")
+      ->capture_default_str();
+
+  add_option(app,
+             "--sense",
+             config.sense,
+             "Sense of the GPIO pin for indicating TX status.\n"
+             "True outputs a high when transmitting, false outputs a low when "
+             "transmitting.")
+      ->capture_default_str();
+
+  add_option(app,
+             "--source",
+             config.source,
+             "Source of the GPIO value, either 'idle' or 'config'.")
+      ->capture_default_str();
+
+  add_option(app,
+	     "--prelude",
+	     config.prelude,
+	     "Amount of time to put GPIO in TX mode early in microseconds.")
+      ->capture_default_str();
+}
+
+static void configure_cli11_ru_sdr_expert_gpio_tx_cell_args(CLI::App& app, ru_sdr_unit_expert_config_gpio_tx_cell& config) {
+  add_option_cell(app,
+             "--sectors",
+             [&config](const std::vector<std::string>& values) {
+                config.sectors.resize(values.size());
+
+                for (unsigned i = 0, e = values.size(); i != e; ++i) {
+                  CLI::App subapp("SDR Expert GPIO TX Cell Sector Config",
+                          "SDR Expert GPIO TX Cell Sector Config, item #"
+                          + std::to_string(i));
+                  subapp.config_formatter(create_yaml_config_parser());
+                  subapp.allow_config_extras();
+                  configure_cli11_ru_sdr_expert_gpio_tx_sector_args(subapp, config.sectors[i]);
+                  std::istringstream ss(values[i]);
+                  subapp.parse_from_stream(ss);
+                }
+             },
+             "GPIO TX sector description")
+      ->capture_default_str();
+}
+
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert_config& config)
 {
   auto buffer_size_policy_check = [](const std::string& value) -> std::string {
@@ -52,10 +101,10 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert
   };
 
   auto tx_mode_check = [](const std::string& value) -> std::string {
-    if (value == "continuous" || value == "discontinuous" || value == "same-port") {
+    if (value == "continuous" || value == "discontinuous-idle" || value == "discontinuous-config" || value == "same-port") {
       return {};
     }
-    return "Invalid transmission mode. Accepted values [continuous,discontinuous,same-port]";
+    return "Invalid transmission mode. Accepted values [continuous,discontinuous-idle,discontinuous-config,same-port-idle,same-port-config]";
   };
 
   add_option(app,
@@ -67,9 +116,11 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert
              "--tx_mode",
              config.transmission_mode,
              "Selects a radio transmission mode. Discontinuous modes are not supported by all radios.\n"
-             "  continuous:    the TX chain is always active.\n"
-             "  discontinuous: the transmitter stops when there is no data to transmit.\n"
-             "  same-port:     the radio transmits and receives from the same antenna port.\n")
+             "  continuous:           the TX chain is always active.\n"
+             "  discontinuous-idle:   the transmitter stops when there is no data to transmit.\n"
+             "  discontinuous-config: the transmitter stops when not in TX of TDD config.\n"
+             "  same-port-idle:       the radio transmits and receives from the same antenna port, switching based on transmit data.\n"
+             "  same-port-config:     the radio transmits and receives from the same antenna port, switching based on TDD config.\n")
       ->capture_default_str()
       ->check(tx_mode_check);
 
@@ -85,6 +136,36 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert
              "Selects the size policy of the baseband buffers that pass DL samples from the lower PHY to the radio.")
       ->capture_default_str()
       ->check(buffer_size_policy_check);
+
+  add_option(app,
+             "--pps_time_offset_us",
+             config.pps_time_offset_us,
+             "Time at which the radio sense the PPS going high. For radios with alignment problems.")
+      ->capture_default_str();
+
+  add_option(app,
+             "--sample_offset",
+             config.sample_offset,
+             "Number of samples to offset the tx/rx time by, used to compensate for radio offsets. Positive means start tx later/report rx as being later.")
+      ->capture_default_str();
+
+  add_option_cell(
+      app,
+      "--gpio_tx_cells",
+      [&config](const std::vector<std::string>& values) {
+        config.gpio_tx_cells.resize(values.size());
+
+	for (unsigned i = 0, e = values.size(); i != e; ++i) {
+	  CLI::App subapp("SDR Expert GPIO TX Cell Config",
+			  "SDR Expert GPIO TX Cel Config, item #" + std::to_string(i));
+	  subapp.config_formatter(create_yaml_config_parser());
+	  subapp.allow_config_extras();
+	  configure_cli11_ru_sdr_expert_gpio_tx_cell_args(subapp, config.gpio_tx_cells[i]);
+	  std::istringstream ss(values[i]);
+	  subapp.parse_from_stream(ss);
+	}
+      },
+      "Set the GPIO TX configuration on a per cell basis");
 }
 
 static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_unit_config& config)

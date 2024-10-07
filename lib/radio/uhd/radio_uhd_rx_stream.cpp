@@ -60,7 +60,10 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                       nof_rxd_
 radio_uhd_rx_stream::radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                                          const stream_description&    description,
                                          radio_notification_handler&  notifier_) :
-  id(description.id), srate_Hz(description.srate_Hz), notifier(notifier_)
+  id(description.id),
+  srate_Hz(description.srate_Hz),
+  sample_offset(description.sample_offset),
+  notifier(notifier_)
 {
   srsran_assert(std::isnormal(srate_Hz) && (srate_Hz > 0.0), "Invalid sampling rate {}.", srate_Hz);
 
@@ -104,8 +107,10 @@ bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
 
   if (!safe_execution([this, &time_spec]() {
         uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
-        stream_cmd.time_spec  = time_spec;
-        stream_cmd.stream_now = (time_spec.get_real_secs() == uhd::time_spec_t());
+        stream_cmd.time_spec  = time_spec
+            + uhd::time_spec_t::from_ticks(sample_offset, srate_Hz);
+        stream_cmd.stream_now =
+            (stream_cmd.time_spec.get_real_secs() == uhd::time_spec_t());
 
         stream->issue_stream_cmd(stream_cmd);
       })) {
@@ -136,7 +141,7 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
 
     // Save timespec for first block only if the last timestamp is unknown.
     if (rxd_samples_total == 0) {
-      ret.ts = md.time_spec.to_ticks(srate_Hz);
+      ret.ts = md.time_spec.to_ticks(srate_Hz) - sample_offset;
     }
 
     // Increase the total amount of received samples.
@@ -195,7 +200,8 @@ bool radio_uhd_rx_stream::stop()
   // Try to stop the stream.
   if (!safe_execution([this]() {
         uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_STOP_CONTINUOUS);
-        stream_cmd.time_spec  = uhd::time_spec_t();
+        stream_cmd.time_spec  = uhd::time_spec_t()
+            + uhd::time_spec_t::from_ticks(sample_offset, srate_Hz);
         stream_cmd.stream_now = true;
 
         stream->issue_stream_cmd(stream_cmd);

@@ -35,6 +35,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -52,6 +53,8 @@ struct lower_phy_sector_description {
   unsigned nof_tx_ports;
   /// Number of receive ports.
   unsigned nof_rx_ports;
+  /// TDD Configuration
+  std::optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 /// \brief Lower physical layer baseband gateway buffer size policy.

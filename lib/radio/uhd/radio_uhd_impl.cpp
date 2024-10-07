@@ -310,7 +310,8 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   // Reset timestamps.
   if ((total_rx_channel_count > 1 || total_tx_channel_count > 1) &&
       radio_config.clock.sync != radio_configuration::clock_sources::source::GPSDO) {
-    device.set_time_unknown_pps(uhd::time_spec_t());
+    device.set_time_unknown_pps(
+            uhd::time_spec_t(radio_config.pps_time_offset_us/1e6));
   }
 
   // Lists of stream descriptions.
@@ -335,9 +336,22 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     stream_description.id                                      = stream_idx;
     stream_description.otw_format                              = otw_format;
     stream_description.srate_hz                                = actual_tx_rate_Hz;
+    stream_description.sample_offset                           = radio_config.sample_offset;
     stream_description.args                                    = stream.args;
-    stream_description.discontiuous_tx  = (radio_config.tx_mode != radio_configuration::transmission_mode::continuous);
-    stream_description.power_ramping_us = radio_config.power_ramping_us;
+    stream_description.discontinuous_tx  = (radio_config.tx_mode != radio_configuration::transmission_mode::continuous);
+    stream_description.discontinuous_config =
+        (radio_config.tx_mode ==
+            radio_configuration::transmission_mode::discontinuous_config
+         || radio_config.tx_mode ==
+            radio_configuration::transmission_mode::same_port_config);
+    fmt::print(stderr, "{}\n", stream_description.discontinuous_config);
+    stream_description.power_ramping_us   = radio_config.power_ramping_us;
+    stream_description.gpio_tx_index      = stream.gpio_tx_index;
+    stream_description.gpio_tx_sense      = stream.gpio_tx_sense;
+    stream_description.gpio_tx_use_config =
+        stream.gpio_tx_source == srsran::radio_configuration::
+                                    gpio_source::config;
+    stream_description.gpio_tx_prelude   = stream.gpio_tx_prelude;
 
     // Setup ports.
     for (unsigned channel_idx = 0; channel_idx != stream.channels.size(); ++channel_idx) {
@@ -387,6 +401,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     stream_description.id                                      = stream_idx;
     stream_description.otw_format                              = otw_format;
     stream_description.srate_Hz                                = actual_rx_rate_Hz;
+    stream_description.sample_offset                           = radio_config.sample_offset;
     stream_description.args                                    = stream.args;
 
     // Setup ports.
@@ -420,7 +435,10 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       }
 
       // Set the same port for TX and RX.
-      if (radio_config.tx_mode == radio_configuration::transmission_mode::same_port) {
+      if (radio_config.tx_mode ==
+            radio_configuration::transmission_mode::same_port_idle
+          || radio_config.tx_mode ==
+            radio_configuration::transmission_mode::same_port_config) {
         // Get the selected TX antenna.
         std::string selected_tx_antenna;
         if (!device.get_selected_tx_antenna(selected_tx_antenna, port_idx)) {

@@ -243,7 +243,7 @@ const std::vector<test_case_t> radio_zmq_validator_test_data = {
      "Only default OTW format is currently supported.\n"},
     {[] {
        radio_configuration::radio config = radio_base_config;
-       config.tx_mode                    = radio_configuration::transmission_mode::discontinuous;
+       config.tx_mode                    = radio_configuration::transmission_mode::discontinuous_idle;
        return config;
      },
      "Discontinuous transmission modes are not supported by the ZMQ radio.\n"},

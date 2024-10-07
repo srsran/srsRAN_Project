@@ -158,3 +158,50 @@ std::optional<unsigned> srsran::find_next_tdd_full_ul_slot(const tdd_ul_dl_confi
   }
   return ret;
 }
+
+bool srsran::is_first_tdd_dl_symbol(const tdd_ul_dl_config_common& cfg,
+                                    unsigned slot_index,
+                                    unsigned symbol_index,
+                                    cyclic_prefix cp)
+{
+  // All periods are integer number of slots, all slot configuration periods
+  // start with DL, therefore first symbol MUST be first symbol of slot
+  if(symbol_index != 0) {
+    return false;
+  }
+
+  // By TS 38.213 11.1, first symbol every 20/P is a first symbol of frame
+  if(slot_index == 0) {
+    return true;
+  } else {
+    if(!has_active_tdd_dl_symbols(cfg, slot_index)) {
+      return false;
+    } else {
+      // Previous slot wasn't a full DL slot
+      return nof_active_symbols(cfg, slot_index-1, cp, true)
+              < nof_slots_per_tdd_period(cfg);
+    }
+  }
+
+  // Impossible
+}
+
+bool srsran::is_last_tdd_dl_symbol(const tdd_ul_dl_config_common& cfg,
+                                   unsigned slot_index,
+                                   unsigned symbol_index,
+                                   cyclic_prefix cp)
+{
+  if(is_tdd_full_dl_slot(cfg, slot_index)) {
+    if(symbol_index == get_nsymb_per_slot(cp) - 1) {
+      return !has_active_tdd_dl_symbols(cfg, slot_index+1);
+    } else {
+      return false;
+    }
+  } else {
+    return symbol_index+1 ==
+        get_active_tdd_dl_symbols(cfg, slot_index, cp).stop();
+  }
+
+  // Impossible
+}
+

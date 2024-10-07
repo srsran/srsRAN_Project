@@ -112,4 +112,19 @@ std::optional<unsigned> find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg
 /// start_slot_index being >= TDD period in slots.
 std::optional<unsigned> find_next_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
+/// \brief Determines if this is the first DL symbol
+/// \return True if this is the first dl symbol (e.g. after UL). Else false.
+bool is_first_tdd_dl_symbol(const tdd_ul_dl_config_common& cfg,
+                            unsigned slot_index,
+                            unsigned symbol_index,
+                            cyclic_prefix cp);
+
+/// \brief Determines if this is the last DL symbol (e.g. before a gap to UL)
+/// \return True if this is the last dl symbol (e.g. before swap to ul).
+/// Else false.
+bool is_last_tdd_dl_symbol(const tdd_ul_dl_config_common& cfg,
+                           unsigned slot_index,
+                           unsigned symbol_index,
+                           cyclic_prefix cp);
+
 } // namespace srsran

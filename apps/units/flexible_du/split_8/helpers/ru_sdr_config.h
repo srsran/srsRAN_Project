@@ -28,6 +28,27 @@
 
 namespace srsran {
 
+/// GPIO TX indication sector configuration.
+struct ru_sdr_unit_expert_config_gpio_tx_sector {
+  /// \brief GPIO pin to indicate TX status on (optional)
+  std::optional<unsigned> gpio_index;
+  /// \brief Sense of the GPIO pin for indicating TX status
+  ///
+  /// True outputs a high when transmitting, false outputs a low when
+  /// transmitting.
+  bool sense = false;
+  /// \brief Source of the GPIO signal, either "idle" or "config"
+  std::string source = "idle";
+  /// \brief Amount of time to put GPIO in TX mode early in microseconds.
+  float prelude = 0.0F;
+};
+
+/// GPIO TX indication cell configuration.
+struct ru_sdr_unit_expert_config_gpio_tx_cell {
+  // Per sector config
+  std::vector<ru_sdr_unit_expert_config_gpio_tx_sector> sectors;
+};
+
 /// Expert SDR Radio Unit configuration.
 struct ru_sdr_unit_expert_config {
   /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
@@ -36,8 +57,10 @@ struct ru_sdr_unit_expert_config {
   ///
   /// Selects the radio transmission mode between the available options:
   ///   - continuous: The radio keeps the transmitter chain active, even when there are no transmission requests.
-  ///   - discontinuous: The transmitter stops when there is no data to transmit.
-  ///   - same-port: like discontinuous mode, but using the same port to transmit and receive.
+  ///   - discontinuous-idle: The transmitter stops when there is no data to transmit.
+  ///   - discontinuous-config: The transmitter stops when not in TX portion of TDD config.
+  ///   - same-port-idle: like discontinuous-idle mode, but using the same port to transmit and receive.
+  ///   - same-port-config: like discontinuous-config mode, but using the same port to transmit and receive.
   ///
   /// \remark The discontinuous and same-port transmission modes may not be supported for some radio devices.
   std::string transmission_mode = "continuous";
@@ -58,6 +81,15 @@ struct ru_sdr_unit_expert_config {
   /// \note Powering up the transmitter ahead of time requires starting the transmission earlier, and reduces the time
   /// window for the radio to transmit the provided samples.
   float power_ramping_time_us = 0.0F;
+  /// \brief Time the PPS goes high. Usually 0.0, but on some radios later.
+  ///
+  /// E.g. on an N310 this can be 101.3 us.
+  float pps_time_offset_us = 0.0f;
+  /// Number of samples to offset the tx/rx time by, used to compensate for
+  /// radio offsets. Positive means start tx later/report rx as being later.
+  int sample_offset = 0;
+  /// \brief The per sector per cell configuration of the TX GPIOs
+  std::vector<ru_sdr_unit_expert_config_gpio_tx_cell> gpio_tx_cells;
   /// \brief Lower PHY downlink baseband buffer size policy.
   ///
   /// Selects the size policy of the baseband buffers that pass DL samples from the lower PHY to the radio.

@@ -31,6 +31,7 @@
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
 #include "srsran/phy/lower/sampling_rate.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/support/stats.h"
 
 namespace srsran {
@@ -45,6 +46,8 @@ struct downlink_processor_baseband_configuration {
   cyclic_prefix cp;
   /// Baseband sampling rate.
   sampling_rate rate;
+  /// TDD Config
+  std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Number of transmit ports.
   unsigned nof_tx_ports;
   /// Number of slots notified in advance in the TTI boundary event.
@@ -216,6 +219,10 @@ private:
   unsigned sector_id;
   /// Subcarrier spacing.
   subcarrier_spacing scs;
+  /// Cyclic prefix configuration.
+  cyclic_prefix cp;
+  /// TDD Config.
+  std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Number of receive ports.
   unsigned nof_rx_ports;
   /// Number of samples per subframe;
@@ -232,6 +239,9 @@ private:
   detail::baseband_symbol_buffer temp_buffer;
   /// Last notified slot boundary.
   std::optional<slot_point> last_notified_slot;
+
+  /// Hold stop time for the symbol in the temp_buffer.
+  std::optional<baseband_gateway_timestamp> hold_stop_time;
 };
 
 } // namespace srsran
