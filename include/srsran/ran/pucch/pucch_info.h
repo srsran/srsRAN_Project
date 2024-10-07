@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/bounded_integer.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/uci/uci_info.h"
@@ -149,5 +150,12 @@ inline unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned no
   const unsigned long_crc_length = 11U;
   return estimated_pucch_f2_capacity - long_crc_length;
 }
+
+/// Returns the number of possible spreading factors which is a function of the number of symbols.
+inline unsigned format1_symb_to_spreading_factor(bounded_integer<unsigned, 4, 14> f1_symbols)
+{
+  // As per Table 6.3.2.4.1-1, TS 38.211.
+  return f1_symbols.to_uint() / 2;
+};
 
 } // namespace srsran

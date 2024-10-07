@@ -991,8 +991,11 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
   add_option(
       app, "--total_nof_ra_preambles", prach_params.total_nof_ra_preambles, "Number of different PRACH preambles")
       ->check(CLI::Range(1, 64));
-  add_option(
-      app, "--prach_frequency_start", prach_params.prach_frequency_start, "PRACH message frequency offset in PRBs")
+  add_option(app,
+             "--prach_frequency_start",
+             prach_params.prach_frequency_start,
+             "PRACH message frequency offset in PRBs. NOTE: When setting this parameter, it's up to user the ensure the"
+             " PRACH opportunities do not overlap with the PUCCH resources")
       ->capture_default_str()
       ->check(CLI::Range(0, 274));
   add_option(app,

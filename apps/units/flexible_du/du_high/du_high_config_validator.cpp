@@ -9,12 +9,12 @@
  */
 
 #include "du_high_config_validator.h"
-
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/pucch/pucch_constants.h"
+#include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/support/format/fmt_optional.h"
@@ -392,7 +392,9 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
 }
 
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config& config, subcarrier_spacing scs_common)
+static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config& config,
+                                            subcarrier_spacing                   scs_common,
+                                            unsigned                             nof_crbs)
 {
   const du_high_unit_pucch_config& pucch_cfg = config.pucch_cfg;
   if (not config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources > 0) {
@@ -441,6 +443,76 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
     fmt::print("With the given PUCCH parameters, the number of PUCCH resources per cell exceeds the limit={}.\n",
                pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES);
+    return false;
+  }
+
+  // The number of symbols reserved for PUCCH depends on whether the GNB uses (periodic) Sounding Reference Signals
+  // (SRS).
+  const unsigned max_nof_srs_symbols =
+      config.srs_cfg.srs_period_ms.has_value() ? config.srs_cfg.max_nof_symbols_per_slot : 0U;
+  const unsigned max_nof_pucch_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_nof_srs_symbols;
+  unsigned       nof_f0_f1_rbs         = 0U;
+  if (pucch_cfg.use_format_0) {
+    // The number of symbols per PUCCH resource F0 is not exposed to the DU user interface and set by default to 2.
+    constexpr unsigned pucch_f0_nof_symbols = 2U;
+    // We define a block as a set of Resources (either F0/F1 or F2) aligned over the same starting PRB.
+    const unsigned nof_f0_per_block = max_nof_pucch_symbols / pucch_f0_nof_symbols;
+    // Each PUCCH resource F0/F1 occupies 1 RB (per block).
+    nof_f0_f1_rbs = static_cast<unsigned>(
+        std::ceil(static_cast<float>(pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
+                                     pucch_cfg.nof_cell_sr_resources) /
+                  static_cast<float>(nof_f0_per_block)));
+    // With intraslot_freq_hopping, the nof of RBs is an even number.
+    if (config.pucch_cfg.f0_intraslot_freq_hopping) {
+      nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f0_f1_rbs) / 2.0F)) * 2;
+    }
+  } else {
+    // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F1, we use all
+    // symbols available for PUCCH within a slot.
+    const unsigned pucch_f1_nof_symbols = max_nof_pucch_symbols;
+    const unsigned nof_occ_codes =
+        config.pucch_cfg.f1_enable_occ ? format1_symb_to_spreading_factor(pucch_f1_nof_symbols) : 1U;
+
+    // We define a block as a set of Resources (either F0/F1 or F2) aligned over the same starting PRB.
+    const unsigned nof_f1_per_block = nof_occ_codes * config.pucch_cfg.nof_cyclic_shift;
+    // Each PUCCH resource F0/F1 occupies 1 RB (per block).
+    nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(
+        static_cast<float>(config.pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
+                           pucch_cfg.nof_cell_sr_resources) /
+        static_cast<float>(nof_f1_per_block)));
+    // With intraslot_freq_hopping, the nof of RBs is an even number.
+    if (config.pucch_cfg.f1_intraslot_freq_hopping) {
+      nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f0_f1_rbs) / 2.0F)) * 2;
+    }
+  }
+
+  // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
+  constexpr unsigned pucch_f2_nof_symbols = 2U;
+  const unsigned     f2_max_rbs =
+      config.pucch_cfg.max_payload_bits.has_value()
+              ? get_pucch_format2_max_nof_prbs(config.pucch_cfg.max_payload_bits.value(),
+                                           pucch_f2_nof_symbols,
+                                           to_max_code_rate_float(config.pucch_cfg.max_code_rate))
+              : config.pucch_cfg.f2_max_nof_rbs;
+
+  const unsigned nof_f2_blocks = max_nof_pucch_symbols / pucch_f2_nof_symbols;
+  unsigned       nof_f2_rbs =
+      static_cast<unsigned>(std::ceil(
+          static_cast<float>(config.pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
+                             pucch_cfg.nof_cell_csi_resources) /
+          static_cast<float>(nof_f2_blocks))) *
+      f2_max_rbs;
+  // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
+  if (config.pucch_cfg.f2_intraslot_freq_hopping) {
+    nof_f2_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_rbs) / 2.0F)) * 2;
+  }
+
+  // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
+  // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 60% of the BWP. This is an extreme
+  // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
+  constexpr float max_allowed_prbs_usage = 0.6F;
+  if (static_cast<float>(nof_f0_f1_rbs + nof_f2_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
+    fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 60% of the BWP PRBs.\n");
     return false;
   }
 
@@ -849,7 +921,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pucch_cell_unit_config(config, config.common_scs)) {
+  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs)) {
     return false;
   }
 

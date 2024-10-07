@@ -524,7 +524,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     const du_high_unit_pucch_config& user_pucch_cfg = base_cell.pucch_cfg;
     du_pucch_cfg.nof_cell_harq_pucch_res_sets       = user_pucch_cfg.nof_cell_harq_pucch_sets;
     du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
-    du_pucch_cfg.nof_csi_resources                  = user_pucch_cfg.nof_cell_csi_resources;
+    du_pucch_cfg.nof_csi_resources                  = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
     if (user_pucch_cfg.use_format_0) {
       auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<srs_du::pucch_f0_params>();
       // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
@@ -549,7 +549,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     srs_du::srs_builder_params&    du_srs_cfg   = out_cell.srs_cfg;
     const du_high_unit_srs_config& user_srs_cfg = base_cell.srs_cfg;
     if (user_srs_cfg.srs_period_ms.has_value()) {
-      const unsigned srs_period_slots = static_cast<unsigned>(
+      const auto srs_period_slots = static_cast<unsigned>(
           static_cast<float>(get_nof_slots_per_subframe(base_cell.common_scs)) * user_srs_cfg.srs_period_ms.value());
       du_srs_cfg.srs_period.emplace(static_cast<srs_periodicity>(srs_period_slots));
     }
