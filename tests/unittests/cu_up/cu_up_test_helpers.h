@@ -55,9 +55,11 @@ class dummy_cu_up_executor_mapper final : public srs_cu_up::cu_up_executor_mappe
 public:
   dummy_cu_up_executor_mapper(task_executor* test_executor_) : test_executor(test_executor_) {}
 
-  task_executor& common_executor() override { return *test_executor; }
+  task_executor& ctrl_executor() override { return *test_executor; }
 
   task_executor& io_executor() override { return *test_executor; }
+
+  task_executor& e2_executor() override { return *test_executor; }
 
   std::unique_ptr<srs_cu_up::ue_executor_mapper> create_ue_executor_mapper() override
   {

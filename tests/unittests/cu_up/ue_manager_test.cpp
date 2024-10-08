@@ -51,7 +51,6 @@ protected:
                                           *gtpu_n3_allocator,
                                           *gtpu_f1u_allocator,
                                           *cu_up_exec_mapper,
-                                          worker,
                                           gtpu_pcap,
                                           test_logger);
   }

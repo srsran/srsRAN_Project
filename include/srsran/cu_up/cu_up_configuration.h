@@ -82,10 +82,7 @@ struct cu_up_test_mode_config {
 
 /// Configuration passed to CU-UP.
 struct cu_up_configuration {
-  cu_up_executor_mapper* ue_exec_pool   = nullptr;
-  task_executor*         ctrl_executor  = nullptr; ///< CU-UP executor for control
-  task_executor*         io_ul_executor = nullptr; ///< CU-UP executor for UL data IO
-  task_executor*         cu_up_e2_exec  = nullptr;
+  cu_up_executor_mapper* exec_mapper = nullptr;
   e1ap_config_params     e1ap;
   f1u_cu_up_gateway*     f1u_gateway = nullptr;
   ngu_gateway*           ngu_gw      = nullptr;

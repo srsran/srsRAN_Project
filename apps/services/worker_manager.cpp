@@ -201,10 +201,6 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     config.gtpu_task_queue_size,
                                                                                     *exec_map.at("low_prio_exec"),
                                                                                     use_dedicated_io_strand});
-
-  cu_up_io_ul_exec = &cu_up_exec_mapper->io_executor();
-  cu_up_ctrl_exec  = &cu_up_exec_mapper->common_executor();
-  cu_up_e2_exec    = &cu_up_exec_mapper->common_executor();
 }
 
 void worker_manager::create_du_executors(const worker_manager_config::du_high_config&        du_hi,

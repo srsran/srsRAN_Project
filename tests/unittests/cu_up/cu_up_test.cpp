@@ -107,9 +107,7 @@ protected:
   {
     // create config
     cu_up_configuration cfg;
-    cfg.ctrl_executor                = executor.get();
-    cfg.ue_exec_pool                 = exec_pool.get();
-    cfg.io_ul_executor               = executor.get();
+    cfg.exec_mapper                  = exec_pool.get();
     cfg.e1ap.e1_conn_client          = &e1ap_client;
     cfg.f1u_gateway                  = f1u_gw.get();
     cfg.ngu_gw                       = ngu_gw.get();

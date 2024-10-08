@@ -36,9 +36,7 @@ struct worker_manager : public worker_manager_executor_getter {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  task_executor*              cu_cp_exec       = nullptr;
-  task_executor*              cu_up_ctrl_exec  = nullptr; ///< CU-UP executor for control
-  task_executor*              cu_up_io_ul_exec = nullptr; ///< CU-UP executor for UL data flow
+  task_executor*              cu_cp_exec = nullptr;
   std::vector<task_executor*> lower_phy_tx_exec;
   std::vector<task_executor*> lower_phy_rx_exec;
   std::vector<task_executor*> lower_phy_dl_exec;
@@ -58,7 +56,6 @@ struct worker_manager : public worker_manager_executor_getter {
   std::vector<task_executor*> ru_dl_exec;
   std::vector<task_executor*> ru_rx_exec;
   task_executor*              cu_cp_e2_exec    = nullptr;
-  task_executor*              cu_up_e2_exec    = nullptr;
   task_executor*              metrics_hub_exec = nullptr;
 
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;

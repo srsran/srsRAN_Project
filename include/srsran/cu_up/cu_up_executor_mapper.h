@@ -56,10 +56,13 @@ public:
   virtual ~cu_up_executor_mapper() = default;
 
   /// \brief Gets task executor that used for common tasks that are not related with any UE in particular.
-  virtual task_executor& common_executor() = 0;
+  virtual task_executor& ctrl_executor() = 0;
 
-  /// \brief Gets task executor that is used to write samples into gateway.
+  /// \brief Gets task executor that is used to write UL PDUs into the gateway.
   virtual task_executor& io_executor() = 0;
+
+  /// \brief Gets task executor that is used by the E2 CU-UP agent.
+  virtual task_executor& e2_executor() = 0;
 
   /// \brief Instantiate executors for a created UE in the CU-UP.
   virtual std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() = 0;

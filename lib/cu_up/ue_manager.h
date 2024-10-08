@@ -35,7 +35,6 @@ public:
                       gtpu_teid_pool&                             n3_teid_allocator_,
                       gtpu_teid_pool&                             f1u_teid_allocator_,
                       cu_up_executor_mapper&                      exec_pool_,
-                      task_executor&                              ctrl_executor_,
                       dlt_pcap&                                   gtpu_pcap_,
                       srslog::basic_logger&                       logger_);
 

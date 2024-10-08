@@ -202,9 +202,11 @@ public:
   {
   }
 
-  task_executor& common_executor() override { return cu_up_strand; }
+  task_executor& ctrl_executor() override { return cu_up_strand; }
 
   task_executor& io_executor() override { return *io_ul_exec; }
+
+  task_executor& e2_executor() override { return cu_up_strand; }
 
   std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() override
   {
