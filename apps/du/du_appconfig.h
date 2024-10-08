@@ -37,12 +37,8 @@ struct nru_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  /// JSON metrics reporting.
-  bool        enable_json_metrics      = false;
-  std::string addr                     = "127.0.0.1";
-  uint16_t    port                     = 55555;
-  bool        autostart_stdout_metrics = false;
-  unsigned    stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+  std::string addr = "127.0.0.1";
+  uint16_t    port = 55555;
 };
 
 } // namespace srs_du

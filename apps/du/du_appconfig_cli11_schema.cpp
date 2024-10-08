@@ -31,23 +31,10 @@ static expected<Integer, std::string> parse_int(const std::string& value)
 
 static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfig& metrics_params)
 {
-  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
-      ->always_capture_default();
-
   app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str()->check(CLI::ValidIPV4);
   app.add_option("--port", metrics_params.port, "Metrics UDP port.")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
-
-  app.add_option(
-         "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
-      ->capture_default_str();
-
-  add_option(app,
-             "--stdout_metrics_period",
-             metrics_params.stdout_metrics_period,
-             "DU statistics report period in milliseconds. This metrics sets the console output period.")
-      ->capture_default_str();
 }
 
 static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)

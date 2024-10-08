@@ -42,15 +42,8 @@ struct cu_up_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  struct pdcp_metrics {
-    unsigned report_period = 0; // PDCP report period in ms
-  } pdcp;
-  /// JSON metrics reporting.
-  bool        enable_json_metrics      = false;
-  std::string addr                     = "127.0.0.1";
-  uint16_t    port                     = 55555;
-  bool        autostart_stdout_metrics = false;
-  unsigned    stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+  std::string addr = "127.0.0.1";
+  uint16_t    port = 55555;
 };
 
 /// CPU affinities configuration for the gNB app.
