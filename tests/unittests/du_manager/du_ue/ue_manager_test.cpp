@@ -172,6 +172,7 @@ TEST_F(du_ue_manager_tester,
   // Action 1: UL CCCH Message and UE deletion request received concurrently.
   push_ul_ccch_message(create_ul_ccch_message(to_rnti(0x4601)));
   push_f1ap_ue_delete_request(get_last_ue_index());
+  worker.run_pending_tasks();
 
   // MAC and F1AP receive request to create UE.
   ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
@@ -181,6 +182,7 @@ TEST_F(du_ue_manager_tester,
   ASSERT_FALSE(mac_dummy.last_ue_delete_msg.has_value());
   ASSERT_FALSE(f1ap_dummy.last_ue_release_req.has_value());
   mac_completes_ue_creation(true);
+  worker.run_pending_tasks();
   ASSERT_TRUE(mac_dummy.last_ue_delete_msg.has_value());
   ASSERT_EQ(get_last_ue_index(), mac_dummy.last_ue_delete_msg->ue_index);
 
@@ -276,6 +278,7 @@ TEST_F(du_ue_manager_tester, when_ue_is_being_removed_then_ue_notifiers_get_disc
   // TEST: UE notifiers are disconnected.
   mac_dummy.last_dl_bs.reset();
   srb1.on_buffer_state_update(10);
+  worker.run_pending_tasks();
   ASSERT_TRUE(not mac_dummy.last_dl_bs.has_value() or mac_dummy.last_dl_bs.value().bs == 0);
 }
 
@@ -405,6 +408,7 @@ TEST_F(du_ue_manager_rlf_tester, when_ue_is_being_deleted_then_rlf_should_have_n
 {
   // Action: Initiate UE removal.
   push_f1ap_ue_delete_request(get_last_ue_index());
+  worker.run_pending_tasks();
 
   // Test: UE removal is under way.
   ASSERT_TRUE(mac_dummy.last_ue_delete_msg.has_value());
@@ -427,6 +431,7 @@ TEST_F(du_ue_manager_rlf_tester, when_rlf_is_triggered_but_ue_removal_starts_the
 
   // Action: Initiate UE removal.
   push_f1ap_ue_delete_request(get_last_ue_index());
+  worker.run_pending_tasks();
 
   // Test: UE removal is under way.
   ASSERT_TRUE(mac_dummy.last_ue_delete_msg.has_value());
