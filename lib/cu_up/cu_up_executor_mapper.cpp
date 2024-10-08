@@ -118,11 +118,11 @@ private:
 };
 
 struct base_cu_up_executor_pool_config {
-  task_executor&                       main_exec;
-  span<std::unique_ptr<task_executor>> dl_executors;
-  span<std::unique_ptr<task_executor>> ul_executors;
-  span<std::unique_ptr<task_executor>> ctrl_executors;
-  task_executor&                       crypto_exec;
+  task_executor&       main_exec;
+  span<task_executor*> dl_executors;
+  span<task_executor*> ul_executors;
+  span<task_executor*> ctrl_executors;
+  task_executor&       crypto_exec;
 };
 
 class round_robin_cu_up_exec_pool
@@ -212,45 +212,57 @@ public:
   }
 
 private:
-  using cu_up_strand_type = task_strand<task_executor*, concurrent_queue_policy::lockfree_mpmc>;
+  using cu_up_strand_type        = task_strand<task_executor*, concurrent_queue_policy::lockfree_mpmc>;
+  using io_dedicated_strand_type = task_strand<cu_up_strand_type*, concurrent_queue_policy::lockfree_mpmc>;
+  using ue_strand_type           = priority_task_strand<cu_up_strand_type*>;
 
   base_cu_up_executor_pool_config create_strands(const strand_based_executor_config& config)
   {
-    using prio_strand_ptr = std::shared_ptr<priority_task_strand<decltype(cu_up_strand)*>>;
     concurrent_queue_params qparams{srsran::concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size};
     concurrent_queue_params data_qparams{srsran::concurrent_queue_policy::lockfree_mpmc, config.gtpu_task_queue_size};
 
+    // Create IO executor that can be either inlined with CU-UP strand or its own strand.
     if (config.dedicated_io_strand) {
-      io_ul_strand.emplace<cu_up_strand_type>(&cu_up_strand, config.default_task_queue_size);
-      io_ul_exec = &std::get<cu_up_strand_type>(io_ul_strand);
+      io_ul_strand.emplace<io_dedicated_strand_type>(&cu_up_strand, config.default_task_queue_size);
+      io_ul_exec = &std::get<io_dedicated_strand_type>(io_ul_strand);
     } else {
       io_ul_strand.emplace<inline_task_executor>();
       io_ul_exec = &std::get<inline_task_executor>(io_ul_strand);
     }
 
     // Create UE-dedicated strands.
+    ue_strands.resize(config.max_nof_ue_strands);
     ue_ctrl_execs.resize(config.max_nof_ue_strands);
     ue_ul_execs.resize(config.max_nof_ue_strands);
     ue_dl_execs.resize(config.max_nof_ue_strands);
     std::array<concurrent_queue_params, 3> ue_queue_params = {qparams, data_qparams, data_qparams};
     for (unsigned i = 0; i != config.max_nof_ue_strands; ++i) {
-      prio_strand_ptr ue_strand = make_priority_task_strand_ptr(&cu_up_strand, ue_queue_params);
-      ue_ctrl_execs[i]          = make_priority_task_executor_ptr(enqueue_priority::max, ue_strand);
-      ue_ul_execs[i]            = make_priority_task_executor_ptr(enqueue_priority::max - 1, ue_strand);
-      ue_dl_execs[i]            = make_priority_task_executor_ptr(enqueue_priority::max - 2, ue_strand);
+      ue_strands[i]                             = std::make_unique<ue_strand_type>(&cu_up_strand, ue_queue_params);
+      span<ue_strand_type::executor_type> execs = ue_strands[i]->get_executors();
+      ue_ctrl_execs[i]                          = &execs[0];
+      ue_ul_execs[i]                            = &execs[1];
+      ue_dl_execs[i]                            = &execs[2];
     }
 
     return base_cu_up_executor_pool_config{
         cu_up_strand, ue_dl_execs, ue_ul_execs, ue_ctrl_execs, config.worker_pool_executor};
   }
 
-  cu_up_strand_type                                     cu_up_strand;
-  std::variant<inline_task_executor, cu_up_strand_type> io_ul_strand;
-  task_executor*                                        io_ul_exec;
-  std::vector<std::unique_ptr<task_executor>>           ue_ctrl_execs;
-  std::vector<std::unique_ptr<task_executor>>           ue_ul_execs;
-  std::vector<std::unique_ptr<task_executor>>           ue_dl_execs;
-  round_robin_cu_up_exec_pool                           cu_up_exec_pool;
+  // Base strand that sequentializes accesses to the worker pool executor.
+  cu_up_strand_type cu_up_strand;
+
+  // IO executor with two modes
+  std::variant<inline_task_executor, io_dedicated_strand_type> io_ul_strand;
+  task_executor*                                               io_ul_exec;
+
+  // UE strands and respective executors.
+  std::vector<std::unique_ptr<ue_strand_type>> ue_strands;
+  std::vector<task_executor*>                  ue_ctrl_execs;
+  std::vector<task_executor*>                  ue_ul_execs;
+  std::vector<task_executor*>                  ue_dl_execs;
+
+  // pool of UE executors with round-robin dispatch policy.
+  round_robin_cu_up_exec_pool cu_up_exec_pool;
 };
 
 } // namespace

@@ -192,6 +192,25 @@ public:
 
 } // namespace detail
 
+template <typename OutExec, concurrent_queue_policy QueuePolicy>
+class task_strand;
+
+/// \brief Executor for a task strand with a single priority level and queueing policy \c QueuePolicy.
+template <typename OutExec, concurrent_queue_policy QueuePolicy>
+class task_strand_executor final : public task_executor
+{
+public:
+  task_strand_executor() = default;
+  task_strand_executor(task_strand<OutExec, QueuePolicy>& strand_) : strand(&strand_) {}
+
+  SRSRAN_NODISCARD bool execute(unique_task task) override { return strand->execute(std::move(task)); }
+
+  SRSRAN_NODISCARD bool defer(unique_task task) override { return strand->defer(std::move(task)); }
+
+private:
+  task_strand<OutExec, QueuePolicy>* strand = nullptr;
+};
+
 /// \brief This class implements a strand with a specified enqueueing policy, with no prioritization.
 ///
 /// \tparam Executor Executor that the strands dispatches tasks to.
@@ -200,8 +219,10 @@ template <typename OutExec, concurrent_queue_policy QueuePolicy>
 class task_strand final : public task_executor
 {
 public:
+  using executor_type = task_strand_executor<OutExec, QueuePolicy>;
+
   template <typename ExecType>
-  task_strand(ExecType&& out_exec, unsigned qsize) : impl(std::forward<ExecType>(out_exec), qsize)
+  task_strand(ExecType&& out_exec, unsigned qsize) : impl(std::forward<ExecType>(out_exec), qsize), exec(*this)
   {
   }
 
@@ -226,8 +247,34 @@ public:
   /// Number of priority levels supported by this strand.
   size_t nof_priority_levels() { return 1; }
 
+  /// Get a view to the basic executor of the strand.
+  executor_type& get_executor() { return exec; }
+
 private:
   detail::task_strand_impl<OutExec, detail::strand_queue<QueuePolicy>> impl;
+  executor_type                                                        exec;
+};
+
+/// \brief Executor that dispatches tasks with a specified priority to a strand that supports multiple priority levels.
+template <typename StrandType>
+class priority_task_strand_executor final : public task_executor
+{
+public:
+  template <typename StrandRef>
+  priority_task_strand_executor(enqueue_priority prio_, StrandRef&& strand_ref) :
+    prio(prio_), strand(std::forward<StrandRef>(strand_ref))
+  {
+  }
+
+  [[nodiscard]] bool execute(unique_task task) override
+  {
+    return detail::invoke_execute(strand, prio, std::move(task));
+  }
+  [[nodiscard]] bool defer(unique_task task) override { return detail::invoke_defer(strand, prio, std::move(task)); }
+
+private:
+  enqueue_priority prio;
+  StrandType       strand;
 };
 
 /// \brief Task strand that supports multiple priority levels for the dispatched tasks.
@@ -237,14 +284,21 @@ template <typename OutExec>
 class priority_task_strand
 {
 public:
+  using strand_type   = priority_task_strand<OutExec>;
+  using executor_type = priority_task_strand_executor<strand_type&>;
+
   template <typename ExecType>
   priority_task_strand(ExecType&& out_exec, span<const concurrent_queue_params> strand_queue_params) :
     impl(std::forward<ExecType>(out_exec), strand_queue_params)
   {
+    exec_list.reserve(nof_priority_levels());
+    for (unsigned i = 0; i != exec_list.size(); ++i) {
+      exec_list.emplace_back(executor_type{detail::queue_index_to_enqueue_priority(i, nof_priority_levels()), *this});
+    }
   }
 
   /// \brief Dispatch task with priority \c prio. If possible, the task can be run inline.
-  SRSRAN_NODISCARD bool execute(enqueue_priority prio, unique_task task)
+  [[nodiscard]] bool execute(enqueue_priority prio, unique_task task)
   {
     // Enqueue task in task_strand queue.
     if (not impl.queue.try_push(prio, std::move(task))) {
@@ -254,7 +308,7 @@ public:
   }
 
   /// \brief Dispatch task with priority \c prio. The task is never run inline.
-  SRSRAN_NODISCARD bool defer(enqueue_priority prio, unique_task task)
+  [[nodiscard]] bool defer(enqueue_priority prio, unique_task task)
   {
     // Enqueue task in task_strand queue.
     if (not impl.queue.try_push(prio, std::move(task))) {
@@ -266,43 +320,14 @@ public:
   /// Number of priority levels supported by this strand.
   size_t nof_priority_levels() { return impl.queue.queue.nof_priority_levels(); }
 
+  /// \brief Get a view of the basic executors for the different task priorities of the strand.
+  ///
+  /// The first is the highest priority, and the last, the lowest.
+  span<executor_type> get_executors() { return exec_list; }
+
 private:
   detail::task_strand_impl<OutExec, detail::priority_strand_queue> impl;
-};
-
-/// \brief Executor for a task strand with a single priority level and queueing policy \c QueuePolicy.
-template <typename OutExec, concurrent_queue_policy QueuePolicy>
-class task_strand_executor final : public task_executor
-{
-public:
-  task_strand_executor() = default;
-  task_strand_executor(task_strand<OutExec, QueuePolicy>& strand_) : strand(&strand_) {}
-
-  SRSRAN_NODISCARD bool execute(unique_task task) override { return strand->execute(std::move(task)); }
-
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return strand->defer(std::move(task)); }
-
-private:
-  task_strand<OutExec, QueuePolicy>* strand = nullptr;
-};
-
-/// \brief Executor that dispatches tasks with a specified priority to a strand that supports multiple priority levels.
-template <typename StrandPtr>
-class priority_task_strand_executor final : public task_executor
-{
-public:
-  priority_task_strand_executor() = default;
-  priority_task_strand_executor(enqueue_priority prio_, StrandPtr strand_ptr) :
-    prio(prio_), strand(std::move(strand_ptr))
-  {
-  }
-
-  SRSRAN_NODISCARD bool execute(unique_task task) override { return strand->execute(prio, std::move(task)); }
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return strand->defer(prio, std::move(task)); }
-
-private:
-  enqueue_priority prio   = enqueue_priority::min;
-  StrandPtr        strand = nullptr;
+  std::vector<executor_type>                                       exec_list;
 };
 
 /// \brief Creates a task strand instance with a single priority task level.
