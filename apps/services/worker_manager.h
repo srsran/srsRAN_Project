@@ -12,7 +12,7 @@
 
 #include "apps/services/worker_manager_config.h"
 #include "apps/services/worker_manager_worker_getter.h"
-#include "srsran/cu_up/cu_up_executor_pool.h"
+#include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
@@ -61,7 +61,7 @@ struct worker_manager : public worker_manager_executor_getter {
   task_executor*              cu_up_e2_exec    = nullptr;
   task_executor*              metrics_hub_exec = nullptr;
 
-  std::unique_ptr<srs_cu_up::cu_up_executor_pool> cu_up_exec_mapper;
+  std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
 
   srs_du::du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
@@ -80,8 +80,6 @@ struct worker_manager : public worker_manager_executor_getter {
   worker_manager_executor_getter* get_executor_getter() { return this; }
 
 private:
-  static const unsigned nof_cu_up_ue_strands = 16;
-
   struct du_high_executor_storage {
     std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
   };
@@ -117,12 +115,15 @@ private:
   execution_config_helper::worker_pool create_low_prio_workers(unsigned                  nof_low_prio_threads,
                                                                os_sched_affinity_bitmask low_prio_mask);
   void                                 create_low_prio_executors(const worker_manager_config& config);
-  void                                 associate_low_prio_executors();
+  void                                 associate_low_prio_executors(const worker_manager_config& config);
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(unsigned nof_cells);
 
   std::vector<execution_config_helper::priority_multiqueue_worker> create_du_hi_slot_workers(unsigned nof_cells,
                                                                                              bool     rt_mode);
+
+  /// Helper method that creates the CU-UP executors.
+  void create_cu_up_executors(const worker_manager_config::cu_up_config& config);
 
   /// Helper method that creates the Distributed Unit executors.
   void create_du_executors(const worker_manager_config::du_high_config&        du_hi,

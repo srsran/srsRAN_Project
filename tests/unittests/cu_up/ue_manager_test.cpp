@@ -35,7 +35,7 @@ protected:
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     e1ap               = std::make_unique<dummy_e1ap>();
 
-    cu_up_exec_mapper = std::make_unique<dummy_cu_up_executor_pool>(&worker);
+    cu_up_exec_mapper = std::make_unique<dummy_cu_up_executor_mapper>(&worker);
     // Create UE cfg
     ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, std::chrono::seconds(0)};
 
@@ -67,7 +67,7 @@ protected:
   std::unique_ptr<gtpu_teid_pool>                             gtpu_f1u_allocator;
   std::unique_ptr<gtpu_tunnel_common_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_control_message_handler>               e1ap;
-  std::unique_ptr<cu_up_executor_pool>                        cu_up_exec_mapper;
+  std::unique_ptr<cu_up_executor_mapper>                      cu_up_exec_mapper;
   dummy_inner_f1u_bearer                                      f1u_bearer;
   null_dlt_pcap                                               gtpu_pcap;
   std::unique_ptr<f1u_cu_up_gateway>                          f1u_gw;

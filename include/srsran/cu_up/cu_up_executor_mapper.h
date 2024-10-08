@@ -50,21 +50,31 @@ public:
 /// \brief Interface used to access different executors used in the CU-UP.
 ///
 /// Tasks dispatched to executors with the same key will be executed sequentially.
-class cu_up_executor_pool
+class cu_up_executor_mapper
 {
 public:
-  virtual ~cu_up_executor_pool() = default;
+  virtual ~cu_up_executor_mapper() = default;
+
+  /// \brief Gets task executor that used for common tasks that are not related with any UE in particular.
+  virtual task_executor& common_executor() = 0;
+
+  /// \brief Gets task executor that is used to write samples into gateway.
+  virtual task_executor& io_executor() = 0;
 
   /// \brief Instantiate executors for a created UE in the CU-UP.
   virtual std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() = 0;
 };
 
-/// \brief Creates an executor mapper for the CU-UP.
-std::unique_ptr<cu_up_executor_pool> make_cu_up_executor_pool(task_executor&       cu_up_main_executor,
-                                                              span<task_executor*> dl_pdu_executors,
-                                                              span<task_executor*> ul_pdu_executors,
-                                                              span<task_executor*> ctrl_executors,
-                                                              task_executor&       crypto_executor);
+struct strand_based_executor_config {
+  unsigned       max_nof_ue_strands;
+  unsigned       default_task_queue_size;
+  unsigned       gtpu_task_queue_size;
+  task_executor& worker_pool_executor;
+  bool           dedicated_io_strand;
+};
+
+/// \brief Creates an executor mapper for the CU-UP that is based on strands of a worker pool.
+std::unique_ptr<cu_up_executor_mapper> make_cu_up_executor_mapper(const strand_based_executor_config& config);
 
 } // namespace srs_cu_up
 } // namespace srsran

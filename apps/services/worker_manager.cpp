@@ -41,7 +41,11 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   }
 
   create_low_prio_executors(worker_cfg);
-  associate_low_prio_executors();
+  associate_low_prio_executors(worker_cfg);
+
+  if (worker_cfg.cu_up_cfg) {
+    create_cu_up_executors(worker_cfg.cu_up_cfg.value());
+  }
 
   if (worker_cfg.du_hi_cfg) {
     create_du_executors(worker_cfg.du_hi_cfg.value(), worker_cfg.du_low_cfg, worker_cfg.fapi_cfg);
@@ -185,6 +189,24 @@ worker_manager::create_du_hi_slot_workers(unsigned nof_cells, bool rt_mode)
   return workers;
 }
 
+void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config)
+{
+  using namespace execution_config_helper;
+  const auto&           exec_map                = exec_mng.executors();
+  static constexpr bool use_dedicated_io_strand = true; // TODO: parameterize
+
+  cu_up_exec_mapper =
+      srs_cu_up::make_cu_up_executor_mapper(srs_cu_up::strand_based_executor_config{config.max_nof_ue_strands,
+                                                                                    task_worker_queue_size,
+                                                                                    config.gtpu_task_queue_size,
+                                                                                    *exec_map.at("low_prio_exec"),
+                                                                                    use_dedicated_io_strand});
+
+  cu_up_io_ul_exec = &cu_up_exec_mapper->io_executor();
+  cu_up_ctrl_exec  = &cu_up_exec_mapper->common_executor();
+  cu_up_e2_exec    = &cu_up_exec_mapper->common_executor();
+}
+
 void worker_manager::create_du_executors(const worker_manager_config::du_high_config&        du_hi,
                                          std::optional<worker_manager_config::du_low_config> du_low,
                                          std::optional<worker_manager_config::fapi_config>   fapi_cfg)
@@ -285,19 +307,13 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
       create_low_prio_workers(worker_cfg.nof_low_prio_threads, worker_cfg.low_prio_sched_config.mask);
 
   // Associate executors to the worker pool.
-  // Used for PCAP writing.
-  non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
   // Used for control plane and timer management.
-  non_rt_pool.executors.push_back({"high_prio_exec", task_priority::max});
-  // Used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
-  non_rt_pool.executors.push_back({"cu_up_strand",
-                                   task_priority::max - 1,
-                                   {}, // define CU-UP strands below.
-                                   task_worker_queue_size});
+  non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
+  // Used for PCAP writing and CU-UP.
+  non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
 
   std::vector<strand>& low_prio_strands  = non_rt_pool.executors[0].strands;
   std::vector<strand>& high_prio_strands = non_rt_pool.executors[1].strands;
-  std::vector<strand>& cu_up_strands     = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   append_pcap_strands(low_prio_strands, worker_cfg.pcap_cfg);
@@ -324,29 +340,13 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
     }
   }
 
-  // Configuration of strands for user plane handling (CU-UP and DU-low user plane). Given that the CU-UP doesn't
-  // currently support multithreading, these strands will point to a strand that interfaces with the non-RT thread
-  // pool. Each UE strand will have three queues, one for timer management and configuration, one for DL data plane
-  // and one for UL data plane.
-  cu_up_strands.push_back(
-      strand{{{"cu_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-              {"cu_up_io_ul_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}});
-  for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
-    cu_up_strands.push_back(strand{
-        {{fmt::format("ue_up_ctrl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-         {fmt::format("ue_up_ul_exec#{}", i),
-          concurrent_queue_policy::lockfree_mpmc,
-          worker_cfg.gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
-         {fmt::format("ue_up_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size}}});
-  }
-
   // Create non-RT worker pool.
   if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
     report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
   }
 }
 
-void worker_manager::associate_low_prio_executors()
+void worker_manager::associate_low_prio_executors(const worker_manager_config& config)
 {
   using namespace execution_config_helper;
   const auto& exec_map = exec_mng.executors();
@@ -355,21 +355,6 @@ void worker_manager::associate_low_prio_executors()
   cu_cp_exec       = exec_map.at("ctrl_exec");
   cu_cp_e2_exec    = exec_map.at("ctrl_exec");
   metrics_hub_exec = exec_map.at("ctrl_exec");
-  cu_up_ctrl_exec  = exec_map.at("cu_up_ctrl_exec");
-  cu_up_io_ul_exec = exec_map.at("cu_up_io_ul_exec");
-  cu_up_e2_exec    = exec_map.at("cu_up_ctrl_exec");
-
-  // Create CU-UP execution mapper object.
-  std::vector<task_executor*> ue_up_dl_execs(nof_cu_up_ue_strands, nullptr);
-  std::vector<task_executor*> ue_up_ul_execs(nof_cu_up_ue_strands, nullptr);
-  std::vector<task_executor*> ue_up_ctrl_execs(nof_cu_up_ue_strands, nullptr);
-  for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
-    ue_up_dl_execs[i]   = exec_map.at(fmt::format("ue_up_dl_exec#{}", i));
-    ue_up_ul_execs[i]   = exec_map.at(fmt::format("ue_up_ul_exec#{}", i));
-    ue_up_ctrl_execs[i] = exec_map.at(fmt::format("ue_up_ctrl_exec#{}", i));
-  }
-  cu_up_exec_mapper = srs_cu_up::make_cu_up_executor_pool(
-      *exec_map.at("cu_up_ctrl_exec"), ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs, *exec_map.at("low_prio_exec"));
 }
 
 void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,

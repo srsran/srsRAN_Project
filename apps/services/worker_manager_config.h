@@ -69,6 +69,11 @@ struct worker_manager_config {
     bool     is_rt_mode_enabled;
   };
 
+  struct cu_up_config {
+    unsigned max_nof_ue_strands = 16;
+    unsigned gtpu_task_queue_size;
+  };
+
   /// PCAP worker configuration.
   struct pcap_config {
     bool is_f1ap_enabled = false;
@@ -91,6 +96,8 @@ struct worker_manager_config {
   unsigned gtpu_queue_size;
   /// Vector of affinities mask indexed by cell.
   std::vector<std::vector<os_sched_affinity_config>> config_affinities;
+  /// CU-UP configuration.
+  std::optional<cu_up_config> cu_up_cfg;
   /// DU high configuration.
   std::optional<du_high_config> du_hi_cfg;
   /// FAPI configuration.

@@ -7,7 +7,7 @@
 #
 
 set(SOURCES
-      cu_up_executor_pool.cpp
+        cu_up_executor_mapper.cpp
       cu_up_factory.cpp
       cu_up_impl.cpp
       cu_up_manager_impl.cpp

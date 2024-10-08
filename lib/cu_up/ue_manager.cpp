@@ -24,7 +24,7 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
                        gtpu_demux_ctrl&                            gtpu_rx_demux_,
                        gtpu_teid_pool&                             n3_teid_allocator_,
                        gtpu_teid_pool&                             f1u_teid_allocator_,
-                       cu_up_executor_pool&                        exec_pool_,
+                       cu_up_executor_mapper&                      exec_pool_,
                        task_executor&                              ctrl_executor_,
                        dlt_pcap&                                   gtpu_pcap_,
                        srslog::basic_logger&                       logger_) :
