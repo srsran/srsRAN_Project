@@ -462,7 +462,7 @@ public:
 
   /// Erase object pointed by the given iterator. Iterator must point to valid element.
   /// \param it container iterator
-  void erase(iterator it) noexcept { erase(this->extract_iterator_index(it)); }
+  void erase(iterator it) noexcept { erase(extract_iterator_index(it)); }
 
   /// Clear all elements of the container
   void clear() noexcept
