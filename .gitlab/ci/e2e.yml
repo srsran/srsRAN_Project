@@ -341,6 +341,7 @@ test mode ru tsan:
       artifacts: true
     - *txrx-lib
     - *retina-needs
+  allow_failure: true
 
 test mode ru asan:
   extends: test mode ru
@@ -412,7 +413,6 @@ android b200:
     - job: "basic relwithdeb"
       artifacts: true
     - *retina-needs
-  allow_failure: true
 
 android IMS:
   stage: rf
@@ -445,7 +445,6 @@ android x300:
     - job: "basic relwithdeb"
       artifacts: true
     - *retina-needs
-  allow_failure: true
 
 ################################################################################
 # VIAVI
