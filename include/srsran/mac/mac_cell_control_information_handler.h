@@ -243,6 +243,7 @@ struct mac_uci_indication_message {
 };
 
 struct mac_srs_pdu {
+  mac_srs_pdu() = default;
   mac_srs_pdu(rnti_t rnti_, std::optional<phy_time_unit> ta, srs_channel_matrix& matrix) :
     rnti(rnti_), time_advance_offset(ta), channel_matrix(matrix)
   {
