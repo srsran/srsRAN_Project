@@ -320,7 +320,6 @@ struct formatter<srsran::pdcp_t_reordering> {
 
   template <typename FormatContext>
   auto format(srsran::pdcp_t_reordering t_reordering, FormatContext& ctx)
-
   {
     if (t_reordering == srsran::pdcp_t_reordering::infinity) {
       return format_to(ctx.out(), "infinity");
@@ -340,7 +339,6 @@ struct formatter<srsran::pdcp_discard_timer> {
 
   template <typename FormatContext>
   auto format(srsran::pdcp_discard_timer discard_timer, FormatContext& ctx)
-
   {
     if (discard_timer == srsran::pdcp_discard_timer::infinity) {
       return format_to(ctx.out(), "infinity");
