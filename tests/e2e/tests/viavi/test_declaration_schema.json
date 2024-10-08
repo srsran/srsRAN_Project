@@ -42,6 +42,9 @@
                     },
                     "warning_as_errors": {
                         "type": "boolean"
+                    },
+                    "enable_dddsu": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
