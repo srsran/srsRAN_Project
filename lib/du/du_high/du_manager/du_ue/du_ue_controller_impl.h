@@ -61,6 +61,8 @@ private:
   std::unique_ptr<rlf_state_machine>                   rlf_handler;
   std::unique_ptr<mac_ue_radio_link_notifier>          mac_rlf_notifier;
   std::unique_ptr<rlc_tx_upper_layer_control_notifier> rlc_rlf_notifier;
+
+  unique_timer dispatch_timer;
 };
 
 } // namespace srs_du

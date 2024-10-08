@@ -224,7 +224,8 @@ du_ue_controller_impl::du_ue_controller_impl(const du_ue_context&         contex
   cfg(cfg_),
   rlf_handler(std::make_unique<rlf_state_machine>(*this, cfg, ue_db)),
   mac_rlf_notifier(std::make_unique<mac_rlf_du_adapter>(ue_index, ue_db, cfg.services.du_mng_exec)),
-  rlc_rlf_notifier(std::make_unique<rlc_rlf_du_adapter>(ue_index, ue_db, cfg.services.du_mng_exec))
+  rlc_rlf_notifier(std::make_unique<rlc_rlf_du_adapter>(ue_index, ue_db, cfg.services.du_mng_exec)),
+  dispatch_timer(cfg.services.timers.create_unique_timer(cfg.services.du_mng_exec))
 {
 }
 
@@ -316,22 +317,58 @@ async_task<void> du_ue_controller_impl::create_stop_traffic_task()
   });
 }
 
+template <typename TaskExecutor>
+auto defer_on_blocking(TaskExecutor& exec, unique_timer& retry_timer)
+{
+  struct blocking_defer_on_awaiter {
+    blocking_defer_on_awaiter(TaskExecutor& exec_, unique_timer& retry_timer_) : exec(exec_), retry_timer(retry_timer_)
+    {
+    }
+
+    bool await_ready() noexcept { return false; }
+
+    void await_suspend(coro_handle<> suspending_awaitable)
+    {
+      auto task = [suspending_awaitable]() mutable { suspending_awaitable.resume(); };
+
+      if (exec.defer(task)) {
+        return;
+      }
+
+      // Dispatch failed (e.g. task executor is full). Run timer to retry dispatch.
+      retry_timer.set(std::chrono::milliseconds{1},
+                      [this, suspending_awaitable](timer_id_t tid) { await_suspend(suspending_awaitable); });
+      retry_timer.run();
+    }
+
+    void await_resume() {}
+
+    blocking_defer_on_awaiter& get_awaiter() { return *this; }
+
+  private:
+    TaskExecutor& exec;
+    unique_timer& retry_timer;
+  };
+
+  return blocking_defer_on_awaiter(exec, retry_timer);
+}
+
 async_task<void> du_ue_controller_impl::run_in_ue_executor(unique_task task)
 {
   return launch_async([this, task = std::move(task)](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
     // Sync with UE control executor to run provided task.
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+    CORO_AWAIT(defer_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index), dispatch_timer));
     task();
-    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
+    CORO_AWAIT(defer_on_blocking(cfg.services.du_mng_exec, dispatch_timer));
 
     // Sync with remaining UE executors, as there might be still pending tasks dispatched to those.
     // TODO: use when_all awaiter
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.mac_ul_pdu_executor(ue_index)));
-    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.f1u_dl_pdu_executor(ue_index)));
-    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
+    CORO_AWAIT(defer_on_blocking(cfg.services.ue_execs.mac_ul_pdu_executor(ue_index), dispatch_timer));
+    CORO_AWAIT(defer_on_blocking(cfg.services.du_mng_exec, dispatch_timer));
+    CORO_AWAIT(defer_on_blocking(cfg.services.ue_execs.f1u_dl_pdu_executor(ue_index), dispatch_timer));
+    CORO_AWAIT(defer_on_blocking(cfg.services.du_mng_exec, dispatch_timer));
 
     CORO_RETURN();
   });
