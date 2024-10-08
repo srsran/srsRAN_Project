@@ -218,7 +218,7 @@ def test_android_hp(
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_32: Tuple[UEStub, ...],
+    ue_64: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -233,7 +233,7 @@ def test_zmq(
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_32,
+        ue_array=ue_64,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
