@@ -1472,7 +1472,7 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
       -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {
-      return s.template to_string_of_hex(ctx.out(), order == reverse);
+      return s.template to_string_of_hex<decltype(std::declval<FormatContext>().out())>(ctx.out(), order == reverse);
     }
 
     if (mode == bit_positions) {
@@ -1496,7 +1496,7 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
       return ctx.out();
     }
 
-    return s.template to_string_of_bits(ctx.out(), order == reverse);
+    return s.template to_string_of_bits<decltype(std::declval<FormatContext>().out())>(ctx.out(), order == reverse);
   }
 };
 } // namespace fmt

@@ -465,9 +465,9 @@ struct formatter<srsran::bit_buffer> {
   auto format(const srsran::bit_buffer& s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {
-      return s.template to_hex_string(ctx.out());
+      return s.template to_hex_string<decltype(std::declval<FormatContext>().out())>(ctx.out());
     }
-    return s.template to_bin_string(ctx.out());
+    return s.template to_bin_string<decltype(std::declval<FormatContext>().out())>(ctx.out());
   }
 };
 
