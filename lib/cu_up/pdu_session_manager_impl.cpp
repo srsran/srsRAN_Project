@@ -177,6 +177,9 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&                         new_session,
                                                                     const e1ap_drb_to_setup_item_ng_ran& drb_to_setup)
 {
+  auto&    cpu_desc  = cpu_architecture_info::get();
+  uint32_t nof_cores = cpu_desc.get_host_nof_available_cpus();
+
   // prepare DRB creation result
   drb_setup_result drb_result = {};
   drb_result.success          = false;
@@ -267,6 +270,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.ue_dl_executor                       = &ue_dl_exec;
   pdcp_msg.ue_ul_executor                       = &ue_ul_exec;
   pdcp_msg.crypto_executor                      = &crypto_exec;
+  pdcp_msg.max_nof_crypto_workers               = nof_cores;
   new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
 
   security::sec_128_as_config sec_128 = security::truncate_config(security_info);

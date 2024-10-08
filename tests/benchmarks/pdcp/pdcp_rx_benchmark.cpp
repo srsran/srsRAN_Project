@@ -213,8 +213,6 @@ void benchmark_pdcp_rx(bench_params                  params,
   config.direction      = pdcp_security_direction::uplink;
   config.t_reordering   = pdcp_t_reordering::ms100;
 
-  config.custom.max_nof_crypto_workers = params.nof_crypto_threads;
-
   security::sec_128_as_config sec_cfg = {};
 
   // Set security domain
@@ -228,7 +226,7 @@ void benchmark_pdcp_rx(bench_params                  params,
   sec_cfg.integ_algo  = int_algo;
   sec_cfg.cipher_algo = ciph_algo;
 
-  std::unique_ptr<pdcp_rx_test_frame> frame;
+  std::unique_ptr<pdcp_rx_test_frame>      frame;
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
   std::unique_ptr<pdcp_entity_rx>          pdcp_rx;
 
@@ -256,11 +254,19 @@ void benchmark_pdcp_rx(bench_params                  params,
       }
     }
     pdcp_rx.release();
-    pdu_list = gen_pdu_list(nof_sdus, sdu_len, int_enabled, ciph_enabled, int_algo, ciph_algo);
-    frame    = std::make_unique<pdcp_rx_test_frame>();
+    pdu_list    = gen_pdu_list(nof_sdus, sdu_len, int_enabled, ciph_enabled, int_algo, ciph_algo);
+    frame       = std::make_unique<pdcp_rx_test_frame>();
     metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, ul_exec);
-    pdcp_rx  = std::make_unique<pdcp_entity_rx>(
-        0, drb_id_t::drb1, config, *frame, *frame, timer_factory{timers, ul_exec}, ul_exec, crypto_exec, *metrics_agg);
+    pdcp_rx     = std::make_unique<pdcp_entity_rx>(0,
+                                               drb_id_t::drb1,
+                                               config,
+                                               *frame,
+                                               *frame,
+                                               timer_factory{timers, ul_exec},
+                                               ul_exec,
+                                               crypto_exec,
+                                               params.nof_crypto_threads,
+                                               *metrics_agg);
     pdcp_rx->configure_security(sec_cfg, int_enabled, ciph_enabled);
   };
 

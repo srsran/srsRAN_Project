@@ -25,6 +25,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                timer_factory                   ue_ul_timer_factory_,
                                task_executor&                  ue_ul_executor_,
                                task_executor&                  crypto_executor_,
+                               uint32_t                        max_nof_crypto_workers_,
                                pdcp_metrics_aggregator&        metrics_agg_) :
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
@@ -35,6 +36,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   ue_ul_timer_factory(ue_ul_timer_factory_),
   ue_ul_executor(ue_ul_executor_),
   crypto_executor(crypto_executor_),
+  max_nof_crypto_workers(max_nof_crypto_workers_),
   metrics_agg(metrics_agg_)
 {
   if (metrics_agg.get_metrics_period().count()) {
@@ -59,8 +61,8 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger.log_info("PDCP configured. {}", cfg);
 
   // Populate null security engines
-  sec_engine_pool.reserve(cfg.custom.max_nof_crypto_workers);
-  for (uint32_t i = 0; i < cfg.custom.max_nof_crypto_workers; i++) {
+  sec_engine_pool.reserve(max_nof_crypto_workers);
+  for (uint32_t i = 0; i < max_nof_crypto_workers; i++) {
     std::unique_ptr<security::security_engine_impl> null_engine;
     sec_engine_pool.push_back(std::move(null_engine));
   }
@@ -446,13 +448,13 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
 
   uint32_t worker_idx = execution_context::get_current_worker_index();
 
-  if (worker_idx >= cfg.custom.max_nof_crypto_workers) {
+  if (worker_idx >= max_nof_crypto_workers) {
     srsran_assertion_failure("Worker index exceeds number of crypto workers. worker_idx={} max_nof_crypto_workers={}",
                              worker_idx,
-                             cfg.custom.max_nof_crypto_workers);
+                             max_nof_crypto_workers);
     logger.log_error("Worker index exceeds number of crypto workers. worker_idx={} max_nof_crypto_workers={}",
                      worker_idx,
-                     cfg.custom.max_nof_crypto_workers);
+                     max_nof_crypto_workers);
     return make_unexpected(default_error_t{});
   }
   logger.log_debug("Using sec_engine with worker_idx={}. count={} pdu_len={}", worker_idx, count, buf.length());
@@ -557,10 +559,10 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
 
   // Remove previous security engines
   sec_engine_pool.clear();
-  sec_engine_pool.reserve(cfg.custom.max_nof_crypto_workers);
+  sec_engine_pool.reserve(max_nof_crypto_workers);
 
   // Populate new security engines
-  for (uint32_t i = 0; i < cfg.custom.max_nof_crypto_workers; i++) {
+  for (uint32_t i = 0; i < max_nof_crypto_workers; i++) {
     auto sec_engine = std::make_unique<security::security_engine_impl>(
         sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
     sec_engine_pool.push_back(std::move(sec_engine));

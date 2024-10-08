@@ -20,8 +20,6 @@ namespace srs_cu_cp {
 struct srb_pdcp_config {
   /// Value in ms of t-Reordering specified in TS 38.323.
   pdcp_t_reordering t_reordering = pdcp_t_reordering::infinity;
-  /// Maximum number of crypto workers
-  uint32_t max_nof_crypto_workers = 4; // TODO: propagate this value from CU-CP config::max_nof_crypto_workers
 };
 
 /// RRC UE configuration.

@@ -78,14 +78,13 @@ protected:
     logger.info("Creating PDCP RX ({} bit nia={} nea={})", pdcp_sn_size_to_uint(sn_size), algo, algo);
 
     // Set Rx config
-    config.rb_type                       = rb_type_;
-    config.rlc_mode                      = rlc_mode_;
-    config.sn_size                       = sn_size;
-    config.direction                     = pdcp_security_direction::downlink;
-    config.out_of_order_delivery         = false;
-    config.t_reordering                  = t_reordering;
-    config.custom.max_nof_crypto_workers = 2;
-    config.custom.max_count              = max_count;
+    config.rb_type               = rb_type_;
+    config.rlc_mode              = rlc_mode_;
+    config.sn_size               = sn_size;
+    config.direction             = pdcp_security_direction::downlink;
+    config.out_of_order_delivery = false;
+    config.t_reordering          = t_reordering;
+    config.custom.max_count      = max_count;
 
     // RB_id and security domain
     rb_id_t rb_id;
@@ -111,8 +110,16 @@ protected:
     // Create PDCP RX entity
     test_frame  = std::make_unique<pdcp_rx_test_frame>();
     metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker);
-    pdcp_rx     = std::make_unique<pdcp_entity_rx>(
-        0, rb_id, config, *test_frame, *test_frame, timer_factory{timers, worker}, worker, crypto_exec, *metrics_agg);
+    pdcp_rx     = std::make_unique<pdcp_entity_rx>(0,
+                                               rb_id,
+                                               config,
+                                               *test_frame,
+                                               *test_frame,
+                                               timer_factory{timers, worker},
+                                               worker,
+                                               crypto_exec,
+                                               nof_crypto_threads,
+                                               *metrics_agg);
     pdcp_rx->set_status_handler(test_frame.get());
 
     srslog::flush();
@@ -158,8 +165,8 @@ protected:
   manual_task_worker                  worker{64};
   std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
 
-  unsigned nof_crypto_threads = config.custom.max_nof_crypto_workers;
-  unsigned crypto_queue_size  = 128;
+  const uint32_t nof_crypto_threads = 2;
+  unsigned       crypto_queue_size  = 128;
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc>          crypto_worker_pool{"crypto",
                                                                               nof_crypto_threads,

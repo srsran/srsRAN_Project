@@ -35,7 +35,8 @@ public:
                    timer_factory                   ue_ctrl_timer_factory,
                    task_executor&                  ue_dl_executor,
                    task_executor&                  ue_ul_executor,
-                   task_executor&                  crypto_executor) :
+                   task_executor&                  crypto_executor,
+                   uint32_t                        max_nof_crypto_workers) :
     logger("PDCP", {ue_index, rb_id, "DL/UL"}),
     metrics_period(config.custom.metrics_period),
     metrics_timer(ue_ctrl_timer_factory.create_timer()),
@@ -58,6 +59,7 @@ public:
                                           ue_ul_timer_factory,
                                           ue_ul_executor,
                                           crypto_executor,
+                                          max_nof_crypto_workers,
                                           metrics_agg);
 
     // Tx/Rx interconnect

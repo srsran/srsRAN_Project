@@ -141,9 +141,7 @@ struct pdcp_max_count {
 };
 
 struct pdcp_custom_config_base {
-  /// Maximum number of concurrent crypto workers needing one security engine each.
-  uint32_t       max_nof_crypto_workers = 1;
-  pdcp_max_count max_count              = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+  pdcp_max_count max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
 };
 
 struct pdcp_custom_config_tx : public pdcp_custom_config_base {
@@ -266,8 +264,7 @@ inline pdcp_config pdcp_make_default_srb_config(uint32_t max_nof_crypto_workers)
   config.rx.t_reordering          = pdcp_t_reordering::infinity;
 
   // Custom config
-  config.custom                           = {};
-  config.custom.rx.max_nof_crypto_workers = max_nof_crypto_workers;
+  config.custom = {};
 
   return config;
 }

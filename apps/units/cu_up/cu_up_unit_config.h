@@ -60,8 +60,6 @@ struct cu_up_unit_config {
   unsigned gtpu_queue_size          = 2048;
   unsigned gtpu_reordering_timer_ms = 0;
   bool     warn_on_drop             = false;
-  /// Maximum number of crypto workers
-  unsigned max_nof_crypto_workers = 1;
   /// UPF configuration.
   cu_up_unit_upf_config upf_cfg;
   /// Metrics.

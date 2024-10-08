@@ -62,6 +62,7 @@ public:
                  timer_factory                   ue_ul_timer_factory_,
                  task_executor&                  ue_ul_executor_,
                  task_executor&                  crypto_executor_,
+                 uint32_t                        max_nof_crypto_workers_,
                  pdcp_metrics_aggregator&        metrics_agg_);
 
   ~pdcp_entity_rx() override;
@@ -163,6 +164,7 @@ private:
 
   task_executor& ue_ul_executor;
   task_executor& crypto_executor;
+  uint32_t       max_nof_crypto_workers;
 
   pdcp_rx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;

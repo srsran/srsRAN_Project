@@ -38,6 +38,7 @@ struct pdcp_entity_creation_message {
   task_executor*                  ue_dl_executor;
   task_executor*                  ue_ul_executor;
   task_executor*                  crypto_executor;
+  uint32_t                        max_nof_crypto_workers;
 };
 
 /// Creates an instance of a PDCP entity.

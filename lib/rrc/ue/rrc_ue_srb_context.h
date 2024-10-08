@@ -65,9 +65,10 @@ struct srb_pdcp_context {
     srb_pdcp.ue_ul_timer_factory   = timers;
     srb_pdcp.ue_ctrl_timer_factory = timers;
     // Uplink, Downlink, Control and Crypto run in the same executor
-    srb_pdcp.ue_dl_executor  = &executor;
-    srb_pdcp.ue_ul_executor  = &executor;
-    srb_pdcp.crypto_executor = &executor;
+    srb_pdcp.ue_dl_executor         = &executor;
+    srb_pdcp.ue_ul_executor         = &executor;
+    srb_pdcp.crypto_executor        = &executor;
+    srb_pdcp.max_nof_crypto_workers = max_nof_crypto_workers;
 
     // create PDCP entity
     entity = create_pdcp_entity(srb_pdcp);
