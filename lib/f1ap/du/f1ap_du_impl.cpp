@@ -71,13 +71,14 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
                            f1ap_du_configurator&       du_mng_,
                            task_executor&              ctrl_exec_,
                            du_high_ue_executor_mapper& ue_exec_mapper_,
-                           f1ap_du_paging_notifier&    paging_notifier_) :
+                           f1ap_du_paging_notifier&    paging_notifier_,
+                           timer_manager&              timers_) :
   logger(srslog::fetch_basic_logger("DU-F1")),
   ctrl_exec(ctrl_exec_),
   du_mng(du_mng_),
   paging_notifier(paging_notifier_),
   connection_handler(f1c_client_handler_, *this, du_mng, ctrl_exec),
-  ues(du_mng, ctrl_exec, ue_exec_mapper_),
+  ues(du_mng, ctrl_exec, ue_exec_mapper_, timers_),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory()))
 {
 }

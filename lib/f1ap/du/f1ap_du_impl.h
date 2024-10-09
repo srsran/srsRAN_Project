@@ -31,7 +31,8 @@ public:
                f1ap_du_configurator&       task_sched_,
                task_executor&              ctrl_exec,
                du_high_ue_executor_mapper& ue_exec_mapper,
-               f1ap_du_paging_notifier&    paging_notifier_);
+               f1ap_du_paging_notifier&    paging_notifier_,
+               timer_manager&              timers_);
   ~f1ap_du_impl() override;
 
   bool connect_to_cu_cp() override;

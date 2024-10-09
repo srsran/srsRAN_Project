@@ -16,7 +16,7 @@
 #include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/async_timer.h"
-#include "srsran/support/async/execute_on.h"
+#include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;
@@ -129,7 +129,8 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
                                                  f1c_rx_sdu_notifier&   f1c_sdu_notifier_,
                                                  f1ap_du_configurator&  du_configurator_,
                                                  task_executor&         ctrl_exec_,
-                                                 task_executor&         ue_exec_) :
+                                                 task_executor&         ue_exec_,
+                                                 timer_manager&         timers_) :
   ue_ctxt(ue_ctxt_),
   srb_id(srb_id_),
   f1ap_notifier(f1ap_notifier_),
@@ -137,6 +138,7 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
   du_configurator(du_configurator_),
   ctrl_exec(ctrl_exec_),
   ue_exec(ue_exec_),
+  timers(timers_),
   logger(srslog::fetch_basic_logger("DU-F1")),
   event_pool(MAX_CONCURRENT_PDU_EVENTS)
 {
@@ -263,7 +265,7 @@ async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer      
                        sdu    = std::move(pdu)](coro_context<async_task<bool>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    CORO_AWAIT(execute_on_blocking(ue_exec));
+    CORO_AWAIT(execute_on_blocking(ue_exec, timers));
 
     // Forward SDU to lower layers.
     sdu_notifier.on_new_sdu(std::move(sdu));
@@ -272,7 +274,7 @@ async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer      
     CORO_AWAIT_VALUE(result, wait_for_notification(pdcp_sn, tx_or_delivery, time_to_wait));
 
     // Return back to control executor.
-    CORO_AWAIT(execute_on_blocking(ctrl_exec));
+    CORO_AWAIT(execute_on_blocking(ctrl_exec, timers));
 
     // True for success, false for timeout/cancel.
     CORO_RETURN(result.index() == 0);

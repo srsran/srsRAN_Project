@@ -120,6 +120,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                              cfg.exec_mapper->du_control_executor(),
                              cfg.exec_mapper->ue_mapper(),
                              adapters->f1ap_paging_notifier,
+                             timers,
                              cfg.test_cfg);
 
   du_manager = create_du_manager(du_manager_params{

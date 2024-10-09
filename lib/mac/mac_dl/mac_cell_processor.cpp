@@ -58,21 +58,35 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 
 async_task<void> mac_cell_processor::start()
 {
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this]() { state = cell_state::active; });
+  return execute_and_continue_on_blocking(
+      cell_exec,
+      ctrl_exec,
+      timers,
+      [this]() { state = cell_state::active; },
+      [this, cell_index = cell_cfg.cell_index]() {
+        logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full", cell_index);
+      });
 }
 
 async_task<void> mac_cell_processor::stop()
 {
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this]() {
-    if (state == cell_state::inactive) {
-      return;
-    }
+  return execute_and_continue_on_blocking(
+      cell_exec,
+      ctrl_exec,
+      timers,
+      [this]() {
+        if (state == cell_state::inactive) {
+          return;
+        }
 
-    // Set cell state as inactive to stop answering to slot indications.
-    state = cell_state::inactive;
+        // Set cell state as inactive to stop answering to slot indications.
+        state = cell_state::inactive;
 
-    logger.info("cell={}: Cell was stopped.", cell_cfg.cell_index);
-  });
+        logger.info("cell={}: Cell was stopped.", cell_cfg.cell_index);
+      },
+      [this, cell_index = cell_cfg.cell_index]() {
+        logger.warning("cell={}: Postponed cell stop operation. Cause: Task queue is full", cell_index);
+      });
 }
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
@@ -104,28 +118,39 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
   mac_dl_ue_context ue_inst(request);
 
   // > Update the UE context inside the cell executor.
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, ue_inst = std::move(ue_inst)]() mutable {
-    // > Insert UE and DL bearers.
-    // Note: Ensure we only do so if the cell is active.
-    return state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
-  });
+  return execute_and_continue_on_blocking(
+      cell_exec,
+      ctrl_exec,
+      timers,
+      [this, ue_inst = std::move(ue_inst)]() mutable {
+        // > Insert UE and DL bearers.
+        // Note: Ensure we only do so if the cell is active.
+        return state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
+      },
+      [this, ue_index = request.ue_index]() {
+        logger.warning("ue={}: Postponed UE creation. Cause: Task queue is full", ue_index);
+      });
 }
 
 async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& request)
 {
-  return launch_async([this, request](coro_context<async_task<void>>& ctx) mutable {
+  auto log_dispatch_failure = [this, ue_index = request.ue_index]() {
+    logger.warning("ue={}: Postponed UE removal. Cause: task queue is full", ue_index);
+  };
+
+  return launch_async([this, request, log_dispatch_failure](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     // Change to respective DL cell executor.
     // Note: Caller (ctrl exec) blocks if the cell executor is full.
-    CORO_AWAIT(execute_on_blocking(cell_exec, timers));
+    CORO_AWAIT(execute_on_blocking(cell_exec, timers, log_dispatch_failure));
 
     // Remove UE associated DL channels
     ue_mng.remove_ue(request.ue_index);
 
     // Change back to CTRL executor before returning
     // Note: Blocks if the executor is full (which should never happen).
-    CORO_AWAIT(execute_on_blocking(ctrl_exec, timers));
+    CORO_AWAIT(execute_on_blocking(ctrl_exec, timers, log_dispatch_failure));
 
     // Deallocate DL HARQ buffers back in the CTRL executor.
     dl_harq_buffers.deallocate_ue_buffers(request.ue_index);
@@ -137,20 +162,34 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
 async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t                                  ue_index,
                                                     const std::vector<mac_logical_channel_config>& logical_channels)
 {
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, ue_index, logical_channels]() {
-    // Configure logical channels.
-    return state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels);
-  });
+  return execute_and_continue_on_blocking(
+      cell_exec,
+      ctrl_exec,
+      timers,
+      [this, ue_index, logical_channels]() {
+        // Configure logical channels.
+        return state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels);
+      },
+      [this, ue_index]() {
+        logger.warning("ue={}: Postponed UE bearer add/mod operation. Cause: Task queue is full", ue_index);
+      });
 }
 
 async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)
 {
   std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
 
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, ue_index, lcids = std::move(lcids)]() {
-    // Remove logical channels.
-    return ue_mng.remove_bearers(ue_index, lcids);
-  });
+  return execute_and_continue_on_blocking(
+      cell_exec,
+      ctrl_exec,
+      timers,
+      [this, ue_index, lcids = std::move(lcids)]() {
+        // Remove logical channels.
+        return ue_mng.remove_bearers(ue_index, lcids);
+      },
+      [this, ue_index]() {
+        logger.warning("ue={}: Postponed UE bearer removal. Cause: Task queue is full", ue_index);
+      });
 }
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)

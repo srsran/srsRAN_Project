@@ -71,7 +71,8 @@ public:
                           f1c_rx_sdu_notifier&   f1c_sdu_notifier_,
                           f1ap_du_configurator&  du_configurator_,
                           task_executor&         ctrl_exec_,
-                          task_executor&         ue_exec_);
+                          task_executor&         ue_exec_,
+                          timer_manager&         timers_);
 
   /// \brief Packs and forwards the UL RRC message transfer as per TS 38.473 section 8.4.3.
   /// \param[in] sdu The message to be encoded in the RRC container of the UL RRC message transfer message to transmit.
@@ -114,6 +115,7 @@ private:
   f1ap_du_configurator&  du_configurator;
   task_executor&         ctrl_exec;
   task_executor&         ue_exec;
+  timer_manager&         timers;
   srslog::basic_logger&  logger;
   event_observer_type    always_set_event;
 

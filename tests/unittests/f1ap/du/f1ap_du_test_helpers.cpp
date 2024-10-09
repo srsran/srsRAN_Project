@@ -209,7 +209,7 @@ f1ap_du_test::f1ap_du_test()
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  f1ap = create_f1ap(f1c_gw, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper, paging_handler);
+  f1ap = create_f1ap(f1c_gw, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper, paging_handler, timer_service);
   f1ap_du_cfg_handler.connect(*f1ap);
 }
 

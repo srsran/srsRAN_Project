@@ -29,11 +29,12 @@ public:
              f1ap_du_configurator&  du_handler_,
              f1ap_message_notifier& f1ap_msg_notifier_,
              task_executor&         ctrl_exec,
-             task_executor&         ue_exec) :
+             task_executor&         ue_exec,
+             timer_manager&         timers) :
     context(ue_index_, gnb_f1ap_du_ue_id_),
     f1ap_msg_notifier(f1ap_msg_notifier_),
     du_handler(du_handler_),
-    bearers(context, f1ap_msg_notifier, du_handler, ctrl_exec, ue_exec)
+    bearers(context, f1ap_msg_notifier, du_handler, ctrl_exec, ue_exec, timers)
   {
   }
 
