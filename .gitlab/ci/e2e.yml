@@ -437,7 +437,6 @@ android IMS:
     - job: "basic relwithdeb"
       artifacts: true
     - *retina-needs
-  allow_failure: true
 
 android x300:
   stage: rf
