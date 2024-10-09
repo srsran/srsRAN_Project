@@ -34,6 +34,9 @@ struct du_cell_config;
 struct du_low_unit_config;
 struct worker_manager;
 
+hal_upper_phy_config make_du_low_hal_config_and_dependencies(const du_low_unit_config& du_low_unit_cfg,
+                                                             unsigned                  nof_cells);
+
 void make_du_low_wrapper_config_and_dependencies(srs_du::du_low_wrapper_config&              out_cfg,
                                                  const du_low_unit_config&                   du_low_unit_cfg,
                                                  std::vector<srs_du::cell_prach_ports_entry> prach_ports,
@@ -42,6 +45,7 @@ void make_du_low_wrapper_config_and_dependencies(srs_du::du_low_wrapper_config& 
                                                  upper_phy_rg_gateway&                       rg_gateway,
                                                  upper_phy_rx_symbol_request_notifier&       rx_symbol_request_notifier,
                                                  worker_manager&                             workers,
-                                                 unsigned                                    du_id);
+                                                 unsigned                                    du_id,
+                                                 const hal_upper_phy_config&                 hal_config);
 
 } // namespace srsran

@@ -70,6 +70,7 @@ class _ViaviConfiguration:
     expected_dl_bitrate: float = 0
     expected_nof_kos: int = 0
     warning_as_errors: bool = True
+    enable_dddsu: bool = False
 
 
 # pylint: disable=too-many-instance-attributes
@@ -109,6 +110,7 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 expected_ul_bitrate=test_declaration["expected_ul_bitrate"],
                 expected_nof_kos=test_declaration["expected_nof_kos"],
                 warning_as_errors=test_declaration["warning_as_errors"],
+                enable_dddsu=test_declaration.get("enable_dddsu", False),
             )
         )
     return test_declaration_list
@@ -344,6 +346,7 @@ def _test_viavi(
                 "prach_config_index": 159,
                 "max_puschs_per_slot": test_declaration.max_puschs_per_slot,
                 "max_pdschs_per_slot": test_declaration.max_pdschs_per_slot,
+                "enable_dddsu": test_declaration.enable_dddsu,
                 "enable_qos_viavi": test_declaration.enable_qos_viavi,
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,

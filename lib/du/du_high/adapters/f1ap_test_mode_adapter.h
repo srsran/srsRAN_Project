@@ -37,6 +37,7 @@ std::unique_ptr<f1ap_du> create_du_high_f1ap(f1c_connection_client&      f1c_cli
                                              task_executor&              ctrl_exec,
                                              du_high_ue_executor_mapper& ue_exec_mapper,
                                              f1ap_du_paging_notifier&    paging_notifier,
+                                             timer_manager&              timers,
                                              const du_test_mode_config&  test_cfg);
 
 } // namespace srs_du

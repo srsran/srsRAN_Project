@@ -21,6 +21,7 @@
 set(SOURCES
         cu_cp_application_unit_impl.cpp
         cu_cp_builder.cpp
+        cu_cp_wrapper.cpp
         cu_cp_unit_config_cli11_schema.cpp
         cu_cp_config_translators.cpp
         cu_cp_unit_config_validator.cpp

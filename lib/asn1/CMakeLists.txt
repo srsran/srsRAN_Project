@@ -48,6 +48,8 @@ add_library(e2ap_asn1 STATIC e2ap/e2ap.cpp e2sm/e2sm_common_ies.cpp e2sm/e2sm_kp
 target_compile_options(e2ap_asn1 PRIVATE -Os -fno-exceptions)
 target_link_libraries(e2ap_asn1 asn1_utils)
 
+add_to_exported_libs(e2ap_asn1)
+
 # NGAP ASN1
 add_library(ngap_asn1 STATIC ngap/common.cpp ngap/ngap_ies.cpp ngap/ngap_pdu_contents.cpp ngap/ngap.cpp)
 target_compile_options(ngap_asn1 PRIVATE -Os -fno-exceptions)

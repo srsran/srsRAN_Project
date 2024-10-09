@@ -67,7 +67,7 @@ private:
   const subcarrier_spacing                                     scs;
   std::reference_wrapper<mac_cell_rach_handler>                rach_handler;
   std::reference_wrapper<mac_pdu_handler>                      pdu_handler;
-  std::reference_wrapper<mac_cell_control_information_handler> crc_handler;
+  std::reference_wrapper<mac_cell_control_information_handler> cell_control_handler;
 };
 
 } // namespace fapi_adaptor

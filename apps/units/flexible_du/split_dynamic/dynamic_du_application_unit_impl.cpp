@@ -21,6 +21,7 @@
  */
 
 #include "dynamic_du_application_unit_impl.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "dynamic_du_factory.h"
 #include "dynamic_du_translators.h"
 #include "dynamic_du_unit_cli11_schema.h"

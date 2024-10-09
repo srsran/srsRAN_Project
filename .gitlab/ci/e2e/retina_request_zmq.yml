@@ -11,7 +11,7 @@
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   labels: 
     - ${ZMQ_HOSTLABEL_0}
-  nof_ports: 32
+  nof_ports: 64
   requirements:
     arch: amd64
     cpu:

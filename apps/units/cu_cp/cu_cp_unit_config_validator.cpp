@@ -57,6 +57,7 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
             !report_cfg.meas_trigger_quantity_threshold_db.has_value() or !report_cfg.hysteresis_db.has_value() or
             !report_cfg.time_to_trigger_ms.has_value()) {
           fmt::print("Invalid event A1/A2/A4 measurement report configuration.\n");
+          return false;
         }
       }
       if (report_cfg.event_triggered_report_type.value() == "a3" or
@@ -64,6 +65,7 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
         if (!report_cfg.meas_trigger_quantity.has_value() or !report_cfg.meas_trigger_quantity_offset_db.has_value() or
             !report_cfg.hysteresis_db.has_value() or !report_cfg.time_to_trigger_ms.has_value()) {
           fmt::print("Invalid event A3/A6 measurement report configuration.\n");
+          return false;
         }
       }
       if (report_cfg.event_triggered_report_type.value() == "a5") {
@@ -72,6 +74,7 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
             !report_cfg.meas_trigger_quantity_threshold_2_db.has_value() or !report_cfg.hysteresis_db.has_value() or
             !report_cfg.time_to_trigger_ms.has_value()) {
           fmt::print("Invalid event A5 measurement report configuration.\n");
+          return false;
         }
       }
     }

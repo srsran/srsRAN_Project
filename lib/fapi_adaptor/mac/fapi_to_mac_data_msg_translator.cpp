@@ -47,6 +47,8 @@ public:
   void handle_crc(const mac_crc_indication_message& msg) override {}
 
   void handle_uci(const mac_uci_indication_message& msg) override {}
+
+  void handle_srs(const mac_srs_indication_message& msg) override {}
 };
 
 } // namespace
@@ -61,7 +63,7 @@ static mac_pdu_handler_dummy dummy_pdu_handler;
 
 /// This dummy object is passed to the constructor of the FAPI-to-MAC message translator as a placeholder for the
 /// actual, cell-specific MAC CRC handler, which will be later set up through the \ref set_cell_crc_handler() method.
-static mac_cell_control_information_handler_dummy dummy_crc_handler;
+static mac_cell_control_information_handler_dummy dummy_cell_control_handler;
 
 /// Converts the given FAPI UCI SINR to dB as per SCF-222 v4.0 section 3.4.9.
 static float to_uci_ul_sinr(int sinr)
@@ -100,7 +102,10 @@ static std::optional<float> convert_fapi_to_mac_rsrp(uint16_t fapi_rsrp)
 }
 
 fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs_) :
-  scs(scs_), rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), crc_handler(dummy_crc_handler)
+  scs(scs_),
+  rach_handler(dummy_mac_rach_handler),
+  pdu_handler(dummy_pdu_handler),
+  cell_control_handler(dummy_cell_control_handler)
 {
 }
 
@@ -152,15 +157,16 @@ void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indicati
     }
   }
 
-  crc_handler.get().handle_crc(indication);
+  cell_control_handler.get().handle_crc(indication);
 }
 
 /// Converts the given FAPI Timing Advance Offset in nanoseconds to Physical layer time unit.
-static void convert_fapi_to_mac_ta_offset(std::optional<phy_time_unit>& mac_ta_offset, int16_t fapi_ta_offset_ns)
+static std::optional<phy_time_unit> convert_fapi_to_mac_ta_offset(int16_t fapi_ta_offset_ns)
 {
   if (fapi_ta_offset_ns != std::numeric_limits<decltype(fapi_ta_offset_ns)>::min()) {
-    mac_ta_offset = phy_time_unit::from_seconds(static_cast<float>(fapi_ta_offset_ns) * 1e-9);
+    return phy_time_unit::from_seconds(static_cast<float>(fapi_ta_offset_ns) * 1e-9);
   }
+  return std::nullopt;
 }
 
 /// Converts the given FAPI UCI RSSI to dB as per SCF-222 v4.0 section 3.4.9.
@@ -182,10 +188,10 @@ static bool is_fapi_uci_payload_valid(uci_pusch_or_pucch_f2_3_4_detection_status
 static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_type&     mac_pucch,
                                                     const fapi::uci_pucch_pdu_format_0_1& fapi_pucch)
 {
-  mac_pucch.ul_sinr_dB = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
-  mac_pucch.rssi_dBFS  = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
-  mac_pucch.rsrp_dBFS  = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
-  convert_fapi_to_mac_ta_offset(mac_pucch.time_advance_offset, fapi_pucch.timing_advance_offset_ns);
+  mac_pucch.ul_sinr_dB          = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
+  mac_pucch.rssi_dBFS           = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
+  mac_pucch.rsrp_dBFS           = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
+  mac_pucch.time_advance_offset = convert_fapi_to_mac_ta_offset(fapi_pucch.timing_advance_offset_ns);
 
   // Fill SR.
   if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_0_1::SR_BIT)) {
@@ -200,10 +206,10 @@ static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_
 
 static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch, const fapi::uci_pusch_pdu& fapi_pusch)
 {
-  mac_pusch.ul_sinr_dB = convert_fapi_to_mac_ul_sinr(fapi_pusch.ul_sinr_metric);
-  mac_pusch.rssi_dBFS  = convert_fapi_to_mac_rssi(fapi_pusch.rssi);
-  mac_pusch.rsrp_dBFS  = convert_fapi_to_mac_rsrp(fapi_pusch.rsrp);
-  convert_fapi_to_mac_ta_offset(mac_pusch.time_advance_offset, fapi_pusch.timing_advance_offset_ns);
+  mac_pusch.ul_sinr_dB          = convert_fapi_to_mac_ul_sinr(fapi_pusch.ul_sinr_metric);
+  mac_pusch.rssi_dBFS           = convert_fapi_to_mac_rssi(fapi_pusch.rssi);
+  mac_pusch.rsrp_dBFS           = convert_fapi_to_mac_rsrp(fapi_pusch.rsrp);
+  mac_pusch.time_advance_offset = convert_fapi_to_mac_ta_offset(fapi_pusch.timing_advance_offset_ns);
 
   // Fill HARQ.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::HARQ_BIT)) {
@@ -234,10 +240,10 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
 static void convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_uci_pdu::pucch_f2_or_f3_or_f4_type& mac_pucch,
                                                        const fapi::uci_pucch_pdu_format_2_3_4& fapi_pucch)
 {
-  mac_pucch.ul_sinr_dB = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
-  mac_pucch.rssi_dBFS  = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
-  mac_pucch.rsrp_dBFS  = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
-  convert_fapi_to_mac_ta_offset(mac_pucch.time_advance_offset, fapi_pucch.timing_advance_offset_ns);
+  mac_pucch.ul_sinr_dB          = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
+  mac_pucch.rssi_dBFS           = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
+  mac_pucch.rsrp_dBFS           = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
+  mac_pucch.time_advance_offset = convert_fapi_to_mac_ta_offset(fapi_pucch.timing_advance_offset_ns);
 
   // Fill SR.
   if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_2_3_4::SR_BIT)) {
@@ -303,10 +309,23 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
     }
   }
 
-  crc_handler.get().handle_uci(mac_msg);
+  cell_control_handler.get().handle_uci(mac_msg);
 }
 
-void fapi_to_mac_data_msg_translator::on_srs_indication(const fapi::srs_indication_message& msg) {}
+void fapi_to_mac_data_msg_translator::on_srs_indication(const fapi::srs_indication_message& msg)
+{
+  mac_srs_indication_message mac_msg;
+  mac_msg.sl_rx = slot_point(scs, msg.sfn, msg.slot);
+
+  for (const auto& pdu : msg.pdus) {
+    mac_srs_pdu& mac_pdu        = mac_msg.srss.emplace_back();
+    mac_pdu.rnti                = pdu.rnti;
+    mac_pdu.time_advance_offset = convert_fapi_to_mac_ta_offset(pdu.timing_advance_offset_ns);
+    mac_pdu.channel_matrix      = pdu.matrix;
+  }
+
+  cell_control_handler.get().handle_srs(mac_msg);
+}
 
 /// Converts the given FAPI RACH occasion RSSI to dB as per SCF-222 v4.0 section 3.4.11.
 static float to_prach_rssi_dB(int fapi_rssi)
@@ -367,5 +386,5 @@ void fapi_to_mac_data_msg_translator::set_cell_pdu_handler(mac_pdu_handler& hand
 
 void fapi_to_mac_data_msg_translator::set_cell_crc_handler(mac_cell_control_information_handler& handler)
 {
-  crc_handler = std::ref(handler);
+  cell_control_handler = std::ref(handler);
 }

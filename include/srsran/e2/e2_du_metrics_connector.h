@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/e2/e2.h"
+#include "srsran/e2/e2_du.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include <deque>
 
@@ -42,12 +42,9 @@ public:
 
   void report_metrics(const rlc_metrics& metrics) override;
 
-  void get_metrics(scheduler_ue_metrics& ue_metrics) override;
-
   void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) override;
 
 private:
-  std::deque<scheduler_ue_metrics>        ue_metrics_queue;
   std::unique_ptr<e2_du_metrics_notifier> e2_meas_provider;
 };
 } // namespace srsran

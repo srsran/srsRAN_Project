@@ -73,6 +73,7 @@ public:
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
   void handle_crc_indication(const ul_crc_indication& crc) override;
   void handle_uci_indication(const uci_indication& uci) override;
+  void handle_srs_indication(const srs_indication& srs) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override;
   void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
 

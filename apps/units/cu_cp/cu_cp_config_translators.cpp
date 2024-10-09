@@ -466,6 +466,15 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   return out_cfg;
 }
 
+e2ap_configuration srsran::generate_e2_config(const cu_cp_unit_config& cu_cp)
+{
+  e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
+  out_cfg.gnb_id             = cu_cp.gnb_id;
+  out_cfg.e2sm_kpm_enabled   = cu_cp.e2_cfg.e2sm_kpm_enabled;
+  out_cfg.e2sm_rc_enabled    = cu_cp.e2_cfg.e2sm_rc_enabled;
+  return out_cfg;
+}
+
 srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool                              no_core,
                                                                          const cu_cp_unit_amf_config_item& amf_cfg,
                                                                          dlt_pcap&                         pcap_writer,

@@ -36,6 +36,7 @@
 namespace srsran {
 
 class scheduler_event_logger;
+class cell_metrics_handler;
 
 /// Get MSG3 Delay.
 /// \param[in] pusch_td_res_alloc PUSCH-TimeDomainResourceAllocation.
@@ -58,7 +59,8 @@ public:
   explicit ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
                         const cell_configuration&         cfg_,
                         pdcch_resource_allocator&         pdcch_sched_,
-                        scheduler_event_logger&           ev_logger_);
+                        scheduler_event_logger&           ev_logger_,
+                        cell_metrics_handler&             metrics_handler_);
 
   /// Enqueue RACH indication
   /// \remark See TS 38.321, 5.1.3 - RAP transmission.
@@ -162,6 +164,7 @@ private:
   const cell_configuration&         cell_cfg;
   pdcch_resource_allocator&         pdcch_sch;
   scheduler_event_logger&           ev_logger;
+  cell_metrics_handler&             metrics_hdlr;
 
   // derived from args
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");

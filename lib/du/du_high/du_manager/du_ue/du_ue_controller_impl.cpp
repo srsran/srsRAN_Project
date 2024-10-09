@@ -21,7 +21,7 @@
  */
 
 #include "du_ue_controller_impl.h"
-#include "srsran/support/async/execute_on.h"
+#include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -330,20 +330,27 @@ async_task<void> du_ue_controller_impl::create_stop_traffic_task()
 
 async_task<void> du_ue_controller_impl::run_in_ue_executor(unique_task task)
 {
-  return launch_async([this, task = std::move(task)](coro_context<async_task<void>>& ctx) {
+  auto log_dispatch_retry = [this]() {
+    logger.warning("ue={}: Postpone dispatching of control task to executor. Cause: Task queue is full", ue_index);
+  };
+
+  return launch_async([this, task = std::move(task), log_dispatch_retry](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
     // Sync with UE control executor to run provided task.
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index)));
+    CORO_AWAIT(
+        defer_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_index), cfg.services.timers, log_dispatch_retry));
     task();
-    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
+    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec, cfg.services.timers, log_dispatch_retry));
 
     // Sync with remaining UE executors, as there might be still pending tasks dispatched to those.
     // TODO: use when_all awaiter
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.mac_ul_pdu_executor(ue_index)));
-    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
-    CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.f1u_dl_pdu_executor(ue_index)));
-    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
+    CORO_AWAIT(defer_on_blocking(
+        cfg.services.ue_execs.mac_ul_pdu_executor(ue_index), cfg.services.timers, log_dispatch_retry));
+    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec, cfg.services.timers, log_dispatch_retry));
+    CORO_AWAIT(defer_on_blocking(
+        cfg.services.ue_execs.f1u_dl_pdu_executor(ue_index), cfg.services.timers, log_dispatch_retry));
+    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec, cfg.services.timers, log_dispatch_retry));
 
     CORO_RETURN();
   });

@@ -581,7 +581,7 @@ struct ul_sched_result {
   /// PUCCH grants allocated in the current slot.
   static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT> pucchs;
   /// SRS grants allocated in the current slot.
-  static_vector<srs_info, MAX_PUCCH_PDUS_PER_SLOT> srss;
+  static_vector<srs_info, MAX_SRS_PDUS_PER_SLOT> srss;
 };
 
 /// Scheduler decision made for DL and UL in a given slot.

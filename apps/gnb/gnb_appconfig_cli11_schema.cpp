@@ -45,31 +45,16 @@ static expected<Integer, std::string> parse_int(const std::string& value)
 
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
 {
-  app.add_option("--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
-      ->capture_default_str();
-
-  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
-      ->always_capture_default();
-
   app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str();
   app.add_option("--port", metrics_params.port, "Metrics UDP port.")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
-
-  add_option(
-      app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
-      ->capture_default_str();
-
-  add_option(app,
-             "--stdout_metrics_period",
-             metrics_params.stdout_metrics_period,
-             "DU statistics report period in milliseconds. This metrics sets the console output period.")
-      ->capture_default_str();
 }
 
 static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
 {
   add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent")->capture_default_str();
+  add_option(app, "--enable_cu_e2", e2_params.enable_cu_e2, "Enable CU E2 agent")->capture_default_str();
   add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
   add_option(app, "--port", e2_params.port, "RIC port")->check(CLI::Range(20000, 40000))->capture_default_str();
   add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")

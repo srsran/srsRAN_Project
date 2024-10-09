@@ -246,14 +246,15 @@ std::unique_ptr<f1ap_du> srsran::srs_du::create_du_high_f1ap(f1c_connection_clie
                                                              task_executor&              ctrl_exec,
                                                              du_high_ue_executor_mapper& ue_exec_mapper,
                                                              f1ap_du_paging_notifier&    paging_notifier,
+                                                             timer_manager&              timers,
                                                              const du_test_mode_config&  test_cfg)
 {
   if (not test_cfg.test_ue.has_value()) {
-    return create_f1ap(f1c_client_handler, du_mng, ctrl_exec, ue_exec_mapper, paging_notifier);
+    return create_f1ap(f1c_client_handler, du_mng, ctrl_exec, ue_exec_mapper, paging_notifier, timers);
   }
 
   // Create a F1AP test mode adapter that wraps the real F1AP and intercepts messages to the F1-C client.
   auto f1ap_testmode = std::make_unique<f1ap_test_mode_adapter>(*test_cfg.test_ue, f1c_client_handler, ctrl_exec);
-  f1ap_testmode->connect(create_f1ap(*f1ap_testmode, du_mng, ctrl_exec, ue_exec_mapper, paging_notifier));
+  f1ap_testmode->connect(create_f1ap(*f1ap_testmode, du_mng, ctrl_exec, ue_exec_mapper, paging_notifier, timers));
   return f1ap_testmode;
 }

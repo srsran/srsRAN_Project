@@ -520,7 +520,7 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
   res_set.res_type =
       srs_config::srs_resource_set::aperiodic_resource_type{.aperiodic_srs_res_trigger = 1, .slot_offset = 7};
 
-  res_set.srs_res_set_usage = srs_config::srs_resource_set::usage::codebook;
+  res_set.srs_res_set_usage = srs_usage::codebook;
   res_set.p0                = -84;
   res_set.pathloss_ref_rs   = static_cast<ssb_id_t>(0);
 

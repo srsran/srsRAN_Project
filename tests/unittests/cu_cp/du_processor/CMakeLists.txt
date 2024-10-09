@@ -39,6 +39,6 @@ set(SOURCES
 
 add_executable(du_processor_test ${SOURCES})
 target_include_directories(du_processor_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(du_processor_test du_processor_test_helpers srsran_support srslog gtest gtest_main)
+target_link_libraries(du_processor_test du_processor_test_helpers srsran_support srsran_e2 srslog gtest gtest_main)
 add_test(du_processor_test du_processor_test)
 set_tests_properties(du_processor_test PROPERTIES LABELS "LABELS;du_processor")

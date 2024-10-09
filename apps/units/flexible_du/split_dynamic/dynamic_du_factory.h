@@ -37,7 +37,6 @@ class f1u_du_gateway;
 
 struct dynamic_du_unit_config;
 class e2_connection_client;
-class e2_metric_connector_manager;
 class f1ap_message_notifier;
 class console_helper;
 class metrics_log_helper;

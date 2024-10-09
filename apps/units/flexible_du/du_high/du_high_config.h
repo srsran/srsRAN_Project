@@ -24,6 +24,7 @@
 
 #include "apps/services/os_sched_affinity_manager.h"
 #include "srsran/adt/optional.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
@@ -298,13 +299,35 @@ struct du_high_unit_pucch_config {
 
 struct du_high_unit_srs_config {
   /// If set, enables periodic Sound Reference Signals (SRS) for the UEs within this cell. If not present, SRS are
-  /// aperiodic.
-  /// Values: {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560}.
-  std::optional<unsigned> srs_period = std::nullopt;
-  /// \brief Defines the maximum number of symbols dedicated to the cell SRS resources in a slot.  Values: {1,...,6}.
+  /// aperiodic. The given value is the SRS period in milliseconds.
+  /// The available values are a subset of the values in \c SRS-PeriodicityAndOffset, \c SRS-Resource \c SRS-Config,
+  /// TS 38.331, converted to millisecond.
+  /// Values: {1, 2, 2.5, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560}.
+  std::optional<float> srs_period_ms = std::nullopt;
+  /// \brief Defines the maximum number of symbols dedicated to (all) the cell SRS resources in a slot.
   /// This is the space that the GNB reserves for all the cell SRS resources in the UL slots, not to be confused with
-  /// the symbols per SRS resource configured in the UE dedicated configuration.
-  unsigned max_nof_symbols_per_slot = 2U;
+  /// the symbols per SRS resource configured in the UE dedicated configuration. Values: {1,...,6}.
+  unsigned max_nof_symbols_per_slot = 2;
+  /// Defines the number of symbols per SRS resource as per \c nrofSymbols, \c resourceMapping, \c SRS-Resource \c
+  /// SRS-Config, TS 38.331. Values: {1, 2, 4}.
+  unsigned nof_symbols = 1;
+  /// \c Transmission comb number, \c transmissionComb, \c SRS-Resource \c SRS-Config, TS 38.331. Values: {2, 4}.
+  unsigned tx_comb = 4;
+  /// Defines the Cyclic Shift (CS) reuse factor for the SRS resources.
+  /// \remark With 2 or 4 antenna ports, different cyclic shifts are used by the different antennas. This parameter
+  /// defines how many UEs can be multiplexed in the same symbols and RBs by exploiting different cyclic shifts.
+  /// Values: {no_cyclic_shift, two, four} for 2 UL antenna ports and tx_comb == 2.
+  /// Values: {no_cyclic_shift, two, three, four, six} for 2 UL antenna ports and tx_comb == 4.
+  /// Values: {no_cyclic_shift, two} for 4 UL antenna ports and tx_comb == 2.
+  /// Values: {no_cyclic_shift, three} for 4 UL antenna ports and tx_comb == 4.
+  /// Refer to Section 6.4.1.4.2, TS 38.211 for the definition of "Cyclic Shift".
+  unsigned cyclic_shift_reuse_factor = 1;
+  /// Defines the reuse of the SRS sequence ID for different UEs within the same cell.
+  /// \remark The goal of the SRS sequence ID would be to reduce the inter-cell interference. However, if the cell is
+  /// not in a dense multi-cell environment, we can reuse different sequence ID for different cell UEs.
+  /// Values: {1, 2, 3, 5, 6, 10, 15, 30}.
+  /// Refer to Section 6.4.1.4.2, TS 38.211 for the definition of "sequenceId".
+  unsigned sequence_id_reuse_factor = 1;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -798,32 +821,6 @@ struct du_high_unit_qos_config {
   du_high_unit_mac_lc_config mac;
 };
 
-/// E2 Agent configuration.
-struct du_high_unit_e2_config {
-  /// Whether to enable DU E2 agent.
-  bool enable_du_e2 = false;
-  /// RIC IP address.
-  std::string ip_addr = "127.0.0.1";
-  /// RIC port.
-  uint16_t port = 36421;
-  /// Local IP address to bind for RIC connection.
-  std::string bind_addr = "127.0.0.1";
-  /// SCTP initial RTO value for RIC connection.
-  int sctp_rto_initial = 120;
-  /// SCTP RTO min for RIC connection.
-  int sctp_rto_min = 120;
-  /// SCTP RTO max for RIC connection.
-  int sctp_rto_max = 500;
-  /// SCTP init max attempts for RIC connection.
-  int sctp_init_max_attempts = 3;
-  /// SCTP max init timeout for RIC connection.
-  int sctp_max_init_timeo = 500;
-  /// Whether to enable KPM service module.
-  bool e2sm_kpm_enabled = false;
-  /// Whether to enable RC service module.
-  bool e2sm_rc_enabled = false;
-};
-
 /// DU high configuration.
 struct du_high_unit_config {
   bool warn_on_drop = false;
@@ -852,7 +849,7 @@ struct du_high_unit_config {
   /// SRB configuration.
   std::map<srb_id_t, du_high_unit_srb_config> srb_cfg;
   /// E2 configuration.
-  du_high_unit_e2_config e2_cfg;
+  e2_config e2_cfg;
 
   /// Returns true if testmode is enabled, false otherwise.
   bool is_testmode_enabled() const { return test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI; }

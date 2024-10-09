@@ -28,12 +28,8 @@ using namespace srsran;
 
 static void fill_gnb_appconfig_metrics_section(YAML::Node node, const metrics_appconfig& config)
 {
-  node["pdcp_report_period"]       = config.pdcp.report_period;
-  node["enable_json_metrics"]      = config.enable_json_metrics;
-  node["addr"]                     = config.addr;
-  node["port"]                     = config.port;
-  node["autostart_stdout_metrics"] = config.autostart_stdout_metrics;
-  node["stdout_metrics_period"]    = config.stdout_metrics_period;
+  node["addr"] = config.addr;
+  node["port"] = config.port;
 }
 
 static void fill_gnb_appconfig_e2_section(YAML::Node node, const e2_appconfig& config)

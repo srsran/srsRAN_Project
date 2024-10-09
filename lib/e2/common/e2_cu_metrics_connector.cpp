@@ -20,25 +20,13 @@
  *
  */
 
-#include "e2_metric_connector_manager.h"
+#include "srsran/e2/e2_cu_metrics_connector.h"
 
 using namespace srsran;
 
-e2_metric_connector_manager::e2_metric_connector_manager(unsigned nof_cells)
-{
-  for (unsigned i = 0, e = nof_cells; i != e; ++i) {
-    e2_du_metric_connectors.push_back(std::make_unique<e2_du_metrics_connector>());
-  }
-}
+e2_cu_metrics_connector::e2_cu_metrics_connector() = default;
 
-e2_du_metrics_notifier& e2_metric_connector_manager::get_e2_du_metric_notifier(unsigned du_index)
+void e2_cu_metrics_connector::connect_e2_cu_meas_provider(std::unique_ptr<e2_cu_metrics_notifier> meas_provider)
 {
-  srsran_assert(du_index < e2_du_metric_connectors.size(), "Invalid DU index");
-  return *e2_du_metric_connectors[du_index];
-}
-
-e2_du_metrics_interface& e2_metric_connector_manager::get_e2_du_metrics_interface(unsigned du_index)
-{
-  srsran_assert(du_index < e2_du_metric_connectors.size(), "Invalid DU index");
-  return *e2_du_metric_connectors[du_index];
+  e2_meas_provider = std::move(meas_provider);
 }

@@ -37,6 +37,8 @@
 #include "ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/e2/e2_cu.h"
+#include "srsran/e2/e2_cu_factory.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ran/plmn_identity.h"
 #include <dlfcn.h>
@@ -220,6 +222,8 @@ private:
   start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
   connect_amfs_func                              connect_amfs       = nullptr;
   disconnect_amfs_func                           disconnect_amfs    = nullptr;
+  // E2 interface
+  std::unique_ptr<e2_interface> e2ap_entity;
 };
 
 } // namespace srs_cu_cp

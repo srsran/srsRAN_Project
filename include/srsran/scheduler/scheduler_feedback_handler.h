@@ -33,6 +33,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/harq_id.h"
 #include <variant>
@@ -141,6 +142,37 @@ struct uci_indication {
   uci_pdu_list    ucis;
 };
 
+struct srs_indication {
+  struct srs_indication_pdu {
+    srs_indication_pdu(const du_ue_index_t          ue_idx,
+                       const rnti_t                 ue_rnti_,
+                       std::optional<phy_time_unit> ta,
+                       const srs_channel_matrix&    matrix) :
+      ue_index(ue_idx), rnti(ue_rnti_), time_advance_offset(ta), channel_matrix(matrix)
+    {
+    }
+
+    du_ue_index_t ue_index;
+    /// RNTI value corresponding to the UE that generated this PDU.
+    rnti_t rnti;
+    /// Timing Advance Offset measured for the UE.
+    std::optional<phy_time_unit> time_advance_offset;
+    /// Channel matrix reported in the SRS codebook-based report.
+    /// \remark This Channel matrix assumes that the SRS usage is codebook-based, which is the only usage currently
+    /// supported.
+    srs_channel_matrix channel_matrix;
+  };
+
+  using srs_pdu_list = static_vector<srs_indication_pdu, MAX_SRS_PDUS_PER_SRS_IND>;
+
+  // Note: user-defined ctor to avoid zero-initialization of srs_pdu_list.
+  srs_indication() {}
+
+  du_cell_index_t cell_index;
+  slot_point      slot_rx;
+  srs_pdu_list    srss;
+};
+
 struct dl_mac_ce_indication {
   du_ue_index_t ue_index;
   lcid_dl_sch_t ce_lcid;
@@ -161,6 +193,7 @@ public:
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
   virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;
+  virtual void handle_srs_indication(const srs_indication& srs)               = 0;
 
   /// \brief Handles PHR indication sent by MAC.
   ///

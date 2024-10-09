@@ -22,6 +22,7 @@
 
 #include "../config/cell_configuration.h"
 #include "scheduler_metrics_handler.h"
+#include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -60,6 +61,13 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
 
     rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);
+  }
+}
+
+void cell_metrics_handler::handle_rach_indication(const rach_indication_message& msg)
+{
+  for (auto& occ : msg.occasions) {
+    nof_prach_preambles += occ.preambles.size();
   }
 }
 
@@ -224,6 +232,7 @@ void cell_metrics_handler::report_metrics()
   next_report.nof_prbs                 = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
   next_report.nof_dl_slots             = nof_dl_slots;
   next_report.nof_ul_slots             = nof_ul_slots;
+  next_report.nof_prach_preambles      = nof_prach_preambles;
 
   // Reset cell-wide metric counters.
   error_indication_counter = 0;
@@ -231,6 +240,7 @@ void cell_metrics_handler::report_metrics()
   decision_latency_hist    = {};
   nof_dl_slots             = 0;
   nof_ul_slots             = 0;
+  nof_prach_preambles      = 0;
 
   // Report all UE metrics in a batch.
   notifier.report_metrics(next_report);
@@ -300,10 +310,10 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   decision_latency_hist[bin_idx]++;
 }
 
-void cell_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay)
+void cell_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay_ms)
 {
   if (ues.contains(ue_index)) {
-    ues[ue_index].data.sum_ul_delay_ms += delay;
+    ues[ue_index].data.sum_ul_delay_ms += delay_ms;
   }
 }
 
@@ -352,7 +362,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pusch_rsrp_db    = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
                                                          : -std::numeric_limits<float>::infinity();
   ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
-  ret.ul_delay_ms      = data.sum_ul_delay_ms / data.count_crc_pdus;
+  ret.ul_delay_ms      = data.count_crc_pdus > 0 ? data.sum_ul_delay_ms / data.count_crc_pdus : 0;
   ret.bsr              = last_bsr;
   ret.dl_bs            = 0;
   for (const unsigned value : last_dl_bs) {

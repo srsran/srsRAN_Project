@@ -23,6 +23,7 @@
 #pragma once
 
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
+#include "apps/services/e2/e2_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/os_sched_affinity_manager.h"
 #include "srsran/ran/gnb_id.h"
@@ -30,21 +31,6 @@
 #include <string>
 
 namespace srsran {
-
-/// E2 Agent configuration
-struct e2_appconfig {
-  bool        enable_du_e2           = false;       ///< Whether to enable DU E2 agent
-  std::string ip_addr                = "127.0.0.1"; ///< RIC IP address
-  uint16_t    port                   = 36421;       ///< RIC port
-  std::string bind_addr              = "127.0.0.1"; ///< Local IP address to bind for RIC connection
-  int         sctp_rto_initial       = 120;         ///< SCTP initial RTO value for RIC connection
-  int         sctp_rto_min           = 120;         ///< SCTP RTO min for RIC connection
-  int         sctp_rto_max           = 500;         ///< SCTP RTO max for RIC connection
-  int         sctp_init_max_attempts = 3;           ///< SCTP init max attempts for RIC connection
-  int         sctp_max_init_timeo    = 500;         ///< SCTP max init timeout for RIC connection
-  bool        e2sm_kpm_enabled       = false;       ///< Whether to enable KPM service module
-  bool        e2sm_rc_enabled        = false;       ///< Whether to enable RC service module
-};
 
 struct cu_up_appconfig {
   unsigned gtpu_queue_size          = 2048;
@@ -54,15 +40,8 @@ struct cu_up_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  struct pdcp_metrics {
-    unsigned report_period = 0; // PDCP report period in ms
-  } pdcp;
-  /// JSON metrics reporting.
-  bool        enable_json_metrics      = false;
-  std::string addr                     = "127.0.0.1";
-  uint16_t    port                     = 55555;
-  bool        autostart_stdout_metrics = false;
-  unsigned    stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+  std::string addr = "127.0.0.1";
+  uint16_t    port = 55555;
 };
 
 /// CPU affinities configuration for the gNB app.

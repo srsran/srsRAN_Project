@@ -33,6 +33,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2sm/e2sm_rc_ies.h"
 #include "srsran/e2/e2.h"
+#include "srsran/e2/e2_du_factory.h"
 #include "srsran/e2/e2_factory.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/e2/e2sm/e2sm.h"
@@ -284,8 +285,6 @@ inline e2_message generate_ric_control_request(srslog::basic_logger& logger,
 class dummy_e2_du_metrics : public e2_du_metrics_interface
 {
 public:
-  void get_metrics(scheduler_ue_metrics& ue_metrics) override {}
-
   void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) override
   {
     e2_meas_provider = std::move(meas_provider);
@@ -343,9 +342,9 @@ public:
   {
     return supported_metrics;
   };
-  virtual bool cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override { return true; };
-  virtual bool ue_supported(const asn1::e2sm::ue_id_c& ueid) override { return true; };
-  virtual bool test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override { return true; };
+  virtual bool is_cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override { return true; };
+  virtual bool is_ue_supported(const asn1::e2sm::ue_id_c& ueid) override { return true; };
+  virtual bool is_test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override { return true; };
 
   virtual bool get_ues_matching_test_conditions(const asn1::e2sm::matching_cond_list_l& matching_cond_list,
                                                 std::vector<asn1::e2sm::ue_id_c>&       ues) override
@@ -360,10 +359,10 @@ public:
     return get_ues_matching_cond(ues);
   };
 
-  virtual bool metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
-                                const asn1::e2sm::meas_label_s&  label,
-                                const e2sm_kpm_metric_level_enum level,
-                                const bool&                      cell_scope) override
+  virtual bool is_metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
+                                   const asn1::e2sm::meas_label_s&  label,
+                                   const e2sm_kpm_metric_level_enum level,
+                                   const bool&                      cell_scope) override
   {
     if (std::find(supported_metrics.begin(), supported_metrics.end(), meas_type.meas_name().to_string()) !=
         supported_metrics.end()) {
@@ -903,8 +902,8 @@ class e2_entity_test : public e2_test_base
     f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
     factory               = timer_factory{timers, task_worker};
     rc_param_configurator = std::make_unique<dummy_du_configurator>();
-    e2                    = create_e2_entity(
-        cfg, e2_client.get(), *du_metrics, *f1ap_ue_id_mapper, *rc_param_configurator, factory, task_worker);
+    e2                    = create_e2_du_entity(
+        cfg, e2_client.get(), &(*du_metrics), &(*f1ap_ue_id_mapper), &(*rc_param_configurator), factory, task_worker);
   }
 
   void TearDown() override

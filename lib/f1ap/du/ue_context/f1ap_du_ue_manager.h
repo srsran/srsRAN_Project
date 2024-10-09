@@ -36,8 +36,9 @@ class f1ap_du_ue_manager
 public:
   f1ap_du_ue_manager(f1ap_du_configurator&       du_handler_,
                      task_executor&              ctrl_exec_,
-                     du_high_ue_executor_mapper& ue_exec_mapper_) :
-    du_handler(du_handler_), ctrl_exec(ctrl_exec_), ue_exec_mapper(ue_exec_mapper_)
+                     du_high_ue_executor_mapper& ue_exec_mapper_,
+                     timer_manager&              timers_) :
+    du_handler(du_handler_), ctrl_exec(ctrl_exec_), ue_exec_mapper(ue_exec_mapper_), timers(timers_)
   {
   }
 
@@ -50,8 +51,14 @@ public:
     srsran_assert(not ues.contains(ue_index), "Duplicate ueId={} detected", ue_index);
 
     gnb_du_ue_f1ap_id_t f1ap_id = static_cast<gnb_du_ue_f1ap_id_t>(next_gnb_f1ap_du_ue_id++);
-    ues.emplace(
-        ue_index, ue_index, f1ap_id, du_handler, *f1ap_msg_notifier, ctrl_exec, ue_exec_mapper.ctrl_executor(ue_index));
+    ues.emplace(ue_index,
+                ue_index,
+                f1ap_id,
+                du_handler,
+                *f1ap_msg_notifier,
+                ctrl_exec,
+                ue_exec_mapper.ctrl_executor(ue_index),
+                timers);
 
     {
       std::lock_guard<std::mutex> lock(map_mutex);
@@ -116,6 +123,7 @@ private:
   f1ap_message_notifier*      f1ap_msg_notifier = nullptr;
   task_executor&              ctrl_exec;
   du_high_ue_executor_mapper& ue_exec_mapper;
+  timer_manager&              timers;
 
   uint64_t next_gnb_f1ap_du_ue_id = 0;
 

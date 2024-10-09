@@ -85,7 +85,6 @@ trigger builder:
     - if: $ON_MR
       changes:
         paths:
-          - .gitlab/ci/src_cache.yml
           - .gitlab/ci/builders.yml
           - .gitlab/ci/builders/**/*
           - docker/scripts/**/*
@@ -115,35 +114,75 @@ trigger docker:
   variables:
     PY_DIR: docker/metrics_server
 
-helm:
+matlab nightly:
+  stage: ci
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      variables:
+        ON_SCHEDULE: "true"
+        CI_DESCRIPTION: Nightly
+        SRSRAN_COMMIT: $CI_COMMIT_SHA
+        NOTIFY_SLACK: "true"
+      when: delayed
+      start_in: 3 hours
+  inherit:
+    variables: false
+  trigger:
+    project: softwareradiosystems/srsgnb_matlab
+    branch: master
+
+enterprise nightly:
+  stage: ci
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      variables:
+        ON_SCHEDULE: "true"
+        CI_DESCRIPTION: Nightly
+        SRSRAN_COMMIT: $CI_COMMIT_SHA
+        NOTIFY_SLACK: "true"
+      when: delayed
+      start_in: 3 hours
+  inherit:
+    variables: false
+  trigger:
+    project: softwareradiosystems/srsran_5g_enterprise
+    branch: main
+
+matlab weekly:
   stage: ci
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       variables:
+        ON_SCHEDULE: "true"
+        CI_DESCRIPTION: Nightly
+        SRSRAN_COMMIT: $CI_COMMIT_SHA
+        NOTIFY_SLACK: "true"
+      when: delayed
+      start_in: 20 hours
+  inherit:
+    variables: false
+  trigger:
+    project: softwareradiosystems/srsgnb_matlab
+    branch: master
+
+helm weekly:
+  stage: ci
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      variables:
+        ON_SCHEDULE: "true"
         CI_DESCRIPTION: Synchronization with srsGNB
         NOTIFY_SLACK: "true"
+      when: delayed
+      start_in: 20 hours
   inherit:
-    variables: false        
+    variables: false
   trigger:
     project: softwareradiosystems/ci/srsgnb_k8s
     branch: main
   needs:
     - job: trigger docker
       artifacts: false
-
-enterprise:
-  stage: ci
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      variables:
-        CI_DESCRIPTION: Nightly
-        SRSRAN_COMMIT: $CI_COMMIT_SHA
-        NOTIFY_SLACK: "true"
-  inherit:
-    variables: false
-  trigger:
-    project: softwareradiosystems/srsran_5g_enterprise
-    branch: main
 
 ################################################################################
 ## Static
@@ -184,7 +223,7 @@ full-code-format:
   image: ${CR_REGISTRY_URI}/srsgnb/codechecker:${DOCKER_BUILDER_VERSION}
   stage: static
   tags:
-    - ${AMD64_TAG}
+    - amd64
   needs:
     - job: builder version
       optional: false
@@ -298,7 +337,7 @@ clangsa:
     KUBERNETES_MEMORY_REQUEST: 12Gi
     KUBERNETES_MEMORY_LIMIT: 12Gi
   tags:
-    - ${AMD64_TAG}
+    - amd64
   interruptible: false
   timeout: 2 hours
   script:
@@ -400,10 +439,10 @@ unit coverage:
     - |
       export metric_prefix=""
       if [[ $ON_MR == "true" ]]; then metric_prefix="_pr"; fi
-      echo "coverage${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${coverage_value}" >> build_time_metrics.txt
+      echo "coverage${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${coverage_value}" >> build/build_time_metrics.txt
     - |
       influx write --host $INFLUXDB_URL --token $INFLUXDB_TOKEN --org $INFLUXDB_ORG \
-        --bucket ci --file build_time_metrics.txt
+        --bucket ci --file build/build_time_metrics.txt
   coverage: /^\s*Line coverage:\s*\d+.\d+\%/
   artifacts: &unit_coverage_artifacts
     paths:

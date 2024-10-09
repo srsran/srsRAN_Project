@@ -98,7 +98,7 @@ srs_config make_initial_srs_config()
       .srs_res_id_list = {static_cast<srs_config::srs_res_id>(0)},
       .res_type =
           srs_config::srs_resource_set::aperiodic_resource_type{.aperiodic_srs_res_trigger = 1, .slot_offset = 2},
-      .srs_res_set_usage  = srs_config::srs_resource_set::usage::codebook,
+      .srs_res_set_usage  = srs_usage::codebook,
       .srs_pwr_ctrl_alpha = alpha::alpha1,
       .p0                 = -80});
   srs_config::srs_resource::tx_comb_params tx_comb{
@@ -749,7 +749,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
       srs_config::srs_resource_set{.id                 = static_cast<srs_config::srs_res_set_id>(1),
                                    .srs_res_id_list    = {static_cast<srs_config::srs_res_id>(1)},
                                    .res_type           = semi_persistent_resource,
-                                   .srs_res_set_usage  = srs_config::srs_resource_set::usage::non_codebook,
+                                   .srs_res_set_usage  = srs_usage::non_codebook,
                                    .srs_pwr_ctrl_alpha = alpha::alpha07,
                                    .p0                 = -70});
   // Release.

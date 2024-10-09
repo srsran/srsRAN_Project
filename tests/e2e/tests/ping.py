@@ -227,7 +227,7 @@ def test_android_hp(
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_zmq(
+def test_zmq_32(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_32: Tuple[UEStub, ...],
@@ -246,6 +246,65 @@ def test_zmq(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_32,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        ue_stop_timeout=3,
+        enable_security_mode=ciphering,
+        post_command=("cu_cp --inactivity_timer=600", ""),
+    )
+
+
+@mark.parametrize(
+    "band, common_scs, bandwidth, ciphering",
+    (
+        param(3, 15, 5, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(3, 15, 10, False, marks=mark.test, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(3, 15, 20, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(3, 15, 50, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(3, 15, 50, True, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(41, 30, 10, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(41, 30, 20, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(41, 30, 50, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(41, 30, 50, True, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+    ),
+)
+@mark.zmq
+@mark.flaky(
+    reruns=2,
+    only_rerun=[
+        "failed to start",
+        "Attach timeout reached",
+        "Some packages got lost",
+        "socket is already closed",
+        "5GC crashed",
+    ],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_zmq_64(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_64: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    ciphering: bool,
+):
+    """
+    ZMQ Pings
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_64,
         gnb=gnb,
         fivegc=fivegc,
         band=band,

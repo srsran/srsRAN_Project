@@ -48,6 +48,8 @@ static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& lo
 
 static void configure_cli11_pcap_args(CLI::App& app, cu_cp_unit_pcap_config& pcap_params)
 {
+  add_option(app, "--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
   add_option(app, "--ngap_filename", pcap_params.ngap.filename, "N3 GTP-U PCAP file output path")
       ->capture_default_str();
   add_option(app, "--ngap_enable", pcap_params.ngap.enabled, "Enable N3 GTP-U packet capture")
@@ -539,6 +541,25 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_confi
       ->capture_default_str();
 }
 
+static void configure_cli11_e2_args(CLI::App& app, e2_config& e2_params)
+{
+  add_option(app, "--enable_cu_e2", e2_params.enable_unit_e2, "Enable DU E2 agent")->capture_default_str();
+  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
+  add_option(app, "--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
+  add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
+      ->capture_default_str()
+      ->check(CLI::ValidIPV4);
+  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value")->capture_default_str();
+  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min")->capture_default_str();
+  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max")->capture_default_str();
+  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts")
+      ->capture_default_str();
+  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout")
+      ->capture_default_str();
+  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module")->capture_default_str();
+  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module")->capture_default_str();
+}
+
 void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& unit_cfg)
 {
   add_option(app, "--gnb_id", unit_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
@@ -562,6 +583,10 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
+
+  // E2 section.
+  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
+  configure_cli11_e2_args(*e2_subcmd, unit_cfg.e2_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {

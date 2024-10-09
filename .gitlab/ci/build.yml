@@ -10,44 +10,9 @@ include:
   - project: softwareradiosystems/ci/srsran_project_packaging
     ref: "7"
     file: .gitlab/ci-shared/package.yml
-  - local: .gitlab/ci/src_cache.yml
+  - local: .gitlab/ci-shared/build.yml
 
 variables:
-  AMD64_TAG: amd64
-  AMD64_AVX2_TAG: amd64-avx2
-  AMD64_AVX512_TAG: amd64-avx2-avx512
-  ARM64_TAG: arm64
-
-  INFRASTRUCTURE_TAG:
-    description: Computer architecture and supported instruction sets
-    options:
-      - amd64
-      - amd64-avx2
-      - amd64-avx2-avx512
-      - arm64
-      - on-prem-amd64
-      - on-prem-arm64
-      - aws-spot-amd64
-      - aws-spot-arm64
-    value: "amd64-avx2"
-  OS:
-    description: Operating system
-    options:
-      - "ubuntu-24.10"
-      - "ubuntu-24.04"
-      - "ubuntu-23.10"
-      - "ubuntu-22.04"
-      - "debian-12"
-      - "debian-11"
-      - "archlinux-latest"
-      - "rhel-8"
-    value: "ubuntu-24.04"
-  COMPILER:
-    description: Compiler to use
-    options:
-      - "gcc"
-      - "clang"
-    value: "gcc"
   TEST_MODE:
     description: What tests to run. None won't run any test at all.
     options:
@@ -57,18 +22,7 @@ variables:
       - "valgrind"
       - "none"
     value: "default"
-  BUILD_ARGS:
-    description: It will be passed to cmake
-    value: ""
-  MAKE_ARGS:
-    description: It will be passed to make
-    value: ""
-  UHD_VERSION:
-    description: must be one version supported in the specified OS
-    value: ""
-  DPDK_VERSION:
-    description: must be one version supported in the specified OS
-    value: ""
+  SRSRANDIR: ${CI_PROJECT_DIR}
 
 ################
 # Build caches #
@@ -91,14 +45,9 @@ variables:
 # Base job
 
 .build_and_unit:
-  image: ${CR_REGISTRY_URI}/srsgnb/builder-${OS}:${DOCKER_BUILDER_VERSION}
-  tags: ["${AMD64_TAG}"]
+  extends: .build_and_unit_template
   stage: build and unit tests
   variables:
-    # Setup
-    UHD_VERSION: "" # Default for OS
-    DPDK_VERSION: "" # None
-    # Build
     BUILD_TYPE: "" # Empty for cmake default
     ASSERT_LEVEL: "" # Empty for cmake default
     ENABLE_EXPORT: "" # Empty for cmake default
@@ -113,26 +62,71 @@ variables:
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     MARCH: ""
     MTUNE: ""
-    # TEST
-    TEST_EXECUTION_TIMEOUT: 0
-    # CI
-    KUBERNETES_CPU_REQUEST: 6
-    KUBERNETES_CPU_LIMIT: 6
-    KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
-    MAKE_ARGS: "-j${KUBERNETES_CPU_REQUEST}"
-    GIT_STRATEGY: none
   needs:
-    - !reference [.fetch_src_cache, needs]
     - job: builder version
       optional: false
       artifacts: true
     - job: trigger builder
       optional: true
       artifacts: false
-  before_script:
-    - !reference [.fetch_src_cache, script]
-    - |
+  script:
+    - &srs_functions |
+      CMAKE_FLAGS_CMD=""
+      if [ -n "${BUILD_TYPE}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+      fi
+      if [ -n "${ASSERT_LEVEL}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DASSERT_LEVEL=${ASSERT_LEVEL}"
+      fi
+      if [ -n "${ENABLE_EXPORT}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_EXPORT=${ENABLE_EXPORT}"
+      fi
+      if [ -n "${ENABLE_FFTW}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_FFTW=${ENABLE_FFTW}"
+      fi
+      if [ -n "${ENABLE_UHD}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_UHD=${ENABLE_UHD}"
+      fi
+      if [ -n "${ENABLE_DPDK}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_DPDK=${ENABLE_DPDK}"
+      fi
+      if [ -n "${ENABLE_ZEROMQ}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"
+      fi
+      if [ -n "${ENABLE_ASAN}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_ASAN=${ENABLE_ASAN}"
+      fi
+      if [ -n "${ENABLE_TSAN}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_TSAN=${ENABLE_TSAN}"
+      fi
+      if [ -n "${ENABLE_GCOV}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_GCOV=${ENABLE_GCOV}"
+      fi
+      if [ -n "${MARCH}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DMARCH=${MARCH}"
+      fi
+      if [ -n "${MTUNE}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DTUNE=${MTUNE}"
+      fi
+      if [ -n "${ENABLE_WERROR}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_WERROR=${ENABLE_WERROR}"
+      fi
+      if [ -n "${FORCE_DEBUG_INFO}" ]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DFORCE_DEBUG_INFO=${FORCE_DEBUG_INFO}"
+      fi
+      if [[ $TEST_MODE = "none" ]]; then
+        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DBUILD_TESTS=False"
+      fi
+
+      echo "INFRASTRUCTURE_TAG=${INFRASTRUCTURE_TAG}"
+      echo "OS=${OS}"
+      echo "COMPILER=${COMPILER}"
+      echo "TEST_MODE=${TEST_MODE}"
+      echo "BUILD_ARGS=${CMAKE_FLAGS_CMD} ${BUILD_ARGS}"
+      echo "MAKE_ARGS=${MAKE_ARGS}"
+      echo "UHD_VERSION=${UHD_VERSION}"
+      echo "DPDK_VERSION=${DPDK_VERSION}"
+
       build_srsgnb() {
         start_time=$(date +%s)
         if [ -e "/usr/local/bin/ram_reporter.py" ]; then
@@ -140,88 +134,7 @@ variables:
           ram_reporter_pid=$!
         fi
 
-        BUILD_CMD=""
-        if [ -n "${BUILD_TYPE}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
-        fi
-        if [ -n "${ASSERT_LEVEL}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DASSERT_LEVEL=${ASSERT_LEVEL}"
-        fi
-        if [ -n "${ENABLE_EXPORT}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_EXPORT=${ENABLE_EXPORT}"
-        fi
-        if [ -n "${ENABLE_FFTW}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_FFTW=${ENABLE_FFTW}"
-        fi
-        if [ -n "${ENABLE_UHD}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_UHD=${ENABLE_UHD}"
-        fi
-        if [ -n "${ENABLE_DPDK}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_DPDK=${ENABLE_DPDK}"
-        fi
-        if [ -n "${ENABLE_ZEROMQ}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"
-        fi
-        if [ -n "${ENABLE_ASAN}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_ASAN=${ENABLE_ASAN}"
-        fi
-        if [ -n "${ENABLE_TSAN}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_TSAN=${ENABLE_TSAN}"
-        fi
-        if [ -n "${ENABLE_GCOV}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_GCOV=${ENABLE_GCOV}"
-        fi
-        if [ -n "${MARCH}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DMARCH=${MARCH}"
-        fi
-        if [ -n "${MTUNE}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DTUNE=${MTUNE}"
-        fi
-        if [ -n "${ENABLE_WERROR}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DENABLE_WERROR=${ENABLE_WERROR}"
-        fi
-        if [ -n "${FORCE_DEBUG_INFO}" ]; then
-          BUILD_CMD="${BUILD_CMD} -DFORCE_DEBUG_INFO=${FORCE_DEBUG_INFO}"
-        fi
-        if [[ $TEST_MODE = "none" ]]; then
-          BUILD_CMD="${BUILD_CMD} -DBUILD_TESTS=False"
-        fi
-        if [ -n "${BUILD_ARGS}" ]; then
-          BUILD_CMD="${BUILD_CMD} ${BUILD_ARGS}"
-        fi
-
-        echo "INFRASTRUCTURE_TAG=${INFRASTRUCTURE_TAG}"
-        echo "OS=${OS}"
-        echo "COMPILER=${COMPILER}"
-        echo "TEST_MODE=${TEST_MODE}"
-        echo "BUILD_ARGS=${BUILD_CMD}"
-        echo "MAKE_ARGS=${MAKE_ARGS}"
-        echo "UHD_VERSION=${UHD_VERSION}"
-        echo "DPDK_VERSION=${DPDK_VERSION}"
-
-        if [ -n "${DPDK_VERSION}" ]; then
-          BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
-          export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/:/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu/:${LD_LIBRARY_PATH}
-        fi
-        if [ -n "${UHD_VERSION}" ]; then
-          BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
-          export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
-        fi
-        if [ -n "${CLEAN_BUILD}" ]; then
-          BUILD_CMD="-r ${CLEAN_BUILD} ${BUILD_CMD}"
-        fi
-        if [ -n "${MAKE_ARGS}" ]; then
-          BUILD_CMD="-m ${MAKE_ARGS} ${BUILD_CMD}"
-        fi
-        if [ -n "${COMPILER}" ]; then
-          BUILD_CMD="-c ${COMPILER} ${BUILD_CMD}"
-        fi
-        BUILD_CMD="builder.sh ${BUILD_CMD} ."
-
-        echo "${BUILD_CMD}"
-        echo "============================================================================================="
-        $BUILD_CMD
-
+        build_srsran "" ${CMAKE_FLAGS_CMD}
         if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
           echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"
           cd build
@@ -240,11 +153,11 @@ variables:
           ram_usage=$(cat ${CI_PROJECT_DIR}/ram_usage.txt)
           echo "RAM usage is: $ram_usage GB"
           kill $ram_reporter_pid
-          echo "ram_usage${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${ram_usage}" >> build_time_metrics.txt
+          echo "ram_usage${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${ram_usage}" >> ${CI_PROJECT_DIR}/build/build_time_metrics.txt
         fi
-        echo "build_time${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${execution_time}" >> build_time_metrics.txt
+        echo "build_time${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${execution_time}" >> ${CI_PROJECT_DIR}/build/build_time_metrics.txt
       }
-    - |
+
       launch_tests() {
         cd ${CI_PROJECT_DIR}/build
         case $TEST_MODE in
@@ -277,12 +190,11 @@ variables:
         fi
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
-        echo "${CTEST_CMD}"
-        echo "============================================================================================="
+        echo "+ ${CTEST_CMD}"
 
         status_file=$(mktemp)
         timeout ${TEST_EXECUTION_TIMEOUT} \
-          bash -c "${CTEST_CMD} && echo 0 > ${status_file} || echo 1 > ${status_file}" \
+          bash -c "${CTEST_CMD}; echo \$? > ${status_file}" \
           && ret=$(cat ${status_file}) || ret=124
 
         if [[ $TEST_MODE = "coverage" ]]; then
@@ -319,12 +231,9 @@ variables:
 
         exit $ret
       }
-  script:
     - build_srsgnb
     - launch_tests
   timeout: 6h
-  cache:
-    - !reference [.fetch_src_cache, cache]
 
 .build_artifacts:
   after_script: &build_after_script
@@ -362,7 +271,7 @@ variables:
     TEST_MODE: coverage
     ENABLE_GCOV: "True"
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
 
 .smoke relwithdeb:
   extends: .build_and_unit
@@ -373,7 +282,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
 
 .smoke tsan:
   extends: .build_and_unit
@@ -385,7 +294,7 @@ variables:
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
 
 .smoke rhel:
   extends: .build_and_unit
@@ -396,7 +305,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
 
 .smoke archlinux:
   extends: .build_and_unit
@@ -408,7 +317,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
 
 .smoke dpdk:
   extends: .build_and_unit
@@ -422,7 +331,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     DPDK_VERSION: "23.11.1_avx2"
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
 
 .smoke valgrind:
   extends: .build_and_unit
@@ -433,7 +342,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: valgrind
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
 
 .smoke avx512:
   extends: .build_and_unit
@@ -444,7 +353,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v4
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
 
 .smoke arm:
   extends: .build_and_unit
@@ -455,7 +364,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: armv8-a
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
 
 .smoke arm neon:
   extends: .build_and_unit
@@ -466,7 +375,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: armv8.2-a+crypto+fp16+dotprod
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
 
 # Combinations to use in schedules matrix
 
@@ -493,7 +402,6 @@ smoke relwithdeb cached:
   artifacts:
     <<: *build_artifacts
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke tsan cached:
@@ -508,7 +416,6 @@ smoke tsan cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke rhel cached:
@@ -523,7 +430,6 @@ smoke rhel cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke archlinux cached:
@@ -538,7 +444,6 @@ smoke archlinux cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke dpdk cached:
@@ -553,7 +458,6 @@ smoke dpdk cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 .infra_path_changes:
@@ -579,7 +483,6 @@ smoke avx512 cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke arm cached:
@@ -598,7 +501,6 @@ smoke arm cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke arm neon cached:
@@ -617,7 +519,6 @@ smoke arm neon cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke relwithdeb clean:
@@ -680,6 +581,7 @@ intermediate commits cached:
     - if: $ON_MR
   timeout: 2 hour
   script:
+    - *srs_functions
     - git config advice.detachedHead false
     - git fetch origin --depth=20 $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
     - |
@@ -697,7 +599,6 @@ intermediate commits cached:
   artifacts:
     <<: *build_artifacts
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 valgrind changed tests:
@@ -717,6 +618,7 @@ valgrind changed tests:
     FINGERPRINT: "fingerprints.csv"
     TEST_EXECUTION_TIMEOUT: 20m
   script:
+    - *srs_functions
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 40
     - |
@@ -737,15 +639,12 @@ valgrind changed tests:
     - echo "This test execution has a timeout of ${TEST_EXECUTION_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
     - launch_tests
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 intermediate commits clean:
   extends: intermediate commits cached
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache:
-    - !reference [.fetch_src_cache, cache]
 
 #################
 # Build Nightly #
@@ -774,7 +673,6 @@ smoke release update cache:
   after_script:
     - *build_after_script
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
   artifacts:
     <<: *build_artifacts
@@ -789,7 +687,6 @@ smoke relwithdeb update cache:
   retry: 2
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke tsan update cache:
@@ -801,7 +698,6 @@ smoke tsan update cache:
   interruptible: false
   retry: 2
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke rhel update cache:
@@ -813,7 +709,6 @@ smoke rhel update cache:
   retry: 2
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke archlinux update cache:
@@ -825,7 +720,6 @@ smoke archlinux update cache:
   retry: 2
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke dpdk update cache:
@@ -837,7 +731,6 @@ smoke dpdk update cache:
   retry: 2
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke valgrind update cache:
@@ -849,7 +742,6 @@ smoke valgrind update cache:
   interruptible: false
   retry: 2
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke avx512 update cache:
@@ -861,7 +753,6 @@ smoke avx512 update cache:
   interruptible: false
   retry: 2
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke arm update cache:
@@ -873,7 +764,6 @@ smoke arm update cache:
   retry: 2
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke arm neon update cache:
@@ -885,7 +775,6 @@ smoke arm neon update cache:
   retry: 2
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke asan:
@@ -904,7 +793,7 @@ smoke asan:
     ENABLE_ASAN: "True"
     TEST_MODE: asan
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
 
 # Packaging
 
@@ -925,7 +814,7 @@ package:
     DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
     MAKEFLAGS: -j${KUBERNETES_CPU_LIMIT}
     extraopts: -DMARCH=x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS_VERSION: "22.04"
@@ -942,7 +831,7 @@ install-package:
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   script:
     - gnb --version
   parallel:
@@ -973,7 +862,7 @@ export on amd64:
     COMPILER: gcc
     TEST_MODE: none
     ENABLE_EXPORT: "True"
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
@@ -982,7 +871,7 @@ export on amd64:
 
 export on amd64 avx512:
   extends: export on amd64
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
@@ -997,7 +886,7 @@ ubuntu-24.10 amd64 avx2:
       when: delayed
       start_in: 210 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1011,7 +900,7 @@ ubuntu-24.04 amd64 avx2:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1025,7 +914,7 @@ ubuntu-24.04 amd64 avx512:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1039,7 +928,7 @@ ubuntu-23.10 amd64 avx2:
       when: delayed
       start_in: 150 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1053,7 +942,7 @@ ubuntu-23.10 amd64 avx512:
       when: delayed
       start_in: 150 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1067,7 +956,7 @@ ubuntu-22.04 amd64 avx2:
       when: delayed
       start_in: 180 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1081,7 +970,7 @@ rhel-8 amd64 avx2:
       when: delayed
       start_in: 240 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: rhel-8
@@ -1097,7 +986,7 @@ ubuntu-24.04 arm neon:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1111,7 +1000,7 @@ ubuntu-23.10 arm neon:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1133,7 +1022,7 @@ ubuntu dpdk:
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1157,7 +1046,7 @@ archlinux amd64 native:
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   parallel:
     matrix:
       - OS: archlinux-latest
@@ -1171,7 +1060,7 @@ archlinux amd64 avx2:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: archlinux-latest
@@ -1184,7 +1073,7 @@ archlinux amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: archlinux-latest
@@ -1199,7 +1088,7 @@ debian 12 amd64 native:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   parallel:
     matrix:
       - OS: debian-12
@@ -1213,7 +1102,7 @@ debian 12 amd64 avx2:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: debian-12
@@ -1228,7 +1117,7 @@ debian 12 amd64 avx512:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: debian-12
@@ -1275,7 +1164,7 @@ debian 12 amd64 avx512:
 
 sanitizers amd64 native:
   extends: .weekly sanitizers
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
@@ -1300,7 +1189,7 @@ sanitizers amd64 avx2:
   extends: .weekly sanitizers
   variables:
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
@@ -1328,7 +1217,7 @@ sanitizers amd64 avx512:
   extends: .weekly sanitizers
   variables:
     MARCH: x86-64-v4
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
@@ -1351,13 +1240,13 @@ sanitizers amd64 avx512:
 
 sanitizers arm native:
   extends: .weekly sanitizers
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
 
 sanitizers arm neon:
   extends: .weekly sanitizers
   variables:
     MARCH: armv8.2-a+crypto+fp16+dotprod
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
 
 # UHD Alternatives
 
@@ -1370,7 +1259,7 @@ build uhd alt:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
     MARCH: x86-64-v3
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1395,7 +1284,7 @@ ubuntu-24.10 amd64 native:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1408,7 +1297,7 @@ ubuntu-24.10 amd64 avx512:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1422,7 +1311,7 @@ ubuntu-24.10 arm native:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1435,7 +1324,7 @@ ubuntu-24.10 arm neon:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1449,7 +1338,7 @@ ubuntu-24.04 amd64 native:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1462,7 +1351,7 @@ ubuntu-24.04 arm native:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1475,7 +1364,7 @@ ubuntu-23.10 amd64 native:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1488,7 +1377,7 @@ ubuntu-23.10 arm native:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1501,7 +1390,7 @@ ubuntu-22.04 amd64 native:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1514,7 +1403,7 @@ ubuntu-22.04 amd64 avx512:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1528,7 +1417,7 @@ ubuntu-22.04 arm native:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1541,7 +1430,7 @@ ubuntu-22.04 arm neon:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1555,7 +1444,7 @@ rhel-8 amd64 native:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   parallel:
     matrix:
       - OS: rhel-8
@@ -1568,7 +1457,7 @@ rhel-8 amd64 avx512:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: rhel-8
@@ -1582,7 +1471,7 @@ rhel-8 arm native:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: rhel-8
@@ -1595,7 +1484,7 @@ rhel-8 arm neon:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["${ARM64_TAG}"]
+  tags: ["arm64"]
   parallel:
     matrix:
       - OS: rhel-8
@@ -1618,7 +1507,7 @@ ubuntu-22.04 amd64 avx2 dpdk:
       when: delayed
       start_in: 240 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1633,7 +1522,7 @@ ubuntu-22.04 amd64 avx512 dpdk:
       when: delayed
       start_in: 270 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1648,7 +1537,7 @@ ubuntu-23.10 amd64 avx2 dpdk:
       when: delayed
       start_in: 300 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1663,7 +1552,7 @@ ubuntu-23.10 amd64 avx512 dpdk:
       when: delayed
       start_in: 330 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1678,7 +1567,7 @@ ubuntu-24.04 amd64 avx2 dpdk:
       when: delayed
       start_in: 360 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1693,7 +1582,7 @@ ubuntu-24.04 amd64 avx512 dpdk:
       when: delayed
       start_in: 390 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1708,7 +1597,7 @@ ubuntu-24.10 amd64 avx2 dpdk:
       when: delayed
       start_in: 420 minutes
   interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1723,7 +1612,7 @@ ubuntu-24.10 amd64 avx512 dpdk:
       when: delayed
       start_in: 450 minutes
   interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1737,7 +1626,7 @@ ubuntu-24.10 amd64 avx512 dpdk:
 
 check-affinity-manager-nocpu:
   image: ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu-24.04:${DOCKER_BUILDER_VERSION}
-  tags: ["${AMD64_TAG}"]
+  tags: ["amd64"]
   stage: build and unit tests
   needs:
     - job: "smoke release update cache"
@@ -1799,7 +1688,7 @@ basic package:
   variables:
     <<: *package_variables
     OS_VERSION: "24.04"
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   needs: []
 
 basic tsan:
@@ -1826,7 +1715,7 @@ basic asan:
     TEST_MODE: none
     MARCH: x86-64-v3
     BUILD_ARGS: -DEXIT_TIMEOUT=60
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["amd64-avx2"]
   after_script:
     - *build_after_script
   artifacts:
@@ -1866,7 +1755,7 @@ basic avx512 dpdk:
     MARCH: x86-64-v4
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: AUTO
-  tags: ["${AMD64_AVX512_TAG}"]
+  tags: ["amd64-avx2-avx512"]
   after_script:
     - *build_after_script
   artifacts:
@@ -1876,7 +1765,7 @@ basic avx512 dpdk:
 basic avx512 dpdk withassert:
   extends: basic avx512 dpdk
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/  
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   variables:
     ASSERT_LEVEL: PARANOID
 
@@ -1898,5 +1787,4 @@ custom build:
     <<: *build_artifacts
     expire_in: 4 hours
   cache:
-    - !reference [.fetch_src_cache, cache]
     - *cache_build_get

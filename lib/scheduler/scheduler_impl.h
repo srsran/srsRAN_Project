@@ -65,6 +65,7 @@ public:
   void handle_rach_indication(const rach_indication_message& msg) override;
   void handle_crc_indication(const ul_crc_indication& crc) override;
   void handle_uci_indication(const uci_indication& uci) override;
+  void handle_srs_indication(const srs_indication& srs) override;
 
 private:
   const scheduler_expert_config expert_params;

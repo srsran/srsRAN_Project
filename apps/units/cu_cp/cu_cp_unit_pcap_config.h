@@ -37,6 +37,10 @@ struct cu_cp_unit_pcap_config {
     bool        enabled  = false;
   } e1ap;
   struct {
+    std::string filename = "/tmp/cu_e2ap.pcap";
+    bool        enabled  = false;
+  } e2ap;
+  struct {
     std::string filename = "/tmp/cu_f1ap.pcap";
     bool        enabled  = false;
   } f1ap;

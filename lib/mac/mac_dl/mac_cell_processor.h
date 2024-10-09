@@ -38,6 +38,8 @@
 
 namespace srsran {
 
+class timer_manager;
+
 class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
 {
 public:
@@ -48,7 +50,8 @@ public:
                      task_executor&                   cell_exec,
                      task_executor&                   slot_exec,
                      task_executor&                   ctrl_exec,
-                     mac_pcap&                        pcap);
+                     mac_pcap&                        pcap,
+                     timer_manager&                   timers);
 
   /// Starts configured cell.
   async_task<void> start() override;
@@ -100,6 +103,7 @@ private:
   task_executor&                  slot_exec;
   task_executor&                  ctrl_exec;
   mac_cell_result_notifier&       phy_cell;
+  timer_manager&                  timers;
 
   // Mapper of upper-layer bearers to MAC logical channels in the DL direction.
   mac_dl_ue_repository ue_mng;

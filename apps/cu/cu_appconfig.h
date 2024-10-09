@@ -66,6 +66,8 @@ struct cu_appconfig {
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
 
+  /// E2 configuration.
+  e2_appconfig e2_cfg;
   /// TODO fill in the rest of the configuration
 };
 

@@ -46,8 +46,6 @@ inline void save_msg_pcap(const byte_buffer& last_pdu)
 class e2_rlc_metrics_notifier : public e2_du_metrics_notifier, public e2_du_metrics_interface
 {
 public:
-  void get_metrics(scheduler_ue_metrics& ue_metrics) override {}
-
   void report_metrics(const scheduler_cell_metrics& metrics) override
   {
     if (e2_meas_provider) {

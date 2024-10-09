@@ -84,6 +84,8 @@ struct scheduler_cell_metrics {
   unsigned nof_dl_slots = 0;
   /// Number of full uplink slots.
   unsigned nof_ul_slots = 0;
+  /// Number of PRACH preambles detected.
+  unsigned nof_prach_preambles = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};

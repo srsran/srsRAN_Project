@@ -35,6 +35,9 @@
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
+
+class timer_manager;
+
 namespace srs_du {
 
 class f1ap_event_manager;
@@ -47,12 +50,14 @@ public:
                     f1ap_message_notifier& f1ap_notif_,
                     f1ap_du_configurator&  du_configurator_,
                     task_executor&         ctrl_exec_,
-                    task_executor&         ue_exec_) :
+                    task_executor&         ue_exec_,
+                    timer_manager&         timers_) :
     ue_ctx(ue_ctx_),
     f1ap_notifier(f1ap_notif_),
     du_configurator(du_configurator_),
     ctrl_exec(ctrl_exec_),
-    ue_exec(ue_exec_)
+    ue_exec(ue_exec_),
+    timers(timers_)
   {
   }
 
@@ -78,6 +83,7 @@ private:
   f1ap_du_configurator&  du_configurator;
   task_executor&         ctrl_exec;
   task_executor&         ue_exec;
+  timer_manager&         timers;
 
   slotted_array<std::unique_ptr<f1c_bearer>, MAX_NOF_SRBS> f1c_bearers;
 };

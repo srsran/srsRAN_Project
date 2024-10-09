@@ -180,8 +180,13 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
   // [Implementation-defined] The default CSI symbols are in symbols 4 and 8, the DM-RS for PDSCH might collide in
   // symbol index 8 when the number of DM-RS additional positions is 3.
   if (uint_to_dmrs_additional_positions(cell_cfg.pdsch_cfg.dmrs_add_pos) == dmrs_additional_positions::pos3) {
-    csi_params.csi_ofdm_symbol_index            = 9;
-    csi_params.tracking_csi_ofdm_symbol_indexes = {4, 9, 4, 9};
+    csi_params.csi_ofdm_symbol_index = 9;
+    // As per TS 38.214, clause 5.1.6.1.1, following time-domain locations of the two CSI-RS resources in a slot, or of
+    // the four CSI-RS resources in two consecutive slots are allowed:
+    // {4,8}, {5,9}, or {6,10} for frequency range 1 and frequency range 2.
+    // NOTE: As per TS 38.211, table 7.4.1.1.2-3, PDSCH DM-RS time-domain positions for single-symbol DM-RS
+    // corresponding to ld >= 12 and dmrs-AdditionalPosition pos3 are l0, 5, 8, 11.
+    csi_params.tracking_csi_ofdm_symbol_indexes = {6, 10, 6, 10};
   }
 
   if (cell_cfg.tdd_ul_dl_cfg.has_value()) {
@@ -230,8 +235,6 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
 
 std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_high_unit_config& config)
 {
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
-
   std::vector<srs_du::du_cell_config> out_cfg;
   out_cfg.reserve(config.cells_cfg.size());
 
@@ -557,8 +560,10 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Parameters for SRS-Config.
     srs_du::srs_builder_params&    du_srs_cfg   = out_cell.srs_cfg;
     const du_high_unit_srs_config& user_srs_cfg = base_cell.srs_cfg;
-    if (user_srs_cfg.srs_period.has_value()) {
-      du_srs_cfg.srs_period.emplace(static_cast<srs_periodicity>(*user_srs_cfg.srs_period));
+    if (user_srs_cfg.srs_period_ms.has_value()) {
+      const unsigned srs_period_slots = static_cast<unsigned>(
+          static_cast<float>(get_nof_slots_per_subframe(base_cell.common_scs)) * user_srs_cfg.srs_period_ms.value());
+      du_srs_cfg.srs_period.emplace(static_cast<srs_periodicity>(srs_period_slots));
     }
     du_srs_cfg.max_nof_symbols = user_srs_cfg.max_nof_symbols_per_slot;
 
@@ -641,8 +646,16 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
                                                  base_cell.csi_cfg.csi_rs_enabled
                                                      ? std::optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec}
                                                      : std::nullopt);
-    // The maximum number of symbols for cell PUCCH resources is computed based on the SRS configuration.
+    // The maximum number of symbols for cell PUCCH resources is computed based on the SRS configuration, but only if
+    // the SRS are periodic. The aperiodic SRS resources are not currently supported and used only for the UE to accept
+    // the configuration; therefore, the maximum number of symbols for PUCCH resources is computed only for periodic
+    // SRS.
     du_pucch_cfg.max_nof_symbols = config_helpers::compute_max_nof_pucch_symbols(du_srs_cfg);
+    if (user_srs_cfg.srs_period_ms.has_value() and
+        std::holds_alternative<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params)) {
+      auto& f1_params       = std::get<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params);
+      f1_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f1_params.nof_symbols.to_uint());
+    }
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
@@ -651,21 +664,6 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Slicing configuration.
     std::vector<std::string> cell_plmns{base_cell.plmn};
     out_cell.rrm_policy_members = generate_du_slicing_rrm_policy_config(cell_plmns, base_cell.slice_cfg, nof_crbs);
-
-    logger.info(
-        "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
-        "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
-        base_cell.pci,
-        *param.band,
-        base_cell.dl_f_ref_arfcn,
-        nof_crbs,
-        to_string(base_cell.common_scs),
-        to_string(out_cfg.back().ssb_cfg.scs),
-        ssb_freq_loc->offset_to_point_A.to_uint(),
-        ssb_freq_loc->k_ssb.to_uint(),
-        ssb_freq_loc->ssb_arfcn,
-        ssb_freq_loc->coreset0_idx,
-        ssb_freq_loc->searchspace0_idx);
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {

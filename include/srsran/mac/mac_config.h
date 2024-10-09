@@ -32,6 +32,8 @@
 
 namespace srsran {
 
+class timer_manager;
+
 /// \brief Implementation-specific parameters used to tune MAC operation.
 struct mac_expert_config {
   /// Initial C-RNTI to assign to created UEs.
@@ -60,6 +62,7 @@ struct mac_config {
   // Parameters passed to MAC scheduler.
   scheduler_expert_config     sched_cfg;
   scheduler_metrics_notifier& metric_notifier;
+  timer_manager&              timers;
 };
 
 } // namespace srsran

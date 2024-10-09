@@ -82,17 +82,17 @@ public:
   /// \brief check if cell with cell global id is supported
   /// \param[in] cell_global_id of the required cell
   /// \return Returns True if cell is present
-  virtual bool cell_supported(const asn1::e2sm::cgi_c& cell_global_id) = 0;
+  virtual bool is_cell_supported(const asn1::e2sm::cgi_c& cell_global_id) = 0;
 
   /// \brief check if UE with ueid is supported
   /// \param[in] ueid of the required UE
   /// \return Returns True if UE is present
-  virtual bool ue_supported(const asn1::e2sm::ue_id_c& ueid) = 0;
+  virtual bool is_ue_supported(const asn1::e2sm::ue_id_c& ueid) = 0;
 
   /// \brief check if a test condition is supported
   /// \param[in] test_cond_type
   /// \return Returns True if test condition is supported
-  virtual bool test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) = 0;
+  virtual bool is_test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) = 0;
 
   /// \brief check if a metric with labels, level and optional cell scope is supported
   /// \param[in] meas_type defines the metric
@@ -100,10 +100,10 @@ public:
   /// \param[in] level if metric can be measured at the given level
   /// \param[in] cell_scope if metric can be measured for a single cell
   /// \return Returns True if metric is supported with given labels, level and cell_scope
-  virtual bool metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
-                                const asn1::e2sm::meas_label_s&  label,
-                                const e2sm_kpm_metric_level_enum level,
-                                const bool&                      cell_scope) = 0;
+  virtual bool is_metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
+                                   const asn1::e2sm::meas_label_s&  label,
+                                   const e2sm_kpm_metric_level_enum level,
+                                   const bool&                      cell_scope) = 0;
 
   /// \brief collected UE ids of the UEs matching the requested conditions
   /// \param[in] matching_cond_list defines the conditions to be satisfied

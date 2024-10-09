@@ -24,7 +24,6 @@
 
 #include "srsran/du/du_high/du_manager/du_manager.h"
 #include "srsran/f1ap/du/f1ap_du.h"
-#include "srsran/support/async/execute_on.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {

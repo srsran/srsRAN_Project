@@ -428,8 +428,7 @@ validator_result srsran::config_validators::validate_srs_cfg(const serving_cell_
   VERIFY(srs_cfg.srs_res_set_list.front().srs_res_id_list.front() == srs_cfg.srs_res_list.front().id.ue_res_id,
          "The SRS resource set ID 0's resource should point to the SRS resource ID 0");
   const auto& srs_res_set = srs_cfg.srs_res_set_list.front();
-  VERIFY(srs_res_set.srs_res_set_usage == srs_config::srs_resource_set::usage::codebook,
-         "Only SRS resource set usage \"codebook\" is supported");
+  VERIFY(srs_res_set.srs_res_set_usage == srs_usage::codebook, "Only SRS resource set usage \"codebook\" is supported");
 
   const auto& srs_res = srs_cfg.srs_res_list.front();
   VERIFY(

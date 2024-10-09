@@ -482,7 +482,7 @@ error_type<validator_report> srsran::fapi::validate_srs_indication(const srs_ind
     success &= validate_rnti(to_value(pdu.rnti), message_type_id::srs_indication, report);
     success &= validate_timing_advance_offset(pdu.timing_advance_offset, message_type_id::srs_indication, report);
     success &= validate_timing_advance_offset_ns(pdu.timing_advance_offset_ns, message_type_id::srs_indication, report);
-    success &= validate_srs_usage(static_cast<unsigned>(pdu.srs_usage), report);
+    success &= validate_srs_usage(static_cast<unsigned>(pdu.usage), report);
     success &= validate_report_type(pdu.report_type, report);
   }
 

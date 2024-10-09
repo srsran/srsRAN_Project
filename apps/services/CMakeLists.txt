@@ -22,7 +22,6 @@ add_subdirectory(buffer_pool)
 add_subdirectory(logger)
 
 set(SOURCES
-        e2_metric_connector_manager.cpp
         stdin_command_dispatcher.cpp
         worker_manager.cpp)
 

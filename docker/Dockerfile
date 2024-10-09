@@ -60,10 +60,11 @@ RUN /src/docker/scripts/build_${LIB}.sh ${LIB_VERSION} ${MARCH} ${NUM_CORES}
 ARG EXTRA_CMAKE_ARGS=""
 RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
     LIB_UPPER=$(echo $LIB | tr '[:lower:]' '[:upper:]') && \
-    export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" \
+    export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" && \
+    if [ "$LIB_UPPER" = "UHD" ]; then SPLIT="SPLIT_8"; else SPLIT="SPLIT_7_2"; fi \
     && \
     /src/docker/scripts/builder.sh -m "-j${NUM_CORES} install" \
-    -DBUILD_TESTS=False -DENABLE_${LIB_UPPER}=On -DMARCH=${MARCH} -DCMAKE_INSTALL_PREFIX=/opt/srs \
+    -DBUILD_TESTS=False -DENABLE_${LIB_UPPER}=On -DDU_SPLIT_TYPE=${SPLIT} -DMARCH=${MARCH} -DCMAKE_INSTALL_PREFIX=/opt/srs \
     ${EXTRA_CMAKE_ARGS} /src \
     && \
     /src/docker/scripts/builder.sh -m "-j${NUM_CORES} ru_emulator" \

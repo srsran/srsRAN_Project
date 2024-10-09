@@ -89,10 +89,5 @@ public:
 class f1c_bearer : public f1c_tx_sdu_handler, public f1c_tx_delivery_handler, public f1c_rx_pdu_handler
 {};
 
-std::unique_ptr<f1ap_du> create_f1ap(f1c_connection_client&      f1c_client_handler,
-                                     f1ap_du_configurator&       du_mng,
-                                     task_executor&              ctrl_exec,
-                                     du_high_ue_executor_mapper& ue_exec_mapper,
-                                     f1ap_du_paging_notifier&    paging_notifier);
 } // namespace srs_du
 } // namespace srsran

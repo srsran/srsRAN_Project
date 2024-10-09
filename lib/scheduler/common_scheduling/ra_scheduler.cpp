@@ -22,6 +22,7 @@
 
 #include "ra_scheduler.h"
 #include "../logging/scheduler_event_logger.h"
+#include "../logging/scheduler_metrics_handler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
@@ -111,11 +112,13 @@ static constexpr size_t CRC_IND_QUEUE_SIZE = MAX_PUCCH_PDUS_PER_SLOT * 2;
 ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
                            const cell_configuration&         cellcfg_,
                            pdcch_resource_allocator&         pdcch_sch_,
-                           scheduler_event_logger&           ev_logger_) :
+                           scheduler_event_logger&           ev_logger_,
+                           cell_metrics_handler&             metrics_hdlr_) :
   sched_cfg(sched_cfg_),
   cell_cfg(cellcfg_),
   pdcch_sch(pdcch_sch_),
   ev_logger(ev_logger_),
+  metrics_hdlr(metrics_hdlr_),
   ra_win_nof_slots(cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
   ra_crb_lims(
       pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp,
@@ -299,6 +302,9 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
       msg3_entry.msg3_harq_ent = msg3_harqs.add_ue(to_du_ue_index(msg3_ring_idx), prach_preamble.tc_rnti, 1, 1);
     }
   }
+
+  // Forward RACH indication to metrics handler.
+  metrics_hdlr.handle_rach_indication(msg);
 }
 
 void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)

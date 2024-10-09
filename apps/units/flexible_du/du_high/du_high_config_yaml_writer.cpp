@@ -747,9 +747,9 @@ static YAML::Node build_du_high_testmode_section(const du_high_unit_test_mode_co
   return node;
 }
 
-static void fill_du_high_e2_section(YAML::Node node, const du_high_unit_e2_config& config)
+static void fill_du_high_e2_section(YAML::Node node, const e2_config& config)
 {
-  node["enable_du_e2"]           = config.enable_du_e2;
+  node["enable_du_e2"]           = config.enable_unit_e2;
   node["addr"]                   = config.ip_addr;
   node["port"]                   = config.port;
   node["bind_addr"]              = config.bind_addr;

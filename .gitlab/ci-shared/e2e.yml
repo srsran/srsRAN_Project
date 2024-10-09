@@ -1,0 +1,161 @@
+variables:
+  TESTBED:
+    description: Retina Testbed Description
+    options:
+      - "zmq"
+      - "zmq_uesim"
+      - "zmq_deb"
+      - "zmq_srsue"
+      - "zmq_cudu"
+      - "rf_b200"
+      - "rf_hp"
+      - "android_b200"
+      - "android_x300"
+      - "viavi"
+      - "none"
+    value: "zmq"
+  MARKERS:
+    description: Selected pytest marker (label / tag). Tests with that mark will run.
+    value: ""
+  KEYWORDS:
+    description: Select tests by keyword expressions. This will run tests which contain names that match the given string expression (case-insensitive), which can include Python operators that use filenames, class names and function names as variables
+    value: ""
+  PYTEST_ARGS:
+    description: Extra pytest args for the e2e suite to run
+    value: ""
+  RETINA_PARAM_ARGS:
+    description: Extra retina args for the e2e suite to run
+    value: ""
+  RETINA_LAUNCHER_ARGS:
+    description: Extra launcher args
+    value: ""
+  E2E_LOG_LEVEL:
+    description: Log level to set for software under test in the e2e tests
+    options:
+      - debug
+      - info
+      - warning
+      - error
+    value: "info"
+
+.load retina variables:
+  stage: ci
+  script:
+    - cat ${SRSRANDIR}/.gitlab/ci/e2e/.env
+  artifacts:
+    reports:
+      dotenv: ${SRSRANDIR}/.gitlab/ci/e2e/.env
+
+.prepare_test:
+  variables:
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+  before_script: &setup_kube_config
+    - |
+      export FORCE_COLOR=1
+      eval K_PATH="\$$KUBECONFIG_VAR_NAME"
+      export KUBECONFIG=$K_PATH
+
+      eval K_PATH_EXTRA="\$$KUBECONFIG_VAR_NAME_EXTRA"
+      export KUBECONFIG_EXTRA=$K_PATH_EXTRA
+
+.e2e-run-template:
+  resource_group: e2e-${GROUP}
+  timeout: 3 hours
+  image:
+    name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
+    entrypoint: ["/bin/sh", "-c"]
+  variables:
+    ARTIFACT_COMPRESSION_LEVEL: "slowest"
+    KUBERNETES_CPU_REQUEST: 2
+    KUBERNETES_CPU_LIMIT: 2
+    KUBERNETES_MEMORY_REQUEST: 2Gi
+    KUBERNETES_MEMORY_LIMIT: 2Gi
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "20G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "20G"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+    GROUP: zmq
+  tags:
+    - "${RETINA_TAG}"
+  extends:
+    - .prepare_test
+  artifacts:
+    paths:
+      - ${SRSRANDIR}/tests/e2e/log
+    when: always
+    expire_in: 1 week
+    reports:
+      junit: ${SRSRANDIR}/tests/e2e/out.xml
+  script:
+    - |
+      # Print E2E parameters
+      echo "GROUP=${GROUP}"
+      echo "TESTBED=${TESTBED}"
+      echo "MARKERS=${MARKERS}"
+      echo "KEYWORDS=${KEYWORDS}"
+      echo "PYTEST_ARGS=${PYTEST_ARGS}"
+      echo "RETINA_PARAM_ARGS=${RETINA_PARAM_ARGS}"
+      echo "RETINA_LAUNCHER_ARGS=${RETINA_LAUNCHER_ARGS}"
+      echo "E2E_LOG_LEVEL=${E2E_LOG_LEVEL}"
+    - cd ${SRSRANDIR}
+    # Clean LFS files
+    - |
+      while read -r line; do
+        git rm --cached "$line" >/dev/null
+      done < <(git lfs ls-files | sed -r 's/^.{13}//')
+      echo "srsGNB sources+build size is" $(du -hs .)
+    # Remove any existing retina resource for this group
+    - retina-delete-orchestration-network --user-name ci_${GROUP}
+    # Add extra config env variables to the .env file
+    - |
+      echo "" >> .gitlab/ci/e2e/.env
+      cat $RETINA_CONFIG_ENV >> .gitlab/ci/e2e/.env
+    # Modify request to shared the complete folder with the gnb container
+    - |
+      yq -i '(.[] | select(.type == "gnb") | .shared_files) += [{"local_path": "../../", "remote_path": env(SRSRANDIR), "is_executable": false}]' ${SRSRANDIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
+    # Set username for retina
+    - |
+      cd tests/e2e
+      export LOGNAME=ci_${GROUP}
+    # Run Retina
+    - |
+      E2E_CMD="retina-launcher ${RETINA_LAUNCHER_ARGS} --retina-request=${SRSRANDIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
+      echo "${E2E_CMD}"
+      eval $E2E_CMD
+  after_script:
+    # Remove any existing retina resource for this group
+    - *setup_kube_config
+    - retina-delete-orchestration-network --user-name ci_${GROUP}
+    # Push test metrics
+    - |
+      find . -iname "test_metrics.csv" -exec \
+        influx write --host $INFLUXDB_URL --token $INFLUXDB_TOKEN --org $INFLUXDB_ORG \
+        --bucket ci --file {} \;
+    # Artifact size
+    - echo -e "\e[0Ksection_start:`date +%s`:e2e_folder_section[collapsed=true]\r\e[0KLog folder's tree"
+    - |
+      print_tree() {
+        local dir="$1"
+        local prefix="$2"
+
+        # List directories first
+        find "$dir" -mindepth 1 -maxdepth 1 -type d | while read -r subdir; do
+          local size=$(du -sh "$subdir" | awk '{print $1}')
+          echo "${prefix}├── $(basename "$subdir") [$size]"
+          print_tree "$subdir" "$prefix│   "
+        done
+
+        # List files afterwards
+        find "$dir" -mindepth 1 -maxdepth 1 -type f | while read -r file; do
+          local size=$(du -sh "$file" | awk '{print $1}')
+          echo "${prefix}├── $(basename "$file") [$size]"
+        done
+      }
+      print_tree "${SRSRANDIR}/tests/e2e/log/" ""
+    - echo -e "\e[0Ksection_end:`date +%s`:e2e_folder_section\r\e[0K"
+    - |
+      subpath=$(echo "$SRSRANDIR" | sed "s|^$CI_PROJECT_DIR||")
+      echo "*******************************************************************************************************************************"
+      echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts${subpath}/tests/e2e/log/report.html"
+      echo "*******************************************************************************************************************************"

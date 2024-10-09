@@ -910,6 +910,57 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->capture_default_str();
 }
 
+static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs_params)
+{
+  add_option(app,
+             "--srs_period_ms",
+             srs_params.srs_period_ms,
+             "Enable periodic SRS with period in ms. The SRS period needs to be compatible with the subcarrier spacing")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1.0F,
+                             2.0F,
+                             2.5F,
+                             4.0F,
+                             5.0F,
+                             8.0F,
+                             10.0F,
+                             16.0F,
+                             20.0F,
+                             32.0F,
+                             40.0F,
+                             64.0F,
+                             80.0F,
+                             160.0F,
+                             320.0F,
+                             640.0F,
+                             1280.0F,
+                             2560.0F}));
+  add_option(app,
+             "--srs_max_nof_sym_per_slot",
+             srs_params.max_nof_symbols_per_slot,
+             "Number of symbols for UL slot that are reserved for the SRS cell resources")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 6));
+  add_option(app, "--srs_nof_sym_per_resource", srs_params.nof_symbols, "Number of symbols per SRS resource")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 4}));
+  add_option(app, "--srs_tx_comb", srs_params.tx_comb, "SRS TX comb size")
+      ->capture_default_str()
+      ->check(CLI::IsMember({2, 4}));
+  add_option(app,
+             "--srs_cyclic_shift_reuse",
+             srs_params.cyclic_shift_reuse_factor,
+             "SRS cyclic shift reuse factor. It needs to be compatible with the TX comb and number of UL antenna ports")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 3, 4, 6}));
+  add_option(app,
+             "--srs_sequence_id_reuse",
+             srs_params.sequence_id_reuse_factor,
+             "Enable the reuse of SRS sequence id with the set reuse factor")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 3, 5, 6, 10, 15, 30}));
+}
+
 static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config::si_sched_info_config& si_sched_info)
 {
   add_option(app, "--si_period", si_sched_info.si_period_rf, "SI message scheduling period in radio frames")
@@ -1233,9 +1284,13 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   CLI::App* pusch_subcmd = add_subcommand(app, "pusch", "PUSCH parameters");
   configure_cli11_pusch_args(*pusch_subcmd, cell_params.pusch_cfg);
 
-  // PUSCH configuration.
+  // PUCCH configuration.
   CLI::App* pucch_subcmd = add_subcommand(app, "pucch", "PUCCH parameters");
   configure_cli11_pucch_args(*pucch_subcmd, cell_params.pucch_cfg);
+
+  // SRS configuration.
+  CLI::App* srs_subcmd = add_subcommand(app, "srs", "SRS parameters");
+  configure_cli11_srs_args(*srs_subcmd, cell_params.srs_cfg);
 
   // PRACH configuration.
   CLI::App* prach_subcmd = add_subcommand(app, "prach", "PRACH parameters");
@@ -1585,9 +1640,9 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(mac_subcmd);
 }
 
-static void configure_cli11_e2_args(CLI::App& app, du_high_unit_e2_config& e2_params)
+static void configure_cli11_e2_args(CLI::App& app, e2_config& e2_params)
 {
-  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent")->capture_default_str();
+  add_option(app, "--enable_du_e2", e2_params.enable_unit_e2, "Enable DU E2 agent")->capture_default_str();
   add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
   add_option(app, "--port", e2_params.port, "RIC port")->check(CLI::Range(20000, 40000))->capture_default_str();
   add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")

@@ -105,11 +105,11 @@ struct ru_ofh_unit_cell_config {
   /// V-LAN Tag control information field for U-Plane.
   std::optional<uint16_t> vlan_tag_up;
   /// RU PRACH port.
-  std::vector<unsigned> ru_prach_port_id = {4, 5};
+  std::vector<unsigned> ru_prach_port_id = {4};
   /// RU Downlink port.
-  std::vector<unsigned> ru_dl_port_id = {0, 1};
+  std::vector<unsigned> ru_dl_port_id = {0};
   /// RU Uplink port.
-  std::vector<unsigned> ru_ul_port_id = {0, 1};
+  std::vector<unsigned> ru_ul_port_id = {0};
 };
 
 /// RU OFH logging functionalities.

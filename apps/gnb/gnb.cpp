@@ -47,13 +47,14 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/core_isolation_manager.h"
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/services/worker_manager.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.
@@ -370,8 +371,6 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-  e2_metric_connector_manager e2_metric_connectors(du_app_unit->get_du_high_unit_config().cells_cfg.size());
-
   // Load CU-CP plugins if enabled
   std::optional<dynlink_manager> ng_handover_plugin =
       cu_cp_app_unit->get_cu_cp_unit_config().load_plugins
@@ -418,10 +417,17 @@ int main(int argc, char** argv)
   cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
   cu_cp_dependencies.broker         = epoll_broker.get();
 
-  // create CU-CP.
-  auto cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
+  // E2AP configuration.
+  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg.e2_cfg, E2_DU_PPID);
+  srsran::sctp_network_connector_config e2_cu_nw_config = generate_e2ap_nw_config(gnb_cfg.e2_cfg, E2_CP_PPID);
 
-  srs_cu_cp::cu_cp& cu_cp_obj = *cu_cp_obj_and_cmds.unit;
+  // Create E2AP GW remote connector.
+  e2_gateway_remote_connector e2_gw_du{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
+  e2_gateway_remote_connector e2_gw_cu{*epoll_broker, e2_cu_nw_config, *cu_cp_dlt_pcaps.e2ap};
+  cu_cp_dependencies.e2_gw = &e2_gw_cu;
+  // create CU-CP.
+  auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
+  srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
 
   // Create and start CU-UP
   cu_up_unit_dependencies cu_up_unit_deps;
@@ -434,25 +440,18 @@ int main(int argc, char** argv)
 
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
 
-  // E2AP configuration.
-  sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
-
-  // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
-
   // Instantiate one DU.
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
   du_unit_dependencies                      du_dependencies;
-  du_dependencies.workers              = &workers;
-  du_dependencies.f1c_client_handler   = f1c_gw.get();
-  du_dependencies.f1u_gw               = f1u_conn->get_f1u_du_gateway();
-  du_dependencies.timer_mng            = &app_timers;
-  du_dependencies.mac_p                = du_pcaps.mac.get();
-  du_dependencies.rlc_p                = du_pcaps.rlc.get();
-  du_dependencies.e2_client_handler    = &e2_gw;
-  du_dependencies.e2_metric_connectors = &e2_metric_connectors;
-  du_dependencies.json_sink            = &json_sink;
-  du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
+  du_dependencies.workers            = &workers;
+  du_dependencies.f1c_client_handler = f1c_gw.get();
+  du_dependencies.f1u_gw             = f1u_conn->get_f1u_du_gateway();
+  du_dependencies.timer_mng          = &app_timers;
+  du_dependencies.mac_p              = du_pcaps.mac.get();
+  du_dependencies.rlc_p              = du_pcaps.rlc.get();
+  du_dependencies.e2_client_handler  = &e2_gw_du;
+  du_dependencies.json_sink          = &json_sink;
+  du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
   auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
 
@@ -512,8 +511,13 @@ int main(int argc, char** argv)
   cu_cp_obj.stop();
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
-    gnb_logger.info("Closing E2 network connections...");
-    e2_gw.close();
+    gnb_logger.info("Closing E2 DU network connections...");
+    e2_gw_du.close();
+    gnb_logger.info("E2 Network connections closed successfully");
+  }
+  if (gnb_cfg.e2_cfg.enable_cu_e2) {
+    gnb_logger.info("Closing E2 CU network connections...");
+    e2_gw_cu.close();
     gnb_logger.info("E2 Network connections closed successfully");
   }
 

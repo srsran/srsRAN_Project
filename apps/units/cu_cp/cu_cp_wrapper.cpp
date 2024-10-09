@@ -26,8 +26,9 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 cu_cp_wrapper::cu_cp_wrapper(std::vector<std::unique_ptr<srs_cu_cp::n2_connection_client>> n2_clients_,
+                             std::unique_ptr<e2_cu_metrics_connector_manager>              e2_metric_connector_,
                              std::unique_ptr<srs_cu_cp::cu_cp>                             cu_cp_) :
-  n2_clients(std::move(n2_clients_)), cu_cp(std::move(cu_cp_))
+  n2_clients(std::move(n2_clients_)), e2_metric_connector(std::move(e2_metric_connector_)), cu_cp(std::move(cu_cp_))
 {
   srsran_assert(cu_cp, "Invalid CU-CP object");
 }

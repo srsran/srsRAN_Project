@@ -10,6 +10,10 @@ struct noop_operation {
   {
     // Do nothing.
   }
+  void operator()() const
+  {
+    // Do nothing.
+  }
 };
 
 } // namespace srsran

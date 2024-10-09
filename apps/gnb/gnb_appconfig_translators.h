@@ -22,12 +22,12 @@
 
 #pragma once
 
+#include "apps/services/e2/e2_appconfig.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_high/du_qos_config.h"
 #include "srsran/du/du_high/du_srb_config.h"
-#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
@@ -53,7 +53,7 @@ struct worker_manager_config;
 subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
 
 /// Converts and returns the given gnb application configuration to a E2AP Network Gateway configuration.
-srsran::sctp_network_connector_config generate_e2ap_nw_config(const gnb_appconfig& config, int ppid);
+srsran::sctp_network_connector_config generate_e2ap_nw_config(const e2_appconfig& config, int ppid);
 
 /// Fills the gNB worker manager parameters of the given worker manager configuration.
 void fill_gnb_worker_manager_config(worker_manager_config& config, const gnb_appconfig& unit_cfg);

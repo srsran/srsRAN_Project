@@ -27,7 +27,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
-#include "srsran/e2/e2.h"
+#include "srsran/e2/e2_du.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
 #include "srsran/f1ap/du/f1ap_du.h"
@@ -53,16 +53,16 @@ public:
   /// e2sm_kpm_meas_provider functions.
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override;
 
-  bool cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override;
+  bool is_cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override;
 
-  bool ue_supported(const asn1::e2sm::ue_id_c& ueid) override;
+  bool is_ue_supported(const asn1::e2sm::ue_id_c& ueid) override;
 
-  bool test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override;
+  bool is_test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override;
 
-  bool metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
-                        const asn1::e2sm::meas_label_s&  label,
-                        const e2sm_kpm_metric_level_enum level,
-                        const bool&                      cell_scope) override;
+  bool is_metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
+                           const asn1::e2sm::meas_label_s&  label,
+                           const e2sm_kpm_metric_level_enum level,
+                           const bool&                      cell_scope) override;
 
   bool get_ues_matching_test_conditions(const asn1::e2sm::matching_cond_list_l& matching_cond_list,
                                         std::vector<asn1::e2sm::ue_id_c>&       ues) override;
@@ -116,12 +116,14 @@ private:
   metric_meas_getter_func_t get_drb_ul_mean_throughput;
   metric_meas_getter_func_t get_drb_dl_rlc_sdu_latency;
   metric_meas_getter_func_t get_drb_ul_rlc_sdu_latency;
+  metric_meas_getter_func_t get_prach_cell_count;
 
   srslog::basic_logger&                              logger;
   srs_du::f1ap_ue_id_translator&                     f1ap_ue_id_provider;
   unsigned                                           nof_cell_prbs;
   unsigned                                           nof_dl_slots;
   unsigned                                           nof_ul_slots;
+  unsigned                                           nof_ded_cell_preambles;
   std::vector<scheduler_ue_metrics>                  last_ue_metrics;
   std::map<uint16_t, std::deque<rlc_metrics>>        ue_aggr_rlc_metrics;
   size_t                                             max_rlc_metrics = 1;

@@ -166,6 +166,8 @@ public:
 
   void handle_uci(const mac_uci_indication_message& msg) override;
 
+  void handle_srs(const mac_srs_indication_message& msg) override;
+
 private:
   struct slot_decision_history {
     // Locks a given slot.

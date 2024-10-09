@@ -32,12 +32,14 @@ struct cu_cp_dlt_pcaps {
   std::unique_ptr<dlt_pcap> ngap;
   std::unique_ptr<dlt_pcap> f1ap;
   std::unique_ptr<dlt_pcap> e1ap;
+  std::unique_ptr<dlt_pcap> e2ap;
 
   void close()
   {
     ngap.reset();
     f1ap.reset();
     e1ap.reset();
+    e2ap.reset();
   }
 };
 
@@ -51,6 +53,8 @@ inline cu_cp_dlt_pcaps create_cu_cp_dlt_pcap(const cu_cp_unit_pcap_config&   pca
   pcaps.f1ap = pcap_cfg.f1ap.enabled ? create_f1ap_pcap(pcap_cfg.f1ap.filename, exec_getter.get_executor("pcap_exec"))
                                      : create_null_dlt_pcap();
   pcaps.e1ap = pcap_cfg.e1ap.enabled ? create_e1ap_pcap(pcap_cfg.e1ap.filename, exec_getter.get_executor("pcap_exec"))
+                                     : create_null_dlt_pcap();
+  pcaps.e2ap = pcap_cfg.e2ap.enabled ? create_e2ap_pcap(pcap_cfg.e2ap.filename, exec_getter.get_executor("pcap_exec"))
                                      : create_null_dlt_pcap();
   return pcaps;
 }

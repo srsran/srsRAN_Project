@@ -45,7 +45,7 @@
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.
@@ -300,29 +300,25 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(du_cfg.metrics_cfg.addr, du_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-  e2_metric_connector_manager e2_metric_connectors(du_app_unit->get_du_high_unit_config().cells_cfg.size());
-
   // E2AP configuration.
-  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg, E2_DU_PPID);
+  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg.e2_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
   du_unit_dependencies                      du_dependencies;
-  du_dependencies.workers              = &workers;
-  du_dependencies.f1c_client_handler   = f1c_gw.get();
-  du_dependencies.f1u_gw               = du_f1u_conn.get();
-  du_dependencies.timer_mng            = &app_timers;
-  du_dependencies.mac_p                = du_pcaps.mac.get();
-  du_dependencies.rlc_p                = du_pcaps.rlc.get();
-  du_dependencies.e2_client_handler    = &e2_gw;
-  du_dependencies.e2_metric_connectors = &e2_metric_connectors;
-  du_dependencies.json_sink            = &json_sink;
-  du_dependencies.metrics_notifier     = &metrics_notifier_forwarder;
+  du_dependencies.workers            = &workers;
+  du_dependencies.f1c_client_handler = f1c_gw.get();
+  du_dependencies.f1u_gw             = du_f1u_conn.get();
+  du_dependencies.timer_mng          = &app_timers;
+  du_dependencies.mac_p              = du_pcaps.mac.get();
+  du_dependencies.rlc_p              = du_pcaps.rlc.get();
+  du_dependencies.e2_client_handler  = &e2_gw;
+  du_dependencies.json_sink          = &json_sink;
+  du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
   auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
-
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
       srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, du_inst_and_cmds.metrics);

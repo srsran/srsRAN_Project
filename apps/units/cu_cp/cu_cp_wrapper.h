@@ -22,10 +22,16 @@
 
 #pragma once
 
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "srsran/cu_cp/cu_cp.h"
+#include "srsran/e2/e2_cu_metrics_connector.h"
+
 #include "srsran/ngap/gateways/n2_connection_client.h"
 
 namespace srsran {
+
+using e2_cu_metrics_connector_manager =
+    e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
 
 /// \brief CU-CP wrapper implementation.
 ///
@@ -34,6 +40,7 @@ class cu_cp_wrapper : public srs_cu_cp::cu_cp
 {
 public:
   cu_cp_wrapper(std::vector<std::unique_ptr<srs_cu_cp::n2_connection_client>> n2_clients_,
+                std::unique_ptr<e2_cu_metrics_connector_manager>              e2_metric_connector_,
                 std::unique_ptr<srs_cu_cp::cu_cp>                             cu_cp_);
 
   // See interface for documentation.
@@ -53,6 +60,7 @@ public:
 
 private:
   std::vector<std::unique_ptr<srs_cu_cp::n2_connection_client>> n2_clients;
+  std::unique_ptr<e2_cu_metrics_connector_manager>              e2_metric_connector;
   std::unique_ptr<srs_cu_cp::cu_cp>                             cu_cp;
 };
 

@@ -21,8 +21,7 @@
  */
 
 #include "du_high_wrapper_config_helper.h"
-
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "du_high_commands.h"
 #include "du_high_config.h"
 #include "du_high_config_translators.h"
@@ -31,11 +30,14 @@
 #include "metrics/du_high_scheduler_cell_metrics_consumers.h"
 #include "metrics/du_high_scheduler_cell_metrics_producer.h"
 #include "srsran/du/du_high/du_high_wrapper_factory.h"
+#include "srsran/e2/e2_du_metrics_connector.h"
 
 using namespace srsran;
 
 void srsran::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
 {
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
+
   // Generate DU cells.
   auto cells = generate_du_cell_config(du_high_unit_cfg);
 
@@ -50,6 +52,21 @@ void srsran::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
                srsran::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn_f_ref) / 1e6,
                cell.dl_cfg_common.freq_info_dl.absolute_frequency_ssb,
                srsran::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn_f_ref) / 1e6);
+
+    logger.info(
+        "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, nof_crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
+        "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
+        cell.pci,
+        cell.dl_carrier.band,
+        cell.dl_carrier.arfcn_f_ref,
+        cell.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+        to_string(cell.dl_cfg_common.init_dl_bwp.generic_params.scs),
+        to_string(cell.ssb_cfg.scs),
+        cell.ssb_cfg.offset_to_point_A.to_uint(),
+        cell.ssb_cfg.k_ssb.to_uint(),
+        cell.dl_cfg_common.freq_info_dl.absolute_frequency_ssb,
+        cell.coreset0_idx,
+        cell.searchspace0_idx);
   }
 
   fmt::print("\n");
@@ -91,7 +108,7 @@ build_scheduler_du_metrics(std::pair<std::vector<app_services::metrics_config>,
   }
 
   // Connect E2 agent to DU Scheduler UE metrics.
-  if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
+  if (du_high_unit_cfg.e2_cfg.enable_unit_e2) {
     sched_metrics_cfg.consumers.push_back(std::make_unique<scheduler_cell_metrics_consumer_e2>(e2_notifier));
   }
 
@@ -107,7 +124,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   rlc_metrics_notifier* out = nullptr;
 
   // RLC metrics.
-  if (!du_high_unit_cfg.metrics.rlc.json_enabled && !du_high_unit_cfg.e2_cfg.enable_du_e2 &&
+  if (!du_high_unit_cfg.metrics.rlc.json_enabled && !du_high_unit_cfg.e2_cfg.enable_unit_e2 &&
       du_high_unit_cfg.loggers.metrics_level != srslog::basic_levels::debug) {
     return out;
   }
@@ -133,7 +150,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
     rlc_metrics_cfg.consumers.push_back(std::make_unique<rlc_metrics_consumer_json>(rlc_json_channel));
   }
 
-  if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
+  if (du_high_unit_cfg.e2_cfg.enable_unit_e2) {
     rlc_metrics_cfg.consumers.push_back(std::make_unique<rlc_metrics_consumer_e2>(e2_notifier));
   }
 
@@ -141,6 +158,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
 }
 
 std::pair<std::vector<app_services::metrics_config>, std::vector<std::unique_ptr<app_services::application_command>>>
+
 srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
                                     const du_high_unit_config&       du_high_unit_cfg,
                                     unsigned                         du_idx,
@@ -151,7 +169,7 @@ srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
                                     mac_pcap&                        mac_p,
                                     rlc_pcap&                        rlc_p,
                                     e2_connection_client&            e2_client_handler,
-                                    e2_metric_connector_manager&     e2_metric_connectors,
+                                    e2_du_metrics_connector_manager& e2_metric_connectors,
                                     srslog::sink&                    json_sink,
                                     app_services::metrics_notifier&  metrics_notifier)
 {
@@ -174,28 +192,28 @@ srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
   du_hi_cfg.mac_p                     = &mac_p;
   du_hi_cfg.rlc_p                     = &rlc_p;
 
-  if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
+  if (du_high_unit_cfg.e2_cfg.enable_unit_e2) {
     // Connect E2 agent to RLC metric source.
     du_hi_cfg.e2_client          = &e2_client_handler;
     du_hi_cfg.e2ap_config        = generate_e2_config(du_high_unit_cfg);
-    du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(du_idx));
+    du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_metrics_interface(du_idx));
   }
 
   // DU high metrics.
   std::pair<std::vector<app_services::metrics_config>, std::vector<std::unique_ptr<app_services::application_command>>>
       du_services_cfg;
-  du_hi_cfg.sched_ue_metrics_notifier =
-      build_scheduler_du_metrics(du_services_cfg,
-                                 metrics_notifier,
-                                 du_high_unit_cfg,
-                                 json_sink,
-                                 e2_metric_connectors.get_e2_du_metric_notifier(du_idx));
+
+  du_hi_cfg.sched_ue_metrics_notifier = build_scheduler_du_metrics(du_services_cfg,
+                                                                   metrics_notifier,
+                                                                   du_high_unit_cfg,
+                                                                   json_sink,
+                                                                   e2_metric_connectors.get_e2_metric_notifier(du_idx));
 
   du_hi_cfg.rlc_metrics_notif = build_rlc_du_metrics(du_services_cfg.first,
                                                      metrics_notifier,
                                                      du_high_unit_cfg,
                                                      json_sink,
-                                                     e2_metric_connectors.get_e2_du_metric_notifier(du_idx));
+                                                     e2_metric_connectors.get_e2_metric_notifier(du_idx));
 
   // Configure test mode
   if (du_high_unit_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
