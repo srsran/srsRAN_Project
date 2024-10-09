@@ -182,6 +182,8 @@ private:
   std::vector<slot_decision_history> sched_decision_history;
 
   test_ue_info_manager& ue_info_mgr;
+
+  slot_point last_slot_ind;
 };
 
 class mac_test_mode_adapter final : public mac_interface,

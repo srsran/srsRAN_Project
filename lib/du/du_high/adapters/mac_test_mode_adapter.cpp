@@ -502,8 +502,11 @@ void mac_test_mode_cell_adapter::handle_srs(const mac_srs_indication_message& ms
 // Intercepts the sched + signalling results coming from the MAC.
 void mac_test_mode_cell_adapter::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
 {
-  // Process any pending tasks for the test mode UE manager asynchronously.
-  ue_info_mgr.process_pending_tasks();
+  if (last_slot_ind != dl_res.slot) {
+    // Process any pending tasks for the test mode UE manager asynchronously.
+    ue_info_mgr.process_pending_tasks();
+    last_slot_ind = dl_res.slot;
+  }
 
   // Dispatch result to lower layers.
   result_notifier.on_new_downlink_scheduler_results(dl_res);
@@ -512,6 +515,12 @@ void mac_test_mode_cell_adapter::on_new_downlink_scheduler_results(const mac_dl_
 // Intercepts the UL results coming from the MAC.
 void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {
+  if (last_slot_ind != ul_res.slot) {
+    // Process any pending tasks for the test mode UE manager asynchronously.
+    ue_info_mgr.process_pending_tasks();
+    last_slot_ind = ul_res.slot;
+  }
+
   {
     slot_decision_history&       entry = sched_decision_history[get_ring_idx(ul_res.slot)];
     std::unique_lock<std::mutex> lock(entry.mutex);
