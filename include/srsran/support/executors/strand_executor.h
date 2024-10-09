@@ -292,7 +292,7 @@ public:
     impl(std::forward<ExecType>(out_exec), strand_queue_params)
   {
     exec_list.reserve(nof_priority_levels());
-    for (unsigned i = 0; i != exec_list.size(); ++i) {
+    for (unsigned i = 0; i != strand_queue_params.size(); ++i) {
       exec_list.emplace_back(executor_type{detail::queue_index_to_enqueue_priority(i, nof_priority_levels()), *this});
     }
   }

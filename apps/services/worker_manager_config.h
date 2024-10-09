@@ -69,9 +69,10 @@ struct worker_manager_config {
     bool     is_rt_mode_enabled;
   };
 
+  // CU-UP worker configuration
   struct cu_up_config {
-    unsigned max_nof_ue_strands = 16;
-    unsigned gtpu_task_queue_size;
+    unsigned max_nof_ue_strands     = 16;
+    bool     dedicated_io_ul_strand = true;
   };
 
   /// PCAP worker configuration.

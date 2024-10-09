@@ -59,7 +59,7 @@ public:
   virtual task_executor& ctrl_executor() = 0;
 
   /// \brief Gets task executor that is used to write UL PDUs into the gateway.
-  virtual task_executor& io_executor() = 0;
+  virtual task_executor& io_ul_executor() = 0;
 
   /// \brief Gets task executor that is used by the E2 CU-UP agent.
   virtual task_executor& e2_executor() = 0;
@@ -68,12 +68,21 @@ public:
   virtual std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() = 0;
 };
 
+/// Configuration of a cu_up_executor_mapper that instantiates multiple strands associated with the same thread pool.
 struct strand_based_executor_config {
-  unsigned       max_nof_ue_strands;
-  unsigned       default_task_queue_size;
-  unsigned       gtpu_task_queue_size;
+  /// \brief Maximum number of UE-dedicated strands instantiated in the CU-UP. The choice of \c max_nof_ue_strands is a
+  /// tradeoff. A low \c max_nof_ue_strands will lead to UEs potentially sharing the same strand (and respective
+  /// task queue), which will reduce inter-UE isolation and the ability to parallelize across UEs. If
+  /// \c max_nof_ue_strands is high, more memory will be used to instantiate the UE strand queues.
+  unsigned max_nof_ue_strands;
+  /// \brief Default size for the task queues of the strands created in the CU-UP.
+  unsigned default_task_queue_size;
+  /// \brief Size for the task queues of the strands created in the CU-UP and that are connected to the GTPU.
+  unsigned gtpu_task_queue_size;
+  /// \brief Executor to which strands will be associated.
   task_executor& worker_pool_executor;
-  bool           dedicated_io_strand;
+  /// \brief Whether to instantiate a dedicated strand for sending UL PDUs to the IO.
+  bool dedicated_io_strand;
 };
 
 /// \brief Creates an executor mapper for the CU-UP that is based on strands of a worker pool.

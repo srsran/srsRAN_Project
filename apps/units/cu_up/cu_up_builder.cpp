@@ -41,7 +41,7 @@ std::unique_ptr<srs_cu_up::cu_up_interface> srsran::build_cu_up(const cu_up_unit
     ngu_gw_config.bind_interface             = config.net_cfg.n3_bind_interface;
     ngu_gw_config.rx_max_mmsg                = config.net_cfg.n3_rx_max_mmsg;
     ngu_gw                                   = srs_cu_up::create_udp_ngu_gateway(
-        ngu_gw_config, *dependencies.io_brk, dependencies.workers->cu_up_exec_mapper->io_executor());
+        ngu_gw_config, *dependencies.io_brk, dependencies.workers->cu_up_exec_mapper->io_ul_executor());
   } else {
     ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
   }

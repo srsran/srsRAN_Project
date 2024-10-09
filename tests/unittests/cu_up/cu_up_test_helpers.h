@@ -57,7 +57,7 @@ public:
 
   task_executor& ctrl_executor() override { return *test_executor; }
 
-  task_executor& io_executor() override { return *test_executor; }
+  task_executor& io_ul_executor() override { return *test_executor; }
 
   task_executor& e2_executor() override { return *test_executor; }
 

@@ -204,7 +204,7 @@ public:
 
   task_executor& ctrl_executor() override { return cu_up_strand; }
 
-  task_executor& io_executor() override { return *io_ul_exec; }
+  task_executor& io_ul_executor() override { return *io_ul_exec; }
 
   task_executor& e2_executor() override { return cu_up_strand; }
 
@@ -241,9 +241,10 @@ private:
     for (unsigned i = 0; i != config.max_nof_ue_strands; ++i) {
       ue_strands[i]                             = std::make_unique<ue_strand_type>(&cu_up_strand, ue_queue_params);
       span<ue_strand_type::executor_type> execs = ue_strands[i]->get_executors();
-      ue_ctrl_execs[i]                          = &execs[0];
-      ue_ul_execs[i]                            = &execs[1];
-      ue_dl_execs[i]                            = &execs[2];
+      srsran_assert(execs.size() == 3, "Three executors should have been created for the three priorities");
+      ue_ctrl_execs[i] = &execs[0];
+      ue_ul_execs[i]   = &execs[1];
+      ue_dl_execs[i]   = &execs[2];
     }
 
     return base_cu_up_executor_pool_config{
