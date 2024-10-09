@@ -26,6 +26,7 @@ struct mac_dl_config {
   task_executor&                        ctrl_exec;
   mac_result_notifier&                  phy_notifier;
   mac_pcap&                             pcap;
+  timer_manager&                        timers;
 };
 
 class mac_dl_processor final : public mac_dl_configurator

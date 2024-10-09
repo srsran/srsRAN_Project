@@ -27,7 +27,8 @@ public:
              task_worker,
              task_worker,
              task_worker,
-             pcap)
+             pcap,
+             timers)
   {
   }
 
@@ -42,6 +43,7 @@ public:
   test_helpers::dummy_mac_cell_result_notifier phy_notifier;
   manual_task_worker                           task_worker{128};
   null_mac_pcap                                pcap;
+  timer_manager                                timers;
   mac_cell_processor                           mac_cell;
 };
 

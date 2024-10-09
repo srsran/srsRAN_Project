@@ -204,7 +204,8 @@ private:
   rnti_manager                rnti_mng;
   dummy_sched_ce_info_handler sched_ce_handler;
   null_mac_pcap               pcap;
-  mac_ul_config               cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_ce_handler, rnti_mng, pcap};
+  timer_manager               timers;
+  mac_ul_config               cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_ce_handler, rnti_mng, pcap, timers};
   // This is the RNTI of the UE that appears in the mac_rx_pdu created by send_rx_indication_msg()
   du_cell_index_t        cell_idx;
   mac_ul_processor       mac_ul{cfg};

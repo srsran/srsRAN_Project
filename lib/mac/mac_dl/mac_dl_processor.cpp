@@ -38,7 +38,8 @@ void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
                                            cfg.cell_exec_mapper.executor(cell_cfg_req.cell_index),
                                            cfg.cell_exec_mapper.slot_ind_executor(cell_cfg_req.cell_index),
                                            cfg.ctrl_exec,
-                                           cfg.pcap);
+                                           cfg.pcap,
+                                           cfg.timers);
 }
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)

@@ -112,7 +112,8 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                                     cfg.ran.mac_cfg,
                                     *cfg.mac_p,
                                     cfg.ran.sched_cfg,
-                                    cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier},
+                                    cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier,
+                                    timers},
                          cfg.test_cfg);
   f1ap = create_du_high_f1ap(*cfg.f1c_client,
                              adapters->f1_to_du_notifier,

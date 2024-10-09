@@ -10,6 +10,7 @@
 
 #include "mac_ul_processor.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
 
@@ -29,14 +30,14 @@ async_task<bool> mac_ul_processor::add_ue(const mac_ue_create_request& request)
 
   // Dispatch UE creation task to new UL executor.
   return execute_and_continue_on_blocking(
-      ul_exec, cfg.ctrl_exec, [this, request]() { return ue_manager.add_ue(request); });
+      ul_exec, cfg.ctrl_exec, cfg.timers, [this, request]() { return ue_manager.add_ue(request); });
 }
 
 async_task<bool> mac_ul_processor::addmod_bearers(du_ue_index_t                                  ue_index,
                                                   const std::vector<mac_logical_channel_config>& ul_logical_channels)
 {
   return execute_and_continue_on_blocking(
-      cfg.ue_exec_mapper.ctrl_executor(ue_index), cfg.ctrl_exec, [this, ue_index, ul_logical_channels]() {
+      cfg.ue_exec_mapper.ctrl_executor(ue_index), cfg.ctrl_exec, cfg.timers, [this, ue_index, ul_logical_channels]() {
         return ue_manager.addmod_bearers(ue_index, ul_logical_channels);
       });
 }
@@ -45,15 +46,17 @@ async_task<bool> mac_ul_processor::remove_bearers(du_ue_index_t ue_index, span<c
 {
   std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
   return execute_and_continue_on_blocking(
-      cfg.ue_exec_mapper.ctrl_executor(ue_index), cfg.ctrl_exec, [this, ue_index, lcids = std::move(lcids)]() {
-        return ue_manager.remove_bearers(ue_index, lcids);
-      });
+      cfg.ue_exec_mapper.ctrl_executor(ue_index),
+      cfg.ctrl_exec,
+      cfg.timers,
+      [this, ue_index, lcids = std::move(lcids)]() { return ue_manager.remove_bearers(ue_index, lcids); });
 }
 
 async_task<void> mac_ul_processor::remove_ue(const mac_ue_delete_request& msg)
 {
   return execute_and_continue_on_blocking(cfg.ue_exec_mapper.ctrl_executor(msg.ue_index),
                                           cfg.ctrl_exec,
+                                          cfg.timers,
                                           [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
 }
 

@@ -89,8 +89,8 @@ template <typename DispatchTaskExecutor,
 std::enable_if_t<std::is_same_v<ReturnType, void>, async_task<void>>
 execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
                                  CurrentTaskExecutor&  return_exec,
-                                 Callable&&            callable,
-                                 timer_manager&        timers)
+                                 timer_manager&        timers,
+                                 Callable&&            callable)
 {
   return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable), &timers](
                           coro_context<async_task<void>>& ctx) mutable {
@@ -118,22 +118,22 @@ template <typename DispatchTaskExecutor,
 std::enable_if_t<not std::is_same_v<ReturnType, void>, async_task<ReturnType>>
 execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
                                  CurrentTaskExecutor&  return_exec,
-                                 Callable&&            callable,
-                                 unique_timer&         retry_timer)
+                                 timer_manager&        timers,
+                                 Callable&&            callable)
 {
   ReturnType ret{};
-  return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable), &retry_timer, ret](
+  return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable), &timers, ret](
                           coro_context<async_task<ReturnType>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     // Dispatch execution context switch.
-    CORO_AWAIT(execute_on_blocking(dispatch_exec, retry_timer));
+    CORO_AWAIT(execute_on_blocking(dispatch_exec, timers));
 
     // Run task.
     ret = task();
 
     // Continuation in the original executor.
-    CORO_AWAIT(execute_on_blocking(return_exec, retry_timer));
+    CORO_AWAIT(execute_on_blocking(return_exec, timers));
 
     CORO_RETURN(ret);
   });

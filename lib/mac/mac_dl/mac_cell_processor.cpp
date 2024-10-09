@@ -12,7 +12,7 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/support/async/execute_on.h"
+#include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
 
@@ -26,13 +26,15 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
                                        task_executor&                   cell_exec_,
                                        task_executor&                   slot_exec_,
                                        task_executor&                   ctrl_exec_,
-                                       mac_pcap&                        pcap_) :
+                                       mac_pcap&                        pcap_,
+                                       timer_manager&                   timers_) :
   logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
   cell_exec(cell_exec_),
   slot_exec(slot_exec_),
   ctrl_exec(ctrl_exec_),
   phy_cell(phy_notifier_),
+  timers(timers_),
   ue_mng(rnti_table),
   dl_harq_buffers(band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz),
                                                  cell_cfg.scs_common,
@@ -56,12 +58,12 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 
 async_task<void> mac_cell_processor::start()
 {
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this]() { state = cell_state::active; });
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this]() { state = cell_state::active; });
 }
 
 async_task<void> mac_cell_processor::stop()
 {
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this]() {
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this]() {
     if (state == cell_state::inactive) {
       return;
     }
@@ -102,7 +104,7 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
   mac_dl_ue_context ue_inst(request);
 
   // > Update the UE context inside the cell executor.
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this, ue_inst = std::move(ue_inst)]() mutable {
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, ue_inst = std::move(ue_inst)]() mutable {
     // > Insert UE and DL bearers.
     // Note: Ensure we only do so if the cell is active.
     return state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
@@ -116,14 +118,14 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
 
     // Change to respective DL cell executor.
     // Note: Caller (ctrl exec) blocks if the cell executor is full.
-    CORO_AWAIT(execute_on_blocking(cell_exec));
+    CORO_AWAIT(execute_on_blocking(cell_exec, timers));
 
     // Remove UE associated DL channels
     ue_mng.remove_ue(request.ue_index);
 
     // Change back to CTRL executor before returning
     // Note: Blocks if the executor is full (which should never happen).
-    CORO_AWAIT(execute_on_blocking(ctrl_exec));
+    CORO_AWAIT(execute_on_blocking(ctrl_exec, timers));
 
     // Deallocate DL HARQ buffers back in the CTRL executor.
     dl_harq_buffers.deallocate_ue_buffers(request.ue_index);
@@ -135,7 +137,7 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
 async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t                                  ue_index,
                                                     const std::vector<mac_logical_channel_config>& logical_channels)
 {
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this, ue_index, logical_channels]() {
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, ue_index, logical_channels]() {
     // Configure logical channels.
     return state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels);
   });
@@ -145,7 +147,7 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
 {
   std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
 
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this, ue_index, lcids = std::move(lcids)]() {
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, ue_index, lcids = std::move(lcids)]() {
     // Remove logical channels.
     return ue_mng.remove_bearers(ue_index, lcids);
   });

@@ -17,9 +17,10 @@
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
-#include "srsran/support/async/execute_on.h"
 
 namespace srsran {
+
+class timer_manager;
 
 struct mac_ul_config {
   task_executor&                      ctrl_exec;
@@ -28,6 +29,7 @@ struct mac_ul_config {
   mac_scheduler_ce_info_handler&      sched;
   du_rnti_table&                      rnti_table;
   mac_pcap&                           pcap;
+  timer_manager&                      timers;
 };
 
 class mac_ul_processor final : public mac_ul_configurator, public mac_pdu_handler
