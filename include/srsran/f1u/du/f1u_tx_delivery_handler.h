@@ -27,6 +27,9 @@ public:
   ///
   /// Notification must be performed in ascending order of PDCP sequence numbers. It is the responsibility of the
   /// calling function (i.e. the RLC) to prevent out-of-order notifications.
+  /// The parameter \c desired_buf_size informs the CU of the amount of data per DRB to be sent beyond the
+  /// highest delivered PDCP SN (AM) or highest transmitted PDCP SN (UM).
+  /// This corresponds to the total capacity of the RLC queue (in bytes).
   ///
   /// This function is quick and shall be called directly from pcell_executor to avoid excessive transitions across
   /// executors.
@@ -34,7 +37,8 @@ public:
   /// Safe execution from: pcell_executor
   ///
   /// \param highest_pdcp_sn The highest transmitted PDCP sequence number
-  virtual void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes) = 0;
+  /// \param desired_buf_size Desired buffer size for DRB
+  virtual void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size) = 0;
 
   /// \brief Handles a delivery notification from lower layers (i.e. from RLC AM).
   ///

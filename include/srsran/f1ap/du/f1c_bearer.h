@@ -47,7 +47,7 @@ public:
   /// the lower layers (i.e. by the RLC).
   ///
   /// \param highest_sn Highest transmitted PDCP PDU sequence number.
-  virtual void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes) = 0;
+  virtual void handle_transmit_notification(uint32_t highest_pdcp_sn) = 0;
 
   /// \brief Informs the F1-C bearer about the highest PDCP PDU sequence number that was successfully
   /// delivered in sequence towards the UE.

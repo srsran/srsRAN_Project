@@ -44,7 +44,7 @@ public:
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
 
   void handle_sdu(byte_buffer_chain sdu) override;
-  void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_bytes_free) override;
+  void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
   void handle_retransmit_notification(uint32_t highest_pdcp_sn) override;
   void handle_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) override;

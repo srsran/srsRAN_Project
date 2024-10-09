@@ -91,7 +91,6 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
     }
     logger.log_debug("Read SDU. pdcp_sn={} sdu_len={}", sdu.pdcp_sn, sdu.buf.length());
   }
-  rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
 
   size_t sdu_len = sdu.buf.length();
   if (sdu_len > grant_len) {
@@ -102,7 +101,8 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
   if (sdu.pdcp_sn.has_value()) {
-    upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), queue_state.n_bytes);
+    // The desired_buf_size is irrelevant for TM. Nevertheless we put the size of the SDU queue here.
+    upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), cfg.queue_size_bytes);
   }
 
   // In TM there is no header, just pass the plain SDU

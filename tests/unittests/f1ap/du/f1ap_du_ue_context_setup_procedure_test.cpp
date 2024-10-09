@@ -90,7 +90,7 @@ protected:
 
   void on_rrc_container_transmitted(uint32_t highest_pdcp_sn)
   {
-    this->test_ue->f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(highest_pdcp_sn, 0);
+    this->test_ue->f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(highest_pdcp_sn);
     this->ctrl_worker.run_pending_tasks();
   }
 
