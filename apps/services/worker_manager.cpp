@@ -44,7 +44,7 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   associate_low_prio_executors(worker_cfg);
 
   if (worker_cfg.cu_up_cfg) {
-    create_cu_up_executors(worker_cfg.cu_up_cfg.value(), worker_cfg.gtpu_queue_size);
+    create_cu_up_executors(worker_cfg.cu_up_cfg.value());
   }
 
   if (worker_cfg.du_hi_cfg) {
@@ -189,7 +189,7 @@ worker_manager::create_du_hi_slot_workers(unsigned nof_cells, bool rt_mode)
   return workers;
 }
 
-void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config, unsigned gtpu_queue_size)
+void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config)
 {
   using namespace execution_config_helper;
   const auto& exec_map = exec_mng.executors();
@@ -197,7 +197,7 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
   cu_up_exec_mapper =
       srs_cu_up::make_cu_up_executor_mapper(srs_cu_up::strand_based_executor_config{config.max_nof_ue_strands,
                                                                                     task_worker_queue_size,
-                                                                                    gtpu_queue_size,
+                                                                                    config.gtpu_queue_size,
                                                                                     *exec_map.at("low_prio_exec"),
                                                                                     config.dedicated_io_ul_strand});
 }
@@ -330,8 +330,10 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
     for (unsigned i = 0; i != worker_cfg.du_hi_cfg->nof_cells; ++i) {
       low_prio_strands.push_back(strand{
           {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-           {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size},
-           {fmt::format("du_rb_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.gtpu_queue_size}}});
+           {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.du_nru_queue_size},
+           {fmt::format("du_rb_dl_exec#{}", i),
+            concurrent_queue_policy::lockfree_mpmc,
+            worker_cfg.du_nru_queue_size}}});
     }
   }
 

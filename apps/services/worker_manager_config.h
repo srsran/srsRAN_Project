@@ -71,7 +71,9 @@ struct worker_manager_config {
 
   // CU-UP worker configuration
   struct cu_up_config {
-    unsigned max_nof_ue_strands     = 16;
+    unsigned max_nof_ue_strands = 16;
+    /// GTPU queue size.
+    unsigned gtpu_queue_size        = 2048;
     bool     dedicated_io_ul_strand = true;
   };
 
@@ -93,8 +95,8 @@ struct worker_manager_config {
   os_sched_affinity_config low_prio_sched_config;
   /// PCAP configuration.
   pcap_config pcap_cfg;
-  /// GTPU queue size.
-  unsigned gtpu_queue_size;
+  /// DU-high NRU queue size.
+  unsigned du_nru_queue_size;
   /// Vector of affinities mask indexed by cell.
   std::vector<std::vector<os_sched_affinity_config>> config_affinities;
   /// CU-UP configuration.
