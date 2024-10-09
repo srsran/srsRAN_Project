@@ -46,6 +46,7 @@ struct du_high_env_sim_params {
   unsigned                                  nof_cells = 1;
   std::optional<cell_config_builder_params> builder_params;
   std::optional<pucch_builder_params>       pucch_cfg;
+  std::optional<unsigned>                   prach_frequency_start;
 };
 
 class du_high_env_simulator

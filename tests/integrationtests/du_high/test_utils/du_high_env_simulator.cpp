@@ -168,7 +168,12 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
         params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
     for (unsigned i = 0; i < params.nof_cells; ++i) {
       builder_params.pci = (pci_t)i;
-      cfg.ran.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
+      auto du_cell_cfg   = config_helpers::make_default_du_cell_config(builder_params);
+      if (params.prach_frequency_start.has_value()) {
+        du_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start =
+            params.prach_frequency_start.value();
+      }
+      cfg.ran.cells.push_back(du_cell_cfg);
       cfg.ran.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
       if (params.pucch_cfg.has_value()) {
         cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();

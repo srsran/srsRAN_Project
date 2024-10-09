@@ -508,11 +508,11 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   }
 
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
-  // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 60% of the BWP. This is an extreme
+  // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
   // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
-  constexpr float max_allowed_prbs_usage = 0.6F;
+  constexpr float max_allowed_prbs_usage = 0.5F;
   if (static_cast<float>(nof_f0_f1_rbs + nof_f2_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
-    fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 60% of the BWP PRBs.\n");
+    fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");
     return false;
   }
 
