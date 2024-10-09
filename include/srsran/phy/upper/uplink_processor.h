@@ -162,7 +162,7 @@ public:
 
   /// \brief Validates PUSCH configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pusch_processor::pdu_t& config) const = 0;
+  virtual error_type<std::string> is_valid(const pusch_processor::pdu_t& config) const = 0;
 
   /// \brief Validates Sounding Reference Signals channel estimator configuration.
   /// \return True if the parameters contained in \c config are supported, false otherwise.

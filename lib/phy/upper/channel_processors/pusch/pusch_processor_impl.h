@@ -108,7 +108,7 @@ public:
 
   /// \brief Constructs a generic software PUSCH processor.
   /// \param[in] config PUSCH processor dependencies and configuration parameters.
-  pusch_processor_impl(configuration& config);
+  pusch_processor_impl(std::unique_ptr<pusch_pdu_validator> pdu_validator_, configuration& config);
 
   // See interface for documentation.
   void process(span<uint8_t>                    data,
@@ -118,9 +118,8 @@ public:
                const pdu_t&                     pdu) override;
 
 private:
-  /// Asserts the PDU. It triggers an assertion upon an invalid value or combination of values.
-  void assert_pdu(const pusch_processor::pdu_t& pdu, const channel_estimate& ch_estimate) const;
-
+  /// PUSCH PDU validator.
+  std::unique_ptr<pusch_pdu_validator> pdu_validator;
   /// Thread local dependencies pool.
   std::shared_ptr<concurrent_dependencies_pool_type> thread_local_dependencies_pool;
   /// UL-SCH transport block decoder.

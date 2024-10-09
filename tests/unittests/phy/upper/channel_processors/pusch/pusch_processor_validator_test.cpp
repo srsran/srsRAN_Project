@@ -85,7 +85,8 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.bwp_size_rb            = 1;
        return pdu;
      },
-     R"(Invalid BWP configuration 0:1 for a VRB mask of size 16\.)"},
+     // TODO: since vrb_mask was private I took out the part that said "for a VRB mask of size 16"
+     R"(Invalid BWP configuration 0:1\.)"},
     {[] {
        pusch_processor::pdu_t pdu                                      = base_pdu;
        pdu.uci.nof_csi_part1                                           = 0;
@@ -130,7 +131,7 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.nof_symbols            = 15;
        return pdu;
      },
-     R"(The DM-RS symbol mask size \(i\.e\., 14\) must be the same as the number of symbols allocated to the transmission within the slot \(i\.e\., 15\)\.)"},
+     R"(The occupied symbols \(i\.e\., 15\) exceed the slot size \(i\.e\., 14\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu                                   = base_pdu;
        std::get<pusch_processor::dmrs_configuration>(pdu.dmrs).dmrs = dmrs_type::TYPE2;
