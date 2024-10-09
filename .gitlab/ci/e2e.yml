@@ -257,7 +257,7 @@ amari 32UE [ping]:
   variables:
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-    KEYWORDS: ping
+    KEYWORDS: "ping and 32"
 
 amari 32UE 2x2 mimo:
   extends: .zmq-uesim
@@ -283,7 +283,15 @@ cudu amari 32UE:
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
   parallel:
     matrix:
-      - KEYWORDS: ["ping", "iperf and tcp and not band:3 and bandwidth:50"]
+      - KEYWORDS: ["iperf and tcp and not band:3 and bandwidth:50"]
+
+cudu amari 64UE:
+  extends: .zmq
+  variables:
+    TESTBED: zmq_cudu
+    MARKERS: "zmq and not smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+    KEYWORDS: "ping and 64"
 
 ################################################################################
 # TEST MODE
