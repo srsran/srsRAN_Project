@@ -14,6 +14,7 @@
 #include "srsran/ran/alpha.h"
 #include "srsran/ran/csi_rs/csi_rs_id.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
+#include "srsran/ran/pusch/tx_scheme_configuration.h"
 #include "srsran/ran/uci/uci_configuration.h"
 
 namespace srsran {
@@ -27,9 +28,6 @@ enum p0_pusch_alphaset_id : uint8_t {
 /// \brief Used to configure the UE specific PUSCH parameters applicable to a particular BWP.
 /// \remark See TS 38.331, PUSCH-Config.
 struct pusch_config {
-  /// Type of transmission schemes for PUSCH.
-  enum class tx_config { codebook, non_codebook, not_set };
-
   struct pusch_power_control {
     struct p0_pusch_alphaset {
       p0_pusch_alphaset_id id;
@@ -132,22 +130,16 @@ struct pusch_config {
   /// \remark See TS 38.214, clause 6.1.3.
   enum class transform_precoder : unsigned { enabled, disabled, not_set };
 
-  /// Subset of PMIs addressed by TPMI, where PMIs are those supported by UEs with maximum coherence capabilities.
-  /// Applicable to DCI format 0_1.
-  /// \remark See TS 38.214, clause 6.1.1.1.
-  enum class codebook_subset : unsigned {
-    fully_and_partial_and_non_coherent,
-    partial_and_non_coherent,
-    non_coherent,
-    not_set
-  };
-
   /// Identifier used to initalite data scrambling (c_init) for PUSCH. If the field is absent, the UE applies the
   /// physical cell ID. See TS 38.211, clause 6.3.1.1.
   std::optional<uint16_t> data_scrambling_id_pusch;
-  /// UE uses codebook based or non-codebook based transmission (see TS 38.214, clause 6.1.1). If the field is
-  /// not set, the UE transmits PUSCH on one antenna port.
-  tx_config tx_cfg{tx_config::not_set};
+  /// \brief PUSCH transmission schemes according to TS 38.214 Section 6.1.1.
+  ///
+  /// The transmit scheme is given by the field \e txConfig in TS 38.331 Section 6.3.2, Information Element
+  /// \e PUSCH-Config.
+  ///
+  /// The UE is not supposed to receive DCI Format 0_1 if this field is not present.
+  std::optional<pusch_tx_scheme_configuration> tx_cfg;
   /// DMRS configuration for PUSCH transmissions using PUSCH (chosen dynamically via
   /// PUSCH-TimeDomainResourceAllocation). Only the fields dmrs-Type, dmrs-AdditionalPosition and maxLength may be set
   /// differently for mapping type A and B. The field dmrs-UplinkForPUSCH-MappingTypeA applies to DCI format 0_1.
@@ -162,11 +154,6 @@ struct pusch_config {
   /// The UE specific selection of transformer precoder for PUSCH. When the field is not set the UE applies the value of
   /// the field msg3-transformPrecoder.
   transform_precoder trans_precoder{transform_precoder::not_set};
-  /// The field is mandatory present if txConfig is set to codebook and absent otherwise.
-  codebook_subset cb_subset{codebook_subset::not_set};
-  /// Subset of PMIs addressed by TRIs from 1 to ULmaxRank. The field maxRank applies to DCI format 0_1.
-  /// The field is mandatory present if txConfig is set to codebook and absent otherwise. Values {1,..,4}.
-  std::optional<uint8_t> max_rank;
 
   /// \c uci-OnPUSCH.
   std::optional<uci_on_pusch> uci_cfg;
@@ -177,8 +164,7 @@ struct pusch_config {
            pusch_mapping_type_a_dmrs == rhs.pusch_mapping_type_a_dmrs &&
            pusch_mapping_type_b_dmrs == rhs.pusch_mapping_type_b_dmrs && pusch_pwr_ctrl == rhs.pusch_pwr_ctrl &&
            res_alloc == rhs.res_alloc && mcs_table == rhs.mcs_table && trans_precoder == rhs.trans_precoder &&
-           cb_subset == rhs.cb_subset && max_rank == rhs.max_rank && uci_cfg == rhs.uci_cfg &&
-           pusch_td_alloc_list == rhs.pusch_td_alloc_list;
+           uci_cfg == rhs.uci_cfg && pusch_td_alloc_list == rhs.pusch_td_alloc_list;
   }
   bool operator!=(const pusch_config& rhs) const { return !(rhs == *this); }
 };

@@ -109,6 +109,7 @@ struct ul_harq_process_impl : public base_harq_process {
     sch_mcs_index                 mcs;
     unsigned                      tbs_bytes;
     unsigned                      nof_symbols;
+    unsigned                      nof_layers;
     std::optional<ran_slice_id_t> slice_id;
     std::optional<sch_mcs_index>  olla_mcs;
   };

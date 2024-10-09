@@ -1999,17 +1999,39 @@ calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& 
     out.data_scrambling_id_pusch_present = true;
     out.data_scrambling_id_pusch         = dest.data_scrambling_id_pusch.value();
   }
-  if (dest.tx_cfg != srsran::pusch_config::tx_config::not_set) {
-    out.tx_cfg_present = true;
-    switch (dest.tx_cfg) {
-      case pusch_config::tx_config::codebook:
-        out.tx_cfg = pusch_cfg_s::tx_cfg_opts::codebook;
-        break;
-      case pusch_config::tx_config::non_codebook:
-        out.tx_cfg = pusch_cfg_s::tx_cfg_opts::non_codebook;
-        break;
-      default:
-        srsran_assertion_failure("Invalid PUSCH Tx cfg={}", dest.tx_cfg);
+
+  // According to TS 38.331 Section 6.3.2 Information Element PUSCH-Config, the fields codebookSubset and maxRank must
+  // be present if the field txConfig is set to codebook.
+  if (dest.tx_cfg.has_value()) {
+    if (std::holds_alternative<tx_scheme_codebook>(dest.tx_cfg.value())) {
+      // Extract codebook transmit scheme parameters.
+      const auto& tx_cfg = std::get<tx_scheme_codebook>(dest.tx_cfg.value());
+
+      // Set the transmission scheme.
+      out.tx_cfg_present = true;
+      out.tx_cfg         = pusch_cfg_s::tx_cfg_opts::codebook;
+
+      // Set the codebook subset field.
+      out.codebook_subset_present = true;
+      switch (tx_cfg.codebook_subset) {
+        case tx_scheme_codebook_subset::fully_and_partial_and_non_coherent:
+          out.codebook_subset = pusch_cfg_s::codebook_subset_opts::fully_and_partial_and_non_coherent;
+          break;
+        case tx_scheme_codebook_subset::partial_and_non_coherent:
+          out.codebook_subset = pusch_cfg_s::codebook_subset_opts::partial_and_non_coherent;
+          break;
+        case tx_scheme_codebook_subset::non_coherent:
+          out.codebook_subset = pusch_cfg_s::codebook_subset_opts::non_coherent;
+          break;
+      }
+
+      // Set maximum rank field.
+      out.max_rank_present = true;
+      out.max_rank         = tx_cfg.max_rank.to_uint();
+    } else if (std::holds_alternative<tx_scheme_non_codebook>(dest.tx_cfg.value())) {
+      // Set the transmission scheme to non-codebook.
+      out.tx_cfg_present = true;
+      out.tx_cfg         = pusch_cfg_s::tx_cfg_opts::non_codebook;
     }
   }
 
@@ -2101,28 +2123,6 @@ calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& 
       default:
         srsran_assertion_failure("Invalid PUSCH Transform Precoder={}", dest.trans_precoder);
     }
-  }
-
-  if (dest.cb_subset != srsran::pusch_config::codebook_subset::not_set) {
-    out.codebook_subset_present = true;
-    switch (dest.cb_subset) {
-      case pusch_config::codebook_subset::fully_and_partial_and_non_coherent:
-        out.codebook_subset = pusch_cfg_s::codebook_subset_opts::fully_and_partial_and_non_coherent;
-        break;
-      case pusch_config::codebook_subset::partial_and_non_coherent:
-        out.codebook_subset = pusch_cfg_s::codebook_subset_opts::partial_and_non_coherent;
-        break;
-      case pusch_config::codebook_subset::non_coherent:
-        out.codebook_subset = pusch_cfg_s::codebook_subset_opts::non_coherent;
-        break;
-      default:
-        srsran_assertion_failure("Invalid Codebook subset={}", dest.cb_subset);
-    }
-  }
-
-  if (dest.max_rank.has_value()) {
-    out.max_rank_present = true;
-    out.max_rank         = dest.max_rank.value();
   }
 
   if ((dest.uci_cfg.has_value() && not src.uci_cfg.has_value()) ||

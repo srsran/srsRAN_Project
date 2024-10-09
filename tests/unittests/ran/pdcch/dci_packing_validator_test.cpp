@@ -97,8 +97,8 @@ private:
       0,
       // PUSCH frequency hopping flag.
       false,
-      // Non-codebook based transmission flag.
-      false,
+      // PUSCH transmission scheme.
+      tx_scheme_non_codebook(),
       // UL transform precoding flag.
       false,
       // PT-RS signals flag.
@@ -117,10 +117,6 @@ private:
       1,
       // Maximum number of PUSCH layers for non-codebook based operation.
       1,
-      // Maximum UE transmission rank for codebook based operation.
-      1,
-      // Subset of PMIs addressed by TPMI.
-      tx_scheme_codebook_subset::non_coherent,
       // UL DM-RS type for DM-RS mapping type A.
       dmrs_config_type::type1,
       // Maximum number of OFDM symbols occupied by the front-loaded UL DM-RS for DM-RS mapping type A.
@@ -330,6 +326,18 @@ TEST_F(DciValidatorNonFallbackFixture, BadNofTimeDomainResources)
 }
 
 // Check the number of aperiodic ZP CSI-RS resource sets.
+TEST_F(DciValidatorNonFallbackFixture, MissingTransmitScheme)
+{
+  {
+    dci_size_config config     = get_base_dci_config();
+    config.pusch_tx_scheme     = std::nullopt;
+    std::string assert_message = "PUSCH Transmit scheme is required for DCI 0_1.";
+
+    test_validator(config, assert_message);
+  }
+}
+
+// Check the number of aperiodic ZP CSI-RS resource sets.
 TEST_F(DciValidatorNonFallbackFixture, BadAperiodicZpCsiResourceSets)
 {
   dci_size_config config      = get_base_dci_config();
@@ -499,8 +507,8 @@ TEST_F(DciValidatorNonFallbackFixture, ResourceAllocationTypeOneInvalidConfig)
 TEST_F(DciValidatorNonFallbackFixture, NonCodebookTransmissionInvalidConfig)
 {
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = true;
+    dci_size_config config = get_base_dci_config();
+    config.pusch_tx_scheme = tx_scheme_non_codebook();
     config.pusch_max_layers.reset();
     std::string assert_message =
         fmt::format("Maximum number of PUSCH layers is required for non-codebook transmission.");
@@ -508,36 +516,36 @@ TEST_F(DciValidatorNonFallbackFixture, NonCodebookTransmissionInvalidConfig)
     test_validator(config, assert_message);
   }
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = true;
-    config.pusch_max_layers       = 5;
+    dci_size_config config  = get_base_dci_config();
+    config.pusch_tx_scheme  = tx_scheme_non_codebook();
+    config.pusch_max_layers = 5;
     std::string assert_message =
         fmt::format("Maximum number of PUSCH layers {} is out of range [1..4].", config.pusch_max_layers.value());
 
     test_validator(config, assert_message);
   }
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = true;
-    config.pusch_max_layers       = 0;
+    dci_size_config config  = get_base_dci_config();
+    config.pusch_tx_scheme  = tx_scheme_non_codebook();
+    config.pusch_max_layers = 0;
     std::string assert_message =
         fmt::format("Maximum number of PUSCH layers {} is out of range [1..4].", config.pusch_max_layers.value());
 
     test_validator(config, assert_message);
   }
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = true;
-    config.nof_srs_resources      = 5;
+    dci_size_config config   = get_base_dci_config();
+    config.pusch_tx_scheme   = tx_scheme_non_codebook();
+    config.nof_srs_resources = 5;
     std::string assert_message =
         fmt::format("The number of SRS resources {} is out of range [1..4] for non-codebook transmission.",
                     config.nof_srs_resources);
     test_validator(config, assert_message);
   }
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = true;
-    config.nof_srs_resources      = 0;
+    dci_size_config config   = get_base_dci_config();
+    config.pusch_tx_scheme   = tx_scheme_non_codebook();
+    config.nof_srs_resources = 0;
     std::string assert_message =
         fmt::format("The number of SRS resources {} is out of range [1..4] for non-codebook transmission.",
                     config.nof_srs_resources);
@@ -549,10 +557,10 @@ TEST_F(DciValidatorNonFallbackFixture, NonCodebookTransmissionInvalidConfig)
 TEST_F(DciValidatorNonFallbackFixture, NonCodebookTransmissionUnsupportedConfig)
 {
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = true;
-    config.pusch_max_layers       = 2;
-    std::string assert_message    = fmt::format("Multiple layers on PUSCH are not currently supported.");
+    dci_size_config config     = get_base_dci_config();
+    config.pusch_tx_scheme     = tx_scheme_non_codebook();
+    config.pusch_max_layers    = 2;
+    std::string assert_message = fmt::format("Multiple layers on PUSCH are not currently supported.");
     test_validator(config, assert_message);
   }
 }
@@ -561,84 +569,53 @@ TEST_F(DciValidatorNonFallbackFixture, NonCodebookTransmissionUnsupportedConfig)
 TEST_F(DciValidatorNonFallbackFixture, CodebookTransmissionInvalidConfig)
 {
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
-    config.max_rank.reset();
-    std::string assert_message = fmt::format("Maximum rank is required for codebook transmission.");
-
-    test_validator(config, assert_message);
-  }
-  {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
-    config.max_rank               = 5;
-    std::string assert_message    = fmt::format("Maximum rank {} is out of range [1..4].", config.max_rank.value());
-
-    test_validator(config, assert_message);
-  }
-  {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
-    config.max_rank               = 0;
-    std::string assert_message    = fmt::format("Maximum rank {} is out of range [1..4].", config.max_rank.value());
-
-    test_validator(config, assert_message);
-  }
-  {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
-    config.nof_srs_resources      = 3;
-    std::string assert_message    = fmt::format(
+    dci_size_config config = get_base_dci_config();
+    config.pusch_tx_scheme = tx_scheme_codebook{
+        .max_rank = 1, .codebook_subset = tx_scheme_codebook_subset::fully_and_partial_and_non_coherent};
+    config.nof_srs_resources   = 3;
+    std::string assert_message = fmt::format(
         "The number of SRS resources {} is out of range [1..2] for codebook transmission.", config.nof_srs_resources);
 
     test_validator(config, assert_message);
   }
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
+    dci_size_config config = get_base_dci_config();
+    config.pusch_tx_scheme = tx_scheme_codebook{
+        .max_rank = 1, .codebook_subset = tx_scheme_codebook_subset::fully_and_partial_and_non_coherent};
     config.nof_srs_ports.reset();
     std::string assert_message = fmt::format("Number of SRS ports is required for codebook transmission.");
 
     test_validator(config, assert_message);
   }
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
-    config.nof_srs_ports          = 3;
+    dci_size_config config = get_base_dci_config();
+    config.pusch_tx_scheme = tx_scheme_codebook{
+        .max_rank = 1, .codebook_subset = tx_scheme_codebook_subset::fully_and_partial_and_non_coherent};
+    config.nof_srs_ports = 3;
     std::string assert_message =
         fmt::format("The number of SRS ports {} is neither 1, 2, nor 4.", config.nof_srs_ports.value());
 
     test_validator(config, assert_message);
   }
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
-    config.nof_srs_ports          = 2;
-    config.cb_subset              = tx_scheme_codebook_subset::partial_and_non_coherent;
+    dci_size_config config = get_base_dci_config();
+    config.pusch_tx_scheme =
+        tx_scheme_codebook{.max_rank = 1, .codebook_subset = tx_scheme_codebook_subset::partial_and_non_coherent};
+    config.nof_srs_ports = 2;
     std::string assert_message =
         fmt::format("Codebook subset \"partial and non-coherent\" is not supported for 2 SRS ports.");
 
     test_validator(config, assert_message);
   }
   {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
-    config.nof_srs_ports          = 2;
-    config.max_rank               = 3;
+    dci_size_config config = get_base_dci_config();
+    config.pusch_tx_scheme =
+        tx_scheme_codebook{.max_rank = 3, .codebook_subset = tx_scheme_codebook_subset::partial_and_non_coherent};
+    config.nof_srs_ports = 2;
     std::string assert_message =
         fmt::format("Maximum rank {} cannot be larger than the number of SRS antenna ports {}.",
-                    config.max_rank.value(),
+                    std::get<tx_scheme_codebook>(config.pusch_tx_scheme.value()).max_rank,
                     config.nof_srs_ports.value());
-
-    test_validator(config, assert_message);
-  }
-  {
-    dci_size_config config        = get_base_dci_config();
-    config.tx_config_non_codebook = false;
-    config.nof_srs_ports          = 2;
-    config.cb_subset.reset();
-    std::string assert_message =
-        fmt::format("Codebook subset is required for codebook transmission with multiple antenna ports.");
 
     test_validator(config, assert_message);
   }

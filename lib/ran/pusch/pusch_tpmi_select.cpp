@@ -246,8 +246,13 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_2layer(const srs_c
   return {best_tpmi, convert_power_to_dB(best_sinr)};
 }
 
-pusch_tpmi_select_info srsran::get_tpmi_select_info(const srs_channel_matrix& channel, float noise_variance)
+pusch_tpmi_select_info srsran::get_tpmi_select_info(const srs_channel_matrix& channel,
+                                                    float                     noise_variance,
+                                                    tx_scheme_codebook_subset codebook_subset)
 {
+  srsran_assert(codebook_subset == tx_scheme_codebook_subset::fully_and_partial_and_non_coherent,
+                "Unsupported codebook subset.");
+
   unsigned nof_tx_ports   = channel.get_nof_tx_ports();
   unsigned nof_rx_ports   = channel.get_nof_rx_ports();
   unsigned max_nof_layers = std::min(nof_tx_ports, nof_rx_ports);

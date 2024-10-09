@@ -12,6 +12,9 @@
 
 #include "srsran/mac/phr_report.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
+#include "srsran/ran/phy_time_unit.h"
+#include "srsran/ran/pusch/pusch_tpmi_select.h"
+#include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
@@ -37,8 +40,11 @@ public:
   /// \brief Gets the number of recommended layers to be used in DL based on reported RI.
   unsigned get_nof_dl_layers() const { return recommended_dl_layers; }
 
-  /// \brief Fetches the number of recommended layers to be used in UL.
-  unsigned get_nof_ul_layers() const { return 1; }
+  /// \brief Gets the number of recommended layers to be used in PUSCH based on the reported channel coefficients.
+  unsigned get_nof_ul_layers() const;
+
+  /// Gets the most suitable TPMI for a given number of layers.
+  unsigned get_recommended_pusch_tpmi(unsigned nof_layers) const;
 
   /// \brief Fetches the precoding codebook to be used in DL based on reported PMI and the chosen nof layers.
   std::optional<pdsch_precoding_info> get_precoding(unsigned chosen_nof_layers, prb_interval pdsch_prbs) const
@@ -57,6 +63,9 @@ public:
 
   /// Update UE with the latest CSI report for a given cell.
   bool handle_csi_report(const csi_report_data& csi_report);
+
+  /// Update UE with the latest Sounding Reference Signal (SRS) channel matrix.
+  void update_srs_channel_matrix(const srs_channel_matrix& channel_matrix, tx_scheme_codebook_subset cb_subset);
 
   /// Update UE with the latest PHR for a given cell.
   void handle_phr(const cell_ph_report& phr) { latest_phr = phr; }
@@ -88,6 +97,14 @@ private:
 
   /// Latest PHR received from the UE.
   std::optional<cell_ph_report> latest_phr;
+
+  /// \brief Latest PUSCH Transmit Precoding Matrix Indication (TPMI) information.
+  ///
+  /// The TPMI selection information is calculated assuming a noise variance equal to the square of channel coefficients
+  /// matrix Frobenius norm. See \ref get_pusch_tpmi_select_info for more information.
+  ///
+  /// Set to \c std::nullopt if no SRS channel coefficients have been reported.
+  std::optional<pusch_tpmi_select_info> last_pusch_tpmi_select_info;
 };
 
 } // namespace srsran

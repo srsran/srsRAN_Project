@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "tx_scheme_configuration.h"
 #include "srsran/adt/interval.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
@@ -64,9 +65,12 @@ private:
 /// \brief Selects the Transmit Precoding Matrix Indicator (TPMI) for each possible number of layers supported by the
 /// channel topology.
 ///
-/// \param[in] channel        Channel coefficient matrix.
-/// \param[in] noise_variance Linear noise variance.
+/// \param[in] channel         Channel coefficient matrix.
+/// \param[in] noise_variance  Linear noise variance.
+/// \param[in] codebook_subset Transmission scheme codebook subset.
 /// \return The TPMI information given the channel coefficients and noise variance.
-pusch_tpmi_select_info get_tpmi_select_info(const srs_channel_matrix& channel, float noise_variance);
+pusch_tpmi_select_info get_tpmi_select_info(const srs_channel_matrix& channel,
+                                            float                     noise_variance,
+                                            tx_scheme_codebook_subset codebook_subset);
 
 } // namespace srsran

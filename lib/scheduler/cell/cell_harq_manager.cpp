@@ -729,6 +729,7 @@ void ul_harq_process_handle::save_grant_params(const ul_harq_alloc_context& ctx,
   prev_tx_params.mcs         = pusch.mcs_index;
   prev_tx_params.rbs         = pusch.rbs;
   prev_tx_params.nof_symbols = pusch.symbols.length();
+  prev_tx_params.nof_layers  = pusch.nof_layers;
 
   if (harq_repo->is_ntn_mode()) {
     // In NTN mode, save the HARQ info in history.

@@ -326,11 +326,19 @@ protected:
     dci_config.nof_dl_bwp_rrc            = std::get<3>(GetParam());
     dci_config.nof_ul_time_domain_res    = std::get<4>(GetParam());
     dci_config.nof_dl_time_domain_res    = std::get<4>(GetParam());
-    dci_config.tx_config_non_codebook    = std::get<5>(GetParam());
+    bool tx_config_non_codebook          = std::get<5>(GetParam());
     dci_config.ptrs_uplink_configured    = std::get<6>(GetParam());
     dci_config.pusch_res_allocation_type = std::get<7>(GetParam());
     dci_config.pdsch_res_allocation_type = std::get<7>(GetParam());
     dci_config.coreset0_bw               = static_cast<bool>(bool_dist(rgen)) ? dci_config.dl_bwp_initial_bw / 2 : 0;
+
+    // Configure PUSCH transmit scheme.
+    if (tx_config_non_codebook) {
+      dci_config.pusch_tx_scheme = tx_scheme_non_codebook();
+    } else {
+      dci_config.pusch_tx_scheme = tx_scheme_codebook{
+          .max_rank = 1, .codebook_subset = tx_scheme_codebook_subset::fully_and_partial_and_non_coherent};
+    }
 
     // Supplementary UL has implications on the size alignment procedure that are not currently handled, therefore, it
     // is not currently supported.
@@ -359,7 +367,7 @@ protected:
     dci_config.nof_srs_resources = nof_srs_resources_dist(rgen);
 
     // Number of SRS resources for codebook transmission is up to 2.
-    if (!dci_config.tx_config_non_codebook && (dci_config.nof_srs_resources > 2)) {
+    if (!tx_config_non_codebook && (dci_config.nof_srs_resources > 2)) {
       dci_config.nof_srs_resources = 2;
     }
 
@@ -380,7 +388,6 @@ protected:
     dci_config.nof_dl_rb_groups       = nof_rb_groups_dist(rgen);
     dci_config.nof_srs_ports          = 1;
     dci_config.pusch_max_layers       = 1;
-    dci_config.max_rank               = 1;
     dci_config.ptrs_uplink_configured = false;
 
     dmrs_mapping_type mapping_type = static_cast<dmrs_mapping_type>(dmrs_mapping_type_dist(rgen));

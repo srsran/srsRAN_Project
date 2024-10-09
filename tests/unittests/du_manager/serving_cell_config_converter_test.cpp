@@ -29,7 +29,8 @@ srs_du::du_ue_resource_config make_initial_du_ue_resource_config()
 pusch_config make_initial_pusch_config()
 {
   pusch_config cfg{};
-  cfg.tx_cfg = pusch_config::tx_config::codebook;
+  cfg.tx_cfg = tx_scheme_codebook{.max_rank        = 1,
+                                  .codebook_subset = tx_scheme_codebook_subset::fully_and_partial_and_non_coherent};
   cfg.pusch_mapping_type_b_dmrs.emplace();
   cfg.pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.emplace();
   cfg.pusch_mapping_type_b_dmrs.value().ptrs = ptrs_uplink_config{
@@ -58,8 +59,6 @@ pusch_config make_initial_pusch_config()
   cfg.pusch_td_alloc_list[0].map_type = sch_mapping_type::typeA;
   cfg.pusch_td_alloc_list[0].symbols  = {0, 14};
   cfg.trans_precoder                  = pusch_config::transform_precoder::disabled;
-  cfg.cb_subset                       = pusch_config::codebook_subset::non_coherent;
-  cfg.max_rank                        = 1;
 
   cfg.uci_cfg.emplace();
   auto& uci_cfg   = cfg.uci_cfg.value();

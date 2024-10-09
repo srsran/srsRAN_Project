@@ -54,3 +54,24 @@ bool ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_repo
 
   return true;
 }
+
+void ue_channel_state_manager::update_srs_channel_matrix(const srsran::srs_channel_matrix& channel_matrix,
+                                                         tx_scheme_codebook_subset         cb_subset)
+{
+  float norm                  = channel_matrix.frobenius_norm();
+  last_pusch_tpmi_select_info = get_tpmi_select_info(channel_matrix, norm * norm, cb_subset);
+}
+
+SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_nof_ul_layers() const
+{
+  return 1;
+}
+
+SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_recommended_pusch_tpmi(unsigned nof_layers) const
+{
+  if (last_pusch_tpmi_select_info.has_value() &&
+      (nof_layers <= last_pusch_tpmi_select_info.value().get_max_nof_layers())) {
+    return last_pusch_tpmi_select_info.value().get_tpmi_select(nof_layers).tpmi;
+  }
+  return 0;
+}

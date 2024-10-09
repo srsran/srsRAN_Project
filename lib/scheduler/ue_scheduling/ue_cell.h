@@ -103,6 +103,9 @@ public:
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 
+  /// \brief Handle Sounding Reference Signal (SRS) channel matrix.
+  void handle_srs_channel_matrix(const srs_channel_matrix& channel_matrix);
+
   /// Update UE with the latest CSI report for a given cell.
   void handle_csi_report(const csi_report_data& csi_report);
 
