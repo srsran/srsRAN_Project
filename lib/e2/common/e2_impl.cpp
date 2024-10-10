@@ -28,10 +28,8 @@ e2_impl::e2_impl(e2ap_configuration&      cfg_,
   cfg(cfg_),
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
-  subscription_mngr(subscription_mngr_),
+  subscription_proc(subscription_mngr_),
   e2sm_mngr(e2sm_mngr_),
-  subscribe_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
-  subscribe_delete_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
   events(std::make_unique<e2_event_manager>(timers)),
   async_tasks(10)
 {
@@ -137,13 +135,15 @@ void e2_impl::handle_e2_setup_failure(const e2_setup_response_message& msg)
 void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ric_sub_request_s& msg)
 {
   logger.info("Received RIC Subscription Request");
-  subscribe_proc.run_subscription_procedure(msg, *events);
+  async_tasks.schedule(
+      launch_async<e2_subscription_setup_procedure>(msg, *events, pdu_notifier, subscription_proc, timers, logger));
 }
 
 void e2_impl::handle_ric_subscription_delete_request(const asn1::e2ap::ric_sub_delete_request_s& msg)
 {
   logger.info("Received RIC Subscription Delete Request");
-  subscribe_delete_proc.run_subscription_delete_procedure(msg, *events);
+  async_tasks.schedule(
+      launch_async<e2_subscription_delete_procedure>(msg, *events, pdu_notifier, subscription_proc, timers, logger));
 }
 
 void e2_impl::handle_message(const e2_message& msg)

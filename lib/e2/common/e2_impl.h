@@ -99,10 +99,8 @@ private:
   std::map<uint16_t, asn1::e2ap::ran_function_item_s>  candidate_ran_functions;
   std::map<uint16_t, asn1::e2ap::ran_function_item_s>  allowed_ran_functions;
   std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
-  e2_subscriber_mgmt&                                  subscription_mngr;
+  e2_subscription_proc&                                subscription_proc;
   e2sm_manager&                                        e2sm_mngr;
-  e2_subscription_setup_procedure                      subscribe_proc;
-  e2_subscription_delete_procedure                     subscribe_delete_proc;
   std::unique_ptr<e2_event_manager>                    events;
   fifo_async_task_scheduler                            async_tasks;
   unsigned                                             current_transaction_id = 0; // store current E2AP transaction id
