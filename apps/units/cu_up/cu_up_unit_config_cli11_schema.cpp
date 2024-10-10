@@ -150,7 +150,7 @@ static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_c
 void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_unit_config& unit_cfg)
 {
   // CU-UP section.
-  CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-CP parameters")->configurable();
+  CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
   configure_cli11_cu_up_args(*cu_up_subcmd, unit_cfg);
 
   // Loggers section.

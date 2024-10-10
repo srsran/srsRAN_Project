@@ -246,8 +246,8 @@ int main(int argc, char** argv)
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
-  fill_du_worker_manager_config(worker_manager_cfg, du_cfg);
   du_app_unit->fill_worker_manager_config(worker_manager_cfg);
+  fill_du_worker_manager_config(worker_manager_cfg, du_cfg);
 
   worker_manager workers{worker_manager_cfg};
 

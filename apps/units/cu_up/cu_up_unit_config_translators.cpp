@@ -70,7 +70,6 @@ void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, con
   config.cu_up_cfg = worker_manager_config::cu_up_config{};
 
   config.cu_up_cfg.value().gtpu_queue_size = unit_cfg.gtpu_queue_size;
-  config.du_nru_queue_size                 = unit_cfg.gtpu_queue_size; // TODO: Set it in DU-high config.
 
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {

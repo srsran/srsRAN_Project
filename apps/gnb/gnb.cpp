@@ -313,10 +313,10 @@ int main(int argc, char** argv)
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
-  fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
   cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   du_app_unit->fill_worker_manager_config(worker_manager_cfg);
+  fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
 
   worker_manager workers{worker_manager_cfg};
 

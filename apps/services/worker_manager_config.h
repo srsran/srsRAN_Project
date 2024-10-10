@@ -65,8 +65,12 @@ struct worker_manager_config {
 
   /// DU high worker configuration.
   struct du_high_config {
+    /// DU-high PDU queue size.
+    unsigned pdu_queue_size;
+    /// DU high number of cells.
     unsigned nof_cells;
-    bool     is_rt_mode_enabled;
+    /// Real-time mode enabled flag.
+    bool is_rt_mode_enabled;
   };
 
   // CU-UP worker configuration
@@ -95,8 +99,6 @@ struct worker_manager_config {
   os_sched_affinity_config low_prio_sched_config;
   /// PCAP configuration.
   pcap_config pcap_cfg;
-  /// DU-high NRU queue size.
-  unsigned du_nru_queue_size;
   /// Vector of affinities mask indexed by cell.
   std::vector<std::vector<os_sched_affinity_config>> config_affinities;
   /// CU-UP configuration.

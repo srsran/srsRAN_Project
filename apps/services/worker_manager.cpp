@@ -330,10 +330,12 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
     for (unsigned i = 0; i != worker_cfg.du_hi_cfg->nof_cells; ++i) {
       low_prio_strands.push_back(strand{
           {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-           {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, worker_cfg.du_nru_queue_size},
+           {fmt::format("du_rb_ul_exec#{}", i),
+            concurrent_queue_policy::lockfree_mpmc,
+            worker_cfg.du_hi_cfg->pdu_queue_size},
            {fmt::format("du_rb_dl_exec#{}", i),
             concurrent_queue_policy::lockfree_mpmc,
-            worker_cfg.du_nru_queue_size}}});
+            worker_cfg.du_hi_cfg->pdu_queue_size}}});
     }
   }
 
