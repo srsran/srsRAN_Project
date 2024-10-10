@@ -110,143 +110,84 @@ auto defer_to_blocking(TaskExecutor& exec)
 /// \param resume_exec task executor where coroutine will resume once the task is run.
 /// \param callable task to run.
 /// \return awaitable.
-template <typename DispatchTaskExecutor,
-          typename ResumeTaskExecutor,
-          typename Callable,
-          typename ResultType = detail::function_return_t<decltype(&std::decay_t<Callable>::operator())>,
-          std::enable_if_t<not std::is_same<ResultType, void>::value, int> = 0>
-auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor& resume_exec, Callable&& callable)
+template <typename DispatchTaskExecutor, typename ResumeTaskExecutor, typename Callable>
+auto try_offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor& resume_exec, Callable&& callable)
 {
-  struct task_executor_offloader {
-    task_executor_offloader(DispatchTaskExecutor& dispatch_exec_,
-                            ResumeTaskExecutor&   resume_exec_,
-                            Callable              callable_) :
-      dispatch_exec(dispatch_exec_), resume_exec(resume_exec_), task(std::forward<Callable>(callable_))
-    {
-    }
+  using result_type = detail::function_return_t<decltype(&std::decay_t<Callable>::operator())>;
 
-    bool await_ready() noexcept { return false; }
+  if constexpr (std::is_same_v<result_type, void>) {
+    // void return case.
 
-    void await_suspend(coro_handle<> suspending_coro)
-    {
-      continuation     = suspending_coro;
-      bool dispatched1 = dispatch_exec.execute([this]() mutable {
-        result           = task();
-        bool dispatched2 = resume_exec.execute([this]() { continuation.resume(); });
-        srsran_assert(dispatched2, "Failed to dispatch task");
-      });
-      srsran_assert(dispatched1, "Failed to dispatch task");
-    }
+    struct task_executor_offloader {
+      task_executor_offloader(DispatchTaskExecutor& dispatch_exec_,
+                              ResumeTaskExecutor&   resume_exec_,
+                              Callable              callable_) :
+        dispatch_exec(dispatch_exec_), resume_exec(resume_exec_), task(std::forward<Callable>(callable_))
+      {
+      }
 
-    ResultType await_resume() { return result; }
+      bool await_ready() noexcept { return false; }
 
-    task_executor_offloader& get_awaiter() { return *this; }
+      void await_suspend(coro_handle<> suspending_coro)
+      {
+        continuation = suspending_coro;
+        dispatch_exec.execute([this]() mutable {
+          task();
+          resume_exec.execute([this]() { continuation.resume(); });
+        });
+      }
 
-  private:
-    DispatchTaskExecutor& dispatch_exec;
-    ResumeTaskExecutor&   resume_exec;
-    Callable              task;
-    ResultType            result;
-    coro_handle<>         continuation;
-  };
-  return task_executor_offloader{dispatch_exec, resume_exec, std::forward<Callable>(callable)};
-}
+      void await_resume() {}
 
-template <typename DispatchTaskExecutor,
-          typename ResumeTaskExecutor,
-          typename Callable,
-          typename ResultType = detail::function_return_t<decltype(&std::decay_t<Callable>::operator())>,
-          std::enable_if_t<std::is_same<ResultType, void>::value, int> = 0>
-auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor& resume_exec, Callable&& callable)
-{
-  struct task_executor_offloader {
-    task_executor_offloader(DispatchTaskExecutor& dispatch_exec_,
-                            ResumeTaskExecutor&   resume_exec_,
-                            Callable              callable_) :
-      dispatch_exec(dispatch_exec_), resume_exec(resume_exec_), task(std::forward<Callable>(callable_))
-    {
-    }
+      task_executor_offloader& get_awaiter() { return *this; }
 
-    bool await_ready() noexcept { return false; }
+    private:
+      DispatchTaskExecutor& dispatch_exec;
+      ResumeTaskExecutor&   resume_exec;
+      Callable              task;
+      coro_handle<>         continuation;
+    };
 
-    void await_suspend(coro_handle<> suspending_coro)
-    {
-      continuation = suspending_coro;
-      dispatch_exec.execute([this]() mutable {
-        task();
-        resume_exec.execute([this]() { continuation.resume(); });
-      });
-    }
+    return task_executor_offloader{dispatch_exec, resume_exec, std::forward<Callable>(callable)};
 
-    void await_resume() {}
+  } else {
+    // non-void return case.
 
-    task_executor_offloader& get_awaiter() { return *this; }
+    struct task_executor_offloader {
+      task_executor_offloader(DispatchTaskExecutor& dispatch_exec_,
+                              ResumeTaskExecutor&   resume_exec_,
+                              Callable              callable_) :
+        dispatch_exec(dispatch_exec_), resume_exec(resume_exec_), task(std::forward<Callable>(callable_))
+      {
+      }
 
-  private:
-    DispatchTaskExecutor& dispatch_exec;
-    ResumeTaskExecutor&   resume_exec;
-    Callable              task;
-    coro_handle<>         continuation;
-  };
+      bool await_ready() noexcept { return false; }
 
-  return task_executor_offloader{dispatch_exec, resume_exec, std::forward<Callable>(callable)};
-}
+      void await_suspend(coro_handle<> suspending_coro)
+      {
+        continuation     = suspending_coro;
+        bool dispatched1 = dispatch_exec.execute([this]() mutable {
+          result           = task();
+          bool dispatched2 = resume_exec.execute([this]() { continuation.resume(); });
+          srsran_assert(dispatched2, "Failed to dispatch task");
+        });
+        srsran_assert(dispatched1, "Failed to dispatch task");
+      }
 
-/// \brief Returns an async_task<void> that runs a given invocable task in a \c dispatch_exec executor, and once the
-/// task is complete, it resumes the suspended coroutine in a \c return_exec executor.
-template <typename DispatchTaskExecutor,
-          typename CurrentTaskExecutor,
-          typename Callable,
-          typename ReturnType = detail::function_return_t<decltype(&Callable::operator())>>
-std::enable_if_t<std::is_same<ReturnType, void>::value, async_task<void>>
-execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
-                                 CurrentTaskExecutor&  return_exec,
-                                 Callable&&            callable)
-{
-  return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](
-                          coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
+      result_type await_resume() { return result; }
 
-    // Dispatch execution context switch.
-    CORO_AWAIT(execute_on_blocking(dispatch_exec));
+      task_executor_offloader& get_awaiter() { return *this; }
 
-    // Run task.
-    task();
+    private:
+      DispatchTaskExecutor& dispatch_exec;
+      ResumeTaskExecutor&   resume_exec;
+      Callable              task;
+      result_type           result;
+      coro_handle<>         continuation;
+    };
 
-    // Continuation in the original executor.
-    CORO_AWAIT(execute_on_blocking(return_exec));
-
-    CORO_RETURN();
-  });
-}
-
-/// \brief Returns an async_task<ReturnType> that runs a given invocable task in a \c dispatch_exec executor, and once
-/// the task is complete, it resumes the suspended coroutine in a \c return_exec executor.
-template <typename DispatchTaskExecutor,
-          typename CurrentTaskExecutor,
-          typename Callable,
-          typename ReturnType = detail::function_return_t<decltype(&Callable::operator())>>
-std::enable_if_t<not std::is_same<ReturnType, void>::value, async_task<ReturnType>>
-execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
-                                 CurrentTaskExecutor&  return_exec,
-                                 Callable&&            callable)
-{
-  ReturnType ret{};
-  return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable), ret](
-                          coro_context<async_task<ReturnType>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    // Dispatch execution context switch.
-    CORO_AWAIT(execute_on_blocking(dispatch_exec));
-
-    // Run task.
-    ret = task();
-
-    // Continuation in the original executor.
-    CORO_AWAIT(execute_on_blocking(return_exec));
-
-    CORO_RETURN(ret);
-  });
+    return task_executor_offloader{dispatch_exec, resume_exec, std::forward<Callable>(callable)};
+  }
 }
 
 } // namespace srsran

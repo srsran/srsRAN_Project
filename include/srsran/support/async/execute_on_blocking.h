@@ -95,74 +95,65 @@ auto defer_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDis
       exec, timers, std::forward<OnFailureToDispatch>(on_failure));
 }
 
-/// \brief Returns an async_task<void> that runs a given invocable task in a \c dispatch_exec executor, and once the
-/// task is complete, it resumes the suspended coroutine in a \c return_exec executor.
-template <typename DispatchTaskExecutor,
-          typename CurrentTaskExecutor,
-          typename Callable,
-          typename OnFailureToDispatch = noop_operation,
-          typename ReturnType          = detail::function_return_t<decltype(&Callable::operator())>>
-std::enable_if_t<std::is_same_v<ReturnType, void>, async_task<void>>
-execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
-                                 CurrentTaskExecutor&  return_exec,
-                                 timer_manager&        timers,
-                                 Callable&&            callable,
-                                 OnFailureToDispatch&& on_failure = noop_operation{})
-{
-  return launch_async([&return_exec,
-                       &dispatch_exec,
-                       task       = std::forward<Callable>(callable),
-                       on_failure = std::forward<OnFailureToDispatch>(on_failure),
-                       &timers](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    // Dispatch execution context switch.
-    CORO_AWAIT(execute_on_blocking(dispatch_exec, timers, on_failure));
-
-    // Run task.
-    task();
-
-    // Continuation in the original executor.
-    CORO_AWAIT(execute_on_blocking(return_exec, timers, on_failure));
-
-    CORO_RETURN();
-  });
-}
-
 /// \brief Returns an async_task<ReturnType> that runs a given invocable task in a \c dispatch_exec executor, and once
 /// the task is complete, it resumes the suspended coroutine in a \c return_exec executor.
 template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
-          typename OnFailureToDispatch = noop_operation,
-          typename ReturnType          = detail::function_return_t<decltype(&Callable::operator())>>
-std::enable_if_t<not std::is_same_v<ReturnType, void>, async_task<ReturnType>>
-execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
-                                 CurrentTaskExecutor&  return_exec,
-                                 timer_manager&        timers,
-                                 Callable&&            callable,
-                                 OnFailureToDispatch&& on_failure = noop_operation{})
+          typename OnFailureToDispatch = noop_operation>
+auto execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                      CurrentTaskExecutor&  return_exec,
+                                      timer_manager&        timers,
+                                      Callable&&            callable,
+                                      OnFailureToDispatch&& on_failure = noop_operation{})
 {
-  ReturnType ret{};
-  return launch_async([&return_exec,
-                       &dispatch_exec,
-                       task       = std::forward<Callable>(callable),
-                       on_failure = std::forward<OnFailureToDispatch>(on_failure),
-                       &timers,
-                       ret](coro_context<async_task<ReturnType>>& ctx) mutable {
-    CORO_BEGIN(ctx);
+  using return_type = detail::function_return_t<decltype(&Callable::operator())>;
 
-    // Dispatch execution context switch.
-    CORO_AWAIT(execute_on_blocking(dispatch_exec, timers, on_failure));
+  if constexpr (std::is_same_v<return_type, void>) {
+    // async_task<void> case.
 
-    // Run task.
-    ret = task();
+    return launch_async([&return_exec,
+                         &dispatch_exec,
+                         task       = std::forward<Callable>(callable),
+                         on_failure = std::forward<OnFailureToDispatch>(on_failure),
+                         &timers](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
 
-    // Continuation in the original executor.
-    CORO_AWAIT(execute_on_blocking(return_exec, timers, on_failure));
+      // Dispatch execution context switch.
+      CORO_AWAIT(execute_on_blocking(dispatch_exec, timers, on_failure));
 
-    CORO_RETURN(ret);
-  });
+      // Run task.
+      task();
+
+      // Continuation in the original executor.
+      CORO_AWAIT(execute_on_blocking(return_exec, timers, on_failure));
+
+      CORO_RETURN();
+    });
+
+  } else {
+    // async_task<return_type> case.
+
+    return launch_async([&return_exec,
+                         &dispatch_exec,
+                         task       = std::forward<Callable>(callable),
+                         on_failure = std::forward<OnFailureToDispatch>(on_failure),
+                         &timers,
+                         ret = return_type{}](coro_context<async_task<return_type>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      // Dispatch execution context switch.
+      CORO_AWAIT(execute_on_blocking(dispatch_exec, timers, on_failure));
+
+      // Run task.
+      ret = task();
+
+      // Continuation in the original executor.
+      CORO_AWAIT(execute_on_blocking(return_exec, timers, on_failure));
+
+      CORO_RETURN(ret);
+    });
+  }
 }
 
 } // namespace srsran
