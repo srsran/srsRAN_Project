@@ -753,6 +753,15 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       return {alloc_status::skip_ue};
     }
 
+    // If this is not a retx, then we need to adjust the number of PRBs to the PHR, to prevent that the UE reduces the
+    // nominal TX power to meet the max TX power.
+    if (not is_retx) {
+      const unsigned nof_prbs_adjusted_to_phr = ue_cc->channel_state_manager().adapt_pusch_prbs_to_phr(crbs.length());
+      if (nof_prbs_adjusted_to_phr < crbs.length()) {
+        crbs.resize(nof_prbs_adjusted_to_phr);
+      }
+    }
+
     // Verify there is no RB collision.
     if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, crbs)) {
       logger.warning("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Allocation collides with existing "
@@ -980,6 +989,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       pusch_sched_ctx.slice_id = slice_id;
     }
     ue_cc->last_pusch_allocated_slot = pusch_alloc.slot;
+
+    // Update the number of PRBs used in the PUSCH allocation.
+    ue_cc->channel_state_manager().save_pusch_nof_prbs(pusch_alloc.slot, crbs.length());
 
     h_ul->save_grant_params(pusch_sched_ctx, msg.pusch_cfg);
 

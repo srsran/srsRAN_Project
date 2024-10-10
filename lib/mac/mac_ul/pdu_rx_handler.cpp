@@ -263,6 +263,7 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
       phr_ind.cell_index = ctx.cell_index_rx;
       phr_ind.ue_index   = ctx.ue_index;
       phr_ind.rnti       = ctx.pdu_rx.rnti;
+      phr_ind.slot_rx    = ctx.slot_rx;
       phr_ind.phr        = decode_se_phr(subpdu.payload());
       sched.handle_ul_phr_indication(phr_ind);
     } break;

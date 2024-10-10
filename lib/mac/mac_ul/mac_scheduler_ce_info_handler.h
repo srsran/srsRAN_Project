@@ -48,6 +48,7 @@ struct mac_phr_ce_info {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   rnti_t          rnti;
+  slot_point      slot_rx;
   phr_report      phr;
 };
 

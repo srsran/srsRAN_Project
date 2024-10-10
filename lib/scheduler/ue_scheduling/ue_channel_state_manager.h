@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/circular_array.h"
 #include "srsran/mac/phr_report.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/phy_time_unit.h"
@@ -68,11 +69,19 @@ public:
   void update_srs_channel_matrix(const srs_channel_matrix& channel_matrix, tx_scheme_codebook_subset cb_subset);
 
   /// Update UE with the latest PHR for a given cell.
-  void handle_phr(const cell_ph_report& phr) { latest_phr = phr; }
+  void handle_phr(const cell_ph_report& phr);
+
+  /// Save the number of PUSCH PRBs allocated for a given slot.
+  void save_pusch_nof_prbs(slot_point slot, unsigned nof_prbs);
+
+  /// Adapt the number of PUSCH PRBs to the PHR.
+  unsigned adapt_pusch_prbs_to_phr(unsigned nof_prbs) const;
 
 private:
   /// \brief Number of indexes -> nof_layers for precoding (Options: 1, 2, 3, 4 layers).
   static constexpr size_t NOF_LAYER_CHOICES = 4;
+
+  static constexpr size_t MAX_PHR_IND_DELAY_SLOTS = 40;
 
   /// Mapping of number of layers to array index.
   static size_t nof_layers_to_index(unsigned nof_layers) { return nof_layers - 1U; }
@@ -95,8 +104,14 @@ private:
   /// Latest CSI report received from the UE.
   std::optional<csi_report_data> latest_csi_report;
 
+  ///
+  struct ue_phr_report {
+    cell_ph_report       phr;
+    std::optional<float> ph_times_rbs;
+  };
+
   /// Latest PHR received from the UE.
-  std::optional<cell_ph_report> latest_phr;
+  std::optional<ue_phr_report> latest_phr;
 
   /// \brief Latest PUSCH Transmit Precoding Matrix Indication (TPMI) information.
   ///
@@ -105,6 +120,15 @@ private:
   ///
   /// Set to \c std::nullopt if no SRS channel coefficients have been reported.
   std::optional<pusch_tpmi_select_info> last_pusch_tpmi_select_info;
+
+  /// \brief Entry for PUSCH number of PRBs allocation.
+  struct pusch_prbs_entry {
+    slot_point slot_rx;
+    unsigned   nof_prbs;
+  };
+
+  /// \brief Ring of PUSCH number of PRBs allocation indexed by slot.
+  circular_array<pusch_prbs_entry, MAX_PHR_IND_DELAY_SLOTS> pusch_nof_prbs_grid;
 };
 
 } // namespace srsran
