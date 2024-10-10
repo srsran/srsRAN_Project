@@ -37,11 +37,6 @@ target_link_libraries(gnb
         srsran_cu_up_app_unit
         )
 
-if(SRSRAN_ENTERPRISE_FOUND)
-        target_link_libraries(gnb
-                -Wl,--whole-archive srsran_enterprise::srsran_plugin_ng_handover -Wl,--no-whole-archive)
-endif()
-
 if (DPDK_FOUND)
     add_definitions(-DDPDK_FOUND)
     target_link_libraries(gnb hal_dpdk)

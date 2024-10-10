@@ -32,11 +32,6 @@ target_link_libraries(srscu
         ngap_asn1
         )
 
-if(SRSRAN_ENTERPRISE_FOUND)
-        target_link_libraries(srscu
-                -Wl,--whole-archive srsran_enterprise::srsran_plugin_ng_handover -Wl,--no-whole-archive)
-endif()
-
 add_backward(srscu)
 
 target_include_directories(srscu PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
