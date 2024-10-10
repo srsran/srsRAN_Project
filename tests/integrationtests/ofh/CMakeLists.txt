@@ -18,7 +18,12 @@ target_link_libraries(ofh_integration_test
 add_test(ofh_integration_test ofh_integration_test)
 set_tests_properties(ofh_integration_test PROPERTIES LABELS "tsan;NO_MEMCHECK")
 
-set (SOURCES ru_emulator_cli11_schema.cpp ru_emulator.cpp ru_emulator_socket_transceiver.cpp)
+set (SOURCES
+        ru_emulator_cli11_schema.cpp
+        ru_emulator.cpp
+        ru_emulator_rx_window_checker.cpp
+        ru_emulator_socket_transceiver.cpp
+        ru_emulator_timing_notifier.cpp)
 if (DPDK_FOUND)
     list(APPEND SOURCES ru_emulator_dpdk_transceiver.cpp)
 endif (DPDK_FOUND)

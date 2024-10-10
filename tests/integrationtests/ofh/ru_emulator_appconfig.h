@@ -12,6 +12,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
+#include <srsran/srslog/srslog.h>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,18 @@ namespace srsran {
 
 /// RU emulator OFH configuration parameters.
 struct ru_emulator_ofh_appconfig {
+  /// T2a maximum parameter for downlink Control-Plane in microseconds.
+  std::chrono::microseconds T2a_max_cp_dl{500};
+  /// T2a minimum parameter for downlink Control-Plane in microseconds.
+  std::chrono::microseconds T2a_min_cp_dl{258};
+  /// T2a maximum parameter for uplink Control-Plane in microseconds.
+  std::chrono::microseconds T2a_max_cp_ul{500};
+  /// T2a minimum parameter for uplink Control-Plane in microseconds.
+  std::chrono::microseconds T2a_min_cp_ul{285};
+  /// T2a maximum parameter for downlink User-Plane in microseconds.
+  std::chrono::microseconds T2a_max_up{300};
+  /// T2a minimum parameter for downlink User-Plane in microseconds.
+  std::chrono::microseconds T2a_min_up{85};
   /// Ethernet network interface name or PCI bus identifier.
   std::string network_interface;
   /// RU emulator MAC address.
@@ -27,6 +40,8 @@ struct ru_emulator_ofh_appconfig {
   std::string du_mac_address;
   /// V-LAN Tag control information field.
   unsigned vlan_tag;
+  /// Promiscuous mode flag.
+  bool enable_promiscuous = false;
   /// RU Uplink ports.
   std::vector<unsigned> ru_ul_port_id = {0, 1};
   /// RU emulator operating bandwidth.

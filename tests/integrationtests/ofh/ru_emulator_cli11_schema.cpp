@@ -18,15 +18,26 @@ using namespace srsran;
 
 static void configure_cli11_log_args(CLI::App& app, ru_emulator_log_appconfig& log_params)
 {
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
+  /// Function to check that the log level is correct.
+  auto check_log_level = [](const std::string& value) -> std::string {
+    if (srslog::str_to_basic_level(value).has_value()) {
       return {};
     }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
+
+    return fmt::format("Log level '{}' not supported. Accepted values [none,info,debug,warning,error]", value);
+  };
+  /// Function to convert string parameter to srslog level.
+  auto capture_log_level_function = [](srslog::basic_levels& level) {
+    return [&level](const std::string& value) {
+      auto val = srslog::str_to_basic_level(value);
+      level    = (val) ? val.value() : srslog::basic_levels::none;
+    };
   };
 
   app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
-  app.add_option("--level", log_params.level, "Log level")->capture_default_str()->check(level_check);
+  add_option_function<std::string>(app, " --level", capture_log_level_function(log_params.level), "Log level")
+      ->default_str(srslog::basic_level_to_string(log_params.level))
+      ->check(check_log_level);
 }
 
 static void configure_cli11_ru_emu_dpdk_args(CLI::App& app, std::optional<ru_emulator_dpdk_appconfig>& config)
@@ -71,7 +82,28 @@ static void configure_cli11_ru_emu_args(CLI::App& app, ru_emulator_ofh_appconfig
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
   app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
+  app.add_option("--enable_promiscuous", config.enable_promiscuous, "Promiscuous mode flag")->capture_default_str();
   app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
+
+  // Note: For the timing parameters, worst case is 2 slots for scs 15KHz and 14 symbols. Implementation defined.
+  app.add_option("--t2a_max_cp_dl", config.T2a_max_cp_dl, "T2a maximum value for downlink Control-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t2a_min_cp_dl", config.T2a_min_cp_dl, "T2a minimum value for downlink Control-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t2a_max_cp_ul", config.T2a_max_cp_ul, "T2a maximum value for uplink Control-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t2a_min_cp_ul", config.T2a_min_cp_ul, "T2a minimum value for uplink Control-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t2a_max_up", config.T2a_max_up, "T2a maximum value for User-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t2a_min_up", config.T2a_min_up, "T2a minimum value for User-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
 }
 
 void srsran::configure_cli11_with_ru_emulator_appconfig_schema(CLI::App& app, ru_emulator_appconfig& ru_emu_parsed_cfg)
