@@ -302,10 +302,10 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
       create_low_prio_workers(worker_cfg.nof_low_prio_threads, worker_cfg.low_prio_sched_config.mask);
 
   // Associate executors to the worker pool.
-  // Used for control plane and timer management.
-  non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
   // Used for PCAP writing and CU-UP.
   non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
+  // Used for control plane and timer management.
+  non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
 
   std::vector<strand>& low_prio_strands  = non_rt_pool.executors[0].strands;
   std::vector<strand>& high_prio_strands = non_rt_pool.executors[1].strands;
