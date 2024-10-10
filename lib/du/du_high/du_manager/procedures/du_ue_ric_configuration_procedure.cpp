@@ -9,7 +9,7 @@
  */
 
 #include "du_ue_ric_configuration_procedure.h"
-#include "srsran/support/async/execute_on.h"
+#include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -26,7 +26,7 @@ void du_ue_ric_configuration_procedure::operator()(coro_context<async_task<du_ma
   CORO_BEGIN(ctx);
 
   // Change execution context to DU manager.
-  CORO_AWAIT(execute_on_blocking(du_params.services.du_mng_exec));
+  CORO_AWAIT(execute_on_blocking(du_params.services.du_mng_exec, du_params.services.timers));
 
   // Run config task inside the UE task loop and await for its completion.
   CORO_AWAIT(dispatch_ue_config_task());

@@ -9,7 +9,7 @@
  */
 
 #include "ue_manager.h"
-#include "srsran/support/async/execute_on.h"
+#include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -115,7 +115,7 @@ async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
     CORO_BEGIN(ctx);
 
     // Dispatch execution context switch.
-    CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor()));
+    CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor(), timers));
 
     // Stop and delete
     CORO_AWAIT(ue_ctxt->stop());
@@ -123,7 +123,7 @@ async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
     logger.info("ue={}: UE removed", ue_index);
 
     // Continuation in the original executor.
-    CORO_AWAIT(execute_on_blocking(ctrl_executor));
+    CORO_AWAIT(execute_on_blocking(ctrl_executor, timers));
 
     CORO_RETURN();
   });
