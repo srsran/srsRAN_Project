@@ -308,7 +308,8 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   actual_sampling_rate_Hz = actual_rx_rate_Hz;
 
   // Reset timestamps.
-  if ((total_rx_channel_count > 1 || total_tx_channel_count > 1) &&
+  if ((radio_config.clock.sync != radio_configuration::clock_sources::source::DEFAULT
+       || total_rx_channel_count > 1 || total_tx_channel_count > 1) &&
       radio_config.clock.sync != radio_configuration::clock_sources::source::GPSDO) {
     device.set_time_unknown_pps(uhd::time_spec_t());
   }
