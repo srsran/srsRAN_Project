@@ -442,7 +442,7 @@ if (ENABLE_PLUGINS)
    foreach(subdir ${SUBDIRS})
        # Check if it's a directory and contains a CMakeLists.txt file
        if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/${subdir} AND EXISTS ${CMAKE_SOURCE_DIR}/${subdir}/CMakeLists.txt)
-           message(STATUS "Adding subdirectory: ${subdir}")
+           message(STATUS "Adding plugin: ${subdir}")
            add_subdirectory(${subdir})
        endif()
    endforeach()
