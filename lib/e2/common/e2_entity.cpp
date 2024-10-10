@@ -88,7 +88,7 @@ e2_entity::e2_entity(e2ap_configuration&                                        
     e2sm_mngr->add_e2sm_service(e2sm_rc_asn1_packer::oid, std::move(e2sm_rc_iface));
   }
 
-  decorated_e2_iface = std::make_unique<e2_impl>(cfg_, timers_, *e2_pdu_notifier, *subscription_mngr, *e2sm_mngr);
+  e2ap = std::make_unique<e2_impl>(cfg_, timers_, *e2_pdu_notifier, *subscription_mngr, *e2sm_mngr);
 }
 
 void e2_entity::start()
@@ -98,7 +98,7 @@ void e2_entity::start()
           CORO_BEGIN(ctx);
 
           // Send E2AP Setup Request and await for E2AP setup response.
-          CORO_AWAIT(decorated_e2_iface->start_initial_e2_setup_routine());
+          CORO_AWAIT(e2ap->start_initial_e2_setup_routine());
 
           CORO_RETURN();
         });
@@ -125,24 +125,24 @@ void e2_entity::stop()
 
 async_task<e2_setup_response_message> e2_entity::handle_e2_setup_request(e2_setup_request_message& request)
 {
-  return decorated_e2_iface->handle_e2_setup_request(request);
+  return e2ap->handle_e2_setup_request(request);
 }
 
 async_task<e2_setup_response_message> e2_entity::start_initial_e2_setup_routine()
 {
-  return decorated_e2_iface->start_initial_e2_setup_routine();
+  return e2ap->start_initial_e2_setup_routine();
 }
 
 void e2_entity::handle_connection_loss()
 {
-  if (not task_exec.execute([this]() { decorated_e2_iface->handle_connection_loss(); })) {
+  if (not task_exec.execute([this]() { e2ap->handle_connection_loss(); })) {
     logger.error("Unable to dispatch handling of connection loss");
   }
 }
 
 void e2_entity::handle_message(const e2_message& msg)
 {
-  if (not task_exec.execute([this, msg]() { decorated_e2_iface->handle_message(msg); })) {
+  if (not task_exec.execute([this, msg]() { e2ap->handle_message(msg); })) {
     logger.error("Unable to dispatch handling of message");
   }
 }
