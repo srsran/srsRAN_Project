@@ -238,7 +238,7 @@ public:
     config.dec_nof_iterations             = dec_nof_iterations;
     config.dec_enable_early_stop          = dec_enable_early_stop;
     config.csi_sinr_calc_method           = csi_sinr_calc_method;
-    return std::make_unique<pusch_processor_impl>(create_validator(), config);
+    return std::make_unique<pusch_processor_impl>(config);
   }
 
   std::unique_ptr<pusch_pdu_validator> create_validator() override

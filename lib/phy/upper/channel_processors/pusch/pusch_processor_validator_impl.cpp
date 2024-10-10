@@ -63,7 +63,11 @@ error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_pro
 
   // The frequency allocation is not compatible with the BWP parameters.
   if (!pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb)) {
-    return make_unexpected(fmt::format("Invalid BWP configuration {}:{}.", pdu.bwp_start_rb, pdu.bwp_size_rb));
+    return make_unexpected(
+        fmt::format("Invalid BWP configuration, i.e., [{}, {}) for the given RB allocation, i.e., {}.",
+                    pdu.bwp_start_rb,
+                    pdu.bwp_start_rb + pdu.bwp_size_rb,
+                    pdu.freq_alloc));
   }
 
   // Currently, none of the UCI field sizes can exceed 11 bit.
@@ -90,15 +94,15 @@ error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_pro
 
   // The number of OFDM symbols in the DM-RS mask must be equal to the number of OFDM symbols in a slot.
   if (pdu.dmrs_symbol_mask.size() != nof_symbols_slot) {
-    return make_unexpected(fmt::format("The DM-RS symbol mask size (i.e., {}) must be the same as the number of "
-                                       "symbols allocated to the transmission within the slot (i.e., {}).",
-                                       pdu.dmrs_symbol_mask.size(),
-                                       nof_symbols_slot));
+    return make_unexpected(
+        fmt::format("The DM-RS symbol mask size (i.e., {}) must be equal to the slot size (i.e., {}).",
+                    pdu.dmrs_symbol_mask.size(),
+                    nof_symbols_slot));
   }
 
   // The number of symbols carrying DM-RS must be greater than zero.
   if (pdu.dmrs_symbol_mask.none()) {
-    return make_unexpected("The number of OFDM symbols carrying DM-RS RE must be greater than zero.");
+    return make_unexpected("The number of OFDM symbols carrying DM-RS must be greater than zero.");
   }
 
   // The index of the first OFDM symbol carrying DM-RS shall be equal to or greater than the first symbol allocated to
@@ -123,7 +127,8 @@ error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_pro
 
   // None of the occupied symbols must exceed the slot size.
   if (nof_symbols_slot < (pdu.start_symbol_index + pdu.nof_symbols)) {
-    return make_unexpected(fmt::format("The occupied symbols (i.e., {}) exceed the slot size (i.e., {}).",
+    return make_unexpected(fmt::format("The symbol allocation (i.e., [{}, {})) exceeds the slot size (i.e., {}).",
+                                       pdu.start_symbol_index,
                                        pdu.start_symbol_index + pdu.nof_symbols,
                                        nof_symbols_slot));
   }

@@ -11,6 +11,8 @@
 #include "pusch_processor_impl.h"
 #include "pusch_decoder_buffer_dummy.h"
 #include "pusch_processor_notifier_adaptor.h"
+#include "pusch_processor_validator_impl.h"
+
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
@@ -101,8 +103,7 @@ private:
 // Dummy PUSCH decoder buffer. Used for PUSCH transmissions without SCH data.
 static pusch_decoder_buffer_dummy decoder_buffer_dummy;
 
-pusch_processor_impl::pusch_processor_impl(std::unique_ptr<pusch_pdu_validator> pdu_validator_, configuration& config) :
-  pdu_validator(std::move(pdu_validator_)),
+pusch_processor_impl::pusch_processor_impl(configuration& config) :
   thread_local_dependencies_pool(std::move(config.thread_local_dependencies_pool)),
   decoder(std::move(config.decoder)),
   dec_nof_iterations(config.dec_nof_iterations),
@@ -130,7 +131,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Assert PDU.
   [[maybe_unused]] std::string msg;
-  srsran_assert(handle_validation(msg, pdu_validator->is_valid(pdu)), "{}", msg);
+  srsran_assert(
+      handle_validation(msg, pusch_processor_validator_impl(ch_estimate.capacity()).is_valid(pdu)), "{}", msg);
 
   // Number of RB used by this transmission.
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();

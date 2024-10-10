@@ -275,7 +275,7 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
   pusch_proc_factory_config.decoder_factory        = pusch_dec_factory;
   pusch_proc_factory_config.uci_dec_factory        = uci_dec_factory;
   pusch_proc_factory_config.ch_estimate_dimensions = {
-      MAX_NOF_PRBS, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_RX_PORTS, pusch_constants::MAX_NOF_LAYERS};
+      MAX_NOF_PRBS, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_RX_PORTS, 1};
   pusch_proc_factory_config.dec_nof_iterations         = nof_ldpc_iterations;
   pusch_proc_factory_config.dec_enable_early_stop      = dec_enable_early_stop;
   pusch_proc_factory_config.max_nof_concurrent_threads = max_nof_threads;

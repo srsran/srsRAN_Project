@@ -85,8 +85,7 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.bwp_size_rb            = 1;
        return pdu;
      },
-     // TODO: since vrb_mask was private I took out the part that said "for a VRB mask of size 16"
-     R"(Invalid BWP configuration 0:1\.)"},
+     R"(Invalid BWP configuration, i\.e\., \[0, 1\) for the given RB allocation, i\.e\., \[15, 16\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu                                      = base_pdu;
        pdu.uci.nof_csi_part1                                           = 0;
@@ -99,13 +98,14 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.dmrs_symbol_mask       = {true};
        return pdu;
      },
-     R"(The DM-RS symbol mask size \(i\.e\., 1\) must be the same as the number of symbols allocated to the transmission within the slot \(i\.e\., 14\)\.)"},
+     R"(The DM-RS symbol mask size \(i\.e\., 1\) must be equal to the slot size \(i\.e\., 14\)\.)"},
+
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = symbol_slot_mask(get_nsymb_per_slot(pdu.cp));
        return pdu;
      },
-     R"(The number of OFDM symbols carrying DM-RS RE must be greater than zero\.)"},
+     R"(The number of OFDM symbols carrying DM-RS must be greater than zero\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = symbol_slot_mask(get_nsymb_per_slot(pdu.cp));
@@ -131,7 +131,7 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.nof_symbols            = 15;
        return pdu;
      },
-     R"(The occupied symbols \(i\.e\., 15\) exceed the slot size \(i\.e\., 14\)\.)"},
+     R"(The symbol allocation \(i\.e\., \[0, 15\)\) exceeds the slot size \(i\.e\., 14\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu                                   = base_pdu;
        std::get<pusch_processor::dmrs_configuration>(pdu.dmrs).dmrs = dmrs_type::TYPE2;
@@ -178,7 +178,18 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        return pdu;
      },
      R"(Transform precoding is only possible with a valid number of PRB\.)"},
-
+    {[] {
+       pusch_processor::pdu_t pdu = base_pdu;
+       pdu.uci.nof_harq_ack       = 12;
+       return pdu;
+     },
+     R"(UCI field sizes in bits \(12, 1\), exceed the maximum bit size, i\.e\., 11\.)"},
+    {[] {
+       pusch_processor::pdu_t pdu = base_pdu;
+       pdu.uci.nof_csi_part1      = 12;
+       return pdu;
+     },
+     R"(UCI field sizes in bits \(0, 12\), exceed the maximum bit size, i\.e\., 11\.)"},
 };
 
 class PuschProcessorFixture : public ::testing::TestWithParam<test_case_t>
