@@ -231,18 +231,19 @@ void udp_network_gateway_impl::receive()
         (1 - (float)get_byte_buffer_segment_pool_current_size_approx() / get_byte_buffer_segment_pool_capacity());
     if (pool_occupancy >= config.pool_occupancy_threshold) {
       if (warn_low_buffer_pool) {
-        logger.warning("Buffer pool at {}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
+        logger.warning("Buffer pool at {:.1f}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
         warn_low_buffer_pool = false;
         return;
       }
-      logger.info("Buffer pool at {}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
+      logger.info("Buffer pool at {:.1f}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
       return;
     }
     span<uint8_t> payload(rx_mem[i].data(), rx_msghdr[i].msg_len);
 
     byte_buffer pdu = {};
     if (pdu.append(payload)) {
-      logger.debug("Received {} bytes on UDP socket. Pool occupancy {}%", rx_msghdr[i].msg_len, pool_occupancy * 100);
+      logger.debug(
+          "Received {} bytes on UDP socket. Pool occupancy {:.2f}%", rx_msghdr[i].msg_len, pool_occupancy * 100);
       data_notifier.on_new_pdu(std::move(pdu), *(sockaddr_storage*)rx_msghdr[i].msg_hdr.msg_name);
     } else {
       logger.error("Could not allocate byte buffer. Received {} bytes on UDP socket", rx_msghdr[i].msg_len);
