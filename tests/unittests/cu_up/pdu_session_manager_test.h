@@ -128,7 +128,6 @@ protected:
   network_interface_config get_net_config() override
   {
     network_interface_config cfg = net_config_default;
-    cfg.f1u_ext_addr             = GetParam();
     return cfg;
   }
   void SetUp() override { init(); }
