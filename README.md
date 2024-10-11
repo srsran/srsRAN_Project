@@ -8,7 +8,7 @@ srsRAN is a complete 5G RAN solution, featuring an ORAN-native CU/DU developed b
 
 The solution includes a complete L1/2/3 implementation with minimal external dependencies. Portable across processor architectures, the software has been optimized for x86 and ARM. srsRAN follows the 3GPP 5G system architecture implementing the functional splits between distributed unit (DU) and centralized unit (CU). The CU is further disaggregated into control plane (CU-CP) and user-plane (CU-UP).
 
-srsRAN further follows O-RAN architecture principles, supports all external interfaces (F1, E1, E2, A1, O1, N2 and N3) and allows split 7.2a/b as well as split 8 deployments for the fronthaul connection.
+srsRAN further follows O-RAN architecture principles, supports all external interfaces (F1, E1, E2, A1, O1, N2 and N3) and supports split 7.2 as well as split 8 deployments for the fronthaul connection.
 
 License
 -------
@@ -79,4 +79,4 @@ make test
 How to deploy a 5G network?
 ----------------------------------------------
 
-Check our [tutorials](https://docs.srsran.com/projects/project/en/latest/tutorials/source/index.html) that describe how to set up an end-to-end 5G SA system with srsRAN Project.
+Check our [tutorials](https://docs.srsran.com/projects/project/en/latest/tutorials/source/index.html) that describe how to set up an end-to-end 5G network.
