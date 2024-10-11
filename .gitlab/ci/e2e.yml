@@ -483,6 +483,7 @@ viavi:
             "ideal and 1UE",
             "ideal and 32UE and not experimental and not dddsu",
             "fading and 1UE",
+            "fading and 32UE",
             "birth-death and 1UE",
             "32UE and experimental and not extended",
           ]
