@@ -223,6 +223,9 @@ TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
   test_logger.info("Launch e2 setup request procedure with task worker...");
   e2->start();
 
+  // Save E2 Setup Request
+  packer->handle_message(e2_client->last_tx_e2_pdu);
+
   // Need to send setup response, so the transaction can be completed.
   unsigned   transaction_id    = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
@@ -561,7 +564,7 @@ TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(e2sm_kpm_tests, e2_entity_test_with_pcap, testing::Values(g_pcap));
+INSTANTIATE_TEST_SUITE_P(e2sm_kpm_meas_provider_test, e2_entity_test_with_pcap, testing::Values(g_pcap));
 INSTANTIATE_TEST_SUITE_P(e2sm_kpm_meas_provider_test, e2sm_kpm_meas_provider_test, testing::Values(g_pcap));
 
 int main(int argc, char** argv)
