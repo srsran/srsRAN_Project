@@ -15,6 +15,18 @@
 
 using namespace srsran;
 
+/// \brief Looks at the output of the validator and, if unsuccessful, fills msg with the error message.
+///
+/// This is used to call the validator inside the process methods only if asserts are active.
+[[maybe_unused]] static bool handle_validation(std::string& msg, const error_type<std::string>& err)
+{
+  bool is_success = err.has_value();
+  if (!is_success) {
+    msg = err.error();
+  }
+  return is_success;
+}
+
 /// \brief Computes the number of RE used for mapping PDSCH data.
 ///
 /// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.
@@ -165,7 +177,8 @@ void pdsch_processor_lite_impl::process(resource_grid_writer&                   
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                         const pdu_t&                                                 pdu)
 {
-  pdsch_processor_validator_impl::assert_pdu(pdu);
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdsch_processor_validator_impl().is_valid(pdu)), "{}", msg);
 
   // Configure new transmission.
   subprocessor.configure_new_transmission(data[0], 0, pdu);

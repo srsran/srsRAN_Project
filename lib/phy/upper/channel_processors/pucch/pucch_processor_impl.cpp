@@ -14,7 +14,8 @@
 
 using namespace srsran;
 
-/// Looks at the output of the validator and, if unsuccessful, fills msg with the error message.
+/// \brief Looks at the output of the validator and, if unsuccessful, fills msg with the error message.
+///
 /// This is used to call the validator inside the process methods only if asserts are active.
 [[maybe_unused]] static bool handle_validation(std::string& msg, const error_type<std::string>& err)
 {

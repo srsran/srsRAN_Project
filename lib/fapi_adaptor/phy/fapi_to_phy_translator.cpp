@@ -261,9 +261,11 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
       case fapi::dl_pdu_type::PDSCH: {
         pdsch_processor::pdu_t& pdsch_pdu = pdus.pdsch.emplace_back();
         convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot, csi_re_patterns, pm_repo);
-        if (!dl_pdu_validator.is_valid(pdsch_pdu)) {
-          logger.warning("Upper PHY flagged a PDSCH PDU as having an invalid configuration. Skipping DL_TTI.request");
-
+        error_type<std::string> phy_pdsch_validator = dl_pdu_validator.is_valid(pdsch_pdu);
+        if (!phy_pdsch_validator.has_value()) {
+          logger.warning(
+              "Skipping DL_TTI.request: PDSCH PDU flagged as invalid by the Upper PHY with the following error\n    {}",
+              phy_pdsch_validator.error());
           return make_unexpected(default_error_t{});
         }
         break;

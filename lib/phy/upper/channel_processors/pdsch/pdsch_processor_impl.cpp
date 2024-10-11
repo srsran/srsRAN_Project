@@ -15,12 +15,26 @@
 
 using namespace srsran;
 
+/// \brief Looks at the output of the validator and, if unsuccessful, fills msg with the error message.
+///
+/// This is used to call the validator inside the process methods only if asserts are active.
+[[maybe_unused]] static bool handle_validation(std::string& msg, const error_type<std::string>& err)
+{
+  bool is_success = err.has_value();
+  if (!is_success) {
+    msg = err.error();
+  }
+  return is_success;
+}
+
 void pdsch_processor_impl::process(resource_grid_writer&                                        grid,
                                    pdsch_processor_notifier&                                    notifier,
                                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                    const pdsch_processor::pdu_t&                                pdu)
 {
-  pdsch_processor_validator_impl::assert_pdu(pdu);
+  // Assert PDU.
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdsch_processor_validator_impl().is_valid(pdu)), "{}", msg);
 
   // Number of layers from the precoding configuration.
   unsigned nof_layers = pdu.precoding.get_nof_layers();

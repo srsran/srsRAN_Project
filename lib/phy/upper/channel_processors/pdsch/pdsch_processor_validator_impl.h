@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 
 namespace srsran {
@@ -18,13 +19,8 @@ namespace srsran {
 class pdsch_processor_validator_impl : public pdsch_pdu_validator
 {
 public:
-  /// \brief Asserts PDU.
-  ///
-  /// It triggers an assertion if the PDU is not valid for this processor.
-  static void assert_pdu(const pdsch_processor::pdu_t& pdu);
-
   // See interface for documentation.
-  bool is_valid(const pdsch_processor::pdu_t& pdu) const override;
+  error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const override;
 };
 
 } // namespace srsran
