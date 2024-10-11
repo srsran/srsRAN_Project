@@ -433,6 +433,7 @@ android IMS:
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
