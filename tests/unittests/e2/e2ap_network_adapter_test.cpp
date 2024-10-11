@@ -85,7 +85,7 @@ protected:
     e2sm_iface         = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
     e2sm_mngr          = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
-    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2_tx_channel, *e2sm_mngr);
+    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     factory              = timer_factory{timers, task_exec};
     e2ap                 = create_e2(cfg, factory, *e2_tx_channel, *e2_subscription_mngr, *e2sm_mngr);
     e2_adapter->connect_e2ap(e2ap.get());

@@ -37,7 +37,7 @@ void e2_subscription_setup_procedure::operator()(coro_context<async_task<void>>&
   response = subscription_mngr.handle_subscription_setup(request);
   if (response.success) {
     event_manager.add_sub_del_req(request->ric_request_id, timers);
-    subscription_mngr.start_subscription(response.request_id, event_manager, request->ran_function_id);
+    subscription_mngr.start_subscription(response.request_id, request->ran_function_id, event_manager, ric_notif);
     send_e2_subscription_setup_response(response);
   } else {
     send_e2_subscription_setup_failure(response);

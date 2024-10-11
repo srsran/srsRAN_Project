@@ -16,8 +16,8 @@ using namespace srsran;
 
 #define E2SM_IFACE(ran_function_id_value) e2sm_iface_list[supported_ran_functions[ran_function_id_value]]
 
-e2_subscription_manager_impl::e2_subscription_manager_impl(e2_message_notifier& notif_, e2sm_manager& e2sm_mngr_) :
-  notif(notif_), e2sm_mngr(e2sm_mngr_), logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
+e2_subscription_manager_impl::e2_subscription_manager_impl(e2sm_manager& e2sm_mngr_) :
+  e2sm_mngr(e2sm_mngr_), logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
 {
 }
 
@@ -84,8 +84,9 @@ e2_subscription_manager_impl::handle_subscription_delete(const asn1::e2ap::ric_s
 }
 
 void e2_subscription_manager_impl::start_subscription(const asn1::e2ap::ric_request_id_s& ric_request_id,
+                                                      uint16_t                            ran_func_id,
                                                       e2_event_manager&                   ev_mng,
-                                                      uint16_t                            ran_func_id)
+                                                      e2_message_notifier&                tx_pdu_notifier)
 {
   e2sm_interface* e2sm = e2sm_mngr.get_e2sm_interface(ran_func_id);
   for (auto& action :
@@ -102,7 +103,7 @@ void e2_subscription_manager_impl::start_subscription(const asn1::e2ap::ric_requ
 
   subscriptions[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}].indication_task =
       launch_async<e2_indication_procedure>(
-          notif,
+          tx_pdu_notifier,
           ev_mng,
           subscriptions[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}].subscription_info,
           logger);

@@ -510,8 +510,9 @@ public:
   };
 
   void start_subscription(const asn1::e2ap::ric_request_id_s& ric_request_id,
+                          uint16_t                            ran_func_id,
                           e2_event_manager&                   ev_mng,
-                          uint16_t                            ran_func_id) override
+                          e2_message_notifier&                tx_pdu_notifier) override
   {
   }
 
@@ -880,7 +881,7 @@ class e2_test_subscriber : public e2_test_base
     e2sm_mngr        = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
     e2sm_mngr->add_supported_ran_function(1, "1.3.6.1.4.1.53148.1.2.2.2");
-    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier, *e2sm_mngr);
+    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
     e2     = create_e2(cfg, factory, *msg_notifier, *e2_subscription_mngr, *e2sm_mngr);
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
@@ -921,7 +922,7 @@ class e2_test_setup : public e2_test_base
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.1.2.3", std::move(e2sm_rc_iface));
     e2sm_mngr->add_supported_ran_function(3, "1.3.6.1.4.1.53148.1.1.2.3");
-    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier, *e2sm_mngr);
+    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     e2                   = create_e2(cfg, factory, *msg_notifier, *e2_subscription_mngr, *e2sm_mngr);
     gw                   = std::make_unique<dummy_network_gateway_data_handler>();
     pcap                 = std::make_unique<dummy_e2ap_pcap>();

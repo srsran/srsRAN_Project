@@ -50,8 +50,9 @@ public:
   handle_subscription_delete(const asn1::e2ap::ric_sub_delete_request_s& msg) = 0;
   /// \brief start the subscription request
   virtual void start_subscription(const asn1::e2ap::ric_request_id_s& ric_request_id,
+                                  uint16_t                            ran_func_id,
                                   e2_event_manager&                   ev_mng,
-                                  uint16_t                            ran_func_id) = 0;
+                                  e2_message_notifier&                tx_pdu_notifier) = 0;
   /// \brief void stop the subscription request
   virtual void stop_subscription(const asn1::e2ap::ric_request_id_s&         ric_request_id,
                                  e2_event_manager&                           ev_mng,

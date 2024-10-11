@@ -41,7 +41,7 @@ e2_entity::e2_entity(e2ap_configuration&                                        
 {
   e2_pdu_notifier   = connection_handler.connect_to_ric();
   e2sm_mngr         = std::make_unique<e2sm_manager>(logger);
-  subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2_pdu_notifier, *e2sm_mngr);
+  subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
 
   if (cfg.e2sm_kpm_enabled) {
     std::variant<std::unique_ptr<e2sm_kpm_du_meas_provider_impl>, std::unique_ptr<e2sm_kpm_cu_meas_provider_impl>>
