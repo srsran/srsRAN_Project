@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "lib/e2/common/e2_connection_handler.h"
 #include "lib/e2/common/e2_subscription_manager_impl.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
@@ -529,6 +528,8 @@ public:
 
   void add_ran_function_oid(uint16_t ran_func_id, std::string oid) override {}
 
+  void stop() override {}
+
 private:
   void get_subscription_result(e2_subscribe_reponse_message& msg)
   {
@@ -690,6 +691,15 @@ private:
   srslog::basic_logger& logger;
 };
 
+/// Dummy PDU handler
+class dummy_network_gateway_data_handler : public srsran::sctp_network_gateway_data_handler
+{
+public:
+  dummy_network_gateway_data_handler(){};
+  void        handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
+  byte_buffer last_pdu;
+};
+
 class dummy_e2_adapter : public e2_message_handler, public e2_event_handler
 {
 public:
@@ -702,16 +712,6 @@ public:
 private:
   srslog::basic_logger& logger;
   e2_interface*         e2ap = nullptr;
-};
-
-/// Dummy PDU handler
-class dummy_network_gateway_data_handler : public srsran::sctp_network_gateway_data_handler
-{
-public:
-  dummy_network_gateway_data_handler(){};
-  void handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
-
-  byte_buffer last_pdu;
 };
 
 class dummy_e2sm_handler : public e2sm_handler
@@ -795,9 +795,7 @@ protected:
   e2ap_configuration                                  cfg = {};
   timer_factory                                       factory;
   timer_manager                                       timers;
-  std::unique_ptr<dummy_e2_adapter>                   e2_adapter;
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
-  std::unique_ptr<e2_interface>                       e2;
   std::unique_ptr<dummy_e2ap_pcap>                    pcap;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
   std::unique_ptr<e2sm_interface>                     e2sm_kpm_iface;
@@ -814,9 +812,8 @@ protected:
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
   std::unique_ptr<dummy_e2_connection_client>         e2_client;
-  std::unique_ptr<e2_connection_handler>              connection_handler;
-  std::unique_ptr<e2_message_notifier>                e2_tx_channel;
   std::unique_ptr<e2sm_manager>                       e2sm_mngr;
+  std::unique_ptr<e2_interface>                       e2;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -833,16 +830,12 @@ class e2_test : public e2_test_base
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    e2_adapter           = std::make_unique<dummy_e2_adapter>();
     e2_client            = std::make_unique<dummy_e2_connection_client>();
-    connection_handler   = std::make_unique<e2_connection_handler>(*e2_client, *e2_adapter, *e2_adapter, task_worker);
-    e2_tx_channel        = connection_handler->connect_to_ric();
     e2_subscription_mngr = std::make_unique<dummy_e2_subscription_mngr>();
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
     factory              = timer_factory{timers, task_worker};
     e2sm_mngr            = std::make_unique<e2sm_manager>(test_logger);
-    e2                   = create_e2(cfg, factory, *e2_tx_channel, *e2_subscription_mngr, *e2sm_mngr);
-    e2_adapter->connect_e2ap(e2.get());
+    e2                   = create_e2(cfg, factory, e2_client.get(), *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
     gw                   = std::make_unique<dummy_network_gateway_data_handler>();
     pcap                 = std::make_unique<dummy_e2ap_pcap>();
@@ -895,27 +888,25 @@ class e2_test_subscriber : public e2_test_base
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    factory            = timer_factory{timers, task_worker};
-    msg_notifier       = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
-    e2_adapter         = std::make_unique<dummy_e2_adapter>();
-    e2_client          = std::make_unique<dummy_e2_connection_client>();
-    connection_handler = std::make_unique<e2_connection_handler>(*e2_client, *e2_adapter, *e2_adapter, task_worker);
-    e2_tx_channel      = connection_handler->connect_to_ric();
-    e2sm_kpm_packer    = std::make_unique<dummy_e2sm_handler>();
-    du_metrics         = std::make_unique<dummy_e2_du_metrics>();
-    du_meas_provider   = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_kpm_iface     = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
-    e2sm_mngr          = std::make_unique<e2sm_manager>(test_logger);
+    factory          = timer_factory{timers, task_worker};
+    msg_notifier     = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
+    e2_client        = std::make_unique<dummy_e2_connection_client>();
+    e2sm_kpm_packer  = std::make_unique<dummy_e2sm_handler>();
+    du_metrics       = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_kpm_iface   = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
+    e2sm_mngr        = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
     e2sm_mngr->add_supported_ran_function(1, "1.3.6.1.4.1.53148.1.2.2.2");
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
-    e2 = create_e2(cfg, factory, *e2_tx_channel, *e2_subscription_mngr, *e2sm_mngr);
-    e2_adapter->connect_e2ap(e2.get());
+    e2 = create_e2(cfg, factory, e2_client.get(), *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
     packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+
+    report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to create dummy SCTP connection");
   }
 
   void TearDown() override
@@ -932,18 +923,15 @@ class e2_test_setup : public e2_test_base
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    factory               = timer_factory{timers, task_worker};
-    e2_adapter            = std::make_unique<dummy_e2_adapter>();
-    e2_client             = std::make_unique<dummy_e2_connection_client>();
-    connection_handler    = std::make_unique<e2_connection_handler>(*e2_client, *e2_adapter, *e2_adapter, task_worker);
-    e2_tx_channel         = connection_handler->connect_to_ric();
-    du_metrics            = std::make_unique<dummy_e2_du_metrics>();
-    du_meas_provider      = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_kpm_packer       = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_kpm_iface        = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
-    e2sm_rc_packer        = std::make_unique<e2sm_rc_asn1_packer>();
-    rc_param_configurator = std::make_unique<dummy_du_configurator>();
-    e2sm_rc_iface         = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
+    factory                        = timer_factory{timers, task_worker};
+    e2_client                      = std::make_unique<dummy_e2_connection_client>();
+    du_metrics                     = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider               = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_kpm_packer                = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_kpm_iface                 = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
+    e2sm_rc_packer                 = std::make_unique<e2sm_rc_asn1_packer>();
+    rc_param_configurator          = std::make_unique<dummy_du_configurator>();
+    e2sm_rc_iface                  = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
     e2sm_rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
     rc_control_action_2_6_executor = std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*rc_param_configurator);
     e2sm_rc_control_service_style2->add_e2sm_rc_control_action_executor(std::move(rc_control_action_2_6_executor));
@@ -954,8 +942,7 @@ class e2_test_setup : public e2_test_base
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.1.2.3", std::move(e2sm_rc_iface));
     e2sm_mngr->add_supported_ran_function(3, "1.3.6.1.4.1.53148.1.1.2.3");
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
-    e2                   = create_e2(cfg, factory, *e2_tx_channel, *e2_subscription_mngr, *e2sm_mngr);
-    e2_adapter->connect_e2ap(e2.get());
+    e2                   = create_e2(cfg, factory, e2_client.get(), *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
     gw                   = std::make_unique<dummy_network_gateway_data_handler>();
     pcap                 = std::make_unique<dummy_e2ap_pcap>();

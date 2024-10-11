@@ -43,6 +43,7 @@ TEST_F(e2_entity_test, on_start_send_e2ap_setup_request)
 /// Test successful E2 setup procedure
 TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
 {
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   // Action 1: Launch E2 setup procedure
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");
@@ -70,6 +71,7 @@ TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
 
 TEST_F(e2_test, when_e2_setup_failure_received_then_e2_setup_failed)
 {
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   // Action 1: Launch E2 setup procedure
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");
@@ -99,6 +101,7 @@ TEST_F(e2_test_setup, e2_sends_correct_kpm_ran_function_definition)
 {
   using namespace asn1::e2sm;
   using namespace asn1::e2ap;
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");
   e2_setup_request_message request;
@@ -144,6 +147,7 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
 {
   using namespace asn1::e2sm;
   using namespace asn1::e2ap;
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.1.2.3");
   test_logger.info("Launch e2 setup request procedure...");
   e2_setup_request_message request;
@@ -204,6 +208,7 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
 
 TEST_F(e2_test, correctly_unpack_e2_response)
 {
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   // Action 1: Launch E2 setup procedure
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");

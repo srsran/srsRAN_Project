@@ -71,6 +71,8 @@ public:
   virtual e2sm_interface* get_e2sm_interface(const std::string oid) = 0;
 
   virtual void add_ran_function_oid(uint16_t ran_func_id, std::string oid) = 0;
+
+  virtual void stop() = 0;
 };
 
 class e2_subscription_manager : public e2_subscription_proc, public e2_subscriber_mgmt

@@ -56,6 +56,12 @@ class e2_connection_manager
 public:
   virtual ~e2_connection_manager() = default;
 
+  /// \brief Request a new TNL association to the Near-RT RIC.
+  virtual bool handle_e2_tnl_connection_request() = 0;
+
+  /// \brief Request the E2AP handler to disconnect from the Near-RT RIC.
+  virtual async_task<void> handle_e2_disconnection_request() = 0;
+
   /// \brief Initiates the E2 Setup procedure as per _____
   /// \param[in] request The E2SetupRequest message to transmit.
   /// \return Returns a e2_setup_response_message struct with the success member set to 'true' in case of a
@@ -68,9 +74,6 @@ public:
   /// successful outcome, 'false' otherwise.
   /// and awaits the response. If a E2SetupFailure is received the E2 will handle the failure.
   virtual async_task<e2_setup_response_message> start_initial_e2_setup_routine() = 0;
-
-  /// \brief Request the E2AP handler to disconnect from the Near-RT RIC.
-  virtual async_task<void> handle_e2_disconnection_request() = 0;
 };
 
 /// This interface is used to pack outgoing and unpack incoming E2 messages.

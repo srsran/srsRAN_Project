@@ -114,7 +114,8 @@ protected:
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     factory              = timer_factory{timers, ctrl_worker};
-    e2ap                 = create_e2(cfg, factory, *adapter, *e2_subscription_mngr, *e2sm_mngr);
+    e2_client            = std::make_unique<dummy_e2_connection_client>();
+    e2ap                 = create_e2(cfg, factory, e2_client.get(), *e2_subscription_mngr, *e2sm_mngr, ctrl_worker);
     pcap                 = std::make_unique<dummy_e2ap_pcap>();
     adapter->connect_e2ap(e2ap.get());
   }
@@ -132,6 +133,7 @@ protected:
   std::unique_ptr<e2sm_manager>               e2sm_mngr;
   std::unique_ptr<e2sm_interface>             e2sm_iface;
   std::unique_ptr<e2_interface>               e2ap;
+  std::unique_ptr<dummy_e2_connection_client> e2_client;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
 };
 

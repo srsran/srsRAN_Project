@@ -46,9 +46,10 @@ public:
   void stop() override;
 
   /// E2 connection manager functions.
+  bool                                  handle_e2_tnl_connection_request() override;
+  async_task<void>                      handle_e2_disconnection_request() override;
   async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override;
   async_task<e2_setup_response_message> start_initial_e2_setup_routine() override;
-  async_task<void>                      handle_e2_disconnection_request() override;
 
   /// E2_event_ handler functions.
   void handle_connection_loss() override;
@@ -63,12 +64,11 @@ private:
   // Handler for E2AP tasks.
   task_executor&            task_exec;
   fifo_async_task_scheduler main_ctrl_loop;
-  e2_connection_handler     connection_handler;
 
-  std::unique_ptr<e2_message_notifier>       e2_pdu_notifier    = nullptr;
-  std::unique_ptr<e2sm_manager>              e2sm_mngr          = nullptr;
-  std::unique_ptr<e2_subscription_manager>   subscription_mngr  = nullptr;
-  std::unique_ptr<e2_interface>              e2ap               = nullptr;
+  std::unique_ptr<e2_message_notifier>       e2_pdu_notifier   = nullptr;
+  std::unique_ptr<e2sm_manager>              e2sm_mngr         = nullptr;
+  std::unique_ptr<e2_subscription_manager>   subscription_mngr = nullptr;
+  std::unique_ptr<e2_interface>              e2ap              = nullptr;
   std::vector<std::unique_ptr<e2sm_handler>> e2sm_handlers;
 };
 

@@ -9,7 +9,6 @@
  */
 
 #include "dummy_ric.h"
-#include "lib/e2/common/e2_connection_handler.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/adt/concurrent_queue.h"
@@ -77,20 +76,15 @@ protected:
     pcap              = std::make_unique<dummy_e2ap_pcap>();
     e2_client         = create_e2_gateway_client(e2_sctp_gateway_config{e2agent_config, *agent_broker, *pcap});
     e2_client_wrapper = std::make_unique<e2_connection_client_wrapper>(*e2_client);
-    e2_adapter        = std::make_unique<dummy_e2_adapter>();
-    connection_handler =
-        std::make_unique<e2_connection_handler>(*e2_client_wrapper, *e2_adapter, *e2_adapter, task_exec);
-    e2_tx_channel    = connection_handler->connect_to_ric();
-    du_metrics       = std::make_unique<dummy_e2_du_metrics>();
-    du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
-    e2sm_mngr        = std::make_unique<e2sm_manager>(test_logger);
+    du_metrics        = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider  = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_packer       = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_iface        = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    e2sm_mngr         = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     factory              = timer_factory{timers, task_exec};
-    e2ap                 = create_e2(cfg, factory, *e2_tx_channel, *e2_subscription_mngr, *e2sm_mngr);
-    e2_adapter->connect_e2ap(e2ap.get());
+    e2ap = create_e2(cfg, factory, e2_client_wrapper.get(), *e2_subscription_mngr, *e2sm_mngr, task_exec);
   }
 
   void TearDown() override
@@ -192,10 +186,8 @@ protected:
   e2ap_configuration                            cfg;
   timer_factory                                 factory;
   timer_manager                                 timers;
-  std::unique_ptr<dummy_e2_adapter>             e2_adapter;
   std::unique_ptr<e2_connection_client>         e2_client;
   std::unique_ptr<e2_connection_client_wrapper> e2_client_wrapper;
-  std::unique_ptr<e2_connection_handler>        connection_handler;
   std::unique_ptr<e2_message_notifier>          e2_tx_channel;
   manual_task_worker                            task_exec{128};
   std::unique_ptr<dummy_e2ap_pcap>              pcap;
@@ -213,6 +205,8 @@ protected:
 /// Test successful e2 setup procedure
 TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_connected)
 {
+  report_fatal_error_if_not(e2ap->handle_e2_tnl_connection_request(), "Unable to establish connection to RIC");
+
   // Action 1: Launch E2 setup procedure (sends E2 Setup Request to RIC).
   test_logger.info("Launching E2 setup procedure...");
   async_task<e2_setup_response_message>         t1 = e2ap->start_initial_e2_setup_routine();
@@ -284,7 +278,7 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
   ASSERT_EQ(e2_client_wrapper->last_rx_e2_msg.pdu.successful_outcome().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::e2setup_resp);
 
-  async_task<void>         t2 = connection_handler->handle_tnl_association_removal();
+  async_task<void>         t2 = e2ap->handle_e2_disconnection_request();
   lazy_task_launcher<void> t2_launcher(t2);
   while (not t2.ready()) {
     this->tick();

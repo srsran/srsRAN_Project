@@ -25,6 +25,8 @@ public:
   explicit e2_subscription_manager_impl(e2sm_manager& e2sm_mngr_);
   virtual ~e2_subscription_manager_impl() = default;
 
+  void stop() override;
+
   /// \brief  Handles the subscription request message.
   /// \param[in] msg  The subscription request message.
   /// \return The subscription response message.

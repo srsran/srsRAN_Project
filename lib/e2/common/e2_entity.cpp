@@ -33,13 +33,8 @@ e2_entity::e2_entity(e2ap_configuration&                                        
                      srs_du::du_configurator*                                         du_configurator_,
                      timer_factory                                                    timers_,
                      task_executor&                                                   task_exec_) :
-  logger(srslog::fetch_basic_logger("E2")),
-  cfg(cfg_),
-  task_exec(task_exec_),
-  main_ctrl_loop(128),
-  connection_handler(*e2_client_, *this, *this, task_exec_)
+  logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
 {
-  e2_pdu_notifier   = connection_handler.connect_to_ric();
   e2sm_mngr         = std::make_unique<e2sm_manager>(logger);
   subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
 
@@ -88,11 +83,14 @@ e2_entity::e2_entity(e2ap_configuration&                                        
     e2sm_mngr->add_e2sm_service(e2sm_rc_asn1_packer::oid, std::move(e2sm_rc_iface));
   }
 
-  e2ap = std::make_unique<e2_impl>(cfg_, timers_, *e2_pdu_notifier, *subscription_mngr, *e2sm_mngr);
+  e2ap = std::make_unique<e2_impl>(cfg_, timers_, e2_client_, *subscription_mngr, *e2sm_mngr, task_exec_);
 }
 
 void e2_entity::start()
 {
+  // Create e2ap (sctp) connection to RIC
+  e2ap->handle_e2_tnl_connection_request();
+
   if (not task_exec.execute([this]() {
         main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
@@ -122,6 +120,15 @@ void e2_entity::stop()
     report_fatal_error("Unable to initiate E2AP setup procedure");
   }
 }
+bool e2_entity::handle_e2_tnl_connection_request()
+{
+  return e2ap->handle_e2_tnl_connection_request();
+}
+
+async_task<void> e2_entity::handle_e2_disconnection_request()
+{
+  return e2ap->handle_e2_disconnection_request();
+}
 
 async_task<e2_setup_response_message> e2_entity::handle_e2_setup_request(e2_setup_request_message& request)
 {
@@ -145,9 +152,4 @@ void e2_entity::handle_message(const e2_message& msg)
   if (not task_exec.execute([this, msg]() { e2ap->handle_message(msg); })) {
     logger.error("Unable to dispatch handling of message");
   }
-}
-
-async_task<void> e2_entity::handle_e2_disconnection_request()
-{
-  return connection_handler.handle_tnl_association_removal();
 }

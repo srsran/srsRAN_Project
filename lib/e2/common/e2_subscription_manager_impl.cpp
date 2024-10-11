@@ -21,6 +21,14 @@ e2_subscription_manager_impl::e2_subscription_manager_impl(e2sm_manager& e2sm_mn
 {
 }
 
+void e2_subscription_manager_impl::stop()
+{
+  for (auto& c : subscriptions) {
+    c.second.indication_task.await_ready();
+  }
+  subscriptions.clear();
+}
+
 e2_subscribe_reponse_message
 e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ric_sub_request_s& msg)
 {

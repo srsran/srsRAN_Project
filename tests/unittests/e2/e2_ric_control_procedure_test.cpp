@@ -19,6 +19,7 @@ using namespace srsran;
 
 TEST_F(e2_test_setup, ric_control_procedure_setup)
 {
+  e2->handle_e2_tnl_connection_request();
   e2_message request_msg = generate_ric_control_request_style2_action6(test_logger);
   e2->handle_message(request_msg);
 
@@ -28,10 +29,12 @@ TEST_F(e2_test_setup, ric_control_procedure_setup)
             asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::ric_ctrl_ack);
   auto ack = msg.pdu.successful_outcome().value.ric_ctrl_ack();
   ASSERT_EQ(ack->ran_function_id, 3);
+  e2->handle_e2_disconnection_request();
 }
 
 TEST_F(e2_test_setup, ric_control_procedure_setup2)
 {
+  e2->handle_e2_tnl_connection_request();
   e2_message request_msg = generate_ric_control_request(test_logger, 2, 6, 11, 12);
   e2->handle_message(request_msg);
 
@@ -41,10 +44,12 @@ TEST_F(e2_test_setup, ric_control_procedure_setup2)
             asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::ric_ctrl_ack);
   auto ack = msg.pdu.successful_outcome().value.ric_ctrl_ack();
   ASSERT_EQ(ack->ran_function_id, 3);
+  e2->handle_e2_disconnection_request();
 }
 
 TEST_F(e2_test_setup, ric_control_procedure_fail)
 {
+  e2->handle_e2_tnl_connection_request();
   e2_message request_msg = generate_ric_control_request(test_logger, 2, 6, 1, 12);
   e2->handle_message(request_msg);
 
@@ -54,10 +59,12 @@ TEST_F(e2_test_setup, ric_control_procedure_fail)
             asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ric_ctrl_fail);
   auto ack = msg.pdu.unsuccessful_outcome().value.ric_ctrl_fail();
   ASSERT_EQ(ack->ran_function_id, 3);
+  e2->handle_e2_disconnection_request();
 }
 
 TEST_F(e2_test_setup, ric_control_procedure_packed)
 {
+  e2->handle_e2_tnl_connection_request();
   uint8_t e2ap_ctrl_req[] = {
       0x00, 0x04, 0x00, 0x6e, 0x00, 0x00, 0x05, 0x00, 0x1d, 0x00, 0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x05, 0x00,
       0x02, 0x00, 0x03, 0x00, 0x16, 0x00, 0x09, 0x08, 0x01, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00, 0x05, 0x00, 0x17, 0x00,
@@ -70,4 +77,5 @@ TEST_F(e2_test_setup, ric_control_procedure_packed)
 
   e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
+  e2->handle_e2_disconnection_request();
 }

@@ -34,6 +34,8 @@ TEST_F(e2_test_subscriber, when_e2_subscription_request_correct_sent_subscriptio
 
   e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
+  e2_subscription_mngr->stop();
+  e2->handle_e2_disconnection_request();
 }
 TEST_F(e2_test_subscriber, when_e2_subscription_request_received_start_indication_procedure)
 {
@@ -54,6 +56,8 @@ TEST_F(e2_test_subscriber, when_e2_subscription_request_received_start_indicatio
   }
   e2_message& msg1 = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg1.pdu.init_msg().value.type(), e2ap_elem_procs_o::init_msg_c::types_opts::ric_ind);
+  e2_subscription_mngr->stop();
+  e2->handle_e2_disconnection_request();
 }
 
 TEST_F(e2_test_subscriber, start_indication_procedure_check_contents)
@@ -95,6 +99,7 @@ TEST_F(e2_test_subscriber, start_indication_procedure_check_contents)
       ASSERT_EQ(match_cond_it.matching_cond_choice.meas_label().no_label_present, true);
     }
   }
+  e2->handle_e2_disconnection_request();
 }
 
 TEST_F(e2_test_subscriber, start_subscription_then_delete_subscription)
@@ -124,4 +129,5 @@ TEST_F(e2_test_subscriber, start_subscription_then_delete_subscription)
   ASSERT_EQ(msg1.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(msg1.pdu.successful_outcome().value.type(),
             e2ap_elem_procs_o::successful_outcome_c::types_opts::ric_sub_delete_resp);
+  e2->handle_e2_disconnection_request();
 }
