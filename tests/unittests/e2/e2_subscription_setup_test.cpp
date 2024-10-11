@@ -32,11 +32,7 @@ TEST_F(e2_test_subscriber, when_e2_subscription_request_correct_sent_subscriptio
   byte_buffer e2ap_sub_req_buf = byte_buffer::create(e2ap_sub_req, e2ap_sub_req + sizeof(e2ap_sub_req)).value();
   packer->handle_packed_pdu(std::move(e2ap_sub_req_buf));
 
-  asn1::cbit_ref bref(gw->last_pdu);
-  e2_message     msg = {};
-  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
+  e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
 }
 TEST_F(e2_test_subscriber, when_e2_subscription_request_received_start_indication_procedure)
@@ -50,21 +46,13 @@ TEST_F(e2_test_subscriber, when_e2_subscription_request_received_start_indicatio
 
   byte_buffer e2ap_sub_req_buf = byte_buffer::create(e2ap_sub_req, e2ap_sub_req + sizeof(e2ap_sub_req)).value();
   packer->handle_packed_pdu(std::move(e2ap_sub_req_buf));
-  asn1::cbit_ref bref(gw->last_pdu);
-  e2_message     msg = {};
-  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
+
+  e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
   for (int i = 0; i < 1500; i++) {
     this->tick();
   }
-  asn1::cbit_ref bref1(gw->last_pdu);
-  e2_message     msg1 = {};
-  if (msg1.pdu.unpack(bref1) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
-
+  e2_message& msg1 = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg1.pdu.init_msg().value.type(), e2ap_elem_procs_o::init_msg_c::types_opts::ric_ind);
 }
 
@@ -121,11 +109,7 @@ TEST_F(e2_test_subscriber, start_subscription_then_delete_subscription)
   byte_buffer e2ap_sub_req_buf = byte_buffer::create(e2ap_sub_req, e2ap_sub_req + sizeof(e2ap_sub_req)).value();
   packer->handle_packed_pdu(std::move(e2ap_sub_req_buf));
 
-  asn1::cbit_ref bref(gw->last_pdu);
-  e2_message     msg = {};
-  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
+  e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(msg.pdu.successful_outcome().value.type(),
             e2ap_elem_procs_o::successful_outcome_c::types_opts::ric_sub_resp);
@@ -136,11 +120,7 @@ TEST_F(e2_test_subscriber, start_subscription_then_delete_subscription)
 
   packer->handle_packed_pdu(std::move(sub_del_req_buf));
 
-  asn1::cbit_ref bref1(gw->last_pdu);
-  e2_message     msg1 = {};
-  if (msg1.pdu.unpack(bref1) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
+  e2_message& msg1 = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg1.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(msg1.pdu.successful_outcome().value.type(),
             e2ap_elem_procs_o::successful_outcome_c::types_opts::ric_sub_delete_resp);

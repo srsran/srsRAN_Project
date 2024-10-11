@@ -74,16 +74,18 @@ protected:
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    pcap               = std::make_unique<dummy_e2ap_pcap>();
-    e2_client          = create_e2_gateway_client(e2_sctp_gateway_config{e2agent_config, *agent_broker, *pcap});
-    e2_adapter         = std::make_unique<dummy_e2_adapter>(*this);
-    connection_handler = std::make_unique<e2_connection_handler>(*e2_client, *e2_adapter, *e2_adapter, task_exec);
-    e2_tx_channel      = connection_handler->connect_to_ric();
-    du_metrics         = std::make_unique<dummy_e2_du_metrics>();
-    du_meas_provider   = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_packer        = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_iface         = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
-    e2sm_mngr          = std::make_unique<e2sm_manager>(test_logger);
+    pcap              = std::make_unique<dummy_e2ap_pcap>();
+    e2_client         = create_e2_gateway_client(e2_sctp_gateway_config{e2agent_config, *agent_broker, *pcap});
+    e2_client_wrapper = std::make_unique<e2_connection_client_wrapper>(*e2_client);
+    e2_adapter        = std::make_unique<dummy_e2_adapter>();
+    connection_handler =
+        std::make_unique<e2_connection_handler>(*e2_client_wrapper, *e2_adapter, *e2_adapter, task_exec);
+    e2_tx_channel    = connection_handler->connect_to_ric();
+    du_metrics       = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    e2sm_mngr        = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     factory              = timer_factory{timers, task_exec};
@@ -97,30 +99,56 @@ protected:
     srslog::flush();
   }
 
-  class dummy_e2_adapter : public e2_message_handler, public e2_event_handler
+  class e2_msg_notifier_wrapper : public e2_message_notifier
   {
   public:
-    dummy_e2_adapter(e2ap_network_adapter_test& parent_) : logger(srslog::fetch_basic_logger("E2")), parent(parent_){};
-
-    void connect_e2ap(e2_interface* e2ap_) { e2ap = e2ap_; }
-    void handle_message(const e2_message& msg) override
+    e2_msg_notifier_wrapper(e2_message_notifier& notifier_,
+                            e2_message&          last_msg_,
+                            bool&                msg_ready_,
+                            unique_task          on_disconnect_) :
+      notifier(notifier_), last_msg(last_msg_), msg_ready(msg_ready_), on_disconnect(std::move(on_disconnect_))
     {
-      logger.info("E2 received msg.");
-      last_e2_msg = msg;
-      e2ap->handle_message(msg);
-      std::unique_lock<std::mutex> lock(parent.mutex);
-      msg_received = true;
-      parent.cvar.notify_one();
-    };
-    void handle_connection_loss() override { e2ap->handle_connection_loss(); };
+    }
+    ~e2_msg_notifier_wrapper() override { on_disconnect(); }
 
-    bool       msg_received = false;
-    e2_message last_e2_msg;
+    void on_new_message(const e2_message& msg) override
+    {
+      last_msg  = msg;
+      msg_ready = true;
+      notifier.on_new_message(msg);
+    }
+
+    e2_message_notifier& notifier;
+    e2_message&          last_msg;
+    bool&                msg_ready;
+    unique_task          on_disconnect;
+  };
+
+  class e2_connection_client_wrapper : public e2_connection_client
+  {
+  public:
+    e2_connection_client_wrapper(e2_connection_client& e2_client_) : e2_client(e2_client_){};
+    e2_message last_tx_e2_msg;
+    e2_message last_rx_e2_msg;
+
+    bool msg_txed = false;
+    bool msg_rxed = false;
+
+    std::unique_ptr<e2_message_notifier>
+    handle_e2_connection_request(std::unique_ptr<e2_message_notifier> e2_rx_pdu_notifier_) override
+    {
+      e2_rx_msg_notifier = std::move(e2_rx_pdu_notifier_);
+      e2_tx_msg_notifier = e2_client.handle_e2_connection_request(std::make_unique<e2_msg_notifier_wrapper>(
+          *e2_rx_msg_notifier, last_rx_e2_msg, msg_rxed, [this]() { e2_rx_msg_notifier.reset(); }));
+
+      return std::make_unique<e2_msg_notifier_wrapper>(
+          *e2_tx_msg_notifier, last_tx_e2_msg, msg_txed, [this]() { e2_tx_msg_notifier.reset(); });
+    }
 
   private:
-    srslog::basic_logger&      logger;
-    e2ap_network_adapter_test& parent;
-    e2_interface*              e2ap = nullptr;
+    e2_connection_client&                e2_client;
+    std::unique_ptr<e2_message_notifier> e2_rx_msg_notifier;
+    std::unique_ptr<e2_message_notifier> e2_tx_msg_notifier;
   };
 
   class e2_sniffer : public e2_message_notifier
@@ -161,22 +189,23 @@ protected:
   std::unique_ptr<e2_sniffer>           ric_rx_e2_sniffer;
 
   // E2 agent
-  e2ap_configuration                       cfg;
-  timer_factory                            factory;
-  timer_manager                            timers;
-  std::unique_ptr<e2_connection_client>    e2_client;
-  std::unique_ptr<e2_connection_handler>   connection_handler;
-  std::unique_ptr<dummy_e2_adapter>        e2_adapter;
-  std::unique_ptr<e2_message_notifier>     e2_tx_channel;
-  manual_task_worker                       task_exec{128};
-  std::unique_ptr<dummy_e2ap_pcap>         pcap;
-  std::unique_ptr<e2_subscription_manager> e2_subscription_mngr;
-  std::unique_ptr<e2sm_handler>            e2sm_packer;
-  std::unique_ptr<e2sm_manager>            e2sm_mngr;
-  std::unique_ptr<e2_du_metrics_interface> du_metrics;
-  std::unique_ptr<e2sm_kpm_meas_provider>  du_meas_provider;
-  std::unique_ptr<e2sm_interface>          e2sm_iface;
-  std::unique_ptr<e2_interface>            e2ap;
+  e2ap_configuration                            cfg;
+  timer_factory                                 factory;
+  timer_manager                                 timers;
+  std::unique_ptr<dummy_e2_adapter>             e2_adapter;
+  std::unique_ptr<e2_connection_client>         e2_client;
+  std::unique_ptr<e2_connection_client_wrapper> e2_client_wrapper;
+  std::unique_ptr<e2_connection_handler>        connection_handler;
+  std::unique_ptr<e2_message_notifier>          e2_tx_channel;
+  manual_task_worker                            task_exec{128};
+  std::unique_ptr<dummy_e2ap_pcap>              pcap;
+  std::unique_ptr<e2_subscription_manager>      e2_subscription_mngr;
+  std::unique_ptr<e2sm_handler>                 e2sm_packer;
+  std::unique_ptr<e2sm_manager>                 e2sm_mngr;
+  std::unique_ptr<e2_du_metrics_interface>      du_metrics;
+  std::unique_ptr<e2sm_kpm_meas_provider>       du_meas_provider;
+  std::unique_ptr<e2sm_interface>               e2sm_iface;
+  std::unique_ptr<e2_interface>                 e2ap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
@@ -200,7 +229,13 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
   }
   ASSERT_FALSE(t1.ready());
 
+  // Status: E2 sent E2 Setup Request.
+  ASSERT_EQ(e2_client_wrapper->last_tx_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(e2_client_wrapper->last_tx_e2_msg.pdu.successful_outcome().value.type().value,
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+
   // Status: RIC received E2 Setup Request.
+  ASSERT_TRUE(ric_rx_e2_sniffer->msg_received);
   ASSERT_EQ(ric_rx_e2_sniffer->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(ric_rx_e2_sniffer->last_e2_msg.pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
@@ -235,7 +270,7 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
   for (unsigned msec_elapsed = 0; msec_elapsed < 1000; ++msec_elapsed) {
     {
       std::unique_lock<std::mutex> lock(mutex);
-      if (cvar.wait_for(lock, std::chrono::milliseconds(1), [this]() { return e2_adapter->msg_received; })) {
+      if (cvar.wait_for(lock, std::chrono::milliseconds(1), [this]() { return e2_client_wrapper->msg_rxed; })) {
         break;
       }
     }
@@ -244,8 +279,9 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
   }
 
   // Status: E2 Agent received E2 Setup Request Response.
-  ASSERT_EQ(e2_adapter->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
-  ASSERT_EQ(e2_adapter->last_e2_msg.pdu.successful_outcome().value.type().value,
+  ASSERT_TRUE(e2_client_wrapper->msg_rxed);
+  ASSERT_EQ(e2_client_wrapper->last_rx_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(e2_client_wrapper->last_rx_e2_msg.pdu.successful_outcome().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::e2setup_resp);
 
   async_task<void>         t2 = connection_handler->handle_tnl_association_removal();

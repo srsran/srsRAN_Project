@@ -21,11 +21,8 @@ TEST_F(e2_test_setup, ric_control_procedure_setup)
 {
   e2_message request_msg = generate_ric_control_request_style2_action6(test_logger);
   e2->handle_message(request_msg);
-  asn1::cbit_ref bref(gw->last_pdu);
-  e2_message     msg = {};
-  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
+
+  e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(msg.pdu.successful_outcome().value.type(),
             asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::ric_ctrl_ack);
@@ -37,11 +34,8 @@ TEST_F(e2_test_setup, ric_control_procedure_setup2)
 {
   e2_message request_msg = generate_ric_control_request(test_logger, 2, 6, 11, 12);
   e2->handle_message(request_msg);
-  asn1::cbit_ref bref(gw->last_pdu);
-  e2_message     msg = {};
-  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
+
+  e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(msg.pdu.successful_outcome().value.type(),
             asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::ric_ctrl_ack);
@@ -53,11 +47,8 @@ TEST_F(e2_test_setup, ric_control_procedure_fail)
 {
   e2_message request_msg = generate_ric_control_request(test_logger, 2, 6, 1, 12);
   e2->handle_message(request_msg);
-  asn1::cbit_ref bref(gw->last_pdu);
-  e2_message     msg = {};
-  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
+
+  e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome);
   ASSERT_EQ(msg.pdu.unsuccessful_outcome().value.type(),
             asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ric_ctrl_fail);
@@ -77,10 +68,6 @@ TEST_F(e2_test_setup, ric_control_procedure_packed)
   byte_buffer e2ap_ctrl_req_buf = byte_buffer::create(e2ap_ctrl_req, e2ap_ctrl_req + sizeof(e2ap_ctrl_req)).value();
   packer->handle_packed_pdu(std::move(e2ap_ctrl_req_buf));
 
-  asn1::cbit_ref bref(gw->last_pdu);
-  e2_message     msg = {};
-  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Couldn't unpack E2 PDU");
-  }
+  e2_message& msg = e2_client->last_tx_e2_pdu;
   ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
 }
