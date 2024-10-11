@@ -107,7 +107,7 @@ public:
   };
 
   /// \brief Constructs a generic software PUSCH processor.
-  /// \param[in] config          PUSCH processor dependencies and configuration parameters.
+  /// \param[in] config PUSCH processor dependencies and configuration parameters.
   pusch_processor_impl(configuration& config);
 
   // See interface for documentation.
