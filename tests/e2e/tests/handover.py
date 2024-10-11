@@ -294,7 +294,7 @@ def _handover_multi_ues(
         for ue_stub in ue_array:
             ue_validate_no_reattaches(ue_stub)
 
-        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+        stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=16, warning_as_errors=warning_as_errors)
     finally:
         get_kpis(gnb, ue_array=ue_array, metrics_summary=metrics_summary)
 
