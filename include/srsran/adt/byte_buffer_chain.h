@@ -389,7 +389,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::byte_buffer_chain> : public formatter<srsran::byte_buffer_view> {
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer_chain& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer_chain& buf, FormatContext& ctx)
   {
     if (mode == hexadecimal) {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));

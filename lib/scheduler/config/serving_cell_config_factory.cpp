@@ -9,7 +9,6 @@
  */
 
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -21,6 +20,7 @@
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/srslog/srslog.h"
+
 #include <set>
 #include <vector>
 

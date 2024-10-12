@@ -10,7 +10,6 @@
 
 #pragma once
 #include "baseband_gateway_transmitter_metadata.h"
-#include "srsran/adt/optional.h"
 #include "srsran/gateways/baseband/baseband_gateway_base.h"
 
 namespace srsran {

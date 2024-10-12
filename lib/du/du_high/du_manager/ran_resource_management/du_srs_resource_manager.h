@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srs_resource_generator.h"
-#include "srsran/adt/optional.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/ran/srs/srs_bandwidth_configuration.h"
 

@@ -3089,7 +3089,7 @@ struct formatter<T, Char,
   // Parses format specifiers stopping either at the end of the range or at the
   // terminating '}'.
   template <typename ParseContext>
-  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+  FMT_CONSTEXPR auto parse(ParseContext& ctx)  {
     using handler_type = detail::dynamic_specs_handler<ParseContext>;
     auto type = detail::type_constant<T, Char>::value;
     detail::specs_checker<handler_type> handler(handler_type(specs_, ctx),
@@ -3224,7 +3224,7 @@ template <typename Char = char> class dynamic_formatter {
 
  public:
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+  auto parse(ParseContext& ctx)  {
     format_str_ = ctx.begin();
     // Checks are deferred to formatting time when the argument type is known.
     detail::dynamic_specs_handler<ParseContext> handler(specs_, ctx);
@@ -3318,7 +3318,7 @@ class bytes {
 
 template <> struct formatter<bytes> {
   template <typename ParseContext>
-  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+  FMT_CONSTEXPR auto parse(ParseContext& ctx)  {
     using handler_type = detail::dynamic_specs_handler<ParseContext>;
     detail::specs_checker<handler_type> handler(handler_type(specs_, ctx),
                                                 detail::type::string_type);

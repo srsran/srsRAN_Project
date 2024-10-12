@@ -13,6 +13,7 @@
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
+#include "srsran/support/format/fmt_optional.h"
 
 namespace fmt {
 
@@ -31,13 +32,13 @@ struct formatter<pusch_results_wrapper> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const pusch_results_wrapper& result, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const pusch_results_wrapper& result, FormatContext& ctx)
   {
     // Format SCH message.
     if (result.sch.has_value()) {

@@ -12,7 +12,6 @@
 
 #include "../slicing/ran_slice_id.h"
 #include "srsran/adt/intrusive_list.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"

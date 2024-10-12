@@ -12,7 +12,7 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/unique_thread.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_basic_parser.h"
 #include <sched.h>
 
 using namespace srsran;
@@ -147,9 +147,9 @@ bool srsran::is_trace_file_open()
 namespace fmt {
 
 template <>
-struct formatter<trace_event_extended> : public basic_fmt_parser {
+struct formatter<trace_event_extended> : public basic_parser {
   template <typename FormatContext>
-  auto format(const trace_event_extended& event, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const trace_event_extended& event, FormatContext& ctx)
   {
     auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
 
@@ -166,10 +166,10 @@ struct formatter<trace_event_extended> : public basic_fmt_parser {
 };
 
 template <>
-struct formatter<instant_trace_event_extended> : public basic_fmt_parser {
+struct formatter<instant_trace_event_extended> : public basic_parser {
   template <typename FormatContext>
   auto format(const instant_trace_event_extended& event, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     static const char* scope_str[] = {"g", "p", "t"};
 

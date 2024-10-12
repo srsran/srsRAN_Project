@@ -12,7 +12,7 @@
 #include "du_high_rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/engineering_notation.h"
-#include "srsran/support/format_utils.h"
+
 #include "srsran/support/math_utils.h"
 #include <iomanip>
 #include <ostream>

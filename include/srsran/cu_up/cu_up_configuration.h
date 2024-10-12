@@ -111,7 +111,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_cu_up::network_interface_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }

@@ -1448,7 +1448,7 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
   enum { hexadecimal, binary, bit_positions } mode = binary;
   enum { forward, reverse } order                  = forward;
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     while (it != ctx.end() and *it != '}') {
@@ -1469,7 +1469,7 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
 
   template <typename FormatContext>
   auto format(const srsran::bounded_bitset<N, LowestInfoBitIsMSB>& s, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     if (mode == hexadecimal) {
       return s.template to_string_of_hex<decltype(std::declval<FormatContext>().out())>(ctx.out(), order == reverse);

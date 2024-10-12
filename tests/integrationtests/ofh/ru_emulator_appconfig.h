@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
+
 #include <srsran/srslog/srslog.h>
 #include <string>
 #include <vector>

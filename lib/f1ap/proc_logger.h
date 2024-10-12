@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/f1ap/f1ap_ue_id_types.h"
-#include "srsran/support/format_utils.h"
 
 namespace srsran {
 

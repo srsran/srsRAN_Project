@@ -288,12 +288,12 @@ namespace fmt {
 template <>
 struct formatter<srsran::slot_point> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(srsran::slot_point slot, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::slot_point slot, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}.{}", slot.sfn(), slot.slot_index());
   }

@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"

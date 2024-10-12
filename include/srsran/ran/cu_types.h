@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/qos/qos_flow_id.h"
@@ -18,6 +17,7 @@
 #include "srsran/ran/qos/qos_prio_level.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/sdap/sdap_config.h"
+
 #include "fmt/format.h"
 
 namespace srsran {
@@ -159,13 +159,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::pdu_session_id_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdu_session_id_t& sid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pdu_session_id_t& sid, FormatContext& ctx)
   {
     return format_to(ctx.out(), "psi={:#}", pdu_session_id_to_uint(sid));
   }
@@ -174,14 +174,14 @@ struct formatter<srsran::pdu_session_id_t> {
 template <>
 struct formatter<srsran::integrity_protection_indication_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::integrity_protection_indication_t& ind, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     switch (ind) {
       case srsran::integrity_protection_indication_t::not_needed:
@@ -198,14 +198,14 @@ struct formatter<srsran::integrity_protection_indication_t> {
 template <>
 struct formatter<srsran::confidentiality_protection_indication_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::confidentiality_protection_indication_t& ind, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     switch (ind) {
       case srsran::confidentiality_protection_indication_t::not_needed:
@@ -222,14 +222,14 @@ struct formatter<srsran::confidentiality_protection_indication_t> {
 template <>
 struct formatter<srsran::security_indication_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::security_indication_t& security_ind, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(),
                      "integrity_ind={} confidentiality_ind={}",

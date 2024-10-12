@@ -26,7 +26,7 @@ FMT_BEGIN_NAMESPACE
 
 template <typename Char> struct formatting_base {
   template <typename ParseContext>
-  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+  FMT_CONSTEXPR auto parse(ParseContext& ctx)  {
     return ctx.begin();
   }
 };
@@ -219,7 +219,7 @@ struct formatter<TupleT, Char, enable_if_t<fmt::is_tuple_like<TupleT>::value>> {
   formatting_tuple<Char> formatting;
 
   template <typename ParseContext>
-  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+  FMT_CONSTEXPR auto parse(ParseContext& ctx)  {
     return formatting.parse(ctx);
   }
 
@@ -252,7 +252,7 @@ struct formatter<RangeT, Char,
   formatting_range<Char> formatting;
 
   template <typename ParseContext>
-  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+  FMT_CONSTEXPR auto parse(ParseContext& ctx)  {
     return formatting.parse(ctx);
   }
 
@@ -293,7 +293,7 @@ template <typename Char, typename... T> struct tuple_arg_join : detail::view {
 template <typename Char, typename... T>
 struct formatter<tuple_arg_join<Char, T...>, Char> {
   template <typename ParseContext>
-  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+  FMT_CONSTEXPR auto parse(ParseContext& ctx)  {
     return ctx.begin();
   }
 

@@ -10,7 +10,6 @@
 
 #include "du_high_rlc_metrics_consumers.h"
 #include "du_high_rlc_metrics.h"
-#include "srsran/support/format_utils.h"
 
 using namespace srsran;
 

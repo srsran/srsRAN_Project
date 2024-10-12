@@ -52,13 +52,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::pdcp_tx_metrics_container> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_tx_metrics_container m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_tx_metrics_container m, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_pdus={} num_pdu_bytes={} num_discard_timeouts={}",

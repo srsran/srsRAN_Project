@@ -12,7 +12,6 @@
 
 #include "lib/mac/mac_config_interfaces.h"
 #include "lib/mac/mac_ctrl/mac_scheduler_configurator.h"
-#include "srsran/adt/optional.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/pcap/dlt_pcap.h"

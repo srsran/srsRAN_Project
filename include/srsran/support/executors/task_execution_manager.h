@@ -12,8 +12,8 @@
 
 #include "unique_thread.h"
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/adt/optional.h"
 #include "srsran/support/executors/task_executor.h"
+
 #include <unordered_map>
 #include <variant>
 

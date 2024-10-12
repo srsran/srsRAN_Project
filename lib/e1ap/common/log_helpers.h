@@ -15,7 +15,6 @@
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/format_utils.h"
 
 namespace srsran {
 

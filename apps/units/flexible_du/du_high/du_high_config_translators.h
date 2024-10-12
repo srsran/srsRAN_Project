@@ -18,7 +18,6 @@
 #include "srsran/mac/mac_config.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/qos/five_qi.h"
-
 #include <map>
 
 namespace srsran {

@@ -12,7 +12,6 @@
 
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cause/ngap_cause.h"

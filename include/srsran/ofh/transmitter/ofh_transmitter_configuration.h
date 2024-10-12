@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/compression/iq_compressor.h"
 #include "srsran/ofh/ecpri/ecpri_packet_builder.h"

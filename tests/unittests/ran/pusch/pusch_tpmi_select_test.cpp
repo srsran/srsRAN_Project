@@ -24,14 +24,14 @@ struct formatter<srsran::pusch_tpmi_select_info> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::pusch_tpmi_select_info& info, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     unsigned max_nof_layers = info.get_max_nof_layers();
 

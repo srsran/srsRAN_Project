@@ -11,11 +11,11 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include <optional>
 
 namespace srsran {
 

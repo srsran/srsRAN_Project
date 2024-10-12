@@ -10,7 +10,7 @@
 
 #pragma once
 #include "srsran/ran/pdsch/pdsch_context.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/delimited_formatter.h"
 
 namespace fmt {
 
@@ -19,13 +19,13 @@ template <>
 struct formatter<srsran::pdsch_context> {
 public:
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdsch_context& context, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pdsch_context& context, FormatContext& ctx)
   {
     helper.format_always(ctx, "h_id={}", context.h_id);
     helper.format_always(ctx, "k1={}", context.k1);

@@ -53,7 +53,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::gtpu_teid_t> : public formatter<std::string> {
   template <typename FormatContext>
-  auto format(const srsran::gtpu_teid_t& t, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::gtpu_teid_t& t, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{:#08x}", t.value());
   }

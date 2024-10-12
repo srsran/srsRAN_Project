@@ -325,14 +325,14 @@ namespace fmt {
 template <>
 struct formatter<srsran::moveonly_test_object> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::moveonly_test_object& obj, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "{}", obj.value());
   }

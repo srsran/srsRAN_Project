@@ -12,7 +12,7 @@
 
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/support/engineering_notation.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -170,13 +170,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_rx_metrics> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_rx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_rx_metrics m, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "num_pdus={} num_pdu_bytes={} num_lost_pdus={} num_malformed_pdus={} num_sdus={} num_sdu_bytes={}",

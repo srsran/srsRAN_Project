@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -26,6 +25,7 @@
 #include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/vrb_alloc.h"
 #include <bitset>
+#include <optional>
 
 namespace srsran {
 

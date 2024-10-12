@@ -10,11 +10,8 @@
 
 #pragma once
 
-#include "srsran/support/srsran_assert.h"
+#include "fmt/format.h"
 #include <optional>
-#include <type_traits>
-
-//: TODO: This header file will get eventually moved to support after our optional<T> implementation goes away.
 
 namespace fmt {
 
@@ -22,13 +19,13 @@ namespace fmt {
 template <typename T>
 struct formatter<std::optional<T>> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const std::optional<T>& optval, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const std::optional<T>& optval, FormatContext& ctx)
   {
     if (!optval.has_value()) {
       return format_to(ctx.out(), "{{na}}");

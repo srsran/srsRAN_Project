@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ofh/ofh_sector_config.h"
 #include "srsran/srslog/logger.h"
 

@@ -15,7 +15,6 @@
 #include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/ran/srs/srs_channel_matrix_formatters.h"
 #include "srsran/ran/srs/srs_resource_formatter.h"
-#include "srsran/support/format_utils.h"
 
 namespace fmt {
 
@@ -29,14 +28,14 @@ struct formatter<srsran::srs_estimator_configuration> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_estimator_configuration& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_always(ctx, "{}", config.resource);
@@ -56,14 +55,14 @@ struct formatter<srsran::srs_estimator_result> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_estimator_result& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     helper.format_always(ctx, "t_align={:.1}us", config.time_alignment.time_alignment * 1e6);
     helper.format_always(ctx, "noise_var={:.3e}", config.noise_variance);

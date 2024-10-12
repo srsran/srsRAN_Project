@@ -27,7 +27,7 @@
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/signal_handling.h"
 #include "fmt/chrono.h"
 #include <arpa/inet.h>

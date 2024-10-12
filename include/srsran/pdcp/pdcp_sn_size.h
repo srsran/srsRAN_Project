@@ -44,13 +44,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::pdcp_sn_size> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_sn_size sn_size, FormatContext& ctx)
   {
     switch (sn_size) {
       case srsran::pdcp_sn_size::invalid:

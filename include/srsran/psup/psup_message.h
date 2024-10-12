@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/cu_types.h"
+
 #include <cstdint>
 
 namespace srsran {

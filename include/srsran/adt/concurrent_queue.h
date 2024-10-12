@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
+#include <limits>
+#include <optional>
 
 namespace srsran {
 

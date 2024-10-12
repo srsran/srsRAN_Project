@@ -12,7 +12,8 @@
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/support/prefixed_logger.h"
+#include "srsran/support/format/fmt_to_c_str.h"
+#include "srsran/support/format/prefixed_logger.h"
 #include "fmt/format.h"
 #include <string.h>
 
@@ -54,14 +55,14 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_cu_up::e1ap_ue_log_prefix> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::srs_cu_up::e1ap_ue_log_prefix o, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

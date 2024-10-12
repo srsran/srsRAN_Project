@@ -342,14 +342,14 @@ template <>
 struct formatter<srsran::log_likelihood_ratio> {
   /// Parser.
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   /// Formatter.
   template <typename FormatContext>
-  auto format(srsran::log_likelihood_ratio llr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::log_likelihood_ratio llr, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", static_cast<srsran::log_likelihood_ratio::value_type>(llr));
   }

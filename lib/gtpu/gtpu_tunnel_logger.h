@@ -9,10 +9,11 @@
  */
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/gtpu/gtpu_teid.h"
-#include "srsran/support/prefixed_logger.h"
+#include "srsran/support/format/fmt_optional.h"
+#include "srsran/support/format/fmt_to_c_str.h"
+#include "srsran/support/format/prefixed_logger.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -46,13 +47,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::gtpu_tunnel_log_prefix> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::gtpu_tunnel_log_prefix o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::gtpu_tunnel_log_prefix o, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

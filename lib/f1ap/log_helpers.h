@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ran/du_types.h"

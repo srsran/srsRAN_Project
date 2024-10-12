@@ -10,7 +10,6 @@
 
 #pragma once
 #include "srsran/ran/pusch/pusch_context.h"
-#include "srsran/support/format_utils.h"
 
 namespace fmt {
 
@@ -19,13 +18,13 @@ template <>
 struct formatter<srsran::pusch_context> {
 public:
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_context& context, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pusch_context& context, FormatContext& ctx)
   {
     helper.format_always(ctx, "rnti={}", context.rnti);
     helper.format_always(ctx, "h_id={}", context.h_id);

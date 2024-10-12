@@ -56,13 +56,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::symbol_slot_mask> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::symbol_slot_mask& mask, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::symbol_slot_mask& mask, FormatContext& ctx)
   {
     fmt::format_to(ctx.out(), "{:br}", static_cast<srsran::bounded_bitset<srsran::MAX_NSYMB_PER_SLOT>>(mask));
     return ctx.out();
@@ -73,13 +73,13 @@ struct formatter<srsran::symbol_slot_mask> {
 template <>
 struct formatter<srsran::re_prb_mask> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::re_prb_mask& mask, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::re_prb_mask& mask, FormatContext& ctx)
   {
     fmt::format_to(ctx.out(), "{:br}", static_cast<srsran::bounded_bitset<srsran::NRE>>(mask));
     return ctx.out();

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "apps/services/os_sched_affinity_manager.h"
-#include "srsran/adt/optional.h"
+#include <optional>
 #include <string>
 #include <vector>
 

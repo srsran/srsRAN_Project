@@ -9,13 +9,13 @@
 
 #include "dci_builder.h"
 #include "../cell/cell_harq_manager.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_antenna_ports_mapping.h"
 #include "srsran/ran/pusch/pusch_antenna_ports_mapping.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
+
 #include <algorithm>
 
 using namespace srsran;

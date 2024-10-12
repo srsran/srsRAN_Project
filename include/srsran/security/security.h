@@ -16,10 +16,10 @@
  * Common security header - wraps ciphering/integrity check algorithms.
  *****************************************************************************/
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/pci.h"
 #include "srsran/srslog/srslog.h"
+
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <array>
@@ -292,14 +292,14 @@ namespace fmt {
 template <>
 struct formatter<srsran::security::security_direction> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::security::security_direction dir, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     static constexpr const char* options[] = {"UL", "DL"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(dir)]);
@@ -310,14 +310,14 @@ struct formatter<srsran::security::security_direction> {
 template <>
 struct formatter<srsran::security::integrity_enabled> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::security::integrity_enabled integrity_flag, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     static constexpr const char* options[] = {"off", "on"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(integrity_flag)]);
@@ -328,14 +328,14 @@ struct formatter<srsran::security::integrity_enabled> {
 template <>
 struct formatter<srsran::security::ciphering_enabled> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::security::ciphering_enabled ciphering_flag, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     static constexpr const char* options[] = {"off", "on"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(ciphering_flag)]);
@@ -346,14 +346,14 @@ struct formatter<srsran::security::ciphering_enabled> {
 template <>
 struct formatter<srsran::security::supported_algorithms> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::security::supported_algorithms algos, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "N[I|E]A1={}, N[I|E]A2={}, N[I|E]A3={}", algos[0], algos[1], algos[2]);
   }
@@ -363,14 +363,14 @@ struct formatter<srsran::security::supported_algorithms> {
 template <>
 struct formatter<srsran::security::preferred_integrity_algorithms> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::security::preferred_integrity_algorithms algos, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "NIA{}, NIA{}, NIA{}, NIA{}", algos[0], algos[1], algos[2], algos[3]);
   }
@@ -380,14 +380,14 @@ struct formatter<srsran::security::preferred_integrity_algorithms> {
 template <>
 struct formatter<srsran::security::preferred_ciphering_algorithms> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::security::preferred_ciphering_algorithms algos, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "NEA{}, NEA{}, NEA{}, NEA{}", algos[0], algos[1], algos[2], algos[3]);
   }
@@ -397,13 +397,13 @@ struct formatter<srsran::security::preferred_ciphering_algorithms> {
 template <>
 struct formatter<srsran::security::sec_domain> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::security::sec_domain domain, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::security::sec_domain domain, FormatContext& ctx)
   {
     static constexpr const char* options[] = {"RRC", "UP"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(domain)]);
@@ -414,14 +414,14 @@ struct formatter<srsran::security::sec_domain> {
 template <>
 struct formatter<srsran::security::sec_128_key> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::security::sec_128_key& key, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "\n\t{:02x}", fmt::join(key, " "));
   }
@@ -430,13 +430,13 @@ struct formatter<srsran::security::sec_128_key> {
 template <>
 struct formatter<srsran::security::sec_key> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::security::sec_key& key, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::security::sec_key& key, FormatContext& ctx)
   {
     format_to(ctx.out(), "\n\t{:02x}", fmt::join(key.begin(), key.begin() + 16, " "));
     return format_to(ctx.out(), "\n\t{:02x}", fmt::join(key.begin() + 16, key.end(), " "));
@@ -446,13 +446,13 @@ struct formatter<srsran::security::sec_key> {
 template <>
 struct formatter<srsran::security::sec_mac> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::security::sec_mac& mac, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::security::sec_mac& mac, FormatContext& ctx)
   {
     return format_to(ctx.out(), "\n\t{:02x}", fmt::join(mac, " "));
   }

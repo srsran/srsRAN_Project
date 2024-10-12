@@ -12,8 +12,8 @@
 
 #include "restricted_set_config.h"
 #include "srsran/adt/bounded_integer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include <optional>
 
 namespace srsran {
 

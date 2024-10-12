@@ -9,6 +9,7 @@
  */
 
 #include "up_resource_manager_helpers.h"
+#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

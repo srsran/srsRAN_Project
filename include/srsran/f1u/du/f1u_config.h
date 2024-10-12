@@ -37,13 +37,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_du::f1u_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_du::f1u_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::srs_du::f1u_config cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "t_notify={} rlc_queue_bytes_limit={} warn_on_drop={}",

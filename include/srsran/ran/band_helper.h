@@ -14,13 +14,14 @@
 /// provided by DU.
 
 #include "srsran/adt/expected.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/band_helper_constants.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/ssb_properties.h"
+
 #include <cstdint>
+#include <optional>
 
 namespace srsran {
 

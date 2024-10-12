@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/asn1/e2sm/e2sm_rc_ies.h"
 #include "srsran/asn1/rrc_nr/serving_cell.h"

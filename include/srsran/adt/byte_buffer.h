@@ -679,7 +679,7 @@ struct formatter<srsran::byte_buffer_view> {
   enum { hexadecimal, binary } mode = hexadecimal;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     while (it != ctx.end() and *it != '}') {
@@ -692,7 +692,7 @@ struct formatter<srsran::byte_buffer_view> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer_view& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer_view& buf, FormatContext& ctx)
   {
     if (mode == hexadecimal) {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
@@ -707,7 +707,7 @@ struct formatter<srsran::byte_buffer> {
   enum { hexadecimal, binary } mode = hexadecimal;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     while (it != ctx.end() and *it != '}') {
@@ -720,7 +720,7 @@ struct formatter<srsran::byte_buffer> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer& buf, FormatContext& ctx)
   {
     if (mode == hexadecimal) {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
@@ -733,7 +733,7 @@ struct formatter<srsran::byte_buffer> {
 template <>
 struct formatter<srsran::byte_buffer_slice> : public formatter<srsran::byte_buffer_view> {
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer_slice& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer_slice& buf, FormatContext& ctx)
   {
     return formatter<srsran::byte_buffer_view>::format(buf.view(), ctx);
   }

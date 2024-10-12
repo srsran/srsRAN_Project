@@ -11,12 +11,12 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/up_context.h"
 #include "srsran/rrc/meas_types.h"
 #include "srsran/security/security.h"
+#include <optional>
 
 namespace srsran {
 namespace srs_cu_cp {

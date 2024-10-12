@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include <optional>
 
 namespace srsran {
 

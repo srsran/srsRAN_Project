@@ -253,7 +253,7 @@ struct formatter<srsran::span<T>> {
   }
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     static const string_view PREAMBLE_FORMAT = "{:";
     static const string_view COMMA_DELIMITER = ", ";

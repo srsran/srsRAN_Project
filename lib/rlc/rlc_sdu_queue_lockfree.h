@@ -13,6 +13,7 @@
 #include "rlc_bearer_logger.h"
 #include "srsran/adt/spsc_queue.h"
 #include "srsran/rlc/rlc_tx.h"
+#include "srsran/support/format/fmt_optional.h"
 
 namespace srsran {
 
@@ -312,7 +313,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_sdu_queue_lockfree::state_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }

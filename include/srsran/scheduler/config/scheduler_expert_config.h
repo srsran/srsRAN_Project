@@ -14,7 +14,6 @@
 /// \brief Configuration structs passed to scheduler implementation.
 
 #include "srsran/adt/interval.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
@@ -22,6 +21,7 @@
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
+
 #include <chrono>
 #include <variant>
 

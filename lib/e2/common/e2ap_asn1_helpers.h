@@ -14,7 +14,6 @@
 #include "e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2ap_configuration.h"

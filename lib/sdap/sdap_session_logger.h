@@ -9,10 +9,9 @@
  */
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/support/prefixed_logger.h"
+#include "srsran/support/format/prefixed_logger.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -67,14 +66,14 @@ namespace fmt {
 template <>
 struct formatter<srsran::sdap_session_trx_log_prefix> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::sdap_session_trx_log_prefix o, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }
@@ -84,13 +83,13 @@ struct formatter<srsran::sdap_session_trx_log_prefix> {
 template <>
 struct formatter<srsran::sdap_session_log_prefix> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::sdap_session_log_prefix o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::sdap_session_log_prefix o, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

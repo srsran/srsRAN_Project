@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/pdcp/pdcp_t_reordering.h"
 #include "srsran/support/timers.h"
@@ -259,13 +258,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::pdcp_rb_type> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_rb_type type, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_rb_type type, FormatContext& ctx)
   {
     static constexpr const char* options[] = {"SRB", "DRB"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(type)]);
@@ -276,13 +275,13 @@ struct formatter<srsran::pdcp_rb_type> {
 template <>
 struct formatter<srsran::pdcp_rlc_mode> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_rlc_mode mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_rlc_mode mode, FormatContext& ctx)
   {
     static constexpr const char* options[] = {"UM", "AM"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
@@ -293,14 +292,14 @@ struct formatter<srsran::pdcp_rlc_mode> {
 template <>
 struct formatter<srsran::pdcp_t_reordering> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::pdcp_t_reordering t_reordering, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     if (t_reordering == srsran::pdcp_t_reordering::infinity) {
       return format_to(ctx.out(), "infinity");
@@ -313,14 +312,14 @@ struct formatter<srsran::pdcp_t_reordering> {
 template <>
 struct formatter<srsran::pdcp_discard_timer> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::pdcp_discard_timer discard_timer, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     if (discard_timer == srsran::pdcp_discard_timer::infinity) {
       return format_to(ctx.out(), "infinity");
@@ -333,13 +332,13 @@ struct formatter<srsran::pdcp_discard_timer> {
 template <>
 struct formatter<srsran::pdcp_custom_config_tx> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_custom_config_tx cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_custom_config_tx cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "count_notify={} count_max={} rlc_sdu_queue={} warn_on_drop={} test_mode={}",
@@ -355,13 +354,13 @@ struct formatter<srsran::pdcp_custom_config_tx> {
 template <>
 struct formatter<srsran::pdcp_custom_config_rx> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_custom_config_rx cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_custom_config_rx cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(), "count_notify={} count_max={}", cfg.max_count.notify, cfg.max_count.hard);
   }
@@ -371,13 +370,13 @@ struct formatter<srsran::pdcp_custom_config_rx> {
 template <>
 struct formatter<srsran::pdcp_tx_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_tx_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_tx_config cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} sn_size={} discard_timer={} {}",
@@ -393,13 +392,13 @@ struct formatter<srsran::pdcp_tx_config> {
 template <>
 struct formatter<srsran::pdcp_rx_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_rx_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_rx_config cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} sn_size={} t_reordering={} {}",
@@ -415,13 +414,13 @@ struct formatter<srsran::pdcp_rx_config> {
 template <>
 struct formatter<srsran::pdcp_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcp_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pdcp_config& cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} int_req={} cip_req={} TX=[sn_size={} discard_timer={}] "

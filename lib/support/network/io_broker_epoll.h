@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/adt/blocking_queue.h"
-#include "srsran/adt/optional.h"
 #include "srsran/support/io/io_broker.h"
 #include "srsran/support/io/unique_fd.h"
 #include <future>

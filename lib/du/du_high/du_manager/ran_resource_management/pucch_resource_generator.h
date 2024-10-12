@@ -11,7 +11,6 @@
 #pragma once
 
 #include "du_ue_resource_config.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 
 namespace srsran::srs_du {

@@ -12,7 +12,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -288,13 +288,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_am_pdu_header> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_am_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_am_pdu_header& hdr, FormatContext& ctx)
   {
     if (hdr.si == srsran::rlc_si_field::full_sdu || hdr.si == srsran::rlc_si_field::first_segment) {
       // Header of full SDU or first SDU segment has no SO.
@@ -307,14 +307,14 @@ struct formatter<srsran::rlc_am_pdu_header> {
 template <>
 struct formatter<srsran::rlc_am_status_nack> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::rlc_am_status_nack& nack, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     if (nack.has_nack_range) {
       if (nack.has_so) {
@@ -332,14 +332,14 @@ struct formatter<srsran::rlc_am_status_nack> {
 template <>
 struct formatter<srsran::rlc_am_status_pdu> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::rlc_am_status_pdu& status, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     memory_buffer buffer;
     format_to(buffer, "ack_sn={} n_nack={}", status.ack_sn, status.get_nacks().size());

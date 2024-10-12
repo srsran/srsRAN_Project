@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
+
 #include "srsran/support/units.h"
 #include <cstdint>
 

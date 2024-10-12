@@ -10,7 +10,9 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
+#include <cstdint>
+#include <optional>
+#include <utility>
 
 namespace srsran {
 

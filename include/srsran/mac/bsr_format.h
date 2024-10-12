@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/scheduler/config/logical_channel_group.h"
 #include "srsran/support/error_handling.h"
+#include <optional>
 
 namespace srsran {
 

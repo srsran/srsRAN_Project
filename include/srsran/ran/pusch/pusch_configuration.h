@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/alpha.h"
 #include "srsran/ran/csi_rs/csi_rs_id.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/pusch/tx_scheme_configuration.h"
 #include "srsran/ran/uci/uci_configuration.h"
+#include <optional>
 
 namespace srsran {
 

@@ -11,10 +11,10 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+
 #include <cstdint>
 
 namespace srsran {

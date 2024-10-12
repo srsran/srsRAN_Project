@@ -48,7 +48,7 @@ struct formatter<srsran::five_qi_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::five_qi_t& five_qi, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::five_qi_t& five_qi, FormatContext& ctx)
   {
     return format_to(ctx.out(), "5QI={:#x}", five_qi_to_uint(five_qi));
   }

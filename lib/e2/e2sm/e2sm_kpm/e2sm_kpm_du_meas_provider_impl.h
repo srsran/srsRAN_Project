@@ -12,7 +12,6 @@
 
 #include "e2sm_kpm_metric_defs.h"
 #include "e2sm_kpm_utils.h"
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
 #include "srsran/e2/e2_du.h"

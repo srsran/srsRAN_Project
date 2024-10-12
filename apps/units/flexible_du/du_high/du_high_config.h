@@ -11,7 +11,6 @@
 #pragma once
 
 #include "apps/services/os_sched_affinity_manager.h"
-#include "srsran/adt/optional.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"

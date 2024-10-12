@@ -18,6 +18,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
@@ -92,7 +93,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::mac_ul_sch_subpdu> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
@@ -159,12 +160,12 @@ struct formatter<srsran::mac_ul_sch_subpdu> {
 template <>
 struct formatter<srsran::mac_ul_sch_pdu> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(const srsran::mac_ul_sch_pdu& pdu, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::mac_ul_sch_pdu& pdu, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", fmt::join(pdu.begin(), pdu.end(), ", "));
   }

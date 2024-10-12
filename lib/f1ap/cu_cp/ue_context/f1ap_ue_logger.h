@@ -11,7 +11,7 @@
 
 #include "../../proc_logger.h"
 #include "f1ap_ue_ids.h"
-#include "srsran/support/prefixed_logger.h"
+#include "srsran/support/format/prefixed_logger.h"
 
 namespace srsran {
 namespace srs_cu_cp {

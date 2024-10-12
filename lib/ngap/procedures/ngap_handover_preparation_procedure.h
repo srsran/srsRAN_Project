@@ -10,12 +10,11 @@
 
 #pragma once
 
-#include "srsran/ngap/ngap_handover.h"
-#include "srsran/support/async/async_task.h"
-
 #include "procedures/ngap_transaction_manager.h"
 #include "ue_context/ngap_ue_context.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_handover.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran::srs_cu_cp {
 

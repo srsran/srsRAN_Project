@@ -14,6 +14,7 @@
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

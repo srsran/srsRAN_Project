@@ -14,7 +14,6 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/gnb_du_id.h"

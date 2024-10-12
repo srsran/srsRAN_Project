@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 

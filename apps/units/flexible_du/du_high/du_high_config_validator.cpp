@@ -17,6 +17,7 @@
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/rlc/rlc_config.h"
+#include "srsran/support/format/fmt_optional.h"
 #include <algorithm>
 
 using namespace srsran;

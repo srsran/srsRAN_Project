@@ -15,6 +15,7 @@
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/config/validator_helpers.h"
+#include "srsran/support/format/fmt_optional.h"
 #include <numeric>
 
 using namespace srsran;

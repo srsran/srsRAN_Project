@@ -13,7 +13,7 @@
 #include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/error_handling.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
 

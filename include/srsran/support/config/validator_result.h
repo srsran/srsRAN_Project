@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
+#include <string>
 
 namespace srsran {
 

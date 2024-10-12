@@ -14,7 +14,6 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
-#include "srsran/adt/optional.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/re_measurement.h"

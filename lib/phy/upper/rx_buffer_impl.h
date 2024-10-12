@@ -12,7 +12,6 @@
 
 #include "rx_buffer_codeblock_pool.h"
 #include "srsran/adt/bit_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"

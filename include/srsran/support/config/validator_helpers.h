@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/support/config/validator_result.h"
+#include <optional>
 
 namespace srsran {
 

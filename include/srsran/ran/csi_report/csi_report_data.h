@@ -11,7 +11,8 @@
 #pragma once
 
 #include "srsran/adt/bounded_integer.h"
-#include "srsran/adt/optional.h"
+#include "srsran/support/format/fmt_optional.h"
+#include <optional>
 #include <variant>
 
 namespace srsran {

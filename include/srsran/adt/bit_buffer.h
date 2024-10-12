@@ -448,7 +448,7 @@ struct formatter<srsran::bit_buffer> {
   enum { hexadecimal, binary } mode = binary;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     while (it != ctx.end() and *it != '}') {
@@ -462,7 +462,7 @@ struct formatter<srsran::bit_buffer> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::bit_buffer& s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::bit_buffer& s, FormatContext& ctx)
   {
     if (mode == hexadecimal) {
       return s.template to_hex_string<decltype(std::declval<FormatContext>().out())>(ctx.out());

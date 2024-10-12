@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rnti.h"
+#include <optional>
 
 namespace srsran {
 
