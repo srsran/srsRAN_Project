@@ -287,10 +287,12 @@ public:
   using strand_type   = priority_task_strand<OutExec>;
   using executor_type = priority_task_strand_executor<strand_type&>;
 
-  template <typename ExecType>
-  priority_task_strand(ExecType&& out_exec, span<const concurrent_queue_params> strand_queue_params) :
+  template <typename ExecType, typename ArrayOfQueueParams>
+  priority_task_strand(ExecType&& out_exec, const ArrayOfQueueParams& strand_queue_params) :
     impl(std::forward<ExecType>(out_exec), strand_queue_params)
   {
+    static_assert(std::is_same_v<typename std::decay_t<ArrayOfQueueParams>::value_type, concurrent_queue_params>,
+                  "Invalid queue params type");
     exec_list.reserve(nof_priority_levels());
     for (unsigned i = 0; i != strand_queue_params.size(); ++i) {
       exec_list.emplace_back(executor_type{detail::queue_index_to_enqueue_priority(i, nof_priority_levels()), *this});

@@ -201,7 +201,7 @@ public:
     cu_up_strand(&config.worker_pool_executor, config.default_task_queue_size),
     main_strand(
         &cu_up_strand,
-        std::vector{
+        std::array<concurrent_queue_params, 2>{
             concurrent_queue_params{srsran::concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
             concurrent_queue_params{srsran::concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size}}),
     main_ctrl_exec(main_strand.get_executors()[0]),
