@@ -233,13 +233,18 @@ publish maltab:
   stage: public
   interruptible: false
   variables:
+    ON_SCHEDULE: "true"
     CI_DESCRIPTION: Release
     NOTIFY_SLACK: "false"
+    SRSRAN_REPO_URL: https://${PUBLIC_PUSH_TOKEN}@github.com/${PUBLIC_REPO}.git
+    SRSRAN_COMMIT: $PUBLIC_BRANCH
   rules:
     - if: *on_public_push
     - if: *on_public_release
   needs:
     - job: publish main
+  inherit:
+    variables: false
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
