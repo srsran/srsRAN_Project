@@ -139,11 +139,11 @@ public:
 
   void disconnect();
 
-  void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn, uint32_t queue_free_bytes) override
+  void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn, uint32_t desired_buf_size) override
   {
     f1c_bearer* b = bearer.load(std::memory_order_relaxed);
     srsran_assert(b != nullptr, "RLC to F1-C TX data notifier is disconnected");
-    b->handle_transmit_notification(max_deliv_pdcp_sn, queue_free_bytes);
+    b->handle_transmit_notification(max_deliv_pdcp_sn);
   }
 
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override
@@ -178,11 +178,11 @@ public:
 
   void disconnect();
 
-  void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn, uint32_t queue_free_bytes) override
+  void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn, uint32_t desired_buf_size) override
   {
     f1u_tx_delivery_handler* h = handler.load(std::memory_order_relaxed);
     srsran_assert(h != nullptr, "RLC to F1-U TX data notifier is disconnected");
-    h->handle_transmit_notification(max_deliv_pdcp_sn, queue_free_bytes);
+    h->handle_transmit_notification(max_deliv_pdcp_sn, desired_buf_size);
   }
 
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override

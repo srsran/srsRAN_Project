@@ -21,6 +21,7 @@
  */
 
 #include "split6_du_application_unit_impl.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/units/flexible_du/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_du/du_high/du_high_config_yaml_writer.h"
 #include "apps/units/flexible_du/fapi/fapi_config_translator.h"

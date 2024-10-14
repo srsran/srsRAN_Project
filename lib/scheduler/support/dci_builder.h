@@ -122,6 +122,7 @@ void build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
                            uint8_t                       rv,
                            const ul_harq_process_handle& h_ul,
                            unsigned                      total_dai,
-                           unsigned                      nof_layers);
+                           unsigned                      nof_layers,
+                           unsigned                      tpmi);
 
 } // namespace srsran

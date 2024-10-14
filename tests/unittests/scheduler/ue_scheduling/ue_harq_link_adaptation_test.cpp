@@ -94,14 +94,11 @@ protected:
     return h_dl;
   }
 
-  const scheduler_expert_config        sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  cell_common_configuration_list       cell_cfg_list;
-  cell_configuration*                  cell_cfg = nullptr;
-  std::optional<ue_configuration>      ue_ded_cfg;
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
-  cell_harq_manager                    cell_harqs{1,
-                               MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
+  const scheduler_expert_config   sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  cell_common_configuration_list  cell_cfg_list;
+  cell_configuration*             cell_cfg = nullptr;
+  std::optional<ue_configuration> ue_ded_cfg;
+  cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
 
   srslog::basic_logger& logger;
 

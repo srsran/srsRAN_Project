@@ -40,6 +40,8 @@ public:
     }
   }
 
+  ~e2_metric_connector_manager() = default;
+
   e2_metric_connector_manager(e2_metric_connector_manager&& other) noexcept :
     e2_metric_connectors(std::move(other.e2_metric_connectors))
   {

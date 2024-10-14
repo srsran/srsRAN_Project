@@ -25,9 +25,9 @@
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
-#include "srsran/e2/e2_connection_client.h"
 #include "srsran/e2/e2_cu.h"
 #include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/support/async/async_task.h"
@@ -122,8 +122,6 @@ struct cu_cp_configuration {
   struct plugin_params {
     /// Try to load CU-CP plugins.
     bool load_plugins;
-    /// Loaded function pointer to trigger NG Handover
-    void* start_ng_ho_func = nullptr;
     /// Loaded function pointer to connect to AMFs
     connect_amfs_func connect_amfs = nullptr;
     /// Loaded function pointer to disconnect from AMFs

@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../ue_scheduling/harq_process.h"
 #include "scheduler_metrics_ue_configurator.h"
 #include "srsran/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
@@ -36,7 +35,7 @@ class cell_configuration;
 struct rach_indication_message;
 
 ///\brief Handler of scheduler slot metrics for a given cell.
-class cell_metrics_handler final : public harq_timeout_handler, public sched_metrics_ue_configurator
+class cell_metrics_handler final : public sched_metrics_ue_configurator
 {
   using msecs = std::chrono::milliseconds;
   using usecs = std::chrono::microseconds;
@@ -141,7 +140,7 @@ public:
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
 
   /// \brief Register HARQ timeout.
-  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override;
+  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl);
 
   /// \brief Handle UCI PDU indication.
   void handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu);

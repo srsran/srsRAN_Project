@@ -24,7 +24,6 @@ add_executable(srscu
 	cu_appconfig_validator.cpp
 	cu_appconfig_yaml_writer.cpp
     ../gnb/gnb_appconfig_translators.cpp
-    ../gnb/adapters/e2_gateway_remote_connector.cpp # TODO: Delete
 )
 
 install(TARGETS srscu

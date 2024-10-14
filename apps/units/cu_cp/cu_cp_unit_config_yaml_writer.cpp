@@ -30,7 +30,7 @@ static YAML::Node build_cu_cp_tai_slice_section(const s_nssai_t& config)
 {
   YAML::Node node;
 
-  node["sst"] = config.sst;
+  node["sst"] = static_cast<unsigned>(config.sst);
   if (config.sd) {
     node["sd"] = config.sd.value();
   }
@@ -42,9 +42,10 @@ static YAML::Node build_cu_cp_plmn_list_section(const cu_cp_unit_plmn_item& conf
 {
   YAML::Node node;
 
-  node["plmn"] = config.plmn_id;
+  node["plmn"]        = config.plmn_id;
+  auto tai_slice_node = node["tai_slice_support_list"];
   for (const auto& slice : config.tai_slice_support_list) {
-    node["tai_slice_support_list"] = build_cu_cp_tai_slice_section(slice);
+    tai_slice_node.push_back(build_cu_cp_tai_slice_section(slice));
   }
 
   return node;
@@ -54,9 +55,10 @@ static YAML::Node build_cu_cp_supported_tas_section(const cu_cp_unit_supported_t
 {
   YAML::Node node;
 
-  node["tac"] = config.tac;
+  node["tac"]    = config.tac;
+  auto plmn_node = node["plmn_list"];
   for (const auto& plmn_item : config.plmn_list) {
-    node["plmn_list"] = build_cu_cp_plmn_list_section(plmn_item);
+    plmn_node.push_back(build_cu_cp_plmn_list_section(plmn_item));
   }
 
   return node;
@@ -77,8 +79,9 @@ static YAML::Node build_cu_cp_extra_amfs_item_section(const cu_cp_unit_amf_confi
   node["sctp_max_init_timeo"]    = config.sctp_max_init_timeo;
   node["sctp_nodelay"]           = config.sctp_nodelay;
 
+  auto sta_node = node["supported_tracking_areas"];
   for (const auto& ta : config.supported_tas) {
-    node["supported_tracking_areas"] = build_cu_cp_supported_tas_section(ta);
+    sta_node.push_back(build_cu_cp_supported_tas_section(ta));
   }
 
   return node;
@@ -89,7 +92,7 @@ static YAML::Node build_cu_cp_extra_amfs_section(const std::vector<cu_cp_unit_am
   YAML::Node node;
 
   for (const auto& amf : amfs) {
-    node["extra_amfs"] = build_cu_cp_extra_amfs_item_section(amf);
+    node.push_back(build_cu_cp_extra_amfs_item_section(amf));
   }
 
   return node;
@@ -243,16 +246,18 @@ static YAML::Node build_cu_cp_section(const cu_cp_unit_config& config)
   node["max_nof_dus"]               = config.max_nof_dus;
   node["max_nof_cu_ups"]            = config.max_nof_cu_ups;
   node["max_nof_ues"]               = config.max_nof_ues;
-  node["max_nof_drbs_per_ue"]       = config.max_nof_drbs_per_ue;
+  node["max_nof_drbs_per_ue"]       = static_cast<unsigned>(config.max_nof_drbs_per_ue);
   node["inactivity_timer"]          = config.inactivity_timer;
   node["pdu_session_setup_timeout"] = config.pdu_session_setup_timeout;
 
-  node["amf"]        = build_cu_cp_amf_section(config.amf_config);
-  node["extra_amfs"] = build_cu_cp_extra_amfs_section(config.extra_amfs);
-  node["mobility"]   = build_cu_cp_mobility_section(config.mobility_config);
-  node["rrc"]        = build_cu_cp_rrc_section(config.rrc_config);
-  node["security"]   = build_cu_cp_security_section(config.security_config);
-  node["f1ap"]       = build_cu_cp_f1ap_section(config.f1ap_config);
+  node["amf"] = build_cu_cp_amf_section(config.amf_config);
+  if (!config.extra_amfs.empty()) {
+    node["extra_amfs"] = build_cu_cp_extra_amfs_section(config.extra_amfs);
+  }
+  node["mobility"] = build_cu_cp_mobility_section(config.mobility_config);
+  node["rrc"]      = build_cu_cp_rrc_section(config.rrc_config);
+  node["security"] = build_cu_cp_security_section(config.security_config);
+  node["f1ap"]     = build_cu_cp_f1ap_section(config.f1ap_config);
 
   return node;
 }

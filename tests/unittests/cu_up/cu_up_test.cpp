@@ -108,7 +108,7 @@ protected:
     worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
     executor = make_task_executor_ptr(*worker);
 
-    exec_pool    = std::make_unique<dummy_cu_up_executor_pool>(executor.get());
+    exec_pool    = std::make_unique<dummy_cu_up_executor_mapper>(executor.get());
     app_timers   = std::make_unique<timer_manager>(256);
     f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     broker       = create_io_broker(io_broker_type::epoll);
@@ -119,9 +119,7 @@ protected:
   {
     // create config
     cu_up_configuration cfg;
-    cfg.ctrl_executor                = executor.get();
-    cfg.ue_exec_pool                 = exec_pool.get();
-    cfg.io_ul_executor               = executor.get();
+    cfg.exec_mapper                  = exec_pool.get();
     cfg.e1ap.e1_conn_client          = &e1ap_client;
     cfg.f1u_gateway                  = f1u_gw.get();
     cfg.ngu_gw                       = ngu_gw.get();
@@ -157,14 +155,14 @@ protected:
 
   std::unique_ptr<timer_manager> app_timers;
 
-  dummy_cu_cp_handler                        e1ap_client;
-  dummy_inner_f1u_bearer                     f1u_bearer;
-  std::unique_ptr<dummy_f1u_gateway>         f1u_gw;
-  std::unique_ptr<io_broker>                 broker;
-  std::unique_ptr<ngu_gateway>               ngu_gw;
-  std::unique_ptr<dummy_cu_up_executor_pool> exec_pool;
-  std::unique_ptr<srs_cu_up::cu_up>          cu_up;
-  srslog::basic_logger&                      test_logger = srslog::fetch_basic_logger("TEST");
+  dummy_cu_cp_handler                          e1ap_client;
+  dummy_inner_f1u_bearer                       f1u_bearer;
+  std::unique_ptr<dummy_f1u_gateway>           f1u_gw;
+  std::unique_ptr<io_broker>                   broker;
+  std::unique_ptr<ngu_gateway>                 ngu_gw;
+  std::unique_ptr<dummy_cu_up_executor_mapper> exec_pool;
+  std::unique_ptr<srs_cu_up::cu_up>            cu_up;
+  srslog::basic_logger&                        test_logger = srslog::fetch_basic_logger("TEST");
 
   std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;

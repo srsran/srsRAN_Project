@@ -66,15 +66,12 @@ protected:
 
   void run_slot() { next_slot++; }
 
-  const scheduler_expert_config        sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const scheduler_ue_expert_config&    expert_cfg{sched_cfg.ue};
-  cell_common_configuration_list       cell_cfg_list;
-  const cell_configuration&            cell_cfg;
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
-  cell_harq_manager                    cell_harqs{1,
-                               MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
-  std::optional<ue_configuration>      ue_ded_cfg;
+  const scheduler_expert_config     sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
+  cell_common_configuration_list    cell_cfg_list;
+  const cell_configuration&         cell_cfg;
+  cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
+  std::optional<ue_configuration> ue_ded_cfg;
 
   srslog::basic_logger& logger;
 

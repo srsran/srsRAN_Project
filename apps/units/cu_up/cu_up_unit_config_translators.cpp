@@ -79,7 +79,9 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
 
 void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, const cu_up_unit_config& unit_cfg)
 {
-  config.gtpu_queue_size = unit_cfg.gtpu_queue_size;
+  config.cu_up_cfg = worker_manager_config::cu_up_config{};
+
+  config.cu_up_cfg.value().gtpu_queue_size = unit_cfg.gtpu_queue_size;
 
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {

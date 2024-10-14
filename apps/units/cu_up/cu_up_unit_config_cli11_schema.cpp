@@ -29,8 +29,30 @@
 
 using namespace srsran;
 
+static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_params)
+{
+  add_option(app, "--bind_addr", upf_params.bind_addr, "Local IP address to bind for N3 interface")
+      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
+  add_option(app, "--bind_interface", upf_params.bind_interface, "Network device to bind for N3 interface")
+      ->capture_default_str();
+  add_option(app,
+             "--ext_addr",
+             upf_params.ext_addr,
+             "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
+      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
+  add_option(app, "--udp_max_rx_msgs", upf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
+  add_option(
+      app, "--pool_threshold", upf_params.pool_threshold, "Pool accupancy threshold after which packets are dropped")
+      ->check(CLI::Range(0.0, 1.0));
+  add_option(app, "--no_core", upf_params.no_core, "Allow gNB to run without a core");
+}
+
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)
 {
+  // UPF section.
+  CLI::App* upf_subcmd = add_subcommand(app, "upf", "UPF parameters")->configurable();
+  configure_cli11_upf_args(*upf_subcmd, cu_up_params.upf_cfg);
+
   add_option(app, "--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")
       ->capture_default_str();
   add_option(app,
@@ -80,24 +102,6 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
 
   add_option(app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
       ->capture_default_str();
-}
-
-static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_params)
-{
-  add_option(app, "--bind_addr", upf_params.bind_addr, "Local IP address to bind for N3 interface")
-      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--bind_interface", upf_params.bind_interface, "Network device to bind for N3 interface")
-      ->capture_default_str();
-  add_option(app,
-             "--ext_addr",
-             upf_params.ext_addr,
-             "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
-      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--udp_max_rx_msgs", upf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
-  add_option(
-      app, "--pool_threshold", upf_params.pool_threshold, "Pool accupancy threshold after which packets are dropped")
-      ->check(CLI::Range(0.0, 1.0));
-  add_option(app, "--no_core", upf_params.no_core, "Allow gNB to run without a core");
 }
 
 static void configure_cli11_rlc_am_args(CLI::App& app, uint32_t& queue_size)
@@ -158,7 +162,7 @@ static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_c
 void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_unit_config& unit_cfg)
 {
   // CU-UP section.
-  CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-CP parameters")->configurable();
+  CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
   configure_cli11_cu_up_args(*cu_up_subcmd, unit_cfg);
 
   // Loggers section.
@@ -172,10 +176,6 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
-
-  // UPF section.
-  CLI::App* upf_subcmd = add_subcommand(app, "upf", "UPF parameters")->configurable();
-  configure_cli11_upf_args(*upf_subcmd, unit_cfg.upf_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {

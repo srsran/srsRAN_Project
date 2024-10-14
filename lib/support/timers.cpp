@@ -21,7 +21,12 @@
  */
 
 #include "srsran/support/timers.h"
+#include "cameron314/concurrentqueue.h"
 #include "srsran/srslog/srslog.h"
+
+#ifdef ENABLE_TSAN
+#include "sanitizer/tsan_interface.h"
+#endif
 
 using namespace srsran;
 
@@ -74,21 +79,67 @@ void timer_manager::timer_frontend::stop()
   parent.push_timer_command(cmd_t{id, cmd_id.load(std::memory_order_relaxed), cmd_t::stop});
 }
 
-timer_manager::timer_manager(size_t capacity) : logger(srslog::fetch_basic_logger("ALL")), time_wheel(WHEEL_SIZE)
+//
+
+class timer_manager::unique_timer_pool
 {
-  // Pre-reserve timers.
-  while (timer_list.size() < capacity) {
-    timer_list.emplace_back().frontend = std::make_unique<timer_frontend>(*this, (timer_id_t)next_timer_id++);
+public:
+  unique_timer_pool(timer_manager& parent, unsigned capacity) : free_list(capacity) {}
+
+  void push(timer_manager::timer_frontend* obj)
+  {
+#ifdef ENABLE_TSAN
+    __tsan_release((void*)obj);
+#endif
+    free_list.enqueue(obj);
   }
 
-  // Push to free list in reverse order to keep ascending ids.
-  for (auto i = timer_list.rbegin(), e = timer_list.rend(); i != e; ++i) {
-    free_list.emplace_back(i->frontend.get());
+  timer_manager::timer_frontend* pop()
+  {
+    timer_manager::timer_frontend* ret;
+    if (free_list.try_dequeue(ret)) {
+#ifdef ENABLE_TSAN
+      __tsan_acquire((void*)ret);
+#endif
+      return ret;
+    }
+    return nullptr;
   }
+
+  size_t size_approx() const
+  {
+    return free_list.size_approx();
+  }
+
+private:
+  // List of timer_handle objects in timer_list that are currently not allocated.
+  moodycamel::ConcurrentQueue<timer_manager::timer_frontend*> free_list;
+};
+
+//
+
+timer_manager::timer_manager(size_t capacity) :
+  logger(srslog::fetch_basic_logger("ALL")),
+  timer_pool(std::make_unique<unique_timer_pool>(*this, capacity)),
+  time_wheel(WHEEL_SIZE)
+{
+  // Pre-reserve timers.
+  while (timers.size() < capacity) {
+    timers.emplace_back().frontend =
+        std::make_unique<timer_frontend>(*this, (timer_id_t)next_timer_id.fetch_add(1, std::memory_order_relaxed));
+  }
+
+  // Push to free list in ascending id order.
+  for (const auto& t : timers) {
+    timer_pool->push(t.frontend.get());
+  }
+
   const uint16_t cmds_capacity = 16384;
   pending_cmds.reserve(cmds_capacity);
   cmds_to_process.reserve(cmds_capacity);
 }
+
+timer_manager::~timer_manager() {}
 
 void timer_manager::tick()
 {
@@ -109,7 +160,7 @@ void timer_manager::tick()
 
     // Existing timer.
     const cmd_t&  cmd   = std::get<cmd_t>(event);
-    timer_handle& timer = timer_list[static_cast<unsigned>(cmd.id)];
+    timer_handle& timer = timers[static_cast<size_t>(cmd.id)];
 
     // Update the timer backend cmd_id to match frontend.
     timer.backend.cmd_id = cmd.cmd_id;
@@ -137,7 +188,7 @@ void timer_manager::tick()
   // Iterate intrusive linked list of running timers with same wheel index.
   for (auto it = wheel_list.begin(); it != wheel_list.end();) {
     srsran_assert(it->frontend != nullptr, "invalid state of timer in timer wheel");
-    timer_handle& timer = timer_list[static_cast<unsigned>(it->frontend->id)];
+    timer_handle& timer = timers[static_cast<size_t>(it->frontend->id)];
     // We move iterator already, in case, the current timer gets removed from the linked list.
     ++it;
 
@@ -160,12 +211,11 @@ void timer_manager::push_timer_command(cmd_t cmd)
 void timer_manager::create_timer_handle(std::unique_ptr<timer_frontend> timer)
 {
   auto timer_idx = static_cast<unsigned>(timer->id);
-  srsran_assert(timer_idx >= timer_list.size() or timer_list[timer_idx].frontend == nullptr,
-                "Duplicate timer id detection");
-  if (timer_idx >= timer_list.size()) {
-    timer_list.resize(timer_idx + 1);
+  srsran_assert(timer_idx >= timers.size() or timers[timer_idx].frontend == nullptr, "Duplicate timer id detection");
+  if (timer_idx >= timers.size()) {
+    timers.resize(timer_idx + 1);
   }
-  timer_list[timer_idx].frontend = std::move(timer);
+  timers[timer_idx].frontend = std::move(timer);
 }
 
 void timer_manager::start_timer_backend(timer_handle& timer, unsigned duration)
@@ -234,7 +284,7 @@ bool timer_manager::try_stop_timer_backend(timer_handle& timer, bool expiry_reas
 void timer_manager::handle_postponed_timeouts()
 {
   while (not failed_to_trigger_timers.empty()) {
-    timer_handle& timer       = timer_list[static_cast<unsigned>(failed_to_trigger_timers.front().first)];
+    timer_handle& timer       = timers[(size_t)failed_to_trigger_timers.front().first];
     cmd_id_t      prev_cmd_id = failed_to_trigger_timers.front().second;
 
     if (timer.backend.cmd_id == prev_cmd_id and
@@ -268,41 +318,31 @@ void timer_manager::destroy_timer_backend(timer_handle& timer)
   timer.backend.state   = state_t::stopped;
   timer.backend.timeout = 0;
   // Add timer handle in free list.
-  std::lock_guard<std::mutex> lock(free_list_mutex);
-  free_list.emplace_back(timer.frontend.get());
+  timer_pool->push(timer.frontend.get());
 }
 
 timer_manager::timer_frontend& timer_manager::create_frontend_timer(task_executor& exec)
 {
-  // Allocate timer frontend with unique timer id.
-  timer_id_t      id           = timer_id_t::invalid;
-  timer_frontend* cached_timer = nullptr;
-  {
-    std::lock_guard<std::mutex> lock(free_list_mutex);
-    if (!free_list.empty()) {
-      cached_timer = free_list.back();
-      free_list.pop_back();
-    } else {
-      // Need to allocate new timer.
-      id = (timer_id_t)next_timer_id++;
-    }
-  }
-
-  // In case it fails to reuse a cached timer frontend object. Need to create a new one.
-  if (cached_timer == nullptr) {
-    auto new_handle  = std::make_unique<timer_frontend>(*this, id);
-    new_handle->exec = &exec;
-    cached_timer     = new_handle.get();
-
-    // Forward created timer handle to the backend.
-    {
-      std::lock_guard<std::mutex> lock(cmd_mutex);
-      pending_cmds.emplace_back(std::move(new_handle));
-    }
-  } else {
+  // Pop cached timer from pool.
+  timer_frontend* cached_timer = timer_pool->pop();
+  if (cached_timer != nullptr) {
     srsran_assert(cached_timer->exec == nullptr, "Reassignment of timer detected");
     // Assign new executor to created timer.
     cached_timer->exec = &exec;
+    return *cached_timer;
+  }
+
+  // In case it fails to reuse a cached timer frontend object. Need to create a new one.
+  const auto id         = (timer_id_t)next_timer_id.fetch_add(1, std::memory_order_relaxed);
+  auto       new_handle = std::make_unique<timer_frontend>(*this, id);
+  new_handle->exec      = &exec;
+  cached_timer          = new_handle.get();
+
+  // Forward created timer handle to the backend.
+  // Note: This cannot fail, otherwise the created "id" cannot be reused.
+  {
+    std::lock_guard<std::mutex> lock(cmd_mutex);
+    pending_cmds.emplace_back(std::move(new_handle));
   }
 
   return *cached_timer;
@@ -315,6 +355,5 @@ unique_timer timer_manager::create_unique_timer(task_executor& exec)
 
 size_t timer_manager::nof_timers() const
 {
-  std::lock_guard<std::mutex> lock(free_list_mutex);
-  return timer_list.size() - free_list.size();
+  return timers.size() - std::min(timers.size(), timer_pool->size_approx());
 }

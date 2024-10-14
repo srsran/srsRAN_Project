@@ -80,6 +80,9 @@ public:
   /// successful outcome, 'false' otherwise.
   /// and awaits the response. If a E2SetupFailure is received the E2 will handle the failure.
   virtual async_task<e2_setup_response_message> start_initial_e2_setup_routine() = 0;
+
+  /// \brief Request the E2AP handler to disconnect from the Near-RT RIC.
+  virtual async_task<void> handle_e2_disconnection_request() = 0;
 };
 
 /// This interface is used to pack outgoing and unpack incoming E2 messages.

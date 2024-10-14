@@ -79,6 +79,7 @@ option(ENABLE_DPDK           "Enable DPDK"                              OFF)
 option(ENABLE_LIBNUMA        "Enable LibNUMA"                           OFF)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"      OFF)
+option(ENABLE_PLUGINS        "Compile plugins in the plugin folder"     ON)
 option(BUILD_TESTS           "Compile tests"                            ON)
 option(ENABLE_GPROF          "Enable gprof"                             OFF)
 option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              OFF)
@@ -444,6 +445,22 @@ if (BUILD_TESTS)
     add_subdirectory(tests/integrationtests)
     add_subdirectory(tests/benchmarks)
 endif (BUILD_TESTS)
+
+if (ENABLE_PLUGINS)
+   # Discover all subdirectories in the plugin directory (but not recursively)
+   file(GLOB SUBDIRS RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/plugins/*)
+   
+   # Loop through each plugin subdirectory
+   foreach(subdir ${SUBDIRS})
+       # Check if it's a directory and contains a CMakeLists.txt file
+       if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/${subdir} AND EXISTS ${CMAKE_SOURCE_DIR}/${subdir}/CMakeLists.txt)
+           message(STATUS "Adding plugin: ${subdir}")
+           add_subdirectory(${subdir})
+       endif()
+   endforeach()
+endif ()
+
+
 
 ########################################################################
 # Export (selected) libraries

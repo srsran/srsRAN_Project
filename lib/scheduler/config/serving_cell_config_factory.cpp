@@ -441,9 +441,13 @@ ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_con
 
 pusch_config srsran::config_helpers::make_default_pusch_config(const cell_config_builder_params_extended& params)
 {
+  // Default PUSCH transmission scheme is codebook with at maximum one layer. It assumes the UE Capability parameter
+  // pusch-TransCoherence is fullCoherent.
+  static constexpr unsigned                  max_rank        = 1;
+  static constexpr tx_scheme_codebook_subset codebook_subset = tx_scheme_codebook_subset::non_coherent;
+
   pusch_config cfg{};
-  // TODO: Verify whether its the correct Transmission Configuration we want to support.
-  cfg.tx_cfg = pusch_config::tx_config::codebook;
+  cfg.tx_cfg = tx_scheme_codebook{.max_rank = max_rank, .codebook_subset = codebook_subset};
   cfg.pusch_mapping_type_a_dmrs.emplace();
   cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.emplace();
   cfg.pusch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos2;
@@ -465,8 +469,6 @@ pusch_config srsran::config_helpers::make_default_pusch_config(const cell_config
       .closed_loop_idx = pusch_config::pusch_power_control::sri_pusch_pwr_ctrl::sri_pusch_closed_loop_index::i0});
   cfg.res_alloc      = pusch_config::resource_allocation::resource_allocation_type_1;
   cfg.trans_precoder = pusch_config::transform_precoder::disabled;
-  cfg.cb_subset      = pusch_config::codebook_subset::non_coherent;
-  cfg.max_rank       = 1;
 
   cfg.uci_cfg.emplace();
   auto& uci_cfg   = cfg.uci_cfg.value();

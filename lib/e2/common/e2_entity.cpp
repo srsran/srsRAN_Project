@@ -38,14 +38,6 @@
 using namespace srsran;
 using namespace asn1::e2ap;
 
-e2_entity::e2_entity(e2ap_configuration&           cfg_,
-                     std::unique_ptr<e2_interface> decorated_e2_iface_,
-                     task_executor&                task_exec_) :
-  logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
-{
-  decorated_e2_iface = std::move(decorated_e2_iface_);
-}
-
 e2_entity::e2_entity(e2ap_configuration&                                              cfg_,
                      e2_connection_client*                                            e2_client_,
                      std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
@@ -53,9 +45,13 @@ e2_entity::e2_entity(e2ap_configuration&                                        
                      srs_du::du_configurator*                                         du_configurator_,
                      timer_factory                                                    timers_,
                      task_executor&                                                   task_exec_) :
-  logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
+  logger(srslog::fetch_basic_logger("E2")),
+  cfg(cfg_),
+  task_exec(task_exec_),
+  main_ctrl_loop(128),
+  connection_handler(*e2_client_, *this, *this, task_exec_)
 {
-  e2_pdu_notifier   = e2_client_->handle_connection_request();
+  e2_pdu_notifier   = connection_handler.connect_to_ric();
   e2sm_mngr         = std::make_unique<e2sm_manager>(logger);
   subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2_pdu_notifier, *e2sm_mngr);
 
@@ -105,7 +101,6 @@ e2_entity::e2_entity(e2ap_configuration&                                        
   }
 
   decorated_e2_iface = std::make_unique<e2_impl>(cfg_, timers_, *e2_pdu_notifier, *subscription_mngr, *e2sm_mngr);
-  e2_client_->connect_e2ap(e2_pdu_notifier.get(), this, this);
 }
 
 void e2_entity::start()
@@ -126,7 +121,18 @@ void e2_entity::start()
 
 void e2_entity::stop()
 {
-  // placeholder_
+  if (not task_exec.execute([this]() {
+        main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+
+          // Send E2AP Setup Request and await for E2AP setup response.
+          CORO_AWAIT(handle_e2_disconnection_request());
+
+          CORO_RETURN();
+        });
+      })) {
+    report_fatal_error("Unable to initiate E2AP setup procedure");
+  }
 }
 
 async_task<e2_setup_response_message> e2_entity::handle_e2_setup_request(e2_setup_request_message& request)
@@ -151,4 +157,9 @@ void e2_entity::handle_message(const e2_message& msg)
   if (not task_exec.execute([this, msg]() { decorated_e2_iface->handle_message(msg); })) {
     logger.error("Unable to dispatch handling of message");
   }
+}
+
+async_task<void> e2_entity::handle_e2_disconnection_request()
+{
+  return connection_handler.handle_tnl_association_removal();
 }

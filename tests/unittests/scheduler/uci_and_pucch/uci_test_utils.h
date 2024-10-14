@@ -133,7 +133,6 @@ public:
 
   scheduler_expert_config                        expert_cfg;
   sched_cfg_dummy_notifier                       mac_notif;
-  scheduler_harq_timeout_dummy_handler           harq_timeout_handler;
   cell_common_configuration_list                 cell_cfg_list{};
   const cell_configuration&                      cell_cfg;
   std::vector<std::unique_ptr<ue_configuration>> ue_ded_cfgs;

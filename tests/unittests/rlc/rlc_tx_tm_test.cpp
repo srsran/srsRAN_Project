@@ -43,7 +43,7 @@ public:
   uint32_t                      bsr_count   = 0;
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t queue_free_bytes) override {}
+  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t desired_buf_size) override {}
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override {}
   void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override {}
   void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override {}

@@ -117,29 +117,29 @@ generate testvector tar gz:
       - phy_testvectors.tar
     expire_in: "30 days"
 
-coverity-agpl:
-  extends: .coverity_base
-  stage: private
-  rules:
-    - if: *on_public_push
-    - if: *on_public_release
-  variables:
-    GIT_STRATEGY: none
-    PRIVATE_BRANCH: ""
-  before_script:
-    - export PROJECT_NAME="srsRAN_5G_agpl"
-    - export DESCRIPTION="srsRAN Project AGPL build"
-    - export COV_TOKEN="${COVERITY_TOKEN_AGPL}"
-    # Download agpl branch
-    - git config --global user.name "${CODEBOT_USERNAME}"
-    - git config --global user.email "${CODEBOT_LONG_USERNAME}@noreply.gitlab.com"
-    - git clone --depth 1 --branch $PRIVATE_BRANCH https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
-    - cd /${CI_PROJECT_NAME}
-  needs:
-    - *release-var-needs
-    - job: update private branch
-      optional: false
-      artifacts: false
+# coverity-agpl:
+#   extends: .coverity_base
+#   stage: private
+#   rules:
+#     - if: *on_public_push
+#     - if: *on_public_release
+#   variables:
+#     GIT_STRATEGY: none
+#     PRIVATE_BRANCH: ""
+#   before_script:
+#     - export PROJECT_NAME="srsRAN_5G_agpl"
+#     - export DESCRIPTION="srsRAN Project AGPL build"
+#     - export COV_TOKEN="${COVERITY_TOKEN_AGPL}"
+#     # Download agpl branch
+#     - git config --global user.name "${CODEBOT_USERNAME}"
+#     - git config --global user.email "${CODEBOT_LONG_USERNAME}@noreply.gitlab.com"
+#     - git clone --depth 1 --branch $PRIVATE_BRANCH https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
+#     - cd /${CI_PROJECT_NAME}
+#   needs:
+#     - *release-var-needs
+#     - job: update private branch
+#       optional: false
+#       artifacts: false
 
 ################################################################################
 # Publish

@@ -433,11 +433,11 @@ android IMS:
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
     - *retina-needs
-  allow_failure: true
 
 android x300:
   stage: rf
@@ -481,11 +481,10 @@ viavi:
     matrix:
       - KEYWORDS: [
             "ideal and 1UE",
-            "ideal and 32UE and not experimental",
+            "ideal and 32UE and not experimental and not dddsu",
             "fading and 1UE",
-            # "fading and 32UE",
+            "fading and 32UE",
             "birth-death and 1UE",
-            # "birth-death and 32UE",
             "32UE and experimental and not extended",
           ]
 
@@ -495,17 +494,28 @@ viavi-extended:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     KEYWORDS: "extended"
-  allow_failure: true
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
 
+viavi-dddsu:
+  extends: .viavi
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
+  allow_failure: true
+  parallel:
+    matrix:
+      - KEYWORDS: [
+            "dddsu",
+          ]
+
 viavi-debug:
   extends: .viavi
   variables:
     MARKERS: "viavi_debug"
-  allow_failure: true
   needs:
     - job: "basic avx512 dpdk withassert"
       artifacts: true

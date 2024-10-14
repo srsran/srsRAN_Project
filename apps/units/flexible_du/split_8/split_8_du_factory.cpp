@@ -21,7 +21,7 @@
  */
 
 #include "split_8_du_factory.h"
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/worker_manager.h"
 #include "apps/units/flexible_du/du_high/du_high_commands.h"
 #include "apps/units/flexible_du/du_high/du_high_config_translators.h"
@@ -33,6 +33,7 @@
 #include "split_8_du_impl.h"
 #include "srsran/du/du_wrapper.h"
 #include "srsran/du/du_wrapper_factory.h"
+#include "srsran/e2/e2_du_metrics_connector.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/ru/ru_dummy_factory.h"
 
@@ -96,6 +97,9 @@ static void update_du_metrics(std::vector<app_services::metrics_config>& flexibl
 du_unit srsran::create_split_8_du(const split_8_du_unit_config& du_8_cfg, const du_unit_dependencies& dependencies)
 {
   du_unit du_cmd_wrapper;
+  du_cmd_wrapper.e2_metric_connectors = std::make_unique<
+      e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>(
+      du_8_cfg.du_high_cfg.config.cells_cfg.size());
 
   const du_high_unit_config& du_hi    = du_8_cfg.du_high_cfg.config;
   const du_low_unit_config&  du_lo    = du_8_cfg.du_low_cfg;
@@ -144,11 +148,11 @@ du_unit srsran::create_split_8_du(const split_8_du_unit_config& du_8_cfg, const 
                                                          *dependencies.mac_p,
                                                          *dependencies.rlc_p,
                                                          *dependencies.e2_client_handler,
-                                                         *dependencies.e2_metric_connectors,
+                                                         *du_cmd_wrapper.e2_metric_connectors,
                                                          *dependencies.json_sink,
                                                          *dependencies.metrics_notifier);
 
-    update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_du_e2);
+    update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_unit_e2);
 
     // Use the commands of the first cell.
     if (i == 0) {

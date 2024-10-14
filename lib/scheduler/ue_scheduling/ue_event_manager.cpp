@@ -419,20 +419,21 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
 {
   for (unsigned harq_idx = 0, harq_end_idx = harq_bits.size(); harq_idx != harq_end_idx; ++harq_idx) {
     // Update UE HARQ state with received HARQ-ACK.
-    std::optional<dl_harq_process::dl_ack_info_result> result =
+    std::optional<ue_cell::dl_ack_info_result> result =
         ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
     if (result.has_value()) {
       // Respective HARQ was found.
-      const units::bytes tbs{result->tb.tbs_bytes};
+      const units::bytes tbs{result->h_dl.get_grant_params().tbs_bytes};
 
       // Log Event.
       du_cells[ue_cc.cell_index].ev_logger->enqueue(scheduler_event_logger::harq_ack_event{
-          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result->h_id, harq_bits[harq_idx], tbs});
-      if (result->update == dl_harq_process::status_update::acked or
-          result->update == dl_harq_process::status_update::nacked) {
-        // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
+          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result->h_dl.id(), harq_bits[harq_idx], tbs});
+
+      // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
+      if (result->update == dl_harq_process_handle::status_update::acked or
+          result->update == dl_harq_process_handle::status_update::nacked) {
         du_cells[ue_cc.cell_index].metrics->handle_dl_harq_ack(
-            ue_cc.ue_index, result->update == dl_harq_process::status_update::acked, tbs);
+            ue_cc.ue_index, result->update == dl_harq_process_handle::status_update::acked, tbs);
       }
     }
   }
@@ -545,7 +546,33 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
 {
   srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
 
-  // TODO: Implement SRS handling.
+  for (unsigned i = 0, e = ind.srss.size(); i != e; ++i) {
+    const srs_indication::srs_indication_pdu& srs_pdu = ind.srss[i];
+
+    if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
+            srs_pdu.ue_index,
+            [this, channel_matrix = srs_pdu.channel_matrix, time_advance_offset = srs_pdu.time_advance_offset](
+                ue_cell& ue_cc) {
+              // Indicate the channel matrix.
+              ue_cc.handle_srs_channel_matrix(channel_matrix);
+
+              // Handle time aligment measurement if present.
+              if (time_advance_offset.has_value()) {
+                // Assume some SINR for the TA feedback using the channel matrix topology and near zero noise variance.
+                float frobenius_norm = channel_matrix.frobenius_norm();
+                float noise_var      = near_zero;
+                float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
+
+                // Notify UL TA update.
+                ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                    ue_cc.cell_index, sinr_dB, time_advance_offset.value());
+              }
+            },
+            "SRS",
+            false})) {
+      logger.warning("SRS indication discarded. Cause: Event queue is full");
+    }
+  }
 }
 
 void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)

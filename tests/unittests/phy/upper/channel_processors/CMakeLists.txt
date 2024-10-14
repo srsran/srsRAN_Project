@@ -137,6 +137,6 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(pucch_processor_format2_vectortest pucch_processor_format2_test_data.tar.gz "")
 
     add_executable(ssb_processor_vectortest ssb_processor_vectortest.cpp)
-    target_link_libraries(ssb_processor_vectortest srsran_channel_processors srsran_lower_phy_modulation srslog)
+    target_link_libraries(ssb_processor_vectortest srsran_channel_processors srslog)
     add_test_vector(ssb_processor_vectortest ssb_processor_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)

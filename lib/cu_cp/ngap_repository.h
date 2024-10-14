@@ -35,11 +35,10 @@ namespace srs_cu_cp {
 struct cu_cp_configuration;
 
 struct ngap_repository_config {
-  const cu_cp_configuration&                     cu_cp;
-  cu_cp_ngap_handler&                            cu_cp_notifier;
-  paging_message_handler&                        paging_handler;
-  start_ngap_handover_preparation_procedure_func start_ho_func;
-  srslog::basic_logger&                          logger;
+  const cu_cp_configuration& cu_cp;
+  cu_cp_ngap_handler&        cu_cp_notifier;
+  paging_message_handler&    paging_handler;
+  srslog::basic_logger&      logger;
 };
 
 class ngap_repository

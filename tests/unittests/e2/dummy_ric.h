@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "apps/gnb/adapters/e2ap_adapter.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
@@ -34,7 +33,7 @@ namespace srsran {
 class dlt_pcap;
 class io_broker;
 
-struct e2_sctp_gateway_config {
+struct ric_sctp_gateway_config {
   /// SCTP configuration.
   sctp_network_gateway_config sctp;
   /// IO broker responsible for handling SCTP Rx data and notifications.
@@ -71,7 +70,7 @@ public:
 
 /// Creates a RIC Gateway server that listens for incoming SCTP connections, packs/unpacks E2AP PDUs and forwards
 /// them to the GW/RIC E2AP handler.
-std::unique_ptr<e2_connection_server> create_e2_gateway_server(const e2_sctp_gateway_config& params);
+std::unique_ptr<e2_connection_server> create_e2_gateway_server(const ric_sctp_gateway_config& params);
 
 struct e2_agent_repository {
   std::map<unsigned, std::unique_ptr<e2_message_notifier>> db;

@@ -107,7 +107,7 @@ private:
 class ric_sctp_server final : public e2_connection_server, public sctp_network_association_factory
 {
 public:
-  ric_sctp_server(const e2_sctp_gateway_config& params_) : params(params_)
+  ric_sctp_server(const ric_sctp_gateway_config& params_) : params(params_)
   {
     // Create SCTP server.
     sctp_server = create_sctp_network_server(sctp_network_server_config{params.sctp, params.broker, *this});
@@ -141,13 +141,13 @@ public:
   }
 
 private:
-  const e2_sctp_gateway_config         params;
+  const ric_sctp_gateway_config        params;
   srslog::basic_logger&                logger             = srslog::fetch_basic_logger("RIC");
   ric_e2_handler*                      ric_e2_con_handler = nullptr;
   std::unique_ptr<sctp_network_server> sctp_server;
 };
 
-std::unique_ptr<e2_connection_server> srsran::create_e2_gateway_server(const e2_sctp_gateway_config& cfg)
+std::unique_ptr<e2_connection_server> srsran::create_e2_gateway_server(const ric_sctp_gateway_config& cfg)
 {
   return std::make_unique<ric_sctp_server>(cfg);
 }

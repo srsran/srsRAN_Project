@@ -90,7 +90,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
   }
 }
 
-void f1c_srb0_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes)
+void f1c_srb0_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn)
 {
   report_fatal_error("Transmission notifications do not exist for SRB0");
 }
@@ -233,7 +233,7 @@ async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await_delivery(byte_buf
   return handle_pdu_and_await(std::move(pdu), false, time_to_wait);
 }
 
-void f1c_other_srb_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_free_bytes)
+void f1c_other_srb_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn)
 {
   if (not ue_exec.defer([this, highest_pdcp_sn]() { handle_notification(highest_pdcp_sn, true); })) {
     logger.warning("Discarded transmit notification for SRB{} because the task executor queue is full.",

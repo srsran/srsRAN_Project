@@ -53,7 +53,8 @@
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/services/worker_manager.h"
 
-#include "apps/gnb/adapters/e2_gateway_remote_connector.h"
+#include "apps/cu/adapters/e2_gateways.h"
+#include "apps/du/adapters/e2_gateways.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
@@ -324,10 +325,10 @@ int main(int argc, char** argv)
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
-  fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
   cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   du_app_unit->fill_worker_manager_config(worker_manager_cfg);
+  fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
 
   worker_manager workers{worker_manager_cfg};
 
@@ -372,25 +373,10 @@ int main(int argc, char** argv)
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
   // Load CU-CP plugins if enabled
-  std::optional<dynlink_manager> ng_handover_plugin =
-      cu_cp_app_unit->get_cu_cp_unit_config().load_plugins
-          ? dynlink_manager::create("libsrsran_plugin_ng_handover.so", gnb_logger)
-          : std::nullopt;
   std::optional<dynlink_manager> mocn_plugin = cu_cp_app_unit->get_cu_cp_unit_config().load_plugins
                                                    ? dynlink_manager::create("libsrsran_plugin_mocn.so", gnb_logger)
                                                    : std::nullopt;
   if (cu_cp_app_unit->get_cu_cp_unit_config().load_plugins) {
-    if (not ng_handover_plugin) {
-      gnb_logger.error("Could not open NG Handover plugin");
-      return -1;
-    }
-    expected<void*> ng_ho_func = ng_handover_plugin->load_symbol("start_ngap_preparation_procedure_func");
-    if (not ng_ho_func) {
-      gnb_logger.error("Could not open NG Handover function pointer");
-      return -1;
-    }
-    cu_cp_app_unit->get_cu_cp_unit_config().start_ng_ho_func = ng_ho_func.value();
-
     if (not mocn_plugin) {
       gnb_logger.error("Could not open MOCN plugin");
       return -1;
@@ -417,14 +403,12 @@ int main(int argc, char** argv)
   cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
   cu_cp_dependencies.broker         = epoll_broker.get();
 
-  // E2AP configuration.
-  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg.e2_cfg, E2_DU_PPID);
-  srsran::sctp_network_connector_config e2_cu_nw_config = generate_e2ap_nw_config(gnb_cfg.e2_cfg, E2_CP_PPID);
+  // Instantiate E2AP client gateways.
+  std::unique_ptr<e2_connection_client> e2_gw_du =
+      create_du_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *du_pcaps.e2ap);
+  std::unique_ptr<e2_connection_client> e2_gw_cu =
+      create_cu_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap);
 
-  // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw_du{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
-  e2_gateway_remote_connector e2_gw_cu{*epoll_broker, e2_cu_nw_config, *cu_cp_dlt_pcaps.e2ap};
-  cu_cp_dependencies.e2_gw = &e2_gw_cu;
   // create CU-CP.
   auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
   srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
@@ -449,7 +433,7 @@ int main(int argc, char** argv)
   du_dependencies.timer_mng          = &app_timers;
   du_dependencies.mac_p              = du_pcaps.mac.get();
   du_dependencies.rlc_p              = du_pcaps.rlc.get();
-  du_dependencies.e2_client_handler  = &e2_gw_du;
+  du_dependencies.e2_client_handler  = e2_gw_du.get();
   du_dependencies.json_sink          = &json_sink;
   du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
@@ -509,17 +493,6 @@ int main(int argc, char** argv)
 
   // Stop CU-CP activity.
   cu_cp_obj.stop();
-
-  if (gnb_cfg.e2_cfg.enable_du_e2) {
-    gnb_logger.info("Closing E2 DU network connections...");
-    e2_gw_du.close();
-    gnb_logger.info("E2 Network connections closed successfully");
-  }
-  if (gnb_cfg.e2_cfg.enable_cu_e2) {
-    gnb_logger.info("Closing E2 CU network connections...");
-    e2_gw_cu.close();
-    gnb_logger.info("E2 Network connections closed successfully");
-  }
 
   gnb_logger.info("Closing PCAP files...");
   cu_cp_dlt_pcaps.close();

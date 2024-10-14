@@ -451,9 +451,11 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
       case fapi::ul_pdu_type::PUSCH: {
         uplink_processor::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
         convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant, part2_repo);
-        if (!ul_pdu_validator.is_valid(ul_pdu.pdu)) {
-          logger.warning("Upper PHY flagged a PUSCH PDU as having an invalid configuration. Skipping UL_TTI.request");
-
+        error_type<std::string> phy_pusch_validator = ul_pdu_validator.is_valid(ul_pdu.pdu);
+        if (!phy_pusch_validator.has_value()) {
+          logger.warning(
+              "Skipping UL_TTI.request: PUSCH PDU flagged as invalid by the Upper PHY with the following error\n    {}",
+              phy_pusch_validator.error());
           return make_unexpected(default_error_t{});
         }
         break;

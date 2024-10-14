@@ -19,7 +19,6 @@
 #
 
 set(SOURCES
-        harq_process.cpp
         dl_logical_channel_manager.cpp
         ul_logical_channel_manager.cpp
         ta_manager.cpp

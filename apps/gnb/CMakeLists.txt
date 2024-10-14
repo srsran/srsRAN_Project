@@ -24,7 +24,6 @@ add_executable(gnb
         gnb_appconfig_validators.cpp
         gnb_appconfig_translators.cpp
         gnb_appconfig_yaml_writer.cpp
-        adapters/e2_gateway_remote_connector.cpp
         )
 
 install(TARGETS gnb
@@ -35,7 +34,7 @@ target_link_libraries(gnb
         srsgnb_app_f1u_connector
         srsran_cu_cp
         srsran_network
-        srsran_ngap
+        -Wl,--whole-archive srsran_ngap -Wl,--no-whole-archive
         ngap_asn1
         srsran_e2
         e2ap_asn1

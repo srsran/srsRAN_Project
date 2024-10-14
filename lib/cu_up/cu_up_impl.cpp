@@ -34,8 +34,7 @@ using namespace srs_cu_up;
 
 void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 {
-  srsran_assert(cfg.ue_exec_pool != nullptr, "Invalid CU-UP UE executor pool");
-  srsran_assert(cfg.io_ul_executor != nullptr, "Invalid CU-UP IO UL executor");
+  srsran_assert(cfg.exec_mapper != nullptr, "Invalid CU-UP UE executor pool");
   srsran_assert(cfg.e1ap.e1_conn_client != nullptr, "Invalid E1 connection client");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
   srsran_assert(cfg.ngu_gw != nullptr, "Invalid N3 gateway");
@@ -57,7 +56,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
 
-  ctrl_exec_mapper = cfg.ue_exec_pool->create_ue_executor_mapper();
+  ctrl_exec_mapper = cfg.exec_mapper->create_ue_executor_mapper();
   report_error_if_not(ctrl_exec_mapper != nullptr, "Could not create CU-UP executor for control TEID");
 
   // Create GTP-U echo and register it at demux
@@ -92,7 +91,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
   /// > Create e1ap
-  e1ap = create_e1ap(*cfg.e1ap.e1_conn_client, e1ap_cu_up_mng_adapter, *cfg.timers, *cfg.ctrl_executor);
+  e1ap = create_e1ap(*cfg.e1ap.e1_conn_client, e1ap_cu_up_mng_adapter, *cfg.timers, cfg.exec_mapper->ctrl_executor());
 
   cfg.e1ap.e1ap_conn_mng = e1ap.get();
 
@@ -105,7 +104,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Start statistics report timer
   if (cfg.statistics_report_period.count() > 0) {
-    statistics_report_timer = cfg.timers->create_unique_timer(*cfg.ctrl_executor);
+    statistics_report_timer = cfg.timers->create_unique_timer(cfg.exec_mapper->ctrl_executor());
     statistics_report_timer.set(cfg.statistics_report_period,
                                 [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
     statistics_report_timer.run();
@@ -130,7 +129,7 @@ void cu_up::start()
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
-  if (not cfg.ctrl_executor->execute([this, &p]() {
+  if (not cfg.exec_mapper->ctrl_executor().execute([this, &p]() {
         main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
@@ -191,7 +190,7 @@ void cu_up::stop()
 
   // Wait until the all tasks of the main loop are completed and main loop has stopped.
   while (not main_loop_stopped) {
-    if (not cfg.ctrl_executor->execute(stop_cu_up_main_loop)) {
+    if (not cfg.exec_mapper->ctrl_executor().execute(stop_cu_up_main_loop)) {
       logger.error("Unable to stop CU-UP");
       return;
     }

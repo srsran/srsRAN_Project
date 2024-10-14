@@ -34,12 +34,9 @@ protected:
   scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cell_configuration_request_message msg       = test_helpers::make_default_sched_cell_configuration_request();
   sched_ue_creation_request_message        ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
-  scheduler_harq_timeout_dummy_handler     harq_timeout_handler;
 
   cell_common_configuration_list cell_cfg_db;
-  cell_harq_manager              cell_harqs{1,
-                               MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
+  cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
 };
 
 TEST_F(ue_configuration_test, configuration_valid_on_creation)

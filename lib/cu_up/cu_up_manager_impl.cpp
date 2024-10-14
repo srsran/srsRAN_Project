@@ -21,7 +21,7 @@
  */
 
 #include "cu_up_manager_impl.h"
-#include "srsran/support/async/execute_on.h"
+#include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -58,8 +58,7 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_configuration&    config_,
                                         ngu_demux,
                                         n3_teid_allocator,
                                         f1u_teid_allocator,
-                                        *cfg.ue_exec_pool,
-                                        *cfg.ctrl_executor,
+                                        *cfg.exec_mapper,
                                         *cfg.gtpu_pcap,
                                         logger);
 }
@@ -124,7 +123,7 @@ cu_up_manager_impl::handle_bearer_context_modification_request(const e1ap_bearer
     });
   }
   return execute_and_continue_on_blocking(
-      ue_ctxt->ue_exec_mapper->ctrl_executor(), *cfg.ctrl_executor, [this, ue_ctxt, msg]() {
+      ue_ctxt->ue_exec_mapper->ctrl_executor(), cfg.exec_mapper->ctrl_executor(), *cfg.timers, [this, ue_ctxt, msg]() {
         return handle_bearer_context_modification_request_impl(*ue_ctxt, msg);
       });
 }

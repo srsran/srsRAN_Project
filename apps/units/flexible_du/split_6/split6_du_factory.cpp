@@ -21,7 +21,7 @@
  */
 
 #include "split6_du_factory.h"
-#include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/worker_manager.h"
 #include "apps/units/flexible_du/du_high/du_high_commands.h"
 #include "apps/units/flexible_du/du_high/du_high_config_translators.h"
@@ -31,6 +31,7 @@
 #include "split6_du_unit_config.h"
 #include "srsran/du/du_high_wrapper.h"
 #include "srsran/du/du_high_wrapper_factory.h"
+#include "srsran/e2/e2_du_metrics_connector.h"
 
 using namespace srsran;
 
@@ -72,6 +73,9 @@ du_unit srsran::create_du_split6(const split6_du_unit_config&                   
                                  std::vector<std::unique_ptr<fapi::fapi_adaptor>> fapi_adaptors)
 {
   du_unit du_cmd_wrapper;
+  du_cmd_wrapper.e2_metric_connectors = std::make_unique<
+      e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>(
+      du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
   const du_high_unit_config& du_hi    = du_unit_cfg.du_high_cfg.config;
   const fapi_unit_config&    fapi_cfg = du_unit_cfg.fapi_cfg;
@@ -100,7 +104,7 @@ du_unit srsran::create_du_split6(const split6_du_unit_config&                   
                                                          *du_dependencies.json_sink,
                                                          *du_dependencies.metrics_notifier);
 
-    update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_du_e2);
+    update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_unit_e2);
 
     // Use the commands of the first cell.
     if (i == 0) {

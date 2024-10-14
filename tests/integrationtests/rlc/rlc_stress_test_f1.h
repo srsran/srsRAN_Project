@@ -57,7 +57,7 @@ public:
   }
 
   // RLC -> F1AP -> PDCP
-  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t queue_free_bytes) final
+  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t desired_buf_size) final
   {
     logger.log_debug("Transmitted SDU called");
     // TODO

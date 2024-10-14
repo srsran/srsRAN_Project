@@ -31,6 +31,7 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
@@ -41,12 +42,11 @@ namespace srs_cu_cp {
 class ngap_impl final : public ngap_interface
 {
 public:
-  ngap_impl(const ngap_configuration&                      ngap_cfg_,
-            ngap_cu_cp_notifier&                           cu_cp_notifier_,
-            start_ngap_handover_preparation_procedure_func start_ho_prep_func_,
-            n2_connection_client&                          n2_gateway,
-            timer_manager&                                 timers_,
-            task_executor&                                 ctrl_exec_);
+  ngap_impl(const ngap_configuration& ngap_cfg_,
+            ngap_cu_cp_notifier&      cu_cp_notifier_,
+            n2_connection_client&     n2_gateway,
+            timer_manager&            timers_,
+            task_executor&            ctrl_exec_);
   ~ngap_impl();
 
   bool
@@ -189,9 +189,6 @@ private:
   ngap_connection_handler conn_handler;
 
   std::unique_ptr<tx_pdu_notifier_with_logging> tx_pdu_notifier;
-
-  // Plugins
-  start_ngap_handover_preparation_procedure_func start_ho_prep_func = nullptr;
 };
 
 } // namespace srs_cu_cp

@@ -73,11 +73,9 @@ protected:
   test_helpers::test_sched_config_manager test_cfg;
   const cell_configuration&               cell_cfg;
 
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
-
   cell_harq_manager cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(harq_timeout_handler)};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
   ue_repository     ues;
 
   cell_resource_allocator dummy_alloc{cell_cfg};

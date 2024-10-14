@@ -115,13 +115,12 @@ void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
   }
 }
 
-void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_bytes_free)
+void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size)
 {
   // This function may be called from pcell_executor, since it only writes to an atomic variable
-  logger.log_debug(
-      "Storing highest transmitted pdcp_sn={} and desired buffer size bs={}", highest_pdcp_sn, queue_bytes_free);
+  logger.log_debug("Storing highest transmitted pdcp_sn={} and desired_buf_size={}", highest_pdcp_sn, desired_buf_size);
   highest_transmitted_pdcp_sn.store(highest_pdcp_sn, std::memory_order_relaxed);
-  desired_buffer_size_for_data_radio_bearer.store(queue_bytes_free, std::memory_order_relaxed);
+  desired_buffer_size_for_data_radio_bearer.store(desired_buf_size, std::memory_order_relaxed);
 }
 
 void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)

@@ -134,6 +134,8 @@ public:
   /// \param capacity Number of timers to pre-reserve and speed up timer construction.
   explicit timer_manager(size_t pre_reserve_capacity = 64);
 
+  ~timer_manager();
+
   /// Advances one tick and triggers any running timer that just expired.
   void tick();
 
@@ -148,6 +150,8 @@ public:
 
 private:
   friend class unique_timer;
+
+  class unique_timer_pool;
 
   /// \brief Create a new front-end context to be used by a newly created unique_timer.
   timer_frontend& create_frontend_timer(task_executor& exec);
@@ -191,13 +195,12 @@ private:
   /// reused for the creation of new unique_timers in the front-end. The fact that the timer_handle is not deleted
   /// also avoids potential dangling pointer when the timer expiry callback is dispatched to the front-end execution
   /// context.
-  /// Note: we use a deque to maintain reference validity.
-  std::deque<timer_handle> timer_list;
+  // Note: we use a deque to maintain reference validity.
+  std::deque<timer_handle> timers;
 
-  /// List of timer_handle objects in timer_list that are currently not allocated.
-  mutable std::mutex           free_list_mutex;
-  unsigned                     next_timer_id = 0;
-  std::vector<timer_frontend*> free_list;
+  // Pool of timers that can be reused.
+  std::unique_ptr<unique_timer_pool> timer_pool;
+  std::atomic<unsigned>              next_timer_id{0};
 
   /// \brief Timer wheel, which is circularly indexed via a running timer timeout. Collisions are resolved via an
   /// intrusive linked list stored in the timer_handle objects.

@@ -92,6 +92,43 @@ size_t get_ring_size(const mac_cell_creation_request& cell_cfg)
 
 } // namespace
 
+test_ue_info_manager::test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_) :
+  rnti_start(rnti_start_), nof_ues(nof_ues_), pending_tasks(128)
+{
+}
+
+void test_ue_info_manager::add_ue(rnti_t rnti, du_ue_index_t ue_idx, const sched_ue_config_request& sched_ue_cfg_req)
+{
+  // Dispatch creation of UE to du_cell thread.
+  while (not pending_tasks.try_push([this, rnti, ue_idx, sched_ue_cfg_req]() {
+    rnti_to_ue_info_lookup[rnti] =
+        test_ue_info{.ue_idx = ue_idx, .sched_ue_cfg_req = sched_ue_cfg_req, .msg4_rx_flag = false};
+  })) {
+    srslog::fetch_basic_logger("MAC").warning("Failed to add test mode UE. Retrying...");
+  }
+}
+
+void test_ue_info_manager::remove_ue(rnti_t rnti)
+{
+  while (not pending_tasks.try_push([this, rnti]() {
+    if (rnti_to_ue_info_lookup.count(rnti) > 0) {
+      rnti_to_ue_info_lookup.erase(rnti);
+    }
+  })) {
+    srslog::fetch_basic_logger("MAC").warning("Failed to remove test mode UE. Retrying...");
+  }
+}
+
+void test_ue_info_manager::process_pending_tasks()
+{
+  unique_task task;
+  while (pending_tasks.try_pop(task)) {
+    task();
+  }
+}
+
+// ----
+
 mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
     const srs_du::du_test_mode_config::test_mode_ue_config& test_ue_cfg_,
     const mac_cell_creation_request&                        cell_cfg,
@@ -474,9 +511,28 @@ void mac_test_mode_cell_adapter::handle_srs(const mac_srs_indication_message& ms
   // TODO: Implement this method.
 }
 
+// Intercepts the sched + signalling results coming from the MAC.
+void mac_test_mode_cell_adapter::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
+{
+  if (last_slot_ind != dl_res.slot) {
+    // Process any pending tasks for the test mode UE manager asynchronously.
+    ue_info_mgr.process_pending_tasks();
+    last_slot_ind = dl_res.slot;
+  }
+
+  // Dispatch result to lower layers.
+  result_notifier.on_new_downlink_scheduler_results(dl_res);
+}
+
 // Intercepts the UL results coming from the MAC.
 void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {
+  if (last_slot_ind != ul_res.slot) {
+    // Process any pending tasks for the test mode UE manager asynchronously.
+    ue_info_mgr.process_pending_tasks();
+    last_slot_ind = ul_res.slot;
+  }
+
   {
     slot_decision_history&       entry = sched_decision_history[get_ring_idx(ul_res.slot)];
     std::unique_lock<std::mutex> lock(entry.mutex);

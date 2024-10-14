@@ -21,7 +21,7 @@
  */
 
 #include "ue_manager.h"
-#include "srsran/support/async/execute_on.h"
+#include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -36,8 +36,7 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
                        gtpu_demux_ctrl&                            gtpu_rx_demux_,
                        gtpu_teid_pool&                             n3_teid_allocator_,
                        gtpu_teid_pool&                             f1u_teid_allocator_,
-                       cu_up_executor_pool&                        exec_pool_,
-                       task_executor&                              ctrl_executor_,
+                       cu_up_executor_mapper&                      exec_pool_,
                        dlt_pcap&                                   gtpu_pcap_,
                        srslog::basic_logger&                       logger_) :
   net_config(net_config_),
@@ -50,7 +49,7 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
   n3_teid_allocator(n3_teid_allocator_),
   f1u_teid_allocator(f1u_teid_allocator_),
   exec_pool(exec_pool_),
-  ctrl_executor(ctrl_executor_),
+  ctrl_executor(exec_pool.ctrl_executor()),
   gtpu_pcap(gtpu_pcap_),
   timers(timers_),
   logger(logger_)
@@ -128,7 +127,7 @@ async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
     CORO_BEGIN(ctx);
 
     // Dispatch execution context switch.
-    CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor()));
+    CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor(), timers));
 
     // Stop and delete
     CORO_AWAIT(ue_ctxt->stop());
@@ -136,7 +135,7 @@ async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
     logger.info("ue={}: UE removed", ue_index);
 
     // Continuation in the original executor.
-    CORO_AWAIT(execute_on_blocking(ctrl_executor));
+    CORO_AWAIT(execute_on_blocking(ctrl_executor, timers));
 
     CORO_RETURN();
   });

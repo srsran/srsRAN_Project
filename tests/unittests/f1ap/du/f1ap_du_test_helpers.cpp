@@ -354,7 +354,7 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
 
   // Report transmission notification back to F1AP.
   std::optional<uint32_t> pdcp_sn = get_pdcp_sn(f1ap_req->rrc_container, pdcp_sn_size::size12bits, true, test_logger);
-  ue.f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(pdcp_sn.value(), 0);
+  ue.f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(pdcp_sn.value());
   this->ctrl_worker.run_pending_tasks();
 }
 

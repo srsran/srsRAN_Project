@@ -37,15 +37,7 @@ namespace {
 class dummy_harq_timeout_notifier : public harq_timeout_notifier
 {
 public:
-  dummy_harq_timeout_notifier(harq_timeout_handler& handler_) : handler(handler_) {}
-
-  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
-  {
-    handler.handle_harq_timeout(ue_idx, is_dl);
-  }
-
-private:
-  harq_timeout_handler& handler;
+  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override {}
 };
 
 } // namespace
@@ -169,7 +161,7 @@ public:
                                 expert_cfg, make_custom_sched_cell_configuration_request(params.is_tdd)));
       return *cell_cfg_list[to_du_cell_index(0)];
     }()},
-    cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>(harq_timeout_handler)},
+    cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},
     srs_sched(cell_cfg, ues),
     current_sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
@@ -178,16 +170,15 @@ public:
   }
 
   // Class members.
-  scheduler_expert_config              expert_cfg;
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
-  cell_common_configuration_list       cell_cfg_list{};
-  const cell_configuration&            cell_cfg;
-  cell_harq_manager                    cell_harqs;
-  ue_repository                        ues;
-  std::vector<ue_configuration>        ue_ded_cfgs;
-  cell_resource_allocator              res_grid{cell_cfg};
-  srs_scheduler_impl                   srs_sched;
-  slot_point                           current_sl_tx;
+  scheduler_expert_config        expert_cfg;
+  cell_common_configuration_list cell_cfg_list{};
+  const cell_configuration&      cell_cfg;
+  cell_harq_manager              cell_harqs;
+  ue_repository                  ues;
+  std::vector<ue_configuration>  ue_ded_cfgs;
+  cell_resource_allocator        res_grid{cell_cfg};
+  srs_scheduler_impl             srs_sched;
+  slot_point                     current_sl_tx;
 
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");

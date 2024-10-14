@@ -228,35 +228,39 @@ static units::bits ul_precoding_info_size_2port_maxrank1(tx_scheme_codebook_subs
 }
 
 // Computes the UL precoding information field size for DCI format 0_1.
-static units::bits ul_precoding_info_size(bool                                     tx_config_non_codebook,
-                                          unsigned                                 nof_antenna_ports,
-                                          bool                                     transform_precoding_enabled,
-                                          unsigned                                 max_rank,
-                                          std::optional<tx_scheme_codebook_subset> codebook_subset)
+static units::bits ul_precoding_info_size(pusch_tx_scheme_configuration tx_scheme_config,
+                                          unsigned                      nof_antenna_ports,
+                                          bool                          transform_precoding_enabled)
 {
   using namespace units::literals;
 
-  if (tx_config_non_codebook) {
+  // Non-codebook transmission scheme does not contain precoding information bits.
+  if (std::holds_alternative<tx_scheme_non_codebook>(tx_scheme_config)) {
     return 0_bits;
   }
 
+  // Codebook transmission scheme does not work with one antenna port.
   if (nof_antenna_ports == 1) {
     return 0_bits;
   }
 
-  if ((nof_antenna_ports == 4) && (max_rank == 1)) {
-    return ul_precoding_info_size_4port_maxrank1(codebook_subset.value());
+  // Extract codebook transmission scheme parameters.
+  srsran_assert(std::holds_alternative<tx_scheme_codebook>(tx_scheme_config), "Transmission scheme is not codebook.");
+  const tx_scheme_codebook& codebook_config = std::get<tx_scheme_codebook>(tx_scheme_config);
+
+  if ((nof_antenna_ports == 4) && (codebook_config.max_rank == 1)) {
+    return ul_precoding_info_size_4port_maxrank1(codebook_config.codebook_subset);
   }
 
   if (nof_antenna_ports == 4) {
-    return ul_precoding_info_size_4port(codebook_subset.value());
+    return ul_precoding_info_size_4port(codebook_config.codebook_subset);
   }
 
-  if ((nof_antenna_ports == 2) && (max_rank == 1)) {
-    return ul_precoding_info_size_2port_maxrank1(codebook_subset.value());
+  if ((nof_antenna_ports == 2) && (codebook_config.max_rank == 1)) {
+    return ul_precoding_info_size_2port_maxrank1(codebook_config.codebook_subset);
   }
 
-  return ul_precoding_info_size_2port(codebook_subset.value());
+  return ul_precoding_info_size_2port(codebook_config.codebook_subset);
 }
 
 // Computes the UL antenna ports field size for a specific DM-RS configuration.
@@ -359,8 +363,10 @@ static units::bits dl_ports_size(std::optional<dmrs_config_type> dmrs_A_type,
 // Computes the SRS resource indicator field size for DCI format 0_1.
 static unsigned srs_resource_indicator_size(const dci_size_config& dci_config)
 {
+  srsran_assert(dci_config.pusch_tx_scheme.has_value(), "Transmit scheme is not present.");
+
   // SRS resource indicator size for non-codebook based transmission.
-  if (dci_config.tx_config_non_codebook) {
+  if (std::holds_alternative<tx_scheme_non_codebook>(dci_config.pusch_tx_scheme.value())) {
     // Derived from TS38.212 Table 7.3.1.1.2-28.
     switch (dci_config.nof_srs_resources) {
       case 1:
@@ -447,12 +453,9 @@ static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_conf
   sizes.total += sizes.srs_resource_indicator;
 
   // Precoding information and number of layers - 0, 1, 2, 3, 4, 5 or 6 bits.
-  if (dci_config.nof_srs_ports.has_value()) {
-    sizes.precoding_info_nof_layers = ul_precoding_info_size(dci_config.tx_config_non_codebook,
-                                                             dci_config.nof_srs_ports.value(),
-                                                             dci_config.transform_precoding_enabled,
-                                                             dci_config.max_rank.value(),
-                                                             dci_config.cb_subset);
+  if (dci_config.nof_srs_ports.has_value() && dci_config.pusch_tx_scheme.has_value()) {
+    sizes.precoding_info_nof_layers = ul_precoding_info_size(
+        dci_config.pusch_tx_scheme.value(), dci_config.nof_srs_ports.value(), dci_config.transform_precoding_enabled);
     sizes.total += sizes.precoding_info_nof_layers;
   }
 
@@ -1512,7 +1515,6 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
   static constexpr interval<unsigned, true> nof_pdsch_ack_timings_range(1, 8);
   static constexpr interval<unsigned, true> nof_rb_groups_range(1, MAX_NOF_RBGS);
   static constexpr interval<unsigned, true> pusch_max_layers_range(1, 4);
-  static constexpr interval<unsigned, true> max_rank_range(1, 4);
 
   // Check that UL and DL BWP and CORESET 0 bandwidths are within range.
   if (!bwp_bw_range.contains(config.dl_bwp_initial_bw)) {
@@ -1643,8 +1645,14 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
       }
     }
 
+    // PUSCH transmit scheme is required if DCI 0_1 is enabled.
+    if (config.dci_0_1_and_1_1_ue_ss && !config.pusch_tx_scheme.has_value()) {
+      return make_unexpected("PUSCH Transmit scheme is required for DCI 0_1.");
+    }
+
     // Requirements for non-codebook based transmission.
-    if (config.tx_config_non_codebook) {
+    if (config.pusch_tx_scheme.has_value() &&
+        std::holds_alternative<tx_scheme_non_codebook>(config.pusch_tx_scheme.value())) {
       // PUSCH max number of layers is required.
       if (!config.pusch_max_layers) {
         return make_unexpected("Maximum number of PUSCH layers is required for non-codebook transmission.");
@@ -1669,18 +1677,12 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
                         config.nof_srs_resources,
                         non_codebook_nof_srs_res_range));
       }
+    }
 
-      // Requirements for codebook based transmission.
-    } else {
-      // Maximum rank is required for codebook-based transmission.
-      if (!config.max_rank.has_value()) {
-        return make_unexpected("Maximum rank is required for codebook transmission.");
-      }
-
-      // Maximum rank must be within the valid range {1, ..., 4}.
-      if (!max_rank_range.contains(config.max_rank.value())) {
-        return make_unexpected(fmt::format("Maximum rank {} is out of range {}.", config.max_rank, max_rank_range));
-      }
+    // Requirements for codebook based transmission.
+    if (config.pusch_tx_scheme.has_value() &&
+        std::holds_alternative<tx_scheme_codebook>(config.pusch_tx_scheme.value())) {
+      const tx_scheme_codebook& tx_scheme_cfg = std::get<tx_scheme_codebook>(config.pusch_tx_scheme.value());
 
       // For codebook based transmission, the number of SRS ports is required.
       if (!config.nof_srs_ports.has_value()) {
@@ -1696,32 +1698,21 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
       }
 
       // Maximum rank cannot be greater than the number of SRS ports.
-      if (config.max_rank.value() > config.nof_srs_ports.value()) {
+      if (tx_scheme_cfg.max_rank > config.nof_srs_ports.value()) {
         return make_unexpected(fmt::format("Maximum rank {} cannot be larger than the number of SRS antenna ports {}.",
-                                           config.max_rank,
+                                           tx_scheme_cfg.max_rank,
                                            config.nof_srs_ports));
       }
 
       // The number of SRS ports must be a valid value {1, 2, 4}.
-      switch (config.nof_srs_ports.value()) {
-        case 1:
-          break;
-        case 2:
-        case 4:
-          // Codebook subset is required for codebook based transmission with more than one antenna port.
-          if (!config.cb_subset.has_value()) {
-            return make_unexpected(
-                "Codebook subset is required for codebook transmission with multiple antenna ports.");
-          }
-          break;
-        default:
-          return make_unexpected(
-              fmt::format("The number of SRS ports {} is neither 1, 2, nor 4.", config.nof_srs_ports));
+      if ((config.nof_srs_ports.value() != 1) && (config.nof_srs_ports.value() != 2) &&
+          (config.nof_srs_ports.value() != 4)) {
+        return make_unexpected(fmt::format("The number of SRS ports {} is neither 1, 2, nor 4.", config.nof_srs_ports));
       }
 
       // Codebook subset transmission with two ports does not support partial and non-coherent.
       if ((config.nof_srs_ports.value() == 2) &&
-          (config.cb_subset.value() == tx_scheme_codebook_subset::partial_and_non_coherent)) {
+          (tx_scheme_cfg.codebook_subset == tx_scheme_codebook_subset::partial_and_non_coherent)) {
         return make_unexpected("Codebook subset \"partial and non-coherent\" is not supported for 2 SRS ports.");
       }
     }

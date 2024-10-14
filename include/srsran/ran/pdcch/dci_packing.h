@@ -23,13 +23,16 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/pdcch/pdcch_constants.h"
 #include "srsran/ran/physical_cell_group.h"
+#include "srsran/ran/pusch/tx_scheme_configuration.h"
 #include "srsran/support/units.h"
+#include <variant>
 
 namespace srsran {
 
@@ -42,14 +45,6 @@ enum class resource_allocation { resource_allocation_type_0, resource_allocation
 
 /// Dynamic resource allocation indicator for DCI formats 0_1 and 1_1.
 enum class dynamic_resource_allocation { type_0, type_1 };
-
-/// \brief Subset of PMIs addressed by TPMI, where PMIs are those supported by UEs with maximum coherence capabilities.
-/// \remark See TS38.214, Section 6.1.1.1.
-enum class tx_scheme_codebook_subset : unsigned {
-  fully_and_partial_and_non_coherent,
-  partial_and_non_coherent,
-  non_coherent
-};
 
 /// \brief DCI configuration parameters required to perform the DCI size alignment procedure.
 ///
@@ -149,11 +144,16 @@ struct dci_size_config {
   /// Set to \c true if PUSCH frequency hopping is configured, i.e., if the higher layer parameter \e frequencyHopping
   /// (see TS38.331 Section 6.3.2, Information Element \e PUSCH-Config) is configured.
   bool frequency_hopping_configured;
-  /// \brief Non-codebook based transmission flag.
+  /// \brief PUSCH transmission schemes according to TS 38.214 Section 6.1.1.
   ///
-  /// Set to \c true if non-codebook based transmission is configured, i.e., if the higher layer parameter \e txConfig
-  /// (see TS38.331 Section 6.3.2, Information Element \e PUSCH-Config) is set for non-codebook transmission.
-  bool tx_config_non_codebook;
+  /// The transmit scheme is given by the field \e txConfig in TS 38.331 Section 6.3.2, Information Element
+  /// \e PUSCH-Config.
+  ///
+  /// This field is required for DCI Format 0_1.
+  ///
+  /// The maximum rank \ref tx_scheme_codebook::max_rank must be smaller than or equal to the number of \ref
+  /// nof_srs_ports.
+  std::optional<pusch_tx_scheme_configuration> pusch_tx_scheme;
   /// \brief UL transform precoding flag.
   ///
   /// Set to \c true if UL transform precoding is enabled.
@@ -188,8 +188,8 @@ struct dci_size_config {
   /// \brief Number of antenna ports used for PUSCH codebook-based transmission.
   ///
   /// Set according to the higher layer parameter \e nrofSRS-Ports (see TS38.331 Section 6.3.2, Information Element \e
-  /// SRS-Config), as per TS38.214 Section 6.1.1.1, if codebook-based PUSCH transmission is configured, i.e., if \ref
-  /// tx_config_non_codebook is set to \c false. Otherwise, leave it unset. Values: {1, 2, 4}.
+  /// SRS-Config), as per TS38.214 Section 6.1.1.1, if the field \e txConfig is present. Otherwise, leave it
+  /// unset. Values: {1, 2, 4}.
   std::optional<unsigned> nof_srs_ports;
   /// \brief Parameter \f$N_{SRS}\f$ in TS38.212 Section 7.3.1.1.2, indicating the number of SRS resources.
   ///
@@ -207,21 +207,6 @@ struct dci_size_config {
   ///
   /// \remark Required if \ref tx_config_non_codebook is set to \c true, indicating non-codebook transmission.
   std::optional<unsigned> pusch_max_layers;
-  /// \brief Maximum UE transmission rank for codebook based operation.
-  ///
-  /// Specifies the maximum UE transmission rank, determined by the higher layer parameter \e maxRank (see TS38.331
-  /// Section 6.3.2, Information Element \e PUSCH-Config). Values: {1, ..., 4} and it must be smaller or equal than \ref
-  /// nof_srs_ports.
-  ///
-  /// \remark Required for codebook based transmission, i.e., if \ref tx_config_non_codebook is set to \c false.
-  std::optional<unsigned> max_rank;
-  /// \brief Subset of PMIs addressed by TPMI.
-  ///
-  /// Restricts the available PMIs to those supported by the UE, according to its coherence capabilities. Its value is
-  /// indicated by the higher layer parameter \e codebookSubset (see TS38.331 Section 6.3.2, Information Element \e
-  /// PUSCH-Config). It is required for codebook based transmission with more than one antenna port, i.e., if \ref
-  /// tx_config_non_codebook is set to \c false and \ref nof_srs_ports is greater than one. Otherwise, leave it unset.
-  std::optional<tx_scheme_codebook_subset> cb_subset;
   /// \brief UL DM-RS type for DM-RS mapping type A.
   ///
   /// Set according to the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2, Information Element \e
@@ -906,9 +891,9 @@ struct dci_0_1_configuration {
   ///
   /// The content and actual number of bits is defined by TS38.212 Tables 7.3.1.1.2-2/3/4/5, according to whether
   /// transform precoding is enabled or disabled, and the values of the higher layer parameters \e maxRank (see
-  /// dci_size_config::max_rank) and \e codebookSubset (see dci_size_config::cb_subset). It is required for codebook
-  /// based transmission with more than one antenna port, i.e., if \ref dci_size_config::cb_subset is set when computing
-  /// the DCI sizes.
+  /// tx_scheme_codebook::max_rank) and \e codebookSubset (see tx_scheme_codebook::cb_subset). It is required for
+  /// codebook based transmission with more than one antenna port, i.e., if \ref dci_size_config::cb_subset is set when
+  /// computing the DCI sizes.
   unsigned precoding_info_nof_layers;
   /// \brief Antenna ports for PUSCH transmission - 2, 3, 4 or 5 bits.
   ///

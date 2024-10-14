@@ -154,7 +154,13 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 
     // Notify the upper layer about the beginning of the transfer of the current SDU
     if (sdu.pdcp_sn.has_value()) {
-      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), cfg.queue_size_bytes - queue_state.n_bytes);
+      // Use size of SDU queue for desired_buf_size
+      //
+      // From TS 38.425 Sec. 5.4.2.1:
+      // - If the value of the desired buffer size is 0, the hosting node shall stop sending any data per bearer.
+      // - If the value of the desired buffer size in b) above is greater than 0, (...) the hosting node may send up to
+      //   this amount of data per bearer beyond the "Highest Transmitted NR PDCP SN" for RLC UM.
+      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value(), cfg.queue_size_bytes);
     }
   }
 

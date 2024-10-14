@@ -101,7 +101,8 @@ public:
   /// lower layers.
   ///
   /// \param max_tx_pdcp_sn Highest transmitted PDCP PDU sequence number.
-  virtual void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t bytes_free_in_queue) = 0;
+  /// \param desired_buf_size Desired buffer size for DRB. Ignored for SRBs.
+  virtual void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t desired_buf_size) = 0;
 
   /// \brief Informs upper layer about the highest PDCP PDU sequence number of the PDCP PDU that was successfully
   /// delivered in sequence towards the UE.

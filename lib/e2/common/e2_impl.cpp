@@ -90,6 +90,14 @@ async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
 
   return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
 }
+async_task<void> e2_impl::handle_e2_disconnection_request()
+{
+  return launch_async([](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    // Placeholder
+    CORO_RETURN();
+  });
+}
 
 void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
 {

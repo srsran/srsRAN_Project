@@ -45,20 +45,18 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(const ngap_configuration&                      ngap_cfg_,
-                     ngap_cu_cp_notifier&                           cu_cp_notifier_,
-                     start_ngap_handover_preparation_procedure_func start_ho_prep_func_,
-                     n2_connection_client&                          n2_gateway,
-                     timer_manager&                                 timers_,
-                     task_executor&                                 ctrl_exec_) :
+ngap_impl::ngap_impl(const ngap_configuration& ngap_cfg_,
+                     ngap_cu_cp_notifier&      cu_cp_notifier_,
+                     n2_connection_client&     n2_gateway,
+                     timer_manager&            timers_,
+                     task_executor&            ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   ue_ctxt_list(logger),
   cu_cp_notifier(cu_cp_notifier_),
   timers(timers_),
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{timers, ctrl_exec}),
-  conn_handler(n2_gateway, *this, cu_cp_notifier, ctrl_exec),
-  start_ho_prep_func(start_ho_prep_func_)
+  conn_handler(n2_gateway, *this, cu_cp_notifier, ctrl_exec)
 {
   context.gnb_id                    = ngap_cfg_.gnb_id;
   context.ran_node_name             = ngap_cfg_.ran_node_name;
@@ -929,7 +927,6 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
   });
 }
 
-// TODO make preparation result an async task
 async_task<ngap_handover_preparation_response>
 ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_request& msg)
 {
@@ -938,10 +935,6 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
     CORO_RETURN(ngap_handover_preparation_response{false});
   };
 
-  if (start_ho_prep_func == nullptr) {
-    logger.error("ue={}: Dropping HandoverPreparationRequest. NG handover plugin is not loaded", msg.ue_index);
-    return launch_async(std::move(err_function));
-  }
   if (!ue_ctxt_list.contains(msg.ue_index)) {
     logger.warning("ue={}: Dropping HandoverPreparationRequest. UE context does not exist", msg.ue_index);
     return launch_async(std::move(err_function));
@@ -958,7 +951,15 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
 
   ue_ctxt.logger.log_info("Starting HO preparation");
 
-  return (*start_ho_prep_func)(logger);
+  return start_ngap_handover_preparation(msg,
+                                         ue_ctxt.serving_guami.plmn,
+                                         ue_ctxt.ue_ids,
+                                         *tx_pdu_notifier,
+                                         ue->get_ngap_rrc_ue_notifier(),
+                                         cu_cp_notifier,
+                                         ev_mng,
+                                         timer_factory{timers, ctrl_exec},
+                                         ue_ctxt.logger);
 }
 
 void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,

@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
 
@@ -39,7 +40,7 @@ public:
   explicit pusch_processor_validator_impl(const channel_estimate::channel_estimate_dimensions& ce_dims_);
 
   // See interface for documentation.
-  bool is_valid(const pusch_processor::pdu_t& pdu) const override;
+  error_type<std::string> is_valid(const pusch_processor::pdu_t& pdu) const override;
 
 private:
   channel_estimate::channel_estimate_dimensions ce_dims;

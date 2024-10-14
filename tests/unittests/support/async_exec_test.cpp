@@ -85,10 +85,10 @@ void test_offload_exec()
       launch_async([&exec0, exec1, exec2, &inc_count, &worker0](coro_context<eager_async_task<int>>& ctx) mutable {
         CORO_BEGIN(ctx);
         inc_count();
-        CORO_AWAIT(offload_to_executor(exec1, exec0, inc_count));
-        CORO_AWAIT(offload_to_executor(exec2, exec0, inc_count));
-        CORO_AWAIT(offload_to_executor(exec1, exec0, inc_count));
-        CORO_AWAIT(offload_to_executor(exec2, exec0, inc_count));
+        CORO_AWAIT(try_offload_to_executor(exec1, exec0, inc_count));
+        CORO_AWAIT(try_offload_to_executor(exec2, exec0, inc_count));
+        CORO_AWAIT(try_offload_to_executor(exec1, exec0, inc_count));
+        CORO_AWAIT(try_offload_to_executor(exec2, exec0, inc_count));
         worker0.request_stop(); // as we are in worker0, the cancel command is only processed after the return
         CORO_RETURN(inc_count());
       });

@@ -105,6 +105,8 @@ private:
   metric_meas_getter_func_t get_rsrq;
   metric_meas_getter_func_t get_prb_avail_dl;
   metric_meas_getter_func_t get_prb_avail_ul;
+  metric_meas_getter_func_t get_prb_used_dl;
+  metric_meas_getter_func_t get_prb_used_ul;
   metric_meas_getter_func_t get_prb_use_perc_dl;
   metric_meas_getter_func_t get_prb_use_perc_ul;
   metric_meas_getter_func_t get_delay_ul;

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
@@ -195,8 +196,8 @@ public:
   virtual ~pusch_pdu_validator() = default;
 
   /// \brief Validates PUSCH processor configuration parameters.
-  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
-  virtual bool is_valid(const pusch_processor::pdu_t& pdu) const = 0;
+  /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pusch_processor::pdu_t& pdu) const = 0;
 };
 
 } // namespace srsran

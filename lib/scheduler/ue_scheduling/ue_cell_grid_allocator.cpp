@@ -822,9 +822,11 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
 
       mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, mcs_prbs.mcs, crbs.length(), contains_dc);
     }
-    // If it's a reTx, fetch the MCS and TBS from the previous transmission.
+    // If it's a reTx, fetch the MCS, TBS and number of layers from the previous transmission.
     else {
-      mcs_tbs_info.emplace(sch_mcs_tbs{.mcs = h_ul->get_grant_params().mcs, .tbs = h_ul->get_grant_params().tbs_bytes});
+      const auto& prev_params = h_ul->get_grant_params();
+      mcs_tbs_info.emplace(sch_mcs_tbs{.mcs = prev_params.mcs, .tbs = prev_params.tbs_bytes});
+      pusch_cfg.nof_layers = prev_params.nof_layers;
     }
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
@@ -923,7 +925,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
                               rv,
                               *h_ul,
                               dai,
-                              ue_cc->channel_state_manager().get_nof_ul_layers());
+                              pusch_cfg.nof_layers,
+                              ue_cc->channel_state_manager().get_recommended_pusch_tpmi(pusch_cfg.nof_layers));
         break;
       default:
         report_fatal_error("Unsupported PDCCH UL DCI format");

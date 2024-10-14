@@ -134,11 +134,25 @@ tests:
     expected_nof_kos: 9999999999999
     warning_as_errors: true
 
+  # - campaign_filename: *campaign_filename
+  #   test_name: "32UE fading TCP bidirectional"
+  #   test_timeout: *test_timeout
+  #   gnb_extra_commands: *gnb_extra_commands
+  #   id: "32UE fading TCP bidirectional"
+  #   max_pdschs_per_slot: 1
+  #   max_puschs_per_slot: 4
+  #   enable_qos_viavi: false
+  #   # test/fail criteria
+  #   expected_dl_bitrate: 14.0e+3
+  #   expected_ul_bitrate: 1.0e+3
+  #   expected_nof_kos: 9999999999999
+  #   warning_as_errors: false
+
   - campaign_filename: *campaign_filename
-    test_name: "32UE fading TCP bidirectional"
+    test_name: "32UE fading UDP attach-detach with traffic"
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
-    id: "32UE fading TCP bidirectional"
+    id: "32UE fading UDP attach-detach with traffic"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 4
     enable_qos_viavi: false
@@ -146,7 +160,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 9999999999999
-    warning_as_errors: false
+    warning_as_errors: true
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"
@@ -159,8 +173,8 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 9999999999999
-    warning_as_errors: false
+    expected_nof_kos: 4
+    warning_as_errors: true
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"
@@ -173,8 +187,8 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 9999999999999
-    warning_as_errors: false
+    expected_nof_kos: 4
+    warning_as_errors: true
     enable_dddsu: true
 
   - campaign_filename: *campaign_filename

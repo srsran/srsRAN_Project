@@ -41,7 +41,7 @@ public:
   {
     return launch_no_op_task(true);
   }
-  void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_bytes_free) override {}
+  void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
   void handle_sdu(byte_buffer_chain sdu) override {}
 } null_f1c_bearer;
@@ -58,7 +58,7 @@ public:
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
 
   void handle_pdu(nru_dl_message msg) override {}
-  void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t queue_bytes_free) override {}
+  void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
   void handle_retransmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) override {}

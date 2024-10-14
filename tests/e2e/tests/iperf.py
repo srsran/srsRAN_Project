@@ -460,6 +460,7 @@ def test_zmq_4x4_mimo(
         always_download_artifacts=False,
         nof_antennas_dl=4,
         nof_antennas_ul=4,
+        ue_stop_timeout=90,
     )
 
 

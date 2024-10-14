@@ -130,9 +130,6 @@ public:
                const pdu_t&                     pdu) override;
 
 private:
-  /// Asserts the PDU. It triggers an assertion upon an invalid value or combination of values.
-  void assert_pdu(const pusch_processor::pdu_t& pdu, const channel_estimate& ch_estimate) const;
-
   /// Thread local dependencies pool.
   std::shared_ptr<concurrent_dependencies_pool_type> thread_local_dependencies_pool;
   /// UL-SCH transport block decoder.

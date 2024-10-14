@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
-#include "srsran/cu_up/cu_up_executor_pool.h"
+#include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
@@ -41,7 +41,7 @@ constexpr auto default_wait_timeout = std::chrono::seconds(3);
 namespace srsran {
 
 /// Dummy CU-UP executor pool used for testing
-class dummy_cu_up_executor_pool final : public srs_cu_up::cu_up_executor_pool
+class dummy_cu_up_executor_mapper final : public srs_cu_up::cu_up_executor_mapper
 {
   class dummy_pdu_session_executor_mapper_impl : public srs_cu_up::ue_executor_mapper
   {
@@ -65,7 +65,13 @@ class dummy_cu_up_executor_pool final : public srs_cu_up::cu_up_executor_pool
   };
 
 public:
-  dummy_cu_up_executor_pool(task_executor* test_executor_) : test_executor(test_executor_) {}
+  dummy_cu_up_executor_mapper(task_executor* test_executor_) : test_executor(test_executor_) {}
+
+  task_executor& ctrl_executor() override { return *test_executor; }
+
+  task_executor& io_ul_executor() override { return *test_executor; }
+
+  task_executor& e2_executor() override { return *test_executor; }
 
   std::unique_ptr<srs_cu_up::ue_executor_mapper> create_ue_executor_mapper() override
   {

@@ -23,6 +23,8 @@
 #include "pusch_processor_impl.h"
 #include "pusch_decoder_buffer_dummy.h"
 #include "pusch_processor_notifier_adaptor.h"
+#include "pusch_processor_validator_impl.h"
+
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
@@ -34,6 +36,17 @@
 #include "srsran/ran/uci/uci_part2_size_calculator.h"
 
 using namespace srsran;
+
+/// Looks at the output of the validator and, if unsuccessful, fills msg with the error message.
+/// This is used to call the validator inside the process methods only if asserts are active.
+[[maybe_unused]] static bool handle_validation(std::string& msg, const error_type<std::string>& err)
+{
+  bool is_success = err.has_value();
+  if (!is_success) {
+    msg = err.error();
+  }
+  return is_success;
+}
 
 namespace {
 class pusch_processor_csi_part1_feedback_impl : public pusch_processor_csi_part1_feedback
@@ -129,7 +142,9 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   channel_estimate& ch_estimate = dependencies.get_channel_estimate();
 
   // Assert PDU.
-  assert_pdu(pdu, ch_estimate);
+  [[maybe_unused]] std::string msg;
+  srsran_assert(
+      handle_validation(msg, pusch_processor_validator_impl(ch_estimate.capacity()).is_valid(pdu)), "{}", msg);
 
   // Number of RB used by this transmission.
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
@@ -317,50 +332,4 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.rx_ports                    = pdu.rx_ports;
   dependencies.get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, ch_estimate, demod_config);
-}
-
-void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu, const channel_estimate& ch_estimate) const
-{
-  using namespace units::literals;
-  interval<unsigned, true> nof_tx_layers_range(1, ch_estimate.capacity().nof_tx_layers);
-
-  // Make sure the configuration is supported.
-  srsran_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.capacity().nof_prb,
-                "The sum of the BWP start (i.e., {}) and size (i.e., {}) exceeds the maximum grid size (i.e., {} PRB).",
-                pdu.bwp_start_rb,
-                pdu.bwp_size_rb,
-                ch_estimate.capacity().nof_prb);
-  if (std::holds_alternative<dmrs_configuration>(pdu.dmrs)) {
-    const auto& dmrs = std::get<dmrs_configuration>(pdu.dmrs);
-    srsran_assert(dmrs.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
-    srsran_assert(dmrs.nof_cdm_groups_without_data == 2, "Only two CDM groups without data are currently supported.");
-  } else {
-    srsran_assert(pdu.nof_tx_layers == 1, "Transform precoding is only possible with one layer.");
-    srsran_assert(pdu.freq_alloc.is_contiguous(), "Transform precoding is only possible with contiguous allocations.");
-    srsran_assert(is_transform_precoding_nof_prb_valid(pdu.freq_alloc.get_nof_rb()),
-                  "Transform precoding is only possible with a valid number of PRB.");
-  }
-  srsran_assert(nof_tx_layers_range.contains(pdu.nof_tx_layers),
-                "The number of transmit layers (i.e., {}) is out of the range {}.",
-                pdu.nof_tx_layers,
-                nof_tx_layers_range);
-  srsran_assert(pdu.rx_ports.size() <= ch_estimate.capacity().nof_rx_ports,
-                "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
-                pdu.rx_ports.size(),
-                ch_estimate.capacity().nof_rx_ports);
-
-  srsran_assert(pdu.uci.csi_part2_size.is_valid(pdu.uci.nof_csi_part1),
-                "CSI Part 1 UCI field length (i.e., {}) does not correspond with the CSI Part 2 (i.e., {})",
-                pdu.uci.nof_csi_part1,
-                pdu.uci.csi_part2_size);
-  srsran_assert(pdu.tbs_lbrm > 0_bytes, "Invalid LBRM size (0 bytes).");
-
-  // Check DC is whithin the CE.
-  if (pdu.dc_position.has_value()) {
-    interval<unsigned> dc_position_range(0, ch_estimate.size().nof_prb * NRE);
-    srsran_assert(dc_position_range.contains(pdu.dc_position.value()),
-                  "DC position (i.e., {}) is out of range {}.",
-                  pdu.dc_position.value(),
-                  dc_position_range);
-  }
 }
