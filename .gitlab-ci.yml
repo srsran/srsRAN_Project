@@ -142,7 +142,7 @@ matlab weekly:
     - if: $CI_DESCRIPTION =~ /Weekly/
       variables:
         ON_SCHEDULE: "true"
-        CI_DESCRIPTION: Nightly
+        CI_DESCRIPTION: Weekly
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
       when: delayed
