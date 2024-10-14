@@ -95,17 +95,15 @@ private:
   /// \param[in] msg The received ran_function_id from the e2 setup response message.
   void set_allowed_ran_functions(const uint16_t ran_function_id);
 
-  srslog::basic_logger&                                logger;
-  e2ap_configuration&                                  cfg;
-  timer_factory                                        timers;
-  std::map<uint16_t, asn1::e2ap::ran_function_item_s>  candidate_ran_functions;
-  std::map<uint16_t, asn1::e2ap::ran_function_item_s>  allowed_ran_functions;
-  std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
-  e2_subscription_proc&                                subscription_proc;
-  e2sm_manager&                                        e2sm_mngr;
-  std::unique_ptr<e2_event_manager>                    events;
-  fifo_async_task_scheduler                            async_tasks;
-  unsigned                                             current_transaction_id = 0; // store current E2AP transaction id
+  srslog::basic_logger&                               logger;
+  e2ap_configuration&                                 cfg;
+  timer_factory                                       timers;
+  std::map<uint16_t, asn1::e2ap::ran_function_item_s> candidate_ran_functions;
+  std::map<uint16_t, asn1::e2ap::ran_function_item_s> allowed_ran_functions;
+  e2_subscription_proc&                               subscription_proc;
+  e2sm_manager&                                       e2sm_mngr;
+  std::unique_ptr<e2_event_manager>                   events;
+  fifo_async_task_scheduler                           async_tasks;
 
   e2_connection_handler                connection_handler;
   std::unique_ptr<e2_message_notifier> tx_pdu_notifier;

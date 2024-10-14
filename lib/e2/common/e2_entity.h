@@ -55,7 +55,6 @@ private:
   task_executor&            task_exec;
   fifo_async_task_scheduler main_ctrl_loop;
 
-  std::unique_ptr<e2_message_notifier>       e2_pdu_notifier   = nullptr;
   std::unique_ptr<e2sm_manager>              e2sm_mngr         = nullptr;
   std::unique_ptr<e2_subscription_manager>   subscription_mngr = nullptr;
   std::unique_ptr<e2_interface>              e2ap              = nullptr;
