@@ -21,8 +21,8 @@ class e1ap_cu_up_connection_handler
 public:
   e1ap_cu_up_connection_handler(e1_connection_client& e1ap_client_handler_, e1ap_message_handler& e1ap_pdu_handler_);
 
-  SRSRAN_NODISCARD e1ap_message_notifier* connect_to_cu_cp();
-  SRSRAN_NODISCARD bool                   is_connected() const { return e1ap_notifier != nullptr; }
+  [[nodiscard]] e1ap_message_notifier* connect_to_cu_cp();
+  [[nodiscard]] bool                   is_connected() const { return e1ap_notifier != nullptr; }
 
 private:
   e1_connection_client& e1_client_handler;

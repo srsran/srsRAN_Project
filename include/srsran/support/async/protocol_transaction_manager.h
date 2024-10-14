@@ -193,7 +193,7 @@ public:
 
   /// \brief Creates a new protocol transaction with automatically assigned transaction ID and with a timeout, after
   /// which the transaction gets cancelled.
-  SRSRAN_NODISCARD protocol_transaction<T> create_transaction(std::chrono::milliseconds time_to_cancel = max_timeout)
+  [[nodiscard]] protocol_transaction<T> create_transaction(std::chrono::milliseconds time_to_cancel = max_timeout)
   {
     // Allocate a new transaction id for the protocol transaction.
     unsigned transaction_id = invalid_protocol_transaction_id;
@@ -213,8 +213,8 @@ public:
   }
 
   /// \brief Creates a new protocol transaction with pre-defined transaction ID.
-  SRSRAN_NODISCARD protocol_transaction<T> create_transaction(protocol_transaction_id_t transaction_id,
-                                                              std::chrono::milliseconds time_to_cancel = max_timeout)
+  [[nodiscard]] protocol_transaction<T> create_transaction(protocol_transaction_id_t transaction_id,
+                                                           std::chrono::milliseconds time_to_cancel = max_timeout)
   {
     // Create new transaction instance.
     auto ret = running_transactions.emplace(
@@ -248,7 +248,7 @@ public:
   /// \param[in] result Result of the transaction.
   /// \return True if result of the transaction was successfully set. False, if the transaction has already finished.
   template <typename U>
-  SRSRAN_NODISCARD bool set_response(unsigned transaction_id, U&& result)
+  [[nodiscard]] bool set_response(unsigned transaction_id, U&& result)
   {
     static_assert(std::is_convertible_v<U, T>, "Invalid transaction response type being set");
     return set_transaction_outcome(transaction_id, std::forward<U>(result));

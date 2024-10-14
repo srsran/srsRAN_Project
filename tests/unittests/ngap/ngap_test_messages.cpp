@@ -123,8 +123,7 @@ cu_cp_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index
 {
   cu_cp_initial_ue_message msg = {};
   msg.ue_index                 = ue_index;
-  bool ret                     = msg.nas_pdu.resize(nas_pdu_len);
-  (void)ret;
+  (void)msg.nas_pdu.resize(nas_pdu_len);
   msg.establishment_cause               = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
   msg.user_location_info.nr_cgi.plmn_id = plmn_identity::test_value();
   msg.user_location_info.nr_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
@@ -146,8 +145,7 @@ ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
   dl_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   dl_nas_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
   if (nas_pdu.empty()) {
-    bool ret = dl_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
-    (void)ret;
+    (void)dl_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
   } else {
     dl_nas_transport_msg->nas_pdu = nas_pdu.copy();
   }
@@ -172,8 +170,7 @@ cu_cp_ul_nas_transport srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_i
 {
   cu_cp_ul_nas_transport ul_nas_transport = {};
   ul_nas_transport.ue_index               = ue_index;
-  bool ret                                = ul_nas_transport.nas_pdu.resize(nas_pdu_len);
-  (void)ret;
+  (void)ul_nas_transport.nas_pdu.resize(nas_pdu_len);
   ul_nas_transport.user_location_info.nr_cgi.plmn_id = plmn_identity::test_value();
   ul_nas_transport.user_location_info.nr_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
   ul_nas_transport.user_location_info.tai.plmn_id    = plmn_identity::test_value();
@@ -192,8 +189,7 @@ ngap_message srsran::srs_cu_cp::generate_uplink_nas_transport_message(amf_ue_id_
   auto& ul_nas_transport_msg           = ul_nas_transport.pdu.init_msg().value.ul_nas_transport();
   ul_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   ul_nas_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
-  bool ret                             = ul_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
-  (void)ret;
+  (void)ul_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
 
   auto& user_loc_info_nr = ul_nas_transport_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi.plmn_id.from_string("00f110");

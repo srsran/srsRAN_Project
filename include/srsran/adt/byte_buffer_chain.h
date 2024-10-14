@@ -246,7 +246,7 @@ public:
   ///
   /// \param obj Slice to append to the byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  SRSRAN_NODISCARD bool append(byte_buffer_slice obj) noexcept
+  [[nodiscard]] bool append(byte_buffer_slice obj) noexcept
   {
     if (obj.empty()) {
       return true;
@@ -262,11 +262,11 @@ public:
 
   /// Appends a byte_buffer to the end of the byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  SRSRAN_NODISCARD bool append(byte_buffer buf) { return append(byte_buffer_slice{std::move(buf)}); }
+  [[nodiscard]] bool append(byte_buffer buf) { return append(byte_buffer_slice{std::move(buf)}); }
 
   /// Appends the contents of another byte_buffer_chain to the end of this byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  SRSRAN_NODISCARD bool append(byte_buffer_chain other)
+  [[nodiscard]] bool append(byte_buffer_chain other)
   {
     if (nof_slices() + other.nof_slices() > max_nof_slices()) {
       return false;
@@ -282,7 +282,7 @@ public:
 
   /// Prepends a byte_buffer_slice to the beginning of the byte_buffer_chain. This operation has O(N) complexity.
   /// \return true if operation was successful, false otherwise.
-  SRSRAN_NODISCARD bool prepend(byte_buffer_slice slice)
+  [[nodiscard]] bool prepend(byte_buffer_slice slice)
   {
     if (slice.empty()) {
       return true;
@@ -308,7 +308,7 @@ public:
 
   /// Prepends a byte_buffer to the beginning of the byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  SRSRAN_NODISCARD bool prepend(byte_buffer buf) { return prepend(byte_buffer_slice{std::move(buf)}); }
+  [[nodiscard]] bool prepend(byte_buffer buf) { return prepend(byte_buffer_slice{std::move(buf)}); }
 
   /// Release all the byte buffer slices held by the byte_buffer_chain.
   void clear()

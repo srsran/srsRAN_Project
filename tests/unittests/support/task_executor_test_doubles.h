@@ -25,9 +25,9 @@ public:
 
   std::thread::id get_thread_id() const { return t_id; }
 
-  bool execute(unique_task task) override { return defer(std::move(task)); }
+  [[nodiscard]] bool execute(unique_task task) override { return defer(std::move(task)); }
 
-  bool defer(unique_task task) override
+  [[nodiscard]] bool defer(unique_task task) override
   {
     pending_tasks.push_blocking(std::move(task));
     return true;
@@ -46,7 +46,7 @@ public:
 
   void request_stop()
   {
-    defer([this]() { stop(); });
+    (void)defer([this]() { stop(); });
   }
 
   /// Run all pending tasks until queue is emptied.

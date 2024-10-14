@@ -88,16 +88,16 @@ public:
 
   /// Dispatch a task to be run. If the internal queue associated with the priority level is full, drop the task and
   /// return false.
-  SRSRAN_NODISCARD bool try_push(task_priority prio, unique_task task);
+  [[nodiscard]] bool try_push(task_priority prio, unique_task task);
 
   /// \brief Pop a pending task, considering its priority level. If the queues are empty, return false.
-  SRSRAN_NODISCARD bool try_pop(unique_task& t);
+  [[nodiscard]] bool try_pop(unique_task& t);
 
   /// \brief Pop a pending task, considering its priority level. If the queues are empty, this call blocks.
   /// If the queues are stopped, this function returns false.
   bool pop_blocking(unique_task& t);
 
-  SRSRAN_NODISCARD size_t queue_capacity(task_priority prio) const { return queues[get_queue_idx(prio)].capacity(); }
+  [[nodiscard]] size_t queue_capacity(task_priority prio) const { return queues[get_queue_idx(prio)].capacity(); }
 
   size_t nof_priority_levels() const { return queues.size(); }
 

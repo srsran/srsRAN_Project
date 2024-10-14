@@ -96,7 +96,7 @@ f1ap_du_connection_handler::~f1ap_du_connection_handler()
   handle_connection_loss_impl();
 }
 
-SRSRAN_NODISCARD std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handler::connect_to_cu_cp()
+std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handler::connect_to_cu_cp()
 {
   if (is_connected()) {
     logger.warning("Reconnections to CU-CP not supported");

@@ -28,7 +28,7 @@ public:
   virtual ~e1ap_connection_manager() = default;
 
   /// \brief Connect the CU-UP to CU-CP via E1AP interface.
-  virtual SRSRAN_NODISCARD bool connect_to_cu_cp() = 0;
+  [[nodiscard]] virtual bool connect_to_cu_cp() = 0;
 
   /// \brief Initiates the E1 Setup procedure as per TS 38.463, Section 8.2.3.
   /// \param[in] request The E1SetupRequest message to transmit.

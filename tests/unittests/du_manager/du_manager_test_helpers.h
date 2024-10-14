@@ -24,16 +24,16 @@ namespace srs_du {
 class dummy_teid_pool final : public gtpu_teid_pool
 {
 public:
-  SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
+  [[nodiscard]] expected<gtpu_teid_t> request_teid() override
   {
     expected<gtpu_teid_t> ret{int_to_gtpu_teid(next_gtpu_teid)};
     next_gtpu_teid++;
     return ret;
   }
 
-  SRSRAN_NODISCARD bool release_teid(gtpu_teid_t teid) override { return true; }
+  [[nodiscard]] bool release_teid(gtpu_teid_t teid) override { return true; }
 
-  bool full() const override { return false; }
+  [[nodiscard]] bool full() const override { return false; }
 
   uint32_t get_max_nof_teids() override { return std::numeric_limits<uint32_t>::max(); }
 

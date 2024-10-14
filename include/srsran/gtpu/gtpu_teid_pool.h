@@ -26,9 +26,9 @@ class gtpu_teid_pool
 public:
   virtual ~gtpu_teid_pool() = default;
 
-  SRSRAN_NODISCARD virtual expected<gtpu_teid_t> request_teid() = 0;
+  [[nodiscard]] virtual expected<gtpu_teid_t> request_teid() = 0;
 
-  virtual bool release_teid(gtpu_teid_t teid) = 0;
+  [[nodiscard]] virtual bool release_teid(gtpu_teid_t teid) = 0;
 
   [[nodiscard]] virtual bool full() const = 0;
 

@@ -99,7 +99,7 @@ public:
   /// \param[in] err_handler Callback that handles error events.
   /// \return An RAII handle to the registered file descriptor. On destruction, the fd is automatically deregistered
   /// from the io_broker.
-  SRSRAN_NODISCARD virtual subscriber register_fd(
+  [[nodiscard]] virtual subscriber register_fd(
       int              fd,
       recv_callback_t  handler,
       error_callback_t err_handler = [](error_code) {}) = 0;
@@ -108,7 +108,7 @@ private:
   /// \brief Unregister a file descriptor from the IO interface.
   /// \param[in] fd File descriptor to be unregistered.
   /// \return true if the file descriptor was successfully unregistered, false otherwise.
-  SRSRAN_NODISCARD virtual bool unregister_fd(int fd) = 0;
+  [[nodiscard]] virtual bool unregister_fd(int fd) = 0;
 };
 
 } // namespace srsran

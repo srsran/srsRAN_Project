@@ -37,7 +37,7 @@ public:
   {
     adapted->handle_rrc_delivery_report(report);
   }
-  SRSRAN_NODISCARD bool                 connect_to_cu_cp() override { return adapted->connect_to_cu_cp(); }
+  [[nodiscard]] bool                    connect_to_cu_cp() override { return adapted->connect_to_cu_cp(); }
   async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
   {
     return adapted->handle_f1_setup_request(request);

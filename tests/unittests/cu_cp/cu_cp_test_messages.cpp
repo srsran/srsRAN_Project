@@ -43,8 +43,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
 
     cu_cp_pdu_session_res_setup_item item;
     item.pdu_session_id = pdu_session_id;
-    bool ret            = item.pdu_session_nas_pdu.resize(2);
-    (void)ret;
+    (void)item.pdu_session_nas_pdu.resize(2);
     item.pdu_session_nas_pdu[0] = 0xaa;
     item.pdu_session_nas_pdu[1] = 0xbb;
     item.s_nssai.sst            = 1;

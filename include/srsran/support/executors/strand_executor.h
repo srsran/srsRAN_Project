@@ -203,9 +203,9 @@ public:
   task_strand_executor() = default;
   task_strand_executor(task_strand<OutExec, QueuePolicy>& strand_) : strand(&strand_) {}
 
-  SRSRAN_NODISCARD bool execute(unique_task task) override { return strand->execute(std::move(task)); }
+  [[nodiscard]] bool execute(unique_task task) override { return strand->execute(std::move(task)); }
 
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return strand->defer(std::move(task)); }
+  [[nodiscard]] bool defer(unique_task task) override { return strand->defer(std::move(task)); }
 
 private:
   task_strand<OutExec, QueuePolicy>* strand = nullptr;
@@ -226,7 +226,7 @@ public:
   {
   }
 
-  SRSRAN_NODISCARD bool execute(unique_task task) override
+  [[nodiscard]] bool execute(unique_task task) override
   {
     // Enqueue task in task_strand queue.
     if (not impl.queue.try_push(std::move(task))) {
@@ -235,7 +235,7 @@ public:
     return impl.handle_enqueued_task(true);
   }
 
-  SRSRAN_NODISCARD bool defer(unique_task task) override
+  [[nodiscard]] bool defer(unique_task task) override
   {
     // Enqueue task in task_strand queue.
     if (not impl.queue.try_push(std::move(task))) {

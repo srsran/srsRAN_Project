@@ -25,7 +25,7 @@ public:
   explicit io_broker_epoll(const io_broker_config& config);
   ~io_broker_epoll() override;
 
-  SRSRAN_NODISCARD subscriber register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) override;
+  [[nodiscard]] subscriber register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) override;
 
 private:
   // Event enqueued to be handled in the io_broker thread.
@@ -47,7 +47,7 @@ private:
   };
 
   // Note: Blocking function.
-  SRSRAN_NODISCARD bool unregister_fd(int fd) override;
+  [[nodiscard]] bool unregister_fd(int fd) override;
 
   void thread_loop();
 

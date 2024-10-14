@@ -29,7 +29,7 @@ public:
   error_callback_t handle_error;
   int              last_unregistered_fd = -1;
 
-  subscriber register_fd(
+  [[nodiscard]] subscriber register_fd(
       int              fd,
       recv_callback_t  handler_,
       error_callback_t err_handler_ = [](error_code) {}) override
@@ -43,7 +43,7 @@ public:
     return subscriber{*this, fd};
   }
 
-  bool unregister_fd(int fd) override
+  [[nodiscard]] bool unregister_fd(int fd) override
   {
     last_unregistered_fd = fd;
     handle_receive       = {};

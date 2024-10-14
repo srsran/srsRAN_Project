@@ -29,7 +29,7 @@ public:
   {
   }
 
-  bool execute(unique_task task) override
+  [[nodiscard]] bool execute(unique_task task) override
   {
     std::mutex              mutex;
     std::condition_variable cvar;
@@ -58,7 +58,7 @@ public:
     return ret;
   }
 
-  bool defer(unique_task task) override { return execute(std::move(task)); }
+  [[nodiscard]] bool defer(unique_task task) override { return execute(std::move(task)); }
 
 private:
   template <typename U>

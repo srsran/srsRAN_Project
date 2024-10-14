@@ -159,8 +159,8 @@ TEST(trace_executor_test, enqueue_and_run_traces)
   auto trace_exec2 = make_trace_executor("testexec2", exec, test_tracer);
 
   int counter = 0;
-  trace_exec1.defer([&counter]() mutable { counter++; });
-  trace_exec2.execute([&counter]() mutable { counter++; });
+  (void)trace_exec1.defer([&counter]() mutable { counter++; });
+  (void)trace_exec2.execute([&counter]() mutable { counter++; });
 
   worker.run_pending_tasks();
   ASSERT_EQ(counter, 2);

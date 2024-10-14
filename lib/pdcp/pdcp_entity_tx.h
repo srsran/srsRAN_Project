@@ -134,7 +134,7 @@ public:
   /// \brief Writes the header of a PDCP data PDU according to the content of the associated object
   /// \param[out] buf Reference to a byte_buffer that is appended by the header bytes
   /// \param[in] hdr Reference to a pdcp_data_pdu_header that represents the header content
-  SRSRAN_NODISCARD bool write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const;
+  [[nodiscard]] bool write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const;
 
   /*
    * Testing helpers

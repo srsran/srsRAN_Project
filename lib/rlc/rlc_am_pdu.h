@@ -164,7 +164,7 @@ public:
   /// \brief Read a RLC AM status PDU from a PDU buffer view
   /// \param pdu A reference to a byte_buffer_view
   /// \return true if PDU was read successfully, false otherwise
-  SRSRAN_NODISCARD bool unpack(const byte_buffer_view& pdu);
+  [[nodiscard]] bool unpack(const byte_buffer_view& pdu);
 
   /// \brief Checks if a PDU buffer view contains a control PDU
   /// \param pdu A reference to a byte_buffer_view
@@ -176,7 +176,7 @@ public:
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 38.322 v15.3.0 Section 6.2.2.4
  ***************************************************************************/
-inline SRSRAN_NODISCARD bool
+[[nodiscard]] inline bool
 rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn_size, rlc_am_pdu_header* header)
 {
   byte_buffer_reader pdu_reader = pdu;

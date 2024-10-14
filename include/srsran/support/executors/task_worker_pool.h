@@ -118,7 +118,7 @@ public:
   /// \param prio Priority of the dispatched task.
   /// \param task Task to be run in the thread pool.
   /// \return True if task was successfully enqueued to be processed. False, if task queue is full.
-  SRSRAN_NODISCARD bool push_task(enqueue_priority prio, unique_task task)
+  [[nodiscard]] bool push_task(enqueue_priority prio, unique_task task)
   {
     return queue.try_push(prio, std::move(task));
   }
@@ -169,7 +169,7 @@ public:
   /// return false.
   /// \param task Task to be run in the thread pool.
   /// \return True if task was successfully enqueued to be processed. False, if task queue is full.
-  SRSRAN_NODISCARD bool push_task(unique_task task) { return this->queue.try_push(std::move(task)); }
+  [[nodiscard]] bool push_task(unique_task task) { return this->queue.try_push(std::move(task)); }
 
   /// \brief Push a new task to be processed by the worker pool. If the task queue is full, blocks.
   /// \param task Task to be run in the thread pool.
@@ -199,14 +199,14 @@ public:
   task_worker_pool_executor() = default;
   task_worker_pool_executor(task_worker_pool<QueuePolicy>& worker_pool_) : worker_pool(&worker_pool_) {}
 
-  SRSRAN_NODISCARD bool execute(unique_task task) override
+  [[nodiscard]] bool execute(unique_task task) override
   {
     // TODO: Shortpath if can_run_task_inline() returns true. This feature has been disabled while we don't correct the
     //  use of .execute in some places.
     return worker_pool->push_task(std::move(task));
   }
 
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return worker_pool->push_task(std::move(task)); }
+  [[nodiscard]] bool defer(unique_task task) override { return worker_pool->push_task(std::move(task)); }
 
   /// Determine whether the caller is in one of the threads of the worker pool.
   bool can_run_task_inline() const { return worker_pool->is_in_thread_pool(); }
@@ -238,7 +238,7 @@ public:
   {
   }
 
-  SRSRAN_NODISCARD bool execute(unique_task task) override
+  [[nodiscard]] bool execute(unique_task task) override
   {
     if (can_run_task_inline()) {
       task();
@@ -247,7 +247,7 @@ public:
     return workers.push_task(prio, std::move(task));
   }
 
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return workers.push_task(prio, std::move(task)); }
+  [[nodiscard]] bool defer(unique_task task) override { return workers.push_task(prio, std::move(task)); }
 
   /// Determine whether the caller is in one of the threads of the worker pool and the the task can run without
   /// being dispatched.
