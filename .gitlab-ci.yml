@@ -315,43 +315,43 @@ clangsa:
     ANALYZER_ARGS: --ctu
   timeout: 8 hours
 
-.coverity_base:
-  image: $CR_REGISTRY_URI/coverity_image/2022.6.0:1.0.0
-  stage: static
-  needs: []
-  variables:
-    KUBERNETES_CPU_REQUEST: 6
-    KUBERNETES_CPU_LIMIT: 6
-    KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
-  tags:
-    - amd64
-  interruptible: false
-  timeout: 2 hours
-  script:
-    - |
-      mkdir -p build
-      cd build
-      cmake ..
-      cov-build --dir cov-int make -j${KUBERNETES_CPU_REQUEST}
-      tar czvf srsgnb.tgz cov-int
-      ver=$(git rev-parse HEAD)
-    - |
-      curl --form token=$COV_TOKEN \
-        --form email=${COVERITY_EMAIL} \
-        --form file=@srsgnb.tgz \
-        --form version=$ver \
-        --form description="${DESCRIPTION}" \
-        https://scan.coverity.com/builds?project=${PROJECT_NAME}
+# .coverity_base:
+#   image: $CR_REGISTRY_URI/coverity_image/2022.6.0:1.0.0
+#   stage: static
+#   needs: []
+#   variables:
+#     KUBERNETES_CPU_REQUEST: 6
+#     KUBERNETES_CPU_LIMIT: 6
+#     KUBERNETES_MEMORY_REQUEST: 12Gi
+#     KUBERNETES_MEMORY_LIMIT: 12Gi
+#   tags:
+#     - amd64
+#   interruptible: false
+#   timeout: 2 hours
+#   script:
+#     - |
+#       mkdir -p build
+#       cd build
+#       cmake ..
+#       cov-build --dir cov-int make -j${KUBERNETES_CPU_REQUEST}
+#       tar czvf srsgnb.tgz cov-int
+#       ver=$(git rev-parse HEAD)
+#     - |
+#       curl --form token=$COV_TOKEN \
+#         --form email=${COVERITY_EMAIL} \
+#         --form file=@srsgnb.tgz \
+#         --form version=$ver \
+#         --form description="${DESCRIPTION}" \
+#         https://scan.coverity.com/builds?project=${PROJECT_NAME}
 
-coverity-dev:
-  extends: .coverity_base
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  before_script:
-    - export PROJECT_NAME="srsRAN_5G"
-    - export DESCRIPTION="srsRAN Project dev build"
-    - export COV_TOKEN="${COVERITY_TOKEN_DEV}"
+# coverity-dev:
+#   extends: .coverity_base
+#   rules:
+#     - if: $CI_DESCRIPTION =~ /Weekly/
+#   before_script:
+#     - export PROJECT_NAME="srsRAN_5G"
+#     - export DESCRIPTION="srsRAN Project dev build"
+#     - export COV_TOKEN="${COVERITY_TOKEN_DEV}"
 
 e2e tests tox:
   stage: static
