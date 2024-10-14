@@ -112,44 +112,11 @@ void e2_entity::stop()
           CORO_BEGIN(ctx);
 
           // Send E2AP Setup Request and await for E2AP setup response.
-          CORO_AWAIT(handle_e2_disconnection_request());
+          CORO_AWAIT(e2ap->handle_e2_disconnection_request());
 
           CORO_RETURN();
         });
       })) {
     report_fatal_error("Unable to initiate E2AP setup procedure");
-  }
-}
-bool e2_entity::handle_e2_tnl_connection_request()
-{
-  return e2ap->handle_e2_tnl_connection_request();
-}
-
-async_task<void> e2_entity::handle_e2_disconnection_request()
-{
-  return e2ap->handle_e2_disconnection_request();
-}
-
-async_task<e2_setup_response_message> e2_entity::handle_e2_setup_request(e2_setup_request_message& request)
-{
-  return e2ap->handle_e2_setup_request(request);
-}
-
-async_task<e2_setup_response_message> e2_entity::start_initial_e2_setup_routine()
-{
-  return e2ap->start_initial_e2_setup_routine();
-}
-
-void e2_entity::handle_connection_loss()
-{
-  if (not task_exec.execute([this]() { e2ap->handle_connection_loss(); })) {
-    logger.error("Unable to dispatch handling of connection loss");
-  }
-}
-
-void e2_entity::handle_message(const e2_message& msg)
-{
-  if (not task_exec.execute([this, msg]() { e2ap->handle_message(msg); })) {
-    logger.error("Unable to dispatch handling of message");
   }
 }

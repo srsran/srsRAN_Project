@@ -93,11 +93,11 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   if (cfg.e2_client) {
     // todo: subscribe e2_metric_manager to a metric hub (currently not present)
-    e2ap_entity = create_e2_cu_entity(cfg.e2ap_config,
-                                      cfg.e2_client,
-                                      cfg.e2_cu_metric_iface,
-                                      timer_factory{*cfg.services.timers, *cfg.services.cu_cp_executor},
-                                      *cfg.services.cu_cp_executor);
+    e2agent = create_e2_cu_agent(cfg.e2ap_config,
+                                 cfg.e2_client,
+                                 cfg.e2_cu_metric_iface,
+                                 timer_factory{*cfg.services.timers, *cfg.services.cu_cp_executor},
+                                 *cfg.services.cu_cp_executor);
   }
 }
 
@@ -117,8 +117,8 @@ bool cu_cp_impl::start()
       })) {
     report_fatal_error("Failed to initiate CU-CP setup");
   }
-  if (e2ap_entity) {
-    e2ap_entity->start();
+  if (e2agent) {
+    e2agent->start();
   }
 
   // Block waiting for CU-CP setup to complete.
@@ -131,8 +131,8 @@ void cu_cp_impl::stop()
   if (already_stopped) {
     return;
   }
-  if (e2ap_entity) {
-    e2ap_entity->stop();
+  if (e2agent) {
+    e2agent->stop();
   }
   logger.info("Stopping CU-CP...");
 

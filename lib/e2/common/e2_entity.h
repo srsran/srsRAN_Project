@@ -31,7 +31,7 @@
 namespace srsran {
 
 /// Wrapper for the E2 interface that puts function calls into its own task executor
-class e2_entity final : public e2_interface
+class e2_entity final : public e2_agent
 {
 public:
   e2_entity(e2ap_configuration&                                              cfg_,
@@ -42,20 +42,10 @@ public:
             timer_factory                                                    timers_,
             task_executor&                                                   task_exec_);
 
-  void start() override;
-  void stop() override;
-
-  /// E2 connection manager functions.
-  bool                                  handle_e2_tnl_connection_request() override;
-  async_task<void>                      handle_e2_disconnection_request() override;
-  async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override;
-  async_task<e2_setup_response_message> start_initial_e2_setup_routine() override;
-
-  /// E2_event_ handler functions.
-  void handle_connection_loss() override;
-
-  /// E2 message handler functions.
-  void handle_message(const e2_message& msg) override;
+  // E2 Agent interface.
+  void          start() override;
+  void          stop() override;
+  e2_interface& get_e2_interface() override { return *e2ap; };
 
 private:
   srslog::basic_logger& logger;

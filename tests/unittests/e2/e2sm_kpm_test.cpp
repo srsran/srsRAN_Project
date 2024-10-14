@@ -52,7 +52,7 @@ protected:
     f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
     factory               = timer_factory{timers, task_worker};
     rc_param_configurator = std::make_unique<dummy_du_configurator>();
-    e2                    = create_e2_du_entity(
+    e2agent               = create_e2_du_agent(
         cfg, e2_client.get(), &(*du_metrics), &(*f1ap_ue_id_mapper), &(*rc_param_configurator), factory, task_worker);
   }
 
@@ -160,7 +160,7 @@ TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
 {
   // We need this test to generate E2 Setup Request, so Wireshark can decode the following RIC indication messages.
   test_logger.info("Launch e2 setup request procedure with task worker...");
-  e2->start();
+  e2agent->start();
 
   // Save E2 Setup Request
   packer->handle_message(e2_client->last_tx_e2_pdu);
@@ -174,8 +174,8 @@ TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
       ->ran_function_id_item()
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
-  e2->handle_message(e2_setup_response);
-  e2->stop();
+  e2agent->get_e2_interface().handle_message(e2_setup_response);
+  e2agent->stop();
 }
 
 TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)

@@ -207,8 +207,8 @@ private:
 
   std::atomic<bool> stopped{false};
 
-  // E2 interface
-  std::unique_ptr<e2_interface> e2ap_entity;
+  // E2 Agent.
+  std::unique_ptr<e2_agent> e2agent;
 };
 
 } // namespace srs_cu_cp

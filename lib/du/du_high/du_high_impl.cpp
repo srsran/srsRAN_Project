@@ -139,13 +139,13 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
 
   if (cfg.e2_client) {
     // todo: subscribe e2_metric_manager to a metric hub (currently not present)
-    e2ap_entity = create_e2_du_entity(cfg.e2ap_config,
-                                      cfg.e2_client,
-                                      cfg.e2_du_metric_iface,
-                                      f1ap.get(),
-                                      &(get_du_configurator()),
-                                      timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
-                                      cfg.exec_mapper->du_e2_executor());
+    e2agent = create_e2_du_agent(cfg.e2ap_config,
+                                 cfg.e2_client,
+                                 cfg.e2_du_metric_iface,
+                                 f1ap.get(),
+                                 &(get_du_configurator()),
+                                 timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
+                                 cfg.exec_mapper->du_e2_executor());
   }
 }
 
@@ -160,8 +160,8 @@ void du_high_impl::start()
   du_manager->start();
   logger.info("DU-High started successfully");
 
-  if (e2ap_entity) {
-    e2ap_entity->start();
+  if (e2agent) {
+    e2agent->start();
   }
 
   // If test mode is enabled, create a test-mode UE by injecting a Msg3.
@@ -189,8 +189,8 @@ void du_high_impl::stop()
 
   logger.info("Stopping DU-High...");
   du_manager->stop();
-  if (e2ap_entity) {
-    e2ap_entity->stop();
+  if (e2agent) {
+    e2agent->stop();
   }
   logger.info("DU-High stopped successfully");
 }

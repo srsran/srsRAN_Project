@@ -814,6 +814,7 @@ protected:
   std::unique_ptr<dummy_e2_connection_client>         e2_client;
   std::unique_ptr<e2sm_manager>                       e2sm_mngr;
   std::unique_ptr<e2_interface>                       e2;
+  std::unique_ptr<e2_agent>                           e2agent;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -837,9 +838,9 @@ class e2_test : public e2_test_base
     e2sm_mngr            = std::make_unique<e2sm_manager>(test_logger);
     e2                   = create_e2(cfg, factory, e2_client.get(), *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw                   = std::make_unique<dummy_network_gateway_data_handler>();
-    pcap                 = std::make_unique<dummy_e2ap_pcap>();
-    packer               = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    pcap   = std::make_unique<dummy_e2ap_pcap>();
+    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
   }
 
   void TearDown() override
@@ -864,12 +865,12 @@ class e2_entity_test : public e2_test_base
     f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
     factory               = timer_factory{timers, task_worker};
     rc_param_configurator = std::make_unique<dummy_du_configurator>();
-    e2                    = create_e2_du_entity(
+    e2agent               = create_e2_du_agent(
         cfg, e2_client.get(), &(*du_metrics), &(*f1ap_ue_id_mapper), &(*rc_param_configurator), factory, task_worker);
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, e2agent->get_e2_interface(), *pcap);
   }
 
   void TearDown() override
@@ -944,9 +945,9 @@ class e2_test_setup : public e2_test_base
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     e2                   = create_e2(cfg, factory, e2_client.get(), *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw                   = std::make_unique<dummy_network_gateway_data_handler>();
-    pcap                 = std::make_unique<dummy_e2ap_pcap>();
-    packer               = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    pcap   = std::make_unique<dummy_e2ap_pcap>();
+    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
   }
   void TearDown() override
   {

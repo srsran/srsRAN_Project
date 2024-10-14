@@ -95,4 +95,23 @@ public:
   virtual void stop()     = 0;
 };
 
+/// \brief Public interface for a E2 Agent instance.
+class e2_agent
+{
+public:
+  virtual ~e2_agent() = default;
+
+  /// \brief Get handler of the E2 interface of the E2 Agent.
+  virtual e2_interface& get_e2_interface() = 0;
+
+  /// \brief Initiate RIC TNL connection and run E2 Setup Procedure.
+  ///
+  /// This function blocks until the procedure is complete. Once completed, the E2 Agent is in operational state.
+  /// \return Returns true if the connection to the RIC and E2 setup procedure were successful. False, otherwise.
+  virtual void start() = 0;
+
+  /// \brief Stop the E2 Agent operation.
+  virtual void stop() = 0;
+};
+
 } // namespace srsran

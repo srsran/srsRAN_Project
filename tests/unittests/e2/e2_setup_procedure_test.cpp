@@ -20,7 +20,7 @@ using namespace srsran;
 TEST_F(e2_entity_test, on_start_send_e2ap_setup_request)
 {
   test_logger.info("Launch e2 setup request procedure with task worker...");
-  e2->start();
+  e2agent->start();
 
   // Status: received E2 Setup Request.
   ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
@@ -36,8 +36,8 @@ TEST_F(e2_entity_test, on_start_send_e2ap_setup_request)
       ->ran_function_id_item()
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
-  e2->handle_message(e2_setup_response);
-  e2->stop();
+  e2agent->get_e2_interface().handle_message(e2_setup_response);
+  e2agent->stop();
 }
 
 /// Test successful E2 setup procedure
