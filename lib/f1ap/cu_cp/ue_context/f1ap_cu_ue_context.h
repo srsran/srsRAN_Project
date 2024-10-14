@@ -86,7 +86,7 @@ public:
   {
     auto it = std::find_if(
         ues.begin(), ues.end(), [du_ue_id](const std::pair<const gnb_cu_ue_f1ap_id_t, f1ap_ue_context>& u) {
-          return u.second.ue_ids.du_ue_f1ap_id == du_ue_id;
+          return u.second.ue_ids.du_ue_f1ap_id && u.second.ue_ids.du_ue_f1ap_id == du_ue_id;
         });
     return it != ues.end() ? &it->second : nullptr;
   }

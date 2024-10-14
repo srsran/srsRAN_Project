@@ -25,7 +25,7 @@ ue_context_release_procedure::ue_context_release_procedure(const f1ap_configurat
   f1ap_cfg(f1ap_cfg_), ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(srslog::fetch_basic_logger("CU-CP-F1"))
 {
   command->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
-  command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id);
+  command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(*ue_ctxt.ue_ids.du_ue_f1ap_id);
   command->cause             = cause_to_asn1(cmd_.cause);
   if (!cmd_.rrc_release_pdu.empty()) {
     command->rrc_container_present = true;
@@ -74,7 +74,7 @@ ue_index_t ue_context_release_procedure::create_ue_context_release_complete()
 {
   if (transaction_sink.successful()) {
     gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(transaction_sink.response()->gnb_du_ue_f1ap_id);
-    if (du_ue_id != ue_ctxt.ue_ids.du_ue_f1ap_id) {
+    if (!ue_ctxt.ue_ids.du_ue_f1ap_id || du_ue_id != *ue_ctxt.ue_ids.du_ue_f1ap_id) {
       logger.error("{}: Procedure failed. Cause: gNB-DU-UE-F1AP-ID mismatch.",
                    f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
       return ue_index_t::invalid;

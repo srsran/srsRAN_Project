@@ -17,11 +17,12 @@ using namespace srs_cu_cp;
 
 void f1ap_ue_context::handle_dl_rrc_message(const f1ap_dl_rrc_message& msg, f1ap_message_notifier& msg_notifier)
 {
-  srsran_sanity_check(ue_ids.du_ue_f1ap_id != gnb_du_ue_f1ap_id_t::invalid, "Invalid gNB-DU-UE-F1AP-Id");
+  srsran_sanity_check(ue_ids.du_ue_f1ap_id && ue_ids.du_ue_f1ap_id != gnb_du_ue_f1ap_id_t::invalid,
+                      "Invalid gNB-DU-UE-F1AP-Id");
 
   asn1::f1ap::dl_rrc_msg_transfer_s dl_rrc_msg = {};
   dl_rrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(ue_ids.cu_ue_f1ap_id);
-  dl_rrc_msg->gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(ue_ids.du_ue_f1ap_id);
+  dl_rrc_msg->gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(*ue_ids.du_ue_f1ap_id);
   dl_rrc_msg->srb_id                           = static_cast<uint8_t>(srb_id_to_uint(msg.srb_id));
   dl_rrc_msg->rrc_container                    = msg.rrc_container.copy();
 

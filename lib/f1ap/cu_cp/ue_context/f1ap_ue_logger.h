@@ -20,12 +20,16 @@ namespace srs_cu_cp {
 struct f1ap_ue_log_prefix : public srsran::f1ap_common_log_prefix {
   using srsran::f1ap_common_log_prefix::f1ap_common_log_prefix;
 
-  f1ap_ue_log_prefix(ue_index_t ue_index_, gnb_cu_ue_f1ap_id_t cu_ue_id_, gnb_du_ue_f1ap_id_t du_ue_id_) :
-    srsran::f1ap_common_log_prefix(du_ue_id_, cu_ue_id_), ue_index(ue_index_)
+  f1ap_ue_log_prefix(ue_index_t                         ue_index_,
+                     gnb_cu_ue_f1ap_id_t                cu_ue_id_,
+                     std::optional<gnb_du_ue_f1ap_id_t> du_ue_id_) :
+    srsran::f1ap_common_log_prefix(du_ue_id_.value_or(gnb_du_ue_f1ap_id_t::invalid), cu_ue_id_), ue_index(ue_index_)
   {
   }
   f1ap_ue_log_prefix(const f1ap_ue_ids& context_, const char* proc_name_ = nullptr) :
-    srsran::f1ap_common_log_prefix(context_.du_ue_f1ap_id, context_.cu_ue_f1ap_id, proc_name_),
+    srsran::f1ap_common_log_prefix(context_.du_ue_f1ap_id.value_or(gnb_du_ue_f1ap_id_t::invalid),
+                                   context_.cu_ue_f1ap_id,
+                                   proc_name_),
     ue_index(context_.ue_index)
   {
   }
