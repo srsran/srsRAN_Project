@@ -87,7 +87,8 @@ async_task<bool> f1ap_du_ue_context_release_procedure::handle_rrc_container()
   }
 
   // Forward F1AP PDU to lower layers, and await for PDU to be transmitted over-the-air.
-  return srb->handle_pdu_and_await_delivery(msg->rrc_container.copy(), rrc_container_delivery_timeout);
+  return srb->handle_pdu_and_await_delivery(
+      msg->rrc_container.copy(), msg->rrc_delivery_status_request_present, rrc_container_delivery_timeout);
 }
 
 void f1ap_du_ue_context_release_procedure::send_ue_context_release_complete()
