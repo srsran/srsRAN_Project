@@ -19,7 +19,7 @@ Features and roadmap - [Features](https://docs.srsran.com/projects/project/en/la
 Build Preparation
 -----------------
 
-### Dependencies 
+### Dependencies
 
 * Build tools:
   * cmake:               <https://cmake.org/>
@@ -60,16 +60,16 @@ sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest
 
 #### Split-8
 
-For Split-8 configurations, either UHD or ZMQ is required for the fronthaul interface. Both drivers are linked below, please see their respective documentation for installation instructions. 
+For Split-8 configurations, either UHD or ZMQ is required for the fronthaul interface. Both drivers are linked below, please see their respective documentation for installation instructions.
 
 * UHD:                 <https://github.com/EttusResearch/uhd>
 * ZMQ:                 <https://zeromq.org/>
 
 #### Split-7.2
 
-For Split-7.2 configurations no extra 3rd-party dependencies are required, only those listed above. 
+For Split-7.2 configurations no extra 3rd-party dependencies are required, only those listed above.
 
-Optionally, DPDK can be installed for high-bandwidth low-latency scenarios. For more information on this, please see [this tutorial](https://docs.srsran.com/projects/project/en/latest/tutorials/source/dpdk/source/index.html#). 
+Optionally, DPDK can be installed for high-bandwidth low-latency scenarios. For more information on this, please see [this tutorial](https://docs.srsran.com/projects/project/en/latest/tutorials/source/dpdk/source/index.html#).
 
 Build Instructions
 ------------------
@@ -79,15 +79,15 @@ Download and build srsRAN:
 <details open>
 <summary><strong>Vanilla Installation</strong></summary>
 
-First, clone the srsRAN Project repository: 
+First, clone the srsRAN Project repository:
 
 ```bash
     git clone https://github.com/srsRAN/srsRAN_Project.git
-``` 
+```
 
-Then build the code-base: 
+Then build the code-base:
 
-```bash 
+```bash
 
     cd srsRAN_Project
     mkdir build
@@ -97,16 +97,16 @@ Then build the code-base:
     make test -j $(nproc)
 ```
 
-You can now run the gNB from ``srsRAN_Project/build/apps/gnb/``. If you wish to install the srsRAN Project gNB, you can use the following command: 
+You can now run the gNB from ``srsRAN_Project/build/apps/gnb/``. If you wish to install the srsRAN Project gNB, you can use the following command:
 
 ```bash
     sudo make install
 ```
+
 </details>
 
 <details>
 <summary><strong>ZMQ Enabled Installation</strong></summary>
-
 
 Once ZMQ has been installed you will need build of srsRAN Project with the correct flags to enable the use of ZMQ.
 
@@ -132,6 +132,7 @@ Pay extra attention to the cmake console output. Make sure you read the followin
 -- Found libZEROMQ: /usr/local/include, /usr/local/lib/libzmq.so
 ...
 ```
+
 </details>
 
 <details>
@@ -155,6 +156,7 @@ cmake ../ -DENABLE_DPDK=True -DASSERT_LEVEL=MINIMAL
 make -j $(nproc)
 make test -j $(nproc)
 ```
+
 </details>
 
 ### PHY Tests
@@ -164,11 +166,11 @@ PHY layer tests use binary test vectors and are not built by default. To enable,
 Deploying srsRAN Project
 ------------------------
 
-srsRAN Project can be run in two ways: 
+srsRAN Project can be run in two ways:
 
-  - As a monolithic gNB (combined CU & DU)
-  - With a split CU and DU 
+* As a monolithic gNB (combined CU & DU)
+* With a split CU and DU
 
-For exact details on running srsRAN Project in any configuration, see [the documentation](https://docs.srsran.com/projects/project/en/latest/user_manuals/source/running.html). 
+For exact details on running srsRAN Project in any configuration, see [the documentation](https://docs.srsran.com/projects/project/en/latest/user_manuals/source/running.html).
 
-For information on configuring and running srsRAN for various different use cases,  check our [tutorials](https://docs.srsran.com/projects/project/en/latest/tutorials/source/index.html). 
+For information on configuring and running srsRAN for various different use cases,  check our [tutorials](https://docs.srsran.com/projects/project/en/latest/tutorials/source/index.html).
