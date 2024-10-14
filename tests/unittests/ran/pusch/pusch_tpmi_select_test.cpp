@@ -119,9 +119,8 @@ TEST_P(PuschTpmiSelectFixture, VectorTest)
   }
 
   // Get UL-SCH information parameters.
-  pusch_tpmi_select_info info = get_tpmi_select_info(test_case.channel_matrix,
-                                                     test_case.noise_variance,
-                                                     tx_scheme_codebook_subset::fully_and_partial_and_non_coherent);
+  pusch_tpmi_select_info info =
+      get_tpmi_select_info(test_case.channel_matrix, test_case.noise_variance, test_case.codebook_subset);
 
   // Compare with expected.
   ASSERT_EQ(info, test_case.info);

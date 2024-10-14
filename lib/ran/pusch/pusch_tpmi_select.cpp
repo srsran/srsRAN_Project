@@ -138,22 +138,45 @@ static precoding_weight_matrix product_channel_weight(const srs_channel_matrix& 
 }
 
 static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_1layer(const srs_channel_matrix& channel,
-                                                                     float                     noise_variance)
+                                                                     float                     noise_variance,
+                                                                     tx_scheme_codebook_subset codebook_subset)
 {
   unsigned nof_rx_ports = channel.get_nof_rx_ports();
   unsigned nof_tx_ports = channel.get_nof_tx_ports();
 
-  // Select codebook as a function of the number of transmit ports.
-  span<const precoding_weight_matrix> codebook = codebook_1layer_2port;
-  if (nof_tx_ports == 4) {
+  // Select codebook as a function of the number of transmit ports and restrict the candidates according to its subset.
+  span<const precoding_weight_matrix> codebook;
+  unsigned                            tpmi_end;
+  if (nof_tx_ports == 2) {
+    codebook = codebook_1layer_2port;
+    switch (codebook_subset) {
+      case tx_scheme_codebook_subset::non_coherent:
+        tpmi_end = 2;
+        break;
+      default:
+        tpmi_end = codebook.size();
+        break;
+    }
+  } else {
     codebook = codebook_1layer_4port;
+    switch (codebook_subset) {
+      case tx_scheme_codebook_subset::partial_and_non_coherent:
+        tpmi_end = 12;
+        break;
+      case tx_scheme_codebook_subset::non_coherent:
+        tpmi_end = 4;
+        break;
+      default:
+        tpmi_end = codebook.size();
+        break;
+    }
   }
 
   float    best_sinr = -std::numeric_limits<float>::infinity();
   unsigned best_tpmi = 0;
 
   // Iterate possible TPMIs.
-  for (unsigned tpmi = 0, tpmi_end = codebook.size(); tpmi != tpmi_end; ++tpmi) {
+  for (unsigned tpmi = 0; tpmi != tpmi_end; ++tpmi) {
     // Select precoding matrix.
     const precoding_weight_matrix& weights = codebook[tpmi];
 
@@ -186,23 +209,46 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_1layer(const srs_c
 }
 
 static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_2layer(const srs_channel_matrix& channel,
-                                                                     float                     noise_variance)
+                                                                     float                     noise_variance,
+                                                                     tx_scheme_codebook_subset codebook_subset)
 {
   static constexpr unsigned nof_layers   = 2;
   unsigned                  nof_rx_ports = channel.get_nof_rx_ports();
   unsigned                  nof_tx_ports = channel.get_nof_tx_ports();
 
-  // Select codebook as a function of the number of transmit ports.
-  span<const precoding_weight_matrix> codebook = codebook_2layer_2port;
-  if (nof_tx_ports == 4) {
+  // Select codebook as a function of the number of transmit ports and restrict the candidates according to its subset.
+  span<const precoding_weight_matrix> codebook;
+  unsigned                            tpmi_end;
+  if (nof_tx_ports == 2) {
+    codebook = codebook_2layer_2port;
+    switch (codebook_subset) {
+      case tx_scheme_codebook_subset::non_coherent:
+        tpmi_end = 1;
+        break;
+      default:
+        tpmi_end = codebook.size();
+        break;
+    }
+  } else {
     codebook = codebook_2layer_4port;
+    switch (codebook_subset) {
+      case tx_scheme_codebook_subset::partial_and_non_coherent:
+        tpmi_end = 14;
+        break;
+      case tx_scheme_codebook_subset::non_coherent:
+        tpmi_end = 6;
+        break;
+      default:
+        tpmi_end = codebook.size();
+        break;
+    }
   }
 
   float    best_sinr = -std::numeric_limits<float>::infinity();
   unsigned best_tpmi = 0;
 
   // Iterate possible TPMIs.
-  for (unsigned tpmi = 0, tpmi_end = codebook.size(); tpmi != tpmi_end; ++tpmi) {
+  for (unsigned tpmi = 0; tpmi != tpmi_end; ++tpmi) {
     // Select precoding matrix.
     const precoding_weight_matrix& weights = codebook[tpmi];
 
@@ -250,9 +296,6 @@ pusch_tpmi_select_info srsran::get_tpmi_select_info(const srs_channel_matrix& ch
                                                     float                     noise_variance,
                                                     tx_scheme_codebook_subset codebook_subset)
 {
-  srsran_assert(codebook_subset == tx_scheme_codebook_subset::fully_and_partial_and_non_coherent,
-                "Unsupported codebook subset.");
-
   unsigned nof_tx_ports   = channel.get_nof_tx_ports();
   unsigned nof_rx_ports   = channel.get_nof_rx_ports();
   unsigned max_nof_layers = std::min(nof_tx_ports, nof_rx_ports);
@@ -261,12 +304,12 @@ pusch_tpmi_select_info srsran::get_tpmi_select_info(const srs_channel_matrix& ch
 
   // Calculate TPMI select information for 1 layer.
   if (max_nof_layers >= 1) {
-    info.emplace_back(get_tpmi_select_info_1layer(channel, noise_variance));
+    info.emplace_back(get_tpmi_select_info_1layer(channel, noise_variance, codebook_subset));
   }
 
   // Calculate TPMI select information for 2 layer.
   if (max_nof_layers >= 2) {
-    info.emplace_back(get_tpmi_select_info_2layer(channel, noise_variance));
+    info.emplace_back(get_tpmi_select_info_2layer(channel, noise_variance, codebook_subset));
   }
 
   // Return invalid information.
