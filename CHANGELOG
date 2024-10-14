@@ -1,6 +1,12 @@
 Change Log for Releases
 =======================
 
+## 24.10
+- CU/DU split
+- RAN slicing
+- Compile time selection of split 7 and split 8
+- E2 support in the CU
+
 ## 24.04
  * Allow multiple cells per gNB
  * Added Intra-gNB handover
