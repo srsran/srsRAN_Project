@@ -55,6 +55,13 @@ protected:
     f1ap->handle_message(msg);
   }
 
+  void rrc_container_was_delivered(uint32_t pdcp_sn)
+  {
+    ue_test_context& ue = test_ues[test_ue_index];
+    ue.f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(pdcp_sn);
+    ue.f1c_bearers[LCID_SRB1].bearer->handle_delivery_notification(pdcp_sn);
+  }
+
   bool was_ue_context_modification_response_sent() const
   {
     return this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
@@ -82,6 +89,8 @@ TEST_F(f1ap_du_ue_context_modification_test,
        when_f1ap_receives_request_then_f1ap_responds_to_cu_with_ue_context_modification_response)
 {
   start_procedure({drb_id_t::drb1});
+
+  rrc_container_was_delivered(1);
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());

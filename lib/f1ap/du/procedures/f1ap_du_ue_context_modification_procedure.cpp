@@ -10,8 +10,10 @@
 
 #include "f1ap_du_ue_context_modification_procedure.h"
 #include "../../asn1_helpers.h"
+#include "proc_logger.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/f1ap_message.h"
+#include "srsran/support/async/async_no_op_task.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -38,11 +40,13 @@ void f1ap_du_ue_context_modification_procedure::operator()(coro_context<async_ta
   // "If the UE CONTEXT MODIFICATION REQUEST message contains the RRC-Container IE, the gNB-DU shall send the
   // corresponding RRC message to the UE."
   if (du_response.result and req->rrc_container_present) {
-    auto* srb = ue.bearers.find_srb(srb_id_t::srb1);
-    if (srb != nullptr) {
-      srb->handle_pdu(req->rrc_container.copy());
-    } else {
-      du_response.result = false;
+    CORO_AWAIT_VALUE(bool result, handle_rrc_container());
+    if (not result and req->rrc_delivery_status_request_present) {
+      // Note: Even if lower layers do not notify RRC container delivery, the procedure moves forward. We can rely on
+      // RLC RLF in case something goes wrong.
+      logger.warning(
+          "{}: Ignoring RRC Delivery status request. Cause: Lower layers have not confirmed RRC container delivery",
+          f1ap_log_prefix{ue.context, name()});
     }
   }
 
@@ -157,4 +161,23 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_fai
   resp->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
 
   ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
+}
+
+async_task<bool> f1ap_du_ue_context_modification_procedure::handle_rrc_container()
+{
+  // Time waiting for RRC container delivery.
+  static constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
+
+  f1c_bearer* srb1 = ue.bearers.find_srb(srb_id_t::srb1);
+  if (srb1 == nullptr) {
+    logger.error("{}: Failed to find SRB1 bearer to send RRC container.", f1ap_log_prefix{ue.context, name()});
+    return launch_no_op_task(false);
+  }
+
+  if (req->rrc_delivery_status_request_present) {
+    // If RRC delivery status is requested, we wait for the PDU delivery and report the status afterwards.
+    return srb1->handle_pdu_and_await_delivery(req->rrc_container.copy(), true, rrc_container_delivery_timeout);
+  }
+  // TODO: Use handle_pdu_and_await_delivery when all unit tests are updated.
+  return srb1->handle_pdu_and_await_transmission(req->rrc_container.copy(), rrc_container_delivery_timeout);
 }
