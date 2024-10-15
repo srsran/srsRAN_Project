@@ -29,7 +29,7 @@ protected:
         test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {});
     run_ue_context_setup_procedure(test_ue_index, msg);
 
-    this->f1c_gw.last_tx_f1ap_pdu = {};
+    this->f1c_gw.clear_tx_pdus();
   }
 
   void start_procedure(const std::initializer_list<drb_id_t>& drbs, byte_buffer rrc_container = {})
@@ -63,8 +63,9 @@ protected:
 
   bool was_ue_context_modification_response_sent() const
   {
-    return this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
-           this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value ==
+    return this->f1c_gw.tx_pdus_sent() and
+           this->f1c_gw.last_tx_pdu().pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
+           this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.type().value ==
                f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp;
   }
 
@@ -113,7 +114,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -154,7 +155,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT MODIFICATION RESPONSE to CU-CP with failed DRB.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -176,7 +177,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT MODIFICATION RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
   ASSERT_FALSE(resp->drbs_modified_list_present);

@@ -123,14 +123,15 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
   start_procedure(msg);
 
   // Lower layers handle RRC container.
-  this->f1c_gw.last_tx_f1ap_pdu = {};
+  this->f1c_gw.clear_tx_pdus();
   on_rrc_container_transmitted(1);
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value,
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.type().value,
             f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);
-  ue_context_setup_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_setup_resp();
+  const ue_context_setup_resp_s& resp =
+      this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_setup_resp();
   ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
   ASSERT_FALSE(resp->c_rnti_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_setup_list_present);
@@ -175,10 +176,10 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
   byte_buffer ul_rrc_msg =
       byte_buffer::create(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))).value();
   srb2->handle_sdu(byte_buffer_chain::create(ul_rrc_msg.copy()).value());
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.type().value,
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.init_msg().value.type().value,
             f1ap_elem_procs_o::init_msg_c::types_opts::ul_rrc_msg_transfer);
-  const ul_rrc_msg_transfer_s& ulmsg = this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.ul_rrc_msg_transfer();
+  const ul_rrc_msg_transfer_s& ulmsg = this->f1c_gw.last_tx_pdu().pdu.init_msg().value.ul_rrc_msg_transfer();
   ASSERT_EQ(ulmsg->rrc_container, ul_rrc_msg);
 }
 
@@ -220,10 +221,11 @@ TEST_F(
   on_rrc_container_transmitted(1);
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value,
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.type().value,
             f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);
-  ue_context_setup_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_setup_resp();
+  const ue_context_setup_resp_s& resp =
+      this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_setup_resp();
   ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
   ASSERT_TRUE(resp->c_rnti_present)
       << "UE CONTEXT SETUP RESPONSE should contain C-RNTI IE if it created a UE in the process";
@@ -262,7 +264,8 @@ TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
   run_ue_context_setup_procedure(ue_index, ue_ctxt_setup_req);
 
   // SRB2 created.
-  ue_context_setup_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_setup_resp();
+  const ue_context_setup_resp_s& resp =
+      this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_setup_resp();
   ASSERT_TRUE(resp->srbs_setup_list_present);
   ASSERT_EQ(resp->srbs_setup_list.size(), 1);
   ASSERT_EQ(resp->srbs_setup_list[0]->srbs_setup_item().srb_id, 2);

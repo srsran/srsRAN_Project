@@ -69,7 +69,7 @@ TEST_F(f1ap_du_ue_management_tester, f1ap_created_bearers_forward_messages_to_no
   byte_buffer ul_srb_buf =
       byte_buffer::create(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(3, 100))).value();
   resp.f1c_bearers_added[0].bearer->handle_sdu(byte_buffer_chain::create(ul_srb_buf.copy()).value());
-  const auto& ul_f1ap_msg = this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.ul_rrc_msg_transfer();
+  const auto& ul_f1ap_msg = this->f1c_gw.last_tx_pdu().pdu.init_msg().value.ul_rrc_msg_transfer();
   ASSERT_EQ(ul_f1ap_msg->rrc_container, ul_srb_buf);
   ASSERT_EQ((srb_id_t)ul_f1ap_msg->srb_id, srb_id_t::srb2);
 }

@@ -145,16 +145,16 @@ namespace {
 class dummy_f1ap_tx_pdu_notifier : public f1ap_message_notifier
 {
 public:
-  dummy_f1ap_tx_pdu_notifier(f1ap_message& last_tx_pdu_, unique_task on_disconnect_) :
-    last_tx_pdu(last_tx_pdu_), on_disconnect(std::move(on_disconnect_))
+  dummy_f1ap_tx_pdu_notifier(std::deque<f1ap_message>& tx_pdus_, unique_task on_disconnect_) :
+    tx_pdus(tx_pdus_), on_disconnect(std::move(on_disconnect_))
   {
   }
   ~dummy_f1ap_tx_pdu_notifier() override { on_disconnect(); }
 
-  void on_new_message(const f1ap_message& msg) override { last_tx_pdu = msg; }
+  void on_new_message(const f1ap_message& msg) override { tx_pdus.push_back(msg); }
 
-  f1ap_message& last_tx_pdu;
-  unique_task   on_disconnect;
+  std::deque<f1ap_message>& tx_pdus;
+  unique_task               on_disconnect;
 };
 
 } // namespace
@@ -163,7 +163,7 @@ std::unique_ptr<f1ap_message_notifier>
 dummy_f1c_connection_client::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_)
 {
   du_rx_pdu_notifier = std::move(du_rx_pdu_notifier_);
-  return std::make_unique<dummy_f1ap_tx_pdu_notifier>(last_tx_f1ap_pdu, [this]() { du_rx_pdu_notifier.reset(); });
+  return std::make_unique<dummy_f1ap_tx_pdu_notifier>(tx_f1ap_pdus, [this]() { du_rx_pdu_notifier.reset(); });
 }
 
 //////////////////////////////////
@@ -198,7 +198,7 @@ void f1ap_du_test::run_f1_setup_procedure()
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // > F1 setup response received.
-  unsigned     transaction_id    = get_transaction_id(f1c_gw.last_tx_f1ap_pdu.pdu).value();
+  unsigned     transaction_id    = get_transaction_id(f1c_gw.last_tx_pdu().pdu).value();
   f1ap_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
   test_logger.info("Injecting F1SetupResponse");
   f1ap->handle_message(f1_setup_response);
@@ -211,7 +211,7 @@ void f1ap_du_test::run_f1_removal_procedure()
   lazy_task_launcher<void> t_launcher(t);
 
   // Inject F1 removal response.
-  f1ap_message f1_removal_response = test_helpers::generate_f1_removal_response(f1c_gw.last_tx_f1ap_pdu);
+  f1ap_message f1_removal_response = test_helpers::generate_f1_removal_response(f1c_gw.last_tx_pdu());
   test_logger.info("Injecting F1RemovalResponse");
   f1ap->handle_message(f1_removal_response);
 
