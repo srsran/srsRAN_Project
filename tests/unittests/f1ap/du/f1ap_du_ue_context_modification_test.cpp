@@ -32,7 +32,9 @@ protected:
     this->f1c_gw.clear_tx_pdus();
   }
 
-  void start_procedure(const std::initializer_list<drb_id_t>& drbs, byte_buffer rrc_container = {})
+  void start_procedure(const std::initializer_list<drb_id_t>& drbs,
+                       byte_buffer                            rrc_container        = {},
+                       bool                                   rrc_delivery_request = false)
   {
     // Prepare DU manager response to F1AP.
     this->f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
@@ -50,6 +52,9 @@ protected:
     // Initiate procedure in F1AP.
     f1ap_message msg = test_helpers::generate_ue_context_modification_request(
         int_to_gnb_du_ue_f1ap_id(0), int_to_gnb_cu_ue_f1ap_id(0), drbs, {}, {}, std::move(rrc_container));
+    msg.pdu.init_msg().value.ue_context_mod_request()->rrc_delivery_status_request_present = true;
+    msg.pdu.init_msg().value.ue_context_mod_request()->rrc_delivery_status_request.value =
+        asn1::f1ap::rrc_delivery_status_request_opts::true_value;
     f1ap->handle_message(msg);
   }
 
@@ -105,6 +110,26 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_FALSE(was_ue_context_modification_response_sent());
   rrc_container_was_delivered(pdcp_sn);
   ASSERT_TRUE(was_ue_context_modification_response_sent());
+}
+
+TEST_F(
+    f1ap_du_ue_context_modification_test,
+    when_ue_context_mod_has_rrc_container_and_rrc_delivery_status_request_then_f1ap_waits_for_delivery_notification_before_sending_rrc_delivery_request)
+{
+  uint32_t pdcp_sn = 2;
+  start_procedure({drb_id_t::drb1}, test_helpers::create_dl_dcch_rrc_container(pdcp_sn, {0x1, 0x2, 0x3}), true);
+
+  ASSERT_FALSE(this->f1c_gw.tx_pdus_sent());
+  rrc_container_was_delivered(pdcp_sn);
+  ASSERT_TRUE(this->f1c_gw.tx_pdus_sent());
+  auto msg = this->f1c_gw.pop_tx_pdu();
+  ASSERT_EQ(msg.value().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::rrc_delivery_report);
+  ASSERT_EQ(msg.value().pdu.init_msg().value.rrc_delivery_report()->srb_id, 1);
+  ASSERT_EQ(msg.value().pdu.init_msg().value.rrc_delivery_report()->rrc_delivery_status.trigger_msg, pdcp_sn);
+  msg = this->f1c_gw.pop_tx_pdu();
+  ASSERT_EQ(msg.value().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp);
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,

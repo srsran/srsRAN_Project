@@ -174,10 +174,6 @@ async_task<bool> f1ap_du_ue_context_modification_procedure::handle_rrc_container
     return launch_no_op_task(false);
   }
 
-  if (req->rrc_delivery_status_request_present) {
-    // If RRC delivery status is requested, we wait for the PDU delivery and report the status afterwards.
-    return srb1->handle_pdu_and_await_delivery(req->rrc_container.copy(), true, rrc_container_delivery_timeout);
-  }
-  // TODO: Use handle_pdu_and_await_delivery when all unit tests are updated.
-  return srb1->handle_pdu_and_await_transmission(req->rrc_container.copy(), rrc_container_delivery_timeout);
+  // If RRC delivery status is requested, we wait for the PDU delivery and report the status afterwards.
+  return srb1->handle_pdu_and_await_delivery(req->rrc_container.copy(), true, rrc_container_delivery_timeout);
 }
