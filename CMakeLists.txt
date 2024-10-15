@@ -64,6 +64,7 @@ option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            ON)
 option(ENABLE_FFTW           "Enable FFTW"                              ON)
 option(ENABLE_MKL            "Enable Intel MKL"                         ON)
+option(ENABLE_ARMPL          "Enable ARM performance library"           ON)
 option(ENABLE_DPDK           "Enable DPDK"                              OFF)
 option(ENABLE_LIBNUMA        "Enable LibNUMA"                           OFF)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
@@ -259,6 +260,11 @@ endif (ENABLE_FFTW)
 if (ENABLE_MKL)
     find_package(MKL)
 endif (ENABLE_MKL)
+
+# ARMPL
+if (ENABLE_ARMPL)
+    find_package(ARMPL)
+endif (ENABLE_ARMPL)
 
 # Google Tests
 if (BUILD_TESTS)

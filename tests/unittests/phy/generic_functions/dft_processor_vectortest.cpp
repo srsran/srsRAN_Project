@@ -101,10 +101,5 @@ TEST_P(DFTprocessorFixture, DFTProcessorUnittest)
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(DFTprocessorVectorTest,
                          DFTprocessorFixture,
-                         ::testing::Combine(::testing::Values("generic"
-#ifdef ENABLE_FFTW
-                                                              ,
-                                                              "fftw"
-#endif // ENABLE_FFTW
-                                                              ),
+                         ::testing::Combine(::testing::Values("generic", "fftw"),
                                             ::testing::ValuesIn(dft_processor_test_data)));
