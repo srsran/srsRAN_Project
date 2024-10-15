@@ -150,24 +150,25 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_1layer(const srs_c
   if (nof_tx_ports == 2) {
     codebook = codebook_1layer_2port;
     switch (codebook_subset) {
+      case tx_scheme_codebook_subset::fully_and_partial_and_non_coherent:
+      case tx_scheme_codebook_subset::partial_and_non_coherent:
+        tpmi_end = codebook.size();
+        break;
       case tx_scheme_codebook_subset::non_coherent:
         tpmi_end = 2;
-        break;
-      default:
-        tpmi_end = codebook.size();
         break;
     }
   } else {
     codebook = codebook_1layer_4port;
     switch (codebook_subset) {
+      case tx_scheme_codebook_subset::fully_and_partial_and_non_coherent:
+        tpmi_end = codebook.size();
+        break;
       case tx_scheme_codebook_subset::partial_and_non_coherent:
         tpmi_end = 12;
         break;
       case tx_scheme_codebook_subset::non_coherent:
         tpmi_end = 4;
-        break;
-      default:
-        tpmi_end = codebook.size();
         break;
     }
   }
@@ -222,24 +223,25 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_2layer(const srs_c
   if (nof_tx_ports == 2) {
     codebook = codebook_2layer_2port;
     switch (codebook_subset) {
+      case tx_scheme_codebook_subset::fully_and_partial_and_non_coherent:
+      case tx_scheme_codebook_subset::partial_and_non_coherent:
+        tpmi_end = codebook.size();
+        break;
       case tx_scheme_codebook_subset::non_coherent:
         tpmi_end = 1;
-        break;
-      default:
-        tpmi_end = codebook.size();
         break;
     }
   } else {
     codebook = codebook_2layer_4port;
     switch (codebook_subset) {
+      case tx_scheme_codebook_subset::fully_and_partial_and_non_coherent:
+        tpmi_end = codebook.size();
+        break;
       case tx_scheme_codebook_subset::partial_and_non_coherent:
         tpmi_end = 14;
         break;
       case tx_scheme_codebook_subset::non_coherent:
         tpmi_end = 6;
-        break;
-      default:
-        tpmi_end = codebook.size();
         break;
     }
   }
