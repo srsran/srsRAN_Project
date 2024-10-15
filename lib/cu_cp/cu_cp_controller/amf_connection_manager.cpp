@@ -38,8 +38,7 @@ void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signa
         CORO_BEGIN(ctx);
 
         // Launch procedure to initiate AMF connection.
-        amfs_connected.emplace(ngaps.get_ngaps().begin()->first, false);
-        CORO_AWAIT_VALUE(success, launch_async<amf_connection_setup_routine>(ngaps, amfs_connected.begin()->second));
+        CORO_AWAIT_VALUE(success, start_amf_connection_setup(ngaps, amfs_connected));
 
         // Signal through the promise the result of the connection setup.
         if (p != nullptr) {
@@ -60,8 +59,7 @@ async_task<void> amf_connection_manager::disconnect_amf()
     });
   }
 
-  return launch_async<amf_connection_removal_routine>(ngaps.get_ngaps().begin()->second,
-                                                      amfs_connected.begin()->second);
+  return start_amf_connection_removal(ngaps, amfs_connected);
 }
 
 void amf_connection_manager::stop()
