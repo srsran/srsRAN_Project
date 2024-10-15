@@ -267,14 +267,14 @@ public:
 
     constexpr const_iterator(const circular_map_impl* map, size_t idx_) : ptr(map), idx(idx_)
     {
-      if (idx < ptr->capacity() and not ptr->buffer[idx]) {
+      if (idx < ptr->capacity() and not ptr->storage.data[idx]) {
         ++(*this);
       }
     }
 
     constexpr const_iterator& operator++()
     {
-      while (++idx < ptr->capacity() and not ptr->buffer[idx]) {
+      while (++idx < ptr->capacity() and not ptr->storage.data[idx]) {
       }
       return *this;
     }
