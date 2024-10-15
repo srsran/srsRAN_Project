@@ -19,6 +19,7 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 
@@ -81,6 +82,10 @@ private:
   /// \brief Number of indexes -> nof_layers for precoding (Options: 1, 2, 3, 4 layers).
   static constexpr size_t NOF_LAYER_CHOICES = 4;
 
+  /// This variable defines how many PUSCH PRB allocations needs to be stored in the internal ring-buffer; it is the
+  /// maximum expected delay (in slots) between the for which slot the PUSCH is scheduled and the slot at which the PHR
+  /// is received; this delay depends on the PHY processing capabilities. For simplicity, we take round the number to a
+  /// multiple of 10.
   static constexpr size_t MAX_PHR_IND_DELAY_SLOTS = 40;
 
   /// Mapping of number of layers to array index.
@@ -104,7 +109,7 @@ private:
   /// Latest CSI report received from the UE.
   std::optional<csi_report_data> latest_csi_report;
 
-  ///
+  /// \brief Latest PHR received from the UE.
   struct ue_phr_report {
     cell_ph_report       phr;
     std::optional<float> ph_times_rbs;
@@ -129,6 +134,8 @@ private:
 
   /// \brief Ring of PUSCH number of PRBs allocation indexed by slot.
   circular_array<pusch_prbs_entry, MAX_PHR_IND_DELAY_SLOTS> pusch_nof_prbs_grid;
+
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsran

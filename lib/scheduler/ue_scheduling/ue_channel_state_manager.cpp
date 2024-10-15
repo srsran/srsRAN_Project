@@ -9,13 +9,17 @@
  */
 
 #include "ue_channel_state_manager.h"
+#include "srsran/srslog/srslog.h"
 #include <algorithm>
 
 using namespace srsran;
 
 ue_channel_state_manager::ue_channel_state_manager(const scheduler_ue_expert_config& expert_cfg,
                                                    unsigned                          nof_dl_ports_) :
-  nof_dl_ports(nof_dl_ports_), pusch_snr_db(expert_cfg.initial_ul_sinr), wideband_cqi(expert_cfg.initial_cqi)
+  nof_dl_ports(nof_dl_ports_),
+  pusch_snr_db(expert_cfg.initial_ul_sinr),
+  wideband_cqi(expert_cfg.initial_cqi),
+  logger(srslog::fetch_basic_logger("SCHED"))
 {
   // Set initial precoding value when no CSI has yet been received.
   if (nof_dl_ports == 2) {
