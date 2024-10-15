@@ -45,8 +45,8 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
     dl_queue.push(&ctxt);
   }
 
-  alloc_result alloc_result = {alloc_status::invalid_params};
-  unsigned     rem_rbs      = slice_candidate.remaining_rbs();
+  dl_alloc_result alloc_result = {alloc_status::invalid_params};
+  unsigned        rem_rbs      = slice_candidate.remaining_rbs();
   while (not dl_queue.empty() and rem_rbs > 0) {
     ue_ctxt& ue = *dl_queue.top();
     if (alloc_result.status != alloc_status::skip_slot) {
@@ -91,8 +91,8 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
     ul_queue.push(&ctxt);
   }
 
-  alloc_result alloc_result = {alloc_status::invalid_params};
-  unsigned     rem_rbs      = slice_candidate.remaining_rbs();
+  ul_alloc_result alloc_result = {alloc_status::invalid_params};
+  unsigned        rem_rbs      = slice_candidate.remaining_rbs();
   while (not ul_queue.empty() and rem_rbs > 0) {
     ue_ctxt& ue = *ul_queue.top();
     if (alloc_result.status != alloc_status::skip_slot) {
@@ -109,13 +109,13 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 }
 
-alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
-                                             const slice_ue_repository& ues,
-                                             ue_pdsch_allocator&        pdsch_alloc,
-                                             unsigned                   max_rbs)
+dl_alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
+                                                const slice_ue_repository& ues,
+                                                ue_pdsch_allocator&        pdsch_alloc,
+                                                unsigned                   max_rbs)
 {
-  alloc_result   alloc_result = {alloc_status::invalid_params};
-  ue_pdsch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
+  dl_alloc_result alloc_result = {alloc_status::invalid_params};
+  ue_pdsch_grant  grant{&ues[ctxt.ue_index], ctxt.cell_index};
   // Prioritize reTx over newTx.
   if (ctxt.dl_retx_h.has_value()) {
     grant.h_id   = ctxt.dl_retx_h->id();
@@ -142,13 +142,13 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
   return {alloc_status::skip_ue};
 }
 
-alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
-                                             const slice_ue_repository& ues,
-                                             ue_pusch_allocator&        pusch_alloc,
-                                             unsigned                   max_rbs)
+ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
+                                                const slice_ue_repository& ues,
+                                                ue_pusch_allocator&        pusch_alloc,
+                                                unsigned                   max_rbs)
 {
-  alloc_result   alloc_result = {alloc_status::invalid_params};
-  ue_pusch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
+  ul_alloc_result alloc_result = {alloc_status::invalid_params};
+  ue_pusch_grant  grant{&ues[ctxt.ue_index], ctxt.cell_index};
   // Prioritize reTx over newTx.
   if (ctxt.ul_retx_h.has_value()) {
     grant.h_id   = ctxt.ul_retx_h->id();

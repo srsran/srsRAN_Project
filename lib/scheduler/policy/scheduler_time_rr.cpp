@@ -208,8 +208,8 @@ round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index,
       // wrap-around
       it = ue_db.begin();
     }
-    const slice_ue&    u      = *it;
-    const alloc_result result = alloc_ue(u);
+    const slice_ue& u      = *it;
+    const auto      result = alloc_ue(u);
     if (result.status == alloc_status::skip_slot) {
       // Grid allocator directed policy to stop allocations for this slot.
       return std::make_pair(next_ue_index, result.status);
@@ -228,11 +228,11 @@ round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index,
 }
 
 /// Allocates UE PDSCH grant for retransmissions.
-static alloc_result alloc_dl_retxs(const slice_ue_repository&   ue_db,
-                                   const ue_resource_grid_view& res_grid,
-                                   ue_pdsch_allocator&          pdsch_alloc,
-                                   ran_slice_id_t               slice_id,
-                                   dl_harq_pending_retx_list    harq_list)
+static dl_alloc_result alloc_dl_retxs(const slice_ue_repository&   ue_db,
+                                      const ue_resource_grid_view& res_grid,
+                                      ue_pdsch_allocator&          pdsch_alloc,
+                                      ran_slice_id_t               slice_id,
+                                      dl_harq_pending_retx_list    harq_list)
 {
   for (auto it = harq_list.begin(); it != harq_list.end();) {
     // Note: During retx alloc, the pending HARQ list will mutate. So, we prefetch the next node.
@@ -254,8 +254,8 @@ static alloc_result alloc_dl_retxs(const slice_ue_repository&   ue_db,
         continue;
       }
 
-      ue_pdsch_grant     grant{&u, ue_cc.cell_index, h.id()};
-      const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
+      ue_pdsch_grant        grant{&u, ue_cc.cell_index, h.id()};
+      const dl_alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
       // Continue iteration until skip slot indication is received.
       // NOTE: Allocation status other than skip_slot can be ignored because allocation of reTxs is done from oldest
       // HARQ pending to newest. Hence, other allocation status are redundant.
@@ -272,11 +272,11 @@ static alloc_result alloc_dl_retxs(const slice_ue_repository&   ue_db,
 }
 
 /// Allocate UE PDSCH grant for new transmissions.
-static alloc_result alloc_dl_ue_newtx(const slice_ue&              u,
-                                      const ue_resource_grid_view& res_grid,
-                                      ue_pdsch_allocator&          pdsch_alloc,
-                                      srslog::basic_logger&        logger,
-                                      std::optional<unsigned>      dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
+static dl_alloc_result alloc_dl_ue_newtx(const slice_ue&              u,
+                                         const ue_resource_grid_view& res_grid,
+                                         ue_pdsch_allocator&          pdsch_alloc,
+                                         srslog::basic_logger&        logger,
+                                         std::optional<unsigned>      dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   if (not u.has_pending_dl_newtx_bytes()) {
     return {alloc_status::skip_ue};
@@ -298,7 +298,7 @@ static alloc_result alloc_dl_ue_newtx(const slice_ue&              u,
     if (can_allocate_dl_newtx(u, to_ue_cell_index(i), logger)) {
       ue_pdsch_grant grant{
           &u, ue_cc.cell_index, INVALID_HARQ_ID, u.pending_dl_newtx_bytes(), dl_new_tx_max_nof_rbs_per_ue_per_slot};
-      const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
+      const dl_alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
       if (result.status != alloc_status::invalid_params) {
         return result;
@@ -309,10 +309,10 @@ static alloc_result alloc_dl_ue_newtx(const slice_ue&              u,
 }
 
 /// Allocates UE PUSCH grant for retransmissions.
-static alloc_result alloc_ul_retxs(const slice_ue_repository& ue_db,
-                                   ue_pusch_allocator&        pusch_alloc,
-                                   ran_slice_id_t             slice_id,
-                                   ul_harq_pending_retx_list  harq_list)
+static ul_alloc_result alloc_ul_retxs(const slice_ue_repository& ue_db,
+                                      ue_pusch_allocator&        pusch_alloc,
+                                      ran_slice_id_t             slice_id,
+                                      ul_harq_pending_retx_list  harq_list)
 {
   for (auto it = harq_list.begin(); it != harq_list.end();) {
     // Note: During retx alloc, the pending HARQ list will mutate. So, we prefetch the next node.
@@ -329,8 +329,8 @@ static alloc_result alloc_ul_retxs(const slice_ue_repository& ue_db,
                     "policy scheduler called for UE={} in fallback",
                     ue_cc.ue_index);
 
-      ue_pusch_grant     grant{&u, ue_cc.cell_index, h.id()};
-      const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
+      ue_pusch_grant        grant{&u, ue_cc.cell_index, h.id()};
+      const ul_alloc_result result = pusch_alloc.allocate_ul_grant(grant);
       // Continue iteration until skip slot indication is received.
       // NOTE: Allocation status other than skip_slot can be ignored because allocation of reTxs is done from oldest
       // HARQ pending to newest. Hence, other allocation status are redundant.
@@ -347,10 +347,10 @@ static alloc_result alloc_ul_retxs(const slice_ue_repository& ue_db,
 }
 
 /// Allocate UE PUSCH grant for new transmissions.
-static alloc_result alloc_ul_ue_newtx(const slice_ue&         u,
-                                      ue_pusch_allocator&     pusch_alloc,
-                                      srslog::basic_logger&   logger,
-                                      std::optional<unsigned> ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
+static ul_alloc_result alloc_ul_ue_newtx(const slice_ue&         u,
+                                         ue_pusch_allocator&     pusch_alloc,
+                                         srslog::basic_logger&   logger,
+                                         std::optional<unsigned> ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   unsigned pending_newtx_bytes = 0;
   pending_newtx_bytes          = u.pending_ul_newtx_bytes();
@@ -368,7 +368,7 @@ static alloc_result alloc_ul_ue_newtx(const slice_ue&         u,
     if (can_allocate_ul_newtx(u, to_ue_cell_index(i), logger)) {
       ue_pusch_grant grant{
           &u, ue_cc.cell_index, INVALID_HARQ_ID, pending_newtx_bytes, ul_new_tx_max_nof_rbs_per_ue_per_slot};
-      const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
+      const ul_alloc_result result = pusch_alloc.allocate_ul_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
       if (result.status != alloc_status::invalid_params) {
         return result;
