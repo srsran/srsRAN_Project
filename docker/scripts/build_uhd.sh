@@ -32,8 +32,9 @@ main() {
         -DENABLE_EXAMPLES=Off \
         -DENABLE_TESTS=Off \
         -DCMAKE_CXX_FLAGS="-march=${arch}" ..
-    make -j"${ncores}"
-    make -j"${ncores}" install
+    cmake --build . -- -j"${ncores}"
+    cmake --install .
+
 }
 
 main "$@"

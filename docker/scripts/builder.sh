@@ -203,5 +203,5 @@ ccache -z || true
 mkdir -p "$BUILD_FOLDER"
 cd "$BUILD_FOLDER" || exit
 cmake $CCACHE_CMAKE_ARGS "$@" ..
-make $MAKE_EXTRA
+cmake --build . -- $MAKE_EXTRA
 ccache -sv || true
