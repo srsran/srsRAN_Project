@@ -235,7 +235,9 @@ TEST_F(du_high_tester, when_ue_context_modification_with_rem_drbs_is_received_th
 
   // DU receives F1AP UE Context Modification Command.
   cu_notifier.last_f1ap_msgs.clear();
-  f1ap_message msg = generate_ue_context_modification_request({}, {drb_id_t::drb1});
+  auto&        u   = ues[rnti];
+  f1ap_message msg = test_helpers::generate_ue_context_modification_request(
+      u.du_ue_id.value(), u.cu_ue_id.value(), {}, {}, {drb_id_t::drb1}, {});
   this->du_hi->get_f1ap_message_handler().handle_message(msg);
 
   // Wait for DU to send F1AP UE Context Modification Response.

@@ -496,6 +496,29 @@ f1ap_message srsran::test_helpers::generate_ue_context_modification_response(gnb
   return pdu;
 }
 
+byte_buffer srsran::test_helpers::create_dl_dcch_rrc_container(uint32_t                              pdcp_sn,
+                                                               const std::initializer_list<uint8_t>& dl_dcch_msg)
+{
+  return create_dl_dcch_rrc_container(pdcp_sn, byte_buffer::create(dl_dcch_msg).value());
+}
+
+byte_buffer srsran::test_helpers::create_dl_dcch_rrc_container(uint32_t pdcp_sn, const byte_buffer& dl_dcch_msg)
+{
+  byte_buffer container;
+
+  // Add PDCP header.
+  report_fatal_error_if_not(container.append(pdcp_sn >> 8U), "Failed to allocate");
+  report_fatal_error_if_not(container.append(pdcp_sn & 0xfU), "Failed to allocate");
+
+  // Add payload.
+  report_fatal_error_if_not(container.append(dl_dcch_msg), "Failed to allocate");
+
+  // Add dummy MAC.
+  report_fatal_error_if_not(container.append({0x0, 0x0, 0x0, 0x0}), "Failed to allocate");
+
+  return container;
+}
+
 byte_buffer srsran::test_helpers::extract_dl_dcch_msg(const byte_buffer& rrc_container)
 {
   byte_buffer pdu = rrc_container.deep_copy().value();
