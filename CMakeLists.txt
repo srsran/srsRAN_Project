@@ -63,6 +63,7 @@ option(ENABLE_GCOV           "Enable code coverage"                     OFF)
 option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            ON)
 option(ENABLE_FFTW           "Enable FFTW"                              ON)
+option(ENABLE_MKL            "Enable Intel MKL"                         ON)
 option(ENABLE_DPDK           "Enable DPDK"                              OFF)
 option(ENABLE_LIBNUMA        "Enable LibNUMA"                           OFF)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
@@ -255,6 +256,11 @@ endif (MBEDTLS_FOUND)
 if (ENABLE_FFTW)
     find_package(FFTW3F)
 endif (ENABLE_FFTW)
+
+# MKL
+if (ENABLE_MKL)
+    find_package(MKL)
+endif (ENABLE_MKL)
 
 # Google Tests
 if (BUILD_TESTS)
