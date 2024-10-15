@@ -84,7 +84,8 @@ protected:
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     factory              = timer_factory{timers, task_exec};
-    e2ap                 = create_e2(cfg, factory, *e2_client_wrapper, *e2_subscription_mngr, *e2sm_mngr, task_exec);
+    e2agent_notifier     = std::make_unique<dummy_e2_agent_mng>();
+    e2ap = create_e2(cfg, *e2agent_notifier, factory, *e2_client_wrapper, *e2_subscription_mngr, *e2sm_mngr, task_exec);
   }
 
   void TearDown() override
@@ -186,6 +187,7 @@ protected:
   e2ap_configuration                            cfg;
   timer_factory                                 factory;
   timer_manager                                 timers;
+  std::unique_ptr<e2ap_e2agent_notifier>        e2agent_notifier;
   std::unique_ptr<e2_connection_client>         e2_client;
   std::unique_ptr<e2_connection_client_wrapper> e2_client_wrapper;
   std::unique_ptr<e2_message_notifier>          e2_tx_channel;

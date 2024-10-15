@@ -33,6 +33,7 @@ class e2_impl final : public e2_interface
 {
 public:
   e2_impl(e2ap_configuration&      cfg_,
+          e2ap_e2agent_notifier&   agent_notifier_,
           timer_factory            timers_,
           e2_connection_client&    e2_client_,
           e2_subscription_manager& subscription_mngr_,

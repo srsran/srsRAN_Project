@@ -47,6 +47,8 @@ public:
   void          stop() override;
   e2_interface& get_e2_interface() override { return *e2ap; };
 
+  void on_e2_disconnection() override;
+
 private:
   srslog::basic_logger& logger;
   e2ap_configuration&   cfg;

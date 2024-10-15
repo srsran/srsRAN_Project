@@ -95,8 +95,18 @@ public:
   virtual void stop()     = 0;
 };
 
+/// E2AP notifier to the E2 Agent.
+class e2ap_e2agent_notifier
+{
+public:
+  virtual ~e2ap_e2agent_notifier() = default;
+
+  /// \brief Notify that the TNL connection to the RIC was lost.
+  virtual void on_e2_disconnection() = 0;
+};
+
 /// \brief Public interface for a E2 Agent instance.
-class e2_agent
+class e2_agent : public e2ap_e2agent_notifier
 {
 public:
   virtual ~e2_agent() = default;

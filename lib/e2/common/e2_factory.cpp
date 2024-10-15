@@ -18,13 +18,15 @@
 using namespace srsran;
 
 std::unique_ptr<e2_interface> srsran::create_e2(e2ap_configuration&      e2ap_cfg_,
+                                                e2ap_e2agent_notifier&   agent_notifier_,
                                                 timer_factory            timers_,
                                                 e2_connection_client&    e2_client_,
                                                 e2_subscription_manager& e2_subscription_mngr_,
                                                 e2sm_manager&            e2sm_mngr_,
                                                 task_executor&           task_exec_)
 {
-  auto e2 = std::make_unique<e2_impl>(e2ap_cfg_, timers_, e2_client_, e2_subscription_mngr_, e2sm_mngr_, task_exec_);
+  auto e2 = std::make_unique<e2_impl>(
+      e2ap_cfg_, agent_notifier_, timers_, e2_client_, e2_subscription_mngr_, e2sm_mngr_, task_exec_);
   return e2;
 }
 

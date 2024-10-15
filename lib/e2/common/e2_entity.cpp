@@ -83,7 +83,7 @@ e2_entity::e2_entity(e2ap_configuration&                                        
     e2sm_mngr->add_e2sm_service(e2sm_rc_asn1_packer::oid, std::move(e2sm_rc_iface));
   }
 
-  e2ap = std::make_unique<e2_impl>(cfg_, timers_, e2_client_, *subscription_mngr, *e2sm_mngr, task_exec_);
+  e2ap = std::make_unique<e2_impl>(cfg_, *this, timers_, e2_client_, *subscription_mngr, *e2sm_mngr, task_exec_);
 }
 
 void e2_entity::start()
@@ -119,4 +119,11 @@ void e2_entity::stop()
       })) {
     report_fatal_error("Unable to initiate E2AP setup procedure");
   }
+}
+
+void e2_entity::on_e2_disconnection()
+{
+  logger.info("E2 connection was closed.");
+  // TODO: notify all components about the E2 disconnection (e.g., stop running indication procedures).
+  subscription_mngr->stop();
 }

@@ -24,10 +24,10 @@ class e2_connection_client;
 class e2_connection_handler
 {
 public:
-  e2_connection_handler(e2_connection_client& client_handler_,
-                        e2_message_handler&   rx_pdu_handler_,
-                        e2_event_handler&     e2_notifier_,
-                        task_executor&        ctrl_exec_);
+  e2_connection_handler(e2_connection_client&  client_handler_,
+                        e2_message_handler&    rx_pdu_handler_,
+                        e2ap_e2agent_notifier& agent_notifier_,
+                        task_executor&         ctrl_exec_);
   ~e2_connection_handler();
 
   /// Initiate new TNL association to the Near-RT RIC via E2 interface.
@@ -46,11 +46,11 @@ private:
   // Called from within E2AP execution context to handle a TNL association loss.
   void handle_connection_loss_impl();
 
-  e2_connection_client& client_handler;
-  e2_message_handler&   rx_pdu_handler;
-  e2_event_handler&     e2_notifier;
-  task_executor&        ctrl_exec;
-  srslog::basic_logger& logger;
+  e2_connection_client&  client_handler;
+  e2_message_handler&    rx_pdu_handler;
+  e2ap_e2agent_notifier& agent_notifier;
+  task_executor&         ctrl_exec;
+  srslog::basic_logger&  logger;
 
   bool connected_flag{false};
 
