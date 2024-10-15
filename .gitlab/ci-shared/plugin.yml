@@ -111,6 +111,8 @@ builder version:
     - if: $ON_WEB
     - if: $ON_API
     - if: $ON_SCHEDULE
+    - if: $CI_DESCRIPTION =~ /Release/
+      when: never
     - if: $CI_DESCRIPTION
   variables:
     SRSRANDIR: *srsran_dir
