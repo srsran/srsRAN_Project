@@ -94,7 +94,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   if (cfg.e2_client) {
     // todo: subscribe e2_metric_manager to a metric hub (currently not present)
     e2agent = create_e2_cu_agent(cfg.e2ap_config,
-                                 cfg.e2_client,
+                                 *cfg.e2_client,
                                  cfg.e2_cu_metric_iface,
                                  timer_factory{*cfg.services.timers, *cfg.services.cu_cp_executor},
                                  *cfg.services.cu_cp_executor);

@@ -34,7 +34,7 @@ class e2_impl final : public e2_interface
 public:
   e2_impl(e2ap_configuration&      cfg_,
           timer_factory            timers_,
-          e2_connection_client*    e2_client_,
+          e2_connection_client&    e2_client_,
           e2_subscription_manager& subscription_mngr_,
           e2sm_manager&            e2sm_mngr_,
           task_executor&           task_exec_);

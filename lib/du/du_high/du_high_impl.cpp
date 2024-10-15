@@ -140,7 +140,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
   if (cfg.e2_client) {
     // todo: subscribe e2_metric_manager to a metric hub (currently not present)
     e2agent = create_e2_du_agent(cfg.e2ap_config,
-                                 cfg.e2_client,
+                                 *cfg.e2_client,
                                  cfg.e2_du_metric_iface,
                                  f1ap.get(),
                                  &(get_du_configurator()),

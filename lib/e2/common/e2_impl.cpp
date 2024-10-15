@@ -21,7 +21,7 @@ using namespace asn1;
 
 e2_impl::e2_impl(e2ap_configuration&      cfg_,
                  timer_factory            timers_,
-                 e2_connection_client*    e2_client_,
+                 e2_connection_client&    e2_client_,
                  e2_subscription_manager& subscription_mngr_,
                  e2sm_manager&            e2sm_mngr_,
                  task_executor&           task_exec_) :
@@ -32,7 +32,7 @@ e2_impl::e2_impl(e2ap_configuration&      cfg_,
   e2sm_mngr(e2sm_mngr_),
   events(std::make_unique<e2_event_manager>(timers)),
   async_tasks(10),
-  connection_handler(*e2_client_, *this, *this, task_exec_)
+  connection_handler(e2_client_, *this, *this, task_exec_)
 {
 }
 

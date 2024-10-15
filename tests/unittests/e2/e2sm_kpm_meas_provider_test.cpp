@@ -92,13 +92,8 @@ protected:
     f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
     factory               = timer_factory{timers, task_worker};
     rc_param_configurator = std::make_unique<dummy_du_configurator>();
-    e2agent               = create_e2_du_agent(cfg,
-                                 e2_client.get(),
-                                 du_metrics.get(),
-                                 f1ap_ue_id_mapper.get(),
-                                 rc_param_configurator.get(),
-                                 factory,
-                                 task_worker);
+    e2agent               = create_e2_du_agent(
+        cfg, *e2_client, du_metrics.get(), f1ap_ue_id_mapper.get(), rc_param_configurator.get(), factory, task_worker);
   }
 
   void TearDown() override

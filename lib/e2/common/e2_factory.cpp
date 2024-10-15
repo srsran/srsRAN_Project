@@ -19,7 +19,7 @@ using namespace srsran;
 
 std::unique_ptr<e2_interface> srsran::create_e2(e2ap_configuration&      e2ap_cfg_,
                                                 timer_factory            timers_,
-                                                e2_connection_client*    e2_client_,
+                                                e2_connection_client&    e2_client_,
                                                 e2_subscription_manager& e2_subscription_mngr_,
                                                 e2sm_manager&            e2sm_mngr_,
                                                 task_executor&           task_exec_)
@@ -29,7 +29,7 @@ std::unique_ptr<e2_interface> srsran::create_e2(e2ap_configuration&      e2ap_cf
 }
 
 std::unique_ptr<e2_agent> srsran::create_e2_du_agent(e2ap_configuration&            e2ap_cfg_,
-                                                     e2_connection_client*          e2_client_,
+                                                     e2_connection_client&          e2_client_,
                                                      e2_du_metrics_interface*       e2_metrics_var,
                                                      srs_du::f1ap_ue_id_translator* f1ap_ue_id_translator_,
                                                      srs_du::du_configurator*       du_configurator_,
@@ -43,7 +43,7 @@ std::unique_ptr<e2_agent> srsran::create_e2_du_agent(e2ap_configuration&        
 }
 
 std::unique_ptr<e2_agent> srsran::create_e2_cu_agent(e2ap_configuration&      e2ap_cfg_,
-                                                     e2_connection_client*    e2_client_,
+                                                     e2_connection_client&    e2_client_,
                                                      e2_cu_metrics_interface* e2_metrics_var,
                                                      timer_factory            timers_,
                                                      task_executor&           e2_exec_)

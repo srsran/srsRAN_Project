@@ -115,7 +115,7 @@ protected:
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     factory              = timer_factory{timers, ctrl_worker};
     e2_client            = std::make_unique<dummy_e2_connection_client>();
-    e2ap                 = create_e2(cfg, factory, e2_client.get(), *e2_subscription_mngr, *e2sm_mngr, ctrl_worker);
+    e2ap                 = create_e2(cfg, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, ctrl_worker);
     pcap                 = std::make_unique<dummy_e2ap_pcap>();
     adapter->connect_e2ap(e2ap.get());
   }
@@ -194,7 +194,7 @@ protected:
     e2_client             = create_e2_gateway_client(e2_sctp_gateway_config{nw_config, *epoll_broker, *pcap});
     du_param_configurator = std::make_unique<dummy_du_configurator>();
     e2agent               = create_e2_du_agent(
-        cfg, e2_client.get(), &(*du_metrics), &(*f1ap_ue_id_mapper), &(*du_param_configurator), factory, ctrl_worker);
+        cfg, *e2_client, &(*du_metrics), &(*f1ap_ue_id_mapper), &(*du_param_configurator), factory, ctrl_worker);
   }
 
   e2ap_configuration                           cfg;

@@ -35,7 +35,7 @@ class e2_entity final : public e2_agent
 {
 public:
   e2_entity(e2ap_configuration&                                              cfg_,
-            e2_connection_client*                                            e2_client_,
+            e2_connection_client&                                            e2_client_,
             std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
             srs_du::f1ap_ue_id_translator*                                   f1ap_ue_id_translator_,
             srs_du::du_configurator*                                         du_configurator_,
