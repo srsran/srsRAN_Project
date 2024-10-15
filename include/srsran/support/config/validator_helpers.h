@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/support/config/validator_result.h"
+#include <algorithm>
 #include <optional>
 
 namespace srsran {
