@@ -319,7 +319,7 @@ template <typename T> struct printf_formatter {
   printf_formatter() = delete;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx)  {
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
     return ctx.begin();
   }
 

@@ -401,7 +401,7 @@ inline size_t strftime(wchar_t* str, size_t count, const wchar_t* format,
 
 template <typename Char> struct formatter<std::tm, Char> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx)  {
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
     auto it = ctx.begin();
     if (it != ctx.end() && *it == ':') ++it;
     auto end = it;
@@ -1086,7 +1086,7 @@ struct formatter<std::chrono::duration<Rep, Period>, Char> {
   formatter() : precision(-1) {}
 
   FMT_CONSTEXPR auto parse(basic_format_parse_context<Char>& ctx)
-       {
+      -> decltype(ctx.begin()) {
     auto range = do_parse(ctx);
     format_str = basic_string_view<Char>(
         &*range.begin, detail::to_unsigned(range.end - range.begin));

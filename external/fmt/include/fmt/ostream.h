@@ -111,13 +111,13 @@ template <typename T, typename Char>
 struct fallback_formatter<T, Char, enable_if_t<is_streamable<T, Char>::value>>
     : private formatter<basic_string_view<Char>, Char> {
   FMT_CONSTEXPR auto parse(basic_format_parse_context<Char>& ctx)
-       {
+      -> decltype(ctx.begin()) {
     return formatter<basic_string_view<Char>, Char>::parse(ctx);
   }
   template <typename ParseCtx,
             FMT_ENABLE_IF(std::is_same<
                           ParseCtx, basic_printf_parse_context<Char>>::value)>
-  auto parse(ParseCtx& ctx)  {
+  auto parse(ParseCtx& ctx) -> decltype(ctx.begin()) {
     return ctx.begin();
   }
 
