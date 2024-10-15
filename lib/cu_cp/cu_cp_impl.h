@@ -206,10 +206,6 @@ private:
 
   std::atomic<bool> stopped{false};
 
-  // Plug-ins
-  connect_amfs_func    connect_amfs    = nullptr;
-  disconnect_amfs_func disconnect_amfs = nullptr;
-
   // E2 interface
   std::unique_ptr<e2_interface> e2ap_entity;
 };

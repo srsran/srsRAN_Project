@@ -13,5 +13,3 @@ set(SOURCES
 add_library(srsran_ue_security_manager STATIC ${SOURCES})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-add_to_exported_libs(srsran_ue_security_manager)

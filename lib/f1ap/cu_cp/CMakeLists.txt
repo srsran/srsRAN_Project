@@ -21,5 +21,3 @@ add_library(srsran_f1ap_cu
 
 target_include_directories(srsran_f1ap_cu PRIVATE ..)
 target_link_libraries(srsran_f1ap_cu srsran_support srsran_f1ap_common f1ap_asn1)
-
-add_to_exported_libs(srsran_f1ap_cu)

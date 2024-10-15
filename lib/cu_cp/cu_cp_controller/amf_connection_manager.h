@@ -26,8 +26,6 @@ class amf_connection_manager
 {
 public:
   amf_connection_manager(ngap_repository&       ngaps_,
-                         connect_amfs_func      connect_amfs_,
-                         disconnect_amfs_func   disconnect_amfs_,
                          task_executor&         cu_cp_exec_,
                          common_task_scheduler& common_task_sched_);
 
@@ -50,8 +48,6 @@ private:
   amf_index_t plmn_to_amf_index(plmn_identity plmn) const;
 
   ngap_repository&       ngaps;
-  connect_amfs_func      connect_amfs;
-  disconnect_amfs_func   disconnect_amfs;
   task_executor&         cu_cp_exec;
   common_task_scheduler& common_task_sched;
   srslog::basic_logger&  logger;

@@ -360,29 +360,6 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-  // Load CU-CP plugins if enabled
-  std::optional<dynlink_manager> mocn_plugin = cu_cp_app_unit->get_cu_cp_unit_config().load_plugins
-                                                   ? dynlink_manager::create("libsrsran_plugin_mocn.so", gnb_logger)
-                                                   : std::nullopt;
-  if (cu_cp_app_unit->get_cu_cp_unit_config().load_plugins) {
-    if (not mocn_plugin) {
-      gnb_logger.error("Could not open MOCN plugin");
-      return -1;
-    }
-    expected<void*> connect_amfs = mocn_plugin->load_symbol("connect_amfs_func");
-    if (not connect_amfs) {
-      gnb_logger.error("Could not open MOCN function pointer");
-      return -1;
-    }
-    cu_cp_app_unit->get_cu_cp_unit_config().connect_amfs_func_ptr = connect_amfs.value();
-    expected<void*> disconnect_amfs                               = mocn_plugin->load_symbol("disconnect_amfs_func");
-    if (not disconnect_amfs) {
-      gnb_logger.error("Could not open MOCN function pointer");
-      return -1;
-    }
-    cu_cp_app_unit->get_cu_cp_unit_config().disconnect_amfs_func_ptr = disconnect_amfs.value();
-  }
-
   // Create CU-CP dependencies.
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;

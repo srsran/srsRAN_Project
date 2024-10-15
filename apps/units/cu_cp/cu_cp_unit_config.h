@@ -267,12 +267,6 @@ struct cu_cp_unit_config {
   int inactivity_timer = 120;
   /// PDU session setup timeout in seconds (must be larger than T310).
   unsigned pdu_session_setup_timeout = 3;
-  /// Load enterprise plugins.
-  bool load_plugins = false;
-  /// Function pointer to connect to AMFs from plugin
-  void* connect_amfs_func_ptr;
-  /// Function pointer to disconnect from AMFs from plugin
-  void* disconnect_amfs_func_ptr;
   /// Loggers configuration.
   cu_cp_unit_logger_config loggers;
   /// PCAPs configuration.

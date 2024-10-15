@@ -23,5 +23,3 @@ set(SOURCES
 add_library(srsran_security STATIC ${SOURCES})
 target_include_directories(srsran_security PUBLIC ${SEC_INCLUDE_DIRS})
 target_link_libraries(srsran_security ${SEC_LIBRARIES})
-
-add_to_exported_libs(srsran_security)
