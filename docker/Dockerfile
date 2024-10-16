@@ -35,7 +35,8 @@ ADD . /src
 # Install srsRAN build dependencies
 ARG LIB
 RUN /src/docker/scripts/install_dependencies.sh build && \
-    /src/docker/scripts/install_${LIB}_dependencies.sh build
+    /src/docker/scripts/install_${LIB}_dependencies.sh build && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
 
 ARG LIB_VERSION
 ARG MARCH
