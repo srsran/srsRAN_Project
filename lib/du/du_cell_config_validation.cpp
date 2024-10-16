@@ -713,7 +713,7 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
   CHECK_NEQ(prach_cfg.format, srsran::prach_format_type::invalid, "The PRACH format is invalid");
 
   // Derive PRACH duration information.
-  // The information we need are not related to whether it is the last PRACH occasion.
+  // The parameter \c is_last_prach_occasion is arbitrarily set to false, as it doesn't affect the PRACH number of PRBs.
   const bool                       is_last_prach_occasion = false;
   const prach_preamble_information info =
       is_long_preamble(prach_cfg.format)
@@ -735,9 +735,13 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
   const unsigned pucch_to_prach_guardband = is_long_preamble(prach_cfg.format) ? 0U : 3U;
 
   CHECK_TRUE(prach_prb_stop + pucch_to_prach_guardband <= prb_interval_no_pucch.stop(),
-             "With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH resources on the "
-             "upper part of the initial BWP",
-             rach_cfg.rach_cfg_generic.msg1_frequency_start);
+             "With the given prach_frequency_start={}, the PRACH opportunities in prbs=[{}, {}) overlap with the PUCCH "
+             "resources/guardband in PRBs=[{}, {})",
+             rach_cfg.rach_cfg_generic.msg1_frequency_start,
+             rach_cfg.rach_cfg_generic.msg1_frequency_start,
+             prach_prb_stop,
+             prb_interval_no_pucch.stop() - pucch_to_prach_guardband,
+             cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
   return {};
 }

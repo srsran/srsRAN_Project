@@ -106,24 +106,6 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
     return code;
   }
 
-  prach_subcarrier_spacing prach_scs      = is_long_preamble(prach_cfg.format)
-                                                ? get_prach_preamble_long_info(prach_cfg.format).scs
-                                                : to_ra_subcarrier_spacing(pusch_scs);
-  const unsigned           prach_nof_prbs = prach_frequency_mapping_get(prach_scs, pusch_scs).nof_rb_ra;
-  for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
-    uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
-    prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};
-
-    for (const auto& pucch_region : msg.pucch_guardbands) {
-      if (pucch_region.prbs.overlaps(prach_prbs))
-        fmt::print("Warning: Configured PRACH occasion collides with PUCCH RBs ({} intersects {}). Some interference "
-                   "between PUCCH and PRACH is expected.\n",
-                   pucch_region.prbs,
-                   prach_prbs);
-      break;
-    }
-  }
-
   return {};
 }
 

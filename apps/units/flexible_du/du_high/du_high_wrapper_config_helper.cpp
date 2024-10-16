@@ -18,7 +18,10 @@
 #include "metrics/du_high_scheduler_cell_metrics_consumers.h"
 #include "metrics/du_high_scheduler_cell_metrics_producer.h"
 #include "srsran/du/du_high/du_high_wrapper_factory.h"
+#include "srsran/du/du_update_config_helpers.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_frequency_mapping.h"
 
 using namespace srsran;
 
@@ -58,6 +61,40 @@ void srsran::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
   }
 
   fmt::print("\n");
+}
+
+static void validates_derived_du_params(span<const srs_du::du_cell_config> cells)
+{
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("DU", false);
+
+  for (const auto& cell_cfg : cells) {
+    const rach_config_common& rach_cfg = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
+
+    const auto prach_cfg = prach_configuration_get(frequency_range::FR1,
+                                                   band_helper::get_duplex_mode(cell_cfg.dl_carrier.band),
+                                                   rach_cfg.rach_cfg_generic.prach_config_index);
+
+    prb_interval prb_interval_no_pucch = config_helpers::find_largest_prb_interval_without_pucch(
+        cell_cfg.pucch_cfg, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+
+    // This is to preserve a guardband between the PUCCH and PRACH.
+    const unsigned pucch_to_prach_guardband = is_long_preamble(prach_cfg.format) ? 0U : 3U;
+
+    if (rach_cfg.rach_cfg_generic.msg1_frequency_start < prb_interval_no_pucch.start() + pucch_to_prach_guardband) {
+      fmt::print(
+          "Warning: With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH "
+          "resources/guardband in prbs=[0, {}). Some interference between PUCCH and PRACH interference should be "
+          "expected\n",
+          rach_cfg.rach_cfg_generic.msg1_frequency_start,
+          prb_interval_no_pucch.start() + pucch_to_prach_guardband);
+
+      logger.warning(
+          "With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH resources/guardband "
+          "in prbs=[0, {}). Some interference between PUCCH and PRACH interference should be expected",
+          rach_cfg.rach_cfg_generic.msg1_frequency_start,
+          prb_interval_no_pucch.start() + pucch_to_prach_guardband);
+    }
+  }
 }
 
 static scheduler_metrics_notifier*
@@ -166,9 +203,11 @@ srsran::fill_du_high_wrapper_config(srs_du::du_high_wrapper_config&  out_cfg,
   du_hi_cfg.ran.gnb_du_id   = static_cast<gnb_du_id_t>((static_cast<unsigned>(du_high_unit_cfg.gnb_du_id) + du_idx));
   du_hi_cfg.ran.gnb_du_name = fmt::format("srsdu{}", du_hi_cfg.ran.gnb_du_id);
   du_hi_cfg.ran.cells       = generate_du_cell_config(du_high_unit_cfg);
-  du_hi_cfg.ran.srbs        = generate_du_srb_config(du_high_unit_cfg);
-  du_hi_cfg.ran.qos         = generate_du_qos_config(du_high_unit_cfg);
-  du_hi_cfg.ran.mac_cfg     = generate_mac_expert_config(du_high_unit_cfg);
+  // Validates the derived parameters.
+  validates_derived_du_params(du_hi_cfg.ran.cells);
+  du_hi_cfg.ran.srbs    = generate_du_srb_config(du_high_unit_cfg);
+  du_hi_cfg.ran.qos     = generate_du_qos_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg = generate_mac_expert_config(du_high_unit_cfg);
   // Assign different initial C-RNTIs to different DUs.
   du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601 + (0x1000 * du_idx));
   du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
