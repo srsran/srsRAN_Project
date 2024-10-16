@@ -48,11 +48,14 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   dl_alloc_result alloc_result = {alloc_status::invalid_params};
   unsigned        rem_rbs      = slice_candidate.remaining_rbs();
   while (not dl_queue.empty() and rem_rbs > 0) {
-    ue_ctxt& ue = *dl_queue.top();
+    ue_ctxt&   ue      = *dl_queue.top();
+    const bool is_retx = ue.dl_retx_h.has_value();
     if (alloc_result.status != alloc_status::skip_slot) {
       alloc_result = try_dl_alloc(ue, ues, pdsch_alloc, rem_rbs);
     }
-    ue.save_dl_alloc(alloc_result.alloc_bytes);
+    if (not is_retx) {
+      ue.save_dl_alloc(alloc_result.alloc_bytes, alloc_result.tb_info);
+    }
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
     // attempted again before scheduling new transmissions.
     if (ue.dl_retx_h.has_value() and alloc_result.status == alloc_status::invalid_params) {
@@ -94,11 +97,14 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
   ul_alloc_result alloc_result = {alloc_status::invalid_params};
   unsigned        rem_rbs      = slice_candidate.remaining_rbs();
   while (not ul_queue.empty() and rem_rbs > 0) {
-    ue_ctxt& ue = *ul_queue.top();
+    ue_ctxt&   ue      = *ul_queue.top();
+    const bool is_retx = ue.ul_retx_h.has_value();
     if (alloc_result.status != alloc_status::skip_slot) {
       alloc_result = try_ul_alloc(ue, ues, pusch_alloc, rem_rbs);
     }
-    ue.save_ul_alloc(alloc_result.alloc_bytes);
+    if (not is_retx) {
+      ue.save_ul_alloc(alloc_result.alloc_bytes);
+    }
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
     // attempted again before scheduling new transmissions.
     if (ue.ul_retx_h.has_value() and alloc_result.status == alloc_status::invalid_params) {
@@ -177,6 +183,53 @@ ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// \brief Returns rate expressed in bytes per slot for a given rate in bit per second.
+static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs)
+{
+  // Deduce the number of slots per subframe.
+  const unsigned nof_slots_per_subframe   = get_nof_slots_per_subframe(bwp_scs);
+  const unsigned nof_subframes_per_second = 1000;
+  // Deduce the number of slots per second.
+  const unsigned nof_slots_per_second = nof_slots_per_subframe * nof_subframes_per_second;
+
+  return (static_cast<double>(bitrate_bps) / static_cast<double>(nof_slots_per_second * 8U));
+}
+
+/// \brief Computes DL bitrate weight used in computation of DL priority value for a UE in a slot.
+static double compute_dl_bitrate_weight(span<const sched_drb_info> drbs_qos_info,
+                                        span<double>               dl_avg_rate_per_bearer,
+                                        double                     fairness_coeff,
+                                        subcarrier_spacing         bwp_scs)
+{
+  // [Implementation-defined] Bitrate weight is considered 1 for non-GBR flows.
+  const double non_gbr_bitrate_weight = 1;
+
+  double bitrate_weight = 0;
+  for (unsigned id = LCID_MIN_DRB; id < dl_avg_rate_per_bearer.size(); ++id) {
+    lcid_t      lcid = uint_to_lcid(id);
+    const auto* it   = std::find_if(drbs_qos_info.begin(), drbs_qos_info.end(), [lcid](const sched_drb_info& drb_info) {
+      return drb_info.lcid == lcid;
+    });
+
+    // No DRB QoS information or Non-GBR flow.
+    if (it == drbs_qos_info.end() or (not it->gbr_qos_info.has_value())) {
+      bitrate_weight += non_gbr_bitrate_weight;
+      continue;
+    }
+
+    // GBR flow.
+    if (dl_avg_rate_per_bearer[lcid] != 0) {
+      bitrate_weight +=
+          (to_bytes_per_slot(it->gbr_qos_info->gbr_dl, bwp_scs) / pow(dl_avg_rate_per_bearer[lcid], fairness_coeff));
+    } else {
+      return std::numeric_limits<double>::max();
+    }
+  }
+
+  // Sum of bitrate weights of all active bearers.
+  return bitrate_weight;
+}
+
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id)
 {
   dl_retx_h.reset();
@@ -242,13 +295,21 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
 
     // Calculate DL PF priority.
     // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
-    const double estimated_rate   = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
-    const double current_avg_rate = dl_avg_rate();
-    if (current_avg_rate != 0) {
-      dl_prio = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
+    const double estimated_rate = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
+    const double current_total_avg_rate = total_dl_avg_rate();
+    double       pf_weight              = 0;
+    if (current_total_avg_rate != 0) {
+      pf_weight = estimated_rate / pow(current_total_avg_rate, parent->fairness_coeff);
     } else {
-      dl_prio = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
+      pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
     }
+    const double bitrate_weight =
+        compute_dl_bitrate_weight(u.get_drbs_qos_info(),
+                                  dl_avg_rate_per_bearer,
+                                  parent->fairness_coeff,
+                                  ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
+    dl_prio = bitrate_weight * pf_weight;
+
     return;
   }
   has_empty_dl_harq = false;
@@ -330,7 +391,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
     // Calculate UL PF priority.
     // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
     const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
-    const double current_avg_rate = ul_avg_rate();
+    const double current_avg_rate = total_ul_avg_rate();
     if (current_avg_rate != 0) {
       ul_prio = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
     } else {
@@ -341,13 +402,36 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
   has_empty_ul_harq = false;
 }
 
-void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t alloc_bytes)
+void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)
 {
+  // [Implementation-defined] DL average rate is computed only for DRBs.
+  // Compute DL average rate on a per-bearer basis.
+  for (unsigned id = LCID_MIN_DRB; id < dl_avg_rate_per_bearer.size(); ++id) {
+    lcid_t      lcid = uint_to_lcid(id);
+    const auto* it   = std::find_if(tb_info.lc_chs_to_sched.begin(),
+                                  tb_info.lc_chs_to_sched.end(),
+                                  [lcid](const dl_msg_lc_info& lc_info) { return lc_info.lcid == lcid; });
+    // [Implementation-defined] If a DRB is not scheduled then we consider nof. scheduled bytes for that LCID to be 0.
+    unsigned sched_bytes = 0;
+    if (it != tb_info.lc_chs_to_sched.end()) {
+      sched_bytes = it->sched_bytes;
+    }
+    if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
+      // Fast start before transitioning to exponential average.
+      dl_avg_rate_per_bearer[id] =
+          dl_avg_rate_per_bearer[id] + (sched_bytes - dl_avg_rate_per_bearer[id]) / (dl_nof_samples + 1);
+    } else {
+      dl_avg_rate_per_bearer[id] =
+          (1 - parent->exp_avg_alpha) * dl_avg_rate_per_bearer[id] + (parent->exp_avg_alpha) * sched_bytes;
+    }
+  }
+
+  // Compute DL average rate of the UE.
   if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
     // Fast start before transitioning to exponential average.
-    dl_avg_rate_ = dl_avg_rate_ + (alloc_bytes - dl_avg_rate_) / (dl_nof_samples + 1);
+    total_dl_avg_rate_ = total_dl_avg_rate_ + (total_alloc_bytes - total_dl_avg_rate_) / (dl_nof_samples + 1);
   } else {
-    dl_avg_rate_ = (1 - parent->exp_avg_alpha) * dl_avg_rate_ + (parent->exp_avg_alpha) * alloc_bytes;
+    total_dl_avg_rate_ = (1 - parent->exp_avg_alpha) * total_dl_avg_rate_ + (parent->exp_avg_alpha) * total_alloc_bytes;
   }
   dl_nof_samples++;
 }
@@ -356,9 +440,9 @@ void scheduler_time_pf::ue_ctxt::save_ul_alloc(uint32_t alloc_bytes)
 {
   if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
     // Fast start before transitioning to exponential average.
-    ul_avg_rate_ = ul_avg_rate_ + (alloc_bytes - ul_avg_rate_) / (ul_nof_samples + 1);
+    total_ul_avg_rate_ = total_ul_avg_rate_ + (alloc_bytes - total_ul_avg_rate_) / (ul_nof_samples + 1);
   } else {
-    ul_avg_rate_ = (1 - parent->exp_avg_alpha) * ul_avg_rate_ + (parent->exp_avg_alpha) * alloc_bytes;
+    total_ul_avg_rate_ = (1 - parent->exp_avg_alpha) * total_ul_avg_rate_ + (parent->exp_avg_alpha) * alloc_bytes;
   }
   ul_nof_samples++;
 }
