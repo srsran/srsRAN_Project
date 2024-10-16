@@ -22,6 +22,7 @@ class f1u_cu_up_test_frame : public f1u_tx_pdu_notifier, public f1u_rx_delivery_
 {
 public:
   std::list<nru_dl_message>    tx_msg_list;
+  std::list<uint32_t>          desired_buffer_size_list;
   std::list<uint32_t>          highest_transmitted_pdcp_sn_list;
   std::list<uint32_t>          highest_delivered_pdcp_sn_list;
   std::list<uint32_t>          highest_retransmitted_pdcp_sn_list;
@@ -32,6 +33,10 @@ public:
   void on_new_pdu(nru_dl_message msg) override { tx_msg_list.push_back(std::move(msg)); }
 
   // f1u_rx_delivery_notifier interface
+  void on_desired_buffer_size_notification(uint32_t desired_buffer_size) override
+  {
+    desired_buffer_size_list.push_back(desired_buffer_size);
+  }
   void on_transmit_notification(uint32_t highest_pdcp_sn) override
   {
     highest_transmitted_pdcp_sn_list.push_back(highest_pdcp_sn);

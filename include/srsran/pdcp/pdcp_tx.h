@@ -67,6 +67,9 @@ public:
   pdcp_tx_lower_interface(const pdcp_tx_lower_interface&&)            = delete;
   pdcp_tx_lower_interface& operator=(const pdcp_tx_lower_interface&&) = delete;
 
+  // TODO write comment
+  virtual void handle_desired_buffer_size_notification(uint32_t highest_sn) = 0;
+
   /// \brief Informs the PDCP entity about the highest PDCP PDU sequence number of the PDCP PDU that was transmitted by
   /// the lower layers (i.e. by the RLC).
   ///
