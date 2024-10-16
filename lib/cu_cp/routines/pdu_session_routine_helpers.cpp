@@ -118,6 +118,23 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
       radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
     }
 
+    for (const auto& drb_to_modify : pdu_session_to_add_mod.second.drb_to_modify) {
+      rrc_drb_to_add_mod drb_to_add_mod;
+      drb_to_add_mod.drb_id = drb_to_modify.first;
+      if (reestablish_drbs) {
+        drb_to_add_mod.reestablish_pdcp_present = true;
+      } else {
+        drb_to_add_mod.pdcp_cfg = drb_to_modify.second.pdcp_cfg;
+
+        // Add CN association and SDAP config
+        rrc_cn_assoc cn_assoc;
+        cn_assoc.sdap_cfg       = drb_to_modify.second.sdap_cfg;
+        drb_to_add_mod.cn_assoc = cn_assoc;
+      }
+
+      radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_modify.first, drb_to_add_mod);
+    }
+
     // Remove DRB from a PDU session (PDU session itself still exists with out DRBs).
     for (const auto& drb_id : pdu_session_to_add_mod.second.drb_to_remove) {
       radio_bearer_config.drb_to_release_list.push_back(drb_id);
@@ -470,6 +487,34 @@ void srsran::srs_cu_cp::fill_drb_to_setup_list(
     }
 
     e1ap_drb_to_setup_list.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
+  }
+}
+
+void srsran::srs_cu_cp::fill_drb_to_modify_list(
+    slotted_id_vector<drb_id_t, e1ap_drb_to_modify_item_ng_ran>&            e1ap_drb_to_modify_list,
+    const slotted_id_vector<qos_flow_id_t, cu_cp_qos_flow_add_or_mod_item>& qos_flow_list,
+    const std::map<drb_id_t, up_drb_context>&                               drb_to_modify_list,
+    const srslog::basic_logger&                                             logger)
+{
+  for (const auto& drb_to_modify : drb_to_modify_list) {
+    e1ap_drb_to_modify_item_ng_ran e1ap_drb_to_modify_item;
+    e1ap_drb_to_modify_item.drb_id = drb_to_modify.first;
+    // TODO: set `e1ap_drb_to_modify_item.drb_inactivity_timer` if configured
+    e1ap_drb_to_modify_item.sdap_cfg = drb_to_modify.second.sdap_cfg;
+    e1ap_drb_to_modify_item.pdcp_cfg.emplace();
+    fill_e1ap_drb_pdcp_config(e1ap_drb_to_modify_item.pdcp_cfg.value(), drb_to_modify.second.pdcp_cfg);
+
+    // Only iterate over the QoS flows mapped to this particular DRB
+    for (const auto& flow : drb_to_modify.second.qos_flows) {
+      srsran_assert(qos_flow_list.contains(flow.first), "Original setup request doesn't contain {}", flow.first);
+      // Lookup the QoS characteristics from the original request.
+      const auto&                  qos_flow_params = qos_flow_list[flow.first];
+      e1ap_qos_flow_qos_param_item e1ap_qos_item;
+      fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, qos_flow_params);
+      e1ap_drb_to_modify_item.flow_map_info.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
+    }
+
+    e1ap_drb_to_modify_list.emplace(e1ap_drb_to_modify_item.drb_id, e1ap_drb_to_modify_item);
   }
 }
 
