@@ -146,7 +146,7 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_1layer(const srs_c
 
   // Select codebook as a function of the number of transmit ports and restrict the candidates according to its subset.
   span<const precoding_weight_matrix> codebook;
-  unsigned                            tpmi_end;
+  unsigned                            tpmi_end = codebook.size();
   if (nof_tx_ports == 2) {
     codebook = codebook_1layer_2port;
     switch (codebook_subset) {
@@ -219,7 +219,7 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_2layer(const srs_c
 
   // Select codebook as a function of the number of transmit ports and restrict the candidates according to its subset.
   span<const precoding_weight_matrix> codebook;
-  unsigned                            tpmi_end;
+  unsigned                            tpmi_end = codebook.size();
   if (nof_tx_ports == 2) {
     codebook = codebook_2layer_2port;
     switch (codebook_subset) {
