@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/phy/generic_functions/dft_processor.h"
 #include "srsran/phy/support/interpolator.h"
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
@@ -61,14 +61,13 @@ public:
                const configuration&        cfg) override;
 
 private:
-  /// Specializes \ref compute for one layer and one hop.
-  void compute_layer_hop(channel_estimate&           estimate,
-                         const resource_grid_reader& grid,
-                         unsigned                    port,
-                         const dmrs_symbol_list&     pilots,
-                         const configuration&        cfg,
-                         unsigned                    hop,
-                         unsigned                    layer);
+  /// Specializes \ref compute for one hop.
+  void compute_hop(channel_estimate&           estimate,
+                   const resource_grid_reader& grid,
+                   unsigned                    port,
+                   const dmrs_symbol_list&     pilots,
+                   const configuration&        cfg,
+                   unsigned                    hop);
 
   /// \brief Preprocesses the pilots and computes the CFO.
   ///
@@ -77,27 +76,25 @@ private:
   /// - estimates the CFO (if the number of OFDM symbols with pilots is at least 2);
   /// - compensates the CFO for all pilots;
   /// - accumulates all the matched, CFO-compensated received pilots.
-  /// \param[in]  rx_pilots         Received pilots.
   /// \param[in]  pilots            Transmitted pilots.
   /// \param[in]  dmrs_mask         Boolean mask identifying the OFDM symbols carrying DM-RS within the slot.
   /// \param[in]  scs               Subcarrier spacing.
-  /// \param[in]  symbol_start_epochs   Cumulative duration of all CPs in the slot.
-  /// \param[in]  compensate_cfo    Boolean flag to activate the CFO compensation.
   /// \param[in]  first_hop_symbol  Index of the first OFDM symbol of the current hop, within the slot.
   /// \param[in]  last_hop_symbol   Index of the last OFDM symbol of the current hop (not included), within the slot.
   /// \param[in]  hop_offset        Number of OFDM symbols carrying DM-RS in the previous hop.
-  /// \param[in]  i_layer           The considered transmission layer.
-  /// \return A contribution to the EPRE and CFO estimates. CFO is empty if the hop has only one OFDM symbol carrying
-  /// DM-RS.
+  /// \param[in]  start_layer       Index of the first transmission layer to be preprocessed.
+  /// \param[in]  stop_layer        Index of the last transmission layer (not included) to be preprocessed.
+  /// \return A contribution to the CFO estimate. CFO is empty if the hop has only one OFDM symbol carrying DM-RS.
   ///
   /// \warning This method updates the content of the buffers \c pilots_lse and \c pilot_products.
-  std::pair<float, std::optional<float>> preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
-                                                                   const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
-                                                                   const subcarrier_spacing&                 scs,
-                                                                   unsigned first_hop_symbol,
-                                                                   unsigned last_hop_symbol,
-                                                                   unsigned hop_offset,
-                                                                   unsigned i_layer);
+  std::optional<float> preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
+                                                 const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
+                                                 const subcarrier_spacing&                 scs,
+                                                 unsigned                                  first_hop_symbol,
+                                                 unsigned                                  last_hop_symbol,
+                                                 unsigned                                  hop_offset,
+                                                 unsigned                                  start_layer,
+                                                 unsigned                                  stop_layer);
 
   /// \brief Computes the starting time of the symbols inside a slot for the given subcarrier spacing.
   ///
@@ -123,14 +120,11 @@ private:
   dmrs_symbol_list rx_pilots;
 
   /// Auxiliary buffer for processing the pilots.
-  std::array<cf_t, MAX_RB * NRE> aux_pilot_products;
-  /// View on the used part of the pilot buffer \c aux_pilot_products.
-  span<cf_t> pilot_products;
+  static_re_buffer<2, MAX_RB * NRE> pilot_products;
 
   /// Second auxiliary buffer for processing the pilots.
-  std::array<cf_t, MAX_RB * NRE + 2 * MAX_V_PILOTS> aux_pilots_lse;
-  /// View on the used part of the pilot buffer \c aux_pilots_lse.
-  span<cf_t> pilots_lse;
+  static_re_buffer<2, MAX_RB * NRE + 2 * MAX_V_PILOTS> enlarged_pilots_lse;
+  modular_re_buffer<cf_t, 2>                           pilots_lse;
 
   /// Buffer of frequency response coefficients.
   std::array<cf_t, MAX_RB * NRE> freq_response;

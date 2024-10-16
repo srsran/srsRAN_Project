@@ -9,9 +9,10 @@
  */
 
 #include "port_channel_estimator_average_impl.h"
+#include "srsran/phy/constants.h"
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/add.h"
-#include "srsran/srsvec/compare.h"
 #include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/convolution.h"
 #include "srsran/srsvec/copy.h"
@@ -20,7 +21,7 @@
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/srsvec/unwrap.h"
-#include "srsran/srsvec/zero.h"
+#include "srsran/support/transform_optional.h"
 
 using namespace srsran;
 
@@ -132,35 +133,34 @@ static void apply_fd_smoothing(span<cf_t>                                   enla
 /// \param[in]  cfg         Configuration parameters of the current context.
 /// \param[in]  hop         Intra-slot frequency hopping index: 0 for first position (before hopping), 1 for second
 ///                         position (after hopping).
-/// \param[in]  i_layer     Index of the selected layer.
 /// \return The number of OFDM symbols containing DM-RS for the given layer and hop.
 static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
                                             const resource_grid_reader&                  grid,
                                             unsigned                                     port,
                                             const port_channel_estimator::configuration& cfg,
-                                            unsigned                                     hop,
-                                            unsigned                                     i_layer);
+                                            unsigned                                     hop);
 
 /// \brief Estimates the noise energy of one hop.
-/// \param[in] pilots            DM-RS pilots.
-/// \param[in] rx_pilots         Received samples corresponding to DM-RS pilots.
-/// \param[in] estimates         Estimated channel frequency response.
-/// \param[in] beta              DM-RS-to-data amplitude gain (linear scale).
-/// \param[in] dmrs_mask         Boolean mask identifying the OFDM symbols carrying DM-RS within the slot.
-/// \param[in] scs               Subcarrier spacing.
-/// \param[in] cfo               Carrier frequency offset.
+///
+/// The layers in the given range are assumed to transmit DM-RS on the same resources.
+/// \param[in] pilots                DM-RS pilots.
+/// \param[in] rx_pilots             Received samples corresponding to DM-RS pilots.
+/// \param[in] estimates             Estimated channel frequency response.
+/// \param[in] beta                  DM-RS-to-data amplitude gain (linear scale).
+/// \param[in] dmrs_mask             Boolean mask identifying the OFDM symbols carrying DM-RS within the slot.
+/// \param[in] scs                   Subcarrier spacing.
+/// \param[in] cfo                   Carrier frequency offset.
 /// \param[in] symbol_start_epochs   Cumulative duration of all CPs in the slot.
-/// \param[in] compensate_cfo    Boolean flag to activate the CFO compensation.
-/// \param[in] first_hop_symbol  Index of the first OFDM symbol of the current hop, within the slot.
-/// \param[in] last_hop_symbol   Index of the last OFDM symbol of the current hop (not included), within the slot.
-/// \param[in] hop_symbols       Number of OFDM symbols containing DM-RS pilots in the current hop.
-/// \param[in] hop_offset        Number of OFDM symbols containing DM-RS pilots in the previous hop (set to 0 if the
-///                              current hop is the first/only one).
-/// \param[in] i_layer           Index of the selected layer.
+/// \param[in] compensate_cfo        Boolean flag to activate the CFO compensation.
+/// \param[in] first_hop_symbol      Index of the first OFDM symbol of the current hop, within the slot.
+/// \param[in] last_hop_symbol       Index of the last OFDM symbol of the current hop (not included), within the slot.
+/// \param[in] hop_symbols           Number of OFDM symbols containing DM-RS pilots in the current hop.
+/// \param[in] hop_offset            Number of OFDM symbols containing DM-RS pilots in the previous hop (set to 0 if the
+///                                  current hop is the first/only one).
 /// \return The noise energy for the current hop.
 static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             const dmrs_symbol_list&                   rx_pilots,
-                            span<const cf_t>                          estimates,
+                            const re_buffer_reader<cf_t>&             estimates,
                             float                                     beta,
                             const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
                             const subcarrier_spacing&                 scs,
@@ -170,8 +170,7 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             unsigned                                  first_hop_symbol,
                             unsigned                                  last_hop_symbol,
                             unsigned                                  hop_symbols,
-                            unsigned                                  hop_offset,
-                            unsigned                                  i_layer);
+                            unsigned                                  hop_offset);
 
 /// \brief Estimates the time alignment based on one hop.
 ///
@@ -182,7 +181,7 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
 /// \param[in] scs          Subcarrier spacing.
 /// \param[in] ta_estimator Time alignment estimator.
 /// \return The estimated time alignment as a number of samples (the sampling frequency is given by the DFT processor).
-static float estimate_time_alignment(span<const cf_t>                                  pilots_lse,
+static float estimate_time_alignment(const re_buffer_reader<cf_t>&                     pilots_lse,
                                      const port_channel_estimator::layer_dmrs_pattern& pattern,
                                      unsigned                                          hop,
                                      subcarrier_spacing                                scs,
@@ -206,8 +205,13 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
                                                   const dmrs_symbol_list&     pilots,
                                                   const configuration&        cfg)
 {
-  re_measurement_dimensions symbols_size    = pilots.size();
-  unsigned                  nof_dmrs_pilots = symbols_size.nof_subc * symbols_size.nof_symbols;
+  srsran_assert(cfg.dmrs_pattern.size() == 1,
+                "Only one UL layer supported in this version, requested {}.",
+                cfg.dmrs_pattern.size());
+
+  re_measurement_dimensions symbols_size = pilots.size();
+
+  symbols_size.nof_slices = 1;
 
   // Prepare symbol destination.
   rx_pilots.resize(symbols_size);
@@ -215,76 +219,82 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
   // Compute the cumulative duration of all CPs for the given subcarrier spacing.
   initialize_symbol_start_epochs(cfg.cp, cfg.scs);
 
-  // For each layer...
-  for (unsigned i_layer = 0, nof_tx_layers = cfg.dmrs_pattern.size(); i_layer != nof_tx_layers; ++i_layer) {
-    rsrp             = 0;
-    epre             = 0;
-    noise_var        = 0;
-    time_alignment_s = 0;
-    cfo_normalized   = std::nullopt;
+  constexpr unsigned layer0 = 0;
 
-    // compute_layer_hop updates rsrp, epre, niose_var, time_alignment_s, and cfo_normalized.
-    compute_layer_hop(estimate, grid, port, pilots, cfg, /*hop=*/0, i_layer);
-    if (cfg.dmrs_pattern[i_layer].hopping_symbol_index.has_value()) {
-      compute_layer_hop(estimate, grid, port, pilots, cfg, /*hop=*/1, i_layer);
-      time_alignment_s /= 2.0F;
-    }
+  // Initialize metrics.
+  rsrp             = 0;
+  epre             = 0;
+  noise_var        = 0;
+  time_alignment_s = 0;
+  cfo_normalized   = std::nullopt;
 
-    if (compensate_cfo && cfo_normalized.has_value()) {
-      // Apply CFO to the estimated channel.
-      float cfo = cfo_normalized.value();
-      for (unsigned i_symbol = cfg.first_symbol, last_symbol = cfg.first_symbol + cfg.nof_symbols;
-           i_symbol != last_symbol;
-           ++i_symbol) {
-        span<cbf16_t> symbol_ch_estimate = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
-        srsvec::sc_prod(
-            symbol_ch_estimate, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo), symbol_ch_estimate);
-      }
-    }
-
-    rsrp /= static_cast<float>(nof_dmrs_pilots);
-    epre /= static_cast<float>(nof_dmrs_pilots);
-
-    estimate.set_rsrp(rsrp, port, i_layer);
-    estimate.set_epre(epre, port, i_layer);
-    estimate.set_time_alignment(phy_time_unit::from_seconds(time_alignment_s), port, i_layer);
-    estimate.set_cfo_Hz(cfo_normalized.has_value()
-                            ? std::optional<float>(cfo_normalized.value() * scs_to_khz(cfg.scs) * 1000)
-                            : std::nullopt,
-                        port,
-                        i_layer);
-
-    noise_var /= static_cast<float>(nof_dmrs_pilots - 1);
-
-    // Bound the noise variance from below.
-    float min_noise_variance = rsrp / convert_dB_to_power(MAX_SINR_DB);
-    noise_var                = std::max(min_noise_variance, noise_var);
-
-    // Write the noise variance in the channel estimate result.
-    estimate.set_noise_variance(noise_var, port, i_layer);
-
-    srsran_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");
-    // Compute the estimated data received power by scaling the RSRP.
-    float datarp = rsrp / cfg.scaling / cfg.scaling;
-    estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port, i_layer);
+  // compute_hop updates rsrp, epre, niose_var, time_alignment_s, and cfo_normalized.
+  compute_hop(estimate, grid, port, pilots, cfg, /*hop=*/0);
+  if (cfg.dmrs_pattern[0].hopping_symbol_index.has_value()) {
+    compute_hop(estimate, grid, port, pilots, cfg, /*hop=*/1);
+    time_alignment_s /= 2.0F;
   }
+
+  unsigned nof_dmrs_pilots = symbols_size.nof_subc * symbols_size.nof_symbols;
+  rsrp /= static_cast<float>(nof_dmrs_pilots);
+  epre /= static_cast<float>(nof_dmrs_pilots);
+
+  noise_var /= static_cast<float>(nof_dmrs_pilots - 1);
+
+  // Bound the noise variance from below.
+  float min_noise_variance = rsrp / convert_dB_to_power(MAX_SINR_DB);
+  noise_var                = std::max(min_noise_variance, noise_var);
+
+  srsran_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");
+  // Compute the estimated data received power by scaling the RSRP.
+  float datarp = rsrp / cfg.scaling / cfg.scaling;
+
+  // Report stats.
+  if (compensate_cfo && cfo_normalized.has_value()) {
+    // Apply CFO to the estimated channel.
+    float cfo = cfo_normalized.value();
+    for (unsigned i_symbol = cfg.first_symbol, last_symbol = cfg.first_symbol + cfg.nof_symbols;
+         i_symbol != last_symbol;
+         ++i_symbol) {
+      span<cbf16_t> symbol_ch_estimate = estimate.get_symbol_ch_estimate(i_symbol, port, layer0);
+      srsvec::sc_prod(
+          symbol_ch_estimate, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo), symbol_ch_estimate);
+    }
+  }
+
+  estimate.set_rsrp(rsrp, port, layer0);
+  estimate.set_epre(epre, port, layer0);
+  estimate.set_time_alignment(phy_time_unit::from_seconds(time_alignment_s), port, layer0);
+  estimate.set_cfo_Hz(cfo_normalized.has_value()
+                          ? std::optional<float>(cfo_normalized.value() * scs_to_khz(cfg.scs) * 1000)
+                          : std::nullopt,
+                      port,
+                      layer0);
+
+  // Write the noise variance in the channel estimate result.
+  estimate.set_noise_variance(noise_var, port, layer0);
+
+  estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port, layer0);
 }
 
-void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_estimate&           estimate,
-                                                            const srsran::resource_grid_reader& grid,
-                                                            unsigned                            port,
-                                                            const dmrs_symbol_list&             pilots,
-                                                            const configuration&                cfg,
-                                                            unsigned                            hop,
-                                                            unsigned                            i_layer)
+void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate&           estimate,
+                                                      const srsran::resource_grid_reader& grid,
+                                                      unsigned                            port,
+                                                      const dmrs_symbol_list&             pilots,
+                                                      const configuration&                cfg,
+                                                      unsigned                            hop)
 {
-  srsran_assert((hop == 0) || cfg.dmrs_pattern[i_layer].hopping_symbol_index.has_value(),
+  constexpr unsigned layer0    = 0;
+  constexpr unsigned one_layer = 1;
+
+  srsran_assert((hop == 0) || cfg.dmrs_pattern[layer0].hopping_symbol_index.has_value(),
                 "Frequency hopping requested but not configured.");
 
-  // Auxiliary buffers for pilot computations.
-  std::array<cf_t, MAX_RB * NRE + 2 * MAX_V_PILOTS> aux_pilots_lse_rc;
+  const layer_dmrs_pattern& pattern = cfg.dmrs_pattern[layer0];
 
-  const layer_dmrs_pattern& pattern = cfg.dmrs_pattern[i_layer];
+  // Extract symbols from resource grid.
+  unsigned nof_dmrs_symbols = extract_layer_hop_rx_pilots(rx_pilots, grid, port, cfg, hop);
+  srsran_assert(nof_dmrs_symbols != 0, "No DM-RS symbols were found for layer {}.", layer0);
 
   unsigned first_symbol = ((hop == 1) && pattern.hopping_symbol_index.has_value())
                               ? pattern.hopping_symbol_index.value()
@@ -292,58 +302,103 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
   unsigned last_symbol = ((hop == 0) && pattern.hopping_symbol_index.has_value()) ? pattern.hopping_symbol_index.value()
                                                                                   : cfg.first_symbol + cfg.nof_symbols;
 
-  // Extract symbols from resource grid.
-  unsigned nof_dmrs_symbols = extract_layer_hop_rx_pilots(rx_pilots, grid, port, cfg, hop, i_layer);
-  srsran_assert(nof_dmrs_symbols != 0, "No DM-RS symbols were found for layer {}.", i_layer);
+  for (unsigned i_dmrs = 0; i_dmrs != nof_dmrs_symbols; ++i_dmrs) {
+    epre += srsvec::average_power(rx_pilots.get_symbol(i_dmrs, 0)) * rx_pilots.get_symbol(i_dmrs, 0).size();
+  }
 
   unsigned hop_offset = 0;
   if (hop == 1) {
     hop_offset = pilots.size().nof_symbols - nof_dmrs_symbols;
   }
 
-  pilot_products = span<cf_t>(aux_pilot_products).first(pilots.size().nof_subc);
-  pilots_lse     = span<cf_t>(aux_pilots_lse).subspan(MAX_V_PILOTS, pilots.size().nof_subc);
+  // Number of pilots in a single OFDM symbol (carrying DM-RS).
+  unsigned nof_symbol_pilots = pilots.size().nof_subc;
 
-  // Preprocess the pilots and compute hop contributions to the EPRE (first ouput) and to the CFO (second output, if it
-  // can be estimated). Recall that this method updates pilot_products and pilots_lse.
-  std::pair<float, std::optional<float>> hop_results =
-      preprocess_pilots_and_cfo(pilots, pattern.symbols, cfg.scs, first_symbol, last_symbol, hop_offset, i_layer);
-  epre += hop_results.first;
-  std::optional<float> cfo_hop = hop_results.second;
+  // Auxiliary buffers for pilot computations.
+  pilot_products.resize(1, nof_symbol_pilots);
+  pilots_lse.resize(1, nof_symbol_pilots);
+
+  static_re_buffer<one_layer, MAX_RB * NRE + 2 * MAX_V_PILOTS> enlarged_filtered_pilots_lse;
+  modular_re_buffer<cf_t, one_layer>                           filtered_pilots_lse(one_layer, nof_symbol_pilots);
+
+  if (fd_smoothing_strategy == port_channel_estimator_fd_smoothing_strategy::filter) {
+    enlarged_pilots_lse.resize(one_layer, nof_symbol_pilots + 2 * MAX_V_PILOTS);
+    enlarged_filtered_pilots_lse.resize(one_layer, nof_symbol_pilots + 2 * MAX_V_PILOTS);
+
+    pilots_lse.set_slice(layer0, enlarged_pilots_lse.get_slice(layer0).subspan(MAX_V_PILOTS, nof_symbol_pilots));
+    filtered_pilots_lse.set_slice(
+        layer0, enlarged_filtered_pilots_lse.get_slice(layer0).subspan(MAX_V_PILOTS, nof_symbol_pilots));
+  } else {
+    // Enlarging is only necessary with the filter smoothing strategy.
+    enlarged_pilots_lse.resize(one_layer, nof_symbol_pilots);
+    enlarged_filtered_pilots_lse.resize(one_layer, nof_symbol_pilots);
+
+    pilots_lse.set_slice(layer0, enlarged_pilots_lse.get_slice(layer0));
+    filtered_pilots_lse.set_slice(layer0, enlarged_filtered_pilots_lse.get_slice(layer0));
+  }
+
+  float beta_scaling = cfg.scaling;
+
+  //  Preprocess the pilots and compute the hop contribution to the CFO. Recall that this method updates
+  //  pilot_products and pilots_lse.
+  std::optional<float> cfo_hop = preprocess_pilots_and_cfo(
+      pilots, pattern.symbols, cfg.scs, first_symbol, last_symbol, hop_offset, layer0, layer0 + 1);
   if (cfo_hop.has_value()) {
-    if (cfo_normalized.has_value()) {
-      cfo_normalized = (cfo_normalized.value() + cfo_hop.value()) / 2;
-    } else {
-      cfo_normalized = cfo_hop.value();
-    }
+    cfo_normalized = evaluate_or(
+        cfo_normalized, cfo_hop.value(), [](float a, float b) { return (a + b) / 2.0F; }, cfo_hop.value());
   }
 
   // Average and apply DM-RS-to-data gain.
-  float beta_scaling  = cfg.scaling;
   float total_scaling = 1.0F / (static_cast<float>(nof_dmrs_symbols) * beta_scaling);
-  srsvec::sc_prod(pilots_lse, total_scaling, pilots_lse);
+  srsvec::sc_prod(pilots_lse.get_slice(layer0), total_scaling, pilots_lse.get_slice(layer0));
 
   const bounded_bitset<MAX_RB>& hop_rb_mask      = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
   interpolator::configuration   interpolator_cfg = configure_interpolator(pattern.re_pattern);
 
   // Apply a smoothing strategy to remove some noise ("high-time" components). Note that pilots_lse and
   // filtered_pilots_lse have some empty space at both sides, which we include with the enlarged version.
-  span<cf_t> filtered_pilots_lse          = span<cf_t>(aux_pilots_lse_rc).subspan(MAX_V_PILOTS, pilots_lse.size());
-  span<cf_t> enlarged_pilots_lse          = span<cf_t>(aux_pilots_lse).first(pilots_lse.size() + 2 * MAX_V_PILOTS);
-  span<cf_t> enlarged_filtered_pilots_lse = span<cf_t>(aux_pilots_lse_rc).first(pilots_lse.size() + 2 * MAX_V_PILOTS);
-  if (fd_smoothing_strategy != port_channel_estimator_fd_smoothing_strategy::filter) {
-    // Enlarging is only necessary with the filter smoothing strategy.
-    enlarged_pilots_lse          = pilots_lse;
-    enlarged_filtered_pilots_lse = filtered_pilots_lse;
-  }
-  apply_fd_smoothing(enlarged_filtered_pilots_lse,
-                     enlarged_pilots_lse,
+  apply_fd_smoothing(enlarged_filtered_pilots_lse.get_slice(layer0),
+                     enlarged_pilots_lse.get_slice(layer0),
                      hop_rb_mask.count(),
                      interpolator_cfg.stride,
                      fd_smoothing_strategy);
 
-  rsrp += srsvec::average_power(filtered_pilots_lse) * filtered_pilots_lse.size() * beta_scaling * beta_scaling *
-          static_cast<float>(nof_dmrs_symbols);
+  rsrp += srsvec::average_power(filtered_pilots_lse.get_slice(layer0)) * filtered_pilots_lse.get_slice(layer0).size() *
+          beta_scaling * beta_scaling * static_cast<float>(nof_dmrs_symbols);
+
+  // Extract RB mask lowest and highest RB. Also, determine if the allocation is contiguous.
+  int      lowest_rb  = hop_rb_mask.find_lowest();
+  int      highest_rb = hop_rb_mask.find_highest();
+  unsigned rb_count   = hop_rb_mask.count();
+  srsran_assert(highest_rb >= lowest_rb, "Invalid hop RB mask.");
+  bool is_contiguous = (static_cast<unsigned>(highest_rb + 1 - lowest_rb) == rb_count);
+
+  // Interpolate frequency domain.
+  unsigned   nof_re  = rb_count * NRE;
+  span<cf_t> ce_freq = span<cf_t>(freq_response).first(nof_re);
+  freq_interpolator->interpolate(ce_freq, filtered_pilots_lse.get_slice(layer0), interpolator_cfg);
+
+  // Convert interpolation result to complex BFloat16.
+  span<cbf16_t> ce_freq_cbf16 = span<cbf16_t>(freq_response_cbf16).first(nof_re);
+  srsvec::convert(ce_freq_cbf16, ce_freq);
+
+  // Map frequency response to channel estimates.
+  for (unsigned i_symbol = first_symbol; i_symbol != last_symbol; ++i_symbol) {
+    span<cbf16_t> symbol_fr_resp = estimate.get_symbol_ch_estimate(i_symbol, port, layer0);
+
+    if (is_contiguous) {
+      srsvec::copy(symbol_fr_resp.subspan(lowest_rb * NRE, nof_re), ce_freq.first(nof_re));
+      continue;
+    }
+
+    unsigned i_prb_ce = 0;
+    hop_rb_mask.for_each(0, hop_rb_mask.size(), [&](unsigned i_prb) {
+      srsvec::copy(symbol_fr_resp.subspan(i_prb * NRE, NRE), ce_freq.subspan(i_prb_ce * NRE, NRE));
+      ++i_prb_ce;
+    });
+  }
+
+  time_alignment_s += estimate_time_alignment(filtered_pilots_lse, pattern, hop, cfg.scs, *ta_estimator);
 
   noise_var += estimate_noise(pilots,
                               rx_pilots,
@@ -357,53 +412,102 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
                               first_symbol,
                               last_symbol,
                               nof_dmrs_symbols,
-                              hop_offset,
-                              i_layer);
+                              hop_offset);
+}
 
-  time_alignment_s += estimate_time_alignment(filtered_pilots_lse, pattern, hop, cfg.scs, *ta_estimator);
+void port_channel_estimator_average_impl::initialize_symbol_start_epochs(cyclic_prefix cp, subcarrier_spacing scs)
+{
+  unsigned nof_symbols_slot = get_nsymb_per_slot(cp);
+  symbol_start_epochs       = span<float>(aux_symbol_start_epochs).first(nof_symbols_slot);
 
-  // Extract RB mask lowest and highest RB. Also, determine if the allocation is contiguous.
-  int      lowest_rb  = hop_rb_mask.find_lowest();
-  int      highest_rb = hop_rb_mask.find_highest();
-  unsigned rb_count   = hop_rb_mask.count();
-  srsran_assert(highest_rb >= lowest_rb, "Invalid hop RB mask.");
-  bool is_contiguous = (static_cast<unsigned>(highest_rb + 1 - lowest_rb) == rb_count);
-
-  // Interpolate frequency domain.
-  unsigned   nof_re  = rb_count * NRE;
-  span<cf_t> ce_freq = span<cf_t>(freq_response).first(nof_re);
-  freq_interpolator->interpolate(ce_freq, filtered_pilots_lse, interpolator_cfg);
-
-  // Convert interpolation result to complex BFloat16.
-  span<cbf16_t> ce_freq_cbf16 = span<cbf16_t>(freq_response_cbf16).first(nof_re);
-  srsvec::convert(ce_freq_cbf16, ce_freq);
-
-  // Map frequency response to channel estimates.
-  for (unsigned i_symbol = first_symbol; i_symbol != last_symbol; ++i_symbol) {
-    span<cbf16_t> symbol_fr_resp = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
-
-    if (is_contiguous) {
-      srsvec::copy(symbol_fr_resp.subspan(lowest_rb * NRE, nof_re), ce_freq.first(nof_re));
-      continue;
-    }
-
-    unsigned i_prb_ce = 0;
-    hop_rb_mask.for_each(0, hop_rb_mask.size(), [&](unsigned i_prb) {
-      srsvec::copy(symbol_fr_resp.subspan(i_prb * NRE, NRE), ce_freq.subspan(i_prb_ce * NRE, NRE));
-      ++i_prb_ce;
-    });
+  // Compute cumulative duration of CPs.
+  symbol_start_epochs[0] = cp.get_length(0, scs).to_seconds() * scs_to_khz(scs) * 1000;
+  for (unsigned i_cp = 1; i_cp != nof_symbols_slot; ++i_cp) {
+    symbol_start_epochs[i_cp] =
+        symbol_start_epochs[i_cp - 1] + cp.get_length(i_cp, scs).to_seconds() * scs_to_khz(scs) * 1000 + 1.0F;
   }
+}
+
+std::optional<float>
+port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
+                                                               const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
+                                                               const subcarrier_spacing&                 scs,
+                                                               unsigned first_hop_symbol,
+                                                               unsigned last_hop_symbol,
+                                                               unsigned hop_offset,
+                                                               unsigned /* unused */,
+                                                               unsigned /* unused */)
+{
+  constexpr unsigned layer0 = 0;
+
+  // Number of OFDM symbols carrying DM-RS in the current hop.
+  unsigned nof_dmrs_symbols = dmrs_mask.slice(first_hop_symbol, last_hop_symbol).count();
+
+  // Match received and transmitted pilots in the first DM-RS symbol.
+  srsvec::prod_conj(
+      rx_pilots.get_symbol(0, layer0), pilots.get_symbol(hop_offset, layer0), pilots_lse.get_slice(layer0));
+
+  if (nof_dmrs_symbols == 1) {
+    return std::nullopt;
+  }
+
+  // If we have more than one DM-RS symbol, we can estimate the CFO.
+  unsigned i_dmrs_0 = dmrs_mask.find_lowest(first_hop_symbol, last_hop_symbol);
+  unsigned i_dmrs_1 = dmrs_mask.find_lowest(i_dmrs_0 + 1, dmrs_mask.size());
+
+  cf_t noisy_phase_acc = 0;
+
+  // Match received and transmitted pilots in the second DM-RS symbol.
+  srsvec::prod_conj(
+      rx_pilots.get_symbol(1, layer0), pilots.get_symbol(hop_offset + 1, layer0), pilot_products.get_slice(layer0));
+
+  noisy_phase_acc += srsvec::dot_prod(pilot_products.get_slice(layer0), pilots_lse.get_slice(layer0));
+
+  float noisy_phase = std::arg(noisy_phase_acc);
+  float cfo         = noisy_phase / TWOPI / (symbol_start_epochs[i_dmrs_1] - symbol_start_epochs[i_dmrs_0]);
+
+  // Compensate the CFO in the first two DM-RS symbols and combine them.
+  if (compensate_cfo) {
+    srsvec::sc_prod(pilots_lse.get_slice(layer0),
+                    std::polar(1.0F, -TWOPI * symbol_start_epochs[i_dmrs_0] * cfo),
+                    pilots_lse.get_slice(layer0));
+    srsvec::sc_prod(pilot_products.get_slice(layer0),
+                    std::polar(1.0F, -TWOPI * symbol_start_epochs[i_dmrs_1] * cfo),
+                    pilot_products.get_slice(layer0));
+  }
+  srsvec::add(pilots_lse.get_slice(layer0), pilot_products.get_slice(layer0), pilots_lse.get_slice(layer0));
+
+  // If there are other DM-RS symbols in the hop, match them with the corresponding transmitted symbols, compensate the
+  // CFO and combine with the previous DM-RS symbols.
+  if (i_dmrs_1 < last_hop_symbol) {
+    auto combine_pilots = [&, i_dmrs = 2](size_t i_symbol) mutable {
+      srsvec::prod_conj(rx_pilots.get_symbol(i_dmrs, 0),
+                        pilots.get_symbol(hop_offset + i_dmrs, layer0),
+                        pilot_products.get_slice(layer0));
+      if (compensate_cfo) {
+        srsvec::sc_prod(pilot_products.get_slice(layer0),
+                        std::polar(1.0F, -TWOPI * symbol_start_epochs[i_symbol] * cfo),
+                        pilot_products.get_slice(layer0));
+      }
+      srsvec::add(pilots_lse.get_slice(layer0), pilot_products.get_slice(layer0), pilots_lse.get_slice(layer0));
+      ++i_dmrs;
+    };
+
+    dmrs_mask.for_each(i_dmrs_1 + 1, last_hop_symbol, combine_pilots);
+  }
+
+  return cfo;
 }
 
 static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
                                             const resource_grid_reader&                  grid,
                                             unsigned                                     port,
                                             const port_channel_estimator::configuration& cfg,
-                                            unsigned                                     hop,
-                                            unsigned                                     i_layer)
+                                            unsigned                                     hop)
 {
+  constexpr unsigned layer0 = 0;
   // Select DM-RS pattern.
-  const port_channel_estimator::layer_dmrs_pattern& pattern = cfg.dmrs_pattern[i_layer];
+  const port_channel_estimator::layer_dmrs_pattern& pattern = cfg.dmrs_pattern[layer0];
 
   const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
 
@@ -425,7 +529,7 @@ static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                   
     }
 
     // Select symbol buffer for the selected layer and symbol.
-    span<cf_t> layer_dmrs_symbols = rx_symbols.get_symbol(dmrs_symbol_index++, i_layer);
+    span<cf_t> layer_dmrs_symbols = rx_symbols.get_symbol(dmrs_symbol_index++, layer0);
 
     // Get DM-RS symbols from the resource grid.
     layer_dmrs_symbols = grid.get(layer_dmrs_symbols, cfg.rx_ports[port], symbol_index, 0, re_mask);
@@ -439,82 +543,9 @@ static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                   
   return dmrs_symbol_index;
 }
 
-void port_channel_estimator_average_impl::initialize_symbol_start_epochs(cyclic_prefix cp, subcarrier_spacing scs)
-{
-  unsigned nof_symbols_slot = get_nsymb_per_slot(cp);
-  symbol_start_epochs       = span<float>(aux_symbol_start_epochs).first(nof_symbols_slot);
-
-  // Compute cumulative duration of CPs.
-  symbol_start_epochs[0] = cp.get_length(0, scs).to_seconds() * scs_to_khz(scs) * 1000;
-  for (unsigned i_cp = 1; i_cp != nof_symbols_slot; ++i_cp) {
-    symbol_start_epochs[i_cp] =
-        symbol_start_epochs[i_cp - 1] + cp.get_length(i_cp, scs).to_seconds() * scs_to_khz(scs) * 1000 + 1.0F;
-  }
-}
-
-std::pair<float, std::optional<float>>
-port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
-                                                               const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
-                                                               const subcarrier_spacing&                 scs,
-                                                               unsigned first_hop_symbol,
-                                                               unsigned last_hop_symbol,
-                                                               unsigned hop_offset,
-                                                               unsigned i_layer)
-{
-  // Number of OFDM symbols carrying DM-RS in the current hop.
-  unsigned nof_dmrs_symbols = dmrs_mask.slice(first_hop_symbol, last_hop_symbol).count();
-
-  // Match received and transmitted pilots in the first DM-RS symbol and compute EPRE contribution.
-  srsvec::prod_conj(rx_pilots.get_symbol(0, i_layer), pilots.get_symbol(hop_offset, i_layer), pilots_lse);
-  float epre_hop = srsvec::average_power(rx_pilots.get_symbol(0, i_layer)) * rx_pilots.get_symbol(0, i_layer).size();
-
-  if (nof_dmrs_symbols == 1) {
-    return {epre_hop, std::nullopt};
-  }
-
-  // Match received and transmitted pilots in the second DM-RS symbol and compute EPRE contribution.
-  srsvec::prod_conj(rx_pilots.get_symbol(1, i_layer), pilots.get_symbol(hop_offset + 1, i_layer), pilot_products);
-  epre_hop += srsvec::average_power(rx_pilots.get_symbol(1, i_layer)) * rx_pilots.get_symbol(1, i_layer).size();
-
-  // Use the first two DM-RS symbols to estimate the CFO.
-  unsigned i_dmrs_0 = dmrs_mask.find_lowest(first_hop_symbol, last_hop_symbol);
-  unsigned i_dmrs_1 = dmrs_mask.find_lowest(i_dmrs_0 + 1, dmrs_mask.size());
-
-  float noisy_phase = std::arg(srsvec::dot_prod(pilot_products, pilots_lse));
-
-  float cfo = noisy_phase / TWOPI / (symbol_start_epochs[i_dmrs_1] - symbol_start_epochs[i_dmrs_0]);
-
-  // Compensate the CFO in the first two DM-RS symbols and combine them.
-  if (compensate_cfo) {
-    srsvec::sc_prod(pilots_lse, std::polar(1.0F, -TWOPI * symbol_start_epochs[i_dmrs_0] * cfo), pilots_lse);
-    srsvec::sc_prod(pilot_products, std::polar(1.0F, -TWOPI * symbol_start_epochs[i_dmrs_1] * cfo), pilot_products);
-  }
-  srsvec::add(pilots_lse, pilot_products, pilots_lse);
-
-  // If there are other DM-RS symbols in the hop, match them with the corresponding transmitted symbols, compensate the
-  // CFO and combine with the previous DM-RS symbols.
-  if (i_dmrs_1 < last_hop_symbol) {
-    auto combine_pilots = [&, i_dmrs = 2](size_t i_symbol) mutable {
-      srsvec::prod_conj(
-          rx_pilots.get_symbol(i_dmrs, i_layer), pilots.get_symbol(hop_offset + i_dmrs, i_layer), pilot_products);
-      if (compensate_cfo) {
-        srsvec::sc_prod(pilot_products, std::polar(1.0F, -TWOPI * symbol_start_epochs[i_symbol] * cfo), pilot_products);
-      }
-      srsvec::add(pilots_lse, pilot_products, pilots_lse);
-      epre_hop +=
-          srsvec::average_power(rx_pilots.get_symbol(i_dmrs, i_layer)) * rx_pilots.get_symbol(i_dmrs, i_layer).size();
-      ++i_dmrs;
-    };
-
-    dmrs_mask.for_each(i_dmrs_1 + 1, last_hop_symbol, combine_pilots);
-  }
-
-  return {epre_hop, cfo};
-}
-
 static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             const dmrs_symbol_list&                   rx_pilots,
-                            span<const cf_t>                          estimates,
+                            const re_buffer_reader<cf_t>&             estimates,
                             float                                     beta,
                             const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
                             const subcarrier_spacing&                 scs,
@@ -524,43 +555,51 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             unsigned                                  first_hop_symbol,
                             unsigned                                  last_hop_symbol,
                             unsigned                                  hop_symbols,
-                            unsigned                                  hop_offset,
-                            unsigned                                  i_layer)
+                            unsigned                                  hop_offset)
 {
-  std::array<cf_t, MAX_RB * NRE> avg_estimates_buffer;
+  constexpr unsigned                        one_layer = 1;
+  constexpr unsigned                        layer0    = 0;
+  static_re_buffer<one_layer, MAX_RB * NRE> scaled_estimates(one_layer, estimates.get_slice(0).size());
+  srsvec::sc_prod(estimates.get_slice(layer0), cf_t(-beta, 0), scaled_estimates.get_slice(layer0));
+
   std::array<cf_t, MAX_RB * NRE> predicted_obs_buffer;
+  span<cf_t>                     predicted_obs = span<cf_t>(predicted_obs_buffer).first(estimates.get_slice(0).size());
 
-  span<cf_t> scaled_estimates = span<cf_t>(avg_estimates_buffer).first(estimates.size());
-
-  srsvec::sc_prod(estimates, cf_t(-beta, 0), scaled_estimates);
-
-  span<cf_t> predicted_obs = span<cf_t>(predicted_obs_buffer).first(estimates.size());
-  float      noise_energy  = 0.0F;
+  float noise_energy = 0.0F;
 
   if (compensate_cfo && cfo.has_value()) {
     auto noise_cfo = [&, i_dmrs = 0](size_t i_symbol) mutable {
-      span<const cf_t> symbol_pilots    = pilots.get_symbol(hop_offset + i_dmrs, i_layer);
-      span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_dmrs, i_layer);
+      std::array<cf_t, MAX_RB * NRE> noise_samples_buffer;
+      span<cf_t> noise_samples = span<cf_t>(noise_samples_buffer).first(estimates.get_slice(0).size());
 
-      srsvec::prod(scaled_estimates, symbol_pilots, predicted_obs);
+      span<const cf_t> symbol_pilots = pilots.get_symbol(hop_offset + i_dmrs, layer0);
+
+      srsvec::prod(scaled_estimates.get_slice(layer0), symbol_pilots, predicted_obs);
       srsvec::sc_prod(
           predicted_obs, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo.value()), predicted_obs);
-      srsvec::add(predicted_obs, symbol_rx_pilots, predicted_obs);
+      srsvec::add(predicted_obs, noise_samples, noise_samples);
 
-      noise_energy += srsvec::average_power(predicted_obs) * predicted_obs.size();
+      span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_dmrs, 0);
+      srsvec::add(symbol_rx_pilots, noise_samples, noise_samples);
+      noise_energy += srsvec::average_power(noise_samples) * noise_samples.size();
       ++i_dmrs;
     };
 
     dmrs_mask.for_each(first_hop_symbol, last_hop_symbol, noise_cfo);
+
   } else {
     auto noise_no_cfo = [&, i_dmrs = 0](size_t i_symbol) mutable {
-      span<const cf_t> symbol_pilots    = pilots.get_symbol(hop_offset + i_dmrs, i_layer);
-      span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_dmrs, i_layer);
+      std::array<cf_t, MAX_RB * NRE> noise_samples_buffer;
+      span<cf_t> noise_samples = span<cf_t>(noise_samples_buffer).first(estimates.get_slice(0).size());
 
-      srsvec::prod(scaled_estimates, symbol_pilots, predicted_obs);
-      srsvec::add(predicted_obs, symbol_rx_pilots, predicted_obs);
+      span<const cf_t> symbol_pilots = pilots.get_symbol(hop_offset + i_dmrs, layer0);
 
-      noise_energy += srsvec::average_power(predicted_obs) * predicted_obs.size();
+      srsvec::prod(scaled_estimates.get_slice(layer0), symbol_pilots, predicted_obs);
+      srsvec::add(predicted_obs, noise_samples, noise_samples);
+
+      span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_dmrs, 0);
+      srsvec::add(symbol_rx_pilots, noise_samples, noise_samples);
+      noise_energy += srsvec::average_power(noise_samples) * noise_samples.size();
       ++i_dmrs;
     };
     dmrs_mask.for_each(first_hop_symbol, last_hop_symbol, noise_no_cfo);
@@ -569,7 +608,7 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
   return noise_energy;
 }
 
-static float estimate_time_alignment(span<const cf_t>                                  pilots_lse,
+static float estimate_time_alignment(const re_buffer_reader<cf_t>&                     pilots_lse,
                                      const port_channel_estimator::layer_dmrs_pattern& pattern,
                                      unsigned                                          hop,
                                      subcarrier_spacing                                scs,
@@ -585,10 +624,10 @@ static float estimate_time_alignment(span<const cf_t>                           
                 "The resource grid size {} is larger than the port channel estimator DFT size {}.",
                 re_mask.size(),
                 DFT_SIZE);
-  srsran_assert(pilots_lse.size() == re_mask.count(),
+  srsran_assert(pilots_lse.get_slice(0).size() == re_mask.count(),
                 "Expected {} channel estimates, provided {}.",
                 re_mask.size(),
-                pilots_lse.size());
+                pilots_lse.get_slice(0).size());
 
   return ta_estimator.estimate(pilots_lse, re_mask, scs).time_alignment;
 }
