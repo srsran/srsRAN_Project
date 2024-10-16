@@ -168,9 +168,9 @@ public:
   }
 
   [[nodiscard]] bool send_pdu_session_modify_request_and_await_bearer_context_modification_request(
-      pdu_session_id_t                  pdu_session_id   = uint_to_pdu_session_id(1),
-      const std::vector<qos_flow_id_t>& flows_to_add     = {uint_to_qos_flow_id(2)},
-      const std::vector<qos_flow_id_t>& flows_to_release = {})
+      pdu_session_id_t                  pdu_session_id      = uint_to_pdu_session_id(1),
+      const std::vector<qos_flow_id_t>& flows_to_add_or_mod = {uint_to_qos_flow_id(2)},
+      const std::vector<qos_flow_id_t>& flows_to_release    = {})
   {
     report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                               "there are still NGAP messages to pop from AMF");
@@ -181,7 +181,7 @@ public:
 
     // Inject PDU Session Resource Modify Request and wait for Bearer Context Modification Request
     get_amf().push_tx_pdu(generate_valid_pdu_session_resource_modify_request_message(
-        amf_ue_id, ue_ctx->ran_ue_id.value(), pdu_session_id, flows_to_add, flows_to_release));
+        amf_ue_id, ue_ctx->ran_ue_id.value(), pdu_session_id, flows_to_add_or_mod, flows_to_release));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
@@ -516,4 +516,24 @@ TEST_F(cu_cp_pdu_session_resource_modify_test, when_valid_modification_is_receiv
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_pdu_session_resource_modify_response(ngap_pdu));
   ASSERT_TRUE(is_expected_pdu_session_resource_modify_response({}, {psi2}));
+}
+
+TEST_F(cu_cp_pdu_session_resource_modify_test,
+       when_valid_modification_arrives_and_qos_flow_can_be_modified_then_pdu_session_modification_succeeds)
+{
+  // Inject PDU Session Resource Modify Request and await Bearer Context Modification Request
+  ASSERT_TRUE(send_pdu_session_modify_request_and_await_bearer_context_modification_request(psi, {qfi}, {}));
+
+  // Inject Bearer Context Modification Response and await UE Context Modification Request
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+
+  // Inject UE Context Modification Response and await Bearer Context Modification Request
+  ASSERT_TRUE(
+      send_ue_context_modification_response_and_await_bearer_context_modification_request({}, {drb_id_t::drb1}));
+
+  // Inject Bearer Context Modification Response and await RRC Reconfiguration
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_rrc_reconfiguration(psi, drb_id_t::drb1, false));
+
+  // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Modify Response
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_modify_response());
 }
