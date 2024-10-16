@@ -55,20 +55,6 @@ class timer_manager
   /// Possible states for a timer.
   enum class state_t { stopped, running, expired };
 
-  /// Command sent by the unique_timer (front-end) to the timer manager (back-end).
-  struct cmd_t {
-    enum action_t { start, stop, destroy };
-
-    /// Unique identity of the timer.
-    timer_id_t id;
-    /// Identifier associated with this particular command.
-    cmd_id_t cmd_id;
-    /// Action Request type sent by the unique_timer.
-    action_t action;
-    /// Timer duration used, in case the action type is "start".
-    unsigned duration;
-  };
-
   /// Data relative to a timer state that is safe to access from the front-end side (the unique_timer).
   struct timer_frontend {
     /// Reference to timer manager class.
@@ -102,10 +88,37 @@ class timer_manager
     void stop();
   };
 
+  /// Command sent by the unique_timer (front-end) to the timer manager (back-end).
+  struct cmd_t {
+    /// action type used when timer is started.
+    struct start {
+      /// Duration for the new run.
+      timer_duration duration;
+    };
+    /// action type used when timer is stopped.
+    struct stop {};
+    /// action type used when timer is created.
+    struct create {
+      std::unique_ptr<timer_frontend> frontend;
+    };
+    /// action type used when timer is destroyed.
+    struct destroy {};
+
+    /// Unique identity of the timer.
+    timer_id_t id;
+    /// Identifier associated with this particular command.
+    cmd_id_t cmd_id;
+    /// Action Request type sent by the unique_timer.
+    std::variant<start, stop, create, destroy> action;
+  };
+
   /// Timer context used solely by the back-end side of the timer manager.
   struct timer_backend_context {
-    cmd_id_t cmd_id  = 0;
-    state_t  state   = state_t::stopped;
+    /// Last command to be handled in the timer backend.
+    cmd_id_t cmd_id = 0;
+    /// Current stand of the timer from the backend perspective.
+    state_t state = state_t::stopped;
+    /// Timeout set for the last timer run.
     unsigned timeout = 0;
   };
 
@@ -140,6 +153,7 @@ private:
   friend class unique_timer;
 
   class unique_timer_pool;
+  class command_queue;
 
   /// \brief Create a new front-end context to be used by a newly created unique_timer.
   timer_frontend& create_frontend_timer(task_executor& exec);
@@ -147,12 +161,18 @@ private:
   /// Push a new timer command (start, stop, destroy) from the front-end execution context to the backend.
   void push_timer_command(cmd_t cmd);
 
+  /// Handle in the timer manager backend side the command sent by the timer frontends
+  void handle_timer_commands();
+
   /// Create a new timer_handle object in the timer manager back-end side and associate it with the provided frontend
   /// timer.
-  void create_timer_handle(std::unique_ptr<timer_frontend> timer);
+  void create_timer_handle(cmd_id_t cmd_id, std::unique_ptr<timer_frontend> timer);
+
+  /// Handle in the timer manager backend side, a single command sent by the respective timer frontend.
+  void handle_timer_command(timer_handle& timer, const cmd_t& cmd);
 
   /// Start the ticking of a timer with a given duration.
-  void start_timer_backend(timer_handle& timer, unsigned duration);
+  void start_timer_backend(timer_handle& timer, timer_duration duration);
 
   /// Stop a timer from ticking. If \c expiry_reason is set to true, the timer callback is dispatched to the frontend
   /// execution context.
@@ -203,9 +223,10 @@ private:
   std::deque<std::pair<timer_id_t, cmd_id_t>> failed_to_trigger_timers;
 
   /// Commands sent by the timer front-end to the backend.
-  std::mutex                                                        cmd_mutex;
-  std::vector<std::variant<cmd_t, std::unique_ptr<timer_frontend>>> pending_cmds;
-  std::vector<std::variant<cmd_t, std::unique_ptr<timer_frontend>>> cmds_to_process;
+  std::unique_ptr<command_queue> pending_cmds;
+
+  /// List of commands that were not yet processed due to cmd_id reordering.
+  std::deque<std::pair<unsigned, cmd_t>> tmp_skipped_cmds;
 };
 
 /// \brief This class represents a timer which invokes a user-provided callback upon timer expiration. To setup a
