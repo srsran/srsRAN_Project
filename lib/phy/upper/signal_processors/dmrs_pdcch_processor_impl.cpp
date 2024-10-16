@@ -37,7 +37,7 @@ void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                  
       sequence, *prg, M_SQRT1_2 * config.amplitude, config.reference_point_k_rb, NOF_DMRS_PER_RB, config.rb_mask);
 }
 
-void dmrs_pdcch_processor_impl::mapping(resource_grid_mapper&     mapper,
+void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&     grid,
                                         const re_buffer_reader<>& d_pdcch,
                                         const config_t&           config)
 {
@@ -51,10 +51,10 @@ void dmrs_pdcch_processor_impl::mapping(resource_grid_mapper&     mapper,
   pattern.re_mask = re_mask;
 
   // Actual mapping.
-  mapper.map(d_pdcch, pattern, config.precoding);
+  mapper->map(grid, d_pdcch, pattern, config.precoding);
 }
 
-void dmrs_pdcch_processor_impl::map(resource_grid_mapper& mapper, const dmrs_pdcch_processor::config_t& config)
+void dmrs_pdcch_processor_impl::map(resource_grid_writer& grid, const dmrs_pdcch_processor::config_t& config)
 {
   srsran_assert(config.precoding.get_nof_layers() == 1,
                 "Number of layers (i.e., {}) must be one.",
@@ -86,5 +86,5 @@ void dmrs_pdcch_processor_impl::map(resource_grid_mapper& mapper, const dmrs_pdc
   }
 
   // Map sequence.
-  mapping(mapper, d_pdcch, config);
+  mapping(grid, d_pdcch, config);
 }

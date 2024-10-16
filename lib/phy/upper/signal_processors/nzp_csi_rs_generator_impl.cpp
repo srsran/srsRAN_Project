@@ -159,7 +159,7 @@ static unsigned get_seq_len(const nzp_csi_rs_generator::config_t& config)
   return seq_len;
 }
 
-void nzp_csi_rs_generator_impl::map(resource_grid_mapper& mapper, const config_t& config)
+void nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   unsigned nof_ports = csi_rs::get_nof_csi_rs_ports(config.csi_rs_mapping_table_row);
 
@@ -271,7 +271,7 @@ void nzp_csi_rs_generator_impl::map(resource_grid_mapper& mapper, const config_t
       }
     }
 
-    mapper.map(data, pattern, cdm_group_precoding);
+    mapper->map(grid, data, pattern, cdm_group_precoding);
   }
 }
 

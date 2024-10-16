@@ -37,7 +37,7 @@ float pdsch_modulator_impl::modulate(span<ci8_t> d_pdsch, const bit_buffer& b_ha
   return modulator->modulate(d_pdsch, b_hat, modulation);
 }
 
-void pdsch_modulator_impl::map(resource_grid_mapper& mapper,
+void pdsch_modulator_impl::map(resource_grid_writer& grid,
                                span<const ci8_t>     data_re,
                                float                 scaling,
                                const config_t&       config)
@@ -90,10 +90,10 @@ void pdsch_modulator_impl::map(resource_grid_mapper& mapper,
   resource_grid_mapper::symbol_buffer_adapter buffer_adapter(data_re);
 
   // Map into the resource grid.
-  mapper.map(buffer_adapter, allocation, reserved, precoding2);
+  mapper->map(grid, buffer_adapter, allocation, reserved, precoding2);
 }
 
-void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
+void pdsch_modulator_impl::modulate(resource_grid_writer&            grid,
                                     span<const bit_buffer>           codewords,
                                     const pdsch_modulator::config_t& config)
 {
@@ -116,5 +116,5 @@ void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
   float scaling = modulate(pdsch_symbols, b_hat, mod);
 
   // Map resource elements.
-  map(mapper, pdsch_symbols, scaling, config);
+  map(grid, pdsch_symbols, scaling, config);
 }

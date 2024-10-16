@@ -664,7 +664,7 @@ public:
     std::shared_ptr<channel_precoder_factory> precoder_factory = create_channel_precoder_factory("auto");
     report_fatal_error_if_not(precoder_factory, "Invalid factory");
 
-    std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoder_factory);
+    std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
     report_fatal_error_if_not(rg_factory, "Invalid factory");
 
     // Create resource grids according to TDD pattern.

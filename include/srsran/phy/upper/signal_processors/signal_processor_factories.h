@@ -1,7 +1,7 @@
 #pragma once
 
 #include "port_channel_estimator_parameters.h"
-#include "srsran/phy/generic_functions/generic_functions_factories.h"
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator_factories.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pbch_processor.h"
@@ -37,7 +37,8 @@ public:
 };
 
 std::shared_ptr<dmrs_pdcch_processor_factory>
-create_dmrs_pdcch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory);
+create_dmrs_pdcch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                       std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory);
 
 class dmrs_pdsch_processor_factory
 {
@@ -47,7 +48,8 @@ public:
 };
 
 std::shared_ptr<dmrs_pdsch_processor_factory>
-create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory);
+create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                       std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory);
 
 class dmrs_pucch_estimator_factory
 {
@@ -84,7 +86,8 @@ public:
 };
 
 std::shared_ptr<nzp_csi_rs_generator_factory>
-create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory);
+create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                       std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory);
 
 std::shared_ptr<nzp_csi_rs_generator_factory>
 create_nzp_csi_rs_generator_pool_factory(std::shared_ptr<nzp_csi_rs_generator_factory> generator_factory,

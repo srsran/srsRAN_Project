@@ -95,31 +95,34 @@ public:
                             std::unique_ptr<ldpc_rate_matcher>       rate_matcher_,
                             std::unique_ptr<pseudo_random_generator> scrambler_,
                             std::unique_ptr<modulation_mapper>       modulator_,
-                            std::unique_ptr<dmrs_pdsch_processor>    dmrs_) :
+                            std::unique_ptr<dmrs_pdsch_processor>    dmrs_,
+                            std::unique_ptr<resource_grid_mapper>    mapper_) :
     segmenter(std::move(segmenter_)),
     encoder(std::move(encoder_)),
     rate_matcher(std::move(rate_matcher_)),
     scrambler(std::move(scrambler_)),
     modulator(std::move(modulator_)),
     dmrs(std::move(dmrs_)),
+    mapper(std::move(mapper_)),
     subprocessor(*segmenter, *encoder, *rate_matcher, *scrambler, *modulator)
   {
     srsran_assert(segmenter != nullptr, "Invalid segmenter pointer.");
     srsran_assert(scrambler != nullptr, "Invalid scrambler pointer.");
     srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+    srsran_assert(mapper != nullptr, "Invalid resource grid mapper pointer.");
   }
 
   // See interface for documentation.
-  void process(resource_grid_mapper&                                        mapper,
+  void process(resource_grid_writer&                                        grid,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;
 
 private:
   /// \brief Processes DM-RS.
-  /// \param[out] mapper Resource grid mapper interface.
-  /// \param[in]  pdu Necessary parameters to process the DM-RS.
-  void process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu);
+  /// \param[out] grid Resource grid writer interface.
+  /// \param[in]  pdu  Necessary parameters to process the DM-RS.
+  void process_dmrs(resource_grid_writer& grid, const pdu_t& pdu);
 
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_tx> segmenter;
@@ -133,6 +136,8 @@ private:
   std::unique_ptr<modulation_mapper> modulator;
   /// Pointer to DM-RS processor.
   std::unique_ptr<dmrs_pdsch_processor> dmrs;
+  /// Pointer to resource grid mapper.
+  std::unique_ptr<resource_grid_mapper> mapper;
   /// Internal block processor.
   pdsch_block_processor subprocessor;
 };

@@ -19,6 +19,8 @@
 #include "pdsch_processor_lite_impl.h"
 #include "pdsch_processor_pool.h"
 #include "pdsch_processor_validator_impl.h"
+#include "srsran/phy/support/support_factories.h"
+
 #include <memory>
 
 using namespace srsran;
@@ -85,19 +87,25 @@ class pdsch_modulator_factory_sw : public pdsch_modulator_factory
 private:
   std::shared_ptr<channel_modulation_factory>      modulator_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
 
 public:
   pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
-                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
+                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
+                             std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
+    modulator_factory(std::move(modulator_factory_)),
+    prg_factory(std::move(prg_factory_)),
+    rg_mapper_factory(std::move(rg_mapper_factory_))
   {
     srsran_assert(modulator_factory, "Invalid modulator factory.");
     srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
   }
 
   std::unique_ptr<pdsch_modulator> create() override
   {
-    return std::make_unique<pdsch_modulator_impl>(modulator_factory->create_modulation_mapper(), prg_factory->create());
+    return std::make_unique<pdsch_modulator_impl>(
+        modulator_factory->create_modulation_mapper(), prg_factory->create(), rg_mapper_factory->create());
   }
 };
 
@@ -140,16 +148,18 @@ public:
                                         std::shared_ptr<ldpc_encoder_factory>            encoder_factory,
                                         std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
                                         std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
+                                        std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_,
                                         std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                         std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
                                         task_executor&                                   executor_,
                                         unsigned                                         nof_concurrent_threads) :
-    prg_factory(std::move(prg_factory_)), executor(executor_)
+    prg_factory(std::move(prg_factory_)), rg_mapper_factory(std::move(rg_mapper_factory_)), executor(executor_)
   {
     srsran_assert(crc_factory, "Invalid CRC calculator factory.");
     srsran_assert(encoder_factory, "Invalid encoder factory.");
     srsran_assert(rate_matcher_factory, "Invalid rate matcher factory.");
     srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
     srsran_assert(modulator_factory, "Invalid modulator factory.");
     srsran_assert(dmrs_factory, "Invalid DM-RS factory.");
     srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
@@ -184,8 +194,12 @@ public:
 
   std::unique_ptr<pdsch_processor> create() override
   {
-    return std::make_unique<pdsch_processor_concurrent_impl>(
-        cb_processor_pool, prg_factory->create(), dmrs_generator_pool, ptrs_generator_pool, executor);
+    return std::make_unique<pdsch_processor_concurrent_impl>(cb_processor_pool,
+                                                             prg_factory->create(),
+                                                             rg_mapper_factory->create(),
+                                                             dmrs_generator_pool,
+                                                             ptrs_generator_pool,
+                                                             executor);
   }
 
   std::unique_ptr<pdsch_pdu_validator> create_validator() override
@@ -195,6 +209,7 @@ public:
 
 private:
   std::shared_ptr<pseudo_random_generator_factory>                            prg_factory;
+  std::shared_ptr<resource_grid_mapper_factory>                               rg_mapper_factory;
   task_executor&                                                              executor;
   std::shared_ptr<pdsch_processor_concurrent_impl::codeblock_processor_pool>  cb_processor_pool;
   std::shared_ptr<pdsch_processor_concurrent_impl::pdsch_dmrs_generator_pool> dmrs_generator_pool;
@@ -210,6 +225,7 @@ private:
   std::shared_ptr<pseudo_random_generator_factory> scrambler_factory;
   std::shared_ptr<channel_modulation_factory>      modulator_factory;
   std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory;
+  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
 
 public:
   pdsch_processor_lite_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory_,
@@ -217,13 +233,15 @@ public:
                                   std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory_,
                                   std::shared_ptr<pseudo_random_generator_factory> scrambler_factory_,
                                   std::shared_ptr<channel_modulation_factory>      modulator_factory_,
-                                  std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory_) :
+                                  std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory_,
+                                  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
     segmenter_factory(std::move(segmenter_factory_)),
     encoder_factory(std::move(encoder_factory_)),
     rate_matcher_factory(std::move(rate_matcher_factory_)),
     scrambler_factory(std::move(scrambler_factory_)),
     modulator_factory(std::move(modulator_factory_)),
-    dmrs_factory(std::move(dmrs_factory_))
+    dmrs_factory(std::move(dmrs_factory_)),
+    rg_mapper_factory(std::move(rg_mapper_factory_))
   {
     srsran_assert(segmenter_factory, "Invalid segmenter factory.");
     srsran_assert(encoder_factory, "Invalid encoder factory.");
@@ -231,6 +249,7 @@ public:
     srsran_assert(scrambler_factory, "Invalid scrambler factory.");
     srsran_assert(modulator_factory, "Invalid modulator factory.");
     srsran_assert(dmrs_factory, "Invalid DM-RS factory.");
+    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
   }
 
   std::unique_ptr<pdsch_processor> create() override
@@ -240,7 +259,8 @@ public:
                                                        rate_matcher_factory->create(),
                                                        scrambler_factory->create(),
                                                        modulator_factory->create_modulation_mapper(),
-                                                       dmrs_factory->create());
+                                                       dmrs_factory->create(),
+                                                       rg_mapper_factory->create());
   }
 
   std::unique_ptr<pdsch_pdu_validator> create_validator() override
@@ -356,9 +376,11 @@ srsran::create_pdsch_encoder_factory_hw(const pdsch_encoder_factory_hw_configura
 
 std::shared_ptr<pdsch_modulator_factory>
 srsran::create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
-                                          std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+                                          std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                          std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
 {
-  return std::make_shared<pdsch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));
+  return std::make_shared<pdsch_modulator_factory_sw>(
+      std::move(modulator_factory), std::move(prg_factory), std::move(rg_mapper_factory));
 }
 
 std::shared_ptr<pdsch_processor_factory>
@@ -375,6 +397,7 @@ srsran::create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<crc_calcula
                                                      std::shared_ptr<ldpc_encoder_factory>            ldpc_enc_factory,
                                                      std::shared_ptr<ldpc_rate_matcher_factory>       ldpc_rm_factory,
                                                      std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                                     std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory,
                                                      std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                                      std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
                                                      task_executor&                                   executor,
@@ -384,6 +407,7 @@ srsran::create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<crc_calcula
                                                                  std::move(ldpc_enc_factory),
                                                                  std::move(ldpc_rm_factory),
                                                                  std::move(prg_factory),
+                                                                 std::move(rg_mapper_factory),
                                                                  std::move(modulator_factory),
                                                                  std::move(dmrs_factory),
                                                                  executor,
@@ -396,14 +420,16 @@ srsran::create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx
                                                std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
                                                std::shared_ptr<pseudo_random_generator_factory> scrambler_factory,
                                                std::shared_ptr<channel_modulation_factory>      modulator_factory,
-                                               std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory)
+                                               std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
+                                               std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
 {
   return std::make_shared<pdsch_processor_lite_factory_sw>(std::move(segmenter_factory),
                                                            std::move(encoder_factory),
                                                            std::move(rate_matcher_factory),
                                                            std::move(scrambler_factory),
                                                            std::move(modulator_factory),
-                                                           std::move(dmrs_factory));
+                                                           std::move(dmrs_factory),
+                                                           std::move(rg_mapper_factory));
 }
 
 std::shared_ptr<pdsch_processor_factory>

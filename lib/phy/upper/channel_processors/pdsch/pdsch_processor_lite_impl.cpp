@@ -160,7 +160,7 @@ bool pdsch_block_processor::empty() const
   return codeblock_symbols.empty() && (next_i_cb == d_segments.size());
 }
 
-void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
+void pdsch_processor_lite_impl::process(resource_grid_writer&                                        grid,
                                         pdsch_processor_notifier&                                    notifier,
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                         const pdu_t&                                                 pdu)
@@ -218,16 +218,16 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
   precoding2 *= scaling;
 
   // Map PDSCH.
-  mapper.map(subprocessor, allocation, reserved, precoding2);
+  mapper->map(grid, subprocessor, allocation, reserved, precoding2);
 
   // Process DM-RS.
-  process_dmrs(mapper, pdu);
+  process_dmrs(grid, pdu);
 
   // Notify the end of the processing.
   notifier.on_finish_processing();
 }
 
-void pdsch_processor_lite_impl::process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu)
+void pdsch_processor_lite_impl::process_dmrs(resource_grid_writer& grid, const pdu_t& pdu)
 {
   bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
@@ -250,5 +250,5 @@ void pdsch_processor_lite_impl::process_dmrs(resource_grid_mapper& mapper, const
   dmrs_config.precoding            = pdu.precoding;
 
   // Put DM-RS.
-  dmrs->map(mapper, dmrs_config);
+  dmrs->map(grid, dmrs_config);
 }

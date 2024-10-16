@@ -192,8 +192,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   }
 
   // Use resource grid dummy, the PDSCH processor must not call any method.
-  resource_grid_dummy   rg_dummy;
-  resource_grid_mapper& mapper_dummy = rg_dummy.get_mapper();
+  resource_grid_dummy rg_dummy;
 
   // Reset spies.
   encoder_spy->reset();
@@ -202,7 +201,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   notifier.reset();
 
   // Process PDU.
-  pdsch->process(mapper_dummy, notifier, data, pdu);
+  pdsch->process(rg_dummy.get_writer(), notifier, data, pdu);
 
   // Wait for the processor to finish.
   notifier.wait_for_finished();
@@ -249,7 +248,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
     ASSERT_NEAR(entry.config.scaling, convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB), amplitude_max_error);
     ASSERT_EQ(entry.config.reserved, pdu.reserved);
     ASSERT_EQ(entry.config.precoding, pdu.precoding);
-    ASSERT_EQ(entry.mapper, &mapper_dummy);
+    ASSERT_EQ(entry.grid, &rg_dummy.get_writer());
     for (unsigned codeword = 0; codeword != nof_codewords; ++codeword) {
       span<const uint8_t> codeword_encoder   = encoder_spy->get_entries()[codeword].codeword;
       const bit_buffer    codeword_modulator = entry.codewords[codeword];
@@ -274,7 +273,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
     ASSERT_EQ(entry.config.symbols_mask, pdu.dmrs_symbol_mask);
     ASSERT_EQ(entry.config.rb_mask, rb_mask);
     ASSERT_EQ(entry.config.precoding, pdu.precoding);
-    ASSERT_EQ(entry.mapper, &mapper_dummy);
+    ASSERT_EQ(entry.grid, &rg_dummy.get_writer());
   }
 }
 

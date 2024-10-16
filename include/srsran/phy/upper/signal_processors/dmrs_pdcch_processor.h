@@ -13,6 +13,7 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/precoding_configuration.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
 
@@ -51,9 +52,9 @@ public:
 
   /// \brief Generates and maps DMRS for PDCCH according to TS 38.211 section 7.4.1.3.
   ///
-  /// \param[out] mapper Resource grid mapper interface.
+  /// \param[out] grid   Resource grid writer interface.
   /// \param[in] config  Required configuration to generate and map the signal.
-  virtual void map(resource_grid_mapper& mapper, const config_t& config) = 0;
+  virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
 } // namespace srsran

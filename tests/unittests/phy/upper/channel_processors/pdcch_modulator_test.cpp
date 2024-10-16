@@ -23,8 +23,15 @@ int main()
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
 
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+  TESTASSERT(precoding_factory);
+
+  std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+      create_resource_grid_mapper_factory(precoding_factory);
+  TESTASSERT(rg_mapper_factory);
+
   std::shared_ptr<pdcch_modulator_factory> pdcch_factory =
-      create_pdcch_modulator_factory_sw(modulator_factory, prg_factory);
+      create_pdcch_modulator_factory_sw(modulator_factory, prg_factory, rg_mapper_factory);
   TESTASSERT(modulator_factory);
 
   std::unique_ptr<pdcch_modulator> pdcch = pdcch_factory->create();
@@ -39,21 +46,19 @@ int main()
 
     // Prepare resource grid and resource grid mapper spies.
     resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
-    std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
+    std::unique_ptr<resource_grid_mapper> mapper = rg_mapper_factory->create();
 
     // Load input codeword from a testvector
     const std::vector<uint8_t> test_codeword = test_case.data.read();
 
     // Modulate.
-    pdcch->modulate(*mapper, test_codeword, test_case.config);
+    pdcch->modulate(grid, test_codeword, test_case.config);
 
     // Load output golden data
     const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
 
-    // Tolerance: max BF16 error times sqrt(2), since we are taking the modulus.
-    constexpr float tolerance = M_SQRT2f32 / 256.0;
     // Assert resource grid entries.
-    grid.assert_entries(testvector_symbols, tolerance);
+    grid.assert_entries(testvector_symbols);
   }
 
   return 0;

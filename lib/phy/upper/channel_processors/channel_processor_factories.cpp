@@ -90,19 +90,25 @@ class pdcch_modulator_factory_sw : public pdcch_modulator_factory
 private:
   std::shared_ptr<channel_modulation_factory>      modulator_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
 
 public:
   pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
-                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
+                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
+                             std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
+    modulator_factory(std::move(modulator_factory_)),
+    prg_factory(std::move(prg_factory_)),
+    rg_mapper_factory(std::move(rg_mapper_factory_))
   {
     srsran_assert(modulator_factory, "Invalid modulator factory.");
     srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
   }
 
   std::unique_ptr<pdcch_modulator> create() override
   {
-    return std::make_unique<pdcch_modulator_impl>(modulator_factory->create_modulation_mapper(), prg_factory->create());
+    return std::make_unique<pdcch_modulator_impl>(
+        modulator_factory->create_modulation_mapper(), prg_factory->create(), rg_mapper_factory->create());
   }
 };
 
@@ -417,9 +423,11 @@ srsran::create_pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> 
 
 std::shared_ptr<pdcch_modulator_factory>
 srsran::create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
-                                          std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+                                          std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                          std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
 {
-  return std::make_shared<pdcch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));
+  return std::make_shared<pdcch_modulator_factory_sw>(
+      std::move(modulator_factory), std::move(prg_factory), rg_mapper_factory);
 }
 
 std::shared_ptr<pdcch_processor_factory>
@@ -499,9 +507,9 @@ public:
     srsran_assert(processor, "Invalid processor.");
   }
 
-  void process(resource_grid_mapper& mapper, const pdu_t& pdu) override
+  void process(resource_grid_writer& grid, const pdu_t& pdu) override
   {
-    const auto&& func = [this, &mapper, &pdu]() { processor->process(mapper, pdu); };
+    const auto&& func = [this, &grid, &pdu]() { processor->process(grid, pdu); };
 
     if (!enable_logging_broadcast && is_broadcast_rnti(pdu.dci.rnti)) {
       func();

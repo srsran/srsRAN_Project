@@ -19,7 +19,7 @@
 
 namespace srsran {
 
-class resource_grid_mapper;
+class resource_grid_writer;
 
 /// Describes a Non-Zero-Power CSI Reference Signal (NZP-CSI-RS) processor interface, in compliance with TS 38.211
 /// Section 7.4.1.5.
@@ -70,9 +70,9 @@ public:
   virtual ~nzp_csi_rs_generator() = default;
 
   /// \brief Generates and maps the NZP-CSI-RS, according to TS 38.211, Section 7.4.1.5.
-  /// \param [out] mapper Resource grid mapper.
+  /// \param [out] writer Resource grid writer interface.
   /// \param [in]  config Required configuration to generate and map the signal.
-  virtual void map(resource_grid_mapper& mapper, const config_t& config) = 0;
+  virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
 /// Describes the NZP-CSI-RS generator configuration validator interface.

@@ -216,14 +216,25 @@ protected:
         create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
     ASSERT_NE(ldpc_segm_tx_factory, nullptr);
 
+    // Create channel precoding factory.
+    std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+    ASSERT_NE(precoding_factory, nullptr);
+
+    // Create resource grid mapper factory.
+    std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+        create_resource_grid_mapper_factory(precoding_factory);
+    ASSERT_NE(rg_mapper_factory, nullptr);
+
+    resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB);
+
     // Create DM-RS for pdsch channel estimator.
     std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_proc_factory =
-        create_dmrs_pdsch_processor_factory_sw(prg_factory);
+        create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
     ASSERT_NE(dmrs_pdsch_proc_factory, nullptr);
 
     // Create PDSCH demodulator factory.
     std::shared_ptr<pdsch_modulator_factory> pdsch_mod_factory =
-        create_pdsch_modulator_factory_sw(chan_modulation_factory, prg_factory);
+        create_pdsch_modulator_factory_sw(chan_modulation_factory, prg_factory, rg_mapper_factory);
     ASSERT_NE(pdsch_mod_factory, nullptr);
 
     // Create PDSCH decoder factory.
@@ -265,9 +276,8 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
   // Make sure the configuration is invalid.
   ASSERT_FALSE(pdu_validator->is_valid(param.get_pdu()));
 
-  // Prepare resource grid and resource grid mapper spies.
-  resource_grid_writer_spy              grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB);
-  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(0, 0, grid);
+  // Prepare resource grid spy.
+  resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB);
 
   // Prepare receive data.
   std::vector<uint8_t> data;
@@ -276,7 +286,7 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
 
   // Process pdsch PDU.
 #ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pdsch_proc->process(*mapper, notifier_spy, {data}, param.get_pdu()); }, param.expr);
+  ASSERT_DEATH({ pdsch_proc->process(grid, notifier_spy, {data}, param.get_pdu()); }, param.expr);
 #endif // ASSERTS_ENABLED
 }
 

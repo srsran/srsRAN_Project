@@ -130,7 +130,7 @@ void dmrs_pdsch_processor_impl::apply_cdm(span<cf_t>       sequence,
   }
 }
 
-void srsran::dmrs_pdsch_processor_impl::map(resource_grid_mapper& mapper, const config_t& config)
+void srsran::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Number of DM-RS RE in an OFDM symbol.
   unsigned nof_dmrs_re_symbol = config.type.nof_dmrs_per_rb() * config.rb_mask.count();
@@ -245,6 +245,6 @@ void srsran::dmrs_pdsch_processor_impl::map(resource_grid_mapper& mapper, const 
     }
 
     // Map the CDM group symbols into the resource grid.
-    mapper.map(temp_re, dmrs_pattern_cdm, cdm_group_precoding);
+    mapper->map(grid, temp_re, dmrs_pattern_cdm, cdm_group_precoding);
   }
 }

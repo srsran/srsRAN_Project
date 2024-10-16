@@ -61,7 +61,8 @@ public:
 
 std::shared_ptr<pdcch_modulator_factory>
     create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>,
-                                      std::shared_ptr<pseudo_random_generator_factory>);
+                                      std::shared_ptr<pseudo_random_generator_factory>,
+                                      std::shared_ptr<resource_grid_mapper_factory>);
 
 class pdcch_encoder_factory
 {

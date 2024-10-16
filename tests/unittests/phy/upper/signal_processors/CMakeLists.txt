@@ -21,7 +21,7 @@ add_test(sss_processor_test sss_processor_test)
 
 if (USE_PHY_TESTVECTORS)
     add_executable(ptrs_pdsch_generator_vectortest ptrs/ptrs_pdsch_generator_vectortest.cpp)
-    target_link_libraries(ptrs_pdsch_generator_vectortest srsran_signal_processors srsvec srsran_sequence_generators srslog gtest gtest_main)
+    target_link_libraries(ptrs_pdsch_generator_vectortest srsran_signal_processors srsvec srsran_sequence_generators srsran_channel_precoder srslog gtest gtest_main)
     add_test_vector(ptrs_pdsch_generator_vectortest ptrs/ptrs_pdsch_generator_test_data.tar.gz "")
 
     add_executable(srs_estimator_test

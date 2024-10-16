@@ -36,13 +36,13 @@ public:
   }
 
   // See interface for documentation.
-  void process(resource_grid_mapper&                                        mapper,
+  void process(resource_grid_writer&                                        grid,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override
   {
     pdsch_processor& processor = processors->get();
-    return processor.process(mapper, notifier, data, pdu);
+    return processor.process(grid, notifier, data, pdu);
   }
 
 private:

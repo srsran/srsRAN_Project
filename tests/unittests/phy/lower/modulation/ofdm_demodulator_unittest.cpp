@@ -17,9 +17,6 @@
 #include "srsran/support/test_utils.h"
 #include <random>
 
-/// Defines the maximum allowed error at the OFDM demodulator output.
-static constexpr float ASSERT_MAX_ERROR = 1.0F / 128.0F;
-
 using namespace srsran;
 
 int main()
@@ -156,7 +153,7 @@ int main()
           }
 
           // Assert resource grid entries.
-          rg.assert_entries(expected_rg, ASSERT_MAX_ERROR);
+          rg.assert_entries(expected_rg);
         }
       }
     }

@@ -10,7 +10,6 @@
 
 #include "downlink_processor_single_executor_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
-#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
@@ -64,8 +63,7 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      resource_grid_mapper& mapper = current_grid.get().get_mapper();
-      pdcch_proc->process(mapper, pdu);
+      pdcch_proc->process(current_grid.get_writer(), pdu);
     }
 
     l1_tracer << trace_event("process_pdcch", process_pdcch_tp);
@@ -107,8 +105,7 @@ void downlink_processor_single_executor_impl::process_pdsch(
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      resource_grid_mapper& mapper = current_grid->get_mapper();
-      pdsch_proc->process(mapper, pdsch_notifier, data, pdu);
+      pdsch_proc->process(current_grid.get_writer(), pdsch_notifier, data, pdu);
 
       l1_tracer << trace_event("process_pdsch", process_pdsch_tp);
     } else {
@@ -193,8 +190,7 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      resource_grid_mapper& mapper = current_grid->get_mapper();
-      csi_rs_proc->map(mapper, config);
+      csi_rs_proc->map(current_grid->get_writer(), config);
     }
 
     l1_tracer << trace_event("process_nzp_csi_rs", process_nzp_csi_rs_tp);

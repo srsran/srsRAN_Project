@@ -32,10 +32,10 @@ public:
   }
 
   // See interface for documentation.
-  void map(resource_grid_mapper& mapper, const config_t& config) override
+  void map(resource_grid_writer& grid, const config_t& config) override
   {
     nzp_csi_rs_generator& processor = processors->get();
-    return processor.map(mapper, config);
+    return processor.map(grid, config);
   }
 
 private:

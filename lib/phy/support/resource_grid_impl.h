@@ -14,7 +14,6 @@
 #include "resource_grid_reader_impl.h"
 #include "resource_grid_writer_impl.h"
 #include "srsran/adt/tensor.h"
-#include "srsran/phy/generic_functions/precoding/channel_precoder.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_dimensions.h"
 
@@ -22,7 +21,7 @@ namespace srsran {
 
 class resource_grid_mapper;
 
-/// Implements a resource grid and mapper.
+/// Implements a resource grid.
 class resource_grid_impl : public resource_grid
 {
 private:
@@ -44,20 +43,13 @@ private:
   /// Resource grid reader implementation.
   resource_grid_reader_impl reader;
 
-  /// Resource grid mapper implementation.
-  resource_grid_mapper_impl mapper;
-
 public:
   /// \brief Creates a resource grid.
   ///
   /// \param[in] nof_ports Number of ports.
   /// \param[in] nof_symb  Number of OFDM symbols.
   /// \param[in] nof_subc  Number of subcarriers.
-  /// \param[in] precoder_ Resource grid precoder instance.
-  resource_grid_impl(unsigned                          nof_ports,
-                     unsigned                          nof_symb,
-                     unsigned                          nof_subc,
-                     std::unique_ptr<channel_precoder> precoder_);
+  resource_grid_impl(unsigned nof_ports, unsigned nof_symb, unsigned nof_subc);
 
   // See interface for documentation.
   void set_all_zero() override;
@@ -67,9 +59,6 @@ public:
 
   // See interface for documentation.
   const resource_grid_reader& get_reader() const override;
-
-  // See interface for documentation.
-  resource_grid_mapper& get_mapper() override { return mapper; }
 };
 
 } // namespace srsran

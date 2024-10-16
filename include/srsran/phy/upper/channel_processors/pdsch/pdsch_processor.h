@@ -14,6 +14,7 @@
 #include "srsran/phy/support/mask_types.h"
 #include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/phy/support/re_pattern.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
@@ -24,7 +25,7 @@
 
 namespace srsran {
 
-class resource_grid_mapper;
+class resource_grid_writer;
 class unique_tx_buffer;
 
 class pdsch_processor_notifier
@@ -165,13 +166,13 @@ public:
   virtual ~pdsch_processor() = default;
 
   /// \brief Processes a PDSCH transmission.
-  /// \param[out] mapper     Resource grid mapper interface.
+  /// \param[out] grid       Resource grid writer interface.
   /// \param[out] notifier   PDSCH processor notifier.
   /// \param[in]  data       The codewords to transmit.
   /// \param[in]  pdu        Necessary parameters to process the PDSCH transmission.
   /// \remark The number of transport blocks must be equal to the number of codewords in \c pdu.
   /// \remark The size of each transport block is determined by <tt> data[TB index].size() </tt>
-  virtual void process(resource_grid_mapper&                                        mapper,
+  virtual void process(resource_grid_writer&                                        grid,
                        pdsch_processor_notifier&                                    notifier,
                        static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                        const pdu_t&                                                 pdu) = 0;

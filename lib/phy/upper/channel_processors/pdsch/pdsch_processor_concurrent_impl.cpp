@@ -17,13 +17,13 @@
 
 using namespace srsran;
 
-void pdsch_processor_concurrent_impl::process(resource_grid_mapper&                                        mapper_,
+void pdsch_processor_concurrent_impl::process(resource_grid_writer&                                        grid_,
                                               pdsch_processor_notifier&                                    notifier_,
                                               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                               const pdsch_processor::pdu_t&                                pdu_)
 {
   // Saves inputs.
-  save_inputs(mapper_, notifier_, data_, pdu_);
+  save_inputs(grid_, notifier_, data_, pdu_);
 
   // Makes sure the PDU is valid.
   pdsch_processor_validator_impl::assert_pdu(config);
@@ -58,7 +58,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   fork_cb_batches();
 }
 
-void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapper_,
+void pdsch_processor_concurrent_impl::save_inputs(resource_grid_writer&     grid_,
                                                   pdsch_processor_notifier& notifier_,
                                                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                                   const pdsch_processor::pdu_t&                                pdu)
@@ -66,7 +66,7 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
   using namespace units::literals;
 
   // Save process parameter inputs.
-  mapper   = &mapper_;
+  grid     = &grid_;
   notifier = &notifier_;
   data     = data_.front();
   config   = pdu;
@@ -324,7 +324,7 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
       resource_grid_mapper::symbol_buffer_adapter buffer(result.cb_symbols);
 
       // Map into the resource grid.
-      mapper->map(buffer, allocation, reserved, precoding, re_offset[absolute_i_cb]);
+      mapper->map(*grid, buffer, allocation, reserved, precoding, re_offset[absolute_i_cb]);
 
       l1_tracer << trace_event((absolute_i_cb == (nof_cb - 1)) ? "Last CB" : "CB", process_pdsch_tp);
     }
@@ -379,7 +379,7 @@ void pdsch_processor_concurrent_impl::process_dmrs()
   dmrs_config.precoding            = config.precoding;
 
   // Put DM-RS.
-  dmrs_generator_pool->get().map(*mapper, dmrs_config);
+  dmrs_generator_pool->get().map(*grid, dmrs_config);
 
   l1_tracer << trace_event("process_dmrs", process_dmrs_tp);
 
@@ -427,7 +427,7 @@ void pdsch_processor_concurrent_impl::process_ptrs()
   ptrs_config.precoding            = config.precoding;
 
   // Put PT-RS.
-  ptrs_generator_pool->get().generate(*mapper, ptrs_config);
+  ptrs_generator_pool->get().generate(*grid, ptrs_config);
 
   l1_tracer << trace_event("process_ptrs", process_ptrs_tp);
 

@@ -14,16 +14,8 @@
 
 using namespace srsran;
 
-resource_grid_impl::resource_grid_impl(unsigned                          nof_ports_,
-                                       unsigned                          nof_symb_,
-                                       unsigned                          nof_subc_,
-                                       std::unique_ptr<channel_precoder> precoder_) :
-  nof_ports(nof_ports_),
-  nof_symb(nof_symb_),
-  nof_subc(nof_subc_),
-  writer(rg_buffer, empty),
-  reader(rg_buffer, empty),
-  mapper(nof_ports_, nof_subc_, writer, std::move(precoder_))
+resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, unsigned nof_subc_) :
+  nof_ports(nof_ports_), nof_symb(nof_symb_), nof_subc(nof_subc_), writer(rg_buffer, empty), reader(rg_buffer, empty)
 {
   // Reserve memory for the internal buffer.
   rg_buffer.reserve({nof_subc, nof_symb, nof_ports});

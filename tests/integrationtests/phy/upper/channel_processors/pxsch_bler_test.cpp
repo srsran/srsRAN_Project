@@ -138,7 +138,7 @@ private:
     std::shared_ptr<channel_precoder_factory> precod_factory = create_channel_precoder_factory("auto");
     report_fatal_error_if_not(precod_factory, "Failed to create channel precoding factory.");
 
-    return create_resource_grid_factory(precod_factory);
+    return create_resource_grid_factory();
   }
 
   class pdsch_processor_notifier_adaptor : public pdsch_processor_notifier
@@ -365,7 +365,7 @@ private:
 
       // Process PDSCH.
       pdsch_processor_notifier_adaptor tx_notifier;
-      transmitter->process(tx_grid->get_mapper(), tx_notifier, {tx_data}, pdsch_config);
+      transmitter->process(tx_grid->get_writer(), tx_notifier, {tx_data}, pdsch_config);
       tx_notifier.wait_for_completion();
 
       emulator->run(rx_grid->get_writer(), tx_grid->get_reader());

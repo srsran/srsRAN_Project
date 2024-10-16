@@ -174,7 +174,8 @@ struct downlink_processor_factory_sw_config {
 
 /// Creates a full software based downlink processor factory.
 std::shared_ptr<downlink_processor_factory>
-create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config);
+create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config&   config,
+                                     std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory);
 
 /// \brief Downlink processor hardware-accelerated factory configuration.
 struct downlink_processor_factory_hw_config {
@@ -195,7 +196,8 @@ struct downlink_processor_factory_hw_config {
 
 /// Creates a full hardware-accelerated based downlink processor factory.
 std::shared_ptr<downlink_processor_factory>
-create_downlink_processor_factory_hw(const downlink_processor_factory_hw_config& config);
+create_downlink_processor_factory_hw(const downlink_processor_factory_hw_config&   config,
+                                     std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory);
 
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_config {

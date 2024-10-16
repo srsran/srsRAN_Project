@@ -22,7 +22,7 @@ class pdcch_processor_spy : public pdcch_processor
 
 public:
   // See interface for documentation.
-  void process(resource_grid_mapper& mapper, const pdu_t& pdu) override { process_method_called = true; }
+  void process(resource_grid_writer& grid, const pdu_t& pdu) override { process_method_called = true; }
 
   /// Returns true if the process method has been called, false otherwise.
   bool is_process_called() const { return process_method_called; }

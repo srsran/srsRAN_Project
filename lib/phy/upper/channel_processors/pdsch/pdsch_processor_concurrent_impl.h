@@ -40,10 +40,12 @@ public:
   /// \param[in] executor_             Asynchronous task executor.
   pdsch_processor_concurrent_impl(std::shared_ptr<codeblock_processor_pool>  cb_processor_pool_,
                                   std::unique_ptr<pseudo_random_generator>   scrambler_,
+                                  std::unique_ptr<resource_grid_mapper>      mapper_,
                                   std::shared_ptr<pdsch_dmrs_generator_pool> dmrs_generator_pool_,
                                   std::shared_ptr<pdsch_ptrs_generator_pool> ptrs_generator_pool_,
                                   task_executor&                             executor_) :
     scrambler(std::move(scrambler_)),
+    mapper(std::move(mapper_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
     dmrs_generator_pool(std::move(dmrs_generator_pool_)),
     ptrs_generator_pool(std::move(ptrs_generator_pool_)),
@@ -55,7 +57,7 @@ public:
   }
 
   // See interface for documentation.
-  void process(resource_grid_mapper&                                        mapper,
+  void process(resource_grid_writer&                                        grid,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;
@@ -70,7 +72,7 @@ private:
   static unsigned compute_nof_data_re(const pdu_t& pdu);
 
   /// Saves process() parameters for future uses during an asynchronous execution.
-  void save_inputs(resource_grid_mapper&                                        mapper,
+  void save_inputs(resource_grid_writer&                                        grid,
                    pdsch_processor_notifier&                                    notifier,
                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                    const pdu_t&                                                 pdu);
@@ -86,6 +88,8 @@ private:
 
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
+  /// Resource grid mapper.
+  std::unique_ptr<resource_grid_mapper> mapper;
   /// Pool of code block processors.
   std::shared_ptr<codeblock_processor_pool> cb_processor_pool;
   /// DM-RS processor.
@@ -95,7 +99,7 @@ private:
   /// Asynchronous task executor.
   task_executor& executor;
 
-  resource_grid_mapper*     mapper;
+  resource_grid_writer*     grid;
   pdsch_processor_notifier* notifier;
   span<const uint8_t>       data;
   pdsch_processor::pdu_t    config;

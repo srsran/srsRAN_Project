@@ -20,8 +20,15 @@ int main()
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
 
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+  TESTASSERT(precoding_factory);
+
+  std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+      create_resource_grid_mapper_factory(precoding_factory);
+  TESTASSERT(rg_mapper_factory);
+
   std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_pdcch_factory =
-      create_dmrs_pdcch_processor_factory_sw(prg_factory);
+      create_dmrs_pdcch_processor_factory_sw(prg_factory, rg_mapper_factory);
   TESTASSERT(dmrs_pdcch_factory);
 
   // Create DMRS-PDSCH processor.
@@ -36,18 +43,16 @@ int main()
 
     // Prepare resource grid and resource grid mapper spies.
     resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
-    std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
+    std::unique_ptr<resource_grid_mapper> mapper = rg_mapper_factory->create();
 
     // Map DMRS-PDCCH using the test case arguments.
-    dmrs_pdcch->map(*mapper, test_case.config);
+    dmrs_pdcch->map(grid, test_case.config);
 
     // Load output golden data.
     const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
 
-    // Tolerance: max BF16 error times sqrt(2), since we are taking the modulus.
-    constexpr float tolerance = M_SQRT2f32 / 256.0;
     // Assert resource grid entries.
-    grid.assert_entries(testvector_symbols, tolerance);
+    grid.assert_entries(testvector_symbols);
   }
 
   return 0;

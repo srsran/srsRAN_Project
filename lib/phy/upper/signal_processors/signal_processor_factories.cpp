@@ -51,17 +51,19 @@ class dmrs_pdcch_processor_sw_factory : public dmrs_pdcch_processor_factory
 {
 private:
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
 
 public:
-  explicit dmrs_pdcch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    prg_factory(std::move(prg_factory_))
+  explicit dmrs_pdcch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
+                                           std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
+    prg_factory(std::move(prg_factory_)), rg_mapper_factory(rg_mapper_factory_)
   {
     srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<dmrs_pdcch_processor> create() override
   {
-    return std::make_unique<dmrs_pdcch_processor_impl>(prg_factory->create());
+    return std::make_unique<dmrs_pdcch_processor_impl>(prg_factory->create(), rg_mapper_factory->create());
   }
 };
 
@@ -69,17 +71,20 @@ class dmrs_pdsch_processor_sw_factory : public dmrs_pdsch_processor_factory
 {
 private:
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
 
 public:
-  explicit dmrs_pdsch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    prg_factory(std::move(prg_factory_))
+  explicit dmrs_pdsch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
+                                           std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
+    prg_factory(std::move(prg_factory_)), rg_mapper_factory(std::move(rg_mapper_factory_))
   {
     srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
   }
 
   std::unique_ptr<dmrs_pdsch_processor> create() override
   {
-    return std::make_unique<dmrs_pdsch_processor_impl>(prg_factory->create());
+    return std::make_unique<dmrs_pdsch_processor_impl>(prg_factory->create(), rg_mapper_factory->create());
   }
 };
 
@@ -158,14 +163,16 @@ private:
 class nzp_csi_rs_generator_factory_sw : public nzp_csi_rs_generator_factory
 {
 public:
-  nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    prg_factory(std::move(prg_factory_))
+  nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
+                                  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
+    prg_factory(std::move(prg_factory_)), rg_mapper_factory(std::move(rg_mapper_factory_))
   {
     srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
   }
   std::unique_ptr<nzp_csi_rs_generator> create() override
   {
-    return std::make_unique<nzp_csi_rs_generator_impl>(prg_factory->create());
+    return std::make_unique<nzp_csi_rs_generator_impl>(prg_factory->create(), rg_mapper_factory->create());
   }
   std::unique_ptr<nzp_csi_rs_configuration_validator> create_validator() override
   {
@@ -174,6 +181,7 @@ public:
 
 private:
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
 };
 
 class nzp_csi_rs_generator_pool_factory : public nzp_csi_rs_generator_factory
@@ -271,15 +279,17 @@ srsran::create_dmrs_pbch_processor_factory_sw(std::shared_ptr<pseudo_random_gene
 }
 
 std::shared_ptr<dmrs_pdcch_processor_factory>
-srsran::create_dmrs_pdcch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+srsran::create_dmrs_pdcch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                               std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
 {
-  return std::make_shared<dmrs_pdcch_processor_sw_factory>(std::move(prg_factory));
+  return std::make_shared<dmrs_pdcch_processor_sw_factory>(std::move(prg_factory), std::move(rg_mapper_factory));
 }
 
 std::shared_ptr<dmrs_pdsch_processor_factory>
-srsran::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+srsran::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                               std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
 {
-  return std::make_shared<dmrs_pdsch_processor_sw_factory>(std::move(prg_factory));
+  return std::make_shared<dmrs_pdsch_processor_sw_factory>(std::move(prg_factory), std::move(rg_mapper_factory));
 }
 
 std::shared_ptr<dmrs_pucch_estimator_factory>
@@ -300,9 +310,10 @@ std::shared_ptr<dmrs_pusch_estimator_factory> srsran::create_dmrs_pusch_estimato
 }
 
 std::shared_ptr<nzp_csi_rs_generator_factory>
-srsran::create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+srsran::create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                               std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
 {
-  return std::make_shared<nzp_csi_rs_generator_factory_sw>(std::move(prg_factory));
+  return std::make_shared<nzp_csi_rs_generator_factory_sw>(std::move(prg_factory), std::move(rg_mapper_factory));
 }
 
 std::shared_ptr<nzp_csi_rs_generator_factory>
@@ -350,9 +361,9 @@ public:
     srsran_assert(generator, "Invalid NZP CSI-RS generator.");
   }
 
-  void map(resource_grid_mapper& mapper, const config_t& config) override
+  void map(resource_grid_writer& grid, const config_t& config) override
   {
-    const auto&& func = [&]() { generator->map(mapper, config); };
+    const auto&& func = [&]() { generator->map(grid, config); };
 
     std::chrono::nanoseconds time_ns = time_execution(func);
 

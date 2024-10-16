@@ -19,11 +19,20 @@ using namespace srs_du;
 static std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_config&                     upper_config,
                                                    const downlink_processor_factory_sw_config& dl_fact_config)
 {
+  // Create channel precoder factory.
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+  report_fatal_error_if_not(precoding_factory, "Invalid channel precoder factory.");
+
+  // Create resource grid mapper factory.
+  std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+      create_resource_grid_mapper_factory(precoding_factory);
+  report_fatal_error_if_not(precoding_factory, "Invalid resource grid mapper factory.");
+
   // Create downlink processor factory.
   std::shared_ptr<downlink_processor_factory> dl_proc_factory;
   // Check if a hardware-accelerated PDSCH processor is requested.
   if (!upper_config.hal_config.hwacc_pdsch_processor) {
-    dl_proc_factory = create_downlink_processor_factory_sw(dl_fact_config);
+    dl_proc_factory = create_downlink_processor_factory_sw(dl_fact_config, rg_mapper_factory);
   } else {
     downlink_processor_factory_hw_config hw_cfg = {};
     hw_cfg.crc_calculator_type                  = upper_config.crc_calculator_type;
@@ -31,16 +40,12 @@ static std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_config&      
 #ifdef HWACC_PDSCH_ENABLED
     hw_cfg.hwacc_pdsch_enc_cfg = upper_config.hal_config.hwacc_pdsch_enc_cfg;
 #endif // HWACC_PDSCH_ENABLED
-    dl_proc_factory = create_downlink_processor_factory_hw(hw_cfg);
+    dl_proc_factory = create_downlink_processor_factory_hw(hw_cfg, rg_mapper_factory);
   }
   report_fatal_error_if_not(dl_proc_factory, "Invalid DL processor factory.");
 
-  // Create channel precoder factory.
-  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
-  report_fatal_error_if_not(precoding_factory, "Invalid channel precoder factory.");
-
   // Create resource grid factory.
-  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoding_factory);
+  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
   report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
 
   // Create upper PHY factory.

@@ -14,9 +14,6 @@
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/support/test_utils.h"
 
-/// Defines the maximum allowed error at the OFDM demodulator output.
-static constexpr float ASSERT_MAX_ERROR = 5e-3;
-
 using namespace srsran;
 
 int main()
@@ -64,7 +61,7 @@ int main()
     const std::vector<resource_grid_writer_spy::expected_entry_t> demodulated = test_case.demodulated.read();
 
     // Assert resource grid entries.
-    grid.assert_entries(demodulated, ASSERT_MAX_ERROR);
+    grid.assert_entries(demodulated);
   }
 
   return 0;

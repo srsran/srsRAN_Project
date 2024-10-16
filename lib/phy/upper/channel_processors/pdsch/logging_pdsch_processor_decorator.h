@@ -31,7 +31,7 @@ public:
     srsran_assert(processor, "Invalid processor.");
   }
 
-  void process(resource_grid_mapper&                                        mapper,
+  void process(resource_grid_writer&                                        grid,
                pdsch_processor_notifier&                                    notifier_,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                const pdu_t&                                                 pdu_) override
@@ -41,7 +41,7 @@ public:
     pdu      = pdu_;
 
     start = std::chrono::steady_clock::now();
-    processor->process(mapper, *this, data_, pdu);
+    processor->process(grid, *this, data_, pdu);
   }
 
 private:

@@ -40,13 +40,14 @@ if (USE_PHY_TESTVECTORS)
     add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
     target_link_libraries(pdcch_modulator_test
             srsran_channel_processors
+            srsran_channel_precoder
             srslog
             srsran_channel_modulation
             srsran_sequence_generators)
     add_test_vector(pdcch_modulator_test pdcch_modulator_test_data.tar.gz "")
 
     add_executable(pdcch_processor_vectortest pdcch_processor_vectortest.cpp)
-    target_link_libraries(pdcch_processor_vectortest srsran_channel_processors srslog gtest gtest_main)
+    target_link_libraries(pdcch_processor_vectortest srsran_channel_processors srsran_channel_precoder srslog gtest gtest_main)
     add_test_vector(pdcch_processor_vectortest pdcch_processor_test_data.tar.gz "")
 
     add_executable(prach_detector_vectortest prach_detector_vectortest.cpp)
