@@ -10,15 +10,15 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   labels:
-    - kubernetes.io/hostname=skinny-beast
+    - kubernetes.io/hostname=srskit2
   requirements:
     arch: amd64
     cpu:
-      requests: 28
-      limits: 28
+      requests: 20
+      limits: 20
     memory:
-      requests: "56G"
-      limits: "56G"
+      requests: "20G"
+      limits: "20G"
     hugepages-1Gi:
       requests: 2Gi
       limits: 2Gi
