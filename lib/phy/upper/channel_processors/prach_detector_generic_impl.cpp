@@ -11,6 +11,7 @@
 #include "prach_detector_generic_impl.h"
 #include "prach_detector_generic_thresholds.h"
 #include "srsran/adt/interval.h"
+#include "srsran/phy/upper/channel_processors/prach_detector_phy_validator.h"
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srsvec/accumulate.h"
@@ -30,18 +31,9 @@ using namespace srsran;
 
 static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
 
-bool prach_detector_validator_impl::is_valid(const prach_detector::configuration& config) const
+error_type<std::string> prach_detector_validator_impl::is_valid(const prach_detector::configuration& config) const
 {
-  detail::threshold_params th_params;
-  th_params.nof_rx_ports          = config.nof_rx_ports;
-  th_params.scs                   = config.ra_scs;
-  th_params.format                = config.format;
-  th_params.zero_correlation_zone = config.zero_correlation_zone;
-  th_params.combine_symbols       = true;
-
-  auto flag = threshold_and_margin_table.check_flag(th_params);
-
-  return (flag != detail::threshold_and_margin_finder::threshold_flag::red);
+  return validate_prach_detector_phy(config.format, config.ra_scs, config.zero_correlation_zone, config.nof_rx_ports);
 }
 
 prach_detector_generic_impl::prach_detector_generic_impl(std::unique_ptr<dft_processor>   idft_long_,

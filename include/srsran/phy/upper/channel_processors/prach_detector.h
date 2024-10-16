@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/upper/channel_processors/prach_detection_result.h"
 #include "srsran/ran/prach/prach_format_type.h"
@@ -73,8 +74,8 @@ public:
   virtual ~prach_detector_validator() = default;
 
   /// \brief Validates PRACH detector configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const prach_detector::configuration& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const prach_detector::configuration& config) const = 0;
 };
 
 } // namespace srsran
