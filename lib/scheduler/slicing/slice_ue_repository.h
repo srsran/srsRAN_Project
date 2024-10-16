@@ -74,6 +74,9 @@ public:
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;
 
+  /// Get QoS information of DRBs configured for the UE.
+  span<const sched_drb_info> get_drbs_qos_info() const { return u.ue_cfg_dedicated()->drbs_qos_info(); };
+
 private:
   /// Helper function to get LCG ID of a bearer.
   lcg_id_t get_lcg_id_for_bearer(lcid_t lcid) const;

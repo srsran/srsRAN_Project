@@ -292,6 +292,9 @@ public:
   /// \remark UE can be scheduled in fallback scheduler even if UE does not have a complete configuration.
   bool is_ue_cfg_complete() const;
 
+  /// Get QoS information of DRBs configured for the UE.
+  span<const sched_drb_info> drbs_qos_info() const { return drb_qos_list; }
+
 private:
   // List of configured logical channels
   std::vector<logical_channel_config> lc_list;
