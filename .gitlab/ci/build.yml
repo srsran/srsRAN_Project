@@ -208,17 +208,28 @@ variables:
             --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/e2ap/.* \
             --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/f1ap/.* \
             --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/ngap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/nrppa/.* \
             --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/rrc_nr/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/e1ap/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/e2ap/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/f1ap/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/ngap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/nrppa/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.* \
             --exclude-lines-by-pattern \".*srsran_assert.*|.*srsran_sanity_check.*\" \
             --root=${CI_PROJECT_DIR}"
 
-          gcovr $common_options --keep >/dev/null 2>&1
-          gcovr $common_options --xml --print-summary --use-gcov-files -o coverage.xml >/dev/null 2>&1
+          echo "+ gcovr: Coverage generation"
+          if ! output=$(gcovr $common_options --keep 2>&1); then
+            echo "gcovr FAILED!"
+            echo "$output"
+            ret=1
+          fi
+          if ! output=$(gcovr $common_options --xml --print-summary --use-gcov-files -o coverage.xml 2>&1); then
+            echo "gcovr FAILED!"
+            echo "$output"
+            ret=1
+          fi
 
           filesize=$(stat -c%s coverage.xml)
           maxsize=$((10*1204*1024))
