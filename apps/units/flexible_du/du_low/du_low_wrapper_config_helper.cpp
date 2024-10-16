@@ -78,13 +78,6 @@ hal_upper_phy_config srsran::make_du_low_hal_config_and_dependencies(const du_lo
     std::shared_ptr<hal::ext_harq_buffer_context_repository> harq_buffer_context = nullptr;
     unsigned                                                 nof_hwacc_dus       = nof_cells;
 
-    // Create a bbdev accelerator factory.
-    std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory =
-        dpdk::create_bbdev_acc_factory(bbdev_app_cfg.bbdev_acc_type);
-    report_error_if_not(bbdev_acc_factory,
-                        "Unable to create the {} bbdev hardware-accelerator interface factory.",
-                        bbdev_app_cfg.bbdev_acc_type);
-
     // Intefacing to the bbdev-based hardware-accelerator.
     dpdk::bbdev_acc_configuration bbdev_config;
     bbdev_config.id = bbdev_app_cfg.id;
@@ -100,7 +93,7 @@ hal_upper_phy_config srsran::make_du_low_hal_config_and_dependencies(const du_lo
     bbdev_config.rm_mbuf_size = bbdev_app_cfg.rm_mbuf_size.value_or(RTE_BBDEV_LDPC_E_MAX_MBUF);
     // If no number of mbufs is defined, a worst-case value will be used.
     bbdev_config.nof_mbuf = bbdev_app_cfg.nof_mbuf.value_or(static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS))));
-    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, hwacc_logger);
+    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, hwacc_logger);
     report_error_if_not(bbdev_accelerator, "Unable to open the {} hardware-accelerator.", bbdev_app_cfg.hwacc_type);
 
     // Configure the hardware-accelerated PDSCH encoding factory (only if needed).

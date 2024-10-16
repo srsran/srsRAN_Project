@@ -9,27 +9,14 @@
  */
 
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
-#include "plugin_bbdev_acc_factory.h"
-#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 
 using namespace srsran;
 using namespace dpdk;
 
-std::unique_ptr<bbdev_acc_factory> srsran::dpdk::create_bbdev_acc_factory(std::string impl_name)
+SRSRAN_WEAK_SYMB std::shared_ptr<bbdev_acc> srsran::dpdk::create_bbdev_acc(const bbdev_acc_configuration& cfg,
+                                                                           srslog::basic_logger&          logger)
 {
-  // Convert implementation name to lower case.
-  for (char& c : impl_name) {
-    c = std::tolower(c);
-  }
-
-  // Try creating a plugin bbdev accelerator factory.
-  auto factory = create_plugin_bbdev_acc_factory(impl_name);
-  if (factory) {
-    return factory;
-  }
-
-  // No match.
-  fmt::print("Factory for bbdev accelerator type {} not found. Make sure to select a valid type.\n", impl_name);
+  logger.error("[bbdev] bbdev accelerator creation failed. Cause: hardware-acceleration is not supported.");
 
   return nullptr;
 }

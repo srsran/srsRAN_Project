@@ -431,13 +431,6 @@ create_sw_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calc
 static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
 {
 #ifdef HWACC_PUSCH_ENABLED
-  // Create a bbdev accelerator factory.
-  static std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory = nullptr;
-  if (!bbdev_acc_factory) {
-    bbdev_acc_factory = srsran::dpdk::create_bbdev_acc_factory("srs");
-    TESTASSERT(bbdev_acc_factory, "Failed to create the bbdev accelerator factory.");
-  }
-
   TESTASSERT(nof_threads + nof_pusch_decoder_threads + 1 <= dpdk::MAX_NOF_BBDEV_VF_INSTANCES,
              "Insufficient hardware-accelerated LDPC decoder VFs: requested {} but only {} are available.",
              nof_threads + nof_pusch_decoder_threads + 1,
@@ -452,7 +445,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   bbdev_config.nof_ldpc_dec_lcores                   = nof_threads + nof_pusch_decoder_threads + 1;
   bbdev_config.nof_fft_lcores                        = 0;
   bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
-  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, logger);
+  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
   TESTASSERT(bbdev_accelerator);
 
   // Interfacing to a shared external HARQ buffer context repository.
@@ -471,7 +464,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   hw_decoder_config.dedicated_queue     = dedicated_queue;
 
   // ACC100 hardware-accelerator implementation.
-  return srsran::hal::create_bbdev_pusch_dec_acc_factory(hw_decoder_config, "srs");
+  return srsran::hal::create_bbdev_pusch_dec_acc_factory(hw_decoder_config);
 #else  // HWACC_PUSCH_ENABLED
   return nullptr;
 #endif // HWACC_PUSCH_ENABLED

@@ -14,8 +14,7 @@ endif ()
 
 
 add_library(hal_hwacc_pusch STATIC hw_accelerator_factories.cpp
-                                   ext_harq_buffer_context_repository_factory.cpp
-                                   plugin_bbdev_pusch_dec_acc_factory.cpp)
+                                   ext_harq_buffer_context_repository_factory.cpp)
 
 set_source_files_properties(hw_accelerator_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${HWACC_FACTORIES_DEFINITIONS}")
 
