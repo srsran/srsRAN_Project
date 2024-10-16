@@ -65,6 +65,11 @@ variables:
         BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
         export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
       fi
+      if [ -n "${ENABLE_ARMPL}" ]; then
+        if ARMPL_DIR=$(ls -d /opt/arm/armpl_* 2>/dev/null); then
+            export LD_LIBRARY_PATH=${ARMPL_DIR}/lib:${LD_LIBRARY_PATH}
+        fi
+      fi
       if [ -n "${COMPILER}" ]; then
         BUILD_CMD="-c ${COMPILER} ${BUILD_CMD}"
       fi
