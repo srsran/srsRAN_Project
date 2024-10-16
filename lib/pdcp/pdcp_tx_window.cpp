@@ -55,8 +55,10 @@ void pdcp_tx_window::add_sdu(uint32_t count, byte_buffer sdu, unique_timer disca
   pdcp_tx_sdu_info& sdu_info = tx_window->add_sn(count);
   sdu_info.count             = count;
   sdu_info.discard_timer     = std::move(discard_timer);
+  sdu_info.sdu_length        = sdu.length();
 
-  // tx_window_bytes += sdu.length();
+  sdu_bytes += sdu_info.sdu_length;
+  nof_sdus++;
   if (rlc_mode == pdcp_rlc_mode::am) {
     sdu_info.sdu = std::move(sdu);
   }
@@ -65,6 +67,8 @@ void pdcp_tx_window::add_sdu(uint32_t count, byte_buffer sdu, unique_timer disca
 void pdcp_tx_window::remove_sdu(uint32_t count)
 {
   if (tx_window->has_sn(count)) {
+    sdu_bytes -= (*tx_window)[count].sdu_length;
+    nof_sdus--;
     tx_window->remove_sn(count);
   }
 }
@@ -72,4 +76,15 @@ void pdcp_tx_window::remove_sdu(uint32_t count)
 void pdcp_tx_window::clear()
 {
   tx_window->clear();
+}
+
+uint32_t pdcp_tx_window::get_sdu_bytes() const
+{
+  return sdu_bytes;
+}
+
+uint32_t pdcp_tx_window::get_pdu_bytes(security::integrity_enabled integrity) const
+{
+  uint16_t trailer_size = integrity == security::integrity_enabled::on ? 4 : 0;
+  return sdu_bytes + nof_sdus * pdcp_data_header_size(sn_size) + trailer_size;
 }

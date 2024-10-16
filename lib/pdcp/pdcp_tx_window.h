@@ -14,6 +14,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_sn_size.h"
+#include "srsran/security/security.h"
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 
@@ -23,6 +24,7 @@ struct pdcp_tx_sdu_info {
   uint32_t     count;
   byte_buffer  sdu;
   unique_timer discard_timer;
+  uint32_t     sdu_length;
 };
 
 /// Wrapper to PDCP tx window.
@@ -50,6 +52,10 @@ public:
 
   void clear();
 
+  uint32_t get_sdu_bytes() const;
+
+  uint32_t get_pdu_bytes(security::integrity_enabled integrity) const;
+
 private:
   /// \brief Tx window.
   /// This container is used to store discard timers of transmitted SDUs and, only for AM, a copy of the SDU for data
@@ -65,6 +71,9 @@ private:
   pdcp_rlc_mode      rlc_mode;
   pdcp_sn_size       sn_size;
   pdcp_bearer_logger logger;
+
+  uint32_t sdu_bytes = 0;
+  uint32_t nof_sdus  = 0;
 };
 
 } // namespace srsran

@@ -66,22 +66,31 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
   trace_point tx_tp = up_tracer.now();
 
-  // Avoid TX'ing if we are close to overload RLC SDU queue
-  if (st.tx_trans > st.tx_next) {
-    logger.log_error("Invalid state, tx_trans is larger than tx_next. {}", st);
-    return;
-  }
-  if ((st.tx_next - st.tx_trans) >= cfg.custom.rlc_sdu_queue) {
-    if (not cfg.custom.warn_on_drop) {
-      logger.log_info("Dropping SDU to avoid overloading RLC queue. rlc_sdu_queue={} {}", cfg.custom.rlc_sdu_queue, st);
-    } else {
-      logger.log_warning(
-          "Dropping SDU to avoid overloading RLC queue. rlc_sdu_queue={} {}", cfg.custom.rlc_sdu_queue, st);
+  if (is_drb()) {
+    if (desired_buffer_size == 0) {
+      // TODO buffer SDUs
+      return;
     }
-    return;
+    if (tx_window.get_pdu_bytes(integrity_enabled) > desired_buffer_size) {
+      if (not cfg.custom.warn_on_drop) {
+        logger.log_info(
+            "Dropping SDU to avoid overloading RLC queue. desired_buffer_size={} pdcp_tx_window_bytes={} {}",
+            desired_buffer_size,
+            tx_window.get_pdu_bytes(integrity_enabled),
+            st);
+      } else {
+        logger.log_warning(
+            "Dropping SDU to avoid overloading RLC queue. desired_buffer_size={} pdcp_tx_window_bytes={} {}",
+            desired_buffer_size,
+            tx_window.get_pdu_bytes(integrity_enabled),
+            st);
+      }
+      return;
+    }
   }
+
   if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
-    logger.log_info("Dropping SDU to avoid going over the TX window size. {}", st);
+    logger.log_warning("Dropping SDU to avoid going over the TX window size. {}", st);
     return;
   }
 
@@ -598,8 +607,7 @@ void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_s
 
 void pdcp_entity_tx::handle_desired_buffer_size_notification(uint32_t desired_bs)
 {
-  static uint32_t count = 0;
-  fmt::print("{} {} {}\n", desired_buffer_size, desired_bs, count++);
+  desired_buffer_size = desired_bs;
 }
 
 uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)

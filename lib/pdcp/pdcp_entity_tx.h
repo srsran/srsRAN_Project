@@ -81,13 +81,13 @@ public:
   /*
    * SDU/PDU handlers
    */
-  void handle_sdu(byte_buffer sdu) override;
+  void handle_sdu(byte_buffer buf) override;
 
   void handle_transmit_notification(uint32_t notif_sn) override;
   void handle_delivery_notification(uint32_t notif_sn) override;
   void handle_retransmit_notification(uint32_t notif_sn) override;
   void handle_delivery_retransmitted_notification(uint32_t notif_sn) override;
-  void handle_desired_buffer_size_notification(uint32_t desired_buffer_size) override;
+  void handle_desired_buffer_size_notification(uint32_t desired_bs) override;
 
   /// \brief Evaluates a PDCP status report
   ///
@@ -184,10 +184,6 @@ private:
   pdcp_tx_window tx_window;
 
   class discard_callback;
-
-  void     add_sdu(byte_buffer sdu, unique_timer discard_timer);
-  void     rm_sdu(uint32_t count);
-  uint32_t tx_window_bytes = 0;
 };
 
 class pdcp_entity_tx::discard_callback

@@ -41,6 +41,14 @@ constexpr uint32_t pdcp_window_size(uint16_t sn_size)
   return pcdp_sn_cardinality(sn_size - 1);
 }
 
+/// \brief Returns the PDCP header size
+/// \param sn_size Length of the sequence number field in bits
+/// \return size of the window
+constexpr uint32_t pdcp_data_header_size(pdcp_sn_size sn_size)
+{
+  return sn_size == pdcp_sn_size::size12bits ? 2 : 3;
+}
+
 /// Maximum supported PDCP SDU size, see TS 38.323, section 4.3.1.
 constexpr uint16_t pdcp_max_sdu_size = 9000;
 
