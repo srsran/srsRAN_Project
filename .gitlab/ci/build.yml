@@ -935,11 +935,12 @@ ubuntu-24.10 amd64 avx2:
       start_in: 210 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: ubuntu-24.10
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: ubuntu-24.10
-        <<: *basic_combinations
-        MARCH: x86-64-v3
+      - <<: *basic_combinations
 
 ubuntu-24.04 amd64 avx2:
   extends: .build_and_unit
@@ -949,11 +950,12 @@ ubuntu-24.04 amd64 avx2:
       start_in: 120 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: ubuntu-24.04
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: ubuntu-24.04
-        <<: *basic_combinations
-        MARCH: x86-64-v3
+      - <<: *basic_combinations
 
 ubuntu-24.04 amd64 avx512:
   extends: .build_and_unit
@@ -963,11 +965,12 @@ ubuntu-24.04 amd64 avx512:
       start_in: 120 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: ubuntu-24.04
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: ubuntu-24.04
-        <<: *basic_combinations
-        MARCH: x86-64-v4
+      - <<: *basic_combinations
 
 ubuntu-23.10 amd64 avx2:
   extends: .build_and_unit
@@ -977,11 +980,12 @@ ubuntu-23.10 amd64 avx2:
       start_in: 150 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: ubuntu-23.10
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: ubuntu-23.10
-        <<: *basic_combinations
-        MARCH: x86-64-v3
+      - <<: *basic_combinations
 
 ubuntu-23.10 amd64 avx512:
   extends: .build_and_unit
@@ -991,11 +995,12 @@ ubuntu-23.10 amd64 avx512:
       start_in: 150 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: ubuntu-23.10
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: ubuntu-23.10
-        <<: *basic_combinations
-        MARCH: x86-64-v4
+      - <<: *basic_combinations
 
 ubuntu-22.04 amd64 avx2:
   extends: .build_and_unit
@@ -1005,11 +1010,12 @@ ubuntu-22.04 amd64 avx2:
       start_in: 180 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: ubuntu-22.04
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: ubuntu-22.04
-        <<: *basic_combinations
-        MARCH: x86-64-v3
+      - <<: *basic_combinations
 
 rhel-8 amd64 avx2:
   extends: .build_and_unit
@@ -1019,11 +1025,12 @@ rhel-8 amd64 avx2:
       start_in: 240 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: rhel-8
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: rhel-8
-        <<: *basic_combinations
-        MARCH: x86-64-v3
+      - <<: *basic_combinations
 
 # Basic ARM NO_ISA / NEON
 
@@ -1035,11 +1042,12 @@ ubuntu-24.04 arm neon:
       start_in: 60 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: ubuntu-24.04
+    MARCH: armv8.2-a+crypto+fp16+dotprod
   parallel:
     matrix:
-      - OS: ubuntu-24.04
-        <<: *basic_combinations
-        MARCH: armv8.2-a+crypto+fp16+dotprod
+      - <<: *basic_combinations
 
 ubuntu-23.10 arm neon:
   extends: .build_and_unit
@@ -1049,11 +1057,12 @@ ubuntu-23.10 arm neon:
       start_in: 90 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: ubuntu-23.10
+    MARCH: armv8.2-a+crypto+fp16+dotprod
   parallel:
     matrix:
-      - OS: ubuntu-23.10
-        <<: *basic_combinations
-        MARCH: armv8.2-a+crypto+fp16+dotprod
+      - <<: *basic_combinations
 
 # Basic DPDK
 
@@ -1095,11 +1104,12 @@ archlinux amd64 native:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
   tags: ["amd64"]
+  variables:
+    OS: archlinux-latest
+    ENABLE_WERROR: "False"
   parallel:
     matrix:
-      - OS: archlinux-latest
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 archlinux amd64 avx2:
   extends: .build_and_unit
@@ -1109,12 +1119,13 @@ archlinux amd64 avx2:
       start_in: 30 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: archlinux-latest
+    ENABLE_WERROR: "False"
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: archlinux-latest
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
-        MARCH: x86-64-v3
+      - <<: *basic_combinations
 
 archlinux amd64 avx512:
   extends: .build_and_unit
@@ -1122,12 +1133,13 @@ archlinux amd64 avx512:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: archlinux-latest
+    ENABLE_WERROR: "False"
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: archlinux-latest
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
-        MARCH: x86-64-v4
+      - <<: *basic_combinations
 
 debian 12 amd64 native:
   extends: .build_and_unit
@@ -1137,11 +1149,12 @@ debian 12 amd64 native:
       start_in: 60 minutes
   interruptible: false
   tags: ["amd64"]
+  variables:
+    OS: debian-12
+    ENABLE_WERROR: "False"
   parallel:
     matrix:
-      - OS: debian-12
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 debian 12 amd64 avx2:
   extends: .build_and_unit
@@ -1151,12 +1164,13 @@ debian 12 amd64 avx2:
       start_in: 90 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: debian-12
+    ENABLE_WERROR: "False"
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: debian-12
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
-        MARCH: x86-64-v3
+      - <<: *basic_combinations
 
 debian 12 amd64 avx512:
   extends: .build_and_unit
@@ -1166,12 +1180,13 @@ debian 12 amd64 avx512:
       start_in: 30 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: debian-12
+    ENABLE_WERROR: "False"
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: debian-12
-        ENABLE_WERROR: "False"
-        <<: *basic_combinations
-        MARCH: x86-64-v4
+      - <<: *basic_combinations
 
 ##########
 # Weekly #
@@ -1333,10 +1348,11 @@ ubuntu-24.10 amd64 native:
       start_in: 90 minutes
   interruptible: false
   tags: ["amd64"]
+  variables:
+    OS: ubuntu-24.10
   parallel:
     matrix:
-      - OS: ubuntu-24.10
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 ubuntu-24.10 amd64 avx512:
   extends: .build_and_unit
@@ -1346,11 +1362,12 @@ ubuntu-24.10 amd64 avx512:
       start_in: 90 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: ubuntu-24.10
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: ubuntu-24.10
-        <<: *basic_combinations
-        MARCH: x86-64-v4
+      - <<: *basic_combinations
 
 ubuntu-24.10 arm native:
   extends: .build_and_unit
@@ -1360,10 +1377,11 @@ ubuntu-24.10 arm native:
       start_in: 90 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: ubuntu-24.10
   parallel:
     matrix:
-      - OS: ubuntu-24.10
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 ubuntu-24.10 arm neon:
   extends: .build_and_unit
@@ -1373,11 +1391,12 @@ ubuntu-24.10 arm neon:
       start_in: 90 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: ubuntu-24.10
+    MARCH: armv8.2-a+crypto+fp16+dotprod
   parallel:
     matrix:
-      - OS: ubuntu-24.10
-        <<: *basic_combinations
-        MARCH: armv8.2-a+crypto+fp16+dotprod
+      - <<: *basic_combinations
 
 ubuntu-24.04 amd64 native:
   extends: .build_and_unit
@@ -1387,10 +1406,11 @@ ubuntu-24.04 amd64 native:
       start_in: 30 minutes
   interruptible: false
   tags: ["amd64"]
+  variables:
+    OS: ubuntu-24.04
   parallel:
     matrix:
-      - OS: ubuntu-24.04
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 ubuntu-24.04 arm native:
   extends: .build_and_unit
@@ -1400,10 +1420,11 @@ ubuntu-24.04 arm native:
       start_in: 30 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: ubuntu-24.04
   parallel:
     matrix:
-      - OS: ubuntu-24.04
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 ubuntu-23.10 amd64 native:
   extends: .build_and_unit
@@ -1413,10 +1434,11 @@ ubuntu-23.10 amd64 native:
       start_in: 30 minutes
   interruptible: false
   tags: ["amd64"]
+  variables:
+    OS: ubuntu-23.10
   parallel:
     matrix:
-      - OS: ubuntu-23.10
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 ubuntu-23.10 arm native:
   extends: .build_and_unit
@@ -1426,10 +1448,11 @@ ubuntu-23.10 arm native:
       start_in: 30 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: ubuntu-23.10
   parallel:
     matrix:
-      - OS: ubuntu-23.10
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 ubuntu-22.04 amd64 native:
   extends: .build_and_unit
@@ -1439,10 +1462,11 @@ ubuntu-22.04 amd64 native:
       start_in: 60 minutes
   interruptible: false
   tags: ["amd64"]
+  variables:
+    OS: ubuntu-22.04
   parallel:
     matrix:
-      - OS: ubuntu-22.04
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 ubuntu-22.04 amd64 avx512:
   extends: .build_and_unit
@@ -1452,11 +1476,12 @@ ubuntu-22.04 amd64 avx512:
       start_in: 60 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: ubuntu-22.04
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: ubuntu-22.04
-        <<: *basic_combinations
-        MARCH: x86-64-v4
+      - <<: *basic_combinations
 
 ubuntu-22.04 arm native:
   extends: .build_and_unit
@@ -1466,10 +1491,11 @@ ubuntu-22.04 arm native:
       start_in: 60 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: ubuntu-22.04
   parallel:
     matrix:
-      - OS: ubuntu-22.04
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 ubuntu-22.04 arm neon:
   extends: .build_and_unit
@@ -1479,11 +1505,12 @@ ubuntu-22.04 arm neon:
       start_in: 60 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: ubuntu-22.04
+    MARCH: armv8.2-a+crypto+fp16+dotprod
   parallel:
     matrix:
-      - OS: ubuntu-22.04
-        <<: *basic_combinations
-        MARCH: armv8.2-a+crypto+fp16+dotprod
+      - <<: *basic_combinations
 
 rhel-8 amd64 native:
   extends: .build_and_unit
@@ -1493,10 +1520,11 @@ rhel-8 amd64 native:
       start_in: 120 minutes
   interruptible: false
   tags: ["amd64"]
+  variables:
+    OS: rhel-8
   parallel:
     matrix:
-      - OS: rhel-8
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 rhel-8 amd64 avx512:
   extends: .build_and_unit
@@ -1506,11 +1534,12 @@ rhel-8 amd64 avx512:
       start_in: 120 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: rhel-8
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: rhel-8
-        <<: *basic_combinations
-        MARCH: x86-64-v4
+      - <<: *basic_combinations
 
 rhel-8 arm native:
   extends: .build_and_unit
@@ -1520,10 +1549,11 @@ rhel-8 arm native:
       start_in: 120 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: rhel-8
   parallel:
     matrix:
-      - OS: rhel-8
-        <<: *basic_combinations
+      - <<: *basic_combinations
 
 rhel-8 arm neon:
   extends: .build_and_unit
@@ -1533,11 +1563,12 @@ rhel-8 arm neon:
       start_in: 120 minutes
   interruptible: false
   tags: ["arm64"]
+  variables:
+    OS: rhel-8
+    MARCH: armv8.2-a+crypto+fp16+dotprod
   parallel:
     matrix:
-      - OS: rhel-8
-        <<: *basic_combinations
-        MARCH: armv8.2-a+crypto+fp16+dotprod
+      - <<: *basic_combinations
 
 # DPDK
 
@@ -1556,12 +1587,13 @@ ubuntu-22.04 amd64 avx2 dpdk:
       start_in: 240 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: ubuntu-22.04
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: ubuntu-22.04
-        <<: *basic_combinations_dpdk
+      - <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
-        MARCH: x86-64-v3
 
 ubuntu-22.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1571,12 +1603,13 @@ ubuntu-22.04 amd64 avx512 dpdk:
       start_in: 270 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: ubuntu-22.04
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: ubuntu-22.04
-        <<: *basic_combinations_dpdk
+      - <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.6_avx512", "23.11.1_avx512"]
-        MARCH: x86-64-v4
 
 ubuntu-23.10 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1586,12 +1619,13 @@ ubuntu-23.10 amd64 avx2 dpdk:
       start_in: 300 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: ubuntu-23.10
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: ubuntu-23.10
-        <<: *basic_combinations_dpdk
+      - <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
-        MARCH: x86-64-v3
 
 ubuntu-23.10 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1601,12 +1635,13 @@ ubuntu-23.10 amd64 avx512 dpdk:
       start_in: 330 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: ubuntu-23.10
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: ubuntu-23.10
-        <<: *basic_combinations_dpdk
+      - <<: *basic_combinations_dpdk
         DPDK_VERSION: ["22.11.6_avx512", "23.11.1_avx512"]
-        MARCH: x86-64-v4
 
 ubuntu-24.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1616,12 +1651,13 @@ ubuntu-24.04 amd64 avx2 dpdk:
       start_in: 360 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: ubuntu-24.04
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: ubuntu-24.04
-        <<: *basic_combinations_dpdk
+      - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx2"
-        MARCH: x86-64-v3
 
 ubuntu-24.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1631,12 +1667,13 @@ ubuntu-24.04 amd64 avx512 dpdk:
       start_in: 390 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: ubuntu-24.04
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: ubuntu-24.04
-        <<: *basic_combinations_dpdk
+      - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx512"
-        MARCH: x86-64-v4
 
 ubuntu-24.10 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1646,12 +1683,13 @@ ubuntu-24.10 amd64 avx2 dpdk:
       start_in: 420 minutes
   interruptible: false
   tags: ["amd64-avx2"]
+  variables:
+    OS: ubuntu-24.10
+    MARCH: x86-64-v3
   parallel:
     matrix:
-      - OS: ubuntu-24.10
-        <<: *basic_combinations_dpdk
+      - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx2"
-        MARCH: x86-64-v3
 
 ubuntu-24.10 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1661,12 +1699,13 @@ ubuntu-24.10 amd64 avx512 dpdk:
       start_in: 450 minutes
   interruptible: false
   tags: ["amd64-avx2-avx512"]
+  variables:
+    OS: ubuntu-24.10
+    MARCH: x86-64-v4
   parallel:
     matrix:
-      - OS: ubuntu-24.10
-        <<: *basic_combinations_dpdk
+      - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx512"
-        MARCH: x86-64-v4
 
 #############
 # Run check #
