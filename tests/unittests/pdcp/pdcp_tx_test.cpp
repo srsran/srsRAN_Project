@@ -113,9 +113,12 @@ TEST_P(pdcp_tx_test, pdu_stall)
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
-    uint32_t sdu_queue_size = 4096;
-    uint32_t window_size    = pdcp_window_size(sn_size);
-    uint32_t stall          = std::min(sdu_queue_size, window_size - 1); // nof SDUs before stalling
+    uint32_t pdu_size             = sn_size == pdcp_sn_size::size12bits ? pdu_size_snlen12 : pdu_size_snlen18;
+    uint32_t rlc_queue_size       = 4096;
+    uint32_t rlc_queue_size_bytes = rlc_queue_size * pdu_size;
+    pdcp_tx->handle_desired_buffer_size_notification(rlc_queue_size_bytes);
+    uint32_t window_size = pdcp_window_size(sn_size);
+    uint32_t stall       = std::min(rlc_queue_size, window_size - 1); // nof SDUs before stalling
 
     // Write SDU
     for (uint32_t count = tx_next; count < tx_next + stall; ++count) {
@@ -138,6 +141,7 @@ TEST_P(pdcp_tx_test, pdu_stall)
     {
       // Notify transmission of all PDUs
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
+      pdcp_tx->handle_delivery_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
 
       // Write an SDU that should be dropped
       byte_buffer sdu = byte_buffer::create(sdu1).value();

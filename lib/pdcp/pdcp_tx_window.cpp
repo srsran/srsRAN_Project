@@ -86,5 +86,5 @@ uint32_t pdcp_tx_window::get_sdu_bytes() const
 uint32_t pdcp_tx_window::get_pdu_bytes(security::integrity_enabled integrity) const
 {
   uint16_t trailer_size = integrity == security::integrity_enabled::on ? 4 : 0;
-  return sdu_bytes + nof_sdus * pdcp_data_header_size(sn_size) + trailer_size;
+  return sdu_bytes + nof_sdus * pdcp_data_header_size(sn_size) + nof_sdus * trailer_size;
 }

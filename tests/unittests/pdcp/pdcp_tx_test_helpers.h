@@ -135,6 +135,7 @@ protected:
     pdcp_tx = std::make_unique<pdcp_entity_tx>(
         0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker}, worker, worker);
     pdcp_tx->set_status_provider(&test_frame);
+    pdcp_tx->handle_desired_buffer_size_notification(20 * (1 << 20)); // 20 MBi in RLC buffer
   }
 
   /// \brief Gets expected PDU based on the COUNT being tested
@@ -166,6 +167,7 @@ protected:
   manual_task_worker worker{4098};
   pdcp_tx_test_frame test_frame = {};
 
+  uint32_t rlc_sdu_queue_size = 20 * (1 << 20);
   // Security configuration
   security::sec_128_as_config sec_cfg = {};
 
