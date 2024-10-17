@@ -284,10 +284,6 @@ grafana server image latest:
   extends: .docker-builder
   stage: publish
   rules:
-    - if: $ON_MR
-      changes:
-        <<: *srs_container_changes
-      variables:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       interruptible: false
   variables:

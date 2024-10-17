@@ -70,6 +70,8 @@ pr reminder:
 trigger builder:
   stage: ci
   rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-builder/
+      when: never  
     - if: $ON_MR
       changes:
         paths:
@@ -83,6 +85,8 @@ trigger builder:
 trigger docker:
   stage: ci
   rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-docker/
+      when: never  
     - if: $ON_MR
       changes:
         paths:
