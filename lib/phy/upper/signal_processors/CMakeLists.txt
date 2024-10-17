@@ -20,6 +20,7 @@ set(SOURCES
         dmrs_pusch_estimator_impl.cpp
         nzp_csi_rs_generator_impl.cpp
         port_channel_estimator_average_impl.cpp
+        port_channel_estimator_helpers.cpp
         signal_processor_factories.cpp
         pss_processor_impl.cpp
         sss_processor_impl.cpp
