@@ -249,9 +249,9 @@ class cu_cp_mobility_manager_handler
 public:
   virtual ~cu_cp_mobility_manager_handler() = default;
 
-  /// \brief Handle an Inter DU handover.
-  virtual async_task<cu_cp_inter_du_handover_response>
-  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+  /// \brief Handle an Intra CU handover.
+  virtual async_task<cu_cp_intra_cu_handover_response>
+  handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request& request,
                                    du_index_t&                            source_du_index,
                                    du_index_t&                            target_du_index) = 0;
 };

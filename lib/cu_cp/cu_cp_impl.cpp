@@ -14,7 +14,7 @@
 #include "mobility_manager/mobility_manager_factory.h"
 #include "routines/initial_context_setup_routine.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
-#include "routines/mobility/inter_du_handover_routine.h"
+#include "routines/mobility/intra_cu_handover_routine.h"
 #include "routines/pdu_session_resource_modification_routine.h"
 #include "routines/pdu_session_resource_release_routine.h"
 #include "routines/pdu_session_resource_setup_routine.h"
@@ -628,8 +628,8 @@ bool cu_cp_impl::handle_cell_config_update_request(nr_cell_identity nci, const s
   return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
 }
 
-async_task<cu_cp_inter_du_handover_response>
-cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+async_task<cu_cp_intra_cu_handover_response>
+cu_cp_impl::handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request& request,
                                              du_index_t&                            source_du_index,
                                              du_index_t&                            target_du_index)
 {
@@ -638,7 +638,7 @@ cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_reque
 
   byte_buffer sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);
 
-  return launch_async<inter_du_handover_routine>(
+  return launch_async<intra_cu_handover_routine>(
       request,
       std::move(sib1),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),

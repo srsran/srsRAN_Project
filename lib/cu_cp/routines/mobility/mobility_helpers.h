@@ -19,7 +19,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Handle UE context setup response from target DU and prefills the Bearer context modification.
-bool handle_context_setup_response(cu_cp_inter_du_handover_response&         response_msg,
+bool handle_context_setup_response(cu_cp_intra_cu_handover_response&         response_msg,
                                    e1ap_bearer_context_modification_request& bearer_context_modification_request,
                                    const f1ap_ue_context_setup_response&     target_ue_context_setup_response,
                                    up_config_update&                         next_config,
@@ -28,7 +28,7 @@ bool handle_context_setup_response(cu_cp_inter_du_handover_response&         res
 
 /// \brief Handler Bearer context modification response from CU-UP and prefill UE context modification for source DU.
 bool handle_bearer_context_modification_response(
-    cu_cp_inter_du_handover_response&                response_msg,
+    cu_cp_intra_cu_handover_response&                response_msg,
     f1ap_ue_context_modification_request&            source_ue_context_mod_request,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,
     up_config_update&                                next_config,

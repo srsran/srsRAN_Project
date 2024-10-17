@@ -88,13 +88,18 @@ void mobility_manager::handle_handover(ue_index_t       ue_index,
 
   du_index_t source_du = ue_mng.find_du_ue(ue_index)->get_du_index();
 
-  // TODO: Trigger intra DU HO when target_du == source_du. For now we perform inter DU HO to itself.
-
-  logger.info("ue={}: Trigger inter DU handover from source_du={} to target_du={}", ue_index, source_du, target_du);
-  handle_inter_du_handover(ue_index, neighbor_pci, source_du, target_du);
+  if (source_du == target_du) {
+    logger.info("ue={}: Trigger intra-CU (intra-DU) handover on du={}", ue_index, source_du);
+  } else {
+    logger.info("ue={}: Trigger intra-CU (inter-DU) handover from source_du={} to target_du={}",
+                ue_index,
+                source_du,
+                target_du);
+  }
+  handle_intra_cu_handover(ue_index, neighbor_pci, source_du, target_du);
 }
 
-void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
+void mobility_manager::handle_intra_cu_handover(ue_index_t source_ue_index,
                                                 pci_t      neighbor_pci,
                                                 du_index_t source_du_index,
                                                 du_index_t target_du_index)
@@ -108,7 +113,7 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
     return;
   }
 
-  cu_cp_inter_du_handover_request request = {};
+  cu_cp_intra_cu_handover_request request = {};
   request.source_ue_index                 = source_ue_index;
   request.target_pci                      = neighbor_pci;
   request.cgi                             = cgi.value();
@@ -120,19 +125,14 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
     return;
   }
 
-  // Trigger Inter DU handover routine on the DU processor of the source DU.
-  auto ho_trigger = [this, request, response = cu_cp_inter_du_handover_response{}, &source_du_index, &target_du_index](
+  // Trigger Intra CU handover routine on the DU processor of the source DU.
+  auto ho_trigger = [this, request, response = cu_cp_intra_cu_handover_response{}, &source_du_index, &target_du_index](
                         coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
-    CORO_AWAIT_VALUE(response, cu_cp_notifier.on_inter_du_handover_required(request, source_du_index, target_du_index));
+    CORO_AWAIT_VALUE(response, cu_cp_notifier.on_intra_cu_handover_required(request, source_du_index, target_du_index));
     CORO_RETURN();
   };
   u->get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
-}
-
-void mobility_manager::handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
-{
-  // TODO: prepare call
 }
 
 void mobility_manager::handle_inter_cu_handover(ue_index_t       source_ue_index,

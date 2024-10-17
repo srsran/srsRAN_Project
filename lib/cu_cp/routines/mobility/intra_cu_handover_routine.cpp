@@ -8,7 +8,7 @@
  *
  */
 
-#include "inter_du_handover_routine.h"
+#include "intra_cu_handover_routine.h"
 #include "../pdu_session_routine_helpers.h"
 #include "handover_reconfiguration_routine.h"
 #include "mobility_helpers.h"
@@ -18,7 +18,7 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-bool verify_ho_request(const cu_cp_inter_du_handover_request& request,
+bool verify_ho_request(const cu_cp_intra_cu_handover_request& request,
                        ue_manager&                            ue_mng,
                        const srslog::basic_logger&            logger)
 {
@@ -45,7 +45,7 @@ bool verify_ho_request(const cu_cp_inter_du_handover_request& request,
   return true;
 }
 
-inter_du_handover_routine::inter_du_handover_routine(const cu_cp_inter_du_handover_request& request_,
+intra_cu_handover_routine::intra_cu_handover_routine(const cu_cp_intra_cu_handover_request& request_,
                                                      const byte_buffer&                     target_cell_sib1_,
                                                      e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
                                                      f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
@@ -68,7 +68,7 @@ inter_du_handover_routine::inter_du_handover_routine(const cu_cp_inter_du_handov
 {
 }
 
-void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_du_handover_response>>& ctx)
+void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_cu_handover_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -240,7 +240,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   CORO_RETURN(response_msg);
 }
 
-bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
+bool intra_cu_handover_routine::generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
                                                                   const static_vector<srb_id_t, MAX_NOF_SRBS>& srbs,
                                                                   const rrc_ue_transfer_context& transfer_context)
 {
@@ -291,7 +291,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
   return true;
 }
 
-void inter_du_handover_routine::create_srb(cu_cp_ue* ue, srb_id_t srb_id)
+void intra_cu_handover_routine::create_srb(cu_cp_ue* ue, srb_id_t srb_id)
 {
   srb_creation_message srb_msg{};
   srb_msg.ue_index        = ue->get_ue_index();
@@ -301,7 +301,7 @@ void inter_du_handover_routine::create_srb(cu_cp_ue* ue, srb_id_t srb_id)
   ue->get_rrc_ue()->create_srb(srb_msg);
 }
 
-bool inter_du_handover_routine::add_security_context_to_bearer_context_modification(
+bool intra_cu_handover_routine::add_security_context_to_bearer_context_modification(
     const srsran::security::sec_as_config& security_cfg)
 {
   // Fill security info

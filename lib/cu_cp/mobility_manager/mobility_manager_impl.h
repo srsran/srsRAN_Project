@@ -41,9 +41,9 @@ class mobility_manager_cu_cp_notifier
 public:
   virtual ~mobility_manager_cu_cp_notifier() = default;
 
-  /// \brief Notify the CU-CP about an required inter-DU handover.
-  virtual async_task<cu_cp_inter_du_handover_response>
-  on_inter_du_handover_required(const cu_cp_inter_du_handover_request& request,
+  /// \brief Notify the CU-CP about an required intra-CU handover.
+  virtual async_task<cu_cp_intra_cu_handover_response>
+  on_intra_cu_handover_required(const cu_cp_intra_cu_handover_request& request,
                                 du_index_t                             source_du_index,
                                 du_index_t                             target_du_index) = 0;
 };
@@ -69,11 +69,10 @@ private:
   void
   handle_handover(ue_index_t ue_index, gnb_id_t neighbor_gnb_id, nr_cell_identity neighbor_nci, pci_t neighbor_pci);
   void handle_inter_cu_handover(ue_index_t source_ue_index, gnb_id_t target_gnb_id, nr_cell_identity target_nci);
-  void handle_inter_du_handover(ue_index_t source_ue_index,
+  void handle_intra_cu_handover(ue_index_t source_ue_index,
                                 pci_t      neighbor_pci,
                                 du_index_t source_du_index,
                                 du_index_t target_du_index);
-  void handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci);
 
   mobility_manager_cfg             cfg;
   mobility_manager_cu_cp_notifier& cu_cp_notifier;

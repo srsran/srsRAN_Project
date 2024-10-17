@@ -15,8 +15,8 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Generate a Inter DU Handover Request.
-cu_cp_inter_du_handover_request generate_inter_du_handover_request();
+/// \brief Generate a Intra CU Handover Request.
+cu_cp_intra_cu_handover_request generate_intra_cu_handover_request();
 
 } // namespace srs_cu_cp
 } // namespace srsran

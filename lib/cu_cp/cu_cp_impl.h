@@ -111,8 +111,8 @@ public:
   bool handle_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override;
 
   // cu_cp_mobility_manager_handler
-  async_task<cu_cp_inter_du_handover_response>
-  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+  async_task<cu_cp_intra_cu_handover_response>
+  handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request& request,
                                    du_index_t&                            source_du_index,
                                    du_index_t&                            target_du_index) override;
 

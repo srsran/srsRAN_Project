@@ -18,12 +18,12 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Handles the handover of a UE between two different DUs.
+/// \brief Handles the handover of a UE between two different cells managed by the same CU.
 /// TODO Add seqdiag
-class inter_du_handover_routine
+class intra_cu_handover_routine
 {
 public:
-  inter_du_handover_routine(const cu_cp_inter_du_handover_request& request_,
+  intra_cu_handover_routine(const cu_cp_intra_cu_handover_request& request_,
                             const byte_buffer&                     target_cell_sib1_,
                             e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
                             f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
@@ -34,9 +34,9 @@ public:
                             ue_manager&                            ue_mng_,
                             srslog::basic_logger&                  logger_);
 
-  void operator()(coro_context<async_task<cu_cp_inter_du_handover_response>>& ctx);
+  void operator()(coro_context<async_task<cu_cp_intra_cu_handover_response>>& ctx);
 
-  static const char* name() { return "Inter DU Handover Routine"; }
+  static const char* name() { return "Intra CU Handover Routine"; }
 
 private:
   bool generate_ue_context_setup_request(f1ap_ue_context_setup_request&               setup_request,
@@ -46,7 +46,7 @@ private:
 
   bool add_security_context_to_bearer_context_modification(const srsran::security::sec_as_config& security_cfg);
 
-  const cu_cp_inter_du_handover_request request;
+  const cu_cp_intra_cu_handover_request request;
   const byte_buffer                     target_cell_sib1;
 
   cu_cp_ue* source_ue = nullptr; // Pointer to UE in the source DU
@@ -73,7 +73,7 @@ private:
   cu_cp_ue_context_release_command ue_context_release_command;     // After succesfull HO source UE needs to be removed.
 
   // (sub-)routine results
-  cu_cp_inter_du_handover_response response_msg;
+  cu_cp_intra_cu_handover_response response_msg;
   f1ap_ue_context_setup_response   target_ue_context_setup_response;
   e1ap_bearer_context_modification_response
       bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
