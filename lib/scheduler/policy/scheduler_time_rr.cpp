@@ -34,8 +34,11 @@ static const std::vector<scheduler_alloc_limits> scheduler_alloc_limits_lookup =
     {MAX_NOF_DU_UES, 8},
 };
 
-static unsigned get_max_ues_to_be_sched(const slice_ue_repository& ues, bool is_dl)
+static unsigned get_max_ues_to_be_sched(const slice_ue_repository& ues, bool is_dl, unsigned max_ues)
 {
+  if (max_ues == 0) {
+    return 0;
+  }
   unsigned nof_ue_with_new_tx = 0;
   unsigned lookup_idx         = 0;
   for (const auto& u : ues) {
@@ -46,8 +49,9 @@ static unsigned get_max_ues_to_be_sched(const slice_ue_repository& ues, bool is_
       // check if we surpassed a limit of the lookup table.
       if (nof_ue_with_new_tx > scheduler_alloc_limits_lookup[lookup_idx].max_nof_ues_with_new_tx) {
         lookup_idx++;
-        if (lookup_idx == scheduler_alloc_limits_lookup.size() - 1) {
-          // no need to continue the search as we reached the maximum position of the lookup.
+        if (lookup_idx == scheduler_alloc_limits_lookup.size() - 1 or
+            scheduler_alloc_limits_lookup[lookup_idx].nof_ues_to_be_scheduled_per_slot >= max_ues) {
+          // no need to continue the search as we reached the maximum number of ues to be scheduled in the slot.
           break;
         }
       }
@@ -56,7 +60,7 @@ static unsigned get_max_ues_to_be_sched(const slice_ue_repository& ues, bool is_
   if (nof_ue_with_new_tx == 0) {
     return 0;
   }
-  return scheduler_alloc_limits_lookup[lookup_idx].nof_ues_to_be_scheduled_per_slot;
+  return std::min(scheduler_alloc_limits_lookup[lookup_idx].nof_ues_to_be_scheduled_per_slot, max_ues);
 }
 
 /// \brief Computes maximum nof. RBs to allocate per UE per slot for newTx.
@@ -64,24 +68,31 @@ static unsigned get_max_ues_to_be_sched(const slice_ue_repository& ues, bool is_
 /// \param[in] is_dl Flag indicating whether the computation is DL or UL.
 /// \param[in] res_grid View of the resource grid.
 /// \param[in] expert_cfg Scheduler UE expert configuration.
+/// \param[in] pxsch_slot The PDSCH/PUSCH slot where allocation is going to take place.
 /// \param[in] slice_max_rbs Maximum nof. RBs to allocate to a slice.
 /// \return Maximum nof. RBs to allocate per UE per slot for newTx.
 static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&        ues,
                                                     bool                              is_dl,
                                                     const ue_resource_grid_view&      res_grid,
                                                     const scheduler_ue_expert_config& expert_cfg,
+                                                    slot_point                        pxsch_slot,
                                                     unsigned                          slice_max_rbs)
 {
-  unsigned nof_ues_to_be_scheduled_per_slot = get_max_ues_to_be_sched(ues, is_dl);
-  if (nof_ues_to_be_scheduled_per_slot == 0) {
+  if (ues.empty()) {
     return 0;
   }
+  du_cell_index_t cell_idx = ues.begin()->get_pcell().cell_index;
 
   // > Apply limits if passed to scheduler.
-  if (is_dl) {
-    nof_ues_to_be_scheduled_per_slot = std::min(expert_cfg.max_pdschs_per_slot, nof_ues_to_be_scheduled_per_slot);
-  } else {
-    nof_ues_to_be_scheduled_per_slot = std::min(expert_cfg.max_puschs_per_slot, nof_ues_to_be_scheduled_per_slot);
+  unsigned nof_ues_to_be_scheduled_per_slot = is_dl ? expert_cfg.max_pdschs_per_slot : expert_cfg.max_puschs_per_slot;
+  unsigned nof_pxsch_already_alloc          = is_dl ? res_grid.get_ue_pdsch_sched_results(cell_idx, pxsch_slot).size()
+                                                    : res_grid.get_ue_pusch_sched_results(cell_idx, pxsch_slot).size();
+  nof_ues_to_be_scheduled_per_slot -= std::min(nof_ues_to_be_scheduled_per_slot, nof_pxsch_already_alloc);
+
+  // > Compute number of UEs to allocate in slot, given the number of UEs with pending data.
+  nof_ues_to_be_scheduled_per_slot = get_max_ues_to_be_sched(ues, is_dl, nof_ues_to_be_scheduled_per_slot);
+  if (nof_ues_to_be_scheduled_per_slot == 0) {
+    return 0;
   }
 
   // NOTE: All UEs use the same dedicated SearchSpace configuration.
@@ -398,7 +409,7 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   }
 
   const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
-      compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg, max_rbs);
+      compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg, slice_candidate.get_slot_tx(), max_rbs);
   if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     // Then, schedule UEs with new transmissions.
     auto drb_newtx_ue_function =
@@ -432,7 +443,7 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
 
   // Then, schedule UEs with new transmissions.
   const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
-      compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, max_rbs);
+      compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, slice_candidate.get_slot_tx(), max_rbs);
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     auto data_tx_ue_function = [this, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const slice_ue& u) {
       return alloc_ul_ue_newtx(u, pusch_alloc, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
