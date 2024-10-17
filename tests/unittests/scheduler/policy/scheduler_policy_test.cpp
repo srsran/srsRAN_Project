@@ -19,6 +19,7 @@
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -710,6 +711,121 @@ TEST_F(scheduler_pf_test, pf_ensures_fairness_in_ul_when_ues_have_different_chan
               ue_pusch_scheduled_count[u1.ue_index] > ue_pusch_scheduled_count[u3.ue_index]);
 }
 
+// Expressed in bits per second.
+using gbr_bitrate_bps = uint64_t;
+
+class scheduler_pf_qos_test : public base_scheduler_policy_test, public ::testing::TestWithParam<gbr_bitrate_bps>
+{
+protected:
+  scheduler_pf_qos_test() : base_scheduler_policy_test(policy_scheduler_type::time_pf) {}
+
+  static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs)
+  {
+    // Deduce the number of slots per subframe.
+    const unsigned nof_slots_per_subframe   = get_nof_slots_per_subframe(bwp_scs);
+    const unsigned nof_subframes_per_second = 1000;
+    // Deduce the number of slots per second.
+    const unsigned nof_slots_per_second = nof_slots_per_subframe * nof_subframes_per_second;
+
+    return (static_cast<double>(bitrate_bps) / static_cast<double>(nof_slots_per_second * 8U));
+  }
+};
+
+TEST_P(scheduler_pf_qos_test, pf_upholds_qos_in_dl_gbr_flows)
+{
+  const lcg_id_t lcg_id              = uint_to_lcg_id(2);
+  const lcid_t   gbr_bearer_lcid     = uint_to_lcid(6);
+  const lcid_t   non_gbr_bearer_lcid = uint_to_lcid(5);
+
+  const gbr_bitrate_bps brate = GetParam();
+
+  ue& ue_with_gbr =
+      add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {non_gbr_bearer_lcid, gbr_bearer_lcid}, lcg_id));
+  // Prepare request with GBR bearer information.
+  sched_ue_config_request cfg_req{};
+  cfg_req.lc_config_list.emplace();
+  cfg_req.lc_config_list->resize(4);
+  (*cfg_req.lc_config_list)[0]          = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
+  (*cfg_req.lc_config_list)[1]          = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
+  (*cfg_req.lc_config_list)[2]          = config_helpers::create_default_logical_channel_config(non_gbr_bearer_lcid);
+  (*cfg_req.lc_config_list)[2].lc_group = lcg_id;
+  (*cfg_req.lc_config_list)[3]          = config_helpers::create_default_logical_channel_config(gbr_bearer_lcid);
+  (*cfg_req.lc_config_list)[3].lc_group = lcg_id;
+  cfg_req.drb_info_list.resize(2);
+  cfg_req.drb_info_list[0] = sched_drb_info{.lcid     = non_gbr_bearer_lcid,
+                                            .qos_info = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(9))};
+  cfg_req.drb_info_list[1] = sched_drb_info{.lcid         = gbr_bearer_lcid,
+                                            .qos_info     = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(1)),
+                                            .gbr_qos_info = gbr_qos_flow_information{brate, brate, brate, brate}};
+  ue_ded_cell_cfg_list[0]->update(cell_cfg_list, cfg_req);
+  // Add UE with no GBR bearer.
+  ue& ue_with_no_gbr = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {non_gbr_bearer_lcid}, lcg_id));
+
+  const double expected_rate = to_bytes_per_slot(brate, cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs);
+
+  push_dl_bs(ue_with_gbr.ue_index, gbr_bearer_lcid, expected_rate);
+  push_dl_bs(ue_with_no_gbr.ue_index, non_gbr_bearer_lcid, 1000000);
+
+  // Report best channel condition for different UEs.
+  ue_with_gbr.get_pcell().handle_csi_report(
+      csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}});
+  ue_with_no_gbr.get_pcell().handle_csi_report(
+      csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}});
+
+  unsigned              scheduled_bytes_for_gbr_bearer = 0;
+  static const unsigned max_nof_slots                  = 50;
+
+  for (unsigned i = 0; i != max_nof_slots; ++i) {
+    run_slot();
+    // Keep pushing buffer status update for UE with GBR bearer so that there is steady flow of pending bytes.
+    push_dl_bs(ue_with_gbr.ue_index, gbr_bearer_lcid, expected_rate);
+    for (const auto& grant : this->res_grid[0].result.dl.ue_grants) {
+      if (grant.context.ue_index == ue_with_gbr.ue_index) {
+        for (const auto& tb_info : grant.tb_list) {
+          const auto* it = std::find_if(tb_info.lc_chs_to_sched.begin(),
+                                        tb_info.lc_chs_to_sched.end(),
+                                        [](const dl_msg_lc_info& lc_info) { return lc_info.lcid == gbr_bearer_lcid; });
+          if (it == tb_info.lc_chs_to_sched.end()) {
+            continue;
+          }
+          scheduled_bytes_for_gbr_bearer += it->sched_bytes;
+        }
+      }
+    }
+
+    // Auto ACK HARQs.
+    const slot_point current_slot = next_slot - 1;
+    for (const pucch_info& pucch : this->res_grid[0].result.ul.pucchs) {
+      unsigned nof_ack_bits = 0;
+      switch (pucch.format) {
+        case pucch_format::FORMAT_0:
+          nof_ack_bits = pucch.format_0.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_1:
+          nof_ack_bits = pucch.format_1.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_2:
+          nof_ack_bits = pucch.format_2.harq_ack_nof_bits;
+          break;
+        default:
+          break;
+      }
+      if (pucch.crnti == ue_with_gbr.crnti) {
+        for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
+          ue_with_gbr.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::ack, harq_bit_idx, 100);
+        }
+      } else if (pucch.crnti == ue_with_no_gbr.crnti) {
+        for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
+          ue_with_no_gbr.get_pcell().handle_dl_ack_info(
+              current_slot, mac_harq_ack_report_status::ack, harq_bit_idx, 100);
+        }
+      }
+    }
+  }
+  const double observed_rate = static_cast<double>(scheduled_bytes_for_gbr_bearer) / static_cast<double>(max_nof_slots);
+  ASSERT_GE(observed_rate, expected_rate);
+}
+
 class scheduler_policy_alloc_bounds_test : public base_scheduler_policy_test,
                                            public ::testing::TestWithParam<policy_scheduler_type>
 {
@@ -781,3 +897,4 @@ INSTANTIATE_TEST_SUITE_P(scheduler_policy,
 INSTANTIATE_TEST_SUITE_P(scheduler_policy,
                          scheduler_policy_alloc_bounds_test,
                          testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_pf));
+INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_pf_qos_test, testing::Values(128000, 256000));
