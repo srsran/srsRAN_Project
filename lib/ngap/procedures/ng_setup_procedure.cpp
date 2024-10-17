@@ -41,7 +41,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
 {
   CORO_BEGIN(ctx);
 
-  logger.info("\"{}\" started...", name());
+  logger.debug("\"{}\" started...", name());
 
   while (true) {
     // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.
@@ -59,10 +59,10 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
     }
 
     // Await timer.
-    logger.info("Reinitiating NG setup in {}s (retry={}/{}). Received NGSetupFailure with Time to Wait IE",
-                time_to_wait.count(),
-                ng_setup_retry_no,
-                max_setup_retries);
+    logger.debug("Reinitiating NG setup in {}s (retry={}/{}). Received NGSetupFailure with Time to Wait IE",
+                 time_to_wait.count(),
+                 ng_setup_retry_no,
+                 max_setup_retries);
     CORO_AWAIT(
         async_wait_for(ng_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
   }
@@ -106,7 +106,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
   ngap_ng_setup_result res{};
 
   if (transaction_sink.successful()) {
-    logger.info("\"{}\" finished successfully", name());
+    logger.debug("\"{}\" finished successfully", name());
 
     fill_ngap_ng_setup_result(res, transaction_sink.response());
 
