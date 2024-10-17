@@ -41,7 +41,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" started...", name());
+  logger.info("\"{}\" started...", name());
 
   while (true) {
     // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.

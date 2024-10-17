@@ -98,8 +98,6 @@ async_task<void> ngap_impl::handle_amf_disconnection_request()
 
 async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(unsigned max_setup_retries)
 {
-  logger.info("Sending NgSetupRequest");
-
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
@@ -155,7 +153,7 @@ async_task<void> ngap_impl::handle_ng_reset_message(const cu_cp_ng_reset& msg)
 void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 {
   if (ue_ctxt_list.contains(msg.ue_index)) {
-    logger.warning("ue={}: Dropping InitialUEMessage. UE context already exist", msg.ue_index);
+    logger.warning("ue={}: Dropping InitialUEMessage. UE context already exists", msg.ue_index);
     return;
   }
 
@@ -273,7 +271,7 @@ void ngap_impl::handle_tx_ue_radio_capability_info_indication_required(
   ue_radio_cap_info_ind_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   ue_radio_cap_info_ind_msg->ue_radio_cap   = msg.ue_cap_rat_container_list.copy();
 
-  ue_ctxt.logger.log_info("Scheduling UE Radio Capability Info Indication");
+  ue_ctxt.logger.log_debug("Scheduling UE Radio Capability Info Indication");
 
   // Schedule transmission of UE Radio Capability Info Indication to AMF
   ue->schedule_async_task(launch_async([this, ngap_msg](coro_context<async_task<void>>& ctx) {
@@ -603,8 +601,6 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
                 ue_ctxt.ue_ids.ran_ue_id,
                 ue_ctxt.ue_ids.amf_ue_id);
 
-  ue_ctxt.logger.log_info("Received PduSessionResourceReleaseCommand");
-
   // Convert to common type
   cu_cp_pdu_session_resource_release_command msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
@@ -680,8 +676,6 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
                 ue_ctxt.ue_ids.ue_index,
                 ue_ctxt.ue_ids.ran_ue_id,
                 ue_ctxt.ue_ids.amf_ue_id);
-
-  ue_ctxt.logger.log_info("Received UeContextReleaseCommand");
 
   // Convert to common type
   cu_cp_ue_context_release_command msg;
