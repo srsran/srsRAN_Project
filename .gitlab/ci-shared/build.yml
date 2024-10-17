@@ -45,6 +45,22 @@ variables:
 .build_and_unit_template:
   image: ${CR_REGISTRY_URI}/srsgnb/builder-${OS}:${DOCKER_BUILDER_VERSION}
   variables:
+    CMAKE_BUILD_TYPE: "" # Empty for cmake default
+    ASSERT_LEVEL: "" # Empty for cmake default
+    ENABLE_EXPORT: "" # Empty for cmake default
+    ENABLE_FFTW: "" # Empty for cmake default
+    ENABLE_MKL: "False" # Empty for cmake default
+    ENABLE_ARMPL: "False" # Empty for cmake default
+    ENABLE_UHD: "" # Empty for cmake default
+    ENABLE_DPDK: "" # Empty for cmake default
+    ENABLE_ZEROMQ: "" # Empty for cmake default
+    ENABLE_ASAN: "" # Empty for cmake default
+    ENABLE_TSAN: "" # Empty for cmake default
+    ENABLE_GCOV: "" # Empty for cmake default
+    ENABLE_WERROR: "" # Empty for cmake default
+    FORCE_DEBUG_INFO: "" # Empty for cmake default
+    MARCH: "" # Empty for cmake default
+    MTUNE: "" # Empty for cmake default
     # TEST
     TEST_EXECUTION_TIMEOUT: 0
     # CI
@@ -56,6 +72,19 @@ variables:
     - ${INFRASTRUCTURE_TAG}
   before_script:
     - |
+      for var in \
+        CMAKE_BUILD_TYPE ASSERT_LEVEL ENABLE_EXPORT \
+        ENABLE_FFTW ENABLE_MKL ENABLE_ARMPL \
+        ENABLE_UHD ENABLE_DPDK ENABLE_ZEROMQ \
+        ENABLE_ASAN ENABLE_TSAN ENABLE_GCOV \
+        ENABLE_WERROR FORCE_DEBUG_INFO \
+        MARCH MTUNE \
+      ; do
+        if [ -n "${!var}" ]; then
+          BUILD_ARGS="-D${var}=${!var} ${BUILD_ARGS}"
+        fi
+      done
+
       BUILD_CMD="${BUILD_ARGS}"
       if [ -n "${DPDK_VERSION}" ]; then
         BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"

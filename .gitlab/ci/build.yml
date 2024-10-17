@@ -29,12 +29,12 @@ variables:
 ################
 
 .cache_build_set: &cache_build_set
-  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${MARCH}
+  - key: ${OS}-${COMPILER}-${CMAKE_BUILD_TYPE}-${MARCH}
     paths: [ccache]
     policy: push
 
 .cache_build_get: &cache_build_get
-  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${MARCH}
+  - key: ${OS}-${COMPILER}-${CMAKE_BUILD_TYPE}-${MARCH}
     paths: [ccache]
     policy: pull-push
 
@@ -47,21 +47,6 @@ variables:
 .build_and_unit:
   extends: .build_and_unit_template
   stage: build and unit tests
-  variables:
-    BUILD_TYPE: "" # Empty for cmake default
-    ASSERT_LEVEL: "" # Empty for cmake default
-    ENABLE_EXPORT: "" # Empty for cmake default
-    ENABLE_FFTW: "" # Empty for cmake default
-    ENABLE_UHD: "" # Empty for cmake default
-    ENABLE_DPDK: "" # Empty for cmake default
-    ENABLE_ZEROMQ: "True" # Empty for cmake default
-    ENABLE_ASAN: "" # Empty for cmake default
-    ENABLE_TSAN: "" # Empty for cmake default
-    ENABLE_GCOV: "" # Empty for cmake default
-    ENABLE_WERROR: "" # Empty for cmake default
-    FORCE_DEBUG_INFO: "" # Empty for cmake default
-    MARCH: ""
-    MTUNE: ""
   needs:
     - job: builder version
       optional: false
@@ -72,48 +57,6 @@ variables:
   script:
     - &srs_functions |
       CMAKE_FLAGS_CMD=""
-      if [ -n "${BUILD_TYPE}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
-      fi
-      if [ -n "${ASSERT_LEVEL}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DASSERT_LEVEL=${ASSERT_LEVEL}"
-      fi
-      if [ -n "${ENABLE_EXPORT}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_EXPORT=${ENABLE_EXPORT}"
-      fi
-      if [ -n "${ENABLE_FFTW}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_FFTW=${ENABLE_FFTW}"
-      fi
-      if [ -n "${ENABLE_UHD}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_UHD=${ENABLE_UHD}"
-      fi
-      if [ -n "${ENABLE_DPDK}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_DPDK=${ENABLE_DPDK}"
-      fi
-      if [ -n "${ENABLE_ZEROMQ}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"
-      fi
-      if [ -n "${ENABLE_ASAN}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_ASAN=${ENABLE_ASAN}"
-      fi
-      if [ -n "${ENABLE_TSAN}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_TSAN=${ENABLE_TSAN}"
-      fi
-      if [ -n "${ENABLE_GCOV}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_GCOV=${ENABLE_GCOV}"
-      fi
-      if [ -n "${MARCH}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DMARCH=${MARCH}"
-      fi
-      if [ -n "${MTUNE}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DTUNE=${MTUNE}"
-      fi
-      if [ -n "${ENABLE_WERROR}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DENABLE_WERROR=${ENABLE_WERROR}"
-      fi
-      if [ -n "${FORCE_DEBUG_INFO}" ]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DFORCE_DEBUG_INFO=${FORCE_DEBUG_INFO}"
-      fi
       if [[ $TEST_MODE = "none" ]]; then
         CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DBUILD_TESTS=False"
       fi
@@ -277,7 +220,7 @@ variables:
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
-    BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: coverage
     ENABLE_GCOV: "True"
@@ -289,7 +232,7 @@ variables:
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
-    BUILD_TYPE: RelWithDebInfo
+    CMAKE_BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
@@ -300,7 +243,7 @@ variables:
   variables:
     OS: ubuntu-24.04
     COMPILER: clang
-    BUILD_TYPE: Debug
+    CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
@@ -312,7 +255,7 @@ variables:
   variables:
     OS: rhel-8
     COMPILER: gcc
-    BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
@@ -324,7 +267,7 @@ variables:
     OS: archlinux-latest
     ENABLE_WERROR: "False"
     COMPILER: gcc
-    BUILD_TYPE: Debug
+    CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
@@ -335,7 +278,7 @@ variables:
   variables:
     OS: ubuntu-24.04
     COMPILER: clang
-    BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Release
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
@@ -349,7 +292,7 @@ variables:
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
-    BUILD_TYPE: Debug
+    CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     TEST_MODE: valgrind
     MARCH: x86-64-v3
@@ -360,7 +303,7 @@ variables:
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
-    BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v4
@@ -371,7 +314,7 @@ variables:
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
-    BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: armv8-a
@@ -382,7 +325,7 @@ variables:
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
-    BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: armv8.2-a+crypto+fp16+dotprod
@@ -392,7 +335,7 @@ variables:
 
 .combinations: &basic_combinations
   COMPILER: [gcc, clang]
-  BUILD_TYPE: [Release, RelWithDebInfo, Debug]
+  CMAKE_BUILD_TYPE: [Release, RelWithDebInfo, Debug]
   ASSERT_LEVEL: [MINIMAL, NORMAL, PARANOID]
 
 ######
@@ -836,7 +779,7 @@ smoke asan:
   variables:
     OS: ubuntu-24.04
     COMPILER: clang
-    BUILD_TYPE: Debug
+    CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
     TEST_MODE: asan
@@ -1201,7 +1144,7 @@ debian 12 amd64 avx512:
   interruptible: false
   variables:
     ASSERT_LEVEL: PARANOID
-    BUILD_TYPE: Debug
+    CMAKE_BUILD_TYPE: Debug
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
@@ -1833,7 +1776,7 @@ basic avx512 dpdk:
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
-    BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Release
     TEST_MODE: none
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
