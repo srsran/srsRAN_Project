@@ -31,7 +31,9 @@ public:
 
 private:
   /// Fairness parameters.
+  /// Coefficient used to tweak decision in favor of fairness or throughput.
   const double fairness_coeff;
+  /// Coefficient used to compute exponential moving average.
   const double exp_avg_alpha = 0.01;
 
   /// Holds the information needed to compute priority of a UE in a priority queue.
@@ -55,7 +57,9 @@ private:
     /// Returns average UL rate expressed in bytes per slot of the UE.
     [[nodiscard]] double total_ul_avg_rate() const { return ul_nof_samples == 0 ? 0 : total_ul_avg_rate_; }
 
+    /// Computes the priority of the UE to be scheduled in DL based on the QoS and proportional fair metric.
     void compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id);
+    /// Computes the priority of the UE to be scheduled in UL based on the proportional fair metric.
     void compute_ul_prio(const slice_ue& u, const ue_resource_grid_view& res_grid, ran_slice_id_t slice_id);
 
     void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info);

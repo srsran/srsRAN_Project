@@ -195,17 +195,17 @@ static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs
   return (static_cast<double>(bitrate_bps) / static_cast<double>(nof_slots_per_second * 8U));
 }
 
-/// \brief Computes DL bitrate weight used in computation of DL priority value for a UE in a slot.
-static double compute_dl_bitrate_weight(span<const sched_drb_info> drbs_qos_info,
-                                        span<double>               dl_avg_rate_per_bearer,
-                                        double                     fairness_coeff,
-                                        subcarrier_spacing         bwp_scs)
+/// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
+static double compute_dl_rate_weight(span<const sched_drb_info> drbs_qos_info,
+                                     span<double>               dl_avg_rate_per_bearer,
+                                     subcarrier_spacing         bwp_scs)
 {
-  // [Implementation-defined] Bitrate weight is considered 1 for non-GBR flows.
-  const double non_gbr_bitrate_weight = 1;
+  // [Implementation-defined] Rate weight to assign when average rate in a GBR bearer is zero or if the UE has only
+  // non-GBR bearers.
+  const double initial_rate_weight = 1;
 
-  double bitrate_weight = 0;
-  for (unsigned id = LCID_MIN_DRB; id < dl_avg_rate_per_bearer.size(); ++id) {
+  double rate_weight = 0;
+  for (unsigned id = LCID_MIN_DRB, size = dl_avg_rate_per_bearer.size(); id != size; ++id) {
     lcid_t      lcid = uint_to_lcid(id);
     const auto* it   = std::find_if(drbs_qos_info.begin(), drbs_qos_info.end(), [lcid](const sched_drb_info& drb_info) {
       return drb_info.lcid == lcid;
@@ -213,21 +213,19 @@ static double compute_dl_bitrate_weight(span<const sched_drb_info> drbs_qos_info
 
     // No DRB QoS information or Non-GBR flow.
     if (it == drbs_qos_info.end() or (not it->gbr_qos_info.has_value())) {
-      bitrate_weight += non_gbr_bitrate_weight;
       continue;
     }
 
     // GBR flow.
     if (dl_avg_rate_per_bearer[lcid] != 0) {
-      bitrate_weight +=
-          (to_bytes_per_slot(it->gbr_qos_info->gbr_dl, bwp_scs) / pow(dl_avg_rate_per_bearer[lcid], fairness_coeff));
+      rate_weight += (to_bytes_per_slot(it->gbr_qos_info->gbr_dl, bwp_scs) / dl_avg_rate_per_bearer[lcid]);
     } else {
-      return std::numeric_limits<double>::max();
+      return initial_rate_weight;
     }
   }
 
-  // Sum of bitrate weights of all active bearers.
-  return bitrate_weight;
+  // Sum of rate weights of all active bearers.
+  return rate_weight == 0 ? initial_rate_weight : rate_weight;
 }
 
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id)
@@ -303,12 +301,11 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
     } else {
       pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
     }
-    const double bitrate_weight =
-        compute_dl_bitrate_weight(u.get_drbs_qos_info(),
-                                  dl_avg_rate_per_bearer,
-                                  parent->fairness_coeff,
-                                  ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
-    dl_prio = bitrate_weight * pf_weight;
+    const double rate_weight =
+        compute_dl_rate_weight(u.get_drbs_qos_info(),
+                               dl_avg_rate_per_bearer,
+                               ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
+    dl_prio = rate_weight * pf_weight;
 
     return;
   }
