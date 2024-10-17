@@ -12,6 +12,7 @@
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ngap/ngap_types.h"
+#include "srsran/ran/cu_types.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -85,6 +86,8 @@ std::optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::in
       return uint_to_ran_ue_id(init_msg.value.ue_context_resume_request()->ran_ue_ngap_id);
     case init_types::ue_context_suspend_request:
       return uint_to_ran_ue_id(init_msg.value.ue_context_suspend_request()->ran_ue_ngap_id);
+    case init_types::ue_radio_cap_info_ind:
+      return uint_to_ran_ue_id(init_msg.value.ue_radio_cap_info_ind()->ran_ue_ngap_id);
     case init_types::dl_nas_transport:
       return uint_to_ran_ue_id(init_msg.value.dl_nas_transport()->ran_ue_ngap_id);
     case init_types::error_ind:
