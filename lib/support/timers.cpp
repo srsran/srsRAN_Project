@@ -110,9 +110,9 @@ private:
 
 class timer_manager::command_queue
 {
-  constexpr static size_t initial_batch_size     = 128;
-  constexpr static size_t max_dequeues_per_tick  = 4096;
-  constexpr static size_t default_queue_capacity = 16384;
+  constexpr static size_t initial_batch_size            = 128;
+  constexpr static size_t warn_on_nof_dequeues_per_tick = 4096U;
+  constexpr static size_t default_queue_capacity        = 16384;
 
 public:
   explicit command_queue(srslog::basic_logger& logger_, size_t initial_capacity = default_queue_capacity) :
@@ -142,8 +142,7 @@ private:
                         std::vector<T>&                                            buffer)
   {
     size_t nread = 0;
-
-    for (size_t pos = 0; nread < max_dequeues_per_tick;) {
+    for (size_t pos = 0; true;) {
       // pop whatever space we have left in temporary buffer.
       size_t max_n = buffer.size() - pos;
       size_t n     = q.try_dequeue_bulk(t, buffer.begin() + pos, max_n);
@@ -158,8 +157,8 @@ private:
       pos = buffer.size();
       buffer.resize(buffer.size() + initial_batch_size);
     }
-    if (nread == max_dequeues_per_tick) {
-      logger.warning("Number of events within one tick exceeded maximum {}", max_dequeues_per_tick);
+    if (nread == warn_on_nof_dequeues_per_tick) {
+      logger.warning("Number of timer events within one tick exceeded {}", warn_on_nof_dequeues_per_tick);
     }
 
     return nread;
