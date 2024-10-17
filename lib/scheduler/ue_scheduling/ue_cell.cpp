@@ -71,6 +71,20 @@ void ue_cell::deactivate()
 void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg)
 {
   ue_cfg = &ue_cell_cfg;
+
+  // Cancel HARQ retxs, given that the UE may have changed some critical params (e.g. MCS tables)
+  for (unsigned i = 0; i != harqs.nof_dl_harqs(); ++i) {
+    std::optional<dl_harq_process_handle> h_dl = harqs.dl_harq(to_harq_id(i));
+    if (h_dl.has_value()) {
+      h_dl.value().cancel_retxs();
+    }
+  }
+  for (unsigned i = 0; i != harqs.nof_ul_harqs(); ++i) {
+    std::optional<ul_harq_process_handle> h_ul = harqs.ul_harq(to_harq_id(i));
+    if (h_ul.has_value()) {
+      h_ul->cancel_retxs();
+    }
+  }
 }
 
 void ue_cell::set_fallback_state(bool set_fallback)

@@ -817,6 +817,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       const auto& prev_params = h_ul->get_grant_params();
       mcs_tbs_info.emplace(sch_mcs_tbs{.mcs = prev_params.mcs, .tbs = prev_params.tbs_bytes});
       pusch_cfg.nof_layers = prev_params.nof_layers;
+      srsran_assert(prev_params.mcs_table == pusch_cfg.mcs_table, "MCS table cannot change across HARQ reTxs");
     }
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
