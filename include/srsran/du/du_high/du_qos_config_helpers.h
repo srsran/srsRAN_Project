@@ -62,10 +62,6 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
     // F1-U
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
-    // MAC
-    cfg.mac          = make_default_drb_mac_lc_config();
-    cfg.mac.priority = 4;
-    cfg.mac.lcg_id   = uint_to_lcg_id(1);
 
     qos_list[uint_to_five_qi(1)] = cfg;
   }
@@ -83,10 +79,6 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
     // F1-U
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
-    // MAC
-    cfg.mac          = make_default_drb_mac_lc_config();
-    cfg.mac.priority = 4;
-    cfg.mac.lcg_id   = uint_to_lcg_id(1);
 
     qos_list[uint_to_five_qi(2)] = cfg;
   }
@@ -111,8 +103,6 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
     // F1-U
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
-    // MAC
-    cfg.mac = make_default_drb_mac_lc_config();
 
     qos_list[uint_to_five_qi(5)] = cfg;
   }
@@ -131,10 +121,6 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     cfg.f1u.warn_on_drop          = warn_on_drop;
-    // MAC
-    cfg.mac          = make_default_drb_mac_lc_config();
-    cfg.mac.priority = 4;
-    cfg.mac.lcg_id   = uint_to_lcg_id(1);
 
     qos_list[uint_to_five_qi(7)] = cfg;
   }
@@ -160,8 +146,6 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
     cfg.f1u.t_notify              = 10;
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
     cfg.f1u.warn_on_drop          = warn_on_drop;
-    // MAC
-    cfg.mac = make_default_drb_mac_lc_config();
 
     qos_list[uint_to_five_qi(9)] = cfg;
   }

@@ -31,4 +31,10 @@ mac_lc_config make_default_srb_mac_lc_config(lcid_t lcid);
 /// \brief Generates default DRB MAC Logical Channel configuration for DRBs.
 mac_lc_config make_default_drb_mac_lc_config();
 
+/// \brief Generates default DRB MAC Logical Channel configuration for GBR DRBs.
+mac_lc_config make_default_gbr_drb_mac_lc_config();
+
+/// \brief Generates default DRB MAC Logical Channel configuration for non-GBR DRBs.
+mac_lc_config make_default_non_gbr_drb_mac_lc_config();
+
 } // namespace srsran

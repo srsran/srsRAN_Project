@@ -40,8 +40,8 @@ mac_lc_config srsran::make_default_srb_mac_lc_config(lcid_t lcid)
   // See TS 38.331, 9.2.1 Default SRB configurations.
   mac_cfg.priority            = lcid == LCID_SRB2 ? 3 : 1;
   mac_cfg.lcg_id              = uint_to_lcg_id(0);
-  mac_cfg.pbr                 = to_prioritized_bit_rate(65537);
-  mac_cfg.bsd                 = to_bucket_size_duration(5);
+  mac_cfg.pbr                 = prioritized_bit_rate::infinity;
+  mac_cfg.bsd                 = bucket_size_duration::ms5;
   mac_cfg.lc_sr_mask          = false;
   mac_cfg.lc_sr_delay_applied = false;
   mac_cfg.sr_id               = uint_to_sched_req_id(0);
@@ -54,10 +54,23 @@ mac_lc_config srsran::make_default_drb_mac_lc_config()
   // [Implementation-Defined] Setting priority higher than the least priority among SRBs.
   mac_cfg.priority            = 5;
   mac_cfg.lcg_id              = uint_to_lcg_id(2);
-  mac_cfg.pbr                 = to_prioritized_bit_rate(65537);
-  mac_cfg.bsd                 = to_bucket_size_duration(5);
+  mac_cfg.pbr                 = prioritized_bit_rate::infinity;
+  mac_cfg.bsd                 = bucket_size_duration::ms5;
   mac_cfg.lc_sr_mask          = false;
   mac_cfg.lc_sr_delay_applied = false;
   mac_cfg.sr_id               = uint_to_sched_req_id(0);
   return mac_cfg;
+}
+
+mac_lc_config srsran::make_default_gbr_drb_mac_lc_config()
+{
+  mac_lc_config mac_cfg{make_default_drb_mac_lc_config()};
+  mac_cfg.priority = 4;
+  mac_cfg.lcg_id   = uint_to_lcg_id(1);
+  return mac_cfg;
+}
+
+mac_lc_config srsran::make_default_non_gbr_drb_mac_lc_config()
+{
+  return make_default_drb_mac_lc_config();
 }

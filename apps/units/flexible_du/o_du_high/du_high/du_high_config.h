@@ -719,21 +719,6 @@ struct du_high_unit_expert_execution_config {
   std::vector<du_high_unit_cpu_affinities_cell_config> cell_affinities = {{}};
 };
 
-struct du_high_unit_mac_lc_config {
-  /// Logical channel priority. Values {1,...,16}. An increasing priority value indicates a lower priority level.
-  /// [Implementation-Defined] Only priority > 3 are allowed for DRBs.
-  uint8_t priority;
-  /// Logical channel group ID. Values {0,...,7}.
-  /// [Implementation-Defined] Only LCG ID > 0 are allowed for DRBs.
-  uint8_t lc_group_id;
-  /// Bucket size duration in milliseconds. Values {5, 10, 20, 50, 100, 150, 300, 500, 1000}. See TS 38.331, \c
-  /// bucketSizeDuration.
-  unsigned bucket_size_duration_ms;
-  /// Prioritized Bit rate value in kiloBytes/s. Values {0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384,
-  /// 32768, 65536, 65537}. Value 65537 means infinity. See TS 38.331, \c prioritisedBitRate.
-  unsigned prioritized_bit_rate_kBps;
-};
-
 /// RLC UM TX configuration
 struct du_high_unit_rlc_tx_am_config {
   uint16_t sn_field_length; ///< Number of bits used for sequence number
@@ -767,7 +752,6 @@ struct du_high_unit_rlc_am_config {
 struct du_high_unit_srb_config {
   unsigned                   srb_id;
   du_high_unit_rlc_am_config rlc;
-  du_high_unit_mac_lc_config mac;
 };
 
 /// F1-U configuration at DU side
@@ -806,7 +790,6 @@ struct du_high_unit_qos_config {
   five_qi_t                  five_qi = uint_to_five_qi(9);
   du_high_unit_rlc_config    rlc;
   du_high_unit_f1u_du_config f1u_du;
-  du_high_unit_mac_lc_config mac;
 };
 
 /// DU high configuration.

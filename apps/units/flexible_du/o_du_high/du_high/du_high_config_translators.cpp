@@ -458,7 +458,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     }
     const unsigned coreset1_nof_resources = cset1_l_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
     freq_resources.fill(cset1_start_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE,
-                        cset1_start_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE + coreset1_nof_resources,
+                        (cset1_start_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE) + coreset1_nof_resources,
                         true);
 
     search_space_configuration& ss2_cfg   = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
@@ -693,20 +693,6 @@ static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config&
   return out_rlc;
 }
 
-static mac_lc_config generate_mac_lc_config(const du_high_unit_mac_lc_config& in_cfg)
-{
-  mac_lc_config out_mac;
-
-  out_mac.priority            = in_cfg.priority;
-  out_mac.lcg_id              = uint_to_lcg_id(in_cfg.lc_group_id);
-  out_mac.pbr                 = to_prioritized_bit_rate(in_cfg.prioritized_bit_rate_kBps);
-  out_mac.bsd                 = to_bucket_size_duration(in_cfg.bucket_size_duration_ms);
-  out_mac.lc_sr_mask          = false;
-  out_mac.lc_sr_delay_applied = false;
-  out_mac.sr_id               = uint_to_sched_req_id(0);
-  return out_mac;
-}
-
 std::vector<slice_rrm_policy_config>
 srsran::generate_du_slicing_rrm_policy_config(span<const std::string>                    plmns,
                                               span<const du_high_unit_cell_slice_config> slice_cfg,
@@ -771,9 +757,6 @@ std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const 
     out_f1u.rlc_queue_bytes_limit =
         qos.rlc.mode == "am" ? qos.rlc.am.tx.queue_size_bytes : qos.rlc.um.tx.queue_size_bytes;
     out_f1u.warn_on_drop = config.warn_on_drop;
-
-    // Convert MAC config
-    out_cfg[qos.five_qi].mac = generate_mac_lc_config(qos.mac);
   }
   return out_cfg;
 }
@@ -786,39 +769,30 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   srb_cfg.insert(std::make_pair(srb_id_t::srb1, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb1].rlc;
-    auto& out_mac = srb_cfg[srb_id_t::srb1].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
-    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb1).mac);
   } else {
     srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
-    srb_cfg.at(srb_id_t::srb1).mac = make_default_srb_mac_lc_config(LCID_SRB1);
   }
 
   // SRB2
   srb_cfg.insert(std::make_pair(srb_id_t::srb2, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb2) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb2].rlc;
-    auto& out_mac = srb_cfg[srb_id_t::srb2].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
-    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb2).mac);
   } else {
     srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
-    srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB2);
   }
 
   // SRB3
   srb_cfg.insert(std::make_pair(srb_id_t::srb3, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb3) != config.srb_cfg.end()) {
     auto& out_rlc = srb_cfg[srb_id_t::srb3].rlc;
-    auto& out_mac = srb_cfg[srb_id_t::srb3].mac;
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
-    out_mac       = generate_mac_lc_config(config.srb_cfg.at(srb_id_t::srb3).mac);
   } else {
     srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
-    srb_cfg.at(srb_id_t::srb3).mac = make_default_srb_mac_lc_config(LCID_SRB3);
   }
 
   if (config.ntn_cfg.has_value()) {

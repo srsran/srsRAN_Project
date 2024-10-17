@@ -21,7 +21,6 @@ namespace srs_du {
 struct du_qos_config {
   rlc_config         rlc;
   srs_du::f1u_config f1u;
-  mac_lc_config      mac;
 };
 
 } // namespace srs_du

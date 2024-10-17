@@ -656,20 +656,11 @@ static void fill_du_high_f1u_qos_section(YAML::Node node, const du_high_unit_f1u
   node["backoff_timer"] = config.t_notify;
 }
 
-static void fill_du_high_mac_qos_section(YAML::Node node, const du_high_unit_mac_lc_config& config)
-{
-  node["lc_priority"]               = static_cast<unsigned>(config.priority);
-  node["lc_group_id"]               = static_cast<unsigned>(config.lc_group_id);
-  node["bucket_size_duration_ms"]   = config.bucket_size_duration_ms;
-  node["prioritized_bit_rate_kBps"] = config.prioritized_bit_rate_kBps;
-}
-
 static void fill_du_high_qos_entry(YAML::Node node, const du_high_unit_qos_config& config)
 {
   node["five_qi"] = five_qi_to_uint(config.five_qi);
   fill_du_high_rlc_qos_section(node["rlc"], config.rlc);
   fill_du_high_f1u_qos_section(node["f1u_du"], config.f1u_du);
-  fill_du_high_mac_qos_section(node["mac"], config.mac);
 }
 
 static YAML::Node get_last_entry(YAML::Node node)
@@ -704,7 +695,6 @@ static void build_du_high_sbr_section(YAML::Node& node, const std::map<srb_id_t,
     YAML::Node entry;
     entry["srb_id"] = cell.second.srb_id;
     fill_du_high_am_section(entry["rlc"], cell.second.rlc);
-    fill_du_high_mac_qos_section(entry["mac"], cell.second.mac);
     node["srbs"].push_back(entry);
   }
 }

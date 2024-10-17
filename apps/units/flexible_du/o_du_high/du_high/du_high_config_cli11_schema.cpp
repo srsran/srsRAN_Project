@@ -1449,41 +1449,14 @@ static void configure_cli11_rlc_am_args(CLI::App& app, du_high_unit_rlc_am_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_mac_args(CLI::App& app, du_high_unit_mac_lc_config& mac_params)
-{
-  add_option(app,
-             "--lc_priority",
-             mac_params.priority,
-             "Logical Channel priority. An increasing priority value indicates a lower priority level")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 16));
-  add_option(app, "--lc_group_id", mac_params.lc_group_id, "Logical Channel Group id")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 7));
-  add_option(
-      app, "--bucket_size_duration_ms", mac_params.bucket_size_duration_ms, "Bucket size duration in milliseconds")
-      ->capture_default_str()
-      ->check(CLI::IsMember({5, 10, 20, 50, 100, 150, 300, 500, 1000}));
-  add_option(app,
-             "--prioritized_bit_rate_kBps",
-             mac_params.prioritized_bit_rate_kBps,
-             "Prioritized bit rate in kBps. Value 65537 means infinity")
-      ->capture_default_str()
-      ->check(CLI::IsMember({0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 2768, 65536, 65537}));
-}
-
 static void configure_cli11_srb_args(CLI::App& app, du_high_unit_srb_config& srb_params)
 {
   add_option(app, "--srb_id", srb_params.srb_id, "SRB Id")->capture_default_str()->check(CLI::IsMember({1, 2}));
   CLI::App* rlc_subcmd = add_subcommand(app, "rlc", "RLC parameters");
   configure_cli11_rlc_am_args(*rlc_subcmd, srb_params.rlc);
 
-  CLI::App* mac_subcmd = add_subcommand(app, "mac", "MAC parameters");
-  configure_cli11_mac_args(*mac_subcmd, srb_params.mac);
-
   // Require RLC configuration.
   app.needs(rlc_subcmd);
-  app.needs(mac_subcmd);
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_config& metrics_params)
@@ -1628,14 +1601,9 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   CLI::App* f1u_du_subcmd = add_subcommand(app, "f1u_du", "F1-U parameters at DU side");
   configure_cli11_f1u_du_args(*f1u_du_subcmd, qos_params.f1u_du);
 
-  // MAC section.
-  CLI::App* mac_subcmd = add_subcommand(app, "mac", "MAC parameters");
-  configure_cli11_mac_args(*mac_subcmd, qos_params.mac);
-
   // Mark the application that these subcommands need to be present.
   app.needs(rlc_subcmd);
   app.needs(f1u_du_subcmd);
-  app.needs(mac_subcmd);
 }
 
 static void configure_cli11_e2_args(CLI::App& app, e2_config& e2_params)
