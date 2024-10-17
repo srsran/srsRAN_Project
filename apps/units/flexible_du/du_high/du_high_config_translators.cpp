@@ -825,11 +825,12 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
 
 mac_expert_config srsran::generate_mac_expert_config(const du_high_unit_config& config)
 {
-  mac_expert_config                    out_cfg = {};
-  const du_high_unit_base_cell_config& cell    = config.cells_cfg.front().cell;
-  out_cfg.configs.push_back({.max_consecutive_dl_kos  = cell.pdsch_cfg.max_consecutive_kos,
-                             .max_consecutive_ul_kos  = cell.pusch_cfg.max_consecutive_kos,
-                             .max_consecutive_csi_dtx = cell.pucch_cfg.max_consecutive_kos});
+  mac_expert_config out_cfg = {};
+  for (const auto& cell : config.cells_cfg) {
+    out_cfg.configs.push_back({.max_consecutive_dl_kos  = cell.cell.pdsch_cfg.max_consecutive_kos,
+                               .max_consecutive_ul_kos  = cell.cell.pusch_cfg.max_consecutive_kos,
+                               .max_consecutive_csi_dtx = cell.cell.pucch_cfg.max_consecutive_kos});
+  }
 
   return out_cfg;
 }

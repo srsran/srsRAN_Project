@@ -34,12 +34,12 @@ build_mac_fapi_adaptor(unsigned                                                 
       fapi_adaptor::create_mac_fapi_adaptor_factory();
   report_error_if_not(adaptor_factory, "Invalid MAC adaptor factory.");
 
-  fapi_adaptor::mac_fapi_adaptor_factory_config mac_fapi_config;
+  fapi_adaptor::mac_fapi_adaptor_config mac_fapi_config;
   mac_fapi_config.sector_id     = sector_id;
   mac_fapi_config.cell_nof_prbs = cell_nof_prbs;
   mac_fapi_config.scs           = scs;
 
-  fapi_adaptor::mac_fapi_adaptor_factory_dependencies mac_fapi_deps;
+  fapi_adaptor::mac_fapi_adaptor_dependencies mac_fapi_deps;
   mac_fapi_deps.gateway           = &gateway;
   mac_fapi_deps.last_msg_notifier = &last_msg_notifier;
   mac_fapi_deps.pm_mapper         = std::move(pm_mapper);

@@ -25,7 +25,7 @@ namespace fapi_adaptor {
 class fapi_to_mac_data_msg_translator : public fapi::slot_data_message_notifier
 {
 public:
-  explicit fapi_to_mac_data_msg_translator(subcarrier_spacing scs_);
+  fapi_to_mac_data_msg_translator(subcarrier_spacing scs_, unsigned sector_);
 
   // See interface for documentation.
   void on_rx_data_indication(const fapi::rx_data_indication_message& msg) override;
@@ -53,6 +53,7 @@ public:
 
 private:
   const subcarrier_spacing                                     scs;
+  const unsigned                                               sector;
   std::reference_wrapper<mac_cell_rach_handler>                rach_handler;
   std::reference_wrapper<mac_pdu_handler>                      pdu_handler;
   std::reference_wrapper<mac_cell_control_information_handler> cell_control_handler;
