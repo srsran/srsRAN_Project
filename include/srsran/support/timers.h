@@ -49,7 +49,7 @@ class timer_manager
   using cmd_id_t = uint32_t;
 
   /// Constant used to represent invalid timer durations.
-  static constexpr timer_duration INVALID_DURATION = std::numeric_limits<timer_duration>::max();
+  static constexpr timer_duration INVALID_DURATION = timer_duration::max();
 
   /// Possible states for a timer.
   enum class state_t { stopped, running, expired };
