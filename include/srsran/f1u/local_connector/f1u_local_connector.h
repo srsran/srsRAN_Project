@@ -18,6 +18,7 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/format/fmt_optional.h"
 #include <cstdint>
+#include <mutex>
 #include <unordered_map>
 
 namespace srsran {

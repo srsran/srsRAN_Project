@@ -18,6 +18,7 @@
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
+#include <mutex>
 #include <set>
 
 namespace srsran {

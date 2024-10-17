@@ -17,7 +17,6 @@
 #include "srsran/support/srsran_assert.h"
 #include <chrono>
 #include <deque>
-#include <mutex>
 #include <utility>
 #include <variant>
 
