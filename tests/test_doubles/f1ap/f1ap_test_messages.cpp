@@ -27,15 +27,14 @@ static byte_buffer generate_rrc_container(uint32_t pdcp_sn, unsigned pdu_len)
       pdcp_sn_size::size12bits, true, pdcp_sn, pdu_len, test_rgen::uniform_int<uint8_t>());
 }
 
-gnb_du_served_cells_item_s
-srsran::test_helpers::generate_served_cells_item(nr_cell_identity nci, pci_t nrpci, unsigned tac)
+gnb_du_served_cells_item_s srsran::test_helpers::generate_served_cells_item(const served_cell_item_info& info)
 {
   gnb_du_served_cells_item_s served_cells_item;
   served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
-  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nci.value());
-  served_cells_item.served_cell_info.nr_pci              = nrpci;
+  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(info.nci.value());
+  served_cells_item.served_cell_info.nr_pci              = info.pci;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
-  served_cells_item.served_cell_info.five_gs_tac.from_number(tac);
+  served_cells_item.served_cell_info.five_gs_tac.from_number(info.tac);
 
   served_plmns_item_s served_plmn;
   served_plmn.plmn_id.from_string("00f110");
@@ -63,8 +62,8 @@ srsran::test_helpers::generate_served_cells_item(nr_cell_identity nci, pci_t nrp
   return served_cells_item;
 }
 
-f1ap_message
-srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, nr_cell_identity nci, pci_t pci, unsigned tac)
+f1ap_message srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t                               gnb_du_id,
+                                                             const std::vector<served_cell_item_info>& cells)
 {
   f1ap_message msg;
   msg.pdu.set_init_msg();
@@ -77,9 +76,11 @@ srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, nr_cell_i
   setup_req->gnb_du_name.from_string("srsDU");
   setup_req->gnb_du_rrc_version.latest_rrc_version.from_number(1);
   setup_req->gnb_du_served_cells_list_present = true;
-  setup_req->gnb_du_served_cells_list.resize(1);
-  setup_req->gnb_du_served_cells_list[0].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
-  setup_req->gnb_du_served_cells_list[0].value().gnb_du_served_cells_item() = generate_served_cells_item(nci, pci, tac);
+  setup_req->gnb_du_served_cells_list.resize(cells.size());
+  for (unsigned i = 0; i != cells.size(); ++i) {
+    setup_req->gnb_du_served_cells_list[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
+    setup_req->gnb_du_served_cells_list[i].value().gnb_du_served_cells_item() = generate_served_cells_item(cells[i]);
+  }
 
   return msg;
 }

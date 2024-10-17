@@ -43,7 +43,7 @@ public:
     EXPECT_TRUE(ret.has_value());
     target_du_idx = ret.value();
     EXPECT_TRUE(this->run_f1_setup(
-        target_du_idx, int_to_gnb_du_id(0x22), nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(), 2));
+        target_du_idx, int_to_gnb_du_id(0x22), {{nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(), 2}}));
 
     // Setup CU-UP.
     ret = connect_new_cu_up();

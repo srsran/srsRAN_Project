@@ -15,6 +15,7 @@
 #include "test_doubles/mock_amf.h"
 #include "test_doubles/mock_cu_up.h"
 #include "test_doubles/mock_du.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -88,10 +89,9 @@ public:
   /// Drop TNL connection between a DU and the CU-CP.
   bool drop_du_connection(unsigned du_idx);
   /// Run F1 setup procedure to completion.
-  bool run_f1_setup(unsigned         du_idx,
-                    gnb_du_id_t      gnb_du_id = int_to_gnb_du_id(0x11),
-                    nr_cell_identity nci       = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value(),
-                    pci_t            pci       = 0);
+  bool run_f1_setup(unsigned                                         du_idx,
+                    gnb_du_id_t                                      gnb_du_id = int_to_gnb_du_id(0x11),
+                    std::vector<test_helpers::served_cell_item_info> cells = {test_helpers::served_cell_item_info{}});
 
   /// Establish a TNL connection between a CU-UP and the CU-CP.
   std::optional<unsigned> connect_new_cu_up();
