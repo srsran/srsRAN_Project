@@ -22,8 +22,10 @@
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
-namespace srs_cu_cp {
 
+class pdcp_metrics_notifier;
+
+namespace srs_cu_cp {
 class n2_connection_client;
 class ngap_repository;
 
@@ -129,6 +131,8 @@ struct cu_cp_configuration {
   e2_connection_client* e2_client = nullptr;
   /// E2 CU metrics interface.
   e2_cu_metrics_interface* e2_cu_metric_iface = nullptr;
+  /// PDCP metrics notifier.
+  pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
 };
 
 } // namespace srs_cu_cp

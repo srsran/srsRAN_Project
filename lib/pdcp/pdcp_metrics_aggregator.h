@@ -14,6 +14,8 @@
 #include "srsran/pdcp/pdcp_metrics.h"
 #include "srsran/pdcp/pdcp_rx_metrics.h"
 #include "srsran/pdcp/pdcp_tx_metrics.h"
+#include "srsran/support/executors/task_executor.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 class pdcp_metrics_aggregator

@@ -14,7 +14,7 @@
 #include "apps/services/metrics/metrics_properties.h"
 #include "apps/services/metrics/metrics_set.h"
 #include "srsran/adt/span.h"
-#include "srsran/pdcp/pdcp_metrics.h"
+#include "srsran/pdcp/pdcp_entity.h"
 
 namespace srsran {
 

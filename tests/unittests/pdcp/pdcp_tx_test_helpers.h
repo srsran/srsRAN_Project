@@ -13,6 +13,7 @@
 #include "lib/pdcp/pdcp_entity_tx.h"
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>

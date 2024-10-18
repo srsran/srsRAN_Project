@@ -46,6 +46,8 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
+#include "apps/services/metrics/metrics_manager.h"
+#include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/services/worker_manager.h"
 #include "apps/services/worker_manager_config.h"
@@ -312,20 +314,29 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw_cu =
       create_cu_e2_client_gateway(cu_cfg.e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap);
 
+  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+
   // Create CU-CP config.
   cu_cp_build_dependencies cu_cp_dependencies;
-  cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
-  cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.timers         = cu_timers;
-  cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
-  cu_cp_dependencies.broker         = epoll_broker.get();
-  cu_cp_dependencies.e2_gw          = e2_gw_cu.get();
+  cu_cp_dependencies.cu_cp_executor   = workers.cu_cp_exec;
+  cu_cp_dependencies.cu_cp_e2_exec    = workers.cu_cp_e2_exec;
+  cu_cp_dependencies.timers           = cu_timers;
+  cu_cp_dependencies.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
+  cu_cp_dependencies.broker           = epoll_broker.get();
+  cu_cp_dependencies.e2_gw            = e2_gw_cu.get();
+  cu_cp_dependencies.metrics_notifier = &metrics_notifier_forwarder;
+
   // create CU-CP.
   auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
   srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
 
   // Create console helper object for commands and metrics printing.
   app_services::stdin_command_dispatcher command_parser(*epoll_broker, cu_cp_obj_and_cmds.commands);
+
+  app_services::metrics_manager metrics_mngr(
+      srslog::fetch_basic_logger("CU"), *workers.metrics_hub_exec, cu_cp_obj_and_cmds.metrics);
+  // Connect the forwarder to the metrics manager.
+  metrics_notifier_forwarder.connect(metrics_mngr);
 
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());

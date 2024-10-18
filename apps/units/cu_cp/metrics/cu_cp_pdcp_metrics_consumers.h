@@ -11,10 +11,9 @@
 #pragma once
 
 #include "cu_cp_pdcp_metrics.h"
-#include "srsran/srslog/log_channel.h"
-#include "srsran/srslog/logger.h"
 
 namespace srsran {
+class pdcp_metrics_notifier;
 
 /// Consumer for the E2 RLC metrics.
 class pdcp_metrics_consumer_e2 : public app_services::metrics_consumer

@@ -20,3 +20,4 @@ set(SOURCES
 
 add_library(srsran_cu_cp_app_unit STATIC ${SOURCES})
 target_include_directories(srsran_cu_cp_app_unit PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srsran_cu_cp_app_unit srsran_cu_cp_unit_metrics_helpers)

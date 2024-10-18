@@ -17,6 +17,8 @@
 
 namespace srsran {
 
+struct pdcp_metrics_container;
+
 /// \brief Notifier interface used to report RLC metrics.
 class pdcp_metrics_notifier
 {

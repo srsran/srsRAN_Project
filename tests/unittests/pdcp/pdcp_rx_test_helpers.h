@@ -14,6 +14,7 @@
 #include "lib/pdcp/pdcp_interconnect.h"
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
