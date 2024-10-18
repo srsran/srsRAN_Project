@@ -72,6 +72,9 @@ public:
 
   void set_fallback_state(bool in_fallback);
 
+  bool is_dl_enabled(slot_point dl_slot) const;
+  bool is_ul_enabled(slot_point ul_slot) const;
+
   struct dl_ack_info_result {
     dl_harq_process_handle::status_update update;
     dl_harq_process_handle                h_dl;

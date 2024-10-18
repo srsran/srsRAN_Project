@@ -111,6 +111,22 @@ void ue_cell::set_fallback_state(bool set_fallback)
   logger.debug("ue={} rnti={}: {} fallback mode", ue_index, rnti(), in_fallback_mode ? "Entering" : "Leaving");
 }
 
+bool ue_cell::is_dl_enabled(slot_point dl_slot) const
+{
+  if (not active) {
+    return false;
+  }
+  return cfg().is_dl_enabled(dl_slot);
+}
+
+bool ue_cell::is_ul_enabled(slot_point ul_slot) const
+{
+  if (not active) {
+    return false;
+  }
+  return cfg().is_ul_enabled(ul_slot);
+}
+
 std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
                                                                        mac_harq_ack_report_status ack_value,
                                                                        unsigned                   harq_bit_idx,

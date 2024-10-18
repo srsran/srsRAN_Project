@@ -91,16 +91,18 @@ private:
 class ue_cell_configuration
 {
 public:
-  ue_cell_configuration(rnti_t                     crnti_,
-                        const cell_configuration&  cell_cfg_common_,
-                        const serving_cell_config& serv_cell_cfg_,
-                        bool                       multi_cells_configured = false);
+  ue_cell_configuration(rnti_t                                crnti_,
+                        const cell_configuration&             cell_cfg_common_,
+                        const serving_cell_config&            serv_cell_cfg_,
+                        const std::optional<meas_gap_config>& meas_gap_cfg_          = std::nullopt,
+                        bool                                  multi_cells_configured = false);
   ue_cell_configuration(const ue_cell_configuration& other);
   ue_cell_configuration(ue_cell_configuration&&)                 = delete;
   ue_cell_configuration& operator=(const ue_cell_configuration&) = delete;
   ue_cell_configuration& operator=(ue_cell_configuration&&)      = delete;
 
-  void reconfigure(const serving_cell_config& cell_cfg_ded_);
+  void reconfigure(const serving_cell_config&            cell_cfg_ded_,
+                   const std::optional<meas_gap_config>& meas_gaps = std::nullopt);
 
   void set_rrm_config(const sched_ue_resource_alloc_config& ue_res_alloc_cfg);
 
@@ -147,6 +149,12 @@ public:
 
   /// Get the number of active DL ports for this UE.
   unsigned get_nof_dl_ports() const { return nof_dl_ports; }
+
+  /// Determines whether DL allocations are possible in the provided slot.
+  bool is_dl_enabled(slot_point dl_slot) const;
+
+  /// Determines whether UL allocations are possible in the provided slot.
+  bool is_ul_enabled(slot_point ul_slot) const;
 
   /// Determines the use of transform precoding for DCI Format 0_1 for C-RNTI.
   bool use_pusch_transform_precoding_dci_0_1() const
@@ -209,8 +217,9 @@ private:
   void configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_uplink_dedicated& bwp_ul_ded);
 
   /// Dedicated cell configuration.
-  serving_cell_config cell_cfg_ded;
-  bool                multi_cells_configured;
+  serving_cell_config            cell_cfg_ded;
+  std::optional<meas_gap_config> meas_gap_cfg;
+  bool                           multi_cells_configured;
 
   /// Lookup table for BWP params indexed by BWP-Id.
   std::array<bwp_info, MAX_NOF_BWPS> bwp_table = {};
