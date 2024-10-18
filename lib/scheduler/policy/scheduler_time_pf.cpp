@@ -41,7 +41,8 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
       ue_history_db.emplace(u.ue_index(), ue_ctxt{u.ue_index(), u.get_pcell().cell_index, this});
     }
     ue_ctxt& ctxt = ue_history_db[u.ue_index()];
-    ctxt.compute_dl_prio(u, slice_candidate.id());
+    ctxt.compute_dl_prio(
+        u, slice_candidate.id(), res_grid.get_pdcch_slot(u.get_pcell().cell_index), slice_candidate.get_slot_tx());
     dl_queue.push(&ctxt);
   }
 
@@ -90,7 +91,8 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
       ue_history_db.emplace(u.ue_index(), ue_ctxt{u.ue_index(), u.get_pcell().cell_index, this});
     }
     ue_ctxt& ctxt = ue_history_db[u.ue_index()];
-    ctxt.compute_ul_prio(u, res_grid, slice_candidate.id());
+    ctxt.compute_ul_prio(
+        u, slice_candidate.id(), res_grid.get_pdcch_slot(u.get_pcell().cell_index), slice_candidate.get_slot_tx());
     ul_queue.push(&ctxt);
   }
 
@@ -248,7 +250,10 @@ static double compute_ul_rate_weight(const slice_ue& u, double current_ue_ul_avg
   return qos_gbr_rate_sum / current_ue_ul_avg_rate;
 }
 
-void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id)
+void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
+                                                 ran_slice_id_t  slice_id,
+                                                 slot_point      pdcch_slot,
+                                                 slot_point      pdsch_slot)
 {
   dl_retx_h.reset();
   has_empty_dl_harq    = false;
@@ -260,6 +265,10 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
   srsran_assert(ue_cc->is_active() and not ue_cc->is_in_fallback_mode(),
                 "policy scheduler called for UE={} in fallback",
                 ue_cc->ue_index);
+  if (not ue_cc->is_dl_enabled(pdcch_slot) or not ue_cc->is_dl_enabled(pdsch_slot)) {
+    // Cannot allocate PDCCH/PDSCH for this UE in this slot.
+    return;
+  }
 
   std::optional<dl_harq_process_handle> oldest_dl_harq_candidate;
   for (unsigned i = 0; i != ue_cc->harqs.nof_dl_harqs(); ++i) {
@@ -330,9 +339,10 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
   has_empty_dl_harq = false;
 }
 
-void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
-                                                 const ue_resource_grid_view& res_grid,
-                                                 ran_slice_id_t               slice_id)
+void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
+                                                 ran_slice_id_t  slice_id,
+                                                 slot_point      pdcch_slot,
+                                                 slot_point      pusch_slot)
 {
   ul_retx_h.reset();
   has_empty_ul_harq    = false;
@@ -345,6 +355,10 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
   srsran_assert(ue_cc->is_active() and not ue_cc->is_in_fallback_mode(),
                 "policy scheduler called for UE={} in fallback",
                 ue_cc->ue_index);
+  if (not ue_cc->is_dl_enabled(pdcch_slot) or not ue_cc->is_ul_enabled(pusch_slot)) {
+    // Cannot allocate PDCCH/PUSCH for this UE in the provided slots.
+    return;
+  }
 
   std::optional<ul_harq_process_handle> oldest_ul_harq_candidate;
   for (unsigned i = 0; i != ue_cc->harqs.nof_ul_harqs(); ++i) {
@@ -376,9 +390,8 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
     const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_res_list.front();
     // [Implementation-defined] We assume nof. HARQ ACK bits is zero at PUSCH slot as a simplification in calculating
     // estimated instantaneous achievable rate.
-    constexpr unsigned nof_harq_ack_bits  = 0;
-    const bool         is_csi_report_slot = csi_helper::is_csi_reporting_slot(
-        u.get_pcell().cfg().cfg_dedicated(), res_grid.get_pusch_slot(cell_index, pusch_td_cfg.k2));
+    constexpr unsigned nof_harq_ack_bits = 0;
+    const bool is_csi_report_slot = csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_slot);
 
     pusch_config_params pusch_cfg;
     switch (ss_info->get_ul_dci_format()) {

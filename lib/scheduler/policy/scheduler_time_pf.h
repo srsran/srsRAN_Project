@@ -50,9 +50,9 @@ private:
     [[nodiscard]] double total_ul_avg_rate() const { return ul_nof_samples == 0 ? 0 : total_ul_avg_rate_; }
 
     /// Computes the priority of the UE to be scheduled in DL based on the QoS and proportional fair metric.
-    void compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id);
+    void compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id, slot_point pdcch_slot, slot_point pdsch_slot);
     /// Computes the priority of the UE to be scheduled in UL based on the proportional fair metric.
-    void compute_ul_prio(const slice_ue& u, const ue_resource_grid_view& res_grid, ran_slice_id_t slice_id);
+    void compute_ul_prio(const slice_ue& u, ran_slice_id_t slice_id, slot_point pdcch_slot, slot_point pusch_slot);
 
     void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info, const slice_ue& u);
     void save_ul_alloc(uint32_t alloc_bytes);
