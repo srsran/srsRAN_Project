@@ -10,7 +10,7 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   labels:
-    - kubernetes.io/hostname=srskit2
+    - kubernetes.io/hostname=dell-xr12
   requirements:
     arch: amd64
     cpu:
