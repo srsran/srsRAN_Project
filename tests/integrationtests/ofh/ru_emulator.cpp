@@ -12,6 +12,7 @@
 #include "ru_emulator_appconfig.h"
 #include "ru_emulator_cli11_schema.h"
 #include "ru_emulator_rx_window_checker.h"
+#include "ru_emulator_seq_id_checker.h"
 #include "ru_emulator_timing_notifier.h"
 #include "ru_emulator_transceiver.h"
 #include "srsran/adt/circular_map.h"
@@ -33,6 +34,7 @@
 #include <arpa/inet.h>
 #include <random>
 #include <srsran/adt/to_array.h>
+#include <srsran/ofh/ofh_factories.h>
 #include <srsran/ran/cyclic_prefix.h>
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -92,6 +94,25 @@ struct ru_emulator_config {
   unsigned vlan_tag;
   /// Timing parameters.
   ru_em_rx_window_timing_parameters timing_params;
+  /// DL, UL and PRACH ports.
+  std::vector<unsigned> dl_eaxc;
+  std::vector<unsigned> ul_eaxc;
+  std::vector<unsigned> prach_eaxc;
+};
+
+/// RU emulator dependencies.
+struct ru_emulator_dependencies {
+  /// Logger.
+  srslog::basic_logger* logger = nullptr;
+  /// RU emulators executor.
+  task_executor* executor = nullptr;
+  /// Ethernet transmitter.
+  ru_emulator_transceiver* transceiver = nullptr;
+  /// Sequence identifier checkers.
+  std::unique_ptr<ru_emulator_seq_id_checker> dl_up_seq_id_checker;
+  std::unique_ptr<ru_emulator_seq_id_checker> dl_cp_seq_id_checker;
+  std::unique_ptr<ru_emulator_seq_id_checker> ul_cp_seq_id_checker;
+  std::unique_ptr<ru_emulator_seq_id_checker> prach_seq_id_checker;
 };
 
 /// Helper structure used to group OFH header parameters.
@@ -106,16 +127,13 @@ struct header_parameters {
 struct rx_message_info {
   unsigned          eaxc;
   data_direction    direction;
+  filter_index_type filter_index;
   message_type      type;
   slot_symbol_point symbol_point{{}, 0, MAX_NOF_SYMBOLS};
   unsigned          nof_symbols;
+  uint8_t           compr_header;
+  uint8_t           seq_id;
 };
-
-/// \brief OFH packet decoding failure codes.
-/// drop    - packet must be dropped (it is not an eCPRI OFH packet).
-/// corrupt - packet contains OFH message with valid seqID, but contains either an undefined in the ORAN specification
-///           value, unsupported value (e.g. compression parameters) or unconfigured value (e.g. eAxC value).
-enum class decoder_error_codes { drop, corrupt };
 
 /// One symbol may require up to two byte buffers depending on configured compression parameters.
 using symbol_buffer = static_vector<std::vector<uint8_t>, MAX_NOF_PACKETS_PER_UPLANE_MESSAGE>;
@@ -124,6 +142,28 @@ using symbol_buffer = static_vector<std::vector<uint8_t>, MAX_NOF_PACKETS_PER_UP
 using eaxc_buffers = static_vector<symbol_buffer, MAX_NOF_SYMBOLS>;
 
 } // namespace
+
+/// Returns structure with RU emulators dependencies.
+static ru_emulator_dependencies resolve_ru_emulator_dependencies(srslog::basic_logger&    logger,
+                                                                 task_executor&           executor,
+                                                                 ru_emulator_transceiver& transceiver)
+{
+  ru_emulator_dependencies dependencies;
+
+  dependencies.logger      = &logger;
+  dependencies.executor    = &executor;
+  dependencies.transceiver = &transceiver;
+  dependencies.dl_cp_seq_id_checker =
+      std::make_unique<ru_emulator_seq_id_checker>("DL CP", logger, ofh::create_sequence_id_checker());
+  dependencies.dl_up_seq_id_checker =
+      std::make_unique<ru_emulator_seq_id_checker>("DL UP", logger, ofh::create_sequence_id_checker());
+  dependencies.ul_cp_seq_id_checker =
+      std::make_unique<ru_emulator_seq_id_checker>("UL CP", logger, ofh::create_sequence_id_checker());
+  dependencies.prach_seq_id_checker =
+      std::make_unique<ru_emulator_seq_id_checker>("PRACH", logger, ofh::create_sequence_id_checker());
+
+  return dependencies;
+}
 
 /// Fills the given array with random bytes.
 static void fill_random_data(span<uint8_t> frame, unsigned seed)
@@ -238,6 +278,7 @@ static std::vector<eaxc_buffers> generate_test_data(const ru_emulator_config& cf
   return test_data;
 }
 
+/// Converts timing parameters expressed in microseconds into the ones expressed in number of OFDM symbols.
 static ru_em_rx_window_timing_parameters rx_timing_window_params_us_to_symbols(std::chrono::microseconds T2a_max_cp_dl,
                                                                                std::chrono::microseconds T2a_min_cp_dl,
                                                                                std::chrono::microseconds T2a_max_cp_ul,
@@ -259,43 +300,60 @@ static ru_em_rx_window_timing_parameters rx_timing_window_params_us_to_symbols(s
   return rx_window_timing_params;
 }
 
-/// Analyzes content of received OFH packets.
-/// Returns decoded message parameters on success, otherwise an error code (see \c decoder_error_codes).
-static expected<rx_message_info, decoder_error_codes>
-decode_rx_message(span<const uint8_t> packet, span<const unsigned> ul_eaxc, srslog::basic_logger& logger)
+/// \brief Checks whether received OFH packet should be dropped or processed by the RU emulator.
+///
+/// Packet must be dropped if it is not an eCPRI OFH packet.
+///
+/// \param packet A packet received on Ethernet port.
+/// \param logger RU emulator's logger instance.
+///
+/// \return true if packet should be dropped, false otherwise.
+static bool should_packet_be_dropped(span<const uint8_t> packet, srslog::basic_logger& logger)
 {
-  rx_message_info message_info;
-
   // Drop non OFH packet.
   if (packet.size() < 26) {
     logger.debug("Dropping packet of size smaller than 26 bytes");
-    return make_unexpected(decoder_error_codes::drop);
+    return true;
   }
 
   // Verify the Ethernet type is eCPRI.
   uint16_t eth_type = (uint16_t(packet[12]) << 8u) | packet[13];
   if (eth_type != ECPRI_ETH_TYPE) {
     logger.debug("Dropping packet as it is not of eCPRI type");
-    return make_unexpected(decoder_error_codes::drop);
+    return true;
   }
 
-  // Check the filter index in the byte 26, bits 0-3.
+  return false;
+}
+
+/// \brief Analyzes content of received OFH packets.
+///
+/// \param message_info  Decoded message parameters.
+/// \param packet        A packet received on Ethernet port.
+/// \param logger        RU emulator's logger instance.
+///
+/// \return true if passed message was decoded successfully, false otherwise.
+static bool decode_rx_message(rx_message_info& message_info, span<const uint8_t> packet, srslog::basic_logger& logger)
+{
+  // Decode and check the filter index in the byte 26, bits 0-3.
   auto filter_index = static_cast<filter_index_type>(packet[22] & 0x0f);
-  if (filter_index != filter_index_type::standard_channel_filter) {
-    logger.warning("Packet is corrupt: non-standard filter index = {} decoded", filter_index);
-    return make_unexpected(decoder_error_codes::corrupt);
+  if (filter_index != filter_index_type::standard_channel_filter && !is_a_prach_message(filter_index)) {
+    logger.warning("Packet is corrupt: unknown filter index = {} decoded", filter_index);
+    return false;
   }
+  message_info.filter_index = filter_index;
 
+  // Decode and check message type.
   uint8_t type = packet[15];
   if (type != uint8_t(ecpri::message_type::rt_control_data) && type != uint8_t(ecpri::message_type::iq_data)) {
     logger.warning("Packet is corrupt: unknown eCPRI message type = {} decoded", type);
-    return make_unexpected(decoder_error_codes::corrupt);
+    return false;
   }
   message_info.type = static_cast<ecpri::message_type>(type) == ecpri::message_type::rt_control_data
                           ? message_type::control_plane
                           : message_type::user_plane;
 
-  // Check direction, which is codified in the byte 26, bit 7.
+  // Decode direction, which is codified in the byte 26, bit 7.
   message_info.direction = static_cast<data_direction>((packet[22] & 0x80) >> 7u);
   logger.debug("Packet direction is {}", message_info.direction == data_direction::uplink ? "uplink" : "downlink");
 
@@ -314,40 +372,19 @@ decode_rx_message(span<const uint8_t> packet, span<const unsigned> ul_eaxc, srsl
   auto slot                 = slot_point(to_numerology_value(subcarrier_spacing::kHz30), frame, subframe, slot_id);
   message_info.symbol_point = {slot, symbol_id, MAX_NOF_SYMBOLS};
 
-  if (!message_info.symbol_point.get_slot().valid() || !message_info.symbol_point.is_valid()) {
-    logger.warning("Packet is corrupt: incorrect timestamp = {}:{}",
-                   message_info.symbol_point.get_slot(),
-                   message_info.symbol_point.get_symbol_index());
-    return make_unexpected(decoder_error_codes::corrupt);
-  }
+  // Peek number of symbols.
+  message_info.nof_symbols = (packet[35] & 0xf);
 
-  // Following parameters are only checked for UL C-Plane messages.
-  if (message_info.direction == data_direction::uplink && message_info.type == message_type::control_plane) {
-    // Peek the eAxC.
-    message_info.eaxc = packet[19];
+  // Peek the eAxC.
+  message_info.eaxc = packet[19];
 
-    if (std::find(ul_eaxc.begin(), ul_eaxc.end(), message_info.eaxc) == ul_eaxc.end()) {
-      logger.warning("Packet is corrupt: received eAxC = '{}' is not configured in the RU emulator", message_info.eaxc);
-      return make_unexpected(decoder_error_codes::corrupt);
-    }
+  // Peek sequence identifier.
+  message_info.seq_id = packet[20];
 
-    // Peek number of symbols.
-    message_info.nof_symbols = (packet[35] & 0xf);
-    if (message_info.nof_symbols > MAX_NOF_SYMBOLS) {
-      logger.warning("Packet is corrupt: incorrect number of symbols = {}", message_info.nof_symbols);
-      return make_unexpected(decoder_error_codes::corrupt);
-    }
+  // Peek compression header.
+  message_info.compr_header = packet[28];
 
-    // For UL C-Plane message check also compression parameters.
-    uint8_t compr_header = packet[28];
-    if (std::find(SUPPORTED_UL_CMPR_HDR.begin(), SUPPORTED_UL_CMPR_HDR.end(), compr_header) ==
-        SUPPORTED_UL_CMPR_HDR.end()) {
-      logger.warning("Packet is corrupt: unsupported UL compression parameters = {}", compr_header);
-      return make_unexpected(decoder_error_codes::corrupt);
-    }
-  }
-
-  return message_info;
+  return true;
 }
 
 namespace {
@@ -355,41 +392,28 @@ namespace {
 /// RU emulator receives OFH traffic and replies with UL packets to a DU.
 class ru_emulator : public frame_notifier
 {
-  /// Helper class that represents a KPI counter.
-  class kpi_counter
-  {
-    std::atomic<uint64_t> counter{0};
-    uint64_t              last_value_printed = 0U;
-
-  public:
-    uint64_t get_value()
-    {
-      uint64_t current_value = counter.load(std::memory_order_relaxed);
-      uint64_t total         = current_value - last_value_printed;
-      last_value_printed     = current_value;
-      return total;
-    }
-
-    void increment(unsigned n = 1) { counter.fetch_add(n, std::memory_order_relaxed); }
-  };
+  using kpi_counter = ru_emu_stats::kpi_counter;
 
   srslog::basic_logger&    logger;
   task_executor&           executor;
   ru_emulator_transceiver& transceiver;
+
+  // RU emulator configuration.
+  const ru_emulator_config cfg;
 
   // Timing window checkers, store statistics of early/late/on-time packets.
   ru_emulator_rx_window_checker dl_cp_window_checker;
   ru_emulator_rx_window_checker dl_up_window_checker;
   ru_emulator_rx_window_checker ul_cp_window_checker;
 
-  // RU emulator configuration.
-  const ru_emulator_config cfg;
   // Pre-generated test data for each symbol for each configured eAxC.
   std::vector<eaxc_buffers> test_data;
   // Keeps track of last used seq_id for each eAxC.
   static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
-  // Stores the list of configured eAxC.
+  // Stores the list of configured eAxC for uplink, downlink and PRACH.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
 
   // Other KPI counters.
   kpi_counter rx_total_counter;
@@ -397,24 +421,41 @@ class ru_emulator : public frame_notifier
   kpi_counter corrupt_counter;
   kpi_counter dropped_counter;
 
+  // Sequence identifier checkers.
+  std::unique_ptr<ru_emulator_seq_id_checker> dl_up_seq_id_checker;
+  std::unique_ptr<ru_emulator_seq_id_checker> dl_cp_seq_id_checker;
+  std::unique_ptr<ru_emulator_seq_id_checker> ul_cp_seq_id_checker;
+  std::unique_ptr<ru_emulator_seq_id_checker> prach_seq_id_checker;
+
 public:
-  ru_emulator(srslog::basic_logger&    logger_,
-              task_executor&           executor_,
-              ru_emulator_transceiver& transceiver_,
-              ru_emulator_config       cfg_,
-              std::vector<unsigned>    ul_eaxc_) :
-    logger(logger_),
-    executor(executor_),
-    transceiver(transceiver_),
+  ru_emulator(ru_emulator_dependencies&& dependencies, ru_emulator_config cfg_) :
+    logger(*dependencies.logger),
+    executor(*dependencies.executor),
+    transceiver(*dependencies.transceiver),
+    cfg(cfg_),
     dl_cp_window_checker({cfg_.timing_params.sym_cp_dl_end, cfg_.timing_params.sym_cp_dl_start}),
     dl_up_window_checker({cfg_.timing_params.sym_up_dl_end, cfg_.timing_params.sym_up_dl_start}),
     ul_cp_window_checker({cfg_.timing_params.sym_cp_ul_end, cfg_.timing_params.sym_cp_ul_start}),
-    cfg(cfg_)
+
+    dl_up_seq_id_checker(std::move(dependencies.dl_up_seq_id_checker)),
+    dl_cp_seq_id_checker(std::move(dependencies.dl_cp_seq_id_checker)),
+    ul_cp_seq_id_checker(std::move(dependencies.ul_cp_seq_id_checker)),
+    prach_seq_id_checker(std::move(dependencies.prach_seq_id_checker))
   {
-    ul_eaxc.assign(ul_eaxc_.begin(), ul_eaxc_.end());
-    for (auto eaxc : ul_eaxc) {
-      srsran_assert(eaxc <= MAX_SUPPORTED_EAXC_ID_VALUE, "Unsupported eAxC value requested");
+    for (auto eaxc : cfg.dl_eaxc) {
+      srsran_assert(eaxc <= MAX_SUPPORTED_EAXC_ID_VALUE, "Unsupported DL eAxC value requested");
+      dl_eaxc.push_back(eaxc);
+    }
+
+    for (auto eaxc : cfg.ul_eaxc) {
+      srsran_assert(eaxc <= MAX_SUPPORTED_EAXC_ID_VALUE, "Unsupported UL eAxC value requested");
+      ul_eaxc.push_back(eaxc);
       seq_counters.insert(eaxc, 0);
+    }
+
+    for (auto eaxc : cfg.prach_eaxc) {
+      srsran_assert(eaxc <= MAX_SUPPORTED_EAXC_ID_VALUE, "Unsupported DL eAxC value requested");
+      prach_eaxc.push_back(eaxc);
     }
 
     test_data = generate_test_data(cfg, ul_eaxc);
@@ -442,26 +483,30 @@ public:
     auto dl_cp_kpi = dl_cp_window_checker.get_statistics();
     auto ul_cp_kpi = ul_cp_window_checker.get_statistics();
 
-    uint64_t rx_total  = rx_total_counter.get_value();
-    uint64_t tx_total  = tx_total_counter.get_value();
-    uint64_t malformed = corrupt_counter.get_value();
-    uint64_t dropped   = dropped_counter.get_value();
+    uint64_t rx_total  = rx_total_counter.calculate_acc_value();
+    uint64_t tx_total  = tx_total_counter.calculate_acc_value();
+    uint64_t malformed = corrupt_counter.calculate_acc_value();
+    uint64_t dropped   = dropped_counter.calculate_acc_value();
 
     fmt::format_to(buffer,
-                   "| {:%H:%M:%S} | {:^3} | {:^11} | {:^11} | {:^11} | {:^11} | {:^13} | {:^13} | {:^13} | {:^14} | "
-                   "{:^14} | {:^14} | {:^11} | {:^11} | {:^11} |\n",
+                   "| {:%H:%M:%S} | {:^3} | {:^11} | {:^11} | {:^11} | {:^11} | {:^15} | {:^13} | {:^13} | {:^13} | "
+                   "{:^15} | {:^14} | {:^14} | {:^14} | {:^15} | {:^15} | {:^11} | {:^11} | {:^11} |\n",
                    current_time,
                    emu_id,
                    rx_total,
                    dl_up_kpi.rx_on_time,
                    dl_up_kpi.rx_early,
                    dl_up_kpi.rx_late,
+                   print_seq_id_err(dl_eaxc, *dl_up_seq_id_checker),
                    dl_cp_kpi.rx_on_time,
                    dl_cp_kpi.rx_early,
                    dl_cp_kpi.rx_late,
+                   print_seq_id_err(dl_eaxc, *dl_cp_seq_id_checker),
                    ul_cp_kpi.rx_on_time,
                    ul_cp_kpi.rx_early,
                    ul_cp_kpi.rx_late,
+                   print_seq_id_err(ul_eaxc, *ul_cp_seq_id_checker),
+                   print_seq_id_err(prach_eaxc, *prach_seq_id_checker),
                    malformed,
                    dropped,
                    tx_total);
@@ -480,48 +525,85 @@ public:
   }
 
 private:
+  /// Decodes and processes received OFH message.
+  void process_new_frame(unique_rx_buffer buffer)
+  {
+    span<const uint8_t> payload = buffer.data();
+
+    if (should_packet_be_dropped(payload, logger)) {
+      return dropped_counter.increment();
+    }
+
+    rx_message_info message_info;
+    if (!decode_rx_message(message_info, payload, logger)) {
+      return corrupt_counter.increment();
+    }
+
+    if (!validate_rx_ofh_params(message_info)) {
+      return corrupt_counter.increment();
+    }
+
+    rx_total_counter.increment();
+
+    // Check SeqId field and update statistics for the messages received on time.
+    bool received_on_time = get_window_checker(message_info).update_rx_window_statistics(message_info.symbol_point);
+    if (received_on_time) {
+      update_seq_id_statistics(message_info);
+    }
+
+    // Send uplink packets.
+    if (is_ul_uplane_request(message_info)) {
+      generate_ul_uplane_messages(message_info);
+    }
+  }
+
   /// Returns window checker for OFH messages of corresponding type given by \c message_info parameter.
-  ru_emulator_rx_window_checker& get_window_checker(rx_message_info& message_info)
+  ru_emulator_rx_window_checker& get_window_checker(const rx_message_info& message_info)
   {
     return (message_info.direction == data_direction::uplink)   ? ul_cp_window_checker
            : (message_info.type == message_type::control_plane) ? dl_cp_window_checker
                                                                 : dl_up_window_checker;
   }
 
-  /// Decodes and processes received OFH message.
-  void process_new_frame(unique_rx_buffer buffer)
+  /// Return sequence identifier checker depending on the given \c message_info parameter.
+  ru_emulator_seq_id_checker& get_sequence_id_checker(const rx_message_info& message_info)
   {
-    span<const uint8_t> payload = buffer.data();
+    return (message_info.direction == data_direction::uplink)
+               ? is_a_prach_message(message_info.filter_index) ? *prach_seq_id_checker : *ul_cp_seq_id_checker
+           : (message_info.type == message_type::control_plane) ? *dl_cp_seq_id_checker
+                                                                : *dl_up_seq_id_checker;
+  }
 
-    auto decoded_message_info = decode_rx_message(payload, ul_eaxc, logger);
+  bool is_ul_uplane_request(const rx_message_info& message_info)
+  {
+    return (message_info.direction == data_direction::uplink) && (message_info.type == message_type::control_plane) &&
+           !is_a_prach_message(message_info.filter_index);
+  }
 
-    if (!decoded_message_info.has_value()) {
-      switch (decoded_message_info.error()) {
-        case decoder_error_codes::corrupt:
-          corrupt_counter.increment();
-          break;
-        case decoder_error_codes::drop:
-          dropped_counter.increment();
-          break;
-      }
-      return;
+  /// Returns string containing sequence identifier errors for the given list of eAxCs collected by the specified
+  /// sequence identifier checker object.
+  std::string print_seq_id_err(span<const unsigned> eaxc, ru_emulator_seq_id_checker& seq_id_checker)
+  {
+    fmt::memory_buffer stats_format_buf;
+    for (unsigned i = 0, e = eaxc.size(); i != e; ++i) {
+      fmt::format_to(stats_format_buf, "{}{}", seq_id_checker.calculate_statistics(eaxc[i]), (i == e - 1) ? "" : "/");
     }
-    rx_total_counter.increment();
+    return to_string(stats_format_buf);
+  }
 
-    auto message_info = decoded_message_info.value();
-    get_window_checker(message_info).update_rx_window_statistics(message_info.symbol_point);
-
-    if (message_info.direction == data_direction::uplink) {
-      generate_ul_uplane_messages(message_info);
-    }
+  void update_seq_id_statistics(const rx_message_info& message_info)
+  {
+    get_sequence_id_checker(message_info)
+        .update_statistics(message_info.eaxc, message_info.seq_id, message_info.symbol_point);
   }
 
   /// Generates UL U-Plane messages with correct headers based on received C-Plane message.
-  void generate_ul_uplane_messages(rx_message_info& message_info)
+  void generate_ul_uplane_messages(const rx_message_info& message_info)
   {
     static_vector<span<const uint8_t>, MAX_BURST_SIZE> frame_burst;
 
-    auto& eaxc_frames = test_data[message_info.eaxc];
+    unsigned eaxc_idx    = std::distance(ul_eaxc.begin(), std::find(ul_eaxc.begin(), ul_eaxc.end(), message_info.eaxc));
+    auto&    eaxc_frames = test_data[eaxc_idx];
 
     // Set correct header parameters and send UL U-Plane packets for each symbol.
     for (unsigned symbol = message_info.symbol_point.get_symbol_index(), end = message_info.nof_symbols; symbol != end;
@@ -538,6 +620,54 @@ private:
 
     // Increment TX_TOTAL counter.
     tx_total_counter.increment(frame_burst.size());
+  }
+
+  /// \brief Validates decoded message parameters.
+  ///
+  /// \param message_info Decoded message parameters.
+  /// \return false if decoded parameters are invalid (a packet is considered corrupt then), true otherwise.
+  ///
+  /// \note packet is considered corrupt if any of the decoded parameters has undefined in the ORAN specification
+  /// value, unsupported value (e.g. compression parameters) or unconfigured value (e.g. eAxC value).
+  bool validate_rx_ofh_params(rx_message_info& message_info)
+  {
+    if (!message_info.symbol_point.get_slot().valid() || !message_info.symbol_point.is_valid()) {
+      logger.warning("Packet is corrupt: incorrect timestamp = {}:{}",
+                     message_info.symbol_point.get_slot(),
+                     message_info.symbol_point.get_symbol_index());
+      return false;
+    }
+
+    if (message_info.direction == data_direction::downlink) {
+      if (std::find(dl_eaxc.begin(), dl_eaxc.end(), message_info.eaxc) == dl_eaxc.end()) {
+        logger.warning("Packet is corrupt: received eAxC = '{}' is not configured in the RU emulator DL ports list",
+                       message_info.eaxc);
+        return false;
+      }
+    }
+
+    // Following parameters are only checked for UL C-Plane messages.
+    if (message_info.direction == data_direction::uplink && message_info.type == message_type::control_plane) {
+      const auto& eaxc = is_a_prach_message(message_info.filter_index) ? prach_eaxc : ul_eaxc;
+      if (std::find(eaxc.begin(), eaxc.end(), message_info.eaxc) == eaxc.end()) {
+        logger.warning("Packet is corrupt: received eAxC = '{}' is not configured in the RU emulator UL ports list",
+                       message_info.eaxc);
+        return false;
+      }
+
+      if (message_info.nof_symbols > MAX_NOF_SYMBOLS) {
+        logger.warning("Packet is corrupt: incorrect number of symbols = {}", message_info.nof_symbols);
+        return false;
+      }
+
+      // For UL C-Plane message check also compression parameters.
+      if (std::find(SUPPORTED_UL_CMPR_HDR.begin(), SUPPORTED_UL_CMPR_HDR.end(), message_info.compr_header) ==
+          SUPPORTED_UL_CMPR_HDR.end()) {
+        logger.warning("Packet is corrupt: unsupported UL compression parameters = {}", message_info.compr_header);
+        return false;
+      }
+    }
+    return true;
   }
 
   void set_runtime_header_params(span<uint8_t> frame, slot_point slot, unsigned symbol, unsigned eaxc)
@@ -749,9 +879,12 @@ int main(int argc, char** argv)
                                                                   ru_cfg.T2a_min_cp_ul,
                                                                   ru_cfg.T2a_max_up,
                                                                   ru_cfg.T2a_min_up);
+    emu_cfg.dl_eaxc       = ru_cfg.ru_dl_port_id;
+    emu_cfg.ul_eaxc       = ru_cfg.ru_ul_port_id;
+    emu_cfg.prach_eaxc    = ru_cfg.ru_prach_port_id;
 
     ru_emulators.push_back(std::make_unique<ru_emulator>(
-        logger, *workers.ru_emulators_exec[i], *transceivers[i], emu_cfg, ru_cfg.ru_ul_port_id));
+        resolve_ru_emulator_dependencies(logger, *workers.ru_emulators_exec[i], *transceivers[i]), emu_cfg));
   }
 
   // Create timing worker.
@@ -772,20 +905,24 @@ int main(int argc, char** argv)
   }
   fmt::print("Running. Waiting for incoming packets...\n");
 
-  fmt::print("| {:^8} | {:^3} | {:^11} | {:^11} | {:^11} | {:^11} | {:^13} | {:^13} | {:^13} | {:^14} | {:^14} | "
-             "{:^14} | {:^11} | {:^11} | {:^11} |\n",
+  fmt::print("| {:^8} | {:^3} | {:^11} | {:^11} | {:^11} | {:^11} | {:^15} | {:^13} | {:^13} | {:^13} | {:^15} | "
+             "{:^14} | {:^14} | {:^14} | {:^15} | {:^15} | {:^11} | {:^11} | {:^11} |\n",
              "TIME",
              "ID",
              "RX_TOTAL",
              "RX_ON_TIME",
              "RX_EARLY",
              "RX_LATE",
+             "RX_SEQ_ERR",
              "RX_ON_TIME_C",
              "RX_EARLY_C",
              "RX_LATE_C",
+             "RX_SEQ_ERR_C",
              "RX_ON_TIME_C_U",
              "RX_EARLY_C_U",
              "RX_LATE_C_U",
+             "RX_SEQ_ERR_C_U",
+             "RX_SEQ_ERR_PRACH",
              "RX_CORRUPT",
              "RX_ERR_DROP",
              "TX_TOTAL");

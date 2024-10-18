@@ -86,4 +86,27 @@ inline bool is_valid_bw(unsigned bandwidth)
   return false;
 }
 
+namespace ru_emu_stats {
+
+/// Helper class that represents a KPI counter.
+class kpi_counter
+{
+  std::atomic<uint64_t> counter{0};
+  uint64_t              last_value_printed = 0U;
+
+public:
+  /// Returns value accumulated since last call.
+  uint64_t calculate_acc_value()
+  {
+    uint64_t current_value = counter.load(std::memory_order_relaxed);
+    uint64_t total         = current_value - last_value_printed;
+    last_value_printed     = current_value;
+    return total;
+  }
+
+  /// Increments value by the given amount.
+  void increment(unsigned n = 1) { counter.fetch_add(n, std::memory_order_relaxed); }
+};
+
+} // namespace ru_emu_stats
 } // namespace srsran

@@ -57,7 +57,7 @@ void ru_emulator_rx_window_checker::on_new_symbol(ofh::slot_symbol_point symbol_
   count_val.store(ota_symbol_point.to_uint(), std::memory_order_release);
 }
 
-void ru_emulator_rx_window_checker::update_rx_window_statistics(ofh::slot_symbol_point symbol_point)
+bool ru_emulator_rx_window_checker::update_rx_window_statistics(ofh::slot_symbol_point symbol_point)
 {
   // Store the ota symbol point to use the same value for the early and late points.
   slot_symbol_point ota_point(
@@ -69,17 +69,18 @@ void ru_emulator_rx_window_checker::update_rx_window_statistics(ofh::slot_symbol
   // Late detected.
   if (diff > static_cast<int>(timing_parameters.sym_end)) {
     statistics.increment_early_counter();
-    return;
+    return false;
   }
 
   // Early detected.
   if (diff < static_cast<int>(timing_parameters.sym_start)) {
     statistics.increment_late_counter();
-    return;
+    return false;
   }
 
   // On time detected.
   statistics.increment_on_time_counter();
+  return true;
 }
 
 ru_emulator_rx_kpis ru_emulator_rx_window_checker::get_statistics()

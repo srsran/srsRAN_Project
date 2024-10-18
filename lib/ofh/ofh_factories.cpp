@@ -11,6 +11,7 @@
 #include "srsran/ofh/ofh_factories.h"
 #include "ofh_sector_impl.h"
 #include "receiver/ofh_receiver_factories.h"
+#include "receiver/ofh_sequence_id_checker_impl.h"
 #include "timing/ofh_timing_manager_impl.h"
 #include "transmitter/ofh_transmitter_factories.h"
 #include "srsran/ofh/ethernet/ethernet_factories.h"
@@ -21,6 +22,11 @@
 
 using namespace srsran;
 using namespace ofh;
+
+std::unique_ptr<sequence_id_checker> ofh::create_sequence_id_checker()
+{
+  return std::make_unique<sequence_id_checker_impl>();
+}
 
 std::unique_ptr<timing_manager> srsran::ofh::create_ofh_timing_manager(const controller_config& config,
                                                                        srslog::basic_logger&    logger,

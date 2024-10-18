@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ofh_sequence_id_checker.h"
+#include "srsran/ofh/receiver/ofh_sequence_id_checker.h"
 
 namespace srsran {
 namespace ofh {

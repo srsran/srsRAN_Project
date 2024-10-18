@@ -44,6 +44,10 @@ struct ru_emulator_ofh_appconfig {
   bool enable_promiscuous = false;
   /// RU Uplink ports.
   std::vector<unsigned> ru_ul_port_id = {0, 1};
+  /// RU Downlink ports.
+  std::vector<unsigned> ru_dl_port_id = {0, 1, 2, 3};
+  /// RU PRACH ports.
+  std::vector<unsigned> ru_prach_port_id = {4, 5};
   /// RU emulator operating bandwidth.
   bs_channel_bandwidth bandwidth = srsran::bs_channel_bandwidth::MHz100;
   /// Uplink compression method.

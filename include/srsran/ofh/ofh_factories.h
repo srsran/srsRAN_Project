@@ -15,6 +15,7 @@
 #include "srsran/ofh/ofh_sector_config.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
+#include "srsran/ofh/receiver/ofh_sequence_id_checker.h"
 #include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
@@ -68,6 +69,9 @@ create_dynamic_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger& 
                                                           cyclic_prefix                    cp,
                                                           unsigned                         ru_nof_prbs,
                                                           std::unique_ptr<iq_decompressor> decompressor);
+
+/// Creates an Open Fronthaul sequence identifier checker.
+std::unique_ptr<sequence_id_checker> create_sequence_id_checker();
 
 /// Open Fronthaul controller config.
 struct controller_config {
