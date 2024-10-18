@@ -26,6 +26,7 @@ struct pdcp_tx_metrics_container {
   uint32_t num_pdus;
   uint32_t num_pdu_bytes;
   uint32_t num_discard_timeouts;
+  unsigned counter;
 };
 
 /// This interface will allow the relevant entities to query PDCP RX
