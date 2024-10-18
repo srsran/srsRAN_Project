@@ -75,6 +75,8 @@ void pdcp_tx_window::remove_sdu(uint32_t count)
 
 void pdcp_tx_window::clear()
 {
+  sdu_bytes = 0;
+  nof_sdus  = 0;
   tx_window->clear();
 }
 
@@ -86,5 +88,7 @@ uint32_t pdcp_tx_window::get_sdu_bytes() const
 uint32_t pdcp_tx_window::get_pdu_bytes(security::integrity_enabled integrity) const
 {
   uint16_t trailer_size = integrity == security::integrity_enabled::on ? 4 : 0;
-  return sdu_bytes + nof_sdus * pdcp_data_header_size(sn_size) + nof_sdus * trailer_size;
+  uint32_t pdu_bytes    = sdu_bytes + nof_sdus * pdcp_data_header_size(sn_size) + nof_sdus * trailer_size;
+  logger.log_info("tx_window nof_sdus={} pdu_bytes={}", nof_sdus, pdu_bytes);
+  return pdu_bytes;
 }

@@ -71,7 +71,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       // TODO buffer SDUs
       return;
     }
-    if (tx_window.get_pdu_bytes(integrity_enabled) > desired_buffer_size) {
+    uint32_t pdu_size =
+        pdcp_data_header_size(sn_size) + buf.length() + (integrity_enabled == security::integrity_enabled::on ? 4 : 0);
+    uint32_t updated_buffer_size = tx_window.get_pdu_bytes(integrity_enabled) + pdu_size;
+    fmt::print(stderr, "updated_buffer_size={} desired_buffer_size={}\n", updated_buffer_size, desired_buffer_size);
+    if (updated_buffer_size > desired_buffer_size) {
       if (not cfg.custom.warn_on_drop) {
         logger.log_info(
             "Dropping SDU to avoid overloading RLC queue. desired_buffer_size={} pdcp_tx_window_bytes={} {}",
