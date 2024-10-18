@@ -32,7 +32,7 @@ if (USE_PHY_TESTVECTORS)
 
     if (ENABLE_PDSCH_HWACC)
         set_source_files_properties(pdsch_encoder_test.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PDSCH_ENABLED")
-        list(APPEND PDSCH_ENCODER_LIBRARIES hal_hwacc_pdsch)
+        list(APPEND PDSCH_ENCODER_LIBRARIES srsran_hal_pdsch)
     endif (ENABLE_PDSCH_HWACC)
 
     target_link_libraries(pdsch_encoder_test ${PDSCH_ENCODER_LIBRARIES})
@@ -47,7 +47,7 @@ if (USE_PHY_TESTVECTORS)
 
     if (ENABLE_PDSCH_HWACC)
         set_source_files_properties(pdsch_processor_vectortest.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PDSCH_ENABLED")
-        list(APPEND PDSCH_PROCESSOR_LIBRARIES hal_hwacc_pdsch)
+        list(APPEND PDSCH_PROCESSOR_LIBRARIES srsran_hal_pdsch)
     endif (ENABLE_PDSCH_HWACC)
 
     target_link_libraries(pdsch_processor_vectortest ${PDSCH_PROCESSOR_LIBRARIES})

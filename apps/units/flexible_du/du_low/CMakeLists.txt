@@ -20,9 +20,9 @@ set(DU_LOW_UNIT_HELPERS_LIBRARIES srsran_upper_phy)
 # Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
 if (DPDK_FOUND)
    set_source_files_properties(${SOURCES} PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND; HWACC_PDSCH_ENABLED; HWACC_PUSCH_ENABLED")
-   list(APPEND DU_LOW_UNIT_HELPERS_LIBRARIES hal_hwacc_pusch
-        hal_hwacc_pdsch
-        hal_bbdev_factory)
+   list(APPEND DU_LOW_UNIT_HELPERS_LIBRARIES srsran_hal_pusch
+        srsran_hal_pdsch
+        srsran_hal_bbdev)
 endif (DPDK_FOUND)
 
 target_link_libraries(srsran_du_low_unit_helpers PUBLIC ${DU_LOW_UNIT_HELPERS_LIBRARIES})

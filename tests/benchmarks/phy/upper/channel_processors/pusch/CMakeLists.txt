@@ -18,7 +18,7 @@ if (ENABLE_PUSCH_HWACC)
             srsvec)
     if (DPDK_FOUND)
         set_source_files_properties(pusch_decoder_hwacc_benchmark.cpp PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND")
-        list(APPEND PUSCH_DECODER_HWACC_BENCHMARK_LIBRARIES hal_hwacc_pusch)
+        list(APPEND PUSCH_DECODER_HWACC_BENCHMARK_LIBRARIES srsran_hal_pusch)
     endif (DPDK_FOUND)
     target_link_libraries(pusch_decoder_hwacc_benchmark ${PUSCH_DECODER_HWACC_BENCHMARK_LIBRARIES})
 endif (ENABLE_PUSCH_HWACC)
@@ -35,7 +35,7 @@ set(PUSCH_PROCESSOR_LIBRARIES srsran_phy_support
 
 if (ENABLE_PUSCH_HWACC)
     set_source_files_properties(pusch_processor_benchmark.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PUSCH_ENABLED")
-    list(APPEND PUSCH_PROCESSOR_LIBRARIES hal_hwacc_pusch)
+    list(APPEND PUSCH_PROCESSOR_LIBRARIES srsran_hal_pusch)
 endif (ENABLE_PUSCH_HWACC)
 
 target_link_libraries(pusch_processor_benchmark ${PUSCH_PROCESSOR_LIBRARIES})

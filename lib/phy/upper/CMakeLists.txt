@@ -40,9 +40,9 @@ set(UPPER_PHY_LIBRARIES srsran_instrumentation
 # Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
 if (DPDK_FOUND)
    set_source_files_properties(upper_phy_factories.cpp PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND; HWACC_PDSCH_ENABLED; HWACC_PUSCH_ENABLED")
-   list(APPEND UPPER_PHY_LIBRARIES hal_hwacc_pusch
-        hal_hwacc_pdsch
-        hal_bbdev_factory)
+   list(APPEND UPPER_PHY_LIBRARIES srsran_hal_pusch
+        srsran_hal_pdsch
+        srsran_hal_bbdev)
 endif (DPDK_FOUND)
 target_link_libraries(srsran_upper_phy ${UPPER_PHY_LIBRARIES})
 
