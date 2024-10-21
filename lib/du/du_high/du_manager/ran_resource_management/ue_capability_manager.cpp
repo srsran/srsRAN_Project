@@ -32,11 +32,24 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
     ue_caps.pdsch_qam256_supported = ue_cap.phy_params.phy_params_fr1.pdsch_256_qam_fr1_present;
   }
   for (const auto& band : ue_cap.rf_params.supported_band_list_nr) {
-    auto& band_cap                  = ue_caps.bands.emplace_back();
+    // Create and convert band capability.
+    ue_capability_summary::supported_band band_cap;
     band_cap.pusch_qam256_supported = band.pusch_256_qam_present;
+
+    // Emplace the band capability in the map.
+    ue_caps.bands.emplace(static_cast<nr_band>(band.band_nr), band_cap);
   }
 
+  // Convert advanced UE NR capabilities.
+  decode_advanced_ue_nr_caps(ue_caps, ue_cap);
+
   return ue_caps;
+}
+
+SRSRAN_WEAK_SYMB void srsran::srs_du::decode_advanced_ue_nr_caps(srsran::srs_du::ue_capability_summary& ue_capability,
+                                                                 const asn1::rrc_nr::ue_nr_cap_s&       ue_caps)
+{
+  // Advanced UE capabilities is not implemented.
 }
 
 // Configure dedicated UE configuration to set MCS ant CQI tables.
@@ -155,6 +168,7 @@ pdsch_mcs_table ue_capability_manager::select_pdsch_mcs_table(du_cell_index_t ce
 
 pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t cell_idx) const
 {
+  nr_band     band        = base_cell_cfg_list[cell_idx].ul_carrier.band;
   const auto& base_ul_cfg = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
 
   if (not base_ul_cfg.has_value() or not base_ul_cfg->init_ul_bwp.pusch_cfg.has_value() or not ue_caps.has_value()) {
@@ -163,11 +177,58 @@ pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t ce
   }
 
   if (base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table == pusch_mcs_table::qam256) {
+    // If the band capability is present, select the MCS table from this band.
+    if (ue_caps->bands.count(band)) {
+      return ue_caps->bands.at(band).pusch_qam256_supported ? pusch_mcs_table::qam256 : pusch_mcs_table::qam64;
+    }
+
     // In case the preferred MCS table is 256QAM, but the UE does not support it, we default to QAM64.
-    if (std::none_of(
-            ue_caps->bands.begin(), ue_caps->bands.end(), [](const auto& b) { return b.pusch_qam256_supported; })) {
+    if (std::none_of(ue_caps->bands.begin(), ue_caps->bands.end(), [](const auto& b) {
+          return b.second.pusch_qam256_supported;
+        })) {
       return pusch_mcs_table::qam64;
     }
   }
   return base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table;
+}
+
+tx_scheme_codebook_subset ue_capability_manager::select_tx_codebook_subset(du_cell_index_t cell_idx) const
+{
+  nr_band     band        = base_cell_cfg_list[cell_idx].ul_carrier.band;
+  const auto& base_ul_cfg = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
+
+  // Default to non-coherent, if no PUSCH config or no UE capabilities decoded yet.
+  if (not base_ul_cfg.has_value() or not base_ul_cfg->init_ul_bwp.pusch_cfg.has_value() or not ue_caps.has_value()) {
+    return tx_scheme_codebook_subset::non_coherent;
+  }
+
+  // If the band capability is present, select the codebook from this band.
+  if (ue_caps->bands.count(band)) {
+    return ue_caps->bands.at(band).pusch_tx_coherence;
+  }
+
+  // Find the band with the most limiting transmit codebook subset across all the bands.
+  const auto min_tx_codebook_subset =
+      std::min_element(ue_caps->bands.begin(), ue_caps->bands.end(), [](const auto& lhs, const auto& rhs) {
+        // The most limiting codebook subset has the greater integer value.
+        return rhs.second.pusch_tx_coherence > lhs.second.pusch_tx_coherence;
+      });
+
+  // Select the most limiting transmit subset if the band list is not emtpy.
+  if (min_tx_codebook_subset != ue_caps->bands.end()) {
+    return min_tx_codebook_subset->second.pusch_tx_coherence;
+  }
+
+  // Otherwise, default to non-coherent.
+  return tx_scheme_codebook_subset::non_coherent;
+}
+
+unsigned ue_capability_manager::select_srs_nof_ports() const
+{
+  // Default to one port if the UE capabilities are not present.
+  if (not ue_caps.has_value()) {
+    return 1;
+  }
+
+  return ue_caps->nof_srs_tx_ports;
 }
