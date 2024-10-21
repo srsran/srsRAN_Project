@@ -10,11 +10,24 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_unit.h"
+#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config.h"
+#include "apps/units/flexible_du/split_helpers/multicell_flexible_du_factory.h"
 
 namespace srsran {
-struct dynamic_du_unit_config;
 
-du_unit create_multicell_dynamic_du(const dynamic_du_unit_config& dyn_du_cfg, const du_unit_dependencies& dependencies);
+class multicell_dynamic_du_factory : public multicell_flexible_du_factory
+{
+  const dynamic_du_unit_config& unit_config;
+
+public:
+  explicit multicell_dynamic_du_factory(const dynamic_du_unit_config& config_) :
+    multicell_flexible_du_factory({config_.du_high_cfg, config_.du_low_cfg, config_.fapi_cfg}), unit_config(config_)
+  {
+  }
+
+private:
+  std::unique_ptr<radio_unit> create_radio_unit(const flexible_du_ru_config&       ru_config,
+                                                const flexible_du_ru_dependencies& ru_dependencies) override;
+};
 
 } // namespace srsran

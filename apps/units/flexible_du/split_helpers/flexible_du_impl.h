@@ -21,11 +21,13 @@ namespace srsran {
 
 class radio_unit;
 
-/// DU split 8 implementation.
-class split_8_du_impl : public srs_du::du, public du_power_controller
+/// \brief Flexible DU implementation.
+///
+/// The DU manages only one cell. To achieve multicell, one DU is created per cell.
+class flexible_du_impl : public srs_du::du, public du_power_controller
 {
 public:
-  explicit split_8_du_impl(unsigned nof_cells);
+  explicit flexible_du_impl(unsigned nof_cells);
 
   // See interface for documentation.
   du_power_controller& get_power_controller() override { return *this; }
@@ -36,10 +38,10 @@ public:
   // See interface for documentation.
   void stop() override;
 
-  /// Adds the given RU to this split 8 DU.
+  /// Adds the given RU to this dynamic DU.
   void add_ru(std::unique_ptr<radio_unit> active_ru);
 
-  /// Adds the given DUs to this split 8 DU.
+  /// Adds the given DUs to this dynamic DU.
   void add_dus(std::vector<std::unique_ptr<srs_du::du_wrapper>> active_du);
 
   /// Getters to the adaptors.

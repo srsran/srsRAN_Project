@@ -14,7 +14,6 @@ if (DU_SPLIT_8)
     set(SOURCES
             split_8_du_application_unit_impl.cpp
             split_8_du_factory.cpp
-            split_8_du_impl.cpp
             split_8_du_unit_cli11_schema.cpp
             split_8_du_unit_config_validator.cpp
             split_8_du_unit_config_yaml_writer.cpp)
@@ -34,6 +33,7 @@ if (DU_SPLIT_8)
             srsran_fapi_app_unit
             srsran_du_low_unit_helpers
             srsran_split_8_app_unit_helpers
-            srsran_du_high_unit_helpers)
+            srsran_du_high_unit_helpers
+            srsran_flexible_du_helpers)
 
 endif ()

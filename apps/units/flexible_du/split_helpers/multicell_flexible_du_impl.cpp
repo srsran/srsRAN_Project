@@ -8,7 +8,7 @@
  *
  */
 
-#include "multicell_dynamic_du_impl.h"
+#include "multicell_flexible_du_impl.h"
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_low/du_low_wrapper.h"
 #include "srsran/du/du_wrapper.h"
@@ -18,24 +18,24 @@
 
 using namespace srsran;
 
-multicell_dynamic_du_impl::multicell_dynamic_du_impl(unsigned nof_cells) :
+multicell_flexible_du_impl::multicell_flexible_du_impl(unsigned nof_cells) :
   ru_ul_adapt(nof_cells), ru_timing_adapt(nof_cells), ru_error_adapt(nof_cells)
 {
 }
 
-void multicell_dynamic_du_impl::start()
+void multicell_flexible_du_impl::start()
 {
   du->get_power_controller().start();
   ru->get_controller().start();
 }
 
-void multicell_dynamic_du_impl::stop()
+void multicell_flexible_du_impl::stop()
 {
   ru->get_controller().stop();
   du->get_power_controller().stop();
 }
 
-void multicell_dynamic_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
+void multicell_flexible_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
 {
   ru = std::move(active_ru);
   srsran_assert(ru, "Invalid Radio Unit");
@@ -45,7 +45,7 @@ void multicell_dynamic_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
   ru_ul_request_adapt.connect(ru->get_uplink_plane_handler());
 }
 
-void multicell_dynamic_du_impl::add_du(std::unique_ptr<srs_du::du_wrapper> active_du)
+void multicell_flexible_du_impl::add_du(std::unique_ptr<srs_du::du_wrapper> active_du)
 {
   du = std::move(active_du);
   srsran_assert(du, "Cannot set an invalid DU");

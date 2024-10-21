@@ -15,16 +15,18 @@
 #include "srsran/du/du_wrapper.h"
 #include "srsran/ru/ru_adapters.h"
 #include <memory>
-#include <vector>
 
 namespace srsran {
 
 class radio_unit;
 
-class dynamic_du_impl : public srs_du::du, public du_power_controller
+/// \brief Multicell flexible DU implementation.
+///
+/// One DU can handle more than one cell.
+class multicell_flexible_du_impl : public srs_du::du, public du_power_controller
 {
 public:
-  explicit dynamic_du_impl(unsigned nof_cells);
+  explicit multicell_flexible_du_impl(unsigned nof_cells);
 
   // See interface for documentation.
   du_power_controller& get_power_controller() override { return *this; }
@@ -38,8 +40,8 @@ public:
   /// Adds the given RU to this dynamic DU.
   void add_ru(std::unique_ptr<radio_unit> active_ru);
 
-  /// Adds the given DUs to this dynamic DU.
-  void add_dus(std::vector<std::unique_ptr<srs_du::du_wrapper>> active_du);
+  /// Adds the given DU to this dynamic DU.
+  void add_du(std::unique_ptr<srs_du::du_wrapper> active_du);
 
   /// Getters to the adaptors.
   upper_phy_ru_ul_adapter&         get_upper_ru_ul_adapter() { return ru_ul_adapt; }
@@ -49,13 +51,13 @@ public:
   upper_phy_ru_ul_request_adapter& get_upper_ru_ul_request_adapter() { return ru_ul_request_adapt; }
 
 private:
-  upper_phy_ru_ul_adapter                          ru_ul_adapt;
-  upper_phy_ru_timing_adapter                      ru_timing_adapt;
-  upper_phy_ru_error_adapter                       ru_error_adapt;
-  std::vector<std::unique_ptr<srs_du::du_wrapper>> du_list;
-  std::unique_ptr<radio_unit>                      ru;
-  upper_phy_ru_dl_rg_adapter                       ru_dl_rg_adapt;
-  upper_phy_ru_ul_request_adapter                  ru_ul_request_adapt;
+  upper_phy_ru_ul_adapter             ru_ul_adapt;
+  upper_phy_ru_timing_adapter         ru_timing_adapt;
+  upper_phy_ru_error_adapter          ru_error_adapt;
+  std::unique_ptr<srs_du::du_wrapper> du;
+  std::unique_ptr<radio_unit>         ru;
+  upper_phy_ru_dl_rg_adapter          ru_dl_rg_adapt;
+  upper_phy_ru_ul_request_adapter     ru_ul_request_adapt;
 };
 
 } // namespace srsran

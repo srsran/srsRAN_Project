@@ -53,8 +53,8 @@ void dynamic_du_application_unit_impl::on_parsing_configuration_registration(CLI
 du_unit dynamic_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
                                                                   bool                        use_multicell)
 {
-  return use_multicell ? create_multicell_dynamic_du(unit_cfg, dependencies)
-                       : create_dynamic_du(unit_cfg, dependencies);
+  return use_multicell ? multicell_dynamic_du_factory(unit_cfg).create_flexible_du(dependencies)
+                       : dynamic_du_factory(unit_cfg).create_flexible_du(dependencies);
 }
 
 std::unique_ptr<flexible_du_application_unit> srsran::create_flexible_du_application_unit(std::string_view app_name)
