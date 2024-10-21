@@ -402,6 +402,14 @@ static asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t
   drb_info.drb_qos.reflective_qos_attribute_present = true;
   drb_info.drb_qos.reflective_qos_attribute.value =
       qos_flow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
+  drb_info.flows_mapped_to_drb_list.resize(1);
+  drb_info.flows_mapped_to_drb_list[0].qos_flow_id = 0;
+  auto& qos_flow                                   = drb_info.flows_mapped_to_drb_list[0].qos_flow_level_qos_params;
+  auto& desc                                       = qos_flow.qos_characteristics.set_non_dyn_5qi();
+  desc.five_qi                                     = 8;
+  qos_flow.ngra_nalloc_retention_prio.pre_emption_cap.value = pre_emption_cap_opts::shall_not_trigger_pre_emption;
+  qos_flow.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
+      pre_emption_vulnerability_opts::not_pre_emptable;
   drb_info.snssai.sst.from_string("01");
   drb_info.snssai.sd.from_string("0027db");
   drb.rlc_mode.value                  = rlc_mode_opts::rlc_am;

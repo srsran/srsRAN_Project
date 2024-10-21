@@ -261,20 +261,35 @@ TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
   du_ue_index_t ue_index = to_du_ue_index(0);
   run_f1_setup_procedure();
   run_f1ap_ue_create(ue_index);
+  this->f1c_gw.clear_tx_pdus();
   run_ue_context_setup_procedure(ue_index, ue_ctxt_setup_req);
 
-  // SRB2 created.
-  const ue_context_setup_resp_s& resp =
-      this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_setup_resp();
+  // UE Context Setup Response received.
+  auto f1ap_resp = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(f1ap_resp.has_value());
+  ASSERT_EQ(f1ap_resp.value().pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(f1ap_resp.value().pdu.successful_outcome().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);
+  const ue_context_setup_resp_s& resp = f1ap_resp.value().pdu.successful_outcome().value.ue_context_setup_resp();
+  // > SRB2 created.
   ASSERT_TRUE(resp->srbs_setup_list_present);
   ASSERT_EQ(resp->srbs_setup_list.size(), 1);
   ASSERT_EQ(resp->srbs_setup_list[0]->srbs_setup_item().srb_id, 2);
-
-  // DUtoCURRCInformation included in response.
+  // > DUtoCURRCInformation included in response.
   ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
             this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 
   // F1AP sends RRC Container present in UE CONTEXT SETUP REQUEST via SRB1.
   ASSERT_EQ(test_ues[ue_index].f1c_bearers[1].rx_sdu_notifier.last_pdu,
             ue_ctxt_setup_req.pdu.init_msg().value.ue_context_setup_request()->rrc_container);
+
+  // The message contained RRC Delivery Report Request.
+  f1ap_resp = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(f1ap_resp.has_value());
+  ASSERT_EQ(f1ap_resp.value().pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(f1ap_resp.value().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::rrc_delivery_report);
+  const rrc_delivery_report_s& report = f1ap_resp.value().pdu.init_msg().value.rrc_delivery_report();
+  ASSERT_EQ(report->srb_id, 1);
+  ASSERT_EQ(report->rrc_delivery_status.trigger_msg, 3);
 }

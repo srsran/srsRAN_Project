@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_test_helpers.h"
+#include "test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -36,6 +37,8 @@ protected:
                        byte_buffer                            rrc_container        = {},
                        bool                                   rrc_delivery_request = false)
   {
+    this->f1c_gw.clear_tx_pdus();
+
     // Prepare DU manager response to F1AP.
     this->f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
     for (drb_id_t drb_id : drbs) {
@@ -52,10 +55,14 @@ protected:
     // Initiate procedure in F1AP.
     f1ap_message msg = test_helpers::generate_ue_context_modification_request(
         int_to_gnb_du_ue_f1ap_id(0), int_to_gnb_cu_ue_f1ap_id(0), drbs, {}, {}, std::move(rrc_container));
-    msg.pdu.init_msg().value.ue_context_mod_request()->rrc_delivery_status_request_present = true;
-    msg.pdu.init_msg().value.ue_context_mod_request()->rrc_delivery_status_request.value =
-        asn1::f1ap::rrc_delivery_status_request_opts::true_value;
+    if (rrc_delivery_request) {
+      msg.pdu.init_msg().value.ue_context_mod_request()->rrc_delivery_status_request_present = true;
+      msg.pdu.init_msg().value.ue_context_mod_request()->rrc_delivery_status_request.value =
+          asn1::f1ap::rrc_delivery_status_request_opts::true_value;
+    }
     f1ap->handle_message(msg);
+
+    last_ue_ctxt_mod_req = msg;
   }
 
   void rrc_container_was_delivered(uint32_t pdcp_sn)
@@ -66,15 +73,14 @@ protected:
     ctrl_worker.run_pending_tasks();
   }
 
-  bool was_ue_context_modification_response_sent() const
+  bool is_ue_context_modification_response_valid(const f1ap_message& resp)
   {
-    return this->f1c_gw.tx_pdus_sent() and
-           this->f1c_gw.last_tx_pdu().pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
-           this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.type().value ==
-               f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp;
+    return test_helpers::is_valid_ue_context_modification_response(resp, last_ue_ctxt_mod_req);
   }
 
   du_ue_index_t test_ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
+
+  f1ap_message last_ue_ctxt_mod_req;
 };
 
 TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1ap_notifies_du_of_ue_context_update)
@@ -107,39 +113,25 @@ TEST_F(f1ap_du_ue_context_modification_test,
   uint32_t pdcp_sn = 2;
   start_procedure({drb_id_t::drb1}, test_helpers::create_dl_dcch_rrc_container(pdcp_sn, {0x1, 0x2, 0x3}));
 
-  ASSERT_FALSE(was_ue_context_modification_response_sent());
+  ASSERT_FALSE(this->f1c_gw.pop_tx_pdu().has_value());
   rrc_container_was_delivered(pdcp_sn);
-  ASSERT_TRUE(was_ue_context_modification_response_sent());
-}
-
-TEST_F(
-    f1ap_du_ue_context_modification_test,
-    when_ue_context_mod_has_rrc_container_and_rrc_delivery_status_request_then_f1ap_waits_for_delivery_notification_before_sending_rrc_delivery_request)
-{
-  uint32_t pdcp_sn = 2;
-  start_procedure({drb_id_t::drb1}, test_helpers::create_dl_dcch_rrc_container(pdcp_sn, {0x1, 0x2, 0x3}), true);
-
-  ASSERT_FALSE(this->f1c_gw.tx_pdus_sent());
-  rrc_container_was_delivered(pdcp_sn);
-  ASSERT_TRUE(this->f1c_gw.tx_pdus_sent());
-  auto msg = this->f1c_gw.pop_tx_pdu();
-  ASSERT_EQ(msg.value().pdu.init_msg().value.type().value,
-            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::rrc_delivery_report);
-  ASSERT_EQ(msg.value().pdu.init_msg().value.rrc_delivery_report()->srb_id, 1);
-  ASSERT_EQ(msg.value().pdu.init_msg().value.rrc_delivery_report()->rrc_delivery_status.trigger_msg, pdcp_sn);
-  msg = this->f1c_gw.pop_tx_pdu();
-  ASSERT_EQ(msg.value().pdu.init_msg().value.type().value,
-            asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp);
+  auto sent_pdu = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(sent_pdu.has_value());
+  ASSERT_TRUE(is_ue_context_modification_response_valid(sent_pdu.value()));
+  ASSERT_FALSE(this->f1c_gw.pop_tx_pdu().has_value()) << "Only UEContextModificationResponse should have been sent";
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,
        when_f1ap_receives_request_then_f1ap_responds_to_cu_with_ue_context_modification_response)
 {
-  start_procedure({drb_id_t::drb1});
+  uint32_t pdcp_sn = 2;
+  start_procedure({drb_id_t::drb1}, test_helpers::create_dl_dcch_rrc_container(pdcp_sn, {0x1, 0x2, 0x3}));
+  rrc_container_was_delivered(pdcp_sn);
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
-  ASSERT_TRUE(was_ue_context_modification_response_sent());
-  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
+  auto sent_pdu = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(is_ue_context_modification_response_valid(sent_pdu.value()));
+  const ue_context_mod_resp_s& resp = sent_pdu.value().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -163,6 +155,28 @@ TEST_F(f1ap_du_ue_context_modification_test,
             this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
 
+TEST_F(
+    f1ap_du_ue_context_modification_test,
+    when_ue_context_mod_has_rrc_container_and_rrc_delivery_status_request_then_f1ap_waits_for_delivery_notification_before_sending_rrc_delivery_request)
+{
+  uint32_t pdcp_sn = 2;
+  start_procedure({drb_id_t::drb1}, test_helpers::create_dl_dcch_rrc_container(pdcp_sn, {0x1, 0x2, 0x3}), true);
+
+  ASSERT_FALSE(this->f1c_gw.pop_tx_pdu().has_value());
+  rrc_container_was_delivered(pdcp_sn);
+  auto sent_pdu = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(is_ue_context_modification_response_valid(sent_pdu.value()));
+
+  // Pop RRC Delivery Status Report (after UE context modification response).
+  auto msg = this->f1c_gw.pop_tx_pdu();
+  ASSERT_EQ(msg.value().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::rrc_delivery_report);
+  ASSERT_EQ(msg.value().pdu.init_msg().value.rrc_delivery_report()->srb_id, 1);
+  ASSERT_EQ(msg.value().pdu.init_msg().value.rrc_delivery_report()->rrc_delivery_status.trigger_msg, pdcp_sn);
+  msg = this->f1c_gw.pop_tx_pdu();
+  ASSERT_FALSE(msg.has_value()) << "No more messages should have been sent";
+}
+
 TEST_F(f1ap_du_ue_context_modification_test,
        when_du_fails_to_create_drb_then_f1ap_adds_the_failed_drb_in_ue_context_modification_response)
 {
@@ -177,10 +191,12 @@ TEST_F(f1ap_du_ue_context_modification_test,
   f1ap_message msg = test_helpers::generate_ue_context_modification_request(
       int_to_gnb_du_ue_f1ap_id(0), int_to_gnb_cu_ue_f1ap_id(0), {drb_id_t::drb1}, {}, {});
   f1ap->handle_message(msg);
+  this->last_ue_ctxt_mod_req = msg;
 
   // F1AP sends UE CONTEXT MODIFICATION RESPONSE to CU-CP with failed DRB.
-  ASSERT_TRUE(was_ue_context_modification_response_sent());
-  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
+  auto ret = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(is_ue_context_modification_response_valid(ret.value()));
+  const ue_context_mod_resp_s& resp = ret.value().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -201,8 +217,10 @@ TEST_F(f1ap_du_ue_context_modification_test,
   start_procedure({drb_id_t::drb1, drb_id_t::drb2});
 
   // F1AP sends UE CONTEXT MODIFICATION RESPONSE to CU-CP.
-  ASSERT_TRUE(was_ue_context_modification_response_sent());
-  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
+  auto ret = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(ret.has_value());
+  ASSERT_TRUE(is_ue_context_modification_response_valid(ret.value()));
+  const ue_context_mod_resp_s& resp = ret.value().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
   ASSERT_FALSE(resp->drbs_modified_list_present);

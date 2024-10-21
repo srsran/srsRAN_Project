@@ -319,12 +319,14 @@ void f1c_other_srb_du_bearer::handle_notification(uint32_t highest_pdcp_sn, bool
   // When the gNB-DU has successfully delivered an RRC message to the UE for which the gNB-CU has requested a
   // delivery report, the gNB-DU shall send the RRC DELIVERY REPORT message to the gNB-CU containing the RRC
   // Delivery Status IE and the SRB ID IE.
-  while (not pending_rrc_delivery_status_reports.empty() and
-         highest_pdcp_sn >= pending_rrc_delivery_status_reports.front()) {
-    uint32_t trigger_sn = pending_rrc_delivery_status_reports.front();
-    pending_rrc_delivery_status_reports.pop_front();
-    // TODO: Save in-order PDCP SN delivery.
-    handle_rrc_delivery_report(trigger_sn, highest_pdcp_sn);
+  if (not tx_or_delivery) {
+    while (not pending_rrc_delivery_status_reports.empty() and
+           highest_pdcp_sn >= pending_rrc_delivery_status_reports.front()) {
+      uint32_t trigger_sn = pending_rrc_delivery_status_reports.front();
+      pending_rrc_delivery_status_reports.pop_front();
+      // TODO: Save in-order PDCP SN delivery.
+      handle_rrc_delivery_report(trigger_sn, highest_pdcp_sn);
+    }
   }
 
   // Trigger awaiters of delivery notifications.
