@@ -15,4 +15,7 @@ set(SOURCES
 
 add_library(srsran_app_services STATIC ${SOURCES})
 target_include_directories(srsran_app_services PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_app_services srsran_logger_app_service srsran_buffer_pool_app_service)
+target_link_libraries(srsran_app_services
+        srsran_logger_app_service
+        srsran_buffer_pool_app_service
+        srsran_du_high) # TODO: Temp

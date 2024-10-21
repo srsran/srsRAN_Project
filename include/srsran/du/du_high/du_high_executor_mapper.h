@@ -118,11 +118,12 @@ struct du_high_executor_config {
     unsigned       max_nof_strands;
     unsigned       ctrl_queue_size;
     unsigned       pdu_queue_size;
-    task_executor& pool_executor;
+    task_executor* pool_executor;
   };
+  /// \brief Configuration of strand for control-plane tasks of the DU-high.
   struct control_executor_config {
     unsigned       task_queue_size;
-    task_executor& pool_executor;
+    task_executor* pool_executor;
   };
 
   /// DU-high cell executors.

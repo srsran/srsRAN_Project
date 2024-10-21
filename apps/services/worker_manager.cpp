@@ -9,9 +9,7 @@
  */
 
 #include "worker_manager.h"
-#include "../../lib/du/du_high/du_high_executor_strategies.h"
-#include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/support/event_tracing.h"
+#include "srsran/du/du_high/du_high_executor_mapper.h"
 
 using namespace srsran;
 
@@ -250,19 +248,21 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
     auto&             du_item     = du_high_executors[i];
     const std::string cell_id_str = std::to_string(i);
 
-    // DU-high executor mapper.
-    using exec_list       = std::initializer_list<task_executor*>;
-    auto cell_exec_mapper = std::make_unique<srs_du::cell_executor_mapper>(
-        exec_list{exec_map.at("cell_exec#" + cell_id_str)}, exec_list{exec_map.at("slot_exec#" + cell_id_str)});
-    auto ue_exec_mapper =
-        std::make_unique<srs_du::pcell_ue_executor_mapper>(exec_list{exec_map.at(fmt::format("du_rb_prio_exec#{}", i))},
-                                                           exec_list{exec_map.at(fmt::format("du_rb_ul_exec#{}", i))},
-                                                           exec_list{exec_map.at(fmt::format("du_rb_dl_exec#{}", i))});
-    du_item.du_high_exec_mapper = std::make_unique<srs_du::du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
-                                                                                         std::move(ue_exec_mapper),
-                                                                                         *exec_map.at("ctrl_exec"),
-                                                                                         *exec_map.at("timer_exec"),
-                                                                                         *exec_map.at("ctrl_exec"));
+    // DU-high executor mapper creation.
+    srs_du::du_high_executor_config cfg;
+    cfg.cell_executors = srs_du::du_high_executor_config::dedicated_cell_worker_list{
+        {*exec_map.at("slot_exec#" + cell_id_str), *exec_map.at("cell_exec#" + cell_id_str)}};
+    cfg.ue_executors.policy            = srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell;
+    cfg.ue_executors.max_nof_strands   = 1;
+    cfg.ue_executors.ctrl_queue_size   = task_worker_queue_size;
+    cfg.ue_executors.pdu_queue_size    = du_hi.pdu_queue_size;
+    cfg.ue_executors.pool_executor     = exec_map.at("low_prio_exec");
+    cfg.ctrl_executors.task_queue_size = task_worker_queue_size;
+    cfg.ctrl_executors.pool_executor   = exec_map.at("high_prio_exec");
+    cfg.is_rt_mode_enabled             = du_hi.is_rt_mode_enabled;
+    cfg.trace_exec_tasks               = false;
+
+    du_item.du_high_exec_mapper = srs_du::create_du_high_executor_mapper(cfg);
   }
 
   if (du_low) {
@@ -313,31 +313,9 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   append_pcap_strands(low_prio_strands, worker_cfg.pcap_cfg);
 
-  // Configuration of strand for the control plane handling (CU-CP and DU-high control plane).
-  // This strand will support two priority levels, the highest being for timer management.
-  // Note: In case of non-RT operation, we make the timer_exec synchronous. This will have the effect of stopping
-  // the lower layers from running faster than this strand.
-  strand cp_strand{{{"timer_exec",
-                     concurrent_queue_policy::lockfree_spsc,
-                     task_worker_queue_size,
-                     worker_cfg.du_hi_cfg ? !worker_cfg.du_hi_cfg->is_rt_mode_enabled : false},
-                    {"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
-  high_prio_strands.push_back(cp_strand);
-
-  // Setup strands for the data plane of all the instantiated DUs.
-  // One strand per DU, each with multiple priority levels.
-  if (worker_cfg.du_hi_cfg) {
-    for (unsigned i = 0; i != worker_cfg.du_hi_cfg->nof_cells; ++i) {
-      low_prio_strands.push_back(strand{
-          {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-           {fmt::format("du_rb_ul_exec#{}", i),
-            concurrent_queue_policy::lockfree_mpmc,
-            worker_cfg.du_hi_cfg->pdu_queue_size},
-           {fmt::format("du_rb_dl_exec#{}", i),
-            concurrent_queue_policy::lockfree_mpmc,
-            worker_cfg.du_hi_cfg->pdu_queue_size}}});
-    }
-  }
+  // Configuration of strand for the CU-CP task handling.
+  strand cu_cp_strand{{{"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
+  high_prio_strands.push_back(cu_cp_strand);
 
   // Create non-RT worker pool.
   if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {

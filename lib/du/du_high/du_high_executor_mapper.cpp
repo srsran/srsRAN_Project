@@ -289,13 +289,13 @@ std::unique_ptr<du_high_ue_executor_mapper> create_du_high_ue_executor_mapper(co
 {
   std::unique_ptr<du_high_ue_executor_mapper> ue_mapper;
   if (config.ue_executors.policy == du_high_executor_config::ue_executor_config::map_policy::per_cell) {
-    ue_mapper = std::make_unique<pcell_ue_executor_mapper>(config.ue_executors.pool_executor,
+    ue_mapper = std::make_unique<pcell_ue_executor_mapper>(*config.ue_executors.pool_executor,
                                                            config.ue_executors.max_nof_strands,
                                                            config.ue_executors.ctrl_queue_size,
                                                            config.ue_executors.pdu_queue_size,
                                                            config.trace_exec_tasks);
   } else {
-    ue_mapper = std::make_unique<index_based_ue_executor_mapper>(config.ue_executors.pool_executor,
+    ue_mapper = std::make_unique<index_based_ue_executor_mapper>(*config.ue_executors.pool_executor,
                                                                  config.ue_executors.max_nof_strands,
                                                                  config.ue_executors.ctrl_queue_size,
                                                                  config.ue_executors.pdu_queue_size,
@@ -306,6 +306,12 @@ std::unique_ptr<du_high_ue_executor_mapper> create_du_high_ue_executor_mapper(co
 
 //
 
+/// \brief Executor mapper for control-plane tasks.
+///
+/// It creates one strand with two priority levels. The highest priority is used for timer tick tasks. The second level
+/// is used for all other control-plane tasks.
+/// In case of non-RT operation, we make the timer_exec synchronous. This will have the effect of stopping
+/// the lower layers from running faster than this strand.
 class ctrl_executor_mapper
 {
   using ctrl_strand_type = priority_task_strand<task_executor*>;
@@ -314,7 +320,7 @@ public:
   ctrl_executor_mapper(const du_high_executor_config::control_executor_config& cfg,
                        bool                                                    rt_mode_enabled,
                        bool                                                    trace_enabled) :
-    strand(&cfg.pool_executor,
+    strand(cfg.pool_executor,
            std::array<concurrent_queue_params, 2>{
                concurrent_queue_params{concurrent_queue_policy::lockfree_spsc, cfg.task_queue_size},
                concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, cfg.task_queue_size}}),
