@@ -60,11 +60,14 @@ public:
     }
   }
 
-  task_executor& executor(du_cell_index_t cell_index) override { return cell_execs[cell_index].low_prio_executor; }
+  task_executor& executor(du_cell_index_t cell_index) override
+  {
+    return cell_execs[cell_index % cell_execs.size()].low_prio_executor;
+  }
 
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override
   {
-    return cell_execs[cell_index].high_prio_executor;
+    return cell_execs[cell_index % cell_execs.size()].high_prio_executor;
   }
 
 private:
@@ -88,7 +91,7 @@ public:
     cell_strands.resize(cfg.nof_cells);
     for (unsigned i = 0, e = cfg.nof_cells; i != e; ++i) {
       cell_strands[i].strand = std::make_unique<cell_strand_type>(
-          &cfg.pool_executor, std::array<concurrent_queue_params, 2>{slot_qparams, other_qparams});
+          cfg.pool_executor, std::array<concurrent_queue_params, 2>{slot_qparams, other_qparams});
       auto execs = cell_strands[i].strand->get_executors();
 
       std::string exec_name         = trace_enabled ? fmt::format("slot_ind_exec#{}", i) : "";
@@ -98,11 +101,14 @@ public:
     }
   }
 
-  task_executor& executor(du_cell_index_t cell_index) override { return *cell_strands[cell_index].cell_exec; }
+  task_executor& executor(du_cell_index_t cell_index) override
+  {
+    return *cell_strands[cell_index % cell_strands.size()].cell_exec;
+  }
 
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override
   {
-    return *cell_strands[cell_index].slot_ind_exec;
+    return *cell_strands[cell_index % cell_strands.size()].slot_ind_exec;
   }
 
 private:

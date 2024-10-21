@@ -122,9 +122,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   }
 
   // synchronization point - Wait for PDUs to reach RLC SDU queues.
-  for (unsigned i = 0; i != this->workers.ue_workers.size(); ++i) {
-    this->workers.ue_workers[i].wait_pending_tasks();
-  }
+  this->workers.flush_pending_dl_pdus();
 
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
   std::vector<unsigned> bytes_sched_per_cell(GetParam().nof_cells, 0);

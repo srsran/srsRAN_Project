@@ -156,7 +156,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     init_loggers();
 
     du_high_configuration cfg{};
-    cfg.exec_mapper                          = &workers.exec_mapper;
+    cfg.exec_mapper                          = workers.exec_mapper.get();
     cfg.f1c_client                           = &cu_notifier;
     cfg.f1u_gw                               = &cu_up_sim;
     cfg.phy_adapter                          = &phy;

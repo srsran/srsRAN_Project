@@ -105,7 +105,7 @@ struct du_high_executor_config {
     /// Default queue size for tasks other than slot indications.
     unsigned default_task_queue_size;
     /// Worker pool executor.
-    task_executor& pool_executor;
+    task_executor* pool_executor;
   };
   /// \brief Configuration of the DU-high cell executors. Two options:
   /// - list of dedicated workers, one per cell, and indexed by cell index.
@@ -133,7 +133,7 @@ struct du_high_executor_config {
   /// Executor used for control-plane tasks of the DU-high.
   control_executor_config ctrl_executors;
   /// Whether the DU-high is operating in a real-time or simulation environment
-  bool is_rt_mode_enabled;
+  bool is_rt_mode_enabled = true;
   /// Whether to trace executed tasks.
   bool trace_exec_tasks = false;
 };
