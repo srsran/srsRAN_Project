@@ -123,15 +123,13 @@ TEST_P(pdcp_tx_test, pdu_stall)
     // Write SDU
     for (uint32_t count = tx_next; count < tx_next + stall; ++count) {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
-      logger.info("sdu={}", count - tx_next);
       pdcp_tx->handle_sdu(std::move(sdu));
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
     }
-    logger.info("Test finished writing SDUs. SN_SIZE={} COUNT={}", sn_size, tx_next);
-    srslog::flush();
+
     {
       // Write an SDU that should be dropped
       byte_buffer sdu = byte_buffer::create(sdu1).value();
@@ -140,7 +138,7 @@ TEST_P(pdcp_tx_test, pdu_stall)
       // Check there is no new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 0);
     }
-    logger.info("Test dropped SDU correctly. SN_SIZE={} COUNT={}", sn_size, tx_next);
+
     {
       // Notify transmission of all PDUs
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
@@ -338,8 +336,6 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
       timers.tick();
       worker.run_pending_tasks();
     }
-    logger.info("sdu discard with stall sn_size={} tx_next={}", sn_size, tx_next);
-    srslog::flush();
 
     // Check that we can write PDUs again
     for (uint32_t count = tx_next + stall; count < tx_next + 2 * stall; ++count) {
@@ -429,42 +425,6 @@ TEST_P(pdcp_tx_test, count_wraparound)
   }
 }
 
-/// \brief Test correct discard when RLC SDU queue is full
-TEST_P(pdcp_tx_test_short_rlc_queue, discard_on_full_rlc_sdu_queue)
-{
-  init(GetParam());
-  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
-
-  byte_buffer sdu = byte_buffer::create(sdu1).value();
-
-  uint32_t pdu_size             = sn_size == pdcp_sn_size::size12bits ? pdu_size_snlen12 : pdu_size_snlen18;
-  uint32_t rlc_queue_size       = config.custom.rlc_sdu_queue;
-  uint32_t rlc_queue_size_bytes = rlc_queue_size * pdu_size;
-
-  pdcp_tx->handle_desired_buffer_size_notification(rlc_queue_size_bytes);
-  // Fill the RLC SDU queue
-  for (uint32_t i = 0; i < config.custom.rlc_sdu_queue; i++) {
-    pdcp_tx->handle_sdu(sdu.deep_copy().value());
-    ASSERT_EQ(test_frame.pdu_queue.size(), 1);
-    test_frame.pdu_queue.pop();
-  }
-
-  // Any further SDUs should be discarded and not forwarded to lower layers
-  pdcp_tx->handle_sdu(sdu.deep_copy().value());
-  ASSERT_TRUE(test_frame.pdu_queue.empty());
-
-  // Make room for one more SDU and check if one PDU will be passed to lower layers
-  pdcp_tx->handle_transmit_notification(0);
-  pdcp_tx->handle_delivery_notification(0);
-  pdcp_tx->handle_sdu(sdu.deep_copy().value());
-  ASSERT_EQ(test_frame.pdu_queue.size(), 1);
-  test_frame.pdu_queue.pop();
-
-  // Any further SDUs should be discarded and not forwarded to lower layers
-  pdcp_tx->handle_sdu(sdu.deep_copy().value());
-  ASSERT_TRUE(test_frame.pdu_queue.empty());
-}
-
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
@@ -481,12 +441,6 @@ std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<
 
 INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
                          pdcp_tx_test,
-                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
-                                            ::testing::Values(1, 2, 3)),
-                         test_param_info_to_string);
-
-INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
-                         pdcp_tx_test_short_rlc_queue,
                          ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
                                             ::testing::Values(1, 2, 3)),
                          test_param_info_to_string);

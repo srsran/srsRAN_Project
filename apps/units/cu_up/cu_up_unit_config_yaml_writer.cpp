@@ -59,29 +59,6 @@ static YAML::Node build_cu_up_section(const cu_up_unit_config& config)
   return node;
 }
 
-static void fill_um_bidir_section(YAML::Node node, const cu_up_unit_qos_config& config)
-{
-  YAML::Node node_tx    = node["tx"];
-  node_tx["queue-size"] = config.rlc_sdu_queue;
-}
-
-static void fill_am_section(YAML::Node node, const cu_up_unit_qos_config& config)
-{
-  YAML::Node node_tx    = node["tx"];
-  node_tx["queue-size"] = config.rlc_sdu_queue;
-}
-
-static void fill_cu_up_rlc_qos_section(YAML::Node node, const cu_up_unit_qos_config& config)
-{
-  node["mode"] = config.mode;
-
-  if (config.mode == "um_bidir") {
-    fill_um_bidir_section(node["um_bidir"], config);
-  } else if (config.mode == "am") {
-    fill_am_section(node["am"], config);
-  }
-}
-
 static void fill_cu_up_f1_qos_section(YAML::Node node, const cu_cp_unit_f1u_config& config)
 {
   node["backoff_timer"] = config.t_notify;
@@ -90,7 +67,6 @@ static void fill_cu_up_f1_qos_section(YAML::Node node, const cu_cp_unit_f1u_conf
 static void fill_cu_up_qos_entry(YAML::Node node, const cu_up_unit_qos_config& config)
 {
   node["five_qi"] = five_qi_to_uint(config.five_qi);
-  fill_cu_up_rlc_qos_section(node["rlc"], config);
   fill_cu_up_f1_qos_section(node["f1u_cu_up"], config.f1u_cu_up);
 }
 

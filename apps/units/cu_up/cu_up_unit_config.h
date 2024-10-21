@@ -41,9 +41,8 @@ struct cu_cp_unit_f1u_config {
 
 /// QoS configuration.
 struct cu_up_unit_qos_config {
-  five_qi_t             five_qi       = uint_to_five_qi(9);
-  std::string           mode          = "am";
-  unsigned              rlc_sdu_queue = 4096;
+  five_qi_t             five_qi = uint_to_five_qi(9);
+  std::string           mode    = "am";
   cu_cp_unit_f1u_config f1u_cu_up;
 };
 

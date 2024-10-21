@@ -128,7 +128,6 @@ std::vector<byte_buffer_chain> gen_pdu_list(bench_params                  params
   config.direction              = pdcp_security_direction::uplink;
   config.discard_timer          = pdcp_discard_timer::ms10;
   config.status_report_required = false;
-  config.custom.rlc_sdu_queue   = params.nof_repetitions;
   config.custom.test_mode       = true; // imediatly notify transmit notification to avoid buffering
 
   security::sec_128_as_config sec_cfg = {};

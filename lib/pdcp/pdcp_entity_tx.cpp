@@ -68,7 +68,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   if (is_drb()) {
     if (desired_buffer_size == 0) {
-      // TODO buffer SDUs
+      if (not cfg.custom.warn_on_drop) {
+        logger.log_info("Dropping SDU. Desired buffer size is 0");
+      } else {
+        logger.log_warning("Dropping SDU. Desired buffer size is 0");
+      }
       return;
     }
     uint32_t pdu_size            = get_pdu_size(buf);

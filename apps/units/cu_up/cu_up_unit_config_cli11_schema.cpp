@@ -92,31 +92,6 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_rlc_am_args(CLI::App& app, uint32_t& queue_size)
-{
-  CLI::App* tx_subcmd = app.add_subcommand("tx", "AM TX parameters");
-  add_option(*tx_subcmd, "--queue-size", queue_size, "RLC AM TX SDU queue size")->capture_default_str();
-}
-
-static void configure_cli11_rlc_um_args(CLI::App& app, uint32_t& queue_size)
-{
-  CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
-  rlc_tx_um_subcmd->add_option("--queue-size", queue_size, "RLC UM TX SDU queue size")->capture_default_str();
-}
-
-static void configure_cli11_rlc_args(CLI::App& app, cu_up_unit_qos_config& qos_params)
-{
-  add_option(app, "--mode", qos_params.mode, "RLC mode")->capture_default_str();
-
-  // UM section.
-  CLI::App* rlc_um_subcmd = app.add_subcommand("um-bidir", "UM parameters");
-  configure_cli11_rlc_um_args(*rlc_um_subcmd, qos_params.rlc_sdu_queue);
-
-  // AM section.
-  CLI::App* rlc_am_subcmd = app.add_subcommand("am", "AM parameters");
-  configure_cli11_rlc_am_args(*rlc_am_subcmd, qos_params.rlc_sdu_queue);
-}
-
 static void configure_cli11_f1u_cu_up_args(CLI::App& app, cu_cp_unit_f1u_config& f1u_cu_up_params)
 {
   app.add_option("--backoff_timer", f1u_cu_up_params.t_notify, "F1-U backoff timer (ms)")->capture_default_str();
@@ -125,10 +100,6 @@ static void configure_cli11_f1u_cu_up_args(CLI::App& app, cu_cp_unit_f1u_config&
 static void configure_cli11_qos_args(CLI::App& app, cu_up_unit_qos_config& qos_params)
 {
   add_option(app, "--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
-
-  // RLC section.
-  CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
-  configure_cli11_rlc_args(*rlc_subcmd, qos_params);
 
   CLI::App* f1u_cu_up_subcmd = app.add_subcommand("f1u_cu_up", "F1-U parameters at CU_UP side");
   configure_cli11_f1u_cu_up_args(*f1u_cu_up_subcmd, qos_params.f1u_cu_up);

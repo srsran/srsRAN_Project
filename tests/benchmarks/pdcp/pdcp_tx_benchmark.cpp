@@ -111,7 +111,7 @@ void benchmark_pdcp_tx(bench_params                  params,
   config.direction              = pdcp_security_direction::downlink;
   config.discard_timer          = pdcp_discard_timer::infinity;
   config.status_report_required = false;
-  config.custom.rlc_sdu_queue   = params.nof_repetitions;
+  config.custom.warn_on_drop    = true;
 
   security::sec_128_as_config sec_cfg = {};
 
@@ -134,10 +134,14 @@ void benchmark_pdcp_tx(bench_params                  params,
       0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
   pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
+  const uint32_t sdu_size     = 1500;
+  const uint32_t max_pdu_size = sdu_size + 9;
+  pdcp_tx->handle_desired_buffer_size_notification(params.nof_repetitions * max_pdu_size);
+
   // Prepare SDU list for benchmark
   std::vector<byte_buffer> sdu_list  = {};
   int                      num_sdus  = params.nof_repetitions;
-  int                      num_bytes = 1500;
+  int                      num_bytes = sdu_size;
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
     for (int j = 0; j < num_bytes; ++j) {

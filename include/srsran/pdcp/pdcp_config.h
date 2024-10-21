@@ -143,9 +143,8 @@ struct pdcp_custom_config_base {
 };
 
 struct pdcp_custom_config_tx : public pdcp_custom_config_base {
-  uint16_t rlc_sdu_queue = 4096;
-  bool     warn_on_drop  = false;
-  bool     test_mode     = false;
+  bool warn_on_drop = false;
+  bool test_mode    = false;
 };
 
 struct pdcp_custom_config_rx : public pdcp_custom_config_base {
@@ -266,9 +265,7 @@ inline pdcp_config pdcp_make_default_srb_config()
   config.rx.t_reordering          = pdcp_t_reordering::infinity;
 
   // Custom config
-  config.custom                  = {};
-  config.custom.tx.rlc_sdu_queue = 512;
-
+  config.custom = {};
   return config;
 }
 } // namespace srsran
@@ -365,10 +362,9 @@ struct formatter<srsran::pdcp_custom_config_tx> {
   auto format(srsran::pdcp_custom_config_tx cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
-                     "count_notify={} count_max={} rlc_sdu_queue={} warn_on_drop={} test_mode={}",
+                     "count_notify={} count_max={} warn_on_drop={} test_mode={}",
                      cfg.max_count.notify,
                      cfg.max_count.hard,
-                     cfg.rlc_sdu_queue,
                      cfg.warn_on_drop,
                      cfg.test_mode);
   }
