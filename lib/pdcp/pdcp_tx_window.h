@@ -32,7 +32,7 @@ struct pdcp_tx_sdu_info {
 class pdcp_tx_window
 {
 public:
-  pdcp_tx_window(pdcp_rlc_mode rlc_mode_, pdcp_sn_size sn_size_, pdcp_bearer_logger logger_);
+  pdcp_tx_window(pdcp_rb_type rb_type_, pdcp_rlc_mode rlc_mode_, pdcp_sn_size sn_size_, pdcp_bearer_logger logger_);
 
   bool has_sn(uint32_t count);
 
@@ -68,6 +68,7 @@ private:
   /// \return unique pointer to tx_window instance
   void create_tx_window();
 
+  pdcp_rb_type       rb_type;
   pdcp_rlc_mode      rlc_mode;
   pdcp_sn_size       sn_size;
   pdcp_bearer_logger logger;

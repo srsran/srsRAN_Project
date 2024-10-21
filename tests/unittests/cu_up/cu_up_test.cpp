@@ -272,7 +272,6 @@ TEST_F(cu_up_test, dl_data_flow)
   std::array<uint8_t, 128> rx_buf;
   int                      ret;
   ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
-  fmt::print("got it!");
 
   // Now that the disered buffer size is updated, we push DL PDUs
   sockaddr_in cu_up_addr;

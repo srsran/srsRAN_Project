@@ -33,7 +33,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   ue_dl_timer_factory(ue_dl_timer_factory_),
   ue_dl_executor(ue_dl_executor_),
   crypto_executor(crypto_executor_),
-  tx_window(cfg.rlc_mode, cfg.sn_size, logger)
+  tx_window(cfg.rb_type, cfg.rlc_mode, cfg.sn_size, logger)
 {
   // Validate configuration
   if (is_srb() && (cfg.sn_size != pdcp_sn_size::size12bits)) {
@@ -71,10 +71,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       // TODO buffer SDUs
       return;
     }
-    uint32_t pdu_size =
-        pdcp_data_header_size(sn_size) + buf.length() + (integrity_enabled == security::integrity_enabled::on ? 4 : 0);
+    uint32_t pdu_size            = get_pdu_size(buf);
     uint32_t updated_buffer_size = tx_window.get_pdu_bytes(integrity_enabled) + pdu_size;
-    fmt::print(stderr, "updated_buffer_size={} desired_buffer_size={}\n", updated_buffer_size, desired_buffer_size);
     if (updated_buffer_size > desired_buffer_size) {
       if (not cfg.custom.warn_on_drop) {
         logger.log_info(
@@ -94,7 +92,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
-    logger.log_warning("Dropping SDU to avoid going over the TX window size. {}", st);
+    if (not cfg.custom.warn_on_drop) {
+      logger.log_info("Dropping SDU to avoid going over the TX window size. {}", st);
+    } else {
+      logger.log_warning("Dropping SDU to avoid going over the TX window size. {}", st);
+    }
     return;
   }
 
@@ -705,6 +707,11 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
       return false;
   }
   return true;
+}
+
+uint32_t pdcp_entity_tx::get_pdu_size(const byte_buffer& sdu)
+{
+  return pdcp_data_header_size(sn_size) + sdu.length() + (integrity_enabled == security::integrity_enabled::on ? 4 : 0);
 }
 
 /*

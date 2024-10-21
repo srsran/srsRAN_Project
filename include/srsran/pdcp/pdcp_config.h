@@ -43,10 +43,26 @@ constexpr uint32_t pdcp_window_size(uint16_t sn_size)
 
 /// \brief Returns the PDCP header size
 /// \param sn_size Length of the sequence number field in bits
-/// \return size of the window
+/// \return size of the data PDU header
 constexpr uint32_t pdcp_data_header_size(pdcp_sn_size sn_size)
 {
   return sn_size == pdcp_sn_size::size12bits ? 2 : 3;
+}
+
+/// \brief Returns the PDCP trailer size
+/// \param rb_type whether this is a SRB or DRB.
+/// \param integrity_enabled wether integrity is enabled or not.
+/// \return size of the
+constexpr uint32_t pdcp_data_trailer_size(pdcp_rb_type rb_type, bool integrity_enabled)
+{
+  constexpr uint32_t mac_i_size = 4;
+  if (rb_type == pdcp_rb_type::srb) {
+    return mac_i_size;
+  }
+  if (integrity_enabled) {
+    return mac_i_size;
+  }
+  return 0;
 }
 
 /// Maximum supported PDCP SDU size, see TS 38.323, section 4.3.1.

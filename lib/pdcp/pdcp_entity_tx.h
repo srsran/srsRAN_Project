@@ -164,7 +164,7 @@ private:
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// Apply ciphering and integrity protection to the payload
-  expected<byte_buffer> apply_ciphering_and_integrity_protection(byte_buffer sdu_plus_header, uint32_t count);
+  expected<byte_buffer> apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);
 
   uint32_t notification_count_estimation(uint32_t notification_sn);
 
@@ -182,6 +182,9 @@ private:
 
   /// \brief Discard timer information and, only for AM, a copy of the SDU for data recovery procedure.
   pdcp_tx_window tx_window;
+
+  /// \brief Get estimated size of a PDU from an SDU
+  uint32_t get_pdu_size(const byte_buffer& sdu);
 
   class discard_callback;
 };

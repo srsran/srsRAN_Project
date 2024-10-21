@@ -17,8 +17,11 @@
 
 using namespace srsran;
 
-pdcp_tx_window::pdcp_tx_window(pdcp_rlc_mode rlc_mode_, pdcp_sn_size sn_size_, pdcp_bearer_logger logger_) :
-  rlc_mode(rlc_mode_), sn_size(sn_size_), logger(std::move(logger_))
+pdcp_tx_window::pdcp_tx_window(pdcp_rb_type       rb_type_,
+                               pdcp_rlc_mode      rlc_mode_,
+                               pdcp_sn_size       sn_size_,
+                               pdcp_bearer_logger logger_) :
+  rb_type(rb_type_), rlc_mode(rlc_mode_), sn_size(sn_size_), logger(std::move(logger_))
 {
   create_tx_window();
 }
@@ -87,8 +90,6 @@ uint32_t pdcp_tx_window::get_sdu_bytes() const
 
 uint32_t pdcp_tx_window::get_pdu_bytes(security::integrity_enabled integrity) const
 {
-  uint16_t trailer_size = integrity == security::integrity_enabled::on ? 4 : 0;
-  uint32_t pdu_bytes    = sdu_bytes + nof_sdus * pdcp_data_header_size(sn_size) + nof_sdus * trailer_size;
-  logger.log_info("tx_window nof_sdus={} pdu_bytes={}", nof_sdus, pdu_bytes);
-  return pdu_bytes;
+  return sdu_bytes + nof_sdus * (pdcp_data_header_size(sn_size) +
+                                 pdcp_data_trailer_size(rb_type, integrity == security::integrity_enabled::on));
 }
