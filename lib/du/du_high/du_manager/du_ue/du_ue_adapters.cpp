@@ -20,14 +20,16 @@ using namespace srs_du;
 class null_sink_f1c_bearer : public f1c_bearer
 {
 public:
-  void             handle_pdu(byte_buffer pdu) override {}
+  void             handle_pdu(byte_buffer pdu, bool rrc_delivery_status_request) override {}
   async_task<bool> handle_pdu_and_await_delivery(byte_buffer               pdu,
                                                  bool                      report_rrc_delivery_status,
                                                  std::chrono::milliseconds timeout) override
   {
     return launch_no_op_task(true);
   }
-  async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds timeout) override
+  async_task<bool> handle_pdu_and_await_transmission(byte_buffer               pdu,
+                                                     bool                      rrc_delivery_status_request,
+                                                     std::chrono::milliseconds timeout) override
   {
     return launch_no_op_task(true);
   }

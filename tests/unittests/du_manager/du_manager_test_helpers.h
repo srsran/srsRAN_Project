@@ -69,7 +69,7 @@ public:
   byte_buffer       last_rx_pdu;
   byte_buffer_chain last_tx_sdu = byte_buffer_chain::create().value();
 
-  void             handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
+  void handle_pdu(byte_buffer pdu, bool rrc_delivery_status_request) override { last_rx_pdu = std::move(pdu); }
   async_task<bool> handle_pdu_and_await_delivery(byte_buffer               pdu,
                                                  bool                      report_rrc_delivery_status,
                                                  std::chrono::milliseconds timeout) override
@@ -77,7 +77,9 @@ public:
     last_rx_pdu = std::move(pdu);
     return launch_no_op_task(true);
   }
-  async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds timeout) override
+  async_task<bool> handle_pdu_and_await_transmission(byte_buffer               pdu,
+                                                     bool                      rrc_delivery_status_request,
+                                                     std::chrono::milliseconds timeout) override
   {
     last_rx_pdu = std::move(pdu);
     return launch_no_op_task(true);

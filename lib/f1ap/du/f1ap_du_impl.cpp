@@ -277,7 +277,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   }
 
   // Forward SDU to lower layers.
-  srb_bearer->handle_pdu(msg->rrc_container.copy());
+  srb_bearer->handle_pdu(msg->rrc_container.copy(), msg->rrc_delivery_status_request_present);
 }
 
 void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_release_request& request)
