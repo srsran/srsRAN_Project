@@ -21,7 +21,7 @@ std::pair<std::unique_ptr<gateway>, std::unique_ptr<receiver>>
 srsran::ether::create_dpdk_txrx(const gw_config& config, task_executor& rx_executor, srslog::basic_logger& logger)
 {
   dpdk_port_config port_cfg;
-  port_cfg.pcie_id                     = config.interface;
+  port_cfg.id                          = config.interface;
   port_cfg.is_promiscuous_mode_enabled = config.is_promiscuous_mode_enabled;
   port_cfg.mtu_size                    = config.mtu_size;
 

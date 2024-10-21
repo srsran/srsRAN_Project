@@ -9,6 +9,8 @@
  */
 
 #include "dpdk_ethernet_port_context.h"
+#include "srsran/adt/expected.h"
+#include <charconv>
 #include <rte_ethdev.h>
 
 using namespace srsran;
@@ -110,23 +112,55 @@ static void print_link_status(unsigned port_id)
   }
 }
 
+static expected<int> parse_int(const std::string& value)
+{
+  int result{};
+  auto [ptr, ec] = std::from_chars(value.data(), value.data() + value.size(), result);
+
+  if (ec != std::errc() || ptr != (value.data() + value.size())) {
+    return make_unexpected(default_error_t{});
+  }
+
+  return result;
+}
+
+/// On success returns DPDK port identifier resolved based on the passed identifier.
+static expected<uint16_t> get_dpdk_port_id(const std::string& port_id)
+{
+  // Try to resolve port identifier based on the passed identifier.
+  uint16_t dpdk_port_id;
+  if (::rte_eth_dev_get_port_by_name(port_id.c_str(), &dpdk_port_id) == 0) {
+    return dpdk_port_id;
+  }
+
+  // If the function above failed, try to convert passed parameter to an integer for the case when DPDK port identifier
+  // was specified directly in the config.
+  auto result = parse_int(port_id);
+  if (result.has_value() && result.value() >= 0) {
+    return result.value();
+  }
+
+  return make_unexpected(default_error_t{});
+}
+
 /// Configures an Ethernet port managed by DPDK.
 static unsigned dpdk_port_configure(const dpdk_port_config& config, ::rte_mempool* mem_pool)
 {
-  uint16_t port_id;
-  if (::rte_eth_dev_get_port_by_name(config.pcie_id.c_str(), &port_id)) {
+  auto expected_port_id = get_dpdk_port_id(config.id);
+  if (!expected_port_id.has_value()) {
     ::rte_exit(EXIT_FAILURE,
-               "DPDK - Unable to find an Ethernet port with PCIe device id '%s'. Make sure the device id is valid and "
+               "DPDK - Unable to find an Ethernet port with device id '%s'. Make sure the device id is valid and "
                "is bound to DPDK\n",
-               config.pcie_id.c_str());
+               config.id.c_str());
   }
 
-  if (!port_init(config, mem_pool, port_id)) {
-    ::rte_exit(EXIT_FAILURE, "DPDK - Unable to initialize Ethernet port '%u'\n", port_id);
+  uint16_t dpdk_port_id = expected_port_id.value();
+  if (!port_init(config, mem_pool, dpdk_port_id)) {
+    ::rte_exit(EXIT_FAILURE, "DPDK - Unable to initialize Ethernet port '%u'\n", dpdk_port_id);
   }
 
-  print_link_status(port_id);
-  return port_id;
+  print_link_status(dpdk_port_id);
+  return dpdk_port_id;
 }
 
 std::shared_ptr<dpdk_port_context> dpdk_port_context::create(const dpdk_port_config& config)

@@ -844,7 +844,7 @@ int main(int argc, char** argv)
 #ifdef DPDK_FOUND
     if (uses_dpdk) {
       dpdk_port_config port_cfg;
-      port_cfg.pcie_id                     = ru_cfg.network_interface;
+      port_cfg.id                          = ru_cfg.network_interface;
       port_cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
       port_cfg.is_promiscuous_mode_enabled = ru_cfg.enable_promiscuous;
       auto ctx                             = dpdk_port_context::create(port_cfg);

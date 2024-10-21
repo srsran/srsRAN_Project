@@ -23,8 +23,8 @@ constexpr unsigned MAX_BUFFER_SIZE = 9600;
 
 /// DPDK port configuration.
 struct dpdk_port_config {
-  /// PCI-E device identifier.
-  std::string pcie_id;
+  /// Device identifier.
+  std::string id;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
   /// MTU size.
