@@ -191,9 +191,10 @@ std::vector<drb_id_t> du_bearer_resource_manager::setup_drbs(du_ue_resource_conf
     new_drb.qos               = drb_to_setup.qos_info.drb_qos;
     new_drb.f1u               = qos.f1u;
     new_drb.rlc_cfg           = qos.rlc;
-    new_drb.mac_cfg           = make_default_non_gbr_drb_mac_lc_config();
+    new_drb.mac_cfg           = make_non_gbr_drb_mac_lc_config();
     if (drb_to_setup.qos_info.drb_qos.gbr_qos_info.has_value()) {
-      new_drb.mac_cfg = make_default_gbr_drb_mac_lc_config();
+      // Populate MAC LC configuration for GBR DRB if GBR QoS information is present.
+      new_drb.mac_cfg = make_gbr_drb_mac_lc_config(*drb_to_setup.qos_info.drb_qos.gbr_qos_info);
     }
 
     // Update pdcp_sn_len in RLC config

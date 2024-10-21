@@ -52,25 +52,52 @@ mac_lc_config srsran::make_default_drb_mac_lc_config()
 {
   mac_lc_config mac_cfg{};
   // [Implementation-Defined] Setting priority higher than the least priority among SRBs.
-  mac_cfg.priority            = 5;
-  mac_cfg.lcg_id              = uint_to_lcg_id(2);
-  mac_cfg.pbr                 = prioritized_bit_rate::infinity;
-  mac_cfg.bsd                 = bucket_size_duration::ms5;
+  mac_cfg.priority = 5;
+  mac_cfg.lcg_id   = uint_to_lcg_id(2);
+  // [Implementation-Defined] By default we set the PBR to 0 so that there is no prioritized bitrate for the DRB. But,
+  // can be customised based on the requirement.
+  mac_cfg.pbr                 = prioritized_bit_rate::kBps0;
+  mac_cfg.bsd                 = bucket_size_duration::ms300;
   mac_cfg.lc_sr_mask          = false;
   mac_cfg.lc_sr_delay_applied = false;
   mac_cfg.sr_id               = uint_to_sched_req_id(0);
   return mac_cfg;
 }
 
-mac_lc_config srsran::make_default_gbr_drb_mac_lc_config()
+prioritized_bit_rate srsran::get_pbr_ge_to_given_bit_rate(uint64_t bitrate_bps)
+{
+  // Convert given bitrate (bps) to kilo Bytes per second.
+  const float given_bitrate_kBps = bitrate_bps / (1000 * 8);
+  // Prioritized bitrate values as per TS 38.331, \c prioritisedBitRate.
+  constexpr static std::array<unsigned, 15> pbr_kBps{
+      0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536};
+  // Find PBR value greater than or equal to give bitrate.
+  for (unsigned pbr : pbr_kBps) {
+    if (given_bitrate_kBps <= pbr) {
+      return static_cast<prioritized_bit_rate>(pbr);
+    }
+  }
+  return prioritized_bit_rate::infinity;
+}
+
+mac_lc_config srsran::make_gbr_drb_mac_lc_config(const gbr_qos_flow_information& gbr_qos_flow_info)
 {
   mac_lc_config mac_cfg{make_default_drb_mac_lc_config()};
+  // [Implementation-Defined] Setting priority higher than the non-GBR DRBs.
   mac_cfg.priority = 4;
-  mac_cfg.lcg_id   = uint_to_lcg_id(1);
+  // [Implementation-Defined] Setting LCG ID other than the one assigned to non-GBR DRBs.
+  mac_cfg.lcg_id = uint_to_lcg_id(1);
+  // Set PBR based on the given GBR QoS flow information.
+  mac_cfg.pbr = get_pbr_ge_to_given_bit_rate(gbr_qos_flow_info.gbr_ul);
   return mac_cfg;
 }
 
-mac_lc_config srsran::make_default_non_gbr_drb_mac_lc_config()
+mac_lc_config srsran::make_non_gbr_drb_mac_lc_config()
 {
-  return make_default_drb_mac_lc_config();
+  mac_lc_config mac_cfg{make_default_drb_mac_lc_config()};
+  // [Implementation-Defined] Value of PBR is set such that the final value of B_j (computed before applying
+  // logical channel prioritization procedure) is small (non-zero) for non-GBR DRBs. See TS 38.321, 5.4.3.1.1-3, for
+  // computation of B_j and logical channel prioritization procedure.
+  mac_cfg.pbr = prioritized_bit_rate::kBps8;
+  return mac_cfg;
 }
