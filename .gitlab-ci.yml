@@ -116,7 +116,7 @@ matlab nightly:
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
       when: delayed
-      start_in: 3 hours
+      start_in: 5 hours
   inherit:
     variables: false
   trigger:
@@ -133,7 +133,7 @@ enterprise nightly:
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
       when: delayed
-      start_in: 3 hours
+      start_in: 7 hours
   inherit:
     variables: false
   trigger:
