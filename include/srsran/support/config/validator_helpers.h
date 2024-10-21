@@ -22,8 +22,9 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/support/config/validator_result.h"
+#include <algorithm>
+#include <optional>
 
 namespace srsran {
 

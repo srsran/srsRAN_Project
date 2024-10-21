@@ -25,7 +25,6 @@
 #include "../support/prach_context_repository.h"
 #include "../support/uplink_context_repository.h"
 #include "ofh_data_flow_cplane_scheduling_commands.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/transmitter/ofh_uplink_request_handler.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"

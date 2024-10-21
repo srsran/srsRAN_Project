@@ -151,7 +151,7 @@ metrics version check in retina:
       interruptible: false
   before_script:
     - *docker_setup
-    - docker compose -f docker/docker-compose.yml build --build-arg NUM_CORES=${KUBERNETES_CPU_LIMIT} --build-arg LIB=${LIB} --build-arg LIB_VERSION=${LIB_VERSION} gnb
+    - docker compose -f docker/docker-compose.yml build --build-arg NUM_JOBS=${KUBERNETES_CPU_LIMIT} --build-arg LIB=${LIB} --build-arg LIB_VERSION=${LIB_VERSION} gnb
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srscu"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srsdu"
 
@@ -183,7 +183,7 @@ gnb docker compose dpdk:
     - if: $CI_DESCRIPTION =~ /Weekly/
       interruptible: false
   script:
-    - docker compose -f docker/docker-compose.yml build --build-arg NUM_CORES=${KUBERNETES_CPU_LIMIT} 5gc
+    - docker compose -f docker/docker-compose.yml build --build-arg NUM_JOBS=${KUBERNETES_CPU_LIMIT} 5gc
     - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
 
 grafana docker compose:
@@ -284,10 +284,6 @@ grafana server image latest:
   extends: .docker-builder
   stage: publish
   rules:
-    - if: $ON_MR
-      changes:
-        <<: *srs_container_changes
-      variables:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       interruptible: false
   variables:
@@ -306,7 +302,7 @@ grafana server image latest:
     - |
       export NAME="srsran-project"
       export VERSION="${SPLIT}_${SUFFIX}"
-      export BUILD_ARGS="LIB=${LIB};LIB_VERSION=${LIB_VERSION};MARCH=${MARCH};NUM_CORES=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
+      export BUILD_ARGS="LIB=${LIB};LIB_VERSION=${LIB_VERSION};MARCH=${MARCH};NUM_JOBS=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
 
 srsran image split72:
   extends: .srsran image

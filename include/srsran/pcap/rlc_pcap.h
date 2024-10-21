@@ -148,14 +148,14 @@ namespace fmt {
 template <>
 struct formatter<srsran::pcap_rlc_pdu_context> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::pcap_rlc_pdu_context& pcap_context, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(),
                      "rlc_mode={} dir={} sn_len={} bearer_type={} bearer_id={} ueid={}",

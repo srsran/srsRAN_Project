@@ -168,13 +168,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::drb_id_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::drb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::drb_id_t o, FormatContext& ctx)
   {
     switch (o) {
       case srsran::drb_id_t::invalid:
@@ -189,13 +189,13 @@ struct formatter<srsran::drb_id_t> {
 template <>
 struct formatter<srsran::srb_id_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::srb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::srb_id_t o, FormatContext& ctx)
   {
     return format_to(ctx.out(), "SRB{}", srb_id_to_uint(o));
   }
@@ -205,13 +205,13 @@ struct formatter<srsran::srb_id_t> {
 template <>
 struct formatter<srsran::rb_id_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::rb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rb_id_t o, FormatContext& ctx)
   {
     if (o.is_drb()) {
       return format_to(ctx.out(), "{}", o.get_drb_id());

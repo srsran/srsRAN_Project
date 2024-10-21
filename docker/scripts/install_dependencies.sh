@@ -49,6 +49,29 @@ main() {
         if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
             DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
                 libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev libdpdk-dev libelf-dev libdwarf-dev
+            
+            ARCH=$(uname -m)
+            if [[ "$ARCH" == "x86_64" ]]; then
+                DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gpg gpg-agent wget
+                wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+                echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+                DEBIAN_FRONTEND=noninteractive apt-get update
+                DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends intel-oneapi-mkl-devel libomp-dev
+            else
+                DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget
+                pushd /tmp
+                wget https://developer.arm.com/-/cdn-downloads/permalink/Arm-Performance-Libraries/Version_24.10/arm-performance-libraries_24.10_deb_gcc.tar
+                tar -xf arm-performance-libraries_24.10_deb_gcc.tar
+                cd arm-performance-libraries_24.10_deb/
+                ./arm-performance-libraries_24.10_deb.sh --accept
+                popd
+                rm -Rf /tmp/arm-performance-libraries_24.10_deb
+                DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends environment-modules
+                source /usr/share/modules/init/bash
+                export MODULEPATH=$MODULEPATH:/opt/arm/modulefiles
+                module avail
+                module load armpl/24.10.0_gcc
+            fi
         fi
 
     elif [[ "$ID" == "arch" ]]; then

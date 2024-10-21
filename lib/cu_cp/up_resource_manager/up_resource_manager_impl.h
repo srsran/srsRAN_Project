@@ -34,6 +34,7 @@ struct up_pdu_session_context_update {
   up_pdu_session_context_update(pdu_session_id_t id_) : id(id_){};
   pdu_session_id_t                   id;
   std::map<drb_id_t, up_drb_context> drb_to_add;
+  std::map<drb_id_t, up_drb_context> drb_to_modify;
   std::vector<drb_id_t>              drb_to_remove;
 };
 

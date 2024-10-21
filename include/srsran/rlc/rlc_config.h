@@ -24,6 +24,7 @@
 
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/rlc/rlc_mode.h"
+#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/timers.h"
 #include <cstdint>
@@ -763,7 +764,7 @@ struct formatter<srsran::rlc_um_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_um_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_um_sn_size sn_size, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", to_number(sn_size));
   }
@@ -772,13 +773,13 @@ struct formatter<srsran::rlc_um_sn_size> {
 template <>
 struct formatter<srsran::rlc_am_sn_size> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_am_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_am_sn_size& sn_size, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", to_number(sn_size));
   }
@@ -787,13 +788,13 @@ struct formatter<srsran::rlc_am_sn_size> {
 template <>
 struct formatter<srsran::rlc_dc_field> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_dc_field dc, FormatContext& ctx)
   {
     static constexpr const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
@@ -803,13 +804,13 @@ struct formatter<srsran::rlc_dc_field> {
 template <>
 struct formatter<srsran::rlc_si_field> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_si_field si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_si_field si, FormatContext& ctx)
   {
     static constexpr const char* options[] = {"full", "first", "last", "mid"};
     return format_to(ctx.out(), "{}", options[to_number(si)]);
@@ -819,13 +820,13 @@ struct formatter<srsran::rlc_si_field> {
 template <>
 struct formatter<srsran::rlc_control_pdu_type> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_control_pdu_type cpt, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", to_number(cpt));
   }
@@ -841,7 +842,7 @@ struct formatter<srsran::rlc_tx_tm_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tx_tm_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_tx_tm_config& cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(), "queue_size={}", cfg.queue_size);
   }
@@ -867,7 +868,7 @@ struct formatter<srsran::rlc_rx_tm_config> {
 template <>
 struct formatter<srsran::rlc_tm_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
@@ -883,7 +884,7 @@ struct formatter<srsran::rlc_tm_config> {
 template <>
 struct formatter<srsran::rlc_tx_um_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
@@ -904,7 +905,7 @@ struct formatter<srsran::rlc_tx_um_config> {
 template <>
 struct formatter<srsran::rlc_rx_um_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
@@ -984,7 +985,7 @@ struct formatter<srsran::rlc_rx_am_config> {
 template <>
 struct formatter<srsran::rlc_am_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }

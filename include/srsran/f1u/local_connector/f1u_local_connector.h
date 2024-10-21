@@ -27,7 +27,9 @@
 #include "srsran/f1u/du/f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/format/fmt_optional.h"
 #include <cstdint>
+#include <mutex>
 #include <unordered_map>
 
 namespace srsran {

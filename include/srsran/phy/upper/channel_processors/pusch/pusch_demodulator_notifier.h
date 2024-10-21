@@ -21,7 +21,8 @@
  */
 
 #pragma once
-#include "srsran/adt/optional.h"
+
+#include <optional>
 
 namespace srsran {
 

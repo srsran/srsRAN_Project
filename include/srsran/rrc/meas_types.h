@@ -574,14 +574,14 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     std::string smtc1_str;
     std::string smtc2_str;

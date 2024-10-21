@@ -22,16 +22,28 @@
 
 #pragma once
 
-#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
-#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
-#include <string>
+#include "fmt/format.h"
+#include <optional>
 
-namespace srsran {
-namespace hal {
+namespace fmt {
 
-std::unique_ptr<hw_accelerator_pusch_dec_factory>
-create_plugin_bbdev_pusch_dec_acc_factory(const bbdev_hwacc_pusch_dec_factory_configuration& accelerator_config,
-                                          std::string                                        impl_name);
+/// Default formatter for std::optional<T>
+template <typename T>
+struct formatter<std::optional<T>> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
 
-} // namespace hal
-} // namespace srsran
+  template <typename FormatContext>
+  auto format(const std::optional<T>& optval, FormatContext& ctx)
+  {
+    if (!optval.has_value()) {
+      return format_to(ctx.out(), "{{na}}");
+    }
+    return format_to(ctx.out(), "{}", optval.value());
+  }
+};
+
+} // namespace fmt

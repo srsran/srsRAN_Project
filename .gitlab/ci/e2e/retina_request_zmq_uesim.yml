@@ -9,6 +9,7 @@
 - name: amarisoft-ue
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue-remote:${RETINA_VERSION}
+  taints: ["machine=srskit2"]
   labels: 
     - ${ZMQ_HOSTLABEL_1}
   nof_ports: 32
@@ -35,6 +36,7 @@
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  taints: ["machine=srskit2"]
   labels: 
     - ${ZMQ_HOSTLABEL_1}
   force_external_ip: true
@@ -44,8 +46,8 @@
       requests: 16
       limits: 16
     memory:
-      requests: "48G"
-      limits: "48G"
+      requests: "10G"
+      limits: "10G"
     ephemeral-storage:
       requests: "15G"
       limits: "15G"
@@ -66,11 +68,12 @@
       requests: 2
       limits: 2
     memory:
-      requests: "8G"
-      limits: "8G"
+      requests: "6G"
+      limits: "6G"
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
+  taints: ["machine=srskit2"]
   labels: 
     - ${ZMQ_HOSTLABEL_1}

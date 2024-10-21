@@ -41,8 +41,6 @@ add_library(cu_cp_test_helpers
 target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(cu_cp_test_helpers srsran_cu_cp srsran_support srslog f1ap_test_helpers e1ap_test_helpers f1ap_asn1 ngap_asn1 e1ap_asn1 srsran_e2)
 
-add_to_exported_libs(cu_cp_test_helpers)
-
 
 add_executable(cu_cp_test
                cu_cp_connectivity_test.cpp

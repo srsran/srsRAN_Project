@@ -22,7 +22,6 @@
 
 #pragma once
 #include "srsran/ran/pdcch/pdcch_context.h"
-#include "srsran/support/format_utils.h"
 
 namespace fmt {
 
@@ -31,13 +30,13 @@ template <>
 struct formatter<srsran::pdcch_context> {
 public:
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcch_context& context, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pdcch_context& context, FormatContext& ctx)
   {
     helper.format_always(ctx, "ss_id={}", context.ss_id);
     helper.format_always(ctx, "format={}", context.dci_format);

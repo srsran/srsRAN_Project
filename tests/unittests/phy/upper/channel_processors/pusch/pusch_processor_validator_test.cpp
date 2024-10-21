@@ -26,6 +26,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/support/format/fmt_optional.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 

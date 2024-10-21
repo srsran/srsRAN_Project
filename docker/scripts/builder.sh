@@ -194,6 +194,13 @@ if [[ -n "$DPDK_VERSION" ]]; then
     echo "DPDK_DIR set to $DPDK_DIR"
 fi
 
+ARCH=$(uname -m)
+if [[ "$ARCH" == "aarch64" ]]; then
+    if ARMPL_DIR=$(ls -d /opt/arm/armpl_* 2>/dev/null); then
+        export ARMPL_DIR
+    fi
+fi
+
 # Setup cache dir
 mkdir -p "$CACHE_FOLDER"
 export CCACHE_BASEDIR=${PWD}
@@ -215,5 +222,5 @@ ccache -z || true
 mkdir -p "$BUILD_FOLDER"
 cd "$BUILD_FOLDER" || exit
 cmake $CCACHE_CMAKE_ARGS "$@" ..
-make $MAKE_EXTRA
+cmake --build . -- $MAKE_EXTRA
 ccache -sv || true

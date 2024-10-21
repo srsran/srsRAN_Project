@@ -392,11 +392,6 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
              "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
       ->capture_default_str();
 
-  add_option(app,
-             "--load_plugins",
-             cu_cp_params.load_plugins,
-             "Attempt to load plugin library to enable srsRAN_Enterprise features");
-
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF configuration");
   configure_cli11_amf_args(*amf_subcmd, cu_cp_params.amf_config);
 

@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/sch/sch_mcs.h"
+#include <optional>
 
 namespace srsran {
 

@@ -64,7 +64,8 @@ void split_8_du_application_unit_impl::on_parsing_configuration_registration(CLI
   configure_cli11_with_split_8_du_unit_config_schema(app, unit_cfg);
 }
 
-du_unit split_8_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies)
+du_unit split_8_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
+                                                                  bool                        use_multicell)
 {
   return create_split_8_du(unit_cfg, dependencies);
 }

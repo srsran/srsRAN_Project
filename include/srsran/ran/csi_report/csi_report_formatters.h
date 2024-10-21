@@ -25,7 +25,6 @@
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/csi_report/csi_report_pusch_size.h"
 #include "srsran/ran/uci/uci_formatters.h"
-#include "srsran/support/format_utils.h"
 
 /// Custom formatter for \c srsran::csi_report_configuration.
 template <>
@@ -37,14 +36,14 @@ struct fmt::formatter<srsran::csi_report_configuration> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::csi_report_configuration& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     helper.format_always(ctx, "nof_csi_rs_resources={}", config.nof_csi_rs_resources);
     helper.format_always(ctx, "pmi_codebook={}", to_string(config.pmi_codebook));
@@ -66,13 +65,13 @@ struct fmt::formatter<srsran::csi_report_pmi> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::csi_report_pmi& pmi, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::csi_report_pmi& pmi, FormatContext& ctx)
   {
     if (const auto* two_ports_pmi = std::get_if<srsran::csi_report_pmi::two_antenna_port>(&pmi.type)) {
       helper.format_always(ctx, "pmi={}", two_ports_pmi->pmi);
@@ -97,13 +96,13 @@ struct fmt::formatter<srsran::csi_report_data> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::csi_report_data& data, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::csi_report_data& data, FormatContext& ctx)
   {
     if (data.cri.has_value()) {
       helper.format_always(ctx, "cri={}", data.cri.value());
@@ -143,14 +142,14 @@ struct fmt::formatter<srsran::csi_report_pusch_size> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::csi_report_pusch_size& data, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     helper.format_always(ctx, "part1={}", data.part1_size.value());
     helper.format_always(ctx, "part2={{{}}}", data.part2_correspondence);

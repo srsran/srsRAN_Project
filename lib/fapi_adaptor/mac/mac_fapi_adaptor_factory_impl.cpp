@@ -26,16 +26,13 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-std::unique_ptr<mac_fapi_adaptor>
-mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_factory_config&  config,
-                                      mac_fapi_adaptor_factory_dependencies&& dependencies)
+std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_config&  config,
+                                                                        mac_fapi_adaptor_dependencies&& dependencies)
 {
-  return std::make_unique<mac_fapi_adaptor_impl>(*dependencies.gateway,
-                                                 *dependencies.last_msg_notifier,
-                                                 std::move(dependencies.pm_mapper),
-                                                 std::move(dependencies.part2_mapper),
-                                                 config.cell_nof_prbs,
-                                                 config.scs);
+  srsran_assert(dependencies.gateway, "Invalid FAPI slot message gateway");
+  srsran_assert(dependencies.last_msg_notifier, "Invalid FAPI last message notifier");
+
+  return std::make_unique<mac_fapi_adaptor_impl>(config, std::move(dependencies));
 }
 
 std::unique_ptr<mac_fapi_adaptor_factory> srsran::fapi_adaptor::create_mac_fapi_adaptor_factory()

@@ -26,6 +26,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/executors/task_executor.h"
+#include <mutex>
 
 namespace srsran {
 

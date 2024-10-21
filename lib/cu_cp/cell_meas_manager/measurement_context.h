@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/rrc/meas_types.h"
 #include "srsran/srslog/srslog.h"
+
 #include <map>
 #include <unordered_map>
 

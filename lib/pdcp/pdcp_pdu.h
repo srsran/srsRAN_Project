@@ -95,13 +95,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::pdcp_dc_field> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_dc_field dc, FormatContext& ctx)
   {
     static constexpr const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
@@ -111,13 +111,13 @@ struct formatter<srsran::pdcp_dc_field> {
 template <>
 struct formatter<srsran::pdcp_control_pdu_type> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_control_pdu_type cpt, FormatContext& ctx)
   {
     static constexpr const char* options[] = {"status_report", "rohc_feedback", "ehc_feedback"};
     return format_to(ctx.out(), "{}", options[to_number(cpt)]);
@@ -127,14 +127,14 @@ struct formatter<srsran::pdcp_control_pdu_type> {
 template <>
 struct formatter<srsran::pdcp_data_pdu_header> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::pdcp_data_pdu_header& hdr, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "sn={}", hdr.sn);
   }
@@ -143,14 +143,14 @@ struct formatter<srsran::pdcp_data_pdu_header> {
 template <>
 struct formatter<srsran::pdcp_control_pdu_header> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::pdcp_control_pdu_header& hdr, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "cpt={}", hdr.cpt);
   }

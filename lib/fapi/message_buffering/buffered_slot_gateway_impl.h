@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/srslog/logger.h"
+
 #include <atomic>
 
 namespace srsran {

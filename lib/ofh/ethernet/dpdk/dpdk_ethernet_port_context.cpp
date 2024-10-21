@@ -107,6 +107,21 @@ static bool port_init(const dpdk_port_config& config, ::rte_mempool* mem_pool, u
   return true;
 }
 
+/// Checks and prints Ethernet Link status of the given port.
+static void print_link_status(unsigned port_id)
+{
+  ::rte_eth_link link = {};
+
+  if (::rte_eth_link_get(port_id, &link) < 0) {
+    fmt::print("DPDK - Failed to retrieve port link status\n");
+    return;
+  }
+
+  if (link.link_status != RTE_ETH_LINK_UP) {
+    fmt::print("DPDK - Port {} link status is \"DOWN\" \n", port_id);
+  }
+}
+
 /// Configures an Ethernet port managed by DPDK.
 static unsigned dpdk_port_configure(const dpdk_port_config& config, ::rte_mempool* mem_pool)
 {
@@ -122,6 +137,7 @@ static unsigned dpdk_port_configure(const dpdk_port_config& config, ::rte_mempoo
     ::rte_exit(EXIT_FAILURE, "DPDK - Unable to initialize Ethernet port '%u'\n", port_id);
   }
 
+  print_link_status(port_id);
   return port_id;
 }
 
@@ -142,11 +158,16 @@ std::shared_ptr<dpdk_port_context> dpdk_port_context::create(const dpdk_port_con
 
 dpdk_port_context::~dpdk_port_context()
 {
-  fmt::print("DPDK - Closing port_id '{}' ...", port_id);
+  fmt::print("DPDK - Closing port_id '{}' ... ", port_id);
   int ret = ::rte_eth_dev_stop(port_id);
   if (ret != 0) {
     fmt::print("rte_eth_dev_stop: err '{}', port_id '{}'\n", ret, port_id);
   }
-  ::rte_eth_dev_close(port_id);
+  ret = ::rte_eth_dev_close(port_id);
+  if (ret != 0) {
+    fmt::print("rte_eth_dev_close: err '{}', port_id '{}'\n", rte_errno, port_id);
+  }
+  ::rte_mempool_free(mem_pool);
+
   fmt::print(" Done\n");
 }

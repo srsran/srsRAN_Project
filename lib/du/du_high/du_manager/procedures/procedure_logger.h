@@ -25,7 +25,6 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/format_utils.h"
 
 namespace srsran {
 namespace srs_du {

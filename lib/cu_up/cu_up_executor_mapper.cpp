@@ -216,7 +216,7 @@ public:
 
   task_executor& ctrl_executor() override { return cu_up_strand; }
 
-  task_executor& io_ul_executor() override { return *io_ul_exec; }
+  task_executor& io_ul_executor() override { return *io_ul_exec_ptr; }
 
   task_executor& e2_executor() override { return cu_up_strand; }
 
@@ -227,7 +227,7 @@ public:
 
 private:
   using cu_up_strand_type        = task_strand<task_executor*, concurrent_queue_policy::lockfree_mpmc>;
-  using io_dedicated_strand_type = task_strand<cu_up_strand_type*, concurrent_queue_policy::lockfree_mpmc>;
+  using io_dedicated_strand_type = task_strand<task_executor*, concurrent_queue_policy::lockfree_mpmc>;
   using ue_strand_type           = priority_task_strand<cu_up_strand_type*>;
 
   base_cu_up_executor_pool_config create_strands(const strand_based_executor_config& config)
@@ -237,11 +237,11 @@ private:
 
     // Create IO executor that can be either inlined with CU-UP strand or its own strand.
     if (config.dedicated_io_strand) {
-      io_ul_strand.emplace<io_dedicated_strand_type>(&cu_up_strand, config.default_task_queue_size);
-      io_ul_exec = &std::get<io_dedicated_strand_type>(io_ul_strand);
+      io_ul_exec.emplace<io_dedicated_strand_type>(&config.worker_pool_executor, config.gtpu_task_queue_size);
+      io_ul_exec_ptr = &std::get<io_dedicated_strand_type>(io_ul_exec);
     } else {
-      io_ul_strand.emplace<inline_task_executor>();
-      io_ul_exec = &std::get<inline_task_executor>(io_ul_strand);
+      io_ul_exec.emplace<inline_task_executor>();
+      io_ul_exec_ptr = &std::get<inline_task_executor>(io_ul_exec);
     }
 
     // Create UE-dedicated strands.
@@ -267,8 +267,8 @@ private:
   cu_up_strand_type cu_up_strand;
 
   // IO executor with two modes
-  std::variant<inline_task_executor, io_dedicated_strand_type> io_ul_strand;
-  task_executor*                                               io_ul_exec;
+  std::variant<inline_task_executor, io_dedicated_strand_type> io_ul_exec;
+  task_executor*                                               io_ul_exec_ptr;
 
   // UE strands and respective executors.
   std::vector<std::unique_ptr<ue_strand_type>> ue_strands;

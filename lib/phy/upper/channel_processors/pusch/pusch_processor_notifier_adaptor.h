@@ -23,7 +23,6 @@
 #pragma once
 
 #include "pusch_uci_decoder_notifier.h"
-#include "srsran/adt/optional.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator_notifier.h"

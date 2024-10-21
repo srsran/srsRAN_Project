@@ -49,8 +49,8 @@ csi_resource_periodicity srsran::csi_helper::get_max_csi_rs_period(subcarrier_sp
   return max_csi_period;
 }
 
-SRSRAN_NODISCARD bool srsran::csi_helper::is_csi_rs_period_valid(csi_resource_periodicity       csi_rs_period,
-                                                                 const tdd_ul_dl_config_common& tdd_cfg)
+bool srsran::csi_helper::is_csi_rs_period_valid(csi_resource_periodicity       csi_rs_period,
+                                                const tdd_ul_dl_config_common& tdd_cfg)
 {
   const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
   if (static_cast<unsigned>(csi_rs_period) % tdd_period != 0) {

@@ -20,7 +20,6 @@
  *
  */
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/srs/srs_bandwidth_configuration.h"
 #include <gtest/gtest.h>
 

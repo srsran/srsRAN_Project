@@ -34,6 +34,7 @@
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
 #include "srsran/security/security_engine.h"
+#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 
@@ -145,7 +146,7 @@ public:
   /// \brief Writes the header of a PDCP data PDU according to the content of the associated object
   /// \param[out] buf Reference to a byte_buffer that is appended by the header bytes
   /// \param[in] hdr Reference to a pdcp_data_pdu_header that represents the header content
-  SRSRAN_NODISCARD bool write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const;
+  [[nodiscard]] bool write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const;
 
   /*
    * Testing helpers
@@ -255,13 +256,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::pdcp_tx_state> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx)
   {
     return format_to(ctx.out(), "tx_next_ack={} tx_trans={} tx_next={}", st.tx_next_ack, st.tx_trans, st.tx_next);
   }

@@ -87,7 +87,7 @@ public:
 
   /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, enqueueing fails.
   /// \return true if task was successfully enqueued. False if task FIFO was full.
-  SRSRAN_NODISCARD bool push_task(task_t&& task) { return pending_tasks.try_push(std::move(task)); }
+  [[nodiscard]] bool push_task(task_t&& task) { return pending_tasks.try_push(std::move(task)); }
 
   /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, this call blocks,
   /// until the FIFO has space to enqueue the task.
@@ -145,7 +145,7 @@ public:
 
   general_task_worker_executor(general_task_worker<QueuePolicy, WaitPolicy>& worker_) : worker(&worker_) {}
 
-  SRSRAN_NODISCARD bool execute(unique_task task) override
+  [[nodiscard]] bool execute(unique_task task) override
   {
     if (can_run_task_inline()) {
       // Same thread. Run task right away.
@@ -155,7 +155,7 @@ public:
     return defer(std::move(task));
   }
 
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return worker->push_task(std::move(task)); }
+  [[nodiscard]] bool defer(unique_task task) override { return worker->push_task(std::move(task)); }
 
   /// Determine whether the caller is in the same thread as the worker this executor adapts.
   bool can_run_task_inline() const { return worker->get_id() == std::this_thread::get_id(); }

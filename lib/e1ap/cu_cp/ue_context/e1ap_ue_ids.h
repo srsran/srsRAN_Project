@@ -24,7 +24,7 @@
 
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/common/e1ap_types.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_basic_parser.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -45,7 +45,7 @@ struct e1ap_ue_ids {
 namespace fmt {
 
 template <>
-struct formatter<srsran::srs_cu_cp::e1ap_ue_ids> : public basic_fmt_parser {
+struct formatter<srsran::srs_cu_cp::e1ap_ue_ids> : public basic_parser {
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::e1ap_ue_ids& p, FormatContext& ctx)
   {

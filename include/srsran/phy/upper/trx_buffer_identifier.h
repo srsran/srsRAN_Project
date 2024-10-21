@@ -86,14 +86,14 @@ namespace fmt {
 template <>
 struct formatter<srsran::trx_buffer_identifier> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::trx_buffer_identifier& value, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "rnti={:#x} h_id={}", value.get_rnti(), value.get_harq());
   }

@@ -24,7 +24,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -176,7 +176,7 @@ public:
   /// \brief Read a RLC AM status PDU from a PDU buffer view
   /// \param pdu A reference to a byte_buffer_view
   /// \return true if PDU was read successfully, false otherwise
-  SRSRAN_NODISCARD bool unpack(const byte_buffer_view& pdu);
+  [[nodiscard]] bool unpack(const byte_buffer_view& pdu);
 
   /// \brief Checks if a PDU buffer view contains a control PDU
   /// \param pdu A reference to a byte_buffer_view
@@ -188,7 +188,7 @@ public:
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 38.322 v15.3.0 Section 6.2.2.4
  ***************************************************************************/
-inline SRSRAN_NODISCARD bool
+[[nodiscard]] inline bool
 rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn_size, rlc_am_pdu_header* header)
 {
   byte_buffer_reader pdu_reader = pdu;
@@ -300,13 +300,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_am_pdu_header> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_am_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_am_pdu_header& hdr, FormatContext& ctx)
   {
     if (hdr.si == srsran::rlc_si_field::full_sdu || hdr.si == srsran::rlc_si_field::first_segment) {
       // Header of full SDU or first SDU segment has no SO.
@@ -319,14 +319,14 @@ struct formatter<srsran::rlc_am_pdu_header> {
 template <>
 struct formatter<srsran::rlc_am_status_nack> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::rlc_am_status_nack& nack, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     if (nack.has_nack_range) {
       if (nack.has_so) {
@@ -344,14 +344,14 @@ struct formatter<srsran::rlc_am_status_nack> {
 template <>
 struct formatter<srsran::rlc_am_status_pdu> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::rlc_am_status_pdu& status, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     memory_buffer buffer;
     format_to(buffer, "ack_sn={} n_nack={}", status.ack_sn, status.get_nacks().size());

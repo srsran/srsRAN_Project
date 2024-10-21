@@ -433,8 +433,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
     decoder_config.hw_decoder_factory        = nullptr;
     decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
 #ifdef HWACC_PUSCH_ENABLED
-    decoder_config.hw_decoder_factory =
-        hal::create_bbdev_pusch_dec_acc_factory(config.hal_config.hwacc_pusch_dec_cfg, "srs");
+    decoder_config.hw_decoder_factory = hal::create_bbdev_pusch_dec_acc_factory(config.hal_config.hwacc_pusch_dec_cfg);
 #endif // HWACC_PUSCH_ENABLED
     decoder_config.executor = config.pusch_decoder_executor;
     report_fatal_error_if_not(decoder_config.hw_decoder_factory, "Invalid hardware-accelerated PUSCH decoder factory.");
@@ -887,7 +886,7 @@ srsran::create_downlink_processor_factory_hw(const downlink_processor_factory_hw
   encoder_config.crc_factory       = crc_calc_factory;
   encoder_config.segmenter_factory = ldpc_seg_tx_factory;
 #ifdef HWACC_PDSCH_ENABLED
-  encoder_config.hw_encoder_factory = hal::create_bbdev_pdsch_enc_acc_factory(config.hwacc_pdsch_enc_cfg, "srs");
+  encoder_config.hw_encoder_factory = hal::create_bbdev_pdsch_enc_acc_factory(config.hwacc_pdsch_enc_cfg);
 #endif // HWACC_PDSCH_ENABLED
   report_fatal_error_if_not(encoder_config.hw_encoder_factory, "Invalid hardware-accelerated PDSCH encoder factory.");
   std::shared_ptr<pdsch_encoder_factory> pdsch_enc_factory = create_pdsch_encoder_factory_hw(encoder_config);

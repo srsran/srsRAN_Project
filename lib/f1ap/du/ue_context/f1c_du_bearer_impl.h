@@ -58,7 +58,9 @@ public:
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
   void             handle_pdu(byte_buffer pdu) override;
-  async_task<bool> handle_pdu_and_await_delivery(byte_buffer sdu, std::chrono::milliseconds time_to_wait) override;
+  async_task<bool> handle_pdu_and_await_delivery(byte_buffer               sdu,
+                                                 bool                      report_rrc_delivery_status,
+                                                 std::chrono::milliseconds time_to_wait) override;
   async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds time_to_wait) override;
 
 private:
@@ -94,7 +96,9 @@ public:
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
   void             handle_pdu(byte_buffer sdu) override;
-  async_task<bool> handle_pdu_and_await_delivery(byte_buffer pdu, std::chrono::milliseconds time_to_wait) override;
+  async_task<bool> handle_pdu_and_await_delivery(byte_buffer               pdu,
+                                                 bool                      report_rrc_delivery_status,
+                                                 std::chrono::milliseconds time_to_wait) override;
   async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds time_to_wait) override;
 
 private:
@@ -115,10 +119,16 @@ private:
   };
   using event_ptr = unsync_fixed_size_object_pool<event_context>::ptr;
 
-  async_task<bool> handle_pdu_and_await(byte_buffer pdu, bool tx_or_delivery, std::chrono::milliseconds time_to_wait);
+  async_task<bool> handle_pdu_and_await(byte_buffer               pdu,
+                                        bool                      tx_or_delivery,
+                                        bool                      report_rrc_delivery_status,
+                                        std::chrono::milliseconds time_to_wait);
   event_observer_type&
        wait_for_notification(uint32_t pdcp_sn, bool tx_or_delivery, std::chrono::milliseconds time_to_wait);
   void handle_notification(uint32_t highest_pdcp_sn, bool tx_or_delivery);
+
+  /// Handle RRC Delivery Report as per TS 38.473, Section 8.4.4.
+  void handle_rrc_delivery_report(uint32_t triggering_pdcp_sn);
 
   f1ap_ue_context&       ue_ctxt;
   srb_id_t               srb_id;

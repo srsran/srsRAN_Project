@@ -36,9 +36,13 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
+  const char* name() const { return "UE Context Modification"; }
+
   void create_du_request(const asn1::f1ap::ue_context_mod_request_s& msg);
   void send_ue_context_modification_response();
   void send_ue_context_modification_failure();
+
+  async_task<bool> handle_rrc_container();
 
   const asn1::f1ap::ue_context_mod_request_s req;
   f1ap_du_ue&                                ue;

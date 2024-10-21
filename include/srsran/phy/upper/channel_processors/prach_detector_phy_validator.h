@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 
@@ -36,10 +37,10 @@ namespace srsran {
 /// \param[in] scs                      PRACH subcarrier spacing.
 /// \param[in] zero_correlation_zone    PRACH zero correlation zone.
 /// \param[in] nof_rx_ports             Number of receive antenna ports.
-/// \return True if the PRACH configuration is support by the detector, false otherwise.
-bool validate_prach_detector_phy(prach_format_type        format,
-                                 prach_subcarrier_spacing scs,
-                                 unsigned                 zero_correlation_zone,
-                                 unsigned                 nof_rx_ports);
+/// \return A success if the PRACH configuration is support by the detector, an error message otherwise.
+error_type<std::string> validate_prach_detector_phy(prach_format_type        format,
+                                                    prach_subcarrier_spacing scs,
+                                                    unsigned                 zero_correlation_zone,
+                                                    unsigned                 nof_rx_ports);
 
 } // namespace srsran

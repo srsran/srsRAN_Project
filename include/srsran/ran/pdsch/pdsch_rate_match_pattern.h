@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/phy/constants.h"
+
 #include <cstdint>
 
 namespace srsran {

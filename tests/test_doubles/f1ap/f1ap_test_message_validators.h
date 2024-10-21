@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
+#include <optional>
 
 namespace srsran {
 

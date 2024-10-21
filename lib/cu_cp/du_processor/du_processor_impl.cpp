@@ -236,13 +236,18 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     // Return the RRCReject container
     return make_unexpected(rrc->get_rrc_reject());
   }
-  rrc_ue_interface* rrc_ue       = rrc->find_ue(ue_index);
-  f1ap_rrc_ue_adapters[ue_index] = {};
-  f1ap_rrc_ue_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_pdu_handler());
+  rrc_ue_interface* rrc_ue         = rrc->find_ue(ue_index);
+  f1ap_rrc_dcch_adapters[ue_index] = {};
+  f1ap_rrc_ccch_adapters[ue_index] = {};
+  f1ap_rrc_ccch_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_pdu_handler());
+  f1ap_rrc_dcch_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_pdu_handler());
 
   // Signal back that the UE was successfully created.
   logger.info("ue={} c-rnti={}: UE created", ue->get_ue_index(), req.c_rnti);
-  return ue_rrc_context_creation_response{ue_index, &f1ap_rrc_ue_adapters.at(ue_index)};
+  return ue_rrc_context_creation_response{ue_index,
+                                          &f1ap_rrc_ccch_adapters.at(ue_index),
+                                          &f1ap_rrc_dcch_adapters.at(ue_index).get_srb1_notifier(),
+                                          &f1ap_rrc_dcch_adapters.at(ue_index).get_srb2_notifier()};
 }
 
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)

@@ -115,13 +115,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::ngap_cause_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(srsran::ngap_cause_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::ngap_cause_t o, FormatContext& ctx)
   {
     if (const auto* result = std::get_if<srsran::ngap_cause_radio_network_t>(&o)) {
       return format_to(ctx.out(), "radio_network-id{}", *result);

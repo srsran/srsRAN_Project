@@ -27,6 +27,7 @@
 #include "fapi_to_mac_time_msg_translator.h"
 #include "mac_to_fapi_translator.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_config.h"
 
 namespace srsran {
 namespace fapi_adaptor {
@@ -35,20 +36,9 @@ namespace fapi_adaptor {
 class mac_fapi_adaptor_impl : public mac_fapi_adaptor
 {
 public:
-  /// \brief Constructor for the MAC&ndash;FAPI bidirectional adaptor.
-  ///
-  /// \param[in] msg_gw              FAPI message gateway.
-  /// \param[in] last_msg_notifier   Slot-specific last message notifier.
-  /// \param[in] pm_mapper           Precoding matrix mapper.
-  /// \param[in] part2_mapper        UCI Part2 mapper.
-  /// \param[in] cell_nof_prbs       Cell bandwidth in PRBs.
-  /// \param[in] scs                 Subcarrier spacing, as per TS38.331 Section 6.2.2.
-  mac_fapi_adaptor_impl(fapi::slot_message_gateway&                      msg_gw,
-                        fapi::slot_last_message_notifier&                last_msg_notifier,
-                        std::unique_ptr<precoding_matrix_mapper>         pm_mapper,
-                        std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper,
-                        unsigned                                         cell_nof_prbs,
-                        subcarrier_spacing                               scs);
+  /// Constructor for the MAC&ndash;FAPI bidirectional adaptor.
+  mac_fapi_adaptor_impl(const mac_fapi_adaptor_config& config, mac_fapi_adaptor_dependencies&& dependencies);
+
   // See interface for documentation.
   fapi::slot_time_message_notifier& get_slot_time_notifier() override;
 

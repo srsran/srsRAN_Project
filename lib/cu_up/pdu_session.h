@@ -60,7 +60,7 @@ struct pdu_session {
   {
     if (not stopped) {
       gtpu_rx_demux.remove_tunnel(local_teid);
-      n3_teid_allocator.release_teid(local_teid);
+      (void)n3_teid_allocator.release_teid(local_teid);
 
       gtpu->stop();
 

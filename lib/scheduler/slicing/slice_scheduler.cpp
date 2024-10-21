@@ -31,7 +31,8 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_reposit
   cell_cfg(cell_cfg_),
   logger(srslog::fetch_basic_logger("SCHED")),
   current_slot(to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0),
-  ues(ues_)
+  ues(ues_),
+  valid_pusch_td_list_per_slot(get_fairly_distributed_pusch_td_resource_indices(cell_cfg))
 {
   // Create a number of slices equal to the number of configured RRM Policy members + 1 (default SRB slice) + 1 (default
   // DRB slice).
@@ -62,18 +63,6 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_reposit
     slice_scheduler_ue_expert_cfg.strategy_cfg = rrm.policy_sched_cfg;
     slices.back().policy                       = create_scheduler_strategy(slice_scheduler_ue_expert_cfg);
     ++id_count;
-  }
-
-  // NOTE: Below derivation assumes that only pusch-ConfigCommon includes pusch-TimeDomainAllocationList.
-  // NOTE: [Implementation-defined] In case of FDD, we use only single value of k2.
-  unsigned nof_slots = cell_cfg.is_tdd() ? nof_slots_per_tdd_period(*cell_cfg.tdd_cfg_common) : 1;
-  valid_pusch_td_list_per_slot.resize(nof_slots);
-  for (unsigned slot_period_idx = 0, e = nof_slots; slot_period_idx != e; ++slot_period_idx) {
-    slot_point pdcch_slot{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), slot_period_idx};
-    if (cell_cfg.is_dl_enabled(pdcch_slot)) {
-      // TODO: Revisit when PUSCH time domain resource list is also defined in UE dedicated configuration.
-      valid_pusch_td_list_per_slot[slot_period_idx] = get_pusch_td_resource_indices(cell_cfg, pdcch_slot);
-    }
   }
 }
 

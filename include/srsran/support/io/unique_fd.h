@@ -56,7 +56,7 @@ public:
     }
   }
 
-  SRSRAN_NODISCARD bool close()
+  [[nodiscard]] bool close()
   {
     if (fd >= 0) {
       if (::close(fd) == -1) {
@@ -68,9 +68,9 @@ public:
     return true;
   }
 
-  SRSRAN_NODISCARD bool is_open() const { return fd >= 0; }
+  [[nodiscard]] bool is_open() const { return fd >= 0; }
 
-  SRSRAN_NODISCARD int value() const { return fd; }
+  [[nodiscard]] int value() const { return fd; }
 
 private:
   int fd = -1;

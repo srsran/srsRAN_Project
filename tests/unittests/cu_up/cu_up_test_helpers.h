@@ -112,15 +112,15 @@ public:
   dummy_gtpu_teid_pool()           = default;
   ~dummy_gtpu_teid_pool() override = default;
 
-  SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
+  [[nodiscard]] expected<gtpu_teid_t> request_teid() override
   {
     expected<gtpu_teid_t> teid = gtpu_teid_t{next_teid++};
     return teid;
   }
 
-  SRSRAN_NODISCARD bool release_teid(gtpu_teid_t teid) override { return true; }
+  [[nodiscard]] bool release_teid(gtpu_teid_t teid) override { return true; }
 
-  bool full() const override { return true; };
+  [[nodiscard]] bool full() const override { return true; };
 
   uint32_t get_max_nof_teids() override { return UINT32_MAX; }
 

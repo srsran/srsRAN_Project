@@ -53,7 +53,7 @@ void srsran::srs_cu_cp::fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_it
 bool srsran::srs_cu_cp::verify_and_log_cell_group_config(const byte_buffer&          packed_config,
                                                          const srslog::basic_logger& logger)
 {
-  // Unpack DU to CU container
+  // Unpack DU to CU container.
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
   asn1::cbit_ref                 bref_cell({packed_config.begin(), packed_config.end()});
   if (cell_group_cfg.unpack(bref_cell) != asn1::SRSASN_SUCCESS) {
@@ -85,7 +85,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     const srslog::basic_logger&                                      logger)
 {
   rrc_radio_bearer_config radio_bearer_config;
-  // if default DRB is being setup, SRB2 needs to be setup as well
+  // If default DRB is being setup, SRB2 needs to be setup as well.
   if (!srbs_to_be_setup_mod_list.empty()) {
     for (const f1ap_srb_to_setup& srb_to_add_mod : srbs_to_be_setup_mod_list) {
       rrc_srb_to_add_mod srb = {};
@@ -97,7 +97,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     }
   }
 
-  // set masterCellGroupConfig as received by DU
+  // Set masterCellGroupConfig as received by DU.
   rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
   rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
 
@@ -107,7 +107,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
       logger.warning("Failed to verify cellGroupConfig");
       return false;
     }
-    // set masterCellGroupConfig as received by DU
+    // Set masterCellGroupConfig as received by DU.
     rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
   }
 
@@ -121,13 +121,30 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
       } else {
         drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
 
-        // Add CN association and SDAP config
+        // Add CN association and SDAP config.
         rrc_cn_assoc cn_assoc;
         cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
         drb_to_add_mod.cn_assoc = cn_assoc;
       }
 
       radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
+    }
+
+    for (const auto& drb_to_modify : pdu_session_to_add_mod.second.drb_to_modify) {
+      rrc_drb_to_add_mod drb_to_add_mod;
+      drb_to_add_mod.drb_id = drb_to_modify.first;
+      if (reestablish_drbs) {
+        drb_to_add_mod.reestablish_pdcp_present = true;
+      } else {
+        drb_to_add_mod.pdcp_cfg = drb_to_modify.second.pdcp_cfg;
+
+        // Add CN association and SDAP config.
+        rrc_cn_assoc cn_assoc;
+        cn_assoc.sdap_cfg       = drb_to_modify.second.sdap_cfg;
+        drb_to_add_mod.cn_assoc = cn_assoc;
+      }
+
+      radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_modify.first, drb_to_add_mod);
     }
 
     // Remove DRB from a PDU session (PDU session itself still exists with out DRBs).
@@ -148,7 +165,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     radio_bearer_config.drb_to_release_list.push_back(drb_id);
   }
 
-  // append NAS PDUs as received by AMF
+  // Append NAS PDUs as received by AMF.
   for (const auto& nas_pdu : nas_pdus) {
     rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(nas_pdu.copy());
   }
@@ -191,7 +208,7 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drb_to_setup& drb_setup_mod_item, // Requ
     return false;
   }
 
-  // verify only a single UL transport info item is present.
+  // Verify only a single UL transport info item is present.
   if (e1ap_drb_item.ul_up_transport_params.size() != 1) {
     logger.warning("Multiple UL UP transport items not supported");
     return false;
@@ -204,13 +221,13 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drb_to_setup& drb_setup_mod_item, // Requ
   drb_setup_mod_item.qos_info.drb_qos.qos_desc             = next_drb_config.qos_params.qos_desc;
   drb_setup_mod_item.qos_info.drb_qos.alloc_retention_prio = next_drb_config.qos_params.alloc_retention_prio;
 
-  // S-NSSAI
+  // S-NSSAI.
   drb_setup_mod_item.qos_info.s_nssai = next_drb_config.s_nssai;
 
   drb_setup_mod_item.mode        = next_drb_config.rlc_mod;
   drb_setup_mod_item.pdcp_sn_len = next_drb_config.pdcp_cfg.tx.sn_size;
 
-  // Add up tnl info
+  // Add UP TNL info.
   for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
     drb_setup_mod_item.uluptnl_info_list.push_back(ul_up_transport_param.up_tnl_info);
     // Store UL tunnel information in DRB context (required for mobility).
@@ -232,16 +249,16 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drb_to_setup& drb_setup_mod_item, // Requ
     }
 
     if (response_flow_list) {
-      // Add flow to NGAP response
+      // Add flow to NGAP response.
       cu_cp_associated_qos_flow qos_flow;
       qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
       response_flow_list->emplace(e1ap_flow.qos_flow_id, qos_flow);
     }
 
-    // Retrieve QoS properties from NGAP request
+    // Retrieve QoS properties from NGAP request.
     const auto& ngap_qos_flow = ngap_qos_flow_setup_items[e1ap_flow.qos_flow_id];
 
-    // Add flow to F1AP DRB item
+    // Add flow to F1AP DRB item.
     flow_mapped_to_drb flow_map_item;
     flow_map_item.qos_flow_id               = e1ap_flow.qos_flow_id;
     flow_map_item.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
@@ -267,7 +284,7 @@ bool srsran::srs_cu_cp::update_setup_list(
     const security_indication_t& default_security_indication,
     const srslog::basic_logger&  logger)
 {
-  // Set up SRB2 if this is the first DRB to be setup
+  // Set up SRB2 if this is the first DRB to be setup.
   if (up_resource_mng.get_nof_drbs() == 0) {
     f1ap_srb_to_setup srb2;
     srb2.srb_id = srb_id_t::srb2;
@@ -294,7 +311,7 @@ bool srsran::srs_cu_cp::update_setup_list(
     auto& transfer                                    = item.pdu_session_resource_setup_response_transfer;
     transfer.dlqos_flow_per_tnl_info.up_tp_layer_info = e1ap_item.ng_dl_up_tnl_info;
 
-    // Determine security settings for this PDU session and decide whether we have to send the security_result via NGAP
+    // Determine security settings for this PDU session and decide whether we have to send the security_result via NGAP.
     bool integrity_enabled = false;
     bool ciphering_enabled = false;
 
@@ -326,7 +343,7 @@ bool srsran::srs_cu_cp::update_setup_list(
             ngap_sec_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::required;
       }
     } else {
-      // Security settings were not signaled via NGAP, we have used the defaults of CU-CP
+      // Security settings were not signaled via NGAP, we have used the defaults of CU-CP.
       const auto sec_ind = default_security_indication;
       if (security_result_required(sec_ind)) {
         // Apply security settings according to the decision in the CU-UP.
@@ -337,7 +354,7 @@ bool srsran::srs_cu_cp::update_setup_list(
         const auto& sec_res = e1ap_item.security_result.value();
         integrity_enabled   = sec_res.integrity_protection_result == integrity_protection_result_t::performed;
         ciphering_enabled = sec_res.confidentiality_protection_result == confidentiality_protection_result_t::performed;
-        // No result in NGAP response needed here
+        // No result in NGAP response needed here.
       } else {
         // Apply default security settings that do not require an explicit response.
         integrity_enabled = sec_ind.integrity_protection_ind == integrity_protection_indication_t::required;
@@ -355,7 +372,7 @@ bool srsran::srs_cu_cp::update_setup_list(
         return false;
       }
 
-      // Update security settings of each DRB
+      // Update security settings of each DRB.
       next_cfg_pdu_session.drb_to_add.find(drb_id)->second.pdcp_cfg.integrity_protection_required = integrity_enabled;
       next_cfg_pdu_session.drb_to_add.find(drb_id)->second.pdcp_cfg.ciphering_required            = ciphering_enabled;
 
@@ -375,7 +392,7 @@ bool srsran::srs_cu_cp::update_setup_list(
       drb_setup_mod_list.push_back(drb_setup_mod_item);
     }
 
-    // Fail on any DRB that fails to be setup
+    // Fail on any DRB that fails to be setup.
     if (!e1ap_item.drb_failed_list_ng_ran.empty()) {
       logger.warning("Non-empty DRB failed list not supported");
       return false;
@@ -397,7 +414,7 @@ bool srsran::srs_cu_cp::update_setup_list(
     up_resource_manager&        up_resource_mng,
     const srslog::basic_logger& logger)
 {
-  // Set up SRB1 and SRB2 (this is for inter CU handover, so no SRBs are setup yet)
+  // Set up SRB1 and SRB2 (this is for inter CU handover, so no SRBs are setup yet).
   // TODO: Do we need to setup SRB0 here as well?
   for (unsigned srb_id = 1; srb_id < 3; ++srb_id) {
     f1ap_srb_to_setup srb_item;
@@ -444,7 +461,7 @@ bool srsran::srs_cu_cp::update_setup_list(
       drb_setup_mod_list.push_back(drb_setup_mod_item);
     }
 
-    // Fail on any DRB that fails to be setup
+    // Fail on any DRB that fails to be setup.
     if (!e1ap_item.drb_failed_list_ng_ran.empty()) {
       logger.warning("Non-empty DRB failed list not supported");
       return false;
@@ -463,7 +480,7 @@ void srsran::srs_cu_cp::fill_drb_to_setup_list(
   for (const auto& drb_to_setup : drb_to_add_list) {
     e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
     e1ap_drb_setup_item.drb_id = drb_to_setup.first;
-    // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured
+    // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured.
     e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
     fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
 
@@ -471,7 +488,7 @@ void srsran::srs_cu_cp::fill_drb_to_setup_list(
     e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
     e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
 
-    // Only iterate over the QoS flows mapped to this particular DRB
+    // Only iterate over the QoS flows mapped to this particular DRB.
     for (const auto& flow : drb_to_setup.second.qos_flows) {
       srsran_assert(qos_flow_list.contains(flow.first), "Original setup request doesn't contain {}", flow.first);
       // Lookup the QoS characteristics from the original request.
@@ -482,6 +499,34 @@ void srsran::srs_cu_cp::fill_drb_to_setup_list(
     }
 
     e1ap_drb_to_setup_list.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
+  }
+}
+
+void srsran::srs_cu_cp::fill_drb_to_modify_list(
+    slotted_id_vector<drb_id_t, e1ap_drb_to_modify_item_ng_ran>&            e1ap_drb_to_modify_list,
+    const slotted_id_vector<qos_flow_id_t, cu_cp_qos_flow_add_or_mod_item>& qos_flow_list,
+    const std::map<drb_id_t, up_drb_context>&                               drb_to_modify_list,
+    const srslog::basic_logger&                                             logger)
+{
+  for (const auto& drb_to_modify : drb_to_modify_list) {
+    e1ap_drb_to_modify_item_ng_ran e1ap_drb_to_modify_item;
+    e1ap_drb_to_modify_item.drb_id = drb_to_modify.first;
+    // TODO: set `e1ap_drb_to_modify_item.drb_inactivity_timer` if configured.
+    e1ap_drb_to_modify_item.sdap_cfg = drb_to_modify.second.sdap_cfg;
+    e1ap_drb_to_modify_item.pdcp_cfg.emplace();
+    fill_e1ap_drb_pdcp_config(e1ap_drb_to_modify_item.pdcp_cfg.value(), drb_to_modify.second.pdcp_cfg);
+
+    // Only iterate over the QoS flows mapped to this particular DRB.
+    for (const auto& flow : drb_to_modify.second.qos_flows) {
+      srsran_assert(qos_flow_list.contains(flow.first), "Original setup request doesn't contain {}", flow.first);
+      // Lookup the QoS characteristics from the original request.
+      const auto&                  qos_flow_params = qos_flow_list[flow.first];
+      e1ap_qos_flow_qos_param_item e1ap_qos_item;
+      fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, qos_flow_params);
+      e1ap_drb_to_modify_item.flow_map_info.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
+    }
+
+    e1ap_drb_to_modify_list.emplace(e1ap_drb_to_modify_item.drb_id, e1ap_drb_to_modify_item);
   }
 }
 
@@ -499,7 +544,7 @@ void srsran::srs_cu_cp::update_failed_list(
     up_config_update&                                                                 next_config)
 {
   for (const auto& e1ap_item : pdu_session_resource_failed_list) {
-    // Remove from next config
+    // Remove from next config.
     next_config.pdu_sessions_to_setup_list.erase(e1ap_item.pdu_session_id);
 
     // Add to list taking cause received from CU-UP.
@@ -536,7 +581,7 @@ bool srsran::srs_cu_cp::update_modify_list(
       // Load existing response item from previous call.
       logger.debug("Amend to existing NGAP response item for {}", psi);
     } else {
-      // Add empty new item;
+      // Add empty new item.
       cu_cp_pdu_session_resource_modify_response_item new_item;
       new_item.pdu_session_id = psi;
       ngap_response_list.emplace(new_item.pdu_session_id, new_item);
@@ -569,7 +614,7 @@ bool srsran::srs_cu_cp::update_modify_list(
         return false;
       }
 
-      // Note: this extra handling for the Modification could be optimized
+      // Note: this extra handling for the Modification could be optimized.
       for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
         // Fill added flows in NGAP response transfer.
         if (!ngap_item.transfer.qos_flow_add_or_modify_response_list.has_value()) {
@@ -591,7 +636,7 @@ bool srsran::srs_cu_cp::update_modify_list(
       ue_context_mod_request.drbs_to_be_released_list.push_back(drb_id);
     }
 
-    // Fail on any DRB that fails to be setup
+    // Fail on any DRB that fails to be setup.
     if (!e1ap_item.drb_failed_list_ng_ran.empty()) {
       logger.warning("Non-empty DRB failed list not supported");
       return false;
@@ -615,7 +660,7 @@ void srsran::srs_cu_cp::fill_e1ap_bearer_context_list(
     for (const auto& drb_item : drb_setup_items) {
       // Only include the DRB if it belongs to the this session.
       if (pdu_session.second.drb_to_add.find(drb_item.drb_id) != pdu_session.second.drb_to_add.end()) {
-        // DRB belongs to this PDU session
+        // DRB belongs to this PDU session.
         e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
         e1ap_drb_item.drb_id = drb_item.drb_id;
 
@@ -661,7 +706,7 @@ void srsran::srs_cu_cp::fill_e1ap_pdu_session_res_to_setup_list(
       e1ap_pdu_session_item.security_ind = default_security_indication;
     }
 
-    // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
+    // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured.
     fill_drb_to_setup_list(e1ap_pdu_session_item.drb_to_setup_list_ng_ran,
                            pdu_session_cfg.qos_flow_setup_request_items,
                            session.drb_to_add,
@@ -679,14 +724,14 @@ bool srsran::srs_cu_cp::update_modify_list(
     const up_config_update&                      next_config,
     const srslog::basic_logger&                  logger)
 {
-  // Fail procedure if (single) DRB couldn't be setup
+  // Fail procedure if (single) DRB couldn't be setup.
   if (!ue_context_modification_response.drbs_failed_to_be_setup_list.empty()) {
     logger.warning("Couldn't setup {} DRBs at DU",
                    ue_context_modification_response.drbs_failed_to_be_setup_list.size());
     return false;
   }
 
-  // Only prepare bearer context modifcation request if needed
+  // Only prepare bearer context modifcation request if needed.
   if (ue_context_modification_response.drbs_setup_list.empty() and
       ue_context_modification_response.drbs_modified_list.empty()) {
     // No DRB added or updated.

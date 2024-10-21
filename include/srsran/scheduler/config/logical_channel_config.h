@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/sr_configuration.h"

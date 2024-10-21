@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/phy_time_unit.h"
+#include <optional>
 
 namespace srsran {
 

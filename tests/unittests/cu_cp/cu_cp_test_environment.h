@@ -49,19 +49,11 @@ struct cu_cp_test_env_params {
                         unsigned                                                 max_nof_ues_         = 8192,
                         unsigned                                                 max_nof_drbs_per_ue_ = 8,
                         const std::vector<std::vector<supported_tracking_area>>& amf_config_ =
-                            {{supported_tracking_area{7, {{plmn_identity::test_value(), {{1}}}}}}},
-                        bool                 load_plugins_     = false,
-                        void*                start_ng_ho_func_ = nullptr,
-                        connect_amfs_func    connect_amfs_     = nullptr,
-                        disconnect_amfs_func disconnect_amfs_  = nullptr) :
+                            {{supported_tracking_area{7, {{plmn_identity::test_value(), {{1}}}}}}}) :
     max_nof_cu_ups(max_nof_cu_ups_),
     max_nof_dus(max_nof_dus_),
     max_nof_ues(max_nof_ues_),
-    max_nof_drbs_per_ue(max_nof_drbs_per_ue_),
-    load_plugins(load_plugins_),
-    start_ng_ho_func(start_ng_ho_func_),
-    connect_amfs(connect_amfs_),
-    disconnect_amfs(disconnect_amfs_)
+    max_nof_drbs_per_ue(max_nof_drbs_per_ue_)
   {
     uint16_t amf_idx = 0;
     for (const auto& supported_tas : amf_config_) {
@@ -73,10 +65,6 @@ struct cu_cp_test_env_params {
   unsigned                                  max_nof_dus;
   unsigned                                  max_nof_ues;
   unsigned                                  max_nof_drbs_per_ue;
-  bool                                      load_plugins;
-  void*                                     start_ng_ho_func;
-  connect_amfs_func                         connect_amfs;
-  disconnect_amfs_func                      disconnect_amfs;
   std::map<unsigned, cu_cp_test_amf_config> amf_configs;
 };
 

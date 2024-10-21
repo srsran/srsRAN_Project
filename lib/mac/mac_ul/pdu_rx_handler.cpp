@@ -23,7 +23,8 @@
 #include "pdu_rx_handler.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_basic_parser.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
 
@@ -50,7 +51,7 @@ pdu_log_prefix create_prefix(const decoded_mac_rx_pdu& pdu, const mac_ul_sch_sub
 } // namespace
 
 template <>
-struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
+struct fmt::formatter<pdu_log_prefix> : public basic_parser {
   template <typename FormatContext>
   auto format(const pdu_log_prefix& p, FormatContext& ctx)
   {

@@ -219,6 +219,11 @@ void fill_e1ap_pdu_session_res_to_modify_list(
                            session.drb_to_add,
                            logger);
 
+    fill_drb_to_modify_list(e1ap_pdu_session_item.drb_to_modify_list_ng_ran,
+                            pdu_session_cfg.transfer.qos_flow_add_or_modify_request_list,
+                            session.drb_to_modify,
+                            logger);
+
     fill_drb_to_remove_list(e1ap_pdu_session_item.drb_to_rem_list_ng_ran, session.drb_to_remove);
 
     pdu_session_res_to_modify_list.emplace(pdu_session_cfg.pdu_session_id, e1ap_pdu_session_item);

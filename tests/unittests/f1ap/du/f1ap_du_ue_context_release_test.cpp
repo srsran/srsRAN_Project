@@ -87,11 +87,11 @@ TEST_F(f1ap_du_ue_context_release_test,
   }
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value,
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.type().value,
             f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete);
-  ue_context_release_complete_s& resp =
-      this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_release_complete();
+  const ue_context_release_complete_s& resp =
+      this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_release_complete();
   ASSERT_EQ(resp->gnb_du_ue_f1ap_id, (uint64_t)*test_ue->gnb_du_ue_f1ap_id);
   ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, (uint64_t)*test_ue->gnb_cu_ue_f1ap_id);
 }

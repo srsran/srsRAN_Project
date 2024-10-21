@@ -101,8 +101,9 @@ static std::optional<float> convert_fapi_to_mac_rsrp(uint16_t fapi_rsrp)
   return std::nullopt;
 }
 
-fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs_) :
+fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs_, unsigned sector_) :
   scs(scs_),
+  sector(sector_),
   rach_handler(dummy_mac_rach_handler),
   pdu_handler(dummy_pdu_handler),
   cell_control_handler(dummy_cell_control_handler)
@@ -113,7 +114,7 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
 {
   mac_rx_data_indication indication;
   indication.sl_rx      = slot_point(scs, msg.sfn, msg.slot);
-  indication.cell_index = to_du_cell_index(0);
+  indication.cell_index = to_du_cell_index(sector);
   for (const auto& fapi_pdu : msg.pdus) {
     // PDUs that were not successfully decoded have zero length.
     if (fapi_pdu.pdu_length == 0) {

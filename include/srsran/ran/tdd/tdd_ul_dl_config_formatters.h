@@ -23,12 +23,13 @@
 #pragma once
 
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_basic_parser.h"
+#include "srsran/support/format/fmt_optional.h"
 
 namespace fmt {
 
 template <>
-struct formatter<srsran::tdd_ul_dl_pattern> : public basic_fmt_parser {
+struct formatter<srsran::tdd_ul_dl_pattern> : public basic_parser {
   template <typename FormatContext>
   auto format(const srsran::tdd_ul_dl_pattern& cfg, FormatContext& ctx)
   {
@@ -43,7 +44,7 @@ struct formatter<srsran::tdd_ul_dl_pattern> : public basic_fmt_parser {
 };
 
 template <>
-struct formatter<srsran::tdd_ul_dl_config_common> : public basic_fmt_parser {
+struct formatter<srsran::tdd_ul_dl_config_common> : public basic_parser {
   template <typename FormatContext>
   auto format(const srsran::tdd_ul_dl_config_common& cfg, FormatContext& ctx)
   {

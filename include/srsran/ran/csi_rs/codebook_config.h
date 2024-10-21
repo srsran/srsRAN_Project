@@ -23,7 +23,8 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
-#include "srsran/adt/optional.h"
+
+#include <optional>
 #include <variant>
 
 namespace srsran {

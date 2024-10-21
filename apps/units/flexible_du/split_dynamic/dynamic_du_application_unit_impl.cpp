@@ -28,6 +28,7 @@
 #include "dynamic_du_unit_config_validator.h"
 #include "dynamic_du_unit_config_yaml_writer.h"
 #include "dynamic_du_unit_logger_registrator.h"
+#include "multicell_dynamic_du_factory.h"
 
 using namespace srsran;
 
@@ -61,9 +62,11 @@ void dynamic_du_application_unit_impl::on_parsing_configuration_registration(CLI
   configure_cli11_with_dynamic_du_unit_config_schema(app, unit_cfg);
 }
 
-du_unit dynamic_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies)
+du_unit dynamic_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
+                                                                  bool                        use_multicell)
 {
-  return create_dynamic_du(unit_cfg, dependencies);
+  return use_multicell ? create_multicell_dynamic_du(unit_cfg, dependencies)
+                       : create_dynamic_du(unit_cfg, dependencies);
 }
 
 std::unique_ptr<flexible_du_application_unit> srsran::create_flexible_du_application_unit(std::string_view app_name)

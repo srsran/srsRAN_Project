@@ -12,6 +12,8 @@
   script:
     - |
       hash_multiple() {
+          set -e
+
           # Create a temporary tar archive of the folders
           temp_archive=$(mktemp)
           
@@ -31,6 +33,8 @@
           # Clean up the temporary archive
           rm "$temp_archive"
       }
+    - |
+      [ -z "$SRSRANDIR" ] && SRSRANDIR=${CI_PROJECT_DIR}
     - echo ${SRSRANDIR}
     - ls -lah ${SRSRANDIR}
     - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders docker/scripts)
@@ -46,10 +50,11 @@ builder version:
     - if: $ON_MR
     - if: $ON_WEB
     - if: $ON_API
+    - if: $ON_TAG
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
     - if: $CI_DESCRIPTION =~ /Weekly/
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   variables:
-    SRSRANDIR: $CI_PROJECT_DIR
+    SRSRANDIR: ${CI_PROJECT_DIR}
   needs: []

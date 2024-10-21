@@ -26,7 +26,7 @@
 #pragma once
 
 #include "srsran/ran/pdcch/dci_packing.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/delimited_formatter.h"
 
 namespace fmt {
 /// \brief Custom formatter for \c dci_0_0_size.
@@ -39,13 +39,13 @@ struct formatter<srsran::dci_0_0_size> {
   formatter() { helper = srsran::delimited_formatter("\n"); }
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::dci_0_0_size& dci_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::dci_0_0_size& dci_size, FormatContext& ctx)
   {
     helper.format_always(ctx, "Total:                {}", dci_size.total);
     helper.format_always(ctx, "Frequency resource:   {}", dci_size.frequency_resource);
@@ -65,13 +65,13 @@ struct formatter<srsran::dci_1_0_size> {
   formatter() { helper = srsran::delimited_formatter("\n"); }
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::dci_1_0_size& dci_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::dci_1_0_size& dci_size, FormatContext& ctx)
   {
     helper.format_always(ctx, "Total:              {}", dci_size.total);
     helper.format_always(ctx, "Frequency resource: {}", dci_size.frequency_resource);
@@ -91,13 +91,13 @@ struct formatter<srsran::dci_0_1_size> {
   formatter() { helper = srsran::delimited_formatter("\n"); }
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::dci_0_1_size& dci_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::dci_0_1_size& dci_size, FormatContext& ctx)
   {
     helper.format_always(ctx, "Total:                 {}", dci_size.total);
     helper.format_always(ctx, "Carrier indicator:     {}", dci_size.carrier_indicator);
@@ -133,13 +133,13 @@ struct formatter<srsran::dci_1_1_size> {
   formatter() { helper = srsran::delimited_formatter("\n"); }
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
-  auto format(const srsran::dci_1_1_size& dci_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::dci_1_1_size& dci_size, FormatContext& ctx)
   {
     helper.format_always(ctx, "Total:                   {}", dci_size.total);
     helper.format_always(ctx, "Carrier indicator:       {}", dci_size.carrier_indicator);

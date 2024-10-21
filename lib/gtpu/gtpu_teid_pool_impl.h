@@ -38,7 +38,7 @@ public:
   {
   }
 
-  SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
+  [[nodiscard]] expected<gtpu_teid_t> request_teid() override
   {
     expected<gtpu_teid_t> teid = make_unexpected(default_error_t{});
 
@@ -67,7 +67,7 @@ public:
     return teid;
   }
 
-  bool release_teid(gtpu_teid_t teid) override
+  [[nodiscard]] bool release_teid(gtpu_teid_t teid) override
   {
     uint32_t teid_idx = teid.value() - GTPU_TEID_MIN.value();
     if (not teid_pool[teid_idx]) {

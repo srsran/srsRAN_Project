@@ -21,6 +21,7 @@
  */
 
 #include "up_resource_manager_helpers.h"
+#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -78,7 +79,7 @@ drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_pdu_session_context_update&
   // The new DRB ID must not be allocated already.
   while (contains_drb(context, new_drb_id) || contains_drb(config_update, new_drb_id) ||
          contains_drb(new_session_context, new_drb_id)) {
-    /// try next
+    // Try next.
     new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
 
     if (drb_id_to_uint(new_drb_id) > max_nof_drbs_per_ue) {
@@ -163,12 +164,6 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
         logger.warning("QoS flow configuration for {} can't be derived", qos_flow.qos_flow_id);
         return false;
       }
-      // TODO: Add DRB modification support.
-      // Until then: Reject request if QoS flow to add already exists.
-      if (context.qos_flow_map.find(qos_flow.qos_flow_id) != context.qos_flow_map.end()) {
-        logger.warning("{} already exists", qos_flow.qos_flow_id);
-        return false;
-      }
     }
 
     // Reject request if QoS flow to remove doesn't exist.
@@ -243,9 +238,9 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   up_drb_context drb_ctx;
   drb_ctx.drb_id         = drb_id;
   drb_ctx.pdu_session_id = new_session_context.id;
-  drb_ctx.default_drb    = full_context.drb_map.empty() ? true : false; // make first DRB the default
+  drb_ctx.default_drb    = full_context.drb_map.empty(); // make first DRB the default
 
-  // Fill QoS (TODO: derive QoS params correctly)
+  // Fill QoS (TODO: derive QoS params correctly).
   auto& qos_params                                       = drb_ctx.qos_params;
   qos_params.qos_desc                                    = non_dyn_5qi_descriptor{};
   auto& non_dyn_5qi                                      = qos_params.qos_desc.get_nondyn_5qi();
@@ -254,19 +249,58 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   qos_params.alloc_retention_prio.may_trigger_preemption = false;
   qos_params.alloc_retention_prio.is_preemptable         = false;
 
-  // Add flow
+  // Add flow.
   up_qos_flow_context flow_ctx;
   flow_ctx.qfi        = qos_flow.qos_flow_id;
   flow_ctx.qos_params = qos_flow.qos_flow_level_qos_params;
   drb_ctx.qos_flows.emplace(flow_ctx.qfi, flow_ctx);
 
-  // Set PDCP/SDAP config
+  // Set PDCP/SDAP config.
   drb_ctx.pdcp_cfg = set_rrc_pdcp_config(five_qi, cfg);
   drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
   drb_ctx.rlc_mod  = (drb_ctx.pdcp_cfg.rlc_mode == pdcp_rlc_mode::am) ? rlc_mode::am : rlc_mode::um_bidir;
 
-  // add new DRB to list
+  // Add new DRB to list.
   new_session_context.drb_to_add.emplace(drb_id, drb_ctx);
+
+  return drb_id;
+}
+
+/// \brief Modifies a QoS flow for an existing DRB. Inserts it in PDU session object.
+static drb_id_t modify_qos_flow(up_pdu_session_context_update&     new_session_context,
+                                const qos_flow_setup_request_item& qos_flow,
+                                const up_config_update&            config_update,
+                                const up_context&                  full_context,
+                                const up_resource_manager_cfg&     cfg,
+                                const srslog::basic_logger&        logger)
+{
+  // Note: We map QoS flows to DRBs in a 1:1 manner meaning that each flow gets it's own DRB.
+  // potential optimization to support more QoS flows is to map non-GPB flows onto existing DRBs.
+  if (full_context.qos_flow_map.find(qos_flow.qos_flow_id) == full_context.qos_flow_map.end()) {
+    logger.warning("{} does not exist", qos_flow.qos_flow_id);
+    return drb_id_t::invalid;
+  }
+
+  drb_id_t drb_id = full_context.qos_flow_map.at(qos_flow.qos_flow_id);
+
+  up_drb_context drb_ctx;
+  drb_ctx.drb_id         = drb_id;
+  drb_ctx.pdu_session_id = new_session_context.id;
+  drb_ctx.qos_params     = qos_flow.qos_flow_level_qos_params;
+
+  // Add flow.
+  up_qos_flow_context flow_ctx;
+  flow_ctx.qfi        = qos_flow.qos_flow_id;
+  flow_ctx.qos_params = qos_flow.qos_flow_level_qos_params;
+  drb_ctx.qos_flows.emplace(flow_ctx.qfi, flow_ctx);
+
+  // Set PDCP/SDAP config.
+  drb_ctx.pdcp_cfg = set_rrc_pdcp_config(qos_flow.qos_flow_level_qos_params.qos_desc.get_5qi(), cfg);
+  drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
+  drb_ctx.rlc_mod  = (drb_ctx.pdcp_cfg.rlc_mode == pdcp_rlc_mode::am) ? rlc_mode::am : rlc_mode::um_bidir;
+
+  // Add modified DRB to list.
+  new_session_context.drb_to_modify.emplace(drb_id, drb_ctx);
 
   return drb_id;
 }
@@ -339,16 +373,31 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
 
     up_pdu_session_context_update ctxt_update(modify_item.pdu_session_id);
     for (const auto& flow_item : modify_item.transfer.qos_flow_add_or_modify_request_list) {
-      auto drb_id = allocate_qos_flow(ctxt_update, flow_item, update, context, cfg, logger);
-      if (drb_id == drb_id_t::invalid) {
-        logger.warning("Couldn't allocate {}", flow_item.qos_flow_id);
-        update.pdu_sessions_failed_to_modify_list.push_back(modify_item.pdu_session_id);
+      // If QoS flow already exists, modify it.
+      if (context.qos_flow_map.find(flow_item.qos_flow_id) != context.qos_flow_map.end()) {
+        auto drb_id = modify_qos_flow(ctxt_update, flow_item, update, context, cfg, logger);
+        if (drb_id == drb_id_t::invalid) {
+          logger.warning("Couldn't modify {}", flow_item.qos_flow_id);
+          update.pdu_sessions_failed_to_modify_list.push_back(modify_item.pdu_session_id);
+        } else {
+          srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end() ||
+                            ctxt_update.drb_to_modify.find(drb_id) != ctxt_update.drb_to_modify.end(),
+                        "{} has to exist in current PDU session context or in context update",
+                        drb_id);
+          logger.debug("Modified {} on {}", flow_item.qos_flow_id, drb_id);
+        }
       } else {
-        srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end() ||
-                          ctxt_update.drb_to_add.find(drb_id) != ctxt_update.drb_to_add.end(),
-                      "{} has to exist in current PDU session context or in context update",
-                      drb_id);
-        logger.debug("Allocated {} to {}", flow_item.qos_flow_id, drb_id);
+        auto drb_id = allocate_qos_flow(ctxt_update, flow_item, update, context, cfg, logger);
+        if (drb_id == drb_id_t::invalid) {
+          logger.warning("Couldn't allocate {}", flow_item.qos_flow_id);
+          update.pdu_sessions_failed_to_modify_list.push_back(modify_item.pdu_session_id);
+        } else {
+          srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end() ||
+                            ctxt_update.drb_to_add.find(drb_id) != ctxt_update.drb_to_add.end(),
+                        "{} has to exist in current PDU session context or in context update",
+                        drb_id);
+          logger.debug("Allocated {} to {}", flow_item.qos_flow_id, drb_id);
+        }
       }
     }
 

@@ -40,9 +40,13 @@ protected:
     f1ap_message msg =
         test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {});
     run_ue_context_setup_procedure(test_ue_index, msg);
+
+    this->f1c_gw.clear_tx_pdus();
   }
 
-  void start_procedure(const std::initializer_list<drb_id_t>& drbs, byte_buffer rrc_container = {})
+  void start_procedure(const std::initializer_list<drb_id_t>& drbs,
+                       byte_buffer                            rrc_container        = {},
+                       bool                                   rrc_delivery_request = false)
   {
     // Prepare DU manager response to F1AP.
     this->f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
@@ -58,19 +62,27 @@ protected:
         byte_buffer::create({0x1, 0x2, 0x3}).value();
 
     // Initiate procedure in F1AP.
-    f1ap_message msg = generate_ue_context_modification_request(drbs);
-    if (not rrc_container.empty()) {
-      // If specified, add RRC container.
-      msg.pdu.init_msg().value.ue_context_mod_request()->rrc_container_present = true;
-      msg.pdu.init_msg().value.ue_context_mod_request()->rrc_container         = std::move(rrc_container);
-    }
+    f1ap_message msg = test_helpers::generate_ue_context_modification_request(
+        int_to_gnb_du_ue_f1ap_id(0), int_to_gnb_cu_ue_f1ap_id(0), drbs, {}, {}, std::move(rrc_container));
+    msg.pdu.init_msg().value.ue_context_mod_request()->rrc_delivery_status_request_present = true;
+    msg.pdu.init_msg().value.ue_context_mod_request()->rrc_delivery_status_request.value =
+        asn1::f1ap::rrc_delivery_status_request_opts::true_value;
     f1ap->handle_message(msg);
+  }
+
+  void rrc_container_was_delivered(uint32_t pdcp_sn)
+  {
+    ue_test_context& ue = test_ues[test_ue_index];
+    ue.f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(pdcp_sn);
+    ue.f1c_bearers[LCID_SRB1].bearer->handle_delivery_notification(pdcp_sn);
+    ctrl_worker.run_pending_tasks();
   }
 
   bool was_ue_context_modification_response_sent() const
   {
-    return this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
-           this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value ==
+    return this->f1c_gw.tx_pdus_sent() and
+           this->f1c_gw.last_tx_pdu().pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
+           this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.type().value ==
                f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp;
   }
 
@@ -91,13 +103,55 @@ TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1a
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,
+       when_ue_context_mod_req_contains_rrc_container_then_rrc_container_is_sent_to_lower_layers)
+{
+  byte_buffer dl_dcch_msg   = byte_buffer::create(test_rgen::random_vector<uint8_t>(100)).value();
+  byte_buffer rrc_container = test_helpers::create_dl_dcch_rrc_container(2, dl_dcch_msg);
+  start_procedure({drb_id_t::drb1}, rrc_container.copy());
+
+  // Check if RRC container is sent to lower layers.
+  ASSERT_EQ(this->test_ues[test_ue_index].f1c_bearers[1].rx_sdu_notifier.last_pdu, rrc_container);
+}
+
+TEST_F(f1ap_du_ue_context_modification_test,
+       when_ue_context_mod_has_rrc_container_then_f1ap_waits_for_delivery_notification)
+{
+  uint32_t pdcp_sn = 2;
+  start_procedure({drb_id_t::drb1}, test_helpers::create_dl_dcch_rrc_container(pdcp_sn, {0x1, 0x2, 0x3}));
+
+  ASSERT_FALSE(was_ue_context_modification_response_sent());
+  rrc_container_was_delivered(pdcp_sn);
+  ASSERT_TRUE(was_ue_context_modification_response_sent());
+}
+
+TEST_F(
+    f1ap_du_ue_context_modification_test,
+    when_ue_context_mod_has_rrc_container_and_rrc_delivery_status_request_then_f1ap_waits_for_delivery_notification_before_sending_rrc_delivery_request)
+{
+  uint32_t pdcp_sn = 2;
+  start_procedure({drb_id_t::drb1}, test_helpers::create_dl_dcch_rrc_container(pdcp_sn, {0x1, 0x2, 0x3}), true);
+
+  ASSERT_FALSE(this->f1c_gw.tx_pdus_sent());
+  rrc_container_was_delivered(pdcp_sn);
+  ASSERT_TRUE(this->f1c_gw.tx_pdus_sent());
+  auto msg = this->f1c_gw.pop_tx_pdu();
+  ASSERT_EQ(msg.value().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::rrc_delivery_report);
+  ASSERT_EQ(msg.value().pdu.init_msg().value.rrc_delivery_report()->srb_id, 1);
+  ASSERT_EQ(msg.value().pdu.init_msg().value.rrc_delivery_report()->rrc_delivery_status.trigger_msg, pdcp_sn);
+  msg = this->f1c_gw.pop_tx_pdu();
+  ASSERT_EQ(msg.value().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp);
+}
+
+TEST_F(f1ap_du_ue_context_modification_test,
        when_f1ap_receives_request_then_f1ap_responds_to_cu_with_ue_context_modification_response)
 {
   start_procedure({drb_id_t::drb1});
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -132,12 +186,13 @@ TEST_F(f1ap_du_ue_context_modification_test,
       byte_buffer::create({0x1, 0x2, 0x3}).value();
 
   // Initiate procedure in F1AP.
-  f1ap_message msg = generate_ue_context_modification_request({drb_id_t::drb1});
+  f1ap_message msg = test_helpers::generate_ue_context_modification_request(
+      int_to_gnb_du_ue_f1ap_id(0), int_to_gnb_cu_ue_f1ap_id(0), {drb_id_t::drb1}, {}, {});
   f1ap->handle_message(msg);
 
   // F1AP sends UE CONTEXT MODIFICATION RESPONSE to CU-CP with failed DRB.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -159,7 +214,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT MODIFICATION RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  const ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
   ASSERT_FALSE(resp->drbs_modified_list_present);
@@ -172,19 +227,4 @@ TEST_F(f1ap_du_ue_context_modification_test,
   auto& drb2_setup = resp->drbs_setup_mod_list[1].value().drbs_setup_mod_item();
   ASSERT_EQ(drb2_setup.drb_id, 2);
   ASSERT_EQ(drb2_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
-}
-
-TEST_F(f1ap_du_ue_context_modification_test,
-       when_ue_context_mod_req_contains_rrc_container_then_rrc_container_is_sent_to_lower_layers)
-{
-  byte_buffer rrc_container = byte_buffer::create(test_rgen::random_vector<uint8_t>(100)).value();
-  start_procedure({drb_id_t::drb1}, rrc_container.copy());
-
-  // F1AP sends UE CONTEXT MODIFICATION RESPONSE to CU-CP.
-  ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
-  ASSERT_TRUE(resp->drbs_setup_mod_list_present);
-
-  // Check if RRC container is sent to lower layers.
-  ASSERT_EQ(this->test_ues[test_ue_index].f1c_bearers[1].rx_sdu_notifier.last_pdu, rrc_container);
 }

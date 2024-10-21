@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/ptrs.h"
 

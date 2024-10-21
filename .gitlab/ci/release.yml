@@ -64,6 +64,31 @@ load release variables:
 # Update private branches
 ################################################################################
 
+check version updated:
+  stage: private
+  interruptible: false
+  rules:
+    - if: *on_public_release
+  image: ubuntu:24.04
+  script:
+    - |
+      CHANGELOG=$CI_PROJECT_DIR/CHANGELOG
+      if ! grep -q "## $CI_COMMIT_TAG" "$CHANGELOG"; then
+        echo "Please add an entry in $CHANGELOG file for $CI_COMMIT_TAG release."
+        exit 1
+      fi
+    - |
+      CMAKE_FILE=$CI_PROJECT_DIR/cmake/modules/version.cmake
+      IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< "$CI_COMMIT_TAG"
+      VERSION_PATCH=${VERSION_PATCH:-0}
+
+      if ! grep -q "set(SRSRAN_VERSION_MAJOR $VERSION_MAJOR)" "$CMAKE_FILE" || 
+        ! grep -q "set(SRSRAN_VERSION_MINOR $VERSION_MINOR)" "$CMAKE_FILE" || 
+        ! grep -q "set(SRSRAN_VERSION_PATCH $VERSION_PATCH)" "$CMAKE_FILE"; then
+        echo "Please update the version $CI_COMMIT_TAG in $CMAKE_FILE."
+        exit 1
+      fi
+
 update private branch:
   stage: private
   interruptible: false
@@ -103,6 +128,8 @@ update private branch:
   needs: &release-var-needs
     - job: "load release variables"
       artifacts: true
+    - job: check version updated
+      optional: true
 
 generate testvector tar gz:
   stage: private
@@ -233,13 +260,20 @@ publish maltab:
   stage: public
   interruptible: false
   variables:
+    ON_SCHEDULE: "true"
     CI_DESCRIPTION: Release
     NOTIFY_SLACK: "false"
+    SRSRAN_REPO_URL: https://${PUBLIC_PUSH_TOKEN}@github.com/${PUBLIC_REPO}.git
+    SRSRAN_COMMIT: $PUBLIC_BRANCH
+    DOCKER_BUILDER_VERSION: $DOCKER_BUILDER_VERSION
   rules:
     - if: *on_public_push
     - if: *on_public_release
   needs:
     - job: publish main
+    - job: builder version
+  inherit:
+    variables: false
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master

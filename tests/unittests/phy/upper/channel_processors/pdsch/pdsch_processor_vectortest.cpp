@@ -43,9 +43,8 @@ using namespace srsran;
 
 static std::string eal_arguments = "pdsch_processor_vectortest";
 #ifdef HWACC_PDSCH_ENABLED
-static bool                                     skip_hwacc_test   = false;
-static std::unique_ptr<dpdk::dpdk_eal>          dpdk_interface    = nullptr;
-static std::unique_ptr<dpdk::bbdev_acc_factory> bbdev_acc_factory = nullptr;
+static bool                            skip_hwacc_test = false;
+static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface  = nullptr;
 
 // Separates EAL and non-EAL arguments.
 // The function assumes that 'eal_arg' flags the start of the EAL arguments and that no more non-EAL arguments follow.
@@ -142,15 +141,6 @@ private:
       return nullptr;
     }
 
-    // Create a bbdev accelerator factory.
-    if (!bbdev_acc_factory) {
-      bbdev_acc_factory = srsran::dpdk::create_bbdev_acc_factory("srs");
-      if (!bbdev_acc_factory || skip_hwacc_test) {
-        skip_hwacc_test = true;
-        return nullptr;
-      }
-    }
-
     // Intefacing to the bbdev-based hardware-accelerator.
     dpdk::bbdev_acc_configuration bbdev_config;
     bbdev_config.id                                    = 0;
@@ -158,7 +148,7 @@ private:
     bbdev_config.nof_ldpc_dec_lcores                   = 0;
     bbdev_config.nof_fft_lcores                        = 0;
     bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
-    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = bbdev_acc_factory->create(bbdev_config, logger);
+    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
     if (!bbdev_accelerator || skip_hwacc_test) {
       skip_hwacc_test = true;
       return nullptr;
@@ -173,7 +163,7 @@ private:
     hw_encoder_config.dedicated_queue   = true;
 
     // ACC100 hardware-accelerator implementation.
-    return srsran::hal::create_bbdev_pdsch_enc_acc_factory(hw_encoder_config, "srs");
+    return srsran::hal::create_bbdev_pdsch_enc_acc_factory(hw_encoder_config);
 #else  // HWACC_PDSCH_ENABLED
     return nullptr;
 #endif // HWACC_PDSCH_ENABLED

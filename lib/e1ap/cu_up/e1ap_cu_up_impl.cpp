@@ -29,6 +29,7 @@
 #include "procedures/e1ap_cu_up_setup_procedure.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/ran/bcd_helper.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/timers.h"
 #include <memory>
 

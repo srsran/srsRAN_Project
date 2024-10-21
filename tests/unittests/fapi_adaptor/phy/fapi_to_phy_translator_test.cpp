@@ -70,7 +70,10 @@ public:
 class uplink_pdu_validator_dummy : public uplink_pdu_validator
 {
 public:
-  bool                    is_valid(const prach_detector::configuration& config) const override { return true; }
+  error_type<std::string> is_valid(const prach_detector::configuration& config) const override
+  {
+    return default_success_t();
+  }
   error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override
   {
     return default_success_t();

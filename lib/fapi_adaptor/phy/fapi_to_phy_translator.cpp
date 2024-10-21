@@ -21,6 +21,7 @@
  */
 
 #include "fapi_to_phy_translator.h"
+#include "srsran/adt/expected.h"
 #include "srsran/fapi/message_builders.h"
 #include "srsran/fapi_adaptor/phy/messages/csi_rs.h"
 #include "srsran/fapi_adaptor/phy/messages/pdcch.h"
@@ -425,9 +426,12 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
       case fapi::ul_pdu_type::PRACH: {
         prach_buffer_context& context = pdus.prach.emplace_back();
         convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, ports, msg.sfn, msg.slot, sector_id);
-        if (!ul_pdu_validator.is_valid(get_prach_dectector_config_from(context))) {
-          logger.warning(
-              "Upper PHY flagged a PRACH PDU as having an invalid configuration. Skipping UL_TTI.request in slot");
+        error_type<std::string> phy_prach_validation =
+            ul_pdu_validator.is_valid(get_prach_dectector_config_from(context));
+        if (!phy_prach_validation.has_value()) {
+          logger.warning("Skipping UL_TTI.request in slot: PRACH PDU flagged as invalid by the Upper PHY with the "
+                         "following error\n    {}",
+                         phy_prach_validation.error());
 
           return make_unexpected(default_error_t{});
         }

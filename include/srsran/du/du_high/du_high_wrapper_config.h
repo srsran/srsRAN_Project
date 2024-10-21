@@ -35,9 +35,8 @@ namespace srs_du {
 
 /// FAPI configuration for the DU high wrapper.
 struct du_high_wrapper_fapi_config {
-  srslog::basic_levels          log_level;
-  unsigned                      l2_nof_slots_ahead;
-  std::optional<task_executor*> executor;
+  srslog::basic_levels log_level;
+  unsigned             l2_nof_slots_ahead;
 };
 
 /// Base DU high wrapper configuration.
@@ -52,6 +51,8 @@ struct du_high_wrapper_config {
 struct du_high_wrapper_sector_dependencies {
   fapi::slot_message_gateway*       gateway           = nullptr;
   fapi::slot_last_message_notifier* last_msg_notifier = nullptr;
+  /// FAPI buffered executor.
+  std::optional<task_executor*> fapi_executor;
 };
 
 /// DU high wrapper dependencies.

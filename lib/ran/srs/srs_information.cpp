@@ -21,7 +21,6 @@
  */
 
 #include "srsran/ran/srs/srs_information.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/srs/srs_bandwidth_configuration.h"
 #include "srsran/ran/srs/srs_resource_configuration.h"
 #include "srsran/support/srsran_assert.h"

@@ -20,18 +20,12 @@
  *
  */
 
-#pragma once
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
+#include "srsran/support/compiler.h"
 
-#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_factories.h"
-#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
-#include <string>
+using namespace srsran;
 
-namespace srsran {
-namespace hal {
-
-std::unique_ptr<hw_accelerator_pdsch_enc_factory>
-create_plugin_bbdev_pdsch_enc_acc_factory(const bbdev_hwacc_pdsch_enc_factory_configuration& accelerator_config,
-                                          std::string                                        impl_name);
-
-} // namespace hal
-} // namespace srsran
+SRSRAN_WEAK_SYMB pusch_processor_phy_capabilities srsran::get_pusch_processor_phy_capabilities()
+{
+  return {.max_nof_layers = 1};
+}

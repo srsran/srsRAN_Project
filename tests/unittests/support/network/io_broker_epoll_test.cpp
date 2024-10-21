@@ -20,7 +20,6 @@
  *
  */
 
-#include "srsran/adt/optional.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/io/unique_fd.h"

@@ -27,6 +27,14 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+SRSRAN_WEAK_SYMB async_task<void>
+                 srsran::srs_cu_cp::start_amf_connection_removal(ngap_repository&                                    ngap_db,
+                                                std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected)
+{
+  return launch_async<amf_connection_removal_routine>(ngap_db.get_ngaps().begin()->second,
+                                                      amfs_connected.begin()->second);
+}
+
 amf_connection_removal_routine::amf_connection_removal_routine(ngap_interface*    ngap_,
                                                                std::atomic<bool>& amf_connected_) :
   ngap(ngap_), amf_connected(amf_connected_), logger(srslog::fetch_basic_logger("CU-CP"))

@@ -76,8 +76,11 @@ public:
   // See interface for documentation.
   void on_new_symbol(ofh::slot_symbol_point symbol_point) override;
 
-  /// Updates the Rx window statistics.
-  void update_rx_window_statistics(ofh::slot_symbol_point symbol_point);
+  /// \brief Updates the Rx window statistics.
+  ///
+  /// \param symbol_point slot and symbol of a received Open Fronthaul message.
+  /// \return true if message was received on time, false otherwise.
+  bool update_rx_window_statistics(ofh::slot_symbol_point symbol_point);
 
   /// Getters to the number of messages.
   uint64_t nof_on_time_messages() const { return statistics.nof_on_time_messages(); }

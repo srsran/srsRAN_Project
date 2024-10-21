@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/phy/upper/channel_coding/crc_calculator.h"
 #include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
+#include <optional>
 
 namespace srsran {
 

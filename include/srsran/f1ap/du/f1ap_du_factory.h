@@ -1,15 +1,15 @@
 #pragma once
 
-#include "f1ap_du.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 #include <memory>
 
 namespace srsran {
 
-class du_high_ue_executor_mapper;
 class timer_manager;
 
 namespace srs_du {
 
+class du_high_ue_executor_mapper;
 class f1c_connection_client;
 
 /// Creates an instance of an F1AP DU interface, notifying outgoing packets on the specified listener object.

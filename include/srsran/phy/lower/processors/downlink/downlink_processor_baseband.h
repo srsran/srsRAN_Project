@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/complex.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter_metadata.h"
 

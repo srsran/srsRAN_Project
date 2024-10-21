@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
+#include <cstdint>
+#include <optional>
 
 namespace srsran {
 namespace srs_cu_cp {

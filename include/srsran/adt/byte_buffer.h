@@ -258,7 +258,7 @@ public:
 
   /// Append bytes of a iterator range.
   template <typename Iterator>
-  SRSRAN_NODISCARD bool append(Iterator begin, Iterator end)
+  [[nodiscard]] bool append(Iterator begin, Iterator end)
   {
     static_assert(std::is_same<std::decay_t<decltype(*begin)>, uint8_t>::value or
                       std::is_same<std::decay_t<decltype(*begin)>, const uint8_t>::value,
@@ -278,19 +278,19 @@ public:
   }
 
   /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
-  SRSRAN_NODISCARD bool append(span<const uint8_t> bytes);
+  [[nodiscard]] bool append(span<const uint8_t> bytes);
 
   /// Appends an initializer list of bytes.
-  SRSRAN_NODISCARD bool append(const std::initializer_list<uint8_t>& bytes);
+  [[nodiscard]] bool append(const std::initializer_list<uint8_t>& bytes);
 
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
-  SRSRAN_NODISCARD bool append(const byte_buffer& other);
+  [[nodiscard]] bool append(const byte_buffer& other);
 
   /// Appends bytes from another rvalue byte_buffer. This function may allocate new segments.
-  SRSRAN_NODISCARD bool append(byte_buffer&& other);
+  [[nodiscard]] bool append(byte_buffer&& other);
 
   /// Appends bytes to the byte buffer. This function may allocate new segments.
-  SRSRAN_NODISCARD bool append(uint8_t byte)
+  [[nodiscard]] bool append(uint8_t byte)
   {
     if (empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
       if (not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM)) {
@@ -303,20 +303,20 @@ public:
   }
 
   /// Appends a view of bytes into current byte buffer.
-  SRSRAN_NODISCARD bool append(const byte_buffer_view& view);
+  [[nodiscard]] bool append(const byte_buffer_view& view);
 
   /// Appends an owning view of bytes into current byte buffer.
-  SRSRAN_NODISCARD bool append(const byte_buffer_slice& view);
+  [[nodiscard]] bool append(const byte_buffer_slice& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
-  SRSRAN_NODISCARD bool prepend(span<const uint8_t> bytes);
+  [[nodiscard]] bool prepend(span<const uint8_t> bytes);
 
   /// \brief Prepend data of byte buffer to this byte buffer.
-  SRSRAN_NODISCARD bool prepend(const byte_buffer& other);
+  [[nodiscard]] bool prepend(const byte_buffer& other);
 
   /// \brief Prepend data of r-value byte buffer to this byte buffer. The segments of the provided byte buffer can get
   /// "stolen" if the byte buffer is the last reference to the segments.
-  SRSRAN_NODISCARD bool prepend(byte_buffer&& other);
+  [[nodiscard]] bool prepend(byte_buffer&& other);
 
   /// Prepends space in byte_buffer. This function may allocate new segments.
   /// \param nof_bytes Number of bytes to reserve at header.
@@ -363,10 +363,10 @@ public:
   bool is_contiguous() const { return empty() or ctrl_blk_ptr->segments.head == ctrl_blk_ptr->segments.tail; }
 
   /// Moves the bytes stored in different segments of the byte_buffer into first segment.
-  SRSRAN_NODISCARD bool linearize();
+  [[nodiscard]] bool linearize();
 
   /// Set byte_buffer length. Note: It doesn't initialize newly created bytes.
-  SRSRAN_NODISCARD bool resize(size_t new_sz);
+  [[nodiscard]] bool resize(size_t new_sz);
 
   /// Returns a non-owning list of segments that compose the byte_buffer.
   byte_buffer_segment_span_range segments()
@@ -403,13 +403,13 @@ public:
 private:
   bool has_ctrl_block() const { return ctrl_blk_ptr != nullptr; }
 
-  SRSRAN_NODISCARD node_t* add_head_segment(size_t headroom, bool use_fallback = false);
+  [[nodiscard]] node_t* add_head_segment(size_t headroom, bool use_fallback = false);
 
-  SRSRAN_NODISCARD node_t* create_segment(size_t headroom);
+  [[nodiscard]] node_t* create_segment(size_t headroom);
 
-  SRSRAN_NODISCARD bool append_segment(size_t headroom_suggestion);
+  [[nodiscard]] bool append_segment(size_t headroom_suggestion);
 
-  SRSRAN_NODISCARD bool prepend_segment(size_t headroom_suggestion);
+  [[nodiscard]] bool prepend_segment(size_t headroom_suggestion);
 
   /// \brief Removes last segment of the byte_buffer.
   /// Note: This operation is O(N), as it requires recomputing the tail.
@@ -611,22 +611,22 @@ public:
   byte_buffer_view view() const { return *buffer; }
 
   /// Appends bytes.
-  SRSRAN_NODISCARD bool append(byte_buffer_view bytes) { return buffer->append(bytes); }
+  [[nodiscard]] bool append(byte_buffer_view bytes) { return buffer->append(bytes); }
 
   /// Appends initializer list of bytes.
-  SRSRAN_NODISCARD bool append(const std::initializer_list<uint8_t>& bytes)
+  [[nodiscard]] bool append(const std::initializer_list<uint8_t>& bytes)
   {
     return buffer->append(span<const uint8_t>{bytes.begin(), bytes.size()});
   }
 
   /// Appends span of bytes.
-  SRSRAN_NODISCARD bool append(span<const uint8_t> bytes) { return buffer->append(bytes); }
+  [[nodiscard]] bool append(span<const uint8_t> bytes) { return buffer->append(bytes); }
 
   /// Appends a single byte.
-  SRSRAN_NODISCARD bool append(uint8_t byte) { return buffer->append(byte); }
+  [[nodiscard]] bool append(uint8_t byte) { return buffer->append(byte); }
 
   /// Appends the specified amount of zeros.
-  SRSRAN_NODISCARD bool append_zeros(size_t nof_zeros);
+  [[nodiscard]] bool append_zeros(size_t nof_zeros);
 
   /// Checks last appended byte.
   uint8_t& back() { return buffer->back(); }
@@ -691,7 +691,7 @@ struct formatter<srsran::byte_buffer_view> {
   enum { hexadecimal, binary } mode = hexadecimal;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     while (it != ctx.end() and *it != '}') {
@@ -704,7 +704,7 @@ struct formatter<srsran::byte_buffer_view> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer_view& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer_view& buf, FormatContext& ctx)
   {
     if (mode == hexadecimal) {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
@@ -719,7 +719,7 @@ struct formatter<srsran::byte_buffer> {
   enum { hexadecimal, binary } mode = hexadecimal;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     while (it != ctx.end() and *it != '}') {
@@ -732,7 +732,7 @@ struct formatter<srsran::byte_buffer> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer& buf, FormatContext& ctx)
   {
     if (mode == hexadecimal) {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
@@ -745,7 +745,7 @@ struct formatter<srsran::byte_buffer> {
 template <>
 struct formatter<srsran::byte_buffer_slice> : public formatter<srsran::byte_buffer_view> {
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer_slice& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer_slice& buf, FormatContext& ctx)
   {
     return formatter<srsran::byte_buffer_view>::format(buf.view(), ctx);
   }

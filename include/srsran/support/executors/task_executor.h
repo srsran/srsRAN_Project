@@ -34,10 +34,10 @@ public:
 
   /// Dispatches a task to be executed. According to this policy, executor may invoke task inplace if it deemed safe
   /// to do so.
-  virtual SRSRAN_NODISCARD bool execute(unique_task task) = 0;
+  [[nodiscard]] virtual bool execute(unique_task task) = 0;
 
   /// Dispatches a task to be later executed. The task always gets enqueued for later invocation.
-  virtual SRSRAN_NODISCARD bool defer(unique_task task) = 0;
+  [[nodiscard]] virtual bool defer(unique_task task) = 0;
 };
 
 } // namespace srsran

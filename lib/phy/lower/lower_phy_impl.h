@@ -26,7 +26,6 @@
 #include "processors/adaptors/processor_handler_adaptor.h"
 #include "processors/adaptors/processor_notifier_adaptor.h"
 #include "srsran/adt/circular_array.h"
-#include "srsran/adt/optional.h"
 #include "srsran/gateways/baseband/baseband_gateway.h"
 #include "srsran/phy/lower/amplitude_controller/amplitude_controller.h"
 #include "srsran/phy/lower/lower_phy.h"

@@ -33,9 +33,10 @@ template <typename T, typename... Args>
 class is_task_executor_ptr
 {
   template <typename U>
-  static auto test(U&& ptr) -> decltype(ptr->execute(std::declval<Args>()...), std::true_type{});
+  static auto test(U&& ptr) -> decltype((void)ptr->execute(std::declval<Args>()...), std::true_type{});
   template <typename U>
-  static auto test(const U* ptr) -> decltype(std::declval<U*>()->execute(std::declval<Args>()...), std::true_type{});
+  static auto test(const U* ptr)
+      -> decltype((void)std::declval<U*>()->execute(std::declval<Args>()...), std::true_type{});
 
   static std::false_type test(...);
 
@@ -47,10 +48,10 @@ template <typename T>
 class is_task_executor_ptr<T>
 {
   template <typename U>
-  static auto test(U&& ptr) -> decltype(ptr->execute(std::declval<unique_task>()), std::true_type{});
+  static auto test(U&& ptr) -> decltype((void)ptr->execute(std::declval<unique_task>()), std::true_type{});
   template <typename U>
   static auto test(const U* ptr)
-      -> decltype(std::declval<U*>()->execute(std::declval<unique_task>()), std::true_type{});
+      -> decltype((void)std::declval<U*>()->execute(std::declval<unique_task>()), std::true_type{});
 
   static std::false_type test(...);
 

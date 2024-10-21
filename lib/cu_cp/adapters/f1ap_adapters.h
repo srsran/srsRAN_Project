@@ -31,8 +31,8 @@ namespace srs_cu_cp {
 
 class cu_cp_controller;
 
-/// Adapter between F1AP and RRC UE
-class f1ap_rrc_ue_adapter : public f1ap_rrc_message_notifier
+/// Adapter between F1AP UE entity and RRC UE entity that forwards CCCH messages.
+class f1ap_rrc_ul_ccch_adapter : public f1ap_ul_ccch_notifier
 {
 public:
   void connect_rrc_ue(rrc_ul_pdu_handler& rrc_pdu_handler_) { rrc_pdu_handler = &rrc_pdu_handler_; }
@@ -43,14 +43,46 @@ public:
     rrc_pdu_handler->handle_ul_ccch_pdu(std::move(pdu));
   }
 
-  void on_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) override
+private:
+  rrc_ul_pdu_handler* rrc_pdu_handler = nullptr;
+};
+
+/// Adapter between F1AP UE entity and RRC UE entity that forwards DCCH messages.
+class f1ap_rrc_ul_dcch_adapter : public f1ap_ul_dcch_notifier
+{
+public:
+  void connect_rrc_ue(srb_id_t srb_id_, rrc_ul_pdu_handler& rrc_pdu_handler_)
+  {
+    srb_id          = srb_id_;
+    rrc_pdu_handler = &rrc_pdu_handler_;
+  }
+
+  void on_ul_dcch_pdu(byte_buffer pdu) override
   {
     srsran_assert(rrc_pdu_handler != nullptr, "RRC UL handler must not be nullptr");
     rrc_pdu_handler->handle_ul_dcch_pdu(srb_id, std::move(pdu));
   }
 
 private:
+  srb_id_t            srb_id          = srb_id_t::nulltype;
   rrc_ul_pdu_handler* rrc_pdu_handler = nullptr;
+};
+
+class f1ap_rrc_ul_dcch_adapter_collection
+{
+public:
+  void connect_rrc_ue(rrc_ul_pdu_handler& rrc_pdu_handler_)
+  {
+    srb1_adapter.connect_rrc_ue(srb_id_t::srb1, rrc_pdu_handler_);
+    srb2_adapter.connect_rrc_ue(srb_id_t::srb2, rrc_pdu_handler_);
+  }
+
+  f1ap_ul_dcch_notifier& get_srb1_notifier() { return srb1_adapter; }
+  f1ap_ul_dcch_notifier& get_srb2_notifier() { return srb2_adapter; }
+
+private:
+  f1ap_rrc_ul_dcch_adapter srb1_adapter;
+  f1ap_rrc_ul_dcch_adapter srb2_adapter;
 };
 
 } // namespace srs_cu_cp

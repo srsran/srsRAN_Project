@@ -321,34 +321,36 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
 
 async_task<bool> rrc_ue_impl::handle_security_mode_complete_expected(uint8_t transaction_id)
 {
-  return launch_async(
-      [this, timeout_ms = context.cfg.rrc_procedure_timeout_ms, transaction_id, transaction = rrc_transaction{}](
-          coro_context<async_task<bool>>& ctx) mutable {
-        CORO_BEGIN(ctx);
+  return launch_async([this,
+                       timeout_ms = context.cfg.rrc_procedure_timeout_ms,
+                       transaction_id,
+                       transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+    CORO_BEGIN(ctx);
 
-        logger.log_debug("Awaiting RRC Security Mode Complete (timeout={}ms)", timeout_ms.count());
-        // create new transaction for RRC Security Mode Command procedure
-        transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
+    logger.log_debug("Awaiting RRC Security Mode Complete (timeout={}ms)", timeout_ms.count());
+    // create new transaction for RRC Security Mode Command procedure
+    transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
 
-        CORO_AWAIT(transaction);
+    CORO_AWAIT(transaction);
 
-        if (!transaction.has_response()) {
-          logger.log_debug("Did not receive RRC Security Mode Complete. Cause: timeout");
-          CORO_EARLY_RETURN(false);
-        }
+    if (!transaction.has_response()) {
+      logger.log_debug("Did not receive RRC Security Mode Complete. Cause: {}",
+                       transaction.failure_cause() == protocol_transaction_failure::timeout ? "timeout" : "canceled");
+      CORO_EARLY_RETURN(false);
+    }
 
-        if (transaction.response().msg.c1().type() == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_fail) {
-          logger.log_warning("Received RRC Security Mode Failure");
-          CORO_EARLY_RETURN(false);
-        }
+    if (transaction.response().msg.c1().type() == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_fail) {
+      logger.log_warning("Received RRC Security Mode Failure");
+      CORO_EARLY_RETURN(false);
+    }
 
-        if (transaction.response().msg.c1().type() == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete) {
-          logger.log_debug("Received RRC Security Mode Complete");
-          handle_security_mode_complete(transaction.response().msg.c1().security_mode_complete());
-        }
+    if (transaction.response().msg.c1().type() == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete) {
+      logger.log_debug("Received RRC Security Mode Complete");
+      handle_security_mode_complete(transaction.response().msg.c1().security_mode_complete());
+    }
 
-        CORO_RETURN(true);
-      });
+    CORO_RETURN(true);
+  });
 }
 
 byte_buffer rrc_ue_impl::get_packed_ue_capability_rat_container_list() const
@@ -424,31 +426,33 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
 
 async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id)
 {
-  return launch_async(
-      [this, timeout_ms = context.cfg.rrc_procedure_timeout_ms, transaction_id, transaction = rrc_transaction{}](
-          coro_context<async_task<bool>>& ctx) mutable {
-        CORO_BEGIN(ctx);
+  return launch_async([this,
+                       timeout_ms = context.cfg.rrc_procedure_timeout_ms,
+                       transaction_id,
+                       transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+    CORO_BEGIN(ctx);
 
-        logger.log_debug("Awaiting RRC Reconfiguration Complete (timeout={}ms)", timeout_ms.count());
-        // create new transaction for RRC Reconfiguration procedure
-        transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
+    logger.log_debug("Awaiting RRC Reconfiguration Complete (timeout={}ms)", timeout_ms.count());
+    // create new transaction for RRC Reconfiguration procedure
+    transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
 
-        CORO_AWAIT(transaction);
+    CORO_AWAIT(transaction);
 
-        bool procedure_result = false;
-        if (transaction.has_response()) {
-          logger.log_debug("Received RRC Reconfiguration Complete after HO");
-          procedure_result = true;
+    bool procedure_result = false;
+    if (transaction.has_response()) {
+      logger.log_debug("Received RRC Reconfiguration Complete after HO");
+      procedure_result = true;
 
-          // The UE in the target cell is in connected state on RRC Reconfiguration Complete reception.
-          context.state = rrc_state::connected;
+      // The UE in the target cell is in connected state on RRC Reconfiguration Complete reception.
+      context.state = rrc_state::connected;
 
-        } else {
-          logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: timeout");
-        }
+    } else {
+      logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: {}",
+                       transaction.failure_cause() == protocol_transaction_failure::timeout ? "timeout" : "canceled");
+    }
 
-        CORO_RETURN(procedure_result);
-      });
+    CORO_RETURN(procedure_result);
+  });
 }
 
 bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)

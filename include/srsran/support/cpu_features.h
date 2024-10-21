@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/to_array.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "fmt/format.h"
 
 #ifdef __aarch64__
@@ -226,13 +226,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::cpu_feature> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::cpu_feature feature, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::cpu_feature feature, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", srsran::to_string(feature));
   }

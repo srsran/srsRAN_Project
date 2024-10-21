@@ -21,60 +21,98 @@
  */
 
 #include "srsran/adt/circular_map.h"
-#include "srsran/support/test_utils.h"
+#include <gtest/gtest.h>
 
-namespace srsran {
+using namespace srsran;
 
-void test_id_map()
+// Disable GCC 5's -Wsuggest-override warnings in gtest.
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
+
+namespace {
+
+template <typename U>
+struct is_static_circular_map : std::false_type {
+};
+template <typename K, typename V, std::size_t N>
+struct is_static_circular_map<static_circular_map<K, V, N>> : std::true_type {
+};
+
+template <typename T>
+class circular_map_tester_1 : public ::testing::Test
 {
-  circular_map<uint32_t, std::string, 16> myobj;
-  TESTASSERT_EQ(0, myobj.size());
-  TESTASSERT(myobj.empty() and not myobj.full());
-  TESTASSERT(myobj.begin() == myobj.end());
+protected:
+  template <typename U = T, std::enable_if_t<is_static_circular_map<U>::value, int> = 0>
+  constexpr circular_map_tester_1()
+  {
+  }
 
-  TESTASSERT(not myobj.contains(0));
-  TESTASSERT(myobj.insert(0, "obj0"));
-  TESTASSERT(myobj.contains(0) and myobj[0] == "obj0");
-  TESTASSERT_EQ(1, myobj.size());
-  TESTASSERT(not myobj.empty() and not myobj.full());
-  TESTASSERT(myobj.begin() != myobj.end());
+  template <typename U = T, std::enable_if_t<!is_static_circular_map<U>::value, int> = 0>
+  constexpr circular_map_tester_1() : mymap(4)
+  {
+  }
 
-  TESTASSERT(not myobj.insert(0, "obj0"));
-  TESTASSERT(myobj.insert(1, "obj1"));
-  TESTASSERT(myobj.contains(0) and myobj.contains(1) and myobj[1] == "obj1");
-  TESTASSERT(myobj.size() == 2 and not myobj.empty() and not myobj.full());
+  T mymap;
+};
 
-  TESTASSERT(myobj.find(1) != myobj.end());
-  TESTASSERT_EQ(1, myobj.find(1)->first);
-  TESTASSERT(myobj.find(1)->second == "obj1");
+using test_value_types_1 = ::testing::Types<static_circular_map<unsigned, std::string, 4>,
+                                            circular_map<unsigned, std::string, true>,
+                                            circular_map<unsigned, std::string, false>>;
 
-  // TEST: iteration
+TYPED_TEST_SUITE(circular_map_tester_1, test_value_types_1);
+
+TYPED_TEST(circular_map_tester_1, test_id_map)
+{
+  ASSERT_EQ(0, this->mymap.size());
+  ASSERT_TRUE(this->mymap.empty() and not this->mymap.full());
+  ASSERT_TRUE(this->mymap.begin() == this->mymap.end());
+
+  ASSERT_TRUE(not this->mymap.contains(0));
+  ASSERT_TRUE(this->mymap.insert(0, "obj0"));
+  ASSERT_TRUE(this->mymap.contains(0) and this->mymap[0] == "obj0");
+  ASSERT_EQ(1, this->mymap.size());
+  ASSERT_TRUE(not this->mymap.empty() and not this->mymap.full());
+  ASSERT_TRUE(this->mymap.begin() != this->mymap.end());
+
+  ASSERT_TRUE(not this->mymap.insert(0, "obj0"));
+  ASSERT_TRUE(this->mymap.insert(1, "obj1"));
+  ASSERT_TRUE(this->mymap.contains(0) and this->mymap.contains(1) and this->mymap[1] == "obj1");
+  ASSERT_TRUE(this->mymap.size() == 2 and not this->mymap.empty() and not this->mymap.full());
+
+  ASSERT_TRUE(this->mymap.find(1) != this->mymap.end());
+  ASSERT_EQ(1, this->mymap.find(1)->first);
+  ASSERT_TRUE(this->mymap.find(1)->second == "obj1");
+
+  // TEST: iteration.
   uint32_t count = 0;
-  for (std::pair<uint32_t, std::string>& obj : myobj) {
-    TESTASSERT(obj.second == "obj" + std::to_string(count++));
+  for (auto& obj : this->mymap) {
+    ASSERT_TRUE(obj.second == "obj" + std::to_string(count++));
   }
 
-  // TEST: const iteration
+  // TEST: const iteration.
   count = 0;
-  for (const std::pair<uint32_t, std::string>& obj : myobj) {
-    TESTASSERT(obj.second == "obj" + std::to_string(count++));
+  for (const auto& obj : this->mymap) {
+    ASSERT_TRUE(obj.second == "obj" + std::to_string(count++));
   }
 
-  TESTASSERT(myobj.erase(0));
-  TESTASSERT(myobj.erase(1));
-  TESTASSERT(myobj.size() == 0 and myobj.empty());
+  ASSERT_TRUE(this->mymap.erase(0));
+  ASSERT_TRUE(this->mymap.erase(1));
+  ASSERT_TRUE(this->mymap.size() == 0 and this->mymap.empty());
 
-  TESTASSERT(myobj.insert(0, "obj0"));
-  TESTASSERT(myobj.insert(1, "obj1"));
-  TESTASSERT(myobj.size() == 2 and not myobj.empty() and not myobj.full());
-  myobj.clear();
-  TESTASSERT(myobj.size() == 0 and myobj.empty());
+  ASSERT_TRUE(this->mymap.insert(0, "obj0"));
+  ASSERT_TRUE(this->mymap.insert(1, "obj1"));
+  ASSERT_TRUE(this->mymap.size() == 2 and not this->mymap.empty() and not this->mymap.full());
+  this->mymap.clear();
+  ASSERT_TRUE(this->mymap.size() == 0 and this->mymap.empty());
 }
 
 struct C {
-  C() { count++; }
-  ~C() { count--; }
-  C(C&&) { count++; }
+  C() { ++count; }
+  ~C() { --count; }
+  C(C&&) { ++count; }
   C(const C&)       = delete;
   C& operator=(C&&) = default;
 
@@ -82,55 +120,68 @@ struct C {
 };
 size_t C::count = 0;
 
-void test_correct_destruction()
+template <typename T>
+class circular_map_tester_2 : public ::testing::Test
 {
-  TESTASSERT(C::count == 0);
+protected:
+  template <typename U = T, std::enable_if_t<is_static_circular_map<U>::value, int> = 0>
+  constexpr circular_map_tester_2()
   {
-    circular_map<uint32_t, C, 4> circ_buffer;
-    TESTASSERT(C::count == 0);
-    TESTASSERT(circ_buffer.insert(0, C{}));
-    TESTASSERT(C::count == 1);
-    TESTASSERT(circ_buffer.insert(1, C{}));
-    TESTASSERT(circ_buffer.insert(2, C{}));
-    TESTASSERT(circ_buffer.insert(3, C{}));
-    TESTASSERT(C::count == 4);
-    TESTASSERT(not circ_buffer.insert(4, C{}));
-    TESTASSERT(C::count == 4);
-    TESTASSERT(circ_buffer.erase(1));
-    TESTASSERT(C::count == 3);
-    TESTASSERT(not circ_buffer.contains(1));
-
-    std::array<uint32_t, 3> content{0, 2, 3};
-    size_t                  i = 0;
-    for (auto& e : circ_buffer) {
-      TESTASSERT(content[i] == e.first);
-      i++;
-    }
-
-    TESTASSERT(C::count == 3);
-    circular_map<uint32_t, C, 4> circ_buffer2;
-    circ_buffer2 = std::move(circ_buffer);
-    TESTASSERT(C::count == 3);
-
-    circular_map<uint32_t, C, 4> circ_buffer3;
-    TESTASSERT(circ_buffer3.insert(1, C{}));
-    TESTASSERT(C::count == 4);
-    circ_buffer2 = std::move(circ_buffer3);
-    TESTASSERT(C::count == 1);
   }
-  TESTASSERT(C::count == 0);
-}
 
-} // namespace srsran
+  template <typename U = T, std::enable_if_t<!is_static_circular_map<U>::value, int> = 0>
+  constexpr circular_map_tester_2() : mymap(4), mymap2(4), mymap3(4)
+  {
+  }
 
-int main()
+  T mymap;
+  T mymap2;
+  T mymap3;
+};
+
+using test_value_types_2 = ::testing::
+    Types<static_circular_map<uint32_t, C, 4>, circular_map<uint32_t, C, true>, circular_map<uint32_t, C, false>>;
+
+TYPED_TEST_SUITE(circular_map_tester_2, test_value_types_2);
+
+TYPED_TEST(circular_map_tester_2, test_correct_destruction)
 {
-  auto& test_log = srslog::fetch_basic_logger("TEST");
-  test_log.set_level(srslog::basic_levels::info);
+  ASSERT_TRUE(C::count == 0);
 
-  srsran::test_id_map();
-  srsran::test_correct_destruction();
+  ASSERT_TRUE(C::count == 0);
+  ASSERT_TRUE(this->mymap.insert(0, C{}));
+  ASSERT_TRUE(C::count == 1);
+  ASSERT_TRUE(this->mymap.insert(1, C{}));
+  ASSERT_TRUE(this->mymap.insert(2, C{}));
+  ASSERT_TRUE(this->mymap.insert(3, C{}));
+  ASSERT_TRUE(C::count == 4);
+  ASSERT_TRUE(not this->mymap.insert(4, C{}));
+  ASSERT_TRUE(C::count == 4);
+  ASSERT_TRUE(this->mymap.erase(1));
+  ASSERT_TRUE(C::count == 3);
+  ASSERT_TRUE(not this->mymap.contains(1));
 
-  printf("Success\n");
-  return 0;
+  std::array<uint32_t, 3> content{0, 2, 3};
+  size_t                  i = 0;
+  for (auto& e : this->mymap) {
+    ASSERT_TRUE(content[i] == e.first);
+    ++i;
+  }
+
+  ASSERT_TRUE(C::count == 3);
+  this->mymap2 = std::move(this->mymap);
+  ASSERT_TRUE(C::count == 3);
+
+  ASSERT_TRUE(this->mymap3.insert(1, C{}));
+  ASSERT_TRUE(C::count == 4);
+  this->mymap2 = std::move(this->mymap3);
+  ASSERT_TRUE(C::count == 1);
+
+  this->mymap.clear();
+  this->mymap2.clear();
+  this->mymap3.clear();
+
+  ASSERT_TRUE(C::count == 0);
 }
+
+} // namespace

@@ -105,11 +105,6 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
 
   cu_cp_cfg.f1ap.json_log_enabled = true;
 
-  // > Plugin config
-  cu_cp_cfg.plugin.load_plugins    = params.load_plugins;
-  cu_cp_cfg.plugin.connect_amfs    = params.connect_amfs;
-  cu_cp_cfg.plugin.disconnect_amfs = params.disconnect_amfs;
-
   // > Mobility config
   cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = true;
   {

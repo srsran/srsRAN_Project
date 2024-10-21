@@ -39,15 +39,15 @@ TEST_F(f1ap_du_test, when_sdu_is_received_then_sdu_is_forwarded_to_tx_pdu_notifi
   f1ap_message     msg =
       test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {});
   run_ue_context_setup_procedure(ue->ue_index, msg);
-  this->f1c_gw.last_tx_f1ap_pdu.pdu = {};
+  this->f1c_gw.clear_tx_pdus();
 
   std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 4000));
   byte_buffer          sdu   = byte_buffer::create(bytes).value();
   ue->f1c_bearers[1].bearer->handle_sdu(byte_buffer_chain::create(sdu.copy()).value());
 
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().proc_code, ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);
-  const ul_rrc_msg_transfer_s& ul_rrc_msg = this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.ul_rrc_msg_transfer();
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.init_msg().proc_code, ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);
+  const ul_rrc_msg_transfer_s& ul_rrc_msg = this->f1c_gw.last_tx_pdu().pdu.init_msg().value.ul_rrc_msg_transfer();
   ASSERT_EQ(ul_rrc_msg->srb_id, 1);
   ASSERT_EQ(ul_rrc_msg->rrc_container, sdu);
 }

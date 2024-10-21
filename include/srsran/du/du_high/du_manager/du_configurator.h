@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/support/async/async_task.h"
 

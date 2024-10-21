@@ -109,6 +109,7 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
 }
 
 async_task<bool> f1c_srb0_du_bearer::handle_pdu_and_await_delivery(byte_buffer               sdu,
+                                                                   bool                      report_rrc_delivery_status,
                                                                    std::chrono::milliseconds time_to_wait)
 {
   // Forward task to lower layers.
@@ -224,13 +225,14 @@ void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer pdu)
 async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await_transmission(byte_buffer               pdu,
                                                                             std::chrono::milliseconds time_to_wait)
 {
-  return handle_pdu_and_await(std::move(pdu), true, time_to_wait);
+  return handle_pdu_and_await(std::move(pdu), true, false, time_to_wait);
 }
 
-async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await_delivery(byte_buffer               pdu,
+async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await_delivery(byte_buffer pdu,
+                                                                        bool        report_rrc_delivery_status,
                                                                         std::chrono::milliseconds time_to_wait)
 {
-  return handle_pdu_and_await(std::move(pdu), false, time_to_wait);
+  return handle_pdu_and_await(std::move(pdu), false, report_rrc_delivery_status, time_to_wait);
 }
 
 void f1c_other_srb_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn)
@@ -251,6 +253,7 @@ void f1c_other_srb_du_bearer::handle_delivery_notification(uint32_t highest_pdcp
 
 async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer               pdu,
                                                                bool                      tx_or_delivery,
+                                                               bool                      report_rrc_delivery_status,
                                                                std::chrono::milliseconds time_to_wait)
 {
   // Extract PDCP SN.
@@ -272,6 +275,7 @@ async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer      
   return launch_async([this,
                        pdcp_sn = pdcp_sn.value(),
                        tx_or_delivery,
+                       report_rrc_delivery_status,
                        time_to_wait,
                        result = event_result_type{},
                        sdu    = std::move(pdu)](coro_context<async_task<bool>>& ctx) mutable {
@@ -288,8 +292,16 @@ async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer      
     // Return back to control executor.
     CORO_AWAIT(execute_on_blocking(ctrl_exec, timers));
 
+    // When the gNB-DU has successfully delivered an RRC message to the UE for which the gNB-CU has requested a
+    // delivery report, the gNB-DU shall send the RRC DELIVERY REPORT message to the gNB-CU containng the RRC
+    // Delivery Status IE and the SRB ID IE.
+    bool delivered = result.index() == 0;
+    if (delivered and report_rrc_delivery_status) {
+      handle_rrc_delivery_report(pdcp_sn);
+    }
+
     // True for success, false for timeout/cancel.
-    CORO_RETURN(result.index() == 0);
+    CORO_RETURN(delivered);
   });
 }
 
@@ -342,4 +354,20 @@ f1c_other_srb_du_bearer::wait_for_notification(uint32_t                  pdcp_sn
   // Allocation successful. Return awaitable event.
   pending_events.emplace_back(std::move(event_slot));
   return pending_events.back()->observer;
+}
+
+void f1c_other_srb_du_bearer::handle_rrc_delivery_report(uint32_t trigger_pdcp_sn)
+{
+  f1ap_message msg;
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_RRC_DELIVERY_REPORT);
+  asn1::f1ap::rrc_delivery_report_ies_container& report = *msg.pdu.init_msg().value.rrc_delivery_report();
+
+  report.gnb_cu_ue_f1ap_id                   = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.gnb_cu_ue_f1ap_id);
+  report.gnb_du_ue_f1ap_id                   = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
+  report.srb_id                              = srb_id_to_uint(srb_id);
+  report.rrc_delivery_status.trigger_msg     = trigger_pdcp_sn;
+  report.rrc_delivery_status.delivery_status = trigger_pdcp_sn; // TODO: Save in-order PDCP SN delivery.
+
+  // Send F1AP PDU to CU-CP.
+  f1ap_notifier.on_new_message(msg);
 }

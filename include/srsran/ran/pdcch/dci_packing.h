@@ -25,12 +25,12 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/expected.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/pdcch/pdcch_constants.h"
 #include "srsran/ran/physical_cell_group.h"
 #include "srsran/ran/pusch/tx_scheme_configuration.h"
+#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/units.h"
 #include <variant>
 

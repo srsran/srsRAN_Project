@@ -21,9 +21,9 @@
  */
 
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "srsran/adt/optional.h"
 #include "srsran/srsvec/compare.h"
 #include <cmath>
+#include <optional>
 
 #ifdef __AVX2__
 #include <immintrin.h>

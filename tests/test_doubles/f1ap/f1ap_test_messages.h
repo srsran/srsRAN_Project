@@ -26,7 +26,6 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/gnb_du_id.h"
@@ -110,11 +109,15 @@ f1ap_message generate_ue_context_modification_request(gnb_du_ue_f1ap_id_t       
                                                       const std::initializer_list<drb_id_t>& drbs_to_setup = {},
                                                       const std::initializer_list<drb_id_t>& drbs_to_mod   = {},
                                                       const std::initializer_list<drb_id_t>& drbs_to_rem   = {},
-                                                      byte_buffer                            rrc_container = {});
+                                                      byte_buffer                            dl_dcch_msg   = {});
 
 /// \brief Generates dummy F1AP UE CONTEXT MODIFICATION RESPONSE message.
 f1ap_message
 generate_ue_context_modification_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id, rnti_t rnti);
+
+/// \brief Create RRC Container with PDCP header and DL-DCCH message.
+byte_buffer create_dl_dcch_rrc_container(uint32_t pdcp_sn, const std::initializer_list<uint8_t>& dl_dcch_msg);
+byte_buffer create_dl_dcch_rrc_container(uint32_t pdcp_sn, const byte_buffer& dl_dcch_msg);
 
 /// \brief Remove PDCP header from DL-DCCH message.
 byte_buffer extract_dl_dcch_msg(const byte_buffer& rrc_container);

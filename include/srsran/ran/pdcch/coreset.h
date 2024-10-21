@@ -23,9 +23,9 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/pdcch/pdcch_constants.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
+#include <optional>
 
 namespace srsran {
 

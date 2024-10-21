@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "f1c_connection_server.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
+#include "srsran/f1ap/gateways/f1c_connection_server.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 
 namespace srsran {

@@ -24,7 +24,6 @@
 
 #include "srsran/adt/bit_buffer.h"
 #include "srsran/adt/mpmc_queue.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/support/math_utils.h"

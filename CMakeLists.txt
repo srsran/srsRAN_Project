@@ -75,6 +75,8 @@ option(ENABLE_GCOV           "Enable code coverage"                     OFF)
 option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            OFF)
 option(ENABLE_FFTW           "Enable FFTW"                              ON)
+option(ENABLE_MKL            "Enable Intel MKL"                         ON)
+option(ENABLE_ARMPL          "Enable ARM performance library"           ON)
 option(ENABLE_DPDK           "Enable DPDK"                              OFF)
 option(ENABLE_LIBNUMA        "Enable LibNUMA"                           OFF)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
@@ -121,9 +123,7 @@ endif ()
 # Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
 if (ENABLE_DPDK)
   SET(ENABLE_PDSCH_HWACC ON CACHE BOOL "Enable PDSCH hardware-acceleration")
-  message(STATUS "Hardware-acceleration enabled for PDSCH.")
   SET(ENABLE_PUSCH_HWACC ON CACHE BOOL "Enable PUSCH hardware-acceleration")
-  message(STATUS "Hardware-acceleration enabled for PUSCH.")
 else (ENABLE_DPDK)
   unset(ENABLE_PDSCH_HWACC CACHE)
   unset(ENABLE_PUSCH_HWACC CACHE)
@@ -267,6 +267,16 @@ endif (MBEDTLS_FOUND)
 if (ENABLE_FFTW)
     find_package(FFTW3F)
 endif (ENABLE_FFTW)
+
+# MKL
+if (ENABLE_MKL)
+    find_package(MKL)
+endif (ENABLE_MKL)
+
+# ARMPL
+if (ENABLE_ARMPL)
+    find_package(ARMPL)
+endif (ENABLE_ARMPL)
 
 # Google Tests
 if (BUILD_TESTS)

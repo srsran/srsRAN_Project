@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include <cstdint>
 #include <string>
 #include <variant>

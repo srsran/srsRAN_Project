@@ -46,7 +46,10 @@ public:
   }
 
   // See interface for documentation.
-  bool is_valid(const prach_detector::configuration& config) const override { return prach->is_valid(config); }
+  error_type<std::string> is_valid(const prach_detector::configuration& config) const override
+  {
+    return prach->is_valid(config);
+  }
   error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override
   {
     return pucch->is_valid(config);

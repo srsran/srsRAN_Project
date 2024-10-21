@@ -182,8 +182,8 @@ TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
     // Note: Skip special slots in test for now.
     if (cell_cfg_list[0].is_fully_ul_enabled(this->last_result_slot())) {
       // Ensure UE PUSCH allocations are made.
-      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs.empty())
-          << "The UE configuration is leading to some UL slots staying empty";
+      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs.empty()) << fmt::format(
+          "The UE configuration is leading to slot {} not having UL UE grant scheduled", this->last_result_slot());
     }
 
     for (const ul_sched_info& pusch : this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs) {
@@ -195,6 +195,7 @@ TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
       crc.crcs[0].rnti           = ue_rnti;
       crc.crcs[0].harq_id        = to_harq_id(pusch.pusch_cfg.harq_id);
       crc.crcs[0].tb_crc_success = true;
+      crc.crcs[0].ul_sinr_dB     = 100;
       this->sched->handle_crc_indication(crc);
     }
   }
@@ -234,9 +235,12 @@ INSTANTIATE_TEST_SUITE_P(
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}, // DDDDDDDDSU
   tdd_test_params{false, {subcarrier_spacing::kHz30, {6,  3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}},
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}},  // DDSU
+  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 4, 5, 5, 0}}, 5}, // DDDDSUUUUU
   // UL heavy
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 4, 5, 5, 0}}}, // DDDDSUUUUU
   tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}},
+  tdd_test_params{true, {subcarrier_spacing::kHz30, {5, 1, 10, 3, 0}, tdd_ul_dl_pattern{5, 1, 10, 3, 0}}, 2},
+  tdd_test_params{true, {subcarrier_spacing::kHz30, {6, 2, 10, 3, 0}, tdd_ul_dl_pattern{4, 1, 0, 3, 0}}, 2},
+  tdd_test_params{true, {subcarrier_spacing::kHz30, {4, 1, 10, 2, 0}, tdd_ul_dl_pattern{6, 1, 10, 4, 0}}, 2},
   tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2, 10, 7, 0}}, 2}
 )); // DDDSUUDDDD
 // clang-format on

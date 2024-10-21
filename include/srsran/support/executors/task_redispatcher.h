@@ -40,7 +40,7 @@ public:
   {
   }
 
-  SRSRAN_NODISCARD bool execute()
+  [[nodiscard]] bool execute()
   {
     if (not dispatch_task(true)) {
       dispatch_fail_count.fetch_add(1U, std::memory_order_relaxed);
@@ -49,7 +49,7 @@ public:
     return true;
   }
 
-  SRSRAN_NODISCARD bool defer()
+  [[nodiscard]] bool defer()
   {
     if (not dispatch_task(false)) {
       dispatch_fail_count.fetch_add(1U, std::memory_order_relaxed);

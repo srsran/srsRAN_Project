@@ -41,7 +41,7 @@ public:
   {
   }
 
-  bool execute(unique_task task) override
+  [[nodiscard]] bool execute(unique_task task) override
   {
     auto enqueue_tp = trace_clock::now();
     return get(exec).execute([this, task = std::move(task), enqueue_tp]() mutable {
@@ -52,7 +52,7 @@ public:
     });
   }
 
-  bool defer(unique_task task) override
+  [[nodiscard]] bool defer(unique_task task) override
   {
     auto enqueue_tp = trace_clock::now();
     return get(exec).defer([this, task = std::move(task), enqueue_tp]() mutable {
@@ -95,9 +95,9 @@ class executor_tracer<Exec, detail::null_event_tracer> final : public task_execu
 public:
   executor_tracer(Exec exec_, detail::null_event_tracer& /**/, const std::string& /**/) : exec(std::move(exec_)) {}
 
-  bool execute(unique_task task) override { return get(exec).execute(std::move(task)); }
+  [[nodiscard]] bool execute(unique_task task) override { return get(exec).execute(std::move(task)); }
 
-  bool defer(unique_task task) override { return get(exec).defer(std::move(task)); }
+  [[nodiscard]] bool defer(unique_task task) override { return get(exec).defer(std::move(task)); }
 
 private:
   template <typename U>

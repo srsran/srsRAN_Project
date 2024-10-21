@@ -22,13 +22,18 @@
 
 #pragma once
 
-#include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
-#include <string>
+#include <array>
+#include <type_traits>
 
 namespace srsran {
-namespace dpdk {
+namespace detail {
 
-std::unique_ptr<bbdev_acc_factory> create_plugin_bbdev_acc_factory(std::string impl_name);
+template <typename U>
+struct is_std_array : std::false_type {
+};
+template <typename U, std::size_t N>
+struct is_std_array<std::array<U, N>> : std::true_type {
+};
 
-} // namespace dpdk
+} // namespace detail
 } // namespace srsran

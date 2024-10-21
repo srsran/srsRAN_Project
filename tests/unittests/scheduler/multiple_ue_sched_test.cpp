@@ -27,7 +27,6 @@
 #include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/scheduler/scheduler_dci.h"

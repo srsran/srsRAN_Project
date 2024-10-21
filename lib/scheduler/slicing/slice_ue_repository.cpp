@@ -87,17 +87,31 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
     }
   }
   // Subtract the bytes already allocated in UL HARQs.
+  unsigned bytes_in_harqs = 0;
   for (unsigned cell_idx = 0, e = nof_cells(); cell_idx != e; ++cell_idx) {
     const ue_cell& ue_cc = get_cell(to_ue_cell_index(cell_idx));
-    if (pending_bytes == 0) {
+    if (pending_bytes <= bytes_in_harqs) {
       break;
     }
-    unsigned harq_bytes = ue_cc.harqs.total_ul_bytes_waiting_ack();
-    pending_bytes -= std::min(pending_bytes, harq_bytes);
+    bytes_in_harqs += ue_cc.harqs.total_ul_bytes_waiting_ack();
+  }
+  pending_bytes -= std::min(pending_bytes, bytes_in_harqs);
+  if (pending_bytes > 0) {
+    return pending_bytes;
   }
 
   // If there are no pending bytes, check if a SR is pending.
-  return pending_bytes > 0 ? pending_bytes : (has_pending_sr() ? SR_GRANT_BYTES : 0);
+  // Note: We consider all LCGs, so that the UL grant is not unnecessarily small, when there are bytes already pending
+  // for other slices of the UE.
+  if (has_pending_sr()) {
+    for (unsigned lcg_id = 0, e = lcg_ids.size(); lcg_id != e; ++lcg_id) {
+      pending_bytes += u.pending_ul_newtx_bytes(uint_to_lcg_id(lcg_id));
+    }
+    pending_bytes -= std::min(pending_bytes, bytes_in_harqs);
+    return std::max(pending_bytes, SR_GRANT_BYTES);
+  }
+
+  return 0;
 }
 
 bool slice_ue::has_pending_sr() const

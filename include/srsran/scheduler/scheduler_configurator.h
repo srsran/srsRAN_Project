@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"

@@ -46,7 +46,7 @@ class mac_rach_indication_fixture : public testing::TestWithParam<float>
   fapi_to_mac_data_msg_translator translator;
 
 protected:
-  mac_rach_indication_fixture() : translator(subcarrier_spacing::kHz15)
+  mac_rach_indication_fixture() : translator(subcarrier_spacing::kHz15, 0)
   {
     translator.set_cell_rach_handler(rach_handler);
   }

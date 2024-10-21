@@ -52,6 +52,14 @@ public:
   {
     return (*cell_res_grids[cell_index])[0].result.dl.dl_pdcchs;
   }
+  span<const dl_msg_alloc> get_ue_pdsch_sched_results(du_cell_index_t cell_index, slot_point pdsch_slot) const
+  {
+    return (*cell_res_grids[cell_index])[pdsch_slot].result.dl.ue_grants;
+  }
+  span<const ul_sched_info> get_ue_pusch_sched_results(du_cell_index_t cell_index, slot_point pusch_slot) const
+  {
+    return (*cell_res_grids[cell_index])[pusch_slot].result.ul.puschs;
+  }
 
   const cell_resource_allocator& get_grid(du_cell_index_t cell_index) const { return *cell_res_grids[cell_index]; }
 

@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdcch/dci_packing.h"

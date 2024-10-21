@@ -72,7 +72,7 @@ struct formatter<srsran::rnti_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rnti_t rnti, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rnti_t rnti, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{:#x}", to_value(rnti));
   }

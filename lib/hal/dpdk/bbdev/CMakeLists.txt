@@ -19,8 +19,7 @@
 #
 
 set(SOURCES 
-  bbdev_acc_factory.cpp
-  plugin_bbdev_acc_factory.cpp)
+  bbdev_acc_factory.cpp)
 
 add_library(hal_bbdev_factory STATIC ${SOURCES})
 target_compile_options(hal_bbdev_factory PRIVATE ${DPDK_CFLAGS})

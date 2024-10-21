@@ -32,7 +32,7 @@
 #include "srsran/ran/pdcch/pdcch_context_formatter.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/srsvec/copy.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/delimited_formatter.h"
 
 namespace fmt {
 
@@ -46,14 +46,13 @@ struct formatter<srsran::pdcch_processor::coreset_description> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pdcch_processor::coreset_description& coreset, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "bwp=[{}, {})", coreset.bwp_start_rb, coreset.bwp_start_rb + coreset.bwp_size_rb);
     helper.format_always(
@@ -90,14 +89,13 @@ struct formatter<srsran::pdcch_processor::pdu_t> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pdcch_processor::pdu_t& pdu, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rnti=0x{:04x}", pdu.dci.rnti);
     if (pdu.context.has_value()) {
@@ -129,14 +127,13 @@ struct formatter<srsran::prach_detector::configuration> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::prach_detector::configuration& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rsi={}", config.root_sequence_index);
     helper.format_if_verbose(ctx,
@@ -157,14 +154,13 @@ struct formatter<srsran::prach_detector::configuration> {
 template <>
 struct formatter<srsran::prach_detection_result::preamble_indication> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::prach_detection_result::preamble_indication& preamble, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     format_to(ctx.out(),
               "{{idx={} ta={:.2f}us detection_metric={:.1f}}}",
@@ -185,14 +181,13 @@ struct formatter<srsran::prach_detection_result> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::prach_detection_result& result, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rssi={:+.1f}dB", result.rssi_dB);
     helper.format_if_verbose(ctx, "res={:.1f}us", result.time_resolution.to_seconds() * 1e6);
@@ -215,14 +210,13 @@ struct formatter<srsran::pucch_processor::format0_configuration> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor::format0_configuration& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (config.context.has_value()) {
       helper.format_always(ctx, config.context.value());
@@ -254,14 +248,13 @@ struct formatter<srsran::pucch_processor::format1_configuration> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor::format1_configuration& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (config.context.has_value()) {
       helper.format_always(ctx, config.context.value());
@@ -294,14 +287,13 @@ struct formatter<srsran::pucch_processor::format2_configuration> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor::format2_configuration& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (config.context.has_value()) {
       helper.format_always(ctx, config.context.value());
@@ -330,14 +322,13 @@ struct formatter<srsran::pucch_processor::format2_configuration> {
 template <>
 struct formatter<srsran::pucch_processor::format3_configuration> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor::format3_configuration& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "format3_configuration");
   }
@@ -347,14 +338,13 @@ struct formatter<srsran::pucch_processor::format3_configuration> {
 template <>
 struct formatter<srsran::pucch_processor::format4_configuration> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor::format4_configuration& config, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "format4_configuration");
   }
@@ -370,14 +360,13 @@ struct formatter<srsran::pucch_processor_result> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor_result& result, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     unsigned nof_sr        = result.message.get_expected_nof_sr_bits();
     unsigned nof_harq_ack  = result.message.get_expected_nof_harq_ack_bits();
@@ -447,14 +436,13 @@ struct formatter<srsran::ssb_processor::pdu_t> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::ssb_processor::pdu_t& pdu, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "pci={}", pdu.phys_cell_id);
     helper.format_always(ctx, "ssb_idx={}", pdu.ssb_idx);

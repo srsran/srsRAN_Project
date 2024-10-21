@@ -24,7 +24,7 @@
 #include "du_high_rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/engineering_notation.h"
-#include "srsran/support/format_utils.h"
+
 #include "srsran/support/math_utils.h"
 #include <iomanip>
 #include <ostream>
@@ -289,13 +289,23 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
 
   fmt::memory_buffer buffer;
 
+  unsigned sum_dl_bitrate_kbps = 0;
+  unsigned sum_ul_bitrate_kbps = 0;
+  for (const auto& ue : metrics.ue_metrics) {
+    sum_dl_bitrate_kbps += ue.dl_brate_kbps;
+    sum_ul_bitrate_kbps += ue.ul_brate_kbps;
+  }
+
   // log cell-wide metrics
   fmt::format_to(buffer, "Cell Scheduler Metrics:");
-  fmt::format_to(buffer,
-                 " error_indications={} mean_latency={}usec latency_hist=[{}]",
-                 metrics.nof_error_indications,
-                 metrics.average_decision_latency.count(),
-                 fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
+  fmt::format_to(
+      buffer,
+      " total_dl_bitrate_kbps={} total_ul_bitrate_kbps={} error_indications={} mean_latency={}usec latency_hist=[{}]",
+      float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
+      float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
+      metrics.nof_error_indications,
+      metrics.average_decision_latency.count(),
+      fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
   if (not metrics.events.empty()) {
     fmt::format_to(buffer, " events=[");
     bool first = true;

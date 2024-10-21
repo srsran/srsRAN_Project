@@ -32,8 +32,8 @@ class mac_fapi_adaptor_factory_impl : public mac_fapi_adaptor_factory
 {
 public:
   // See interface for documentation.
-  std::unique_ptr<mac_fapi_adaptor> create(const mac_fapi_adaptor_factory_config&  config,
-                                           mac_fapi_adaptor_factory_dependencies&& dependencies) override;
+  std::unique_ptr<mac_fapi_adaptor> create(const mac_fapi_adaptor_config&  config,
+                                           mac_fapi_adaptor_dependencies&& dependencies) override;
 };
 
 } // namespace fapi_adaptor

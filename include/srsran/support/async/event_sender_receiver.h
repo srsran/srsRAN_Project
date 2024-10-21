@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/support/async/coroutine.h"
+#include <optional>
 
 namespace srsran {
 

@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/gateways/network_gateway.h"
 #include "srsran/support/io/io_broker.h"
 #include <netdb.h>

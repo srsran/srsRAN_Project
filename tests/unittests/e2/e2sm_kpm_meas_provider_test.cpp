@@ -21,6 +21,7 @@
  */
 
 #include "lib/e2/common/e2ap_asn1_packer.h"
+#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/support/executors/task_worker.h"
@@ -56,6 +57,17 @@ public:
 
 private:
   e2_du_metrics_notifier* e2_meas_provider;
+};
+
+class e2_pdcp_metrics_notifier : public e2_cu_metrics_notifier, public e2_cu_metrics_interface
+{
+public:
+  void connect_e2_cu_meas_provider(std::unique_ptr<e2_cu_metrics_notifier> meas_provider) override {}
+
+  void connect_e2_cu_meas_provider(e2_cu_metrics_notifier* meas_provider) { e2_meas_provider = meas_provider; }
+
+private:
+  e2_cu_metrics_notifier* e2_meas_provider;
 };
 
 class e2_entity_test_with_pcap : public e2_test_base_with_pcap
@@ -116,20 +128,13 @@ protected:
 
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
-
-    du_metrics        = std::make_unique<e2_rlc_metrics_notifier>();
-    f1ap_ue_id_mapper = std::make_unique<dummy_f1ap_ue_id_translator>();
-    du_meas_provider  = std::make_unique<e2sm_kpm_du_meas_provider_impl>(*f1ap_ue_id_mapper, 30);
-    e2sm_packer       = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_iface        = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
-    gw                = std::make_unique<dummy_network_gateway_data_handler>();
-    pcap              = std::make_unique<dummy_e2ap_pcap>();
+    gw                   = std::make_unique<dummy_network_gateway_data_handler>();
+    pcap                 = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
       packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
     } else {
       packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
     }
-    du_metrics->connect_e2_du_meas_provider(du_meas_provider.get());
   }
 
   void TearDown() override
@@ -139,7 +144,6 @@ protected:
     pcap->close();
   }
 
-protected:
   void tick()
   {
     timers.tick();
@@ -155,13 +159,50 @@ protected:
   std::unique_ptr<e2sm_interface>                     e2sm_iface;
   std::unique_ptr<e2sm_handler>                       e2sm_packer;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
-  std::unique_ptr<e2_rlc_metrics_notifier>            du_metrics;
-  std::unique_ptr<dummy_f1ap_ue_id_translator>        f1ap_ue_id_mapper;
-  std::unique_ptr<e2sm_kpm_du_meas_provider_impl>     du_meas_provider;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
   std::unique_ptr<dummy_e2_connection_client>         e2_client;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
+};
+
+class e2sm_kpm_du_meas_provider_test : public e2sm_kpm_meas_provider_test
+{
+  void SetUp() override
+  {
+    e2sm_kpm_meas_provider_test::SetUp();
+    f1ap_ue_id_mapper = std::make_unique<dummy_f1ap_ue_id_translator>();
+    du_meas_provider  = std::make_unique<e2sm_kpm_du_meas_provider_impl>(*f1ap_ue_id_mapper, 30);
+    e2sm_packer       = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_iface        = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    metrics           = std::make_unique<e2_rlc_metrics_notifier>();
+    metrics->connect_e2_du_meas_provider(du_meas_provider.get());
+  }
+
+  void TearDown() override { e2sm_kpm_meas_provider_test::TearDown(); }
+
+protected:
+  std::unique_ptr<e2_rlc_metrics_notifier>        metrics;
+  std::unique_ptr<dummy_f1ap_ue_id_translator>    f1ap_ue_id_mapper;
+  std::unique_ptr<e2sm_kpm_du_meas_provider_impl> du_meas_provider;
+};
+
+class e2sm_kpm_cu_meas_provider_test : public e2sm_kpm_meas_provider_test
+{
+  void SetUp() override
+  {
+    e2sm_kpm_meas_provider_test::SetUp();
+    cu_meas_provider = std::make_unique<e2sm_kpm_cu_meas_provider_impl>();
+    e2sm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*cu_meas_provider);
+    e2sm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *cu_meas_provider);
+    metrics          = std::make_unique<e2_pdcp_metrics_notifier>();
+    metrics->connect_e2_cu_meas_provider(cu_meas_provider.get());
+  }
+
+  void TearDown() override { e2sm_kpm_meas_provider_test::TearDown(); }
+
+protected:
+  std::unique_ptr<e2_pdcp_metrics_notifier>       metrics;
+  std::unique_ptr<e2sm_kpm_cu_meas_provider_impl> cu_meas_provider;
 };
 
 rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
@@ -251,7 +292,7 @@ TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
   e2->stop();
 }
 
-TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
+TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
 {
   std::vector<uint32_t> ue_ids        = {31, 23, 152};
   std::vector<uint32_t> nof_drbs      = {3, 1, 2};
@@ -324,7 +365,7 @@ TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
     for (unsigned u = 0; u < ue_ids.size(); ++u) {
       for (unsigned b = 1; b < (nof_drbs[u] + 1); ++b) {
         rlc_metrics = generate_rlc_metrics(ue_ids[u], b);
-        du_metrics->report_metrics(rlc_metrics);
+        metrics->report_metrics(rlc_metrics);
       }
     }
 
@@ -381,7 +422,7 @@ TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   }
 }
 
-TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
+TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
 {
   std::vector<uint32_t> ue_ids        = {31, 23, 152};
   std::vector<uint32_t> nof_drbs      = {3, 1, 2};
@@ -435,7 +476,7 @@ TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
     for (unsigned u = 0; u < ue_ids.size(); ++u) {
       for (unsigned b = 1; b < (nof_drbs[u] + 1); ++b) {
         rlc_metrics = generate_rlc_metrics(ue_ids[u], b);
-        du_metrics->report_metrics(rlc_metrics);
+        metrics->report_metrics(rlc_metrics);
       }
     }
 
@@ -471,7 +512,7 @@ TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
   }
 }
 
-TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
+TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
 {
   std::vector<uint32_t>              grants_ue0 = {1, 0, 3, 4, 5, 6, 7, 8, 9, 0};
   std::vector<uint32_t>              grants_ue1 = {0, 0, 8, 7, 6, 5, 4, 3, 2, 1};
@@ -542,7 +583,7 @@ TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
   // Push dummy metric measurements.
   scheduler_cell_metrics sched_metrics;
   sched_metrics = generate_sched_metrics(nof_prbs, nof_slots, dl_grants, ul_grants);
-  du_metrics->report_metrics(sched_metrics);
+  metrics->report_metrics(sched_metrics);
 
   // Trigger measurement collection.
   report_service->collect_measurements();
@@ -576,8 +617,8 @@ TEST_P(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(e2sm_kpm_meas_provider_test, e2_entity_test_with_pcap, testing::Values(g_pcap));
-INSTANTIATE_TEST_SUITE_P(e2sm_kpm_meas_provider_test, e2sm_kpm_meas_provider_test, testing::Values(g_pcap));
+INSTANTIATE_TEST_SUITE_P(e2sm_kpm_du_meas_provider_test, e2_entity_test_with_pcap, testing::Values(g_pcap));
+INSTANTIATE_TEST_SUITE_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_du_meas_provider_test, testing::Values(g_pcap));
 
 int main(int argc, char** argv)
 {

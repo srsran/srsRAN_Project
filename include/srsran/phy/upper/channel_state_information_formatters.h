@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_state_information.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/delimited_formatter.h"
 #include <fmt/core.h>
 
 namespace fmt {
@@ -38,14 +38,14 @@ struct formatter<srsran::channel_state_information> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::channel_state_information& csi, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     // Verbose representation prints all available SINR parameters. It appends [sel] to the label of the selected
     // measurement point.

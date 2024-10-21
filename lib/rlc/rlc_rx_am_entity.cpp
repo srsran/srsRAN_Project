@@ -24,6 +24,7 @@
 #include "../support/sdu_window_impl.h"
 #include "srsran/adt/scope_exit.h"
 #include "srsran/instrumentation/traces/up_traces.h"
+#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 

@@ -324,13 +324,13 @@ namespace fmt {
 template <>
 struct formatter<rx_order> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(rx_order order, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(rx_order order, FormatContext& ctx)
   {
     static constexpr const char* options[] = {"in order", "swapped edges", "reverse order", "even odd"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(order)]);

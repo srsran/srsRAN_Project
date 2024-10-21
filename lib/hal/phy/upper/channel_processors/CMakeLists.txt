@@ -27,8 +27,7 @@ if (ENABLE_PDSCH_HWACC)
 endif ()
 
 
-add_library(hal_hwacc_pdsch STATIC hw_accelerator_factories.cpp
-                                   plugin_bbdev_pdsch_enc_acc_factory.cpp)
+add_library(hal_hwacc_pdsch STATIC hw_accelerator_factories.cpp)
 
 set_source_files_properties(hw_accelerator_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${HWACC_FACTORIES_DEFINITIONS}")
 

@@ -205,13 +205,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_um_pdu_header> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_um_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_um_pdu_header& hdr, FormatContext& ctx)
   {
     if (hdr.si == srsran::rlc_si_field::full_sdu) {
       // Header of full SDU only has SI; no SN and no SO.

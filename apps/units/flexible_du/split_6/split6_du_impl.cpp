@@ -21,7 +21,6 @@
  */
 
 #include "split6_du_impl.h"
-
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;

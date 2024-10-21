@@ -143,7 +143,9 @@ bool ue_context_setup_procedure::create_ue_rrc_context(const f1ap_ue_context_set
     }
 
     // Add RRC notifier to F1AP UE context.
-    ue_ctxt_list.add_rrc_notifier(outcome->ue_index, outcome->f1ap_rrc_notifier);
+    ue_ctxt_list.add_srb0_rrc_notifier(outcome->ue_index, outcome->f1ap_srb0_notifier);
+    ue_ctxt_list.add_srb1_rrc_notifier(outcome->ue_index, outcome->f1ap_srb1_notifier);
+    ue_ctxt_list.add_srb2_rrc_notifier(outcome->ue_index, outcome->f1ap_srb2_notifier);
 
     logger.debug("ue={} Added RRC UE notifier", outcome->ue_index);
   }

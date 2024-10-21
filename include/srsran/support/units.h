@@ -139,7 +139,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::units::bits> : public formatter<srsran::units::bits::value_type> {
   template <typename FormatContext>
-  auto format(srsran::units::bits s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::units::bits s, FormatContext& ctx)
   {
     return fmt::format_to(ctx.out(), "{}{}", s.value(), srsran::units::bits::tag_type::str());
   }
@@ -151,7 +151,7 @@ struct formatter<srsran::units::bytes> : public formatter<srsran::units::bytes::
   bool print_units = false;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     while (it != ctx.end() and *it != '}') {
@@ -164,7 +164,7 @@ struct formatter<srsran::units::bytes> : public formatter<srsran::units::bytes::
   }
 
   template <typename FormatContext>
-  auto format(srsran::units::bytes s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::units::bytes s, FormatContext& ctx)
   {
     return fmt::format_to(ctx.out(), "{}{}", s.value(), print_units ? srsran::units::bytes::tag_type::str() : "");
   }

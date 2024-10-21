@@ -252,6 +252,9 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<hal_appconfig>
 
 void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfig& du_cfg)
 {
+  add_option(app, "--du_multicell_enabled", du_cfg.du_multicell_enabled, "DU multicell enabled flag")
+      ->capture_default_str();
+
   // Loggers section.
   configure_cli11_with_logger_appconfig_schema(app, du_cfg.log_cfg);
 

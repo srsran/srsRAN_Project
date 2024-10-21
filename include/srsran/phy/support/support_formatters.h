@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "srsran/support/format_utils.h"
 #include <chrono>
 
 namespace fmt {
@@ -34,14 +33,14 @@ namespace fmt {
 template <>
 struct formatter<std::chrono::nanoseconds> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const std::chrono::nanoseconds& nanoseconds, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     return format_to(ctx.out(), "t={:.1f}us", static_cast<float>(nanoseconds.count()) * 1e-3F);
   }

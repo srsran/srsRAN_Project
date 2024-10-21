@@ -31,6 +31,7 @@
 #include "srsran/ran/ssb_gscn.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/sched_consts.h"
+#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;

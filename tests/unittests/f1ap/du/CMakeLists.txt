@@ -20,6 +20,8 @@
 
 include_directories(../../..)
 
+set_directory_properties(PROPERTIES LABELS "f1ap;f1ap_du")
+
 add_library(f1ap_du_test_helpers f1ap_du_test_helpers.cpp)
 target_link_libraries(f1ap_du_test_helpers f1ap_test_helpers f1ap_test_doubles
         srsran_f1ap_du srsran_support du_manager_converters sched_config)
@@ -44,4 +46,4 @@ target_link_libraries(f1ap_du_test
         f1ap_du_test_helpers
         gtest
         gtest_main)
-gtest_discover_tests(f1ap_du_test PROPERTIES "LABELS;f1ap;f1ap_du")
+add_test(f1ap_du_test f1ap_du_test)

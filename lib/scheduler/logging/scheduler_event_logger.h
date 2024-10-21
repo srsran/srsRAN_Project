@@ -24,7 +24,6 @@
 
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/format_utils.h"
 
 namespace srsran {
 

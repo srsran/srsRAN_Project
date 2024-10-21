@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/fapi/messages.h"
 #include "srsran/ran/dmrs.h"

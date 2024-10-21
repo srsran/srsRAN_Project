@@ -175,7 +175,7 @@ bool byte_buffer::append(span<const uint8_t> bytes)
   return true;
 }
 
-SRSRAN_NODISCARD bool byte_buffer::append(const std::initializer_list<uint8_t>& bytes)
+bool byte_buffer::append(const std::initializer_list<uint8_t>& bytes)
 {
   return append(span<const uint8_t>(bytes.begin(), bytes.size()));
 }
@@ -247,7 +247,7 @@ bool byte_buffer::append(byte_buffer&& other)
   return true;
 }
 
-SRSRAN_NODISCARD bool byte_buffer::append(const byte_buffer_view& view)
+bool byte_buffer::append(const byte_buffer_view& view)
 {
   // Append segment by segment.
   auto view_segs = view.segments();
@@ -640,7 +640,7 @@ span<const uint8_t> srsran::to_span(const byte_buffer& src, span<uint8_t> tmp_me
 
 // ---- byte_buffer_writer
 
-SRSRAN_NODISCARD bool byte_buffer_writer::append_zeros(size_t nof_zeros)
+bool byte_buffer_writer::append_zeros(size_t nof_zeros)
 {
   // TODO: optimize.
   for (size_t i = 0; i != nof_zeros; ++i) {

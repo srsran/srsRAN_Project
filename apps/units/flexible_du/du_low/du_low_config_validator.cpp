@@ -136,10 +136,12 @@ static bool validate_expert_execution_unit_config(const du_low_unit_config&     
 static bool validate_phy_prach_configuration(span<const du_low_prach_validation_config>& prach_cells_config)
 {
   for (const auto& prach_cell_cfg : prach_cells_config) {
-    if (!validate_prach_detector_phy(prach_cell_cfg.format,
-                                     prach_cell_cfg.prach_scs,
-                                     prach_cell_cfg.zero_correlation_zone,
-                                     prach_cell_cfg.nof_prach_ports)) {
+    error_type<std::string> valid_prach = validate_prach_detector_phy(prach_cell_cfg.format,
+                                                                      prach_cell_cfg.prach_scs,
+                                                                      prach_cell_cfg.zero_correlation_zone,
+                                                                      prach_cell_cfg.nof_prach_ports);
+    if (!valid_prach.has_value()) {
+      fmt::print("Invalid configuration:\n    {}", valid_prach.error());
       return false;
     }
   }

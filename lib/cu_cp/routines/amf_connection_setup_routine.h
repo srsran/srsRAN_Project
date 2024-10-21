@@ -30,6 +30,9 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+async_task<bool> start_amf_connection_setup(ngap_repository&                                    ngap_db,
+                                            std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected);
+
 /// \brief Handles the setup of the connection between the CU-CP and AMF, handling in particular the NG Setup procedure.
 class amf_connection_setup_routine
 {

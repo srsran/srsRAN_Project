@@ -26,7 +26,7 @@
 #include "async_task.h"
 #include "eager_async_task.h"
 #include "manual_event.h"
-#include "srsran/adt/optional.h"
+#include <optional>
 
 namespace srsran {
 

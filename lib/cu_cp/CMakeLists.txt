@@ -80,5 +80,3 @@ target_link_libraries(srsran_cu_cp
         srsran_e2
         ${CMAKE_DL_LIBS}
 )
-
-add_to_exported_libs(srsran_cu_cp)

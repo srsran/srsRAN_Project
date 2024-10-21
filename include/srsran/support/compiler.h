@@ -26,9 +26,6 @@
 
 #pragma once
 
-/// Emits a warning if a caller of the function with this attribute does not use its return value.
-#define SRSRAN_NODISCARD __attribute__((warn_unused_result))
-
 /// Provides a hint to the compiler that a condition is likely to be true.
 #define SRSRAN_LIKELY(EXPR) __builtin_expect((bool)(EXPR), true)
 /// Provides a hint to the compiler that a condition is likely to be false.

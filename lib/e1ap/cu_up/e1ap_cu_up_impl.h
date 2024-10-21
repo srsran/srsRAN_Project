@@ -44,7 +44,7 @@ public:
   ~e1ap_cu_up_impl() override;
 
   // e1ap connection manager functions
-  bool connect_to_cu_cp() override;
+  [[nodiscard]] bool connect_to_cu_cp() override;
   // E1AP interface management procedures functions as per TS38.463, Section 8.2.
   async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) override;
 

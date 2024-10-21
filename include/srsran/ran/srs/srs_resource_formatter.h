@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/ran/srs/srs_resource_configuration.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/delimited_formatter.h"
 
 namespace fmt {
 
@@ -37,14 +37,14 @@ struct formatter<srsran::srs_resource_configuration> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_resource_configuration& resource, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     helper.format_if_verbose(ctx, "nof_antenna_ports={}", resource.nof_antenna_ports);
     helper.format_if_verbose(ctx,

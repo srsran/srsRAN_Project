@@ -23,7 +23,6 @@
 #include "sch_pdu_builder.h"
 #include "dmrs_helpers.h"
 #include "pdsch/pdsch_default_time_allocation.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"

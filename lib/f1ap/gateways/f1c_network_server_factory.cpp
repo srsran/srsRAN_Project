@@ -26,6 +26,7 @@
 #include "srsran/gateways/sctp_network_server_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/error_handling.h"
+#include <cstdint>
 
 using namespace srsran;
 

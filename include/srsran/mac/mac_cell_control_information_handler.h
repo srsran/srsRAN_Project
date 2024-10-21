@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
@@ -33,6 +32,7 @@
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/ran/uci/uci_mapping.h"
+
 #include <variant>
 
 namespace srsran {

@@ -21,7 +21,6 @@
  */
 
 #include "srsran/ran/srs/srs_bandwidth_configuration.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 
 using namespace srsran;

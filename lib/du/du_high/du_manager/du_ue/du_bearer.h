@@ -23,7 +23,6 @@
 #pragma once
 
 #include "du_ue_adapters.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/f1u/du/f1u_config.h"
 #include "srsran/mac/mac_lc_config.h"
@@ -34,6 +33,7 @@
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/rlc/rlc_entity.h"
+
 #include <map>
 
 namespace srsran {

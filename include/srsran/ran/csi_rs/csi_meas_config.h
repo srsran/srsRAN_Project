@@ -28,9 +28,9 @@
 #include "csi_rs_pattern.h"
 #include "csi_rs_types.h"
 #include "frequency_allocation_type.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/tci.h"
+
 #include <variant>
 
 namespace srsran {

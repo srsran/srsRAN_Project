@@ -23,7 +23,7 @@
 #pragma once
 
 #include "apps/services/os_sched_affinity_manager.h"
-#include "srsran/adt/optional.h"
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -169,8 +169,6 @@ struct hwacc_pusch_appconfig {
 
 /// BBDEV configuration of the DU low.
 struct bbdev_appconfig {
-  /// \brief Type of BBDEV hardware-accelerator.
-  std::string bbdev_acc_type = "srs";
   /// \brief Type of BBDEV hardware-accelerator.
   std::string hwacc_type;
   /// \brief ID of the BBDEV-based hardware-accelerator.

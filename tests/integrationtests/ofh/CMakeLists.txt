@@ -43,7 +43,7 @@ endif (DPDK_FOUND)
 add_executable(ru_emulator ${SOURCES})
 target_include_directories(ru_emulator PRIVATE ${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/external)
-target_link_libraries(ru_emulator srslog srsran_ofh_ethernet srsran_phy_support srsran_support)
+target_link_libraries(ru_emulator srslog srsran_ofh srsran_phy_support srsran_support)
 
 if (DPDK_FOUND)
     target_compile_options(ru_emulator PRIVATE ${DPDK_CFLAGS})

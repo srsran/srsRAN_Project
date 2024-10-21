@@ -55,7 +55,7 @@ public:
   ~priority_task_worker() { stop(); }
 
   /// \brief Push task to task queue with priority level \c priority (lower integer represents a higher priority).
-  SRSRAN_NODISCARD bool push_task(task_priority prio, unique_task task)
+  [[nodiscard]] bool push_task(task_priority prio, unique_task task)
   {
     return task_queue.try_push(prio, std::move(task));
   }
@@ -67,7 +67,7 @@ public:
   const char* worker_name() const { return t_handle.get_name(); }
 
   /// \brief Get specified priority task queue capacity.
-  SRSRAN_NODISCARD size_t queue_capacity(task_priority prio) const { return task_queue.queue_capacity(prio); }
+  [[nodiscard]] size_t queue_capacity(task_priority prio) const { return task_queue.queue_capacity(prio); }
 
   /// Number of priority levels supported by this worker.
   size_t nof_priority_levels() const { return task_queue.nof_priority_levels(); }
@@ -95,7 +95,7 @@ class priority_task_worker_executor : public task_executor
 public:
   priority_task_worker_executor(task_priority prio_, priority_task_worker& worker_) : prio(prio_), worker(worker_) {}
 
-  SRSRAN_NODISCARD bool execute(unique_task task) override
+  [[nodiscard]] bool execute(unique_task task) override
   {
     if (can_run_task_inline()) {
       // If same thread and highest priority task, run task right away.
@@ -105,7 +105,7 @@ public:
     return worker.push_task(prio, std::move(task));
   }
 
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return worker.push_task(prio, std::move(task)); }
+  [[nodiscard]] bool defer(unique_task task) override { return worker.push_task(prio, std::move(task)); }
 
   // Check whether task can be run inline or it needs to be dispatched to a queue.
   bool can_run_task_inline() const

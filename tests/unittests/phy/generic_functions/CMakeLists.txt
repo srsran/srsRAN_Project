@@ -30,10 +30,7 @@ add_executable(dft_processor_test dft_processor_test.cpp)
 target_link_libraries(dft_processor_test srslog srsran_generic_funcs)
 
 add_test(dft_processor_generic_test dft_processor_test -F generic -R 10)
-if (ENABLE_FFTW AND FFTW3F_FOUND)
-    add_test(dft_processor_fftw_test dft_processor_test -F fftw -R 10)
-    add_definitions("-DENABLE_FFTW")
-endif (ENABLE_FFTW AND FFTW3F_FOUND)
+add_test(dft_processor_fftw_test dft_processor_test -F fftw -R 10)
 
 if (USE_PHY_TESTVECTORS)
     add_executable(dft_processor_vectortest dft_processor_vectortest.cpp)

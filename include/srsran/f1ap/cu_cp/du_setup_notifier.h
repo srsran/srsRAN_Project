@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/crit_diagnostics.h"

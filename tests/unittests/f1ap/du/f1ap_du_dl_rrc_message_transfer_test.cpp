@@ -56,7 +56,7 @@ TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_is_received_gnb_cu_ue_f1ap_id_
   // The DL RRC Message Transfer should update the gNB-CU UE F1AP ID.
   f1ap->handle_message(msg);
   test_ues[0].f1c_bearers[1].bearer->handle_sdu(byte_buffer_chain::create(test_rrc_msg.copy()).value());
-  ASSERT_EQ(f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_cu_ue_f1ap_id,
+  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_cu_ue_f1ap_id,
             msg.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_cu_ue_f1ap_id)
       << "Invalid gNB-CU UE F1AP ID";
 }
@@ -86,9 +86,9 @@ TEST_F(f1ap_du_test,
   // > No RRC container is forwarded.
   ASSERT_TRUE(ue1->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
   // > Error Indication is sent to CU.
-  ASSERT_EQ(f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.type().value,
+  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.init_msg().value.type().value,
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::error_ind);
-  const auto& err_ind = f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.error_ind();
+  const auto& err_ind = f1c_gw.last_tx_pdu().pdu.init_msg().value.error_ind();
   ASSERT_TRUE(err_ind->gnb_du_ue_f1ap_id_present);
   ASSERT_EQ(err_ind->gnb_du_ue_f1ap_id, 0);
   ASSERT_TRUE(err_ind->cause_present);
@@ -134,7 +134,7 @@ TEST_F(f1ap_du_test,
 
   // > gNB-CU-UE-F1AP-Id is updated.
   ue2->f1c_bearers[1].bearer->handle_sdu(byte_buffer_chain::create(test_rrc_msg.copy()).value());
-  ASSERT_EQ(f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_cu_ue_f1ap_id,
+  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_cu_ue_f1ap_id,
             msg.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_cu_ue_f1ap_id)
       << "Invalid gNB-CU UE F1AP ID";
 }
@@ -174,7 +174,7 @@ TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_has_duplicate_cu_ue_id_and_old
   ASSERT_EQ(ue2->f1c_bearers[1].rx_sdu_notifier.last_pdu, test_rrc_msg);
   // > gNB-CU-UE-F1AP-Id is updated.
   ue2->f1c_bearers[1].bearer->handle_sdu(byte_buffer_chain::create(test_rrc_msg.copy()).value());
-  ASSERT_EQ(f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_cu_ue_f1ap_id,
+  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_cu_ue_f1ap_id,
             msg.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_cu_ue_f1ap_id)
       << "Invalid gNB-CU UE F1AP ID";
 }

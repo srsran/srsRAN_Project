@@ -24,7 +24,6 @@
 
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/ran/pdsch/pdsch_context_formatter.h"
-#include "srsran/support/format_utils.h"
 
 namespace fmt {
 
@@ -38,14 +37,14 @@ struct formatter<srsran::pdsch_processor::codeword_description> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pdsch_processor::codeword_description& codeword_descr, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     helper.format_always(ctx, "mod={}", to_string(codeword_descr.modulation));
     helper.format_always(ctx, "rv={}", codeword_descr.rv);
@@ -64,14 +63,14 @@ struct formatter<srsran::pdsch_processor::pdu_t> {
   formatter() = default;
 
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pdsch_processor::pdu_t& pdu, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+
   {
     helper.format_always(ctx, "rnti=0x{:04x}", pdu.rnti);
     if (pdu.context.has_value()) {

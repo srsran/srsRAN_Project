@@ -96,26 +96,33 @@ private:
   std::vector<std::unique_ptr<f1ap_message_notifier>> du_tx_notifiers;
 };
 
-class dummy_f1ap_rrc_message_notifier : public srs_cu_cp::f1ap_rrc_message_notifier
+class dummy_f1ap_ul_ccch_message_notifier : public srs_cu_cp::f1ap_ul_ccch_notifier
 {
 public:
-  dummy_f1ap_rrc_message_notifier() = default;
+  dummy_f1ap_ul_ccch_message_notifier() = default;
   void on_ul_ccch_pdu(byte_buffer pdu) override
   {
     logger.info("Received UL CCCH RRC message");
     last_ul_ccch_pdu = std::move(pdu);
-  };
+  }
 
-  void on_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) override
+  byte_buffer last_ul_ccch_pdu;
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
+class dummy_f1ap_ul_dcch_message_notifier : public srs_cu_cp::f1ap_ul_dcch_notifier
+{
+public:
+  dummy_f1ap_ul_dcch_message_notifier() = default;
+  void on_ul_dcch_pdu(byte_buffer pdu) override
   {
-    logger.info("Received UL DCCH RRC {} message.", srb_id);
-    last_srb_id      = srb_id;
+    logger.info("Received UL DCCH RRC message");
     last_ul_dcch_pdu = std::move(pdu);
   };
 
-  byte_buffer last_ul_ccch_pdu;
   byte_buffer last_ul_dcch_pdu;
-  srb_id_t    last_srb_id;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
@@ -145,7 +152,8 @@ public:
     last_ue_creation_msg.du_to_cu_rrc_container = msg.du_to_cu_rrc_container.copy();
     last_ue_creation_msg.c_rnti                 = msg.c_rnti;
 
-    srs_cu_cp::ue_rrc_context_creation_response response{msg.ue_index, f1ap_rrc_notifier.get()};
+    srs_cu_cp::ue_rrc_context_creation_response response{
+        msg.ue_index, f1ap_srb0_notifier.get(), f1ap_srb1_notifier.get(), f1ap_srb2_notifier.get()};
     if (msg.ue_index == ue_index_t::invalid) {
       response.ue_index = on_new_cu_cp_ue_required();
     }
@@ -191,10 +199,14 @@ public:
   srs_cu_cp::du_setup_request last_f1_setup_request_msg;
   srs_cu_cp::du_setup_result  next_du_setup_resp;
 
-  srs_cu_cp::ue_rrc_context_creation_request       last_ue_creation_msg;
-  std::optional<srs_cu_cp::ue_index_t>             last_created_ue_index;
-  std::unique_ptr<dummy_f1ap_rrc_message_notifier> f1ap_rrc_notifier =
-      std::make_unique<dummy_f1ap_rrc_message_notifier>();
+  srs_cu_cp::ue_rrc_context_creation_request           last_ue_creation_msg;
+  std::optional<srs_cu_cp::ue_index_t>                 last_created_ue_index;
+  std::unique_ptr<dummy_f1ap_ul_ccch_message_notifier> f1ap_srb0_notifier =
+      std::make_unique<dummy_f1ap_ul_ccch_message_notifier>();
+  std::unique_ptr<dummy_f1ap_ul_dcch_message_notifier> f1ap_srb1_notifier =
+      std::make_unique<dummy_f1ap_ul_dcch_message_notifier>();
+  std::unique_ptr<dummy_f1ap_ul_dcch_message_notifier> f1ap_srb2_notifier =
+      std::make_unique<dummy_f1ap_ul_dcch_message_notifier>();
 
 private:
   const unsigned            max_nof_supported_ues;

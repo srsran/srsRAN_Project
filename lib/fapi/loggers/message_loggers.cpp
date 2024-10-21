@@ -22,7 +22,7 @@
 
 #include "message_loggers.h"
 #include "srsran/fapi/messages.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
 using namespace fapi;

@@ -31,7 +31,7 @@
 #include "ul_pucch_pdu.h"
 #include "ul_pusch_pdu.h"
 #include "ul_srs_pdu.h"
-#include "srsran/support/format_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
 using namespace fapi;

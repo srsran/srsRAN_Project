@@ -115,42 +115,6 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s srsran::srs_du::generate_drb_am_mod_item
   return drb;
 }
 
-f1ap_message
-srsran::srs_du::generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add,
-                                                         const std::initializer_list<drb_id_t>& drbs_to_rem)
-{
-  using namespace asn1::f1ap;
-  f1ap_message msg;
-
-  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
-  ue_context_mod_request_s& dl_msg = msg.pdu.init_msg().value.ue_context_mod_request();
-  dl_msg->gnb_cu_ue_f1ap_id        = 0;
-  dl_msg->gnb_du_ue_f1ap_id        = 0;
-
-  dl_msg->drbs_to_be_setup_mod_list_present = drbs_to_add.size() > 0;
-  dl_msg->drbs_to_be_setup_mod_list.resize(drbs_to_add.size());
-  unsigned count = 0;
-  for (drb_id_t drbid : drbs_to_add) {
-    dl_msg->drbs_to_be_setup_mod_list[count].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-    dl_msg->drbs_to_be_setup_mod_list[count]->drbs_to_be_setup_mod_item() = generate_drb_am_mod_item(drbid);
-    ++count;
-  }
-
-  dl_msg->drbs_to_be_released_list_present = drbs_to_rem.size() > 0;
-  dl_msg->drbs_to_be_released_list.resize(drbs_to_rem.size());
-  count = 0;
-  for (drb_id_t drbid : drbs_to_rem) {
-    dl_msg->drbs_to_be_released_list[count].load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_RELEASED_ITEM);
-    dl_msg->drbs_to_be_released_list[count]->drbs_to_be_released_item().drb_id = drb_id_to_uint(drbid);
-    ++count;
-  }
-
-  dl_msg->rrc_container_present = true;
-  EXPECT_TRUE(
-      dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))));
-  return msg;
-}
-
 f1ap_message srsran::srs_du::generate_ue_context_release_command()
 {
   using namespace asn1::f1ap;
@@ -193,16 +157,16 @@ namespace {
 class dummy_f1ap_tx_pdu_notifier : public f1ap_message_notifier
 {
 public:
-  dummy_f1ap_tx_pdu_notifier(f1ap_message& last_tx_pdu_, unique_task on_disconnect_) :
-    last_tx_pdu(last_tx_pdu_), on_disconnect(std::move(on_disconnect_))
+  dummy_f1ap_tx_pdu_notifier(std::deque<f1ap_message>& tx_pdus_, unique_task on_disconnect_) :
+    tx_pdus(tx_pdus_), on_disconnect(std::move(on_disconnect_))
   {
   }
   ~dummy_f1ap_tx_pdu_notifier() override { on_disconnect(); }
 
-  void on_new_message(const f1ap_message& msg) override { last_tx_pdu = msg; }
+  void on_new_message(const f1ap_message& msg) override { tx_pdus.push_back(msg); }
 
-  f1ap_message& last_tx_pdu;
-  unique_task   on_disconnect;
+  std::deque<f1ap_message>& tx_pdus;
+  unique_task               on_disconnect;
 };
 
 } // namespace
@@ -211,7 +175,7 @@ std::unique_ptr<f1ap_message_notifier>
 dummy_f1c_connection_client::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_)
 {
   du_rx_pdu_notifier = std::move(du_rx_pdu_notifier_);
-  return std::make_unique<dummy_f1ap_tx_pdu_notifier>(last_tx_f1ap_pdu, [this]() { du_rx_pdu_notifier.reset(); });
+  return std::make_unique<dummy_f1ap_tx_pdu_notifier>(tx_f1ap_pdus, [this]() { du_rx_pdu_notifier.reset(); });
 }
 
 //////////////////////////////////
@@ -246,7 +210,7 @@ void f1ap_du_test::run_f1_setup_procedure()
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // > F1 setup response received.
-  unsigned     transaction_id    = get_transaction_id(f1c_gw.last_tx_f1ap_pdu.pdu).value();
+  unsigned     transaction_id    = get_transaction_id(f1c_gw.last_tx_pdu().pdu).value();
   f1ap_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
   test_logger.info("Injecting F1SetupResponse");
   f1ap->handle_message(f1_setup_response);
@@ -259,7 +223,7 @@ void f1ap_du_test::run_f1_removal_procedure()
   lazy_task_launcher<void> t_launcher(t);
 
   // Inject F1 removal response.
-  f1ap_message f1_removal_response = test_helpers::generate_f1_removal_response(f1c_gw.last_tx_f1ap_pdu);
+  f1ap_message f1_removal_response = test_helpers::generate_f1_removal_response(f1c_gw.last_tx_pdu());
   test_logger.info("Injecting F1RemovalResponse");
   f1ap->handle_message(f1_removal_response);
 
@@ -355,6 +319,7 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
   // Report transmission notification back to F1AP.
   std::optional<uint32_t> pdcp_sn = get_pdcp_sn(f1ap_req->rrc_container, pdcp_sn_size::size12bits, true, test_logger);
   ue.f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(pdcp_sn.value());
+  ue.f1c_bearers[LCID_SRB1].bearer->handle_delivery_notification(pdcp_sn.value());
   this->ctrl_worker.run_pending_tasks();
 }
 

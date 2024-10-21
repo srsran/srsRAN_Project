@@ -250,13 +250,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_tx_amd_retx> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tx_amd_retx retx, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_tx_amd_retx retx, FormatContext& ctx)
   {
     return format_to(ctx.out(), "sn={} so={} len={}", retx.sn, retx.so, retx.length);
   }

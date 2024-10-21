@@ -22,8 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
-
 namespace srsran {
 
 struct crit_diagnostics_item {

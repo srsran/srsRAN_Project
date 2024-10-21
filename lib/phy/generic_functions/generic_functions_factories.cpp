@@ -42,7 +42,6 @@ public:
   }
 };
 
-#ifdef ENABLE_FFTW
 class dft_processor_factory_fftw : public dft_processor_factory
 {
   dft_processor_fftw_configuration fftw_config;
@@ -74,7 +73,6 @@ private:
     return std::make_unique<dft_processor_fftw_impl>(fftw_config, dft_config);
   }
 };
-#endif // ENABLE_FFTW
 
 } // namespace
 
@@ -88,10 +86,6 @@ std::shared_ptr<dft_processor_factory> srsran::create_dft_processor_factory_fftw
                                                                                  bool   avoid_wisdom,
                                                                                  const std::string& wisdom_filename)
 {
-#ifdef ENABLE_FFTW
   return std::make_shared<dft_processor_factory_fftw>(
       optimization_flag, plan_creation_timeout_s, avoid_wisdom, wisdom_filename);
-#else  // ENABLE_FFTW
-  return nullptr;
-#endif // ENABLE_FFTW
 }
