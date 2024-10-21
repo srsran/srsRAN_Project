@@ -12,11 +12,13 @@
 
 #include "srsran/ran/du_types.h"
 #include "srsran/support/executors/task_executor.h"
+#include <variant>
 
 namespace srsran {
 namespace srs_du {
 
-/// This interface is used to allow the DU to choose between different cell-specific task executors.
+/// \brief Mapper of task executors used by the MAC DL, RLC DL and MAC scheduler for low-latency tasks. The task
+/// executors can be mapped based on cell index or type of task (slot indication vs others).
 class du_high_cell_executor_mapper
 {
 public:
@@ -85,6 +87,58 @@ public:
   /// \brief Retrieve E2 control executor.
   virtual task_executor& du_e2_executor() = 0;
 };
+
+/// Configuration of DU-high executor mapper.
+struct du_high_executor_config {
+  /// Dedicated serialized worker for a given cell.
+  struct dedicated_cell_worker {
+    /// Serialized executor used to pass slot indications to a cell in the MAC.
+    task_executor& high_prio_executor;
+    /// Serialized executor used to pass other tasks to a cell in the MAC.
+    task_executor& low_prio_executor;
+  };
+  using dedicated_cell_worker_list = std::vector<dedicated_cell_worker>;
+  /// Worker pool which will be used for the DU-high cell real-time tasks.
+  struct strand_based_worker_pool {
+    /// Number of cells of the DU-high.
+    unsigned nof_cells;
+    /// Default queue size for tasks other than slot indications.
+    unsigned default_task_queue_size;
+    /// Worker pool executor.
+    task_executor& pool_executor;
+  };
+  /// \brief Configuration of the DU-high cell executors. Two options:
+  /// - list of dedicated workers, one per cell, and indexed by cell index.
+  /// - worker pool, to which different strands, one per cell, will be assigned.
+  using cell_executor_config = std::variant<dedicated_cell_worker_list, strand_based_worker_pool>;
+  /// \brief Configuration of the DU-high UE executors.
+  struct ue_executor_config {
+    enum class map_policy { per_cell, round_robin };
+    map_policy     policy;
+    unsigned       max_nof_strands;
+    unsigned       ctrl_queue_size;
+    unsigned       pdu_queue_size;
+    task_executor& pool_executor;
+  };
+  struct control_executor_config {
+    unsigned       task_queue_size;
+    task_executor& pool_executor;
+  };
+
+  /// DU-high cell executors.
+  cell_executor_config cell_executors;
+  /// DU-high UE executors.
+  ue_executor_config ue_executors;
+  /// Executor used for control-plane tasks of the DU-high.
+  control_executor_config ctrl_executors;
+  /// Whether the DU-high is operating in a real-time or simulation environment
+  bool is_rt_mode_enabled;
+  /// Whether to trace executed tasks.
+  bool trace_exec_tasks = false;
+};
+
+/// \brief Creates an executor mapper for the DU-high.
+std::unique_ptr<du_high_executor_mapper> create_du_high_executor_mapper(const du_high_executor_config& config);
 
 } // namespace srs_du
 } // namespace srsran

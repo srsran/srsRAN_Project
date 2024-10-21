@@ -11,7 +11,8 @@ add_subdirectory(du_manager)
 
 add_library(srsran_du_high STATIC
         du_high_impl.cpp
-        du_high_factory.cpp)
+        du_high_factory.cpp
+        du_high_executor_mapper.cpp)
 target_link_libraries(srsran_du_high PUBLIC srsran_du_high_adapters)
 
 add_library(srsran_du_high_wrapper STATIC
