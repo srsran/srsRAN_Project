@@ -25,6 +25,7 @@ set(SOURCES
         procedures/ngap_handover_preparation_procedure.cpp
         procedures/ngap_handover_resource_allocation_procedure.cpp
         procedures/ngap_ue_context_release_procedure.cpp
+        procedures/ngap_dl_ue_associated_nrppa_transport_procedure.cpp
     )
 
 

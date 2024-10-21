@@ -131,9 +131,15 @@ private:
   /// \param[in] msg The received Paging message.
   void handle_paging(const asn1::ngap::paging_s& msg);
 
-  /// \brief Notify about the reception of an Handover request message.
+  /// \brief Notify about the reception of a Handover request message.
   /// \param[in] msg The received handover request message.
   void handle_handover_request(const asn1::ngap::ho_request_s& msg);
+
+  /// \brief Notifiy about the reception of a DL UE Associated NRPPA Transport message.
+  void handle_dl_ue_associated_nrppa_transport(const asn1::ngap::dl_ue_associated_nrppa_transport_s& msg);
+
+  /// \brief Notifiy about the reception of a DL Non UE Associated NRPPA Transport message.
+  void handle_dl_non_ue_associated_nrppa_transport(const asn1::ngap::dl_non_ue_associated_nrppa_transport_s& msg);
 
   /// \brief Notify about the reception of an Error Indication message.
   /// \param[in] msg The received Error Indication message.

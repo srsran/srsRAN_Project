@@ -14,6 +14,7 @@
 #include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
+#include "srsran/ngap/ngap_nrppa.h"
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
@@ -200,6 +201,9 @@ public:
   /// \brief Notifies the CU-CP about a Handover Request.
   virtual async_task<ngap_handover_resource_allocation_response>
   on_ngap_handover_request(const ngap_handover_request& request) = 0;
+
+  /// \brief Notifies the CU-CP about a DL non UE associated NRPPa transport.
+  virtual void on_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) = 0;
 };
 
 /// Handle NGAP NAS Message procedures as defined in TS 38.413 section 8.6.

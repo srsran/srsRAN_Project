@@ -102,6 +102,9 @@ public:
   /// \brief Handles UE index allocation request for N2 handover at target gNB
   virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
 
+  /// \brief Handles a DL non UE associated NRPPa transport.
+  virtual void handle_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) = 0;
+
   /// \brief Handle N2 AMF connection drop.
   virtual void handle_n2_disconnection() = 0;
 };

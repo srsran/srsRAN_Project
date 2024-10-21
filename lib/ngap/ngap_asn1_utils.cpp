@@ -90,6 +90,8 @@ std::optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::in
       return uint_to_ran_ue_id(init_msg.value.ue_radio_cap_info_ind()->ran_ue_ngap_id);
     case init_types::dl_nas_transport:
       return uint_to_ran_ue_id(init_msg.value.dl_nas_transport()->ran_ue_ngap_id);
+    case init_types::dl_ue_associated_nrppa_transport:
+      return uint_to_ran_ue_id(init_msg.value.dl_ue_associated_nrppa_transport()->ran_ue_ngap_id);
     case init_types::error_ind:
       if (init_msg.value.error_ind()->ran_ue_ngap_id_present) {
         return uint_to_ran_ue_id(init_msg.value.error_ind()->ran_ue_ngap_id);

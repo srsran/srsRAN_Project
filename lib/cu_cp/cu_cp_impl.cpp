@@ -12,6 +12,7 @@
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "mobility_manager/mobility_manager_factory.h"
+#include "routines/dl_non_ue_associated_nrppa_transport_routine.h"
 #include "routines/initial_context_setup_routine.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
 #include "routines/mobility/intra_cu_handover_routine.h"
@@ -603,6 +604,11 @@ ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_i
     return ue_index_t::invalid;
   }
   return ue_mng.add_ue(du_index, cgi.plmn_id);
+}
+
+void cu_cp_impl::handle_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg)
+{
+  common_task_sched.schedule_async_task(start_ngap_dl_non_ue_associated_nrppa_transport(msg, logger));
 }
 
 void cu_cp_impl::handle_n2_disconnection()
