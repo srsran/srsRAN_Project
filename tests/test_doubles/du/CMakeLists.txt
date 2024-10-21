@@ -6,11 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(mac)
-add_subdirectory(rrc)
-add_subdirectory(e1ap)
-add_subdirectory(f1ap)
-add_subdirectory(ngap)
-add_subdirectory(scheduler)
-add_subdirectory(pdcp)
-add_subdirectory(du)
+add_library(du_test_doubles test_du_high_worker_manager.cpp)
+target_link_libraries(du_test_doubles srsran_support srsran_du_high srslog)

@@ -16,6 +16,8 @@ target_link_libraries(du_high_benchmark
   f1ap_du_test_helpers
   pdcp_test_doubles
   sched_test_doubles
-  srsran_pcap gtest
+  du_test_doubles
+  srsran_pcap
+  gtest
 )
 add_test(du_high_benchmark du_high_benchmark)

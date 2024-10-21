@@ -29,10 +29,13 @@
 
 #include "lib/du/du_high/du_high_impl.h"
 #include "lib/mac/mac_ul/ul_bsr.h"
+#include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
+#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
@@ -42,9 +45,6 @@
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/event_tracing.h"
-#include "srsran/support/executors/priority_task_worker.h"
-#include "srsran/support/executors/task_worker.h"
-#include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/test_utils.h"
 #include <pthread.h>
 
@@ -407,81 +407,6 @@ public:
   expected<std::string> get_du_bind_address(gnb_du_id_t gnb_du_id) const override { return std::string("127.0.0.1"); }
 };
 
-/// \brief Instantiation of the DU-high workers and executors for the benchmark.
-struct du_high_single_cell_worker_manager {
-  using cell_worker_type                       = priority_task_worker;
-  static const uint32_t task_worker_queue_size = 100000;
-
-  explicit du_high_single_cell_worker_manager(span<unsigned> du_cell_cores) :
-    worker_pool("low_prio_pool",
-                3,
-                std::array<concurrent_queue_params, 2>{
-                    concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                    concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-                std::chrono::microseconds{100},
-                os_thread_realtime_priority::no_realtime(),
-                std::array<os_sched_affinity_bitmask, 1>{get_other_affinity_mask(du_cell_cores)}),
-    cell_worker(
-        "du_cell",
-        std::vector<concurrent_queue_params>({{concurrent_queue_policy::lockfree_spsc, 8},
-                                              {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}),
-        std::chrono::microseconds{10},
-        os_thread_realtime_priority::max() - 10,
-        get_du_cell_affinity_mask(du_cell_cores)),
-    slot_exec(make_priority_task_worker_executor(enqueue_priority::max, cell_worker)),
-    cell_exec(make_priority_task_worker_executor(enqueue_priority::max - 1, cell_worker))
-  {
-    srs_du::du_high_executor_config cfg;
-    cfg.cell_executors = {srs_du::du_high_executor_config::dedicated_cell_worker_list{{slot_exec, cell_exec}}};
-    cfg.ue_executors   = {srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell,
-                          1,
-                          task_worker_queue_size,
-                          task_worker_queue_size,
-                          &low_prio_exec};
-    cfg.ctrl_executors = {task_worker_queue_size, &high_prio_exec};
-
-    du_high_exec_mapper = srs_du::create_du_high_executor_mapper(cfg);
-  }
-
-  void stop()
-  {
-    worker_pool.stop();
-    cell_worker.stop();
-  }
-
-  static os_sched_affinity_bitmask get_du_cell_affinity_mask(span<const unsigned> du_cell_cores)
-  {
-    os_sched_affinity_bitmask mask;
-    if (not du_cell_cores.empty()) {
-      for (auto core : du_cell_cores) {
-        mask.set(core);
-      }
-    }
-    return mask;
-  }
-
-  static os_sched_affinity_bitmask get_other_affinity_mask(span<const unsigned> du_cell_cores)
-  {
-    os_sched_affinity_bitmask mask;
-    if (not du_cell_cores.empty()) {
-      for (unsigned i = 0; i != mask.size(); ++i) {
-        if (std::find(du_cell_cores.begin(), du_cell_cores.end(), i) == du_cell_cores.end()) {
-          mask.set(i);
-        }
-      }
-    }
-    return mask;
-  }
-
-  priority_task_worker_pool                worker_pool;
-  priority_task_worker_pool_executor       high_prio_exec{enqueue_priority::max, worker_pool};
-  priority_task_worker_pool_executor       low_prio_exec{enqueue_priority::max - 1, worker_pool};
-  cell_worker_type                         cell_worker;
-  priority_task_worker_executor            slot_exec;
-  priority_task_worker_executor            cell_exec;
-  std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
-};
-
 /// \brief Metrics collected from the results passed by the MAC to the lower layers.
 struct phy_metrics {
   unsigned slot_count    = 0;
@@ -616,7 +541,7 @@ public:
     params(builder_params),
     f1u_dl_pdu_bytes_per_slot(dl_buffer_state_bytes_),
     f1u_pdu_size(f1u_pdu_size_),
-    workers(du_cell_cores),
+    workers(test_helpers::create_multi_threaded_du_high_executor_mapper({1, true, du_cell_cores})),
     ul_bsr_bytes(ul_bsr_bytes_)
   {
     // Set slot point based on the SCS.
@@ -635,7 +560,7 @@ public:
     // Instantiate a DU-high object.
     cfg.ran.gnb_du_id                  = (gnb_du_id_t)1;
     cfg.ran.gnb_du_name                = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
-    cfg.exec_mapper                    = workers.du_high_exec_mapper.get();
+    cfg.exec_mapper                    = &workers->get_exec_mapper();
     cfg.f1c_client                     = &sim_cu_cp;
     cfg.f1u_gw                         = &sim_cu_up;
     cfg.phy_adapter                    = &sim_phy;
@@ -684,7 +609,7 @@ public:
   void stop()
   {
     du_hi->stop();
-    workers.stop();
+    workers->stop();
   }
 
   ~du_high_bench() { stop(); }
@@ -842,7 +767,7 @@ public:
       return;
     }
 
-    task_executor& dl_exec = workers.du_high_exec_mapper->ue_mapper().f1u_dl_pdu_executor(to_du_ue_index(0));
+    task_executor& dl_exec = workers->get_exec_mapper().ue_mapper().f1u_dl_pdu_executor(to_du_ue_index(0));
     while (not dl_exec.defer([this]() {
       static std::array<uint32_t, MAX_NOF_DU_UES> pdcp_sn_list{0};
       const unsigned nof_dl_pdus_per_slot = divide_ceil(f1u_dl_pdu_bytes_per_slot, this->f1u_pdu_size.value());
@@ -1100,17 +1025,17 @@ public:
   unsigned     f1u_dl_pdu_bytes_per_slot;
   units::bytes f1u_pdu_size{DEFAULT_DL_PDU_SIZE};
 
-  srslog::basic_logger&              test_logger = srslog::fetch_basic_logger("TEST");
-  dummy_metrics_handler              metrics_handler;
-  cu_cp_simulator                    sim_cu_cp;
-  cu_up_simulator                    sim_cu_up;
-  phy_simulator                      sim_phy;
-  timer_manager                      timers;
-  du_high_single_cell_worker_manager workers;
-  std::unique_ptr<du_high_impl>      du_hi;
-  slot_point                         next_sl_tx{0, 0};
-  null_mac_pcap                      mac_pcap;
-  null_rlc_pcap                      rlc_pcap;
+  srslog::basic_logger&                                 test_logger = srslog::fetch_basic_logger("TEST");
+  dummy_metrics_handler                                 metrics_handler;
+  cu_cp_simulator                                       sim_cu_cp;
+  cu_up_simulator                                       sim_cu_up;
+  phy_simulator                                         sim_phy;
+  timer_manager                                         timers;
+  std::unique_ptr<test_helpers::du_high_worker_manager> workers;
+  std::unique_ptr<du_high_impl>                         du_hi;
+  slot_point                                            next_sl_tx{0, 0};
+  null_mac_pcap                                         mac_pcap;
+  null_rlc_pcap                                         rlc_pcap;
 
   /// Queue of MAC UCI indication message to be sent in their expected receive slot.
   std::deque<mac_uci_indication_message> pending_ucis;
