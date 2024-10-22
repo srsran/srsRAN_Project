@@ -550,7 +550,7 @@ cu_cp_impl::handle_ngap_handover_request(const ngap_handover_request& request)
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  return launch_async<inter_cu_handover_target_routine>(
+  return start_inter_cu_handover_target_routine(
       request,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
