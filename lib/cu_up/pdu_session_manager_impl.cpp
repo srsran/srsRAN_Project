@@ -289,6 +289,12 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   auto& pdcp_rx_ctrl = new_drb->pdcp->get_rx_upper_control_interface();
   pdcp_rx_ctrl.configure_security(sec_128, integrity_enabled, ciphering_enabled);
 
+  // if using testmode, make sure that desired buffer size is not 0
+  if (test_mode_config.enabled) {
+    pdcp_tx_lower_interface& pdcp_tx_lower = new_drb->pdcp->get_tx_lower_interface();
+    pdcp_tx_lower.handle_desired_buffer_size_notification(UINT32_MAX);
+  }
+
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
   new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
