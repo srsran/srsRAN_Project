@@ -22,6 +22,7 @@ class du_ue_dummy : public du_ue, public mac_ue_radio_link_notifier, public rlc_
 {
 public:
   bool                         ue_notifiers_disconnected = false;
+  bool                         drbs_and_rlf_disabled     = false;
   std::optional<du_ue_index_t> last_rlf_ue_index;
   std::optional<rlf_cause>     last_rlf_cause;
 
@@ -39,7 +40,11 @@ public:
     ue_notifiers_disconnected = true;
     return launch_no_op_task();
   }
-  async_task<void> handle_activity_stop_request() override { return launch_no_op_task(); }
+  async_task<void> handle_activity_stop_request() override
+  {
+    drbs_and_rlf_disabled = true;
+    return launch_no_op_task();
+  }
   async_task<void> handle_drb_traffic_stop_request(span<const drb_id_t> /*unused*/) override
   {
     return launch_no_op_task();
@@ -52,8 +57,8 @@ public:
   void                                 on_rlf_detected() override {}
   void                                 on_crnti_ce_received() override {}
   rlc_tx_upper_layer_control_notifier& get_rlc_rlf_notifier() override { return *this; }
-  void                                 on_protocol_failure() override {}
-  void                                 on_max_retx() override {}
+  void on_protocol_failure() override { this->handle_rlf_detection(rlf_cause::rlc_protocol_failure); }
+  void on_max_retx() override {}
 };
 
 class ue_manager_dummy : public du_ue_manager_repository

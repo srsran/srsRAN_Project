@@ -14,6 +14,7 @@
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du/du_high/du_manager/procedures/ue_configuration_procedure.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "tests/test_doubles/rrc/rrc_packed_test_messages.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_config_helpers.h"
@@ -522,4 +523,13 @@ TEST_F(ue_config_tester,
   ASSERT_TRUE(res.result);
   req.srbs_to_setup.erase(req.srbs_to_setup.begin()); // Remove SRB1 for the checks.
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, nullptr, true));
+}
+
+TEST_F(ue_config_tester, when_handover_from_source_cell_then_du_to_cu_rrc_container_is_in_response)
+{
+  f1ap_ue_context_update_request req  = create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {});
+  req.ho_prep_info                    = create_ho_prep_info();
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+
+  ASSERT_FALSE(res.du_to_cu_rrc_container.empty());
 }
