@@ -41,9 +41,14 @@ stages:
   - rf
   - manual
   - documentation
+  # release
+  - pre private
   - private
+  - post private
   - public
+  - post public
   - release
+  - post release
 
 variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
@@ -123,7 +128,7 @@ matlab nightly:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
 
-enterprise nightly:
+plugin nightly:
   stage: ci
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
@@ -137,7 +142,7 @@ enterprise nightly:
   inherit:
     variables: false
   trigger:
-    project: softwareradiosystems/srsran_5g_enterprise
+    project: ${PLUGIN_REPO}
     branch: main
 
 matlab weekly:
