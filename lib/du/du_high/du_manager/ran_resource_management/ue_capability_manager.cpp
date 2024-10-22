@@ -39,6 +39,10 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
     // Emplace the band capability in the map.
     ue_caps.bands.emplace(static_cast<nr_band>(band.band_nr), band_cap);
   }
+  if (ue_cap.mac_params_present and ue_cap.mac_params.mac_params_xdd_diff_present) {
+    ue_caps.long_drx_cycle_supported  = ue_cap.mac_params.mac_params_xdd_diff.long_drx_cycle_present;
+    ue_caps.short_drx_cycle_supported = ue_cap.mac_params.mac_params_xdd_diff.short_drx_cycle_present;
+  }
 
   // Convert advanced UE NR capabilities.
   decode_advanced_ue_nr_caps(ue_caps, ue_cap);

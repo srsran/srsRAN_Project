@@ -47,6 +47,10 @@ struct ue_capability_summary {
   uint8_t nof_srs_tx_ports = 1;
   /// Contains specific bands capabilities.
   std::unordered_map<nr_band, supported_band> bands;
+  /// Set to true if Long DRX cycle is supported.
+  bool long_drx_cycle_supported = false;
+  /// Set to true if Short DRX cycle is supported.
+  bool short_drx_cycle_supported = false;
 };
 
 /// Helper function to extract a summary of the UE capabilities based on a packed ASN.1 container.
