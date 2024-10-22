@@ -20,7 +20,7 @@ using namespace ether;
 static constexpr unsigned MBUF_CACHE_SIZE = 256;
 static constexpr unsigned RX_RING_SIZE    = 1024;
 static constexpr unsigned TX_RING_SIZE    = 1024;
-static constexpr unsigned NUM_MBUFS       = 8191;
+static constexpr unsigned NUM_MBUFS       = 13824;
 
 /// DPDK port initialization routine.
 static bool port_init(const dpdk_port_config& config, ::rte_mempool* mem_pool, unsigned port_id)
