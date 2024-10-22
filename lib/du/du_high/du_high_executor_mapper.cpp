@@ -18,7 +18,7 @@ using namespace srs_du;
 
 namespace {
 
-// Helper class to decorate executors with extra functionalities.
+/// Helper class to decorate executors with extra functionalities.
 struct executor_decorator {
   template <typename Exec>
   task_executor& decorate(Exec&& exec, bool is_sync, const std::string& trace_name = "")
@@ -126,11 +126,9 @@ private:
 std::unique_ptr<du_high_cell_executor_mapper> create_du_high_cell_executor_mapper(const du_high_executor_config& config)
 {
   std::unique_ptr<du_high_cell_executor_mapper> cell_mapper;
-  if (std::holds_alternative<du_high_executor_config::dedicated_cell_worker_list>(config.cell_executors)) {
+  if (auto* ded_workers = std::get_if<du_high_executor_config::dedicated_cell_worker_list>(&config.cell_executors)) {
     cell_mapper = std::make_unique<dedicated_cell_worker_executor_mapper>(
-        std::get<du_high_executor_config::dedicated_cell_worker_list>(config.cell_executors),
-        config.is_rt_mode_enabled,
-        config.trace_exec_tasks);
+        *ded_workers, config.is_rt_mode_enabled, config.trace_exec_tasks);
   } else {
     cell_mapper = std::make_unique<strand_cell_worker_executor_mapper>(
         std::get<du_high_executor_config::strand_based_worker_pool>(config.cell_executors),
@@ -140,9 +138,9 @@ std::unique_ptr<du_high_cell_executor_mapper> create_du_high_cell_executor_mappe
   return cell_mapper;
 }
 
-//
+//--- common_ue_executor_mapper ---//
 
-// common base class for different types of ue_executor_mappers.
+/// Common base class for different types of ue_executor_mappers.
 class common_ue_executor_mapper : public du_high_ue_executor_mapper
 {
 protected:
@@ -310,7 +308,7 @@ std::unique_ptr<du_high_ue_executor_mapper> create_du_high_ue_executor_mapper(co
   return ue_mapper;
 }
 
-//
+//--- ctrl_executor_mapper ---//
 
 /// \brief Executor mapper for control-plane tasks.
 ///

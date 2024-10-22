@@ -112,12 +112,22 @@ struct du_high_executor_config {
   /// - worker pool, to which different strands, one per cell, will be assigned.
   using cell_executor_config = std::variant<dedicated_cell_worker_list, strand_based_worker_pool>;
   /// \brief Configuration of the DU-high UE executors.
+  ///
+  /// Parallelism is achieved by distributing UEs across different strands.
+  /// These executors are used for:
+  /// - handle UL PDUs in MAC, RLC, and F1
+  /// - handle DL PDUs in F1 and RLC-high
   struct ue_executor_config {
+    /// Policy used to distribute UEs across strands.
     enum class map_policy { per_cell, round_robin };
-    map_policy     policy;
-    unsigned       max_nof_strands;
-    unsigned       ctrl_queue_size;
-    unsigned       pdu_queue_size;
+    map_policy policy;
+    /// Maximum number of strands to instantiate. There is a trade-off parallelization vs memory.
+    unsigned max_nof_strands;
+    /// Size of the queue used for control-plane tasks associated with a UE.
+    unsigned ctrl_queue_size;
+    /// Size of the queue used for PDU handling tasks associated with a UE.
+    unsigned pdu_queue_size;
+    /// Executor of a thread pool to which strands will point to.
     task_executor* pool_executor;
   };
   /// \brief Configuration of strand for control-plane tasks of the DU-high.
