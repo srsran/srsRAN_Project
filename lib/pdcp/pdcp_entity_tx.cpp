@@ -24,7 +24,8 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
                                pdcp_tx_upper_control_notifier& upper_cn_,
                                timer_factory                   ue_dl_timer_factory_,
                                task_executor&                  ue_dl_executor_,
-                               task_executor&                  crypto_executor_) :
+                               task_executor&                  crypto_executor_,
+                               pdcp_metrics_aggregator&        metrics_agg_) :
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "DL"}),
   cfg(cfg_),
@@ -33,8 +34,17 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   ue_dl_timer_factory(ue_dl_timer_factory_),
   ue_dl_executor(ue_dl_executor_),
   crypto_executor(crypto_executor_),
-  tx_window(cfg.rb_type, cfg.rlc_mode, cfg.sn_size, logger)
+  tx_window(cfg.rb_type, cfg.rlc_mode, cfg.sn_size, logger),
+  metrics_agg(metrics_agg_)
 {
+  if (metrics_agg.get_metrics_period().count()) {
+    metrics_timer = ue_dl_timer_factory.create_timer();
+    metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
+      metrics_agg.push_tx_metrics(metrics.get_metrics_and_reset());
+      metrics_timer.run();
+    });
+    metrics_timer.run();
+  }
   // Validate configuration
   if (is_srb() && (cfg.sn_size != pdcp_sn_size::size12bits)) {
     report_error("PDCP SRB with invalid sn_size. {}", cfg);
@@ -127,7 +137,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     return;
   }
 
-  metrics_add_sdus(1, buf.length());
+  metrics.add_sdus(1, buf.length());
   logger.log_debug(buf.begin(), buf.end(), "TX SDU. sdu_len={}", buf.length());
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
@@ -285,14 +295,14 @@ void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer 
                   SN(count),
                   count,
                   is_retx);
-  metrics_add_pdus(1, buf.length());
+  metrics.add_pdus(1, buf.length());
   lower_dn.on_new_pdu(std::move(buf), is_retx);
 }
 
 void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
 {
   logger.log_info(buf.begin(), buf.end(), "TX PDU. type=ctrl pdu_len={}", buf.length());
-  metrics_add_pdus(1, buf.length());
+  metrics.add_pdus(1, buf.length());
   lower_dn.on_new_pdu(std::move(buf), /* is_retx = */ false);
 }
 
@@ -809,7 +819,7 @@ void pdcp_entity_tx::discard_callback::operator()(timer_id_t timer_id)
   parent->logger.log_debug("Discard timer expired. count={}", discard_count);
 
   // Add discard to metrics
-  parent->metrics_add_discard_timouts(1);
+  parent->metrics.add_discard_timouts(1);
 
   // Discard PDU
   // NOTE: this will delete the callback. It *must* be the last instruction.

@@ -13,11 +13,14 @@
 
 using namespace srsran;
 
-pdcp_metrics_aggregator::pdcp_metrics_aggregator(timer_duration         metrics_period_,
+pdcp_metrics_aggregator::pdcp_metrics_aggregator(rb_id_t                rb_id_,
+                                                 timer_duration         metrics_period_,
                                                  pdcp_metrics_notifier* pdcp_metrics_notif_,
-                                                 task_executor&         ue_executor_,
-                                                 srslog::basic_logger&  logger_) :
-  metrics_period(metrics_period_), pdcp_metrics_notif(pdcp_metrics_notif_), ue_executor(ue_executor_), logger(logger_)
+                                                 task_executor&         ue_executor_) :
+  metrics_period(metrics_period_),
+  pdcp_metrics_notif(pdcp_metrics_notif_),
+  ue_executor(ue_executor_),
+  logger("PDCP", {(uint32_t)1, rb_id_, "UL"})
 {
   m_tx.counter = 0;
   m_rx.counter = 0;
@@ -26,14 +29,14 @@ pdcp_metrics_aggregator::pdcp_metrics_aggregator(timer_duration         metrics_
 void pdcp_metrics_aggregator::push_tx_metrics(pdcp_tx_metrics_container m_tx_)
 {
   if (not ue_executor.execute([this, m_tx_]() { push_tx_metrics_impl(m_tx_); })) {
-    logger.error("Could not push TX metrics");
+    logger.log_error("Could not push TX metrics");
   }
 }
 
 void pdcp_metrics_aggregator::push_rx_metrics(pdcp_rx_metrics_container m_rx_)
 {
   if (not ue_executor.execute([this, m_rx_]() { push_rx_metrics_impl(m_rx_); })) {
-    logger.error("Could not push RX metrics");
+    logger.log_error("Could not push RX metrics");
   }
 }
 

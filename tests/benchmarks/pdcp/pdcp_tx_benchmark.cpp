@@ -130,8 +130,10 @@ void benchmark_pdcp_tx(bench_params                  params,
   pdcp_tx_gen_frame frame = {};
 
   // Create PDCP entities
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
+      std::make_unique<pdcp_metrics_aggregator>(drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
   std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
+      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
   pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
   const uint32_t sdu_size     = 1500;

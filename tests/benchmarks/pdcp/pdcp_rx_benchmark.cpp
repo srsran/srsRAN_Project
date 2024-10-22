@@ -146,9 +146,11 @@ std::vector<byte_buffer_chain> gen_pdu_list(bench_params                  params
   // Create test frame
   pdcp_tx_gen_frame frame = {};
 
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
+      std::make_unique<pdcp_metrics_aggregator>(drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
   // Create PDCP entities
   std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
+      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
   pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
   // Prepare SDU list for benchmark
@@ -209,8 +211,10 @@ void benchmark_pdcp_rx(bench_params                  params,
   pdcp_rx_test_frame frame = {};
 
   // Create PDCP entities
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
+      std::make_unique<pdcp_metrics_aggregator>(drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
   std::unique_ptr<pdcp_entity_rx> pdcp_rx = std::make_unique<pdcp_entity_rx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
+      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
   pdcp_rx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
   // Prepare SDU list for benchmark

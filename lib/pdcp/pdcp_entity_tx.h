@@ -13,6 +13,7 @@
 #include "pdcp_bearer_logger.h"
 #include "pdcp_entity_tx_rx_base.h"
 #include "pdcp_interconnect.h"
+#include "pdcp_metrics_aggregator.h"
 #include "pdcp_pdu.h"
 #include "pdcp_tx_metrics_impl.h"
 #include "pdcp_tx_window.h"
@@ -59,8 +60,7 @@ class pdcp_entity_tx final : public pdcp_entity_tx_rx_base,
                              public pdcp_tx_status_handler,
                              public pdcp_tx_upper_data_interface,
                              public pdcp_tx_upper_control_interface,
-                             public pdcp_tx_lower_interface,
-                             public pdcp_tx_metrics
+                             public pdcp_tx_lower_interface
 {
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
@@ -70,7 +70,8 @@ public:
                  pdcp_tx_upper_control_notifier& upper_cn_,
                  timer_factory                   ue_dl_timer_factory_,
                  task_executor&                  ue_dl_executor_,
-                 task_executor&                  crypto_executor_);
+                 task_executor&                  crypto_executor_,
+                 pdcp_metrics_aggregator&        metrics_agg_);
 
   ~pdcp_entity_tx() override;
 
@@ -146,14 +147,14 @@ public:
   void retransmit_all_pdus();
 
 private:
-  pdcp_bearer_logger   logger;
-  const pdcp_tx_config cfg;
-  bool                 stopped = false;
-
+  pdcp_bearer_logger              logger;
+  const pdcp_tx_config            cfg;
+  bool                            stopped         = false;
   pdcp_rx_status_provider*        status_provider = nullptr;
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
   timer_factory                   ue_dl_timer_factory;
+  unique_timer                    metrics_timer;
 
   task_executor& ue_dl_executor;
   task_executor& crypto_executor;
@@ -191,6 +192,9 @@ private:
 
   /// \brief Get estimated size of a PDU from an SDU
   uint32_t get_pdu_size(const byte_buffer& sdu);
+
+  pdcp_tx_metrics          metrics;
+  pdcp_metrics_aggregator& metrics_agg;
 
   class discard_callback;
 };

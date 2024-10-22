@@ -24,7 +24,8 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                pdcp_rx_upper_control_notifier& upper_cn_,
                                timer_factory                   ue_ul_timer_factory_,
                                task_executor&                  ue_ul_executor_,
-                               task_executor&                  crypto_executor_) :
+                               task_executor&                  crypto_executor_,
+                               pdcp_metrics_aggregator&        metrics_agg_) :
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
@@ -33,8 +34,17 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   upper_cn(upper_cn_),
   ue_ul_timer_factory(ue_ul_timer_factory_),
   ue_ul_executor(ue_ul_executor_),
-  crypto_executor(crypto_executor_)
+  crypto_executor(crypto_executor_),
+  metrics_agg(metrics_agg_)
 {
+  if (metrics_agg.get_metrics_period().count()) {
+    metrics_timer = ue_ul_timer_factory.create_timer();
+    metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
+      metrics_agg.push_rx_metrics(metrics.get_metrics_and_reset());
+      metrics_timer.run();
+    });
+    metrics_timer.run();
+  }
   // t-Reordering timer
   if (cfg.t_reordering != pdcp_t_reordering::ms0 && cfg.t_reordering != pdcp_t_reordering::infinity) {
     reordering_timer = ue_ul_timer_factory.create_timer();
@@ -75,20 +85,20 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
   }
 
   trace_point rx_tp = up_tracer.now();
-  metrics_add_pdus(1, buf.length());
+  metrics.add_pdus(1, buf.length());
 
   // Log PDU
   logger.log_debug(buf.begin(), buf.end(), "RX PDU. pdu_len={}", buf.length());
   // Sanity check
   if (buf.length() == 0) {
-    metrics_add_dropped_pdus(1);
+    metrics.add_dropped_pdus(1);
     logger.log_error("Dropping empty PDU.");
     return;
   }
 
   auto pdu_copy = buf.deep_copy();
   if (not pdu_copy.has_value()) {
-    metrics_add_dropped_pdus(1);
+    metrics.add_dropped_pdus(1);
     logger.log_error("Dropping PDU: Copy failed. pdu_len={}", buf.length());
     return;
   }
@@ -153,7 +163,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
 {
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
-    metrics_add_dropped_pdus(1);
+    metrics.add_dropped_pdus(1);
     logger.log_error(pdu.begin(), pdu.end(), "RX PDU too small. pdu_len={} hdr_len={}", pdu.length(), hdr_len_bytes);
     return;
   }
@@ -163,7 +173,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
   // Unpack header
   pdcp_data_pdu_header hdr = {};
   if (not read_data_pdu_header(hdr, pdu)) {
-    metrics_add_dropped_pdus(1);
+    metrics.add_dropped_pdus(1);
     logger.log_error(
         pdu.begin(), pdu.end(), "Failed to extract SN. pdu_len={} hdr_len={}", pdu.length(), hdr_len_bytes);
     return;
@@ -324,7 +334,7 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
     logger.log_info("RX SDU. count={}", st.rx_deliv);
 
     // Pass PDCP SDU to the upper layers
-    metrics_add_sdus(1, sdu_info.sdu.length());
+    metrics.add_sdus(1, sdu_info.sdu.length());
     upper_dn.on_new_sdu(std::move(sdu_info.sdu));
     rx_window->remove_sn(st.rx_deliv);
 
@@ -344,7 +354,7 @@ void pdcp_entity_rx::deliver_all_sdus()
       logger.log_info("RX SDU. count={}", count);
 
       // Pass PDCP SDU to the upper layers
-      metrics_add_sdus(1, sdu_info.sdu.length());
+      metrics.add_sdus(1, sdu_info.sdu.length());
       upper_dn.on_new_sdu(std::move(sdu_info.sdu));
       rx_window->remove_sn(count);
     }
@@ -449,7 +459,7 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
     switch (result.buf.error()) {
       case srsran::security::security_error::integrity_failure:
         logger.log_warning("Integrity failed, dropping PDU. count={}", result.count);
-        metrics_add_integrity_failed_pdus(1);
+        metrics.add_integrity_failed_pdus(1);
         upper_cn.on_integrity_failure();
         break;
       case srsran::security::security_error::ciphering_failure:
@@ -463,7 +473,7 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
     }
     return make_unexpected(default_error_t{});
   }
-  metrics_add_integrity_verified_pdus(1);
+  metrics.add_integrity_verified_pdus(1);
   logger.log_debug(result.buf.value().begin(), result.buf.value().end(), "Integrity passed.");
 
   return {std::move(result.buf.value())};
@@ -537,7 +547,7 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
  */
 void pdcp_entity_rx::handle_t_reordering_expire()
 {
-  metrics_add_t_reordering_timeouts(1);
+  metrics.add_t_reordering_timeouts(1);
   // Deliver all PDCP SDU(s) with associated COUNT value(s) < RX_REORD
   while (st.rx_deliv != st.rx_reord) {
     if (rx_window->has_sn(st.rx_deliv)) {
@@ -545,7 +555,7 @@ void pdcp_entity_rx::handle_t_reordering_expire()
       logger.log_info("RX SDU. count={}", st.rx_deliv);
 
       // Pass PDCP SDU to the upper layers
-      metrics_add_sdus(1, sdu_info.sdu.length());
+      metrics.add_sdus(1, sdu_info.sdu.length());
       upper_dn.on_new_sdu(std::move(sdu_info.sdu));
       rx_window->remove_sn(st.rx_deliv);
     }

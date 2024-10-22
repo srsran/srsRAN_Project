@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "pdcp_bearer_logger.h"
 #include "srsran/pdcp/pdcp_metrics.h"
 #include "srsran/pdcp/pdcp_rx_metrics.h"
 #include "srsran/pdcp/pdcp_tx_metrics.h"
@@ -18,10 +19,10 @@ namespace srsran {
 class pdcp_metrics_aggregator
 {
 public:
-  pdcp_metrics_aggregator(timer_duration         metrics_period_,
+  pdcp_metrics_aggregator(rb_id_t                rb_id_,
+                          timer_duration         metrics_period_,
                           pdcp_metrics_notifier* pdcp_metrics_notif_,
-                          task_executor&         ue_executor_,
-                          srslog::basic_logger&  logger_);
+                          task_executor&         ue_executor_);
 
   void push_tx_metrics(pdcp_tx_metrics_container m_tx_);
 
@@ -40,6 +41,6 @@ private:
   timer_duration            metrics_period;
   pdcp_metrics_notifier*    pdcp_metrics_notif;
   task_executor&            ue_executor;
-  srslog::basic_logger&     logger;
+  pdcp_bearer_logger        logger;
 };
 } // namespace srsran

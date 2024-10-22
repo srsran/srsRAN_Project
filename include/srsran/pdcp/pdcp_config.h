@@ -18,6 +18,8 @@
 
 namespace srsran {
 
+class pdcp_metrics_notifier;
+
 /// PDCP NR SRB or DRB information.
 enum class pdcp_rb_type { srb, drb };
 
@@ -159,9 +161,10 @@ struct pdcp_custom_config_rx : public pdcp_custom_config_base {
 /// these parameters to the CU-UP, so it's necessary for the
 /// CU-UP to store these configurations itself.
 struct pdcp_custom_config {
-  timer_duration        metrics_period;
-  pdcp_custom_config_tx tx = {};
-  pdcp_custom_config_rx rx = {};
+  timer_duration         metrics_period;
+  pdcp_metrics_notifier* metrics_notifier = nullptr;
+  pdcp_custom_config_tx  tx               = {};
+  pdcp_custom_config_rx  rx               = {};
 };
 
 /// \brief Configurable parameters for PDCP that are common

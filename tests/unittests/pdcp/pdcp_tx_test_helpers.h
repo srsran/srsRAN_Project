@@ -20,6 +20,14 @@
 
 namespace srsran {
 
+class mock_pdcp_metrics_notifier : public pdcp_metrics_notifier
+{
+  void report_metrics(const pdcp_metrics_container& metrics) override { metrics_list.push_back(metrics); }
+
+public:
+  std::vector<pdcp_metrics_container> metrics_list;
+};
+
 /// Mocking class of the surrounding layers invoked by the PDCP.
 class pdcp_tx_test_frame : public pdcp_rx_status_provider,
                            public pdcp_tx_lower_notifier,
@@ -131,9 +139,10 @@ protected:
     // Allow for config adjustments
     init_adjustments();
 
+    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(rb_id, timer_duration{100}, &metrics_notif, worker);
     // Create PDCP entity
     pdcp_tx = std::make_unique<pdcp_entity_tx>(
-        0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker}, worker, worker);
+        0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
     pdcp_tx->set_status_provider(&test_frame);
     pdcp_tx->handle_desired_buffer_size_notification(20 * (1 << 20)); // 20 MBi in RLC buffer
   }
@@ -173,7 +182,8 @@ protected:
 
   // Default max COUNT
   const pdcp_max_count default_max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
-
-  std::unique_ptr<pdcp_entity_tx> pdcp_tx;
+  mock_pdcp_metrics_notifier metrics_notif;
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
+  std::unique_ptr<pdcp_entity_tx>          pdcp_tx;
 };
 } // namespace srsran

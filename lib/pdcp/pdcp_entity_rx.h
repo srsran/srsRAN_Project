@@ -13,6 +13,7 @@
 #include "pdcp_bearer_logger.h"
 #include "pdcp_entity_tx_rx_base.h"
 #include "pdcp_interconnect.h"
+#include "pdcp_metrics_aggregator.h"
 #include "pdcp_pdu.h"
 #include "pdcp_rx_metrics_impl.h"
 #include "srsran/adt/byte_buffer.h"
@@ -49,8 +50,7 @@ struct pdcp_rx_sdu_info {
 class pdcp_entity_rx final : public pdcp_entity_tx_rx_base,
                              public pdcp_rx_status_provider,
                              public pdcp_rx_lower_interface,
-                             public pdcp_rx_upper_control_interface,
-                             public pdcp_rx_metrics
+                             public pdcp_rx_upper_control_interface
 {
 public:
   pdcp_entity_rx(uint32_t                        ue_index,
@@ -60,7 +60,8 @@ public:
                  pdcp_rx_upper_control_notifier& upper_cn_,
                  timer_factory                   ue_ul_timer_factory_,
                  task_executor&                  ue_ul_executor_,
-                 task_executor&                  crypto_executor_);
+                 task_executor&                  crypto_executor_,
+                 pdcp_metrics_aggregator&        metrics_agg_);
 
   ~pdcp_entity_rx() override;
 
@@ -154,6 +155,10 @@ private:
 
   task_executor& ue_ul_executor;
   task_executor& crypto_executor;
+
+  pdcp_rx_metrics          metrics;
+  pdcp_metrics_aggregator& metrics_agg;
+  unique_timer             metrics_timer;
 
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
