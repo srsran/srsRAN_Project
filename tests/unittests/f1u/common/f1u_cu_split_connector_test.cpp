@@ -128,12 +128,13 @@ protected:
 
     // create f1-u connector
     udp_network_gateway_config nru_gw_config = {};
-    nru_gw_config.bind_address               = "127.0.0.1";
+    nru_gw_config.bind_address               = cu_gw_bind_address;
     nru_gw_config.bind_port                  = 0;
     nru_gw_config.reuse_addr                 = true;
     udp_gw = srs_cu_up::create_udp_ngu_gateway(nru_gw_config, *epoll_broker, io_tx_executor);
 
-    f1u_cu_up_split_gateway_creation_msg cu_create_msg{*udp_gw, *demux, dummy_pcap, tester_bind_port.value()};
+    f1u_cu_up_split_gateway_creation_msg cu_create_msg{
+        *udp_gw, *demux, dummy_pcap, tester_bind_port.value(), get_external_bind_address()};
     cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());
@@ -192,6 +193,8 @@ protected:
     udp_tester->handle_pdu(std::move(pdu), addr_storage);
   }
 
+  virtual std::string get_external_bind_address() { return "auto"; }
+
   manual_task_worker           ue_worker{128};
   std::unique_ptr<io_broker>   epoll_broker;
   manual_task_worker           io_tx_executor{128};
@@ -207,13 +210,24 @@ protected:
 
   srs_cu_up::f1u_config                  f1u_cu_up_cfg;
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_gw;
-  std::optional<uint16_t>                cu_gw_bind_port = 0;
+  std::optional<uint16_t>                cu_gw_bind_port    = 0;
+  std::string                            cu_gw_bind_address = "127.0.0.1";
 
   srslog::basic_logger& logger         = srslog::fetch_basic_logger("TEST", false);
   srslog::basic_logger& f1u_logger_cu  = srslog::fetch_basic_logger("CU-F1-U", false);
   srslog::basic_logger& gtpu_logger_cu = srslog::fetch_basic_logger("GTPU", false);
   srslog::basic_logger& udp_logger_cu  = srslog::fetch_basic_logger("UDP-GW", false);
 };
+
+class f1u_cu_split_connector_external_address_test : public f1u_cu_split_connector_test,
+                                                     public ::testing::WithParamInterface<std::string>
+{
+  std::string get_external_bind_address() override { return external_address; }
+
+protected:
+  std::string external_address = GetParam();
+};
+
 } // namespace
 
 /// Test the instantiation of a new entity
@@ -445,6 +459,21 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   expected<nru_ul_message> rx_sdu2 = cu_rx.get_rx_pdu_blocking(ue_worker, std::chrono::milliseconds(200));
   ASSERT_FALSE(rx_sdu2.has_value());
 }
+
+TEST_P(f1u_cu_split_connector_external_address_test, external_address)
+{
+  expected<std::string> addr = cu_gw->get_cu_bind_address();
+  ASSERT_TRUE(addr.has_value());
+  if (external_address == "" || external_address == "auto") {
+    ASSERT_EQ(addr.value(), cu_gw_bind_address);
+  } else {
+    ASSERT_EQ(addr.value(), external_address);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(f1u_cu_split_connector_test_external_address,
+                         f1u_cu_split_connector_external_address_test,
+                         ::testing::Values("auto", "", "8.8.8.8"));
 
 int main(int argc, char** argv)
 {

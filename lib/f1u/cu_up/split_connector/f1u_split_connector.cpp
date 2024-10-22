@@ -231,7 +231,7 @@ expected<std::string> f1u_split_connector::get_cu_bind_address() const
 {
   std::string ip_address;
 
-  if (ext_addr == "auto") {
+  if (ext_addr == "auto" || ext_addr == "") {
     if (not udp_session->get_bind_address(ip_address)) {
       return make_unexpected(default_error_t{});
     }
