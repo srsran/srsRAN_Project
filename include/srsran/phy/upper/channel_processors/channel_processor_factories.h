@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "pucch_detector.h"
 #include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
@@ -21,12 +20,7 @@
 #include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/channel_processors/prach_generator.h"
-#include "srsran/phy/upper/channel_processors/pucch_demodulator.h"
-#include "srsran/phy/upper/channel_processors/pucch_detector.h"
-#include "srsran/phy/upper/channel_processors/pucch_processor.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
-#include "srsran/phy/upper/channel_processors/uci/factories.h"
-#include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include <memory>
 
@@ -129,49 +123,6 @@ public:
 };
 
 std::shared_ptr<prach_generator_factory> create_prach_generator_factory_sw();
-
-class pucch_demodulator_factory
-{
-public:
-  virtual ~pucch_demodulator_factory()                = default;
-  virtual std::unique_ptr<pucch_demodulator> create() = 0;
-};
-
-std::shared_ptr<pucch_demodulator_factory>
-create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
-                                    std::shared_ptr<channel_modulation_factory>      demodulation_factory,
-                                    std::shared_ptr<pseudo_random_generator_factory> prg_factory);
-
-class pucch_detector_factory
-{
-public:
-  virtual ~pucch_detector_factory()                = default;
-  virtual std::unique_ptr<pucch_detector> create() = 0;
-};
-
-std::shared_ptr<pucch_detector_factory>
-create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
-                                 std::shared_ptr<pseudo_random_generator_factory>      prgf,
-                                 std::shared_ptr<channel_equalizer_factory>            eqzrf);
-
-class pucch_processor_factory
-{
-public:
-  virtual ~pucch_processor_factory()                              = default;
-  virtual std::unique_ptr<pucch_processor>     create()           = 0;
-  virtual std::unique_ptr<pucch_pdu_validator> create_validator() = 0;
-  virtual std::unique_ptr<pucch_processor>     create(srslog::basic_logger& logger);
-};
-
-std::shared_ptr<pucch_processor_factory>
-create_pucch_processor_factory_sw(std::shared_ptr<dmrs_pucch_estimator_factory>        dmrs_factory,
-                                  std::shared_ptr<pucch_detector_factory>              detector_factory,
-                                  std::shared_ptr<pucch_demodulator_factory>           demodulator_factory,
-                                  std::shared_ptr<uci_decoder_factory>                 decoder_factory,
-                                  const channel_estimate::channel_estimate_dimensions& channel_estimate_dimensions);
-
-std::shared_ptr<pucch_processor_factory>
-create_pucch_processor_pool_factory(std::shared_ptr<pucch_processor_factory> factory, unsigned nof_concurrent_threads);
 
 class ssb_processor_factory
 {

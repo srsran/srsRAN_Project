@@ -14,7 +14,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
-#include "srsran/phy/upper/channel_processors/pucch_processor.h"
+#include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
