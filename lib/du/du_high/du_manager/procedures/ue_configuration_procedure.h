@@ -29,6 +29,7 @@ public:
   const char* name() const { return "UE Configuration"; }
 
 private:
+  bool changed_detected() const;
   // Stop activity in DRBs that need to be replaced.
   async_task<void> stop_drbs_to_rem();
   // Update DU UE bearers. This stage includes the creation/modification/removal of SRBs/DRBs, creation of RLC
@@ -54,6 +55,9 @@ private:
   // Snapshot of the UE resources at the start of the UE configuration procedure.
   du_ue_resource_config          prev_ue_res_cfg;
   du_ue_resource_update_response ue_res_cfg_resp;
+
+  // MAC response to a config.
+  mac_ue_reconfiguration_response mac_res;
 
   // SRBs that were actually added during the configuration.
   static_vector<srb_id_t, MAX_NOF_SRBS> srbs_added;

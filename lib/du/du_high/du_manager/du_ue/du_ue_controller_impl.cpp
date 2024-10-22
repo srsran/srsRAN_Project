@@ -31,6 +31,7 @@ const char* get_rlf_cause_str(rlf_cause cause)
   return "unknown";
 }
 
+/// Adapter between MAC and DU manager RLF detection handler.
 class mac_rlf_du_adapter final : public mac_ue_radio_link_notifier
 {
 public:
@@ -77,6 +78,7 @@ private:
   srslog::basic_logger&     logger = srslog::fetch_basic_logger("DU-MNG");
 };
 
+/// Adapter between RLC and DU manager RLF detection handler.
 class rlc_rlf_du_adapter : public rlc_tx_upper_layer_control_notifier
 {
 public:
