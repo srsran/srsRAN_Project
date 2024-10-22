@@ -749,14 +749,14 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
 
   if (!cu_cp_notifier.schedule_async_task(
           ho_request.ue_index,
-          launch_async<ngap_handover_resource_allocation_procedure>(ho_request,
-                                                                    uint_to_amf_ue_id(msg->amf_ue_ngap_id),
-                                                                    ue_ctxt_list,
-                                                                    cu_cp_notifier,
-                                                                    *tx_pdu_notifier,
-                                                                    timers,
-                                                                    ctrl_exec,
-                                                                    logger))) {
+          start_ngap_handover_resource_allocation(ho_request,
+                                                  uint_to_amf_ue_id(msg->amf_ue_ngap_id),
+                                                  ue_ctxt_list,
+                                                  cu_cp_notifier,
+                                                  *tx_pdu_notifier,
+                                                  timers,
+                                                  ctrl_exec,
+                                                  logger))) {
     logger.warning("Sending HandoverFailure. Couldn't schedule handover resource allocation procedure");
     tx_pdu_notifier->on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
     return;
