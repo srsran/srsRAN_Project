@@ -131,6 +131,10 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
   f1ap_ue_context_update_request du_request;
   du_request.ue_index = ue->context.ue_index;
 
+  auto plmn = plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes());
+  auto nci  = nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number());
+  du_request.spcell_id.emplace(plmn.value(), nci.value());
+
   // > Set whether full configuration is required.
   // [TS 38.473, section 8.3.1.1] If the received CU to DU RRC Information IE does not include source cell group
   // configuration, the gNB-DU shall generate the cell group configuration using full configuration. Otherwise,

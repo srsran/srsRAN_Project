@@ -338,6 +338,21 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
 
   // Include RRC ReconfigWithSync if HandoverPreparationInformation is included.
   if (not request.ho_prep_info.empty()) {
+    if (not request.spcell_id.has_value()) {
+      proc_logger.log_proc_failure("Failed to handle HandoverPreparation IE. Cause: No Spcell ID provided");
+      return make_ue_config_failure();
+    }
+    auto target_cell_it = std::find_if(du_params.ran.cells.begin(), du_params.ran.cells.end(), [this](const auto& e) {
+      return e.nr_cgi == request.spcell_id;
+    });
+    if (target_cell_it == du_params.ran.cells.end()) {
+      proc_logger.log_proc_failure("Failed to handle HandoverPreparation IE. Cause: No Spcell ID {}:{} found",
+                                   request.spcell_id->plmn_id,
+                                   request.spcell_id->nci);
+      return make_ue_config_failure();
+    }
+
+    // Parse HandoverPreparationInformation.
     asn1::rrc_nr::ho_prep_info_s ho_prep_info;
     {
       asn1::cbit_ref    bref{request.ho_prep_info};
@@ -347,12 +362,8 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
         return make_ue_config_failure();
       }
     }
-    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present =
-        calculate_reconfig_with_sync_diff(asn1_cell_group.sp_cell_cfg.recfg_with_sync,
-                                          du_params.ran.cells[0],
-                                          ue->resources.value(),
-                                          ho_prep_info,
-                                          ue->rnti);
+    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present = calculate_reconfig_with_sync_diff(
+        asn1_cell_group.sp_cell_cfg.recfg_with_sync, *target_cell_it, ue->resources.value(), ho_prep_info, ue->rnti);
     if (not asn1_cell_group.sp_cell_cfg.recfg_with_sync_present) {
       proc_logger.log_proc_failure("Failed to calculate ReconfigWithSync");
       return make_ue_config_failure();

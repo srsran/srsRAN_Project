@@ -64,6 +64,15 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
   // Construct DU request.
   du_request.ue_index = ue.context.ue_index;
 
+  if (msg->sp_cell_id_present) {
+    // > [TS 38.473, 8.3.4.2] "If the SpCell ID IE is included in the UE CONTEXT MODIFICATION REQUEST message, the
+    // gNB-DU shall replace any previously received value and regard it as a reconfiguration with sync as defined in
+    // TS 38.331"
+    auto plmn = plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes());
+    auto nci  = nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number());
+    du_request.spcell_id.emplace(plmn.value(), nci.value());
+  }
+
   // > Set whether full configuration is required.
   // [TS 38.473, section 8.3.4.2] If the Full Configuration IE is contained in the UE CONTEXT MODIFICATION REQUEST
   // message, the gNB-DU shall generate a CellGroupConfig IE using full configuration and include it in the UE CONTEXT

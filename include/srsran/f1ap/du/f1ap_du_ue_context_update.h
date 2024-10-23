@@ -44,7 +44,9 @@ struct f1ap_scell_to_setup {
 
 /// \brief Request from DU F1AP to DU manager to modify existing UE configuration.
 struct f1ap_ue_context_update_request {
-  du_ue_index_t         ue_index;
+  du_ue_index_t                      ue_index;
+  std::optional<nr_cell_global_id_t> spcell_id;
+  /// New SRBs to setup.
   std::vector<srb_id_t> srbs_to_setup;
   /// List of new DRBs to setup.
   std::vector<f1ap_drb_to_setup> drbs_to_setup;
