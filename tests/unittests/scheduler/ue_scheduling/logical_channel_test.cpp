@@ -199,7 +199,7 @@ TEST(dl_logical_channel_test, mac_sdu_is_scheduled_if_tb_has_space)
   do {
     unsigned       pending_bytes = lch_mng.total_pending_bytes();
     dl_msg_lc_info subpdu;
-    unsigned       allocated_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_bytes);
+    unsigned       allocated_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_bytes, lcid);
     if (not subpdu.lcid.is_valid()) {
       // There was not enough space in the TB to deplete all the pending tx bytes.
       ASSERT_LT(tb_size, get_mac_sdu_required_bytes(sdu_size));

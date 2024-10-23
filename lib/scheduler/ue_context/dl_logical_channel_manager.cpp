@@ -25,6 +25,7 @@ dl_logical_channel_manager::dl_logical_channel_manager()
 {
   // SRB0 is always activated.
   set_status(LCID_SRB0, true);
+  sorted_channels.resize(1, LCID_SRB0);
 }
 
 void dl_logical_channel_manager::deactivate()
@@ -33,16 +34,34 @@ void dl_logical_channel_manager::deactivate()
     set_status((lcid_t)lcid, false);
   }
   pending_ces.clear();
+  sorted_channels.clear();
 }
 
 void dl_logical_channel_manager::configure(span<const logical_channel_config> log_channels_configs)
 {
+  // Clear old list of sorted channels.
+  sorted_channels.clear();
+  sorted_channels.resize(log_channels_configs.size());
+
   for (unsigned i = 1; i != channels.size(); ++i) {
     channels[i].active = false;
   }
   for (const logical_channel_config& lc_ch : log_channels_configs) {
     set_status(lc_ch.lcid, true);
+    sorted_channels.push_back(lc_ch.lcid);
   }
+
+  // Sort logical channels based on priority set in MAC LC configuration.
+  std::sort(
+      sorted_channels.begin(), sorted_channels.end(), [log_channels_configs](const auto lcid_lhs, const auto lcid_rhs) {
+        auto it_lhs = std::find_if(log_channels_configs.begin(),
+                                   log_channels_configs.end(),
+                                   [lcid_lhs](const logical_channel_config& lc_ch) { return lc_ch.lcid == lcid_lhs; });
+        auto it_rhs = std::find_if(log_channels_configs.begin(),
+                                   log_channels_configs.end(),
+                                   [lcid_rhs](const logical_channel_config& lc_ch) { return lc_ch.lcid == lcid_rhs; });
+        return it_lhs->priority < it_rhs->priority;
+      });
 }
 
 unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, unsigned rem_bytes, lcid_t lcid)
@@ -61,10 +80,9 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, un
 
 lcid_t dl_logical_channel_manager::get_max_prio_lcid() const
 {
-  // Prioritize by LCID.
-  for (unsigned idx = 0; idx != channels.size(); ++idx) {
-    if (channels[idx].active and channels[idx].buf_st > 0) {
-      return (lcid_t)idx;
+  for (const auto lcid : sorted_channels) {
+    if (channels[lcid].active and channels[lcid].buf_st > 0) {
+      return lcid;
     }
   }
   return INVALID_LCID;
@@ -221,6 +239,11 @@ unsigned dl_logical_channel_manager::allocate_ue_con_res_id_mac_ce(dl_msg_lc_inf
   }
 
   return alloc_bytes;
+}
+
+span<const lcid_t> dl_logical_channel_manager::get_prioritized_logical_channels() const
+{
+  return sorted_channels;
 }
 
 unsigned

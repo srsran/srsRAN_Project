@@ -171,6 +171,9 @@ public:
   /// \return Allocated bytes for UE Contention Resolution Identity MAC CE (with subheader).
   unsigned allocate_ue_con_res_id_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes);
 
+  /// \brief Returns a list of LCIDs sorted based on decreasing order of priority.
+  span<const lcid_t> get_prioritized_logical_channels() const;
+
 private:
   struct channel_context {
     bool active = false;
@@ -185,6 +188,9 @@ private:
   unsigned allocate_mac_sdu(dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes);
 
   std::array<channel_context, MAX_NOF_RB_LCIDS> channels;
+
+  /// List of logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest priority.
+  std::vector<lcid_t> sorted_channels;
 
   bool pending_con_res_id{false};
 
