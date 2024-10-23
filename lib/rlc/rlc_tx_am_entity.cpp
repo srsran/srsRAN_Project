@@ -137,6 +137,11 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
     pull_begin = std::chrono::steady_clock::now();
   }
 
+  if (max_retx_reached) {
+    logger.log_debug("Trying to pull when maximum retransmissions already reached.");
+    return 0;
+  }
+
   std::lock_guard<std::mutex> lock(mutex);
 
   const size_t grant_len = rlc_pdu_buf.size();
@@ -563,6 +568,10 @@ size_t rlc_tx_am_entity::build_retx_pdu(span<uint8_t> rlc_pdu_buf)
   // Update RETX queue. This must be done before calculating
   // the polling bit, to make sure the poll bit is calculated correctly
   if (retx_complete) {
+    // Check if this SN triggered max_retx
+    if ((*tx_window)[retx.sn].retx_count == cfg.max_retx_thresh) {
+      max_retx_reached = true;
+    }
     // remove RETX from queue
     retx_queue.pop();
   } else {

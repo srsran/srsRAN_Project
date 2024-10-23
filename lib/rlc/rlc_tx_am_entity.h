@@ -128,6 +128,8 @@ private:
 
   bool stopped = false;
 
+  bool max_retx_reached = false;
+
 public:
   rlc_tx_am_entity(gnb_du_id_t                          gnb_du_id,
                    du_ue_index_t                        ue_index,
