@@ -181,7 +181,7 @@ TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
 TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
 {
   // Measurement values in 5 time slot.
-  std::vector<float>    meas_real_values = {0.15625, 0.15625, 0.15625, 0.15625, 0.15625};
+  std::vector<float>    meas_real_values = {0.15625, 1.0, 4.0, 4.00001, 1234.1234};
   std::vector<uint32_t> meas_int_values  = {1, 2, 3, 4, 5};
   uint32_t              nof_meas_data    = meas_real_values.size();
   uint32_t              nof_metrics      = 2;
