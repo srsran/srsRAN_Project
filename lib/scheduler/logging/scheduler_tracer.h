@@ -52,11 +52,13 @@ public:
       diff_resusage           = slot_stop_resusage - slot_start_resusage;
 
       logger.warning("cell={}: Detected slow slot processing. Latency={}usec, voluntary_context_switches={} "
-                     "involutary_context_switches={}",
+                     "involutary_context_switches={} user_telapsed={}usec system_telapsed={}usec",
                      cell_index,
                      slot_dur.count(),
                      diff_resusage.vol_ctxt_switch_count,
-                     diff_resusage.invol_ctxt_switch_count);
+                     diff_resusage.invol_ctxt_switch_count,
+                     diff_resusage.user_dur.count(),
+                     diff_resusage.system_dur.count());
     }
   }
 

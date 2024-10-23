@@ -17,7 +17,7 @@ using namespace resource_usage;
 srsran::expected<snapshot, int> srsran::resource_usage::now()
 {
   snapshot ret;
-  if (getrusage(RUSAGE_SELF, &ret) == 0) {
+  if (getrusage(RUSAGE_THREAD, &ret) == 0) {
     return ret;
   }
   return make_unexpected(errno);
