@@ -753,7 +753,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       return {alloc_status::skip_ue};
     }
 
-    // If this is not a retx, then we need to adjust the number of PRBs to the PHR, to prevent that the UE reduces the
+    // If this is not a retx, then we need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the
     // nominal TX power to meet the max TX power.
     if (not is_retx) {
       const unsigned nof_prbs_adjusted_to_phr = ue_cc->channel_state_manager().adapt_pusch_prbs_to_phr(crbs.length());

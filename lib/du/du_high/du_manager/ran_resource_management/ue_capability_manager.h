@@ -89,7 +89,7 @@ private:
   span<const du_cell_config> base_cell_cfg_list;
   srslog::basic_logger&      logger;
 
-  // flag that tells whether this is the first time that update is called.
+  // Flag that tells whether this is the first time that update is called.
   bool                                 first_update = true;
   std::optional<ue_capability_summary> ue_caps;
 };

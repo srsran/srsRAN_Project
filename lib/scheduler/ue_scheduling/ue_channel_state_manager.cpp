@@ -91,7 +91,7 @@ SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_recommended_pusch_tpmi(u
 
 void ue_channel_state_manager::save_pusch_nof_prbs(slot_point slot_rx, unsigned nof_prbs)
 {
-  pusch_nof_prbs_grid[slot_rx.to_uint() % pusch_nof_prbs_grid.size()] = {slot_rx, nof_prbs};
+  pusch_nof_prbs_grid[slot_rx.to_uint()] = {slot_rx, nof_prbs};
 }
 
 SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::adapt_pusch_prbs_to_phr(unsigned nof_prbs) const

@@ -18,6 +18,7 @@
 #include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
+#include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/srslog/logger.h"
 
@@ -133,7 +134,7 @@ private:
   };
 
   /// \brief Ring of PUSCH number of PRBs allocation indexed by slot.
-  circular_array<pusch_prbs_entry, MAX_PHR_IND_DELAY_SLOTS> pusch_nof_prbs_grid;
+  circular_array<pusch_prbs_entry, get_allocator_ring_size_gt_min(MAX_PHR_IND_DELAY_SLOTS)> pusch_nof_prbs_grid;
 
   srslog::basic_logger& logger;
 };
