@@ -64,7 +64,7 @@ mac_lc_config srsran::make_default_drb_mac_lc_config()
   return mac_cfg;
 }
 
-prioritized_bit_rate srsran::get_pbr_ge_to_given_bit_rate(uint64_t bitrate_bps)
+prioritized_bit_rate srsran::get_pbr_ceil(uint64_t bitrate_bps)
 {
   // Convert given bitrate (bps) to kilo Bytes per second.
   const float given_bitrate_kBps = bitrate_bps / (1000 * 8);
@@ -88,7 +88,7 @@ mac_lc_config srsran::make_gbr_drb_mac_lc_config(const gbr_qos_flow_information&
   // [Implementation-Defined] Setting LCG ID other than the one assigned to non-GBR DRBs.
   mac_cfg.lcg_id = uint_to_lcg_id(1);
   // Set PBR based on the given GBR QoS flow information.
-  mac_cfg.pbr = get_pbr_ge_to_given_bit_rate(gbr_qos_flow_info.gbr_ul);
+  mac_cfg.pbr = get_pbr_ceil(gbr_qos_flow_info.gbr_ul);
   return mac_cfg;
 }
 

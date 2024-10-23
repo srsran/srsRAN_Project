@@ -26,7 +26,7 @@ class mac_lc_config_test : public ::testing::TestWithParam<mac_lc_config_test_pa
 TEST_P(mac_lc_config_test, verify_get_pbr_ge_given_bit_rate)
 {
   mac_lc_config_test_params params = GetParam();
-  ASSERT_EQ(params.expected_output, get_pbr_ge_to_given_bit_rate(params.input));
+  ASSERT_EQ(params.expected_output, get_pbr_ceil(params.input));
 }
 
 INSTANTIATE_TEST_SUITE_P(mac_config_helpers_test,
