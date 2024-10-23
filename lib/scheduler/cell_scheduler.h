@@ -21,6 +21,7 @@
 #include "config/cell_configuration.h"
 #include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_result_logger.h"
+#include "logging/scheduler_tracer.h"
 #include "pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "pucch_scheduling/pucch_allocator_impl.h"
 #include "pucch_scheduling/pucch_guardbands_scheduler.h"
@@ -79,6 +80,8 @@ private:
   si_message_scheduler          si_msg_sch;
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
+
+  scheduler_slot_tracer tracer;
 };
 
 } // namespace srsran

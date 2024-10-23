@@ -36,7 +36,11 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   sib1_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   si_msg_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   pucch_guard_sch(cell_cfg),
-  pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
+  pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg),
+  tracer(logger,
+         cell_cfg.cell_index,
+         std::chrono::microseconds{1000 /
+                                   get_nof_slots_per_subframe(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)})
 {
   // Register new cell in the UE scheduler.
   ue_sched.add_cell(ue_scheduler_cell_params{
@@ -73,7 +77,7 @@ void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 void cell_scheduler::run_slot(slot_point sl_tx)
 {
   // Mark the start of the slot.
-  auto slot_start_tp = std::chrono::high_resolution_clock::now();
+  tracer.start();
 
   // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
   if (SRSRAN_LIKELY(res_grid.slot_tx().valid())) {
@@ -119,15 +123,14 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   ue_sched.run_slot(sl_tx);
 
   // > Mark stop of the slot processing
-  auto slot_stop_tp = std::chrono::high_resolution_clock::now();
-  auto slot_dur     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
+  tracer.stop();
 
   // > Log processed events.
   event_logger.log();
 
   // > Log the scheduler results.
-  result_logger.on_scheduler_result(last_result(), slot_dur);
+  result_logger.on_scheduler_result(last_result(), tracer.time_elapsed());
 
   // > Push the scheduler results to the metrics handler.
-  metrics.push_result(sl_tx, last_result(), slot_dur);
+  metrics.push_result(sl_tx, last_result(), tracer.time_elapsed());
 }
