@@ -15,9 +15,15 @@
 
 namespace srsran {
 
+/// Traces the latency at which the scheduler handles new slot indications.
 class scheduler_slot_tracer
 {
 public:
+  /// \brief Creates a new scheduler slot tracer.
+  ///
+  /// \param[in] logger_ Logger to which warnings of slow slots are reported.
+  /// \param[in] cell_index_ Cell index associated with this tracer.
+  /// \param[in] log_warn_thres_ Threshold in microseconds, above which, a warning is reported of a slow slot handling.
   scheduler_slot_tracer(srslog::basic_logger&     logger_,
                         du_cell_index_t           cell_index_,
                         std::chrono::microseconds log_warn_thres_ = std::chrono::microseconds{0}) :
@@ -25,6 +31,7 @@ public:
   {
   }
 
+  /// Marks the start of a new slot indication.
   void start()
   {
     slot_start_tp = std::chrono::high_resolution_clock::now();
@@ -33,6 +40,8 @@ public:
     }
   }
 
+  /// \brief Marks the end of a slot indication, and computes how much time has passed. If \c log_warn_thres > 0 and
+  /// the slot latency is greater than \c log_warn_thres, a warning is logged with some metrics.
   void stop()
   {
     auto slot_stop_tp = std::chrono::high_resolution_clock::now();
@@ -51,6 +60,7 @@ public:
     }
   }
 
+  /// Returns how much time has passed between the last start() and stop().
   std::chrono::microseconds time_elapsed() const { return slot_dur; }
 
 private:
