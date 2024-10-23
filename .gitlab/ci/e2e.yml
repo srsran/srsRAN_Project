@@ -482,7 +482,7 @@ viavi:
     matrix:
       - KEYWORDS: [
             "ideal and 1UE",
-            "ideal and 32UE and not experimental and not dddsu",
+            "ideal and 32UE and not experimental",
             "fading and 1UE",
             "fading and 32UE",
             "birth-death and 1UE",
@@ -499,19 +499,6 @@ viavi-extended:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
-
-viavi-dddsu:
-  extends: .viavi
-  needs:
-    - job: "basic avx512 dpdk"
-      artifacts: true
-    - *retina-needs
-  allow_failure: true
-  parallel:
-    matrix:
-      - KEYWORDS: [
-            "dddsu",
-          ]
 
 viavi-debug:
   extends: .viavi

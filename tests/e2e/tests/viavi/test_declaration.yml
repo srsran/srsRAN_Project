@@ -182,8 +182,8 @@ tests:
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"
     test_timeout: *test_timeout
-    gnb_extra_commands: "log --ngap_level=debug metrics --rlc_report_period=1000 cell_cfg tdd_ul_dl_cfg --nof_ul_slots=6 --nof_ul_symbols=4"
-    id: "32UE ideal UDP attach-detach with traffic DDDSU heavy"
+    gnb_extra_commands: "log --ngap_level=debug metrics --rlc_report_period=1000"
+    id: "32UE ideal UDP attach-detach with traffic UL heavy TDD"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 4
     enable_qos_viavi: false
@@ -192,7 +192,7 @@ tests:
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 4
     warning_as_errors: true
-    enable_dddsu: true
+    enable_ul_heavy_tdd: true
 
   - campaign_filename: *campaign_filename
     test_name: "1UE birth-death UDP bidirectional"
