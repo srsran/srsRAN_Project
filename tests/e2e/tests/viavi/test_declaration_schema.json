@@ -45,6 +45,9 @@
                     },
                     "enable_dddsu": {
                         "type": "boolean"
+                    },
+                    "enable_ul_heavy_tdd": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
