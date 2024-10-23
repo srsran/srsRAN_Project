@@ -62,8 +62,8 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   clear_old_ue_context();
 
   if (not request.ho_prep_info.empty()) {
-    // In case of Handover, stop UE DRB activity and RLF handling in the source Cell.
-    CORO_AWAIT(ue->handle_activity_stop_request());
+    // In case of Handover, stop UE RLF detection in the source Cell.
+    ue->disable_rlf_detection();
   }
 
   proc_logger.log_proc_completed();
@@ -74,7 +74,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 async_task<void> ue_configuration_procedure::stop_drbs_to_rem()
 {
   // Request traffic to stop for DRBs that are going to be removed.
-  return ue->handle_drb_traffic_stop_request(request.drbs_to_rem);
+  return ue->handle_drb_stop_request(request.drbs_to_rem);
 }
 
 void ue_configuration_procedure::update_ue_context()

@@ -105,7 +105,7 @@ async_task<void> du_ue_manager::handle_ue_deactivation_request(du_ue_index_t ue_
     logger.warning("ue={}: UE deactivation request for inexistent UE index", ue_index);
     return launch_no_op_task();
   }
-  return ue_db[ue_index].handle_activity_stop_request();
+  return ue_db[ue_index].handle_activity_stop_request(false);
 }
 
 void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)
@@ -155,7 +155,7 @@ async_task<void> du_ue_manager::stop()
 
     // Disconnect notifiers of all UEs bearers from within the ue_executors context.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      CORO_AWAIT(ue_it->handle_traffic_stop_request());
+      CORO_AWAIT(ue_it->handle_activity_stop_request(true));
     }
 
     proc_logger.log_progress("All UEs are disconnected");
