@@ -221,6 +221,33 @@ static double compute_dl_rate_weight(const slice_ue& u, span<double> dl_avg_rate
   return rate_weight == 0 ? initial_rate_weight : rate_weight;
 }
 
+/// \brief Computes UL rate weight used in computation of UL priority value for a UE in a slot.
+static double compute_ul_rate_weight(const slice_ue& u, double current_ue_ul_avg_rate, subcarrier_spacing bwp_scs)
+{
+  span<const sched_drb_info> drbs_qos_info = u.get_drbs_qos_info();
+  // [Implementation-defined] Rate weight to assign if the UE has only non-GBR bearers or average UL rate of UE is 0.
+  const double initial_rate_weight = 1;
+
+  double qos_gbr_rate_sum = 0;
+  // Compute sum of GBR rates of all LCs belonging to this slice.
+  for (const sched_drb_info& drb_qos_info : drbs_qos_info) {
+    // LC is not part of the slice or a non-GBR flow.
+    if (not u.contains(drb_qos_info.lcid) and not drb_qos_info.gbr_qos_info.has_value()) {
+      continue;
+    }
+    qos_gbr_rate_sum += to_bytes_per_slot(drb_qos_info.gbr_qos_info->gbr_ul, bwp_scs);
+  }
+
+  if (qos_gbr_rate_sum == 0 or current_ue_ul_avg_rate == 0) {
+    return initial_rate_weight;
+  }
+
+  // [Implementation-defined] Since scheduler does not have the information related to nof. bytes sent by UE for each
+  // LCG, the computation of rate weight is simplified by dividing the sum of GBR rates in all LC with average UL rate
+  // experienced by the UE.
+  return qos_gbr_rate_sum / current_ue_ul_avg_rate;
+}
+
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id)
 {
   dl_retx_h.reset();
@@ -380,11 +407,16 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
     // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
     const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
     const double current_avg_rate = total_ul_avg_rate();
+    double       pf_weight        = 0;
     if (current_avg_rate != 0) {
-      ul_prio = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
+      pf_weight = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
     } else {
-      ul_prio = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
+      pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
     }
+    const double rate_weight = compute_ul_rate_weight(
+        u, current_avg_rate, ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs);
+    ul_prio = rate_weight * pf_weight;
+
     return;
   }
   has_empty_ul_harq = false;
