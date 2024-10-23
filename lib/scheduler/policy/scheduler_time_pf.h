@@ -39,19 +39,11 @@ private:
   /// Holds the information needed to compute priority of a UE in a priority queue.
   struct ue_ctxt {
     ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_pf* parent_) :
-      ue_index(ue_index_), cell_index(cell_index_), parent(parent_), dl_avg_rate_per_bearer(lcid_t::LCID_MAX_DRB)
+      ue_index(ue_index_), cell_index(cell_index_), parent(parent_), dl_avg_rate_per_lc(lcid_t::MAX_NOF_RB_LCIDS)
     {
-      std::fill(dl_avg_rate_per_bearer.begin(), dl_avg_rate_per_bearer.end(), 0);
+      std::fill(dl_avg_rate_per_lc.begin(), dl_avg_rate_per_lc.end(), 0);
     }
 
-    /// Returns average DL rate expressed in bytes per slot for a bearer.
-    [[nodiscard]] double dl_avg_rate(lcid_t lcid) const
-    {
-      srsran_assert(lcid >= lcid_t::LCID_MIN_DRB and lcid < lcid_t::LCID_MAX_DRB,
-                    "Accessing DL average rate of lcid={} is not allowed",
-                    lcid);
-      return dl_nof_samples == 0 ? 0 : dl_avg_rate_per_bearer[lcid];
-    }
     /// Returns average DL rate expressed in bytes per slot of the UE.
     [[nodiscard]] double total_dl_avg_rate() const { return dl_nof_samples == 0 ? 0 : total_dl_avg_rate_; }
     /// Returns average UL rate expressed in bytes per slot of the UE.
@@ -62,7 +54,7 @@ private:
     /// Computes the priority of the UE to be scheduled in UL based on the proportional fair metric.
     void compute_ul_prio(const slice_ue& u, const ue_resource_grid_view& res_grid, ran_slice_id_t slice_id);
 
-    void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info);
+    void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info, const slice_ue& u);
     void save_ul_alloc(uint32_t alloc_bytes);
 
     const du_ue_index_t      ue_index;
@@ -82,8 +74,8 @@ private:
     bool sr_ind_received = false;
 
   private:
-    /// Average DL rate expressed in bytes per slot experienced by UE in each of its bearers.
-    static_vector<double, lcid_t::LCID_MAX_DRB> dl_avg_rate_per_bearer;
+    /// Average DL rate expressed in bytes per slot experienced by UE in each of its logical channel.
+    static_vector<double, lcid_t::MAX_NOF_RB_LCIDS> dl_avg_rate_per_lc;
     /// Average DL rate expressed in bytes per slot experienced by UE.
     double total_dl_avg_rate_ = 0;
     /// Average UL rate expressed in bytes per slot experienced by UE.

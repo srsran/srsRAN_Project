@@ -54,7 +54,7 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
       alloc_result = try_dl_alloc(ue, ues, pdsch_alloc, rem_rbs);
     }
     if (not is_retx) {
-      ue.save_dl_alloc(alloc_result.alloc_bytes, alloc_result.tb_info);
+      ue.save_dl_alloc(alloc_result.alloc_bytes, alloc_result.tb_info, ues[ue.ue_index]);
     }
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
     // attempted again before scheduling new transmissions.
@@ -196,35 +196,28 @@ static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs
 }
 
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
-static double compute_dl_rate_weight(span<const sched_drb_info> drbs_qos_info,
-                                     span<double>               dl_avg_rate_per_bearer,
-                                     subcarrier_spacing         bwp_scs)
+static double compute_dl_rate_weight(const slice_ue& u, span<double> dl_avg_rate_per_lc, subcarrier_spacing bwp_scs)
 {
-  // [Implementation-defined] Rate weight to assign when average rate in a GBR bearer is zero or if the UE has only
+  span<const sched_drb_info> drbs_qos_info = u.get_drbs_qos_info();
+  // [Implementation-defined] Rate weight to assign when average rate in all GBR bearers is zero or if the UE has only
   // non-GBR bearers.
   const double initial_rate_weight = 1;
 
   double rate_weight = 0;
-  for (unsigned id = LCID_MIN_DRB, size = dl_avg_rate_per_bearer.size(); id != size; ++id) {
-    lcid_t      lcid = uint_to_lcid(id);
-    const auto* it   = std::find_if(drbs_qos_info.begin(), drbs_qos_info.end(), [lcid](const sched_drb_info& drb_info) {
-      return drb_info.lcid == lcid;
-    });
+  for (const sched_drb_info& drb_qos_info : drbs_qos_info) {
+    lcid_t lcid = drb_qos_info.lcid;
 
-    // No DRB QoS information or Non-GBR flow.
-    if (it == drbs_qos_info.end() or (not it->gbr_qos_info.has_value())) {
+    // LC not part of the slice or non-GBR flow.
+    if (not u.contains(drb_qos_info.lcid) or not drb_qos_info.gbr_qos_info.has_value()) {
       continue;
     }
 
     // GBR flow.
-    if (dl_avg_rate_per_bearer[lcid] != 0) {
-      rate_weight += (to_bytes_per_slot(it->gbr_qos_info->gbr_dl, bwp_scs) / dl_avg_rate_per_bearer[lcid]);
-    } else {
-      return initial_rate_weight;
+    if (dl_avg_rate_per_lc[lcid] != 0) {
+      rate_weight += (to_bytes_per_slot(drb_qos_info.gbr_qos_info->gbr_dl, bwp_scs) / dl_avg_rate_per_lc[lcid]);
     }
   }
 
-  // Sum of rate weights of all active bearers.
   return rate_weight == 0 ? initial_rate_weight : rate_weight;
 }
 
@@ -301,10 +294,8 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u, ran_slice_id
     } else {
       pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
     }
-    const double rate_weight =
-        compute_dl_rate_weight(u.get_drbs_qos_info(),
-                               dl_avg_rate_per_bearer,
-                               ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
+    const double rate_weight = compute_dl_rate_weight(
+        u, dl_avg_rate_per_lc, ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
     dl_prio = rate_weight * pf_weight;
 
     return;
@@ -399,13 +390,20 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue&              u,
   has_empty_ul_harq = false;
 }
 
-void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)
+void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t              total_alloc_bytes,
+                                               const dl_msg_tb_info& tb_info,
+                                               const slice_ue&       u)
 {
+  span<const sched_drb_info> drbs_qos_info = u.get_drbs_qos_info();
   // [Implementation-defined] DL average rate is computed only for DRBs.
-  // Compute DL average rate on a per-bearer basis.
-  for (unsigned id = LCID_MIN_DRB; id < dl_avg_rate_per_bearer.size(); ++id) {
-    lcid_t      lcid = uint_to_lcid(id);
-    const auto* it   = std::find_if(tb_info.lc_chs_to_sched.begin(),
+  // Compute DL average rate on a per-logical channel basis.
+  for (const sched_drb_info& drb_qos_info : drbs_qos_info) {
+    lcid_t lcid = drb_qos_info.lcid;
+    if (not u.contains(lcid)) {
+      // Skip if LC does not belong to this slice.
+      continue;
+    }
+    const auto* it = std::find_if(tb_info.lc_chs_to_sched.begin(),
                                   tb_info.lc_chs_to_sched.end(),
                                   [lcid](const dl_msg_lc_info& lc_info) { return lc_info.lcid == lcid; });
     // [Implementation-defined] If a DRB is not scheduled then we consider nof. scheduled bytes for that LCID to be 0.
@@ -415,11 +413,11 @@ void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const
     }
     if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
       // Fast start before transitioning to exponential average.
-      dl_avg_rate_per_bearer[id] =
-          dl_avg_rate_per_bearer[id] + (sched_bytes - dl_avg_rate_per_bearer[id]) / (dl_nof_samples + 1);
+      dl_avg_rate_per_lc[lcid] =
+          dl_avg_rate_per_lc[lcid] + (sched_bytes - dl_avg_rate_per_lc[lcid]) / (dl_nof_samples + 1);
     } else {
-      dl_avg_rate_per_bearer[id] =
-          (1 - parent->exp_avg_alpha) * dl_avg_rate_per_bearer[id] + (parent->exp_avg_alpha) * sched_bytes;
+      dl_avg_rate_per_lc[lcid] =
+          (1 - parent->exp_avg_alpha) * dl_avg_rate_per_lc[lcid] + (parent->exp_avg_alpha) * sched_bytes;
     }
   }
 
