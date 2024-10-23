@@ -96,3 +96,7 @@ add_test(complex_normal_random_test complex_normal_random_test)
 add_executable(transform_optional_test transform_optional_test.cpp)
 target_link_libraries(transform_optional_test srslog gtest gtest_main)
 add_test(transform_optional_test transform_optional_test)
+
+add_executable(resource_usage_test tracing/resource_usage_test.cpp)
+target_link_libraries(resource_usage_test srsran_support srslog gtest gtest_main)
+add_test(resource_usage_test resource_usage_test)
