@@ -83,15 +83,15 @@ public:
   virtual void handle_slot_results(du_cell_index_t cell_index);
 
   du_high_worker_manager  workers;
+  timer_manager           timers;
   dummy_f1c_test_client   cu_notifier;
   srs_du::cu_up_simulator cu_up_sim;
-  phy_test_dummy          phy;
-  null_mac_pcap           mac_pcap;
-  null_rlc_pcap           rlc_pcap;
-  timer_manager           timers;
 
   du_high_configuration    du_high_cfg;
   std::unique_ptr<du_high> du_hi;
+  phy_test_dummy           phy;
+  null_mac_pcap            mac_pcap;
+  null_rlc_pcap            rlc_pcap;
 
   slot_point next_slot;
 

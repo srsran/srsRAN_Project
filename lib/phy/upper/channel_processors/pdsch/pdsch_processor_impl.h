@@ -33,10 +33,10 @@ public:
   }
 
   // See interface for documentation.
-  void process(resource_grid_writer&                                        grid,
-               pdsch_processor_notifier&                                    notifier,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override;
+  void process(resource_grid_writer&                                           grid,
+               pdsch_processor_notifier&                                       notifier,
+               static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+               const pdu_t&                                                    pdu) override;
 
 private:
   /// \brief Computes the number of RE used for mapping PDSCH data.

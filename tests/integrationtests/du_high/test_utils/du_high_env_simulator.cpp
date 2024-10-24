@@ -151,7 +151,6 @@ static void init_loggers()
 
 du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
   cu_notifier(workers.test_worker),
-  phy(params.nof_cells, workers.test_worker),
   du_high_cfg([this, params]() {
     init_loggers();
 
@@ -189,6 +188,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     return cfg;
   }()),
   du_hi(make_du_high(du_high_cfg)),
+  phy(params.nof_cells, workers.test_worker),
   next_slot(to_numerology_value(du_high_cfg.ran.cells[0].scs_common),
             test_rgen::uniform_int<unsigned>(0, 10239) *
                 get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common))

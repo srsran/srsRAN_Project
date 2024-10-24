@@ -290,7 +290,8 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
 
   // Process pdsch PDU.
 #ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pdsch_proc->process(grid, notifier_spy, {data}, param.get_pdu()); }, param.expr);
+  ASSERT_DEATH({ pdsch_proc->process(grid, notifier_spy, {shared_transport_block(data)}, param.get_pdu()); },
+               param.expr);
 #endif // ASSERTS_ENABLED
 }
 

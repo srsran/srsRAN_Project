@@ -717,10 +717,10 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
     // Process PDU.
     if (worker_pool) {
       (void)worker_pool->push_task([&proc, &grid, &notifier, &data, &config]() mutable {
-        proc.process(grid->get_writer(), notifier, {data}, config);
+        proc.process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
       });
     } else {
-      proc.process(grid->get_writer(), notifier, {data}, config);
+      proc.process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
     }
 
     // Wait for the processor to finish.

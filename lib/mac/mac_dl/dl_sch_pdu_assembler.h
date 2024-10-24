@@ -22,6 +22,7 @@ class byte_buffer_chain;
 class cell_dl_harq_buffer_pool;
 
 /// \brief This class represents and encodes a MAC DL-SCH PDU that may contain multiple subPDUs.
+///
 /// Each subPDU is composed of a MAC subheader and MAC CE or MAC SDU payload.
 class dl_sch_pdu
 {
@@ -94,26 +95,30 @@ public:
   explicit dl_sch_pdu_assembler(mac_dl_ue_repository& ue_mng_, cell_dl_harq_buffer_pool& cell_dl_harq_buffers);
 
   /// \brief Encodes a MAC DL-SCH PDU with the provided scheduler information.
-  /// \param rnti RNTI for which the MAC PDU was allocated.
-  /// \param h_id HARQ-Id of the HARQ process used for this PDU transmission.
-  /// \param tb_idx Transport block index of the HARQ process used for this PDU transmission.
-  /// \param tb_info The information relative to the transport block allocated by the scheduler. This class contains
-  /// a list of LCIDs of the subPDUs to allocated together with how many bytes each subPDU should take.
+  ///
+  /// \param rnti          RNTI for which the MAC PDU was allocated.
+  /// \param h_id          HARQ-Id of the HARQ process used for this PDU transmission.
+  /// \param tb_idx        Transport block index of the HARQ process used for this PDU transmission.
+  /// \param tb_info       The information relative to the transport block allocated by the scheduler. This class
+  /// contains
+  ///                      a list of LCIDs of the subPDUs to allocated together with how many bytes each subPDU should
+  ///                      take.
   /// \param tb_size_bytes Number of bytes allocated for the Transport Block.
   /// \return Byte container with assembled PDU. This container length should be lower or equal to \c tb_size_bytes.
-  span<const uint8_t> assemble_newtx_pdu(rnti_t                rnti,
-                                         harq_id_t             h_id,
-                                         unsigned              tb_idx,
-                                         const dl_msg_tb_info& tb_info,
-                                         unsigned              tb_size_bytes);
+  shared_transport_block assemble_newtx_pdu(rnti_t                rnti,
+                                            harq_id_t             h_id,
+                                            unsigned              tb_idx,
+                                            const dl_msg_tb_info& tb_info,
+                                            unsigned              tb_size_bytes);
 
   /// \brief Fetches and assembles MAC DL-SCH PDU that corresponds to a HARQ retransmission.
-  /// \param rnti RNTI for which the MAC PDU was allocated.
-  /// \param h_id HARQ-Id of the HARQ process used for this PDU transmission.
-  /// \param tb_idx Transport block index of the HARQ process used for this PDU transmission.
-  /// \param tb_size_bytes Number of bytes allocated for the Transport Block.
+  ///
+  /// \param rnti      RNTI for which the MAC PDU was allocated.
+  /// \param h_id      HARQ-Id of the HARQ process used for this PDU transmission.
+  /// \param tb_idx    Transport block index of the HARQ process used for this PDU transmission.
+  /// \param tbs_bytes Number of bytes allocated for the Transport Block.
   /// \return Byte container with assembled PDU.
-  span<const uint8_t> assemble_retx_pdu(rnti_t rnti, harq_id_t harq_id, unsigned tb_idx, unsigned tbs_bytes);
+  shared_transport_block assemble_retx_pdu(rnti_t rnti, harq_id_t h_id, unsigned tb_idx, unsigned tbs_bytes);
 
 private:
   class pdu_log_builder;
@@ -126,9 +131,8 @@ private:
 
   mac_dl_ue_repository&     ue_mng;
   cell_dl_harq_buffer_pool& harq_buffers;
-
-  srslog::basic_logger& logger;
-  // memory buffer to avoid allocations during formatting of pdus
+  srslog::basic_logger&     logger;
+  /// Memory buffer to avoid allocations during formatting of pdus.
   fmt::memory_buffer fmtbuf;
 };
 

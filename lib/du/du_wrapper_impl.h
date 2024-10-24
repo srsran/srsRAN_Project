@@ -47,8 +47,8 @@ public:
   du_low_wrapper& get_du_low_wrapper() override;
 
 private:
-  std::unique_ptr<du_low_wrapper>  du_lo;
   std::unique_ptr<du_high_wrapper> du_hi;
+  std::unique_ptr<du_low_wrapper>  du_lo;
 };
 
 } // namespace srs_du

@@ -17,7 +17,7 @@ using namespace srsran;
 using namespace srs_du;
 
 du_wrapper_impl::du_wrapper_impl(du_wrapper_impl_dependencies&& dependencies) :
-  du_lo(std::move(dependencies.du_lo)), du_hi(std::move(dependencies.du_hi))
+  du_hi(std::move(dependencies.du_hi)), du_lo(std::move(dependencies.du_lo))
 {
   srsran_assert(du_lo, "Invalid DU low");
   srsran_assert(du_hi, "Invalid DU high");

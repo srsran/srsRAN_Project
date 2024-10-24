@@ -365,7 +365,7 @@ private:
 
       // Process PDSCH.
       pdsch_processor_notifier_adaptor tx_notifier;
-      transmitter->process(tx_grid->get_writer(), tx_notifier, {tx_data}, pdsch_config);
+      transmitter->process(tx_grid->get_writer(), tx_notifier, {shared_transport_block(tx_data)}, pdsch_config);
       tx_notifier.wait_for_completion();
 
       emulator->run(rx_grid->get_writer(), tx_grid->get_reader());

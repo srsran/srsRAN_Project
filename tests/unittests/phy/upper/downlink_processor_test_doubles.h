@@ -36,8 +36,8 @@ public:
 
   void process_pdcch(const pdcch_processor::pdu_t& pdu) override {}
 
-  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
-                     const pdsch_processor::pdu_t&                                                        pdu) override
+  void process_pdsch(static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
+                     const pdsch_processor::pdu_t&                                                    pdu) override
   {
   }
 

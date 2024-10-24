@@ -92,7 +92,7 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
   })) {
     for (unsigned i = 0; i != phy.cells[0].last_dl_data.value().ue_pdus.size(); ++i) {
       if (phy.cells[0].last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
-        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.size();
+        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.get_buffer().size();
       }
     }
     phy.cells[0].last_dl_data.reset();

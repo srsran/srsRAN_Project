@@ -77,8 +77,8 @@ public:
   void process_pdcch(const pdcch_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
-                     const pdsch_processor::pdu_t&                                                        pdu) override;
+  void process_pdsch(static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
+                     const pdsch_processor::pdu_t&                                                    pdu) override;
 
   // See interface for documentation.
   void process_ssb(const ssb_processor::pdu_t& pdu) override;
@@ -116,7 +116,7 @@ private:
   class downlink_task_executor
   {
   public:
-    using task_type = unique_function<void(), 64, true>;
+    using task_type = unique_function<void(), 128, true>;
 
     downlink_task_executor(task_executor& executor_) : executor(executor_) {}
 

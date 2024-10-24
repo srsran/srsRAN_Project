@@ -17,7 +17,7 @@
 using namespace srsran;
 
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
-constexpr size_t MAX_K0_DELAY = 32;
+static constexpr size_t MAX_K0_DELAY = 32;
 
 mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg_req_,
                                        mac_scheduler_cell_info_handler& sched_,
@@ -279,7 +279,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   // Update DL buffer state for the allocated logical channels.
   update_logical_channel_dl_buffer_states(sl_res.dl);
 
-  // Write PCAP
+  // Write PCAP.
   write_tx_pdu_pcap(sl_tx, sl_res, data_res);
 
   l2_tracer << trace_event{"mac_cleanup_tp", cleanup_tp};
@@ -362,57 +362,61 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
     } else {
       payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), tbs);
     }
-    data_res.si_pdus.emplace_back(0, payload);
+    data_res.si_pdus.emplace_back(0, shared_transport_block(payload));
   }
 
   // Assemble scheduled RARs' subheaders and payloads.
   for (const rar_information& rar : dl_res.rar_grants) {
-    data_res.rar_pdus.emplace_back(0, rar_assembler.encode_rar_pdu(rar));
+    data_res.rar_pdus.emplace_back(0, shared_transport_block(rar_assembler.encode_rar_pdu(rar)));
   }
 
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
-    for (unsigned cw_idx = 0; cw_idx != grant.pdsch_cfg.codewords.size(); ++cw_idx) {
+    for (unsigned cw_idx = 0, e = grant.pdsch_cfg.codewords.size(); cw_idx != e; ++cw_idx) {
       const pdsch_codeword& cw = grant.pdsch_cfg.codewords[cw_idx];
-      span<const uint8_t>   pdu;
       if (cw.new_data) {
-        pdu = dlsch_assembler.assemble_newtx_pdu(
-            grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, cw_idx, grant.tb_list[cw_idx], cw.tb_size_bytes);
-      } else {
-        pdu =
-            dlsch_assembler.assemble_retx_pdu(grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, cw_idx, cw.tb_size_bytes);
+        data_res.ue_pdus.emplace_back(
+            cw_idx,
+            dlsch_assembler.assemble_newtx_pdu(
+                grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, cw_idx, grant.tb_list[cw_idx], cw.tb_size_bytes));
+        continue;
       }
-      data_res.ue_pdus.emplace_back(cw_idx, pdu);
+
+      data_res.ue_pdus.emplace_back(
+          cw_idx,
+          dlsch_assembler.assemble_retx_pdu(grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, cw_idx, cw.tb_size_bytes));
     }
   }
 
   // Assemble scheduled Paging payloads.
   for (const dl_paging_allocation& pg : dl_res.paging_grants) {
-    for (unsigned cw_idx = 0; cw_idx != pg.pdsch_cfg.codewords.size(); ++cw_idx) {
-      data_res.paging_pdus.emplace_back(cw_idx, paging_assembler.encode_paging_pdu(pg));
+    for (unsigned cw_idx = 0, e = pg.pdsch_cfg.codewords.size(); cw_idx != e; ++cw_idx) {
+      data_res.paging_pdus.emplace_back(cw_idx, shared_transport_block(paging_assembler.encode_paging_pdu(pg)));
     }
   }
 }
 
 void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res)
 {
-  if (dl_res.nof_dl_symbols > 0) {
-    for (const dl_msg_alloc& grant : dl_res.ue_grants) {
-      for (const dl_msg_tb_info& tb_info : grant.tb_list) {
-        for (const dl_msg_lc_info& lc_info : tb_info.lc_chs_to_sched) {
-          if (not lc_info.lcid.is_sdu()) {
-            continue;
-          }
+  if (dl_res.nof_dl_symbols == 0) {
+    return;
+  }
 
-          // Fetch RLC Bearer.
-          mac_sdu_tx_builder* bearer = ue_mng.get_lc_sdu_builder(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
-          srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
-
-          // Update DL buffer state for the allocated logical channel.
-          mac_dl_buffer_state_indication_message bs{
-              ue_mng.get_ue_index(grant.pdsch_cfg.rnti), lc_info.lcid.to_lcid(), bearer->on_buffer_state_update()};
-          sched.handle_dl_buffer_state_update(bs);
+  for (const dl_msg_alloc& grant : dl_res.ue_grants) {
+    for (const dl_msg_tb_info& tb_info : grant.tb_list) {
+      for (const dl_msg_lc_info& lc_info : tb_info.lc_chs_to_sched) {
+        if (not lc_info.lcid.is_sdu()) {
+          continue;
         }
+
+        // Fetch RLC Bearer.
+        mac_sdu_tx_builder* bearer = ue_mng.get_lc_sdu_builder(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
+        srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
+
+        // Update DL buffer state for the allocated logical channel.
+        mac_dl_buffer_state_indication_message bs{
+            ue_mng.get_ue_index(grant.pdsch_cfg.rnti), lc_info.lcid.to_lcid(), bearer->on_buffer_state_update()};
+        sched.handle_dl_buffer_state_update(bs);
       }
     }
   }
@@ -426,7 +430,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     return;
   }
 
-  for (unsigned i = 0; i < dl_res.si_pdus.size(); ++i) {
+  for (unsigned i = 0, e = dl_res.si_pdus.size(); i != e; ++i) {
     const sib_information& dl_alloc = sl_res.dl.bc.sibs[i];
     // At the moment, we allocate max 1 SIB (SIB1) message per slot. Eventually, this will be extended to other SIBs.
     // TODO: replace sib1_pcap_dumped flag with a vector or booleans that includes other SIBs.
@@ -439,13 +443,13 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
       context.rnti      = to_value(dl_alloc.pdsch_cfg.rnti);
       context.system_frame_number = sl_tx.sfn();
       context.sub_frame_number    = sl_tx.subframe_index();
-      context.length              = sib1_pdu.pdu.size();
-      pcap.push_pdu(context, sib1_pdu.pdu);
+      context.length              = sib1_pdu.pdu.get_buffer().size();
+      pcap.push_pdu(context, sib1_pdu.pdu.get_buffer());
       sib1_pcap_dumped = true;
     }
   }
 
-  for (unsigned i = 0; i < dl_res.rar_pdus.size(); ++i) {
+  for (unsigned i = 0, e = dl_res.rar_pdus.size(); i != e; ++i) {
     const mac_dl_data_result::dl_pdu& rar_pdu  = dl_res.rar_pdus[i];
     const rar_information&            dl_alloc = sl_res.dl.rar_grants[i];
     srsran::mac_nr_context_info       context  = {};
@@ -455,10 +459,11 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     context.rnti                = to_value(dl_alloc.pdsch_cfg.rnti);
     context.system_frame_number = sl_tx.sfn();
     context.sub_frame_number    = sl_tx.subframe_index();
-    context.length              = rar_pdu.pdu.size();
-    pcap.push_pdu(context, rar_pdu.pdu);
+    context.length              = rar_pdu.pdu.get_buffer().size();
+    pcap.push_pdu(context, rar_pdu.pdu.get_buffer());
   }
-  for (unsigned i = 0; i < dl_res.paging_pdus.size(); ++i) {
+
+  for (unsigned i = 0, e = dl_res.paging_pdus.size(); i != e; ++i) {
     const mac_dl_data_result::dl_pdu& pg_pdu   = dl_res.paging_pdus[i];
     const dl_paging_allocation&       dl_alloc = sl_res.dl.paging_grants[i];
     srsran::mac_nr_context_info       context  = {};
@@ -468,10 +473,11 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     context.rnti                = to_value(dl_alloc.pdsch_cfg.rnti);
     context.system_frame_number = sl_tx.sfn();
     context.sub_frame_number    = sl_tx.subframe_index();
-    context.length              = pg_pdu.pdu.size();
-    pcap.push_pdu(context, pg_pdu.pdu);
+    context.length              = pg_pdu.pdu.get_buffer().size();
+    pcap.push_pdu(context, pg_pdu.pdu.get_buffer());
   }
-  for (unsigned i = 0; i < dl_res.ue_pdus.size(); ++i) {
+
+  for (unsigned i = 0, e = dl_res.ue_pdus.size(); i != e; ++i) {
     const mac_dl_data_result::dl_pdu& ue_pdu   = dl_res.ue_pdus[i];
     const dl_msg_alloc&               dl_alloc = sl_res.dl.ue_grants[i];
     if (dl_alloc.pdsch_cfg.codewords[0].new_data) {
@@ -486,8 +492,8 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
       context.harqid    = dl_alloc.pdsch_cfg.harq_id;
       context.system_frame_number = sl_tx.sfn();
       context.sub_frame_number    = sl_tx.subframe_index();
-      context.length              = ue_pdu.pdu.size();
-      pcap.push_pdu(context, ue_pdu.pdu);
+      context.length              = ue_pdu.pdu.get_buffer().size();
+      pcap.push_pdu(context, ue_pdu.pdu.get_buffer());
     }
   }
 }

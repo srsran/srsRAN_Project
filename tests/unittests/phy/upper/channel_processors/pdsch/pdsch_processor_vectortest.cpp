@@ -361,7 +361,7 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   ASSERT_FALSE(transport_block.empty()) << "Failed to load transport block.";
 
   // Prepare transport blocks view.
-  static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> transport_blocks;
+  static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> transport_blocks;
   transport_blocks.emplace_back(transport_block);
 
   // Make sure the configuration is valid.

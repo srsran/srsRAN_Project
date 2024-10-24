@@ -29,13 +29,13 @@ using namespace srsran;
   return is_success;
 }
 
-void pdsch_processor_concurrent_impl::process(resource_grid_writer&                                        grid_,
-                                              pdsch_processor_notifier&                                    notifier_,
-                                              static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
-                                              const pdsch_processor::pdu_t&                                pdu_)
+void pdsch_processor_concurrent_impl::process(resource_grid_writer&                                           grid_,
+                                              pdsch_processor_notifier&                                       notifier_,
+                                              static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data_,
+                                              const pdsch_processor::pdu_t&                                   pdu_)
 {
   // Saves inputs.
-  save_inputs(grid_, notifier_, data_, pdu_);
+  save_inputs(grid_, notifier_, std::move(data_), pdu_);
 
   // Makes sure the PDU is valid.
   [[maybe_unused]] std::string msg;
@@ -73,15 +73,15 @@ void pdsch_processor_concurrent_impl::process(resource_grid_writer&             
 
 void pdsch_processor_concurrent_impl::save_inputs(resource_grid_writer&     grid_,
                                                   pdsch_processor_notifier& notifier_,
-                                                  static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
-                                                  const pdsch_processor::pdu_t&                                pdu)
+                                                  static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data_,
+                                                  const pdsch_processor::pdu_t&                                   pdu)
 {
   using namespace units::literals;
 
   // Save process parameter inputs.
   grid     = &grid_;
   notifier = &notifier_;
-  data     = data_.front();
+  data     = std::move(data_.front());
   config   = pdu;
 
   // Codeword index is fix.
@@ -100,7 +100,7 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_writer&     grid
   scrambler->init((static_cast<unsigned>(config.rnti) << 15U) + (i_cw << 14U) + config.n_id);
 
   // Calculate transport block size.
-  tbs = units::bytes(data.size()).to_bits();
+  tbs = units::bytes(data.get_buffer().size()).to_bits();
 
   // Calculate number of codeblocks.
   nof_cb = ldpc::compute_nof_codeblocks(tbs, config.ldpc_base_graph);
@@ -331,7 +331,7 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
       cb_config.metadata.cb_specific.rm_length = rm_length[absolute_i_cb].value();
 
       // Process codeblock.
-      pdsch_codeblock_processor::result result = cb_processor.process(data, cb_config);
+      pdsch_codeblock_processor::result result = cb_processor.process(data.get_buffer(), cb_config);
 
       // Build resource grid mapper adaptor.
       resource_grid_mapper::symbol_buffer_adapter buffer(result.cb_symbols);
@@ -344,6 +344,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
 
     // Decrement code block batch counter.
     if (cb_task_counter.fetch_sub(1) == 1) {
+      // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
+      data.release();
       // Decrement asynchronous task counter.
       if (async_task_counter.fetch_sub(1) == 1) {
         // Notify end of the processing.

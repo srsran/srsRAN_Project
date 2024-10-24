@@ -27,10 +27,10 @@ using namespace srsran;
   return is_success;
 }
 
-void pdsch_processor_impl::process(resource_grid_writer&                                        grid,
-                                   pdsch_processor_notifier&                                    notifier,
-                                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                                   const pdsch_processor::pdu_t&                                pdu)
+void pdsch_processor_impl::process(resource_grid_writer&                                           grid,
+                                   pdsch_processor_notifier&                                       notifier,
+                                   static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+                                   const pdsch_processor::pdu_t&                                   pdu)
 {
   // Assert PDU.
   [[maybe_unused]] std::string msg;
@@ -59,7 +59,7 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   // Encode each codeword.
   for (unsigned codeword_id = 0; codeword_id != nof_codewords; ++codeword_id) {
     unsigned          nof_layers_cw = (codeword_id == 0) ? nof_layers_cw0 : nof_layers_cw1;
-    const bit_buffer& codeword      = encode(data[codeword_id], codeword_id, nof_layers_cw, nof_re_pdsch, pdu);
+    const bit_buffer& codeword = encode(data[codeword_id].get_buffer(), codeword_id, nof_layers_cw, nof_re_pdsch, pdu);
 
     codewords.emplace_back(codeword);
   }

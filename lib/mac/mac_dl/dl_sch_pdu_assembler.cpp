@@ -17,13 +17,13 @@
 
 using namespace srsran;
 
-/// Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader, min payload size and
-/// potential RLC header.
-static const unsigned RLC_HEADER_SIZE_ESTIM = 2;
-
 /// Minimum size required to fit a MAC subheader and SDU.
-static size_t min_mac_subhdr_and_sdu_space_required(lcid_t lcid)
+static constexpr size_t min_mac_subhdr_and_sdu_space_required(lcid_t lcid)
 {
+  /// Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader, min payload size and
+  /// potential RLC header.
+  constexpr size_t RLC_HEADER_SIZE_ESTIM = 2;
+
   return MIN_MAC_SDU_SUBHEADER_SIZE + 1 + (lcid != LCID_SRB0 ? RLC_HEADER_SIZE_ESTIM : 0);
 }
 
@@ -111,7 +111,7 @@ unsigned dl_sch_pdu::add_sdu(lcid_t lcid, span<uint8_t> sdu)
   // Copy SDU payload.
   std::copy(sdu.begin(), sdu.end(), sdu_enc.sdu_buffer().begin());
 
-  // Encode subheader
+  // Encode subheader.
   return sdu_enc.encode_sdu(sdu.size());
 }
 
@@ -130,12 +130,12 @@ unsigned dl_sch_pdu::add_sdu(lcid_t lcid, const byte_buffer& sdu)
   span<uint8_t> sdu_buf = sdu_enc.sdu_buffer();
   unsigned      offset  = 0;
   for (span<const uint8_t> seg : sdu.segments()) {
-    memcpy(sdu_buf.data() + offset, seg.data(), seg.size());
+    std::memcpy(sdu_buf.data() + offset, seg.data(), seg.size());
     offset += seg.size();
   }
   srsran_sanity_check(offset == sdu_len, "Error while copying SDU payload");
 
-  // Encode subheader
+  // Encode subheader.
   return sdu_enc.encode_sdu(sdu_len);
 }
 
@@ -182,17 +182,21 @@ void dl_sch_pdu::encode_subheader(bool F_bit, lcid_dl_sch_t lcid, unsigned heade
 {
   pdu[byte_offset++] = ((F_bit ? 1U : 0U) << 6U) | (lcid.value() & 0x3fU);
   if (header_len == 3) {
-    // 3 Byte R/F/LCID/L MAC subheader with 16-bit L field
+    // 3 Byte R/F/LCID/L MAC subheader with 16-bit L field.
     pdu[byte_offset++] = (payload_len & 0xff00U) >> 8U;
     pdu[byte_offset++] = (payload_len & 0xffU);
-  } else if (header_len == 2) {
-    // 2 Byte R/F/LCID/L MAC subheader with 8-bit L field
-    pdu[byte_offset++] = payload_len & 0xffU;
-  } else if (header_len == 1) {
-    // do nothing
-  } else {
-    report_fatal_error("Error while packing PDU. Unsupported header length ({})", header_len);
+    return;
   }
+  if (header_len == 2) {
+    // 2 Byte R/F/LCID/L MAC subheader with 8-bit L field.
+    pdu[byte_offset++] = payload_len & 0xffU;
+    return;
+  }
+  if (header_len == 1) {
+    // Do nothing.
+    return;
+  }
+  report_fatal_error("Error while packing PDU. Unsupported header length ({})", header_len);
 }
 
 // /////////////////////////
@@ -200,11 +204,11 @@ void dl_sch_pdu::encode_subheader(bool F_bit, lcid_dl_sch_t lcid, unsigned heade
 class dl_sch_pdu_assembler::pdu_log_builder
 {
 public:
-  explicit pdu_log_builder(du_ue_index_t         ue_index_,
-                           rnti_t                rnti_,
-                           units::bytes          tbs_,
-                           fmt::memory_buffer&   fmtbuf_,
-                           srslog::basic_logger& logger_) :
+  pdu_log_builder(du_ue_index_t         ue_index_,
+                  rnti_t                rnti_,
+                  units::bytes          tbs_,
+                  fmt::memory_buffer&   fmtbuf_,
+                  srslog::basic_logger& logger_) :
     ue_index(ue_index_), rnti(rnti_), tbs(tbs_), logger(logger_), fmtbuf(fmtbuf_), enabled(logger.info.enabled())
   {
     fmtbuf.clear();
@@ -284,28 +288,34 @@ dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_repository&     ue_mng_,
 {
 }
 
-// Buffer passed to the lower layers when HARQ allocation fails.
+/// Buffer passed to the lower layers when HARQ allocation fails.
 static const std::vector<uint8_t> zero_buffer(MAX_DL_PDU_LENGTH, 0);
 
-span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t                rnti,
-                                                             harq_id_t             h_id,
-                                                             unsigned              tb_idx,
-                                                             const dl_msg_tb_info& tb_info,
-                                                             unsigned              tb_size_bytes)
+/// Returns a shared_transport_block that holds a buffer filled with zeros.
+static shared_transport_block make_shared_zero_buffer(size_t sz)
+{
+  return shared_transport_block(span<const uint8_t>(zero_buffer.data(), sz));
+}
+
+shared_transport_block dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t                rnti,
+                                                                harq_id_t             h_id,
+                                                                unsigned              tb_idx,
+                                                                const dl_msg_tb_info& tb_info,
+                                                                unsigned              tb_size_bytes)
 {
   du_ue_index_t ue_idx = ue_mng.get_ue_index(rnti);
   if (ue_idx == INVALID_DU_UE_INDEX) {
     logger.error("DL rnti={} h_id={}: Failed to assemble MAC PDU. Cause: C-RNTI has no associated UE id.", rnti, h_id);
-    return span<const uint8_t>(zero_buffer).first(tb_size_bytes);
+    return make_shared_zero_buffer(tb_size_bytes);
   }
 
-  span<uint8_t> buffer = harq_buffers.dl_harq_buffer(ue_idx, h_id);
-  if (buffer.size() < tb_size_bytes) {
+  auto shared_buffer = harq_buffers.allocate_dl_harq_buffer(ue_idx, h_id);
+  if (not shared_buffer or shared_buffer->get_buffer().size() < tb_size_bytes) {
     logger.error(
         "DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available", ue_idx, rnti, h_id);
-    return span<const uint8_t>(zero_buffer).first(tb_size_bytes);
+    return make_shared_zero_buffer(tb_size_bytes);
   }
-  dl_sch_pdu ue_pdu(buffer.first(tb_size_bytes));
+  dl_sch_pdu ue_pdu(shared_buffer->get_buffer().first(tb_size_bytes));
 
   pdu_log_builder pdu_logger{ue_idx, rnti, units::bytes{tb_size_bytes}, fmtbuf, logger};
 
@@ -324,12 +334,12 @@ span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t             
     ue_pdu.add_padding(tb_size_bytes - current_size);
   } else if (current_size > tb_size_bytes) {
     logger.error("ERROR: Allocated subPDUs exceed TB size ({} > {})", current_size, tb_size_bytes);
-    return span<const uint8_t>(zero_buffer).first(tb_size_bytes);
+    return make_shared_zero_buffer(tb_size_bytes);
   }
 
   pdu_logger.log();
 
-  return ue_pdu.get();
+  return shared_buffer->transfer_to_buffer_view(ue_pdu.nof_bytes());
 }
 
 void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
@@ -337,11 +347,6 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
                                          const dl_msg_lc_info& lc_grant_info,
                                          pdu_log_builder&      pdu_logger)
 {
-  // Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader, min payload size and
-  // potential RLC header.
-  static const unsigned MIN_MAC_SDU_SIZE =
-      MIN_MAC_SDU_SUBHEADER_SIZE + 1 + (lc_grant_info.lcid.value() != LCID_SRB0 ? RLC_HEADER_SIZE_ESTIM : 0);
-
   // Fetch RLC Bearer.
   const lcid_t        lcid   = lc_grant_info.lcid.to_lcid();
   mac_sdu_tx_builder* bearer = ue_mng.get_lc_sdu_builder(rnti, lcid);
@@ -349,8 +354,9 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
 
   const unsigned total_space =
       std::min(get_mac_sdu_required_bytes(lc_grant_info.sched_bytes), ue_pdu.nof_empty_bytes());
-  unsigned rem_bytes = total_space;
-  while (rem_bytes >= MIN_MAC_SDU_SIZE) {
+  unsigned rem_bytes        = total_space;
+  size_t   min_mac_sdu_size = min_mac_subhdr_and_sdu_space_required(lcid);
+  while (rem_bytes >= min_mac_sdu_size) {
     // Get MAC opportunity size based on the remaining bytes to encode for this LCID.
     const unsigned mac_opportunity_size = get_mac_sdu_payload_size(rem_bytes);
 
@@ -395,11 +401,12 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
 
     rem_bytes -= subh_and_sdu_size;
   }
+
   if (rem_bytes == total_space) {
     // No SDU was encoded for this LCID.
-    // Causes for failure to create MAC SDU include: RLC Tx window is full, mismatch between the logical channel
-    // buffer states in the scheduler and RLC bearers, or the MAC opportunity is too small.
-    if (rem_bytes < MIN_MAC_SDU_SIZE) {
+    // Causes for failure to create MAC SDU include: RLC Tx window is full, mismatch between the logical channel buffer
+    // states in the scheduler and RLC bearers, or the MAC opportunity is too small.
+    if (rem_bytes < min_mac_sdu_size) {
       logger.warning("ue={} rnti={} lcid={}: Skipping MAC SDU encoding into PDU of {} bytes ({} available). Cause: "
                      "Allocated SDU size={} is too small.",
                      ue_mng.get_ue_index(rnti),
@@ -442,21 +449,23 @@ void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
   }
 }
 
-span<const uint8_t>
+shared_transport_block
 dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t h_id, unsigned tb_idx, unsigned tbs_bytes)
 {
   du_ue_index_t ue_idx = ue_mng.get_ue_index(rnti);
   if (ue_idx == INVALID_DU_UE_INDEX) {
     logger.error("DL rnti={} h_id={}: Failed to assemble MAC PDU. Cause: C-RNTI has no associated UE id.", rnti, h_id);
-    return span<const uint8_t>(zero_buffer).first(tbs_bytes);
+    return make_shared_zero_buffer(tbs_bytes);
   }
-  span<const uint8_t> buffer = harq_buffers.dl_harq_buffer(ue_idx, h_id);
-  if (buffer.size() < tbs_bytes) {
+
+  auto shared_buffer = harq_buffers.allocate_dl_harq_buffer(ue_idx, h_id);
+  if (not shared_buffer or shared_buffer->get_buffer().size() < tbs_bytes) {
     logger.error("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
                  ue_mng.get_ue_index(rnti),
                  rnti,
                  h_id);
-    return span<const uint8_t>(zero_buffer).first(tbs_bytes);
+    return make_shared_zero_buffer(tbs_bytes);
   }
-  return buffer.first(tbs_bytes);
+
+  return shared_buffer->transfer_to_buffer_view(tbs_bytes);
 }

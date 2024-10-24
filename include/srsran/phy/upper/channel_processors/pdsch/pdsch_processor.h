@@ -23,6 +23,7 @@
 #include "srsran/ran/ptrs/ptrs.h"
 #include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/support/shared_transport_block.h"
 
 namespace srsran {
 
@@ -173,10 +174,10 @@ public:
   /// \param[in]  pdu        Necessary parameters to process the PDSCH transmission.
   /// \remark The number of transport blocks must be equal to the number of codewords in \c pdu.
   /// \remark The size of each transport block is determined by <tt> data[TB index].size() </tt>
-  virtual void process(resource_grid_writer&                                        grid,
-                       pdsch_processor_notifier&                                    notifier,
-                       static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                       const pdu_t&                                                 pdu) = 0;
+  virtual void process(resource_grid_writer&                                           grid,
+                       pdsch_processor_notifier&                                       notifier,
+                       static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+                       const pdu_t&                                                    pdu) = 0;
 };
 
 /// \brief Describes the PDSCH processor validator interface.

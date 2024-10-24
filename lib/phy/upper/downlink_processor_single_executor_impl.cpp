@@ -85,8 +85,8 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
 }
 
 void downlink_processor_single_executor_impl::process_pdsch(
-    const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
-    const pdsch_processor::pdu_t&                                                        pdu)
+    static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data_,
+    const pdsch_processor::pdu_t&                                                    pdu)
 {
   {
     std::lock_guard<std::mutex> lock(mutex);
@@ -106,12 +106,12 @@ void downlink_processor_single_executor_impl::process_pdsch(
   pdsch_processor::pdu_t& pdu_ref = pdsch_list.emplace_back(pdu);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, data, &pdu_ref]() mutable {
+  bool enqueued = executor.execute([this, data = std::move(data_), &pdu_ref]() mutable {
     trace_point process_pdsch_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      pdsch_proc->process(current_grid.get_writer(), pdsch_notifier, data, pdu_ref);
+      pdsch_proc->process(current_grid.get_writer(), pdsch_notifier, std::move(data), pdu_ref);
 
       l1_tracer << trace_event("process_pdsch", process_pdsch_tp);
     } else {

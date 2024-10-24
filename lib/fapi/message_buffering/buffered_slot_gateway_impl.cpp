@@ -34,8 +34,8 @@ buffered_slot_gateway_impl::buffered_slot_gateway_impl(unsigned              l2_
   tx_data_pool.resize(pool_size);
 }
 
-template <typename T, typename Function>
-void buffered_slot_gateway_impl::handle_message(const T& msg, span<std::optional<T>> pool, Function func)
+template <typename T, typename P, typename Function>
+void buffered_slot_gateway_impl::handle_message(T&& msg, P pool, Function func)
 {
   slot_point msg_slot(scs, msg.sfn, msg.slot);
   slot_point current_slot = get_current_slot();
@@ -51,14 +51,14 @@ void buffered_slot_gateway_impl::handle_message(const T& msg, span<std::optional
     return;
   }
 
-  // Same slot or older, do not need to store.
+  // Same slot or older, no need to store the message.
   if (difference <= 0) {
-    func(msg);
+    func(std::forward<T>(msg));
 
     return;
   }
 
-  std::optional<T>& msg_pool_entry = pool[msg_slot.system_slot() % pool.size()];
+  auto& msg_pool_entry = pool[msg_slot.system_slot() % pool.size()];
 
   if (msg_pool_entry) {
     logger.warning("Detected unsent cached FAPI message type '{}' for slot '{}'",
@@ -66,7 +66,7 @@ void buffered_slot_gateway_impl::handle_message(const T& msg, span<std::optional
                    slot_point(scs, msg_pool_entry->sfn, msg_pool_entry->slot));
   }
 
-  msg_pool_entry.emplace(msg);
+  msg_pool_entry.emplace(std::forward<T>(msg));
 }
 
 /// Sends the message cached in the given pool for the given slot using the given function and clears the pool
@@ -84,11 +84,10 @@ static void send_message(slot_point             slot,
   }
 
   slot_point pool_message_slot(scs, pool_entry->sfn, pool_entry->slot);
-  if (pool_message_slot == slot) {
+  if (auto msg_type = pool_entry->message_type; pool_message_slot == slot) {
     func(*pool_entry);
   } else {
-    logger.warning(
-        "Detected unsent cached FAPI message id '{}' for slot '{}'", pool_entry->message_type, pool_message_slot);
+    logger.warning("Detected unsent cached FAPI message id '{}' for slot '{}'", msg_type, pool_message_slot);
   }
 
   pool_entry.reset();

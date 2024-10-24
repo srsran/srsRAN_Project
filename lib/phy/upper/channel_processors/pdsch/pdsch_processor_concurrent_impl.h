@@ -57,10 +57,10 @@ public:
   }
 
   // See interface for documentation.
-  void process(resource_grid_writer&                                        grid,
-               pdsch_processor_notifier&                                    notifier,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override;
+  void process(resource_grid_writer&                                           grid,
+               pdsch_processor_notifier&                                       notifier,
+               static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+               const pdu_t&                                                    pdu) override;
 
 private:
   /// \brief Computes the number of RE used for mapping PDSCH data.
@@ -72,10 +72,10 @@ private:
   static unsigned compute_nof_data_re(const pdu_t& pdu);
 
   /// Saves process() parameters for future uses during an asynchronous execution.
-  void save_inputs(resource_grid_writer&                                        grid,
-                   pdsch_processor_notifier&                                    notifier,
-                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                   const pdu_t&                                                 pdu);
+  void save_inputs(resource_grid_writer&                                           grid,
+                   pdsch_processor_notifier&                                       notifier,
+                   static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+                   const pdu_t&                                                    pdu);
 
   /// Creates code block processing batches and starts the asynchronous processing.
   void fork_cb_batches();
@@ -101,7 +101,7 @@ private:
 
   resource_grid_writer*     grid;
   pdsch_processor_notifier* notifier;
-  span<const uint8_t>       data;
+  shared_transport_block    data;
   pdsch_processor::pdu_t    config;
 
   /// Transport block size of the current transmission.

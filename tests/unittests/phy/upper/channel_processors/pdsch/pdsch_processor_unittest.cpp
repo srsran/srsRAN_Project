@@ -174,7 +174,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   unsigned Nre = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols -
                  reserved.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, rb_mask);
 
-  static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
+  static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
 
   // Generate random data and prepare TB.
   std::vector<uint8_t> data0(16);
@@ -225,7 +225,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
       ASSERT_EQ(entry.config.Nref, Nref.value());
       ASSERT_EQ(entry.config.nof_layers, codeword == 0 ? nof_layers_cw0 : nof_layers_cw1);
       ASSERT_EQ(entry.config.nof_ch_symbols, Nre * entry.config.nof_layers);
-      ASSERT_EQ(span<const uint8_t>(entry.transport_block), span<const uint8_t>(data[codeword]));
+      ASSERT_EQ(span<const uint8_t>(entry.transport_block), data[codeword].get_buffer());
     }
   }
 

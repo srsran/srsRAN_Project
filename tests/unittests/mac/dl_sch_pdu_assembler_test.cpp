@@ -209,7 +209,7 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   dl_msg_tb_info tb_info;
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, conres_ce_size});
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB0, sdu_size});
-  span<const uint8_t> result = this->dl_sch_enc.assemble_newtx_pdu(this->req.crnti, to_harq_id(0), 0, tb_info, tb_size);
+  auto result = this->dl_sch_enc.assemble_newtx_pdu(this->req.crnti, to_harq_id(0), 0, tb_info, tb_size);
 
   byte_buffer expected;
   bit_encoder enc(expected);
@@ -232,10 +232,10 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   }
 
   ASSERT_EQ(tb_size, expected.length());
-  ASSERT_EQ(tb_size, result.size()) << "PDU was not padded correctly";
+  ASSERT_EQ(tb_size, result.get_buffer().size()) << "PDU was not padded correctly";
   ASSERT_EQ(dl_bearers[0].last_sdus.size(), 1);
   ASSERT_EQ(dl_bearers[0].last_sdus.back().length(), sdu_size);
-  ASSERT_EQ(result, expected);
+  ASSERT_EQ(result.get_buffer(), expected);
 }
 
 TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
@@ -267,8 +267,8 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB1, lcid_sched_bytes});
 
   // Encode MAC PDU with multiple SDUs.
-  span<const uint8_t> result = this->dl_sch_enc.assemble_newtx_pdu(this->req.crnti, to_harq_id(0), 0, tb_info, tb_size);
-  ASSERT_EQ(result.size(), tb_size);
+  auto result = this->dl_sch_enc.assemble_newtx_pdu(this->req.crnti, to_harq_id(0), 0, tb_info, tb_size);
+  ASSERT_EQ(result.get_buffer().size(), tb_size);
   ASSERT_EQ(this->dl_bearers[1].last_sdus.size(), nof_sdus);
   for (unsigned i = 0; i != nof_sdus; ++i) {
     ASSERT_EQ(this->dl_bearers[1].last_sdus[i].length(), sdu_payload_sizes[i])
@@ -289,10 +289,11 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
     // Padding.
     enc.pack(0b00, 2);                   // R | F
     enc.pack(lcid_dl_sch_t::PADDING, 6); // LCID
-    std::vector<uint8_t> padding_bits(result.begin() + expected_result.length(), result.end());
+    std::vector<uint8_t> padding_bits(result.get_buffer().begin() + expected_result.length(),
+                                      result.get_buffer().end());
     enc.pack_bytes(padding_bits);
   }
 
-  byte_buffer result_pdu = byte_buffer::create(result).value();
+  byte_buffer result_pdu = byte_buffer::create(result.get_buffer()).value();
   ASSERT_EQ(expected_result, result_pdu) << fmt_range_difference(expected_result, result_pdu);
 }

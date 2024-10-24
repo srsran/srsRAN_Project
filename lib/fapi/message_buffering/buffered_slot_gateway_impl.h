@@ -79,8 +79,8 @@ private:
   /// \param msg FAPI message to handle.
   /// \param pool Pool of messages.
   /// \param func Function to call to forward the messages
-  template <typename T, typename Function>
-  void handle_message(const T& msg, span<std::optional<T>> pool, Function func);
+  template <typename T, typename P, typename Function>
+  void handle_message(T&& msg, P pool, Function func);
 
 private:
   const unsigned                                                                   l2_nof_slots_ahead;

@@ -36,6 +36,8 @@ private:
   uint8_t*               ptr = nullptr;
 };
 
+} // namespace
+
 void rar_pdu_encoder::encode(span<uint8_t> output_buf)
 {
   // See TS38.321, Section 6.2.3.
@@ -105,8 +107,6 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
   *ptr = to_value(grant.temp_crnti) & 0xffU;
   ++ptr;
 }
-
-} // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

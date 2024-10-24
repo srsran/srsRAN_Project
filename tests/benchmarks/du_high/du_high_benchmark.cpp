@@ -505,7 +505,7 @@ private:
     metrics.slot_dl_count++;
     metrics.nof_dl_grants += slot_dl_data_result.ue_pdus.size();
     for (const auto& pdu : slot_dl_data_result.ue_pdus) {
-      metrics.nof_dl_bytes += pdu.pdu.size();
+      metrics.nof_dl_bytes += pdu.pdu.get_buffer().size();
     }
   }
 
@@ -1027,15 +1027,15 @@ public:
 
   srslog::basic_logger&                                 test_logger = srslog::fetch_basic_logger("TEST");
   dummy_metrics_handler                                 metrics_handler;
+  std::unique_ptr<test_helpers::du_high_worker_manager> workers;
+  timer_manager                                         timers;
+  null_mac_pcap                                         mac_pcap;
+  null_rlc_pcap                                         rlc_pcap;
+  std::unique_ptr<du_high_impl>                         du_hi;
   cu_cp_simulator                                       sim_cu_cp;
   cu_up_simulator                                       sim_cu_up;
   phy_simulator                                         sim_phy;
-  timer_manager                                         timers;
-  std::unique_ptr<test_helpers::du_high_worker_manager> workers;
-  std::unique_ptr<du_high_impl>                         du_hi;
   slot_point                                            next_sl_tx{0, 0};
-  null_mac_pcap                                         mac_pcap;
-  null_rlc_pcap                                         rlc_pcap;
 
   /// Queue of MAC UCI indication message to be sent in their expected receive slot.
   std::deque<mac_uci_indication_message> pending_ucis;

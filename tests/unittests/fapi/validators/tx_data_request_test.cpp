@@ -60,17 +60,7 @@ INSTANTIATE_TEST_SUITE_P(
                          [](tx_data_request_message& msg, int value) { msg.pdus.back().cw_index = value; }}),
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
-INSTANTIATE_TEST_SUITE_P(tlv_payload_custom,
-                         validate_tx_data_request_field,
-                         testing::Combine(testing::Values(pdu_field_data<tx_data_request_message>{
-                                              "TLV payload custom",
-                                              [](tx_data_request_message& msg, int value) {
-                                                (void)value;
-                                                msg.pdus.back().tlv_custom.payload = nullptr;
-                                              }}),
-                                          testing::Values(test_case_data{0, false})));
-
-TEST(validate_uci_pusch_pdu, valid_pdu_passes)
+TEST(validate_tx_data_request_pdu, valid_pdu_passes)
 {
   auto msg = build_valid_tx_data_request();
 
@@ -79,7 +69,7 @@ TEST(validate_uci_pusch_pdu, valid_pdu_passes)
   ASSERT_TRUE(result);
 }
 
-TEST(validate_uci_pusch_pdu, invalid_pdu_fails)
+TEST(validate_tx_data_request_pdu, invalid_pdu_fails)
 {
   auto msg = build_valid_tx_data_request();
 

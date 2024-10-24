@@ -129,14 +129,14 @@ static bool validate_pdu_cw_index(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "CW index", message_type_id::tx_data_request, report);
 }
 
-/// Validates the payload property of a custom Tx_Data.request TBS-TLV, as per SCF-222 v4.0 section 3.4.6.
-static bool validate_tlv_custom_payload(const uint8_t* payload, validator_report& report)
+/// Validates the payload property of a Tx_Data.request message, as per SCF-222 v4.0 section 3.4.6.
+static bool validate_pdu_payload(const shared_transport_block& buffer, validator_report& report)
 {
-  if (payload != nullptr) {
+  if (!buffer.get_buffer().empty()) {
     return true;
   }
 
-  report.append(0U, "TLV payload custom", message_type_id::tx_data_request);
+  report.append(0, "PDU Payload", message_type_id::tx_data_request);
   return false;
 }
 
@@ -151,7 +151,7 @@ error_type<validator_report> srsran::fapi::validate_tx_data_request(const tx_dat
 
   for (const auto& pdu : msg.pdus) {
     success &= validate_pdu_cw_index(pdu.cw_index, report);
-    success &= validate_tlv_custom_payload(pdu.tlv_custom.payload, report);
+    success &= validate_pdu_payload(pdu.pdu, report);
   }
 
   // Build the result.

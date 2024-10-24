@@ -172,16 +172,16 @@ bool pdsch_block_processor::empty() const
   return codeblock_symbols.empty() && (next_i_cb == d_segments.size());
 }
 
-void pdsch_processor_lite_impl::process(resource_grid_writer&                                        grid,
-                                        pdsch_processor_notifier&                                    notifier,
-                                        static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                                        const pdu_t&                                                 pdu)
+void pdsch_processor_lite_impl::process(resource_grid_writer&                                           grid,
+                                        pdsch_processor_notifier&                                       notifier,
+                                        static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+                                        const pdu_t&                                                    pdu)
 {
   [[maybe_unused]] std::string msg;
   srsran_assert(handle_validation(msg, pdsch_processor_validator_impl().is_valid(pdu)), "{}", msg);
 
   // Configure new transmission.
-  subprocessor.configure_new_transmission(data[0], 0, pdu);
+  subprocessor.configure_new_transmission(data.front().get_buffer(), 0, pdu);
 
   // Get the PRB allocation mask.
   const bounded_bitset<MAX_RB> prb_allocation_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);

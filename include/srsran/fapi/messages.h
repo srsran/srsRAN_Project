@@ -36,10 +36,12 @@
 #include "srsran/ran/uci/uci_configuration.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/ran/uci/uci_mapping.h"
+#include "srsran/support/shared_transport_block.h"
 #include "srsran/support/units.h"
 #include <array>
 #include <bitset>
 #include <cstdint>
+#include <utility>
 
 namespace srsran {
 
@@ -825,21 +827,18 @@ struct tlv_info {
   uint32_t value;
 };
 
-/// Custom TLV payload.
-struct tlv_custom_payload {
-  units::bytes   length;
-  const uint8_t* payload;
-};
-
 /// Transmission data request PDU information.
 struct tx_data_req_pdu {
-  /// Maximum number of TLVs.
-  static constexpr unsigned MAX_NUM_TLVS = 1024;
+  tx_data_req_pdu() = default;
 
-  units::bytes       pdu_length;
-  uint16_t           pdu_index;
-  uint8_t            cw_index;
-  tlv_custom_payload tlv_custom;
+  tx_data_req_pdu(uint16_t pdu_index_, uint8_t cw_index_, shared_transport_block pdu_) :
+    pdu_index(pdu_index_), cw_index(cw_index_), pdu(std::move(pdu_))
+  {
+  }
+
+  uint16_t               pdu_index;
+  uint8_t                cw_index;
+  shared_transport_block pdu;
 };
 
 /// Transmission request message.

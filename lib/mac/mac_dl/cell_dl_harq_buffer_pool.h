@@ -10,60 +10,138 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/shared_transport_block.h"
 
 namespace srsran {
+
+/// Handle to a DL HARQ buffer managed inside the pool that allows moving the ownership of the buffer to a shared
+/// transport block.
+class dl_harq_buffer_handle
+{
+  span<uint8_t>          buffer;
+  std::atomic<unsigned>* ref_cnt;
+
+public:
+  dl_harq_buffer_handle(span<uint8_t> buffer_, std::atomic<unsigned>* ref_cnt_) : buffer(buffer_), ref_cnt(ref_cnt_)
+  {
+    srsran_assert(ref_cnt, "Invalid reference counter");
+    ref_cnt->fetch_add(1, std::memory_order::memory_order_relaxed);
+  }
+
+  ~dl_harq_buffer_handle()
+  {
+    if (ref_cnt) {
+      ref_cnt->fetch_sub(1, std::memory_order::memory_order_acq_rel);
+    }
+  }
+
+  dl_harq_buffer_handle(const dl_harq_buffer_handle& other)            = delete;
+  dl_harq_buffer_handle& operator=(const dl_harq_buffer_handle& other) = delete;
+
+  dl_harq_buffer_handle(dl_harq_buffer_handle&& other) noexcept :
+    buffer(std::exchange(other.buffer, {})), ref_cnt(std::exchange(other.ref_cnt, nullptr))
+  {
+  }
+  dl_harq_buffer_handle& operator=(dl_harq_buffer_handle&& other) = delete;
+
+  /// Returns the buffer.
+  span<uint8_t>       get_buffer() { return buffer; }
+  span<const uint8_t> get_buffer() const { return buffer; }
+
+  /// \brief Transfers the ownership of the underlying buffer to a \c shared_transport_block.
+  /// \note This method can be only called once. An assertion is triggered is the buffer is already transferred.
+  shared_transport_block transfer_to_buffer_view(size_t nof_bytes)
+  {
+    srsran_assert(ref_cnt, "Cannot transfer an empty buffer");
+
+    auto out_buffer = buffer.first(nof_bytes);
+    buffer          = {};
+    // As we transfer ownership, do not increment the reference counter inside the view.
+    return shared_transport_block(out_buffer, std::exchange(ref_cnt, nullptr), false);
+  }
+};
 
 /// Class that manages the allocation, deallocation and fetching of DL HARQ buffers for a given cell.
 class cell_dl_harq_buffer_pool
 {
   /// Type representing a DL HARQ buffer.
-  using dl_harq_buffer_storage = std::vector<uint8_t>;
+  struct dl_harq_buffer_storage {
+    dl_harq_buffer_storage() = default;
+    explicit dl_harq_buffer_storage(size_t initial_size) : buffer(initial_size) {}
+    explicit dl_harq_buffer_storage(std::vector<uint8_t>&& buffer_) : buffer(std::move(buffer_)) {}
+
+    /// Reference counter, values greater than 0 mean the buffer is being used, otherwise it is free to be reused.
+    std::atomic<unsigned> ref_cnt{0};
+    /// HARQ buffer storage.
+    std::vector<uint8_t> buffer;
+  };
 
   /// Type representing the list of DL HARQ buffers allocated for a given UE in a given cell.
-  using ue_dl_harq_buffer_list = static_vector<dl_harq_buffer_storage, MAX_NOF_HARQS>;
+  using ue_dl_harq_buffer_list = static_vector<dl_harq_buffer_storage*, MAX_NOF_HARQS>;
 
 public:
   /// \brief Construction of a DL HARQ buffer pool for a given cell.
+  ///
   /// \param cell_nof_prbs Number of PRBs of the cell.
   /// \param nof_ports Number of ports of the cell.
   /// \param ctrl_exec Executor to which DL HARQ buffer allocation tasks is dispatched.
-  explicit cell_dl_harq_buffer_pool(unsigned cell_nof_prbs, unsigned nof_ports, task_executor& ctrl_exec);
+  cell_dl_harq_buffer_pool(unsigned cell_nof_prbs, unsigned nof_ports, task_executor& ctrl_exec);
 
-  /// \brief Allocate DL HARQ buffers for a newly created UE.
+  /// Allocate DL HARQ buffers for a newly created UE.
   void allocate_ue_buffers(du_ue_index_t ue_index, unsigned nof_harqs);
 
-  /// \brief Deallocate DL HARQ buffers for a removed UE.
+  /// Deallocate DL HARQ buffers for a removed UE.
   void deallocate_ue_buffers(du_ue_index_t ue_index);
 
-  /// Get DL HARQ buffer for a given UE.
-  span<uint8_t> dl_harq_buffer(du_ue_index_t ue_index, harq_id_t h_id)
+  /// Allocates a DL HARQ buffer for a given UE.
+  expected<dl_harq_buffer_handle> allocate_dl_harq_buffer(du_ue_index_t ue_index, harq_id_t h_id)
   {
     srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid UE index");
-    srsran_assert(cell_buffers[ue_index].size() >= h_id, "Invalid HARQ ID={}", h_id);
-    return cell_buffers[ue_index][h_id];
+    srsran_assert(cell_buffers[ue_index].size() > h_id, "Invalid HARQ ID={}", h_id);
+
+    auto* harq_buffer = cell_buffers[ue_index][h_id];
+    if (harq_buffer->ref_cnt.load(std::memory_order_acquire) != 0) {
+      return make_unexpected(default_error_t{});
+    }
+
+    return dl_harq_buffer_handle(harq_buffer->buffer, &harq_buffer->ref_cnt);
   }
 
 private:
-  // Maximum MAC PDU length, derived based on the cell properties.
+  /// Returns true if the pool has been depleted.
+  bool is_pool_depleted() const { return pool_elem_index == 0; }
+
+  /// This function dispatches a task to grow the cache of DL HARQ buffers, using the \c ctrl_exec, in case the cache
+  /// size decreased below a specific threshold.
+  void grow_cache_in_background();
+
+  /// Returns a pointer to an unused element in the pool or nullptr if the pool is depleted.
+  dl_harq_buffer_storage* allocate_from_pool();
+
+  /// Takes an unused element from the buffer cache (reference count is 0) and returns its pointer, otherwise returns
+  /// nullptr if none is found.
+  dl_harq_buffer_storage* allocate_from_cache();
+
+  /// Maximum MAC PDU length, derived based on the cell properties.
   const unsigned max_pdu_len;
-  // Executor to which DL HARQ buffer allocation tasks is dispatched in the background.
-  task_executor&        ctrl_exec;
+  /// Executor to which DL HARQ buffer allocation tasks is dispatched in the background.
+  task_executor& ctrl_exec;
+  /// Logger.
   srslog::basic_logger& logger;
-
-  // This function dispatches a task to grow the pool of DL HARQ buffers, using the \c ctrl_exec, in case the pool
-  // size decreased below a specific threshold.
-  void grow_pool_in_background();
-
-  // List of DL HARQ buffers currently allocated to UEs in the cell.
+  /// List of DL HARQ buffers currently allocated to UEs in the cell.
   std::vector<ue_dl_harq_buffer_list> cell_buffers;
-
-  // DL HARQ buffers that are not associated with any UE and can be allocated to newly created UEs.
-  std::vector<std::vector<uint8_t>> buffer_cache;
+  /// DL HARQ buffers that are not associated with any UE and can be allocated to newly created UEs.
+  std::vector<dl_harq_buffer_storage*> buffer_cache;
+  /// Stores the DL HARQ buffers.
+  std::unique_ptr<std::array<dl_harq_buffer_storage, MAX_NOF_DU_UES * MAX_NOF_HARQS>> pool;
+  /// Index to the available buffer storage in the pool.
+  size_t pool_elem_index;
 };
 
 } // namespace srsran
