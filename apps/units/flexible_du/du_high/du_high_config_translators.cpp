@@ -183,7 +183,9 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
             csi_cfg.meas_csi_slot_offset,
             csi_cfg.tracking_csi_slot_offset,
             csi_cfg.zp_csi_slot_offset,
-            generate_tdd_pattern(cell_cfg.common_scs, *cell_cfg.tdd_ul_dl_cfg))) {
+            generate_tdd_pattern(cell_cfg.common_scs, *cell_cfg.tdd_ul_dl_cfg),
+            csi_params.tracking_csi_ofdm_symbol_indexes,
+            cell_cfg.ssb_cfg.ssb_period_msec)) {
       report_error("Unable to derive valid CSI-RS slot offsets and period for cell with pci={}\n", cell_cfg.pci);
     }
   } else {

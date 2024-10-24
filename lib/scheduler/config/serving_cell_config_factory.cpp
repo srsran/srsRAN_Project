@@ -686,8 +686,15 @@ static csi_helper::csi_builder_params make_default_csi_builder_params(const cell
     // Set a default CSI report slot offset that falls in an UL slot.
     const auto& tdd_pattern = *params.tdd_ul_dl_cfg_common;
 
-    if (not csi_helper::derive_valid_csi_rs_slot_offsets(
-            csi_params, std::nullopt, std::nullopt, std::nullopt, tdd_pattern)) {
+    constexpr unsigned default_ssb_period_ms = 10U;
+
+    if (not csi_helper::derive_valid_csi_rs_slot_offsets(csi_params,
+                                                         std::nullopt,
+                                                         std::nullopt,
+                                                         std::nullopt,
+                                                         tdd_pattern,
+                                                         csi_params.tracking_csi_ofdm_symbol_indexes,
+                                                         default_ssb_period_ms)) {
       report_fatal_error("Failed to find valid csi-MeasConfig");
     }
 

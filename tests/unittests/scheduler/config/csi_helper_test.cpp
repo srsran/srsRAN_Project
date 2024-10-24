@@ -30,9 +30,16 @@ class csi_rs_slot_derivation_test : public ::testing::TestWithParam<tdd_ul_dl_co
 protected:
   csi_rs_slot_derivation_test()
   {
-    srsran_assert(
-        csi_helper::derive_valid_csi_rs_slot_offsets(result, std::nullopt, std::nullopt, std::nullopt, tdd_cfg),
-        "Derivation failed");
+    static constexpr std::array<unsigned, 4> def_track_csi_ofdm_symbol_idx = {6, 10, 6, 10};
+    static constexpr unsigned                default_ssb_period_ms         = 10U;
+    srsran_assert(csi_helper::derive_valid_csi_rs_slot_offsets(result,
+                                                               std::nullopt,
+                                                               std::nullopt,
+                                                               std::nullopt,
+                                                               tdd_cfg,
+                                                               def_track_csi_ofdm_symbol_idx,
+                                                               default_ssb_period_ms),
+                  "Derivation failed");
   }
 
   tdd_ul_dl_config_common        tdd_cfg = GetParam();

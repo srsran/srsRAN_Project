@@ -69,7 +69,9 @@ std::optional<csi_resource_periodicity> find_valid_csi_rs_period(const tdd_ul_dl
                                                     const std::optional<unsigned>& meas_csi_slot_offset,
                                                     const std::optional<unsigned>& tracking_csi_slot_offset,
                                                     const std::optional<unsigned>& zp_csi_slot_offset,
-                                                    const tdd_ul_dl_config_common& tdd_cfg);
+                                                    const tdd_ul_dl_config_common& tdd_cfg,
+                                                    span<const unsigned>           tracking_csi_ofdm_symbol_indexes,
+                                                    unsigned                       ssb_period_ms);
 
 /// \brief Generate list of zp-CSI-RS Resources.
 std::vector<zp_csi_rs_resource> make_periodic_zp_csi_rs_resource_list(const csi_builder_params& params);
