@@ -9,6 +9,7 @@ on:
 
 jobs:
   docker:
+    if: ${{ vars.SKIP_DOCKER_JOB != 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
