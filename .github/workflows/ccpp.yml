@@ -19,8 +19,12 @@ jobs:
         compiler: [gcc, clang]
     steps:
     - uses: actions/checkout@v3
-    - name: Build srsRAN Project on x86 ${{ matrix.os }}
+    - name: Install Dependencies
       run: |
-        sudo apt update
-        sudo apt install -y cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev ninja-build
-        mkdir build && cd build && cmake -DENABLE_UHD=False -GNinja .. && ninja && ctest
+        sudo docker/scripts/install_dependencies.sh
+    - name: Build srsRAN Project on x86 ${{ matrix.os }} with compiler ${{ matrix.compiler }}
+      run: |
+        docker/scripts/builder.sh -c ${{ matrix.compiler }} -m "-j$(nproc)" .
+    - name: Run unit tests
+      run: |
+        cd build && ctest -j$(nproc) --schedule-random --output-on-failure
