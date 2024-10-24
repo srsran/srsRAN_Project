@@ -405,7 +405,7 @@ public:
   }
 
   /// Clears stored buffers associated with the given slot and logs the messages that could not be sent.
-  void clear_downlink_slot(slot_point slot_point, srslog::basic_logger& logger)
+  void clear_downlink_slot(slot_point slot_point, unsigned sector, srslog::basic_logger& logger)
   {
     // Lock before changing the pool entries.
     std::lock_guard<std::mutex> lock(mutex);
@@ -419,7 +419,8 @@ public:
       if (used_buf.timestamp.get_slot() == slot_point) {
         continue;
       }
-      logger.warning("Detected '{}' late downlink C-Plane messages in the transmitter queue for slot '{}'",
+      logger.warning("Sector #{}: Detected '{}' late downlink C-Plane messages in the transmitter queue for slot '{}'",
+                     sector,
                      dl_cp_buffers.size(),
                      used_buf.timestamp.get_slot());
       cp_entry.reset_buffers(msg_type);
@@ -437,11 +438,11 @@ public:
         if (used_buf.timestamp.get_slot() == slot_point) {
           continue;
         }
-        logger.warning(
-            "Detected '{}' late downlink U-Plane messages in the transmitter queue for slot '{}', symbol '{}'",
-            dl_up_buffers.size(),
-            used_buf.timestamp.get_slot(),
-            used_buf.timestamp.get_symbol_index());
+        logger.warning("Sector #{}: Detected '{}' late uplink C-Plane messages in the transmitter queue for slot '{}'",
+                       sector,
+                       dl_up_buffers.size(),
+                       used_buf.timestamp.get_slot(),
+                       used_buf.timestamp.get_symbol_index());
         up_entry.reset_buffers(msg_type);
         break;
       }
@@ -449,7 +450,7 @@ public:
   }
 
   /// Clears stored uplink C-Plane buffers associated with the given slot and logs the messages that could not be sent.
-  void clear_uplink_slot(slot_point slot_point, srslog::basic_logger& logger)
+  void clear_uplink_slot(slot_point slot_point, unsigned sector, srslog::basic_logger& logger)
   {
     // Lock before changing the pool entries.
     std::lock_guard<std::mutex> lock(mutex);
@@ -463,7 +464,8 @@ public:
       if (used_buf.timestamp.get_slot() == slot_point) {
         continue;
       }
-      logger.warning("Detected '{}' late uplink C-Plane messages in the transmitter queue for slot '{}'",
+      logger.warning("Sector #{}: Detected '{}' late uplink C-Plane messages in the transmitter queue for slot '{}'",
+                     sector,
                      ul_cp_buffers.size(),
                      used_buf.timestamp.get_slot());
       cp_entry.reset_buffers(msg_type);

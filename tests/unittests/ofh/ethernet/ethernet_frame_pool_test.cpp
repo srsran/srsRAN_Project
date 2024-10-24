@@ -485,7 +485,7 @@ TEST_P(EthFramePoolFixture, clearing_full_pool_should_allow_adding_more_data)
       }
       // Increase slot by pool size, clear stale buffers in the pool.
       auto wrapped_slot = slot + pool_size_slots;
-      pool.clear_downlink_slot(wrapped_slot, logger);
+      pool.clear_downlink_slot(wrapped_slot, 0, logger);
 
       // Verify the pool is empty in the given slot.
       auto rd_buffers = pool.read_frame_buffers(ctx);
@@ -518,7 +518,7 @@ TEST_P(EthFramePoolFixture, clearing_full_pool_should_allow_adding_more_data)
         pool.push_frame_buffers(ctx, frame_buffers);
       }
       // Clear full slot in the pool.
-      pool.clear_uplink_slot(wrapped_slot, logger);
+      pool.clear_uplink_slot(wrapped_slot, 0, logger);
 
       // Verify the pool is empty in the given slot.
       rd_buffers = pool.read_frame_buffers(ctx);

@@ -493,13 +493,12 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
 
       // The generic locking queue type is used here to avoid polling for new tasks and thus for saving CPU resources
       // with a price of higher latency (it is acceptable for UL tasks that have lower priority compared to DL).
-      const single_worker ru_worker{
-          name,
-          {concurrent_queue_policy::locking_mpmc, task_worker_queue_size},
-          {{exec_name}},
-          std::nullopt,
-          os_thread_realtime_priority::max() - 6,
-          low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority)};
+      const single_worker ru_worker{name,
+                                    {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                                    {{exec_name}},
+                                    std::chrono::microseconds{15},
+                                    os_thread_realtime_priority::max() - 5,
+                                    affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru)};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
