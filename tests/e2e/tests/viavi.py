@@ -133,6 +133,14 @@ def viavi_manual_test_timeout(request):
     return request.config.getoption("viavi_manual_test_timeout")
 
 
+@pytest.fixture
+def viavi_manual_extra_gnb_arguments(request):
+    """
+    Extra GNB arguments
+    """
+    return request.config.getoption("viavi_manual_extra_gnb_arguments")
+
+
 @mark.viavi_manual
 # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def test_viavi_manual(
@@ -148,6 +156,7 @@ def test_viavi_manual(
     viavi_manual_campaign_filename: str,  # pylint: disable=redefined-outer-name
     viavi_manual_test_name: str,  # pylint: disable=redefined-outer-name
     viavi_manual_test_timeout: int,  # pylint: disable=redefined-outer-name
+    viavi_manual_extra_gnb_arguments: str,  # pylint: disable=redefined-outer-name
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
@@ -158,7 +167,10 @@ def test_viavi_manual(
     Runs a test using Viavi
     """
     test_declaration = get_viavi_configuration_from_testname(
-        viavi_manual_campaign_filename, viavi_manual_test_name, viavi_manual_test_timeout
+        viavi_manual_campaign_filename,
+        viavi_manual_test_name,
+        viavi_manual_test_timeout,
+        viavi_manual_extra_gnb_arguments,
     )
 
     _test_viavi(
@@ -574,7 +586,9 @@ def get_str_number_criteria(number_criteria: float) -> str:
     return str(number_criteria)
 
 
-def get_viavi_configuration_from_testname(campaign_filename: str, test_name: str, timeout: int) -> _ViaviConfiguration:
+def get_viavi_configuration_from_testname(
+    campaign_filename: str, test_name: str, timeout: int, extra_gnb_arguments=""
+) -> _ViaviConfiguration:
     """
     Get Viavi configuration from dict
     """
@@ -590,4 +604,5 @@ def get_viavi_configuration_from_testname(campaign_filename: str, test_name: str
 
     test_declaration.campaign_filename = campaign_filename
     test_declaration.test_timeout = timeout
+    test_declaration.gnb_extra_commands += " " + extra_gnb_arguments
     return test_declaration
