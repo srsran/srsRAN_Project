@@ -61,11 +61,6 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
 
-  if (not request.ho_prep_info.empty()) {
-    // In case of Handover, stop UE RLF detection in the source Cell.
-    ue->disable_rlf_detection();
-  }
-
   proc_logger.log_proc_completed();
 
   CORO_RETURN(mac_res.result ? make_ue_config_response() : make_ue_config_failure());
