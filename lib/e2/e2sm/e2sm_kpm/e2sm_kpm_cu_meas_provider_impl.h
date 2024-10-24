@@ -31,8 +31,6 @@ public:
 
   ~e2sm_kpm_cu_meas_provider_impl() = default;
 
-  void report_metrics(const pdcp_metrics_container& metrics) override;
-
   /// e2sm_kpm_meas_provider functions.
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override;
 
@@ -59,7 +57,7 @@ public:
                      const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                      std::vector<asn1::e2sm::meas_record_item_c>& items) override;
 
-private:
+protected:
   typedef bool(metric_meas_getter_func_t)(const asn1::e2sm::label_info_list_l          label_info_list,
                                           const std::vector<asn1::e2sm::ue_id_c>&      ues,
                                           const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
@@ -85,6 +83,20 @@ private:
   srslog::basic_logger& logger;
 
   std::map<std::string, e2sm_kpm_supported_metric_t> supported_metrics;
+};
+
+class e2sm_kpm_cu_cp_meas_provider_impl : public e2sm_kpm_cu_meas_provider_impl
+{
+public:
+  e2sm_kpm_cu_cp_meas_provider_impl();
+};
+
+class e2sm_kpm_cu_up_meas_provider_impl : public e2sm_kpm_cu_meas_provider_impl
+{
+public:
+  void report_metrics(const pdcp_metrics_container& metrics) override;
+
+  e2sm_kpm_cu_up_meas_provider_impl();
 };
 
 } // namespace srsran

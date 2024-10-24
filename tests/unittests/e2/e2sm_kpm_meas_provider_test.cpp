@@ -181,7 +181,7 @@ class e2sm_kpm_cu_meas_provider_test : public e2sm_kpm_meas_provider_test
   void SetUp() override
   {
     e2sm_kpm_meas_provider_test::SetUp();
-    cu_meas_provider = std::make_unique<e2sm_kpm_cu_meas_provider_impl>();
+    cu_meas_provider = std::make_unique<e2sm_kpm_cu_up_meas_provider_impl>();
     e2sm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*cu_meas_provider);
     e2sm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *cu_meas_provider);
     metrics          = std::make_unique<e2_pdcp_metrics_notifier>();
@@ -191,8 +191,8 @@ class e2sm_kpm_cu_meas_provider_test : public e2sm_kpm_meas_provider_test
   void TearDown() override { e2sm_kpm_meas_provider_test::TearDown(); }
 
 protected:
-  std::unique_ptr<e2_pdcp_metrics_notifier>       metrics;
-  std::unique_ptr<e2sm_kpm_cu_meas_provider_impl> cu_meas_provider;
+  std::unique_ptr<e2_pdcp_metrics_notifier>          metrics;
+  std::unique_ptr<e2sm_kpm_cu_up_meas_provider_impl> cu_meas_provider;
 };
 
 rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)

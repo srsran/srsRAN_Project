@@ -39,12 +39,12 @@ e2_entity::e2_entity(e2ap_configuration&                                        
   subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
 
   if (cfg.e2sm_kpm_enabled) {
-    std::variant<std::unique_ptr<e2sm_kpm_du_meas_provider_impl>, std::unique_ptr<e2sm_kpm_cu_meas_provider_impl>>
+    std::variant<std::unique_ptr<e2sm_kpm_du_meas_provider_impl>, std::unique_ptr<e2sm_kpm_cu_up_meas_provider_impl>>
         e2sm_kpm_meas_provider;
     if (std::holds_alternative<e2_du_metrics_interface*>(e2_metrics_)) {
       e2sm_kpm_meas_provider = std::make_unique<e2sm_kpm_du_meas_provider_impl>(*f1ap_ue_id_translator_);
     } else {
-      e2sm_kpm_meas_provider = std::make_unique<e2sm_kpm_cu_meas_provider_impl>();
+      e2sm_kpm_meas_provider = std::make_unique<e2sm_kpm_cu_up_meas_provider_impl>();
     }
     std::unique_ptr<e2sm_kpm_asn1_packer> e2sm_kpm_packer;
     std::unique_ptr<e2sm_kpm_impl>        e2sm_kpm_iface;
@@ -65,7 +65,7 @@ e2_entity::e2_entity(e2ap_configuration&                                        
     } else {
       std::get<e2_cu_metrics_interface*>(e2_metrics_)
           ->connect_e2_cu_meas_provider(
-              std::move(std::get<std::unique_ptr<e2sm_kpm_cu_meas_provider_impl>>(e2sm_kpm_meas_provider)));
+              std::move(std::get<std::unique_ptr<e2sm_kpm_cu_up_meas_provider_impl>>(e2sm_kpm_meas_provider)));
     }
   }
   if (cfg.e2sm_rc_enabled && du_configurator_) {

@@ -14,15 +14,9 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm;
 using namespace srsran;
 
-e2sm_kpm_cu_meas_provider_impl::e2sm_kpm_cu_meas_provider_impl() : logger(srslog::fetch_basic_logger("E2SM-KPM"))
-{
-  supported_metrics.emplace(
-      "PdcpReordDelayUl",
-      e2sm_kpm_supported_metric_t{
-          NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_cu_meas_provider_impl::get_pdcp_reordering_delay_ul});
-}
+e2sm_kpm_cu_meas_provider_impl::e2sm_kpm_cu_meas_provider_impl() : logger(srslog::fetch_basic_logger("E2SM-KPM")) {}
 
-void e2sm_kpm_cu_meas_provider_impl::report_metrics(const pdcp_metrics_container& metrics) {}
+e2sm_kpm_cu_cp_meas_provider_impl::e2sm_kpm_cu_cp_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl() {}
 
 bool e2sm_kpm_cu_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metric_defs)
 {
@@ -141,6 +135,16 @@ float e2sm_kpm_cu_meas_provider_impl::bytes_to_kbits(float value)
   constexpr unsigned nof_bits_per_byte = 8;
   return (nof_bits_per_byte * value / 1e3);
 }
+
+e2sm_kpm_cu_up_meas_provider_impl::e2sm_kpm_cu_up_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl()
+{
+  supported_metrics.emplace(
+      "PdcpReordDelayUl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_cu_up_meas_provider_impl::get_pdcp_reordering_delay_ul});
+}
+
+void e2sm_kpm_cu_up_meas_provider_impl::report_metrics(const pdcp_metrics_container& metrics) {}
 
 bool e2sm_kpm_cu_meas_provider_impl::get_pdcp_reordering_delay_ul(const asn1::e2sm::label_info_list_l label_info_list,
                                                                   const std::vector<asn1::e2sm::ue_id_c>& ues,
