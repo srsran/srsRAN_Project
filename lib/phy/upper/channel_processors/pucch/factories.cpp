@@ -166,8 +166,13 @@ class pucch_demodulator_factory_sw : public pucch_demodulator_factory
 public:
   std::unique_ptr<pucch_demodulator> create() override
   {
-    return std::make_unique<pucch_demodulator_impl>(
+    std::unique_ptr<pucch_demodulator_format2> demodulator_format2 = std::make_unique<pucch_demodulator_format2>(
         equalizer_factory->create(), demodulation_factory->create_demodulation_mapper(), prg_factory->create());
+
+    std::unique_ptr<pucch_demodulator_format3> demodulator_format3 = std::make_unique<pucch_demodulator_format3>(
+        equalizer_factory->create(), demodulation_factory->create_demodulation_mapper(), prg_factory->create());
+
+    return std::make_unique<pucch_demodulator_impl>(std::move(demodulator_format2), std::move(demodulator_format3));
   }
 
   pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory_,

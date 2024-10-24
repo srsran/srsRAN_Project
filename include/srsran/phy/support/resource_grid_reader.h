@@ -91,6 +91,7 @@ public:
   /// \param[in]  l       OFDM symbol index.
   /// \param[in]  k_init  Initial subcarrier index.
   /// \param[in]  stride  Distance between the elements to get.
+  /// \return A view to the unused entries of \c symbols.
   /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers.
   virtual void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride = 1) const = 0;
@@ -102,6 +103,7 @@ public:
   /// \param[in]  port    Port index.
   /// \param[in]  l       OFDM symbol index.
   /// \param[in]  k_init  Initial subcarrier index.
+  /// \return A view to the unused entries of \c symbols.
   /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers.
   virtual void get(span<cbf16_t> symbols, unsigned port, unsigned l, unsigned k_init) const = 0;

@@ -46,7 +46,29 @@ public:
 
   /// Collects PUCCH Format 3 demodulation parameters.
   struct format3_configuration {
-    // Add here PUCCH demodulator parameters...
+    /// Port indexes used for the PUCCH reception.
+    static_vector<uint8_t, MAX_PORTS> rx_ports;
+    /// Lowest PRB index used for the PUCCH transmission within the resource grid {0, ..., 274}.
+    unsigned first_prb;
+    /// \brief Index of the first PRB after frequency hopping as per TS38.213 Section 9.2.1.
+    ///
+    /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
+    /// enabled, empty otherwise.
+    std::optional<unsigned> second_hop_prb;
+    /// Number of PRB allocated to PUCCH Format 3 {1, ..., 16}.
+    unsigned nof_prb;
+    /// Start symbol index within the slot {0, ..., 13}.
+    unsigned start_symbol_index;
+    /// Number of symbols for the PUCCH transmission {4, ... , 14}.
+    unsigned nof_symbols;
+    /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.2.5.1.
+    uint16_t rnti;
+    /// Scrambling identifier, see parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.5.1. Range is {0, ..., 1023}.
+    unsigned n_id;
+    /// PUCCH-FormatConfig additionalDMRS flag for Format 3, as per TS38.331 6.3.2.
+    bool additional_dmrs;
+    /// PUCCH-FormatConfig pi2BPSK flag for Format 3, as per TS38.331 6.3.2.
+    bool pi2_bpsk;
   };
 
   /// Collects PUCCH Format 4 demodulation parameters.

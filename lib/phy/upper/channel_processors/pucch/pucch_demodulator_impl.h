@@ -13,12 +13,9 @@
 
 #pragma once
 
-#include "srsran/phy/support/mask_types.h"
-#include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "pucch_demodulator_format2.h"
+#include "pucch_demodulator_format3.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_demodulator.h"
-#include "srsran/phy/upper/equalization/dynamic_ch_est_list.h"
-#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsran/ran/pucch/pucch_constants.h"
 
 namespace srsran {
 
@@ -27,89 +24,48 @@ class pucch_demodulator_impl : public pucch_demodulator
 {
 public:
   /// Constructor: sets up internal components and acquires their ownership.
-  pucch_demodulator_impl(std::unique_ptr<channel_equalizer>       equalizer_,
-                         std::unique_ptr<demodulation_mapper>     demapper_,
-                         std::unique_ptr<pseudo_random_generator> descrambler_) :
-    equalizer(std::move(equalizer_)),
-    demapper(std::move(demapper_)),
-    descrambler(std::move(descrambler_)),
-    ch_estimates(pucch_constants::MAX_NOF_RE, MAX_PORTS, 1)
+  /// \param[in] demodulator_format2_ PUCCH Format 2 demodulator.
+  /// \param[in] demodulator_format3_ PUCCH Format 3 demodulator.
+  pucch_demodulator_impl(std::unique_ptr<pucch_demodulator_format2> demodulator_format2_,
+                         std::unique_ptr<pucch_demodulator_format3> demodulator_format3_) :
+    demodulator_format2(std::move(demodulator_format2_)), demodulator_format3(std::move(demodulator_format3_))
   {
-    srsran_assert(equalizer, "Invalid pointer to channel_equalizer object.");
-    srsran_assert(demapper, "Invalid pointer to demodulation_mapper object.");
-    srsran_assert(descrambler, "Invalid pointer to pseudo_random_generator object.");
+    srsran_assert(demodulator_format2, "Invalid pointer to pucch_demodulator_format2 object.");
+    srsran_assert(demodulator_format3, "Invalid pointer to pucch_demodulator_format3 object.");
   }
 
   // See interface for the documentation.
   void demodulate(span<log_likelihood_ratio>   llr,
                   const resource_grid_reader&  grid,
                   const channel_estimate&      estimates,
-                  const format2_configuration& config) override;
+                  const format2_configuration& config) override
+  {
+    demodulator_format2->demodulate(llr, grid, estimates, config);
+  }
 
   // See interface for the documentation.
   void demodulate(span<log_likelihood_ratio>   llr,
                   const resource_grid_reader&  grid,
                   const channel_estimate&      estimates,
-                  const format3_configuration& config) override;
+                  const format3_configuration& config) override
+  {
+    demodulator_format3->demodulate(llr, grid, estimates, config);
+  }
 
   // See interface for the documentation.
   void demodulate(span<log_likelihood_ratio>   llr,
                   const resource_grid_reader&  grid,
                   const channel_estimate&      estimates,
-                  const format4_configuration& config) override;
+                  const format4_configuration& config) override
+  {
+    srsran_assertion_failure("PUCCH Format 4 not supported.");
+  }
 
 private:
-  /// PUCCH uses a single TX layer.
-  static constexpr unsigned SINGLE_TX_LAYER = 1;
-
-  /// \brief Gets PUCCH Resource Elements and channel estimation coefficients given a PUCCH Format 2 allocation.
-  ///
-  /// Extracts and loads the inner buffers with the PUCCH control data RE from the provided \c resource_grid, and their
-  /// corresponding channel estimates from \c channel_ests. The DM-RS RE are skipped.
-  ///
-  /// \param[in]  resource_grid Resource grid for the current slot.
-  /// \param[in]  channel_ests  Channel estimation for the current slot.
-  /// \param[in]  config        PUCCH configuration parameters.
-  void get_data_re_ests(const resource_grid_reader&  resource_grid,
-                        const channel_estimate&      channel_ests,
-                        const format2_configuration& config);
-
-  /// Channel equalization component, also in charge of combining contributions of all receive antenna ports.
-  std::unique_ptr<channel_equalizer> equalizer;
-  /// Demodulation mapper component: transforms channel symbols into log-likelihood ratios (i.e., soft bits).
-  std::unique_ptr<demodulation_mapper> demapper;
-  /// Descrambler component.
-  std::unique_ptr<pseudo_random_generator> descrambler;
-
-  /// \brief Buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
-  /// \remark The symbols are arranged in two dimensions, i.e., resource element and receive port.
-  static_re_buffer<MAX_PORTS, pucch_constants::MAX_NOF_RE, cbf16_t> ch_re;
-
-  /// \brief Buffer used to store channel modulation resource elements at the equalizer output.
-  /// \remark The symbols are arranged in two dimensions, i.e., resource element and transmit layer.
-  static_vector<cf_t, pucch_constants::MAX_NOF_RE> eq_re;
-
-  /// \brief Buffer used to transfer symbol noise variances at the equalizer output.
-  /// \remark The symbols are arranged in two dimensions, i.e., resource element and transmit layer.
-  static_vector<float, pucch_constants::MAX_NOF_RE> eq_noise_vars;
-
-  /// \brief Buffer used to transfer channel estimation coefficients from the channel estimate to the equalizer.
-  /// \remark The channel estimation coefficients are arranged in three dimensions, i.e., resource element, receive port
-  /// and transmit layer.
-  dynamic_ch_est_list ch_estimates;
-
-  /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
-  std::array<float, MAX_PORTS> noise_var_estimates;
-
-  /// \brief Control data RE allocation pattern for PUCCH Format 2.
-  ///
-  /// Indicates the Resource Elements containing control data symbols within a PRB, as per TS38.211 Section 6.4.1.3.2.2.
-  const re_prb_mask format2_prb_re_mask = {true, false, true, true, false, true, true, false, true, true, false, true};
-
-  /// Temporary channel estimates for an OFDM symbol.
-  std::array<cf_t, MAX_RB * NRE> temp_ests_symbol;
-  /// PRB mask indicating the used PRB within the resource grid.
-  bounded_bitset<MAX_RB> prb_mask;
+  /// PUCCH demodulator Format 2 component.
+  std::unique_ptr<pucch_demodulator_format2> demodulator_format2;
+  /// PUCCH demodulator Format 3 component.
+  std::unique_ptr<pucch_demodulator_format3> demodulator_format3;
 };
 
 } // namespace srsran

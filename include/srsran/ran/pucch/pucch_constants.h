@@ -50,6 +50,15 @@ static constexpr unsigned FORMAT2_MIN_UCI_NBITS = 3;
 /// Number of control data subcarriers per Resource Block for PUCCH Format 2, as per TS38.213 Section 9.1.5.2.
 static constexpr unsigned FORMAT2_NOF_DATA_SC = 8;
 
+/// Minimum number of symbols that PUCCH Format 3 can transmit.
+static constexpr unsigned FORMAT3_MIN_NSYMB = 4;
+
+/// Maximum number of symbols that PUCCH Format 3 can transmit.
+static constexpr unsigned FORMAT3_MAX_NSYMB = 14;
+
+/// Maximum number of PRBs allocated for PUCCH Format 3.
+static constexpr unsigned FORMAT3_MAX_NPRB = 16;
+
 /// \brief Maximum number of resource elements used by PUCCH.
 ///
 /// It corresponds to PUCCH Format 3 with a bandwidth of 16 PRBs and a duration of 14 symbols, two of which are occupied

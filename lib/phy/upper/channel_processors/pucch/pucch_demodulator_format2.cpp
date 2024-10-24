@@ -9,23 +9,31 @@
  */
 
 /// \file
-/// \brief PUCCH demodulator implementation definition.
+/// \brief PUCCH Format 2 demodulator definition.
 
-#include "pucch_demodulator_impl.h"
+#include "pucch_demodulator_format2.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+
+#include <srsran/phy/support/mask_types.h>
 
 using namespace srsran;
 
-void pucch_demodulator_impl::demodulate(span<log_likelihood_ratio>   llr,
-                                        const resource_grid_reader&  grid,
-                                        const channel_estimate&      estimates,
-                                        const format2_configuration& config)
+/// \brief Control data RE allocation pattern for PUCCH Format 2.
+///
+/// Indicates the Resource Elements containing control data symbols within a PRB, as per TS38.211 Section 6.4.1.3.2.2.
+static const re_prb_mask format2_prb_re_mask =
+    {true, false, true, true, false, true, true, false, true, true, false, true};
+
+void pucch_demodulator_format2::demodulate(span<log_likelihood_ratio>                      llr,
+                                           const resource_grid_reader&                     grid,
+                                           const channel_estimate&                         estimates,
+                                           const pucch_demodulator::format2_configuration& config)
 {
   // Number of receive antenna ports.
   auto nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
 
   // Number of data Resource Elements in a slot for a single Rx port.
-  auto nof_re_port = static_cast<unsigned>(pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols);
+  unsigned nof_re_port = pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols;
 
   // Assert that allocations are valid.
   srsran_assert(config.nof_prb && config.nof_prb <= pucch_constants::FORMAT2_MAX_NPRB,
@@ -86,25 +94,9 @@ void pucch_demodulator_impl::demodulate(span<log_likelihood_ratio>   llr,
   descrambler->apply_xor(llr, llr);
 }
 
-void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>                      llr,
-                                        const srsran::resource_grid_reader&                     grid,
-                                        const srsran::channel_estimate&                         estimates,
-                                        const srsran::pucch_demodulator::format3_configuration& config)
-{
-  srsran_assertion_failure("PUCCH Format 3 not supported.");
-}
-
-void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>                      llr,
-                                        const srsran::resource_grid_reader&                     grid,
-                                        const srsran::channel_estimate&                         estimates,
-                                        const srsran::pucch_demodulator::format4_configuration& config)
-{
-  srsran_assertion_failure("PUCCH Format 4 not supported.");
-}
-
-void pucch_demodulator_impl::get_data_re_ests(const resource_grid_reader&                     resource_grid,
-                                              const channel_estimate&                         channel_ests,
-                                              const pucch_demodulator::format2_configuration& config)
+void pucch_demodulator_format2::get_data_re_ests(const resource_grid_reader&                     resource_grid,
+                                                 const channel_estimate&                         channel_ests,
+                                                 const pucch_demodulator::format2_configuration& config)
 {
   // Prepare RB mask. RB allocation is contiguous for PUCCH Format 2.
   prb_mask.resize(config.nof_prb);
