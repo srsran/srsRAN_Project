@@ -136,7 +136,7 @@ public:
 
   void handle_rlf_detection(rlf_cause cause)
   {
-    if (not active()) {
+    if (not is_handling_new_rlfs()) {
       // Either the RLF has been triggered or the UE is already being destroyed.
       return;
     }
@@ -172,22 +172,29 @@ public:
 
   void handle_crnti_ce_detection()
   {
-    if (active() and release_timer.is_running() and current_cause == rlf_cause::max_mac_kos_reached) {
+    if (release_timer.is_running() and current_cause == rlf_cause::max_mac_kos_reached) {
       // If the RLF was not due to MAC KOs, a C-RNTI CE is not enough to cancel the RLF.
       release_timer.stop();
       logger.info("ue={}: RLF timer reset. Cause: C-RNTI CE was received for the UE", ue_ctx.ue_index);
     }
   }
 
-  void deactivate()
+  bool deactivate()
   {
-    rlf_detection_active = false;
-    release_timer.stop();
+    if (release_timer.is_valid()) {
+      release_timer.reset();
+      return true;
+    }
+    return false;
   }
 
-  bool active() const { return rlf_detection_active; }
-
 private:
+  bool is_handling_new_rlfs() const
+  {
+    return release_timer.is_valid() and current_cause != rlf_cause::rlc_protocol_failure and
+           current_cause != rlf_cause::max_rlc_retxs_reached;
+  }
+
   std::chrono::milliseconds get_release_timeout() const
   {
     // Note: Between an RLF being detected and the UE being released, the DU manager will wait for enough time to allow
@@ -204,33 +211,31 @@ private:
   {
     logger.info("ue={}: RLF timer expired with cause=\"{}\". Requesting a UE release...",
                 ue_ctx.ue_index,
-                get_rlf_cause_str(current_cause));
+                get_rlf_cause_str(*current_cause));
 
     // Request UE release to the CU.
     cfg.f1ap.ue_mng.handle_ue_context_release_request(
-        srs_du::f1ap_ue_context_release_request{ue_ctx.ue_index, current_cause});
+        srs_du::f1ap_ue_context_release_request{ue_ctx.ue_index, *current_cause});
 
-    // Stop detection of new RLFs, so that no new RLFs are triggered after the UE is scheduled for release.
+    // Stop handling of RLFs, so that no new RLFs are triggered after the UE is scheduled for release.
     deactivate();
   }
 
   void stop_ue_drb_activity()
   {
-    // Disable the RLF detection. We are at a point of no return for this UE state.
-    deactivate();
-
+    // We are at a point of no return for this UE. Disable DRB traffic (not RLFs because we still the RLF timer to
+    // trigger).
     // Note: We use an async task rather than just an execute call, to ensure that this task is not dispatched after
     // the UE has already been deleted.
-    ue_ctx.schedule_async_task(ue_ctx.handle_activity_stop_request(false));
+    ue_ctx.schedule_async_task(ue_ctx.handle_rb_stop_request(false));
   }
 
   du_ue_controller_impl&   ue_ctx;
   const du_manager_params& cfg;
   srslog::basic_logger&    logger = srslog::fetch_basic_logger("DU-MNG");
 
-  bool         rlf_detection_active = true;
-  rlf_cause    current_cause;
-  unique_timer release_timer;
+  std::optional<rlf_cause> current_cause;
+  unique_timer             release_timer;
 };
 
 // -------------
@@ -252,8 +257,7 @@ du_ue_controller_impl::~du_ue_controller_impl() {}
 
 void du_ue_controller_impl::disable_rlf_detection()
 {
-  if (rlf_handler->active()) {
-    rlf_handler->deactivate();
+  if (rlf_handler->deactivate()) {
     logger.debug("ue={}: Disabled RLF detection", ue_index);
   }
 }
@@ -263,6 +267,11 @@ async_task<void> du_ue_controller_impl::handle_activity_stop_request(bool stop_s
   // Disable RLF detections.
   disable_rlf_detection();
 
+  return handle_rb_stop_request(stop_srbs);
+}
+
+async_task<void> du_ue_controller_impl::handle_rb_stop_request(bool stop_srbs)
+{
   // Disable RBs
   if (stop_srbs) {
     logger.debug("ue={}: Stopping SRB and DRB traffic...", ue_index);

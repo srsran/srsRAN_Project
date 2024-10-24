@@ -46,6 +46,7 @@ private:
   class rlf_state_machine;
 
   async_task<void> run_in_ue_executor(unique_task task);
+  async_task<void> handle_rb_stop_request(bool stop_srbs);
 
   du_ue_manager_repository& ue_db;
   const du_manager_params&  cfg;
