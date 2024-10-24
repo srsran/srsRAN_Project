@@ -15,7 +15,7 @@ add_library(srsran_du_high STATIC
         du_high_executor_mapper.cpp)
 target_link_libraries(srsran_du_high PUBLIC srsran_du_high_adapters)
 
-add_library(srsran_du_high_wrapper STATIC
-        du_high_wrapper_factory.cpp
-        du_high_wrapper_impl.cpp)
-target_link_libraries(srsran_du_high_wrapper PUBLIC srsran_du_config_validators srsran_du_high srsran_mac_fapi_adaptor srsran_fapi)
+add_library(srsran_o_du_high STATIC
+        o_du_high_factory.cpp
+        o_du_high_impl.cpp)
+target_link_libraries(srsran_o_du_high PUBLIC srsran_du_config_validators srsran_du_high srsran_mac_fapi_adaptor srsran_fapi)

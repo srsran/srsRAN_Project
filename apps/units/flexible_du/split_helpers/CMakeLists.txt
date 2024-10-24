@@ -11,7 +11,7 @@ set(SOURCES
         flexible_du_impl.cpp
         multicell_flexible_du_factory.cpp
         multicell_flexible_du_impl.cpp
-)
+        o_du_high_factory.cpp)
 
 add_library(srsran_flexible_du_helpers STATIC ${SOURCES})
 target_include_directories(srsran_flexible_du_helpers PRIVATE ${CMAKE_SOURCE_DIR})
@@ -22,10 +22,10 @@ if (DPDK_FOUND)
 endif (DPDK_FOUND)
 
 target_link_libraries(srsran_flexible_du_helpers
-        srsran_du_wrapper
+        srsran_o_du
         srsran_ru_dummy
         srsran_pcap
         srsran_app_services
         srsran_fapi_app_unit
-        srsran_du_low_unit_helpers
-        srsran_du_high_unit_helpers)
+        srsran_o_du_low_unit_helpers
+        srsran_o_du_high_unit_helpers)

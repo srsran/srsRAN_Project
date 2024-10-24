@@ -9,10 +9,8 @@
  */
 
 #include "split_8_du_application_unit_impl.h"
-#include "apps/services/e2/e2_metric_connector_manager.h"
-#include "apps/units/flexible_du/du_high/du_high_config_translators.h"
-#include "apps/units/flexible_du/du_low/du_low_config_translator.h"
-#include "apps/units/flexible_du/fapi/fapi_config_translator.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_translators.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config_translator.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_translator.h"
 #include "split_8_du_factory.h"
 #include "split_8_du_unit_cli11_schema.h"
@@ -40,10 +38,10 @@ bool split_8_du_application_unit_impl::on_configuration_validation(
 
 split_8_du_application_unit_impl::split_8_du_application_unit_impl(std::string_view app_name)
 {
-  unit_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
   // Note: do not update the default e2ap pcap filename.
 }
 
@@ -52,8 +50,8 @@ void split_8_du_application_unit_impl::on_parsing_configuration_registration(CLI
   configure_cli11_with_split_8_du_unit_config_schema(app, unit_cfg);
 }
 
-du_unit split_8_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
-                                                                  bool                        use_multicell)
+o_du_unit split_8_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
+                                                                    bool                        use_multicell)
 {
   return split8_du_factory(unit_cfg).create_flexible_du(dependencies);
 }
@@ -71,9 +69,9 @@ void split_8_du_application_unit_impl::dump_config(YAML::Node& node) const
 void split_8_du_application_unit_impl::fill_worker_manager_config(worker_manager_config& config)
 {
   bool     is_blocking_mode_enable = unit_cfg.ru_cfg.device_driver == "zmq";
-  unsigned nof_cells               = unit_cfg.du_high_cfg.config.cells_cfg.size();
-  fill_du_high_worker_manager_config(config, unit_cfg.du_high_cfg.config, is_blocking_mode_enable);
+  unsigned nof_cells               = unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
+  fill_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg.du_high_cfg.config, is_blocking_mode_enable);
   fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_cells);
-  fill_fapi_worker_manager_config(config, unit_cfg.fapi_cfg, nof_cells);
+  fill_fapi_worker_manager_config(config, unit_cfg.odu_high_cfg.fapi_cfg, nof_cells);
   fill_sdr_worker_manager_config(config, unit_cfg.ru_cfg);
 }

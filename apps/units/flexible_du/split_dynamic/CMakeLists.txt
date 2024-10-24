@@ -24,13 +24,9 @@ if (DPDK_FOUND)
 endif (DPDK_FOUND)
 
 target_link_libraries(srsran_flexible_du
-        srsran_du_wrapper
         srsran_ru_dummy
         srsran_pcap
         srsran_app_services
-        srsran_fapi_app_unit
-        srsran_du_low_unit_helpers
         srsran_split_8_app_unit_helpers
         srsran_split_7_2_app_unit_helpers
-        srsran_du_high_unit_helpers
         srsran_flexible_du_helpers)

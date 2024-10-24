@@ -10,9 +10,8 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_high/du_high_config.h"
-#include "apps/units/flexible_du/du_low/du_low_config.h"
-#include "apps/units/flexible_du/fapi/fapi_config.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config.h"
 #include <variant>
@@ -50,12 +49,10 @@ struct ru_dummy_unit_config {
 
 /// Dynamic DU unit configuration.
 struct dynamic_du_unit_config {
-  /// DU high configuration.
-  du_high_parsed_config du_high_cfg;
+  /// O-DU high configuration.
+  o_du_high_unit_config odu_high_cfg;
   /// DU low configuration.
   du_low_unit_config du_low_cfg;
-  /// FAPI configuration.
-  fapi_unit_config fapi_cfg;
   /// Radio Unit configuration.
   std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config> ru_cfg = {ru_sdr_unit_config{}};
 };

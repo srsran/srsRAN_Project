@@ -21,7 +21,7 @@ class split8_du_factory : public flexible_du_factory
 
 public:
   explicit split8_du_factory(const split_8_du_unit_config& config_) :
-    flexible_du_factory({config_.du_high_cfg, config_.du_low_cfg, config_.fapi_cfg}), unit_config(config_)
+    flexible_du_factory({config_.odu_high_cfg, config_.du_low_cfg}), unit_config(config_)
   {
   }
 

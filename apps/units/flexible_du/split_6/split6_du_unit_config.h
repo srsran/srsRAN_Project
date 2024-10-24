@@ -12,15 +12,14 @@
 
 #include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "apps/units/flexible_du/fapi/fapi_config.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config.h"
 
 namespace srsran {
 
 /// DU Split 6 unit configuration.
 struct split6_du_unit_config {
-  /// DU high configuration.
-  du_high_parsed_config du_high_cfg;
-  /// FAPI configuration.
-  fapi_unit_config fapi_cfg;
+  /// O-DU high configuration.
+  o_du_high_unit_config odu_high_cfg;
 };
 
 } // namespace srsran

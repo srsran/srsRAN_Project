@@ -9,8 +9,8 @@
  */
 
 #include "dynamic_du_unit_config_validator.h"
-#include "apps/units/flexible_du/du_high/du_high_config_validator.h"
-#include "apps/units/flexible_du/du_low/du_low_config_validator.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_validator.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config_validator.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_validator.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_validator.h"
 #include "srsran/ran/prach/prach_configuration.h"
@@ -118,23 +118,23 @@ static bool validate_expert_execution_unit_config(const ru_dummy_unit_config&   
 bool srsran::validate_dynamic_du_unit_config(const dynamic_du_unit_config&    config,
                                              const os_sched_affinity_bitmask& available_cpus)
 {
-  if (!validate_du_high_config(config.du_high_cfg.config, available_cpus)) {
+  if (!validate_o_du_high_config(config.odu_high_cfg, available_cpus)) {
     return false;
   }
 
-  auto du_low_dependencies = get_du_low_validation_dependencies(config.du_high_cfg.config);
+  auto du_low_dependencies = get_du_low_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
   if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies, available_cpus)) {
     return false;
   }
 
   if (std::holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
-    auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.du_high_cfg.config);
+    auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
     return validate_ru_ofh_config(
         std::get<ru_ofh_unit_parsed_config>(config.ru_cfg).config, ru_ofh_dependencies, available_cpus);
   }
 
   if (std::holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
-    auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config.du_high_cfg.config);
+    auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
     return validate_ru_sdr_config(std::get<ru_sdr_unit_config>(config.ru_cfg), ru_sdr_dependencies, available_cpus);
   }
 

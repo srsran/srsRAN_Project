@@ -21,7 +21,7 @@ class dynamic_du_factory : public flexible_du_factory
 
 public:
   explicit dynamic_du_factory(const dynamic_du_unit_config& config_) :
-    flexible_du_factory({config_.du_high_cfg, config_.du_low_cfg, config_.fapi_cfg}), unit_config(config_)
+    flexible_du_factory({config_.odu_high_cfg, config_.du_low_cfg}), unit_config(config_)
   {
   }
 

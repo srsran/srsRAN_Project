@@ -9,8 +9,8 @@
  */
 
 #include "split_7_2_du_unit_config_validator.h"
-#include "apps/units/flexible_du/du_high/du_high_config_validator.h"
-#include "apps/units/flexible_du/du_low/du_low_config_validator.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_validator.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config_validator.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_validator.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
@@ -70,15 +70,15 @@ static std::vector<ru_ofh_cell_validation_config> get_ru_ofh_validation_dependen
 bool srsran::validate_split_7_2_du_unit_config(const split_7_2_du_unit_config&  config,
                                                const os_sched_affinity_bitmask& available_cpus)
 {
-  if (!validate_du_high_config(config.du_high_cfg.config, available_cpus)) {
+  if (!validate_o_du_high_config(config.odu_high_cfg, available_cpus)) {
     return false;
   }
 
-  auto du_low_dependencies = get_du_low_validation_dependencies(config.du_high_cfg.config);
+  auto du_low_dependencies = get_du_low_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
   if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies, available_cpus)) {
     return false;
   }
 
-  auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.du_high_cfg.config);
+  auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
   return validate_ru_ofh_config(config.ru_cfg.config, ru_ofh_dependencies, available_cpus);
 }

@@ -14,7 +14,7 @@
 using namespace srsran;
 
 split6_du_impl::split6_du_impl(std::vector<std::unique_ptr<fapi::fapi_adaptor>> adaptors_,
-                               std::vector<std::unique_ptr<du_high_wrapper>>    du_list_) :
+                               std::vector<std::unique_ptr<srs_du::o_du_high>>  du_list_) :
   du_list(std::move(du_list_)), adaptors(std::move(adaptors_))
 {
   srsran_assert(!du_list.empty(), "Invalid DU high wrapper");

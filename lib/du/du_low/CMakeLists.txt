@@ -9,10 +9,10 @@
 set(SOURCES
         du_low_factory.cpp
         du_low_impl.cpp
-        du_low_wrapper_factory.cpp
-        du_low_wrapper_impl.cpp)
+        o_du_low_factory.cpp
+        o_du_low_impl.cpp)
 
-add_library(srsran_du_low_wrapper STATIC ${SOURCES})
+add_library(srsran_o_du_low STATIC ${SOURCES})
 set(DU_LOW_LIBRARIES srsran_phy_fapi_adaptor srsran_upper_phy srsran_channel_precoder)
 
 # Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
@@ -22,4 +22,4 @@ if (DPDK_FOUND)
         srsran_hal_pdsch
         srsran_hal_bbdev)
 endif (DPDK_FOUND)
-target_link_libraries(srsran_du_low_wrapper PUBLIC ${DU_LOW_LIBRARIES})
+target_link_libraries(srsran_o_du_low PUBLIC ${DU_LOW_LIBRARIES})

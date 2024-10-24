@@ -38,10 +38,10 @@ bool dynamic_du_application_unit_impl::on_configuration_validation(
 
 dynamic_du_application_unit_impl::dynamic_du_application_unit_impl(std::string_view app_name)
 {
-  unit_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
   // Note: do not update the default e2ap pcap filename.
 }
 
@@ -50,8 +50,8 @@ void dynamic_du_application_unit_impl::on_parsing_configuration_registration(CLI
   configure_cli11_with_dynamic_du_unit_config_schema(app, unit_cfg);
 }
 
-du_unit dynamic_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
-                                                                  bool                        use_multicell)
+o_du_unit dynamic_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
+                                                                    bool                        use_multicell)
 {
   return use_multicell ? multicell_dynamic_du_factory(unit_cfg).create_flexible_du(dependencies)
                        : dynamic_du_factory(unit_cfg).create_flexible_du(dependencies);

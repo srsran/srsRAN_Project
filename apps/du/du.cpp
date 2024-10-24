@@ -51,9 +51,9 @@
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/stdin_command_dispatcher.h"
-#include "apps/units/flexible_du/du_high/du_high_config.h"
-#include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
+#include "apps/units/flexible_du/o_du_high/du_high/du_high_config.h"
+#include "apps/units/flexible_du/o_du_high/du_high/pcap_factory.h"
 
 #include "srsran/du/du_power_controller.h"
 

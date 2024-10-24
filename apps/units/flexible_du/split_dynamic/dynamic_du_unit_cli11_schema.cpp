@@ -9,9 +9,8 @@
  */
 
 #include "dynamic_du_unit_cli11_schema.h"
-#include "apps/units/flexible_du/du_high/du_high_config_cli11_schema.h"
-#include "apps/units/flexible_du/du_low/du_low_config_cli11_schema.h"
-#include "apps/units/flexible_du/fapi/fapi_config_cli11_schema.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_cli11_schema.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config_cli11_schema.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_cli11_schema.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_cli11_schema.h"
 #include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
@@ -81,9 +80,8 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_dummy_unit_c
 
 void srsran::configure_cli11_with_dynamic_du_unit_config_schema(CLI::App& app, dynamic_du_unit_config& parsed_cfg)
 {
-  configure_cli11_with_du_high_config_schema(app, parsed_cfg.du_high_cfg);
+  configure_cli11_with_o_du_high_config_schema(app, parsed_cfg.odu_high_cfg);
   configure_cli11_with_du_low_config_schema(app, parsed_cfg.du_low_cfg);
-  configure_cli11_with_fapi_config_schema(app, parsed_cfg.fapi_cfg);
   configure_cli11_with_ru_ofh_config_schema(app, ofh_cfg);
   configure_cli11_with_ru_sdr_config_schema(app, sdr_cfg);
 
@@ -138,9 +136,10 @@ static void manage_ru(CLI::App& app, dynamic_du_unit_config& parsed_cfg)
 
 void srsran::autoderive_dynamic_du_parameters_after_parsing(CLI::App& app, dynamic_du_unit_config& parsed_cfg)
 {
-  autoderive_du_high_parameters_after_parsing(app, parsed_cfg.du_high_cfg.config);
+  const unsigned nof_cells = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
+  autoderive_o_du_high_parameters_after_parsing(app, parsed_cfg.odu_high_cfg);
   // Auto derive SDR parameters.
-  autoderive_ru_sdr_parameters_after_parsing(app, sdr_cfg, parsed_cfg.du_high_cfg.config.cells_cfg.size());
+  autoderive_ru_sdr_parameters_after_parsing(app, sdr_cfg, nof_cells);
   // Auto derive OFH parameters.
   autoderive_ru_ofh_parameters_after_parsing(app, ofh_cfg);
 
@@ -149,21 +148,18 @@ void srsran::autoderive_dynamic_du_parameters_after_parsing(CLI::App& app, dynam
 
   if (std::holds_alternative<ru_dummy_unit_config>(parsed_cfg.ru_cfg)) {
     auto& dummy = std::get<ru_dummy_unit_config>(parsed_cfg.ru_cfg);
-    if (dummy.cell_affinities.size() < parsed_cfg.du_high_cfg.config.cells_cfg.size()) {
-      dummy.cell_affinities.resize(parsed_cfg.du_high_cfg.config.cells_cfg.size());
+    if (dummy.cell_affinities.size() < nof_cells) {
+      dummy.cell_affinities.resize(nof_cells);
     }
   }
 
   // Auto derive DU low parameters.
-  const auto&   cell = parsed_cfg.du_high_cfg.config.cells_cfg.front().cell;
+  const auto&   cell = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell;
   const nr_band band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_f_ref_arfcn);
   bool          is_zmq_rf_driver = false;
   if (std::holds_alternative<ru_sdr_unit_config>(parsed_cfg.ru_cfg)) {
     is_zmq_rf_driver = std::get<ru_sdr_unit_config>(parsed_cfg.ru_cfg).device_driver == "zmq";
   }
-  autoderive_du_low_parameters_after_parsing(app,
-                                             parsed_cfg.du_low_cfg,
-                                             band_helper::get_duplex_mode(band),
-                                             is_zmq_rf_driver,
-                                             parsed_cfg.du_high_cfg.config.cells_cfg.size());
+  autoderive_du_low_parameters_after_parsing(
+      app, parsed_cfg.du_low_cfg, band_helper::get_duplex_mode(band), is_zmq_rf_driver, nof_cells);
 }

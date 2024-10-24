@@ -56,9 +56,9 @@
 #include "apps/units/cu_up/cu_up_application_unit.h"
 #include "apps/units/cu_up/cu_up_unit_config.h"
 #include "apps/units/cu_up/pcap_factory.h"
-#include "apps/units/flexible_du/du_high/du_high_config.h"
-#include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
+#include "apps/units/flexible_du/o_du_high/du_high/du_high_config.h"
+#include "apps/units/flexible_du/o_du_high/du_high/pcap_factory.h"
 
 #include <atomic>
 #include <yaml-cpp/node/convert.h>

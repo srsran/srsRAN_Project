@@ -10,7 +10,6 @@
 
 #include "ru_ofh_config_translator.h"
 #include "apps/services/worker_manager_config.h"
-#include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "ru_ofh_config.h"
 #include "srsran/du/du_cell_config.h"
 

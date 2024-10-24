@@ -10,9 +10,8 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_high/du_high_config.h"
-#include "apps/units/flexible_du/du_low/du_low_config.h"
-#include "apps/units/flexible_du/fapi/fapi_config.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config.h"
 
 namespace srsran {
 
@@ -27,12 +26,10 @@ struct du_cell_config;
 
 /// Flexible DU unit configuration.
 struct flexible_du_unit_config {
-  /// DU high configuration.
-  const du_high_parsed_config& du_high_cfg;
+  /// ORAN DU high configuration.
+  const o_du_high_unit_config& odu_high_cfg;
   /// DU low configuration.
   const du_low_unit_config& du_low_cfg;
-  /// FAPI configuration.
-  const fapi_unit_config& fapi_cfg;
 };
 
 /// Radio Unit dependencies of the flexible DU.

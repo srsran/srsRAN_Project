@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_unit.h"
+#include "apps/units/flexible_du/o_du_unit.h"
 #include "apps/units/flexible_du/split_helpers/flexible_du_configs.h"
 #include "srsran/ru/ru.h"
 
@@ -27,7 +27,7 @@ public:
   virtual ~flexible_du_factory() = default;
 
   /// Creates a flexible DU using the given dependencies and configuration.
-  du_unit create_flexible_du(const du_unit_dependencies& dependencies);
+  o_du_unit create_flexible_du(const du_unit_dependencies& dependencies);
 
 private:
   /// Creates a Radio Unit using the given config and dependencies.

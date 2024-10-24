@@ -10,8 +10,8 @@
 
 #include "flexible_du_impl.h"
 #include "srsran/du/du_low/du_low.h"
-#include "srsran/du/du_low/du_low_wrapper.h"
-#include "srsran/du/du_wrapper.h"
+#include "srsran/du/du_low/o_du_low.h"
+#include "srsran/du/o_du.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/ru/ru.h"
 #include "srsran/ru/ru_controller.h"
@@ -50,13 +50,13 @@ void flexible_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
   ru_ul_request_adapt.connect(ru->get_uplink_plane_handler());
 }
 
-void flexible_du_impl::add_dus(std::vector<std::unique_ptr<srs_du::du_wrapper>> active_du)
+void flexible_du_impl::add_dus(std::vector<std::unique_ptr<srs_du::o_du>> active_du)
 {
   du_list = std::move(active_du);
   srsran_assert(!du_list.empty(), "Cannot set an empty DU list");
 
   for (auto& du_obj : du_list) {
-    span<upper_phy*> upper_ptrs = du_obj->get_du_low_wrapper().get_du_low().get_all_upper_phys();
+    span<upper_phy*> upper_ptrs = du_obj->get_o_du_low().get_du_low().get_all_upper_phys();
     for (auto* upper : upper_ptrs) {
       // Make connections between DU and RU.
       ru_ul_adapt.map_handler(upper->get_sector_id(), upper->get_rx_symbol_handler());
