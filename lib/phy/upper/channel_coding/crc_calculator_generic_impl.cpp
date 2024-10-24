@@ -44,7 +44,7 @@ crc_calculator_generic_impl::crc_calculator_generic_impl(crc_generator_poly poly
   }
 }
 
-crc_calculator_checksum_t srsran::crc_calculator_generic_impl::calculate_byte(span<const uint8_t> input)
+crc_calculator_checksum_t srsran::crc_calculator_generic_impl::calculate_byte(span<const uint8_t> input) const
 {
   uint64_t highbit   = 1U << order;
   uint64_t remainder = 0;
@@ -72,7 +72,7 @@ crc_calculator_checksum_t srsran::crc_calculator_generic_impl::calculate_byte(sp
   return static_cast<crc_calculator_checksum_t>(remainder & (highbit - 1));
 }
 
-crc_calculator_checksum_t crc_calculator_generic_impl::calculate_bit(srsran::span<const uint8_t> input)
+crc_calculator_checksum_t crc_calculator_generic_impl::calculate_bit(srsran::span<const uint8_t> input) const
 {
   uint64_t highbit   = 1U << order;
   uint64_t remainder = 0;
@@ -96,7 +96,7 @@ crc_calculator_checksum_t crc_calculator_generic_impl::calculate_bit(srsran::spa
   return static_cast<crc_calculator_checksum_t>(remainder & (highbit - 1));
 }
 
-crc_calculator_checksum_t crc_calculator_generic_impl::calculate(const bit_buffer& input)
+crc_calculator_checksum_t crc_calculator_generic_impl::calculate(const bit_buffer& input) const
 {
   uint64_t highbit   = 1U << order;
   uint64_t remainder = 0;

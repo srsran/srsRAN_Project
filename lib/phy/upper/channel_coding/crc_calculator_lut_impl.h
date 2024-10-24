@@ -47,8 +47,6 @@ private:
   const unsigned order;
   /// String of \c order consecutive ones (used for isolating meaningful bits).
   const uint32_t crcmask;
-  /// Computed checksum.
-  uint32_t crc;
   /// Identifier of the cyclic generator polynomial.
   const crc_generator_poly poly;
 
@@ -56,11 +54,8 @@ public:
   /// Initializes the CRC calculator with the provided cyclic generator polynomial.
   explicit crc_calculator_lut_impl(crc_generator_poly poly_);
 
-  /// Sets the internal CRC.
-  void reset(uint32_t crc_ = 0) { crc = crc_; }
-
   /// Includes the given \c byte into the CRC computation.
-  void put_byte(uint8_t byte)
+  uint32_t put_byte(uint32_t crc, uint8_t byte) const
   {
     unsigned idx;
     if (order == 24) {
@@ -75,11 +70,11 @@ public:
       idx          = ((crc << (ord)) & 0xffU) ^ byte;
     }
 
-    crc = (crc << 8U) ^ table[idx];
+    return (crc << 8U) ^ table[idx];
   }
 
   /// Reverses the \c nbits least significant bits of \c crc.
-  void reversecrcbit(unsigned nbits)
+  uint32_t reversecrcbit(uint32_t crc, unsigned nbits) const
   {
     uint64_t m, rmask = 0x1;
 
@@ -89,20 +84,23 @@ public:
       else
         crc = crc >> 1;
     }
-    crc = (crc & table.crcmask);
+    return (crc & table.crcmask);
   }
 
   /// Reads the current value of \c crc.
-  crc_calculator_checksum_t get_checksum() const { return static_cast<crc_calculator_checksum_t>(crc & crcmask); }
+  crc_calculator_checksum_t get_checksum(uint32_t crc) const
+  {
+    return static_cast<crc_calculator_checksum_t>(crc & crcmask);
+  }
 
   // See interface for the documentation.
-  crc_calculator_checksum_t calculate_byte(span<const uint8_t> input) override;
+  crc_calculator_checksum_t calculate_byte(span<const uint8_t> input) const override;
 
   // See interface for the documentation.
-  crc_calculator_checksum_t calculate_bit(span<const uint8_t> input) override;
+  crc_calculator_checksum_t calculate_bit(span<const uint8_t> input) const override;
 
   // See interface for the documentation.
-  crc_calculator_checksum_t calculate(const bit_buffer& data) override;
+  crc_calculator_checksum_t calculate(const bit_buffer& data) const override;
 
   // See interface for the documentation.
   crc_generator_poly get_generator_poly() const override { return poly; }
