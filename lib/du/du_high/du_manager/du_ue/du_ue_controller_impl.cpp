@@ -217,7 +217,7 @@ private:
   void stop_ue_drb_activity()
   {
     // Disable the RLF detection. We are at a point of no return for this UE state.
-    rlf_detection_active = false;
+    deactivate();
 
     // Note: We use an async task rather than just an execute call, to ensure that this task is not dispatched after
     // the UE has already been deleted.
