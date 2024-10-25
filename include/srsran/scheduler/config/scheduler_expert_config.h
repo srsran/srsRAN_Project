@@ -144,8 +144,8 @@ struct scheduler_expert_config {
   scheduler_ra_expert_config     ra;
   scheduler_paging_expert_config pg;
   scheduler_ue_expert_config     ue;
-  bool                           log_broadcast_messages = false;
-  bool                           log_rt_fault_metrics   = false;
+  bool                           log_broadcast_messages       = false;
+  bool                           log_high_latency_diagnostics = false;
   std::chrono::milliseconds      metrics_report_period{1000};
 };
 

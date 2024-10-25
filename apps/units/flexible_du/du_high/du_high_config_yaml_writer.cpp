@@ -40,16 +40,16 @@ static void fill_du_high_pcap_section(YAML::Node node, const du_high_unit_pcap_c
 
 static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_config& config)
 {
-  node["mac_level"]                = srslog::basic_level_to_string(config.mac_level);
-  node["rlc_level"]                = srslog::basic_level_to_string(config.rlc_level);
-  node["f1ap_level"]               = srslog::basic_level_to_string(config.f1ap_level);
-  node["f1u_level"]                = srslog::basic_level_to_string(config.f1u_level);
-  node["gtpu_level"]               = srslog::basic_level_to_string(config.gtpu_level);
-  node["du_level"]                 = srslog::basic_level_to_string(config.du_level);
-  node["hex_max_size"]             = config.hex_max_size;
-  node["broadcast_enabled"]        = config.broadcast_enabled;
-  node["rt_fault_metrics_enabled"] = config.rt_fault_metrics_enabled;
-  node["f1ap_json_enabled"]        = config.f1ap_json_enabled;
+  node["mac_level"]                        = srslog::basic_level_to_string(config.mac_level);
+  node["rlc_level"]                        = srslog::basic_level_to_string(config.rlc_level);
+  node["f1ap_level"]                       = srslog::basic_level_to_string(config.f1ap_level);
+  node["f1u_level"]                        = srslog::basic_level_to_string(config.f1u_level);
+  node["gtpu_level"]                       = srslog::basic_level_to_string(config.gtpu_level);
+  node["du_level"]                         = srslog::basic_level_to_string(config.du_level);
+  node["hex_max_size"]                     = config.hex_max_size;
+  node["broadcast_enabled"]                = config.broadcast_enabled;
+  node["high_latency_diagnostics_enabled"] = config.high_latency_diagnostics_enabled;
+  node["f1ap_json_enabled"]                = config.f1ap_json_enabled;
 }
 
 static YAML::Node build_du_section(const du_high_unit_config& config)

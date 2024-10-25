@@ -19,7 +19,7 @@ static std::chrono::microseconds get_tracer_thres(const cell_configuration& cell
 {
   std::chrono::microseconds slot_dur{1000 >>
                                      to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)};
-  return cell_cfg.expert_cfg.log_rt_fault_metrics ? slot_dur : std::chrono::microseconds{0};
+  return cell_cfg.expert_cfg.log_high_latency_diagnostics ? slot_dur : std::chrono::microseconds{0};
 }
 
 cell_scheduler::cell_scheduler(const scheduler_expert_config&                  sched_cfg,

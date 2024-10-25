@@ -898,9 +898,9 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.si.sib1_dci_aggr_lev = aggregation_level::n4;
 
   // Logging and tracing.
-  out_cfg.log_broadcast_messages = config.loggers.broadcast_enabled;
-  out_cfg.log_rt_fault_metrics   = config.loggers.rt_fault_metrics_enabled;
-  out_cfg.metrics_report_period  = std::chrono::milliseconds{config.metrics.sched_report_period};
+  out_cfg.log_broadcast_messages       = config.loggers.broadcast_enabled;
+  out_cfg.log_high_latency_diagnostics = config.loggers.high_latency_diagnostics_enabled;
+  out_cfg.metrics_report_period        = std::chrono::milliseconds{config.metrics.sched_report_period};
 
   const error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {

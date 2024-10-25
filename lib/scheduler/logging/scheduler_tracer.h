@@ -46,8 +46,7 @@ public:
       auto slot_stop_resusage = resource_usage::now().value();
       diff_resusage           = slot_stop_resusage - slot_start_resusage;
 
-      logger.warning(
-          "cell={}: Detected slow slot processing. Latency={}usec {}", cell_index, slot_dur.count(), diff_resusage);
+      logger.warning("cell={}: High latency detected. Latency={}usec {}", cell_index, slot_dur.count(), diff_resusage);
     }
   }
 

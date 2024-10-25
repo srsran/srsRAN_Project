@@ -90,9 +90,9 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
   add_option(app, "--f1ap_json_enabled", log_params.f1ap_json_enabled, "Enable JSON logging of F1AP PDUs")
       ->always_capture_default();
   add_option(app,
-             "--rt_fault_tracing_enabled",
-             log_params.rt_fault_metrics_enabled,
-             "Log performance metrics when real-time faults (lates) are detected")
+             "--high_latency_diagnostics_enabled",
+             log_params.high_latency_diagnostics_enabled,
+             "Log performance diagnostics when high computational latencies are detected")
       ->always_capture_default();
 }
 

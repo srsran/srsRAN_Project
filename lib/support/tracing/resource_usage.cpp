@@ -9,30 +9,36 @@
  */
 
 #include "srsran/support/tracing/resource_usage.h"
-#include <sys/time.h>
+#include <sys/resource.h>
 
 using namespace srsran;
 using namespace resource_usage;
 
+static snapshot rusage_to_snapshot(const ::rusage& rusg)
+{
+  snapshot s;
+  s.user_time   = std::chrono::seconds{rusg.ru_utime.tv_sec} + std::chrono::microseconds{rusg.ru_utime.tv_usec};
+  s.system_time = std::chrono::seconds{rusg.ru_stime.tv_sec} + std::chrono::microseconds{rusg.ru_stime.tv_usec};
+  s.vol_ctxt_switch_count   = rusg.ru_nvcsw;
+  s.invol_ctxt_switch_count = rusg.ru_nivcsw;
+  return s;
+}
+
 srsran::expected<snapshot, int> srsran::resource_usage::now()
 {
-  snapshot ret;
+  ::rusage ret;
   if (getrusage(RUSAGE_THREAD, &ret) == 0) {
-    return ret;
+    return rusage_to_snapshot(ret);
   }
   return make_unexpected(errno);
 }
 
 diff resource_usage::snapshot::operator-(const snapshot& rhs) const
 {
-  diff           ret;
-  struct timeval diff_time;
-  timersub(&ru_utime, &rhs.ru_utime, &diff_time);
-  ret.user_dur = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds{diff_time.tv_sec}) +
-                 std::chrono::microseconds{diff_time.tv_usec};
-  timersub(&ru_stime, &rhs.ru_stime, &diff_time);
-  ret.system_dur              = std::chrono::seconds{diff_time.tv_sec} + std::chrono::microseconds{diff_time.tv_usec};
-  ret.vol_ctxt_switch_count   = ru_nvcsw - rhs.ru_nvcsw;
-  ret.invol_ctxt_switch_count = ru_nivcsw - rhs.ru_nivcsw;
+  diff ret;
+  ret.user_dur                = user_time - rhs.user_time;
+  ret.system_dur              = system_time - rhs.system_time;
+  ret.vol_ctxt_switch_count   = vol_ctxt_switch_count - rhs.vol_ctxt_switch_count;
+  ret.invol_ctxt_switch_count = invol_ctxt_switch_count - rhs.invol_ctxt_switch_count;
   return ret;
 }

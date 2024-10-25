@@ -13,30 +13,39 @@
 #include "srsran/adt/expected.h"
 #include "srsran/support/format/fmt_basic_parser.h"
 #include <chrono>
-#include <sys/resource.h>
 
 namespace srsran {
 namespace resource_usage {
 
-/// Difference between two resource_usage::snapshot points.
+/// Difference between two resource_usage::snapshot points for a given thread.
 struct diff {
-  /// user CPU time elapsed.
+  /// User CPU time elapsed between the two snapshots.
   std::chrono::microseconds user_dur;
-  /// system CPU time elapsed.
+  /// System CPU time elapsed between the two snapshots.
   std::chrono::microseconds system_dur;
-  /// Number of voluntary context switches.
+  /// Number of voluntary context switches between the two snapshots.
   long vol_ctxt_switch_count;
-  /// Number of involuntary context switches.
+  /// Number of involuntary context switches between the two snapshots.
   long invol_ctxt_switch_count;
 };
 
-struct snapshot : public ::rusage {
+/// Snapshot of the resource usage statistics of a specific thread at given point in time.
+struct snapshot {
+  /// User CPU time.
+  std::chrono::microseconds user_time;
+  /// System CPU time.
+  std::chrono::microseconds system_time;
+  /// Number of voluntary context switches at this point in time.
+  long int vol_ctxt_switch_count;
+  /// Number of involuntary context switches at this point in time.
+  long int invol_ctxt_switch_count;
+
   /// \brief Computes the difference between two resource_usage::snapshot points.
   /// \remark Both snapshots should be captured in the same thread.
   resource_usage::diff operator-(const resource_usage::snapshot& rhs) const;
 };
 
-/// Collect a new resource
+/// Collect a new snapshot for the caller thread.
 srsran::expected<snapshot, int> now();
 
 } // namespace resource_usage
