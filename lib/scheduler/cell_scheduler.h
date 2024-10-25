@@ -81,7 +81,8 @@ private:
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
 
-  scheduler_slot_tracer tracer;
+  // Tracer of resource usage (e.g. context switches)
+  scheduler_slot_tracer res_usage_tracer;
 };
 
 } // namespace srsran

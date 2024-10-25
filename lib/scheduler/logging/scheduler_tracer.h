@@ -34,46 +34,29 @@ public:
   /// Marks the start of a new slot indication.
   void start()
   {
-    slot_start_tp = std::chrono::high_resolution_clock::now();
-    if (is_resource_usage_traced()) {
+    if (active()) {
       slot_start_resusage = resource_usage::now().value();
     }
   }
 
-  /// \brief Marks the end of a slot indication, and computes how much time has passed. If \c log_warn_thres > 0 and
-  /// the slot latency is greater than \c log_warn_thres, a warning is logged with some metrics.
-  void stop()
+  /// \brief If the slot latency is greater than \c log_warn_thres, a warning logged with resource usage metrics.
+  void stop(std::chrono::microseconds slot_dur)
   {
-    auto slot_stop_tp = std::chrono::high_resolution_clock::now();
-    slot_dur          = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
-
     if (slot_dur > log_warn_thres) {
       auto slot_stop_resusage = resource_usage::now().value();
       diff_resusage           = slot_stop_resusage - slot_start_resusage;
 
-      logger.warning("cell={}: Detected slow slot processing. Latency={}usec, voluntary_context_switches={} "
-                     "involutary_context_switches={} user_telapsed={}usec system_telapsed={}usec",
-                     cell_index,
-                     slot_dur.count(),
-                     diff_resusage.vol_ctxt_switch_count,
-                     diff_resusage.invol_ctxt_switch_count,
-                     diff_resusage.user_dur.count(),
-                     diff_resusage.system_dur.count());
+      logger.warning(
+          "cell={}: Detected slow slot processing. Latency={}usec {}", cell_index, slot_dur.count(), diff_resusage);
     }
   }
 
-  /// Returns how much time has passed between the last start() and stop().
-  std::chrono::microseconds time_elapsed() const { return slot_dur; }
+  bool active() const { return log_warn_thres.count() > 0; }
 
 private:
-  bool is_resource_usage_traced() const { return log_warn_thres.count() > 0; }
-
-  srslog::basic_logger&     logger;
-  const du_cell_index_t     cell_index;
-  std::chrono::microseconds log_warn_thres;
-
-  std::chrono::time_point<std::chrono::high_resolution_clock> slot_start_tp;
-  std::chrono::microseconds                                   slot_dur;
+  srslog::basic_logger&           logger;
+  const du_cell_index_t           cell_index;
+  const std::chrono::microseconds log_warn_thres;
 
   resource_usage::snapshot slot_start_resusage;
   resource_usage::diff     diff_resusage;

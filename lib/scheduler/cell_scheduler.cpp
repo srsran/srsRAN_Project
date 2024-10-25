@@ -14,6 +14,13 @@
 
 using namespace srsran;
 
+static std::chrono::microseconds get_tracer_thres(const cell_configuration& cell_cfg)
+{
+  std::chrono::microseconds slot_dur{1000 >>
+                                     to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)};
+  return cell_cfg.expert_cfg.report_slowdowns ? slot_dur : std::chrono::microseconds{0};
+}
+
 cell_scheduler::cell_scheduler(const scheduler_expert_config&                  sched_cfg,
                                const sched_cell_configuration_request_message& msg,
                                const cell_configuration&                       cell_cfg_,
@@ -37,10 +44,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   si_msg_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   pucch_guard_sch(cell_cfg),
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg),
-  tracer(logger,
-         cell_cfg.cell_index,
-         std::chrono::microseconds{1000 /
-                                   get_nof_slots_per_subframe(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)})
+  res_usage_tracer(logger, cell_cfg.cell_index, get_tracer_thres(cell_cfg))
 {
   // Register new cell in the UE scheduler.
   ue_sched.add_cell(ue_scheduler_cell_params{
@@ -77,7 +81,8 @@ void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 void cell_scheduler::run_slot(slot_point sl_tx)
 {
   // Mark the start of the slot.
-  tracer.start();
+  auto slot_start_tp = std::chrono::high_resolution_clock::now();
+  res_usage_tracer.start();
 
   // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
   if (SRSRAN_LIKELY(res_grid.slot_tx().valid())) {
@@ -123,14 +128,16 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   ue_sched.run_slot(sl_tx);
 
   // > Mark stop of the slot processing
-  tracer.stop();
+  auto slot_stop_tp = std::chrono::high_resolution_clock::now();
+  auto slot_dur     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
+  res_usage_tracer.stop(slot_dur);
 
   // > Log processed events.
   event_logger.log();
 
   // > Log the scheduler results.
-  result_logger.on_scheduler_result(last_result(), tracer.time_elapsed());
+  result_logger.on_scheduler_result(last_result(), slot_dur);
 
   // > Push the scheduler results to the metrics handler.
-  metrics.push_result(sl_tx, last_result(), tracer.time_elapsed());
+  metrics.push_result(sl_tx, last_result(), slot_dur);
 }
