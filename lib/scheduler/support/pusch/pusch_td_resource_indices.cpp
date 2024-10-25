@@ -9,6 +9,8 @@
  */
 
 #include "pusch_td_resource_indices.h"
+#include "srsran/srslog/logger.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
@@ -182,15 +184,42 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
     // [Implementation-defined] If no PDCCH slot is found we pick the last valid PDCCH slot for this UL slot, regardless
     // of the restriction to not allow more than \c nof_ul_pdcchs_per_dl_slot UL PDCCHs per PDCCH slot.
     if (no_pdcch_slot_found) {
-      unsigned required_k2 = ul_slot_idx - last_pdcch_slot_index_for_ul_slot;
-      auto*    it          = std::find_if(initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].begin(),
-                              initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].end(),
-                              [&pusch_time_domain_list, required_k2](unsigned pusch_td_res_idx) {
-                                return pusch_time_domain_list[pusch_td_res_idx].k2 == required_k2;
-                              });
-      // TODO: fix and compute the proper k2 value for the PUSCH time domain resource.
-      if (it != initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].end()) {
-        final_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].push_back(*it);
+      std::optional<unsigned> min_k2 = std::nullopt;
+      for (const auto& pusch_time_domain : pusch_time_domain_list) {
+        min_k2 = std::min(min_k2.value_or(pusch_time_domain.k2), pusch_time_domain.k2);
+      }
+      const unsigned required_k2 = ul_slot_idx - last_pdcch_slot_index_for_ul_slot;
+      // If the required k2 value is less than the minimum k2 value in the PUSCH time domain resource list, then we look
+      // for the minimum k2 value that is greater than the DL-UL transmission period, as this is the PDCCH slot closest
+      // to the PUSCH slot.
+      std::optional<unsigned> candidate_required_k2 = std::nullopt;
+      if (required_k2 < min_k2.value()) {
+        for (const auto& pusch_time_domain : pusch_time_domain_list) {
+          if (pusch_time_domain.k2 > cell_cfg.tdd_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots) {
+            candidate_required_k2 =
+                std::min(candidate_required_k2.value_or(pusch_time_domain.k2), pusch_time_domain.k2);
+          }
+        }
+      } else {
+        candidate_required_k2 = required_k2;
+      }
+      // If a valid PUSCH time domain resource is found for the required k2 value, then we store it.
+      std::optional<unsigned> pusch_td_res_idx_for_required_k2 = std::nullopt;
+      if (candidate_required_k2.has_value()) {
+        auto* it = std::find_if(initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].begin(),
+                                initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].end(),
+                                [&pusch_time_domain_list, candidate_required_k2](unsigned pusch_td_res_idx) {
+                                  return pusch_time_domain_list[pusch_td_res_idx].k2 == candidate_required_k2.value();
+                                });
+        if (it != initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].end()) {
+          pusch_td_res_idx_for_required_k2.emplace(*it);
+        }
+      }
+      if (pusch_td_res_idx_for_required_k2.has_value()) {
+        final_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].push_back(*pusch_td_res_idx_for_required_k2);
+      } else {
+        srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED", false);
+        logger.warning("No valid PUSCH time domain resource found for UL slot dx={}", ul_slot_idx);
       }
     }
   }
