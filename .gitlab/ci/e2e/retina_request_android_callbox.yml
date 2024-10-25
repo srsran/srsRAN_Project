@@ -38,7 +38,8 @@
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
-  taints: ["purpose=manual-testing"]
+  labels: 
+    - kubernetes.io/hostname=sdr6
   resources:
     - type: sdr
       model: x300
