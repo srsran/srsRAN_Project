@@ -20,8 +20,8 @@
 # warning_as_errors: treat warnings as errors
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
-gnb_extra_commands: &gnb_extra_commands "ru_ofh --ta4_max 700 --ta4_min 10 metrics --rlc_report_period=1000 log --metrics_level=info"
-test_timeout: &test_timeout 2400 # 40 * 60
+gnb_extra_commands: &gnb_extra_commands "ru_ofh --ta4_max 700 --ta4_min 10 metrics --rlc_report_period=1000 log --metrics_level=info --nof_dl_symbols=8 --nof_dl_slots=7 --nof_ul_slots=2"
+test_timeout: &test_timeout 2400
 
 tests:
   - campaign_filename: *campaign_filename
@@ -139,7 +139,7 @@ tests:
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"
     test_timeout: *test_timeout
-    gnb_extra_commands: "log --ngap_level=debug metrics --rlc_report_period=1000  log --metrics_level=info"
+    gnb_extra_commands: "log --ngap_level=debug metrics --rlc_report_period=1000  log --metrics_level=info --nof_dl_symbols=8 --nof_dl_slots=7 --nof_ul_slots=2"
     id: "32UE ideal UDP attach-detach with traffic"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 4
