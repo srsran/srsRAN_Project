@@ -134,6 +134,18 @@ public:
     report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
                               "Invalid UE Context Modification Request");
+    {
+      // Check if tx_action_ind is set to stop
+      report_fatal_error_if_not(f1ap_pdu.pdu.init_msg().value.ue_context_mod_request()->tx_action_ind_present &&
+                                    f1ap_pdu.pdu.init_msg().value.ue_context_mod_request()->tx_action_ind ==
+                                        asn1::f1ap::tx_action_ind_e::stop,
+                                "Invalid TxActionInd");
+
+      const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+      report_fatal_error_if_not(
+          test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container), false, {}, {}),
+          "Invalid RRC Reconfiguration");
+    }
     return true;
   }
 

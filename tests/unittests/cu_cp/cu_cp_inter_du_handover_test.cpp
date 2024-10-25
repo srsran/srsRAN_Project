@@ -11,9 +11,11 @@
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
@@ -136,6 +138,18 @@ public:
     report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
                               "Invalid UE Context Modification Request");
+    {
+      // Check if tx_action_ind is set to stop
+      report_fatal_error_if_not(f1ap_pdu.pdu.init_msg().value.ue_context_mod_request()->tx_action_ind_present &&
+                                    f1ap_pdu.pdu.init_msg().value.ue_context_mod_request()->tx_action_ind ==
+                                        asn1::f1ap::tx_action_ind_e::stop,
+                                "Invalid TxActionInd");
+
+      const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+      report_fatal_error_if_not(
+          test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container), false, {}, {}),
+          "Invalid RRC Reconfiguration");
+    }
     return true;
   }
 
