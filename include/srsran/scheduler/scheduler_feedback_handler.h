@@ -92,10 +92,10 @@ public:
   {
     if (auto* vec = std::get_if<small_buffer_type>(&buffer)) {
       if (nof_reports <= nof_harq_reports_thres) {
-        // stay in small buffer.
+        // Stay in small buffer.
         vec->resize(nof_reports, init_val);
       } else {
-        // move to large buffer.
+        // Moving to large buffer.
         std::vector<mac_harq_ack_report_status> new_harqs;
         new_harqs.reserve(nof_reports);
         new_harqs.assign(vec->begin(), vec->end());
@@ -105,11 +105,11 @@ public:
     } else {
       auto& large_vec = std::get<large_buffer_type>(buffer);
       if (nof_reports <= nof_harq_reports_thres) {
-        // moving to small vector.
+        // Moving to small vector.
         auto old_vec = std::move(large_vec);
         buffer.emplace<small_buffer_type>(old_vec.begin(), old_vec.begin() + nof_reports);
       } else {
-        // stay in large vector.
+        // Stay in large vector.
         large_vec.resize(nof_reports, init_val);
       }
     }
@@ -117,8 +117,22 @@ public:
 
   mac_harq_ack_report_status&       operator[](unsigned idx) { return to_span()[idx]; }
   const mac_harq_ack_report_status& operator[](unsigned idx) const { return to_span()[idx]; }
+                                    operator span<mac_harq_ack_report_status>() { return to_span(); }
+                                    operator span<const mac_harq_ack_report_status>() const { return to_span(); }
   size_t                            size() const { return to_span().size(); }
   bool                              empty() const { return to_span().empty(); }
+
+  auto begin() { return to_span().begin(); }
+  auto begin() const { return to_span().begin(); }
+  auto end() { return to_span().end(); }
+  auto end() const { return to_span().end(); }
+
+private:
+  constexpr static size_t nof_harq_reports_thres = 11;
+  // type used when the number of harq-bits is equal or below \c nof_harq_reports_thres
+  using small_buffer_type = static_vector<mac_harq_ack_report_status, nof_harq_reports_thres>;
+  // type used when the number of harq-bits is above \c nof_harq_reports_thres
+  using large_buffer_type = std::vector<mac_harq_ack_report_status>;
 
   span<mac_harq_ack_report_status> to_span()
   {
@@ -136,20 +150,6 @@ public:
     auto& vec = std::get<large_buffer_type>(buffer);
     return {vec.data(), vec.size()};
   }
-
-  auto begin() { return to_span().begin(); }
-  auto begin() const { return to_span().begin(); }
-  auto end() { return to_span().end(); }
-  auto end() const { return to_span().end(); }
-
-private:
-  constexpr static size_t nof_harq_reports_thres = 11;
-  // type used when the number of harq-bits is equal or below \c nof_harq_reports_thres
-  using small_buffer_type = static_vector<mac_harq_ack_report_status, nof_harq_reports_thres>;
-  // type used when the number of harq-bits is above \c nof_harq_reports_thres
-  using large_buffer_type = std::vector<mac_harq_ack_report_status>;
-
-  bool is_in_small_buffer() const { return std::holds_alternative<small_buffer_type>(buffer); }
 
   std::variant<small_buffer_type, large_buffer_type> buffer;
 };

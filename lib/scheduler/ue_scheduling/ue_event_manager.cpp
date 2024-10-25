@@ -474,7 +474,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               } else if (const auto* pusch_pdu = std::get_if<uci_indication::uci_pdu::uci_pusch_pdu>(&uci_pdu.pdu)) {
                 // Process DL HARQ ACKs.
                 if (not pusch_pdu->harqs.empty()) {
-                  handle_harq_ind(ue_cc, uci_sl, pusch_pdu->harqs.to_span(), std::nullopt);
+                  handle_harq_ind(ue_cc, uci_sl, pusch_pdu->harqs, std::nullopt);
                 }
 
                 // Process CSI.
@@ -485,7 +485,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                              std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&uci_pdu.pdu)) {
                 // Process DL HARQ ACKs.
                 if (not pucch_f2f3f4->harqs.empty()) {
-                  handle_harq_ind(ue_cc, uci_sl, pucch_f2f3f4->harqs.to_span(), pucch_f2f3f4->ul_sinr_dB);
+                  handle_harq_ind(ue_cc, uci_sl, pucch_f2f3f4->harqs, pucch_f2f3f4->ul_sinr_dB);
                 }
 
                 // Process SRs.

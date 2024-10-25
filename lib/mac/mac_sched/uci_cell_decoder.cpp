@@ -134,7 +134,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
             convert_mac_harq_bits_to_sched_harq_values(pusch->harq_info.value().is_valid, pusch->harq_info->payload);
 
         // Report ACK for RLF detection purposes.
-        for (mac_harq_ack_report_status harq : pdu.harqs.to_span()) {
+        for (mac_harq_ack_report_status harq : pdu.harqs) {
           rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, harq == mac_harq_ack_report_status::ack);
         }
       }
@@ -179,7 +179,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
                                                                pucch_f2f3f4->harq_info->payload);
 
         // Report ACK for RLF detection purposes.
-        for (mac_harq_ack_report_status harq_st : pdu.harqs.to_span()) {
+        for (mac_harq_ack_report_status harq_st : pdu.harqs) {
           rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, harq_st == mac_harq_ack_report_status::ack);
         }
       }
