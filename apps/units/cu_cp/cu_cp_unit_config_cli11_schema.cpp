@@ -600,4 +600,7 @@ void srsran::autoderive_cu_cp_parameters_after_parsing(CLI::App& app, cu_cp_unit
       cell.gnb_id_bit_length = unit_cfg.gnb_id.bit_length;
     }
   }
+
+  // If CU CP E2 agent is disabled do not enable e2ap pcap for it.
+  unit_cfg.pcap_cfg.e2ap.enabled = unit_cfg.e2_cfg.enable_unit_e2 && unit_cfg.pcap_cfg.e2ap.enabled;
 }

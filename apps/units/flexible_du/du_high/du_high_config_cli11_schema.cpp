@@ -1844,4 +1844,7 @@ void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_
 {
   manage_ntn_optional(app, unit_cfg);
   derive_auto_params(unit_cfg);
+
+  // If DU E2 agent is disabled do not enable e2ap pcap for it.
+  unit_cfg.pcaps.e2ap.enabled = unit_cfg.e2_cfg.enable_unit_e2 && unit_cfg.pcaps.e2ap.enabled;
 }
