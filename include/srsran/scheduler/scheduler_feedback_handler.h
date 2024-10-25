@@ -215,6 +215,7 @@ struct uci_indication {
 
 struct srs_indication {
   struct srs_indication_pdu {
+    srs_indication_pdu() = default;
     srs_indication_pdu(const du_ue_index_t          ue_idx,
                        const rnti_t                 ue_rnti_,
                        std::optional<phy_time_unit> ta,
