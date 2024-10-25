@@ -72,4 +72,7 @@ void handover_reconfiguration_routine::generate_ue_context_modification_request(
   ue_context_mod_request.ue_index                 = source_ue.get_ue_index();
   ue_context_mod_request.drbs_to_be_released_list = source_ue.get_up_resource_manager().get_drbs();
   ue_context_mod_request.rrc_container            = ho_reconf_ctxt.rrc_ue_handover_reconfiguration_pdu.copy();
+
+  // Stop data transmission for the UE on the source DU (see TS 38.473 section 8.3.4.2).
+  ue_context_mod_request.tx_action_ind = f1ap_tx_action_ind::stop;
 }
