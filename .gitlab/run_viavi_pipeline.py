@@ -97,7 +97,7 @@ def show_test_list():
 
 
 def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition):
-    timeout = args_definition.timeout
+    timeout = args_definition.timeout if args_definition.timeout else 972800
     retina_log_level = "warning"
     branch = args_definition.branch
     private_token = args_definition.token
