@@ -26,7 +26,7 @@
 namespace srsran {
 
 enum class duplex_mode;
-enum class subcarrier_spacing;
+enum class subcarrier_spacing : uint8_t;
 enum class ssb_pattern_case;
 enum class frequency_range;
 enum class min_channel_bandwidth;

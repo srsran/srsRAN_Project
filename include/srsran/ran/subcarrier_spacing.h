@@ -19,7 +19,7 @@ namespace srsran {
 const size_t NOF_NUMEROLOGIES = 5;
 
 /// Representation of subcarrier spacing.
-enum class subcarrier_spacing { kHz15 = 0, kHz30, kHz60, kHz120, kHz240, invalid };
+enum class subcarrier_spacing : uint8_t { kHz15 = 0, kHz30, kHz60, kHz120, kHz240, invalid };
 
 /// Check if SCS value is valid.
 constexpr inline bool is_scs_valid(subcarrier_spacing scs)
