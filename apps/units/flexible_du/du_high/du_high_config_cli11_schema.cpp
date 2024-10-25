@@ -1395,7 +1395,7 @@ static void configure_cli11_test_mode_args(CLI::App& app, du_high_unit_test_mode
 
 static void configure_cli11_pcap_args(CLI::App& app, du_high_unit_pcap_config& pcap_params)
 {
-  add_option(app, "--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e2ap_du_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
   add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
   add_option(app, "--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
   add_option(app, "--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();

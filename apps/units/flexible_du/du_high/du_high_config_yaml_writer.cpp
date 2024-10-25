@@ -24,18 +24,18 @@ static void fill_du_high_metrics_section(YAML::Node node, const du_high_unit_met
 
 static void fill_du_high_pcap_section(YAML::Node node, const du_high_unit_pcap_config& config)
 {
-  node["e2ap_filename"] = config.e2ap.filename;
-  node["e2ap_enable"]   = config.e2ap.enabled;
-  node["f1ap_filename"] = config.f1ap.filename;
-  node["f1ap_enable"]   = config.f1ap.enabled;
-  node["f1u_filename"]  = config.f1u.filename;
-  node["f1u_enable"]    = config.f1u.enabled;
-  node["rlc_filename"]  = config.rlc.filename;
-  node["rlc_rb_type"]   = config.rlc.rb_type;
-  node["rlc_enable"]    = config.rlc.enabled;
-  node["mac_filename"]  = config.mac.filename;
-  node["mac_type"]      = config.mac.type;
-  node["mac_enable"]    = config.mac.enabled;
+  node["f1ap_filename"]    = config.f1ap.filename;
+  node["f1ap_enable"]      = config.f1ap.enabled;
+  node["f1u_filename"]     = config.f1u.filename;
+  node["f1u_enable"]       = config.f1u.enabled;
+  node["rlc_filename"]     = config.rlc.filename;
+  node["rlc_rb_type"]      = config.rlc.rb_type;
+  node["rlc_enable"]       = config.rlc.enabled;
+  node["mac_filename"]     = config.mac.filename;
+  node["mac_type"]         = config.mac.type;
+  node["mac_enable"]       = config.mac.enabled;
+  node["e2ap_du_filename"] = config.e2ap.filename;
+  node["e2ap_du_enable"]   = config.e2ap.enabled;
 }
 
 static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_config& config)

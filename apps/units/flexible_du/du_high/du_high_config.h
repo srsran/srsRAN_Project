@@ -673,26 +673,26 @@ struct du_high_unit_metrics_config {
 
 struct du_high_unit_pcap_config {
   struct {
-    std::string filename;
-    bool        enabled = false;
+    std::string filename = "/tmp/du_e2ap.pcap";
+    bool        enabled  = false;
   } e2ap;
   struct {
-    std::string filename;
-    bool        enabled = false;
+    std::string filename = "/tmp/du_f1ap.pcap";
+    bool        enabled  = false;
   } f1ap;
   struct {
-    std::string filename;
-    bool        enabled = false;
+    std::string filename = "/tmp/du_f1u.pcap";
+    bool        enabled  = false;
   } f1u;
   struct {
-    std::string filename;
-    std::string rb_type = "all";
-    bool        enabled = false;
+    std::string filename = "/tmp/du_rlc.pcap";
+    std::string rb_type  = "all";
+    bool        enabled  = false;
   } rlc;
   struct {
-    std::string filename;
-    std::string type    = "udp";
-    bool        enabled = false;
+    std::string filename = "/tmp/du_mac.pcap";
+    std::string type     = "udp";
+    bool        enabled  = false;
   } mac;
 
   /// When using the gNB app, there is no point in instantiating

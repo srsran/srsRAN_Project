@@ -38,11 +38,11 @@ bool dynamic_du_application_unit_impl::on_configuration_validation(
 
 dynamic_du_application_unit_impl::dynamic_du_application_unit_impl(std::string_view app_name)
 {
-  unit_cfg.du_high_cfg.config.pcaps.e2ap.filename = fmt::format("/tmp/{}_e2ap.pcap", app_name);
   unit_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
   unit_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
   unit_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
   unit_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
+  // Note: do not update the default e2ap pcap filename.
 }
 
 void dynamic_du_application_unit_impl::on_parsing_configuration_registration(CLI::App& app)
