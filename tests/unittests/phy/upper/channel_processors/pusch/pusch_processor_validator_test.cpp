@@ -320,6 +320,12 @@ protected:
     pdu_validator = pusch_proc_factory->create_validator();
     ASSERT_NE(pdu_validator, nullptr);
   }
+
+  static void TearDownTestSuite()
+  {
+    pdu_validator.reset();
+    pusch_proc.reset();
+  }
 };
 
 std::unique_ptr<pusch_processor>     PuschProcessorFixture::pusch_proc;

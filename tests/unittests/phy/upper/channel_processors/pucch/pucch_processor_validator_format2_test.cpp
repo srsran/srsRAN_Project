@@ -311,6 +311,12 @@ protected:
       ASSERT_NE(pucch_validator, nullptr) << "Cannot create PUCCH validator.";
     }
   }
+
+  static void TearDownTestSuite()
+  {
+    pucch_validator.reset();
+    pucch_proc.reset();
+  }
 };
 
 std::unique_ptr<pucch_processor>     PucchProcessorFormat2Fixture::pucch_proc;

@@ -46,7 +46,7 @@ namespace {
 class TransformPrecodingFixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
-  void SetUp() override
+  static void SetUpTestSuite()
   {
     if (!precoder) {
       std::shared_ptr<dft_processor_factory> dft_proc_factory = create_dft_processor_factory_fftw_slow();
@@ -60,6 +60,8 @@ protected:
       ASSERT_TRUE(precoder);
     }
   }
+
+  static void TearDownTestSuite() { precoder.reset(); }
 
   static std::unique_ptr<transform_precoder> precoder;
 };
