@@ -18,6 +18,7 @@
 
 using namespace srsran;
 
+// TODO: refactor to make this tables and the get_pucch3_symb_mask available in some header
 /// \brief Control data RE allocation pattern for PUCCH Format 3.
 ///
 /// Indicates the symbol positions containing control data within a PUCCH Format 3 resource
@@ -52,6 +53,21 @@ static const auto format3_symb_mask2 = to_array<symbol_slot_mask>({
     {true, false, true, true, true, false, true, true, false, true, true, true, false, true}, // v (14 symbols)
 });
 
+static symbol_slot_mask get_pucch3_symb_mask(pucch_demodulator::format3_configuration config)
+{
+  if (config.nof_symbols == 4) {
+    if (config.second_hop_prb.has_value()) {
+      return {false, true, false, true};
+    }
+    return {true, false, true, true};
+  }
+
+  if (config.additional_dmrs) {
+    return format3_symb_mask2[config.nof_symbols - 5];
+  }
+  return format3_symb_mask1[config.nof_symbols - 5];
+}
+
 void pucch_demodulator_format3::demodulate(span<log_likelihood_ratio>                      llr,
                                            const resource_grid_reader&                     grid,
                                            const channel_estimate&                         estimates,
@@ -61,8 +77,8 @@ void pucch_demodulator_format3::demodulate(span<log_likelihood_ratio>           
   auto nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
 
   // Number of data Resource Elements in a slot for a single Rx port.
-  // TODO: change to Format 3
-  unsigned nof_re_port = pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols;
+  symbol_slot_mask symb_mask   = get_pucch3_symb_mask(config);
+  unsigned         nof_re_port = symb_mask.count() * config.nof_prb * NRE;
 
   // Assert that allocations are valid.
   srsran_assert(config.nof_prb && config.nof_prb <= pucch_constants::FORMAT3_MAX_NPRB,
@@ -85,7 +101,7 @@ void pucch_demodulator_format3::demodulate(span<log_likelihood_ratio>           
 
   interval<unsigned, true> nof_symbols_range(pucch_constants::FORMAT3_MIN_NSYMB, pucch_constants::FORMAT3_MAX_NSYMB);
   srsran_assert(nof_symbols_range.contains(config.nof_symbols),
-                "Invalid Number of OFDM symbols allocated to PUCCH Format 2, i.e., {}. Valid range is {}.",
+                "Invalid Number of OFDM symbols allocated to PUCCH Format 3, i.e., {}. Valid range is {}.",
                 config.nof_symbols,
                 nof_symbols_range);
 
@@ -100,9 +116,9 @@ void pucch_demodulator_format3::demodulate(span<log_likelihood_ratio>           
   // Extract data RE and channel estimation coefficients.
   get_data_re_ests(grid, estimates, config);
 
-  // Get data re ests
   // Equalize
   // Transform precoder -> void deprecode_ofdm_symbol(span<cf_t> out, span<const cf_t> in)
+  srsran_assertion_failure("PUCCH Format 3 not supported.");
 }
 void pucch_demodulator_format3::get_data_re_ests(const resource_grid_reader&                     resource_grid,
                                                  const channel_estimate&                         channel_ests,
@@ -112,28 +128,8 @@ void pucch_demodulator_format3::get_data_re_ests(const resource_grid_reader&    
   prb_mask.resize(config.nof_prb);
   prb_mask.fill(0, config.nof_prb, true);
 
-  /*
-   * DMRS configuration depends on:
-   * - frequency hopping (length <= 4)
-   * - additional dmrs (length >= 10)
-   * - nof_symbols
-   */
-  symbol_slot_mask symb_mask;
-  if (config.nof_symbols == 4) {
-    if (config.second_hop_prb.has_value()) {
-      // Frequency hopping enabled: each frequency hopping position must include a DM-RS symbol.
-      symb_mask = {false, true, false, true};
-    } else {
-      // Frequency hopping disabled.
-      symb_mask = {true, false, true, true};
-    }
-  } else {
-    if (config.additional_dmrs) {
-      symb_mask = format3_symb_mask2[config.nof_symbols - 5];
-    } else {
-      symb_mask = format3_symb_mask1[config.nof_symbols - 5];
-    }
-  }
+  // Get a mask for the symbols in the PUCCH Format 3 resource that contain data.
+  symbol_slot_mask symb_mask = get_pucch3_symb_mask(config);
 
   for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
     // Get a view of the data RE destination buffer for a single Rx port.
@@ -142,7 +138,7 @@ void pucch_demodulator_format3::get_data_re_ests(const resource_grid_reader&    
     // Get a view of the channel estimates destination buffer for a single Rx port and Tx layer.
     span<cbf16_t> ests_port_buffer = ch_estimates.get_channel(i_port, 0);
 
-    // First OFDM subcarrier containing PUCCH Format 2.
+    // First OFDM subcarrier containing PUCCH Format 3.
     unsigned first_subc = config.first_prb * NRE;
 
     // Number of REs per OFDM symbol
@@ -156,15 +152,30 @@ void pucch_demodulator_format3::get_data_re_ests(const resource_grid_reader&    
 
       unsigned i_symbol = i + config.start_symbol_index;
 
+      /* No intra-slot frequency hopping yet.
       if ((i_symbol > config.start_symbol_index) && config.second_hop_prb.has_value()) {
         first_subc = config.second_hop_prb.value() * NRE;
       }
+      */
 
-      span<cbf16_t> re_symb_buffer = re_port_buffer.subspan(nof_re_symb * i_symbol, nof_re_symb);
+      // Get a view of the data RE destination buffer for a single symbol.
+      span<cbf16_t> re_symb_buffer = re_port_buffer.subspan(0, nof_re_symb);
 
       // Extract data RE from the resource grid.
-      // TODO: fix signature to return the unused portion of the span
       resource_grid.get(re_symb_buffer, i_port, i_symbol, first_subc);
+
+      // Advance the RE destination buffer view.
+      re_port_buffer = re_port_buffer.subspan(nof_re_symb, re_port_buffer.size());
+
+      // Get a view over the channel estimation coefficients for a single OFDM symbol.
+      span<const cbf16_t> ests_symbol = channel_ests.get_symbol_ch_estimate(i_symbol, i_port);
+
+      // Copy channel estimation coefficients for a single OFDM symbol.
+      span<const cbf16_t> ests_pucch3 = ests_symbol.subspan(first_subc, nof_re_symb);
+      std::copy(ests_pucch3.begin(), ests_pucch3.end(), ests_port_buffer.begin());
+
+      // Advance the channel estimation coefficients buffer view.
+      ests_port_buffer = ests_port_buffer.subspan(ests_pucch3.size(), ests_port_buffer.size());
     }
 
     // Assert that all port data RE buffer elements have been filled.
