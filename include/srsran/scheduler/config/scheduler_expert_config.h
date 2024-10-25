@@ -145,7 +145,7 @@ struct scheduler_expert_config {
   scheduler_paging_expert_config pg;
   scheduler_ue_expert_config     ue;
   bool                           log_broadcast_messages = false;
-  bool                           report_slowdowns       = false;
+  bool                           log_rt_fault_metrics   = false;
   std::chrono::milliseconds      metrics_report_period{1000};
 };
 

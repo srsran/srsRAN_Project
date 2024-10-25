@@ -42,7 +42,7 @@ public:
   /// \brief If the slot latency is greater than \c log_warn_thres, a warning logged with resource usage metrics.
   void stop(std::chrono::microseconds slot_dur)
   {
-    if (slot_dur > log_warn_thres) {
+    if (active() and slot_dur > log_warn_thres) {
       auto slot_stop_resusage = resource_usage::now().value();
       diff_resusage           = slot_stop_resusage - slot_start_resusage;
 

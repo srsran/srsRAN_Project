@@ -55,6 +55,8 @@ struct du_high_unit_logger_config {
   bool broadcast_enabled = false;
   /// Enable JSON generation for the F1AP Tx and Rx PDUs.
   bool f1ap_json_enabled = false;
+  /// Log metrics (e.g. context switches) when RT slowdowns are detected.
+  bool rt_fault_metrics_enabled = false;
 };
 
 /// Timing Advance MAC CE scheduling expert configuration.

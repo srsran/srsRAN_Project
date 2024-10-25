@@ -14,11 +14,12 @@
 
 using namespace srsran;
 
+/// Obtain duration after which we consider that the scheduler did not perform its operations within the RT deadline.
 static std::chrono::microseconds get_tracer_thres(const cell_configuration& cell_cfg)
 {
   std::chrono::microseconds slot_dur{1000 >>
                                      to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)};
-  return cell_cfg.expert_cfg.report_slowdowns ? slot_dur : std::chrono::microseconds{0};
+  return cell_cfg.expert_cfg.log_rt_fault_metrics ? slot_dur : std::chrono::microseconds{0};
 }
 
 cell_scheduler::cell_scheduler(const scheduler_expert_config&                  sched_cfg,
