@@ -688,13 +688,11 @@ static csi_helper::csi_builder_params make_default_csi_builder_params(const cell
 
     constexpr unsigned default_ssb_period_ms = 10U;
 
-    if (not csi_helper::derive_valid_csi_rs_slot_offsets(csi_params,
-                                                         std::nullopt,
-                                                         std::nullopt,
-                                                         std::nullopt,
-                                                         tdd_pattern,
-                                                         csi_params.tracking_csi_ofdm_symbol_indexes,
-                                                         default_ssb_period_ms)) {
+    const unsigned max_csi_symbol = *std::max_element(csi_params.tracking_csi_ofdm_symbol_indexes.begin(),
+                                                      csi_params.tracking_csi_ofdm_symbol_indexes.end());
+
+    if (not csi_helper::derive_valid_csi_rs_slot_offsets(
+            csi_params, std::nullopt, std::nullopt, std::nullopt, tdd_pattern, max_csi_symbol, default_ssb_period_ms)) {
       report_fatal_error("Failed to find valid csi-MeasConfig");
     }
 

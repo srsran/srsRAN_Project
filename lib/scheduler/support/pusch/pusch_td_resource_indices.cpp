@@ -188,7 +188,10 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
                               [&pusch_time_domain_list, required_k2](unsigned pusch_td_res_idx) {
                                 return pusch_time_domain_list[pusch_td_res_idx].k2 == required_k2;
                               });
-      final_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].push_back(*it);
+      // TODO: fix and compute the proper k2 value for the PUSCH time domain resource.
+      if (it != initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].end()) {
+        final_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].push_back(*it);
+      }
     }
   }
 
