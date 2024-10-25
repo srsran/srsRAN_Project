@@ -880,6 +880,7 @@ int main(int argc, char** argv)
   if (worker_pool) {
     worker_pool->stop();
   }
+  processor.reset();
 
   return 0;
 }
