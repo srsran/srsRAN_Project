@@ -78,6 +78,12 @@ bool ng_setup_procedure::retry_required()
     return false;
   }
 
+  if (transaction_sink.timeout_expired()) {
+    logger.error("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
+    fmt::print("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
+    return false;
+  }
+
   const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
 
   if (not ng_fail->time_to_wait_present) {
@@ -113,9 +119,10 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
     for (const auto& guami_item : std::get<ngap_ng_setup_response>(res).served_guami_list) {
       context.served_guami_list.push_back(guami_item.guami);
     }
-
-  } else {
+  } else if (transaction_sink.failed()) {
     fill_ngap_ng_setup_result(res, transaction_sink.failure());
+  } else {
+    res = ngap_ng_setup_failure{ngap_cause_misc_t::unspecified};
   }
 
   return res;
