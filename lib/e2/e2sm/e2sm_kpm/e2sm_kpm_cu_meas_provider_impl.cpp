@@ -136,6 +136,8 @@ float e2sm_kpm_cu_meas_provider_impl::bytes_to_kbits(float value)
   return (nof_bits_per_byte * value / 1e3);
 }
 
+void e2sm_kpm_cu_meas_provider_impl::report_metrics(const pdcp_metrics_container& metrics) {}
+
 e2sm_kpm_cu_up_meas_provider_impl::e2sm_kpm_cu_up_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl()
 {
   supported_metrics.emplace(
@@ -143,8 +145,6 @@ e2sm_kpm_cu_up_meas_provider_impl::e2sm_kpm_cu_up_meas_provider_impl() : e2sm_kp
       e2sm_kpm_supported_metric_t{
           NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_cu_up_meas_provider_impl::get_pdcp_reordering_delay_ul});
 }
-
-void e2sm_kpm_cu_up_meas_provider_impl::report_metrics(const pdcp_metrics_container& metrics) {}
 
 bool e2sm_kpm_cu_meas_provider_impl::get_pdcp_reordering_delay_ul(const asn1::e2sm::label_info_list_l label_info_list,
                                                                   const std::vector<asn1::e2sm::ue_id_c>& ues,

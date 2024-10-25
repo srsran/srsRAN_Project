@@ -31,6 +31,8 @@ public:
 
   ~e2sm_kpm_cu_meas_provider_impl() = default;
 
+  void report_metrics(const pdcp_metrics_container& metrics) override;
+
   /// e2sm_kpm_meas_provider functions.
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override;
 
@@ -94,8 +96,6 @@ public:
 class e2sm_kpm_cu_up_meas_provider_impl : public e2sm_kpm_cu_meas_provider_impl
 {
 public:
-  void report_metrics(const pdcp_metrics_container& metrics) override;
-
   e2sm_kpm_cu_up_meas_provider_impl();
 };
 

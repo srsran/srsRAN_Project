@@ -53,6 +53,11 @@ private:
   srslog::basic_logger& logger;
   e2ap_configuration&   cfg;
 
+  void build_e2_kpm_du(std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
+                       srs_du::f1ap_ue_id_translator*                                   f1ap_ue_id_translator);
+  void build_e2_kpm_cu_up(std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_);
+  void build_e2_kpm_cu_cp(std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_);
+
   // Handler for E2AP tasks.
   task_executor&            task_exec;
   fifo_async_task_scheduler main_ctrl_loop;
