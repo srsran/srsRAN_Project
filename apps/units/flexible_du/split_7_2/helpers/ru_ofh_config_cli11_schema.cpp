@@ -188,6 +188,8 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_unit_cell_co
       ->capture_default_str();
   add_option(app, "--enable_promiscuous", config.enable_promiscuous_mode, "Promiscuous mode flag")
       ->capture_default_str();
+  add_option(app, "--check_link_status", config.check_link_status, "Ethernet link status checking flag")
+      ->capture_default_str();
   add_option(app, "--mtu", config.mtu_size, "NIC interface MTU size")
       ->capture_default_str()
       ->check(CLI::Range(1500, 9600));

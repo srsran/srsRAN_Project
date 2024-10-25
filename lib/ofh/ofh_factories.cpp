@@ -104,10 +104,11 @@ static std::pair<std::unique_ptr<ether::gateway>, std::unique_ptr<ether::receive
 create_dpdk_txrx(const sector_configuration& sector_cfg, task_executor& rx_executor, srslog::basic_logger& logger)
 {
   ether::gw_config eth_cfg;
-  eth_cfg.interface                   = sector_cfg.interface;
-  eth_cfg.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
-  eth_cfg.mtu_size                    = sector_cfg.mtu_size;
-  eth_cfg.mac_dst_address             = sector_cfg.mac_dst_address;
+  eth_cfg.interface                    = sector_cfg.interface;
+  eth_cfg.is_promiscuous_mode_enabled  = sector_cfg.is_promiscuous_mode_enabled;
+  eth_cfg.is_link_status_check_enabled = sector_cfg.is_link_status_check_enabled;
+  eth_cfg.mtu_size                     = sector_cfg.mtu_size;
+  eth_cfg.mac_dst_address              = sector_cfg.mac_dst_address;
 
   return ether::create_dpdk_txrx(eth_cfg, rx_executor, logger);
 }

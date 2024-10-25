@@ -159,7 +159,9 @@ static unsigned dpdk_port_configure(const dpdk_port_config& config, ::rte_mempoo
     ::rte_exit(EXIT_FAILURE, "DPDK - Unable to initialize Ethernet port '%u'\n", dpdk_port_id);
   }
 
-  print_link_status(dpdk_port_id);
+  if (config.is_link_status_check_enabled) {
+    print_link_status(dpdk_port_id);
+  }
   return dpdk_port_id;
 }
 

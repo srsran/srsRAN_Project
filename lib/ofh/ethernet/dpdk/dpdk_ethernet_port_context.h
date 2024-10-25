@@ -27,6 +27,8 @@ struct dpdk_port_config {
   std::string id;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
+  /// Ethernet link status checking flag.
+  bool is_link_status_check_enabled;
   /// MTU size.
   units::bytes mtu_size;
 };
