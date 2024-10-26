@@ -41,6 +41,8 @@ private:
                                  span<const log_likelihood_ratio> rotated_node,
                                  unsigned                         var_node) override;
 
+  void scale(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) override;
+
   void compute_check_to_var_msgs(span<log_likelihood_ratio>       this_check_to_var,
                                  span<const log_likelihood_ratio> this_var_to_check,
                                  span<const log_likelihood_ratio> rotated_node,

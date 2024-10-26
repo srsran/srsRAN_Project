@@ -152,6 +152,17 @@ void ldpc_decoder_avx512::analyze_var_to_check_msgs(span<log_likelihood_ratio>  
   }
 }
 
+void ldpc_decoder_avx512::scale(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
+{
+  mm512::avx512_const_span in_avx512(in, node_size_avx512);
+  mm512::avx512_span       out_avx512(out, node_size_avx512);
+  for (unsigned i_block = 0; i_block != node_size_avx512; ++i_block) {
+    out_avx512.set_at(
+        i_block,
+        mm512::scale_epi8(in_avx512.get_at(i_block), scaling_factor, log_likelihood_ratio::max().to_value_type()));
+  }
+}
+
 void ldpc_decoder_avx512::compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
                                                     span<const log_likelihood_ratio> /*this_var_to_check*/,
                                                     span<const log_likelihood_ratio> rotated_node,
@@ -179,9 +190,6 @@ void ldpc_decoder_avx512::compute_check_to_var_msgs(span<log_likelihood_ratio> t
         _mm512_cmpeq_epi8_mask(this_var_index_epi8, min_var_to_check_index_avx512.get_at(i_block));
     __m512i check_to_var_epi8 = _mm512_mask_blend_epi8(
         mask_is_min_epi8, min_var_to_check_avx512.get_at(i_block), second_min_var_to_check_avx512.get_at(i_block));
-    // Scale the message to compensate for approximations.
-    check_to_var_epi8 =
-        mm512::scale_epi8(check_to_var_epi8, scaling_factor, log_likelihood_ratio::max().to_value_type());
 
     // Sign of the cumulative product of all variable-to-check messages but the current one (same as multiplying the
     // sign of all messages by the sign of the current one).

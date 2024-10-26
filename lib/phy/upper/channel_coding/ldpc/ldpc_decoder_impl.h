@@ -102,6 +102,11 @@ private:
                                          span<const log_likelihood_ratio> rotated_node,
                                          unsigned                         var_node) = 0;
 
+  /// \brief helper function for scaling buffers of log-likelihood ratios.
+  /// \param[out] out Buffer with the output log-likelihood ratios.
+  /// \param[in]  in  Buffer with the input log-likelihood ratios.
+  virtual void scale(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) = 0;
+
   /// \brief Helper function for \ref update_check_to_variable_messages - Computes the new check-to-variable messages.
   ///
   /// The function operates on all the messages corresponding to the variable-to-check edges obtained from lifting a

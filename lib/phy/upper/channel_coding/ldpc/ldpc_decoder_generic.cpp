@@ -66,6 +66,8 @@ static log_likelihood_ratio scale_llr(log_likelihood_ratio llr, float scaling_fa
       std::round(static_cast<float>(llr.to_value_type()) * scaling_factor));
 }
 
+void ldpc_decoder_generic::scale(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) {}
+
 // In the generic implementation we don't physically rotate the node, since we can access the corresponding values by
 // a simple shift - therefore the unused parameter.
 void ldpc_decoder_generic::compute_check_to_var_msgs(span<log_likelihood_ratio>       this_check_to_var,

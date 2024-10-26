@@ -136,6 +136,17 @@ void ldpc_decoder_avx2::analyze_var_to_check_msgs(span<log_likelihood_ratio>    
   }
 }
 
+void ldpc_decoder_avx2::scale(span<srsran::log_likelihood_ratio> out, span<const srsran::log_likelihood_ratio> in)
+{
+  mm256::avx2_const_span in_avx2(in, node_size_avx2);
+  mm256::avx2_span       out_avx2(out, node_size_avx2);
+  for (unsigned i_block = 0; i_block != node_size_avx2; ++i_block) {
+    out_avx2.set_at(
+        i_block,
+        mm256::scale_epi8(in_avx2.get_at(i_block), scaling_factor, log_likelihood_ratio::max().to_value_type()));
+  }
+}
+
 void ldpc_decoder_avx2::compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
                                                   span<const log_likelihood_ratio> /*this_var_to_check*/,
                                                   span<const log_likelihood_ratio> rotated_node,
@@ -162,9 +173,6 @@ void ldpc_decoder_avx2::compute_check_to_var_msgs(span<log_likelihood_ratio> thi
     __m256i mask_is_min_epi8  = _mm256_cmpeq_epi8(this_var_index_epi8, min_var_to_check_index_avx2.get_at(i_block));
     __m256i check_to_var_epi8 = _mm256_blendv_epi8(
         min_var_to_check_avx2.get_at(i_block), second_min_var_to_check_avx2.get_at(i_block), mask_is_min_epi8);
-    // Scale the message to compensate for approximations.
-    check_to_var_epi8 =
-        mm256::scale_epi8(check_to_var_epi8, scaling_factor, log_likelihood_ratio::max().to_value_type());
 
     // Sign of the cumulative product of all variable-to-check messages but the current one (same as multiplying the
     // sign of all messages by the sign of the current one).
