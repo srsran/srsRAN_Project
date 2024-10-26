@@ -805,7 +805,7 @@ package:
     DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
     MAKEFLAGS: -j${KUBERNETES_CPU_LIMIT}
     extraopts: -DMARCH=x86-64-v3
-    INFRASTRUCTURE_TAG: amd64-avx2
+  tags: [amd64-avx2]
   parallel:
     matrix:
       - OS_VERSION: "22.04"
@@ -822,7 +822,7 @@ install-package:
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-    INFRASTRUCTURE_TAG: amd64-avx2
+  tags: [amd64-avx2]
   script:
     - gnb --version
   parallel:
@@ -1669,8 +1669,7 @@ check-affinity-manager-nocpu:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
   timeout: 15 minutes
-  variables:
-    INFRASTRUCTURE_TAG: amd64
+  tags: [amd64]
   script:
     - cd build/apps/gnb
     - |
