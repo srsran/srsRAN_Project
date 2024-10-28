@@ -21,7 +21,8 @@ namespace srsran {
 class pdcp_metrics_aggregator
 {
 public:
-  pdcp_metrics_aggregator(rb_id_t                rb_id_,
+  pdcp_metrics_aggregator(uint32_t               ue_index_,
+                          rb_id_t                rb_id_,
                           timer_duration         metrics_period_,
                           pdcp_metrics_notifier* pdcp_metrics_notif_,
                           task_executor&         ue_executor_);
@@ -38,6 +39,7 @@ private:
   void push_tx_metrics_impl(pdcp_tx_metrics_container m_tx_);
   void push_rx_metrics_impl(pdcp_rx_metrics_container m_rx_);
 
+  uint32_t                  ue_index;
   pdcp_rx_metrics_container m_rx;
   pdcp_tx_metrics_container m_tx;
   timer_duration            metrics_period;

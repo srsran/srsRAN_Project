@@ -146,7 +146,7 @@ int main(int argc, char** argv)
 
   pdcp_tx_gen_frame frame = {};
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
-      std::make_unique<pdcp_metrics_aggregator>(drb_id_t::drb1, timer_duration{100}, nullptr, worker);
+      std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{100}, nullptr, worker);
   // Create PDCP entities
   std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
       0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);

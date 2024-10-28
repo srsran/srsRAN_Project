@@ -21,6 +21,7 @@
 namespace srsran {
 
 struct pdcp_metrics_container {
+  uint32_t                  ue_index;
   pdcp_tx_metrics_container tx;
   pdcp_rx_metrics_container rx;
   timer_duration            metrics_period;

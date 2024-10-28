@@ -13,7 +13,8 @@
 
 using namespace srsran;
 
-pdcp_metrics_aggregator::pdcp_metrics_aggregator(rb_id_t                rb_id_,
+pdcp_metrics_aggregator::pdcp_metrics_aggregator(uint32_t               ue_index_,
+                                                 rb_id_t                rb_id_,
                                                  timer_duration         metrics_period_,
                                                  pdcp_metrics_notifier* pdcp_metrics_notif_,
                                                  task_executor&         ue_executor_) :
@@ -57,6 +58,6 @@ void pdcp_metrics_aggregator::push_report()
   if (m_tx.counter != m_rx.counter) {
     return;
   }
-  pdcp_metrics_container metrics = {m_tx, m_rx, metrics_period};
+  pdcp_metrics_container metrics = {ue_index, m_tx, m_rx, metrics_period};
   pdcp_metrics_notif->report_metrics(metrics);
 }

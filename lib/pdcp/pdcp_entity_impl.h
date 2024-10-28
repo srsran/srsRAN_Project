@@ -39,7 +39,7 @@ public:
     logger("PDCP", {ue_index, rb_id, "DL/UL"}),
     metrics_period(config.custom.metrics_period),
     metrics_timer(ue_ctrl_timer_factory.create_timer()),
-    metrics_agg(rb_id, metrics_period, config.custom.metrics_notifier, ue_dl_executor)
+    metrics_agg(ue_index, rb_id, metrics_period, config.custom.metrics_notifier, ue_dl_executor)
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index,
                                           rb_id,
