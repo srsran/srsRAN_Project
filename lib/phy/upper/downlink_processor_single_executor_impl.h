@@ -11,11 +11,14 @@
 #pragma once
 
 #include "downlink_processor_single_executor_state.h"
+#include "srsran/adt/unique_function.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/srslog/logger.h"
+#include "srsran/support/executors/task_executor.h"
 #include <mutex>
 
 namespace srsran {
@@ -29,9 +32,6 @@ class downlink_processor_callback
 {
 public:
   virtual ~downlink_processor_callback() = default;
-
-  /// Sends the resource grid and updates the processor state to allow configuring a new resource grid.
-  virtual void send_resource_grid() = 0;
 
   /// Decrements the number of pending PDUs to be processed and tries to send the resource grid through the gateway.
   virtual void on_task_completion() = 0;
@@ -112,29 +112,61 @@ private:
     detail::downlink_processor_callback& callback;
   };
 
-  /// \brief Sends the resource grid and updates the processor state to allow configuring a new resource grid.
-  void send_resource_grid() override;
+  /// Wraps a task executor that forbids memory allocation by design.
+  class downlink_task_executor
+  {
+  public:
+    using task_type = unique_function<void(), 64, true>;
 
-  /// \brief Decrements the number of pending PDUs to be processed and tries to send the resource grid through the
-  /// gateway.
+    downlink_task_executor(task_executor& executor_) : executor(executor_) {}
+
+    bool execute(task_type&& task) { return executor.execute(std::move(task)); }
+
+  private:
+    task_executor& executor;
+  };
+
+  /// Sends the resource grid and updates the processor state to allow configuring a new resource grid.
+  void send_resource_grid();
+
+  /// Decrements the number of pending PDUs to be processed and tries to send the resource grid through the gateway.
   void on_task_completion() override;
 
-  upper_phy_rg_gateway&                 gateway;
-  resource_grid_context                 rg_context;
-  shared_resource_grid                  current_grid;
+  /// Resource grid gateway - it delivers the resource grid when the processing is finished.
+  upper_phy_rg_gateway& gateway;
+  /// Processing context.
+  resource_grid_context rg_context;
+  /// Configured resource grid.
+  shared_resource_grid current_grid;
+  /// \defgroup dl_pdu_list
+  /// \brief Temporary storage of transmit PDUs for asynchronous processing.
+  ///
+  /// The downlink processor might process transmission asynchronously. As the transmission configuration structures
+  /// might be large, the parameters are stored temporally in the downlink processor.
+  ///
+  /// The lists are cleared upon the resource grid configuration before start the execution.
+  /// @{
+  static_vector<pdcch_processor::pdu_t, MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UL_PDCCH_PDUS_PER_SLOT> pdcch_list;
+  static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT>                                 pdsch_list;
+  static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>                                          ssb_list;
+  static_vector<nzp_csi_rs_generator::config_t, MAX_SSB_PER_SLOT>                                nzp_csi_rs_list;
+  /// @}
+  /// \defgroup phy_chan_processors
+  /// \brief Physical channel processors.
+  /// @{
   std::unique_ptr<pdcch_processor>      pdcch_proc;
   std::unique_ptr<pdsch_processor>      pdsch_proc;
   std::unique_ptr<ssb_processor>        ssb_proc;
   std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc;
-  task_executor&                        executor;
-  srslog::basic_logger&                 logger;
-
+  /// @}
+  /// Asynchronous task executor.
+  downlink_task_executor executor;
+  /// Logger.
+  srslog::basic_logger& logger;
   /// DL processor internal state.
   downlink_processor_single_executor_state state;
-
   /// PDSCH notifier wrapper.
   pdsch_processor_notifier_wrapper pdsch_notifier;
-
   /// Protects the internal state.
   // :TODO: remove me later
   mutable std::mutex mutex;
