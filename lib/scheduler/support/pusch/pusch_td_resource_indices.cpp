@@ -16,6 +16,8 @@
 
 using namespace srsran;
 
+using pusch_index_list = static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>;
+
 /// Get minimum value for k1 given the common and dedicated configurations.
 static unsigned get_min_k1(const cell_configuration& cell_cfg, const search_space_info* ss_info)
 {
@@ -34,14 +36,14 @@ get_pusch_time_domain_resource_table(const cell_configuration& cell_cfg, const s
 }
 
 /// Determine PUSCH TD resources for the FDD mode.
-static static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
-get_fdd_pusch_td_resource_indices(const cell_configuration& cell_cfg, const search_space_info* ss_info)
+static pusch_index_list get_fdd_pusch_td_resource_indices(const cell_configuration& cell_cfg,
+                                                          const search_space_info*  ss_info)
 {
   srsran_sanity_check(not cell_cfg.is_tdd(), "Function expects FDD config");
   const unsigned min_k1                 = get_min_k1(cell_cfg, ss_info);
   auto           pusch_time_domain_list = get_pusch_time_domain_resource_table(cell_cfg, ss_info);
 
-  static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> result;
+  pusch_index_list result;
   for (unsigned i = 0; i != pusch_time_domain_list.size(); ++i) {
     if (pusch_time_domain_list[i].k2 <= min_k1) {
       result.push_back(i);
@@ -50,10 +52,9 @@ get_fdd_pusch_td_resource_indices(const cell_configuration& cell_cfg, const sear
   return result;
 }
 
-static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
-srsran::get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
-                                      slot_point                pdcch_slot,
-                                      const search_space_info*  ss_info)
+pusch_index_list srsran::get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
+                                                       slot_point                pdcch_slot,
+                                                       const search_space_info*  ss_info)
 {
   if (not cell_cfg.is_tdd()) {
     // FDD case.
@@ -67,7 +68,7 @@ srsran::get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
   const unsigned nof_full_dl_slots      = nof_dl_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
   const bool     is_dl_heavy            = nof_full_dl_slots >= nof_full_ul_slots;
 
-  static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> result;
+  pusch_index_list result;
   for (unsigned td_idx = 0; td_idx != pusch_time_domain_list.size(); ++td_idx) {
     const pusch_time_domain_resource_allocation& pusch_td_res = pusch_time_domain_list[td_idx];
     const ofdm_symbol_range                      symbols      = get_active_tdd_ul_symbols(
@@ -94,8 +95,8 @@ srsran::get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
   return result;
 }
 
-std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>
-srsran::get_pusch_td_resource_indices_per_slot(const cell_configuration& cell_cfg, const search_space_info* ss_info)
+std::vector<pusch_index_list> srsran::get_pusch_td_resource_indices_per_slot(const cell_configuration& cell_cfg,
+                                                                             const search_space_info*  ss_info)
 {
   // Note: [Implementation-defined] In case of FDD, we only consider one slot.
   if (not cell_cfg.is_tdd()) {
@@ -109,7 +110,7 @@ srsran::get_pusch_td_resource_indices_per_slot(const cell_configuration& cell_cf
 
   // List circularly indexed by slot with the list of applicable PUSCH Time Domain resource indexes per slot.
   // NOTE: The list would be empty for UL slots.
-  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_list_per_slot(nof_slots);
+  std::vector<pusch_index_list> pusch_td_list_per_slot(nof_slots);
   // Populate the initial list of applicable PUSCH time domain resources per slot.
   for (unsigned slot_idx = 0, e = nof_slots; slot_idx != e; ++slot_idx) {
     slot_point pdcch_slot{to_numerology_value(scs), slot_idx};
@@ -120,13 +121,26 @@ srsran::get_pusch_td_resource_indices_per_slot(const cell_configuration& cell_cf
   return pusch_td_list_per_slot;
 }
 
-std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>
+std::optional<unsigned> find_td_index_with_k2(span<const pusch_time_domain_resource_allocation> pusch_res_list,
+                                              span<const unsigned>                              valid_indexes,
+                                              unsigned                                          k2)
+{
+  auto* it = std::find_if(valid_indexes.begin(), valid_indexes.end(), [&pusch_res_list, k2](unsigned pusch_td_res_idx) {
+    return pusch_res_list[pusch_td_res_idx].k2 == k2;
+  });
+  if (it == valid_indexes.end()) {
+    return std::nullopt;
+  }
+  return *it;
+}
+
+std::vector<pusch_index_list>
 srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuration& cell_cfg,
                                                          const search_space_info*  ss_info)
 {
   // List circularly indexed by slot with the list of applicable PUSCH Time Domain resource indexes per slot.
   // NOTE: The list would be empty for UL slots.
-  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> initial_pusch_td_list_per_slot =
+  std::vector<pusch_index_list> initial_pusch_td_list_per_slot =
       get_pusch_td_resource_indices_per_slot(cell_cfg, ss_info);
 
   // In FDD case, we do not need to proceed further.
@@ -159,10 +173,8 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
   // List circularly indexed by slot with the list of applicable PUSCH Time Domain resource indexes per slot fairly
   // distributed among all the PDCCH slots.
   // NOTE: The list would be empty for UL slots.
-  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> final_pusch_td_list_per_slot;
-  final_pusch_td_list_per_slot.resize(nof_slots);
+  std::vector<pusch_index_list> final_pusch_td_list_per_slot(nof_slots);
 
-  unsigned last_pdcch_slot_index_for_ul_slot = nof_slots;
   // Iterate from latest UL slot to earliest and find the closest PDCCH slot to that UL slot.
   // NOTE: There can be scenarios where the closest PDCCH slot may not be able to schedule PUSCH in the chosen UL slot.
   // In this case we move on next closest PDCCH slot, so on and so forth.
@@ -173,20 +185,18 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
       continue;
     }
     // Flag indicating whether a valid PDCCH slot for a given UL slot is found or not.
-    bool no_pdcch_slot_found = true;
+    bool                    no_pdcch_slot_found = true;
+    std::optional<unsigned> last_pdcch_slot_index_for_ul_slot;
     for (int dl_slot_idx = ul_slot_idx; dl_slot_idx >= 0; --dl_slot_idx) {
       // Skip if it's not a DL slot.
       if (not has_active_tdd_dl_symbols(cell_cfg.tdd_cfg_common.value(), dl_slot_idx)) {
         continue;
       }
       // Check whether there is a PUSCH time domain resource with required k2 value for the PDCCH slot.
-      unsigned required_k2 = ul_slot_idx - dl_slot_idx;
-      auto*    it          = std::find_if(initial_pusch_td_list_per_slot[dl_slot_idx].begin(),
-                              initial_pusch_td_list_per_slot[dl_slot_idx].end(),
-                              [&pusch_time_domain_list, required_k2](unsigned pusch_td_res_idx) {
-                                return pusch_time_domain_list[pusch_td_res_idx].k2 == required_k2;
-                              });
-      if (it == initial_pusch_td_list_per_slot[dl_slot_idx].end()) {
+      unsigned                required_k2 = ul_slot_idx - dl_slot_idx;
+      std::optional<unsigned> idx =
+          find_td_index_with_k2(pusch_time_domain_list, initial_pusch_td_list_per_slot[dl_slot_idx], required_k2);
+      if (not idx.has_value()) {
         continue;
       }
       // Store PDCCH slot index at which a valid PUSCH time domain resource was found to schedule PUSCH at given UL
@@ -199,22 +209,28 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
         continue;
       }
       // Store the nof. PUSCH time domain resource index for this PDCCH slot.
-      final_pusch_td_list_per_slot[dl_slot_idx].push_back(*it);
+      final_pusch_td_list_per_slot[dl_slot_idx].push_back(*idx);
       no_pdcch_slot_found = false;
       break;
     }
+
+    srsran_assert(last_pdcch_slot_index_for_ul_slot.has_value(),
+                  "Invalid TDD pattern which leads to UL slot index={} with no valid k2",
+                  ul_slot_idx);
+
     // [Implementation-defined] If no PDCCH slot is found we pick the last valid PDCCH slot for this UL slot, regardless
     // of the restriction to not allow more than \c nof_ul_pdcchs_per_dl_slot UL PDCCHs per PDCCH slot.
     if (no_pdcch_slot_found) {
-      std::optional<unsigned> min_k2 = std::nullopt;
+      std::optional<unsigned> min_k2;
       for (const auto& pusch_time_domain : pusch_time_domain_list) {
         min_k2 = std::min(min_k2.value_or(pusch_time_domain.k2), pusch_time_domain.k2);
       }
-      const unsigned required_k2 = ul_slot_idx - last_pdcch_slot_index_for_ul_slot;
+      const unsigned required_k2 = ul_slot_idx - last_pdcch_slot_index_for_ul_slot.value();
+
       // If the required k2 value is less than the minimum k2 value in the PUSCH time domain resource list, then we look
       // for the minimum k2 value that is greater than the DL-UL transmission period, as this is the PDCCH slot closest
       // to the PUSCH slot.
-      std::optional<unsigned> candidate_required_k2 = std::nullopt;
+      std::optional<unsigned> candidate_required_k2;
       if (required_k2 < min_k2.value()) {
         for (const auto& pusch_time_domain : pusch_time_domain_list) {
           if (pusch_time_domain.k2 > cell_cfg.tdd_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots) {
@@ -228,17 +244,19 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
       // If a valid PUSCH time domain resource is found for the required k2 value, then we store it.
       std::optional<unsigned> pusch_td_res_idx_for_required_k2 = std::nullopt;
       if (candidate_required_k2.has_value()) {
-        auto* it = std::find_if(initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].begin(),
-                                initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].end(),
+        auto& init_push_list = initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot.value()];
+        auto* it             = std::find_if(init_push_list.begin(),
+                                init_push_list.end(),
                                 [&pusch_time_domain_list, candidate_required_k2](unsigned pusch_td_res_idx) {
                                   return pusch_time_domain_list[pusch_td_res_idx].k2 == candidate_required_k2.value();
                                 });
-        if (it != initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].end()) {
+        if (it != init_push_list.end()) {
           pusch_td_res_idx_for_required_k2.emplace(*it);
         }
       }
       if (pusch_td_res_idx_for_required_k2.has_value()) {
-        final_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot].push_back(*pusch_td_res_idx_for_required_k2);
+        final_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot.value()].push_back(
+            *pusch_td_res_idx_for_required_k2);
       } else {
         srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED", false);
         logger.warning("No valid PUSCH time domain resource found for UL slot dx={}", ul_slot_idx);
