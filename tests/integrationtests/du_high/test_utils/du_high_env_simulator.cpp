@@ -425,8 +425,12 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
 
   // DU receives UE Context Setup Request.
   cu_notifier.last_f1ap_msgs.clear();
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
-      *u.cu_ue_id, u.du_ue_id, u.srbs[LCID_SRB1].next_pdcp_sn++, {drb_id_t::drb1});
+  f1ap_message msg =
+      test_helpers::create_ue_context_setup_request(*u.cu_ue_id,
+                                                    u.du_ue_id,
+                                                    u.srbs[LCID_SRB1].next_pdcp_sn++,
+                                                    {drb_id_t::drb1},
+                                                    {plmn_identity::test_value(), nr_cell_identity::create(0).value()});
   asn1::f1ap::ue_context_setup_request_s& cmd = msg.pdu.init_msg().value.ue_context_setup_request();
   cmd->drbs_to_be_setup_list[0]
       .value()

@@ -173,7 +173,8 @@ static drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid)
 f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t                cu_ue_id,
                                                                    std::optional<gnb_du_ue_f1ap_id_t> du_ue_id,
                                                                    uint32_t                     rrc_container_pdcp_sn,
-                                                                   const std::vector<drb_id_t>& drbs_to_setup)
+                                                                   const std::vector<drb_id_t>& drbs_to_setup,
+                                                                   nr_cell_global_id_t          nr_cgi)
 {
   using namespace asn1::f1ap;
   f1ap_message msg;
@@ -187,6 +188,10 @@ f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1a
     dl_msg->gnb_du_ue_f1ap_id         = (unsigned)*du_ue_id;
   }
 
+  // spCell.
+  dl_msg->sp_cell_id.plmn_id = nr_cgi.plmn_id.to_bytes();
+  dl_msg->sp_cell_id.nr_cell_id.from_number(nr_cgi.nci.value());
+
   // SRB2.
   dl_msg->srbs_to_be_setup_list_present = true;
   dl_msg->srbs_to_be_setup_list.resize(1);
@@ -194,7 +199,7 @@ f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1a
   srbs_to_be_setup_item_s& srb2 = dl_msg->srbs_to_be_setup_list[0]->srbs_to_be_setup_item();
   srb2.srb_id                   = 2;
 
-  // drbs-to-be-setup
+  // drbs-to-be-setup.
   dl_msg->drbs_to_be_setup_list_present = drbs_to_setup.size() > 0;
   dl_msg->drbs_to_be_setup_list.resize(drbs_to_setup.size());
   unsigned count = 0;

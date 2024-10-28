@@ -18,7 +18,7 @@
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/ran/nr_cell_identity.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 
@@ -54,7 +54,8 @@ f1ap_message generate_f1_removal_response(const f1ap_message& f1_removal_request
 f1ap_message create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t                cu_ue_id,
                                              std::optional<gnb_du_ue_f1ap_id_t> du_ue_id,
                                              uint32_t                           rrc_container_pdcp_sn,
-                                             const std::vector<drb_id_t>&       drbs_to_setup);
+                                             const std::vector<drb_id_t>&       drbs_to_setup,
+                                             nr_cell_global_id_t                nr_cgi);
 
 /// \brief Generates F1AP Initial UL RRC TRANSFER message.
 f1ap_message create_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,

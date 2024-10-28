@@ -163,7 +163,7 @@ void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_
 
   // Schedule UE Context Setup Procedure.
   du_mng.get_ue_handler(du_ue_index)
-      .schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, ues, du_mng, du_ue_index));
+      .schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, ues, du_mng, du_ue_index, ctxt));
 }
 
 void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg)
