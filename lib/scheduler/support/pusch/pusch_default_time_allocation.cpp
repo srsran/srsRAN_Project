@@ -137,29 +137,39 @@ srsran::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarr
 }
 
 span<const pusch_time_domain_resource_allocation>
-srsran::get_c_rnti_pusch_time_domain_list(const search_space_configuration& ss_cfg,
-                                          const bwp_uplink_common&          active_bwp_ul_common,
-                                          const bwp_uplink_dedicated*       active_bwp_ul_ded)
+srsran::get_c_rnti_pusch_time_domain_list(bool                        is_common_ss,
+                                          coreset_id                  cs_id,
+                                          const bwp_uplink_common&    active_bwp_ul_common,
+                                          const bwp_uplink_dedicated* active_bwp_ul_ded)
 {
-  const bool is_fallback = ss_cfg.is_common_search_space() and ss_cfg.get_coreset_id() == to_coreset_id(0);
-  srsran_assert(is_fallback or active_bwp_ul_ded != nullptr, "Invalid BWP DL dedicated configuration");
+  bool fallback     = is_common_ss and cs_id == to_coreset_id(0);
+  active_bwp_ul_ded = fallback ? nullptr : active_bwp_ul_ded;
 
   // See TS 38.214, Table 6.1.2.1.1-1.
-  if (not is_fallback) {
-    if (active_bwp_ul_ded->pusch_cfg.has_value() and
-        (not active_bwp_ul_ded->pusch_cfg.value().pusch_td_alloc_list.empty())) {
-      // UE dedicated pusch-TimeDomain list.
-      return active_bwp_ul_ded->pusch_cfg.value().pusch_td_alloc_list;
-    }
+  if (active_bwp_ul_ded != nullptr and active_bwp_ul_ded->pusch_cfg.has_value() and
+      not active_bwp_ul_ded->pusch_cfg.value().pusch_td_alloc_list.empty()) {
+    // Cases:
+    // - Any common search space not associated with CORESET 0, pusch-Config includes pusch-TimeDomainAllocationList
+    // - UE specific search space, pusch-Config includes pusch-TimeDomainAllocationList
+    return active_bwp_ul_ded->pusch_cfg.value().pusch_td_alloc_list;
   }
 
   if (active_bwp_ul_common.pusch_cfg_common.has_value() and
       (not active_bwp_ul_common.pusch_cfg_common.value().pusch_td_alloc_list.empty())) {
-    // common pusch-TimeDomain list.
+    // Case in which pusch-ConfigCommon includes puschTimeDomainAllocationList
     return active_bwp_ul_common.pusch_cfg_common.value().pusch_td_alloc_list;
   }
 
   // default A table case.
   return pusch_default_time_allocations_default_A_table(active_bwp_ul_common.generic_params.cp,
                                                         active_bwp_ul_common.generic_params.scs);
+}
+
+span<const pusch_time_domain_resource_allocation>
+srsran::get_c_rnti_pusch_time_domain_list(const search_space_configuration& ss_cfg,
+                                          const bwp_uplink_common&          active_bwp_ul_common,
+                                          const bwp_uplink_dedicated*       active_bwp_ul_ded)
+{
+  return get_c_rnti_pusch_time_domain_list(
+      ss_cfg.is_common_search_space(), ss_cfg.get_coreset_id(), active_bwp_ul_common, active_bwp_ul_ded);
 }
