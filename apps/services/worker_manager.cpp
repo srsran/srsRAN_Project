@@ -330,7 +330,7 @@ void worker_manager::associate_low_prio_executors(const worker_manager_config& c
 
   // Update executor pointer mapping
   cu_cp_exec       = exec_map.at("ctrl_exec");
-  cu_cp_e2_exec    = exec_map.at("ctrl_exec");
+  cu_e2_exec       = exec_map.at("ctrl_exec");
   metrics_hub_exec = exec_map.at("ctrl_exec");
 }
 

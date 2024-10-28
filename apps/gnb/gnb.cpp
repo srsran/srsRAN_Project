@@ -366,7 +366,7 @@ int main(int argc, char** argv)
   // Create CU-CP dependencies.
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor   = workers.cu_cp_exec;
-  cu_cp_dependencies.cu_cp_e2_exec    = workers.cu_cp_e2_exec;
+  cu_cp_dependencies.cu_cp_e2_exec    = workers.cu_e2_exec;
   cu_cp_dependencies.timers           = cu_timers;
   cu_cp_dependencies.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
   cu_cp_dependencies.broker           = epoll_broker.get();
@@ -386,11 +386,14 @@ int main(int argc, char** argv)
   // Create CU-UP
   cu_up_unit_dependencies cu_up_unit_deps;
   cu_up_unit_deps.workers          = &workers;
+  cu_up_unit_deps.cu_up_e2_exec    = workers.cu_e2_exec;
   cu_up_unit_deps.e1ap_conn_client = e1_gw.get();
   cu_up_unit_deps.f1u_gateway      = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();
   cu_up_unit_deps.timers           = cu_timers;
   cu_up_unit_deps.io_brk           = epoll_broker.get();
+  cu_up_unit_deps.e2_gw            = e2_gw_cu.get();
+  cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
 

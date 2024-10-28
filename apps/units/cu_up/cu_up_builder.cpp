@@ -9,13 +9,18 @@
  */
 
 #include "cu_up_builder.h"
+#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/worker_manager.h"
 #include "cu_up_unit_config.h"
 #include "cu_up_unit_config_translators.h"
 #include "cu_up_wrapper.h"
 #include "srsran/cu_up/cu_up_factory.h"
+#include "srsran/e2/e2_cu_metrics_connector.h"
 
 using namespace srsran;
+
+using e2_cu_metrics_connector_manager =
+    e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
 
 std::unique_ptr<srs_cu_up::cu_up_interface> srsran::build_cu_up(const cu_up_unit_config&       unit_cfg,
                                                                 const cu_up_unit_dependencies& dependencies)
@@ -46,6 +51,14 @@ std::unique_ptr<srs_cu_up::cu_up_interface> srsran::build_cu_up(const cu_up_unit
     ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
   }
   config.ngu_gw = ngu_gw.get();
+
+  auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
+
+  if (unit_cfg.e2_cfg.enable_unit_e2) {
+    config.e2_client          = dependencies.e2_gw;
+    config.e2ap_config        = generate_e2_config(unit_cfg);
+    config.e2_cu_metric_iface = &(*e2_metric_connectors).get_e2_metrics_interface(0);
+  }
 
   return std::make_unique<cu_up_wrapper>(std::move(ngu_gw), create_cu_up(config));
 }

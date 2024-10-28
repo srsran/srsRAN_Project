@@ -527,7 +527,7 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_confi
 
 static void configure_cli11_e2_args(CLI::App& app, e2_config& e2_params)
 {
-  add_option(app, "--enable_cu_e2", e2_params.enable_unit_e2, "Enable DU E2 agent")->capture_default_str();
+  add_option(app, "--enable_cu_cp_e2", e2_params.enable_unit_e2, "Enable CU E2 agent")->capture_default_str();
   add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
   add_option(app, "--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
   add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")

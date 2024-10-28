@@ -14,6 +14,9 @@
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/e1ap/gateways/e1_connection_client.h"
+#include "srsran/e2/e2_cu.h"
+#include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/ngu_gateway.h"
@@ -96,6 +99,14 @@ struct cu_up_configuration {
   std::string plmn       = "00101"; ///< Full PLMN as string (without possible filler digit) e.g. "00101"
 
   std::chrono::seconds statistics_report_period; // CU-UP statistics report period in seconds
+  /// E2AP configuration.
+  e2ap_configuration e2ap_config;
+  /// E2 connection client.
+  e2_connection_client* e2_client = nullptr;
+  /// E2 CU metrics interface.
+  e2_cu_metrics_interface* e2_cu_metric_iface = nullptr;
+  /// PDCP metrics notifier.
+  pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
 };
 
 } // namespace srs_cu_up

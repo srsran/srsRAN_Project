@@ -28,5 +28,6 @@ target_link_libraries(srsran_cu_up
         e1ap_asn1
         srsran_sdap
         srsran_security
+        srsran_e2
         srsran_support
         srslog)
