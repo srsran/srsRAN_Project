@@ -18,39 +18,41 @@ using namespace asn1::rrc_nr;
 
 // Free function to amend to the final procedure response message. This will take the results from the various
 // sub-procedures and update the succeeded/failed fields.
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       response_msg,
-                               f1ap_ue_context_modification_request&            ue_context_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request   setup_msg,
-                               const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               up_config_update&                                next_config,
-                               up_resource_manager&                             up_resource_mng_,
-                               const security_indication_t&                     default_security_indication,
-                               srslog::basic_logger&                            logger);
+bool handle_bearer_context_modification_response(
+    cu_cp_pdu_session_resource_setup_response&       response_msg,
+    f1ap_ue_context_modification_request&            ue_context_mod_request,
+    const cu_cp_pdu_session_resource_setup_request   setup_msg,
+    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+    up_config_update&                                next_config,
+    up_resource_manager&                             up_resource_mng_,
+    const security_indication_t&                     default_security_indication,
+    srslog::basic_logger&                            logger);
 
-// Same as above but taking the result from E1AP Bearer Context Setup message
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               f1ap_ue_context_modification_request&           ue_context_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                               up_config_update&                               next_config,
-                               up_resource_manager&                            up_resource_mng_,
-                               const security_indication_t&                    default_security_indication,
-                               srslog::basic_logger&                           logger);
+// Same as above but taking the result from E1AP Bearer Context Setup message.
+bool handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                          f1ap_ue_context_modification_request&           ue_context_mod_request,
+                                          const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                                          const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
+                                          up_config_update&                               next_config,
+                                          up_resource_manager&                            up_resource_mng_,
+                                          const security_indication_t&                    default_security_indication,
+                                          srslog::basic_logger&                           logger);
 
 // This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
 // bearer context modification message to be send to the CU-UP.
 // In case of a negative outcome it also prefills the final PDU session resource setup respone message.
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               const f1ap_ue_context_modification_response&    ue_context_modification_response,
-                               const up_config_update&                         next_config,
-                               const srslog::basic_logger&                     logger);
+bool handle_ue_context_modification_response(
+    cu_cp_pdu_session_resource_setup_response&      response_msg,
+    e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
+    const cu_cp_pdu_session_resource_setup_request& setup_msg,
+    const f1ap_ue_context_modification_response&    ue_context_modification_response,
+    const up_config_update&                         next_config,
+    const srslog::basic_logger&                     logger);
 
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               bool                                            rrc_reconfig_result,
-                               const srslog::basic_logger&                     logger);
+bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                         const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                                         bool                                            rrc_reconfig_result,
+                                         const srslog::basic_logger&                     logger);
 
 pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_request& setup_msg_,
@@ -96,57 +98,57 @@ void pdu_session_resource_setup_routine::operator()(
     next_config = up_resource_mng.calculate_update(setup_msg.pdu_session_res_setup_items);
   }
 
-  // sanity check passed, decide whether we have to create a Bearer Context at the CU-UP or modify an existing one.
+  // Sanity check passed, decide whether we have to create a Bearer Context at the CU-UP or modify an existing one.
   if (next_config.initial_context_creation) {
-    // prepare BearerContextSetupRequest
+    // Prepare BearerContextSetupRequest.
     if (!fill_e1ap_bearer_context_setup_request(bearer_context_setup_request)) {
       logger.warning("ue={}: \"{}\" failed to fill bearer context at CU-UP", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
 
-    // call E1AP procedure
+    // Call E1AP procedure.
     CORO_AWAIT_VALUE(bearer_context_setup_response,
                      e1ap_bearer_ctxt_mng.handle_bearer_context_setup_request(bearer_context_setup_request));
 
-    // Handle BearerContextSetupResponse
-    if (!handle_procedure_response(response_msg,
-                                   ue_context_mod_request,
-                                   setup_msg,
-                                   bearer_context_setup_response,
-                                   next_config,
-                                   up_resource_mng,
-                                   default_security_indication,
-                                   logger)) {
+    // Handle BearerContextSetupResponse.
+    if (!handle_bearer_context_setup_response(response_msg,
+                                              ue_context_mod_request,
+                                              setup_msg,
+                                              bearer_context_setup_response,
+                                              next_config,
+                                              up_resource_mng,
+                                              default_security_indication,
+                                              logger)) {
       logger.warning("ue={}: \"{}\" failed to setup bearer at CU-UP", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   } else {
-    // prepare BearerContextModificationRequest and modify existing bearer
+    // Prepare BearerContextModificationRequest and modify existing bearer.
     bearer_context_modification_request.ng_ran_bearer_context_mod_request.emplace(); // initialize fresh message
     fill_initial_e1ap_bearer_context_modification_request(bearer_context_modification_request);
 
-    // call E1AP procedure and wait for BearerContextModificationResponse
+    // Call E1AP procedure and wait for BearerContextModificationResponse.
     CORO_AWAIT_VALUE(
         bearer_context_modification_response,
         e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
-    // Handle BearerContextModificationResponse
-    if (!handle_procedure_response(response_msg,
-                                   ue_context_mod_request,
-                                   setup_msg,
-                                   bearer_context_modification_response,
-                                   next_config,
-                                   up_resource_mng,
-                                   default_security_indication,
-                                   logger)) {
+    // Handle BearerContextModificationResponse.
+    if (!handle_bearer_context_modification_response(response_msg,
+                                                     ue_context_mod_request,
+                                                     setup_msg,
+                                                     bearer_context_modification_response,
+                                                     next_config,
+                                                     up_resource_mng,
+                                                     default_security_indication,
+                                                     logger)) {
       logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
 
-  // Register required SRB and DRB resources at DU
+  // Register required SRB and DRB resources at DU.
   {
-    // prepare UE Context Modification Request and call F1
+    // Prepare UE Context Modification Request and call F1.
     ue_context_mod_request.ue_index = setup_msg.ue_index;
     ue_context_mod_request.cu_to_du_rrc_info.emplace();
     ue_context_mod_request.cu_to_du_rrc_info.value().ue_cap_rat_container_list =
@@ -156,47 +158,47 @@ void pdu_session_resource_setup_routine::operator()(
     CORO_AWAIT_VALUE(ue_context_modification_response,
                      f1ap_ue_ctxt_mng.handle_ue_context_modification_request(ue_context_mod_request));
 
-    // Handle UE Context Modification Response
-    if (!handle_procedure_response(response_msg,
-                                   bearer_context_modification_request,
-                                   setup_msg,
-                                   ue_context_modification_response,
-                                   next_config,
-                                   logger)) {
+    // Handle UE Context Modification Response.
+    if (!handle_ue_context_modification_response(response_msg,
+                                                 bearer_context_modification_request,
+                                                 setup_msg,
+                                                 ue_context_modification_response,
+                                                 next_config,
+                                                 logger)) {
       logger.warning("ue={}: \"{}\" failed to modify UE context at DU", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
 
-  // Inform CU-UP about the new TEID for UL F1u traffic
+  // Inform CU-UP about the new TEID for UL F1u traffic.
   {
-    // add remaining fields to BearerContextModificationRequest
+    // Add remaining fields to BearerContextModificationRequest.
     bearer_context_modification_request.ue_index = setup_msg.ue_index;
 
-    // call E1AP procedure and wait for BearerContextModificationResponse
+    // Call E1AP procedure and wait for BearerContextModificationResponse.
     CORO_AWAIT_VALUE(
         bearer_context_modification_response,
         e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
-    // Handle BearerContextModificationResponse
-    if (!handle_procedure_response(response_msg,
-                                   ue_context_mod_request,
-                                   setup_msg,
-                                   bearer_context_modification_response,
-                                   next_config,
-                                   up_resource_mng,
-                                   default_security_indication,
-                                   logger)) {
+    // Handle BearerContextModificationResponse.
+    if (!handle_bearer_context_modification_response(response_msg,
+                                                     ue_context_mod_request,
+                                                     setup_msg,
+                                                     bearer_context_modification_response,
+                                                     next_config,
+                                                     up_resource_mng,
+                                                     default_security_indication,
+                                                     logger)) {
       logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
 
   {
-    // prepare RRC Reconfiguration and call RRC UE notifier
-    // if default DRB is being setup, SRB2 needs to be setup as well
+    // Prepare RRC Reconfiguration and call RRC UE notifier.
+    // If default DRB is being setup, SRB2 needs to be setup as well.
     {
-      // get NAS PDUs as received by AMF
+      // Get NAS PDUs as received by AMF.
       std::vector<byte_buffer> nas_pdus;
       if (!setup_msg.nas_pdu.empty()) {
         nas_pdus.push_back(setup_msg.nas_pdu);
@@ -228,32 +230,33 @@ void pdu_session_resource_setup_routine::operator()(
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue->handle_rrc_reconfiguration_request(rrc_reconfig_args));
 
-    // Handle RRC Reconfiguration Response
-    if (!handle_procedure_response(response_msg, setup_msg, rrc_reconfig_result, logger)) {
+    // Handle RRCReconfiguration result.
+    if (!handle_rrc_reconfiguration_response(response_msg, setup_msg, rrc_reconfig_result, logger)) {
       logger.warning("ue={}: \"{}\" RRC reconfiguration failed", setup_msg.ue_index, name());
-      // Notify NGAP to request UE context release from AMF
+      // Notify NGAP to request UE context release from AMF.
       ue_task_sched.schedule_async_task(cu_cp_notifier.handle_ue_context_release(
           {setup_msg.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
 
-  // we are done, all good
+  // We are done, all good.
   CORO_RETURN(handle_pdu_session_resource_setup_result(true));
 }
 
 // Free function to amend to the final procedure response message. This will take the results from the various
 // sub-procedures and update the succeeded/failed fields.
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       response_msg,
-                               f1ap_ue_context_modification_request&            ue_context_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request   setup_msg,
-                               const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               up_config_update&                                next_config,
-                               up_resource_manager&                             up_resource_mng_,
-                               const security_indication_t&                     default_security_indication,
-                               srslog::basic_logger&                            logger)
+bool handle_bearer_context_modification_response(
+    cu_cp_pdu_session_resource_setup_response&       response_msg,
+    f1ap_ue_context_modification_request&            ue_context_mod_request,
+    const cu_cp_pdu_session_resource_setup_request   setup_msg,
+    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+    up_config_update&                                next_config,
+    up_resource_manager&                             up_resource_mng_,
+    const security_indication_t&                     default_security_indication,
+    srslog::basic_logger&                            logger)
 {
-  // Traverse setup list
+  // Traverse setup list.
   if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
                          ue_context_mod_request.srbs_to_be_setup_mod_list,
                          ue_context_mod_request.drbs_to_be_setup_mod_list,
@@ -266,35 +269,35 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
     return false;
   }
 
-  // Traverse failed list
+  // Traverse failed list.
   update_failed_list(response_msg.pdu_session_res_failed_to_setup_items,
                      bearer_context_modification_response.pdu_session_resource_failed_list,
                      next_config);
 
   for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_modified_list) {
-    // modified list
+    // Modified list.
     logger.info("Implement handling of resource modified item with {}", e1ap_item.pdu_session_id);
   }
 
   for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_failed_to_modify_list) {
-    // failed to modify list
+    // Failed to modify list.
     logger.info("Implement handling of resource failed to modify item with {}", e1ap_item.pdu_session_id);
   }
 
   return bearer_context_modification_response.success;
 }
 
-// Same as above but taking the result from E1AP Bearer Context Setup message
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               f1ap_ue_context_modification_request&           ue_context_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                               up_config_update&                               next_config,
-                               up_resource_manager&                            up_resource_mng_,
-                               const security_indication_t&                    default_security_indication,
-                               srslog::basic_logger&                           logger)
+// Same as above but taking the result from E1AP Bearer Context Setup message.
+bool handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                          f1ap_ue_context_modification_request&           ue_context_mod_request,
+                                          const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                                          const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
+                                          up_config_update&                               next_config,
+                                          up_resource_manager&                            up_resource_mng_,
+                                          const security_indication_t&                    default_security_indication,
+                                          srslog::basic_logger&                           logger)
 {
-  // Traverse setup list
+  // Traverse setup list.
   if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
                          ue_context_mod_request.srbs_to_be_setup_mod_list,
                          ue_context_mod_request.drbs_to_be_setup_mod_list,
@@ -307,7 +310,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
     return false;
   }
 
-  // Traverse failed list
+  // Traverse failed list.
   update_failed_list(response_msg.pdu_session_res_failed_to_setup_items,
                      bearer_context_setup_response.pdu_session_resource_failed_list,
                      next_config);
@@ -330,14 +333,15 @@ void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      resp
 // This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
 // bearer context modification message to be send to the CU-UP.
 // In case of a negative outcome it also prefills the final PDU session resource setup respone message.
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               const f1ap_ue_context_modification_response&    ue_context_modification_response,
-                               const up_config_update&                         next_config,
-                               const srslog::basic_logger&                     logger)
+bool handle_ue_context_modification_response(
+    cu_cp_pdu_session_resource_setup_response&      response_msg,
+    e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
+    const cu_cp_pdu_session_resource_setup_request& setup_msg,
+    const f1ap_ue_context_modification_response&    ue_context_modification_response,
+    const up_config_update&                         next_config,
+    const srslog::basic_logger&                     logger)
 {
-  // Fail procedure if (single) DRB couldn't be setup
+  // Fail procedure if (single) DRB couldn't be setup.
   if (!ue_context_modification_response.drbs_failed_to_be_setup_list.empty()) {
     logger.warning("Couldn't setup {} DRBs at DU",
                    ue_context_modification_response.drbs_failed_to_be_setup_list.size());
@@ -359,10 +363,10 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
   return ue_context_modification_response.success;
 }
 
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               bool                                            rrc_reconfig_result,
-                               const srslog::basic_logger&                     logger)
+bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                         const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                                         bool                                            rrc_reconfig_result,
+                                         const srslog::basic_logger&                     logger)
 {
   // Let all PDU sessions fail if response is negative.
   if (!rrc_reconfig_result) {
@@ -417,7 +421,7 @@ bool pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
 {
   e1ap_request.ue_index = setup_msg.ue_index;
 
-  // security info
+  // Security info.
   e1ap_request.security_info.security_algorithm.ciphering_algo                 = security_cfg.cipher_algo;
   e1ap_request.security_info.security_algorithm.integrity_protection_algorithm = security_cfg.integ_algo;
   auto k_enc_buffer = byte_buffer::create(security_cfg.k_enc);

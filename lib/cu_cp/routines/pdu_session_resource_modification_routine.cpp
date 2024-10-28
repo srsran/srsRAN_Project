@@ -20,26 +20,28 @@ using namespace asn1::rrc_nr;
 // sub-procedures and update the succeeded/failed fields.
 
 /// \brief Handle first Bearer Context Modification response and prepare subsequent UE context modification request.
-bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                               f1ap_ue_context_modification_request&            ue_context_mod_request,
-                               const cu_cp_pdu_session_resource_modify_request  modify_request,
-                               const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               up_config_update&                                next_config,
-                               srslog::basic_logger&                            logger);
+bool handle_bearer_context_modification_response(
+    cu_cp_pdu_session_resource_modify_response&      response_msg,
+    f1ap_ue_context_modification_request&            ue_context_mod_request,
+    const cu_cp_pdu_session_resource_modify_request& modify_request,
+    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+    up_config_update&                                next_config,
+    srslog::basic_logger&                            logger);
 
 /// \brief Handle UE context modification response and prepare second Bearer Context Modification.
-bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&     response_msg,
-                               e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
-                               const cu_cp_pdu_session_resource_modify_request modify_request,
-                               const f1ap_ue_context_modification_response&    ue_context_modification_response,
-                               const up_config_update&                         next_config,
-                               const srslog::basic_logger&                     logger);
+bool handle_ue_context_modification_response(
+    cu_cp_pdu_session_resource_modify_response&      response_msg,
+    e1ap_bearer_context_modification_request&        bearer_ctxt_mod_request,
+    const cu_cp_pdu_session_resource_modify_request& modify_request,
+    const f1ap_ue_context_modification_response&     ue_context_modification_response,
+    const up_config_update&                          next_config,
+    const srslog::basic_logger&                      logger);
 
-/// \brief Handle RRC reconfiguration result
-bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                               const cu_cp_pdu_session_resource_modify_request& modify_request,
-                               bool                                             rrc_reconfig_result,
-                               const srslog::basic_logger&                      logger);
+/// \brief Handle RRC reconfiguration result.
+bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
+                                         const cu_cp_pdu_session_resource_modify_request& modify_request,
+                                         bool                                             rrc_reconfig_result,
+                                         const srslog::basic_logger&                      logger);
 
 pdu_session_resource_modification_routine::pdu_session_resource_modification_routine(
     const cu_cp_pdu_session_resource_modify_request& modify_request_,
@@ -80,72 +82,72 @@ void pdu_session_resource_modification_routine::operator()(
   }
 
   {
-    // prepare first BearerContextModificationRequest
+    // Prepare first BearerContextModificationRequest.
     bearer_context_modification_request.ng_ran_bearer_context_mod_request.emplace(); // initialize fresh message
     fill_initial_e1ap_bearer_context_modification_request(bearer_context_modification_request);
 
-    // call E1AP procedure and wait for BearerContextModificationResponse
+    // Call E1AP procedure and wait for BearerContextModificationResponse.
     CORO_AWAIT_VALUE(
         bearer_context_modification_response,
         e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
-    // Handle BearerContextModificationResponse and fill subsequent UE context modification
-    if (handle_procedure_response(response_msg,
-                                  ue_context_mod_request,
-                                  modify_request,
-                                  bearer_context_modification_response,
-                                  next_config,
-                                  logger) == false) {
+    // Handle BearerContextModificationResponse and fill subsequent UEContextModificationRequest.
+    if (!handle_bearer_context_modification_response(response_msg,
+                                                     ue_context_mod_request,
+                                                     modify_request,
+                                                     bearer_context_modification_response,
+                                                     next_config,
+                                                     logger)) {
       logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
 
   {
-    // prepare UE Context Modification Request and call F1 notifier
+    // Prepare UEContextModificationRequest and call F1 notifier.
     ue_context_mod_request.ue_index = modify_request.ue_index;
 
     CORO_AWAIT_VALUE(ue_context_modification_response,
                      f1ap_ue_ctxt_mng.handle_ue_context_modification_request(ue_context_mod_request));
 
-    // Handle UE Context Modification Response
-    if (handle_procedure_response(response_msg,
-                                  bearer_context_modification_request,
-                                  modify_request,
-                                  ue_context_modification_response,
-                                  next_config,
-                                  logger) == false) {
+    // Handle UEContextModificationResponse.
+    if (!handle_ue_context_modification_response(response_msg,
+                                                 bearer_context_modification_request,
+                                                 modify_request,
+                                                 ue_context_modification_response,
+                                                 next_config,
+                                                 logger)) {
       logger.warning("ue={}: \"{}\" failed to modify UE context at DU", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
 
-  // If needed, inform CU-UP about the new TEID for UL F1u traffic
+  // If needed, inform CU-UP about the new TEID for UL F1u traffic.
   if (bearer_context_modification_request.ng_ran_bearer_context_mod_request.has_value()) {
-    // add remaining fields to BearerContextModificationRequest
+    // Add remaining fields to BearerContextModificationRequest.
     bearer_context_modification_request.ue_index = modify_request.ue_index;
 
-    // call E1AP procedure and wait for BearerContextModificationResponse
+    // Call E1AP procedure and wait for BearerContextModificationResponse.
     CORO_AWAIT_VALUE(
         bearer_context_modification_response,
         e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
-    // Handle BearerContextModificationResponse
-    if (handle_procedure_response(response_msg,
-                                  ue_context_mod_request,
-                                  modify_request,
-                                  bearer_context_modification_response,
-                                  next_config,
-                                  logger) == false) {
+    // Handle BearerContextModificationResponse.
+    if (!handle_bearer_context_modification_response(response_msg,
+                                                     ue_context_mod_request,
+                                                     modify_request,
+                                                     bearer_context_modification_response,
+                                                     next_config,
+                                                     logger)) {
       logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
 
   {
-    // prepare RRC Reconfiguration and call RRC UE notifier
+    // Prepare RRCReconfiguration and call RRC UE notifier.
     {
-      // get NAS PDUs as received by AMF
+      // Get NAS PDUs as received by AMF.
       std::vector<byte_buffer> nas_pdus;
       for (const auto& pdu_session : modify_request.pdu_session_res_modify_items) {
         if (!pdu_session.nas_pdu.empty()) {
@@ -172,17 +174,17 @@ void pdu_session_resource_modification_routine::operator()(
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue->handle_rrc_reconfiguration_request(rrc_reconfig_args));
 
-    // Handle RRC Reconfiguration result.
-    if (handle_procedure_response(response_msg, modify_request, rrc_reconfig_result, logger) == false) {
+    // Handle RRCReconfiguration result.
+    if (!handle_rrc_reconfiguration_response(response_msg, modify_request, rrc_reconfig_result, logger)) {
       logger.warning("ue={}: \"{}\" RRC reconfiguration failed", modify_request.ue_index, name());
-      // Notify NGAP to request UE context release from AMF
+      // Notify NGAP to request UE context release from AMF.
       ue_task_sched.schedule_async_task(cu_cp_notifier.handle_ue_context_release(
           {modify_request.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
 
-  // we are done
+  // We are done.
   CORO_RETURN(generate_pdu_session_resource_modify_response(true));
 }
 
@@ -242,25 +244,26 @@ void pdu_session_resource_modification_routine::fill_initial_e1ap_bearer_context
   }
 }
 
-// \brief Handle first Bearer Context Modification response and prepare subsequent UE context modification request.
-bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                               f1ap_ue_context_modification_request&            ue_context_mod_request,
-                               const cu_cp_pdu_session_resource_modify_request  modify_request,
-                               const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               up_config_update&                                next_config,
-                               srslog::basic_logger&                            logger)
+// \brief Handle first BearerContextModificationResponse and prepare subsequent UEContextModificationRequest.
+bool handle_bearer_context_modification_response(
+    cu_cp_pdu_session_resource_modify_response&      response_msg,
+    f1ap_ue_context_modification_request&            ue_context_mod_request,
+    const cu_cp_pdu_session_resource_modify_request& modify_request,
+    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+    up_config_update&                                next_config,
+    srslog::basic_logger&                            logger)
 {
-  // Traverse modify list
-  if (update_modify_list(response_msg.pdu_session_res_modify_list,
-                         ue_context_mod_request,
-                         modify_request.pdu_session_res_modify_items,
-                         bearer_context_modification_response.pdu_session_resource_modified_list,
-                         next_config,
-                         logger) == false) {
+  // Traverse modify list.
+  if (!update_modify_list(response_msg.pdu_session_res_modify_list,
+                          ue_context_mod_request,
+                          modify_request.pdu_session_res_modify_items,
+                          bearer_context_modification_response.pdu_session_resource_modified_list,
+                          next_config,
+                          logger)) {
     return false;
   }
 
-  // Traverse failed list
+  // Traverse failed list.
   update_failed_list(response_msg.pdu_session_res_failed_to_modify_list,
                      bearer_context_modification_response.pdu_session_resource_failed_list,
                      next_config);
@@ -268,21 +271,22 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      
   return bearer_context_modification_response.success;
 }
 
-// Handle UE context modification response and prepare second Bearer Context Modification.
-bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&     response_msg,
-                               e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
-                               const cu_cp_pdu_session_resource_modify_request modify_request,
-                               const f1ap_ue_context_modification_response&    ue_context_modification_response,
-                               const up_config_update&                         next_config,
-                               const srslog::basic_logger&                     logger)
+// Handle UEContextModificationResponse and prepare second BearerContextModificationRequest.
+bool handle_ue_context_modification_response(
+    cu_cp_pdu_session_resource_modify_response&      response_msg,
+    e1ap_bearer_context_modification_request&        bearer_ctxt_mod_request,
+    const cu_cp_pdu_session_resource_modify_request& modify_request,
+    const f1ap_ue_context_modification_response&     ue_context_modification_response,
+    const up_config_update&                          next_config,
+    const srslog::basic_logger&                      logger)
 {
-  // Traverse modify list
-  if (update_modify_list(response_msg.pdu_session_res_modify_list,
-                         bearer_ctxt_mod_request,
-                         modify_request.pdu_session_res_modify_items,
-                         ue_context_modification_response,
-                         next_config,
-                         logger) == false) {
+  // Traverse modify list.
+  if (!update_modify_list(response_msg.pdu_session_res_modify_list,
+                          bearer_ctxt_mod_request,
+                          modify_request.pdu_session_res_modify_items,
+                          ue_context_modification_response,
+                          next_config,
+                          logger)) {
     return false;
   }
 
@@ -301,14 +305,14 @@ void fill_modify_failed_list(cu_cp_pdu_session_resource_modify_response&      re
   }
 }
 
-// Handle RRC reconfiguration result
-bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                               const cu_cp_pdu_session_resource_modify_request& modify_request,
-                               bool                                             rrc_reconfig_result,
-                               const srslog::basic_logger&                      logger)
+// Handle RRCReconfiguration result.
+bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
+                                         const cu_cp_pdu_session_resource_modify_request& modify_request,
+                                         bool                                             rrc_reconfig_result,
+                                         const srslog::basic_logger&                      logger)
 {
   // Let all PDU sessions fail if response is negative.
-  if (rrc_reconfig_result == false) {
+  if (!rrc_reconfig_result) {
     fill_modify_failed_list(response_msg, modify_request);
   }
 
