@@ -6,8 +6,8 @@
 # the distribution.
 #
 
-add_subdirectory(adapters)
 add_subdirectory(du_manager)
+add_subdirectory(test_mode)
 
 add_library(srsran_du_high STATIC
         du_high_impl.cpp

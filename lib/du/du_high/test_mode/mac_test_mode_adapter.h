@@ -52,6 +52,12 @@ public:
     return rnti_to_ue_info_lookup.at(rnti).sched_ue_cfg_req;
   }
 
+  const sched_ue_config_request* find_sched_ue_cfg_request(rnti_t rnti) const
+  {
+    auto it = rnti_to_ue_info_lookup.find(rnti);
+    return it != rnti_to_ue_info_lookup.end() ? &it->second.sched_ue_cfg_req : nullptr;
+  }
+
   bool is_msg4_rxed(rnti_t rnti) const
   {
     if (rnti_to_ue_info_lookup.count(rnti) > 0) {
@@ -162,10 +168,6 @@ private:
     std::vector<ul_sched_info> puschs;
   };
 
-  void fill_csi_bits(rnti_t rnti, bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload) const;
-  void fill_uci_pdu(mac_uci_pdu::pucch_f0_or_f1_type& pucch_ind, const pucch_info& pucch) const;
-  void fill_uci_pdu(mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch_ind, const pucch_info& pucch) const;
-  void fill_uci_pdu(mac_uci_pdu::pusch_type& pusch_ind, const ul_sched_info& ul_grant) const;
   void forward_uci_ind_to_mac(const mac_uci_indication_message& uci_msg);
   void forward_crc_ind_to_mac(const mac_crc_indication_message& crc_msg);
 

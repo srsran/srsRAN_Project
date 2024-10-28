@@ -9,7 +9,8 @@
  */
 
 #include "mac_test_mode_adapter.h"
-#include "du_high_adapter_factories.h"
+#include "../adapters/du_high_adapter_factories.h"
+#include "mac_test_mode_helpers.h"
 #include "srsran/adt/ring_buffer.h"
 #include "srsran/mac/mac_factory.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
@@ -24,26 +25,6 @@ using namespace srs_du;
 // Buffer state that the fake RLC will report to the MAC. This value should be large enough for the scheduler to fill
 // the largest TB possible.
 static const unsigned TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE = 10000000;
-
-static expected<mac_rx_data_indication> create_test_pdu_with_bsr(slot_point sl_rx, rnti_t test_rnti, harq_id_t harq_id)
-{
-  // - 8-bit R/LCID MAC subheader.
-  // - MAC CE with Long BSR.
-  //
-  // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
-  // |              L                |  Octet 2
-  // | LCG7 | LCG6 |    ...   | LCG0 |  Octet 3
-  // |         Buffer Size 1         |  Octet 4
-
-  // We pass BSR=254, which according to TS38.321 is the maximum value for the LBSR size.
-  auto buf = byte_buffer::create({0x3e, 0x02, 0x01, 254});
-  if (not buf.has_value()) {
-    return make_unexpected(default_error_t{});
-  }
-  return mac_rx_data_indication{
-      sl_rx, to_du_cell_index(0), mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, std::move(buf.value())}}};
-}
 
 namespace {
 
@@ -176,27 +157,13 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
 
       // > Handle pending PUCCHs.
       for (const pucch_info& pucch : entry.pucchs) {
-        mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
-        pdu.rnti         = pucch.crnti;
-        switch (pucch.format) {
-          case pucch_format::FORMAT_0:
-          case pucch_format::FORMAT_1: {
-            fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>(), pucch);
-          } break;
-          case pucch_format::FORMAT_2: {
-            fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(), pucch);
-          } break;
-          default:
-            break;
-        }
+        uci_ind.ucis.emplace_back(create_uci_pdu(pucch, test_ue_cfg));
       }
 
       // > Handle pending PUSCHs.
       for (const ul_sched_info& pusch : entry.puschs) {
         if (pusch.uci.has_value()) {
-          mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
-          pdu.rnti         = pusch.pusch_cfg.rnti;
-          fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pusch_type>(), pusch);
+          uci_ind.ucis.emplace_back(create_uci_pdu(pusch, test_ue_cfg));
         }
       }
 
@@ -283,118 +250,6 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
   forward_crc_ind_to_mac(msg_copy);
 }
 
-void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f0_or_f1_type& pucch_ind,
-                                              const pucch_info&                 pucch) const
-{
-  pucch_ind.ul_sinr_dB = 100;
-  srsran_assert(pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1,
-                "Expected PUCCH Format is F0 or F1");
-  if (pucch.format == pucch_format::FORMAT_0) {
-    // In case of Format 0, unlike with Format 0, the GNB only schedules 1 PUCCH per slot; this PUCCH (and the
-    // corresponding UCI indication) can have HARQ-ACK bits or SR bits, or both.
-    if (pucch.format_0.sr_bits != sr_nof_bits::no_sr) {
-      // In test mode, SRs are never detected, and instead BSR is injected.
-      pucch_ind.sr_info.emplace();
-      pucch_ind.sr_info.value().detected = false;
-    }
-    if (pucch.format_0.harq_ack_nof_bits > 0) {
-      pucch_ind.harq_info.emplace();
-      pucch_ind.harq_info->harqs.resize(pucch.format_0.harq_ack_nof_bits, uci_pucch_f0_or_f1_harq_values::ack);
-    }
-  } else {
-    if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
-      // In test mode, SRs are never detected, and instead BSR is injected.
-      pucch_ind.sr_info.emplace();
-      pucch_ind.sr_info.value().detected = false;
-    }
-    if (pucch.format_1.harq_ack_nof_bits > 0) {
-      pucch_ind.harq_info.emplace();
-      // In case of PUCCH F1 with only HARQ-ACK bits, set all HARQ-ACK bits to ACK. If SR is included, then we
-      // consider that the PUCCH is not detected.
-      auto ack_val = pucch.format_1.sr_bits == sr_nof_bits::no_sr ? uci_pucch_f0_or_f1_harq_values::ack
-                                                                  : uci_pucch_f0_or_f1_harq_values::dtx;
-      pucch_ind.harq_info->harqs.resize(pucch.format_1.harq_ack_nof_bits, ack_val);
-    }
-  }
-}
-
-void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch_ind,
-                                              const pucch_info&                       pucch) const
-{
-  pucch_ind.ul_sinr_dB = 100;
-  if (pucch.format_2.sr_bits != sr_nof_bits::no_sr) {
-    // Set SR to not detected.
-    pucch_ind.sr_info.emplace();
-    pucch_ind.sr_info->resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
-  }
-  if (pucch.format_2.harq_ack_nof_bits > 0) {
-    // Set all HARQ-ACK bits to ACK.
-    pucch_ind.harq_info.emplace();
-    pucch_ind.harq_info->is_valid = true;
-    pucch_ind.harq_info->payload.resize(pucch.format_2.harq_ack_nof_bits);
-    pucch_ind.harq_info->payload.fill();
-  }
-  if (pucch.csi_rep_cfg.has_value()) {
-    pucch_ind.csi_part1_info.emplace();
-    pucch_ind.csi_part1_info->is_valid = true;
-    fill_csi_bits(pucch.crnti, pucch_ind.csi_part1_info->payload);
-  }
-}
-
-void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pusch_type& pusch_ind, const ul_sched_info& ul_grant) const
-{
-  const uci_info& uci_info = *ul_grant.uci;
-  pusch_ind.ul_sinr_dB     = 100;
-  if (uci_info.harq.has_value() and uci_info.harq->harq_ack_nof_bits > 0) {
-    pusch_ind.harq_info.emplace();
-    pusch_ind.harq_info->is_valid = true;
-    pusch_ind.harq_info->payload.resize(uci_info.harq.value().harq_ack_nof_bits);
-    pusch_ind.harq_info->payload.fill();
-  }
-  if (uci_info.csi.has_value() and uci_info.csi->csi_part1_nof_bits > 0) {
-    pusch_ind.csi_part1_info.emplace();
-    pusch_ind.csi_part1_info->is_valid = true;
-    fill_csi_bits(ul_grant.pusch_cfg.rnti, pusch_ind.csi_part1_info->payload);
-  }
-}
-
-static bool pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci_pdu& uci_ind)
-{
-  if (pucch.crnti != uci_ind.rnti) {
-    return false;
-  }
-  if ((pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1) and
-      std::holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu)) {
-    const auto pucch_pdu_sr_bits =
-        pucch.format == pucch_format::FORMAT_1 ? pucch.format_1.sr_bits : pucch.format_0.sr_bits;
-    const auto& f1_ind = std::get<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu);
-    if (f1_ind.sr_info.has_value() != (pucch_pdu_sr_bits != sr_nof_bits::no_sr)) {
-      return false;
-    }
-    const auto pucch_pdu_harq_bits =
-        pucch.format == pucch_format::FORMAT_1 ? pucch.format_1.harq_ack_nof_bits : pucch.format_0.harq_ack_nof_bits;
-    if (f1_ind.harq_info.has_value() != (pucch_pdu_harq_bits > 0)) {
-      return false;
-    }
-    return true;
-  }
-  if (pucch.format == pucch_format::FORMAT_2 and
-      std::holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu)) {
-    const auto& f2_ind = std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu);
-    if (f2_ind.sr_info.has_value() != (pucch.format_2.sr_bits != sr_nof_bits::no_sr)) {
-      return false;
-    }
-    if (f2_ind.harq_info.has_value() != (pucch.format_2.harq_ack_nof_bits > 0)) {
-      return false;
-    }
-    if (f2_ind.csi_part1_info.has_value() != pucch.csi_rep_cfg.has_value()) {
-      return false;
-    }
-    return true;
-  }
-  return false;
-}
-
 void mac_test_mode_cell_adapter::forward_uci_ind_to_mac(const mac_uci_indication_message& uci_msg)
 {
   if (uci_msg.ucis.empty()) {
@@ -448,7 +303,7 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
           if (std::holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
             for (const ul_sched_info& pusch : entry.puschs) {
               if (pusch.pusch_cfg.rnti == test_uci.rnti and pusch.uci.has_value()) {
-                fill_uci_pdu(std::get<mac_uci_pdu::pusch_type>(test_uci.pdu), pusch);
+                test_uci    = create_uci_pdu(pusch, test_ue_cfg);
                 entry_found = true;
               }
             }
@@ -457,11 +312,7 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
             for (const pucch_info& pucch : entry.pucchs) {
               if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
                 // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
-                if (pucch.format == pucch_format::FORMAT_0 or pucch.format == pucch_format::FORMAT_1) {
-                  fill_uci_pdu(std::get<mac_uci_pdu::pucch_f0_or_f1_type>(test_uci.pdu), pucch);
-                } else {
-                  fill_uci_pdu(std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);
-                }
+                test_uci    = create_uci_pdu(pucch, test_ue_cfg);
                 entry_found = true;
               }
             }
@@ -576,43 +427,6 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
 
   // Forward results to PHY.
   result_notifier.on_new_uplink_scheduler_results(ul_res);
-}
-
-void mac_test_mode_cell_adapter::fill_csi_bits(
-    rnti_t                                                          rnti,
-    bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload) const
-{
-  static constexpr size_t CQI_BITLEN = 4;
-
-  const sched_ue_config_request& ue_cfg_req = ue_info_mgr.get_sched_ue_cfg_request(rnti);
-
-  if (ue_cfg_req.cells->empty() or not(*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
-    return;
-  }
-  payload.resize(0);
-
-  unsigned nof_ports = (*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[0].res_mapping.nof_ports;
-  if (nof_ports == 2) {
-    const size_t RI_BITLEN  = 1;
-    const size_t PMI_BITLEN = 2;
-    payload.push_back(test_ue_cfg.ri - 1, RI_BITLEN);
-    payload.push_back(test_ue_cfg.pmi, PMI_BITLEN);
-  } else if (nof_ports > 2) {
-    const size_t RI_BITLEN    = 2;
-    const size_t I_1_1_BITLEN = 3;
-    const size_t I_1_3_BITLEN = test_ue_cfg.ri == 2 ? 1 : 0;
-    const size_t I_2_BITLEN   = test_ue_cfg.ri == 1 ? 2 : 1;
-    payload.push_back(test_ue_cfg.ri - 1, RI_BITLEN);
-    if (I_2_BITLEN + I_1_1_BITLEN + I_1_3_BITLEN < 5) {
-      payload.push_back(false);
-    }
-    payload.push_back(test_ue_cfg.i_1_1, I_1_1_BITLEN);
-    if (I_1_3_BITLEN > 0) {
-      payload.push_back(*test_ue_cfg.i_1_3, I_1_3_BITLEN);
-    }
-    payload.push_back(test_ue_cfg.i_2, I_2_BITLEN);
-  }
-  payload.push_back(test_ue_cfg.cqi, CQI_BITLEN);
 }
 
 // ----
