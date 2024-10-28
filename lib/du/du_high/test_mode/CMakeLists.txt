@@ -7,7 +7,7 @@
 #
 
 add_library(srsran_du_high_adapters
-        ../test_mode/mac_test_mode_adapter.cpp
-        ../test_mode/f1ap_test_mode_adapter.cpp
-        ../test_mode/mac_test_mode_helpers.cpp)
+        mac_test_mode_adapter.cpp
+        f1ap_test_mode_adapter.cpp
+        mac_test_mode_helpers.cpp)
 target_link_libraries(srsran_du_high_adapters srslog srsran_support srsran_du_manager srsran_mac srsran_f1ap_du srsran_e2)
