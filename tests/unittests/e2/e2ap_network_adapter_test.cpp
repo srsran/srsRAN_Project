@@ -22,7 +22,12 @@
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/timers.h"
+#include <chrono>
+#include <condition_variable>
 #include <gtest/gtest.h>
+#include <list>
+#include <mutex>
+#include <utility>
 
 using namespace srsran;
 
@@ -97,80 +102,104 @@ protected:
   class e2_msg_notifier_wrapper : public e2_message_notifier
   {
   public:
-    e2_msg_notifier_wrapper(e2_message_notifier& notifier_,
-                            e2_message&          last_msg_,
-                            bool&                msg_ready_,
-                            unique_task          on_disconnect_) :
-      notifier(notifier_), last_msg(last_msg_), msg_ready(msg_ready_), on_disconnect(std::move(on_disconnect_))
+    using E2MsgCallback = std::function<void(const e2_message&)>;
+    e2_msg_notifier_wrapper(e2_message_notifier& notifier_, unique_task on_disconnect_, E2MsgCallback callback) :
+      notifier(notifier_), on_disconnect(std::move(on_disconnect_)), on_message_callback(std::move(callback))
     {
     }
     ~e2_msg_notifier_wrapper() override { on_disconnect(); }
 
     void on_new_message(const e2_message& msg) override
     {
-      last_msg  = msg;
-      msg_ready = true;
+      if (on_message_callback) {
+        on_message_callback(msg);
+      }
       notifier.on_new_message(msg);
     }
 
     e2_message_notifier& notifier;
-    e2_message&          last_msg;
-    bool&                msg_ready;
     unique_task          on_disconnect;
+    E2MsgCallback        on_message_callback;
   };
 
   class e2_connection_client_wrapper : public e2_connection_client
   {
   public:
     e2_connection_client_wrapper(e2_connection_client& e2_client_) : e2_client(e2_client_){};
-    e2_message last_tx_e2_msg;
-    e2_message last_rx_e2_msg;
 
-    bool msg_txed = false;
-    bool msg_rxed = false;
+    void on_e2_message_rx(const e2_message& msg)
+    {
+      std::lock_guard<std::mutex> lock(rx_mutex);
+      e2_msg_queue.push_back(msg);
+      rx_cvar.notify_one();
+    }
+
+    expected<e2_message> get_last_e2_msg(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(5000))
+    {
+      // wait until E2 msg is received
+      std::unique_lock<std::mutex> lock(rx_mutex);
+      if (rx_cvar.wait_for(lock, timeout_ms, [this] { return !e2_msg_queue.empty(); })) {
+        e2_message msg = std::move(e2_msg_queue.front());
+        e2_msg_queue.pop_front();
+        return msg;
+      }
+      return make_unexpected(default_error_t{});
+    }
 
     std::unique_ptr<e2_message_notifier>
     handle_e2_connection_request(std::unique_ptr<e2_message_notifier> e2_rx_pdu_notifier_) override
     {
       e2_rx_msg_notifier = std::move(e2_rx_pdu_notifier_);
-      e2_tx_msg_notifier = e2_client.handle_e2_connection_request(std::make_unique<e2_msg_notifier_wrapper>(
-          *e2_rx_msg_notifier, last_rx_e2_msg, msg_rxed, [this]() { e2_rx_msg_notifier.reset(); }));
-
-      return std::make_unique<e2_msg_notifier_wrapper>(
-          *e2_tx_msg_notifier, last_tx_e2_msg, msg_txed, [this]() { e2_tx_msg_notifier.reset(); });
+      return e2_client.handle_e2_connection_request(std::make_unique<e2_msg_notifier_wrapper>(
+          *e2_rx_msg_notifier,
+          [this]() { e2_rx_msg_notifier.reset(); },
+          [this](const e2_message& msg) { this->on_e2_message_rx(msg); }));
     }
 
   private:
     e2_connection_client&                e2_client;
     std::unique_ptr<e2_message_notifier> e2_rx_msg_notifier;
     std::unique_ptr<e2_message_notifier> e2_tx_msg_notifier;
+
+    // sniff last rx msg
+    std::mutex              rx_mutex;
+    std::condition_variable rx_cvar;
+    std::list<e2_message>   e2_msg_queue;
   };
 
   class e2_sniffer : public e2_message_notifier
   {
   public:
-    e2_sniffer(e2ap_network_adapter_test& parent_) : logger(srslog::fetch_basic_logger("E2")), parent(parent_){};
+    e2_sniffer(e2ap_network_adapter_test& parent_) : logger(srslog::fetch_basic_logger("E2")){};
 
     /// E2 message handler functions.
     void on_new_message(const e2_message& msg) override
     {
-      logger.info("Sniffer received E2 msg.");
-      last_e2_msg = msg;
-      std::unique_lock<std::mutex> lock(parent.mutex);
-      msg_received = true;
-      parent.cvar.notify_one();
+      {
+        std::lock_guard<std::mutex> lock(rx_mutex);
+        e2_msg_queue.push_back(msg);
+      }
+      rx_cvar.notify_one();
     };
 
-    bool       msg_received = false;
-    e2_message last_e2_msg;
+    expected<e2_message> get_last_e2_msg(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(5000))
+    {
+      // wait until E2 msg is received
+      std::unique_lock<std::mutex> lock(rx_mutex);
+      if (rx_cvar.wait_for(lock, timeout_ms, [this] { return !e2_msg_queue.empty(); })) {
+        e2_message msg = std::move(e2_msg_queue.front());
+        e2_msg_queue.pop_front();
+        return msg;
+      }
+      return make_unexpected(default_error_t{});
+    }
 
   private:
-    srslog::basic_logger&      logger;
-    e2ap_network_adapter_test& parent;
+    srslog::basic_logger&   logger;
+    std::mutex              rx_mutex;
+    std::condition_variable rx_cvar;
+    std::list<e2_message>   e2_msg_queue;
   };
-
-  std::mutex              mutex;
-  std::condition_variable cvar;
 
   std::unique_ptr<io_broker>                        ric_broker;
   std::unique_ptr<io_broker>                        agent_broker;
@@ -213,27 +242,13 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
   test_logger.info("Launching E2 setup procedure...");
   async_task<e2_setup_response_message>         t1 = e2ap->start_initial_e2_setup_routine();
   lazy_task_launcher<e2_setup_response_message> t1_launcher(t1);
-  for (unsigned msec_elapsed = 0; msec_elapsed < 1000; ++msec_elapsed) {
-    {
-      std::unique_lock<std::mutex> lock(mutex);
-      if (cvar.wait_for(lock, std::chrono::milliseconds(1), [this]() { return ric_rx_e2_sniffer->msg_received; })) {
-        break;
-      }
-    }
-    // Execute tick if condition was not met
-    this->tick();
-  }
   ASSERT_FALSE(t1.ready());
 
-  // Status: E2 sent E2 Setup Request.
-  ASSERT_EQ(e2_client_wrapper->last_tx_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(e2_client_wrapper->last_tx_e2_msg.pdu.successful_outcome().value.type().value,
-            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
-
   // Status: RIC received E2 Setup Request.
-  ASSERT_TRUE(ric_rx_e2_sniffer->msg_received);
-  ASSERT_EQ(ric_rx_e2_sniffer->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(ric_rx_e2_sniffer->last_e2_msg.pdu.init_msg().value.type().value,
+  auto last_e2_msg = ric_rx_e2_sniffer->get_last_e2_msg();
+  ASSERT_TRUE(last_e2_msg.has_value());
+  ASSERT_EQ(last_e2_msg.value().pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(last_e2_msg.value().pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Action 2: RIC sends E2 Setup Request Response.
@@ -242,8 +257,8 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
   e2_setup_response.pdu.set_successful_outcome();
   e2_setup_response.pdu.successful_outcome().load_info_obj(ASN1_E2AP_ID_E2SETUP);
 
-  auto& setup           = e2_setup_response.pdu.successful_outcome().value.e2setup_resp();
-  setup->transaction_id = ric_rx_e2_sniffer->last_e2_msg.pdu.init_msg().value.e2setup_request()->transaction_id;
+  auto& setup                           = e2_setup_response.pdu.successful_outcome().value.e2setup_resp();
+  setup->transaction_id                 = last_e2_msg.value().pdu.init_msg().value.e2setup_request()->transaction_id;
   setup->ran_functions_accepted_present = true;
   asn1::protocol_ie_single_container_s<asn1::e2ap::ran_function_id_item_ies_o> ran_func_item;
   ran_func_item.value().ran_function_id_item().ran_function_id       = e2sm_kpm_asn1_packer::ran_func_id;
@@ -263,21 +278,12 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
       asn1::e2ap::e2node_component_cfg_ack_s::upd_outcome_opts::success;
 
   ric->send_msg(0, e2_setup_response);
-  for (unsigned msec_elapsed = 0; msec_elapsed < 1000; ++msec_elapsed) {
-    {
-      std::unique_lock<std::mutex> lock(mutex);
-      if (cvar.wait_for(lock, std::chrono::milliseconds(1), [this]() { return e2_client_wrapper->msg_rxed; })) {
-        break;
-      }
-    }
-    // Execute tick if condition was not met
-    this->tick();
-  }
 
   // Status: E2 Agent received E2 Setup Request Response.
-  ASSERT_TRUE(e2_client_wrapper->msg_rxed);
-  ASSERT_EQ(e2_client_wrapper->last_rx_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
-  ASSERT_EQ(e2_client_wrapper->last_rx_e2_msg.pdu.successful_outcome().value.type().value,
+  auto last_e2_msg2 = e2_client_wrapper->get_last_e2_msg();
+  ASSERT_TRUE(last_e2_msg2.has_value());
+  ASSERT_EQ(last_e2_msg2.value().pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(last_e2_msg2.value().pdu.successful_outcome().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::e2setup_resp);
 
   async_task<void>         t2 = e2ap->handle_e2_disconnection_request();
