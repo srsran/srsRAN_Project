@@ -229,6 +229,7 @@ INSTANTIATE_TEST_SUITE_P(
   tdd_test_params{true, {subcarrier_spacing::kHz30, {5, 1, 10, 3, 0}, tdd_ul_dl_pattern{5, 1, 10, 3, 0}}, 2},
   tdd_test_params{true, {subcarrier_spacing::kHz30, {6, 2, 10, 3, 0}, tdd_ul_dl_pattern{4, 1, 0, 3, 0}}, 2},
   tdd_test_params{true, {subcarrier_spacing::kHz30, {4, 1, 10, 2, 0}, tdd_ul_dl_pattern{6, 1, 10, 4, 0}}, 2},
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2, 10, 7, 0}}, 2}
+  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2, 10, 7, 0}}, 2},
+  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2, 6, 7, 0}}, 2}
 )); // DDDSUUDDDD
 // clang-format on
