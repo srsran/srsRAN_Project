@@ -46,7 +46,10 @@
                     "enable_dddsu": {
                         "type": "boolean"
                     },
-                    "enable_ul_heavy_tdd": {
+                    "ul_heavy_7u2d": {
+                        "type": "boolean"
+                    },
+                    "ul_heavy_6u3d": {
                         "type": "boolean"
                     }
                 },

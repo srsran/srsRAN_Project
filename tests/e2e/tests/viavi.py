@@ -59,7 +59,8 @@ class _ViaviConfiguration:
     expected_nof_kos: int = 0
     warning_as_errors: bool = True
     enable_dddsu: bool = False
-    enable_ul_heavy_tdd: bool = False
+    ul_heavy_7u2d: bool = False
+    ul_heavy_6u3d: bool = False
 
 
 # pylint: disable=too-many-instance-attributes
@@ -100,7 +101,8 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 expected_nof_kos=test_declaration["expected_nof_kos"],
                 warning_as_errors=test_declaration["warning_as_errors"],
                 enable_dddsu=test_declaration.get("enable_dddsu", False),
-                enable_ul_heavy_tdd=test_declaration.get("enable_ul_heavy_tdd", False),
+                ul_heavy_7u2d=test_declaration.get("ul_heavy_7u2d", False),
+                ul_heavy_6u3d=test_declaration.get("ul_heavy_6u3d", False),
             )
         )
     return test_declaration_list
@@ -349,7 +351,8 @@ def _test_viavi(
                 "max_puschs_per_slot": test_declaration.max_puschs_per_slot,
                 "max_pdschs_per_slot": test_declaration.max_pdschs_per_slot,
                 "enable_dddsu": test_declaration.enable_dddsu,
-                "enable_ul_heavy_tdd": test_declaration.enable_ul_heavy_tdd,
+                "ul_heavy_7u2d": test_declaration.ul_heavy_7u2d,
+                "ul_heavy_6u3d": test_declaration.ul_heavy_6u3d,
                 "enable_qos_viavi": test_declaration.enable_qos_viavi,
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
