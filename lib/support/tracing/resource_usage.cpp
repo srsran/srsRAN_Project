@@ -27,7 +27,7 @@ static snapshot rusage_to_snapshot(const ::rusage& rusg)
 srsran::expected<snapshot, int> srsran::resource_usage::now()
 {
   ::rusage ret;
-  if (getrusage(RUSAGE_THREAD, &ret) == 0) {
+  if (::getrusage(RUSAGE_THREAD, &ret) == 0) {
     return rusage_to_snapshot(ret);
   }
   return make_unexpected(errno);
