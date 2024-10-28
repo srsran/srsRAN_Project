@@ -395,7 +395,7 @@ int main(int argc, char** argv)
   cu_up_unit_deps.e2_gw            = e2_gw_cu.get();
   cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
+  auto cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
 
   // Instantiate one DU.
   du_unit_dependencies du_dependencies;
@@ -447,7 +447,7 @@ int main(int argc, char** argv)
   // Connect F1-C to CU-CP and start listening for new F1-C connection requests.
   f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
-  cu_up_obj->start();
+  cu_up_obj.unit->start();
 
   // Start processing.
   du_inst.get_power_controller().start();
@@ -464,7 +464,7 @@ int main(int argc, char** argv)
   du_inst.get_power_controller().stop();
 
   // Stop CU-UP activity.
-  cu_up_obj->stop();
+  cu_up_obj.unit->stop();
 
   // Stop CU-CP activity.
   cu_cp_obj.stop();

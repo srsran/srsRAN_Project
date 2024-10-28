@@ -366,9 +366,8 @@ int main(int argc, char** argv)
   cu_up_unit_deps.e2_gw            = e2_gw_cu.get();
   cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
-  cu_up_obj->start();
-
+  auto cu_up_obj_wrapper = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
+  cu_up_obj_wrapper.unit->start();
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -378,7 +377,7 @@ int main(int argc, char** argv)
   }
 
   // Stop CU-UP activity.
-  cu_up_obj->stop();
+  cu_up_obj_wrapper.unit->stop();
 
   // Stop CU-CP activity.
   cu_cp_obj.stop();

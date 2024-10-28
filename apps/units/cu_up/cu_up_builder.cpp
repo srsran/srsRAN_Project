@@ -11,9 +11,10 @@
 #include "cu_up_builder.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/worker_manager.h"
+#include "apps/units/cu_cp/metrics/cu_cp_pdcp_metrics_consumers.h"
+#include "apps/units/cu_cp/metrics/cu_cp_pdcp_metrics_producer.h"
 #include "cu_up_unit_config.h"
 #include "cu_up_unit_config_translators.h"
-#include "cu_up_wrapper.h"
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
 
@@ -22,9 +23,33 @@ using namespace srsran;
 using e2_cu_metrics_connector_manager =
     e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
 
-std::unique_ptr<srs_cu_up::cu_up_interface> srsran::build_cu_up(const cu_up_unit_config&       unit_cfg,
-                                                                const cu_up_unit_dependencies& dependencies)
+static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metrics_config>& cu_cp_services_cfg,
+                                                 app_services::metrics_notifier&            metrics_notifier,
+                                                 bool                                       e2_enabled,
+                                                 e2_cu_metrics_notifier&                    e2_notifier)
 {
+  pdcp_metrics_notifier* out = nullptr;
+
+  // Do not instantiate the metrics if the E2 is not enabled.
+  if (e2_enabled) {
+    return out;
+  }
+
+  auto metrics_generator                    = std::make_unique<pdcp_metrics_producer_impl>(metrics_notifier);
+  out                                       = &(*metrics_generator);
+  app_services::metrics_config& metrics_cfg = cu_cp_services_cfg.emplace_back();
+  metrics_cfg.metric_name                   = pdcp_metrics_properties_impl().name();
+  metrics_cfg.callback                      = pdcp_metrics_callback;
+  metrics_cfg.producers.push_back(std::move(metrics_generator));
+
+  metrics_cfg.consumers.push_back(std::make_unique<pdcp_metrics_consumer_e2>(e2_notifier));
+
+  return out;
+}
+
+cu_up_unit srsran::build_cu_up(const cu_up_unit_config& unit_cfg, const cu_up_unit_dependencies& dependencies)
+{
+  cu_up_unit                     wrapper = {};
   srs_cu_up::cu_up_configuration config = generate_cu_up_config(unit_cfg);
   config.exec_mapper                    = dependencies.workers->cu_up_exec_mapper.get();
   config.e1ap.e1_conn_client            = dependencies.e1ap_conn_client;
@@ -59,6 +84,16 @@ std::unique_ptr<srs_cu_up::cu_up_interface> srsran::build_cu_up(const cu_up_unit
     config.e2ap_config        = generate_e2_config(unit_cfg);
     config.e2_cu_metric_iface = &(*e2_metric_connectors).get_e2_metrics_interface(0);
   }
+  auto pdcp_metric_notifier = build_pdcp_metrics(wrapper.metrics,
+                                                 *dependencies.metrics_notifier,
+                                                 unit_cfg.e2_cfg.enable_unit_e2,
+                                                 e2_metric_connectors->get_e2_metric_notifier(0));
 
-  return std::make_unique<cu_up_wrapper>(std::move(ngu_gw), create_cu_up(config));
+  for (auto& qos_ : config.qos) {
+    qos_.second.pdcp_custom_cfg.metrics_notifier = pdcp_metric_notifier;
+  }
+
+  wrapper.unit = std::make_unique<cu_up_wrapper>(std::move(ngu_gw), create_cu_up(config));
+
+  return wrapper;
 }

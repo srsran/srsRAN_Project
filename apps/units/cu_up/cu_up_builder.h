@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "apps/services/metrics/metrics_config.h"
+#include "cu_up_wrapper.h"
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/support/timers.h"
 #include <memory>
@@ -43,8 +45,13 @@ struct cu_up_unit_dependencies {
   io_broker*                       io_brk           = nullptr;
 };
 
+/// Wraps the CU-CP and its supported application commands.
+struct cu_up_unit {
+  std::unique_ptr<cu_up_wrapper>            unit    = nullptr;
+  std::vector<app_services::metrics_config> metrics = {};
+};
+
 /// Builds the CU UP using the given arguments.
-std::unique_ptr<srs_cu_up::cu_up_interface> build_cu_up(const cu_up_unit_config&       unit_cfg,
-                                                        const cu_up_unit_dependencies& dependencies);
+cu_up_unit build_cu_up(const cu_up_unit_config& unit_cfg, const cu_up_unit_dependencies& dependencies);
 
 } // namespace srsran
