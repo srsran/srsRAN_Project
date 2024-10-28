@@ -109,6 +109,47 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   return {};
 }
 
+static error_type<std::string> validate_pusch_cfg_common(const sched_cell_configuration_request_message& msg)
+{
+  using res_t = pusch_time_domain_resource_allocation;
+
+  if (not msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()) {
+    return {};
+  }
+
+  const auto& pusch_lst = msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
+
+  // Verify that PUSCH TD resource list is sorted by k2.
+  bool sorted = std::is_sorted(pusch_lst.begin(), pusch_lst.end(), [](const res_t& l, const res_t& r) {
+    return l.k2 < r.k2 or (l.k2 == r.k2 and l.symbols.length() >= r.symbols.length());
+  });
+  VERIFY(sorted, "List of PUSCH TD resources should be sorted by k2 values");
+
+  for (const auto& pusch : pusch_lst) {
+    VERIFY(pusch.k2 <= SCHEDULER_MAX_K2, "k2={} value exceeds maximum supported k2", pusch.k2);
+  }
+
+  if (msg.tdd_ul_dl_cfg_common.has_value()) {
+    const auto&    tdd          = msg.tdd_ul_dl_cfg_common.value();
+    const unsigned period_slots = nof_slots_per_tdd_period(tdd);
+
+    // For each PUSCH slot, verify that there is a valid k2.
+    unsigned                next_slot = 0;
+    std::optional<unsigned> ul_slot   = find_next_tdd_full_ul_slot(tdd, next_slot);
+    while (ul_slot.has_value()) {
+      if (std::none_of(pusch_lst.begin(), pusch_lst.end(), [&tdd, period_slots, sl = ul_slot.value()](const auto& p) {
+            unsigned slot_idx = period_slots + sl - p.k2;
+            return has_active_tdd_dl_symbols(tdd, slot_idx);
+          })) {
+        return make_unexpected(fmt::format("Failed to find valid k2 candidate for slot={}", ul_slot.value()));
+      }
+      next_slot = ul_slot.value() + 1;
+      ul_slot   = find_next_tdd_full_ul_slot(tdd, next_slot);
+    }
+  }
+  return {};
+}
+
 static error_type<std::string> validate_pucch_cfg_common(const sched_cell_configuration_request_message& msg)
 {
   for (const auto& pucch_guard : msg.pucch_guardbands) {
@@ -182,16 +223,11 @@ error_type<std::string> srsran::config_validators::validate_sched_cell_configura
     VERIFY(pdsch.k0 <= SCHEDULER_MAX_K0, "k0={} value exceeds maximum supported k0", pdsch.k0);
   }
 
-  if (msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()) {
-    const auto& ul_lst = msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
-    for (const auto& pusch : ul_lst) {
-      VERIFY(pusch.k2 <= SCHEDULER_MAX_K2, "k2={} value exceeds maximum supported k2", pusch.k2);
-    }
-  }
-
   HANDLE_CODE(validate_pdcch_cfg_common(msg));
 
   HANDLE_CODE(validate_rach_cfg_common(msg, expert_cfg));
+
+  HANDLE_CODE(validate_pusch_cfg_common(msg));
 
   HANDLE_CODE(validate_pucch_cfg_common(msg));
 
