@@ -88,11 +88,6 @@ private:
 
   /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
   std::array<float, MAX_PORTS> noise_var_estimates;
-
-  /// Temporary channel estimates for an OFDM symbol.
-  std::array<cf_t, MAX_RB * NRE> temp_ests_symbol;
-  /// PRB mask indicating the used PRB within the resource grid.
-  bounded_bitset<MAX_RB> prb_mask;
 };
 
 } // namespace srsran

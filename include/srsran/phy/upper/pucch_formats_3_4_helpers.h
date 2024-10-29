@@ -15,18 +15,21 @@
 
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/phy/support/mask_types.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 
 namespace srsran {
 
 /// \brief DM-RS symbol mask for PUCCH Format 3 and PUCCH Format 4.
 ///
 /// \param[in] nof_symbols       Number of symbols assigned to PUCCH resource.
-/// \param[in] frequency_hopping True if intra-slot frequency hopping is enabled for the PUCCH resource, false
-/// otherwise. \param[in] additional_dmrs   Whether \e additionalDMRS parameter is set for the PUCCH resource. \returns
-/// The symbol mask for symbols containing DM-RS for that configuration, as per TS38.211 Section 6.4.1.3.3.2-1.
-inline symbol_slot_mask get_pucch_formats_3_4_dmrs_symbol_mask(bounded_integer<unsigned, 4, 14> nof_symbols,
-                                                               bool                             frequency_hopping,
-                                                               bool                             additional_dmrs)
+/// \param[in] frequency_hopping Set to \c true if intra-slot frequency hopping is enabled for the PUCCH resource,
+/// set to \c false otherwise.
+/// \param[in] additional_dmrs   Whether \e additionalDMRS parameter is set for the PUCCH resource.
+/// \returns The symbol mask for symbols containing DM-RS for that configuration, as per TS38.211 Table 6.4.1.3.3.2-1.
+inline symbol_slot_mask get_pucch_formats_3_4_dmrs_symbol_mask(
+    bounded_integer<unsigned, pucch_constants::FORMAT3_MIN_NSYMB, pucch_constants::FORMAT3_MAX_NSYMB> nof_symbols,
+    bool                                                                                              frequency_hopping,
+    bool                                                                                              additional_dmrs)
 {
   symbol_slot_mask mask(nof_symbols.value());
 

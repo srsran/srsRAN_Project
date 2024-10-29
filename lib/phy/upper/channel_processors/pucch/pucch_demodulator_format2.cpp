@@ -98,6 +98,7 @@ void pucch_demodulator_format2::get_data_re_ests(const resource_grid_reader&    
                                                  const pucch_demodulator::format2_configuration& config)
 {
   // Prepare RB mask. RB allocation is contiguous for PUCCH Format 2.
+  bounded_bitset<MAX_RB> prb_mask;
   prb_mask.resize(config.nof_prb);
   prb_mask.fill(0, config.nof_prb, true);
 

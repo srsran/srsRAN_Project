@@ -76,6 +76,8 @@ protected:
   // PUCCH Demodulator.
   static std::unique_ptr<pucch_demodulator> demodulator;
 
+  PucchDemodulatorFixture() : rg_spy(16, 14, MAX_NOF_PRBS) {}
+
   static void SetUpTestSuite()
   {
     if (!demodulator) {

@@ -30,9 +30,9 @@ target_link_libraries(pucch_processor_validators_test
         srsran_channel_equalizer
         srsran_channel_processors
         srsran_generic_funcs
-        srsran_upper_phy_support
         srsran_phy_support
         srsran_transform_precoding
+        srsran_upper_phy_support
         srslog
         gtest
         gtest_main)
