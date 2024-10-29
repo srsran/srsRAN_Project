@@ -31,6 +31,7 @@ private:
   void send_ue_context_modification_failure();
 
   async_task<bool> handle_rrc_container();
+  async_task<void> handle_tx_action_indicator();
 
   const asn1::f1ap::ue_context_mod_request_s req;
   f1ap_du_ue&                                ue;
