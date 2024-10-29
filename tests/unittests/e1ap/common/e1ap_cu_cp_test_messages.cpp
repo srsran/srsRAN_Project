@@ -226,7 +226,8 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_response(
     gnb_cu_cp_ue_e1ap_id_t                             cu_cp_ue_e1ap_id,
     gnb_cu_up_ue_e1ap_id_t                             cu_up_ue_e1ap_id,
     const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add,
-    const std::map<pdu_session_id_t, drb_id_t>&        pdu_sessions_to_modify)
+    const std::map<pdu_session_id_t, drb_id_t>&        pdu_sessions_to_modify,
+    const std::vector<pdu_session_id_t>&               pdu_sessions_failed_to_modify)
 {
   e1ap_message bearer_context_modification_response = {};
 
@@ -290,6 +291,17 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_response(
     drb_modified_item_ng_ran.ul_up_transport_params.push_back(up_params_item);
     pdu_session_res_modified_item.drb_modified_list_ng_ran.push_back(drb_modified_item_ng_ran);
     ng_ran_bearer_context_mod_resp.pdu_session_res_modified_list.push_back(pdu_session_res_modified_item);
+  }
+
+  ng_ran_bearer_context_mod_resp.pdu_session_res_failed_to_modify_list_present = !pdu_sessions_failed_to_modify.empty();
+  for (const auto& psi : pdu_sessions_failed_to_modify) {
+    asn1::e1ap::pdu_session_res_failed_to_modify_item_s pdu_session_res_failed_to_modify_item = {};
+    pdu_session_res_failed_to_modify_item.pdu_session_id = pdu_session_id_to_uint(psi);
+    pdu_session_res_failed_to_modify_item.cause.set_radio_network();
+    pdu_session_res_failed_to_modify_item.cause.radio_network() =
+        asn1::e1ap::cause_radio_network_opts::options::unspecified;
+    ng_ran_bearer_context_mod_resp.pdu_session_res_failed_to_modify_list.push_back(
+        pdu_session_res_failed_to_modify_item);
   }
 
   return bearer_context_modification_response;

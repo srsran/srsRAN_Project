@@ -210,7 +210,8 @@ public:
       const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add = {},
       const std::map<pdu_session_id_t, drb_id_t>& pdu_sessions_to_modify   = {{pdu_session_id_t::min, drb_id_t::drb1}},
       const std::optional<std::vector<srb_id_t>>& expected_srbs_to_add_mod = std::nullopt,
-      const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod = std::nullopt);
+      const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod = std::nullopt,
+      const std::vector<pdu_session_id_t>&        pdu_sessions_failed_to_modify = {});
 
   [[nodiscard]] bool send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
       unsigned                             du_idx,

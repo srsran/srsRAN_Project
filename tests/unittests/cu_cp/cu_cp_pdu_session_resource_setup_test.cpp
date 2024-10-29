@@ -187,7 +187,8 @@ public:
       const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add = {},
       const std::map<pdu_session_id_t, drb_id_t>& pdu_sessions_to_modify   = {{pdu_session_id_t::min, drb_id_t::drb1}},
       const std::optional<std::vector<srb_id_t>>& expected_srbs_to_add_mod = std::nullopt,
-      const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod = std::nullopt)
+      const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod = std::nullopt,
+      const std::vector<pdu_session_id_t>&        pdu_sessions_failed_to_modify = {})
   {
     return cu_cp_test_environment::send_bearer_context_modification_response_and_await_rrc_reconfiguration(
         du_idx,
@@ -196,7 +197,8 @@ public:
         pdu_sessions_to_add,
         pdu_sessions_to_modify,
         expected_srbs_to_add_mod,
-        expected_drbs_to_add_mod);
+        expected_drbs_to_add_mod,
+        pdu_sessions_failed_to_modify);
   }
 
   [[nodiscard]] bool timeout_rrc_reconfiguration_and_await_pdu_session_setup_response()
@@ -298,6 +300,29 @@ TEST_F(cu_cp_pdu_session_resource_setup_test, when_bearer_context_modification_f
 
   // Inject Bearer Context Modification Failure and await PDU Session Resource Setup Response
   ASSERT_TRUE(send_bearer_context_modification_failure_and_await_pdu_session_setup_response());
+}
+
+TEST_F(cu_cp_pdu_session_resource_setup_test,
+       when_bearer_context_modification_response_contains_failed_to_modify_list_then_no_pdu_session_is_setup)
+{
+  // Inject NGAP PDU Session Resource Setup Request and await Bearer Context Setup Request
+  ASSERT_TRUE(send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
+      generate_valid_pdu_session_resource_setup_request_message(
+          ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi, {{qfi, 9}}}})));
+
+  // Inject Bearer Context Setup Response and await UE Context Modification Request
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_modification_request());
+
+  // Inject UE Context Modification Response and await Bearer Context Modification Request
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Response and await DL RRC Message Transfer containing RRC Reconfiguration
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_rrc_reconfiguration(
+      {}, {}, std::vector<srb_id_t>{srb_id_t::srb2}, {}, {psi}));
+
+  // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Setup Response
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
+      generate_rrc_reconfiguration_complete_pdu(3, 7), {}, {psi}));
 }
 
 TEST_F(cu_cp_pdu_session_resource_setup_test, when_rrc_reconfiguration_fails_then_setup_fails)
