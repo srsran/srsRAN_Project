@@ -149,8 +149,8 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   rlc_metrics_notifier* out = nullptr;
 
   // RLC metrics.
-  if (!du_high_unit_cfg.metrics.rlc.json_enabled && !du_high_unit_cfg.e2_cfg.enable_unit_e2 &&
-      du_high_unit_cfg.loggers.metrics_level != srslog::basic_levels::debug) {
+  if (!du_high_unit_cfg.metrics.enable_json_metrics && !du_high_unit_cfg.e2_cfg.enable_unit_e2 &&
+      du_high_unit_cfg.loggers.metrics_level != srslog::basic_levels::info) {
     return out;
   }
 
@@ -164,12 +164,12 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   rlc_metrics_cfg.producers.push_back(std::move(rlc_metric_gen));
 
   // Consumers.
-  if (du_high_unit_cfg.loggers.metrics_level == srslog::basic_levels::debug) {
+  if (du_high_unit_cfg.loggers.metrics_level == srslog::basic_levels::info) {
     rlc_metrics_cfg.consumers.push_back(
         std::make_unique<rlc_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
   }
 
-  if (du_high_unit_cfg.metrics.rlc.json_enabled) {
+  if (du_high_unit_cfg.metrics.enable_json_metrics) {
     srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", json_sink, {});
     rlc_json_channel.set_enabled(true);
     rlc_metrics_cfg.consumers.push_back(std::make_unique<rlc_metrics_consumer_json>(rlc_json_channel));

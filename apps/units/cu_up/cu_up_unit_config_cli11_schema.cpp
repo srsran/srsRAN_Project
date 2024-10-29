@@ -88,7 +88,8 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
              "CU-UP statistics report period in seconds. Set this value to 0 to disable this feature")
       ->capture_default_str();
 
-  add_option(app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
+  add_option(
+      app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period (in milliseconds)")
       ->capture_default_str();
 }
 

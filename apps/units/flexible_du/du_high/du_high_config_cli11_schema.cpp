@@ -64,10 +64,10 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
   app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
 
   auto metric_level_check = [](const std::string& value) -> std::string {
-    if (auto level = srslog::str_to_basic_level(value); !level.has_value() ||
-                                                        level.value() == srslog::basic_levels::error ||
-                                                        level.value() == srslog::basic_levels::warning) {
-      return "Log level value not supported. Accepted values [none,info,debug]";
+    if (auto level = srslog::str_to_basic_level(value);
+        !level.has_value() || level.value() == srslog::basic_levels::debug ||
+        level.value() == srslog::basic_levels::error || level.value() == srslog::basic_levels::warning) {
+      return "Log level value not supported. Accepted values [none,info]";
     }
 
     return {};
@@ -1488,10 +1488,9 @@ static void configure_cli11_srb_args(CLI::App& app, du_high_unit_srb_config& srb
 
 static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_config& metrics_params)
 {
-  add_option(app, "--rlc_report_period", metrics_params.rlc.report_period, "RLC metrics report period")
+  add_option(
+      app, "--rlc_report_period", metrics_params.rlc.report_period, "RLC metrics report period (in milliseconds)")
       ->capture_default_str();
-  add_option(app, "--rlc_json_enable", metrics_params.rlc.json_enabled, "Enable RLC JSON metrics reporting")
-      ->always_capture_default();
 
   add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();

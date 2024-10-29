@@ -17,7 +17,6 @@ using namespace srsran;
 static void fill_du_high_metrics_section(YAML::Node node, const du_high_unit_metrics_config& config)
 {
   node["rlc_report_period"]   = config.rlc.report_period;
-  node["rlc_json_enable"]     = config.rlc.json_enabled;
   node["enable_json_metrics"] = config.enable_json_metrics;
   node["sched_report_period"] = config.sched_report_period;
 }
