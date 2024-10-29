@@ -688,37 +688,40 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   add_option(app, "--max_puschs_per_slot", pusch_params.max_puschs_per_slot, "Maximum number of PUSCH grants per slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_PUSCH_PDUS_PER_SLOT));
-  add_option(app, "--b_offset_ack_idx_1", pusch_params.b_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
+  add_option(
+      app, "--beta_offset_ack_idx_1", pusch_params.beta_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
-  add_option(app, "--b_offset_ack_idx_2", pusch_params.b_offset_ack_idx_2, "betaOffsetACK-Index2 part of UCI-OnPUSCH")
+  add_option(
+      app, "--beta_offset_ack_idx_2", pusch_params.beta_offset_ack_idx_2, "betaOffsetACK-Index2 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
-  add_option(app, "--b_offset_ack_idx_3", pusch_params.b_offset_ack_idx_3, "betaOffsetACK-Index3 part of UCI-OnPUSCH")
+  add_option(
+      app, "--beta_offset_ack_idx_3", pusch_params.beta_offset_ack_idx_3, "betaOffsetACK-Index3 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
   add_option(app,
              "--beta_offset_csi_p1_idx_1",
-             pusch_params.b_offset_csi_p1_idx_1,
-             "b_offset_csi_p1_idx_1 part of UCI-OnPUSCH")
+             pusch_params.beta_offset_csi_p1_idx_1,
+             "betaOffsetCSI-Part1-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
   add_option(app,
              "--beta_offset_csi_p1_idx_2",
-             pusch_params.b_offset_csi_p1_idx_2,
-             "b_offset_csi_p1_idx_2 part of UCI-OnPUSCH")
+             pusch_params.beta_offset_csi_p1_idx_2,
+             "betaOffsetCSI-Part1-Index2 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
   add_option(app,
              "--beta_offset_csi_p2_idx_1",
-             pusch_params.b_offset_csi_p2_idx_1,
-             "b_offset_csi_p2_idx_1 part of UCI-OnPUSCH")
+             pusch_params.beta_offset_csi_p2_idx_1,
+             "betaOffsetCSI-Part2-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
   add_option(app,
              "--beta_offset_csi_p2_idx_2",
-             pusch_params.b_offset_csi_p2_idx_2,
-             "b_offset_csi_p2_idx_2 part of UCI-OnPUSCH")
+             pusch_params.beta_offset_csi_p2_idx_2,
+             "betaOffsetCSI-Part2-Index2 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
   add_option(app, "--min_k2", pusch_params.min_k2, "Minimum value of K2 (difference in slots between PDCCH and PUSCH).")

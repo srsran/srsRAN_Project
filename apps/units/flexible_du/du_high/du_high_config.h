@@ -176,19 +176,19 @@ struct du_high_unit_pusch_config {
   int p0_nominal_with_grant = -76;
 
   /// \c betaOffsetACK-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned b_offset_ack_idx_1 = 9;
+  unsigned beta_offset_ack_idx_1 = 9;
   /// \c betaOffsetACK-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned b_offset_ack_idx_2 = 9;
+  unsigned beta_offset_ack_idx_2 = 9;
   /// \c betaOffsetACK-Index3, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned b_offset_ack_idx_3 = 9;
+  unsigned beta_offset_ack_idx_3 = 9;
   /// \c betaOffsetCSI-Part1-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned b_offset_csi_p1_idx_1 = 9;
+  unsigned beta_offset_csi_p1_idx_1 = 9;
   /// \c betaOffsetCSI-Part1-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned b_offset_csi_p1_idx_2 = 9;
+  unsigned beta_offset_csi_p1_idx_2 = 9;
   /// \c betaOffsetCSI-Part2-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned b_offset_csi_p2_idx_1 = 9;
+  unsigned beta_offset_csi_p2_idx_1 = 9;
   /// \c betaOffsetCSI-Part2-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned b_offset_csi_p2_idx_2 = 9;
+  unsigned beta_offset_csi_p2_idx_2 = 9;
 
   /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
   /// Values {-6,...,8} and must be a multiple of 2.

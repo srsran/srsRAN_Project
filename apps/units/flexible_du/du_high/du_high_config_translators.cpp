@@ -612,13 +612,13 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
                                                                            .init_ul_bwp.pusch_cfg.value()
                                                                            .uci_cfg.value()
                                                                            .beta_offsets_cfg.value());
-    b_offsets.beta_offset_ack_idx_1    = base_cell.pusch_cfg.b_offset_ack_idx_1;
-    b_offsets.beta_offset_ack_idx_2    = base_cell.pusch_cfg.b_offset_ack_idx_2;
-    b_offsets.beta_offset_ack_idx_3    = base_cell.pusch_cfg.b_offset_ack_idx_3;
-    b_offsets.beta_offset_csi_p1_idx_1 = base_cell.pusch_cfg.b_offset_csi_p1_idx_1;
-    b_offsets.beta_offset_csi_p1_idx_2 = base_cell.pusch_cfg.b_offset_csi_p1_idx_2;
-    b_offsets.beta_offset_csi_p2_idx_1 = base_cell.pusch_cfg.b_offset_csi_p2_idx_1;
-    b_offsets.beta_offset_csi_p2_idx_2 = base_cell.pusch_cfg.b_offset_csi_p2_idx_2;
+    b_offsets.beta_offset_ack_idx_1    = base_cell.pusch_cfg.beta_offset_ack_idx_1;
+    b_offsets.beta_offset_ack_idx_2    = base_cell.pusch_cfg.beta_offset_ack_idx_2;
+    b_offsets.beta_offset_ack_idx_3    = base_cell.pusch_cfg.beta_offset_ack_idx_3;
+    b_offsets.beta_offset_csi_p1_idx_1 = base_cell.pusch_cfg.beta_offset_csi_p1_idx_1;
+    b_offsets.beta_offset_csi_p1_idx_2 = base_cell.pusch_cfg.beta_offset_csi_p1_idx_2;
+    b_offsets.beta_offset_csi_p2_idx_1 = base_cell.pusch_cfg.beta_offset_csi_p2_idx_1;
+    b_offsets.beta_offset_csi_p2_idx_2 = base_cell.pusch_cfg.beta_offset_csi_p2_idx_2;
 
     // Parameters for PUCCH-Config.
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
