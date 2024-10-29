@@ -11,6 +11,8 @@
 #pragma once
 
 #include "ue_configuration.h"
+#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/noop_functor.h"
 #include "srsran/scheduler/config/scheduler_config.h"
 #include "srsran/srslog/logger.h"
@@ -127,6 +129,8 @@ private:
   friend class ue_config_update_event;
   friend class ue_config_delete_event;
 
+  void flush_ues_to_rem();
+
   void handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_configuration> next_cfg);
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 
@@ -140,8 +144,14 @@ private:
 
   std::array<std::unique_ptr<ue_configuration>, MAX_NOF_DU_UES> ue_cfg_list;
 
-  /// Mapping of UEs to DU Cell Groups.
+  // Mapping of UEs to DU Cell Groups.
   std::array<std::atomic<du_cell_group_index_t>, MAX_NOF_DU_UES> ue_to_cell_group_index;
+
+  // Cached UE configurations to be reused.
+  concurrent_queue<std::unique_ptr<ue_configuration>,
+                   concurrent_queue_policy::lockfree_mpmc,
+                   concurrent_queue_wait_policy::non_blocking>
+      ues_to_rem;
 };
 
 } // namespace srsran

@@ -58,12 +58,15 @@ void ue_config_delete_event::reset()
   }
 }
 
+// class: sched_config_manager
+
 sched_config_manager::sched_config_manager(const scheduler_config&    sched_cfg,
                                            scheduler_metrics_handler& metrics_handler_) :
   expert_params(sched_cfg.expert_params),
   metrics_handler(metrics_handler_),
   config_notifier(sched_cfg.config_notifier),
-  logger(srslog::fetch_basic_logger("SCHED"))
+  logger(srslog::fetch_basic_logger("SCHED")),
+  ues_to_rem(MAX_NOF_DU_UES)
 {
   std::fill(ue_to_cell_group_index.begin(), ue_to_cell_group_index.end(), INVALID_DU_CELL_GROUP_INDEX);
 }
@@ -88,6 +91,9 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
 ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_request_message& cfg_req)
 {
   srsran_assert(cfg_req.ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", cfg_req.ue_index);
+
+  // See if there are any pending events to process out of the critical path.
+  flush_ues_to_rem();
 
   // Ensure PCell exists.
   if (not cfg_req.cfg.cells.has_value() or cfg_req.cfg.cells->empty()) {
@@ -142,6 +148,9 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
 {
   srsran_assert(cfg_req.ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", cfg_req.ue_index);
 
+  // See if there are any pending events to process out of the critical path.
+  flush_ues_to_rem();
+
   // Check if UE already exists.
   const du_cell_group_index_t group_idx = ue_to_cell_group_index[cfg_req.ue_index].load(std::memory_order_relaxed);
   if (group_idx == INVALID_DU_CELL_GROUP_INDEX) {
@@ -170,6 +179,9 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
 ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+
+  // See if there are any pending events to process out of the critical path.
+  flush_ues_to_rem();
 
   // Check if UE already exists.
   const du_cell_group_index_t group_idx = ue_to_cell_group_index[ue_index].load(std::memory_order_relaxed);
@@ -224,7 +236,11 @@ void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
   du_cell_index_t pcell_idx = ue_cfg_list[ue_index]->pcell_common_cfg().cell_index;
 
   // Deletes UE config.
+  auto old_ue_cfg = std::move(ue_cfg_list[ue_index]);
   ue_cfg_list[ue_index].reset();
+  if (not ues_to_rem.try_push(std::move(old_ue_cfg))) {
+    logger.warning("Failed to offload UE config removal. Performance may be affected");
+  }
 
   // Remove UE from metrics.
   cell_metrics_handler& cell_metrics = metrics_handler.at(pcell_idx);
@@ -235,4 +251,13 @@ void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
 
   // Notifies MAC that event is complete.
   config_notifier.on_ue_delete_response(ue_index);
+}
+
+void sched_config_manager::flush_ues_to_rem()
+{
+  // Note: This should be called by a thread outside of the critical path.
+
+  // clear the UEs to rem.
+  while (ues_to_rem.try_pop()) {
+  }
 }
