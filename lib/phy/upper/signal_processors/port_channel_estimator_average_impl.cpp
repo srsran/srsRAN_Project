@@ -72,11 +72,11 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             unsigned                                  hop_offset);
 
 SRSRAN_WEAK_SYMB
-void port_channel_estimator_average_impl::compute(channel_estimate&           estimate,
-                                                  const resource_grid_reader& grid,
-                                                  unsigned                    port,
-                                                  const dmrs_symbol_list&     pilots,
-                                                  const configuration&        cfg)
+void port_channel_estimator_average_impl::do_compute(channel_estimate&           estimate,
+                                                     const resource_grid_reader& grid,
+                                                     unsigned                    port,
+                                                     const dmrs_symbol_list&     pilots,
+                                                     const configuration&        cfg)
 {
   srsran_assert(cfg.dmrs_pattern.size() == 1,
                 "Only one UL layer supported in this version, requested {}.",

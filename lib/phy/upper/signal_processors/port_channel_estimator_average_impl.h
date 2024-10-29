@@ -58,9 +58,19 @@ public:
                const resource_grid_reader& grid,
                unsigned                    port,
                const dmrs_symbol_list&     pilots,
-               const configuration&        cfg) override;
+               const configuration&        cfg) override
+  {
+    do_compute(estimate, grid, port, pilots, cfg);
+  }
 
 private:
+  /// Actual implementation of the \c compute public method.
+  void do_compute(channel_estimate&           estimate,
+                  const resource_grid_reader& grid,
+                  unsigned                    port,
+                  const dmrs_symbol_list&     pilots,
+                  const configuration&        cfg);
+
   /// Specializes \ref compute for one hop.
   void compute_hop(channel_estimate&           estimate,
                    const resource_grid_reader& grid,
