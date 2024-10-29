@@ -149,6 +149,7 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
   // create GTP-U tunnel rx
   gtpu_tunnel_nru_rx_creation_message msg{};
   msg.ue_index          = int_to_ue_index(ue_index);
+  msg.rx_cfg.node       = nru_node::cu_up;
   msg.rx_cfg.local_teid = ul_up_tnl_info.gtp_teid;
   msg.rx_lower          = cu_bearer->gtpu_to_f1u_adapter.get();
 

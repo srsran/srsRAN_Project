@@ -113,6 +113,7 @@ public:
 
     gtpu_tunnel_nru_creation_message msg{};
     // msg.ue_index                            = 0; TODO
+    msg.cfg.rx.node       = nru_node::du;
     msg.cfg.rx.local_teid = dl_tnl_info.gtp_teid;
     msg.cfg.tx.peer_teid  = ul_tnl_info.gtp_teid;
     msg.cfg.tx.peer_addr  = ul_tnl_info.tp_address.to_string();

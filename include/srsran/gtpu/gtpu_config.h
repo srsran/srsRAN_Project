@@ -37,9 +37,12 @@ struct gtpu_tunnel_ngu_config {
   } tx;
 };
 
+enum class nru_node { invalid, cu_up, du };
+
 /// \brief Configurable parameters for GTP-U NR-U tunnels
 struct gtpu_tunnel_nru_config {
   struct gtpu_tunnel_nru_rx_config {
+    nru_node    node = nru_node::invalid;
     gtpu_teid_t local_teid;
   } rx;
   struct gtpu_tunnel_nru_tx_config {

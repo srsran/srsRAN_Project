@@ -14,6 +14,7 @@
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
 #include "srsran/nru/nru_packing.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 
@@ -29,7 +30,8 @@ public:
     lower_dn(rx_lower_),
     config(cfg)
   {
-    logger.log_info("GTPU NR-U Rx configured. local_teid={}", config.local_teid);
+    logger.log_info("GTPU NR-U Rx configured. node={} local_teid={}", config.node, config.local_teid);
+    srsran_assert(cfg.node != nru_node::invalid, "GTP-U RX node not correctly initialized");
   }
   ~gtpu_tunnel_nru_rx_impl() override = default;
 
