@@ -413,6 +413,88 @@ static void update_failed_list(
   }
 }
 
+/// \brief Processes the response of a UE Context Modification Request.
+/// \param[in] drb_setup_mod_list Reference to the DRBs originally requested to be setup.
+/// \param[in] ngap_setup_list Const reference to the original NGAP request.
+/// \param[in] bearer_contxt_mod_response Const reference to the response of the Bearer Context Modification Response.
+/// \param[in] next_config Const reference to the calculated config update.
+/// \param[in] logger Reference to the logger.
+/// \return True on success, false otherwise.
+static bool validate_next_config_with_bearer_ctxt_mod_response(
+    const std::vector<f1ap_drb_to_setup>&                                        drb_setup_mod_list,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
+    const e1ap_bearer_context_modification_response&                             bearer_contxt_mod_response,
+    const up_config_update&                                                      next_config,
+    const srslog::basic_logger&                                                  logger)
+{
+  for (const auto& e1ap_item : bearer_contxt_mod_response.pdu_session_resource_modified_list) {
+    const auto& psi = e1ap_item.pdu_session_id;
+
+    // Sanity check - make sure this session ID is present in the original setup message.
+    if (!ngap_setup_list.contains(psi)) {
+      logger.warning("PduSessionResourceSetupRequest doesn't include setup for {}", psi);
+      return false;
+    }
+    // Also check if PDU session is included in expected next configuration.
+    if (next_config.pdu_sessions_to_setup_list.find(psi) == next_config.pdu_sessions_to_setup_list.end()) {
+      logger.warning("Didn't expect setup for {}", psi);
+      return false;
+    }
+
+    const auto& next_cfg_pdu_session = next_config.pdu_sessions_to_setup_list.at(psi);
+
+    for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
+      const auto& drb_id = e1ap_drb_item.drb_id;
+      if (next_cfg_pdu_session.drb_to_add.find(drb_id) == next_cfg_pdu_session.drb_to_add.end()) {
+        logger.warning("DRB id {} not part of next configuration", drb_id);
+        return false;
+      }
+
+      // Check that all modified DRBs are already part of the next configuration.
+      for (const auto& drb_mod_item : e1ap_item.drb_modified_list_ng_ran) {
+        auto it =
+            std::find_if(drb_setup_mod_list.begin(),
+                         drb_setup_mod_list.end(),
+                         [&](const f1ap_drb_to_setup& setup_item) { return setup_item.drb_id == drb_mod_item.drb_id; });
+        if (it == drb_setup_mod_list.end()) {
+          return false;
+        }
+      }
+    }
+
+    // Fail on any DRB that failed modification.
+    if (!e1ap_item.drb_failed_to_modify_list_ng_ran.empty()) {
+      logger.warning("Non-empty DRB failed to modify list not supported");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/// \brief Processes the response of a Bearer Context Modification Request.
+/// \param[out] response_msg Reference to the final NGAP response.
+/// \param[out] next_config Const reference to the calculated config update.
+/// \param[in] bearer_context_modification_response Const reference to the response of the Bearer Context Modification
+/// Request.
+static void update_failed_to_modify_list_with_bearer_ctxt_mod_resp(
+    cu_cp_pdu_session_resource_setup_response&       response_msg,
+    up_config_update&                                next_config,
+    const e1ap_bearer_context_modification_response& bearer_context_modification_response)
+{
+  for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_failed_to_modify_list) {
+    // Remove from next config.
+    next_config.pdu_sessions_to_setup_list.erase(e1ap_item.pdu_session_id);
+    response_msg.pdu_session_res_setup_response_items.erase(e1ap_item.pdu_session_id);
+
+    // Add to list taking cause received from CU-UP.
+    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    failed_item.pdu_session_id              = e1ap_item.pdu_session_id;
+    failed_item.unsuccessful_transfer.cause = e1ap_to_ngap_cause(e1ap_item.cause);
+    response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+  }
+}
+
 // Free function to amend to the final procedure response message. This will take the results from the various
 // sub-procedures and update the succeeded/failed fields.
 bool handle_bearer_context_modification_response(
@@ -442,15 +524,18 @@ bool handle_bearer_context_modification_response(
   // Traverse failed list.
   update_failed_list(response_msg, next_config, bearer_context_modification_response.pdu_session_resource_failed_list);
 
-  for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_modified_list) {
-    // Modified list.
-    logger.info("Implement handling of resource modified item with {}", e1ap_item.pdu_session_id);
+  // Traverse modified list.
+  if (!validate_next_config_with_bearer_ctxt_mod_response(ue_context_mod_request.drbs_to_be_setup_mod_list,
+                                                          setup_msg.pdu_session_res_setup_items,
+                                                          bearer_context_modification_response,
+                                                          next_config,
+                                                          logger)) {
+    return false;
   }
 
-  for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_failed_to_modify_list) {
-    // Failed to modify list.
-    logger.info("Implement handling of resource failed to modify item with {}", e1ap_item.pdu_session_id);
-  }
+  // Traverse failed to modify list.
+  update_failed_to_modify_list_with_bearer_ctxt_mod_resp(
+      response_msg, next_config, bearer_context_modification_response);
 
   return bearer_context_modification_response.success;
 }

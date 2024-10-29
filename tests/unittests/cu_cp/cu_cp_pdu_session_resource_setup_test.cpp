@@ -370,7 +370,7 @@ TEST_F(cu_cp_pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_t
   // Inject Bearer Context Modification Response and await DL RRC Message Transfer containing RRC Reconfiguration
   ASSERT_TRUE(send_bearer_context_modification_response_and_await_rrc_reconfiguration(
       {},
-      {{psi, drb_id_t::drb1}, {psi2, drb_id_t::drb2}},
+      {{psi, drb_id_t::drb1}},
       std::vector<srb_id_t>{srb_id_t::srb2},
       std::vector<drb_id_t>{drb_id_t::drb1, drb_id_t::drb2}));
 
@@ -400,8 +400,8 @@ TEST_F(
   ASSERT_TRUE(send_ue_context_modification_response_and_await_bearer_context_modification_request());
 
   // Inject Bearer Context Modification Response and await DL RRC Message Transfer containing RRC Reconfiguration
-  get_cu_up(cu_up_idx).push_tx_pdu(
-      generate_bearer_context_modification_response(ue_ctx->cu_cp_e1ap_id.value(), cu_up_e1ap_id));
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(
+      ue_ctx->cu_cp_e1ap_id.value(), cu_up_e1ap_id, {}, {{uint_to_pdu_session_id(1), drb_id_t::drb1}}));
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu));
   {

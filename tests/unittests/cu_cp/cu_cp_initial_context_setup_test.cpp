@@ -200,7 +200,8 @@ public:
                               "Failed to receive E1AP Bearer Context Modification");
 
     // Inject E1AP Bearer Context Modification Response and wait for DL RRC Message (containing RRC Reconfiguration)
-    get_cu_up(0).push_tx_pdu(generate_bearer_context_modification_response(cu_cp_e1ap_id, cu_up_e1ap_id));
+    get_cu_up(0).push_tx_pdu(generate_bearer_context_modification_response(
+        cu_cp_e1ap_id, cu_up_e1ap_id, {}, {{uint_to_pdu_session_id(1), drb_id_t::drb1}}));
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
                               "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
     report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),

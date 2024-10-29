@@ -714,7 +714,7 @@ bool cu_cp_test_environment::send_bearer_context_modification_response_and_await
 
   // Inject Bearer Context Modification Response and wait for UE Context Modification Request
   get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(
-      ue_ctx.cu_cp_e1ap_id.value(), ue_ctx.cu_up_e1ap_id.value(), {{psi, drb_test_params{drb_id, qfi}}}));
+      ue_ctx.cu_cp_e1ap_id.value(), ue_ctx.cu_up_e1ap_id.value(), {{psi, drb_test_params{drb_id, qfi}}}, {}));
   bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
   report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
