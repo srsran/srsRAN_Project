@@ -17,7 +17,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Perform sanity check on incoming resource setup/modifcation/release requests.
+/// \brief Perform sanity check on incoming resource setup/modification/release requests.
 bool is_valid(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
               const up_context&                                                            context,
               const up_resource_manager_cfg&                                               cfg,

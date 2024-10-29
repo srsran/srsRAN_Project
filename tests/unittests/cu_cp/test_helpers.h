@@ -458,7 +458,7 @@ public:
     logger.info("Received a new UE context modification request");
 
     // store request so it can be verified in the test code
-    make_partial_copy(ue_context_modifcation_request, request);
+    make_partial_copy(ue_context_modification_request, request);
 
     return launch_async([res = f1ap_ue_context_modification_response{},
                          this](coro_context<async_task<f1ap_ue_context_modification_response>>& ctx) mutable {
@@ -495,7 +495,7 @@ public:
 
   bool handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index) override { return true; }
 
-  const f1ap_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
+  const f1ap_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modification_request; }
 
   f1ap_ue_context_release_command last_release_command;
 
@@ -512,7 +512,7 @@ private:
   bool                  ue_context_setup_outcome = false;
   ue_context_outcome_t  ue_context_modification_outcome;
 
-  f1ap_ue_context_modification_request ue_context_modifcation_request;
+  f1ap_ue_context_modification_request ue_context_modification_request;
 };
 
 struct dummy_cu_up_processor_cu_up_management_notifier : public cu_up_processor_cu_up_management_notifier {
