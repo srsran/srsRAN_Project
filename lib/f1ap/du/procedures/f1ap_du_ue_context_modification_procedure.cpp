@@ -201,6 +201,6 @@ async_task<void> f1ap_du_ue_context_modification_procedure::handle_tx_action_ind
     return ue.du_handler.request_ue_drb_deactivation(ue.context.ue_index);
   }
   logger.error("{}: Ignoring Transmission Action Indicator IE with \"restart\" value. Cause: Feature not supported",
-               req->tx_action_ind.value);
+               f1ap_log_prefix{ue.context, name()});
   return launch_no_op_task();
 }
