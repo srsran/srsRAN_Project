@@ -34,6 +34,16 @@ du_high_worker_manager::du_high_worker_manager()
   exec_mapper = srs_du::create_du_high_executor_mapper(cfg);
 }
 
+du_high_worker_manager::~du_high_worker_manager()
+{
+  stop();
+}
+
+void du_high_worker_manager::stop()
+{
+  worker_pool.stop();
+}
+
 void du_high_worker_manager::flush_pending_dl_pdus()
 {
   std::vector<std::promise<void>> promises(nof_ue_strands);

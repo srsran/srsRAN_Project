@@ -23,7 +23,8 @@ struct du_high_worker_manager {
   static const uint32_t task_worker_queue_size = 10000;
 
   du_high_worker_manager();
-  void stop() { worker_pool.stop(); }
+  ~du_high_worker_manager();
+  void stop();
   void flush_pending_dl_pdus();
 
   manual_task_worker        test_worker{task_worker_queue_size};
