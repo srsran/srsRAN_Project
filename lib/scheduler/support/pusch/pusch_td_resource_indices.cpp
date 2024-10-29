@@ -188,7 +188,7 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
     }
     // Flag indicating whether a valid PDCCH slot for a given UL slot is found or not.
     bool                    no_pdcch_slot_found = true;
-    std::optional<unsigned> last_pdcch_slot_index_for_ul_slot;
+    std::optional<unsigned> last_valid_k2;
     for (unsigned k2 = 0; k2 <= max_k2; ++k2) {
       unsigned dl_slot_idx = (nof_slots + ul_slot_idx - k2) % nof_slots;
       // Skip if it's not a DL slot.
@@ -203,7 +203,7 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
       }
       // Store PDCCH slot index at which a valid PUSCH time domain resource was found to schedule PUSCH at given UL
       // slot.
-      last_pdcch_slot_index_for_ul_slot = dl_slot_idx;
+      last_valid_k2 = k2;
       // Skip if nof. PUSCH time domain resource indexes for this PDCCH slot exceed nof. UL PDCCHs that can be scheduled
       // in each PDCCH slot.
       if (final_pusch_td_list_per_slot[dl_slot_idx].size() >= nof_ul_pdcchs_per_dl_slot) {
@@ -217,9 +217,8 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
     }
 
     // Note: This should not happen if the config passed the validation.
-    srsran_sanity_check(last_pdcch_slot_index_for_ul_slot.has_value(),
-                        "Invalid TDD pattern which leads to UL slot index={} with no valid k2",
-                        ul_slot_idx);
+    srsran_sanity_check(
+        last_valid_k2.has_value(), "Invalid TDD pattern which leads to UL slot index={} with no valid k2", ul_slot_idx);
 
     // [Implementation-defined] If no PDCCH slot is found we pick the last valid PDCCH slot for this UL slot, regardless
     // of the restriction to not allow more than \c nof_ul_pdcchs_per_dl_slot UL PDCCHs per PDCCH slot.
@@ -228,7 +227,8 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
       for (const auto& pusch_time_domain : pusch_time_domain_list) {
         min_k2 = std::min(min_k2.value_or(pusch_time_domain.k2), pusch_time_domain.k2);
       }
-      const unsigned required_k2 = ul_slot_idx - last_pdcch_slot_index_for_ul_slot.value();
+      const unsigned required_k2      = last_valid_k2.value();
+      const unsigned pdcch_slot_index = (ul_slot_idx + nof_slots - required_k2) % nof_slots;
 
       // If the required k2 value is less than the minimum k2 value in the PUSCH time domain resource list, then we look
       // for the minimum k2 value that is greater than the DL-UL transmission period, as this is the PDCCH slot closest
@@ -247,7 +247,7 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
       // If a valid PUSCH time domain resource is found for the required k2 value, then we store it.
       std::optional<unsigned> pusch_td_res_idx_for_required_k2 = std::nullopt;
       if (candidate_required_k2.has_value()) {
-        auto& init_push_list = initial_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot.value()];
+        auto& init_push_list = initial_pusch_td_list_per_slot[pdcch_slot_index];
         auto* it             = std::find_if(init_push_list.begin(),
                                 init_push_list.end(),
                                 [&pusch_time_domain_list, candidate_required_k2](unsigned pusch_td_res_idx) {
@@ -258,8 +258,7 @@ srsran::get_fairly_distributed_pusch_td_resource_indices(const cell_configuratio
         }
       }
       if (pusch_td_res_idx_for_required_k2.has_value()) {
-        final_pusch_td_list_per_slot[last_pdcch_slot_index_for_ul_slot.value()].push_back(
-            *pusch_td_res_idx_for_required_k2);
+        final_pusch_td_list_per_slot[pdcch_slot_index].push_back(*pusch_td_res_idx_for_required_k2);
       } else {
         srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED", false);
         logger.warning("No valid PUSCH time domain resource found for UL slot dx={}", ul_slot_idx);

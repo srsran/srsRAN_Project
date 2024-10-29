@@ -107,17 +107,20 @@ TEST_P(pusch_td_resource_indices_test, all_ul_slots_have_one_pdcch_slot_to_sched
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
       get_c_rnti_pusch_time_domain_list(true, to_coreset_id(0), cell_cfg->ul_cfg_common.init_ul_bwp, nullptr);
 
+  unsigned nof_slots = nof_slots_per_tdd_period(cell_cfg->tdd_cfg_common.value());
+
   auto ul_slot_idx_it = ul_slot_indexes.begin();
   while (ul_slot_idx_it != ul_slot_indexes.end()) {
     bool pdcch_slot_found = false;
     for (const auto dl_slot_idx : dl_slot_indexes) {
       span<const unsigned> pusch_td_res_indxes_list = pusch_td_res_indxes_list_per_slot[dl_slot_idx];
-      pdcch_slot_found                              = std::any_of(
-          pusch_td_res_indxes_list.begin(),
-          pusch_td_res_indxes_list.end(),
-          [&pusch_time_domain_list, dl_slot_idx, ul_slot_idx = *ul_slot_idx_it](const unsigned pusch_td_res_idx) {
-            return ul_slot_idx == dl_slot_idx + pusch_time_domain_list[pusch_td_res_idx].k2;
-          });
+      pdcch_slot_found =
+          std::any_of(pusch_td_res_indxes_list.begin(),
+                      pusch_td_res_indxes_list.end(),
+                      [&pusch_time_domain_list, dl_slot_idx, ul_slot_idx = *ul_slot_idx_it, nof_slots](
+                          const unsigned pusch_td_res_idx) {
+                        return ul_slot_idx == (dl_slot_idx + pusch_time_domain_list[pusch_td_res_idx].k2) % nof_slots;
+                      });
       if (pdcch_slot_found) {
         break;
       }
