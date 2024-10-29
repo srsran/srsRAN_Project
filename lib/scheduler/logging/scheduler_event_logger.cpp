@@ -44,7 +44,7 @@ void scheduler_event_logger::enqueue_impl(const prach_event& rach_ev)
     fmt::format_to(fmtbuf,
                    "\n- PRACH: slot={} pci={} preamble={} ra-rnti={} temp_crnti={} ta_cmd={}",
                    rach_ev.slot_rx,
-                   cell_pcis[rach_ev.cell_index],
+                   pci,
                    rach_ev.preamble_id,
                    rach_ev.ra_rnti,
                    rach_ev.tc_rnti,
@@ -62,8 +62,7 @@ void scheduler_event_logger::enqueue_impl(const prach_event& rach_ev)
 void scheduler_event_logger::enqueue_impl(const rach_indication_message& rach_ind)
 {
   if (mode == debug) {
-    fmt::format_to(
-        fmtbuf, "\n- RACH ind: slot_rx={} pci={} PRACHs: ", cell_pcis[rach_ind.cell_index], rach_ind.slot_rx);
+    fmt::format_to(fmtbuf, "\n- RACH ind: slot_rx={} pci={} PRACHs: ", rach_ind.slot_rx, pci);
     unsigned count = 0;
     for (unsigned i = 0; i != rach_ind.occasions.size(); ++i) {
       for (unsigned j = 0; j != rach_ind.occasions[i].preambles.size(); ++j) {
@@ -88,11 +87,7 @@ void scheduler_event_logger::enqueue_impl(const rach_indication_message& rach_in
 void scheduler_event_logger::enqueue_impl(const ue_creation_event& ue_request)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf,
-                   "\n- UE creation: ue={} rnti={} pci={}",
-                   ue_request.ue_index,
-                   ue_request.rnti,
-                   cell_pcis[ue_request.pcell_index]);
+    fmt::format_to(fmtbuf, "\n- UE creation: ue={} rnti={} pci={}", ue_request.ue_index, ue_request.rnti, pci);
   }
 }
 
@@ -190,7 +185,7 @@ void scheduler_event_logger::enqueue_impl(const harq_ack_event& harq_ev)
                    "\n- HARQ-ACK: ue={} rnti={} pci={} slot_rx={} h_id={} ack={}",
                    harq_ev.ue_index,
                    harq_ev.rnti,
-                   cell_pcis[harq_ev.cell_index],
+                   pci,
                    harq_ev.sl_ack_rx,
                    harq_ev.h_id,
                    (unsigned)harq_ev.ack);
@@ -208,7 +203,7 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
                      "\n- CRC: ue={} rnti={} pci={} rx_slot={} h_id={} crc={} sinr={}dB",
                      crc_ev.ue_index,
                      crc_ev.rnti,
-                     cell_pcis[crc_ev.cell_index],
+                     pci,
                      crc_ev.sl_rx,
                      crc_ev.h_id,
                      crc_ev.crc,
@@ -218,7 +213,7 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
                      "\n- CRC: ue={} rnti={} pci={} rx_slot={} h_id={} crc={} sinr=N/A",
                      crc_ev.ue_index,
                      crc_ev.rnti,
-                     cell_pcis[crc_ev.cell_index],
+                     pci,
                      crc_ev.sl_rx,
                      crc_ev.h_id,
                      crc_ev.crc);
@@ -243,12 +238,7 @@ void scheduler_event_logger::enqueue_impl(const dl_buffer_state_indication_messa
 void scheduler_event_logger::enqueue_impl(const phr_event& phr_ev)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf,
-                   "\n- PHR: ue={} rnti={} pci={} ph={}dB",
-                   phr_ev.ue_index,
-                   phr_ev.rnti,
-                   cell_pcis[phr_ev.cell_index],
-                   phr_ev.ph);
+    fmt::format_to(fmtbuf, "\n- PHR: ue={} rnti={} pci={} ph={}dB", phr_ev.ue_index, phr_ev.rnti, pci, phr_ev.ph);
     if (phr_ev.p_cmax.has_value()) {
       fmt::format_to(fmtbuf, " p_cmax={}dBm", phr_ev.p_cmax.value());
     }
