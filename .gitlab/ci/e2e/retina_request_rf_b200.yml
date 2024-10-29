@@ -14,8 +14,8 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 14
-      limits: 14
+      requests: 13
+      limits: 13
     memory:
       requests: "48G"
       limits: "48G"
