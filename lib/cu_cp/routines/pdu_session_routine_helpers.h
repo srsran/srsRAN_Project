@@ -22,7 +22,26 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-bool verify_and_log_cell_group_config(const byte_buffer& cell_group_cfg, const srslog::basic_logger& logger);
+bool verify_and_log_cell_group_config(const byte_buffer& packed_cell_group_cfg, const srslog::basic_logger& logger);
+
+/// \brief Fill thew DRB setup mod item for the DU.
+/// \param[out] drb_setup_mod_item The DRB setup item to fill.
+/// \param[in] response_flow_list The list of QoS flows to be added to the NGAP response.
+/// \param[in] psi The PDU session ID.
+/// \param[in] drb_id The DRB ID.
+/// \param[in] next_drb_config The DRB config to be updated.
+/// \param[in] e1ap_drb_item The DRB setup response from CU-UP.
+/// \param[in] ngap_qos_flow_setup_items The initial QoS flow setup request from AMF.
+/// \param[in] logger The logger.
+bool fill_f1ap_drb_setup_mod_item(f1ap_drb_to_setup& drb_setup_mod_item, // Request to setup DRB at DU.
+                                  slotted_id_vector<qos_flow_id_t, cu_cp_associated_qos_flow>* response_flow_list,
+                                  pdu_session_id_t                                             psi,
+                                  drb_id_t                                                     drb_id,
+                                  up_drb_context& next_drb_config,                 // DRB config (info is written back).
+                                  const e1ap_drb_setup_item_ng_ran& e1ap_drb_item, // Response from CU-UP.
+                                  const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>&
+                                                              ngap_qos_flow_setup_items, // Initial request from AMF.
+                                  const srslog::basic_logger& logger);
 
 void fill_e1ap_drb_pdcp_config(e1ap_pdcp_config& e1ap_pdcp_cfg, const pdcp_config& cu_cp_pdcp_cfg);
 void fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_item&      e1ap_qos_item,
@@ -76,69 +95,16 @@ bool fill_rrc_reconfig_args(rrc_reconfiguration_procedure_request&              
                             byte_buffer                                                      sib1,
                             const srslog::basic_logger&                                      logger);
 
-bool update_setup_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    std::vector<f1ap_srb_to_setup>&                                                 srb_setup_mod_list,
-    std::vector<f1ap_drb_to_setup>&                                                 drb_setup_mod_list,
-    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
-    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-                                 pdu_session_resource_setup_list,
-    up_config_update&            next_config,
-    up_resource_manager&         up_resource_mng,
-    const security_indication_t& default_security_indication,
-    const srslog::basic_logger&  logger);
-
-bool update_setup_list(std::vector<f1ap_srb_to_setup>&                                              srb_setup_mod_list,
-                       std::vector<f1ap_drb_to_setup>&                                              drb_setup_mod_list,
-                       const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
-                       const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-                                                   pdu_session_resource_setup_list,
-                       up_config_update&           next_config,
-                       up_resource_manager&        up_resource_mng,
-                       const srslog::basic_logger& logger);
-
-bool update_setup_list(e1ap_bearer_context_modification_request& bearer_ctxt_mod_request,
-                       const std::vector<f1ap_drb_setupmod>&     drb_setup_mod_list,
-                       const up_config_update&                   next_config,
-                       const srslog::basic_logger&               logger);
-
-void update_failed_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
-    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list,
-    up_config_update&                                                                 next_config);
-
-/// \brief Processes the result of a Bearer Context Modifcation Result's PDU session modify list.
-/// \param[out] ngap_response_list Reference to the final NGAP response
-/// \param[out] ue_context_mod_request Reference to the next request message - a UE context modification.
-/// \param[in] ngap_modify_list Const reference to the original NGAP request
-/// \param[in] e1ap_pdu_session_resource_modify_list Const reference to the response of the previous subprocedure
-/// \param[in]next_config Const reference to the calculated config update
+/// \brief Processes the response of a UE Context Setup Request.
+/// \param[out] bearer_ctxt_mod_request Reference to the resulting Bearer Context Modification Request response.
+/// \param[out] drb_setup_mod_list Reference to the successful DRB setup list.
+/// \param[out] next_config Const reference to the calculated config update.
 /// \param[in] logger Reference to the logger.
 /// \return True on success, false otherwise.
-bool update_modify_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
-    f1ap_ue_context_modification_request&                                                 ue_context_mod_request,
-    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
-    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
-                                e1ap_pdu_session_resource_modify_list,
-    up_config_update&           next_config,
-    const srslog::basic_logger& logger);
-
-/// \brief Processes the response of a UE Context Modifcation Request.
-/// \param[out] ngap_response_list Reference to the final NGAP response.
-/// \param[out] ue_context_mod_request Reference to the next request message - a Bearer context modification request.
-/// \param[in] ngap_modify_list Const reference to the original NGAP request
-/// \param[in] ue_context_modification_response Const reference to the response of the UE context modifcation request.
-/// \param[in] next_config Const reference to the calculated config update
-/// \param[in] logger Reference to the logger.
-/// \return True on success, false otherwise.
-bool update_modify_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
-    e1ap_bearer_context_modification_request&                                             bearer_context_mod_request,
-    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
-    const f1ap_ue_context_modification_response& ue_context_modification_response,
-    const up_config_update&                      next_config,
-    const srslog::basic_logger&                  logger);
+bool update_setup_list_with_ue_ctxt_setup_response(e1ap_bearer_context_modification_request& bearer_ctxt_mod_request,
+                                                   const std::vector<f1ap_drb_setupmod>&     drb_setup_mod_list,
+                                                   const up_config_update&                   next_config,
+                                                   const srslog::basic_logger&               logger);
 
 } // namespace srs_cu_cp
 } // namespace srsran

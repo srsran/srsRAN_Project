@@ -10,6 +10,7 @@
 
 #include "pdu_session_resource_setup_routine.h"
 #include "pdu_session_routine_helpers.h"
+#include "srsran/ran/cause/e1ap_cause_converters.h"
 #include "srsran/ran/cause/ngap_cause.h"
 
 using namespace srsran;
@@ -21,10 +22,10 @@ using namespace asn1::rrc_nr;
 bool handle_bearer_context_modification_response(
     cu_cp_pdu_session_resource_setup_response&       response_msg,
     f1ap_ue_context_modification_request&            ue_context_mod_request,
-    const cu_cp_pdu_session_resource_setup_request   setup_msg,
-    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
     up_config_update&                                next_config,
-    up_resource_manager&                             up_resource_mng_,
+    const cu_cp_pdu_session_resource_setup_request&  setup_msg,
+    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+    up_resource_manager&                             up_resource_mng,
     const security_indication_t&                     default_security_indication,
     srslog::basic_logger&                            logger);
 
@@ -135,9 +136,9 @@ void pdu_session_resource_setup_routine::operator()(
     // Handle BearerContextModificationResponse.
     if (!handle_bearer_context_modification_response(response_msg,
                                                      ue_context_mod_request,
+                                                     next_config,
                                                      setup_msg,
                                                      bearer_context_modification_response,
-                                                     next_config,
                                                      up_resource_mng,
                                                      default_security_indication,
                                                      logger)) {
@@ -183,9 +184,9 @@ void pdu_session_resource_setup_routine::operator()(
     // Handle BearerContextModificationResponse.
     if (!handle_bearer_context_modification_response(response_msg,
                                                      ue_context_mod_request,
+                                                     next_config,
                                                      setup_msg,
                                                      bearer_context_modification_response,
-                                                     next_config,
                                                      up_resource_mng,
                                                      default_security_indication,
                                                      logger)) {
@@ -244,35 +245,202 @@ void pdu_session_resource_setup_routine::operator()(
   CORO_RETURN(handle_pdu_session_resource_setup_result(true));
 }
 
+/// \brief Processes the response of a Bearer Context Setup/Modification Request.
+/// \param[out] ngap_response_list Reference to the final NGAP response.
+/// \param[out] srb_setup_mod_list Reference to the successful SRB setup list.
+/// \param[out] drb_setup_mod_list Reference to the successful DRB setup list.
+/// \param[out] next_config Const reference to the calculated config update.
+/// \param[out] ngap_setup_list Const reference to the original NGAP request.
+/// \param[in] pdu_session_resource_setup_list Const reference to the PDU sessions of the Bearer Context
+/// Setup/Modification Response.
+/// \param[in] up_resource_mng Reference to the UP resource manager.
+/// \param[in] default_security_indication Const reference to the default security indication.
+/// \param[in] logger Reference to the logger.
+/// \return True on success, false otherwise.
+static bool update_setup_list_with_bearer_ctxt_setup_mod_response(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
+    std::vector<f1ap_srb_to_setup>&                                                 srb_setup_mod_list,
+    std::vector<f1ap_drb_to_setup>&                                                 drb_setup_mod_list,
+    up_config_update&                                                               next_config,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
+                                 pdu_session_resource_setup_list,
+    up_resource_manager&         up_resource_mng,
+    const security_indication_t& default_security_indication,
+    const srslog::basic_logger&  logger)
+{
+  // Set up SRB2 if this is the first DRB to be setup.
+  if (up_resource_mng.get_nof_drbs() == 0) {
+    f1ap_srb_to_setup srb2;
+    srb2.srb_id = srb_id_t::srb2;
+    srb_setup_mod_list.push_back(srb2);
+  }
+
+  for (const auto& e1ap_item : pdu_session_resource_setup_list) {
+    const auto& psi = e1ap_item.pdu_session_id;
+
+    // Sanity check - make sure this session ID is present in the original setup message.
+    if (!ngap_setup_list.contains(psi)) {
+      logger.warning("PduSessionResourceSetupRequest doesn't include setup for {}", psi);
+      return false;
+    }
+    // Also check if PDU session is included in expected next configuration.
+    if (next_config.pdu_sessions_to_setup_list.find(psi) == next_config.pdu_sessions_to_setup_list.end()) {
+      logger.warning("Didn't expect setup for {}", psi);
+      return false;
+    }
+
+    cu_cp_pdu_session_res_setup_response_item item;
+    item.pdu_session_id = psi;
+
+    auto& transfer                                    = item.pdu_session_resource_setup_response_transfer;
+    transfer.dlqos_flow_per_tnl_info.up_tp_layer_info = e1ap_item.ng_dl_up_tnl_info;
+
+    // Determine security settings for this PDU session and decide whether we have to send the security_result via NGAP.
+    bool integrity_enabled = false;
+    bool ciphering_enabled = false;
+
+    if (ngap_setup_list[psi].security_ind.has_value()) {
+      // TS 38.413 Sec. 8.2.1.2:
+      // For each PDU session for which the Security Indication IE is included in the PDU Session Resource Setup Request
+      // Transfer IE of the PDU SESSION RESOURCE SETUP REQUEST message, and the Integrity Protection Indication IE
+      // or Confidentiality Protection Indication IE is set to "preferred", then the NG-RAN node should, if supported,
+      // perform user plane integrity protection or ciphering, respectively, for the concerned PDU session and shall
+      // notify whether it performed the user plane integrity protection or ciphering by including the Integrity
+      // Protection Result IE or Confidentiality Protection Result IE, respectively, in the PDU Session Resource Setup
+      // Response Transfer IE of the PDU SESSION RESOURCE SETUP RESPONSE message.
+      const auto& ngap_sec_ind = ngap_setup_list[psi].security_ind.value();
+      if (security_result_required(ngap_sec_ind)) {
+        // Apply security settings according to the decision in the CU-UP.
+        if (!e1ap_item.security_result.has_value()) {
+          logger.warning("Missing security result in E1AP response for {}", psi);
+          return false;
+        }
+        const auto& sec_res = e1ap_item.security_result.value();
+        integrity_enabled   = sec_res.integrity_protection_result == integrity_protection_result_t::performed;
+        ciphering_enabled = sec_res.confidentiality_protection_result == confidentiality_protection_result_t::performed;
+        // Add result to NGAP response
+        transfer.security_result = sec_res;
+      } else {
+        // Apply security settings that were requested via NGAP and do not require an explicit reponse.
+        integrity_enabled = ngap_sec_ind.integrity_protection_ind == integrity_protection_indication_t::required;
+        ciphering_enabled =
+            ngap_sec_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::required;
+      }
+    } else {
+      // Security settings were not signaled via NGAP, we have used the defaults of CU-CP.
+      const auto sec_ind = default_security_indication;
+      if (security_result_required(sec_ind)) {
+        // Apply security settings according to the decision in the CU-UP.
+        if (!e1ap_item.security_result.has_value()) {
+          logger.warning("Missing security result in E1AP response for {}", psi);
+          return false;
+        }
+        const auto& sec_res = e1ap_item.security_result.value();
+        integrity_enabled   = sec_res.integrity_protection_result == integrity_protection_result_t::performed;
+        ciphering_enabled = sec_res.confidentiality_protection_result == confidentiality_protection_result_t::performed;
+        // No result in NGAP response needed here.
+      } else {
+        // Apply default security settings that do not require an explicit response.
+        integrity_enabled = sec_ind.integrity_protection_ind == integrity_protection_indication_t::required;
+        ciphering_enabled = sec_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::required;
+      }
+    }
+
+    auto& next_cfg_pdu_session = next_config.pdu_sessions_to_setup_list.at(psi);
+
+    for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
+      const auto& drb_id = e1ap_drb_item.drb_id;
+      if (next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.find(drb_id) ==
+          next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.end()) {
+        logger.warning("DRB id {} not part of next configuration", drb_id);
+        return false;
+      }
+
+      // Update security settings of each DRB.
+      next_cfg_pdu_session.drb_to_add.find(drb_id)->second.pdcp_cfg.integrity_protection_required = integrity_enabled;
+      next_cfg_pdu_session.drb_to_add.find(drb_id)->second.pdcp_cfg.ciphering_required            = ciphering_enabled;
+
+      // Prepare DRB item for DU.
+      f1ap_drb_to_setup drb_setup_mod_item;
+      if (!fill_f1ap_drb_setup_mod_item(drb_setup_mod_item,
+                                        &transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list,
+                                        item.pdu_session_id,
+                                        drb_id,
+                                        next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.at(drb_id),
+                                        e1ap_drb_item,
+                                        ngap_setup_list[item.pdu_session_id].qos_flow_setup_request_items,
+                                        logger)) {
+        logger.warning("Couldn't populate DRB setup/mod item {}", e1ap_drb_item.drb_id);
+        return false;
+      }
+      drb_setup_mod_list.push_back(drb_setup_mod_item);
+    }
+
+    // Fail on any DRB that fails to be setup.
+    if (!e1ap_item.drb_failed_list_ng_ran.empty()) {
+      logger.warning("Non-empty DRB failed list not supported");
+      return false;
+    }
+
+    ngap_response_list.emplace(item.pdu_session_id, item);
+  }
+
+  return true;
+}
+
+/// \brief Processes the response of a Bearer Context Setup/Modification Request.
+/// \param[out] response_msg Reference to the final NGAP response.
+/// \param[out] next_config Const reference to the calculated config update.
+/// \param[in] pdu_session_resource_failed_list Const reference to the failed PDU sessions of the Bearer Context
+/// Setup/Modification Response.
+static void update_failed_list(
+
+    cu_cp_pdu_session_resource_setup_response&                                        response_msg,
+    up_config_update&                                                                 next_config,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list)
+{
+  for (const auto& e1ap_item : pdu_session_resource_failed_list) {
+    // Remove from next config.
+    next_config.pdu_sessions_to_setup_list.erase(e1ap_item.pdu_session_id);
+    response_msg.pdu_session_res_setup_response_items.erase(e1ap_item.pdu_session_id);
+
+    // Add to list taking cause received from CU-UP.
+    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    failed_item.pdu_session_id              = e1ap_item.pdu_session_id;
+    failed_item.unsuccessful_transfer.cause = e1ap_to_ngap_cause(e1ap_item.cause);
+    response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+  }
+}
+
 // Free function to amend to the final procedure response message. This will take the results from the various
 // sub-procedures and update the succeeded/failed fields.
 bool handle_bearer_context_modification_response(
     cu_cp_pdu_session_resource_setup_response&       response_msg,
     f1ap_ue_context_modification_request&            ue_context_mod_request,
-    const cu_cp_pdu_session_resource_setup_request   setup_msg,
-    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
     up_config_update&                                next_config,
-    up_resource_manager&                             up_resource_mng_,
+    const cu_cp_pdu_session_resource_setup_request&  setup_msg,
+    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+    up_resource_manager&                             up_resource_mng,
     const security_indication_t&                     default_security_indication,
     srslog::basic_logger&                            logger)
 {
   // Traverse setup list.
-  if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
-                         ue_context_mod_request.srbs_to_be_setup_mod_list,
-                         ue_context_mod_request.drbs_to_be_setup_mod_list,
-                         setup_msg.pdu_session_res_setup_items,
-                         bearer_context_modification_response.pdu_session_resource_setup_list,
-                         next_config,
-                         up_resource_mng_,
-                         default_security_indication,
-                         logger)) {
+  if (!update_setup_list_with_bearer_ctxt_setup_mod_response(
+          response_msg.pdu_session_res_setup_response_items,
+          ue_context_mod_request.srbs_to_be_setup_mod_list,
+          ue_context_mod_request.drbs_to_be_setup_mod_list,
+          next_config,
+          setup_msg.pdu_session_res_setup_items,
+          bearer_context_modification_response.pdu_session_resource_setup_list,
+          up_resource_mng,
+          default_security_indication,
+          logger)) {
     return false;
   }
 
   // Traverse failed list.
-  update_failed_list(response_msg.pdu_session_res_failed_to_setup_items,
-                     bearer_context_modification_response.pdu_session_resource_failed_list,
-                     next_config);
+  update_failed_list(response_msg, next_config, bearer_context_modification_response.pdu_session_resource_failed_list);
 
   for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_modified_list) {
     // Modified list.
@@ -298,22 +466,21 @@ bool handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_respo
                                           srslog::basic_logger&                           logger)
 {
   // Traverse setup list.
-  if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
-                         ue_context_mod_request.srbs_to_be_setup_mod_list,
-                         ue_context_mod_request.drbs_to_be_setup_mod_list,
-                         setup_msg.pdu_session_res_setup_items,
-                         bearer_context_setup_response.pdu_session_resource_setup_list,
-                         next_config,
-                         up_resource_mng_,
-                         default_security_indication,
-                         logger)) {
+  if (!update_setup_list_with_bearer_ctxt_setup_mod_response(
+          response_msg.pdu_session_res_setup_response_items,
+          ue_context_mod_request.srbs_to_be_setup_mod_list,
+          ue_context_mod_request.drbs_to_be_setup_mod_list,
+          next_config,
+          setup_msg.pdu_session_res_setup_items,
+          bearer_context_setup_response.pdu_session_resource_setup_list,
+          up_resource_mng_,
+          default_security_indication,
+          logger)) {
     return false;
   }
 
   // Traverse failed list.
-  update_failed_list(response_msg.pdu_session_res_failed_to_setup_items,
-                     bearer_context_setup_response.pdu_session_resource_failed_list,
-                     next_config);
+  update_failed_list(response_msg, next_config, bearer_context_setup_response.pdu_session_resource_failed_list);
 
   return bearer_context_setup_response.success;
 }
@@ -348,7 +515,7 @@ bool handle_ue_context_modification_response(
     return false;
   }
 
-  if (!update_setup_list(
+  if (!update_setup_list_with_ue_ctxt_setup_response(
           bearer_ctxt_mod_request, ue_context_modification_response.drbs_setup_list, next_config, logger)) {
     return false;
   }
@@ -389,7 +556,7 @@ void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_response&     
     fail_item.cause          = cause;
     failed_list.emplace(setup_item.pdu_session_id, fail_item);
   }
-  update_failed_list(response_msg.pdu_session_res_failed_to_setup_items, failed_list, next_config);
+  update_failed_list(response_msg, next_config, failed_list);
   // No PDU session setup can be successful at the same time.
   response_msg.pdu_session_res_setup_response_items.clear();
 }
