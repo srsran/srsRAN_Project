@@ -70,7 +70,7 @@ async_task<void> mac_ul_processor::remove_ue(const mac_ue_delete_request& msg)
   // Note: We use "mac_ul_pdu_executor" to ensure that the removal of the UE from the MAC UL happens after all the
   // pending UL PDUs for that same UE have been processed. Otherwise, we would see "Discarding subPDU... UE does not
   // exist" in the logs.
-  return execute_and_continue_on_blocking(
+  return defer_and_continue_on_blocking(
       cfg.ue_exec_mapper.mac_ul_pdu_executor(msg.ue_index),
       cfg.ctrl_exec,
       cfg.timers,
