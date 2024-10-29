@@ -12,6 +12,7 @@
 #include "pucch_processor_format0_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/formatters.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/support/complex_normal_random.h"
 #include <gtest/gtest.h>
 
@@ -103,9 +104,13 @@ protected:
     std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
     ASSERT_NE(demod_factory, nullptr) << "Cannot create channel modulation factory.";
 
+    std::shared_ptr<transform_precoder_factory> precoding_factory =
+        create_dft_transform_precoder_factory(dft_factory, pucch_constants::FORMAT3_MAX_NPRB + 1);
+    ASSERT_NE(precoding_factory, nullptr) << "Cannot create transform precoder factory";
+
     // Create PUCCH demodulator factory.
     std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
-        create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory);
+        create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, precoding_factory);
     ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
 
     // Create short block detector factory.

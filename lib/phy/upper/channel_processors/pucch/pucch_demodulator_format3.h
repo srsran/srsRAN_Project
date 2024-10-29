@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsran/phy/generic_functions/transform_precoding/transform_precoder.h"
 #include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_demodulator.h"
 #include "srsran/phy/upper/equalization/dynamic_ch_est_list.h"
@@ -29,10 +30,12 @@ public:
   /// Constructor: sets up internal components and acquires their ownership.
   pucch_demodulator_format3(std::unique_ptr<channel_equalizer>       equalizer_,
                             std::unique_ptr<demodulation_mapper>     demapper_,
-                            std::unique_ptr<pseudo_random_generator> descrambler_) :
+                            std::unique_ptr<pseudo_random_generator> descrambler_,
+                            std::unique_ptr<transform_precoder>      precoder_) :
     equalizer(std::move(equalizer_)),
     demapper(std::move(demapper_)),
     descrambler(std::move(descrambler_)),
+    precoder(std::move(precoder_)),
     ch_estimates(pucch_constants::MAX_NOF_RE, MAX_PORTS, 1)
   {
     srsran_assert(equalizer, "Invalid pointer to channel_equalizer object.");
@@ -68,6 +71,8 @@ private:
   std::unique_ptr<demodulation_mapper> demapper;
   /// Descrambler component.
   std::unique_ptr<pseudo_random_generator> descrambler;
+  /// Transform precoder component.
+  std::unique_ptr<transform_precoder> precoder;
 
   /// \brief Buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and receive port.
@@ -91,8 +96,6 @@ private:
 
   /// Temporary channel estimates for an OFDM symbol.
   std::array<cf_t, MAX_RB * NRE> temp_ests_symbol;
-  /// PRB mask indicating the used PRB within the resource grid.
-  bounded_bitset<MAX_RB> prb_mask;
 };
 
 } // namespace srsran

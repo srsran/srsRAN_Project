@@ -65,9 +65,11 @@ public:
     uint16_t rnti;
     /// Scrambling identifier, see parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.5.1. Range is {0, ..., 1023}.
     unsigned n_id;
-    /// PUCCH-FormatConfig additionalDMRS flag for Format 3, as per TS38.331 6.3.2.
+    /// Set to higher layer parameter \e additionalDMRS described in TS38.331 Section 6.3.2, Information Element \e
+    /// PUCCH-FormatConfig.
     bool additional_dmrs;
-    /// PUCCH-FormatConfig pi2BPSK flag for Format 3, as per TS38.331 6.3.2.
+    /// Set to higher layer parameter \e pi2BPSK described in TS38.331 Section 6.3.2, Information Element \e
+    /// PUCCH-FormatConfig.
     bool pi2_bpsk;
   };
 

@@ -78,9 +78,16 @@ protected:
       std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
       ASSERT_NE(prg_factory, nullptr) << "Cannot create pseudo-random generator factory";
 
+      std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
+      ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT processor factory";
+
+      std::shared_ptr<transform_precoder_factory> precoding_factory =
+          create_dft_transform_precoder_factory(dft_factory, pucch_constants::FORMAT3_MAX_NPRB + 1);
+      ASSERT_NE(precoding_factory, nullptr) << "Cannot create transform precoder factory";
+
       // Create PUCCH demodulator factory.
       std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
-          create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory);
+          create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, precoding_factory);
       ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
 
       // Create PUCCH demodulator.

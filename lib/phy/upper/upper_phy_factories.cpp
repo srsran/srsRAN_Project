@@ -520,7 +520,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
 
   // Create PUCCH demodulator factory.
   std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
-      create_pucch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory);
+      create_pucch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory, precoding_factory);
   report_fatal_error_if_not(pucch_demod_factory, "Invalid PUCCH demodulator factory.");
 
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;

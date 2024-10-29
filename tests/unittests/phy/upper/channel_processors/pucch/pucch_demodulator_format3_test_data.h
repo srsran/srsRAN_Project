@@ -10,7 +10,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 25-10-2024 (seed 0):
+// This file was generated using the following MATLAB class on 28-10-2024 (seed 0):
 //   + "srsPUCCHDemodulatorFormat3Unittest.m"
 
 #include "../../../support/resource_grid_test_doubles.h"

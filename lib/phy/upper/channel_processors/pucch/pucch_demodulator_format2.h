@@ -13,12 +13,12 @@
 
 #pragma once
 
+#include "srsran/adt/to_array.h"
 #include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_demodulator.h"
 #include "srsran/phy/upper/equalization/dynamic_ch_est_list.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/ran/pucch/pucch_constants.h"
-#include <srsran/adt/to_array.h>
 
 namespace srsran {
 

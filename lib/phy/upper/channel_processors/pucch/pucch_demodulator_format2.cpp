@@ -12,9 +12,8 @@
 /// \brief PUCCH Format 2 demodulator definition.
 
 #include "pucch_demodulator_format2.h"
+#include "srsran/phy/support/mask_types.h"
 #include "srsran/phy/support/resource_grid_reader.h"
-
-#include <srsran/phy/support/mask_types.h>
 
 using namespace srsran;
 

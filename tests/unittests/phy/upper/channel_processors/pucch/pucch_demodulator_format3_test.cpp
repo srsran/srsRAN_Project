@@ -9,84 +9,43 @@
  */
 
 #include "pucch_demodulator_format3_test_data.h"
+#include "srsran/adt/to_array.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_demodulator.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/phy/upper/pucch_formats_3_4_helpers.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/srsvec/conversion.h"
+#include "srsran/support/format/fmt_optional.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
-#include <srsran/adt/to_array.h>
 
 using namespace srsran;
 
 using PucchDemodulatorParams = test_case_t;
 
-// TODO: refactor to make this tables and the get_pucch3_symb_mask available in some header
-/// \brief Control data RE allocation pattern for PUCCH Format 3.
-///
-/// Indicates the symbol positions containing control data within a PUCCH Format 3 resource
-/// when the additionalDMRS flag is disabled, as per TS38.211 Section 6.4.1.3.3.2-1.
-static const auto format3_symb_mask1 = to_array<symbol_slot_mask>({
-    {false, true, true, false, true},                                                       // ^ (5 symbols)
-    {true, false, true, true, false, true},                                                 // |
-    {true, false, true, true, false, true, true},                                           // | constant section
-    {true, false, true, true, true, false, true, true},                                     // |
-    {true, false, true, true, true, true, false, true, true},                               // v (9 symbols)
-    {true, true, false, true, true, true, true, false, true, true},                         // ^ (10 symbols)
-    {true, true, false, true, true, true, true, false, true, true, true},                   // |
-    {true, true, false, true, true, true, true, true, false, true, true, true},             // | variable section
-    {true, true, false, true, true, true, true, true, true, false, true, true, true},       // |
-    {true, true, true, false, true, true, true, true, true, true, false, true, true, true}, // v (14 symbols)
-});
-
-/// \brief Control data RE allocation pattern for PUCCH Format 3.
-///
-/// Indicates the symbol positions containing control data within a PUCCH Format 3 resource
-/// when the additionalDMRS flag is enabled, as per TS38.211 Section 6.4.1.3.3.2-1.
-static const auto format3_symb_mask2 = to_array<symbol_slot_mask>({
-    {false, true, true, false, true},                                                         // ^ (5 symbols)
-    {true, false, true, true, false, true},                                                   // |
-    {true, false, true, true, false, true, true},                                             // | constant section
-    {true, false, true, true, true, false, true, true},                                       // |
-    {true, false, true, true, true, true, false, true, true},                                 // v (9 symbols)
-    {true, false, true, false, true, true, false, true, false, true},                         // ^ (10 symbols)
-    {true, false, true, false, true, true, false, true, true, false, true},                   // |
-    {true, false, true, true, false, true, true, false, true, true, false, true},             // | variable section
-    {true, false, true, true, false, true, true, false, true, true, true, false, true},       // |
-    {true, false, true, true, true, false, true, true, false, true, true, true, false, true}, // v (14 symbols)
-});
-
-static symbol_slot_mask get_pucch3_symb_mask(pucch_demodulator::format3_configuration config)
-{
-  if (config.nof_symbols == 4) {
-    if (config.second_hop_prb.has_value()) {
-      return {false, true, false, true};
-    }
-    return {true, false, true, true};
-  }
-
-  if (config.additional_dmrs) {
-    return format3_symb_mask2[config.nof_symbols - 5];
-  }
-  return format3_symb_mask1[config.nof_symbols - 5];
-}
-
 namespace srsran {
+
+// Maximum allowed error.
+constexpr log_likelihood_ratio::value_type LLR_MAX_ERROR = 2;
 
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
   fmt::print(os,
-             "ports=[{}] first_prb={} nof_prb={} start_symbol_index={} nof_symbols={} rnti={} n_id={}",
+             "ports=[{}] first_prb={} second_hop_prb={} nof_prb={} start_symbol_index={} nof_symbols={} rnti={} "
+             "n_id={} additionalDMRS={} pi2_bpsk={}",
              span<const uint8_t>(test_case.context.config.rx_ports),
              test_case.context.config.first_prb,
+             test_case.context.config.second_hop_prb,
              test_case.context.config.nof_prb,
              test_case.context.config.start_symbol_index,
              test_case.context.config.nof_symbols,
              test_case.context.config.rnti,
-             test_case.context.config.n_id);
+             test_case.context.config.n_id,
+             test_case.context.config.additional_dmrs,
+             test_case.context.config.pi2_bpsk);
   return os;
 }
 
@@ -96,11 +55,12 @@ std::ostream& operator<<(std::ostream& os, span<const log_likelihood_ratio> data
   return os;
 }
 
-static bool operator==(span<const log_likelihood_ratio> a, span<const log_likelihood_ratio> b)
+static bool operator==(span<const log_likelihood_ratio> lhs, span<const log_likelihood_ratio> rhs)
 {
-  return std::equal(a.begin(), a.end(), b.begin(), [](log_likelihood_ratio x, log_likelihood_ratio y) {
-    return ((x - y >= -1) && (x - y <= 1));
-  });
+  return std::equal(
+      lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](log_likelihood_ratio lhs_, log_likelihood_ratio rhs_) {
+        return log_likelihood_ratio::abs(lhs_ - rhs_) <= LLR_MAX_ERROR;
+      });
 }
 
 } // namespace srsran
@@ -129,9 +89,16 @@ protected:
       std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
       ASSERT_NE(prg_factory, nullptr) << "Cannot create pseudo-random generator factory";
 
+      std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
+      ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT processor factory";
+
+      std::shared_ptr<transform_precoder_factory> precoding_factory =
+          create_dft_transform_precoder_factory(dft_factory, pucch_constants::FORMAT3_MAX_NPRB + 1);
+      ASSERT_NE(precoding_factory, nullptr) << "Cannot create transform precoder factory";
+
       // Create PUCCH demodulator factory.
       std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
-          create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory);
+          create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, precoding_factory);
       ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
 
       // Create PUCCH demodulator.
@@ -159,9 +126,10 @@ protected:
     unsigned nof_rx_ports = config.rx_ports.size();
 
     // Prepare the resource grid.
-    symbol_slot_mask symb_mask = get_pucch3_symb_mask(config);
-    unsigned         nof_test_symbols =
-        test_case.context.config.rx_ports.size() * symb_mask.count() * test_case.context.config.nof_prb * NRE;
+    symbol_slot_mask dmrs_symb_mask = get_pucch_formats_3_4_dmrs_symbol_mask(
+        config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
+    unsigned nof_test_symbols = test_case.context.config.rx_ports.size() *
+                                (config.nof_symbols - dmrs_symb_mask.count()) * test_case.context.config.nof_prb * NRE;
 
     std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_case.symbols.read();
     ASSERT_EQ(grid_entries.size(), nof_test_symbols)
