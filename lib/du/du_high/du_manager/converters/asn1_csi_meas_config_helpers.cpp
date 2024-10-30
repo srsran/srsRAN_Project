@@ -1273,15 +1273,15 @@ void srsran::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s
     out.report_trigger_size         = dest.report_trigger_size.value();
   }
 
-  if ((dest.aperiodic_trigger_state_list.has_value() and not src.aperiodic_trigger_state_list.has_value()) or
-      (dest.aperiodic_trigger_state_list.has_value() and src.aperiodic_trigger_state_list.has_value() and
+  if ((not dest.aperiodic_trigger_state_list.empty() and src.aperiodic_trigger_state_list.empty()) or
+      (not dest.aperiodic_trigger_state_list.empty() and not src.aperiodic_trigger_state_list.empty() and
        dest.aperiodic_trigger_state_list != src.aperiodic_trigger_state_list)) {
     out.aperiodic_trigger_state_list_present = true;
     auto& ap_trigger_state_list              = out.aperiodic_trigger_state_list.set_setup();
-    for (const auto& trigger_state : dest.aperiodic_trigger_state_list.value()) {
+    for (const auto& trigger_state : dest.aperiodic_trigger_state_list) {
       ap_trigger_state_list.push_back(make_asn1_aperiodic_trigger_state(trigger_state));
     }
-  } else if (src.aperiodic_trigger_state_list.has_value() and not dest.aperiodic_trigger_state_list.has_value()) {
+  } else if (not src.aperiodic_trigger_state_list.empty() and dest.aperiodic_trigger_state_list.empty()) {
     out.aperiodic_trigger_state_list_present = true;
     out.aperiodic_trigger_state_list.set_release();
   }

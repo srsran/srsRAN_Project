@@ -1125,11 +1125,10 @@ TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
 
   dest_csi_meas_cfg.report_trigger_size = 2;
 
-  dest_csi_meas_cfg.aperiodic_trigger_state_list.emplace();
   auto associated_report_cfg_info_list =
       csi_associated_report_config_info{.report_cfg_id   = static_cast<csi_report_config_id_t>(1),
                                         .res_for_channel = csi_associated_report_config_info::csi_ssb_resource_set{1}};
-  dest_csi_meas_cfg.aperiodic_trigger_state_list.value().push_back(
+  dest_csi_meas_cfg.aperiodic_trigger_state_list.push_back(
       csi_aperiodic_trigger_state{.associated_report_cfg_info_list = {associated_report_cfg_info_list}});
 
   dest_csi_meas_cfg.semi_persistent_on_pusch_trigger_state_list.emplace();
