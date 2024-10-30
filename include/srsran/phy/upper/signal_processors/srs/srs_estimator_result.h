@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_measurement.h"
-#include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"
+#include <optional>
 
 namespace srsran {
 
@@ -20,8 +20,10 @@ namespace srsran {
 struct srs_estimator_result {
   /// Wideband estimated channel matrix.
   srs_channel_matrix channel_matrix;
-  /// Wideband measured noise variance.
-  float noise_variance;
+  /// Wideband energy per resource element (EPRE), in decibel.
+  std::optional<float> epre_dB;
+  /// Wideband measured noise variance as a linear quantity.
+  std::optional<float> noise_variance;
   /// Measured time alignment.
   time_alignment_measurement time_alignment;
 };

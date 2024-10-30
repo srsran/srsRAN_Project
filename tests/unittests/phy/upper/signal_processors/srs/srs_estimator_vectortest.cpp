@@ -88,6 +88,9 @@ TEST_P(srsEstimatorFixture, FromVector)
   srs_estimator_result result = estimator->estimate(grid, config);
 
   ASSERT_EQ(test_case.context.result.channel_matrix.normalize(), result.channel_matrix.normalize());
+  ASSERT_TRUE(result.epre_dB.has_value());
+  ASSERT_NEAR(
+      convert_dB_to_power(test_case.context.result.epre_dB.value()), convert_dB_to_power(result.epre_dB.value()), 5e-3);
   ASSERT_NEAR(test_case.context.result.time_alignment.time_alignment, result.time_alignment.time_alignment, 1e-7);
 }
 
