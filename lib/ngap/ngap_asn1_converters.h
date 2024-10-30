@@ -514,8 +514,8 @@ inline bool asn1_to_security_context(security::security_context&           sec_c
                                      const asn1::ngap::ue_security_cap_s&  asn1_sec_cap,
                                      const asn1::ngap::security_context_s& asn1_sec_ctxt)
 {
-  // TODO: Handle next_hop_chaining_count
   copy_asn1_key(sec_ctxt.k, asn1_sec_ctxt.next_hop_nh);
+  sec_ctxt.ncc = asn1_sec_ctxt.next_hop_chaining_count;
   fill_supported_algorithms(sec_ctxt.supported_int_algos, asn1_sec_cap.nr_integrity_protection_algorithms);
   fill_supported_algorithms(sec_ctxt.supported_enc_algos, asn1_sec_cap.nr_encryption_algorithms);
   srslog::fetch_basic_logger("NGAP").debug(asn1_sec_ctxt.next_hop_nh.data(), 32, "K_gnb");

@@ -91,7 +91,7 @@ bool fill_rrc_reconfig_args(rrc_reconfiguration_procedure_request&              
                             const std::optional<rrc_meas_cfg>                                rrc_meas_cfg,
                             bool                                                             reestablish_srbs,
                             bool                                                             reestablish_drbs,
-                            bool                                                             update_keys,
+                            std::optional<uint8_t>                                           ncc,
                             byte_buffer                                                      sib1,
                             const srslog::basic_logger&                                      logger);
 

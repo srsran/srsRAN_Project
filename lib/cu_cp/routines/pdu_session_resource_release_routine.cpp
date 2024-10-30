@@ -134,7 +134,7 @@ void pdu_session_resource_release_routine::operator()(
                                   rrc_ue->generate_meas_config(),
                                   false,
                                   false,
-                                  false,
+                                  {},
                                   {},
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", release_cmd.ue_index, name());

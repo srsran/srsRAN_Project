@@ -180,6 +180,7 @@ using sec_short_mac_i = std::array<uint8_t, 2>;
 struct security_context {
   srslog::basic_logger&          logger = srslog::fetch_basic_logger("SEC");
   security::sec_key              k;
+  uint8_t                        ncc = 0;
   security::supported_algorithms supported_int_algos;
   security::supported_algorithms supported_enc_algos;
   sec_selected_algos             sel_algos;
@@ -189,6 +190,7 @@ struct security_context {
   ~security_context() = default;
   security_context(const security_context& sec_ctxt) :
     k(sec_ctxt.k),
+    ncc(sec_ctxt.ncc),
     supported_int_algos(sec_ctxt.supported_int_algos),
     supported_enc_algos(sec_ctxt.supported_enc_algos),
     sel_algos(sec_ctxt.sel_algos),
@@ -201,6 +203,7 @@ struct security_context {
       return *this;
     }
     k                   = sec_ctxt.k;
+    ncc                 = sec_ctxt.ncc;
     supported_int_algos = sec_ctxt.supported_int_algos;
     supported_enc_algos = sec_ctxt.supported_enc_algos;
     sel_algos           = sec_ctxt.sel_algos;

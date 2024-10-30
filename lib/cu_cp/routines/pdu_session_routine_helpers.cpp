@@ -67,7 +67,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     const std::optional<rrc_meas_cfg>                                rrc_meas_cfg,
     bool                                                             reestablish_srbs,
     bool                                                             reestablish_drbs,
-    bool                                                             update_keys,
+    std::optional<uint8_t>                                           ncc,
     byte_buffer                                                      sib1,
     const srslog::basic_logger&                                      logger)
 {
@@ -157,10 +157,10 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(nas_pdu.copy());
   }
 
-  if (update_keys) {
+  if (ncc.has_value()) {
     rrc_recfg_v1530_ies.master_key_upd.emplace();
     rrc_recfg_v1530_ies.master_key_upd.value().key_set_change_ind      = false;
-    rrc_recfg_v1530_ies.master_key_upd.value().next_hop_chaining_count = 0; // TODO: remove hard-coded value
+    rrc_recfg_v1530_ies.master_key_upd.value().next_hop_chaining_count = ncc.value(); // TODO: remove hard-coded value
   }
 
   rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;

@@ -34,8 +34,13 @@ security::sec_128_as_config ue_security_manager::get_up_128_as_config() const
   return sec_context.get_128_as_config(security::sec_domain::up);
 }
 
+uint8_t ue_security_manager::get_ncc() const
+{
+  return sec_context.ncc;
+}
+
 // ngap_ue_security_manager
-bool ue_security_manager::init_security_context(security::security_context sec_ctxt)
+bool ue_security_manager::init_security_context(const security::security_context& sec_ctxt)
 {
   // Update the security context
   sec_context = sec_ctxt;
