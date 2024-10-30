@@ -18,6 +18,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 
 namespace srsran {
@@ -94,6 +95,7 @@ public:
                             std::unique_ptr<pseudo_random_generator> scrambler_,
                             std::unique_ptr<modulation_mapper>       modulator_,
                             std::unique_ptr<dmrs_pdsch_processor>    dmrs_,
+                            std::unique_ptr<ptrs_pdsch_generator>    ptrs_,
                             std::unique_ptr<resource_grid_mapper>    mapper_) :
     segmenter(std::move(segmenter_)),
     encoder(std::move(encoder_)),
@@ -101,12 +103,14 @@ public:
     scrambler(std::move(scrambler_)),
     modulator(std::move(modulator_)),
     dmrs(std::move(dmrs_)),
+    ptrs(std::move(ptrs_)),
     mapper(std::move(mapper_)),
     subprocessor(*segmenter, *encoder, *rate_matcher, *scrambler, *modulator)
   {
     srsran_assert(segmenter != nullptr, "Invalid segmenter pointer.");
     srsran_assert(scrambler != nullptr, "Invalid scrambler pointer.");
     srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+    srsran_assert(ptrs != nullptr, "Invalid ptrs pointer.");
     srsran_assert(mapper != nullptr, "Invalid resource grid mapper pointer.");
   }
 
@@ -129,6 +133,8 @@ private:
   std::unique_ptr<modulation_mapper> modulator;
   /// Pointer to DM-RS processor.
   std::unique_ptr<dmrs_pdsch_processor> dmrs;
+  /// Pointer to PT-RS generator.
+  std::unique_ptr<ptrs_pdsch_generator> ptrs;
   /// Pointer to resource grid mapper.
   std::unique_ptr<resource_grid_mapper> mapper;
   /// Internal block processor.

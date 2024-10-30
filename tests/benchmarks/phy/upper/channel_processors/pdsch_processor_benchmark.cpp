@@ -595,6 +595,11 @@ static pdsch_processor_factory& get_processor_factory()
       create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
   TESTASSERT(dmrs_pdsch_gen_factory);
 
+  // Create PT-RS for PDSCH channel estimator.
+  std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
+      create_ptrs_pdsch_generator_generic_factory(prg_factory, rg_mapper_factory);
+  TESTASSERT(ptrs_pdsch_gen_factory);
+
   // Create PDSCH demodulator factory.
   std::shared_ptr<pdsch_modulator_factory> pdsch_mod_factory =
       create_pdsch_modulator_factory_sw(chan_modulation_factory, prg_factory, rg_mapper_factory);
@@ -606,8 +611,8 @@ static pdsch_processor_factory& get_processor_factory()
 
   // Create generic PDSCH processor.
   if (pdsch_processor_type == "generic") {
-    pdsch_proc_factory =
-        create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory);
+    pdsch_proc_factory = create_pdsch_processor_factory_sw(
+        pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory, ptrs_pdsch_gen_factory);
   }
 
   // Note that currently hardware-acceleration is limited to "generic" processor types.
@@ -618,6 +623,7 @@ static pdsch_processor_factory& get_processor_factory()
                                                                 prg_factory,
                                                                 chan_modulation_factory,
                                                                 dmrs_pdsch_gen_factory,
+                                                                ptrs_pdsch_gen_factory,
                                                                 rg_mapper_factory);
   }
 
@@ -647,6 +653,7 @@ static pdsch_processor_factory& get_processor_factory()
                                                                       rg_mapper_factory,
                                                                       chan_modulation_factory,
                                                                       dmrs_pdsch_gen_factory,
+                                                                      ptrs_pdsch_gen_factory,
                                                                       *executor,
                                                                       nof_pdsch_processor_concurrent_threads);
 

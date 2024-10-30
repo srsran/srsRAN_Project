@@ -54,6 +54,7 @@ public:
     srsran_assert(scrambler, "Invalid scrambler pointer.");
     srsran_assert(cb_processor_pool, "Invalid CB processor pool pointer.");
     srsran_assert(dmrs_generator_pool, "Invalid DM-RS pointer.");
+    srsran_assert(ptrs_generator_pool, "Invalid PT-RS pointer.");
   }
 
   // See interface for documentation.

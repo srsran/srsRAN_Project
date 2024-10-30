@@ -233,6 +233,11 @@ protected:
         create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
     ASSERT_NE(dmrs_pdsch_proc_factory, nullptr);
 
+    // Create PT-RS for pdsch channel estimator.
+    std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
+        create_ptrs_pdsch_generator_generic_factory(prg_factory, rg_mapper_factory);
+    ASSERT_NE(ptrs_pdsch_gen_factory, nullptr);
+
     // Create PDSCH demodulator factory.
     std::shared_ptr<pdsch_modulator_factory> pdsch_mod_factory =
         create_pdsch_modulator_factory_sw(chan_modulation_factory, prg_factory, rg_mapper_factory);
@@ -247,8 +252,8 @@ protected:
     ASSERT_NE(pdsch_enc_factory, nullptr);
 
     // Create PDSCH processor.
-    std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
-        create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
+    std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory = create_pdsch_processor_factory_sw(
+        pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory, ptrs_pdsch_gen_factory);
     ASSERT_NE(pdsch_proc_factory, nullptr);
 
     // Create actual PDSCH processor.

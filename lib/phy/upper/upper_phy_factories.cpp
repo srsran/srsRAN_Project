@@ -757,6 +757,11 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
       create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
   report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Invalid DMRS PDSCH factory.");
 
+  // Create PTRS generators - PDSCH
+  std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
+      create_ptrs_pdsch_generator_generic_factory(prg_factory, rg_mapper_factory);
+  report_fatal_error_if_not(ptrs_pdsch_gen_factory, "Invalid PTRS PDSCH factory.");
+
   // Create channel processors - PDCCH
   std::shared_ptr<pdcch_processor_factory> pdcch_proc_factory =
       create_pdcch_processor_factory_sw(pdcch_enc_factory, pdcch_mod_factory, dmrs_pdcch_proc_factory);
@@ -765,8 +770,8 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   // Create channel processors - PDSCH
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
   if (std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
-    pdsch_proc_factory =
-        create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
+    pdsch_proc_factory = create_pdsch_processor_factory_sw(
+        pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory, ptrs_pdsch_gen_factory);
   } else if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
     const pdsch_processor_concurrent_configuration& pdsch_processor_config =
         std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
@@ -784,6 +789,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      rg_mapper_factory,
                                                      mod_factory,
                                                      dmrs_pdsch_proc_factory,
+                                                     ptrs_pdsch_gen_factory,
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
@@ -798,6 +804,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                                 prg_factory,
                                                                 mod_factory,
                                                                 dmrs_pdsch_proc_factory,
+                                                                ptrs_pdsch_gen_factory,
                                                                 rg_mapper_factory);
   }
   report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
@@ -924,6 +931,11 @@ srsran::create_downlink_processor_factory_hw(const downlink_processor_factory_hw
       create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
   report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Invalid DMRS PDSCH factory.");
 
+  // Create PTRS generators - PDSCH
+  std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
+      create_ptrs_pdsch_generator_generic_factory(prg_factory, rg_mapper_factory);
+  report_fatal_error_if_not(ptrs_pdsch_gen_factory, "Invalid PTRS PDSCH factory.");
+
   // Create channel processors - PDCCH
   std::shared_ptr<pdcch_processor_factory> pdcch_proc_factory =
       create_pdcch_processor_factory_sw(pdcch_enc_factory, pdcch_mod_factory, dmrs_pdcch_proc_factory);
@@ -931,8 +943,8 @@ srsran::create_downlink_processor_factory_hw(const downlink_processor_factory_hw
 
   // Create channel processors - PDSCH
   // Hardware-acceleration currently supports 'generic' PDSCH processor types only.
-  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
-      create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
+  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory = create_pdsch_processor_factory_sw(
+      pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory, ptrs_pdsch_gen_factory);
   report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
 
   // Create channel processors - SSB

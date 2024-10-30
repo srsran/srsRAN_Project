@@ -267,8 +267,15 @@ private:
       return nullptr;
     }
 
+    std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_factory =
+        create_ptrs_pdsch_generator_generic_factory(prg_factory, rg_mapper_factory);
+    if (!dmrs_pdsch_factory) {
+      return nullptr;
+    }
+
     if (factory_type.find("generic") != std::string::npos) {
-      return create_pdsch_processor_factory_sw(pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_factory);
+      return create_pdsch_processor_factory_sw(
+          pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_factory, ptrs_pdsch_factory);
     }
 
     if (factory_type == "concurrent") {
@@ -283,6 +290,7 @@ private:
                                                           rg_mapper_factory,
                                                           modulator_factory,
                                                           dmrs_pdsch_factory,
+                                                          ptrs_pdsch_factory,
                                                           *executor,
                                                           NOF_CONCURRENT_THREADS);
     }
@@ -294,6 +302,7 @@ private:
                                                     prg_factory,
                                                     modulator_factory,
                                                     dmrs_pdsch_factory,
+                                                    ptrs_pdsch_factory,
                                                     rg_mapper_factory);
     }
 

@@ -67,6 +67,11 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   // Modulate codewords.
   modulate(grid, codewords, pdu);
 
+  if (pdu.ptrs) {
+    // Prepare PT-RS configuration and generate.
+    pdsch_process_ptrs(grid, *ptrs, pdu);
+  }
+
   // Prepare DM-RS configuration and generate.
   pdsch_process_dmrs(grid, *dmrs, pdu);
 

@@ -18,6 +18,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_modulator.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator_factory.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
@@ -73,7 +74,8 @@ public:
 std::shared_ptr<pdsch_processor_factory>
 create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>        encoder_factory,
                                   std::shared_ptr<pdsch_modulator_factory>      modulator_factory,
-                                  std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory);
+                                  std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory,
+                                  std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_factory);
 
 std::shared_ptr<pdsch_processor_factory>
 create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<crc_calculator_factory>          crc_factory,
@@ -83,6 +85,7 @@ create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<crc_calculator_fact
                                              std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory,
                                              std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                              std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
+                                             std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
                                              task_executor&                                   executor,
                                              unsigned                                         nof_concurrent_threads);
 
@@ -93,6 +96,7 @@ create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory
                                        std::shared_ptr<pseudo_random_generator_factory> scrambler_factory,
                                        std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                        std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
+                                       std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
                                        std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory);
 
 std::shared_ptr<pdsch_processor_factory>

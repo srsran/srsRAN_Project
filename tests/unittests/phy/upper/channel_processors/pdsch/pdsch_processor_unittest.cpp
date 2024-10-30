@@ -10,6 +10,7 @@
 
 #include "../../../support/resource_grid_test_doubles.h"
 #include "../../signal_processors/dmrs_pdsch_processor_test_doubles.h"
+#include "../../signal_processors/ptrs/ptrs_pdsch_generator_test_doubles.h"
 #include "pdsch_encoder_test_doubles.h"
 #include "pdsch_modulator_test_doubles.h"
 #include "pdsch_processor_test_doubles.h"
@@ -107,11 +108,14 @@ TEST_P(PdschProcessorFixture, UnitTest)
   std::shared_ptr<pdsch_modulator_factory_spy> modulator_factory_spy = std::make_shared<pdsch_modulator_factory_spy>();
   std::shared_ptr<dmrs_pdsch_processor_factory_spy> dmrs_factory_spy =
       std::make_shared<dmrs_pdsch_processor_factory_spy>();
+  std::shared_ptr<ptrs_pdsch_generator_factory_spy> ptrs_factory_spy =
+      std::make_shared<ptrs_pdsch_generator_factory_spy>();
 
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
       create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>(encoder_factory_spy),
                                         std::shared_ptr<pdsch_modulator_factory>(modulator_factory_spy),
-                                        std::shared_ptr<dmrs_pdsch_processor_factory>(dmrs_factory_spy));
+                                        std::shared_ptr<dmrs_pdsch_processor_factory>(dmrs_factory_spy),
+                                        std::shared_ptr<ptrs_pdsch_generator_factory>(ptrs_factory_spy));
   ASSERT_NE(pdsch_proc_factory, nullptr);
 
   std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
@@ -120,6 +124,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   pdsch_encoder_spy*           encoder_spy   = encoder_factory_spy->get_entries().front();
   pdsch_modulator_spy*         modulator_spy = modulator_factory_spy->get_entries().front();
   dmrs_pdsch_processor_spy*    dmrs_spy      = dmrs_factory_spy->get_entries().front();
+  ptrs_pdsch_generator_spy*    ptrs_spy      = ptrs_factory_spy->get_entries().front();
   pdsch_processor_notifier_spy notifier;
 
   unsigned nof_codewords    = (nof_layers > 4) ? 2 : 1;
@@ -198,6 +203,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   encoder_spy->reset();
   modulator_spy->reset();
   dmrs_spy->reset();
+  ptrs_spy->reset();
   notifier.reset();
 
   // Process PDU.
@@ -274,6 +280,11 @@ TEST_P(PdschProcessorFixture, UnitTest)
     ASSERT_EQ(entry.config.rb_mask, rb_mask);
     ASSERT_EQ(entry.config.precoding, pdu.precoding);
     ASSERT_EQ(entry.grid, &rg_dummy.get_writer());
+  }
+
+  // Validate PT-RS generator.
+  {
+    ASSERT_EQ(ptrs_spy->get_nof_entries(), 0);
   }
 }
 

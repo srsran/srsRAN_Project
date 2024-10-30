@@ -203,6 +203,11 @@ void pdsch_processor_lite_impl::process(resource_grid_writer&                   
   // Map PDSCH.
   mapper->map(grid, subprocessor, allocation, reserved, precoding2);
 
+  if (pdu.ptrs) {
+    // Prepare PT-RS configuration and generate.
+    pdsch_process_ptrs(grid, *ptrs, pdu);
+  }
+
   // Process DM-RS.
   pdsch_process_dmrs(grid, *dmrs, pdu);
 

@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_modulator.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 
 namespace srsran {
@@ -24,12 +25,14 @@ public:
   /// \brief Creates a generic PDSCH processor.
   pdsch_processor_impl(std::unique_ptr<pdsch_encoder>        encoder_,
                        std::unique_ptr<pdsch_modulator>      modulator_,
-                       std::unique_ptr<dmrs_pdsch_processor> dmrs_) :
-    encoder(std::move(encoder_)), modulator(std::move(modulator_)), dmrs(std::move(dmrs_))
+                       std::unique_ptr<dmrs_pdsch_processor> dmrs_,
+                       std::unique_ptr<ptrs_pdsch_generator> ptrs_) :
+    encoder(std::move(encoder_)), modulator(std::move(modulator_)), dmrs(std::move(dmrs_)), ptrs(std::move(ptrs_))
   {
     srsran_assert(encoder != nullptr, "Invalid encoder pointer.");
     srsran_assert(modulator != nullptr, "Invalid modulator pointer.");
     srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+    srsran_assert(ptrs != nullptr, "Invalid ptrs pointer.");
   }
 
   // See interface for documentation.
@@ -59,6 +62,7 @@ private:
   std::unique_ptr<pdsch_encoder>                                  encoder;
   std::unique_ptr<pdsch_modulator>                                modulator;
   std::unique_ptr<dmrs_pdsch_processor>                           dmrs;
+  std::unique_ptr<ptrs_pdsch_generator>                           ptrs;
   std::array<uint8_t, pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_unpacked_codeword;
   std::array<static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()>, MAX_NOF_TRANSPORT_BLOCKS>
       temp_packed_codewords;
