@@ -62,6 +62,9 @@ public:
                  task_executor&                  ue_ul_executor_,
                  task_executor&                  crypto_executor_);
 
+  /// \brief Stop handling PDUs and stops timers
+  void stop();
+
   void handle_pdu(byte_buffer_chain buf) override;
 
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
@@ -104,6 +107,7 @@ public:
 private:
   pdcp_bearer_logger   logger;
   const pdcp_rx_config cfg;
+  bool                 stopped = false;
 
   std::unique_ptr<security::security_engine_rx> sec_engine;
 

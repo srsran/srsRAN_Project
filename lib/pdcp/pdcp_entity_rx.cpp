@@ -53,8 +53,20 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   (void)crypto_executor;
 }
 
+void pdcp_entity_rx::stop()
+{
+  stopped = true;
+  reordering_timer.stop();
+  logger.log_debug("Stopped PDCP entity");
+}
+
 void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 {
+  if (stopped) {
+    logger.log_info("Dropping PDU. Entity is stopped");
+    return;
+  }
+
   trace_point rx_tp = up_tracer.now();
   metrics_add_pdus(1, buf.length());
 

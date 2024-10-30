@@ -72,6 +72,9 @@ public:
                  task_executor&                  ue_dl_executor_,
                  task_executor&                  crypto_executor_);
 
+  /// \brief Stop handling SDUs and stop timers
+  void stop();
+
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
   void reestablish(security::sec_128_as_config sec_cfg) override;
 
@@ -143,6 +146,7 @@ public:
 private:
   pdcp_bearer_logger   logger;
   const pdcp_tx_config cfg;
+  bool                 stopped = false;
 
   pdcp_rx_status_provider*        status_provider = nullptr;
   pdcp_tx_lower_notifier&         lower_dn;

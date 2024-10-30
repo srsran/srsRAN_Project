@@ -28,6 +28,7 @@ struct drb_context {
 
   void stop()
   {
+    pdcp->stop();
     f1u->stop();
     f1u_gw_bearer->stop();
   }

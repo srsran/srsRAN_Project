@@ -117,12 +117,22 @@ public:
                     m.rx.num_t_reordering_timeouts);
   }
 
+  void stop() override
+  {
+    if (not stopped) {
+      metrics_timer.stop();
+      tx->stop();
+      rx->stop();
+    }
+  }
+
 private:
-  std::unique_ptr<pdcp_entity_tx> tx = {};
-  std::unique_ptr<pdcp_entity_rx> rx = {};
+  std::unique_ptr<pdcp_entity_tx> tx;
+  std::unique_ptr<pdcp_entity_rx> rx;
 
   pdcp_bearer_logger logger;
   timer_duration     metrics_period;
   unique_timer       metrics_timer;
+  bool               stopped = false;
 };
 } // namespace srsran

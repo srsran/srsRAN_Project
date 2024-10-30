@@ -56,6 +56,13 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   (void)crypto_executor;
 }
 
+void pdcp_entity_tx::stop()
+{
+  stopped = true;
+  tx_window.clear(); // discard all SDUs and stop discard timers
+  logger.log_debug("Stopped PDCP entity");
+}
+
 /// \brief Receive an SDU from the upper layers, apply encryption
 /// and integrity protection and pass the resulting PDU
 /// to the lower layers.
@@ -64,6 +71,15 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
 /// \ref TS 38.323 section 5.2.1: Transmit operation
 void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
+  if (stopped) {
+    if (not cfg.custom.warn_on_drop) {
+      logger.log_info("Dropping SDU. Entity is stopped");
+    } else {
+      logger.log_warning("Dropping SDU. Entity is stopped");
+    }
+    return;
+  }
+
   trace_point tx_tp = up_tracer.now();
 
   if (is_drb()) {
