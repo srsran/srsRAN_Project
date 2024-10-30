@@ -12,7 +12,6 @@
 #include "pdsch_processor_helpers.h"
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/srsvec/copy.h"
 
 using namespace srsran;
 
@@ -52,7 +51,7 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   unsigned nof_layers_cw1 = nof_layers - nof_layers_cw0;
 
   // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
-  unsigned nof_re_pdsch = compute_nof_data_re(pdu);
+  unsigned nof_re_pdsch = pdsch_compute_nof_data_re(pdu);
 
   // Prepare encoded codewords.
   static_vector<bit_buffer, pdsch_constants::MAX_NOF_CODEWORDS> codewords;
@@ -73,30 +72,6 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
 
   // Notify the end of the processing.
   notifier.on_finish_processing();
-}
-
-unsigned pdsch_processor_impl::compute_nof_data_re(const pdu_t& pdu)
-{
-  // Copy reserved RE and merge DMRS pattern.
-  re_pattern_list reserved_re = pdu.reserved;
-  reserved_re.merge(pdu.dmrs.get_dmrs_pattern(
-      pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask));
-
-  // Generate allocation mask.
-  bounded_bitset<MAX_RB> prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
-
-  // Calculate the number of RE allocated in the grid.
-  unsigned nof_grid_re = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols;
-
-  // Calculate the number of reserved resource elements.
-  unsigned nof_reserved_re = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
-
-  // Subtract the number of reserved RE from the number of allocated RE.
-  srsran_assert(nof_grid_re > nof_reserved_re,
-                "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
-                nof_grid_re,
-                nof_reserved_re);
-  return nof_grid_re - nof_reserved_re;
 }
 
 const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,

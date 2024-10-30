@@ -39,14 +39,6 @@ public:
                const pdu_t&                                                    pdu) override;
 
 private:
-  /// \brief Computes the number of RE used for mapping PDSCH data.
-  ///
-  /// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.
-  ///
-  /// \param[in] pdu Describes a PDSCH transmission.
-  /// \return The number of resource elements.
-  static unsigned compute_nof_data_re(const pdu_t& pdu);
-
   /// \brief Encodes a codeword as per TS 38.212 section 7.2.
   ///
   /// \param[in]     data        Provides the data to transmit as packed bits.

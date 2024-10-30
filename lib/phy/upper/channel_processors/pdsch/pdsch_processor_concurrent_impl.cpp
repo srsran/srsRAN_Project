@@ -9,7 +9,6 @@
  */
 
 #include "pdsch_processor_concurrent_impl.h"
-
 #include "pdsch_processor_helpers.h"
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
@@ -117,7 +116,7 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_writer&     grid
   unsigned nof_layers = config.precoding.get_nof_layers();
 
   // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
-  unsigned nof_re_pdsch = compute_nof_data_re(config);
+  unsigned nof_re_pdsch = pdsch_compute_nof_data_re(config);
 
   // Calculate the total number of the chanel modulated symbols.
   nof_ch_symbols = nof_layers * nof_re_pdsch;
@@ -249,69 +248,6 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_writer&     grid
   // Apply scaling to the precoding matrix.
   precoding = config.precoding;
   precoding *= scaling;
-}
-
-unsigned pdsch_processor_concurrent_impl::compute_nof_data_re(const pdu_t& config)
-{
-  // Get PRB mask.
-  bounded_bitset<MAX_RB> prb_mask = config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
-
-  // Get number of PRB.
-  unsigned nof_prb = prb_mask.count();
-
-  // Calculate the number of RE allocated in the grid.
-  unsigned nof_grid_re = nof_prb * NRE * config.nof_symbols;
-
-  // Generate DM-RS pattern.
-  re_pattern dmrs_pattern = config.dmrs.get_dmrs_pattern(
-      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symbol_mask);
-
-  // Calculate the number of RE used by DM-RS. It assumes it does not overlap with reserved elements.
-  unsigned nof_grid_dmrs = nof_prb * dmrs_pattern.re_mask.count() * dmrs_pattern.symbols.count();
-
-  // Generate reserved pattern.
-  re_pattern_list reserved = config.reserved;
-
-  // If the pattern contains PT-RS, append the reserved elements to the list.
-  if (config.ptrs) {
-    // Extract specific PT-RS configuration.
-    const ptrs_configuration& ptrs_config = config.ptrs.value();
-
-    // Create PT-RS pattern configuration.
-    ptrs_pattern_configuration ptrs_pattern_config = {
-        .rnti             = to_rnti(config.rnti),
-        .dmrs_type        = (config.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2,
-        .dmrs_symbol_mask = config.dmrs_symbol_mask,
-        .rb_mask          = prb_mask,
-        .time_allocation  = {config.start_symbol_index, config.start_symbol_index + config.nof_symbols},
-        .freq_density     = ptrs_config.freq_density,
-        .time_density     = ptrs_config.time_density,
-        .re_offset        = ptrs_config.re_offset,
-        .nof_ports        = 1};
-
-    // Calculate PT-RS pattern and convert it to an RE pattern.
-    ptrs_pattern ptrs_reserved_pattern = get_ptrs_pattern(ptrs_pattern_config);
-
-    re_pattern ptrs_reserved_re_pattern;
-    for (unsigned i_prb = ptrs_reserved_pattern.rb_begin; i_prb < ptrs_reserved_pattern.rb_end;
-         i_prb += ptrs_reserved_pattern.rb_stride) {
-      ptrs_reserved_re_pattern.prb_mask.set(i_prb);
-    }
-    ptrs_reserved_re_pattern.symbols = ptrs_reserved_pattern.symbol_mask;
-    ptrs_reserved_re_pattern.re_mask.set(ptrs_reserved_pattern.re_offset.front());
-
-    reserved.merge(ptrs_reserved_re_pattern);
-  }
-
-  // Calculate the number of reserved resource elements.
-  unsigned nof_reserved_re = reserved.get_inclusion_count(config.start_symbol_index, config.nof_symbols, prb_mask);
-
-  // Subtract the number of reserved RE from the number of allocated RE.
-  srsran_assert(nof_grid_re > nof_reserved_re,
-                "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
-                nof_grid_re,
-                nof_reserved_re);
-  return nof_grid_re - nof_reserved_re - nof_grid_dmrs;
 }
 
 void pdsch_processor_concurrent_impl::fork_cb_batches()

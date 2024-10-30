@@ -27,36 +27,6 @@ using namespace srsran;
   return is_success;
 }
 
-/// \brief Computes the number of RE used for mapping PDSCH data.
-///
-/// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.
-///
-/// \param[in] pdu Describes a PDSCH transmission.
-/// \return The number of resource elements.
-static unsigned compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
-{
-  // Copy reserved RE and merge DM-RS pattern.
-  re_pattern_list reserved_re = pdu.reserved;
-  reserved_re.merge(pdu.dmrs.get_dmrs_pattern(
-      pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask));
-
-  // Generate allocation mask.
-  bounded_bitset<MAX_RB> prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
-
-  // Calculate the number of RE allocated in the grid.
-  unsigned nof_grid_re = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols;
-
-  // Calculate the number of reserved resource elements.
-  unsigned nof_reserved_re = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
-
-  // Subtract the number of reserved RE from the number of allocated RE.
-  srsran_assert(nof_grid_re > nof_reserved_re,
-                "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
-                nof_grid_re,
-                nof_reserved_re);
-  return nof_grid_re - nof_reserved_re;
-}
-
 void pdsch_block_processor::configure_new_transmission(span<const uint8_t>           data,
                                                        unsigned                      i_cw,
                                                        const pdsch_processor::pdu_t& pdu)
@@ -65,7 +35,7 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
   unsigned nof_layers = pdu.precoding.get_nof_layers();
 
   // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
-  unsigned nof_re_pdsch = compute_nof_data_re(pdu);
+  unsigned nof_re_pdsch = pdsch_compute_nof_data_re(pdu);
 
   // Init scrambling initial state.
   scrambler.init((static_cast<unsigned>(pdu.rnti) << 15U) + (i_cw << 14U) + pdu.n_id);
