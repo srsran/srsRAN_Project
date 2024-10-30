@@ -23,14 +23,14 @@ ta_manager::ta_manager(const scheduler_ue_expert_config& expert_cfg_,
   }
 }
 
-void ta_manager::handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_diff_, float ul_sinr)
+void ta_manager::handle_ul_n_ta_update_indication(time_alignment_group::id_t tag_id, int64_t n_ta_diff_, float ul_sinr)
 {
   // [Implementation-defined] N_TA update (N_TA_new - N_TA_old value in T_C units) measurements are considered only if
   // the UL SINR reported in the corresponding indication message is higher than the threshold.
   // NOTE: From the testing with COTS UE its observed that N_TA update measurements with UL SINR less than 10 dB were
   // majorly outliers.
   if (state == state_t::measure and ul_sinr > expert_cfg.ta_update_measurement_ul_sinr_threshold) {
-    tag_n_ta_diff_measurements[tag_id].emplace_back(n_ta_diff_);
+    tag_n_ta_diff_measurements[tag_id.value()].emplace_back(n_ta_diff_);
   }
 }
 

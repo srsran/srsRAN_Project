@@ -12,9 +12,9 @@
 
 #include "bsr_format.h"
 #include "phr_config.h"
-#include "time_alignment_group_config.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/sr_configuration.h"
+#include "srsran/ran/time_alignment_config.h"
 
 namespace srsran {
 
@@ -25,7 +25,7 @@ struct mac_cell_group_config {
   /// \c bsr-Config.
   std::optional<bsr_config> bsr_cfg;
   /// \c tag-Config.
-  static_vector<tag, MAX_NOF_TAGS> tag_config;
+  static_vector<time_alignment_group, MAX_NOF_TIME_ALIGNMENT_GROUPS> tag_config;
   /// \c phr-Config.
   std::optional<phr_config> phr_cfg;
   /// \c skipUplinkTxDynamic.

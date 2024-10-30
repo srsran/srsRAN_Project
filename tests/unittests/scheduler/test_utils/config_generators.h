@@ -132,8 +132,6 @@ create_empty_spcell_cfg_sched_ue_creation_request(const cell_config_builder_para
   serving_cell_config& serv_cell = cfg.serv_cell_cfg;
 
   serv_cell.cell_index = to_du_cell_index(0);
-  // > TAG-ID.
-  serv_cell.tag_id = static_cast<tag_id_t>(0);
 
   msg.cfg.cells.emplace();
   msg.cfg.cells->push_back(cfg);

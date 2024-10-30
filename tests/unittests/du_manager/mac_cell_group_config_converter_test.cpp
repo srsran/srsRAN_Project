@@ -120,8 +120,10 @@ TEST(mac_cell_group_config_converter_test, test_custom_tag_cfg_conversion)
   srs_du::du_ue_resource_config dest_cfg{src_cfg};
   // Add new configuration to be setup.
   auto& dest_mcg_cfg = dest_cfg.cell_group.mcg_cfg;
-  dest_mcg_cfg.tag_config.push_back(tag{.tag_id = static_cast<tag_id_t>(1), .ta_timer = time_alignment_timer::ms2560});
-  dest_mcg_cfg.tag_config.push_back(tag{.tag_id = static_cast<tag_id_t>(2), .ta_timer = time_alignment_timer::ms1280});
+  dest_mcg_cfg.tag_config.push_back(
+      time_alignment_group{.tag_id = time_alignment_group::id_t{1}, .ta_timer = time_alignment_timer::ms2560});
+  dest_mcg_cfg.tag_config.push_back(
+      time_alignment_group{.tag_id = time_alignment_group::id_t{2}, .ta_timer = time_alignment_timer::ms1280});
   dest_mcg_cfg.tag_config.erase(dest_mcg_cfg.tag_config.begin());
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;

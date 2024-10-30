@@ -12,8 +12,8 @@
 #include "srsran/mac/bsr_format.h"
 #include "srsran/mac/mac_cell_group_config.h"
 #include "srsran/mac/phr_config.h"
-#include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/sr_configuration.h"
+#include "srsran/ran/time_alignment_config.h"
 
 using namespace srsran;
 
@@ -33,7 +33,8 @@ config_helpers::make_initial_mac_cell_group_config(const srs_du::mac_cell_group_
     mcg_cfg.bsr_cfg.value().lc_sr_delay_timer = mcg_params.lc_sr_delay_timer;
   }
 
-  mcg_cfg.tag_config.emplace_back(tag{.tag_id = uint_to_tag_id(0), .ta_timer = time_alignment_timer::infinity});
+  mcg_cfg.tag_config.emplace_back(
+      time_alignment_group{.tag_id = time_alignment_group::id_t{0}, .ta_timer = time_alignment_timer::infinity});
 
   mcg_cfg.phr_cfg.emplace();
   mcg_cfg.phr_cfg.value().periodic_timer         = phr_periodic_timer::sf10;

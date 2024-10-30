@@ -11,7 +11,6 @@
 #pragma once
 
 #include "bwp_configuration.h"
-#include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/meas_gap_config.h"
@@ -26,6 +25,7 @@
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tci.h"
+#include "srsran/ran/time_alignment_config.h"
 
 namespace srsran {
 
@@ -248,7 +248,7 @@ struct serving_cell_config {
   /// \c CSI-MeasConfig.
   std::optional<csi_meas_config> csi_meas_cfg;
   /// Timing Advance Group ID to which this cell belongs to.
-  tag_id_t tag_id;
+  time_alignment_group::id_t tag_id{0};
 };
 
 /// UE-dedicated configuration for serving cell.

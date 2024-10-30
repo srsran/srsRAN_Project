@@ -12,9 +12,9 @@
 
 #include "dl_logical_channel_manager.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/ran/time_alignment_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <cstdint>
 
@@ -32,7 +32,7 @@ public:
   void slot_indication(slot_point current_sl);
 
   /// \brief Handles N_TA update indication.
-  void handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_diff_, float ul_sinr);
+  void handle_ul_n_ta_update_indication(time_alignment_group::id_t tag_id, int64_t n_ta_diff_, float ul_sinr);
 
 private:
   /// State of the Timing Advance manager.
@@ -67,7 +67,7 @@ private:
   /// List of N_TA update (N_TA_new - N_TA_old value in T_C units) measurements maintained per Timing Advance Group.
   /// The array index corresponds to TAG ID. And, the corresponding array value (i.e. vector) holds N_TA update
   /// measurements for that TAG ID.
-  std::array<std::vector<int64_t>, MAX_NOF_TAGS> tag_n_ta_diff_measurements;
+  std::array<std::vector<int64_t>, MAX_NOF_TIME_ALIGNMENT_GROUPS> tag_n_ta_diff_measurements;
   /// State of the Timing Advance manager.
   state_t state;
 };
