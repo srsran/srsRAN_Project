@@ -10,6 +10,9 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
+#include <string>
+
 namespace srsran {
 
 struct srs_estimator_configuration;
@@ -22,8 +25,8 @@ public:
   virtual ~srs_estimator_configuration_validator() = default;
 
   /// \brief Validates SRS channel estimator configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const srs_estimator_configuration& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const srs_estimator_configuration& config) const = 0;
 };
 
 } // namespace srsran

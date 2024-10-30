@@ -62,7 +62,10 @@ public:
   {
     return pusch->is_valid(config);
   }
-  bool is_valid(const srs_estimator_configuration& config) const override { return srs->is_valid(config); }
+  error_type<std::string> is_valid(const srs_estimator_configuration& config) const override
+  {
+    return srs->is_valid(config);
+  }
 
 private:
   std::unique_ptr<prach_detector_validator>              prach;

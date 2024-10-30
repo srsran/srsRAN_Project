@@ -161,12 +161,12 @@ public:
   virtual error_type<std::string> is_valid(const pucch_processor::format4_configuration& config) const = 0;
 
   /// \brief Validates PUSCH configuration parameters.
-  /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
   virtual error_type<std::string> is_valid(const pusch_processor::pdu_t& config) const = 0;
 
   /// \brief Validates Sounding Reference Signals channel estimator configuration.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const srs_estimator_configuration& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const srs_estimator_configuration& config) const = 0;
 };
 
 /// \brief Pool of uplink processors.
