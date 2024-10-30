@@ -438,7 +438,8 @@ public:
         if (used_buf.timestamp.get_slot() == slot_point) {
           continue;
         }
-        logger.warning("Sector #{}: Detected '{}' late uplink C-Plane messages in the transmitter queue for slot '{}'",
+        logger.warning("Sector #{}: Detected '{}' late downlink U-Plane messages in the transmitter queue for slot "
+                       "'{}', symbol '{}'",
                        sector,
                        dl_up_buffers.size(),
                        used_buf.timestamp.get_slot(),
