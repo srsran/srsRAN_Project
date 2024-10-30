@@ -266,7 +266,7 @@ void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
 }
 
 template <>
-void file_event_tracer<true>::operator<<(const rusage_trace_event& event) const
+void file_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) const
 {
   if (not is_trace_file_open()) {
     return;
@@ -300,7 +300,7 @@ void logger_event_tracer<true>::operator<<(const instant_trace_event& event) con
 }
 
 template <>
-void logger_event_tracer<true>::operator<<(const rusage_trace_event& event) const
+void logger_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) const
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {
@@ -332,7 +332,7 @@ void test_event_tracer::operator<<(const instant_trace_event& event)
   last_events.push_back(fmt::format("{}", instant_trace_event_extended{event}));
 }
 
-void test_event_tracer::operator<<(const rusage_trace_event& event)
+void test_event_tracer::operator<<(const rusage_thres_trace_event& event)
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {

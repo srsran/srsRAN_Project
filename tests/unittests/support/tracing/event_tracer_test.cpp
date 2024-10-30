@@ -83,7 +83,7 @@ TEST(event_tracing_test, rusage_event_trace_formatting)
 
   trace_point tp           = tracer.now();
   auto        rus_snapshot = tracer.rusage_now();
-  tracer << rusage_trace_event("test_event", std::chrono::microseconds{0}, tp, rus_snapshot);
+  tracer << rusage_thres_trace_event("test_event", std::chrono::microseconds{0}, tp, rus_snapshot);
 
   std::string event_out = tracer.pop_last_events()[0];
   fmt::print("event: {}\n", event_out);
