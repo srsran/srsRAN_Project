@@ -19,7 +19,7 @@
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"

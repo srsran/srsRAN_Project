@@ -14,21 +14,12 @@
 
 #pragma once
 
+#include "srsran/ran/logical_channel/bsr_format.h"
 #include "srsran/scheduler/config/logical_channel_group.h"
 #include "srsran/support/error_handling.h"
 #include <optional>
 
 namespace srsran {
-
-/// TS 38.321, 6.1.3.1 - Buffer Status Report MAC CEs
-enum class bsr_format { SHORT_BSR, LONG_BSR, SHORT_TRUNC_BSR, LONG_TRUNC_BSR };
-
-inline const char* to_string(bsr_format bsr)
-{
-  static constexpr std::array<const char*, 4> names = {
-      "Short BSR", "Long BSR", "Short Truncated BSR", "Long Truncated BSR"};
-  return (size_t)bsr < names.size() ? names[(size_t)bsr] : "Invalid BSR format";
-}
 
 /// \c periodicBSR-Timer, as part of BSR-Config, TS 38.331.
 enum class periodic_bsr_timer {

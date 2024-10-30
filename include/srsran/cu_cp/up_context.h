@@ -11,7 +11,7 @@
 #pragma once
 
 #include "cu_cp_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/rlc/rlc_config.h"
 
 namespace srsran {

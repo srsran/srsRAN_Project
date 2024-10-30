@@ -17,7 +17,7 @@
 #include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/srslog/srslog.h"
 #include <variant>

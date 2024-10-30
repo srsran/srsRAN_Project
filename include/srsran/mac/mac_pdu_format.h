@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ran/lcid_dl_sch.h"
+#include "srsran/ran/logical_channel/lcid_dl_sch.h"
 
 namespace srsran {
 

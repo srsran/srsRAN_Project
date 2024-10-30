@@ -11,9 +11,9 @@
 #pragma once
 
 #include "ul_bsr.h"
-#include "srsran/mac/phr_report.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid_dl_sch.h"
+#include "srsran/ran/logical_channel/lcid_dl_sch.h"
+#include "srsran/ran/logical_channel/phr_report.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_point.h"
 

@@ -13,7 +13,7 @@
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/gnb_id.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 
 namespace srsran {
 

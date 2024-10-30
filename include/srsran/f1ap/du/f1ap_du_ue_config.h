@@ -14,7 +14,7 @@
 #include "srsran/f1ap/du/f1c_rx_sdu_notifier.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
 #include <vector>
 

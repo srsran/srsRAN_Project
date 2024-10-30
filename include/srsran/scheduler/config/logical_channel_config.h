@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/sr_configuration.h"
 #include "srsran/scheduler/config/logical_channel_group.h"

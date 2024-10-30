@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/mac/phr_report.h"
+#include "srsran/ran/logical_channel/phr_report.h"
 
 namespace srsran {
 

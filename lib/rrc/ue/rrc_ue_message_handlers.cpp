@@ -19,7 +19,7 @@
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

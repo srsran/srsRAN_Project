@@ -16,7 +16,7 @@
 #include "srsran/du/du_high/du_srb_config.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/mac/mac_config.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/qos/five_qi.h"
 #include <map>
 

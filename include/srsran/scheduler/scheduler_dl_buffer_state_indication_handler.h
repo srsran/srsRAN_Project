@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/logical_channel/lcid.h"
 
 namespace srsran {
 

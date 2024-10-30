@@ -10,7 +10,7 @@
 #pragma once
 
 #include "srsran/ran/cu_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/support/format/prefixed_logger.h"
 #include "fmt/format.h"
 

@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/mac/bsr_format.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"

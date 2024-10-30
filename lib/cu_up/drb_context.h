@@ -16,7 +16,7 @@
 #include "qos_flow_context.h"
 #include "srsran/f1u/cu_up/f1u_config.h"
 #include "srsran/pdcp/pdcp_entity.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include <map>
 
 namespace srsran {

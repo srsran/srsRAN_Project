@@ -12,7 +12,7 @@
 
 #include "pdcp_sn.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 
 namespace srsran {
 

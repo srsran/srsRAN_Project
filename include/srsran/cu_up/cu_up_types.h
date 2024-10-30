@@ -13,7 +13,7 @@
 #include "srsran/f1u/cu_up/f1u_config.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include <cstdint>
 #include <type_traits>
 #include <vector>

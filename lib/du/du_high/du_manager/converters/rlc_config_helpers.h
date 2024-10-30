@@ -15,7 +15,7 @@
 #include "srsran/f1ap/du/f1ap_du_ue_config.h"
 #include "srsran/mac/mac_lc_config.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/rlc/rlc_factory.h"
 

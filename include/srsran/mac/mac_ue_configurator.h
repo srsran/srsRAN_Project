@@ -11,10 +11,10 @@
 #pragma once
 
 #include "mac_cell_group_config.h"
-#include "srsran/mac/bsr_format.h"
+#include "srsran/mac/bsr_config.h"
 #include "srsran/mac/mac_sdu_handler.h"
 #include "srsran/mac/phr_config.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/physical_cell_group.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sr_configuration.h"

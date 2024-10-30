@@ -13,8 +13,8 @@
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/ran/lcid.h"
 #include "srsran/ran/plmn_identity.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <chrono>

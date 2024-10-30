@@ -11,7 +11,7 @@
 
 #include "f1u_split_connector.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 
 using namespace srsran;
 using namespace srs_du;

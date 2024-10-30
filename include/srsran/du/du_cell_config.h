@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/mac/bsr_format.h"
+#include "srsran/mac/bsr_config.h"
 #include "srsran/mac/phr_config.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/nr_cgi.h"

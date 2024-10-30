@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsran/adt/circular_array.h"
-#include "srsran/mac/phr_report.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
+#include "srsran/ran/logical_channel/phr_report.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/pusch/pusch_tpmi_select.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"

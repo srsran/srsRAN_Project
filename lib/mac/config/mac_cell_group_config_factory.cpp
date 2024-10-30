@@ -9,7 +9,6 @@
  */
 
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
-#include "srsran/mac/bsr_format.h"
 #include "srsran/mac/mac_cell_group_config.h"
 #include "srsran/mac/phr_config.h"
 #include "srsran/ran/sr_configuration.h"
