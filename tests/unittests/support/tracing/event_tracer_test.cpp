@@ -77,6 +77,27 @@ TEST(event_tracing_test, instant_event_trace_formatting)
   ASSERT_TRUE(event_out.find("\"s\": \"g\"") != std::string::npos);
 }
 
+TEST(event_tracing_test, rusage_event_trace_formatting)
+{
+  test_event_tracer tracer;
+
+  trace_point tp           = tracer.now();
+  auto        rus_snapshot = tracer.rusage_now();
+  tracer << rusage_trace_event("test_event", std::chrono::microseconds{0}, tp, rus_snapshot);
+
+  std::string event_out = tracer.pop_last_events()[0];
+  fmt::print("event: {}\n", event_out);
+
+  ASSERT_EQ(event_out[0], '{');
+  ASSERT_EQ(event_out.back(), '}');
+  ASSERT_TRUE(event_out.find("\"name\": \"test_event\"") != std::string::npos);
+  ASSERT_TRUE(event_out.find("\"cat\": \"process\"") != std::string::npos);
+  ASSERT_TRUE(event_out.find("\"start_tstamp\": ") != std::string::npos);
+  ASSERT_TRUE(event_out.find("\"vol_ctxt_switch\": ") != std::string::npos);
+  ASSERT_TRUE(event_out.find("\"invol_ctxt_switch\": ") != std::string::npos);
+  ASSERT_TRUE(event_out.find("\"dur\": ") != std::string::npos);
+}
+
 TEST(event_tracing_test, file_event_tracer)
 {
   open_trace_file("/tmp/event_tracing_test.json");

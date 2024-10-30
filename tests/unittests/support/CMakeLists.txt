@@ -85,7 +85,7 @@ add_executable(validator_helpers_test config/validator_helpers_test.cpp)
 target_link_libraries(validator_helpers_test srsran_support gtest gtest_main)
 add_test(validator_helpers_test validator_helpers_test)
 
-add_executable(event_tracer_test event_tracer_test.cpp)
+add_executable(event_tracer_test tracing/event_tracer_test.cpp)
 target_link_libraries(event_tracer_test srsran_support gtest gtest_main)
 add_test(event_tracer_test event_tracer_test)
 

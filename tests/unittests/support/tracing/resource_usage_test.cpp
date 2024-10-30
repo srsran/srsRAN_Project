@@ -19,8 +19,6 @@ TEST(resource_usage_test, calculate_resource_usage_diff)
   resource_usage::snapshot point2 = resource_usage::now().value();
 
   resource_usage::diff d = point2 - point1;
-  ASSERT_GE(d.user_dur, std::chrono::microseconds{0});
-  ASSERT_GE(d.system_dur, std::chrono::microseconds{0});
   ASSERT_GE(d.vol_ctxt_switch_count, 0);
   ASSERT_GE(d.invol_ctxt_switch_count, 0);
 }

@@ -94,6 +94,15 @@ struct instant_trace_event_extended : public instant_trace_event {
   }
 };
 
+struct rusage_trace_event_extended : public trace_event_extended {
+  resource_usage::diff rusage_diff;
+
+  rusage_trace_event_extended(const trace_event& event, trace_duration duration_, resource_usage::diff rusage_diff_) :
+    trace_event_extended(event, duration_), rusage_diff(rusage_diff_)
+  {
+  }
+};
+
 struct timestamp_data {
   hours        h;
   minutes      min;
@@ -154,8 +163,8 @@ struct formatter<trace_event_extended> : public basic_parser {
     auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
 
     return format_to(ctx.out(),
-                     "{{\"args\": {{}}, \"pid\": {}, \"tid\": \"{}\","
-                     "\"dur\": {}, \"ts\": {}, \"cat\": \"process\", \"ph\": \"X\","
+                     "{{\"args\": {{}}, \"pid\": {}, \"tid\": \"{}\", "
+                     "\"dur\": {}, \"ts\": {}, \"cat\": \"process\", \"ph\": \"X\", "
                      "\"name\": \"{}\"}}",
                      event.cpu,
                      event.thread_name,
@@ -178,8 +187,8 @@ struct formatter<instant_trace_event_extended> : public basic_parser {
     const timestamp_data timestamp = get_timestamp(event.tp);
 
     return format_to(ctx.out(),
-                     "{{\"args\": {{\"tstamp\": \"{}:{}:{}.{}\"}}, \"pid\": {}, \"tid\": \"{}\","
-                     "\"ts\": {}, \"cat\": \"process\", \"ph\": \"i\", \"s\": \"{}\","
+                     "{{\"args\": {{\"tstamp\": \"{}:{}:{}.{}\"}}, \"pid\": {}, \"tid\": \"{}\", "
+                     "\"ts\": {}, \"cat\": \"process\", \"ph\": \"i\", \"s\": \"{}\", "
                      "\"name\": \"{}\"}}",
                      timestamp.h.count(),
                      timestamp.min.count(),
@@ -190,6 +199,36 @@ struct formatter<instant_trace_event_extended> : public basic_parser {
                      ts,
                      scope_str[(unsigned)event.scope],
                      event.name);
+  }
+};
+
+template <>
+struct formatter<rusage_trace_event_extended> : public basic_parser {
+  template <typename FormatContext>
+  auto format(const rusage_trace_event_extended& event, FormatContext& ctx)
+
+  {
+    auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
+
+    const timestamp_data timestamp = get_timestamp(event.start_tp);
+
+    return format_to(
+        ctx.out(),
+        "{{\"args\": {{\"start_tstamp\": \"{}:{}:{}.{}\", \"vol_ctxt_switch\": {}, \"invol_ctxt_switch\": {}}}, "
+        "\"pid\": {}, \"tid\": \"{}\", \"dur\": {}, "
+        "\"ts\": {}, \"cat\": \"process\", \"ph\": \"X\", "
+        "\"name\": \"{}\"}}",
+        timestamp.h.count(),
+        timestamp.min.count(),
+        timestamp.sec.count(),
+        timestamp.usec.count(),
+        event.rusage_diff.vol_ctxt_switch_count,
+        event.rusage_diff.invol_ctxt_switch_count,
+        event.cpu,
+        event.thread_name,
+        event.duration.count(),
+        ts,
+        event.name);
   }
 };
 
@@ -227,6 +266,19 @@ void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
 }
 
 template <>
+void file_event_tracer<true>::operator<<(const rusage_trace_event& event) const
+{
+  if (not is_trace_file_open()) {
+    return;
+  }
+  const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  if (dur >= event.thres) {
+    trace_file_writer->write_trace(rusage_trace_event_extended{
+        trace_event{event.name, event.start_tp}, dur, resource_usage::now().value() - event.rusg_capture});
+  }
+}
+
+template <>
 void logger_event_tracer<true>::operator<<(const trace_event& event) const
 {
   log_ch("{}", trace_event_extended{event, std::chrono::duration_cast<trace_duration>(now() - event.start_tp)});
@@ -247,6 +299,19 @@ void logger_event_tracer<true>::operator<<(const instant_trace_event& event) con
   log_ch("{}", instant_trace_event_extended{event});
 }
 
+template <>
+void logger_event_tracer<true>::operator<<(const rusage_trace_event& event) const
+{
+  const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  if (dur >= event.thres) {
+    log_ch("{}",
+           rusage_trace_event_extended{trace_event{event.name, event.start_tp},
+                                       dur,
+                                       resource_usage::now().value_or(resource_usage::snapshot{0, 0}) -
+                                           event.rusg_capture});
+  }
+}
+
 void test_event_tracer::operator<<(const trace_event& event)
 {
   const auto end_tp = now();
@@ -265,4 +330,15 @@ void test_event_tracer::operator<<(const trace_thres_event& event)
 void test_event_tracer::operator<<(const instant_trace_event& event)
 {
   last_events.push_back(fmt::format("{}", instant_trace_event_extended{event}));
+}
+
+void test_event_tracer::operator<<(const rusage_trace_event& event)
+{
+  const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  if (dur >= event.thres) {
+    last_events.push_back(fmt::format("{}",
+                                      rusage_trace_event_extended{trace_event{event.name, event.start_tp},
+                                                                  dur,
+                                                                  resource_usage::now().value() - event.rusg_capture}));
+  }
 }

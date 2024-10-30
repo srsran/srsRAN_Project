@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "resource_usage.h"
 #include "srsran/support/compiler.h"
 #include <chrono>
 #include <string>
@@ -28,6 +29,12 @@ using trace_clock    = std::chrono::steady_clock;
 using trace_point    = trace_clock::time_point;
 using trace_duration = std::chrono::microseconds;
 
+/// Trace point value when tracing is disabled.
+constexpr static trace_point null_trace_point = {};
+
+/// Resource usaged value when tracing is disabled.
+constexpr static resource_usage::snapshot null_rusage_snapshot{0, 0};
+
 /// Open a file to write trace events to.
 void open_trace_file(std::string_view trace_file_name = "/tmp/srsran_trace.json");
 
@@ -43,7 +50,9 @@ struct trace_event {
   const char* name;
   trace_point start_tp;
 
-  SRSRAN_FORCE_INLINE trace_event(const char* name_, trace_point start_tp_) : name(name_), start_tp(start_tp_) {}
+  SRSRAN_FORCE_INLINE constexpr trace_event(const char* name_, trace_point start_tp_) : name(name_), start_tp(start_tp_)
+  {
+  }
 };
 
 struct trace_thres_event {
@@ -51,7 +60,7 @@ struct trace_thres_event {
   trace_point    start_tp;
   trace_duration thres;
 
-  SRSRAN_FORCE_INLINE trace_thres_event(const char* name_, trace_point start_tp_, trace_duration thres_) :
+  SRSRAN_FORCE_INLINE constexpr trace_thres_event(const char* name_, trace_point start_tp_, trace_duration thres_) :
     name(name_), start_tp(start_tp_), thres(thres_)
   {
   }
@@ -65,7 +74,23 @@ struct instant_trace_event {
   const char* name;
   cpu_scope   scope;
 
-  SRSRAN_FORCE_INLINE instant_trace_event(const char* name_, cpu_scope scope_) : name(name_), scope(scope_) {}
+  SRSRAN_FORCE_INLINE constexpr instant_trace_event(const char* name_, cpu_scope scope_) : name(name_), scope(scope_) {}
+};
+
+/// \brief Event like \c trace_thres_event but that also captures resource usage.
+struct rusage_trace_event {
+  const char*              name;
+  trace_duration           thres;
+  trace_point              start_tp;
+  resource_usage::snapshot rusg_capture;
+
+  SRSRAN_FORCE_INLINE constexpr rusage_trace_event(const char*              name_,
+                                                   trace_duration           thres_,
+                                                   trace_point              start_tp_,
+                                                   resource_usage::snapshot start_rusage_) :
+    name(name_), thres(thres_), start_tp(start_tp_), rusg_capture(start_rusage_)
+  {
+  }
 };
 
 namespace detail {
@@ -75,13 +100,16 @@ namespace detail {
 class null_event_tracer
 {
 public:
-  static trace_point now() { return {}; }
+  static constexpr trace_point    now() { return null_trace_point; }
+  static resource_usage::snapshot rusage_now() { return null_rusage_snapshot; }
 
   void operator<<(const trace_event& event) const {}
 
   void operator<<(const trace_thres_event& event) const {}
 
   void operator<<(const instant_trace_event& event) const {}
+
+  void operator<<(const rusage_trace_event& event) const {}
 };
 
 } // namespace detail
@@ -91,13 +119,16 @@ template <bool Enabled = true>
 class file_event_tracer
 {
 public:
-  static trace_point now() { return trace_clock::now(); }
+  static trace_point              now() { return trace_clock::now(); }
+  static resource_usage::snapshot rusage_now() { return resource_usage::now().value_or(null_rusage_snapshot); }
 
   void operator<<(const trace_event& event) const;
 
   void operator<<(const trace_thres_event& event) const;
 
   void operator<<(const instant_trace_event& event) const;
+
+  void operator<<(const rusage_trace_event& event) const;
 };
 
 /// Specialization of file_event_tracer that does not write any events.
@@ -113,13 +144,16 @@ class logger_event_tracer
 public:
   explicit logger_event_tracer(srslog::log_channel& log_ch_) : log_ch(log_ch_) {}
 
-  static trace_point now() { return trace_clock::now(); }
+  static trace_point              now() { return trace_clock::now(); }
+  static resource_usage::snapshot rusage_now() { return resource_usage::now().value_or(null_rusage_snapshot); }
 
   void operator<<(const trace_event& event) const;
 
   void operator<<(const trace_thres_event& event) const;
 
   void operator<<(const instant_trace_event& event) const;
+
+  void operator<<(const rusage_trace_event& event) const;
 
 private:
   srslog::log_channel& log_ch;
@@ -134,13 +168,16 @@ class logger_event_tracer<false> : public detail::null_event_tracer
 class test_event_tracer
 {
 public:
-  static trace_point now() { return trace_clock::now(); }
+  static trace_point              now() { return trace_clock::now(); }
+  static resource_usage::snapshot rusage_now() { return resource_usage::now().value_or(null_rusage_snapshot); }
 
   void operator<<(const trace_event& event);
 
   void operator<<(const trace_thres_event& event);
 
   void operator<<(const instant_trace_event& event);
+
+  void operator<<(const rusage_trace_event& event);
 
   std::vector<std::string> pop_last_events() { return std::move(last_events); }
 
