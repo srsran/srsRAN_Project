@@ -15,7 +15,7 @@
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
-#include "lib/scheduler/ue_scheduling/ue.h"
+#include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/du_types.h"

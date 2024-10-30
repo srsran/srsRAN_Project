@@ -12,7 +12,7 @@
 
 #include "../config/sched_config_manager.h"
 #include "../slicing/slice_scheduler.h"
-#include "ue.h"
+#include "../ue_context/ue.h"
 #include "ue_fallback_scheduler.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"

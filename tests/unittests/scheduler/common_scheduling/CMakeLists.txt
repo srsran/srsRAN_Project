@@ -16,6 +16,7 @@ target_link_libraries(common_scheduler_test
         srsran_sched
         srslog
         sched_config
+        sched_config_manager
         mac_configuration_helpers
         scheduler_test_suite
         gtest

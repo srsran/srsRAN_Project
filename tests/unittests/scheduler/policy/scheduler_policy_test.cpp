@@ -15,7 +15,7 @@
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/slicing/slice_scheduler.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
-#include "lib/scheduler/ue_scheduling/ue.h"
+#include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/du/du_cell_config_helpers.h"

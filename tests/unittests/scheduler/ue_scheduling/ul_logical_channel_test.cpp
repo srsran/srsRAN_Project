@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/ue_scheduling/ul_logical_channel_manager.h"
+#include "lib/scheduler/ue_context/ul_logical_channel_manager.h"
 #include <gtest/gtest.h>
 #include <random>
 

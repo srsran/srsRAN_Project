@@ -8,8 +8,8 @@
  *
  */
 
-#include "lib/scheduler/ue_scheduling/dl_logical_channel_manager.h"
-#include "lib/scheduler/ue_scheduling/ta_manager.h"
+#include "lib/scheduler/ue_context/dl_logical_channel_manager.h"
+#include "lib/scheduler/ue_context/ta_manager.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "srsran/ran/duplex_mode.h"

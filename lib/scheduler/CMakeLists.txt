@@ -7,9 +7,11 @@
 #
 
 add_subdirectory(config)
+add_subdirectory(support)
 add_subdirectory(logging)
 add_subdirectory(cell)
 add_subdirectory(common_scheduling)
+add_subdirectory(ue_context)
 add_subdirectory(ue_scheduling)
 
 set(SOURCES
@@ -24,21 +26,6 @@ set(SOURCES
         uci_scheduling/uci_scheduler_impl.cpp
         uci_scheduling/uci_allocator_impl.cpp
         srs/srs_scheduler_impl.cpp
-        support/pdcch/pdcch_type0_helpers.cpp
-        support/pdsch/pdsch_default_time_allocation.cpp
-        support/pdsch/pdsch_dmrs_symbol_mask.cpp
-        support/pucch/pucch_default_resource.cpp
-        support/pusch/pusch_default_time_allocation.cpp
-        support/pusch/pusch_dmrs_symbol_mask.cpp
-        support/mcs_tbs_calculator.cpp
-        support/prbs_calculator.cpp
-        support/mcs_calculator.cpp
-        support/pdcch_aggregation_level_calculator.cpp
-        support/rb_helper.cpp
-        support/sr_helper.cpp
-        support/dci_builder.cpp
-        support/sch_pdu_builder.cpp
-        support/csi_report_helpers.cpp
         slicing/slice_scheduler.cpp
         slicing/ran_slice_instance.cpp
         slicing/slice_ue_repository.cpp
@@ -52,5 +39,6 @@ add_library(srsran_sched STATIC ${SOURCES}
         $<TARGET_OBJECTS:sched_config_manager>
         $<TARGET_OBJECTS:sched_cell>
         $<TARGET_OBJECTS:common_sched>
+        $<TARGET_OBJECTS:sched_ue_context>
         $<TARGET_OBJECTS:ue_sched>)
-target_link_libraries(srsran_sched srsran_ran sched_config scheduler_logger)
+target_link_libraries(srsran_sched srsran_ran sched_config sched_support scheduler_logger)

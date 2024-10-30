@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ue.h"
+#include "../ue_context/ue.h"
 
 namespace srsran {
 
