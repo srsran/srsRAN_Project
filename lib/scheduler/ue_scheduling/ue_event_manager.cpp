@@ -405,7 +405,7 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
     auto& u = ue_db[phr_ind->ue_index];
     for (const cell_ph_report& cell_phr : phr_ind->phr.get_phr()) {
       srsran_sanity_check(
-          u.nof_cells() <= cell_phr.serv_cell_id, "Invalid serving cell index={}", cell_phr.serv_cell_id);
+          cell_phr.serv_cell_id < u.nof_cells(), "Invalid serving cell index={}", cell_phr.serv_cell_id);
       auto& ue_cc = u.get_cell(to_ue_cell_index(cell_phr.serv_cell_id));
 
       ue_cc.channel_state_manager().handle_phr(cell_phr);
