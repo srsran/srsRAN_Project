@@ -9,6 +9,8 @@
  */
 
 #include "pdsch_processor_concurrent_impl.h"
+
+#include "pdsch_processor_helpers.h"
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
@@ -62,7 +64,19 @@ void pdsch_processor_concurrent_impl::process(resource_grid_writer&             
   }
 
   // Process DM-RS concurrently.
-  auto dmrs_task = [this]() { process_dmrs(); };
+  auto dmrs_task = [this]() {
+    trace_point process_dmrs_tp = l1_tracer.now();
+
+    pdsch_process_dmrs(*grid, dmrs_generator_pool->get(), config);
+
+    l1_tracer << trace_event("process_dmrs", process_dmrs_tp);
+
+    // Decrement asynchronous task counter.
+    if (async_task_counter.fetch_sub(1) == 1) {
+      // Notify end of the processing.
+      notifier->on_finish_processing();
+    }
+  };
   if (!executor.execute(dmrs_task)) {
     dmrs_task();
   }
@@ -366,42 +380,6 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
     if (!successful) {
       async_task();
     }
-  }
-}
-
-void pdsch_processor_concurrent_impl::process_dmrs()
-{
-  trace_point process_dmrs_tp = l1_tracer.now();
-
-  bounded_bitset<MAX_RB> rb_mask_bitset = config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
-
-  // Select the DM-RS reference point.
-  unsigned dmrs_reference_point_k_rb = 0;
-  if (config.ref_point == pdu_t::PRB0) {
-    dmrs_reference_point_k_rb = config.bwp_start_rb;
-  }
-
-  // Prepare DM-RS configuration.
-  dmrs_pdsch_processor::config_t dmrs_config;
-  dmrs_config.slot                 = config.slot;
-  dmrs_config.reference_point_k_rb = dmrs_reference_point_k_rb;
-  dmrs_config.type                 = config.dmrs;
-  dmrs_config.scrambling_id        = config.scrambling_id;
-  dmrs_config.n_scid               = config.n_scid;
-  dmrs_config.amplitude            = convert_dB_to_amplitude(-config.ratio_pdsch_dmrs_to_sss_dB);
-  dmrs_config.symbols_mask         = config.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask_bitset;
-  dmrs_config.precoding            = config.precoding;
-
-  // Put DM-RS.
-  dmrs_generator_pool->get().map(*grid, dmrs_config);
-
-  l1_tracer << trace_event("process_dmrs", process_dmrs_tp);
-
-  // Decrement asynchronous task counter.
-  if (async_task_counter.fetch_sub(1) == 1) {
-    // Notify end of the processing.
-    notifier->on_finish_processing();
   }
 }
 

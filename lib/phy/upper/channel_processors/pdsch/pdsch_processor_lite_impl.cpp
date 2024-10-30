@@ -9,9 +9,9 @@
  */
 
 #include "pdsch_processor_lite_impl.h"
+#include "pdsch_processor_helpers.h"
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
-#include "srsran/ran/dmrs.h"
 
 using namespace srsran;
 
@@ -234,34 +234,8 @@ void pdsch_processor_lite_impl::process(resource_grid_writer&                   
   mapper->map(grid, subprocessor, allocation, reserved, precoding2);
 
   // Process DM-RS.
-  process_dmrs(grid, pdu);
+  pdsch_process_dmrs(grid, *dmrs, pdu);
 
   // Notify the end of the processing.
   notifier.on_finish_processing();
-}
-
-void pdsch_processor_lite_impl::process_dmrs(resource_grid_writer& grid, const pdu_t& pdu)
-{
-  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
-
-  // Select the DM-RS reference point.
-  unsigned dmrs_reference_point_k_rb = 0;
-  if (pdu.ref_point == pdu_t::PRB0) {
-    dmrs_reference_point_k_rb = pdu.bwp_start_rb;
-  }
-
-  // Prepare DM-RS configuration.
-  dmrs_pdsch_processor::config_t dmrs_config;
-  dmrs_config.slot                 = pdu.slot;
-  dmrs_config.reference_point_k_rb = dmrs_reference_point_k_rb;
-  dmrs_config.type                 = pdu.dmrs;
-  dmrs_config.scrambling_id        = pdu.scrambling_id;
-  dmrs_config.n_scid               = pdu.n_scid;
-  dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
-  dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask_bitset;
-  dmrs_config.precoding            = pdu.precoding;
-
-  // Put DM-RS.
-  dmrs->map(grid, dmrs_config);
 }

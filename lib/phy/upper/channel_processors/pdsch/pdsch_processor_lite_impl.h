@@ -119,11 +119,6 @@ public:
                const pdu_t&                                                    pdu) override;
 
 private:
-  /// \brief Processes DM-RS.
-  /// \param[out] grid Resource grid writer interface.
-  /// \param[in]  pdu  Necessary parameters to process the DM-RS.
-  void process_dmrs(resource_grid_writer& grid, const pdu_t& pdu);
-
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_tx> segmenter;
   /// Pointer to an LDPC encoder.

@@ -64,11 +64,6 @@ private:
   /// \param[in] pdu            Provides the PDSCH processor PDU.
   void modulate(resource_grid_writer& grid, span<const bit_buffer> temp_codewords, const pdu_t& pdu);
 
-  /// \brief Generates and maps DMRS for the PDSCH transmission as per TS 38.211 section 7.4.1.1.
-  /// \param[out] grid Resource grid writer interface.
-  /// \param[in] pdu   Provides the PDSCH processor PDU.
-  void put_dmrs(resource_grid_writer& grid, const pdu_t& pdu);
-
   std::unique_ptr<pdsch_encoder>                                  encoder;
   std::unique_ptr<pdsch_modulator>                                modulator;
   std::unique_ptr<dmrs_pdsch_processor>                           dmrs;
