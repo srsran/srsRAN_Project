@@ -13,7 +13,6 @@
 #include "phase_compensation_lut.h"
 #include "srsran/phy/generic_functions/dft_processor.h"
 #include "srsran/phy/lower/modulation/ofdm_demodulator.h"
-#include "srsran/srsvec/aligned_vec.h"
 #include <memory>
 
 namespace srsran {
@@ -47,9 +46,9 @@ private:
   /// Phase compensation table.
   phase_compensation_lut phase_compensation_table;
   /// Internal buffer aimed at storing the phase compensated DFT outputs.
-  srsvec::aligned_vec<cf_t> compensated_output;
+  std::vector<cf_t> compensated_output;
   /// DFT window offset phase compensation.
-  srsvec::aligned_vec<cf_t> window_phase_compensation;
+  std::vector<cf_t> window_phase_compensation;
 
 public:
   /// \brief Constructs an OFDM symbol demodulator.

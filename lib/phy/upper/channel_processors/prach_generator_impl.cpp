@@ -173,7 +173,7 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
       2935, 3355, 419};
 
   // Create view of the sequence.
-  span<cf_t> y_u_v = sequence.first(LONG);
+  span<cf_t> y_u_v = span<cf_t>(sequence).first(LONG);
 
   // Sequence compression factor and offset.
   uint64_t factor = static_cast<uint64_t>(compression_factor_table[sequence_number]);
@@ -219,7 +219,7 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_short(unsigned sequence_nu
       199, 547, 339, 409, 479, 271, 341, 411, 481, 551, 65,  135, 205, 553, 345, 137, 207, 555, 69};
 
   // Create view of the sequence.
-  span<cf_t> y_u_v = sequence.first(SHORT);
+  span<cf_t> y_u_v = span<cf_t>(sequence).first(SHORT);
 
   // Sequence compression factor and offset.
   uint64_t factor = static_cast<uint64_t>(compression_factor_table[sequence_number]);

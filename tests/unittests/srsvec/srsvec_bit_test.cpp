@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/bit.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -46,7 +45,7 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestUnpack)
   unsigned value = dist(rgen);
 
   // Create destination
-  srsvec::aligned_vec<uint8_t> unpacked(size);
+  std::vector<uint8_t> unpacked(size);
 
   // Unpack
   span<uint8_t> bit_buf = srsvec::bit_unpack(unpacked, value, size);
@@ -73,10 +72,10 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestUnpackVector)
   }
 
   // Create destination
-  srsvec::aligned_vec<uint8_t> unpacked(nbits);
+  std::vector<uint8_t> unpacked(nbits);
 
   // Generate expected values.
-  srsvec::aligned_vec<uint8_t> expected(nbits);
+  std::vector<uint8_t> expected(nbits);
   std::generate(expected.begin(), expected.end(), [&, index = 0]() mutable { return packed.extract(index++, 1); });
 
   // Unpack
@@ -91,7 +90,7 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestPack)
   std::uniform_int_distribution<uint8_t> dist(0, 1U);
 
   // Create unpacked data
-  srsvec::aligned_vec<uint8_t> unpacked(size);
+  std::vector<uint8_t> unpacked(size);
   for (uint8_t& value : unpacked) {
     value = dist(rgen);
   }
@@ -116,7 +115,7 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestPackVector)
   std::uniform_int_distribution<unsigned> dist(0, 1U);
 
   // Create unpacked data
-  srsvec::aligned_vec<uint8_t> unpacked(nbits);
+  std::vector<uint8_t> unpacked(nbits);
   for (uint8_t& value : unpacked) {
     value = dist(rgen);
   }
@@ -139,7 +138,7 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestPackFullVector)
   std::uniform_int_distribution<unsigned> dist(0, 1U);
 
   // Create unpacked data
-  srsvec::aligned_vec<uint8_t> unpacked(size);
+  std::vector<uint8_t> unpacked(size);
   for (uint8_t& value : unpacked) {
     value = dist(rgen);
   }
@@ -157,7 +156,7 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestPackOffsetVector)
   std::uniform_int_distribution<unsigned> dist(0, 1U);
 
   // Create unpacked data
-  srsvec::aligned_vec<uint8_t> unpacked(nbits);
+  std::vector<uint8_t> unpacked(nbits);
   for (uint8_t& value : unpacked) {
     value = dist(rgen);
   }
@@ -265,10 +264,10 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestUnpackVectorWithRemainder)
   }
 
   // Create destination
-  srsvec::aligned_vec<uint8_t> unpacked(15);
+  std::vector<uint8_t> unpacked(15);
 
   // Generate expected values.
-  srsvec::aligned_vec<uint8_t> expected(15);
+  std::vector<uint8_t> expected(15);
   std::generate(expected.begin(), expected.end(), [&, index = 0]() mutable { return packed.extract(index++, 1); });
 
   // Unpack
@@ -290,10 +289,10 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestUnpackVectorOffset)
   }
 
   // Create destination
-  srsvec::aligned_vec<uint8_t> unpacked(nbits - offset);
+  std::vector<uint8_t> unpacked(nbits - offset);
 
   // Generate expected values.
-  srsvec::aligned_vec<uint8_t> expected(nbits - offset);
+  std::vector<uint8_t> expected(nbits - offset);
   std::generate(expected.begin(), expected.end(), [&, index = offset]() mutable { return packed.extract(index++, 1); });
 
   // Unpack

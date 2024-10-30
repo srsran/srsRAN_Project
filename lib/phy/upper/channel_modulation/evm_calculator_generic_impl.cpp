@@ -43,7 +43,7 @@ float evm_calculator_generic_impl::calculate(span<const log_likelihood_ratio> so
     hard_decision(hard_bits, soft_bits.first(block_nof_bits));
 
     // Modulate.
-    span<cf_t> modulated = temp_modulated.first(block_nof_symbols);
+    span<cf_t> modulated = span<cf_t>(temp_modulated).first(block_nof_symbols);
     modulator->modulate(modulated, hard_bits, modulation);
 
     // Calculate EVM.

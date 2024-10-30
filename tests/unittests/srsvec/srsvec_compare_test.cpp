@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/compare.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
@@ -22,14 +21,14 @@ static void test_max_abs_ccc(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   for (cf_t& v : x) {
     v = {dist(rgen), dist(rgen)};
   }
 
   std::pair<unsigned, float> result = srsvec::max_abs_element(x);
 
-  cf_t*    expected_it = std::max_element(x.begin(), x.end(), [](cf_t a, cf_t b) { return abs_sq(a) < abs_sq(b); });
+  auto     expected_it = std::max_element(x.begin(), x.end(), [](cf_t a, cf_t b) { return abs_sq(a) < abs_sq(b); });
   unsigned expected_max_index = static_cast<unsigned>(expected_it - x.begin());
   float    expected_max_value = abs_sq(*expected_it);
 
@@ -41,7 +40,7 @@ static void test_max_abs_ccc_same(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   std::fill(x.begin(), x.end(), 0);
 
   std::pair<unsigned, float> result = srsvec::max_abs_element(x);
@@ -54,14 +53,14 @@ static void test_max_f(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<float> x(N);
+  std::vector<float> x(N);
   for (float& v : x) {
     v = dist(rgen);
   }
 
   std::pair<unsigned, float> result = srsvec::max_element(x);
 
-  float*   expected_it        = std::max_element(x.begin(), x.end());
+  auto     expected_it        = std::max_element(x.begin(), x.end());
   unsigned expected_max_index = static_cast<unsigned>(expected_it - x.begin());
   float    expected_max_value = *expected_it;
 
@@ -71,7 +70,7 @@ static void test_max_f(std::size_t N)
 
 static void test_max_f_same(std::size_t N)
 {
-  srsvec::aligned_vec<float> x(N);
+  std::vector<float> x(N);
   std::fill(x.begin(), x.end(), 0);
 
   std::pair<unsigned, float> result = srsvec::max_element(x);
@@ -85,7 +84,7 @@ static void test_count_if_part_abs_greater_than(std::size_t N)
   float                                 threshold = 0.5;
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   std::generate(x.begin(), x.end(), [&dist]() { return cf_t{dist(rgen), dist(rgen)}; });
 
   unsigned result = srsvec::count_if_part_abs_greater_than(x, threshold);

@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/binary.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
@@ -22,17 +21,17 @@ void test_binary_xor(std::size_t N)
 {
   std::uniform_int_distribution<T> dist(0, RANGE);
 
-  srsvec::aligned_vec<T> x(N);
+  std::vector<T> x(N);
   for (T& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<T> y(N);
+  std::vector<T> y(N);
   for (T& v : y) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<T> z(N);
+  std::vector<T> z(N);
 
   srsvec::binary_xor(x, y, z);
 
@@ -47,17 +46,17 @@ void test_binary_and(std::size_t N)
 {
   std::uniform_int_distribution<T> dist(0, RANGE);
 
-  srsvec::aligned_vec<T> x(N);
+  std::vector<T> x(N);
   for (T& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<T> y(N);
+  std::vector<T> y(N);
   for (T& v : y) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<T> z(N);
+  std::vector<T> z(N);
 
   srsvec::binary_and(x, y, z);
 
@@ -72,17 +71,17 @@ void test_binary_or(std::size_t N)
 {
   std::uniform_int_distribution<T> dist(0, RANGE);
 
-  srsvec::aligned_vec<T> x(N);
+  std::vector<T> x(N);
   for (T& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<T> y(N);
+  std::vector<T> y(N);
   for (T& v : y) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<T> z(N);
+  std::vector<T> z(N);
 
   srsvec::binary_or(x, y, z);
 

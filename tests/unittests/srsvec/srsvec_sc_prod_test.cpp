@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
@@ -22,14 +21,14 @@ void test_sc_prod_ccc(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   for (cf_t& v : x) {
     v = {dist(rgen), dist(rgen)};
   }
 
   cf_t h = {dist(rgen), dist(rgen)};
 
-  srsvec::aligned_vec<cf_t> z(N);
+  std::vector<cf_t> z(N);
 
   srsvec::sc_prod(x, h, z);
 
@@ -44,16 +43,16 @@ void test_sc_prod_ccc_bf16(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cbf16_t> x(N);
+  std::vector<cbf16_t> x(N);
   std::generate(x.begin(), x.end(), [&dist]() { return to_cbf16(cf_t{dist(rgen), dist(rgen)}); });
 
   cf_t h = {dist(rgen), dist(rgen)};
 
-  srsvec::aligned_vec<cbf16_t> z(N);
+  std::vector<cbf16_t> z(N);
 
   srsvec::sc_prod(x, h, z);
 
-  srsvec::aligned_vec<cf_t> expected(N);
+  std::vector<cf_t> expected(N);
   std::transform(x.begin(), x.end(), expected.begin(), [&h](cbf16_t value) { return h * to_cf(value); });
 
   for (size_t i = 0; i != N; i++) {
@@ -67,14 +66,14 @@ void test_sc_prod_cfc(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   for (cf_t& v : x) {
     v = {dist(rgen), dist(rgen)};
   }
 
   float h = dist(rgen);
 
-  srsvec::aligned_vec<cf_t> z(N);
+  std::vector<cf_t> z(N);
 
   srsvec::sc_prod(x, h, z);
 
@@ -89,14 +88,14 @@ void test_sc_prod_fff(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<float> x(N);
+  std::vector<float> x(N);
   for (float& v : x) {
     v = dist(rgen);
   }
 
   float h = dist(rgen);
 
-  srsvec::aligned_vec<float> z(N);
+  std::vector<float> z(N);
 
   srsvec::sc_prod(x, h, z);
 

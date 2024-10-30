@@ -81,8 +81,8 @@ void polar_decoder_impl::tmp_node_s::compute(std::vector<node_rate*>& node_type,
   uint8_t  code_size_log_1 = code_size_log - 1;
   uint16_t code_half_size  = (1U << code_size_log_1);
 
-  srsvec::zero(i_even.first(code_half_size));
-  srsvec::zero(i_odd.first(code_half_size));
+  srsvec::zero(span<uint16_t>(i_even).first(code_half_size));
+  srsvec::zero(span<uint16_t>(i_odd).first(code_half_size));
   for (uint16_t i = 0; i != code_half_size; ++i) {
     i_even[i] = 2 * i;
     i_odd[i]  = 2 * i + 1;
@@ -145,12 +145,12 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   llr_alloc.resize(llr_all_stages);
 
   // Assign a valid view for the first stage llr0 and an invalid view for llr1.
-  llr0[0] = llr_alloc.first(1);
+  llr0[0] = span<log_likelihood_ratio>(llr_alloc).first(1);
   llr1[0] = span<log_likelihood_ratio>();
 
   // Assign a valid view for the rest of stages llr0 and llr1.
   for (uint8_t s = 1; s != n_llr_all_stages; ++s) {
-    llr0[s] = llr_alloc.subspan(param.code_stage_size[s] - 1, param.code_stage_size[s]);
+    llr0[s] = span<log_likelihood_ratio>(llr_alloc).subspan(param.code_stage_size[s] - 1, param.code_stage_size[s]);
     llr1[s] = llr0[s].last(param.code_stage_size[s - 1]);
   }
 
@@ -177,7 +177,7 @@ void polar_decoder_impl::init(span<uint8_t>                    data_decoded,
   srsvec::zero(data_decoded.first(code_size));
 
   // Initialize est_bit vector to all zeros.
-  srsvec::zero(est_bit.first(code_size));
+  srsvec::zero(span<uint8_t>(est_bit).first(code_size));
 
   // Initializes LLR buffer for the last stage/level with the input LLRs values.
   for (uint16_t i = 0; i != code_half_size; ++i) {
@@ -187,7 +187,7 @@ void polar_decoder_impl::init(span<uint8_t>                    data_decoded,
 
   // Initializes the state of the decoding tree: start from the only one node at the last stage + 1.
   state.stage = code_size_log + 1;
-  srsvec::zero(state.active_node_per_stage.first(code_size_log + 1));
+  srsvec::zero(span<uint16_t>(state.active_node_per_stage).first(code_size_log + 1));
   state.flag_finished = false;
 
   // Computes the node types for the decoding tree.
@@ -221,7 +221,7 @@ void polar_decoder_impl::rate_1_node(span<uint8_t> message)
   uint16_t code_size       = param.code_stage_size[param.code_size_log];
   uint16_t code_stage_size = param.code_stage_size[stage];
 
-  span<uint8_t> codeword = est_bit.subspan(bit_pos, code_stage_size);
+  span<uint8_t> codeword = span<uint8_t>(est_bit).subspan(bit_pos, code_stage_size);
   srsran_assert(llr0[stage].size() == code_stage_size, "Invalid size ({} != {})", llr0[stage].size(), code_stage_size);
 
   vec_hard_bit(llr0[stage], codeword);

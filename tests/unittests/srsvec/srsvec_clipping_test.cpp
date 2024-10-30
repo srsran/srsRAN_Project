@@ -11,7 +11,6 @@
 /// \file
 /// \brief Unit test for the clipping functions in the \c srsvec vector library.
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/clip.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
@@ -21,9 +20,9 @@ static const float  ASSERT_MAX_ERROR = 1e-6;
 
 using namespace srsran;
 
-static srsvec::aligned_vec<cf_t> input;
-static srsvec::aligned_vec<cf_t> output;
-static srsvec::aligned_vec<cf_t> output_gold;
+static std::vector<cf_t> input;
+static std::vector<cf_t> output;
+static std::vector<cf_t> output_gold;
 
 static void setup(std::size_t nof_samples, const float max_amplitude)
 {

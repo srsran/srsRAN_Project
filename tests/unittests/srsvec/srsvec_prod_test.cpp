@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/prod.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
@@ -22,17 +21,17 @@ void test_prod_ccc(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   for (cf_t& v : x) {
     v = {dist(rgen), dist(rgen)};
   }
 
-  srsvec::aligned_vec<cf_t> y(N);
+  std::vector<cf_t> y(N);
   for (cf_t& v : y) {
     v = {dist(rgen), dist(rgen)};
   }
 
-  srsvec::aligned_vec<cf_t> z(N);
+  std::vector<cf_t> z(N);
 
   srsvec::prod(x, y, z);
 
@@ -47,17 +46,17 @@ void test_prod_fff(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<float> x(N);
+  std::vector<float> x(N);
   for (float& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<float> y(N);
+  std::vector<float> y(N);
   for (float& v : y) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<float> z(N);
+  std::vector<float> z(N);
 
   srsvec::prod(x, y, z);
 

@@ -10,7 +10,6 @@
 
 #include "modulation_mapper_test_data.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/bit.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -89,13 +88,13 @@ TEST_P(ModulationMapperFixture, ModulationMapperTest)
     srsvec::bit_pack(packed_data, testvector_data);
 
     // Modulate in complex float.
-    srsran::srsvec::aligned_vec<cf_t> symbols_cf(test_case.nsymbols);
+    std::vector<cf_t> symbols_cf(test_case.nsymbols);
     modulator->modulate(symbols_cf, packed_data, test_case.scheme);
     assert_symbols<cf_t>(symbols_cf, expected_symbols);
 
     // Modulate in complex i8.
-    srsran::srsvec::aligned_vec<ci8_t> symbols_ci8(test_case.nsymbols);
-    float                              scale_ci8 = modulator->modulate(symbols_ci8, packed_data, test_case.scheme);
+    std::vector<ci8_t> symbols_ci8(test_case.nsymbols);
+    float              scale_ci8 = modulator->modulate(symbols_ci8, packed_data, test_case.scheme);
     assert_symbols<ci8_t>(symbols_ci8, expected_symbols, scale_ci8);
   }
 }

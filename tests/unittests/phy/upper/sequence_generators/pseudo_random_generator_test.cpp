@@ -9,7 +9,6 @@
  */
 
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/bit.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -150,7 +149,7 @@ TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorXorUnpacked)
   std::uniform_int_distribution<unsigned char> distXorUnpacked(0, 1);
 
   // Create data buffer.
-  srsvec::aligned_vec<uint8_t> data(size);
+  std::vector<uint8_t> data(size);
 
   // Fill buffer with random data.
   for (unsigned char& v : data) {
@@ -164,7 +163,7 @@ TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorXorUnpacked)
   generator->advance(offset);
 
   // Apply sequence.
-  srsvec::aligned_vec<uint8_t> data_xor(size);
+  std::vector<uint8_t> data_xor(size);
   generator->apply_xor(data_xor, data);
 
   // Assert.
@@ -180,7 +179,7 @@ TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorXori8)
                                                   log_likelihood_ratio::max().to_value_type());
 
   // Create data buffer.
-  srsvec::aligned_vec<log_likelihood_ratio> data(size);
+  std::vector<log_likelihood_ratio> data(size);
 
   // Fill buffer with random data.
   for (log_likelihood_ratio& v : data) {
@@ -194,7 +193,7 @@ TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorXori8)
   generator->advance(offset);
 
   // Apply sequence.
-  srsvec::aligned_vec<log_likelihood_ratio> data_xor(size);
+  std::vector<log_likelihood_ratio> data_xor(size);
   generator->apply_xor(data_xor, data);
 
   // Assert.
@@ -234,7 +233,7 @@ TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorBit)
 TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorFloat)
 {
   // Create data buffer.
-  srsvec::aligned_vec<float> sequence(size);
+  std::vector<float> sequence(size);
 
   // Initialize sequence generator.
   generator->init(c_init);
