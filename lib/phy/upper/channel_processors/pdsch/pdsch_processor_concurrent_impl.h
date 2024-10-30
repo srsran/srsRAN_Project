@@ -80,9 +80,6 @@ private:
   /// Creates code block processing batches and starts the asynchronous processing.
   void fork_cb_batches();
 
-  /// Processes PDSCH PT-RS.
-  void process_ptrs();
-
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
   /// Resource grid mapper.

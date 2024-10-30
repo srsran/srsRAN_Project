@@ -12,12 +12,14 @@
 /// \brief Helper functions for PDSCH processor implementations.
 
 #pragma once
+#include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 
 namespace srsran {
 
-/// \brief Generates and maps DMRS for the PDSCH transmission as per TS 38.211 section 7.4.1.1.
+/// \brief Generates and maps DM-RS for the PDSCH transmission as per TS 38.211 section 7.4.1.1.
 /// \param[out] grid Resource grid writer interface.
-/// \param[in] pdu   Provides the PDSCH processor PDU.
+/// \param[out] dmrs DM-RS PDSCH processor interface.
+/// \param[in]  pdu  Provides the PDSCH processor PDU.
 inline void
 pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const pdsch_processor::pdu_t& pdu)
 {
@@ -43,6 +45,49 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
 
   // Put DM-RS.
   dmrs.map(grid, dmrs_config);
+}
+
+/// \brief Generates and maps PT-RS for the PDSCH transmission as per TS 38.211 section 7.4.1.2.
+/// \param[out] grid           Resource grid writer interface.
+/// \param[out] ptrs_generator PT-RS PDSCH generator interface.
+/// \param[in]  pdu            Provides the PDSCH processor PDU.
+inline void
+pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_generator, const pdsch_processor::pdu_t& pdu)
+{
+  // Extract PT-RS configuration parameters.
+  const pdsch_processor::ptrs_configuration& ptrs = pdu.ptrs.value();
+
+  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+
+  // Select the DM-RS reference point.
+  unsigned ptrs_reference_point_k_rb = 0;
+  if (pdu.ref_point == pdsch_processor::pdu_t::PRB0) {
+    ptrs_reference_point_k_rb = pdu.bwp_start_rb;
+  }
+
+  // Calculate the PT-RS sequence amplitude following TS38.214 Section 4.1.
+  float amplitude = convert_dB_to_amplitude(ptrs.ratio_ptrs_to_pdsch_data_dB - pdu.ratio_pdsch_data_to_sss_dB);
+
+  // Prepare PT-RS configuration.
+  ptrs_pdsch_generator::configuration ptrs_config;
+  ptrs_config.slot                 = pdu.slot;
+  ptrs_config.rnti                 = to_rnti(pdu.rnti);
+  ptrs_config.dmrs_config_type     = pdu.dmrs;
+  ptrs_config.reference_point_k_rb = ptrs_reference_point_k_rb;
+  ptrs_config.scrambling_id        = pdu.scrambling_id;
+  ptrs_config.n_scid               = pdu.n_scid;
+  ptrs_config.amplitude            = amplitude;
+  ptrs_config.dmrs_symbols_mask    = pdu.dmrs_symbol_mask;
+  ptrs_config.rb_mask              = rb_mask_bitset;
+  ptrs_config.time_allocation      = {pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols};
+  ptrs_config.freq_density         = ptrs.freq_density;
+  ptrs_config.time_density         = ptrs.time_density;
+  ptrs_config.re_offset            = ptrs.re_offset;
+  ptrs_config.reserved             = pdu.reserved;
+  ptrs_config.precoding            = pdu.precoding;
+
+  // Put PT-RS.
+  ptrs_generator.generate(grid, ptrs_config);
 }
 
 } // namespace srsran

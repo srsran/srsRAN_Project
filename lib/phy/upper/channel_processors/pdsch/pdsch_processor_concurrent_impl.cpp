@@ -51,7 +51,19 @@ void pdsch_processor_concurrent_impl::process(resource_grid_writer&             
     ++async_task_counter;
 
     // Process PT-RS concurrently.
-    auto ptrs_task = [this]() { process_ptrs(); };
+    auto ptrs_task = [this]() {
+      trace_point process_ptrs_tp = l1_tracer.now();
+
+      pdsch_process_ptrs(*grid, ptrs_generator_pool->get(), config);
+
+      l1_tracer << trace_event("process_ptrs", process_ptrs_tp);
+
+      // Decrement asynchronous task counter.
+      if (async_task_counter.fetch_sub(1) == 1) {
+        // Notify end of the processing.
+        notifier->on_finish_processing();
+      }
+    };
 
     bool success = false;
     if (cb_processor_pool->capacity() > 1) {
@@ -380,53 +392,5 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
     if (!successful) {
       async_task();
     }
-  }
-}
-
-void pdsch_processor_concurrent_impl::process_ptrs()
-{
-  trace_point process_ptrs_tp = l1_tracer.now();
-
-  // Extract PT-RS configuration parameters.
-  const ptrs_configuration& ptrs = config.ptrs.value();
-
-  bounded_bitset<MAX_RB> rb_mask_bitset = config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
-
-  // Select the DM-RS reference point.
-  unsigned ptrs_reference_point_k_rb = 0;
-  if (config.ref_point == pdu_t::PRB0) {
-    ptrs_reference_point_k_rb = config.bwp_start_rb;
-  }
-
-  // Calculate the PT-RS sequence amplitude following TS38.214 Section 4.1.
-  float amplitude = convert_dB_to_amplitude(ptrs.ratio_ptrs_to_pdsch_data_dB - config.ratio_pdsch_data_to_sss_dB);
-
-  // Prepare PT-RS configuration.
-  ptrs_pdsch_generator::configuration ptrs_config;
-  ptrs_config.slot                 = config.slot;
-  ptrs_config.rnti                 = to_rnti(config.rnti);
-  ptrs_config.dmrs_config_type     = config.dmrs;
-  ptrs_config.reference_point_k_rb = ptrs_reference_point_k_rb;
-  ptrs_config.scrambling_id        = config.scrambling_id;
-  ptrs_config.n_scid               = config.n_scid;
-  ptrs_config.amplitude            = amplitude;
-  ptrs_config.dmrs_symbols_mask    = config.dmrs_symbol_mask;
-  ptrs_config.rb_mask              = rb_mask_bitset;
-  ptrs_config.time_allocation      = {config.start_symbol_index, config.start_symbol_index + config.nof_symbols};
-  ptrs_config.freq_density         = ptrs.freq_density;
-  ptrs_config.time_density         = ptrs.time_density;
-  ptrs_config.re_offset            = ptrs.re_offset;
-  ptrs_config.reserved             = config.reserved;
-  ptrs_config.precoding            = config.precoding;
-
-  // Put PT-RS.
-  ptrs_generator_pool->get().generate(*grid, ptrs_config);
-
-  l1_tracer << trace_event("process_ptrs", process_ptrs_tp);
-
-  // Decrement asynchronous task counter.
-  if (async_task_counter.fetch_sub(1) == 1) {
-    // Notify end of the processing.
-    notifier->on_finish_processing();
   }
 }
