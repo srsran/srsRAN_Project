@@ -31,7 +31,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metri
   pdcp_metrics_notifier* out = nullptr;
 
   // Do not instantiate the metrics if the E2 is not enabled.
-  if (e2_enabled) {
+  if (!e2_enabled) {
     return out;
   }
 
@@ -93,7 +93,8 @@ cu_up_unit srsran::build_cu_up(const cu_up_unit_config& unit_cfg, const cu_up_un
     qos_.second.pdcp_custom_cfg.metrics_notifier = pdcp_metric_notifier;
   }
 
-  wrapper.unit = std::make_unique<cu_up_wrapper>(std::move(ngu_gw), create_cu_up(config));
+  wrapper.unit =
+      std::make_unique<cu_up_wrapper>(std::move(ngu_gw), std::move(e2_metric_connectors), create_cu_up(config));
 
   return wrapper;
 }

@@ -144,11 +144,10 @@ void cu_up::start()
         });
       })) {
     report_fatal_error("Unable to initiate CU-UP setup routine");
-    if (e2agent) {
-      e2agent->start();
-    }
   }
-
+  if (e2agent) {
+    e2agent->start();
+  }
   // Block waiting for CU-UP setup to complete.
   fut.wait();
 

@@ -311,8 +311,10 @@ int main(int argc, char** argv)
   io_timer_source time_source{app_timers, *epoll_broker, std::chrono::milliseconds{1}};
 
   // Instantiate E2AP client gateway.
-  std::unique_ptr<e2_connection_client> e2_gw_cu =
+  std::unique_ptr<e2_connection_client> e2_gw_cu_cp =
       create_cu_e2_client_gateway(cu_cfg.e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap);
+  std::unique_ptr<e2_connection_client> e2_gw_cu_up =
+      create_cu_e2_client_gateway(cu_cfg.e2_cfg, *epoll_broker, *cu_up_dlt_pcaps.e2ap);
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
@@ -323,7 +325,7 @@ int main(int argc, char** argv)
   cu_cp_dependencies.timers           = cu_timers;
   cu_cp_dependencies.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
   cu_cp_dependencies.broker           = epoll_broker.get();
-  cu_cp_dependencies.e2_gw            = e2_gw_cu.get();
+  cu_cp_dependencies.e2_gw            = e2_gw_cu_cp.get();
   cu_cp_dependencies.metrics_notifier = &metrics_notifier_forwarder;
 
   // create CU-CP.
@@ -363,7 +365,7 @@ int main(int argc, char** argv)
   cu_up_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();
   cu_up_unit_deps.timers           = cu_timers;
   cu_up_unit_deps.io_brk           = epoll_broker.get();
-  cu_up_unit_deps.e2_gw            = e2_gw_cu.get();
+  cu_up_unit_deps.e2_gw            = e2_gw_cu_up.get();
   cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
   auto cu_up_obj_wrapper = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);

@@ -86,7 +86,7 @@ void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, con
 e2ap_configuration srsran::generate_e2_config(const cu_up_unit_config& cu_cp)
 {
   e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
-  out_cfg.e2_type            = e2_type_t::CU_CP;
+  out_cfg.e2_type            = e2_type_t::CU_UP;
   out_cfg.e2sm_kpm_enabled   = cu_cp.e2_cfg.e2sm_kpm_enabled;
   out_cfg.e2sm_rc_enabled    = cu_cp.e2_cfg.e2sm_rc_enabled;
   return out_cfg;

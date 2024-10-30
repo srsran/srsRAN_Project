@@ -12,9 +12,10 @@
 
 using namespace srsran;
 
-cu_up_wrapper::cu_up_wrapper(std::unique_ptr<srs_cu_up::ngu_gateway>     gateway_,
-                             std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_) :
-  gateway(std::move(gateway_)), cu_up(std::move(cu_up_))
+cu_up_wrapper::cu_up_wrapper(std::unique_ptr<srs_cu_up::ngu_gateway>          gateway_,
+                             std::unique_ptr<e2_cu_metrics_connector_manager> e2_metric_connector_,
+                             std::unique_ptr<srs_cu_up::cu_up_interface>      cu_up_) :
+  gateway(std::move(gateway_)), e2_metric_connector(std::move(e2_metric_connector_)), cu_up(std::move(cu_up_))
 {
   srsran_assert(gateway, "Invlid NGU gateway");
   srsran_assert(cu_up, "Invalid CU-UP");

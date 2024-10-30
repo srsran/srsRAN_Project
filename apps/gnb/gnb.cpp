@@ -363,6 +363,14 @@ int main(int argc, char** argv)
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
   std::vector<app_services::metrics_config> metrics_configs;
 
+  // Instantiate E2AP client gateways.
+  std::unique_ptr<e2_connection_client> e2_gw_du =
+      create_du_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *du_pcaps.e2ap);
+  std::unique_ptr<e2_connection_client> e2_gw_cu_cp =
+      create_cu_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap);
+  std::unique_ptr<e2_connection_client> e2_gw_cu_up =
+      create_cu_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *cu_up_dlt_pcaps.e2ap);
+
   // Create CU-CP dependencies.
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor   = workers.cu_cp_exec;
@@ -371,12 +379,7 @@ int main(int argc, char** argv)
   cu_cp_dependencies.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
   cu_cp_dependencies.broker           = epoll_broker.get();
   cu_cp_dependencies.metrics_notifier = &metrics_notifier_forwarder;
-
-  // Instantiate E2AP client gateways.
-  std::unique_ptr<e2_connection_client> e2_gw_du =
-      create_du_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *du_pcaps.e2ap);
-  std::unique_ptr<e2_connection_client> e2_gw_cu =
-      create_cu_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap);
+  cu_cp_dependencies.e2_gw            = e2_gw_cu_cp.get();
 
   // create CU-CP.
   auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
@@ -392,11 +395,13 @@ int main(int argc, char** argv)
   cu_up_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();
   cu_up_unit_deps.timers           = cu_timers;
   cu_up_unit_deps.io_brk           = epoll_broker.get();
-  cu_up_unit_deps.e2_gw            = e2_gw_cu.get();
+  cu_up_unit_deps.e2_gw            = e2_gw_cu_up.get();
   cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
   auto cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
-
+  for (auto& metric : cu_up_obj.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
   // Instantiate one DU.
   du_unit_dependencies du_dependencies;
   du_dependencies.workers            = &workers;
