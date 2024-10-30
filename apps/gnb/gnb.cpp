@@ -402,7 +402,7 @@ int main(int argc, char** argv)
   du_dependencies.json_sink          = &json_sink;
   du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
-  auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
+  auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies, gnb_cfg.du_multicell_enabled);
 
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 

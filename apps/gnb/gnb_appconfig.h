@@ -72,6 +72,8 @@ struct hal_appconfig {
 struct gnb_appconfig {
   /// Default constructor to update the log filename.
   gnb_appconfig() { log_cfg.filename = "/tmp/gnb.log"; }
+  /// DU multicell flag.
+  bool du_multicell_enabled = false;
   /// Loggers configuration.
   logger_appconfig log_cfg;
   /// Metrics configuration.
