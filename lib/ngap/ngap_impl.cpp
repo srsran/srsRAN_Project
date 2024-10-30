@@ -1067,8 +1067,8 @@ void ngap_impl::on_pdu_session_setup_timer_expired(ue_index_t ue_index)
 
     if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
       // AMF never responded to InitialUEMessage, so we only remove the UE from the DU
-      ue_ctxt.logger.log_warning("PDU session setup timer expired after {}ms. Releasing UE from DU",
-                                 ue_ctxt.pdu_session_setup_timer.duration().count());
+      ue_ctxt.logger.log_info("UE did not request a PDU session after {}ms. Releasing UE from DU",
+                              ue_ctxt.pdu_session_setup_timer.duration().count());
 
       ue->schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
@@ -1077,8 +1077,8 @@ void ngap_impl::on_pdu_session_setup_timer_expired(ue_index_t ue_index)
         CORO_RETURN();
       }));
     } else {
-      ue_ctxt.logger.log_warning("PDU session setup timer expired after {}ms. Requesting UE release",
-                                 ue_ctxt.pdu_session_setup_timer.duration().count());
+      ue_ctxt.logger.log_info("UE did not request a PDU session after {}ms. Requesting UE release",
+                              ue_ctxt.pdu_session_setup_timer.duration().count());
 
       // Request UE release
       ue->schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
