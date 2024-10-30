@@ -65,6 +65,7 @@ TEST_F(du_ue_ric_config_tester,
   ASSERT_TRUE(mac.last_ue_reconf_msg->sched_cfg.res_alloc_cfg.has_value());
   prb_interval expected_prbs{expected_min_prb, expected_max_prb};
   ASSERT_EQ(mac.last_ue_reconf_msg->sched_cfg.res_alloc_cfg->pdsch_grant_size_limits, expected_prbs);
+  ASSERT_EQ(mac.last_ue_reconf_msg->sched_cfg.res_alloc_cfg->pusch_grant_size_limits, expected_prbs);
   ASSERT_FALSE(mac.last_ue_reconf_msg->sched_cfg.cells.has_value()) << "Cells should not have been configured";
   ASSERT_FALSE(mac.last_ue_reconf_msg->sched_cfg.lc_config_list.has_value())
       << "Logical channels should not have been configured";
