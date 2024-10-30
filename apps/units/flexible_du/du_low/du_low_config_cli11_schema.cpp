@@ -285,6 +285,13 @@ static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
   // Clean the HAL optional.
   if (app.get_subcommand("hal")->count_all() == 0) {
     parsed_cfg.hal_config.reset();
+
+    return;
+  }
+
+  const auto& hal = app.get_subcommand("hal");
+  if (hal->get_subcommand("bbdev_hwacc")->count_all() == 0) {
+    parsed_cfg.hal_config->bbdev_hwacc.reset();
   }
 }
 
