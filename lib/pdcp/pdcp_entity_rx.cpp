@@ -167,6 +167,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     logger.log_error(pdu.begin(), pdu.end(), "RX PDU too small. pdu_len={} hdr_len={}", pdu.length(), hdr_len_bytes);
     return;
   }
+  std::chrono::system_clock::time_point time_start = std::chrono::system_clock::now();
   // Log state
   log_state(srslog::basic_levels::debug);
 
@@ -265,6 +266,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
   pdcp_rx_sdu_info& sdu_info = rx_window->add_sn(rcvd_count);
   sdu_info.sdu               = std::move(pdu);
   sdu_info.count             = rcvd_count;
+  sdu_info.time_of_arrival   = time_start;
 
   // Update RX_NEXT
   if (rcvd_count >= st.rx_next) {
@@ -335,6 +337,7 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
 
     // Pass PDCP SDU to the upper layers
     metrics.add_sdus(1, sdu_info.sdu.length());
+    record_reordering_dealy(sdu_info.time_of_arrival);
     upper_dn.on_new_sdu(std::move(sdu_info.sdu));
     rx_window->remove_sn(st.rx_deliv);
 
@@ -355,6 +358,7 @@ void pdcp_entity_rx::deliver_all_sdus()
 
       // Pass PDCP SDU to the upper layers
       metrics.add_sdus(1, sdu_info.sdu.length());
+      record_reordering_dealy(sdu_info.time_of_arrival);
       upper_dn.on_new_sdu(std::move(sdu_info.sdu));
       rx_window->remove_sn(count);
     }
@@ -556,6 +560,7 @@ void pdcp_entity_rx::handle_t_reordering_expire()
 
       // Pass PDCP SDU to the upper layers
       metrics.add_sdus(1, sdu_info.sdu.length());
+      record_reordering_dealy(sdu_info.time_of_arrival);
       upper_dn.on_new_sdu(std::move(sdu_info.sdu));
       rx_window->remove_sn(st.rx_deliv);
     }
@@ -622,4 +627,11 @@ bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_
       return false;
   }
   return true;
+}
+
+void pdcp_entity_rx::record_reordering_dealy(std::chrono::system_clock::time_point time_of_arrival)
+{
+  std::chrono::microseconds time_taken =
+      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_of_arrival);
+  metrics.add_reordering_delay_us((uint32_t)time_taken.count());
 }

@@ -41,8 +41,9 @@ struct pdcp_rx_state {
 };
 
 struct pdcp_rx_sdu_info {
-  byte_buffer sdu   = {};
-  uint32_t    count = {};
+  byte_buffer                           sdu   = {};
+  uint32_t                              count = {};
+  std::chrono::system_clock::time_point time_of_arrival;
 };
 
 /// Base class used for receiving PDCP bearers.
@@ -140,6 +141,8 @@ private:
   void deliver_all_consecutive_counts();
   void deliver_all_sdus();
   void discard_all_sdus();
+
+  void record_reordering_dealy(std::chrono::system_clock::time_point time_of_arrival);
 
   /// Apply deciphering and integrity check to the PDU
   expected<byte_buffer> apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count);

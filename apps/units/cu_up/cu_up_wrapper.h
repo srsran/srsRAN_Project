@@ -39,9 +39,9 @@ public:
   std::optional<uint16_t> get_n3_bind_port() override;
 
 private:
-  std::unique_ptr<srs_cu_up::ngu_gateway>     gateway;
+  std::unique_ptr<srs_cu_up::ngu_gateway>          gateway;
   std::unique_ptr<e2_cu_metrics_connector_manager> e2_metric_connector;
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;
+  std::unique_ptr<srs_cu_up::cu_up_interface>      cu_up;
 };
 
 } // namespace srsran

@@ -17,7 +17,7 @@
 #include "srsran/e2/e2_cu.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
-#include "srsran/pdcp/pdcp_metrics.h"
+#include "srsran/pdcp/pdcp_entity.h"
 #include <map>
 #include <numeric>
 
@@ -79,12 +79,18 @@ protected:
   // Helper functions.
   float bytes_to_kbits(float value);
 
+  bool handle_no_meas_data_available(const std::vector<asn1::e2sm::ue_id_c>&        ues,
+                                     std::vector<asn1::e2sm::meas_record_item_c>&   items,
+                                     asn1::e2sm::meas_record_item_c::types::options value_type);
+
   // Measurement getter functions.
   metric_meas_getter_func_t get_pdcp_reordering_delay_ul;
 
   srslog::basic_logger& logger;
 
-  std::map<std::string, e2sm_kpm_supported_metric_t> supported_metrics;
+  std::map<std::string, e2sm_kpm_supported_metric_t>     supported_metrics;
+  std::map<uint32_t, std::deque<pdcp_metrics_container>> ue_aggr_pdcp_metrics;
+  const uint32_t                                         max_pdcp_metrics = 10;
 };
 
 class e2sm_kpm_cu_cp_meas_provider_impl : public e2sm_kpm_cu_meas_provider_impl

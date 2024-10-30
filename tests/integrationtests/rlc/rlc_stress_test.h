@@ -63,7 +63,7 @@ public:
     auto m = pdcp_metrics_notifier.metrics_list.back();
     return m;
   }
-  rlc_metrics            get_rlc_metrics() { return rlc->get_metrics(); }
+  rlc_metrics get_rlc_metrics() { return rlc->get_metrics(); }
 
   // Mutex and condition variables for stopping workers
   std::mutex              mutex_pcell;

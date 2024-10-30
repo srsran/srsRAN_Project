@@ -144,7 +144,7 @@ int main(int argc, char** argv)
   sec_cfg.integ_algo  = static_cast<security::integrity_algorithm>(args.algo);
   sec_cfg.cipher_algo = static_cast<security::ciphering_algorithm>(args.algo);
 
-  pdcp_tx_gen_frame frame = {};
+  pdcp_tx_gen_frame                        frame = {};
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
       std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{100}, nullptr, worker);
   // Create PDCP entities

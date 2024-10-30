@@ -43,12 +43,19 @@ public:
 
   void add_t_reordering_timeouts(uint32_t num_timeouts_) { metrics.num_t_reordering_timeouts += num_timeouts_; }
 
+  void add_reordering_delay_us(uint32_t reordering_delay_us_)
+  {
+    metrics.reordering_delay_us += reordering_delay_us_;
+    metrics.reordering_counter++;
+  }
+
   pdcp_rx_metrics_container get_metrics() { return metrics; }
 
   pdcp_rx_metrics_container get_metrics_and_reset()
   {
-    pdcp_rx_metrics_container   ret = metrics;
-    metrics                         = {};
+    pdcp_rx_metrics_container ret = metrics;
+    ret.counter++;
+    metrics = {};
     return ret;
   }
 

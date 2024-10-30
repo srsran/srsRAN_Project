@@ -182,7 +182,7 @@ protected:
   security::sec_128_as_config sec_cfg = {};
 
   // Default max COUNT
-  const pdcp_max_count default_max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+  const pdcp_max_count       default_max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
   mock_pdcp_metrics_notifier metrics_notif;
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
   std::unique_ptr<pdcp_entity_tx>          pdcp_tx;
