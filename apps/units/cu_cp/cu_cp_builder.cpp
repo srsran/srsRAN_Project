@@ -22,30 +22,6 @@
 
 using namespace srsran;
 
-static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metrics_config>& cu_cp_services_cfg,
-                                                 app_services::metrics_notifier&            metrics_notifier,
-                                                 const cu_cp_unit_config&                   cu_cp_unit_cfg,
-                                                 e2_cu_metrics_notifier&                    e2_notifier)
-{
-  pdcp_metrics_notifier* out = nullptr;
-
-  // Do not instantiate the metrics if the E2 is not enabled.
-  if (!cu_cp_unit_cfg.e2_cfg.enable_unit_e2) {
-    return out;
-  }
-
-  auto metrics_generator                    = std::make_unique<pdcp_metrics_producer_impl>(metrics_notifier);
-  out                                       = &(*metrics_generator);
-  app_services::metrics_config& metrics_cfg = cu_cp_services_cfg.emplace_back();
-  metrics_cfg.metric_name                   = pdcp_metrics_properties_impl().name();
-  metrics_cfg.callback                      = pdcp_metrics_callback;
-  metrics_cfg.producers.push_back(std::move(metrics_generator));
-
-  metrics_cfg.consumers.push_back(std::make_unique<pdcp_metrics_consumer_e2>(e2_notifier));
-
-  return out;
-}
-
 cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies)
 {
   srsran_assert(dependencies.cu_cp_executor, "Invalid CU-CP executor");
@@ -84,11 +60,6 @@ cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_bu
   }
 
   cu_cp_unit cu_cmd_wrapper;
-  cu_cp_cfg.pdcp_metric_notifier = build_pdcp_metrics(cu_cmd_wrapper.metrics,
-                                                      *dependencies.metrics_notifier,
-                                                      cu_cp_unit_cfg,
-                                                      e2_metric_connectors->get_e2_metric_notifier(0));
-
   cu_cmd_wrapper.unit =
       std::make_unique<cu_cp_wrapper>(std::move(n2_clients), std::move(e2_metric_connectors), create_cu_cp(cu_cp_cfg));
 
