@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/mac/lcid_dl_sch.h"
 #include "srsran/mac/mac_pdu_format.h"
+#include "srsran/ran/lcid_dl_sch.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include <queue>
