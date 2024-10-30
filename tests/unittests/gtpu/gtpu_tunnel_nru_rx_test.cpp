@@ -188,6 +188,7 @@ TEST_F(gtpu_tunnel_nru_rx_test, entity_creation)
 {
   // create Rx entity
   gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config rx_cfg = {};
+  rx_cfg.node                                              = nru_node::cu_up;
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
 
   rx = std::make_unique<gtpu_tunnel_nru_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower);
@@ -200,6 +201,7 @@ TEST_F(gtpu_tunnel_nru_rx_test, rx_no_sn)
 {
   // create Rx entity
   gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config rx_cfg = {};
+  rx_cfg.node                                              = nru_node::du;
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
 
   rx = std::make_unique<gtpu_tunnel_nru_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower);
