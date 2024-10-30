@@ -11,8 +11,8 @@
 #include "cu_up_builder.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/worker_manager.h"
-#include "apps/units/cu_cp/metrics/cu_cp_pdcp_metrics_consumers.h"
-#include "apps/units/cu_cp/metrics/cu_cp_pdcp_metrics_producer.h"
+#include "apps/units/cu_up/metrics/cu_up_pdcp_metrics_consumers.h"
+#include "apps/units/cu_up/metrics/cu_up_pdcp_metrics_producer.h"
 #include "cu_up_unit_config.h"
 #include "cu_up_unit_config_translators.h"
 #include "srsran/cu_up/cu_up_factory.h"
@@ -23,7 +23,7 @@ using namespace srsran;
 using e2_cu_metrics_connector_manager =
     e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
 
-static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metrics_config>& cu_cp_services_cfg,
+static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metrics_config>& cu_up_services_cfg,
                                                  app_services::metrics_notifier&            metrics_notifier,
                                                  bool                                       e2_enabled,
                                                  e2_cu_metrics_notifier&                    e2_notifier)
@@ -37,7 +37,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metri
 
   auto metrics_generator                    = std::make_unique<pdcp_metrics_producer_impl>(metrics_notifier);
   out                                       = &(*metrics_generator);
-  app_services::metrics_config& metrics_cfg = cu_cp_services_cfg.emplace_back();
+  app_services::metrics_config& metrics_cfg = cu_up_services_cfg.emplace_back();
   metrics_cfg.metric_name                   = pdcp_metrics_properties_impl().name();
   metrics_cfg.callback                      = pdcp_metrics_callback;
   metrics_cfg.producers.push_back(std::move(metrics_generator));

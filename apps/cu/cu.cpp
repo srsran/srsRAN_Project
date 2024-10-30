@@ -333,12 +333,8 @@ int main(int argc, char** argv)
   srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
 
   // Create console helper object for commands and metrics printing.
-  app_services::stdin_command_dispatcher command_parser(*epoll_broker, cu_cp_obj_and_cmds.commands);
-
-  app_services::metrics_manager metrics_mngr(
-      srslog::fetch_basic_logger("CU"), *workers.metrics_hub_exec, cu_cp_obj_and_cmds.metrics);
-  // Connect the forwarder to the metrics manager.
-  metrics_notifier_forwarder.connect(metrics_mngr);
+  app_services::stdin_command_dispatcher    command_parser(*epoll_broker, cu_cp_obj_and_cmds.commands);
+  std::vector<app_services::metrics_config> metrics_configs = std::move(cu_cp_obj_and_cmds.metrics);
 
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());
@@ -369,6 +365,14 @@ int main(int argc, char** argv)
   cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
   auto cu_up_obj_wrapper = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
+  for (auto& metric : cu_up_obj_wrapper.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
+  app_services::metrics_manager metrics_mngr(
+      srslog::fetch_basic_logger("CU"), *workers.metrics_hub_exec, metrics_configs);
+  // Connect the forwarder to the metrics manager.
+  metrics_notifier_forwarder.connect(metrics_mngr);
+
   cu_up_obj_wrapper.unit->start();
   {
     app_services::application_message_banners app_banner(app_name);

@@ -8,8 +8,8 @@
  *
  */
 
-#include "cu_cp_pdcp_metrics_producer.h"
-#include "cu_cp_pdcp_metrics.h"
+#include "cu_up_pdcp_metrics_producer.h"
+#include "cu_up_pdcp_metrics.h"
 
 using namespace srsran;
 

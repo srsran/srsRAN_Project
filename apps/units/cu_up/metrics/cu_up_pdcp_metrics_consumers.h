@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "cu_cp_pdcp_metrics.h"
+#include "cu_up_pdcp_metrics.h"
 
 namespace srsran {
 class pdcp_metrics_notifier;
 
-/// Consumer for the E2 RLC metrics.
+/// Consumer for the E2 PDCP metrics.
 class pdcp_metrics_consumer_e2 : public app_services::metrics_consumer
 {
 public:

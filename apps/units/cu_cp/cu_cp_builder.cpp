@@ -11,8 +11,6 @@
 #include "cu_cp_builder.h"
 #include "apps/services/metrics/metrics_config.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
-#include "apps/units/cu_cp/metrics/cu_cp_pdcp_metrics_consumers.h"
-#include "apps/units/cu_cp/metrics/cu_cp_pdcp_metrics_producer.h"
 #include "cu_cp_commands.h"
 #include "cu_cp_config_translators.h"
 #include "cu_cp_unit_config.h"
