@@ -16,6 +16,7 @@
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
@@ -430,6 +431,12 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().p0_nominal_with_grant =
         base_cell.pusch_cfg.p0_nominal_with_grant;
     out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().msg3_delta_power = base_cell.pusch_cfg.msg3_delta_power;
+
+    // Determine the PUSCH transmission maximum number of layers. Selects the most limiting factor among the physical
+    // layer, number of antennas and configured maximum rank.
+    pusch_processor_phy_capabilities phy_capabilities = get_pusch_processor_phy_capabilities();
+    out_cell.pusch_max_nof_layers =
+        std::min(cell.cell.nof_antennas_ul, std::min(phy_capabilities.max_nof_layers, cell.cell.pusch_cfg.max_rank));
 
     if (config.ntn_cfg.has_value()) {
       out_cell.ntn_cs_koffset = config.ntn_cfg.value().cell_specific_koffset;

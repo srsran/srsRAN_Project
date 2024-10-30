@@ -97,6 +97,28 @@ static void set_pusch_mcs_table(serving_cell_config& cell_cfg, pusch_mcs_table m
   }
 }
 
+// Configure dedicated UE configuration to set UL-MIMO related parameters.
+static void set_ul_mimo(serving_cell_config&      cell_cfg,
+                        unsigned                  max_rank,
+                        unsigned                  nof_srs_ports,
+                        tx_scheme_codebook_subset codebook_subset)
+{
+  // Skip if the UL configuration is not present.
+  if (SRSRAN_UNLIKELY(!cell_cfg.ul_config.has_value() || !cell_cfg.ul_config->init_ul_bwp.pusch_cfg ||
+                      !cell_cfg.ul_config->init_ul_bwp.srs_cfg)) {
+    return;
+  }
+
+  // Prepare codebook transmission parameters.
+  cell_cfg.ul_config->init_ul_bwp.pusch_cfg->tx_cfg =
+      tx_scheme_codebook{.max_rank = max_rank, .codebook_subset = codebook_subset};
+
+  // Force the number of ports for all SRS resources to the maximum the UE supports.
+  for (auto& srs_res : cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list) {
+    srs_res.nof_ports = static_cast<srs_config::srs_resource::nof_srs_ports>(nof_srs_ports);
+  }
+}
+
 ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_, srslog::basic_logger& logger_) :
   base_cell_cfg_list(cell_cfg_list_), logger(logger_)
 {
@@ -120,6 +142,10 @@ void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const byte
 
   // Enable 256QAM for PUSCH, if supported.
   set_pusch_mcs_table(pcell_cfg, select_pusch_mcs_table(cell_idx));
+
+  // Setup UL MIMO parameters.
+  set_ul_mimo(
+      pcell_cfg, select_pusch_max_rank(cell_idx), select_srs_nof_ports(cell_idx), select_tx_codebook_subset(cell_idx));
 }
 
 bool ue_capability_manager::decode_ue_capability_list(const byte_buffer& ue_cap_rat_list)
@@ -198,41 +224,39 @@ pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t ce
 
 tx_scheme_codebook_subset ue_capability_manager::select_tx_codebook_subset(du_cell_index_t cell_idx) const
 {
-  nr_band     band        = base_cell_cfg_list[cell_idx].ul_carrier.band;
-  const auto& base_ul_cfg = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
+  nr_band band = base_cell_cfg_list[cell_idx].ul_carrier.band;
 
-  // Default to non-coherent, if no PUSCH config or no UE capabilities decoded yet.
-  if (not base_ul_cfg.has_value() or not base_ul_cfg->init_ul_bwp.pusch_cfg.has_value() or not ue_caps.has_value()) {
-    return tx_scheme_codebook_subset::non_coherent;
+  // If UE capabilities or the band are not available, return default value.
+  if (not ue_caps.has_value() || ue_caps->bands.count(band) == 0) {
+    return ue_capability_summary::default_pusch_tx_coherence;
   }
 
-  // If the band capability is present, select the codebook from this band.
-  if (ue_caps->bands.count(band)) {
-    return ue_caps->bands.at(band).pusch_tx_coherence;
-  }
-
-  // Find the band with the most limiting transmit codebook subset across all the bands.
-  const auto min_tx_codebook_subset =
-      std::min_element(ue_caps->bands.begin(), ue_caps->bands.end(), [](const auto& lhs, const auto& rhs) {
-        // The most limiting codebook subset has the greater integer value.
-        return rhs.second.pusch_tx_coherence > lhs.second.pusch_tx_coherence;
-      });
-
-  // Select the most limiting transmit subset if the band list is not emtpy.
-  if (min_tx_codebook_subset != ue_caps->bands.end()) {
-    return min_tx_codebook_subset->second.pusch_tx_coherence;
-  }
-
-  // Otherwise, default to non-coherent.
-  return tx_scheme_codebook_subset::non_coherent;
+  return ue_caps->bands.at(band).pusch_tx_coherence;
 }
 
-unsigned ue_capability_manager::select_srs_nof_ports() const
+unsigned ue_capability_manager::select_srs_nof_ports(du_cell_index_t cell_idx) const
 {
-  // Default to one port if the UE capabilities are not present.
-  if (not ue_caps.has_value()) {
-    return 1;
+  nr_band band = base_cell_cfg_list[cell_idx].ul_carrier.band;
+
+  // If UE capabilities or the band are not available, return default value.
+  if (not ue_caps.has_value() || ue_caps->bands.count(band) == 0) {
+    return ue_capability_summary::default_nof_srs_tx_ports;
   }
 
-  return ue_caps->nof_srs_tx_ports;
+  return ue_caps->bands.at(band).nof_srs_tx_ports;
+}
+
+unsigned ue_capability_manager::select_pusch_max_rank(du_cell_index_t cell_idx) const
+{
+  nr_band band = base_cell_cfg_list[cell_idx].ul_carrier.band;
+
+  // Configured maximum number of layers.
+  unsigned pusch_max_rank = base_cell_cfg_list[cell_idx].pusch_max_nof_layers;
+
+  // If UE capabilities or the band are not available, return default value.
+  if (not ue_caps.has_value() || ue_caps->bands.count(band) == 0) {
+    return std::min(pusch_max_rank, ue_capability_summary::default_pusch_max_rank);
+  }
+
+  return std::min(pusch_max_rank, ue_caps->bands.at(band).pusch_max_rank);
 }

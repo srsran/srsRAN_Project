@@ -646,6 +646,13 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
       ->default_str("qam64")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
   add_option(app,
+             "--max_rank",
+             pusch_params.max_rank,
+             "Maximum number of PUSCH transmission layers. The actual maximum is limited by the number of receive "
+             "ports and UE capabilities.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 4));
+  add_option(app,
              "--msg3_delta_preamble",
              pusch_params.msg3_delta_preamble,
              "msg3-DeltaPreamble, Power offset between msg3 and RACH preamble transmission")

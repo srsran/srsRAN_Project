@@ -15,10 +15,10 @@ using namespace srsran;
 // Current range of supported number of layers.
 static constexpr interval<unsigned, true> nof_layers_range(1, 1);
 
-unsigned srsran::get_pusch_antenna_port_mapping_row_index(unsigned         nof_layers,
-                                                          bool             transform_precoder,
-                                                          dmrs_config_type dmrs_cfg_type,
-                                                          dmrs_max_length  dmrs_max_len)
+SRSRAN_WEAK_SYMB unsigned srsran::get_pusch_antenna_port_mapping_row_index(unsigned         nof_layers,
+                                                                           bool             transform_precoder,
+                                                                           dmrs_config_type dmrs_cfg_type,
+                                                                           dmrs_max_length  dmrs_max_len)
 {
   srsran_assert(nof_layers_range.contains(nof_layers),
                 "The number of layers (i.e., {}) is out of the range {}.",
@@ -38,13 +38,14 @@ unsigned srsran::get_pusch_antenna_port_mapping_row_index(unsigned         nof_l
   return 2;
 }
 
-unsigned srsran::get_pusch_precoding_info_row_index(unsigned                                      nof_layers,
-                                                    unsigned                                      max_rank,
-                                                    srs_resource_configuration::one_two_four_enum nof_srs_ports,
-                                                    bool                                          transform_precoder,
-                                                    dmrs_config_type                              dmrs_cfg_type,
-                                                    dmrs_max_length                               dmrs_max_len,
-                                                    unsigned                                      tpmi)
+SRSRAN_WEAK_SYMB unsigned
+srsran::get_pusch_precoding_info_row_index(unsigned                                      nof_layers,
+                                           unsigned                                      max_rank,
+                                           srs_resource_configuration::one_two_four_enum nof_srs_ports,
+                                           bool                                          transform_precoder,
+                                           dmrs_config_type                              dmrs_cfg_type,
+                                           dmrs_max_length                               dmrs_max_len,
+                                           unsigned                                      tpmi)
 {
   static constexpr interval<unsigned, true> max_rank_range(1, 4);
   srsran_assert(

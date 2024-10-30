@@ -68,7 +68,7 @@ public:
   bool handle_csi_report(const csi_report_data& csi_report);
 
   /// Update UE with the latest Sounding Reference Signal (SRS) channel matrix.
-  void update_srs_channel_matrix(const srs_channel_matrix& channel_matrix, tx_scheme_codebook_subset cb_subset);
+  void update_srs_channel_matrix(const srs_channel_matrix& channel_matrix, tx_scheme_codebook codebook_cfg);
 
   /// Update UE with the latest PHR for a given cell.
   void handle_phr(const cell_ph_report& phr);

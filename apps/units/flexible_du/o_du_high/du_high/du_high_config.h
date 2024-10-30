@@ -168,6 +168,8 @@ struct du_high_unit_pusch_config {
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
   std::vector<unsigned> rv_sequence = {0};
+  /// Maximum rank. Limits the number of layers for PUSCH transmissions.
+  unsigned max_rank = 4;
   /// MCS table to use for PUSCH
   pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
   /// \c msg3-DeltaPreamble, TS 38.331. Values: {-1,...,6}.

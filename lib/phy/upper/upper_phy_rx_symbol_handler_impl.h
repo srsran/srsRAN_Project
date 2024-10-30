@@ -34,7 +34,7 @@ class rx_payload_buffer_pool
   /// Maximum number of slots to store.
   static constexpr size_t nof_slots = 40U;
   /// Maximum number of bits that could potentially be allocated in a slot.
-  static constexpr units::bits max_buffer_size = units::bits(MAX_RB * 156 * 8);
+  static constexpr units::bits max_buffer_size = units::bits(MAX_RB * 156 * 8 * 2);
   /// Minimum block size. It ensures that the payload offsets are selected using multiples of blocks.
   static constexpr unsigned min_block_size = 64;
 
@@ -45,7 +45,8 @@ public:
     // Convert the maximum buffer size from bits to bytes for comparison and allocation.
     static constexpr units::bytes max_buffer_size_bytes = max_buffer_size.truncate_to_bytes();
 
-    srsran_assert(size <= max_buffer_size_bytes, "Buffer size (i.e., {}) exceeds maximum {}.", size, pool.size());
+    srsran_assert(
+        size <= max_buffer_size_bytes, "Buffer size (i.e., {}) exceeds maximum {}.", size, max_buffer_size_bytes);
 
     // Round the number of consumed bytes to the next block.
     size_t count = divide_ceil(size.value(), min_block_size) * min_block_size;

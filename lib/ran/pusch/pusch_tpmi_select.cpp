@@ -296,11 +296,12 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_2layer(const srs_c
 
 pusch_tpmi_select_info srsran::get_tpmi_select_info(const srs_channel_matrix& channel,
                                                     float                     noise_variance,
+                                                    unsigned                  max_rank,
                                                     tx_scheme_codebook_subset codebook_subset)
 {
   unsigned nof_tx_ports   = channel.get_nof_tx_ports();
   unsigned nof_rx_ports   = channel.get_nof_rx_ports();
-  unsigned max_nof_layers = std::min(nof_tx_ports, nof_rx_ports);
+  unsigned max_nof_layers = std::min(std::min(nof_tx_ports, nof_rx_ports), max_rank);
 
   static_vector<pusch_tpmi_select_info::tpmi_info, pusch_constants::MAX_NOF_LAYERS> info;
 

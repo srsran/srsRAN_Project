@@ -170,12 +170,12 @@ public:
     return cell_cfg_ded.ul_config->init_ul_bwp.pusch_cfg->trans_precoder == pusch_config::transform_precoder::enabled;
   }
 
-  /// \brief Gets the PUSCH transmit scheme codebook subset.
+  /// \brief Gets the PUSCH transmit scheme codebook configuration.
   ///
-  /// The codebook subset is selection procedure is described in TS 38.214 Section 6.1.1.1.
+  /// The codebook subset selection procedure is described in TS 38.214 Section 6.1.1.1.
   ///
   /// \remark An assertion is triggered if the transmission scheme is not present or not set to codebook.
-  tx_scheme_codebook_subset get_pusch_codebook_subset() const
+  const tx_scheme_codebook& get_pusch_codebook_config() const
   {
     srsran_assert(cell_cfg_ded.ul_config.has_value(), "Missing dedicated UL configuration.");
     srsran_assert(cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.has_value(),
@@ -185,29 +185,7 @@ public:
     srsran_assert(std::holds_alternative<tx_scheme_codebook>(
                       cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.value().tx_cfg.value()),
                   "PUSCH Transmission scheme must be set to codebook.");
-    const auto& tx_config =
-        std::get<tx_scheme_codebook>(cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.value().tx_cfg.value());
-    return tx_config.codebook_subset;
-  }
-
-  /// \brief Gets the PUSCH maximum number of layers.
-  ///
-  /// The maximum number of layers selection procedudre is described in TS 38.214 Section 6.1.1.1.
-  ///
-  /// \remark An assertion is triggered if the transmission scheme is not present or not set to codebook.
-  uint8_t get_pusch_max_rank() const
-  {
-    srsran_assert(cell_cfg_ded.ul_config.has_value(), "Missing dedicated UL configuration.");
-    srsran_assert(cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.has_value(),
-                  "Missing dedicated PUSCH configuration.");
-    srsran_assert(cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.value().tx_cfg.has_value(),
-                  "Missing transmit configuration.");
-    srsran_assert(std::holds_alternative<tx_scheme_codebook>(
-                      cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.value().tx_cfg.value()),
-                  "PUSCH Transmission scheme must be set to codebook.");
-    const auto& tx_config =
-        std::get<tx_scheme_codebook>(cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.value().tx_cfg.value());
-    return tx_config.max_rank.to_uint();
+    return std::get<tx_scheme_codebook>(cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.value().tx_cfg.value());
   }
 
 private:

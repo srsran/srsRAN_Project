@@ -314,6 +314,8 @@ struct upper_phy_config {
   unsigned ul_bw_rb;
   /// Request headroom size in slots.
   unsigned nof_slots_request_headroom;
+  /// Maximum number of layers for PUSCH transmissions.
+  unsigned pusch_max_nof_layers;
   /// List of active subcarrier spacing, indexed by numerology.
   std::array<bool, to_numerology_value(subcarrier_spacing::invalid)> active_scs;
   /// Receive buffer pool configuration.

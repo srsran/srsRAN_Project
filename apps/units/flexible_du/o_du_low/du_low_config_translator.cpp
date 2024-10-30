@@ -110,6 +110,7 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
     }
 
     upper_phy_cell.nof_slots_request_headroom = du_low.expert_phy_cfg.nof_slots_request_headroom;
+    upper_phy_cell.pusch_max_nof_layers       = cell.pusch_max_nof_layers;
     upper_phy_cell.log_level                  = du_low.loggers.phy_level;
     upper_phy_cell.enable_logging_broadcast   = du_low.loggers.broadcast_enabled;
     upper_phy_cell.rx_symbol_printer_filename = du_low.loggers.phy_rx_symbols_filename;

@@ -67,10 +67,12 @@ private:
 ///
 /// \param[in] channel         Channel coefficient matrix.
 /// \param[in] noise_variance  Linear noise variance.
+/// \param[in] max_rank        Maximum number of layers.
 /// \param[in] codebook_subset Transmission scheme codebook subset.
 /// \return The TPMI information given the channel coefficients and noise variance.
 pusch_tpmi_select_info get_tpmi_select_info(const srs_channel_matrix& channel,
                                             float                     noise_variance,
+                                            unsigned                  max_rank,
                                             tx_scheme_codebook_subset codebook_subset);
 
 } // namespace srsran
