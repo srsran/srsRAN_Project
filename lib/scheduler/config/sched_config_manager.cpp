@@ -215,7 +215,10 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std
     }
 
     // Stores new UE config and deletes old config.
-    ue_cfg_list[ue_index] = std::move(next_cfg);
+    ue_cfg_list[ue_index].swap(next_cfg);
+    if (not ues_to_rem.try_push(std::move(next_cfg))) {
+      logger.warning("Failed to offload UE config removal. Performance may be affected");
+    }
 
     // Notifies MAC that event is complete.
     config_notifier.on_ue_config_complete(ue_index, true);
