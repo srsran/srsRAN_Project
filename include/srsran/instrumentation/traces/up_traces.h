@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/support/event_tracing.h"
+#include "srsran/support/tracing/event_tracing.h"
 
 namespace srsran {
 

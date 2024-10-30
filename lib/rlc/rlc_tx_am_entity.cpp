@@ -14,8 +14,8 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
+#include "srsran/support/tracing/event_tracing.h"
 
 using namespace srsran;
 

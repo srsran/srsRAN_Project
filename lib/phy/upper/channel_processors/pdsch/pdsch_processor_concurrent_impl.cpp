@@ -14,7 +14,7 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/ran/ptrs/ptrs_pattern.h"
-#include "srsran/support/event_tracing.h"
+#include "srsran/support/tracing/event_tracing.h"
 
 using namespace srsran;
 

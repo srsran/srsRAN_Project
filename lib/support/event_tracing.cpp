@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/support/event_tracing.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/unique_thread.h"

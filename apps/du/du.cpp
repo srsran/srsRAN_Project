@@ -10,8 +10,8 @@
 
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/support/cpu_features.h"
-#include "srsran/support/event_tracing.h"
 #include "srsran/support/signal_handling.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
 

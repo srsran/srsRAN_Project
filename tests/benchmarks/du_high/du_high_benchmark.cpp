@@ -44,8 +44,8 @@
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/event_tracing.h"
 #include "srsran/support/test_utils.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include <pthread.h>
 
 using namespace srsran;
