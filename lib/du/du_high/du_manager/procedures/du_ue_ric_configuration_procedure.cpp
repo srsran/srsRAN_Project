@@ -79,15 +79,31 @@ async_task<mac_ue_reconfiguration_response> du_ue_ric_configuration_procedure::h
   rrm_policy_ratio_group dummy   = {};
   res_alloc_cfg.rrm_policy_group = req.rrm_policy_group.has_value() ? req.rrm_policy_group.value() : dummy;
   // TODO remove when RRM group support is added to scheduler.
-  res_alloc_cfg.pdsch_grant_size_limits = {
-      req.rrm_policy_group.has_value() ? (req.rrm_policy_group.value().min_prb_policy_ratio.has_value()
-                                              ? req.rrm_policy_group.value().min_prb_policy_ratio.value()
-                                              : 0)
-                                       : 0,
-      req.rrm_policy_group.has_value() ? (req.rrm_policy_group.value().max_prb_policy_ratio.has_value()
-                                              ? req.rrm_policy_group.value().max_prb_policy_ratio.value()
-                                              : MAX_NOF_PRBS)
-                                       : MAX_NOF_PRBS};
+  int min_prb_limit = 0;
+  int max_prb_limit = MAX_NOF_PRBS;
+  if (req.rrm_policy_group.has_value()) {
+    unsigned int nof_prbs = get_max_Nprb(du_params.ran.cells[0].dl_carrier.carrier_bw_mhz,
+                                         du_params.ran.cells[0].scs_common,
+                                         band_helper::get_freq_range(du_params.ran.cells[0].dl_carrier.band));
+
+    min_prb_limit = req.rrm_policy_group.value().min_prb_policy_ratio.has_value()
+                        ? req.rrm_policy_group.value().min_prb_policy_ratio.value()
+                        : 0;
+    max_prb_limit = req.rrm_policy_group.value().max_prb_policy_ratio.has_value()
+                        ? req.rrm_policy_group.value().max_prb_policy_ratio.value()
+                        : MAX_NOF_PRBS;
+
+    min_prb_limit = std::max(0, std::min(min_prb_limit, 100));
+    max_prb_limit = std::max(0, std::min(max_prb_limit, 100));
+
+    if (max_prb_limit < min_prb_limit) {
+      std::swap(max_prb_limit, min_prb_limit);
+    }
+
+    min_prb_limit = static_cast<int>((1.0 * min_prb_limit / 100) * nof_prbs);
+    max_prb_limit = static_cast<int>((1.0 * max_prb_limit / 100) * nof_prbs);
+  }
+  res_alloc_cfg.pdsch_grant_size_limits = {min_prb_limit, max_prb_limit};
 
   res_alloc_cfg.max_pdsch_harq_retxs = req.num_harq_retransmissions.has_value()
                                            ? req.num_harq_retransmissions.value()
