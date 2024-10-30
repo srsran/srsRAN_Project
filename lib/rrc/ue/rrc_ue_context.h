@@ -20,9 +20,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// RRC states (3GPP 38.331 v15.5.1 Sec 4.2.1)
-enum class rrc_state { idle = 0, connected, connected_inactive };
-
 /// Holds the RRC UE context used by the UE object and all its procedures.
 class rrc_ue_context_t
 {
