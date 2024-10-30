@@ -28,6 +28,10 @@ struct cu_up_unit_pcap_config {
     std::string filename;
     bool        enabled = false;
   } e1ap;
+  struct {
+    std::string filename;
+    bool        enabled = false;
+  } e2ap;
 
   /// When using the gNB app, there is no point in instantiating
   /// E1 pcaps twice. This function force disables them in the CU-UP.

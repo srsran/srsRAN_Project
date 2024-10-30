@@ -37,6 +37,7 @@ static void fill_cu_up_pcap_section(YAML::Node node, const cu_up_unit_pcap_confi
   node["f1u_enable"]    = config.f1u.enabled;
   node["e1ap_filename"] = config.e1ap.filename;
   node["e1ap_enable"]   = config.e1ap.enabled;
+  node["e2ap_enable"]   = config.e2ap.enabled;
 }
 
 static void fill_cu_up_log_section(YAML::Node node, const cu_up_unit_logger_config& config)

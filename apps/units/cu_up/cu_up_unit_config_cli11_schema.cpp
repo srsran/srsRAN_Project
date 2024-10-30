@@ -71,6 +71,8 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
 
 static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pcap_params)
 {
+  add_option(app, "--e2ap_cu_up_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")
+      ->capture_default_str();
   add_option(app, "--n3_filename", pcap_params.n3.filename, "N3 GTP-U PCAP file output path")->capture_default_str();
   add_option(app, "--n3_enable", pcap_params.n3.enabled, "Enable N3 GTP-U packet capture")->always_capture_default();
   add_option(app, "--f1u_filename", pcap_params.f1u.filename, "F1-U GTP-U PCAP file output path")
