@@ -165,7 +165,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   rrc_ue->generate_meas_config(),
                                   false,
                                   false,
-                                  {},
+                                  std::nullopt,
                                   {},
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", modify_request.ue_index, name());
