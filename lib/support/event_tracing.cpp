@@ -341,31 +341,31 @@ void file_event_tracer<true>::operator<<(span<const rusage_trace_event> events) 
 }
 
 template <>
-void logger_event_tracer<true>::operator<<(const trace_event& event) const
+void logger_event_tracer<true>::push(const trace_event& event) const
 {
-  log_ch("{:l}", trace_event_extended{event, std::chrono::duration_cast<trace_duration>(now() - event.start_tp)});
+  (*log_ch)("{:l}", trace_event_extended{event, std::chrono::duration_cast<trace_duration>(now() - event.start_tp)});
 }
 
 template <>
-void logger_event_tracer<true>::operator<<(const trace_thres_event& event) const
+void logger_event_tracer<true>::push(const trace_thres_event& event) const
 {
   const trace_duration dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {
-    log_ch("{:l}", trace_event_extended{trace_event{event.name, event.start_tp}, dur});
+    (*log_ch)("{:l}", trace_event_extended{trace_event{event.name, event.start_tp}, dur});
   }
 }
 
 template <>
-void logger_event_tracer<true>::operator<<(const instant_trace_event& event) const
+void logger_event_tracer<true>::push(const instant_trace_event& event) const
 {
-  log_ch("{:l}", instant_trace_event_extended{event});
+  (*log_ch)("{:l}", instant_trace_event_extended{event});
 }
 
 template <>
-void logger_event_tracer<true>::operator<<(const rusage_trace_event& event) const
+void logger_event_tracer<true>::push(const rusage_trace_event& event) const
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
-  log_ch(
+  (*log_ch)(
       "{:l}",
       rusage_trace_event_extended{trace_event{event.name, event.start_tp},
                                   dur,
@@ -373,34 +373,35 @@ void logger_event_tracer<true>::operator<<(const rusage_trace_event& event) cons
 }
 
 template <>
-void logger_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) const
+void logger_event_tracer<true>::push(const rusage_thres_trace_event& event) const
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {
-    log_ch("{:l}",
-           rusage_trace_event_extended{trace_event{event.name, event.start_tp},
-                                       dur,
-                                       resource_usage::now().value_or(resource_usage::snapshot{0, 0}) -
-                                           event.rusg_capture});
+    (*log_ch)("{:l}",
+              rusage_trace_event_extended{trace_event{event.name, event.start_tp},
+                                          dur,
+                                          resource_usage::now().value_or(resource_usage::snapshot{0, 0}) -
+                                              event.rusg_capture});
   }
 }
 
 template <>
-void logger_event_tracer<true>::operator<<(span<const rusage_trace_event> events) const
+void logger_event_tracer<true>::push(span<const rusage_trace_event> events) const
 {
   // Log total
-  log_ch("{:l}",
-         rusage_trace_event_extended{
-             trace_event{events.front().name, events.front().start_tp},
-             std::chrono::duration_cast<trace_duration>(events.back().start_tp - events.front().start_tp),
-             events.back().rusg_capture - events.front().rusg_capture});
+  (*log_ch)("{:l}",
+            rusage_trace_event_extended{
+                trace_event{events.front().name, events.front().start_tp},
+                std::chrono::duration_cast<trace_duration>(events.back().start_tp - events.front().start_tp),
+                events.back().rusg_capture - events.front().rusg_capture});
   if (events.size() > 2) {
     auto prev_it = events.begin();
     for (auto it = prev_it + 1; it != events.end(); prev_it = it++) {
-      log_ch("{:l}",
-             rusage_trace_event_extended{trace_event{it->name, prev_it->start_tp},
-                                         std::chrono::duration_cast<trace_duration>(it->start_tp - prev_it->start_tp),
-                                         it->rusg_capture - prev_it->rusg_capture});
+      (*log_ch)(
+          "{:l}",
+          rusage_trace_event_extended{trace_event{it->name, prev_it->start_tp},
+                                      std::chrono::duration_cast<trace_duration>(it->start_tp - prev_it->start_tp),
+                                      it->rusg_capture - prev_it->rusg_capture});
     }
   }
 }

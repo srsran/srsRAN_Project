@@ -21,13 +21,13 @@
 #include "config/cell_configuration.h"
 #include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_result_logger.h"
-#include "logging/scheduler_tracer.h"
 #include "pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "pucch_scheduling/pucch_allocator_impl.h"
 #include "pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "uci_scheduling/uci_allocator_impl.h"
 #include "ue_scheduling/ue_scheduler.h"
 #include "srsran/scheduler/config/scheduler_config.h"
+#include "srsran/support/tracing/rusage_trace_recorder.h"
 
 namespace srsran {
 
@@ -82,7 +82,7 @@ private:
   paging_scheduler              pg_sch;
 
   // Tracer of resource usage (e.g. context switches)
-  scheduler_slot_tracer res_usage_tracer;
+  rusage_trace_recorder<logger_event_tracer<true>> res_usage_tracer;
 };
 
 } // namespace srsran

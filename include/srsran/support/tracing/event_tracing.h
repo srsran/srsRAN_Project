@@ -166,25 +166,35 @@ template <bool Enabled = true>
 class logger_event_tracer
 {
 public:
-  explicit logger_event_tracer(srslog::log_channel& log_ch_) : log_ch(log_ch_) {}
+  explicit logger_event_tracer(srslog::log_channel* log_ch_) :
+    log_ch(log_ch_), enabled(log_ch != nullptr ? log_ch->enabled() : false)
+  {
+  }
 
-  static trace_point              now() { return trace_clock::now(); }
-  static resource_usage::snapshot rusage_now() { return resource_usage::now().value_or(null_rusage_snapshot); }
+  trace_point              now() const { return enabled ? trace_clock::now() : null_trace_point; }
+  resource_usage::snapshot rusage_now() const
+  {
+    return enabled ? resource_usage::now().value_or(null_rusage_snapshot) : null_rusage_snapshot;
+  }
 
-  void operator<<(const trace_event& event) const;
-
-  void operator<<(const trace_thres_event& event) const;
-
-  void operator<<(const instant_trace_event& event) const;
-
-  void operator<<(const rusage_trace_event& event) const;
-
-  void operator<<(const rusage_thres_trace_event& event) const;
-
-  void operator<<(span<const rusage_trace_event> events) const;
+  template <typename EventType>
+  void operator<<(const EventType& event) const
+  {
+    if (enabled) {
+      push(event);
+    }
+  }
 
 private:
-  srslog::log_channel& log_ch;
+  void push(const trace_event& ev) const;
+  void push(const trace_thres_event& event) const;
+  void push(const instant_trace_event& event) const;
+  void push(const rusage_trace_event& event) const;
+  void push(const rusage_thres_trace_event& event) const;
+  void push(span<const rusage_trace_event> events) const;
+
+  srslog::log_channel* log_ch;
+  const bool           enabled;
 };
 
 template <>

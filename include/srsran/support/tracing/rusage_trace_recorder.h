@@ -24,8 +24,9 @@ template <typename TracerType, bool Enabled = not std::is_base_of_v<detail::null
 class rusage_trace_recorder
 {
 public:
-  rusage_trace_recorder(TracerType& tracer_, trace_duration latency_thres_, unsigned max_sections) :
-    tracer(tracer_), thres(latency_thres_)
+  template <typename T = TracerType>
+  rusage_trace_recorder(T&& tracer_, trace_duration latency_thres_, unsigned max_sections) :
+    tracer(std::forward<T>(tracer_)), thres(latency_thres_)
   {
     // Add two extra positions for start and stop.
     trace_points.reserve(max_sections + 2);
@@ -67,7 +68,7 @@ public:
   }
 
 private:
-  TracerType&    tracer;
+  TracerType     tracer;
   trace_duration thres;
 
   std::vector<rusage_trace_event> trace_points;
@@ -88,5 +89,12 @@ public:
   void add_section(const char* /* unused */) {}
   void stop(const char* /* unused */) {}
 };
+
+template <typename TracerType>
+rusage_trace_recorder<TracerType>
+create_rusage_trace_recorder(TracerType&& tracer, trace_duration latency_thres, unsigned max_sections)
+{
+  return rusage_trace_recorder<TracerType>{std::forward<TracerType>(tracer), latency_thres, max_sections};
+}
 
 } // namespace srsran

@@ -118,7 +118,7 @@ TEST(event_tracing_test, recorder_test)
 {
   test_event_tracer tracer;
   tracer.set_log_style_format(true);
-  rusage_trace_recorder<test_event_tracer> recorder{tracer, std::chrono::microseconds{0}, 8};
+  auto recorder = create_rusage_trace_recorder(tracer, std::chrono::microseconds{0}, 8);
 
   recorder.start("total");
   recorder.add_section("section1");
