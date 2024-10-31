@@ -20,9 +20,6 @@
 
 using namespace srsran;
 
-using e2_cu_metrics_connector_manager =
-    e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
-
 static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metrics_config>& cu_up_services_cfg,
                                                  app_services::metrics_notifier&            metrics_notifier,
                                                  bool                                       e2_enabled,

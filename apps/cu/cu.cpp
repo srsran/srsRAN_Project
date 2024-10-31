@@ -157,7 +157,8 @@ static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_c
   if (cu_up_cfg.upf_cfg.bind_addr == "auto") {
     cu_up_cfg.upf_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
   }
-  cu_up_cfg.upf_cfg.no_core = cu_cp_cfg.amf_config.no_core;
+  cu_up_cfg.upf_cfg.no_core       = cu_cp_cfg.amf_config.no_core;
+  cu_up_cfg.pcap_cfg.e2ap.enabled = cu_up_cfg.e2_cfg.enable_unit_e2 && cu_up_cfg.pcap_cfg.e2ap.enabled;
 }
 
 int main(int argc, char** argv)
