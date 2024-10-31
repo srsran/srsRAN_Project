@@ -1091,8 +1091,10 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
       }
     }
     if (av_ue_sdu_latency_us) {
+      float av_ue_sdu_latency_ms = (av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size()) / 1e3; // Unit is 0.1 ms.
+      av_ue_sdu_latency_ms       = std::round(av_ue_sdu_latency_ms * 10.0f) / 10.0f;
       meas_record_item.set_real();
-      meas_record_item.real().value = av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size();
+      meas_record_item.real().value = av_ue_sdu_latency_ms;
       items.push_back(meas_record_item);
       meas_collected = true;
     } else {
@@ -1123,8 +1125,10 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
                           0,
                           [](size_t sum, const rlc_metrics& metric) { return sum + metric.tx.tx_high.num_sdus; });
       if (tot_sdu_latency_us) {
+        float av_ue_sdu_latency_ms = (tot_sdu_latency_us / tot_num_sdus) / 1e3; // Unit is 0.1 ms.
+        av_ue_sdu_latency_ms       = std::round(av_ue_sdu_latency_ms * 10.0f) / 10.0f;
         meas_record_item.set_real();
-        meas_record_item.real().value = tot_sdu_latency_us / tot_num_sdus;
+        meas_record_item.real().value = av_ue_sdu_latency_ms;
         items.push_back(meas_record_item);
         meas_collected = true;
       } else {
@@ -1171,7 +1175,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
     }
     if (av_ue_sdu_latency_us) {
       meas_record_item.set_real();
-      meas_record_item.real().value = (float)av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size();
+      meas_record_item.real().value = (av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size()) / 1e3; // Unit is ms.
       items.push_back(meas_record_item);
       meas_collected = true;
     } else {
@@ -1203,7 +1207,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
                           [](size_t sum, const rlc_metrics& metric) { return sum + metric.rx.num_sdus; });
       if (tot_sdu_latency) {
         meas_record_item.set_real();
-        meas_record_item.real().value = tot_sdu_latency / tot_num_sdus;
+        meas_record_item.real().value = (tot_sdu_latency / tot_num_sdus) / 1e3; // Unit is ms.
         items.push_back(meas_record_item);
         meas_collected = true;
       } else {
