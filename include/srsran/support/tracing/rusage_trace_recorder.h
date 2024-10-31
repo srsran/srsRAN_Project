@@ -31,6 +31,12 @@ public:
     trace_points.reserve(max_sections + 2);
   }
 
+  void set(trace_duration latency_thres_, unsigned max_sections)
+  {
+    thres = latency_thres_;
+    trace_points.reserve(max_sections + 2);
+  }
+
   void start(const char* record_name)
   {
     srsran_assert(trace_points.empty(), "Recorder has already started");
@@ -77,9 +83,10 @@ public:
   {
   }
 
-  void start_recording() {}
-  void tag_time_point(const char* name) {}
-  void stop_recording() {}
+  void set(trace_duration latency_thres_, unsigned max_sections) {}
+  void start(const char* /* unused */) {}
+  void add_section(const char* /* unused */) {}
+  void stop(const char* /* unused */) {}
 };
 
 } // namespace srsran
