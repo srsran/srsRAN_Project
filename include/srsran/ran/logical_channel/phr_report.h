@@ -34,7 +34,7 @@ enum class ph_field_type_t { type1, type2, type3 };
 /// UL Power Headroom Report (PHR) of a cell.
 struct cell_ph_report {
   /// Serving cell ID of the cell for which PH is reported. du_cell_index_t == 0 for SE-PHR.
-  du_cell_index_t serv_cell_id;
+  ue_cell_index_t serv_cell_id;
   /// PH type. For SE-PHR its type1.
   ph_field_type_t ph_type;
   /// Indicates the power headroom level in dB interval.
@@ -58,7 +58,7 @@ struct phr_report {
   /// \brief Sets Single-Entry PHR report.
   void set_se_phr(const cell_ph_report& cell_phr)
   {
-    srsran_assert(cell_phr.serv_cell_id == to_du_cell_index(0), "Invalid serving cell id set in SE-PHR.");
+    srsran_assert(cell_phr.serv_cell_id == to_ue_cell_index(0), "Invalid serving cell id set in SE-PHR.");
     srsran_assert(cell_phr.ph_type == ph_field_type_t::type1, "Invalid PH type set in SE-PHR.");
     srsran_assert(cell_phr.p_cmax.has_value(), "P_CMAX must be set for SE-PHR.");
     ph_reports.clear();

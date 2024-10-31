@@ -406,7 +406,7 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
     for (const cell_ph_report& cell_phr : phr_ind->phr.get_phr()) {
       srsran_sanity_check(
           cell_phr.serv_cell_id < u.nof_cells(), "Invalid serving cell index={}", cell_phr.serv_cell_id);
-      auto& ue_cc = u.get_cell(to_ue_cell_index(cell_phr.serv_cell_id));
+      auto& ue_cc = u.get_cell(cell_phr.serv_cell_id);
 
       ue_cc.channel_state_manager().handle_phr(cell_phr);
 
@@ -414,10 +414,10 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
       scheduler_event_logger::phr_event event{};
       event.ue_index   = phr_ind->ue_index;
       event.rnti       = phr_ind->rnti;
-      event.cell_index = cell_phr.serv_cell_id;
+      event.cell_index = ue_cc.cell_index;
       event.ph         = cell_phr.ph;
       event.p_cmax     = cell_phr.p_cmax;
-      du_cells[cell_phr.serv_cell_id].ev_logger->enqueue(event);
+      du_cells[phr_ind->cell_index].ev_logger->enqueue(event);
     }
 
     // Notify metrics handler.
