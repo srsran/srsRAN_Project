@@ -97,6 +97,22 @@ TEST(event_tracing_test, rusage_event_trace_formatting)
   ASSERT_TRUE(event_out.find("\"dur\": ") != std::string::npos);
 }
 
+TEST(event_tracing_test, log_style_event_trace_format)
+{
+  test_event_tracer tracer;
+  tracer.set_log_style_format(true);
+
+  trace_point tp           = tracer.now();
+  auto        rus_snapshot = tracer.rusage_now();
+  tracer << trace_event("test_event", tp);
+  tracer << rusage_thres_trace_event("test_event", std::chrono::microseconds{0}, tp, rus_snapshot);
+
+  auto events = tracer.pop_last_events();
+  for (const std::string& ev : events) {
+    fmt::print("event: {}\n", ev);
+  }
+}
+
 TEST(event_tracing_test, file_event_tracer)
 {
   open_trace_file("/tmp/event_tracing_test.json");

@@ -183,8 +183,11 @@ public:
 
   std::vector<std::string> pop_last_events() { return std::move(last_events); }
 
+  void set_log_style_format(bool log_style) { is_log_stype = log_style; }
+
 private:
   std::vector<std::string> last_events;
+  bool                     is_log_stype = false;
 };
 
 } // namespace srsran

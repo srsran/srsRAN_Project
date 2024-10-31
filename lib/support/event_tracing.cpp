@@ -140,12 +140,42 @@ static auto formatted_date(trace_point tp)
 
 namespace fmt {
 
+/// Common fmt parser to all events.
+struct trace_format_parser {
+  bool is_log;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    auto it = ctx.begin();
+    is_log  = false;
+    while (it != ctx.end() and *it != '}') {
+      if (*it == 'l') {
+        is_log = true;
+      }
+      ++it;
+    }
+    return it;
+  }
+};
+
 template <>
-struct formatter<trace_event_extended> : public basic_parser {
+struct formatter<trace_event_extended> : public trace_format_parser {
   template <typename FormatContext>
   auto format(const trace_event_extended& event, FormatContext& ctx)
   {
     auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
+
+    if (is_log) {
+      return format_to(ctx.out(),
+                       "event=\"{}\": cpu={} tid=\"{}\" tstamp={} telapsed={}_usec dur={}_usec",
+                       event.name,
+                       event.cpu,
+                       event.thread_name,
+                       formatted_date(event.start_tp),
+                       ts,
+                       event.duration.count());
+    }
 
     return format_to(ctx.out(),
                      "{{\"args\": {{}}, \"pid\": {}, \"tid\": \"{}\", "
@@ -160,7 +190,7 @@ struct formatter<trace_event_extended> : public basic_parser {
 };
 
 template <>
-struct formatter<instant_trace_event_extended> : public basic_parser {
+struct formatter<instant_trace_event_extended> : public trace_format_parser {
   template <typename FormatContext>
   auto format(const instant_trace_event_extended& event, FormatContext& ctx)
 
@@ -168,6 +198,16 @@ struct formatter<instant_trace_event_extended> : public basic_parser {
     static const char* scope_str[] = {"g", "p", "t"};
 
     auto ts = duration_cast<microseconds>(event.tp - run_epoch).count();
+
+    if (is_log) {
+      return format_to(ctx.out(),
+                       "instant_event=\"{}\": cpu={} tid=\"{}\" tstamp={} telapsed={}_usec",
+                       event.name,
+                       event.cpu,
+                       event.thread_name,
+                       formatted_date(event.tp),
+                       ts);
+    }
 
     return format_to(ctx.out(),
                      "{{\"args\": {{\"tstamp\": \"{}\"}}, \"pid\": {}, \"tid\": \"{}\", "
@@ -183,12 +223,26 @@ struct formatter<instant_trace_event_extended> : public basic_parser {
 };
 
 template <>
-struct formatter<rusage_trace_event_extended> : public basic_parser {
+struct formatter<rusage_trace_event_extended> : public trace_format_parser {
   template <typename FormatContext>
   auto format(const rusage_trace_event_extended& event, FormatContext& ctx)
 
   {
     auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
+
+    if (is_log) {
+      return format_to(ctx.out(),
+                       "rusage_event=\"{}\": cpu={} tid=\"{}\" start_tstamp={} telapsed={}_usec dur={}_usec "
+                       "vol_ctxt_switch={} invol_ctxt_switch={}",
+                       event.name,
+                       event.cpu,
+                       event.thread_name,
+                       formatted_date(event.start_tp),
+                       ts,
+                       event.duration.count(),
+                       event.rusage_diff.vol_ctxt_switch_count,
+                       event.rusage_diff.invol_ctxt_switch_count);
+    }
 
     return format_to(ctx.out(),
                      "{{\"args\": {{\"start_tstamp\": \"{}\", \"vol_ctxt_switch\": {}, \"invol_ctxt_switch\": {}}}, "
@@ -255,7 +309,7 @@ void file_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) 
 template <>
 void logger_event_tracer<true>::operator<<(const trace_event& event) const
 {
-  log_ch("{}", trace_event_extended{event, std::chrono::duration_cast<trace_duration>(now() - event.start_tp)});
+  log_ch("{:l}", trace_event_extended{event, std::chrono::duration_cast<trace_duration>(now() - event.start_tp)});
 }
 
 template <>
@@ -263,14 +317,14 @@ void logger_event_tracer<true>::operator<<(const trace_thres_event& event) const
 {
   const trace_duration dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {
-    log_ch("{}", trace_event_extended{trace_event{event.name, event.start_tp}, dur});
+    log_ch("{:l}", trace_event_extended{trace_event{event.name, event.start_tp}, dur});
   }
 }
 
 template <>
 void logger_event_tracer<true>::operator<<(const instant_trace_event& event) const
 {
-  log_ch("{}", instant_trace_event_extended{event});
+  log_ch("{:l}", instant_trace_event_extended{event});
 }
 
 template <>
@@ -278,7 +332,7 @@ void logger_event_tracer<true>::operator<<(const rusage_thres_trace_event& event
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {
-    log_ch("{}",
+    log_ch("{:l}",
            rusage_trace_event_extended{trace_event{event.name, event.start_tp},
                                        dur,
                                        resource_usage::now().value_or(resource_usage::snapshot{0, 0}) -
@@ -289,28 +343,30 @@ void logger_event_tracer<true>::operator<<(const rusage_thres_trace_event& event
 void test_event_tracer::operator<<(const trace_event& event)
 {
   const auto end_tp = now();
-  last_events.push_back(fmt::format(
-      "{}", trace_event_extended{event, std::chrono::duration_cast<trace_duration>(end_tp - event.start_tp)}));
+  last_events.push_back(
+      fmt::format(is_log_stype ? "{:l}" : "{}",
+                  trace_event_extended{event, std::chrono::duration_cast<trace_duration>(end_tp - event.start_tp)}));
 }
 
 void test_event_tracer::operator<<(const trace_thres_event& event)
 {
   const trace_duration dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {
-    last_events.push_back(fmt::format("{}", trace_event_extended{trace_event{event.name, event.start_tp}, dur}));
+    last_events.push_back(
+        fmt::format(is_log_stype ? "{:l}" : "{}", trace_event_extended{trace_event{event.name, event.start_tp}, dur}));
   }
 }
 
 void test_event_tracer::operator<<(const instant_trace_event& event)
 {
-  last_events.push_back(fmt::format("{}", instant_trace_event_extended{event}));
+  last_events.push_back(fmt::format(is_log_stype ? "{:l}" : "{}", instant_trace_event_extended{event}));
 }
 
 void test_event_tracer::operator<<(const rusage_thres_trace_event& event)
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {
-    last_events.push_back(fmt::format("{}",
+    last_events.push_back(fmt::format(is_log_stype ? "{:l}" : "{}",
                                       rusage_trace_event_extended{trace_event{event.name, event.start_tp},
                                                                   dur,
                                                                   resource_usage::now().value() - event.rusg_capture}));
