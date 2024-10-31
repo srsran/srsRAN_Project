@@ -65,7 +65,7 @@ public:
       metrics_timer.run();
     }
   }
-  ~pdcp_entity_impl() override = default;
+  ~pdcp_entity_impl() override { stop(); }
   pdcp_tx_upper_control_interface& get_tx_upper_control_interface() final { return (*tx); };
   pdcp_tx_upper_data_interface&    get_tx_upper_data_interface() final { return (*tx); };
   pdcp_tx_lower_interface&         get_tx_lower_interface() final { return (*tx); };
@@ -120,6 +120,7 @@ public:
   void stop() override
   {
     if (not stopped) {
+      stopped = true;
       metrics_timer.stop();
       tx->stop();
       rx->stop();

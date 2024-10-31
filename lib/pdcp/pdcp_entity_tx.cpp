@@ -56,11 +56,18 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   (void)crypto_executor;
 }
 
+pdcp_entity_tx::~pdcp_entity_tx()
+{
+  stop();
+}
+
 void pdcp_entity_tx::stop()
 {
-  stopped = true;
-  tx_window.clear(); // discard all SDUs and stop discard timers
-  logger.log_debug("Stopped PDCP entity");
+  if (not stopped) {
+    stopped = true;
+    tx_window.clear(); // discard all SDUs and stop discard timers
+    logger.log_debug("Stopped PDCP entity");
+  }
 }
 
 /// \brief Receive an SDU from the upper layers, apply encryption

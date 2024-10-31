@@ -53,11 +53,18 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   (void)crypto_executor;
 }
 
+pdcp_entity_rx::~pdcp_entity_rx()
+{
+  stop();
+}
+
 void pdcp_entity_rx::stop()
 {
-  stopped = true;
-  reordering_timer.stop();
-  logger.log_debug("Stopped PDCP entity");
+  if (not stopped) {
+    stopped = true;
+    reordering_timer.stop();
+    logger.log_debug("Stopped PDCP entity");
+  }
 }
 
 void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)

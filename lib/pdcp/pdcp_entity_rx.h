@@ -62,6 +62,8 @@ public:
                  task_executor&                  ue_ul_executor_,
                  task_executor&                  crypto_executor_);
 
+  ~pdcp_entity_rx() override;
+
   /// \brief Stop handling PDUs and stops timers
   void stop();
 
