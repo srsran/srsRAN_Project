@@ -11,6 +11,7 @@
 #pragma once
 
 #include "resource_usage.h"
+#include "srsran/adt/span.h"
 #include "srsran/support/compiler.h"
 #include <chrono>
 #include <string>
@@ -79,6 +80,19 @@ struct instant_trace_event {
   SRSRAN_FORCE_INLINE constexpr instant_trace_event(const char* name_, cpu_scope scope_) : name(name_), scope(scope_) {}
 };
 
+struct rusage_trace_event {
+  const char*              name;
+  trace_point              start_tp;
+  resource_usage::snapshot rusg_capture;
+
+  SRSRAN_FORCE_INLINE constexpr rusage_trace_event(const char*              name_,
+                                                   trace_point              start_tp_,
+                                                   resource_usage::snapshot start_rusage_) :
+    name(name_), start_tp(start_tp_), rusg_capture(start_rusage_)
+  {
+  }
+};
+
 /// \brief Event like \c trace_thres_event but that also captures resource usage.
 struct rusage_thres_trace_event {
   const char*              name;
@@ -111,7 +125,11 @@ public:
 
   void operator<<(const instant_trace_event& event) const {}
 
+  void operator<<(const rusage_trace_event& event) const {}
+
   void operator<<(const rusage_thres_trace_event& event) const {}
+
+  void operator<<(span<const rusage_trace_event> events) const {}
 };
 
 } // namespace detail
@@ -130,7 +148,11 @@ public:
 
   void operator<<(const instant_trace_event& event) const;
 
+  void operator<<(const rusage_trace_event& event) const;
+
   void operator<<(const rusage_thres_trace_event& event) const;
+
+  void operator<<(span<const rusage_trace_event> events) const;
 };
 
 /// Specialization of file_event_tracer that does not write any events.
@@ -155,7 +177,11 @@ public:
 
   void operator<<(const instant_trace_event& event) const;
 
+  void operator<<(const rusage_trace_event& event) const;
+
   void operator<<(const rusage_thres_trace_event& event) const;
+
+  void operator<<(span<const rusage_trace_event> events) const;
 
 private:
   srslog::log_channel& log_ch;
@@ -179,7 +205,11 @@ public:
 
   void operator<<(const instant_trace_event& event);
 
+  void operator<<(const rusage_trace_event& event);
+
   void operator<<(const rusage_thres_trace_event& event);
+
+  void operator<<(span<const rusage_trace_event> events);
 
   std::vector<std::string> pop_last_events() { return std::move(last_events); }
 

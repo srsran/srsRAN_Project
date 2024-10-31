@@ -14,6 +14,7 @@
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/format/custom_formattable.h"
 #include "srsran/support/format/fmt_basic_parser.h"
+#include "srsran/support/tracing/rusage_trace_recorder.h"
 #include "fmt/chrono.h"
 #include <sched.h>
 
@@ -168,7 +169,7 @@ struct formatter<trace_event_extended> : public trace_format_parser {
 
     if (is_log) {
       return format_to(ctx.out(),
-                       "event=\"{}\": cpu={} tid=\"{}\" tstamp={} telapsed={}_usec dur={}_usec",
+                       "event=\"{}\": cpu={} tid=\"{}\" tstamp={} ts={}_usec dur={}_usec",
                        event.name,
                        event.cpu,
                        event.thread_name,
@@ -201,7 +202,7 @@ struct formatter<instant_trace_event_extended> : public trace_format_parser {
 
     if (is_log) {
       return format_to(ctx.out(),
-                       "instant_event=\"{}\": cpu={} tid=\"{}\" tstamp={} telapsed={}_usec",
+                       "instant_event=\"{}\": cpu={} tid=\"{}\" tstamp={} ts={}_usec",
                        event.name,
                        event.cpu,
                        event.thread_name,
@@ -232,7 +233,7 @@ struct formatter<rusage_trace_event_extended> : public trace_format_parser {
 
     if (is_log) {
       return format_to(ctx.out(),
-                       "rusage_event=\"{}\": cpu={} tid=\"{}\" start_tstamp={} telapsed={}_usec dur={}_usec "
+                       "rusage_event=\"{}\": cpu={} tid=\"{}\" start_tstamp={} ts={}_usec dur={}_usec "
                        "vol_ctxt_switch={} invol_ctxt_switch={}",
                        event.name,
                        event.cpu,
@@ -294,6 +295,17 @@ void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
 }
 
 template <>
+void file_event_tracer<true>::operator<<(const rusage_trace_event& event) const
+{
+  if (not is_trace_file_open()) {
+    return;
+  }
+  const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  trace_file_writer->write_trace(rusage_trace_event_extended{
+      trace_event{event.name, event.start_tp}, dur, resource_usage::now().value() - event.rusg_capture});
+}
+
+template <>
 void file_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) const
 {
   if (not is_trace_file_open()) {
@@ -303,6 +315,28 @@ void file_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) 
   if (dur >= event.thres) {
     trace_file_writer->write_trace(rusage_trace_event_extended{
         trace_event{event.name, event.start_tp}, dur, resource_usage::now().value() - event.rusg_capture});
+  }
+}
+
+template <>
+void file_event_tracer<true>::operator<<(span<const rusage_trace_event> events) const
+{
+  if (not is_trace_file_open()) {
+    return;
+  }
+  // Log total
+  trace_file_writer->write_trace(rusage_trace_event_extended{
+      trace_event{events.front().name, events.front().start_tp},
+      std::chrono::duration_cast<trace_duration>(events.back().start_tp - events.front().start_tp),
+      events.back().rusg_capture - events.front().rusg_capture});
+  if (events.size() > 2) {
+    auto prev_it = events.begin();
+    for (auto it = prev_it + 1; it != events.end(); prev_it = it++) {
+      trace_file_writer->write_trace(
+          rusage_trace_event_extended{trace_event{it->name, prev_it->start_tp},
+                                      std::chrono::duration_cast<trace_duration>(it->start_tp - prev_it->start_tp),
+                                      it->rusg_capture - prev_it->rusg_capture});
+    }
   }
 }
 
@@ -328,6 +362,17 @@ void logger_event_tracer<true>::operator<<(const instant_trace_event& event) con
 }
 
 template <>
+void logger_event_tracer<true>::operator<<(const rusage_trace_event& event) const
+{
+  const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  log_ch(
+      "{:l}",
+      rusage_trace_event_extended{trace_event{event.name, event.start_tp},
+                                  dur,
+                                  resource_usage::now().value_or(resource_usage::snapshot{0, 0}) - event.rusg_capture});
+}
+
+template <>
 void logger_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) const
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
@@ -337,6 +382,26 @@ void logger_event_tracer<true>::operator<<(const rusage_thres_trace_event& event
                                        dur,
                                        resource_usage::now().value_or(resource_usage::snapshot{0, 0}) -
                                            event.rusg_capture});
+  }
+}
+
+template <>
+void logger_event_tracer<true>::operator<<(span<const rusage_trace_event> events) const
+{
+  // Log total
+  log_ch("{:l}",
+         rusage_trace_event_extended{
+             trace_event{events.front().name, events.front().start_tp},
+             std::chrono::duration_cast<trace_duration>(events.back().start_tp - events.front().start_tp),
+             events.back().rusg_capture - events.front().rusg_capture});
+  if (events.size() > 2) {
+    auto prev_it = events.begin();
+    for (auto it = prev_it + 1; it != events.end(); prev_it = it++) {
+      log_ch("{:l}",
+             rusage_trace_event_extended{trace_event{it->name, prev_it->start_tp},
+                                         std::chrono::duration_cast<trace_duration>(it->start_tp - prev_it->start_tp),
+                                         it->rusg_capture - prev_it->rusg_capture});
+    }
   }
 }
 
@@ -362,6 +427,15 @@ void test_event_tracer::operator<<(const instant_trace_event& event)
   last_events.push_back(fmt::format(is_log_stype ? "{:l}" : "{}", instant_trace_event_extended{event}));
 }
 
+void test_event_tracer::operator<<(const rusage_trace_event& event)
+{
+  const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  last_events.push_back(fmt::format(is_log_stype ? "{:l}" : "{}",
+                                    rusage_trace_event_extended{trace_event{event.name, event.start_tp},
+                                                                dur,
+                                                                resource_usage::now().value() - event.rusg_capture}));
+}
+
 void test_event_tracer::operator<<(const rusage_thres_trace_event& event)
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
@@ -370,5 +444,26 @@ void test_event_tracer::operator<<(const rusage_thres_trace_event& event)
                                       rusage_trace_event_extended{trace_event{event.name, event.start_tp},
                                                                   dur,
                                                                   resource_usage::now().value() - event.rusg_capture}));
+  }
+}
+
+void test_event_tracer::operator<<(span<const rusage_trace_event> events)
+{
+  // Log total
+  last_events.push_back(
+      fmt::format(is_log_stype ? "{:l}" : "{}",
+                  rusage_trace_event_extended{
+                      trace_event{events.front().name, events.front().start_tp},
+                      std::chrono::duration_cast<trace_duration>(events.back().start_tp - events.front().start_tp),
+                      events.back().rusg_capture - events.front().rusg_capture}));
+  if (events.size() > 2) {
+    auto prev_it = events.begin();
+    for (auto it = prev_it + 1; it != events.end(); prev_it = it++) {
+      last_events.push_back(fmt::format(
+          is_log_stype ? "{:l}" : "{}",
+          rusage_trace_event_extended{trace_event{it->name, prev_it->start_tp},
+                                      std::chrono::duration_cast<trace_duration>(it->start_tp - prev_it->start_tp),
+                                      it->rusg_capture - prev_it->rusg_capture}));
+    }
   }
 }

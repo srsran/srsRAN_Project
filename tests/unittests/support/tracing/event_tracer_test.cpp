@@ -11,6 +11,7 @@
 #include "srsran/support/executors/executor_tracer.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/tracing/event_tracing.h"
+#include "srsran/support/tracing/rusage_trace_recorder.h"
 #include <fstream>
 #include <gtest/gtest.h>
 
@@ -111,6 +112,33 @@ TEST(event_tracing_test, log_style_event_trace_format)
   for (const std::string& ev : events) {
     fmt::print("event: {}\n", ev);
   }
+}
+
+TEST(event_tracing_test, recorder_test)
+{
+  test_event_tracer tracer;
+  tracer.set_log_style_format(true);
+  rusage_trace_recorder<test_event_tracer> recorder{tracer, std::chrono::microseconds{0}, 8};
+
+  recorder.start("total");
+  recorder.add_section("section1");
+  recorder.add_section("section2");
+  recorder.stop("final_section");
+
+  auto events = tracer.pop_last_events();
+  for (const std::string& ev : events) {
+    fmt::print("{}\n", ev);
+  }
+
+  ASSERT_EQ(events.size(), 4);
+  auto it = events.begin();
+  ASSERT_NE(it->find("total"), std::string::npos);
+  ++it;
+  ASSERT_NE(it->find("section1"), std::string::npos);
+  ++it;
+  ASSERT_NE(it->find("section2"), std::string::npos);
+  ++it;
+  ASSERT_NE(it->find("final_section"), std::string::npos);
 }
 
 TEST(event_tracing_test, file_event_tracer)
