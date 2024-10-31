@@ -177,7 +177,7 @@ static void parse_args(int argc, char** argv)
         break;
       case 'w':
         if (optarg != nullptr) {
-          if (!is_valid_bw(std::strtol(optarg, nullptr, 10))) {
+          if (!is_valid_bandwidth(std::strtol(optarg, nullptr, 10))) {
             fmt::print("Invalid bandwidth\n");
             invalid_arg = true;
           } else {

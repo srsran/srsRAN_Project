@@ -20,6 +20,7 @@
 #include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ofh/ecpri/ecpri_constants.h"
 #include "srsran/ofh/ecpri/ecpri_packet_properties.h"
+#include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_factories.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/resource_block.h"
@@ -546,10 +547,8 @@ private:
     rx_total_counter.increment();
 
     // Check SeqId field and update statistics for the messages received on time.
-    bool received_on_time = get_window_checker(message_info).update_rx_window_statistics(message_info.symbol_point);
-    if (received_on_time) {
-      update_seq_id_statistics(message_info);
-    }
+    get_window_checker(message_info).update_rx_window_statistics(message_info.symbol_point);
+    update_seq_id_statistics(message_info);
 
     // Send uplink packets.
     if (is_ul_uplane_request(message_info)) {
@@ -647,26 +646,30 @@ private:
     }
 
     // Following parameters are only checked for UL C-Plane messages.
-    if (message_info.direction == data_direction::uplink && message_info.type == message_type::control_plane) {
-      const auto& eaxc = is_a_prach_message(message_info.filter_index) ? prach_eaxc : ul_eaxc;
-      if (std::find(eaxc.begin(), eaxc.end(), message_info.eaxc) == eaxc.end()) {
-        logger.warning("Packet is corrupt: received eAxC = '{}' is not configured in the RU emulator UL ports list",
-                       message_info.eaxc);
-        return false;
-      }
-
-      if (message_info.nof_symbols > MAX_NOF_SYMBOLS) {
-        logger.warning("Packet is corrupt: incorrect number of symbols = {}", message_info.nof_symbols);
-        return false;
-      }
-
-      // For UL C-Plane message check also compression parameters.
-      if (std::find(SUPPORTED_UL_CMPR_HDR.begin(), SUPPORTED_UL_CMPR_HDR.end(), message_info.compr_header) ==
-          SUPPORTED_UL_CMPR_HDR.end()) {
-        logger.warning("Packet is corrupt: unsupported UL compression parameters = {}", message_info.compr_header);
-        return false;
-      }
+    if (message_info.direction != data_direction::uplink || message_info.type != message_type::control_plane) {
+      return true;
     }
+
+    const auto& eaxc = is_a_prach_message(message_info.filter_index) ? prach_eaxc : ul_eaxc;
+    if (std::find(eaxc.begin(), eaxc.end(), message_info.eaxc) == eaxc.end()) {
+      logger.warning("Packet is corrupt: received eAxC = '{}' is not configured in the RU emulator UL ports list",
+                     message_info.eaxc);
+      return false;
+    }
+
+    if (message_info.nof_symbols > MAX_NOF_SYMBOLS) {
+      logger.warning("Packet is corrupt: incorrect number of symbols = {}", message_info.nof_symbols);
+      return false;
+    }
+
+    // For UL C-Plane message check also compression parameters.
+    if (!is_a_prach_message(message_info.filter_index) &&
+        std::find(SUPPORTED_UL_CMPR_HDR.begin(), SUPPORTED_UL_CMPR_HDR.end(), message_info.compr_header) ==
+            SUPPORTED_UL_CMPR_HDR.end()) {
+      logger.warning("Packet is corrupt: unsupported UL compression parameters = {}", message_info.compr_header);
+      return false;
+    }
+
     return true;
   }
 
@@ -841,21 +844,18 @@ int main(int argc, char** argv)
 
   for (unsigned i = 0, e = ru_emulator_parsed_cfg.ru_cfg.size(); i != e; ++i) {
     ru_emulator_ofh_appconfig ru_cfg = ru_emulator_parsed_cfg.ru_cfg[i];
+
+    gw_config cfg;
+    cfg.interface                   = ru_cfg.network_interface;
+    cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
+    cfg.is_promiscuous_mode_enabled = ru_cfg.enable_promiscuous;
 #ifdef DPDK_FOUND
     if (uses_dpdk) {
-      dpdk_port_config port_cfg;
-      port_cfg.id                          = ru_cfg.network_interface;
-      port_cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
-      port_cfg.is_promiscuous_mode_enabled = ru_cfg.enable_promiscuous;
-      auto ctx                             = dpdk_port_context::create(port_cfg);
+      auto ctx = create_dpdk_port_context(cfg);
       transceivers.push_back(std::make_unique<dpdk_transceiver>(logger, *workers.ru_rx_exec[i], ctx));
     } else
 #endif
     {
-      gw_config cfg;
-      cfg.interface                   = ru_cfg.network_interface;
-      cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
-      cfg.is_promiscuous_mode_enabled = ru_cfg.enable_promiscuous;
       if (!parse_mac_address(ru_cfg.du_mac_address, cfg.mac_dst_address)) {
         report_error("Invalid MAC address provided: '{}'", ru_cfg.du_mac_address);
       }

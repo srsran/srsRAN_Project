@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/ran/bs_channel_bandwidth.h"
-
 #include <srsran/srslog/srslog.h>
 #include <string>
 #include <vector>

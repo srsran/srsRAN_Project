@@ -8,7 +8,7 @@
  *
  */
 
-#include "dpdk_ethernet_port_context.h"
+#include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
 #include "srsran/adt/expected.h"
 #include <charconv>
 #include <rte_ethdev.h>

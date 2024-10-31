@@ -60,7 +60,7 @@ public:
     }
 
     if (nof_skipped_seq_id > 0) {
-      logger.warning("Slot '{}', symbol '{}': potentially lost '{}' messages sent by the RU on {} eAxC '{}'. Last "
+      logger.warning("Slot '{}', symbol '{}': potentially lost '{}' messages sent by the DU on {} eAxC '{}'. Last "
                      "valid slot was '{}', symbol '{}'",
                      symbol_point.get_slot(),
                      symbol_point.get_symbol_index(),

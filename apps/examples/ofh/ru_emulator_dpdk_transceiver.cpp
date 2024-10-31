@@ -8,8 +8,8 @@
  *
  */
 
-#include "../../../lib/ofh/ethernet/dpdk/dpdk_ethernet_rx_buffer_impl.h"
 #include "ru_emulator_transceiver.h"
+#include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_rx_buffer.h"
 #include <chrono>
 #include <future>
 #include <rte_ethdev.h>

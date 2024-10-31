@@ -10,9 +10,7 @@
 
 #pragma once
 
-#include "../../../lib/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
-#include "../../../lib/ofh/ethernet/ethernet_receiver_impl.h"
-#include "../../../lib/ofh/ethernet/ethernet_transmitter_impl.h"
+#include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_gw_config.h"
@@ -86,8 +84,8 @@ public:
   void send(span<span<const uint8_t>> frames) override;
 
 private:
-  std::unique_ptr<ether::transmitter_impl> transmitter;
-  std::unique_ptr<ether::receiver_impl>    receiver;
+  std::unique_ptr<ether::gateway>  transmitter;
+  std::unique_ptr<ether::receiver> receiver;
 };
 
 } // namespace srsran

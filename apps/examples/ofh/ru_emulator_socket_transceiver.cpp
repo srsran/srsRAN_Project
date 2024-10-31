@@ -9,6 +9,7 @@
  */
 
 #include "ru_emulator_transceiver.h"
+#include "srsran/ofh/ethernet/ethernet_factories.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -18,10 +19,10 @@ socket_transceiver::socket_transceiver(srslog::basic_logger&   logger_,
                                        srsran::task_executor&  executor_,
                                        const ether::gw_config& config)
 {
-  transmitter = std::make_unique<transmitter_impl>(config, logger_);
+  transmitter = create_gateway(config, logger_);
   srsran_assert(transmitter, "RU emulator failed to initialize Ethernet transmitter");
 
-  receiver = std::make_unique<receiver_impl>(config.interface, config.is_promiscuous_mode_enabled, executor_, logger_);
+  receiver = create_receiver(config.interface, config.is_promiscuous_mode_enabled, executor_, logger_);
   srsran_assert(receiver, "RU emulator failed to initialize Ethernet receiver");
 }
 

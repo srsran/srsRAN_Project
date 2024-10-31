@@ -9,8 +9,8 @@
  */
 
 #include "dpdk_ethernet_receiver.h"
-#include "dpdk_ethernet_rx_buffer_impl.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
+#include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_rx_buffer.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/support/executors/task_executor.h"
 #include <future>

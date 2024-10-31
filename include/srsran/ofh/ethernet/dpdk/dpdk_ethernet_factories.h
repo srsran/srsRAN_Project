@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/srslog/logger.h"
@@ -23,6 +24,9 @@ namespace ether {
 
 class frame_notifier;
 struct gw_config;
+
+/// Creates a DPDK port context object.
+std::shared_ptr<dpdk_port_context> create_dpdk_port_context(const gw_config& config);
 
 /// Creates a DPDK Ethernet transmitter and receiver pair.
 std::pair<std::unique_ptr<gateway>, std::unique_ptr<receiver>>

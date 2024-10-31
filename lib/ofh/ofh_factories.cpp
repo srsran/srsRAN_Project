@@ -17,7 +17,7 @@
 #include "srsran/ofh/ethernet/ethernet_factories.h"
 
 #ifdef DPDK_FOUND
-#include "ethernet/dpdk/dpdk_ethernet_factories.h"
+#include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_factories.h"
 #endif
 
 using namespace srsran;
