@@ -264,9 +264,15 @@ struct formatter<rusage_trace_event_extended> : public trace_format_parser {
 } // namespace fmt
 
 template <>
+bool file_event_tracer<true>::is_enabled() const
+{
+  return is_trace_file_open();
+}
+
+template <>
 void file_event_tracer<true>::operator<<(const trace_event& event) const
 {
-  if (not is_trace_file_open()) {
+  if (not is_enabled()) {
     return;
   }
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
@@ -276,7 +282,7 @@ void file_event_tracer<true>::operator<<(const trace_event& event) const
 template <>
 void file_event_tracer<true>::operator<<(const trace_thres_event& event) const
 {
-  if (not is_trace_file_open()) {
+  if (not is_enabled()) {
     return;
   }
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
@@ -288,7 +294,7 @@ void file_event_tracer<true>::operator<<(const trace_thres_event& event) const
 template <>
 void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
 {
-  if (not is_trace_file_open()) {
+  if (not is_enabled()) {
     return;
   }
   trace_file_writer->write_trace(instant_trace_event_extended{event});
@@ -297,7 +303,7 @@ void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
 template <>
 void file_event_tracer<true>::operator<<(const rusage_trace_event& event) const
 {
-  if (not is_trace_file_open()) {
+  if (not is_enabled()) {
     return;
   }
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
@@ -308,7 +314,7 @@ void file_event_tracer<true>::operator<<(const rusage_trace_event& event) const
 template <>
 void file_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) const
 {
-  if (not is_trace_file_open()) {
+  if (not is_enabled()) {
     return;
   }
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
@@ -321,7 +327,7 @@ void file_event_tracer<true>::operator<<(const rusage_thres_trace_event& event) 
 template <>
 void file_event_tracer<true>::operator<<(span<const rusage_trace_event> events) const
 {
-  if (not is_trace_file_open()) {
+  if (not is_enabled()) {
     return;
   }
   // Log total

@@ -118,9 +118,9 @@ TEST(event_tracing_test, recorder_test)
 {
   test_event_tracer tracer;
   tracer.set_log_style_format(true);
-  auto recorder = create_rusage_trace_recorder(tracer, std::chrono::microseconds{0}, 8);
+  auto recorder = create_rusage_trace_recorder("test", tracer, std::chrono::microseconds{0}, 8);
 
-  recorder.start("total");
+  recorder.start();
   recorder.add_section("section1");
   recorder.add_section("section2");
   recorder.stop("final_section");
@@ -132,7 +132,7 @@ TEST(event_tracing_test, recorder_test)
 
   ASSERT_EQ(events.size(), 4);
   auto it = events.begin();
-  ASSERT_NE(it->find("total"), std::string::npos);
+  ASSERT_NE(it->find("test"), std::string::npos);
   ++it;
   ASSERT_NE(it->find("section1"), std::string::npos);
   ++it;

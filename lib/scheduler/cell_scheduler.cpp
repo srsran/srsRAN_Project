@@ -45,7 +45,8 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   si_msg_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   pucch_guard_sch(cell_cfg),
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg),
-  res_usage_tracer(logger_event_tracer<true>{sched_cfg.log_high_latency_diagnostics ? &logger.warning : nullptr},
+  res_usage_tracer(fmt::format("cell_sched_{}", cell_cfg.cell_index),
+                   logger_event_tracer<true>{sched_cfg.log_high_latency_diagnostics ? &logger.warning : nullptr},
                    get_tracer_thres(cell_cfg),
                    8)
 {
@@ -85,7 +86,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
 {
   // Mark the start of the slot.
   auto slot_start_tp = std::chrono::high_resolution_clock::now();
-  res_usage_tracer.start("sched_run_slot");
+  res_usage_tracer.start();
 
   // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
   if (SRSRAN_LIKELY(res_grid.slot_tx().valid())) {
@@ -127,7 +128,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   // > Schedule Paging.
   pg_sch.run_slot(res_grid);
 
-  res_usage_tracer.start("sched_common");
+  res_usage_tracer.add_section("sched_common");
 
   // > Schedule UE DL and UL data.
   ue_sched.run_slot(sl_tx);

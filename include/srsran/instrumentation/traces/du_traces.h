@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/du_types.h"
 #include "srsran/support/tracing/rusage_trace_recorder.h"
 
 namespace srsran {
@@ -42,6 +43,6 @@ constexpr bool L2_LATE_TRACE_ENABLED = true;
 
 /// L2 slot event tracing for when lates are detected. This tracer will only log when the latencies of the L2 are
 /// above a full slot duration.
-extern thread_local rusage_trace_recorder<file_event_tracer<L2_LATE_TRACE_ENABLED>> l2_slot_thres_tracer;
+extern std::array<rusage_trace_recorder<file_event_tracer<L2_LATE_TRACE_ENABLED>>, MAX_NOF_DU_CELLS> l2_late_tracer;
 
 } // namespace srsran

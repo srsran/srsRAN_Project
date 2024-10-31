@@ -56,6 +56,16 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 {
 }
 
+static void initialize_cell_tracer(du_cell_index_t cell_idx, subcarrier_spacing scs)
+{
+  constexpr static size_t MAX_EVENTS = 8;
+
+  std::chrono::microseconds slot_dur{1000 / get_nof_slots_per_subframe(scs)};
+
+  l2_late_tracer[cell_idx] = create_rusage_trace_recorder(
+      fmt::format("cell_{}_slot_run", cell_idx), file_event_tracer<L2_LATE_TRACE_ENABLED>{}, slot_dur, MAX_EVENTS);
+}
+
 async_task<void> mac_cell_processor::start()
 {
   return execute_and_continue_on_blocking(
@@ -64,8 +74,7 @@ async_task<void> mac_cell_processor::start()
       timers,
       [this]() {
         // set up thread-local tracer parameters.
-        l2_slot_thres_tracer.set(
-            std::chrono::microseconds{SUBFRAME_DURATION_MSEC / get_nof_slots_per_subframe(cell_cfg.scs_common)}, 8);
+        initialize_cell_tracer(cell_cfg.cell_index, cell_cfg.scs_common);
 
         // set cell as active.
         state = cell_state::active;
@@ -203,7 +212,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
   // * Start of Critical Path * //
 
-  l2_slot_thres_tracer.start("start_slot");
+  l2_late_tracer[cell_cfg.cell_index].start();
   trace_point sched_tp = l2_tracer.now();
 
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
@@ -237,7 +246,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   mac_dl_sched_result mac_dl_res{};
   mac_dl_data_result  data_res{};
 
-  l2_slot_thres_tracer.add_section("mac_sched");
+  l2_late_tracer[cell_cfg.cell_index].add_section("mac_sched");
   l2_tracer << trace_event{"mac_sched", sched_tp};
 
   // If it is a DL slot, process results.
@@ -250,7 +259,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
     // Send DL sched result to PHY.
     phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
-    l2_slot_thres_tracer.add_section("mac_dl_tti_req");
+    l2_late_tracer[cell_cfg.cell_index].add_section("mac_dl_tti_req");
     l2_tracer << trace_event{"mac_dl_tti_req", dl_tti_req_tp};
 
     // Start assembling Slot Data Result.
@@ -263,7 +272,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
       // Send DL Data to PHY.
       phy_cell.on_new_downlink_data(data_res);
 
-      l2_slot_thres_tracer.add_section("mac_tx_data_req");
+      l2_late_tracer[cell_cfg.cell_index].add_section("mac_tx_data_req");
       l2_tracer << trace_event{"mac_tx_data_req", tx_data_req_tp};
     }
   }
@@ -277,7 +286,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
     mac_ul_res.ul_res = &sl_res.ul;
     phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 
-    l2_slot_thres_tracer.add_section("mac_ul_tti_req");
+    l2_late_tracer[cell_cfg.cell_index].add_section("mac_ul_tti_req");
     l2_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
   }
 
@@ -295,7 +304,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   write_tx_pdu_pcap(sl_tx, sl_res, data_res);
 
   l2_tracer << trace_event{"mac_cleanup_tp", cleanup_tp};
-  l2_slot_thres_tracer.stop("mac_cleanup");
+  l2_late_tracer[cell_cfg.cell_index].stop("mac_cleanup");
 }
 
 /// Encodes DL DCI.

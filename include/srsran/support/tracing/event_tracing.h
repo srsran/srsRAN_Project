@@ -130,6 +130,8 @@ public:
   void operator<<(const rusage_thres_trace_event& event) const {}
 
   void operator<<(span<const rusage_trace_event> events) const {}
+
+  bool is_enabled() const { return false; }
 };
 
 } // namespace detail
@@ -153,6 +155,8 @@ public:
   void operator<<(const rusage_thres_trace_event& event) const;
 
   void operator<<(span<const rusage_trace_event> events) const;
+
+  bool is_enabled() const;
 };
 
 /// Specialization of file_event_tracer that does not write any events.
@@ -184,6 +188,8 @@ public:
       push(event);
     }
   }
+
+  bool is_enabled() const { return enabled; }
 
 private:
   void push(const trace_event& ev) const;
@@ -220,6 +226,8 @@ public:
   void operator<<(const rusage_thres_trace_event& event);
 
   void operator<<(span<const rusage_trace_event> events);
+
+  bool is_enabled() const { return true; }
 
   std::vector<std::string> pop_last_events() { return std::move(last_events); }
 
