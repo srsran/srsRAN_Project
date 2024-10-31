@@ -1096,7 +1096,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
       items.push_back(meas_record_item);
       meas_collected = true;
     } else {
-      logger.warning("Invalid RLC SDU latency value.");
+      meas_record_item.set_no_value();
+      items.push_back(meas_record_item);
+      meas_collected = true;
       return meas_collected;
     }
   } else {
@@ -1126,7 +1128,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
         items.push_back(meas_record_item);
         meas_collected = true;
       } else {
-        logger.warning("Invalid RLC SDU latency value.");
+        meas_record_item.set_no_value();
+        items.push_back(meas_record_item);
+        meas_collected = true;
       }
     }
   }
@@ -1171,7 +1175,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
       items.push_back(meas_record_item);
       meas_collected = true;
     } else {
-      logger.warning("Invalid RLC SDU latency value.");
+      meas_record_item.set_no_value();
+      items.push_back(meas_record_item);
+      meas_collected = true;
       return meas_collected;
     }
   } else {
@@ -1201,7 +1207,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
         items.push_back(meas_record_item);
         meas_collected = true;
       } else {
-        logger.warning("Invalid RLC SDU latency value.");
+        meas_record_item.set_no_value();
+        items.push_back(meas_record_item);
+        meas_collected = true;
       }
     }
   }
