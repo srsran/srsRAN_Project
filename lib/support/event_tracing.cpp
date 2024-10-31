@@ -12,7 +12,9 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/unique_thread.h"
+#include "srsran/support/format/custom_formattable.h"
 #include "srsran/support/format/fmt_basic_parser.h"
+#include "fmt/chrono.h"
 #include <sched.h>
 
 using namespace srsran;
@@ -103,37 +105,11 @@ struct rusage_trace_event_extended : public trace_event_extended {
   }
 };
 
-struct timestamp_data {
-  hours        h;
-  minutes      min;
-  seconds      sec;
-  microseconds usec;
-};
-
 } // namespace
 
 static trace_point run_epoch = trace_clock::now();
 /// Unique event trace file writer.
 static std::unique_ptr<event_trace_writer> trace_file_writer;
-
-static timestamp_data get_timestamp(trace_point tp)
-{
-  using days = duration<int, std::ratio_multiply<hours::period, std::ratio<24>>::type>;
-
-  timestamp_data ret;
-
-  system_clock::duration start_dur = tp.time_since_epoch();
-  start_dur -= duration_cast<days>(start_dur);
-  ret.h = duration_cast<hours>(start_dur);
-  start_dur -= ret.h;
-  ret.min = duration_cast<minutes>(start_dur);
-  start_dur -= ret.min;
-  ret.sec = duration_cast<seconds>(start_dur);
-  start_dur -= ret.sec;
-  ret.usec = duration_cast<microseconds>(start_dur);
-
-  return ret;
-}
 
 void srsran::open_trace_file(std::string_view trace_file_name)
 {
@@ -151,6 +127,15 @@ void srsran::close_trace_file()
 bool srsran::is_trace_file_open()
 {
   return trace_file_writer != nullptr;
+}
+
+static auto formatted_date(trace_point tp)
+{
+  return make_formattable([tp](auto& ctx) {
+    std::tm current_time = fmt::gmtime(std::chrono::high_resolution_clock::to_time_t(tp));
+    auto us_fraction = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count() % 1000000u;
+    return fmt::format_to(ctx.out(), "{:%H:%M:%S}.{:06}", current_time, us_fraction);
+  });
 }
 
 namespace fmt {
@@ -184,16 +169,11 @@ struct formatter<instant_trace_event_extended> : public basic_parser {
 
     auto ts = duration_cast<microseconds>(event.tp - run_epoch).count();
 
-    const timestamp_data timestamp = get_timestamp(event.tp);
-
     return format_to(ctx.out(),
-                     "{{\"args\": {{\"tstamp\": \"{}:{}:{}.{}\"}}, \"pid\": {}, \"tid\": \"{}\", "
+                     "{{\"args\": {{\"tstamp\": \"{}\"}}, \"pid\": {}, \"tid\": \"{}\", "
                      "\"ts\": {}, \"cat\": \"process\", \"ph\": \"i\", \"s\": \"{}\", "
                      "\"name\": \"{}\"}}",
-                     timestamp.h.count(),
-                     timestamp.min.count(),
-                     timestamp.sec.count(),
-                     timestamp.usec.count(),
+                     formatted_date(event.tp),
                      event.cpu,
                      event.thread_name,
                      ts,
@@ -210,25 +190,19 @@ struct formatter<rusage_trace_event_extended> : public basic_parser {
   {
     auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
 
-    const timestamp_data timestamp = get_timestamp(event.start_tp);
-
-    return format_to(
-        ctx.out(),
-        "{{\"args\": {{\"start_tstamp\": \"{}:{}:{}.{}\", \"vol_ctxt_switch\": {}, \"invol_ctxt_switch\": {}}}, "
-        "\"pid\": {}, \"tid\": \"{}\", \"dur\": {}, "
-        "\"ts\": {}, \"cat\": \"process\", \"ph\": \"X\", "
-        "\"name\": \"{}\"}}",
-        timestamp.h.count(),
-        timestamp.min.count(),
-        timestamp.sec.count(),
-        timestamp.usec.count(),
-        event.rusage_diff.vol_ctxt_switch_count,
-        event.rusage_diff.invol_ctxt_switch_count,
-        event.cpu,
-        event.thread_name,
-        event.duration.count(),
-        ts,
-        event.name);
+    return format_to(ctx.out(),
+                     "{{\"args\": {{\"start_tstamp\": \"{}\", \"vol_ctxt_switch\": {}, \"invol_ctxt_switch\": {}}}, "
+                     "\"pid\": {}, \"tid\": \"{}\", \"dur\": {}, "
+                     "\"ts\": {}, \"cat\": \"process\", \"ph\": \"X\", "
+                     "\"name\": \"{}\"}}",
+                     formatted_date(event.start_tp),
+                     event.rusage_diff.vol_ctxt_switch_count,
+                     event.rusage_diff.invol_ctxt_switch_count,
+                     event.cpu,
+                     event.thread_name,
+                     event.duration.count(),
+                     ts,
+                     event.name);
   }
 };
 

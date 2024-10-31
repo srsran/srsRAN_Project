@@ -24,8 +24,10 @@ class log_channel;
 
 namespace srsran {
 
-/// Trace Event clock types.
-using trace_clock    = std::chrono::steady_clock;
+/// \brief Trace Event clock type.
+///
+/// \remark We use high_resolution_clock instead of steady_clock for time stamps to be aligned with logging.
+using trace_clock    = std::chrono::high_resolution_clock;
 using trace_point    = trace_clock::time_point;
 using trace_duration = std::chrono::microseconds;
 
