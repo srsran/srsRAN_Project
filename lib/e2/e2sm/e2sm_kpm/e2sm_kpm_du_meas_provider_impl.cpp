@@ -583,7 +583,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
 {
   bool meas_collected = false;
   if (last_ue_metrics.empty()) {
-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::no_value);
   }
 
   if ((label_info_list.size() > 1 or
@@ -660,7 +660,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
 {
   bool meas_collected = false;
   if (ue_aggr_rlc_metrics.empty()) {
-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
   }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -706,7 +706,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
     for (auto& ue : ue_throughput) {
       total_throughput += ue.second;
     }
-    meas_record_item.set_integer() = total_throughput;
+    meas_record_item.set_real().value = total_throughput;
     items.push_back(meas_record_item);
     meas_collected = true;
   }
@@ -721,7 +721,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
       meas_collected = true;
       continue;
     }
-    meas_record_item.set_integer() = ue_throughput[ue_idx];
+    meas_record_item.set_real().value = ue_throughput[ue_idx];
     items.push_back(meas_record_item);
     meas_collected = true;
   }
@@ -735,7 +735,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
 {
   bool meas_collected = false;
   if (ue_aggr_rlc_metrics.empty()) {
-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
   }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -761,7 +761,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
     for (auto& ue : ue_throughput) {
       total_throughput += ue.second;
     }
-    meas_record_item.set_integer() = total_throughput;
+    meas_record_item.set_real().value = total_throughput;
     items.push_back(meas_record_item);
     meas_collected = true;
   }
@@ -776,7 +776,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
       meas_collected = true;
       continue;
     }
-    meas_record_item.set_integer() = ue_throughput[ue_idx];
+    meas_record_item.set_real().value = ue_throughput[ue_idx];
     items.push_back(meas_record_item);
     meas_collected = true;
   }
@@ -790,7 +790,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(const asn1::e2sm::l
 {
   bool meas_collected = false;
   if (ue_aggr_rlc_metrics.empty()) {
-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::no_value);
   }
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
@@ -867,7 +867,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
 {
   bool meas_collected = false;
   if (ue_aggr_rlc_metrics.empty()) {
-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::no_value);
   }
 
   if ((label_info_list.size() > 1 or
@@ -1065,7 +1065,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
 {
   bool meas_collected = false;
   if (ue_aggr_rlc_metrics.empty()) {
-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::no_value);
   }
 
   if ((label_info_list.size() > 1 or
@@ -1148,7 +1148,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
 {
   bool meas_collected = false;
   if (ue_aggr_rlc_metrics.empty()) {
-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::no_value);
   }
 
   if ((label_info_list.size() > 1 or

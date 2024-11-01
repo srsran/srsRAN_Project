@@ -292,8 +292,8 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
 
   uint32_t              expected_drop_rate       = 10;
   uint32_t              expected_ul_success_rate = 80;
-  uint32_t              expected_dl_throughput   = 10000 / 1e3 * 8;
-  uint32_t              expected_ul_throughput   = 5000 / 1e3 * 8;
+  float                 expected_dl_throughput   = 10000 / 1e3 * 8;
+  float                 expected_ul_throughput   = 5000 / 1e3 * 8;
   std::vector<uint32_t> expected_dl_vol;
   std::vector<uint32_t> expected_ul_vol;
 
@@ -398,10 +398,10 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
         TESTASSERT_EQ(expected_ul_success_rate, meas_record[3].integer());
       }
       if (nof_records >= 5) {
-        TESTASSERT_EQ(expected_dl_throughput, meas_record[4].integer());
+        TESTASSERT_EQ(expected_dl_throughput, meas_record[4].real().value);
       }
       if (nof_records >= 6) {
-        TESTASSERT_EQ(expected_ul_throughput, meas_record[5].integer());
+        TESTASSERT_EQ(expected_ul_throughput, meas_record[5].real().value);
       }
     }
   }
