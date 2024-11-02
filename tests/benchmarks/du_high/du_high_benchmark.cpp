@@ -44,6 +44,7 @@
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/format/custom_formattable.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include <pthread.h>
@@ -78,6 +79,9 @@ struct bench_params {
   std::vector<unsigned> du_cell_cores = {};
   /// \brief Policy scheduler type.
   policy_scheduler_expert_config strategy_cfg = time_rr_scheduler_expert_config{};
+  /// \brief Whether the trace is enabled. This gives more diagnostics of the scheduler latency, at the cost of some
+  /// slowdown.
+  bool sched_trace_enabled = false;
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -118,7 +122,7 @@ static std::vector<Ret> tokenize(const std::string& s, Func&& func)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:a:p:P:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:a:p:P:t:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -173,6 +177,9 @@ static void parse_args(int argc, char** argv, bench_params& params)
           exit(0);
         }
       } break;
+      case 't':
+        params.sched_trace_enabled = std::string(optarg) == "true";
+        break;
       case 'h':
       default:
         usage(argv[0], params);
@@ -212,6 +219,7 @@ static void print_args(const bench_params& params)
   } else {
     fmt::print("- Policys scheduler: time_rr\n");
   }
+  fmt::print("- Scheduler tracing: {}\n", params.sched_trace_enabled ? "enabled" : "disabled");
 }
 
 class dummy_metrics_handler : public scheduler_metrics_notifier
@@ -244,7 +252,18 @@ public:
     scheduler_cell_metrics metrics;
     while (pending_metrics.try_pop(metrics)) {
       fmt::format_to(fmtbuf, "Latency=[{}]", fmt::join(metrics.latency_histogram, ", "));
-      logger.info("cell metrics: {}\n", to_c_str(fmtbuf));
+      if (not metrics.events.empty()) {
+        fmt::format_to(fmtbuf, " Events: [");
+        for (const auto& ev : metrics.events) {
+          fmt::format_to(fmtbuf,
+                         "{}rnti={} type={}",
+                         &ev == &metrics.events.front() ? "" : ", ",
+                         ev.rnti,
+                         sched_event_to_string(ev.type));
+        }
+        fmt::format_to(fmtbuf, "]");
+      }
+      logger.info("cell metrics: {}", to_c_str(fmtbuf));
       fmtbuf.clear();
     }
   }
@@ -537,6 +556,7 @@ public:
                 units::bytes                          f1u_pdu_size_,
                 span<unsigned>                        du_cell_cores,
                 const policy_scheduler_expert_config& strategy_cfg,
+                bool                                  sched_tracing_enabled,
                 const cell_config_builder_params&     builder_params = {}) :
     params(builder_params),
     f1u_dl_pdu_bytes_per_slot(dl_buffer_state_bytes_),
@@ -558,22 +578,23 @@ public:
     report_fatal_error_if_not(bsr_mac_subpdu.append(lbsr_buff_sz), "Failed to allocate PDU");
 
     // Instantiate a DU-high object.
-    cfg.ran.gnb_du_id                  = (gnb_du_id_t)1;
-    cfg.ran.gnb_du_name                = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
-    cfg.exec_mapper                    = &workers->get_exec_mapper();
-    cfg.f1c_client                     = &sim_cu_cp;
-    cfg.f1u_gw                         = &sim_cu_up;
-    cfg.phy_adapter                    = &sim_phy;
-    cfg.timers                         = &timers;
-    cfg.ran.cells                      = {config_helpers::make_default_du_cell_config(params)};
-    cfg.ran.sched_cfg                  = config_helpers::make_default_scheduler_expert_config();
-    cfg.ran.sched_cfg.ue.strategy_cfg  = strategy_cfg;
-    cfg.ran.sched_cfg.ue.pdsch_nof_rbs = {1, max_nof_rbs_per_dl_grant};
-    cfg.ran.mac_cfg                    = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.ran.qos                        = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
-    cfg.mac_p                          = &mac_pcap;
-    cfg.rlc_p                          = &rlc_pcap;
-    cfg.sched_ue_metrics_notifier      = &metrics_handler;
+    cfg.ran.gnb_du_id                              = (gnb_du_id_t)1;
+    cfg.ran.gnb_du_name                            = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
+    cfg.exec_mapper                                = &workers->get_exec_mapper();
+    cfg.f1c_client                                 = &sim_cu_cp;
+    cfg.f1u_gw                                     = &sim_cu_up;
+    cfg.phy_adapter                                = &sim_phy;
+    cfg.timers                                     = &timers;
+    cfg.ran.cells                                  = {config_helpers::make_default_du_cell_config(params)};
+    cfg.ran.sched_cfg                              = config_helpers::make_default_scheduler_expert_config();
+    cfg.ran.sched_cfg.log_high_latency_diagnostics = sched_tracing_enabled;
+    cfg.ran.sched_cfg.ue.strategy_cfg              = strategy_cfg;
+    cfg.ran.sched_cfg.ue.pdsch_nof_rbs             = {1, max_nof_rbs_per_dl_grant};
+    cfg.ran.mac_cfg                                = mac_expert_config{.configs = {{10000, 10000, 10000}}};
+    cfg.ran.qos                   = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
+    cfg.mac_p                     = &mac_pcap;
+    cfg.rlc_p                     = &rlc_pcap;
+    cfg.sched_ue_metrics_notifier = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     cfg.ran.cells[0].pucch_cfg.nof_sr_resources               = 30;
@@ -1117,6 +1138,7 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
                                  unsigned                              max_nof_rbs_per_dl_grant,
                                  units::bytes                          dl_pdu_size,
                                  span<unsigned>                        du_cell_cores,
+                                 bool                                  sched_tracing_enabled,
                                  const policy_scheduler_expert_config& strategy_cfg)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
@@ -1131,6 +1153,7 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
                       dl_pdu_size,
                       du_cell_cores,
                       strategy_cfg,
+                      sched_tracing_enabled,
                       generate_custom_cell_config_builder_params(dplx_mode)};
   for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
     bench.add_ue(to_du_ue_index(ue_count));
@@ -1217,7 +1240,7 @@ int main(int argc, char** argv)
   srslog::fetch_basic_logger("DU-F1-U").set_level(test_log_level);
   srslog::fetch_basic_logger("UE-MNG").set_level(test_log_level);
   srslog::fetch_basic_logger("DU-MNG").set_level(test_log_level);
-  srslog::fetch_basic_logger("METRICS").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("METRICS").set_level(test_log_level);
   srslog::init();
 
   std::string tracing_filename = "";
@@ -1234,6 +1257,10 @@ int main(int argc, char** argv)
 
   // Setup size of byte buffer pool.
   init_byte_buffer_segment_pool(byte_buffer_nof_segments, byte_buffer_segment_size);
+
+  if (params.sched_trace_enabled) {
+    srslog::fetch_basic_logger("METRICS").set_level(srslog::basic_levels::debug);
+  }
 
   // Configure main thread.
   configure_main_thread(params.du_cell_cores);
@@ -1253,6 +1280,7 @@ int main(int argc, char** argv)
                                 params.max_dl_rb_grant,
                                 params.pdu_size,
                                 params.du_cell_cores,
+                                params.sched_trace_enabled,
                                 params.strategy_cfg);
   }
 

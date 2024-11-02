@@ -60,6 +60,12 @@ struct scheduler_cell_event {
   event_type type;
 };
 
+inline const char* sched_event_to_string(scheduler_cell_event::event_type ev)
+{
+  std::array<const char*, 3> names = {"ue_add", "ue_reconf", "ue_rem"};
+  return names[std::min(static_cast<size_t>(ev), names.size() - 1)];
+}
+
 /// \brief Snapshot of the metrics for a cell and its UEs.
 struct scheduler_cell_metrics {
   /// Latency histogram number of bins.
