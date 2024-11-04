@@ -22,8 +22,14 @@ namespace srsran {
 class channel_equalizer_generic_impl : public channel_equalizer
 {
 public:
+  /// Maximum number of ports supported by the equalizer.
+  static constexpr unsigned max_nof_ports = 4;
+
   /// Default constructor.
   explicit channel_equalizer_generic_impl(channel_equalizer_algorithm_type type_) : type(type_) {}
+
+  // See interface for documentation.
+  bool is_supported(unsigned nof_ports, unsigned nof_layers) override;
 
   // See interface for documentation.
   void equalize(span<cf_t>                       eq_symbols,
@@ -34,6 +40,9 @@ public:
                 float                            tx_scaling) override;
 
 private:
+  /// Determines whether a combination of the algorithm type, number of layers, and number of ports is supported.
+  static bool is_supported(channel_equalizer_algorithm_type algorithm, unsigned nof_ports, unsigned nof_layers);
+
   channel_equalizer_algorithm_type type;
 };
 

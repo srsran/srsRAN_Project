@@ -118,7 +118,7 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_writer&     grid
   // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
   unsigned nof_re_pdsch = pdsch_compute_nof_data_re(config);
 
-  // Calculate the total number of the chanel modulated symbols.
+  // Calculate the total number of the channel modulated symbols.
   nof_ch_symbols = nof_layers * nof_re_pdsch;
 
   // Calculate scrambling initial state.

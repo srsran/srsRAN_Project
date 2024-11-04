@@ -49,6 +49,9 @@ public:
   /// Default destructor.
   virtual ~channel_equalizer() = default;
 
+  /// Determines if the dimensions and algorithm are valid.
+  virtual bool is_supported(unsigned nof_ports, unsigned nof_layers) = 0;
+
   /// \brief Equalizes the MIMO channel and combines Tx&ndash;Rx paths.
   ///
   /// For each transmit layer, the contributions of all receive ports are combined with weights obtained from the
