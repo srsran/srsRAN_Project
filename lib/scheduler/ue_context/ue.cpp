@@ -49,8 +49,7 @@ void ue::slot_indication(slot_point sl_tx)
       }
     }
     if (ue_cc->last_pusch_allocated_slot.valid()) {
-      srsran_sanity_check(sl_tx >= ue_cc->last_pusch_allocated_slot, "Invalid last PUSCH alloc slot");
-      if (static_cast<unsigned>(sl_tx - ue_cc->last_pusch_allocated_slot) > SCHEDULER_MAX_K2) {
+      if (sl_tx - ue_cc->last_pusch_allocated_slot > static_cast<int>(SCHEDULER_MAX_K2)) {
         ue_cc->last_pusch_allocated_slot.clear();
       }
     }
