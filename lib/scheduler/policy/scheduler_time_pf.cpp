@@ -38,7 +38,7 @@ dl_alloc_result scheduler_time_pf::schedule_dl_retxs(ue_pdsch_allocator&        
     for (unsigned i = 0; i != u.nof_cells(); ++i) {
       const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
       srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
-                    "policy scheduler called for UE={} in fallback",
+                    "Policy scheduler called for UE={} in fallback",
                     ue_cc.ue_index);
 
       // [Implementation-defined] Skip UE if PDCCH is already allocated for this UE in this slot.
@@ -134,7 +134,7 @@ ul_alloc_result scheduler_time_pf::schedule_ul_retxs(ue_pusch_allocator&        
     for (unsigned i = 0; i != u.nof_cells(); ++i) {
       const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
       srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
-                    "policy scheduler called for UE={} in fallback",
+                    "Policy scheduler called for UE={} in fallback",
                     ue_cc.ue_index);
 
       if (not ue_cc.is_dl_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
@@ -333,7 +333,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
     return;
   }
   srsran_assert(ue_cc->is_active() and not ue_cc->is_in_fallback_mode(),
-                "policy scheduler called for UE={} in fallback",
+                "Policy scheduler called for UE={} in fallback",
                 ue_cc->ue_index);
   if (not ue_cc->is_dl_enabled(pdcch_slot) or not ue_cc->is_dl_enabled(pdsch_slot)) {
     // Cannot allocate PDCCH/PDSCH for this UE in this slot.
@@ -409,7 +409,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
     return;
   }
   srsran_assert(ue_cc->is_active() and not ue_cc->is_in_fallback_mode(),
-                "policy scheduler called for UE={} in fallback",
+                "Policy scheduler called for UE={} in fallback",
                 ue_cc->ue_index);
   if (not ue_cc->is_dl_enabled(pdcch_slot) or not ue_cc->is_ul_enabled(pusch_slot)) {
     // Cannot allocate PDCCH/PUSCH for this UE in the provided slots.

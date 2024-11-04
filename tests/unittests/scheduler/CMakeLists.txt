@@ -76,7 +76,7 @@ target_link_libraries(scheduler_metrics_handler_test
         sched_config
         gtest
         gtest_main)
-gtest_discover_tests(scheduler_metrics_handler_test)
+add_test(scheduler_metrics_handler_test scheduler_metrics_handler_test)
 
 add_executable(multi_cell_scheduler_test multi_cell_scheduler_test.cpp)
 target_link_libraries(multi_cell_scheduler_test
@@ -85,4 +85,4 @@ target_link_libraries(multi_cell_scheduler_test
         scheduler_test_suite
         gtest
         gtest_main)
-gtest_discover_tests(multi_cell_scheduler_test)
+add_test(multi_cell_scheduler_test multi_cell_scheduler_test)
