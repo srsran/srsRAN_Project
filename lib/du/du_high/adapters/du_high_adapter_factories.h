@@ -18,8 +18,8 @@ namespace srsran {
 namespace srs_du {
 
 /// \brief Create a MAC instance for DU-high. In case the test mode is enabled, the MAC messages will be intercepted.
-std::unique_ptr<mac_interface> create_du_high_mac(const mac_config&                  mac_cfg,
-                                                  const srs_du::du_test_mode_config& test_cfg);
+std::unique_ptr<mac_interface>
+create_du_high_mac(const mac_config& mac_cfg, const srs_du::du_test_mode_config& test_cfg, unsigned nof_cells);
 
 } // namespace srs_du
 } // namespace srsran

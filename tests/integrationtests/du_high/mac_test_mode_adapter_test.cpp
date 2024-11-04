@@ -146,7 +146,7 @@ static mac_uci_pdu make_random_uci_with_csi(rnti_t test_rnti = to_rnti(0x4601))
 class base_mac_test_mode_test
 {
 protected:
-  base_mac_test_mode_test(const test_params& params_) : params(params_), adapter{params.test_ue_cfg, phy}
+  base_mac_test_mode_test(const test_params& params_) : params(params_), adapter{params.test_ue_cfg, phy, 1}
   {
     adapter.connect(std::make_unique<mac_dummy>(mac_events, adapter.get_phy_notifier()));
 

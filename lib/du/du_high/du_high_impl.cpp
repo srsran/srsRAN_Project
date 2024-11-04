@@ -113,7 +113,8 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                                     cfg.ran.sched_cfg,
                                     cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier,
                                     timers},
-                         cfg.test_cfg);
+                         cfg.test_cfg,
+                         cfg.ran.cells.size());
   f1ap = create_du_high_f1ap(*cfg.f1c_client,
                              adapters->f1_to_du_notifier,
                              cfg.exec_mapper->du_control_executor(),
@@ -166,17 +167,22 @@ void du_high_impl::start()
 
   // If test mode is enabled, create a test-mode UE by injecting a Msg3.
   if (cfg.test_cfg.test_ue.has_value()) {
-    // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
-    for (unsigned ue_num = 0, nof_ues = cfg.test_cfg.test_ue->nof_ues; ue_num != nof_ues; ++ue_num) {
-      auto rx_buf = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00});
-      if (not rx_buf.has_value()) {
-        logger.warning("Unable to allocate byte_buffer");
-        continue;
+    for (unsigned cell_id = 0, cell_end = cfg.ran.cells.size(); cell_id != cell_end; ++cell_id) {
+      // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
+      for (unsigned ue_num = 0, nof_ues = cfg.test_cfg.test_ue->nof_ues; ue_num != nof_ues; ++ue_num) {
+        auto rx_buf = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00});
+        if (not rx_buf.has_value()) {
+          logger.warning("Unable to allocate byte_buffer");
+          continue;
+        }
+        mac->get_pdu_handler().handle_rx_data_indication(mac_rx_data_indication{
+            slot_point{0, 0},
+            to_du_cell_index(cell_id),
+            {mac_rx_pdu{to_rnti(to_value(cfg.test_cfg.test_ue->rnti) + (cell_id * nof_ues) + ue_num),
+                        0,
+                        0,
+                        std::move(rx_buf.value())}}});
       }
-      mac->get_pdu_handler().handle_rx_data_indication(mac_rx_data_indication{
-          slot_point{0, 0},
-          to_du_cell_index(0),
-          {mac_rx_pdu{to_rnti(to_value(cfg.test_cfg.test_ue->rnti) + ue_num), 0, 0, std::move(rx_buf.value())}}});
     }
   }
 }
