@@ -66,10 +66,8 @@ private:
     /// UL priority value of the UE.
     double ul_prio = 0;
 
-    bool                                  has_empty_dl_harq = false;
-    bool                                  has_empty_ul_harq = false;
-    std::optional<dl_harq_process_handle> dl_retx_h;
-    std::optional<ul_harq_process_handle> ul_retx_h;
+    bool has_empty_dl_harq = false;
+    bool has_empty_ul_harq = false;
     /// Flag indicating whether SR indication from the UE is received or not.
     bool sr_ind_received = false;
 
@@ -85,6 +83,15 @@ private:
     /// Nof. UL samples over which average DL bitrate is computed.
     uint32_t ul_nof_samples = 0;
   };
+
+  dl_alloc_result schedule_dl_retxs(ue_pdsch_allocator&          pdsch_alloc,
+                                    const ue_resource_grid_view& res_grid,
+                                    dl_ran_slice_candidate&      slice_candidate,
+                                    dl_harq_pending_retx_list    harq_pending_retx_list);
+  ul_alloc_result schedule_ul_retxs(ue_pusch_allocator&          pusch_alloc,
+                                    const ue_resource_grid_view& res_grid,
+                                    ul_ran_slice_candidate&      slice_candidate,
+                                    ul_harq_pending_retx_list    harq_pending_retx_list);
 
   /// \brief Attempts to allocate PDSCH for a UE.
   /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.
@@ -122,7 +129,7 @@ private:
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(ue_ctxt* elem)
     {
-      if (not elem->dl_retx_h.has_value() and not elem->has_empty_dl_harq) {
+      if (not elem->has_empty_dl_harq) {
         return;
       }
       base_type::push(elem);
@@ -147,7 +154,7 @@ private:
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(ue_ctxt* elem)
     {
-      if (not elem->ul_retx_h.has_value() and not elem->has_empty_ul_harq) {
+      if (not elem->has_empty_ul_harq) {
         return;
       }
       base_type::push(elem);
