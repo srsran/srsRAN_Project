@@ -37,19 +37,21 @@ ue::ue(const ue_creation_command& cmd) :
 
 void ue::slot_indication(slot_point sl_tx)
 {
-  for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
-    if (ue_du_cells[i] != nullptr) {
-      // [Implementation-defined]
-      // Clear last PxSCH allocated slot if gap to current \c sl_tx is too large. This is done in order to circumvent
-      // the ambiguity caused by the slot_point wrap around while scheduling next PxSCHs. e.g. last PxSCH allocated
-      // slot=289.0 and next PxSCH to be allocated slot=(289.0 - SCHEDULER_MAX_K0/SCHEDULER_MAX_K2) after wrap around.
-      if (ue_du_cells[i]->last_pdsch_allocated_slot.valid() and
-          std::abs(sl_tx - ue_du_cells[i]->last_pdsch_allocated_slot) > SCHEDULER_MAX_K0) {
-        ue_du_cells[i]->last_pdsch_allocated_slot.clear();
+  for (ue_cell* ue_cc : ue_cells) {
+    // [Implementation-defined]
+    // Clear last PxSCH allocated slot if gap to current \c sl_tx is too large. This is done in order to circumvent
+    // the ambiguity caused by the slot_point wrap around while scheduling next PxSCHs. e.g. last PxSCH allocated
+    // slot=289.0 and next PxSCH to be allocated slot=(289.0 - SCHEDULER_MAX_K0/SCHEDULER_MAX_K2) after wrap around.
+    if (ue_cc->last_pdsch_allocated_slot.valid()) {
+      srsran_sanity_check(sl_tx >= ue_cc->last_pdsch_allocated_slot, "Invalid last PDSCH alloc slot");
+      if (static_cast<unsigned>(sl_tx - ue_cc->last_pdsch_allocated_slot) > SCHEDULER_MAX_K0) {
+        ue_cc->last_pdsch_allocated_slot.clear();
       }
-      if (ue_du_cells[i]->last_pusch_allocated_slot.valid() and
-          std::abs(sl_tx - ue_du_cells[i]->last_pusch_allocated_slot) > SCHEDULER_MAX_K2) {
-        ue_du_cells[i]->last_pusch_allocated_slot.clear();
+    }
+    if (ue_cc->last_pusch_allocated_slot.valid()) {
+      srsran_sanity_check(sl_tx >= ue_cc->last_pusch_allocated_slot, "Invalid last PUSCH alloc slot");
+      if (static_cast<unsigned>(sl_tx - ue_cc->last_pusch_allocated_slot) > SCHEDULER_MAX_K2) {
+        ue_cc->last_pusch_allocated_slot.clear();
       }
     }
   }
