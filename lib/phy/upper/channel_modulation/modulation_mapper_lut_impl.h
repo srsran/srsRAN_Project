@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include <map>
 
 namespace srsran {

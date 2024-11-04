@@ -10,7 +10,7 @@
 
 #include "crc_calculator_lut_impl.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 #if __SSE4_1__
 #include <immintrin.h>

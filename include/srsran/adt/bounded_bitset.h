@@ -12,7 +12,7 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <cstdint>

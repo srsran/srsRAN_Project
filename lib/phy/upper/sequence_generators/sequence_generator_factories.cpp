@@ -12,7 +12,7 @@
 #include "low_papr_sequence_collection_impl.h"
 #include "low_papr_sequence_generator_impl.h"
 #include "pseudo_random_generator_impl.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

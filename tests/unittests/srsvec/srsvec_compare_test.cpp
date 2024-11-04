@@ -10,7 +10,7 @@
 
 #include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/compare.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
 

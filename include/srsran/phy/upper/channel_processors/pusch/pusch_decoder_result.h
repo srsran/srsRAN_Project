@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/support/stats.h"
+#include "srsran/support/math/stats.h"
 
 namespace srsran {
 

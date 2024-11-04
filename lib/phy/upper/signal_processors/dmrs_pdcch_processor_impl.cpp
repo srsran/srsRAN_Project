@@ -13,7 +13,7 @@
 #include "srsran/phy/support/mask_types.h"
 #include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

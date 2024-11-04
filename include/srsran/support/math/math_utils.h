@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "srsran_assert.h"
 #include "srsran/adt/complex.h"
+#include "srsran/support/srsran_assert.h"
 #include <numeric>
 
 namespace srsran {

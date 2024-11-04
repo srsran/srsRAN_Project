@@ -17,7 +17,7 @@
 #include "srsran/radio/radio_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/file_vector.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/signal_handling.h"
 #include <getopt.h>
 #include <random>

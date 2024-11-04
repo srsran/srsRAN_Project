@@ -10,7 +10,7 @@
 
 #include "pdcch_processor_impl.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 using namespace pdcch_constants;

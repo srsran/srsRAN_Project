@@ -11,7 +11,7 @@
 #include "ru_controller_generic_impl.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
 #include "srsran/radio/radio_session.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

@@ -10,7 +10,7 @@
 
 #include "crc_calculator_generic_impl.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

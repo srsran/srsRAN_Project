@@ -14,7 +14,7 @@
 #include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>

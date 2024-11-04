@@ -13,7 +13,7 @@
 #include "packing_utils_neon.h"
 #include "quantizer.h"
 #include "srsran/ofh/compression/compression_properties.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 using namespace ofh;

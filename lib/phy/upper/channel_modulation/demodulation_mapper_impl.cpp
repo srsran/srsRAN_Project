@@ -13,7 +13,7 @@
 #include "demodulation_mapper_qam256.h"
 #include "demodulation_mapper_qam64.h"
 #include "demodulation_mapper_qpsk.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;

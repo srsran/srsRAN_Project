@@ -16,7 +16,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/support/stats.h"
+#include "srsran/support/math/stats.h"
 #include <optional>
 
 namespace srsran {

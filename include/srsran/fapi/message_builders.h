@@ -17,7 +17,7 @@
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/ptrs/ptrs.h"
 #include "srsran/ran/srs/srs_configuration.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/shared_transport_block.h"
 #include <algorithm>
 

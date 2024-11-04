@@ -12,8 +12,8 @@
 
 #include "srsran/phy/lower/lower_phy_baseband_metrics.h"
 #include "srsran/phy/lower/lower_phy_metrics_notifier.h"
-#include "srsran/support/math_utils.h"
-#include "srsran/support/stats.h"
+#include "srsran/support/math/math_utils.h"
+#include "srsran/support/math/stats.h"
 #include <fmt/format.h>
 #include <mutex>
 

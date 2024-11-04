@@ -12,7 +12,7 @@
 #include "pseudo_random_generator_fast_advance.h"
 #include "pseudo_random_generator_initializers.h"
 #include "pseudo_random_generator_sequence.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 
 #if __SSE3__

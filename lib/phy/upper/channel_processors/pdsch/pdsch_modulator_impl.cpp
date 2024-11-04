@@ -11,7 +11,7 @@
 #include "pdsch_modulator_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

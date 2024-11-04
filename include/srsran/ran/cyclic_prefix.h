@@ -14,7 +14,7 @@
 #pragma once
 
 #include "srsran/ran/phy_time_unit.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include <algorithm>
 
 namespace srsran {
