@@ -47,7 +47,7 @@ public:
   const bounded_bitset<MAX_NOF_RB_LCIDS>& get_bearers() const { return bearers; }
 
   /// Determines if bearer with LCID is part of this slice.
-  bool contains(lcid_t lcid) const { return bearers.test(lcid); }
+  bool contains(lcid_t lcid) const { return bearers.size() > lcid and bearers.test(lcid); }
 
   /// Fetch DU cell index of UE's PCell.
   const ue_cell& get_pcell() const { return u.get_pcell(); }
