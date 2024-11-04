@@ -68,9 +68,10 @@ rlc_rx_am_entity::rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
     max_nof_sn_per_status_report = window_size(to_number(cfg.sn_field_length));
   }
 
-  // initialize status report
-  status_cached->ack_sn = st.rx_next_highest;
-  status_report_size.store(status_cached->get_packed_size(), std::memory_order_relaxed);
+  // initialize cached status report
+  rlc_am_status_pdu& init_cached_status = *status_cached.load(std::memory_order_relaxed);
+  init_cached_status.ack_sn             = st.rx_next_highest;
+  status_report_size.store(init_cached_status.get_packed_size(), std::memory_order_relaxed);
 
   logger.log_info("RLC AM configured. {}", cfg);
 }
@@ -626,9 +627,9 @@ void rlc_rx_am_entity::refresh_status_report()
 
 void rlc_rx_am_entity::store_status_report()
 {
-  std::unique_lock<std::mutex> lock(status_report_mutex);
-  std::swap(status_builder, status_cached);
-  status_report_size.store(status_cached->get_packed_size(), std::memory_order_relaxed);
+  // Minor inacurracy between status_report_size and status_cached is tolerated here
+  status_report_size.store(status_builder->get_packed_size(), std::memory_order_relaxed);
+  status_builder = status_cached.exchange(status_builder, std::memory_order_relaxed);
 }
 
 rlc_am_status_pdu& rlc_rx_am_entity::get_status_pdu()
@@ -640,8 +641,7 @@ rlc_am_status_pdu& rlc_rx_am_entity::get_status_pdu()
     }
     status_prohibit_timer_is_running.store(true, std::memory_order_relaxed);
   }
-  std::unique_lock<std::mutex> lock(status_report_mutex);
-  std::swap(status_shared, status_cached);
+  status_shared = status_cached.exchange(status_shared, std::memory_order_relaxed);
   return *status_shared;
 }
 

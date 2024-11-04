@@ -18,7 +18,7 @@
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
-#include <mutex>
+#include <atomic>
 #include <set>
 
 namespace srsran {
@@ -110,16 +110,13 @@ private:
   /// Status report for (re)-building
   rlc_am_status_pdu* status_builder = &status_buf[0];
   /// Status report for caching
-  rlc_am_status_pdu* status_cached = &status_buf[1];
+  std::atomic<rlc_am_status_pdu*> status_cached = &status_buf[1];
   /// Status report for sharing
   rlc_am_status_pdu* status_shared = &status_buf[2];
 
   /// Size of the cached status report
   std::atomic<uint32_t> status_report_size;
   std::atomic<bool>     status_prohibit_timer_is_running{false};
-
-  /// Mutex for controlled access to the cached status report, e.g. read by the Tx entity in a different executor
-  std::mutex status_report_mutex;
 
   /// \brief t-StatusProhibit
   /// This timer is used by the receiving side of an AM RLC entity in order to prohibit transmission of a STATUS PDU
