@@ -4,10 +4,11 @@
 # at start-up. The following command may be used to run the gNB with this configuration file: 
 #   sudo ./gnb -c gnb_ru_ran550_tdd_n78_100mhz_2x2.yml -c slicing.yml
 
-slicing:
-  -
-    sst: 1
-    sd: 1
-  -
-    sst: 2
-    sd: 42
+cell_cfg:
+  slicing:
+    -
+      sst: 1
+      sd: 1
+    -
+      sst: 2
+      sd: 42
