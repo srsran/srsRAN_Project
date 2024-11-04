@@ -121,7 +121,7 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
     ctrl_cfg.param_list.push_back(cur_control_params);
   } else if (action_params[ran_param_id] == "SST") {
     if (ctrl_cfg.param_list.size()) {
-      if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sst) {
+      if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sst.value() != 0) {
         srs_du::control_config_params cur_control_params = {};
         cur_control_params.rrm_policy_group.emplace();
         cur_control_params = ctrl_cfg.param_list.back();
@@ -135,18 +135,18 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
     }
   } else if (action_params[ran_param_id] == "SD") {
     if (ctrl_cfg.param_list.size()) {
-      if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd.has_value()) {
+      if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd.is_set()) {
         srs_du::control_config_params cur_control_params = {};
         cur_control_params.rrm_policy_group.emplace();
         cur_control_params = ctrl_cfg.param_list.back();
-        cur_control_params.rrm_policy_group.value().pol_member.s_nssai.sd.emplace();
         cur_control_params.rrm_policy_group.value().pol_member.s_nssai.sd =
-            ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
+            slice_differentiator::create(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number())
+                .value();
         ctrl_cfg.param_list.push_back(cur_control_params);
       } else {
-        ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd.emplace();
         ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd =
-            ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
+            slice_differentiator::create(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number())
+                .value();
       }
     }
   } else if (action_params[ran_param_id] == "Min PRB Policy Ratio") {

@@ -559,8 +559,10 @@ struct du_high_unit_cell_slice_sched_config {
 
 /// Slice configuration for a cell.
 struct du_high_unit_cell_slice_config {
-  /// Slice identifier.
-  s_nssai_t s_nssai = s_nssai_t{1};
+  /// Slice/Service Type.
+  uint8_t sst;
+  /// Slice Differentiator.
+  uint32_t sd;
   /// Slice scheduling configuration.
   du_high_unit_cell_slice_sched_config sched_cfg;
 };

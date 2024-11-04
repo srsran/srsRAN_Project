@@ -22,9 +22,14 @@
 namespace srsran {
 
 struct cu_cp_unit_plmn_item {
+  struct tai_slice_t {
+    uint8_t  sst = 0;
+    uint32_t sd  = 0xffffffU;
+  };
+
   std::string plmn_id;
   /// Supported Slices by the RAN node.
-  std::vector<s_nssai_t> tai_slice_support_list;
+  std::vector<tai_slice_t> tai_slice_support_list;
 };
 
 struct cu_cp_unit_supported_ta_item {

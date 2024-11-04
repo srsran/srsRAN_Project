@@ -152,8 +152,9 @@ static void autoderive_slicing_args(du_high_unit_config& du_hi_cfg, cu_cp_unit_c
   std::vector<s_nssai_t> du_slices;
   for (const auto& cell_cfg : du_hi_cfg.cells_cfg) {
     for (const auto& slice : cell_cfg.cell.slice_cfg) {
-      if (du_slices.end() == std::find(du_slices.begin(), du_slices.end(), slice.s_nssai)) {
-        du_slices.push_back(slice.s_nssai);
+      s_nssai_t nssai{slice.sst, slice_differentiator::create(slice.sd).value()};
+      if (du_slices.end() == std::find(du_slices.begin(), du_slices.end(), nssai)) {
+        du_slices.push_back(nssai);
       }
     }
   }
@@ -220,7 +221,8 @@ int main(int argc, char** argv)
     // If test mode is enabled, we auto-enable "no_core" option and generate a amf config with no core.
     if (du_app_unit->get_du_high_unit_config().is_testmode_enabled()) {
       cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core           = true;
-      cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf.supported_tas = {{7, {{"00101", {s_nssai_t{1}}}}}};
+      cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf.supported_tas = {
+          {7, {{"00101", {cu_cp_unit_plmn_item::tai_slice_t{1}}}}}};
     }
 
     cu_cp_app_unit->on_configuration_parameters_autoderivation(app);

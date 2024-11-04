@@ -14,13 +14,13 @@
 
 using namespace srsran;
 
-static YAML::Node build_cu_cp_tai_slice_section(const s_nssai_t& config)
+static YAML::Node build_cu_cp_tai_slice_section(const cu_cp_unit_plmn_item::tai_slice_t& config)
 {
   YAML::Node node;
 
-  node["sst"] = static_cast<unsigned>(config.sst);
+  node["sst"] = config.sst;
   if (config.sd) {
-    node["sd"] = config.sd.value();
+    node["sd"] = config.sd;
   }
 
   return node;
@@ -382,8 +382,8 @@ static void build_cu_cp_slicing_section(YAML::Node node, span<const s_nssai_t> s
 {
   for (const auto& slice : slice_cfg) {
     YAML::Node node_entry;
-    node_entry["sst"] = static_cast<unsigned>(slice.sst);
-    if (slice.sd) {
+    node_entry["sst"] = slice.sst.value();
+    if (slice.sd.is_set()) {
       node_entry["sd"] = slice.sd.value();
     }
     node["slicing"].push_back(node_entry);

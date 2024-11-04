@@ -1160,10 +1160,8 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
 
 static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_config& slice_params)
 {
-  add_option(app, "--sst", slice_params.s_nssai.sst, "Slice Service Type")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 255));
-  add_option(app, "--sd", slice_params.s_nssai.sd, "Service Differentiator")
+  add_option(app, "--sst", slice_params.sst, "Slice Service Type")->capture_default_str()->check(CLI::Range(0, 255));
+  add_option(app, "--sd", slice_params.sd, "Service Differentiator")
       ->capture_default_str()
       ->check(CLI::Range(0, 0xffffff));
 

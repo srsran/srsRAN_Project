@@ -90,7 +90,7 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   res_to_setup_item.pdu_session_id                              = uint_to_pdu_session_id(0);
   res_to_setup_item.pdu_session_type                            = "ipv4";
   res_to_setup_item.snssai.sst                                  = 1;
-  res_to_setup_item.snssai.sd                                   = 10203;
+  res_to_setup_item.snssai.sd                                   = slice_differentiator::create(10203).value();
   res_to_setup_item.security_ind.integrity_protection_ind       = integrity_protection_indication_t::not_needed;
   res_to_setup_item.security_ind.confidentiality_protection_ind = confidentiality_protection_indication_t::not_needed;
   res_to_setup_item.pdu_session_res_dl_ambr                     = 330000000;

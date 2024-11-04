@@ -146,8 +146,8 @@ e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorith
 inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(srsran::s_nssai_t snssai)
 {
   asn1::e1ap::snssai_s asn1_snssai;
-  asn1_snssai.sst.from_number(snssai.sst);
-  if (snssai.sd.has_value()) {
+  asn1_snssai.sst.from_number(snssai.sst.value());
+  if (snssai.sd.is_set()) {
     asn1_snssai.sd_present = true;
     asn1_snssai.sd.from_number(snssai.sd.value());
   }
@@ -164,7 +164,7 @@ inline srsran::s_nssai_t e1ap_asn1_to_snssai(asn1::e1ap::snssai_s asn1_snssai)
   snssai.sst = asn1_snssai.sst.to_number();
 
   if (asn1_snssai.sd_present) {
-    snssai.sd = asn1_snssai.sd.to_number();
+    snssai.sd = slice_differentiator::create(asn1_snssai.sd.to_number()).value();
   }
 
   return snssai;

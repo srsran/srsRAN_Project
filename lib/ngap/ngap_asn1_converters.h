@@ -482,7 +482,7 @@ inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
   s_nssai_t s_nssai;
   s_nssai.sst = asn1_s_nssai.sst.to_number();
   if (asn1_s_nssai.sd_present) {
-    s_nssai.sd = asn1_s_nssai.sd.to_number();
+    s_nssai.sd = slice_differentiator::create(asn1_s_nssai.sd.to_number()).value();
   }
 
   return s_nssai;
@@ -491,9 +491,9 @@ inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
 inline asn1::ngap::s_nssai_s s_nssai_to_asn1(const s_nssai_t& s_nssai)
 {
   asn1::ngap::s_nssai_s asn1_s_nssai;
-  asn1_s_nssai.sst.from_number(s_nssai.sst);
+  asn1_s_nssai.sst.from_number(s_nssai.sst.value());
 
-  if (s_nssai.sd.has_value()) {
+  if (s_nssai.sd.is_set()) {
     asn1_s_nssai.sd_present = true;
     asn1_s_nssai.sd.from_number(s_nssai.sd.value());
   }

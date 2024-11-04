@@ -106,10 +106,10 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
     f1ap_cell.served_cell_info.served_plmns[0].ie_exts.tai_slice_support_list_present = not cell_cfg.slices.empty();
     for (const s_nssai_t& s_nssai : cell_cfg.slices) {
       slice_support_item_s slice{};
-      slice.snssai.sst.from_number(s_nssai.sst);
-      slice.snssai.sd_present = s_nssai.sd.has_value();
+      slice.snssai.sst.from_number(s_nssai.sst.value());
+      slice.snssai.sd_present = s_nssai.sd.is_set();
       if (slice.snssai.sd_present) {
-        slice.snssai.sd.from_number(*s_nssai.sd);
+        slice.snssai.sd.from_number(s_nssai.sd.value());
       }
       f1ap_cell.served_cell_info.served_plmns[0].ie_exts.tai_slice_support_list.push_back(slice);
     }

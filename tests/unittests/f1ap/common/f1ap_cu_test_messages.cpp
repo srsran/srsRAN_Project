@@ -257,7 +257,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
 
   // s nssai
   drbs_to_be_setup_mod_item.qos_info.s_nssai.sst = 1;
-  drbs_to_be_setup_mod_item.qos_info.s_nssai.sd  = 128;
+  drbs_to_be_setup_mod_item.qos_info.s_nssai.sd  = slice_differentiator::create(128).value();
 
   // notif ctrl
   drbs_to_be_setup_mod_item.qos_info.notif_ctrl = drb_notification_control::active;

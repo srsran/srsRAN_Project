@@ -337,7 +337,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
       for (const auto& plmn_item : supported_ta.plmn_list) {
         expected<plmn_identity> plmn = plmn_identity::parse(plmn_item.plmn_id);
         srsran_assert(plmn.has_value(), "Invalid PLMN: {}", plmn_item.plmn_id);
-        plmn_list.push_back({plmn.value(), plmn_item.tai_slice_support_list});
+        plmn_list.push_back({plmn.value(), {}});
+        for (const auto& elem : plmn_item.tai_slice_support_list) {
+          plmn_list.back().slice_support_list.push_back({elem.sst, slice_differentiator::create(elem.sd).value()});
+        }
       }
       supported_tas.push_back({supported_ta.tac, plmn_list});
     }
@@ -351,7 +354,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
       for (const auto& plmn_item : supported_ta.plmn_list) {
         expected<plmn_identity> plmn = plmn_identity::parse(plmn_item.plmn_id);
         srsran_assert(plmn.has_value(), "Invalid PLMN: {}", plmn_item.plmn_id);
-        plmn_list.push_back({plmn.value(), plmn_item.tai_slice_support_list});
+        plmn_list.push_back({plmn.value(), {}});
+        for (const auto& elem : plmn_item.tai_slice_support_list) {
+          plmn_list.back().slice_support_list.push_back({elem.sst, slice_differentiator::create(elem.sd).value()});
+        }
       }
       supported_tas.push_back({supported_ta.tac, plmn_list});
     }
