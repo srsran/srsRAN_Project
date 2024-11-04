@@ -85,9 +85,6 @@ private:
   rlc_retx_queue retx_queue;
   uint32_t       retx_sn = INVALID_RLC_SN; // SN of the most recent ReTx since last status report
 
-  // Mutexes
-  std::mutex mutex;
-
   /// TX counter modulus
   const uint32_t     mod;
   constexpr uint32_t tx_mod_base(uint32_t x) const { return (x - st.tx_next_ack) % mod; }
@@ -338,13 +335,8 @@ private:
   /// itself.
   ///
   /// Safe execution from: pcell_executor
-  /// \param is_locked provides info whether the \c mutex is already locked or not.
   /// \param force_notify forces a notification of the lower layer regardless of the current/previous buffer state.
-  void update_mac_buffer_state(bool is_locked, bool force_notify);
-
-  /// Lock-free version of \c get_buffer_state()
-  /// \return Provides the current buffer state
-  uint32_t get_buffer_state_nolock();
+  void update_mac_buffer_state(bool force_notify);
 
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
