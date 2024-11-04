@@ -116,7 +116,7 @@ private:
   class downlink_task_executor
   {
   public:
-    using task_type = unique_function<void(), 128, true>;
+    using task_type = unique_function<void(), default_unique_task_buffer_size, true>;
 
     downlink_task_executor(task_executor& executor_) : executor(executor_) {}
 
@@ -124,6 +124,18 @@ private:
 
   private:
     task_executor& executor;
+  };
+
+  /// Holds the PDSCH processor arguments.
+  struct pdsch_proc_args {
+    pdsch_proc_args(const pdsch_processor::pdu_t&                                                    pdu_,
+                    static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data_) :
+      pdu(pdu_), data(std::move(data_))
+    {
+    }
+
+    pdsch_processor::pdu_t                                                           pdu;
+    static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
   };
 
   /// Sends the resource grid and updates the processor state to allow configuring a new resource grid.
@@ -147,7 +159,7 @@ private:
   /// The lists are cleared upon the resource grid configuration before start the execution.
   /// @{
   static_vector<pdcch_processor::pdu_t, MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UL_PDCCH_PDUS_PER_SLOT> pdcch_list;
-  static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT>                                 pdsch_list;
+  static_vector<pdsch_proc_args, MAX_PDSCH_PDUS_PER_SLOT>                                        pdsch_list;
   static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>                                          ssb_list;
   static_vector<nzp_csi_rs_generator::config_t, MAX_SSB_PER_SLOT>                                nzp_csi_rs_list;
   /// @}

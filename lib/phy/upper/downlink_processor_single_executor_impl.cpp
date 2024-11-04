@@ -102,22 +102,24 @@ void downlink_processor_single_executor_impl::process_pdsch(
     state.on_task_creation();
   }
 
-  // Copy the PDU and get the reference for the asynchronous processing.
-  pdsch_processor::pdu_t& pdu_ref = pdsch_list.emplace_back(pdu);
+  // Copy the PDU and data and get the reference for the asynchronous processing.
+  pdsch_proc_args& pdsch_args = pdsch_list.emplace_back(pdu, std::move(data_));
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, data = std::move(data_), &pdu_ref]() mutable {
+  bool enqueued = executor.execute([this, &pdsch_args]() mutable {
     trace_point process_pdsch_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      pdsch_proc->process(current_grid.get_writer(), pdsch_notifier, std::move(data), pdu_ref);
+      pdsch_proc->process(current_grid.get_writer(), pdsch_notifier, std::move(pdsch_args.data), pdsch_args.pdu);
 
       l1_tracer << trace_event("process_pdsch", process_pdsch_tp);
     } else {
       // Inform about the dropped PDSCH.
-      logger.warning(
-          pdu_ref.slot.sfn(), pdu_ref.slot.slot_index(), "Resource grid not configured. Ignoring PDSCH {:s}.", pdu_ref);
+      logger.warning(pdsch_args.pdu.slot.sfn(),
+                     pdsch_args.pdu.slot.slot_index(),
+                     "Resource grid not configured. Ignoring PDSCH {:s}.",
+                     pdsch_args.pdu);
 
       // Report task drop to FSM.
       on_task_completion();
