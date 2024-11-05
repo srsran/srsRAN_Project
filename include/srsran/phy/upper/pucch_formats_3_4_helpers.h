@@ -161,7 +161,7 @@ inline void pucch_3_4_extract_and_equalize(span<cf_t>                    eq_re,
   // Number of REs per OFDM symbol.
   const unsigned nof_re_symb = nof_prb * NRE;
 
-  // Index of the first symbol allocated to the second subcarrier when intra-slot frequency hopping is enabled.
+  // Index of the first symbol allocated to the second hop, when intra-slot frequency hopping is enabled.
   const unsigned second_hop_start = (nof_symbols / 2) + start_symbol_index;
 
   // Extract the Rx port noise variances from the channel estimation.
@@ -180,7 +180,7 @@ inline void pucch_3_4_extract_and_equalize(span<cf_t>                    eq_re,
 
     // Calculate the lowest resource element containing PUCCH Format 3 within the OFDM symbol.
     unsigned first_subc = first_prb * NRE;
-    if ((i_symbol >= second_hop_start) && second_hop_prb.has_value()) {
+    if (second_hop_prb.has_value() && (i_symbol >= second_hop_start)) {
       // Intra-slot frequency hopping.
       first_subc = second_hop_prb.value() * NRE;
     }
@@ -218,8 +218,8 @@ inline void pucch_3_4_extract_and_equalize(span<cf_t>                    eq_re,
     precoder.deprecode_ofdm_symbol(eq_re_symb, eq_re_symb);
 
     // Advance the equalized RE and noise vars views.
-    eq_re         = eq_re.subspan(nof_re_symb, eq_re.size() - nof_re_symb);
-    eq_noise_vars = eq_noise_vars.subspan(nof_re_symb, eq_noise_vars.size() - nof_re_symb);
+    eq_re         = eq_re.last(eq_re.size() - nof_re_symb);
+    eq_noise_vars = eq_noise_vars.last(eq_noise_vars.size() - nof_re_symb);
   }
 }
 

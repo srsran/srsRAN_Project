@@ -50,9 +50,13 @@ public:
                   const pucch_demodulator::format4_configuration& config);
 
 private:
-  /// Channel equalization component, also in charge of combining contributions of all receive antenna ports.
+  /// \brief Channel equalizer.
+  ///
+  /// Combines the contributions of all receive antenna ports, equalizing the channels.
   std::unique_ptr<channel_equalizer> equalizer;
-  /// Demodulation mapper component: transforms channel symbols into log-likelihood ratios (i.e., soft bits).
+  /// \brief Demodulation mapper.
+  ///
+  /// Transforms channel symbols into log-likelihood ratios (i.e., soft  bits).
   std::unique_ptr<demodulation_mapper> demapper;
   /// Descrambler component.
   std::unique_ptr<pseudo_random_generator> descrambler;

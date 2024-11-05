@@ -16,6 +16,7 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/upper/pucch_formats_3_4_helpers.h"
 #include "srsran/phy/upper/pucch_orthogonal_sequence.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
@@ -27,11 +28,15 @@ void pucch_demodulator_format4::demodulate(span<log_likelihood_ratio>           
   // PUCCH Format 4 modulation scheme can be QPSK or pi/2-BPSK, as per TS38.211 Section 6.3.2.6.2.
   modulation_scheme mod_scheme = config.pi2_bpsk ? modulation_scheme::PI_2_BPSK : modulation_scheme::QPSK;
 
-  // Number of data Resource Elements in a slot for a single Rx port.
+  // Get a boolean mask of the OFDM symbols carrying DM-RS.
   symbol_slot_mask dmrs_symb_mask = get_pucch_formats_3_4_dmrs_symbol_mask(
       config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
 
-  const unsigned nof_re_port = (config.nof_symbols - dmrs_symb_mask.count()) * NRE;
+  // Number of REs per OFDM symbol. PUCCH Format 4 only gets a PRB.
+  const unsigned nof_re_symb = NRE;
+
+  // Number of data Resource Elements in a slot for a single Rx port.
+  const unsigned nof_re_port = (config.nof_symbols - dmrs_symb_mask.count()) * nof_re_symb;
 
   // Assert that allocations are valid.
   srsran_assert(config.first_prb * NRE <= grid.get_nof_subc(),
@@ -96,11 +101,11 @@ void pucch_demodulator_format4::inverse_blockwise_spreading(span<cf_t>        or
                                                             span<const float> eq_noise_vars,
                                                             const pucch_demodulator::format4_configuration& config)
 {
-  const unsigned         mod = 12 / config.occ_length;
-  const span<const cf_t> wn  = pucch_orthogonal_sequence_format4::get_sequence(config.occ_length, config.occ_index);
+  unsigned         mod = 12 / config.occ_length;
+  span<const cf_t> wn  = pucch_orthogonal_sequence_format4::get_sequence(config.occ_length, config.occ_index);
 
-  for (unsigned k = 0; k != NRE; k++) {
-    for (unsigned l = 0, l_end = eq_re.size() / NRE; l != l_end; l++) {
+  for (unsigned k = 0; k != NRE; ++k) {
+    for (unsigned l = 0, l_end = eq_re.size() / NRE; l != l_end; ++l) {
       const unsigned original_index = (l * mod) + (k % mod);
       const unsigned spread_index   = (l * 12) + k;
       original[original_index] += eq_re[spread_index] / wn[k];
@@ -109,7 +114,5 @@ void pucch_demodulator_format4::inverse_blockwise_spreading(span<cf_t>        or
   }
 
   // Scale according to the spreading factor.
-  for (cf_t& symbol : original) {
-    symbol /= config.occ_length;
-  }
+  srsvec::sc_prod(original, 1.0F / config.occ_length, original);
 }

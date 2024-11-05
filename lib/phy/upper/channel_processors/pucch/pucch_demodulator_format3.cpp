@@ -26,11 +26,15 @@ void pucch_demodulator_format3::demodulate(span<log_likelihood_ratio>           
   // PUCCH Format 3 modulation scheme can be QPSK or pi/2-BPSK, as per TS38.211 Section 6.3.2.6.2.
   modulation_scheme mod_scheme = config.pi2_bpsk ? modulation_scheme::PI_2_BPSK : modulation_scheme::QPSK;
 
-  // Number of data Resource Elements in a slot for a single Rx port.
+  // Get a boolean mask of the OFDM symbols carrying DM-RS.
   symbol_slot_mask dmrs_symb_mask = get_pucch_formats_3_4_dmrs_symbol_mask(
       config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
 
-  const unsigned nof_re_port = (config.nof_symbols - dmrs_symb_mask.count()) * config.nof_prb * NRE;
+  // Number of REs per OFDM symbol.
+  const unsigned nof_re_symb = config.nof_prb * NRE;
+
+  // Number of data Resource Elements in a slot for a single Rx port.
+  const unsigned nof_re_port = (config.nof_symbols - dmrs_symb_mask.count()) * nof_re_symb;
 
   // Assert that allocations are valid.
   srsran_assert(config.nof_prb && config.nof_prb <= pucch_constants::FORMAT3_MAX_NPRB,
