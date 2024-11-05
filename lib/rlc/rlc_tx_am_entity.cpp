@@ -14,6 +14,7 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/support/rtsan.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/tracing/event_tracing.h"
 
@@ -130,7 +131,7 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.3.1
-size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
+size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf) SRSRAN_RTSAN_NONBLOCKING
 {
   std::chrono::time_point<std::chrono::steady_clock> pull_begin;
   if (metrics_low.is_enabled()) {
@@ -636,7 +637,7 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
   }
 }
 
-void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
+void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_NONBLOCKING
 {
   trace_point status_tp = l2_tracer.now();
   auto        t_start   = std::chrono::high_resolution_clock::now();
