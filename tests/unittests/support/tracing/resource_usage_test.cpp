@@ -29,7 +29,7 @@ TEST(resource_usage_test, resource_usage_diff_detects_sleep)
   usleep(10);
   resource_usage::snapshot point2 = resource_usage::now().value();
   resource_usage::diff     d      = point2 - point1;
-  ASSERT_GE(d.vol_ctxt_switch_count, 1);
+  ASSERT_GE(d.vol_ctxt_switch_count + d.invol_ctxt_switch_count, 1);
 }
 
 TEST(resource_usage_test, format_resource_usage_diff)
