@@ -10,7 +10,7 @@
 
 #include "flexible_du_factory.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
-#include "apps/services/worker_manager.h"
+#include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_du/flexible_du_commands.h"
 #include "apps/units/flexible_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_du/o_du_high/o_du_high_unit_factory.h"

@@ -13,7 +13,6 @@
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "cu_cp_commands.h"
 #include "cu_cp_config_translators.h"
-#include "cu_cp_unit_config.h"
 #include "cu_cp_wrapper.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"

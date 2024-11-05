@@ -9,7 +9,7 @@
  */
 
 #include "cu_up_unit_config_translators.h"
-#include "apps/services/worker_manager_config.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
 #include "cu_up_unit_config.h"
 #include "srsran/cu_up/cu_up_configuration_helpers.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"

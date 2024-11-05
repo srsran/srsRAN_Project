@@ -19,7 +19,7 @@ install(TARGETS gnb
 
 target_link_libraries(gnb
         srsran_app_services
-        srsgnb_app_f1u_connector
+        srsran_f1u_connector
         srsran_cu_cp
         srsran_network
         srsran_ngap

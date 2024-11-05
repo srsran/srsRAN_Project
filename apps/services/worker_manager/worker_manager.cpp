@@ -553,7 +553,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
 {
   using namespace execution_config_helper;
 
-  // Radio Unit worker and executor. As the radio is unique per gNB, use the first cell of the affinity manager.
+  // Radio Unit worker and executor. As the radio is unique per application, use the first cell of the affinity manager.
   create_prio_worker("radio",
                      task_worker_queue_size,
                      {{"radio_exec"}},

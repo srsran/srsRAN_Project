@@ -9,7 +9,7 @@
  */
 
 #include "cu_cp_config_translators.h"
-#include "apps/services/worker_manager_config.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/plmn_identity.h"

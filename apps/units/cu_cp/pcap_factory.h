@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "apps/services/worker_manager_worker_getter.h"
+#include "apps/services/worker_manager/worker_manager_worker_getter.h"
 #include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 

@@ -10,7 +10,7 @@
 
 #include "du_high_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
-#include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
+#include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"

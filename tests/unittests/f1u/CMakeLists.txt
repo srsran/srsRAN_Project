@@ -11,7 +11,7 @@ add_subdirectory(du)
 
 add_executable(f1u_local_connector_test common/f1u_connector_test.cpp)
 target_link_libraries(f1u_local_connector_test
-srsgnb_app_f1u_connector
+srsran_f1u_connector
 srsran_f1u_du
 srsran_f1u_cu_up
 srsran_support
@@ -24,7 +24,7 @@ gtest_discover_tests(f1u_local_connector_test)
 
 add_executable(f1u_cu_up_split_connector_test common/f1u_cu_split_connector_test.cpp)
 target_link_libraries(f1u_cu_up_split_connector_test
-srsgnb_app_f1u_cu_up_split_connector
+srsran_f1u_cu_up_split_connector
 srsran_f1u_cu_up
 srsran_gtpu
 srsran_network
@@ -38,7 +38,7 @@ gtest_discover_tests(f1u_cu_up_split_connector_test)
 
 add_executable(f1u_du_split_connector_test common/f1u_du_split_connector_test.cpp)
 target_link_libraries(f1u_du_split_connector_test
-srsgnb_app_f1u_du_split_connector
+srsran_f1u_du_split_connector
 srsran_f1u_du
 srsran_gtpu
 srsran_network

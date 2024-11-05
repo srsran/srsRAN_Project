@@ -13,8 +13,7 @@
 #include "../gnb/gnb_appconfig.h" // TODO: Remove
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
-#include "apps/services/os_sched_affinity_manager.h"
-#include "srsran/support/executors/unique_thread.h"
+#include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include <optional>
 
 namespace srsran {

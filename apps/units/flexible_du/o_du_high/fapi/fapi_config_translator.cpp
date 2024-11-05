@@ -9,7 +9,7 @@
  */
 
 #include "fapi_config_translator.h"
-#include "apps/services/worker_manager_config.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
 #include "fapi_config.h"
 
 using namespace srsran;

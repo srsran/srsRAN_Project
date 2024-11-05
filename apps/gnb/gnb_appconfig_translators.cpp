@@ -9,7 +9,7 @@
  */
 
 #include "gnb_appconfig_translators.h"
-#include "apps/services/worker_manager_config.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "gnb_appconfig.h"
 #include "srsran/ran/subcarrier_spacing.h"

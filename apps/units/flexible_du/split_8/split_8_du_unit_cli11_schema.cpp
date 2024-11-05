@@ -13,7 +13,6 @@
 #include "apps/units/flexible_du/o_du_low/du_low_config_cli11_schema.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_cli11_schema.h"
 #include "split_8_du_unit_config.h"
-#include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
 

@@ -9,7 +9,7 @@
  */
 
 #include "du_appconfig_translators.h"
-#include "apps/services/worker_manager_config.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
 #include "du_appconfig.h"
 
 using namespace srsran;

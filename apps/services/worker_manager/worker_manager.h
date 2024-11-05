@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "apps/services/worker_manager_config.h"
-#include "apps/services/worker_manager_worker_getter.h"
+#include "worker_manager_config.h"
+#include "worker_manager_worker_getter.h"
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"

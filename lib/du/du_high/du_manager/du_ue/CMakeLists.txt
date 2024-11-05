@@ -7,4 +7,4 @@
 #
 
 add_library(du_ue du_bearer.cpp du_ue_adapters.cpp du_ue_bearer_manager.cpp du_ue_controller_impl.cpp du_ue_manager.cpp)
-target_link_libraries(du_ue srsran_du_manager_procedures srsran_f1u_du)
+target_link_libraries(du_ue srsran_du_manager_procedures srsran_f1u_du srsran_gtpu)

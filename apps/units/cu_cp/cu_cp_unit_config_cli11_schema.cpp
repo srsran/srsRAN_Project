@@ -11,6 +11,7 @@
 #include "cu_cp_unit_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "cu_cp_unit_config.h"
+#include "srsran/ran/nr_cell_identity.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 

@@ -9,7 +9,7 @@
  */
 
 #include "dynamic_du_translators.h"
-#include "apps/services/worker_manager_config.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
 #include "apps/units/flexible_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_translators.h"
 #include "apps/units/flexible_du/o_du_low/du_low_config_translator.h"

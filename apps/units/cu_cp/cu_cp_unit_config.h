@@ -14,7 +14,6 @@
 #include "cu_cp_unit_logger_config.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/nr_band.h"
-#include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/s_nssai.h"

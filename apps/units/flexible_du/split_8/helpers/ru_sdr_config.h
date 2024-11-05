@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "apps/services/os_sched_affinity_manager.h"
-
+#include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include <string>
 
 namespace srsran {

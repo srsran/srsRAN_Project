@@ -8,12 +8,35 @@
  *
  */
 
+#include "apps/cu/adapters/e2_gateways.h"
+#include "apps/cu/cu_appconfig_cli11_schema.h"
+#include "apps/services/application_message_banners.h"
+#include "apps/services/application_tracer.h"
+#include "apps/services/buffer_pool/buffer_pool_manager.h"
+#include "apps/services/metrics/metrics_manager.h"
+#include "apps/services/metrics/metrics_notifier_proxy.h"
+#include "apps/services/stdin_command_dispatcher.h"
+#include "apps/services/worker_manager/worker_manager.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
+#include "apps/units/cu_cp/cu_cp_application_unit.h"
+#include "apps/units/cu_cp/cu_cp_config_translators.h"
+#include "apps/units/cu_cp/cu_cp_unit_config.h"
+#include "apps/units/cu_cp/pcap_factory.h"
+#include "apps/units/cu_up/cu_up_application_unit.h"
+#include "apps/units/cu_up/cu_up_unit_config.h"
+#include "apps/units/cu_up/pcap_factory.h"
+#include "cu_appconfig.h"
+#include "cu_appconfig_validator.h"
+#include "cu_appconfig_yaml_writer.h"
+#include "srsran/cu_up/cu_up.h"
+#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/ngap/gateways/n2_connection_client_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
@@ -28,36 +51,6 @@
 #include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
-
-#include "apps/cu/cu_appconfig_cli11_schema.h"
-#include "apps/units/cu_cp/cu_cp_application_unit.h"
-#include "apps/units/cu_cp/cu_cp_config_translators.h"
-#include "apps/units/cu_cp/cu_cp_unit_config.h"
-#include "apps/units/cu_cp/pcap_factory.h"
-#include "apps/units/cu_up/cu_up_application_unit.h"
-#include "apps/units/cu_up/cu_up_unit_config.h"
-#include "apps/units/cu_up/pcap_factory.h"
-#include "srsran/cu_up/cu_up.h"
-
-// TODO remove apps/gnb/*.h
-#include "apps/cu/adapters/e2_gateways.h"
-#include "apps/gnb/gnb_appconfig_translators.h"
-
-#include "apps/services/application_message_banners.h"
-#include "apps/services/application_tracer.h"
-#include "apps/services/buffer_pool/buffer_pool_manager.h"
-#include "apps/services/metrics/metrics_manager.h"
-#include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/services/stdin_command_dispatcher.h"
-#include "apps/services/worker_manager.h"
-#include "apps/services/worker_manager_config.h"
-#include "cu_appconfig.h"
-#include "cu_appconfig_validator.h"
-#include "cu_appconfig_yaml_writer.h"
-
-#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
-#include "srsran/ngap/gateways/n2_connection_client_factory.h"
-
 #include <atomic>
 #include <thread>
 

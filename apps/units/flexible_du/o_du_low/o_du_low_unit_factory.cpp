@@ -9,7 +9,7 @@
  */
 
 #include "o_du_low_unit_factory.h"
-#include "apps/services/worker_manager.h"
+#include "apps/services/worker_manager/worker_manager.h"
 #include "du_low_config.h"
 #include "du_low_config_translator.h"
 #include "srsran/du/du_low/o_du_low_factory.h"
