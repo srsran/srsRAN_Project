@@ -204,7 +204,6 @@ public:
         oper_ptr = &get_heap_table<OtherFunT>();
         ptr      = static_cast<void*>(new OtherFunT{std::move(rhs)});
       }
-      rhs.oper_ptr = &empty_table;
     }
     return *this;
   }
