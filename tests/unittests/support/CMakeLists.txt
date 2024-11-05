@@ -78,7 +78,7 @@ target_link_libraries(units_test srslog srsran_support gtest gtest_main)
 add_test(units_test units_test)
 
 add_executable(backtrace_test backtrace_test.cpp)
-target_link_libraries(backtrace_test srsran_support)
+target_link_libraries(backtrace_test PRIVATE srsran_support)
 add_backward(backtrace_test)
 
 add_executable(validator_helpers_test config/validator_helpers_test.cpp)

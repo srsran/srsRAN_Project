@@ -6,11 +6,6 @@
 # the distribution.
 #
 
-if (DU_SPLIT_7_2 OR DU_SPLIT_DYNAMIC)
-    add_subdirectory(ofh)
-endif()
-
-if (DU_SPLIT_8 OR DU_SPLIT_DYNAMIC)
-    add_subdirectory(phy)
-    add_subdirectory(radio)
-endif ()
+add_subdirectory(ofh)
+add_subdirectory(phy)
+add_subdirectory(radio)

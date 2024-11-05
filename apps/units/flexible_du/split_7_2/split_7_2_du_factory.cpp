@@ -18,3 +18,10 @@ std::unique_ptr<radio_unit> split_7_2_du_factory::create_radio_unit(const flexib
 {
   return create_ofh_radio_unit(unit_config.ru_cfg.config, ru_config, ru_dependencies);
 }
+
+std::unique_ptr<radio_unit>
+multicell_split_7_2_du_factory::create_radio_unit(const flexible_du_ru_config&       ru_config,
+                                                  const flexible_du_ru_dependencies& ru_dependencies)
+{
+  return create_ofh_radio_unit(unit_config.ru_cfg.config, ru_config, ru_dependencies);
+}

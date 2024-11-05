@@ -53,7 +53,8 @@ void split_8_du_application_unit_impl::on_parsing_configuration_registration(CLI
 o_du_unit split_8_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
                                                                     bool                        use_multicell)
 {
-  return split8_du_factory(unit_cfg).create_flexible_du(dependencies);
+  return use_multicell ? multicell_split8_du_factory(unit_cfg).create_flexible_du(dependencies)
+                       : split8_du_factory(unit_cfg).create_flexible_du(dependencies);
 }
 
 std::unique_ptr<flexible_du_application_unit> srsran::create_flexible_du_application_unit(std::string_view app_name)

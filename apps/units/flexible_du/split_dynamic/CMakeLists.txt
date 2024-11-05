@@ -15,13 +15,10 @@ set(SOURCES
         dynamic_du_unit_config_yaml_writer.cpp
         multicell_dynamic_du_factory.cpp)
 
-add_library(srsran_flexible_du STATIC ${SOURCES})
-target_include_directories(srsran_flexible_du PRIVATE ${CMAKE_SOURCE_DIR})
-
-target_link_libraries(srsran_flexible_du
+add_library(srsran_flexible_du_split_dynamic STATIC ${SOURCES})
+target_include_directories(srsran_flexible_du_split_dynamic PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srsran_flexible_du_split_dynamic
         srsran_ru_dummy
-        srsran_pcap
-        srsran_app_services
         srsran_split_8_app_unit_helpers
         srsran_split_7_2_app_unit_helpers
         srsran_flexible_du_helpers)

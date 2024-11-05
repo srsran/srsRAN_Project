@@ -16,8 +16,5 @@ set(SOURCES
 add_library(srsran_flexible_du_split6 STATIC ${SOURCES})
 target_include_directories(srsran_flexible_du_split6 PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(srsran_flexible_du_split6
-        srsran_du_high_wrapper
-        srsran_pcap
-        srsran_app_services
-        srsran_fapi_app_unit
+        srsran_o_du
         srsran_du_high_unit_helpers)

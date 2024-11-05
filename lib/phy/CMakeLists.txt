@@ -9,6 +9,4 @@
 add_subdirectory(generic_functions)
 add_subdirectory(support)
 add_subdirectory(upper)
-if (DU_SPLIT_8 OR DU_SPLIT_DYNAMIC)
-    add_subdirectory(lower)
-endif ()
+add_subdirectory(lower)

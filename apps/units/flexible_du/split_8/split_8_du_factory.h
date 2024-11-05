@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/units/flexible_du/split_helpers/flexible_du_factory.h"
+#include "apps/units/flexible_du/split_helpers/multicell_flexible_du_factory.h"
 #include "split_8_du_unit_config.h"
 
 namespace srsran {
@@ -22,6 +23,21 @@ class split8_du_factory : public flexible_du_factory
 public:
   explicit split8_du_factory(const split_8_du_unit_config& config_) :
     flexible_du_factory({config_.odu_high_cfg, config_.du_low_cfg}), unit_config(config_)
+  {
+  }
+
+private:
+  std::unique_ptr<radio_unit> create_radio_unit(const flexible_du_ru_config&       ru_config,
+                                                const flexible_du_ru_dependencies& ru_dependencies) override;
+};
+
+class multicell_split8_du_factory : public multicell_flexible_du_factory
+{
+  const split_8_du_unit_config& unit_config;
+
+public:
+  explicit multicell_split8_du_factory(const split_8_du_unit_config& config_) :
+    multicell_flexible_du_factory({config_.odu_high_cfg, config_.du_low_cfg}), unit_config(config_)
   {
   }
 

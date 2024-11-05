@@ -16,7 +16,7 @@ add_executable(srscu
 install(TARGETS srscu
         RUNTIME)
 
-target_link_libraries(srscu
+target_link_libraries(srscu PRIVATE
         srsran_app_services
         srsran_support
         srsran_versioning
