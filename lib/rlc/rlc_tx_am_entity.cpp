@@ -642,6 +642,20 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_
   trace_point status_tp = l2_tracer.now();
   auto        t_start   = std::chrono::high_resolution_clock::now();
 
+  auto on_function_exit = make_scope_exit([&]() {
+    auto t_end    = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+    logger.log_info("Handled status report. t={}us {}", duration.count(), status);
+
+    // redirect deletion of status report to UE executor
+    auto delete_status_pdu_func = [status = std::move(status)]() mutable {
+      // leaving this scope will implicitly delete the status PDU
+    };
+    if (not ue_executor.execute(std::move(delete_status_pdu_func))) {
+      logger.log_error("Unable to delete status report in UE executor. Deleting from pcell executor");
+    }
+  });
+
   /*
    * Sanity check the received status report.
    * 1. Checking if the ACK_SN is inside the valid ACK_SN window (the TX window "off-by-one")
@@ -674,12 +688,6 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_
       }
     }
   }
-
-  auto on_function_exit = make_scope_exit([&]() {
-    auto t_end    = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
-    logger.log_info("Handled status report. t={}us {}", duration.count(), status);
-  });
 
   /**
    * Section 5.3.3.3: Reception of a STATUS report
