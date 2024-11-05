@@ -15,8 +15,8 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 10
-      limits: 10
+      requests: 5
+      limits: 5
     memory:
       requests: "26G"
       limits: "26G"
@@ -40,8 +40,8 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 10
-      limits: 10
+      requests: 5
+      limits: 5
     memory:
       requests: "26G"
       limits: "26G"
@@ -62,8 +62,8 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 2
-      limits: 2
+      requests: 1
+      limits: 1
     memory:
       requests: "8G"
       limits: "8G"
