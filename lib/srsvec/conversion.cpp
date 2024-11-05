@@ -351,8 +351,8 @@ static void convert_scaled_int16_to_bf16_simd(bf16_t* out, const int16_t* in, co
     __m256i input_vec_2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in + i + 16));
 
     // Load the scale factor into a vector register.
-    __m512 scale_vec_1 = _mm512_load_ps(in_gain + i);
-    __m512 scale_vec_2 = _mm512_load_ps(in_gain + i + 16);
+    __m512 scale_vec_1 = _mm512_loadu_ps(in_gain + i);
+    __m512 scale_vec_2 = _mm512_loadu_ps(in_gain + i + 16);
 
     // Convert the int16_t elements to float and scale them.
     __m512 float_vec_1 = _mm512_cvtepi32_ps(_mm512_cvtepi16_epi32(input_vec_1));
@@ -370,7 +370,7 @@ static void convert_scaled_int16_to_bf16_simd(bf16_t* out, const int16_t* in, co
     __m256i input_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in + i));
 
     // Load the scale factor into a vector register.
-    __m512 scale_vec = _mm512_load_ps(in_gain + i);
+    __m512 scale_vec = _mm512_loadu_ps(in_gain + i);
 
     // Convert the int16_t elements to float and scale them.
     __m512 float_vec = _mm512_cvtepi32_ps(_mm512_cvtepi16_epi32(input_vec));
@@ -417,8 +417,8 @@ static void convert_scaled_int16_to_bf16_simd(bf16_t* out, const int16_t* in, co
     __m128i input_vec_2 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(in + i + 8));
 
     // Load the scale factor into a vector register.
-    __m256 scale_vec_1 = _mm256_load_ps(in_gain + i);
-    __m256 scale_vec_2 = _mm256_load_ps(in_gain + i + 8);
+    __m256 scale_vec_1 = _mm256_loadu_ps(in_gain + i);
+    __m256 scale_vec_2 = _mm256_loadu_ps(in_gain + i + 8);
 
     // Convert the int16_t elements to float and scale them
     __m256 float_vec_1 = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(input_vec_1));
