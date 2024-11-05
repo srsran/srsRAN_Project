@@ -8,34 +8,7 @@
  *
  */
 
-#include "srsran/gtpu/gtpu_config.h"
-#include "srsran/support/cpu_features.h"
-#include "srsran/support/signal_handling.h"
-#include "srsran/support/tracing/event_tracing.h"
-#include "srsran/support/versioning/build_info.h"
-#include "srsran/support/versioning/version.h"
-
-#include "srsran/f1u/du/split_connector/f1u_split_connector_factory.h"
-#include "srsran/gtpu/gtpu_demux_factory.h"
-
-#include "srsran/support/io/io_broker_factory.h"
-
 #include "adapters/f1_gateways.h"
-#include "srsran/support/backtrace.h"
-#include "srsran/support/config_parsers.h"
-
-#include "du_appconfig.h"
-#include "du_appconfig_cli11_schema.h"
-#include "du_appconfig_translators.h"
-#include "du_appconfig_validators.h"
-
-#include "apps/services/worker_manager/worker_manager.h"
-#include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
-
-#include "apps/du/adapters/e2_gateways.h"
-#include "apps/services/e2/e2_metric_connector_manager.h"
-#include "srsran/e2/gateways/e2_connection_client.h"
-
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
@@ -43,11 +16,30 @@
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/stdin_command_dispatcher.h"
+#include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
 #include "apps/units/flexible_du/o_du_high/du_high/du_high_config.h"
 #include "apps/units/flexible_du/o_du_high/du_high/pcap_factory.h"
+#include "du_appconfig.h"
+#include "du_appconfig_cli11_schema.h"
+#include "du_appconfig_translators.h"
+#include "du_appconfig_validators.h"
 #include "du_appconfig_yaml_writer.h"
 #include "srsran/du/du_power_controller.h"
+#include "srsran/e2/e2ap_config_translators.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
+#include "srsran/e2/gateways/e2_network_client_factory.h"
+#include "srsran/f1u/du/split_connector/f1u_split_connector_factory.h"
+#include "srsran/gtpu/gtpu_config.h"
+#include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/support/backtrace.h"
+#include "srsran/support/config_parsers.h"
+#include "srsran/support/cpu_features.h"
+#include "srsran/support/io/io_broker_factory.h"
+#include "srsran/support/signal_handling.h"
+#include "srsran/support/tracing/event_tracing.h"
+#include "srsran/support/versioning/build_info.h"
+#include "srsran/support/versioning/version.h"
 #include <atomic>
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -285,8 +277,8 @@ int main(int argc, char** argv)
       srslog::fetch_udp_sink(du_cfg.metrics_cfg.addr, du_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
   // Instantiate E2AP client gateway.
-  std::unique_ptr<e2_connection_client> e2_gw =
-      create_du_e2_client_gateway(du_cfg.e2_cfg, *epoll_broker, *du_pcaps.e2ap);
+  std::unique_ptr<e2_connection_client> e2_gw = create_e2_gateway_client(generate_e2_client_gateway_config(
+      du_app_unit->get_du_high_unit_config().e2_cfg, *epoll_broker, *du_pcaps.e2ap, E2_DU_PPID));
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
   du_unit_dependencies                      du_dependencies;

@@ -24,11 +24,5 @@ bool srsran::validate_appconfig(const du_appconfig& config)
     return false;
   }
 
-  if (config.e2_cfg.enable_cu_e2) {
-    fmt::print("DU application cannot enable CU E2 agent\n");
-
-    return false;
-  }
-
   return true;
 }

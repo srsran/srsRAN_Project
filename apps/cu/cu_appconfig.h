@@ -11,7 +11,6 @@
 #pragma once
 
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
-#include "apps/services/e2/e2_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include <string>
@@ -39,25 +38,16 @@ struct cu_f1ap_appconfig {
 struct cu_appconfig {
   /// Default constructor to update the log filename.
   cu_appconfig() { log_cfg.filename = "/tmp/cu.log"; }
-
   /// Loggers configuration.
   logger_appconfig log_cfg;
-
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
-
   /// NR-U
   srs_cu::cu_nru_appconfig nru_cfg;
-
   /// F1AP
   srs_cu::cu_f1ap_appconfig f1ap_cfg;
-
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
-
-  /// E2 configuration.
-  e2_appconfig e2_cfg;
-  /// TODO fill in the rest of the configuration
 };
 
 } // namespace srsran

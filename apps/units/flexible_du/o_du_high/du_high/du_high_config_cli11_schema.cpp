@@ -9,6 +9,7 @@
  */
 
 #include "du_high_config_cli11_schema.h"
+#include "apps/services/e2/e2_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
@@ -1611,25 +1612,6 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(f1u_du_subcmd);
 }
 
-static void configure_cli11_e2_args(CLI::App& app, e2_config& e2_params)
-{
-  add_option(app, "--enable_du_e2", e2_params.enable_unit_e2, "Enable DU E2 agent")->capture_default_str();
-  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
-  add_option(app, "--port", e2_params.port, "RIC port")->check(CLI::Range(20000, 40000))->capture_default_str();
-  add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
-      ->capture_default_str()
-      ->check(CLI::ValidIPV4);
-  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value")->capture_default_str();
-  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min")->capture_default_str();
-  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max")->capture_default_str();
-  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts")
-      ->capture_default_str();
-  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout")
-      ->capture_default_str();
-  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module")->capture_default_str();
-  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module")->capture_default_str();
-}
-
 void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)
 {
   add_option(app, "--gnb_id", parsed_cfg.config.gnb_id.id, "gNodeB identifier")->capture_default_str();
@@ -1744,8 +1726,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   configure_cli11_test_mode_args(*test_mode_subcmd, parsed_cfg.config.test_mode_cfg);
 
   // E2 section.
-  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
-  configure_cli11_e2_args(*e2_subcmd, parsed_cfg.config.e2_cfg);
+  configure_cli11_with_e2_config_schema(app, parsed_cfg.config.e2_cfg, "--enable_du_e2", "Enable DU E2 agent");
 }
 
 static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)

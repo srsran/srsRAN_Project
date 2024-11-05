@@ -9,15 +9,17 @@
  */
 
 #include "e2_cli11_schema.h"
-#include "e2_appconfig.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
 
-static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
+static void configure_cli11_e2_args(CLI::App&          app,
+                                    e2_config&         e2_params,
+                                    const std::string& option_name,
+                                    const std::string& option_description)
 {
-  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent")->capture_default_str();
-  add_option(app, "--enable_cu_e2", e2_params.enable_cu_e2, "Enable CU E2 agent")->capture_default_str();
+  add_option(app, option_name, e2_params.enable_unit_e2, option_description)->capture_default_str();
   add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
   add_option(app, "--port", e2_params.port, "RIC port")->check(CLI::Range(20000, 40000))->capture_default_str();
   add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
@@ -34,8 +36,11 @@ static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
   add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module")->capture_default_str();
 }
 
-void srsran::configure_cli11_with_e2_appconfig_schema(CLI::App& app, e2_appconfig& config)
+void srsran::configure_cli11_with_e2_config_schema(CLI::App&          app,
+                                                   e2_config&         config,
+                                                   const std::string& option_name,
+                                                   const std::string& option_description)
 {
   CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
-  configure_cli11_e2_args(*e2_subcmd, config);
+  configure_cli11_e2_args(*e2_subcmd, config, option_name, option_description);
 }
