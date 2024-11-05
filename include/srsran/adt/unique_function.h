@@ -131,7 +131,7 @@ public:
   template <size_t Capacity2, bool F>
   unique_function(unique_function<R(Args...), Capacity2, F>&& rhs) noexcept
   {
-    using FunT = unique_function<R(Args...), Capacity2, F>;
+    using OtherFunT = unique_function<R(Args...), Capacity2, F>;
 
     if constexpr (capacity >= Capacity2) {
       // The capacity of this is equal or higher. We can just move the buffer.
@@ -143,13 +143,15 @@ public:
       static_assert(not ForbidAlloc,
                     "Failed to store the provided unique_function in unique_function specialization that forbids heap "
                     "allocations.");
-      auto& heap_oper_table = get_heap_table<FunT>();
-      oper_ptr              = &heap_oper_table;
-      if (rhs.oper_ptr == heap_oper_table) {
+      if (not rhs.is_in_small_buffer()) {
+        // The functor is in the heap. Just move it.
+        oper_ptr     = rhs.oper_ptr;
         rhs.oper_ptr = &empty_table;
         oper_ptr->move(&rhs.buffer, &buffer);
       } else {
-        ptr = static_cast<void*>(new FunT{std::move(rhs)});
+        // The functor is in the small buffer of the rhs.
+        oper_ptr = &get_heap_table<OtherFunT>();
+        ptr      = static_cast<void*>(new OtherFunT{std::move(rhs)});
       }
     }
   }
@@ -181,7 +183,7 @@ public:
   template <size_t Capacity2, bool F>
   unique_function& operator=(unique_function<R(Args...), Capacity2, F>&& rhs) noexcept
   {
-    using FunT = unique_function<R(Args...), Capacity2, F>;
+    using OtherFunT = unique_function<R(Args...), Capacity2, F>;
 
     oper_ptr->dtor(&buffer);
     if constexpr (capacity >= Capacity2) {
@@ -194,14 +196,15 @@ public:
       static_assert(not ForbidAlloc,
                     "Failed to store the provided unique_function in unique_function specialization that forbids heap "
                     "allocations.");
-      auto& heap_oper_table = get_heap_table<FunT>();
-      oper_ptr              = &heap_oper_table;
-      if (rhs.oper_ptr == heap_oper_table) {
+      if (not rhs.is_in_small_buffer()) {
+        oper_ptr     = rhs.oper_ptr;
         rhs.oper_ptr = &empty_table;
         oper_ptr->move(&rhs.buffer, &buffer);
       } else {
-        ptr = static_cast<void*>(new FunT{std::move(rhs)});
+        oper_ptr = &get_heap_table<OtherFunT>();
+        ptr      = static_cast<void*>(new OtherFunT{std::move(rhs)});
       }
+      rhs.oper_ptr = &empty_table;
     }
     return *this;
   }
