@@ -50,9 +50,6 @@ public:
                   const pucch_demodulator::format4_configuration& config);
 
 private:
-  /// PUCCH uses a single TX layer.
-  static constexpr unsigned SINGLE_TX_LAYER = 1;
-
   /// Channel equalization component, also in charge of combining contributions of all receive antenna ports.
   std::unique_ptr<channel_equalizer> equalizer;
   /// Demodulation mapper component: transforms channel symbols into log-likelihood ratios (i.e., soft bits).
@@ -69,9 +66,6 @@ private:
   /// \brief Buffer used to transfer symbol noise variances at the equalizer output.
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and transmit layer.
   static_vector<float, pucch_constants::MAX_NOF_RE> eq_noise_vars;
-
-  /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
-  std::array<float, MAX_PORTS> noise_var_estimates;
 
   /// \brief Reverts the block-wise spreading applied to PUCCH Format 4, as per TS38.211 Section 6.3.2.6.3.
   /// \param[out] original      Destination buffer for the original symbols.

@@ -15,6 +15,7 @@
 
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/phy/support/mask_types.h"
+#include "srsran/phy/upper/equalization/modular_ch_est_list.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 
 namespace srsran {
@@ -117,6 +118,109 @@ inline symbol_slot_mask get_pucch_formats_3_4_dmrs_symbol_mask(
   }
 
   return mask;
+}
+
+/// \brief Gets REs and channel estimates given a PUCCH Format 3/4 resource, performs equalization and transform
+/// deprecoding.
+///
+/// Extracts and loads the inner buffers with the PUCCH control data RE from the provided \c resource_grid, and their
+/// corresponding channel estimates from \c channel_ests. The DM-RS RE are skipped. Equalization and transform
+/// deprecoding is done symbol by symbol.
+///
+/// \param[out] eq_re              Destination buffer for resource elements at the equalizer output.
+/// \param[out] eq_noise_vars      Destination buffer for noise variances at the equalizer output.
+/// \param[out] equalizer          Channel equalizer.
+/// \param[out] precoder           Transform precoder.
+/// \param[in]  grid               Input resource grid.
+/// \param[in]  estimates          Channel estimates.
+/// \param[in]  dmrs_symb_mask     The symbol mask for symbols containing DM-RS for the PUCCH configuration.
+/// \param[in]  start_symbol_index Start symbol index within the slot {0, ..., 13}.
+/// \param[in]  nof_symbols        Number of symbols assigned to PUCCH resource.
+/// \param[in]  nof_prb            Number of PRB assigned to PUCCH resource.
+/// \param[in]  first_prb          Lowest PRB index used for the PUCCH transmission within the resource grid.
+/// \param[in]  second_hop_prb     Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274}
+///                                if intra-slot frequency hopping is enabled, empty otherwise.
+/// \param[in]  rx_ports           Port indexes used for the PUCCH reception.
+inline void pucch_3_4_extract_and_equalize(span<cf_t>                    eq_re,
+                                           span<float>                   eq_noise_vars,
+                                           channel_equalizer&            equalizer,
+                                           transform_precoder&           precoder,
+                                           const resource_grid_reader&   grid,
+                                           const channel_estimate&       estimates,
+                                           const symbol_slot_mask&       dmrs_symb_mask,
+                                           const unsigned                start_symbol_index,
+                                           const unsigned                nof_symbols,
+                                           const unsigned                nof_prb,
+                                           const unsigned                first_prb,
+                                           const std::optional<unsigned> second_hop_prb,
+                                           span<const uint8_t>           rx_ports)
+{
+  // Number of receive antenna ports.
+  auto nof_rx_ports = static_cast<unsigned>(rx_ports.size());
+
+  // Number of REs per OFDM symbol.
+  const unsigned nof_re_symb = nof_prb * NRE;
+
+  // Index of the first symbol allocated to the second subcarrier when intra-slot frequency hopping is enabled.
+  const unsigned second_hop_start = (nof_symbols / 2) + start_symbol_index;
+
+  // Extract the Rx port noise variances from the channel estimation.
+  std::array<float, MAX_PORTS> noise_var_estimates;
+  for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+    noise_var_estimates[i_port] = estimates.get_noise_variance(i_port, 0);
+  }
+
+  for (unsigned i_symbol = start_symbol_index, i_symbol_end = start_symbol_index + nof_symbols;
+       i_symbol != i_symbol_end;
+       ++i_symbol) {
+    // Skip DM-RS symbols.
+    if (dmrs_symb_mask.test(i_symbol - start_symbol_index)) {
+      continue;
+    }
+
+    // Calculate the lowest resource element containing PUCCH Format 3 within the OFDM symbol.
+    unsigned first_subc = first_prb * NRE;
+    if ((i_symbol >= second_hop_start) && second_hop_prb.has_value()) {
+      // Intra-slot frequency hopping.
+      first_subc = second_hop_prb.value() * NRE;
+    }
+
+    // Create modular buffers to hold the spans for this symbol.
+    modular_re_buffer_reader<cbf16_t, MAX_PORTS> re_symb(nof_rx_ports, nof_re_symb);
+    modular_ch_est_list<MAX_PORTS>               estimates_symb(nof_re_symb, nof_rx_ports, pucch_constants::MAX_LAYERS);
+
+    for (unsigned i_port = 0, i_port_end = nof_rx_ports; i_port != i_port_end; ++i_port) {
+      // Extract data RE from the resource grid.
+      unsigned            i_port_grid  = rx_ports[i_port];
+      span<const cbf16_t> re_symb_view = grid.get_view(i_port_grid, i_symbol).subspan(first_subc, nof_re_symb);
+      re_symb.set_slice(i_port, re_symb_view);
+
+      // Extract estimates from the estimates buffer.
+      estimates_symb.set_channel(
+          estimates.get_symbol_ch_estimate(i_symbol, i_port).subspan(first_subc, nof_re_symb), i_port, 0);
+    }
+
+    // Get a view of the equalized RE buffer for a single symbol.
+    span<cf_t> eq_re_symb = eq_re.first(nof_re_symb);
+
+    // Get a view of the equalized RE buffer for a single symbol.
+    span<float> eq_noise_vars_symb = eq_noise_vars.first(nof_re_symb);
+
+    // Equalize the data RE for a single symbol.
+    equalizer.equalize(eq_re_symb,
+                       eq_noise_vars_symb,
+                       re_symb,
+                       estimates_symb,
+                       span<float>(noise_var_estimates).first(nof_rx_ports),
+                       1.0F);
+
+    // Revert transform precoding for a single symbol.
+    precoder.deprecode_ofdm_symbol(eq_re_symb, eq_re_symb);
+
+    // Advance the equalized RE and noise vars views.
+    eq_re         = eq_re.subspan(nof_re_symb, eq_re.size() - nof_re_symb);
+    eq_noise_vars = eq_noise_vars.subspan(nof_re_symb, eq_noise_vars.size() - nof_re_symb);
+  }
 }
 
 } // namespace srsran
