@@ -54,14 +54,7 @@ RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi && \
     && \
     /src/docker/scripts/builder.sh -m "-j${NUM_JOBS} install" \
     -DBUILD_TESTS=False -DENABLE_${LIB_UPPER}=On -DDU_SPLIT_TYPE=${SPLIT} -DMARCH=${MARCH} -DCMAKE_INSTALL_PREFIX=/opt/srs \
-    ${EXTRA_CMAKE_ARGS} /src \
-    && \
-    /src/docker/scripts/builder.sh -m "-j${NUM_JOBS} ru_emulator" \
-    -DBUILD_TESTS=True -DENABLE_${LIB_UPPER}=On -DMARCH=${MARCH} \
     ${EXTRA_CMAKE_ARGS} /src
-
-# Copy extra binaries
-RUN cp /src/build/tests/integrationtests/ofh/ru_emulator /opt/srs/bin/ru_emulator
 
 ################
 # Stage 2: Run #
