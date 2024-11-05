@@ -9,7 +9,7 @@
  */
 
 /// \file
-/// \brief Generation of PUCCH Format 1 orthogonal sequences.
+/// \brief Generation of PUCCH orthogonal sequences.
 
 #pragma once
 
@@ -23,7 +23,7 @@
 namespace srsran {
 
 /// Generator of orthogonal sequences \e w for PUCCH Format 1.
-class pucch_orthogonal_sequence
+class pucch_orthogonal_sequence_format1
 {
 private:
   /// Alias for sequence table type.
@@ -65,7 +65,7 @@ private:
 
 public:
   /// Constructor: builds the sequences \e w from the coefficients in \ref pucch_format1_phi.
-  pucch_orthogonal_sequence()
+  pucch_orthogonal_sequence_format1()
   {
     for (unsigned n_pucch = 0, max_n_pucch = pucch_constants::FORMAT1_N_MAX; n_pucch != max_n_pucch; ++n_pucch) {
       for (unsigned i_seq = 0; i_seq != pucch_constants::FORMAT1_N_MAX; ++i_seq) {
@@ -115,6 +115,47 @@ public:
     srsran_assert(i < n_pucch, "Invalid sequence index i = {}, valid values from 0 to {}.", i, n_pucch - 1);
 
     return span<const cf_t>(orthogonal_sequence_conj[n_pucch - 1][i]).first(n_pucch);
+  }
+};
+
+/// Generator of orthogonal sequences \e w for PUCCH Format 4.
+class pucch_orthogonal_sequence_format4
+{
+private:
+  static constexpr auto one     = cf_t(1.0f, 0.0f);
+  static constexpr auto neg_one = cf_t(-1.0f, 0.0f);
+  static constexpr auto j       = cf_t(0.0f, 1.0f);
+  static constexpr auto neg_j   = cf_t(0.0f, -1.0f);
+
+  static constexpr std::array<std::array<cf_t, NRE>, 2> pucch_format4_length2 = {{
+      {one, one, one, one, one, one, one, one, one, one, one, one},
+      {one, one, one, one, one, one, neg_one, neg_one, neg_one, neg_one, neg_one, neg_one},
+  }};
+
+  static constexpr std::array<std::array<cf_t, NRE>, 4> pucch_format4_length4 = {{
+      {one, one, one, one, one, one, one, one, one, one, one, one},
+      {one, one, one, neg_j, neg_j, neg_j, neg_one, neg_one, neg_one, j, j, j},
+      {one, one, one, neg_one, neg_one, neg_one, one, one, one, neg_one, neg_one, neg_one},
+      {one, one, one, j, j, j, neg_one, neg_one, neg_one, neg_j, neg_j, neg_j},
+  }};
+
+public:
+  /// \brief Gets an entire PUCCH Format 4 orthogonal sequence.
+  ///
+  /// \param[in] n_pucch   Length of the PUCCH Format 4 sequence
+  ///                      \f$N_{\text{SF},m'}^{\text{PUCCH},4} \in \{2, 4\}\f$.
+  /// \param[in] i         Sequence index \f$i \in \{0, \dots, N_{\text{SF},m'}^{\text{PUCCH},4} - 1\}\f$.
+  /// \returns The requested sequence.
+  /// \warning An assertion is thrown if the inputs do not match the limits above.
+  static span<const cf_t> get_sequence(unsigned n_pucch, unsigned i)
+  {
+    srsran_assert((n_pucch == 2) || (n_pucch == 4), "Invalid n_pucch {}: valid values 2 or 4.", n_pucch);
+    srsran_assert(i < n_pucch, "Invalid sequence index i = {}, valid values from 0 to {}.", i, n_pucch - 1);
+
+    if (n_pucch == 2) {
+      return pucch_format4_length2[i];
+    }
+    return pucch_format4_length4[i];
   }
 };
 
