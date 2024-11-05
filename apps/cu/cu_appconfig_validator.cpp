@@ -16,5 +16,11 @@ using namespace srsran;
 
 bool srsran::validate_cu_appconfig(const cu_appconfig& config)
 {
+  if (config.e2_cfg.enable_du_e2) {
+    fmt::print("CU application cannot enable DU E2 agent\n");
+
+    return false;
+  }
+
   return validate_logger_appconfig(config.log_cfg);
 }

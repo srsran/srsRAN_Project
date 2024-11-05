@@ -10,12 +10,13 @@
 
 #pragma once
 
+#include "CLI/CLI11.hpp"
+
 namespace srsran {
 
-struct du_appconfig;
-struct worker_manager_config;
+struct e2_appconfig;
 
-/// Fills the DU worker manager parameters of the given worker manager configuration.
-void fill_du_worker_manager_config(worker_manager_config& config, const du_appconfig& unit_cfg);
+/// Configures the given CLI11 application with the E2 application configuration schema.
+void configure_cli11_with_e2_appconfig_schema(CLI::App& app, e2_appconfig& config);
 
 } // namespace srsran

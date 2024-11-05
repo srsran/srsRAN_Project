@@ -20,6 +20,6 @@ struct du_appconfig;
 void configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfig& parsed_cfg);
 
 /// Auto derive DU parameters after the parsing.
-void autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig& parsed_cfg);
+void autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig& du_cfg);
 
 } // namespace srsran

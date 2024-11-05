@@ -12,6 +12,7 @@
 
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/e2/e2_appconfig.h"
+#include "apps/services/hal/hal_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include "srsran/ran/gnb_id.h"
@@ -29,12 +30,6 @@ struct cu_up_appconfig {
 struct metrics_appconfig {
   std::string addr = "127.0.0.1";
   uint16_t    port = 55555;
-};
-
-/// HAL configuration of the gNB app.
-struct hal_appconfig {
-  /// EAL configuration arguments.
-  std::string eal_args;
 };
 
 /// Monolithic gnb application configuration.

@@ -10,6 +10,8 @@
 
 #include "du_appconfig_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
+#include "apps/services/e2/e2_cli11_schema.h"
+#include "apps/services/hal/hal_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "du_appconfig.h"
@@ -24,25 +26,6 @@ static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfi
   app.add_option("--port", metrics_params.port, "Metrics UDP port.")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
-}
-
-static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
-{
-  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent")->capture_default_str();
-  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
-  add_option(app, "--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
-  add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
-      ->capture_default_str()
-      ->check(CLI::ValidIPV4);
-  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value")->capture_default_str();
-  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min")->capture_default_str();
-  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max")->capture_default_str();
-  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts")
-      ->capture_default_str();
-  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout")
-      ->capture_default_str();
-  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module")->capture_default_str();
-  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module")->capture_default_str();
 }
 
 static void configure_cli11_f1ap_args(CLI::App& app, srs_du::f1ap_appconfig& f1c_params)
@@ -65,13 +48,6 @@ static void configure_cli11_f1u_args(CLI::App& app, srs_du::nru_appconfig& f1u_p
   app.add_option(
          "--pool_threshold", f1u_params.pool_threshold, "Pool occupancy threshold after which packets are dropped")
       ->capture_default_str();
-}
-
-static void configure_cli11_hal_args(CLI::App& app, std::optional<hal_appconfig>& config)
-{
-  config.emplace();
-
-  add_option(app, "--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
 void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfig& du_cfg)
@@ -101,12 +77,21 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   configure_cli11_metrics_args(*metrics_subcmd, du_cfg.metrics_cfg);
 
   // E2 section.
-  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
-  configure_cli11_e2_args(*e2_subcmd, du_cfg.e2_cfg);
+  configure_cli11_with_e2_appconfig_schema(app, du_cfg.e2_cfg);
 
   // HAL section.
-  CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
-  configure_cli11_hal_args(*hal_subcmd, du_cfg.hal_config);
+  du_cfg.hal_config.emplace();
+  configure_cli11_with_hal_appconfig_schema(app, *du_cfg.hal_config);
 }
 
-void srsran::autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig& parsed_cfg) {}
+static void manage_hal_optional(CLI::App& app, du_appconfig& du_cfg)
+{
+  if (!is_hal_section_present(app)) {
+    du_cfg.hal_config.reset();
+  }
+}
+
+void srsran::autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig& du_cfg)
+{
+  manage_hal_optional(app, du_cfg);
+}

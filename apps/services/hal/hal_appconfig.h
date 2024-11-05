@@ -10,12 +10,14 @@
 
 #pragma once
 
+#include <string>
+
 namespace srsran {
 
-struct du_appconfig;
-struct worker_manager_config;
-
-/// Fills the DU worker manager parameters of the given worker manager configuration.
-void fill_du_worker_manager_config(worker_manager_config& config, const du_appconfig& unit_cfg);
+/// HAL configuration of the application.
+struct hal_appconfig {
+  /// EAL configuration arguments.
+  std::string eal_args;
+};
 
 } // namespace srsran
