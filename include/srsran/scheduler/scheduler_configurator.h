@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ran/carrier_configuration.h"
+#include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/pci.h"
@@ -142,6 +143,8 @@ struct sched_ue_config_request {
   std::optional<sched_ue_resource_alloc_config> res_alloc_cfg;
   /// List of QoS and slicing information for DRBs.
   std::vector<sched_drb_info> drb_info_list;
+  /// DRX-Config.
+  std::optional<drx_config> drx_cfg;
 };
 
 /// Request to create a new UE in scheduler.

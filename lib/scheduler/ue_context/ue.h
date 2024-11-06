@@ -13,6 +13,7 @@
 #include "dl_logical_channel_manager.h"
 #include "ta_manager.h"
 #include "ue_cell.h"
+#include "ue_drx_controller.h"
 #include "ul_logical_channel_manager.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/mac_scheduler.h"
@@ -213,6 +214,9 @@ private:
 
   /// UE Timing Advance Manager.
   ta_manager ta_mgr;
+
+  // Controller of DRX active timer.
+  ue_drx_controller drx;
 };
 
 } // namespace srsran

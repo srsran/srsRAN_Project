@@ -102,7 +102,8 @@ public:
   ue_cell_configuration& operator=(ue_cell_configuration&&)      = delete;
 
   void reconfigure(const serving_cell_config&            cell_cfg_ded_,
-                   const std::optional<meas_gap_config>& meas_gaps = std::nullopt);
+                   const std::optional<meas_gap_config>& meas_gaps = std::nullopt,
+                   const std::optional<drx_config>&      drx_cfg_  = std::nullopt);
 
   void set_rrm_config(const sched_ue_resource_alloc_config& ue_res_alloc_cfg);
 
@@ -112,7 +113,8 @@ public:
   /// Retrieve the parameters relative to the RRM of a UE in the scheduler.
   const sched_ue_resource_alloc_config& rrm_cfg() const { return ue_res_alloc_cfg; }
 
-  const serving_cell_config& cfg_dedicated() const { return cell_cfg_ded; }
+  const serving_cell_config&       cfg_dedicated() const { return cell_cfg_ded; }
+  const std::optional<drx_config>& get_drx_cfg() const { return drx_cfg; }
 
   /// Returns whether UE dedicated configuration is considered complete or not for scheduling the UE as a non-fallback
   /// UE.
@@ -197,6 +199,7 @@ private:
   /// Dedicated cell configuration.
   serving_cell_config            cell_cfg_ded;
   std::optional<meas_gap_config> meas_gap_cfg;
+  std::optional<drx_config>      drx_cfg;
   bool                           multi_cells_configured;
 
   /// Lookup table for BWP params indexed by BWP-Id.
@@ -282,6 +285,9 @@ public:
   /// Get QoS information of DRBs configured for the UE.
   span<const sched_drb_info> drbs_qos_info() const { return drb_qos_list; }
 
+  /// Get DRX configuration for the UE cell group.
+  const std::optional<drx_config>& drx_cfg() const { return ue_drx_cfg; }
+
 private:
   // List of configured logical channels
   std::vector<logical_channel_config> lc_list;
@@ -294,6 +300,9 @@ private:
 
   // Mapping of UE Cell indexes to DU cell indexes.
   std::vector<du_cell_index_t> ue_cell_to_du_cell_index;
+
+  // DRX config for the UE cell group.
+  std::optional<drx_config> ue_drx_cfg;
 };
 
 } // namespace srsran

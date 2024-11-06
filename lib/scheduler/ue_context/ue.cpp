@@ -23,7 +23,8 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
-  ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr)
+  ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr),
+  drx(cell_cfg_common, cmd.cfg.drx_cfg(), ul_lc_ch_mgr)
 {
   // Apply configuration.
   handle_reconfiguration_request(ue_reconf_command{cmd.cfg});

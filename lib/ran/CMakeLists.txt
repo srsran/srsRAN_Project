@@ -49,7 +49,8 @@ add_library(srsran_ran
         ssb_freq_position_generator.cpp
         ssb_gscn.cpp
         ssb_mapping.cpp
-        tdd_ul_dl_config.cpp)
+        tdd_ul_dl_config.cpp
+        drx_config.cpp)
 target_link_libraries(srsran_ran srslog)
 
 add_to_exported_libs(srsran_ran)
