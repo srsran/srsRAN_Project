@@ -47,7 +47,7 @@ _ONLY_RERUN = ["failed to start", "Attach timeout reached", "StatusCode.ABORTED"
 def test_smoke_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_4: Tuple[UEStub, ...],
+    ue_2: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
 ):
@@ -57,7 +57,7 @@ def test_smoke_sequentially(
     _reestablishment_sequentially_ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_4,
+        ue_array=ue_2,
         fivegc=fivegc,
         gnb=gnb,
         metrics_summary=None,

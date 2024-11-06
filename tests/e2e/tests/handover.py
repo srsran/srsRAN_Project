@@ -62,7 +62,7 @@ def test_smoke_sequentially(
         common_scs=30,
         bandwidth=50,
         noise_spd=0,
-        sleep_between_movement_steps=2,
+        sleep_between_movement_steps=1,
         always_download_artifacts=False,
     )
 
