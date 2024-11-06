@@ -15,8 +15,6 @@
 #include "equalize_mmse_1xn.h"
 #include "equalize_zf_1xn.h"
 #include "equalize_zf_2xn.h"
-#include "equalize_zf_3x4.h"
-#include "equalize_zf_4x4.h"
 #include "srsran/adt/interval.h"
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/upper/equalization/modular_ch_est_list.h"
@@ -211,24 +209,70 @@ void equalize_mmse_single_tx_layer<1>(unsigned /**/,
   equalize_mmse_1xn<1>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
 }
 
-SRSRAN_WEAK_SYMB void srsran::equalize_zf_3x4(span<srsran::cf_t> /* eq_symbols */,
-                                              span<float> /* noise_vars */,
-                                              const re_buffer_reader<srsran::cbf16_t>& /* ch_symbols */,
-                                              const channel_equalizer::ch_est_list& /* ch_estimates */,
-                                              float /* noise_var_est */,
-                                              float /* tx_scaling */)
+SRSRAN_WEAK_SYMB void
+channel_equalizer_generic_impl::equalize_zf_3x4(span<srsran::cf_t> /* eq_symbols */,
+                                                span<float> /* noise_vars */,
+                                                const re_buffer_reader<srsran::cbf16_t>& /* ch_symbols */,
+                                                const channel_equalizer::ch_est_list& /* ch_estimates */,
+                                                float /* noise_var_est */,
+                                                float /* tx_scaling */)
 {
   srsran_assertion_failure("Equalizer not implemented for 3x4 ZF algorithm.");
 }
 
-SRSRAN_WEAK_SYMB void srsran::equalize_zf_4x4(span<srsran::cf_t> /* eq_symbols */,
-                                              span<float> /* noise_vars */,
-                                              const re_buffer_reader<srsran::cbf16_t>& /* ch_symbols */,
-                                              const channel_equalizer::ch_est_list& /* ch_estimates */,
-                                              float /* noise_var_est */,
-                                              float /* tx_scaling */)
+SRSRAN_WEAK_SYMB void
+channel_equalizer_generic_impl::equalize_zf_4x4(span<srsran::cf_t> /* eq_symbols */,
+                                                span<float> /* noise_vars */,
+                                                const re_buffer_reader<srsran::cbf16_t>& /* ch_symbols */,
+                                                const channel_equalizer::ch_est_list& /* ch_estimates */,
+                                                float /* noise_var_est */,
+                                                float /* tx_scaling */)
 {
   srsran_assertion_failure("Equalizer not implemented for 4x4 ZF algorithm.");
+}
+
+SRSRAN_WEAK_SYMB void
+channel_equalizer_generic_impl::equalize_mmse_2x2(span<srsran::cf_t> /* eq_symbols */,
+                                                  span<float> /* noise_vars */,
+                                                  const re_buffer_reader<srsran::cbf16_t>& /* ch_symbols */,
+                                                  const channel_equalizer::ch_est_list& /* ch_estimates */,
+                                                  float /* noise_var_est */,
+                                                  float /* tx_scaling */)
+{
+  srsran_assertion_failure("Equalizer not implemented for 2x2 MMSE algorithm.");
+}
+
+SRSRAN_WEAK_SYMB void
+channel_equalizer_generic_impl::equalize_mmse_2x4(span<srsran::cf_t> /* eq_symbols */,
+                                                  span<float> /* noise_vars */,
+                                                  const re_buffer_reader<srsran::cbf16_t>& /* ch_symbols */,
+                                                  const channel_equalizer::ch_est_list& /* ch_estimates */,
+                                                  float /* noise_var_est */,
+                                                  float /* tx_scaling */)
+{
+  srsran_assertion_failure("Equalizer not implemented for 2x4 MMSE algorithm.");
+}
+
+SRSRAN_WEAK_SYMB void
+channel_equalizer_generic_impl::equalize_mmse_3x4(span<srsran::cf_t> /* eq_symbols */,
+                                                  span<float> /* noise_vars */,
+                                                  const re_buffer_reader<srsran::cbf16_t>& /* ch_symbols */,
+                                                  const channel_equalizer::ch_est_list& /* ch_estimates */,
+                                                  float /* noise_var_est */,
+                                                  float /* tx_scaling */)
+{
+  srsran_assertion_failure("Equalizer not implemented for 3x4 MMSE algorithm.");
+}
+
+SRSRAN_WEAK_SYMB void
+channel_equalizer_generic_impl::equalize_mmse_4x4(span<srsran::cf_t> /* eq_symbols */,
+                                                  span<float> /* noise_vars */,
+                                                  const re_buffer_reader<srsran::cbf16_t>& /* ch_symbols */,
+                                                  const channel_equalizer::ch_est_list& /* ch_estimates */,
+                                                  float /* noise_var_est */,
+                                                  float /* tx_scaling */)
+{
+  srsran_assertion_failure("Equalizer not implemented for 4x4 MMSE algorithm.");
 }
 
 bool channel_equalizer_generic_impl::is_supported(unsigned nof_ports, unsigned nof_layers)
@@ -295,6 +339,30 @@ void channel_equalizer_generic_impl::equalize(span<cf_t>                       e
     if (nof_tx_layers == 1) {
       equalize_mmse_single_tx_layer<max_nof_ports>(
           nof_rx_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
+      return;
+    }
+
+    // Two transmit layers and two receive ports.
+    if ((nof_rx_ports == 2) && (nof_tx_layers == 2)) {
+      equalize_mmse_2x2(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+      return;
+    }
+
+    // Two transmit layers and four receive ports.
+    if ((nof_rx_ports == 4) && (nof_tx_layers == 2)) {
+      equalize_mmse_2x4(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+      return;
+    }
+
+    // Three transmit layers and four receive ports.
+    if ((nof_rx_ports == 4) && (nof_tx_layers == 3)) {
+      equalize_mmse_3x4(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+      return;
+    }
+
+    // Four transmit layers and four receive ports.
+    if ((nof_rx_ports == 4) && (nof_tx_layers == 4)) {
+      equalize_mmse_4x4(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       return;
     }
   }

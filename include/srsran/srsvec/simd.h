@@ -1335,7 +1335,6 @@ inline void srsran_simd_cf_fprintf(std::FILE* stream, simd_cf_t a)
   std::fprintf(stream, "];\n");
 }
 
-
 /// Adds two complex SIMD registers.
 inline simd_cf_t operator+(simd_cf_t left, simd_cf_t right)
 {
@@ -1526,10 +1525,10 @@ inline simd_sel_t srsran_simd_sel_set_ones()
   return ~static_cast<simd_sel_t>(0);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  return _mm256_castsi256_ps(_mm256_set1_epi32(0xFFFFFFFF));
+  return _mm256_castsi256_ps(_mm256_set1_epi32(0xffffffff));
 #else
 #ifdef __SSE4_1__
-  return _mm_castsi256_ps(_mm_set1_epi32(0xFFFFFFFF));
+  return _mm_castsi256_ps(_mm_set1_epi32(0xffffffff));
 #else
 #ifdef __ARM_NEON
   return vdupq_n_s32(-1);
