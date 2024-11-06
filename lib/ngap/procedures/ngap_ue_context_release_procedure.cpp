@@ -89,7 +89,5 @@ void ngap_ue_context_release_procedure::send_ue_context_release_complete()
 
   fill_asn1_ue_context_release_complete(asn1_ue_context_release_complete, ue_context_release_complete);
 
-  logger.log_info("Sending UeContextReleaseComplete");
-
   amf_notifier.on_new_message(ngap_msg);
 }

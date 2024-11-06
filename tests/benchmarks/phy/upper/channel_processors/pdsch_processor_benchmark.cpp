@@ -28,7 +28,7 @@
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/executors/unique_thread.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #ifdef HWACC_PDSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
@@ -593,14 +593,28 @@ static pdsch_processor_factory& get_processor_factory()
       create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
   TESTASSERT(ldpc_segm_tx_factory);
 
+  // Create channel precoder factory.
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+  TESTASSERT(precoding_factory);
+
+  // Create resource grid mapper factory.
+  std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+      create_resource_grid_mapper_factory(precoding_factory);
+  TESTASSERT(rg_mapper_factory);
+
   // Create DM-RS for PDSCH channel estimator.
   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_gen_factory =
-      create_dmrs_pdsch_processor_factory_sw(prg_factory);
+      create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
   TESTASSERT(dmrs_pdsch_gen_factory);
+
+  // Create PT-RS for PDSCH channel estimator.
+  std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
+      create_ptrs_pdsch_generator_generic_factory(prg_factory, rg_mapper_factory);
+  TESTASSERT(ptrs_pdsch_gen_factory);
 
   // Create PDSCH demodulator factory.
   std::shared_ptr<pdsch_modulator_factory> pdsch_mod_factory =
-      create_pdsch_modulator_factory_sw(chan_modulation_factory, prg_factory);
+      create_pdsch_modulator_factory_sw(chan_modulation_factory, prg_factory, rg_mapper_factory);
   TESTASSERT(pdsch_mod_factory);
 
   // Create PDSCH encoder factory.
@@ -609,8 +623,8 @@ static pdsch_processor_factory& get_processor_factory()
 
   // Create generic PDSCH processor.
   if (pdsch_processor_type == "generic") {
-    pdsch_proc_factory =
-        create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory);
+    pdsch_proc_factory = create_pdsch_processor_factory_sw(
+        pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory, ptrs_pdsch_gen_factory);
   }
 
   // Note that currently hardware-acceleration is limited to "generic" processor types.
@@ -620,7 +634,9 @@ static pdsch_processor_factory& get_processor_factory()
                                                                 ldpc_rm_factory,
                                                                 prg_factory,
                                                                 chan_modulation_factory,
-                                                                dmrs_pdsch_gen_factory);
+                                                                dmrs_pdsch_gen_factory,
+                                                                ptrs_pdsch_gen_factory,
+                                                                rg_mapper_factory);
   }
 
   // Create synchronous PDSCH processor pool if the processor is synchronous.
@@ -646,8 +662,10 @@ static pdsch_processor_factory& get_processor_factory()
                                                                       ldpc_enc_factory,
                                                                       ldpc_rm_factory,
                                                                       prg_factory,
+                                                                      rg_mapper_factory,
                                                                       chan_modulation_factory,
                                                                       dmrs_pdsch_gen_factory,
+                                                                      ptrs_pdsch_gen_factory,
                                                                       *executor,
                                                                       nof_pdsch_processor_concurrent_threads);
 
@@ -675,9 +693,7 @@ static std::unique_ptr<pdsch_processor> create_processor()
 // Creates a resource grid.
 static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 {
-  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
-  TESTASSERT(precoding_factory != nullptr, "Invalid channel precoder factory.");
-  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoding_factory);
+  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
   TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
 
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
@@ -720,10 +736,10 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
     // Process PDU.
     if (worker_pool) {
       (void)worker_pool->push_task([&proc, &grid, &notifier, &data, &config]() mutable {
-        proc.process(grid->get_mapper(), notifier, {data}, config);
+        proc.process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
       });
     } else {
-      proc.process(grid->get_mapper(), notifier, {data}, config);
+      proc.process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
     }
 
     // Wait for the processor to finish.

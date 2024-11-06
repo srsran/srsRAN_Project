@@ -25,6 +25,8 @@
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/re_pattern.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
@@ -70,6 +72,8 @@ private:
 
   /// Pseudo-random sequece generator for the NZP-CSI-RS signal.
   std::unique_ptr<pseudo_random_generator> prg;
+  /// Resource grid mapper.
+  std::unique_ptr<resource_grid_mapper> mapper;
 
   /// \brief Generates the NZP-CSI-RS sequence.
   ///
@@ -100,13 +104,16 @@ private:
                  const unsigned        l_idx);
 
 public:
-  nzp_csi_rs_generator_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
+  nzp_csi_rs_generator_impl(std::unique_ptr<pseudo_random_generator> prg_,
+                            std::unique_ptr<resource_grid_mapper>    mapper_) :
+    prg(std::move(prg_)), mapper(std::move(mapper_))
   {
     srsran_assert(prg, "Invalid pseudo random generator.");
+    srsran_assert(mapper, "Invalid resource grid mapper.");
   }
 
   // See interface for documentation.
-  void map(resource_grid_mapper& mapper, const config_t& config) override;
+  void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
 } // namespace srsran

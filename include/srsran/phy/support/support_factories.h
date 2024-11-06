@@ -26,6 +26,7 @@
 #include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_pool.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
@@ -46,14 +47,8 @@ public:
 
 /// \brief Creates and returns a resource grid factory that instantiates resource grids.
 ///
-/// \param[in] precoder_factory Channel precoder factory.
 /// \return A pointer to a resource grid factory.
-std::shared_ptr<resource_grid_factory>
-create_resource_grid_factory(std::shared_ptr<channel_precoder_factory> precoder_factory);
-
-/// Creates a resource grid mapper with an ideal precoding.
-std::unique_ptr<resource_grid_mapper>
-create_resource_grid_mapper(unsigned nof_ports, unsigned nof_subc, resource_grid_writer& writer);
+std::shared_ptr<resource_grid_factory> create_resource_grid_factory();
 
 /// \brief Creates a generic resource grid pool.
 ///
@@ -79,6 +74,24 @@ create_generic_resource_grid_pool(std::vector<std::unique_ptr<resource_grid>> gr
 std::unique_ptr<resource_grid_pool>
 create_asynchronous_resource_grid_pool(task_executor&                              async_executor,
                                        std::vector<std::unique_ptr<resource_grid>> grids);
+
+/// Factory that builds resource grid mappers.
+class resource_grid_mapper_factory
+{
+public:
+  /// Default destructor.
+  virtual ~resource_grid_mapper_factory() = default;
+
+  /// Creates and returns an instance of a resource grid mapper.
+  virtual std::unique_ptr<resource_grid_mapper> create() = 0;
+};
+
+/// \brief Creates and returns a resource grid mapper factory that instantiates resource grid mappers.
+///
+/// \param[in] precoder_factory Precoder factory instance.
+/// \return A pointer to a resource grid mapper factory.
+std::shared_ptr<resource_grid_mapper_factory>
+create_resource_grid_mapper_factory(std::shared_ptr<channel_precoder_factory> precoder_factory);
 
 /// \brief Creates a long PRACH sequence buffer.
 ///

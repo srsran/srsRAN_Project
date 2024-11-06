@@ -266,6 +266,15 @@ namespace moodycamel { namespace details {
 // See https://clang.llvm.org/docs/ThreadSanitizer.html#has-feature-thread-sanitizer
 #define MOODYCAMEL_NO_TSAN __attribute__((no_sanitize("thread")))
 
+#ifdef ENABLE_TSAN
+#include "sanitizer/tsan_interface.h"
+#define TSAN_ACQUIRE(x) __tsan_acquire((void*)x)
+#define TSAN_RELEASE(x) __tsan_release((void*)x)
+#else
+#define TSAN_ACQUIRE(x)
+#define TSAN_RELEASE(x)
+#endif
+
 // Compiler-specific likely/unlikely hints
 namespace moodycamel { namespace details {
 #if defined(__GNUC__)
@@ -1716,7 +1725,7 @@ private:
 		}
 
 		template<typename It>
-		inline size_t dequeue_bulk(It& itemFirst, size_t max)
+		inline size_t MOODYCAMEL_NO_TSAN dequeue_bulk(It& itemFirst, size_t max)
 		{
 			if (isExplicit) {
 				return static_cast<ExplicitProducer*>(this)->dequeue_bulk(itemFirst, max);
@@ -2012,6 +2021,7 @@ private:
 
 					// Dequeue
 					auto& el = *((*block)[index]);
+                                        TSAN_ACQUIRE(&el);
 					if (!MOODYCAMEL_NOEXCEPT_ASSIGN(T, T&&, element = std::move(el))) {
 						// Make sure the element is still fully dequeued and destroyed even if the assignment
 						// throws
@@ -2514,6 +2524,7 @@ private:
 					// May throw, try to insert now before we publish the fact that we have this new block
 					MOODYCAMEL_TRY {
 						new ((*newBlock)[currentTailIndex]) T(std::forward<U>(element));
+                                                TSAN_RELEASE((*newBlock)[currentTailIndex]);
 					}
 					MOODYCAMEL_CATCH (...) {
 						rewind_block_index_tail();
@@ -2536,6 +2547,7 @@ private:
 
 			// Enqueue
 			new ((*this->tailBlock)[currentTailIndex]) T(std::forward<U>(element));
+                        TSAN_RELEASE((*this->tailBlock)[currentTailIndex]);
 
 			this->tailIndex.store(newTailIndex, std::memory_order_release);
 			return true;
@@ -2561,6 +2573,7 @@ private:
 					// Dequeue
 					auto block = entry->value.load(std::memory_order_relaxed);
 					auto& el = *((*block)[index]);
+                                        TSAN_ACQUIRE(&el);
 
 					if (!MOODYCAMEL_NOEXCEPT_ASSIGN(T, T&&, element = std::move(el))) {
 #ifdef MCDBGQ_NOLOCKFREE_IMPLICITPRODBLOCKINDEX
@@ -2808,6 +2821,7 @@ private:
 						if (MOODYCAMEL_NOEXCEPT_ASSIGN(T, T&&, details::deref_noexcept(itemFirst) = std::move((*(*block)[index])))) {
 							while (index != endIndex) {
 								auto& el = *((*block)[index]);
+                                                                TSAN_ACQUIRE(&el);
 								*itemFirst++ = std::move(el);
 								el.~T();
 								++index;
@@ -2817,6 +2831,7 @@ private:
 							MOODYCAMEL_TRY {
 								while (index != endIndex) {
 									auto& el = *((*block)[index]);
+                                                                        TSAN_ACQUIRE(&el);
 									*itemFirst = std::move(el);
 									++itemFirst;
 									el.~T();

@@ -26,12 +26,21 @@
 #include "lib/pdcp/pdcp_interconnect.h"
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 
 namespace srsran {
+
+class mock_pdcp_metrics_notifier : public pdcp_metrics_notifier
+{
+  void report_metrics(const pdcp_metrics_container& metrics) override { metrics_list.push_back(metrics); }
+
+public:
+  std::vector<pdcp_metrics_container> metrics_list;
+};
 
 /// Mocking class of the surrounding layers invoked by the PDCP.
 class pdcp_rx_test_frame : public pdcp_tx_status_handler,
@@ -109,9 +118,10 @@ protected:
     sec_cfg.cipher_algo = static_cast<security::ciphering_algorithm>(algo);
 
     // Create PDCP RX entity
-    test_frame = std::make_unique<pdcp_rx_test_frame>();
-    pdcp_rx    = std::make_unique<pdcp_entity_rx>(
-        0, rb_id, config, *test_frame, *test_frame, timer_factory{timers, worker}, worker, worker);
+    test_frame  = std::make_unique<pdcp_rx_test_frame>();
+    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker);
+    pdcp_rx     = std::make_unique<pdcp_entity_rx>(
+        0, rb_id, config, *test_frame, *test_frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
     pdcp_rx->set_status_handler(test_frame.get());
 
     srslog::flush();
@@ -157,9 +167,10 @@ protected:
   manual_task_worker                  worker{64};
   std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
 
-  security::sec_128_as_config sec_cfg;
-
-  std::unique_ptr<pdcp_entity_rx> pdcp_rx;
-  pdcp_rx_lower_interface*        pdcp_rx_lower = nullptr;
+  security::sec_128_as_config              sec_cfg;
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
+  std::unique_ptr<pdcp_entity_rx>          pdcp_rx;
+  mock_pdcp_metrics_notifier               metrics_notif;
+  pdcp_rx_lower_interface*                 pdcp_rx_lower = nullptr;
 };
 } // namespace srsran

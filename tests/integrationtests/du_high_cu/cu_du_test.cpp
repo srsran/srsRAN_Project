@@ -20,7 +20,6 @@
  *
  */
 
-#include "lib/du/du_high/du_high_executor_strategies.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
@@ -31,7 +30,6 @@
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_high/du_high_factory.h"
-#include <chrono>
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -62,7 +60,7 @@ protected:
 
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();
-    cu_cfg.services.cu_cp_executor        = &workers.ctrl_exec;
+    cu_cfg.services.cu_cp_executor        = &workers.exec_mapper->du_control_executor(); // reuse du-high ctrl exec
     cu_cfg.services.timers                = &timers;
     cu_cfg.ngaps.push_back(
         srs_cu_cp::cu_cp_configuration::ngap_params{&*amf, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
@@ -83,7 +81,7 @@ protected:
     phy_dummy phy;
 
     du_high_configuration du_cfg{};
-    du_cfg.exec_mapper     = &workers.exec_mapper;
+    du_cfg.exec_mapper     = workers.exec_mapper.get();
     du_cfg.f1c_client      = &f1c_gw;
     du_cfg.f1u_gw          = &f1u_gw;
     du_cfg.phy_adapter     = &phy;

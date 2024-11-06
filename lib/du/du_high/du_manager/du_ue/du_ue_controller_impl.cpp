@@ -21,6 +21,7 @@
  */
 
 #include "du_ue_controller_impl.h"
+#include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
@@ -43,6 +44,7 @@ const char* get_rlf_cause_str(rlf_cause cause)
   return "unknown";
 }
 
+/// Adapter between MAC and DU manager RLF detection handler.
 class mac_rlf_du_adapter final : public mac_ue_radio_link_notifier
 {
 public:
@@ -89,6 +91,7 @@ private:
   srslog::basic_logger&     logger = srslog::fetch_basic_logger("DU-MNG");
 };
 
+/// Adapter between RLC and DU manager RLF detection handler.
 class rlc_rlf_du_adapter : public rlc_tx_upper_layer_control_notifier
 {
 public:
@@ -145,7 +148,7 @@ public:
 
   void handle_rlf_detection(rlf_cause cause)
   {
-    if (not release_timer.is_valid()) {
+    if (not is_handling_new_rlfs()) {
       // Either the RLF has been triggered or the UE is already being destroyed.
       return;
     }
@@ -156,7 +159,7 @@ public:
       if (cause != rlf_cause::max_mac_kos_reached and current_cause == rlf_cause::max_mac_kos_reached) {
         // RLFs due to RLC failures take priority over RLF due to MAC KOs, as they cannot be recovered from.
         current_cause = cause;
-        ue_ctx.stop_drb_traffic();
+        stop_ue_drb_activity();
       }
       return;
     }
@@ -175,7 +178,7 @@ public:
 
     // Stop traffic in case of RLC-initiated RLF.
     if (cause != rlf_cause::max_mac_kos_reached) {
-      ue_ctx.stop_drb_traffic();
+      stop_ue_drb_activity();
     }
   }
 
@@ -188,9 +191,22 @@ public:
     }
   }
 
-  void disconnect() { release_timer.reset(); }
+  bool deactivate()
+  {
+    if (release_timer.is_valid()) {
+      release_timer.reset();
+      return true;
+    }
+    return false;
+  }
 
 private:
+  bool is_handling_new_rlfs() const
+  {
+    return release_timer.is_valid() and current_cause != rlf_cause::rlc_protocol_failure and
+           current_cause != rlf_cause::max_rlc_retxs_reached;
+  }
+
   std::chrono::milliseconds get_release_timeout() const
   {
     // Note: Between an RLF being detected and the UE being released, the DU manager will wait for enough time to allow
@@ -207,22 +223,31 @@ private:
   {
     logger.info("ue={}: RLF timer expired with cause=\"{}\". Requesting a UE release...",
                 ue_ctx.ue_index,
-                get_rlf_cause_str(current_cause));
+                get_rlf_cause_str(*current_cause));
 
     // Request UE release to the CU.
     cfg.f1ap.ue_mng.handle_ue_context_release_request(
-        srs_du::f1ap_ue_context_release_request{ue_ctx.ue_index, current_cause});
+        srs_du::f1ap_ue_context_release_request{ue_ctx.ue_index, *current_cause});
 
-    // Release timer so no new RLF is triggered for the same UE, after it is scheduled for release.
-    disconnect();
+    // Stop handling of RLFs, so that no new RLFs are triggered after the UE is scheduled for release.
+    deactivate();
+  }
+
+  void stop_ue_drb_activity()
+  {
+    // We are at a point of no return for this UE. Disable DRB traffic (not RLFs because we still the RLF timer to
+    // trigger).
+    // Note: We use an async task rather than just an execute call, to ensure that this task is not dispatched after
+    // the UE has already been deleted.
+    ue_ctx.schedule_async_task(ue_ctx.handle_rb_stop_request(false));
   }
 
   du_ue_controller_impl&   ue_ctx;
   const du_manager_params& cfg;
   srslog::basic_logger&    logger = srslog::fetch_basic_logger("DU-MNG");
 
-  rlf_cause    current_cause;
-  unique_timer release_timer;
+  std::optional<rlf_cause> current_cause;
+  unique_timer             release_timer;
 };
 
 // -------------
@@ -242,30 +267,66 @@ du_ue_controller_impl::du_ue_controller_impl(const du_ue_context&         contex
 
 du_ue_controller_impl::~du_ue_controller_impl() {}
 
-async_task<void> du_ue_controller_impl::handle_traffic_stop_request()
+void du_ue_controller_impl::disable_rlf_detection()
 {
-  // > Disconnect RLF notifiers.
-  rlf_handler->disconnect();
-
-  // > Disconnect bearers from within the UE execution context.
-  return create_stop_traffic_task();
+  if (rlf_handler->deactivate()) {
+    logger.debug("ue={}: Disabled RLF detection", ue_index);
+  }
 }
 
-async_task<void> du_ue_controller_impl::handle_activity_stop_request()
+async_task<void> du_ue_controller_impl::handle_activity_stop_request(bool stop_srbs)
 {
-  // > Disconnect RLF notifiers.
-  rlf_handler->disconnect();
+  // Disable RLF detections.
+  disable_rlf_detection();
 
-  // > Disconnect bearers from within the UE execution context.
-  return create_stop_drb_traffic_task();
+  return handle_rb_stop_request(stop_srbs);
 }
 
-async_task<void> du_ue_controller_impl::handle_drb_traffic_stop_request(span<const drb_id_t> drbs_to_stop)
+async_task<void> du_ue_controller_impl::handle_rb_stop_request(bool stop_srbs)
 {
-  std::vector<drb_id_t> drbs(drbs_to_stop.begin(), drbs_to_stop.end());
-  return run_in_ue_executor([this, drbs = std::move(drbs)]() {
+  // Disable RBs
+  if (stop_srbs) {
+    logger.debug("ue={}: Stopping SRB and DRB traffic...", ue_index);
+  } else {
+    logger.debug("ue={}: Stopping DRB traffic...", ue_index);
+  }
+
+  // Disconnect bearers from within the UE execution context.
+  return run_in_ue_executor([this, stop_srbs]() {
+    // > Disconnect all DRBs.
+    for (auto& drb_pair : bearers.drbs()) {
+      du_ue_drb& drb = *drb_pair.second;
+      drb.stop();
+    }
+
+    // > Disconnect SRBs.
+    if (stop_srbs) {
+      for (du_ue_srb& srb : bearers.srbs()) {
+        srb.stop();
+      }
+    }
+
+    if (stop_srbs) {
+      logger.info("ue={}: SRB and DRB traffic stopped", ue_index);
+    } else {
+      logger.info("ue={}: DRB traffic stopped", ue_index);
+    }
+  });
+}
+
+async_task<void> du_ue_controller_impl::handle_drb_stop_request(span<const drb_id_t> drbs_to_stop)
+{
+  if (drbs_to_stop.empty()) {
+    return launch_no_op_task();
+  }
+
+  // Cannot pass span to executor, otherwise, we will have a dangling pointer.
+  std::vector<drb_id_t> drbs_to_stop_cpy(drbs_to_stop.begin(), drbs_to_stop.end());
+
+  return run_in_ue_executor([this, drbs_to_stop_cpy = std::move(drbs_to_stop_cpy)]() {
+    // > Subset of DRBs will be stopped.
     auto& ue_drbs = bearers.drbs();
-    for (drb_id_t drb_id : drbs) {
+    for (drb_id_t drb_id : drbs_to_stop_cpy) {
       auto it = ue_drbs.find(drb_id);
       if (it == ue_drbs.end()) {
         logger.warning("ue={}: Failed to stop {} activity. Cause: DRB not found", ue_index, drb_id);
@@ -285,47 +346,6 @@ void du_ue_controller_impl::handle_rlf_detection(rlf_cause cause)
 void du_ue_controller_impl::handle_crnti_ce_detection()
 {
   rlf_handler->handle_crnti_ce_detection();
-}
-
-void du_ue_controller_impl::stop_drb_traffic()
-{
-  // Note: We use an async task rather than just an execute call, to ensure that this task is not dispatched after
-  // the UE has already been deleted.
-  schedule_async_task(create_stop_drb_traffic_task());
-}
-
-async_task<void> du_ue_controller_impl::create_stop_drb_traffic_task()
-{
-  logger.debug("ue={}: Stopping DRB traffic...", ue_index);
-
-  return run_in_ue_executor([this]() {
-    // > Disconnect DRBs.
-    for (auto& drb_pair : bearers.drbs()) {
-      du_ue_drb& drb = *drb_pair.second;
-      drb.stop();
-    }
-    logger.info("ue={}: DRB traffic stopped", ue_index);
-  });
-}
-
-async_task<void> du_ue_controller_impl::create_stop_traffic_task()
-{
-  logger.debug("ue={}: Stopping SRB and DRB traffic...", ue_index);
-
-  return run_in_ue_executor([this]() {
-    // > Disconnect DRBs.
-    for (auto& drb_pair : bearers.drbs()) {
-      du_ue_drb& drb = *drb_pair.second;
-      drb.stop();
-    }
-
-    // > Disconnect SRBs.
-    for (du_ue_srb& srb : bearers.srbs()) {
-      srb.stop();
-    }
-
-    logger.info("ue={}: SRB and DRB traffic stopped", ue_index);
-  });
 }
 
 async_task<void> du_ue_controller_impl::run_in_ue_executor(unique_task task)

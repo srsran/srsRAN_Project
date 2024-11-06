@@ -26,8 +26,8 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
+#include "srsran/support/tracing/event_tracing.h"
 
 using namespace srsran;
 
@@ -149,7 +149,10 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
     pull_begin = std::chrono::steady_clock::now();
   }
 
-  std::lock_guard<std::mutex> lock(mutex);
+  if (max_retx_reached) {
+    logger.log_debug("Trying to pull when maximum retransmissions already reached.");
+    return 0;
+  }
 
   const size_t grant_len = rlc_pdu_buf.size();
   logger.log_debug("MAC opportunity. grant_len={} tx_window_size={}", grant_len, tx_window->size());
@@ -575,6 +578,10 @@ size_t rlc_tx_am_entity::build_retx_pdu(span<uint8_t> rlc_pdu_buf)
   // Update RETX queue. This must be done before calculating
   // the polling bit, to make sure the poll bit is calculated correctly
   if (retx_complete) {
+    // Check if this SN triggered max_retx
+    if ((*tx_window)[retx.sn].retx_count == cfg.max_retx_thresh) {
+      max_retx_reached = true;
+    }
     // remove RETX from queue
     retx_queue.pop();
   } else {
@@ -645,8 +652,6 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 {
   trace_point status_tp = l2_tracer.now();
   auto        t_start   = std::chrono::high_resolution_clock::now();
-
-  std::lock_guard<std::mutex> lock(mutex);
 
   /*
    * Sanity check the received status report.
@@ -815,7 +820,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
   l2_tracer << trace_event{"handle_status", status_tp};
 
-  update_mac_buffer_state(/* is_locked = */ true, /* force_notify */ true);
+  update_mac_buffer_state(/* force_notify */ true);
 
   // Trigger recycling of discarded PDUs in ue_executor
   pdu_recycler.clear_by_executor(ue_executor);
@@ -964,8 +969,7 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
   if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
     logger.log_debug("Triggering buffer state update to lower layer");
     // Redirect handling of status to pcell_executor
-    if (not pcell_executor.defer(
-            [this]() { update_mac_buffer_state(/* is_locked = */ false, /* force_notify */ false); })) {
+    if (not pcell_executor.defer([this]() { update_mac_buffer_state(/* force_notify */ false); })) {
       logger.log_error("Failed to enqueue buffer state update");
     }
   } else {
@@ -973,10 +977,10 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
   }
 }
 
-void rlc_tx_am_entity::update_mac_buffer_state(bool is_locked, bool force_notify)
+void rlc_tx_am_entity::update_mac_buffer_state(bool force_notify)
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
-  unsigned bs = is_locked ? get_buffer_state_nolock() : get_buffer_state();
+  unsigned bs = get_buffer_state();
   if (force_notify || bs <= MAX_DL_PDU_LENGTH || prev_buffer_state <= MAX_DL_PDU_LENGTH) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
     lower_dn.on_buffer_state_update(bs);
@@ -991,12 +995,6 @@ void rlc_tx_am_entity::update_mac_buffer_state(bool is_locked, bool force_notify
 
 // TS 38.322 v16.2.0 Sec 5.5
 uint32_t rlc_tx_am_entity::get_buffer_state()
-{
-  std::lock_guard<std::mutex> lock(mutex);
-  return get_buffer_state_nolock();
-}
-
-uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
 {
   // minimum bytes needed to tx all queued SDUs + each header
   rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
@@ -1114,8 +1112,6 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
 
 void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
 {
-  std::unique_lock<std::mutex> lock(mutex);
-
   // t-PollRetransmit
   logger.log_info("Poll retransmit timer expired after {}ms.", poll_retransmit_timer.duration().count());
   log_state(srslog::basic_levels::debug);
@@ -1162,7 +1158,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
           retx_queue.size());
     }
 
-    update_mac_buffer_state(/* is_locked = */ true, /* force_notify */ true);
+    update_mac_buffer_state(/* force_notify */ true);
   }
   /*
    * - include a poll in an AMD PDU as described in clause 5.3.3.2.

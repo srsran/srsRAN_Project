@@ -21,9 +21,8 @@
  */
 
 #include "dynamic_du_unit_config_yaml_writer.h"
-#include "apps/units/flexible_du/du_high/du_high_config_yaml_writer.h"
-#include "apps/units/flexible_du/du_low/du_low_config_yaml_writer.h"
-#include "apps/units/flexible_du/fapi/fapi_config_yaml_writer.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_yaml_writer.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config_yaml_writer.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_yaml_writer.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_yaml_writer.h"
 #include "dynamic_du_unit_config.h"
@@ -58,9 +57,8 @@ static void fill_ru_dummy_config(YAML::Node node, const ru_dummy_unit_config& co
 
 void srsran::fill_dynamic_du_unit_config_in_yaml_schema(YAML::Node& node, const dynamic_du_unit_config& config)
 {
-  fill_du_high_config_in_yaml_schema(node, config.du_high_cfg.config);
+  fill_o_du_high_config_in_yaml_schema(node, config.odu_high_cfg);
   fill_du_low_config_in_yaml_schema(node, config.du_low_cfg);
-  fill_fapi_config_in_yaml_schema(node, config.fapi_cfg);
 
   if (std::holds_alternative<ru_dummy_unit_config>(config.ru_cfg)) {
     fill_ru_dummy_config(node, std::get<ru_dummy_unit_config>(config.ru_cfg));

@@ -31,7 +31,7 @@
 #include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/executors/unique_thread.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #ifdef HWACC_PUSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
@@ -710,9 +710,7 @@ static void thread_process(pusch_processor&              proc,
 // Creates a resource grid.
 static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 {
-  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("generic");
-  TESTASSERT(precoding_factory != nullptr, "Invalid channel precoder factory.");
-  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoding_factory);
+  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
   TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
 
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
@@ -894,6 +892,7 @@ int main(int argc, char** argv)
   if (worker_pool) {
     worker_pool->stop();
   }
+  processor.reset();
 
   return 0;
 }

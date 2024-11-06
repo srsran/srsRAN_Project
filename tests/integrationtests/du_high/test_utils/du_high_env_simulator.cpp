@@ -163,12 +163,11 @@ static void init_loggers()
 
 du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
   cu_notifier(workers.test_worker),
-  phy(params.nof_cells, workers.test_worker),
   du_high_cfg([this, params]() {
     init_loggers();
 
     du_high_configuration cfg{};
-    cfg.exec_mapper                          = &workers.exec_mapper;
+    cfg.exec_mapper                          = workers.exec_mapper.get();
     cfg.f1c_client                           = &cu_notifier;
     cfg.f1u_gw                               = &cu_up_sim;
     cfg.phy_adapter                          = &phy;
@@ -180,7 +179,12 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
         params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
     for (unsigned i = 0; i < params.nof_cells; ++i) {
       builder_params.pci = (pci_t)i;
-      cfg.ran.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
+      auto du_cell_cfg   = config_helpers::make_default_du_cell_config(builder_params);
+      if (params.prach_frequency_start.has_value()) {
+        du_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start =
+            params.prach_frequency_start.value();
+      }
+      cfg.ran.cells.push_back(du_cell_cfg);
       cfg.ran.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
       if (params.pucch_cfg.has_value()) {
         cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
@@ -196,6 +200,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     return cfg;
   }()),
   du_hi(make_du_high(du_high_cfg)),
+  phy(params.nof_cells, workers.test_worker),
   next_slot(to_numerology_value(du_high_cfg.ran.cells[0].scs_common),
             test_rgen::uniform_int<unsigned>(0, 10239) *
                 get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common))
@@ -432,8 +437,12 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
 
   // DU receives UE Context Setup Request.
   cu_notifier.last_f1ap_msgs.clear();
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
-      *u.cu_ue_id, u.du_ue_id, u.srbs[LCID_SRB1].next_pdcp_sn++, {drb_id_t::drb1});
+  f1ap_message msg =
+      test_helpers::create_ue_context_setup_request(*u.cu_ue_id,
+                                                    u.du_ue_id,
+                                                    u.srbs[LCID_SRB1].next_pdcp_sn++,
+                                                    {drb_id_t::drb1},
+                                                    {plmn_identity::test_value(), nr_cell_identity::create(0).value()});
   asn1::f1ap::ue_context_setup_request_s& cmd = msg.pdu.init_msg().value.ue_context_setup_request();
   cmd->drbs_to_be_setup_list[0]
       .value()

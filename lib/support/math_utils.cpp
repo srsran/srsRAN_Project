@@ -20,7 +20,7 @@
  *
  */
 
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/srsran_assert.h"
 

@@ -56,22 +56,21 @@ class du_ue_controller
 public:
   virtual ~du_ue_controller() = default;
 
-  /// \brief Stop all SRB and DRB traffic for a give UE.
-  ///
-  /// This method should be called as a first step in the deletion of a UE, to ensure traffic is not flowing through
-  /// its bearers during the layer by layer UE context removal.
-  virtual async_task<void> handle_traffic_stop_request() = 0;
+  /// \brief Disable the handling of RLF detections.
+  /// This method should be called, for instance, when the UE context is in the process of being removed from the DU or
+  /// the UE is performing handover.
+  virtual void disable_rlf_detection() = 0;
 
-  /// \brief Stop DRB activity and the detection of RLF for this UE.
-  ///
-  /// This method can be called when the DU receives a request to delete a UE context, but the UE is not yet in a
-  /// state where it is ready to be deleted (e.g. pending SRB PDUs).
-  virtual async_task<void> handle_activity_stop_request() = 0;
+  /// \brief Stop traffic for the radio bearers of this UE and detection of RLFs.
+  /// \param[in] stop_srbs Whether to stop both SRB and DRB traffic or just DRB traffic. This flag should be only set
+  /// to true during UE context removal, to ensure traffic is not flowing through its SRBs during the layer-by-layer
+  /// UE context removal. In other situations, we still need SRBs for signalling RRC messages.
+  virtual async_task<void> handle_activity_stop_request(bool stop_srbs) = 0;
 
-  /// \brief Stop activity/traffic for a subset of DRBs of a UE.
+  /// \brief Stop traffic for a subset of DRBs of a UE.
   ///
   /// This method can be called during a UE reconfiguration, when some DRBs are removed.
-  virtual async_task<void> handle_drb_traffic_stop_request(span<const drb_id_t> drbs_to_stop) = 0;
+  virtual async_task<void> handle_drb_stop_request(span<const drb_id_t> drbs_to_stop) = 0;
 
   /// \brief Schedule task for a given UE.
   virtual void schedule_async_task(async_task<void> task) = 0;
@@ -81,11 +80,6 @@ public:
 
   /// \brief Handle the detection of a C-RNTI MAC CE for this UE.
   virtual void handle_crnti_ce_detection() = 0;
-
-  /// \brief Stop DRB traffic from flowing through the stack.
-  ///
-  /// This method may be called when Radio Link Failures are detected.
-  virtual void stop_drb_traffic() = 0;
 
   /// \brief Access to the MAC RLF notifier for this UE.
   virtual mac_ue_radio_link_notifier& get_mac_rlf_notifier() = 0;

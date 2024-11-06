@@ -35,6 +35,7 @@ cu_cp_application_unit_impl::cu_cp_application_unit_impl(std::string_view app_na
   unit_cfg.pcap_cfg.ngap.filename = fmt::format("/tmp/{}_ngap.pcap", app_name);
   unit_cfg.pcap_cfg.e1ap.filename = fmt::format("/tmp/{}_e1ap.pcap", app_name);
   unit_cfg.pcap_cfg.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
+  // Note: do not update the default e2ap pcap filename.
 }
 
 void cu_cp_application_unit_impl::on_parsing_configuration_registration(CLI::App& app)

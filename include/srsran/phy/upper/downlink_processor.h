@@ -31,7 +31,6 @@ namespace srsran {
 
 struct resource_grid_context;
 class shared_resource_grid;
-class unique_tx_buffer;
 
 /// \brief Downlink processor class that groups and process all the downlink channels within a slot.
 ///
@@ -58,8 +57,8 @@ public:
   ///
   /// \param[in]     data      Contains the PDSCH transport blocks.
   /// \param[in]     pdu       PDSCH PDU to process.
-  virtual void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
-                             const pdsch_processor::pdu_t& pdu) = 0;
+  virtual void process_pdsch(static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
+                             const pdsch_processor::pdu_t&                                                    pdu) = 0;
 
   /// \brief Process the given SSB PDU.
   ///
@@ -108,8 +107,8 @@ public:
   virtual bool is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates PDSCH processor configuration parameters.
-  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
-  virtual bool is_valid(const pdsch_processor::pdu_t& pdu) const = 0;
+  /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates NZP-CSI-RS generator configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.

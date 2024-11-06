@@ -22,8 +22,7 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_high/du_high_logger_registrator.h"
-#include "apps/units/flexible_du/fapi/fapi_logger_registrator.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_logger_registrator.h"
 #include "split6_du_unit_config.h"
 
 namespace srsran {
@@ -31,8 +30,7 @@ namespace srsran {
 /// Registers all the loggers for the DU split 6.
 inline void register_split6_du_loggers(const split6_du_unit_config& config)
 {
-  register_du_high_loggers(config.du_high_cfg.config.loggers);
-  register_fapi_loggers(config.fapi_cfg);
+  register_o_du_high_loggers(config.odu_high_cfg);
 }
 
 } // namespace srsran

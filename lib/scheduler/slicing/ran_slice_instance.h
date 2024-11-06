@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../../scheduler/cell/resource_grid.h"
+#include "../cell/resource_grid.h"
 #include "../config/cell_configuration.h"
 #include "../ue_scheduling/ue_repository.h"
 #include "ran_slice_id.h"

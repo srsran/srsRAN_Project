@@ -164,7 +164,7 @@ public:
       return;
     }
 
-    // Copy and change to upper case the chanel string.
+    // Copy and change to upper case the channel string.
     std::string channel_str(args.front());
     std::transform(channel_str.begin(), channel_str.end(), channel_str.begin(), ::toupper);
 

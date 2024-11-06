@@ -32,7 +32,7 @@ using namespace srsran;
 TEST_F(e2_entity_test, on_start_send_e2ap_setup_request)
 {
   test_logger.info("Launch e2 setup request procedure with task worker...");
-  e2->start();
+  e2agent->start();
 
   // Status: received E2 Setup Request.
   ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
@@ -48,13 +48,14 @@ TEST_F(e2_entity_test, on_start_send_e2ap_setup_request)
       ->ran_function_id_item()
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
-  e2->handle_message(e2_setup_response);
-  e2->stop();
+  e2agent->get_e2_interface().handle_message(e2_setup_response);
+  e2agent->stop();
 }
 
-/// Test successful cu-cp initiated e2 setup procedure
+/// Test successful E2 setup procedure
 TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
 {
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   // Action 1: Launch E2 setup procedure
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");
@@ -64,14 +65,14 @@ TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
   // Action 2: E2 setup response received.
-  unsigned   transaction_id    = get_transaction_id(msg_notifier->last_e2_msg.pdu).value();
+  unsigned   transaction_id    = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
@@ -82,6 +83,7 @@ TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
 
 TEST_F(e2_test, when_e2_setup_failure_received_then_e2_setup_failed)
 {
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   // Action 1: Launch E2 setup procedure
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");
@@ -91,14 +93,14 @@ TEST_F(e2_test, when_e2_setup_failure_received_then_e2_setup_failed)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
   // Action 2: E2 setup response received.
-  unsigned   transaction_id    = get_transaction_id(msg_notifier->last_e2_msg.pdu).value();
+  unsigned   transaction_id    = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_failure(transaction_id);
   test_logger.info("Injecting E2SetupFailure");
   e2->handle_message(e2_setup_response);
@@ -111,6 +113,7 @@ TEST_F(e2_test_setup, e2_sends_correct_kpm_ran_function_definition)
 {
   using namespace asn1::e2sm;
   using namespace asn1::e2ap;
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");
   e2_setup_request_message request;
@@ -119,11 +122,11 @@ TEST_F(e2_test_setup, e2_sends_correct_kpm_ran_function_definition)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
-  ran_function_item_s& ran_func_added1 = msg_notifier->last_e2_msg.pdu.init_msg()
+  ran_function_item_s& ran_func_added1 = e2_client->last_tx_e2_pdu.pdu.init_msg()
                                              .value.e2setup_request()
                                              ->ran_functions_added[0]
                                              .value()
@@ -143,7 +146,7 @@ TEST_F(e2_test_setup, e2_sends_correct_kpm_ran_function_definition)
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
   // Action 2: E2 setup response received.
-  unsigned   transaction_id    = get_transaction_id(msg_notifier->last_e2_msg.pdu).value();
+  unsigned   transaction_id    = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
@@ -156,6 +159,7 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
 {
   using namespace asn1::e2sm;
   using namespace asn1::e2ap;
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.1.2.3");
   test_logger.info("Launch e2 setup request procedure...");
   e2_setup_request_message request;
@@ -164,11 +168,11 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
-  ran_function_item_s& ran_func_added1 = msg_notifier->last_e2_msg.pdu.init_msg()
+  ran_function_item_s& ran_func_added1 = e2_client->last_tx_e2_pdu.pdu.init_msg()
                                              .value.e2setup_request()
                                              ->ran_functions_added[0]
                                              .value()
@@ -205,7 +209,7 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
   // Action 2: E2 setup response received.
-  unsigned   transaction_id    = get_transaction_id(msg_notifier->last_e2_msg.pdu).value();
+  unsigned   transaction_id    = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
@@ -216,6 +220,7 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
 
 TEST_F(e2_test, correctly_unpack_e2_response)
 {
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
   // Action 1: Launch E2 setup procedure
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");
@@ -225,8 +230,8 @@ TEST_F(e2_test, correctly_unpack_e2_response)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(e2_client->last_tx_e2_pdu.pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Status: Procedure not yet ready.

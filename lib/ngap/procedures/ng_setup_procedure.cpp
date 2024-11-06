@@ -71,10 +71,10 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
     }
 
     // Await timer.
-    logger.info("Reinitiating NG setup in {}s (retry={}/{}). Received NGSetupFailure with Time to Wait IE",
-                time_to_wait.count(),
-                ng_setup_retry_no,
-                max_setup_retries);
+    logger.debug("Reinitiating NG setup in {}s (retry={}/{}). Received NGSetupFailure with Time to Wait IE",
+                 time_to_wait.count(),
+                 ng_setup_retry_no,
+                 max_setup_retries);
     CORO_AWAIT(
         async_wait_for(ng_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
   }
@@ -87,6 +87,12 @@ bool ng_setup_procedure::retry_required()
 {
   if (transaction_sink.successful()) {
     // Success case.
+    return false;
+  }
+
+  if (transaction_sink.timeout_expired()) {
+    logger.error("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
+    fmt::print("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
     return false;
   }
 
@@ -118,16 +124,17 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
   ngap_ng_setup_result res{};
 
   if (transaction_sink.successful()) {
-    logger.info("\"{}\" finished successfully", name());
+    logger.debug("\"{}\" finished successfully", name());
 
     fill_ngap_ng_setup_result(res, transaction_sink.response());
 
     for (const auto& guami_item : std::get<ngap_ng_setup_response>(res).served_guami_list) {
       context.served_guami_list.push_back(guami_item.guami);
     }
-
-  } else {
+  } else if (transaction_sink.failed()) {
     fill_ngap_ng_setup_result(res, transaction_sink.failure());
+  } else {
+    res = ngap_ng_setup_failure{ngap_cause_misc_t::unspecified};
   }
 
   return res;

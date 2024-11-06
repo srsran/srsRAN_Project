@@ -144,13 +144,10 @@ private:
   void enqueue_impl(const dl_buffer_state_indication_message& bs);
   void enqueue_impl(const phr_event& phr_ev);
 
-  du_cell_index_t       cell_index;
-  pci_t                 pci;
+  const du_cell_index_t cell_index;
+  const pci_t           pci;
   srslog::basic_logger& logger;
   mode_t                mode = none;
-
-  // Mapping of cell indexes to pcis.
-  std::array<pci_t, MAX_NOF_DU_CELLS> cell_pcis{INVALID_PCI};
 
   fmt::memory_buffer fmtbuf;
 };

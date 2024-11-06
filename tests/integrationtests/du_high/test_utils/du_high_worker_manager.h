@@ -22,10 +22,11 @@
 
 #pragma once
 
-#include "lib/du/du_high/du_high_executor_strategies.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
+#include "srsran/support/executors/task_worker_pool.h"
 #include <array>
 
 namespace srsran {
@@ -33,32 +34,21 @@ namespace srsran {
 struct du_high_worker_manager {
   static const uint32_t task_worker_queue_size = 10000;
 
-  void stop()
-  {
-    ctrl_worker.stop();
-    for (auto& w : cell_workers) {
-      w.stop();
-    }
-    for (auto& w : ue_workers) {
-      w.stop();
-    }
-  }
+  du_high_worker_manager();
+  ~du_high_worker_manager();
+  void stop();
+  void flush_pending_dl_pdus();
 
-  manual_task_worker         test_worker{task_worker_queue_size};
-  task_worker                ctrl_worker{"CTRL", task_worker_queue_size};
-  std::array<task_worker, 2> cell_workers{{{"DU-CELL#0", task_worker_queue_size}, {"CELL#1", task_worker_queue_size}}};
-  std::array<task_worker, 2> ue_workers{{{"UE#0", task_worker_queue_size}, {"UE#1", task_worker_queue_size}}};
-  task_worker_executor       ctrl_exec{ctrl_worker};
-  static_vector<task_worker_executor, 2> cell_execs{{cell_workers[0]}, {cell_workers[1]}};
-  static_vector<task_worker_executor, 2> ue_execs{{ue_workers[0]}, {ue_workers[1]}};
-  srs_du::du_high_executor_mapper_impl   exec_mapper{
-      std::make_unique<srs_du::cell_executor_mapper>(
-          std::initializer_list<task_executor*>{&cell_execs[0], &cell_execs[1]}),
-      std::make_unique<srs_du::pcell_ue_executor_mapper>(
-          std::initializer_list<task_executor*>{&ue_execs[0], &ue_execs[1]}),
-      ctrl_exec,
-      ctrl_exec,
-      ctrl_exec};
+  manual_task_worker        test_worker{task_worker_queue_size};
+  priority_task_worker_pool worker_pool{
+      "POOL",
+      3,
+      std::array<concurrent_queue_params, 2>{
+          concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+          concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
+  priority_task_worker_pool_executor               high_prio_exec{enqueue_priority::max, worker_pool};
+  priority_task_worker_pool_executor               low_prio_exec{enqueue_priority::max - 1, worker_pool};
+  std::unique_ptr<srs_du::du_high_executor_mapper> exec_mapper;
 };
 
 } // namespace srsran

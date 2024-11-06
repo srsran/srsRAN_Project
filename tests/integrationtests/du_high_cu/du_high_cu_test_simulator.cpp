@@ -21,7 +21,7 @@
  */
 
 #include "du_high_cu_test_simulator.h"
-#include "lib/du/du_high/du_high_executor_strategies.h"
+#include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -55,36 +55,14 @@ static void init_loggers()
 du_high_cu_cp_worker_manager::du_high_cu_cp_worker_manager(unsigned nof_dus) : test_worker(task_worker_queue_size)
 {
   init_loggers();
-  auto make_worker_and_executor = [this](const std::string& name) {
-    workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, task_worker_queue_size)));
-    executor_insts.insert(std::make_pair(name, std::make_unique<task_worker_executor>(*workers[name])));
-    executors.insert(std::make_pair(name, executor_insts[name].get()));
-  };
 
-  // Add test executor.
-  executors.insert(std::make_pair("TEST", &test_worker));
+  for (unsigned i = 0; i != nof_dus; ++i) {
+    dus.push_back(test_helpers::create_multi_threaded_du_high_executor_mapper(test_helpers::du_high_worker_config{1}));
+  }
 
   // CU-CP especific executor.
-  make_worker_and_executor("CU-CP");
-
-  for (unsigned du_idx = 0; du_idx != nof_dus; ++du_idx) {
-    std::string prefix_str = fmt::format("DU{}", du_idx + 1);
-    make_worker_and_executor(prefix_str + "-CTRL");
-    make_worker_and_executor(prefix_str + "-CELL");
-    make_worker_and_executor(prefix_str + "-UE");
-
-    auto du_hi_cell_mapper = std::make_unique<srs_du::cell_executor_mapper>(
-        std::initializer_list<task_executor*>{executors[prefix_str + "-CELL"]});
-    auto du_hi_ue_mapper = std::make_unique<srs_du::pcell_ue_executor_mapper>(
-        std::initializer_list<task_executor*>{executors[prefix_str + "-UE"]});
-
-    du_hi_exec_mappers.push_back(
-        std::make_unique<srs_du::du_high_executor_mapper_impl>(std::move(du_hi_cell_mapper),
-                                                               std::move(du_hi_ue_mapper),
-                                                               *executors[prefix_str + "-CTRL"],
-                                                               *executors[prefix_str + "-CTRL"],
-                                                               *executors[prefix_str + "-CTRL"]));
-  }
+  // Note: Reuse one of the DU-high control executors.
+  cu_cp_exec = &dus[0]->get_exec_mapper().du_control_executor();
 }
 
 du_high_cu_cp_worker_manager::~du_high_cu_cp_worker_manager()
@@ -94,8 +72,8 @@ du_high_cu_cp_worker_manager::~du_high_cu_cp_worker_manager()
 
 void du_high_cu_cp_worker_manager::stop()
 {
-  for (auto& w : workers) {
-    w.second->stop();
+  for (auto& w : dus) {
+    w->stop();
   }
   test_worker.stop();
 }
@@ -105,7 +83,7 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
 {
   // Prepare CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();
-  cu_cfg.services.cu_cp_executor        = workers.executors["CU-CP"];
+  cu_cfg.services.cu_cp_executor        = workers.cu_cp_exec;
   cu_cfg.services.timers                = &timers;
   cu_cfg.ngaps.push_back(
       srs_cu_cp::cu_cp_configuration::ngap_params{&n2_gw, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
@@ -157,7 +135,7 @@ bool du_high_cu_test_simulator::add_ue(unsigned du_index, rnti_t rnti)
 void du_high_cu_test_simulator::start_dus()
 {
   for (unsigned du_idx = 0; du_idx != cfg.dus.size(); ++du_idx) {
-    dus.emplace_back(std::make_unique<du_sim>(*workers.executors["TEST"]));
+    dus.emplace_back(std::make_unique<du_sim>(workers.test_worker));
     auto& du_ctxt = *dus.back();
 
     // Setup DU-specific slot index.
@@ -167,7 +145,7 @@ void du_high_cu_test_simulator::start_dus()
     srs_du::du_high_configuration& du_hi_cfg = du_ctxt.du_high_cfg;
     du_hi_cfg.ran.gnb_du_name                = fmt::format("srsgnb{}", du_idx + 1);
     du_hi_cfg.ran.gnb_du_id                  = (gnb_du_id_t)(du_idx + 1);
-    du_hi_cfg.exec_mapper                    = workers.du_hi_exec_mappers[du_idx].get();
+    du_hi_cfg.exec_mapper                    = &workers.dus[du_idx]->get_exec_mapper();
     du_hi_cfg.f1c_client                     = &f1c_gw;
     du_hi_cfg.f1u_gw                         = nullptr;
     du_hi_cfg.phy_adapter                    = &du_ctxt.phy;

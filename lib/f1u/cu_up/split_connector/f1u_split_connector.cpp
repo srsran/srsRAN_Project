@@ -22,7 +22,7 @@
 
 #include "f1u_split_connector.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -124,9 +124,11 @@ void f1u_split_gateway_cu_bearer::stop()
 f1u_split_connector::f1u_split_connector(ngu_gateway& udp_gw_,
                                          gtpu_demux&  demux_,
                                          dlt_pcap&    gtpu_pcap_,
-                                         uint16_t     peer_port_) :
+                                         uint16_t     peer_port_,
+                                         std::string  ext_addr_) :
   logger_cu(srslog::fetch_basic_logger("CU-F1-U")),
   peer_port(peer_port_),
+  ext_addr(std::move(ext_addr_)),
   udp_gw(udp_gw_),
   demux(demux_),
   gtpu_pcap(gtpu_pcap_)
@@ -158,6 +160,7 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
   // create GTP-U tunnel rx
   gtpu_tunnel_nru_rx_creation_message msg{};
   msg.ue_index          = int_to_ue_index(ue_index);
+  msg.rx_cfg.node       = nru_node::cu_up;
   msg.rx_cfg.local_teid = ul_up_tnl_info.gtp_teid;
   msg.rx_lower          = cu_bearer->gtpu_to_f1u_adapter.get();
 
@@ -240,9 +243,12 @@ expected<std::string> f1u_split_connector::get_cu_bind_address() const
 {
   std::string ip_address;
 
-  if (not udp_session->get_bind_address(ip_address)) {
-    return make_unexpected(default_error_t{});
+  if (ext_addr == "auto" || ext_addr == "") {
+    if (not udp_session->get_bind_address(ip_address)) {
+      return make_unexpected(default_error_t{});
+    }
+  } else {
+    ip_address = ext_addr;
   }
-
   return ip_address;
 }

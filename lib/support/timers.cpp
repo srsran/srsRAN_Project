@@ -25,10 +25,6 @@
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"
 
-#ifdef ENABLE_TSAN
-#include "sanitizer/tsan_interface.h"
-#endif
-
 using namespace srsran;
 
 /// Timer Wheel configuration parameters.
@@ -88,30 +84,18 @@ class timer_manager::unique_timer_pool
 public:
   unique_timer_pool(timer_manager& parent, unsigned capacity) : free_list(capacity) {}
 
-  void push(timer_manager::timer_frontend* obj)
-  {
-#ifdef ENABLE_TSAN
-    __tsan_release((void*)obj);
-#endif
-    free_list.enqueue(obj);
-  }
+  void push(timer_manager::timer_frontend* obj) { free_list.enqueue(obj); }
 
   timer_manager::timer_frontend* pop()
   {
     timer_manager::timer_frontend* ret;
     if (free_list.try_dequeue(ret)) {
-#ifdef ENABLE_TSAN
-      __tsan_acquire((void*)ret);
-#endif
       return ret;
     }
     return nullptr;
   }
 
-  size_t size_approx() const
-  {
-    return free_list.size_approx();
-  }
+  size_t size_approx() const { return free_list.size_approx(); }
 
 private:
   // List of timer_handle objects in timer_list that are currently not allocated.

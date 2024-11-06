@@ -54,6 +54,7 @@ public:
     unsigned record_index;
   };
 
+  pdcch_slot_allocator();
   ~pdcch_slot_allocator();
 
   /// Erase the current PDCCH allocations and stored context for this slot.

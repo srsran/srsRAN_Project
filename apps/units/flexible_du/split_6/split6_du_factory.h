@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_unit.h"
+#include "apps/units/flexible_du/o_du_unit.h"
 #include <memory>
 #include <vector>
 
@@ -35,8 +35,8 @@ class fapi_adaptor;
 struct split6_du_unit_config;
 
 /// Helper function to build the DU Split 6 with the given arguments.
-du_unit create_du_split6(const split6_du_unit_config&                     du_unit_cfg,
-                         const du_unit_dependencies&                      du_dependencies,
-                         std::vector<std::unique_ptr<fapi::fapi_adaptor>> fapi_adaptors);
+o_du_unit create_du_split6(const split6_du_unit_config&                     du_unit_cfg,
+                           const du_unit_dependencies&                      du_dependencies,
+                           std::vector<std::unique_ptr<fapi::fapi_adaptor>> fapi_adaptors);
 
 } // namespace srsran

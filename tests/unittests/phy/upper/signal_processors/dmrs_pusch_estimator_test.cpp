@@ -23,6 +23,7 @@
 #include "../../support/resource_grid_test_doubles.h"
 #include "dmrs_pusch_estimator_test_data.h"
 #include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsran/srsvec/zero.h"
 #include "fmt/ostream.h"
@@ -137,8 +138,9 @@ TEST_P(DmrsPuschEstimatorFixture, Creation)
   }
 
   // The current estimator does not support Type2 DM-RS.
-  // As well, the MIMO case must be double-checked.
-  if ((config.get_dmrs_type() == dmrs_type::TYPE2) || (config.get_nof_tx_layers() > 1)) {
+  // As well, the MIMO case only works with at most two layers.
+  if ((config.get_dmrs_type() == dmrs_type::TYPE2) ||
+      (config.get_nof_tx_layers() > get_pusch_processor_phy_capabilities().max_nof_layers)) {
     GTEST_SKIP() << "Configuration not supported yet, skipping.";
   }
 
@@ -211,11 +213,12 @@ static bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry
   for (const auto& this_expected : expected) {
     unsigned i_symbol = this_expected.symbol;
     unsigned i_sc     = this_expected.subcarrier;
+    unsigned i_layer  = this_expected.port;
     cf_t     value    = this_expected.value;
 
     if (i_symbol != old_symbol) {
       old_symbol      = i_symbol;
-      computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, 0);
+      computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, i_layer);
     }
 
     if (std::abs(to_cf(computed_symbol[i_sc]) - value) > tolerance * std::abs(value)) {
@@ -235,16 +238,18 @@ TEST_P(DmrsPuschEstimatorFixture, Average)
   }
 
   // The current estimator does not support Type2 DM-RS.
-  // As well, the MIMO case must be double-checked.
-  if ((config.get_dmrs_type() == dmrs_type::TYPE2) || (config.get_nof_tx_layers() > 1)) {
+  // As well, the MIMO case only works with at most two layers.
+  if ((config.get_dmrs_type() == dmrs_type::TYPE2) ||
+      (config.get_nof_tx_layers() > get_pusch_processor_phy_capabilities().max_nof_layers)) {
     GTEST_SKIP() << "Configuration not supported yet, skipping.";
   }
 
   unsigned nof_allocated_res = config.rb_mask.count() * NRE * config.nof_symbols;
+  unsigned nof_layers        = config.get_nof_tx_layers();
 
   // Read expected channel estimates.
   std::vector<resource_grid_reader_spy::expected_entry_t> expected_estimates = GetParam().ch_estimates.read();
-  ASSERT_EQ(expected_estimates.size(), nof_allocated_res) << fmt::format(
+  ASSERT_EQ(expected_estimates.size(), nof_allocated_res * nof_layers) << fmt::format(
       "Number of channel estimates mismatch: configured {}, provided {}", nof_allocated_res, expected_estimates.size());
 
   channel_estimate ch_est;

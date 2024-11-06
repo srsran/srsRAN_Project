@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
@@ -44,13 +45,9 @@ public:
 
   void stop();
 
-  manual_task_worker                                            test_worker;
-  std::map<std::string, task_executor*>                         executors;
-  std::vector<std::unique_ptr<srs_du::du_high_executor_mapper>> du_hi_exec_mappers;
-
-private:
-  std::map<std::string, std::unique_ptr<task_worker>>   workers;
-  std::map<std::string, std::unique_ptr<task_executor>> executor_insts;
+  manual_task_worker                                                 test_worker;
+  std::vector<std::unique_ptr<test_helpers::du_high_worker_manager>> dus;
+  task_executor*                                                     cu_cp_exec = nullptr;
 };
 
 struct du_high_cu_cp_test_simulator_config {

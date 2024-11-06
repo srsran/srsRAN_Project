@@ -28,6 +28,7 @@
 #include "procedures/ng_reset_procedure.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_dl_nas_message_transfer_procedure.h"
+#include "procedures/ngap_dl_ue_associated_nrppa_transport_procedure.h"
 #include "procedures/ngap_handover_preparation_procedure.h"
 #include "procedures/ngap_handover_resource_allocation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
@@ -110,8 +111,6 @@ async_task<void> ngap_impl::handle_amf_disconnection_request()
 
 async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(unsigned max_setup_retries)
 {
-  logger.info("Sending NgSetupRequest");
-
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
@@ -167,7 +166,7 @@ async_task<void> ngap_impl::handle_ng_reset_message(const cu_cp_ng_reset& msg)
 void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 {
   if (ue_ctxt_list.contains(msg.ue_index)) {
-    logger.warning("ue={}: Dropping InitialUEMessage. UE context already exist", msg.ue_index);
+    logger.warning("ue={}: Dropping InitialUEMessage. UE context already exists", msg.ue_index);
     return;
   }
 
@@ -285,7 +284,7 @@ void ngap_impl::handle_tx_ue_radio_capability_info_indication_required(
   ue_radio_cap_info_ind_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   ue_radio_cap_info_ind_msg->ue_radio_cap   = msg.ue_cap_rat_container_list.copy();
 
-  ue_ctxt.logger.log_info("Scheduling UE Radio Capability Info Indication");
+  ue_ctxt.logger.log_debug("Scheduling UE Radio Capability Info Indication");
 
   // Schedule transmission of UE Radio Capability Info Indication to AMF
   ue->schedule_async_task(launch_async([this, ngap_msg](coro_context<async_task<void>>& ctx) {
@@ -346,6 +345,12 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
       break;
     case ngap_elem_procs_o::init_msg_c::types_opts::ho_request:
       handle_handover_request(msg.value.ho_request());
+      break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::dl_ue_associated_nrppa_transport:
+      handle_dl_ue_associated_nrppa_transport(msg.value.dl_ue_associated_nrppa_transport());
+      break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::dl_non_ue_associated_nrppa_transport:
+      handle_dl_non_ue_associated_nrppa_transport(msg.value.dl_non_ue_associated_nrppa_transport());
       break;
     case ngap_elem_procs_o::init_msg_c::types_opts::error_ind:
       handle_error_indication(msg.value.error_ind());
@@ -615,8 +620,6 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
                 ue_ctxt.ue_ids.ran_ue_id,
                 ue_ctxt.ue_ids.amf_ue_id);
 
-  ue_ctxt.logger.log_info("Received PduSessionResourceReleaseCommand");
-
   // Convert to common type
   cu_cp_pdu_session_resource_release_command msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
@@ -693,8 +696,6 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
                 ue_ctxt.ue_ids.ran_ue_id,
                 ue_ctxt.ue_ids.amf_ue_id);
 
-  ue_ctxt.logger.log_info("Received UeContextReleaseCommand");
-
   // Convert to common type
   cu_cp_ue_context_release_command msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
@@ -767,18 +768,67 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
 
   if (!cu_cp_notifier.schedule_async_task(
           ho_request.ue_index,
-          launch_async<ngap_handover_resource_allocation_procedure>(ho_request,
-                                                                    uint_to_amf_ue_id(msg->amf_ue_ngap_id),
-                                                                    ue_ctxt_list,
-                                                                    cu_cp_notifier,
-                                                                    *tx_pdu_notifier,
-                                                                    timers,
-                                                                    ctrl_exec,
-                                                                    logger))) {
+          start_ngap_handover_resource_allocation(ho_request,
+                                                  uint_to_amf_ue_id(msg->amf_ue_ngap_id),
+                                                  ue_ctxt_list,
+                                                  cu_cp_notifier,
+                                                  *tx_pdu_notifier,
+                                                  timers,
+                                                  ctrl_exec,
+                                                  logger))) {
     logger.warning("Sending HandoverFailure. Couldn't schedule handover resource allocation procedure");
     tx_pdu_notifier->on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
     return;
   }
+}
+
+void ngap_impl::handle_dl_ue_associated_nrppa_transport(const asn1::ngap::dl_ue_associated_nrppa_transport_s& msg)
+{
+  if (!ue_ctxt_list.contains(uint_to_ran_ue_id(msg->ran_ue_ngap_id))) {
+    logger.warning("ran_ue={} amf_ue={}: Dropping DlUeAssociatedNrppaTransport. UE context does not exist",
+                   msg->ran_ue_ngap_id,
+                   msg->amf_ue_ngap_id);
+    send_error_indication(*tx_pdu_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    return;
+  }
+
+  ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(msg->ran_ue_ngap_id)];
+
+  if (ue_ctxt.release_scheduled) {
+    ue_ctxt.logger.log_info("Dropping DlUeAssociatedNrppaTransport. UE is already scheduled for release");
+    stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
+                                     error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
+                                                                ue_ctxt.ue_ids.ran_ue_id,
+                                                                uint_to_amf_ue_id(msg->amf_ue_ngap_id)});
+    return;
+  }
+
+  auto* ue = ue_ctxt.get_cu_cp_ue();
+  srsran_assert(ue != nullptr,
+                "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
+                ue_ctxt.ue_ids.ue_index,
+                ue_ctxt.ue_ids.ran_ue_id,
+                ue_ctxt.ue_ids.amf_ue_id);
+
+  // Convert to common type.
+  ngap_ue_associated_nrppa_transport nrppa_transport;
+  nrppa_transport.ue_index = ue_ctxt.ue_ids.ue_index;
+  fill_dl_ue_associated_nrppa_transport(nrppa_transport, msg);
+
+  // Start routine.
+  ue->schedule_async_task(
+      start_ngap_dl_ue_associated_nrppa_transport(nrppa_transport, cu_cp_notifier, *tx_pdu_notifier, ue_ctxt.logger));
+}
+
+void ngap_impl::handle_dl_non_ue_associated_nrppa_transport(
+    const asn1::ngap::dl_non_ue_associated_nrppa_transport_s& msg)
+{
+  // Convert to common type.
+  ngap_non_ue_associated_nrppa_transport nrppa_transport;
+  fill_dl_non_ue_associated_nrppa_transport(nrppa_transport, msg);
+
+  // Forward to CU-CP.
+  cu_cp_notifier.on_dl_non_ue_associated_nrppa_transport(nrppa_transport);
 }
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)

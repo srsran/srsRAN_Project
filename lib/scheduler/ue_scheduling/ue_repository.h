@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../config/sched_config_manager.h"
-#include "ue.h"
+#include "../ue_context/ue.h"
 #include "srsran/adt/ring_buffer.h"
 #include "srsran/adt/unique_function.h"
 

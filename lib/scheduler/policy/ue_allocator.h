@@ -25,7 +25,7 @@
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../slicing/slice_ue_repository.h"
-#include "../ue_scheduling/ue.h"
+#include "../ue_context/ue.h"
 #include "../ue_scheduling/ue_repository.h"
 #include "../ue_scheduling/ue_scheduler.h"
 #include "srsran/ran/slot_point.h"
@@ -63,8 +63,19 @@ struct ue_pusch_grant {
 /// - invalid_params - failure to allocate and the scheduler policy should try a different set of grant parameters.
 enum class alloc_status { success, skip_slot, skip_ue, invalid_params };
 
-/// Allocation result of a UE grant allocation.
-struct alloc_result {
+/// Allocation result of a UE DL grant allocation.
+struct dl_alloc_result {
+  alloc_status status;
+  /// Nof. of bytes allocated if allocation was successful.
+  unsigned alloc_bytes{0};
+  /// Nof. of resource blocks allocated if allocation was successful.
+  unsigned alloc_nof_rbs{0};
+  /// List of logical channels scheduled in this TB if allocation was successful.
+  dl_msg_tb_info tb_info;
+};
+
+/// Allocation result of a UE UL grant allocation.
+struct ul_alloc_result {
   alloc_status status;
   /// Nof. of bytes allocated if allocation was successful.
   unsigned alloc_bytes{0};
@@ -78,7 +89,7 @@ class ue_pdsch_allocator
 public:
   virtual ~ue_pdsch_allocator() = default;
 
-  virtual alloc_result allocate_dl_grant(const ue_pdsch_grant& grant) = 0;
+  virtual dl_alloc_result allocate_dl_grant(const ue_pdsch_grant& grant) = 0;
 };
 
 /// Allocator of PUSCH grants for UEs.
@@ -87,7 +98,7 @@ class ue_pusch_allocator
 public:
   virtual ~ue_pusch_allocator() = default;
 
-  virtual alloc_result allocate_ul_grant(const ue_pusch_grant& grant) = 0;
+  virtual ul_alloc_result allocate_ul_grant(const ue_pusch_grant& grant) = 0;
 };
 
 } // namespace srsran

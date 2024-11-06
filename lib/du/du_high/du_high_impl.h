@@ -81,8 +81,8 @@ private:
 
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
 
-  // E2 interface
-  std::unique_ptr<e2_interface> e2ap_entity;
+  // E2 Agent.
+  std::unique_ptr<e2_agent> e2agent;
 };
 
 } // namespace srs_du

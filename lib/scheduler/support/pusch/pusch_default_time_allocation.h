@@ -71,6 +71,19 @@ pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarrier_spac
 
 /// \brief Determines the time domain resource allocation table to be used for PUSCH as per TS 38.214, clause 6.1.2.1.1.
 ///
+/// \param is_common_ss Whether the active searchSpace is a common searchSpace.
+/// \param cs_id Coreset ID associated with the chosen searchSpace.
+/// \param active_bwp_ul_common Active BWP UL common configuration.
+/// \param active_bwp_ul_ded Active BWP UL UE-dedicated configuration.
+/// \return A list of valid PUSCH time-domain allocation configurations to choose from.
+span<const pusch_time_domain_resource_allocation>
+get_c_rnti_pusch_time_domain_list(bool                        is_common_ss,
+                                  coreset_id                  cs_id,
+                                  const bwp_uplink_common&    active_bwp_ul_common,
+                                  const bwp_uplink_dedicated* active_bwp_ul_ded);
+
+/// \brief Determines the time domain resource allocation table to be used for PUSCH as per TS 38.214, clause 6.1.2.1.1.
+///
 /// \param ss_cfg Search Space configuration.
 /// \param active_bwp_ul_common Active BWP UL common configuration.
 /// \param active_bwp_ul_ded Active BWP UL UE-dedicated configuration.

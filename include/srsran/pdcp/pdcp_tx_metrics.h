@@ -38,24 +38,7 @@ struct pdcp_tx_metrics_container {
   uint32_t num_pdus;
   uint32_t num_pdu_bytes;
   uint32_t num_discard_timeouts;
-};
-
-/// This interface will allow the relevant entities to query PDCP RX
-/// metrics (and possibly reset them).
-class pdcp_tx_metrics_interface
-{
-public:
-  pdcp_tx_metrics_interface()                                             = default;
-  virtual ~pdcp_tx_metrics_interface()                                    = default;
-  pdcp_tx_metrics_interface(const pdcp_tx_metrics_interface&)             = delete;
-  pdcp_tx_metrics_interface& operator=(const pdcp_tx_metrics_interface&)  = delete;
-  pdcp_tx_metrics_interface(const pdcp_tx_metrics_interface&&)            = delete;
-  pdcp_tx_metrics_interface& operator=(const pdcp_tx_metrics_interface&&) = delete;
-
-  /// Metrics interfaces.
-  virtual pdcp_tx_metrics_container get_metrics()           = 0;
-  virtual pdcp_tx_metrics_container get_metrics_and_reset() = 0;
-  virtual void                      reset_metrics()         = 0;
+  unsigned counter;
 };
 } // namespace srsran
 

@@ -26,6 +26,7 @@
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du/du_high/du_manager/procedures/ue_configuration_procedure.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "tests/test_doubles/rrc/rrc_packed_test_messages.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_config_helpers.h"

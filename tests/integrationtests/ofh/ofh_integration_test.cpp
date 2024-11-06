@@ -189,7 +189,7 @@ static void parse_args(int argc, char** argv)
         break;
       case 'w':
         if (optarg != nullptr) {
-          if (!is_valid_bw(std::strtol(optarg, nullptr, 10))) {
+          if (!is_valid_bandwidth(std::strtol(optarg, nullptr, 10))) {
             fmt::print("Invalid bandwidth\n");
             invalid_arg = true;
           } else {
@@ -676,7 +676,7 @@ public:
     std::shared_ptr<channel_precoder_factory> precoder_factory = create_channel_precoder_factory("auto");
     report_fatal_error_if_not(precoder_factory, "Invalid factory");
 
-    std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoder_factory);
+    std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
     report_fatal_error_if_not(rg_factory, "Invalid factory");
 
     // Create resource grids according to TDD pattern.

@@ -52,8 +52,8 @@ public:
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PDCCH PDU in the downlink processor");
   }
-  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
-                     const pdsch_processor::pdu_t&                                                        pdu) override
+  void process_pdsch(static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
+                     const pdsch_processor::pdu_t&                                                    pdu) override
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PDSCH PDU in the downlink processor");
   }
@@ -273,9 +273,11 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
       case fapi::dl_pdu_type::PDSCH: {
         pdsch_processor::pdu_t& pdsch_pdu = pdus.pdsch.emplace_back();
         convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot, csi_re_patterns, pm_repo);
-        if (!dl_pdu_validator.is_valid(pdsch_pdu)) {
-          logger.warning("Upper PHY flagged a PDSCH PDU as having an invalid configuration. Skipping DL_TTI.request");
-
+        error_type<std::string> phy_pdsch_validator = dl_pdu_validator.is_valid(pdsch_pdu);
+        if (!phy_pdsch_validator.has_value()) {
+          logger.warning(
+              "Skipping DL_TTI.request: PDSCH PDU flagged as invalid by the Upper PHY with the following error\n    {}",
+              phy_pdsch_validator.error());
           return make_unexpected(default_error_t{});
         }
         break;
@@ -662,13 +664,10 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
 
   slot_based_upper_phy_controller& controller = slot_controller_mngr.get_controller(slot);
   for (unsigned i = 0, e = msg.pdus.size(); i != e; ++i) {
-    // Get transport block data.
-    static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
-    const fapi::tx_data_req_pdu&                                                  pdu = msg.pdus[i];
-    data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length.value());
-
     // Process PDSCH.
-    controller->process_pdsch(data, pdsch_repository.pdus[i]);
+    controller->process_pdsch(
+        static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>{msg.pdus[i].pdu},
+        pdsch_repository.pdus[i]);
   }
 
   slot_controller_mngr.release_controller(slot);

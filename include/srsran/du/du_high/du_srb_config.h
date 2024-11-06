@@ -30,8 +30,7 @@ namespace srs_du {
 
 /// \brief SRB Configuration, i.e. associated RLC and MAC configuration for SRBs in the DU
 struct du_srb_config {
-  rlc_config    rlc;
-  mac_lc_config mac;
+  rlc_config rlc;
 };
 
 } // namespace srs_du

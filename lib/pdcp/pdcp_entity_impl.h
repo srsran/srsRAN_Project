@@ -24,6 +24,7 @@
 
 #include "pdcp_entity_rx.h"
 #include "pdcp_entity_tx.h"
+#include "pdcp_metrics_aggregator.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include <cstdio>
@@ -49,7 +50,8 @@ public:
                    task_executor&                  crypto_executor) :
     logger("PDCP", {ue_index, rb_id, "DL/UL"}),
     metrics_period(config.custom.metrics_period),
-    metrics_timer(ue_ctrl_timer_factory.create_timer())
+    metrics_timer(ue_ctrl_timer_factory.create_timer()),
+    metrics_agg(ue_index, rb_id, metrics_period, config.custom.metrics_notifier, ue_dl_executor)
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index,
                                           rb_id,
@@ -58,7 +60,8 @@ public:
                                           tx_upper_cn,
                                           ue_dl_timer_factory,
                                           ue_dl_executor,
-                                          crypto_executor);
+                                          crypto_executor,
+                                          metrics_agg);
     rx = std::make_unique<pdcp_entity_rx>(ue_index,
                                           rb_id,
                                           config.get_rx_config(),
@@ -66,75 +69,38 @@ public:
                                           rx_upper_cn,
                                           ue_ul_timer_factory,
                                           ue_ul_executor,
-                                          crypto_executor);
+                                          crypto_executor,
+                                          metrics_agg);
 
     // Tx/Rx interconnect
     tx->set_status_provider(rx.get());
     rx->set_status_handler(tx.get());
-
-    if (config.custom.metrics_period.count() != 0) {
-      metrics_timer.set(config.custom.metrics_period, [this](timer_id_t /*tid*/) { push_metrics(); });
-      metrics_timer.run();
-    }
   }
-  ~pdcp_entity_impl() override = default;
+  ~pdcp_entity_impl() override { stop(); }
   pdcp_tx_upper_control_interface& get_tx_upper_control_interface() final { return (*tx); };
   pdcp_tx_upper_data_interface&    get_tx_upper_data_interface() final { return (*tx); };
   pdcp_tx_lower_interface&         get_tx_lower_interface() final { return (*tx); };
   pdcp_rx_upper_control_interface& get_rx_upper_control_interface() final { return (*rx); };
   pdcp_rx_lower_interface&         get_rx_lower_interface() final { return (*rx); };
 
-  pdcp_metrics_container get_metrics() final
+  void stop() override
   {
-    pdcp_metrics_container m;
-    m.tx = tx->get_metrics();
-    m.rx = rx->get_metrics();
-    return m;
-  };
-
-  void reset_metrics()
-  {
-    tx->reset_metrics();
-    rx->reset_metrics();
-  }
-
-  void push_metrics()
-  {
-    pdcp_metrics_container m = get_metrics();
-    log_metrics(m);
-    reset_metrics();
-    metrics_timer.run();
-  }
-
-  void log_metrics(const pdcp_metrics_container& m)
-  {
-    logger.log_info(
-        "TX metrics period={}ms num_sdus={} sdu_rate={}kbps, num_pdus={}, pdus_rate={} discard_timeouts={} ",
-        metrics_period.count(),
-        m.tx.num_sdus,
-        (double)m.tx.num_sdu_bytes * 8 / (double)metrics_period.count(),
-        m.tx.num_pdus,
-        (double)m.tx.num_pdu_bytes * 8 / (double)metrics_period.count(),
-        m.tx.num_discard_timeouts);
-    logger.log_info("RX metrics period={}ms num_pdus={} pdu_rate={} num_dropped_pdus={} num_sdus={} sdu_rate={} "
-                    "num_integrity_verified_pdus={} num_integrity_failed_pdus={} num_t_reordering_timeouts={}",
-                    metrics_period.count(),
-                    m.rx.num_pdus,
-                    (double)m.rx.num_pdu_bytes * 8 / (double)metrics_period.count(),
-                    m.rx.num_dropped_pdus,
-                    m.rx.num_sdus,
-                    (double)m.rx.num_sdu_bytes * 8 / (double)metrics_period.count(),
-                    m.rx.num_integrity_verified_pdus,
-                    m.rx.num_integrity_failed_pdus,
-                    m.rx.num_t_reordering_timeouts);
+    if (not stopped) {
+      stopped = true;
+      metrics_timer.stop();
+      tx->stop();
+      rx->stop();
+    }
   }
 
 private:
-  std::unique_ptr<pdcp_entity_tx> tx = {};
-  std::unique_ptr<pdcp_entity_rx> rx = {};
+  std::unique_ptr<pdcp_entity_tx> tx;
+  std::unique_ptr<pdcp_entity_rx> rx;
 
-  pdcp_bearer_logger logger;
-  timer_duration     metrics_period;
-  unique_timer       metrics_timer;
+  pdcp_bearer_logger      logger;
+  timer_duration          metrics_period;
+  unique_timer            metrics_timer;
+  pdcp_metrics_aggregator metrics_agg;
+  bool                    stopped = false;
 };
 } // namespace srsran

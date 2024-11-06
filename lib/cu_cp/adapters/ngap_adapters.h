@@ -121,6 +121,12 @@ public:
     return cu_cp_handler->handle_ue_index_allocation_request(cgi);
   }
 
+  void on_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    cu_cp_handler->handle_dl_non_ue_associated_nrppa_transport(msg);
+  }
+
   void on_n2_disconnection() override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");

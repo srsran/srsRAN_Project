@@ -26,6 +26,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/phy/support/re_pattern.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
@@ -83,13 +84,13 @@ public:
 
   /// \brief Modulates a PDSCH codeword according to TS38.211 section 7.3.1 Physical downlink shared channel.
   ///
-  /// \param[out] mapper Resource grid mapping interface.
+  /// \param[out] grid     Resource grid writer interface.
   /// \param[in] codewords The encoded codewords to modulate.
-  /// \param[in] config configuration parameters required for PDSCH modulation.
+  /// \param[in] config    Configuration parameters required for PDSCH modulation.
   /// \note The number of codewords shall be consistent with the number of layers.
   /// \note The codeword length shall be consistent with the resource mapping, considering the reserved resource
   /// elements.
-  virtual void modulate(resource_grid_mapper& mapper, span<const bit_buffer> codewords, const config_t& config) = 0;
+  virtual void modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const config_t& config) = 0;
 };
 
 } // namespace srsran

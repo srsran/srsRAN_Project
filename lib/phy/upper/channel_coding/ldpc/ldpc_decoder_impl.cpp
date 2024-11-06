@@ -293,6 +293,10 @@ void ldpc_decoder_impl::update_check_to_variable_messages(unsigned check_node)
                               var_node);
   }
 
+  // Scale the message to compensate for approximations.
+  scale(min_var_to_check_view, min_var_to_check_view);
+  scale(second_min_var_to_check_view, second_min_var_to_check_view);
+
   // For all variable nodes connected to this check node.
   var_node = 0;
   for (const auto* this_var_index_itr = current_var_indices.cbegin(); this_var_index_itr != this_var_index_end;

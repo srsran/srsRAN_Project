@@ -93,6 +93,8 @@ struct ru_ofh_unit_cell_config {
   std::string network_interface = "enp1s0f0";
   /// Promiscuous mode flag.
   bool enable_promiscuous_mode = false;
+  /// Ethernet link status checking flag.
+  bool check_link_status = false;
   /// MTU size.
   units::bytes mtu_size{9000};
   /// Radio Unit MAC address.

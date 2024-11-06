@@ -43,44 +43,40 @@
 namespace srsran {
 
 /// Wrapper for the E2 interface that puts function calls into its own task executor
-class e2_entity final : public e2_interface
+class e2_entity final : public e2_agent
 {
 public:
   e2_entity(e2ap_configuration&                                              cfg_,
-            e2_connection_client*                                            e2_client_,
+            e2_connection_client&                                            e2_client_,
             std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
             srs_du::f1ap_ue_id_translator*                                   f1ap_ue_id_translator_,
             srs_du::du_configurator*                                         du_configurator_,
             timer_factory                                                    timers_,
             task_executor&                                                   task_exec_);
 
-  void start() override;
-  void stop() override;
+  // E2 Agent interface.
+  void          start() override;
+  void          stop() override;
+  e2_interface& get_e2_interface() override { return *e2ap; };
 
-  /// E2 connection manager functions.
-  async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override;
-  async_task<e2_setup_response_message> start_initial_e2_setup_routine() override;
-  async_task<void>                      handle_e2_disconnection_request() override;
-
-  /// E2_event_ handler functions.
-  void handle_connection_loss() override;
-
-  /// E2 message handler functions.
-  void handle_message(const e2_message& msg) override;
+  void on_e2_disconnection() override;
 
 private:
   srslog::basic_logger& logger;
   e2ap_configuration&   cfg;
 
+  void build_e2_kpm_du(std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
+                       srs_du::f1ap_ue_id_translator*                                   f1ap_ue_id_translator);
+  void build_e2_kpm_cu_up(std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_);
+  void build_e2_kpm_cu_cp(std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_);
+
   // Handler for E2AP tasks.
   task_executor&            task_exec;
   fifo_async_task_scheduler main_ctrl_loop;
-  e2_connection_handler     connection_handler;
 
-  std::unique_ptr<e2_message_notifier>       e2_pdu_notifier    = nullptr;
-  std::unique_ptr<e2sm_manager>              e2sm_mngr          = nullptr;
-  std::unique_ptr<e2_subscription_manager>   subscription_mngr  = nullptr;
-  std::unique_ptr<e2_interface>              decorated_e2_iface = nullptr;
+  std::unique_ptr<e2sm_manager>              e2sm_mngr         = nullptr;
+  std::unique_ptr<e2_subscription_manager>   subscription_mngr = nullptr;
+  std::unique_ptr<e2_interface>              e2ap              = nullptr;
   std::vector<std::unique_ptr<e2sm_handler>> e2sm_handlers;
 };
 

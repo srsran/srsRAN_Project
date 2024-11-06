@@ -62,7 +62,7 @@ asn1::rrc_nr::srs_res_s make_asn1_rrc_srs_res(const srs_config::srs_resource& cf
 
 asn1::rrc_nr::sched_request_to_add_mod_s make_asn1_rrc_scheduling_request(const scheduling_request_to_addmod& cfg);
 
-asn1::rrc_nr::tag_s make_asn1_rrc_tag_config(const tag& cfg);
+asn1::rrc_nr::tag_s make_asn1_rrc_tag_config(const time_alignment_group& cfg);
 
 /// \brief Fills ASN.1 CellGroupConfig struct.
 /// \param[out] out The ASN.1 CellGroupConfig struct to fill.

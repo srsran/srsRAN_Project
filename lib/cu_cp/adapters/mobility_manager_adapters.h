@@ -36,13 +36,13 @@ public:
 
   void connect_cu_cp(cu_cp_mobility_manager_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
 
-  async_task<cu_cp_inter_du_handover_response>
-  on_inter_du_handover_required(const cu_cp_inter_du_handover_request& request,
+  async_task<cu_cp_intra_cu_handover_response>
+  on_intra_cu_handover_required(const cu_cp_intra_cu_handover_request& request,
                                 du_index_t                             source_du_index,
                                 du_index_t                             target_du_index) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
-    return cu_cp_handler->handle_inter_du_handover_request(request, source_du_index, target_du_index);
+    return cu_cp_handler->handle_intra_cu_handover_request(request, source_du_index, target_du_index);
   }
 
 private:

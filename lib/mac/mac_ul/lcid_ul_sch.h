@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 

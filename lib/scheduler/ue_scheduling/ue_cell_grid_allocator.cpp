@@ -72,7 +72,7 @@ void ue_cell_grid_allocator::slot_indication(slot_point sl)
   }
 }
 
-alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant, ran_slice_id_t slice_id)
+dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant, ran_slice_id_t slice_id)
 {
   srsran_assert(ues.contains(grant.user->ue_index()), "Invalid UE candidate index={}", grant.user->ue_index());
   srsran_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
@@ -489,14 +489,17 @@ alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gra
 
     h_dl->save_grant_params(pdsch_sched_ctx, msg.pdsch_cfg);
 
-    return {alloc_status::success, h_dl->get_grant_params().tbs_bytes, crbs.length()};
+    return {alloc_status::success,
+            h_dl->get_grant_params().tbs_bytes,
+            crbs.length(),
+            is_new_data ? msg.tb_list.back() : dl_msg_tb_info{}};
   }
 
   // No candidates for PDSCH allocation.
   return {alloc_status::invalid_params};
 }
 
-alloc_result
+ul_alloc_result
 ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot)
 {
   srsran_assert(ues.contains(grant.user->ue_index()), "Invalid UE candidate index={}", grant.user->ue_index());
@@ -763,6 +766,15 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       return {alloc_status::skip_ue};
     }
 
+    // If this is not a retx, then we need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the
+    // nominal TX power to meet the max TX power.
+    if (not is_retx) {
+      const unsigned nof_prbs_adjusted_to_phr = ue_cc->channel_state_manager().adapt_pusch_prbs_to_phr(crbs.length());
+      if (nof_prbs_adjusted_to_phr < crbs.length()) {
+        crbs.resize(nof_prbs_adjusted_to_phr);
+      }
+    }
+
     // Verify there is no RB collision.
     if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, crbs)) {
       logger.warning("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Allocation collides with existing "
@@ -827,6 +839,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       const auto& prev_params = h_ul->get_grant_params();
       mcs_tbs_info.emplace(sch_mcs_tbs{.mcs = prev_params.mcs, .tbs = prev_params.tbs_bytes});
       pusch_cfg.nof_layers = prev_params.nof_layers;
+      srsran_assert(prev_params.mcs_table == pusch_cfg.mcs_table, "MCS table cannot change across HARQ reTxs");
     }
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
@@ -989,6 +1002,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       pusch_sched_ctx.slice_id = slice_id;
     }
     ue_cc->last_pusch_allocated_slot = pusch_alloc.slot;
+
+    // Update the number of PRBs used in the PUSCH allocation.
+    ue_cc->channel_state_manager().save_pusch_nof_prbs(pusch_alloc.slot, crbs.length());
 
     h_ul->save_grant_params(pusch_sched_ctx, msg.pusch_cfg);
 

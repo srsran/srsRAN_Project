@@ -698,8 +698,13 @@ static csi_helper::csi_builder_params make_default_csi_builder_params(const cell
     // Set a default CSI report slot offset that falls in an UL slot.
     const auto& tdd_pattern = *params.tdd_ul_dl_cfg_common;
 
+    constexpr unsigned default_ssb_period_ms = 10U;
+
+    const unsigned max_csi_symbol = *std::max_element(csi_params.tracking_csi_ofdm_symbol_indexes.begin(),
+                                                      csi_params.tracking_csi_ofdm_symbol_indexes.end());
+
     if (not csi_helper::derive_valid_csi_rs_slot_offsets(
-            csi_params, std::nullopt, std::nullopt, std::nullopt, tdd_pattern)) {
+            csi_params, std::nullopt, std::nullopt, std::nullopt, tdd_pattern, max_csi_symbol, default_ssb_period_ms)) {
       report_fatal_error("Failed to find valid csi-MeasConfig");
     }
 
@@ -794,9 +799,6 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
     // Generate CSI resources.
     serv_cell.csi_meas_cfg = make_csi_meas_config(params);
   }
-
-  // > TAG-ID.
-  serv_cell.tag_id = static_cast<tag_id_t>(0);
 
   return serv_cell;
 }

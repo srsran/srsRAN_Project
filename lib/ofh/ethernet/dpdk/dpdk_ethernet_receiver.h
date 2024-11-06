@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "dpdk_ethernet_port_context.h"
+#include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/srsran_assert.h"

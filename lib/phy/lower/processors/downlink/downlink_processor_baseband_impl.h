@@ -31,7 +31,7 @@
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
 #include "srsran/phy/lower/sampling_rate.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/support/stats.h"
+#include "srsran/support/math/stats.h"
 
 namespace srsran {
 

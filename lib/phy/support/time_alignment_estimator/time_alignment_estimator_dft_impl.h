@@ -24,6 +24,7 @@
 
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/phy/generic_functions/dft_processor.h"
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator.h"
 
 namespace srsran {
@@ -54,8 +55,18 @@ public:
                                       double                          max_ta) override;
 
   // See interface for documentation.
+  time_alignment_measurement estimate(const re_buffer_reader<cf_t>&   symbols,
+                                      bounded_bitset<max_nof_symbols> mask,
+                                      subcarrier_spacing              scs,
+                                      double                          max_ta) override;
+
+  // See interface for documentation.
   time_alignment_measurement
   estimate(span<const cf_t> symbols, unsigned stride, subcarrier_spacing scs, double max_ta) override;
+
+  // See interface for documentation.
+  time_alignment_measurement
+  estimate(const re_buffer_reader<cf_t>& symbols, unsigned stride, subcarrier_spacing scs, double max_ta) override;
 
 private:
   /// DFT processor for converting frequency domain to time domain.
@@ -63,6 +74,9 @@ private:
 
   /// Estimates the TA assuming the complex symbols are already in the DFT input.
   time_alignment_measurement estimate(subcarrier_spacing scs, double max_ta);
+
+  /// Buffer for storing the IDFT magnitude square.
+  std::array<float, dft_size> idft_abs2;
 };
 
 } // namespace srsran

@@ -67,7 +67,7 @@ struct worker_manager : public worker_manager_executor_getter {
   std::vector<task_executor*> fapi_exec;
   std::vector<task_executor*> ru_dl_exec;
   std::vector<task_executor*> ru_rx_exec;
-  task_executor*              cu_cp_e2_exec    = nullptr;
+  task_executor*              cu_e2_exec       = nullptr;
   task_executor*              metrics_hub_exec = nullptr;
 
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;

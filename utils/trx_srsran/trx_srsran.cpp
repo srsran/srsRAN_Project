@@ -26,7 +26,7 @@
 #include "srsran/radio/radio_factory.h"
 #include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include <algorithm>
 #include <cstdlib>

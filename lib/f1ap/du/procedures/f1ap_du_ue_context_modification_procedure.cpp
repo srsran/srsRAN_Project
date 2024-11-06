@@ -62,6 +62,13 @@ void f1ap_du_ue_context_modification_procedure::operator()(coro_context<async_ta
     }
   }
 
+  if (req->tx_action_ind_present) {
+    // "If the UE CONTEXT MODIFICATION REQUEST message contains the Transmission Action Indicator IE, the gNB-DU
+    // shall stop or restart (if already stopped) data transmission for the UE, according to the value of this IE.
+    // It is up to gNB-DU implementation when to stop or restart the UE scheduling.
+    CORO_AWAIT(handle_tx_action_indicator());
+  }
+
   if (du_response.result) {
     send_ue_context_modification_response();
   } else {
@@ -75,6 +82,15 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
 {
   // Construct DU request.
   du_request.ue_index = ue.context.ue_index;
+
+  if (msg->sp_cell_id_present) {
+    // > [TS 38.473, 8.3.4.2] "If the SpCell ID IE is included in the UE CONTEXT MODIFICATION REQUEST message, the
+    // gNB-DU shall replace any previously received value and regard it as a reconfiguration with sync as defined in
+    // TS 38.331"
+    auto plmn = plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes());
+    auto nci  = nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number());
+    du_request.spcell_id.emplace(plmn.value(), nci.value());
+  }
 
   // > Set whether full configuration is required.
   // [TS 38.473, section 8.3.4.2] If the Full Configuration IE is contained in the UE CONTEXT MODIFICATION REQUEST
@@ -187,8 +203,16 @@ async_task<bool> f1ap_du_ue_context_modification_procedure::handle_rrc_container
   }
 
   // If RRC delivery status is requested, we wait for the PDU delivery and report the status afterwards.
-  if (req->rrc_delivery_status_request_present) {
-    return srb1->handle_pdu_and_await_delivery(req->rrc_container.copy(), true, rrc_container_delivery_timeout);
+  return srb1->handle_pdu_and_await_transmission(
+      req->rrc_container.copy(), req->rrc_delivery_status_request_present, rrc_container_delivery_timeout);
+}
+
+async_task<void> f1ap_du_ue_context_modification_procedure::handle_tx_action_indicator()
+{
+  if (req->tx_action_ind.value == asn1::f1ap::tx_action_ind_opts::stop) {
+    return ue.du_handler.request_ue_drb_deactivation(ue.context.ue_index);
   }
-  return srb1->handle_pdu_and_await_transmission(req->rrc_container.copy(), rrc_container_delivery_timeout);
+  logger.error("{}: Ignoring Transmission Action Indicator IE with \"restart\" value. Cause: Feature not supported",
+               f1ap_log_prefix{ue.context, name()});
+  return launch_no_op_task();
 }

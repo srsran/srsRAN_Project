@@ -39,6 +39,7 @@
 #include "uci_scheduling/uci_allocator_impl.h"
 #include "ue_scheduling/ue_scheduler.h"
 #include "srsran/scheduler/config/scheduler_config.h"
+#include "srsran/support/tracing/rusage_trace_recorder.h"
 
 namespace srsran {
 
@@ -91,6 +92,9 @@ private:
   si_message_scheduler          si_msg_sch;
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
+
+  // Tracer of resource usage (e.g. context switches)
+  rusage_trace_recorder<logger_event_tracer<true>> res_usage_tracer;
 };
 
 } // namespace srsran

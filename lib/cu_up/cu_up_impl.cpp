@@ -101,13 +101,20 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   /// > Connect E1AP to CU-UP manager
   e1ap_cu_up_mng_adapter.connect_cu_up_manager(*cu_up_mng);
-
   // Start statistics report timer
   if (cfg.statistics_report_period.count() > 0) {
     statistics_report_timer = cfg.timers->create_unique_timer(cfg.exec_mapper->ctrl_executor());
     statistics_report_timer.set(cfg.statistics_report_period,
                                 [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
     statistics_report_timer.run();
+  }
+
+  if (cfg.e2_client) {
+    e2agent = create_e2_cu_agent(cfg.e2ap_config,
+                                 *cfg.e2_client,
+                                 cfg.e2_cu_metric_iface,
+                                 timer_factory{*cfg.timers, cfg.exec_mapper->ctrl_executor()},
+                                 cfg.exec_mapper->e2_executor());
   }
 }
 
@@ -150,7 +157,9 @@ void cu_up::start()
       })) {
     report_fatal_error("Unable to initiate CU-UP setup routine");
   }
-
+  if (e2agent) {
+    e2agent->start();
+  }
   // Block waiting for CU-UP setup to complete.
   fut.wait();
 
@@ -162,6 +171,9 @@ void cu_up::stop()
   std::unique_lock<std::mutex> lock(mutex);
   if (not std::exchange(running, false)) {
     return;
+  }
+  if (e2agent) {
+    e2agent->stop();
   }
   logger.debug("CU-UP stopping...");
 

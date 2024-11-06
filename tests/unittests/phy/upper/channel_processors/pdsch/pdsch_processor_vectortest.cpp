@@ -256,20 +256,38 @@ private:
       return nullptr;
     }
 
+    std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+    if (!precoding_factory) {
+      return nullptr;
+    }
+
+    std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+        create_resource_grid_mapper_factory(precoding_factory);
+    if (!rg_mapper_factory) {
+      return nullptr;
+    }
+
     std::shared_ptr<pdsch_modulator_factory> pdsch_modulator_factory =
-        create_pdsch_modulator_factory_sw(modulator_factory, prg_factory);
+        create_pdsch_modulator_factory_sw(modulator_factory, prg_factory, rg_mapper_factory);
     if (!pdsch_modulator_factory) {
       return nullptr;
     }
 
     std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_factory =
-        create_dmrs_pdsch_processor_factory_sw(prg_factory);
+        create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
+    if (!dmrs_pdsch_factory) {
+      return nullptr;
+    }
+
+    std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_factory =
+        create_ptrs_pdsch_generator_generic_factory(prg_factory, rg_mapper_factory);
     if (!dmrs_pdsch_factory) {
       return nullptr;
     }
 
     if (factory_type.find("generic") != std::string::npos) {
-      return create_pdsch_processor_factory_sw(pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_factory);
+      return create_pdsch_processor_factory_sw(
+          pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_factory, ptrs_pdsch_factory);
     }
 
     if (factory_type == "concurrent") {
@@ -281,8 +299,10 @@ private:
                                                           ldpc_encoder_factory,
                                                           ldpc_rate_matcher_factory,
                                                           prg_factory,
+                                                          rg_mapper_factory,
                                                           modulator_factory,
                                                           dmrs_pdsch_factory,
+                                                          ptrs_pdsch_factory,
                                                           *executor,
                                                           NOF_CONCURRENT_THREADS);
     }
@@ -293,7 +313,9 @@ private:
                                                     ldpc_rate_matcher_factory,
                                                     prg_factory,
                                                     modulator_factory,
-                                                    dmrs_pdsch_factory);
+                                                    dmrs_pdsch_factory,
+                                                    ptrs_pdsch_factory,
+                                                    rg_mapper_factory);
     }
 
     return nullptr;
@@ -353,30 +375,27 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   unsigned max_ports = config.precoding.get_nof_ports();
 
   // Prepare resource grid and resource grid mapper spies.
-  resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
-  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
+  resource_grid_writer_spy grid(max_ports, max_symb, max_prb);
 
   // Read input data as a bit-packed transport block.
   std::vector<uint8_t> transport_block = test_case.sch_data.read();
   ASSERT_FALSE(transport_block.empty()) << "Failed to load transport block.";
 
   // Prepare transport blocks view.
-  static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> transport_blocks;
+  static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> transport_blocks;
   transport_blocks.emplace_back(transport_block);
 
   // Make sure the configuration is valid.
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PDSCH.
-  pdsch_proc->process(*mapper, notifier_spy, transport_blocks, config);
+  pdsch_proc->process(grid, notifier_spy, transport_blocks, config);
 
   // Waits for the processor to finish.
   notifier_spy.wait_for_finished();
 
-  // Tolerance: max BF16 error times sqrt(2), since we are taking the modulus.
-  constexpr float tolerance = M_SQRT2f32 / 256.0;
   // Assert results.
-  grid.assert_entries(test_case.grid_expected.read(), tolerance);
+  grid.assert_entries(test_case.grid_expected.read(), std::sqrt(max_ports));
 }
 
 // Creates test suite that combines all possible parameters.

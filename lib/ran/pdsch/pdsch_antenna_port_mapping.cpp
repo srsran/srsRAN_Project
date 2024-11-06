@@ -280,11 +280,11 @@ const pdsch_antenna_ports_mapping* get_pdsch_antenna_port_mapping_row(unsigned  
 }
 } // namespace
 
-pdsch_antenna_ports_mapping srsran::get_pdsch_antenna_port_mapping(unsigned         nof_layers,
-                                                                   unsigned         nof_dl_antenna_ports,
-                                                                   dmrs_config_type dmrs_cfg_type,
-                                                                   dmrs_max_length  dmrs_max_len,
-                                                                   bool             are_both_cws_enabled)
+const pdsch_antenna_ports_mapping& srsran::get_pdsch_antenna_port_mapping(unsigned         nof_layers,
+                                                                          unsigned         nof_dl_antenna_ports,
+                                                                          dmrs_config_type dmrs_cfg_type,
+                                                                          dmrs_max_length  dmrs_max_len,
+                                                                          bool             are_both_cws_enabled)
 {
   return *get_pdsch_antenna_port_mapping_row(
       nof_layers, nof_dl_antenna_ports, dmrs_cfg_type, dmrs_max_len, are_both_cws_enabled);

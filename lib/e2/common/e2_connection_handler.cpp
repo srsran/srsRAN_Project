@@ -84,13 +84,13 @@ private:
 
 } // namespace
 
-e2_connection_handler::e2_connection_handler(e2_connection_client& client_handler_,
-                                             e2_message_handler&   rx_pdu_handler_,
-                                             e2_event_handler&     e2_notifier_,
-                                             task_executor&        ctrl_exec_) :
+e2_connection_handler::e2_connection_handler(e2_connection_client&  client_handler_,
+                                             e2_message_handler&    rx_pdu_handler_,
+                                             e2ap_e2agent_notifier& agent_notifier_,
+                                             task_executor&         ctrl_exec_) :
   client_handler(client_handler_),
   rx_pdu_handler(rx_pdu_handler_),
-  e2_notifier(e2_notifier_),
+  agent_notifier(agent_notifier_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("E2AP"))
 {
@@ -154,8 +154,8 @@ void e2_connection_handler::handle_connection_loss_impl()
     // Disconnect Tx path.
     tx_pdu_notifier.reset();
 
-    // Signal to DU that the E2 connection is lost.
-    e2_notifier.handle_connection_loss();
+    // Signal to Agent that the E2 connection is lost.
+    agent_notifier.on_e2_disconnection();
   }
 
   // Signal back that the E2 Rx path has been successfully shutdown to any awaiting coroutine.

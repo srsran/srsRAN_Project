@@ -47,11 +47,14 @@ public:
   void on_loggers_registration() override;
 
   // See interface for documentation.
-  du_unit create_flexible_du_unit(const du_unit_dependencies& dependencies, bool use_multicell = false) override;
+  o_du_unit create_flexible_du_unit(const du_unit_dependencies& dependencies, bool use_multicell = false) override;
 
   // See interface for documentation.
-  du_high_unit_config&       get_du_high_unit_config() override { return unit_cfg.du_high_cfg.config; }
-  const du_high_unit_config& get_du_high_unit_config() const override { return unit_cfg.du_high_cfg.config; }
+  du_high_unit_config&       get_du_high_unit_config() override { return unit_cfg.odu_high_cfg.du_high_cfg.config; }
+  const du_high_unit_config& get_du_high_unit_config() const override
+  {
+    return unit_cfg.odu_high_cfg.du_high_cfg.config;
+  }
 
   // See interface for documentation.
   void dump_config(YAML::Node& node) const override;

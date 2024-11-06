@@ -58,9 +58,6 @@ private:
   rlc_sdu                sdu;
   uint32_t               next_so = 0; // The segment offset for the next generated PDU
 
-  // Mutexes
-  std::mutex mutex;
-
   /// TX counter modulus
   const uint32_t mod;
 

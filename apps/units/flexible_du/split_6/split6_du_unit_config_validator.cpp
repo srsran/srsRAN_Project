@@ -21,14 +21,14 @@
  */
 
 #include "split6_du_unit_config_validator.h"
-#include "apps/units/flexible_du/du_high/du_high_config_validator.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_validator.h"
 
 using namespace srsran;
 
 bool srsran::validate_split6_du_unit_config(const split6_du_unit_config&     config,
                                             const os_sched_affinity_bitmask& available_cpus)
 {
-  if (!validate_du_high_config(config.du_high_cfg.config, available_cpus)) {
+  if (!validate_o_du_high_config(config.odu_high_cfg, available_cpus)) {
     return false;
   }
 

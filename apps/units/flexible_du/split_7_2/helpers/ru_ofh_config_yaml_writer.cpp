@@ -120,6 +120,8 @@ static YAML::Node build_ru_ofh_cell_section(const ru_ofh_unit_cell_config& confi
   node["mtu"]                        = config.mtu_size.value();
   node["ru_mac_addr"]                = config.ru_mac_address;
   node["du_mac_addr"]                = config.du_mac_address;
+  node["check_link_status"]          = config.check_link_status;
+
   if (config.vlan_tag_cp.has_value()) {
     node["vlan_tag_cp"] = config.vlan_tag_cp.value();
   }

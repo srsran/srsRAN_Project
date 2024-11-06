@@ -22,21 +22,18 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_high/du_high_config.h"
-#include "apps/units/flexible_du/du_low/du_low_config.h"
-#include "apps/units/flexible_du/fapi/fapi_config.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config.h"
 
 namespace srsran {
 
 /// Split 7.2 DU unit configuration.
 struct split_7_2_du_unit_config {
-  /// DU high configuration.
-  du_high_parsed_config du_high_cfg;
+  /// O-DU high configuration.
+  o_du_high_unit_config odu_high_cfg;
   /// DU low configuration.
   du_low_unit_config du_low_cfg;
-  /// FAPI configuration.
-  fapi_unit_config fapi_cfg;
   /// Radio Unit configuration.
   ru_ofh_unit_parsed_config ru_cfg;
 };

@@ -34,7 +34,7 @@ target_link_libraries(gnb
         srsgnb_app_f1u_connector
         srsran_cu_cp
         srsran_network
-        -Wl,--whole-archive srsran_ngap -Wl,--no-whole-archive
+        srsran_ngap
         ngap_asn1
         srsran_e2
         e2ap_asn1
@@ -54,11 +54,11 @@ if (DPDK_FOUND)
     target_link_libraries(gnb hal_dpdk)
     if (ENABLE_PUSCH_HWACC)
       add_definitions(-DENABLE_PUSCH_HWACC)
-      target_link_libraries(gnb hal_hwacc_pusch hal_bbdev_factory)
+      target_link_libraries(gnb srsran_hal_pusch srsran_hal_bbdev)
     endif (ENABLE_PUSCH_HWACC)
     if (ENABLE_PDSCH_HWACC)
       add_definitions(-DENABLE_PDSCH_HWACC)
-      target_link_libraries(gnb hal_hwacc_pdsch hal_bbdev_factory)
+      target_link_libraries(gnb srsran_hal_pdsch srsran_hal_bbdev)
     endif (ENABLE_PDSCH_HWACC)
 endif (DPDK_FOUND)
 

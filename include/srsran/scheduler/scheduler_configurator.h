@@ -22,10 +22,9 @@
 
 #pragma once
 
-#include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_constants.h"
@@ -41,6 +40,7 @@
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
+#include "srsran/ran/time_alignment_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
@@ -165,7 +165,7 @@ struct sched_ue_creation_request_message {
   /// Configuration to be applied to the new UE.
   sched_ue_config_request cfg;
   /// Time Alignment Group configuration.
-  static_vector<tag, MAX_NOF_TAGS> tag_config;
+  static_vector<time_alignment_group, MAX_NOF_TIME_ALIGNMENT_GROUPS> tag_config;
 };
 
 /// UE Reconfiguration Request.

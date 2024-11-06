@@ -31,7 +31,7 @@
 
 namespace srsran {
 
-class resource_grid_mapper;
+class resource_grid_writer;
 
 /// \brief Describes the PDCCH processor interface.
 ///
@@ -146,9 +146,9 @@ public:
 
   /// \brief Processes a PDCCH transmission.
   ///
-  /// \param[out] mapper Resource grid mapper interface.
-  /// \param[in] pdu     Necessary parameters to process the PDCCH transmission.
-  virtual void process(resource_grid_mapper& mapper, const pdu_t& pdu) = 0;
+  /// \param[out] grid Resource grid writer interface.
+  /// \param[in] pdu   Necessary parameters to process the PDCCH transmission.
+  virtual void process(resource_grid_writer& grid, const pdu_t& pdu) = 0;
 };
 
 /// \brief Describes the PDCCH processor validator interface.

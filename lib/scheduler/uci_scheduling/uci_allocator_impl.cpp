@@ -226,6 +226,9 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resourc
     if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
       continue;
     }
+    if (not ue_cell_cfg.is_ul_enabled(uci_slot)) {
+      continue;
+    }
 
     if (uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.full()) {
       logger.info(

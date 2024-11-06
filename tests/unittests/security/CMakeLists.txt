@@ -33,3 +33,7 @@ add_executable(ciphering_engine_test ciphering_engine_test.cpp)
 target_include_directories(ciphering_engine_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ciphering_engine_test srsran_security srsran_support srslog gtest gtest_main)
 gtest_discover_tests(ciphering_engine_test)
+
+add_executable(k_gnb_star_gen_helper k_gnb_star_gen_helper.cpp)
+target_include_directories(k_gnb_star_gen_helper PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(k_gnb_star_gen_helper srsran_security srsran_support srslog)

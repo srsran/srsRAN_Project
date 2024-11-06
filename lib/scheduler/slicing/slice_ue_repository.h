@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../ue_scheduling/ue.h"
+#include "../ue_context/ue.h"
 
 namespace srsran {
 
@@ -59,7 +59,7 @@ public:
   const bounded_bitset<MAX_NOF_RB_LCIDS>& get_bearers() const { return bearers; }
 
   /// Determines if bearer with LCID is part of this slice.
-  bool contains(lcid_t lcid) const { return bearers.test(lcid); }
+  bool contains(lcid_t lcid) const { return bearers.size() > lcid and bearers.test(lcid); }
 
   /// Fetch DU cell index of UE's PCell.
   const ue_cell& get_pcell() const { return u.get_pcell(); }
@@ -85,6 +85,9 @@ public:
 
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;
+
+  /// Get QoS information of DRBs configured for the UE.
+  span<const sched_drb_info> get_drbs_qos_info() const { return u.ue_cfg_dedicated()->drbs_qos_info(); };
 
 private:
   /// Helper function to get LCG ID of a bearer.

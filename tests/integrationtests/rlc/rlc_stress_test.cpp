@@ -34,6 +34,7 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   pcell_name("PCell-Worker-" + std::to_string(id)),
   ue_worker{ue_name, task_worker_queue_size},
   pcell_worker{pcell_name, task_worker_queue_size},
+  pdcp_metrics_notifier(),
   logger("STACK", {gnb_du_id_t::min, id, rb_id, "DL/UL"})
 {
   ue_executor    = make_task_executor_ptr(ue_worker);
@@ -56,10 +57,11 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
 
   // SDU queue size;
   const uint32_t rlc_sdu_queue = 256;
+  // const uint32_t rlc_sdu_queue_bytes = rlc_sdu_queue * 1500;
 
   // PDCP
   pdcp_config pdcp_cnfg                 = get_pdcp_config_from_args(id, args_);
-  pdcp_cnfg.custom.tx.rlc_sdu_queue     = rlc_sdu_queue;
+  pdcp_cnfg.custom.metrics_notifier     = &pdcp_metrics_notifier;
   pdcp_entity_creation_message pdcp_msg = {};
   pdcp_msg.ue_index                     = id;
   pdcp_msg.rb_id                        = rb_id;

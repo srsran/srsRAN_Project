@@ -38,13 +38,6 @@ struct pucch_grant {
 
 } // namespace
 
-/// Returns the number of possible spreading factors which is a function of the number of symbols.
-static unsigned format1_symb_to_spreading_factor(bounded_integer<unsigned, 4, 14> f1_symbols)
-{
-  // As per Table 6.3.2.4.1-1, TS 38.211.
-  return f1_symbols.to_uint() / 2;
-};
-
 /// Given the OCC-CS index (implementation-defined), maps and returns the \c initialCyclicShift, defined as per
 /// PUCCH-format1, in PUCCH-Config, TS 38.331.
 static unsigned occ_cs_index_to_cyclic_shift(unsigned occ_cs_idx, unsigned nof_css)
@@ -393,6 +386,11 @@ srsran::srs_du::pucch_parameters_validator(unsigned                             
     const unsigned nof_f0_per_block = max_nof_symbols.to_uint() / f0_params.nof_symbols.to_uint();
     nof_f0_f1_rbs =
         static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f0_f1) / static_cast<float>(nof_f0_per_block)));
+
+    // With intraslot_freq_hopping, the nof of RBs is an even number.
+    if (f0_params.intraslot_freq_hopping) {
+      nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f0_f1_rbs) / 2.0F)) * 2;
+    }
   } else {
     const auto& f1_params = std::get<pucch_f1_params>(f0_f1_params);
     if (f1_params.nof_symbols.to_uint() > max_nof_symbols.to_uint()) {
@@ -439,10 +437,11 @@ srsran::srs_du::pucch_parameters_validator(unsigned                             
   }
 
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
-  // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 60% of the BWP.
-  const float max_allowed_prbs_usage = 0.6F;
+  // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
+  // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
+  const float max_allowed_prbs_usage = 0.5F;
   if (static_cast<float>(nof_f0_f1_rbs + nof_f2_rbs) / static_cast<float>(bwp_size_rbs) >= max_allowed_prbs_usage) {
-    return make_unexpected("With the given parameters, the number of PRBs for PUCCH exceeds the 60% of the BWP PRBs");
+    return make_unexpected("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs");
   }
 
   return {};

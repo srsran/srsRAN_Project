@@ -24,7 +24,7 @@
 #include "srsran/fapi/message_builders.h"
 #include "srsran/fapi/message_validators.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

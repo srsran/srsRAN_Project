@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/du/du.h"
-#include "srsran/du/du_high_wrapper.h"
+#include "srsran/du/du_high/o_du_high.h"
 #include "srsran/du/du_power_controller.h"
 #include "srsran/fapi_adaptor/fapi_adaptor.h"
 #include <memory>
@@ -37,7 +37,7 @@ class split6_du_impl : public srs_du::du, public du_power_controller
 {
 public:
   explicit split6_du_impl(std::vector<std::unique_ptr<fapi::fapi_adaptor>> adaptors_,
-                          std::vector<std::unique_ptr<du_high_wrapper>>    du_list_);
+                          std::vector<std::unique_ptr<srs_du::o_du_high>>  du_list_);
 
   // See interface for documentation.
   du_power_controller& get_power_controller() override { return *this; }
@@ -49,7 +49,7 @@ public:
   void stop() override;
 
 private:
-  std::vector<std::unique_ptr<du_high_wrapper>>    du_list;
+  std::vector<std::unique_ptr<srs_du::o_du_high>>  du_list;
   std::vector<std::unique_ptr<fapi::fapi_adaptor>> adaptors;
 };
 

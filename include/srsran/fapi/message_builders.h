@@ -29,7 +29,8 @@
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/ptrs/ptrs.h"
 #include "srsran/ran/srs/srs_configuration.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
+#include "srsran/support/shared_transport_block.h"
 #include <algorithm>
 
 namespace srsran {
@@ -1006,17 +1007,9 @@ public:
 
   /// Adds a new PDU to the Tx_Data.request message and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.6 in table Tx_Data.request message body.
-  tx_data_request_builder& add_pdu_custom_payload(uint16_t pdu_index, uint8_t cw_index, span<const uint8_t> payload)
+  tx_data_request_builder& add_pdu(uint16_t pdu_index, uint8_t cw_index, const shared_transport_block& payload)
   {
-    auto& pdu = msg.pdus.emplace_back();
-
-    pdu.pdu_index = pdu_index;
-    pdu.cw_index  = cw_index;
-
-    // Fill custom TLV. This TLV always uses a pointer to the payload.
-    pdu.tlv_custom.length  = units::bytes(payload.size());
-    pdu.tlv_custom.payload = payload.data();
-
+    msg.pdus.emplace_back(pdu_index, cw_index, payload);
     return *this;
   }
 

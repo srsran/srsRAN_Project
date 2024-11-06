@@ -24,7 +24,7 @@
 #include "srsran/adt/interval.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/pdcch/dci_packing_formatters.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

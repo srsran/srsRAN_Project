@@ -22,7 +22,6 @@
 
 #include "downlink_processor_single_executor_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
-#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
@@ -70,14 +69,16 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
     state.on_task_creation();
   }
 
+  // Copy the PDU and get the reference for the asynchronous processing.
+  pdcch_processor::pdu_t& pdu_ref = pdcch_list.emplace_back(pdu);
+
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, pdu]() {
+  bool enqueued = executor.execute([this, &pdu_ref]() {
     trace_point process_pdcch_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      resource_grid_mapper& mapper = current_grid.get().get_mapper();
-      pdcch_proc->process(mapper, pdu);
+      pdcch_proc->process(current_grid.get_writer(), pdu_ref);
     }
 
     l1_tracer << trace_event("process_pdcch", process_pdcch_tp);
@@ -96,8 +97,8 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
 }
 
 void downlink_processor_single_executor_impl::process_pdsch(
-    const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
-    const pdsch_processor::pdu_t&                                                        pdu)
+    static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data_,
+    const pdsch_processor::pdu_t&                                                    pdu)
 {
   {
     std::lock_guard<std::mutex> lock(mutex);
@@ -113,19 +114,24 @@ void downlink_processor_single_executor_impl::process_pdsch(
     state.on_task_creation();
   }
 
+  // Copy the PDU and data and get the reference for the asynchronous processing.
+  pdsch_proc_args& pdsch_args = pdsch_list.emplace_back(pdu, std::move(data_));
+
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, data, pdu]() mutable {
+  bool enqueued = executor.execute([this, &pdsch_args]() mutable {
     trace_point process_pdsch_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      resource_grid_mapper& mapper = current_grid->get_mapper();
-      pdsch_proc->process(mapper, pdsch_notifier, data, pdu);
+      pdsch_proc->process(current_grid.get_writer(), pdsch_notifier, std::move(pdsch_args.data), pdsch_args.pdu);
 
       l1_tracer << trace_event("process_pdsch", process_pdsch_tp);
     } else {
       // Inform about the dropped PDSCH.
-      logger.warning(pdu.slot.sfn(), pdu.slot.slot_index(), "Resource grid not configured. Ignoring PDSCH {:s}.", pdu);
+      logger.warning(pdsch_args.pdu.slot.sfn(),
+                     pdsch_args.pdu.slot.slot_index(),
+                     "Resource grid not configured. Ignoring PDSCH {:s}.",
+                     pdsch_args.pdu);
 
       // Report task drop to FSM.
       on_task_completion();
@@ -157,13 +163,16 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
     state.on_task_creation();
   }
 
+  // Copy the PDU and get the reference for the asynchronous processing.
+  ssb_processor::pdu_t& pdu_ref = ssb_list.emplace_back(pdu);
+
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, pdu]() {
+  bool enqueued = executor.execute([this, &pdu_ref]() {
     trace_point process_ssb_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      ssb_proc->process(current_grid->get_writer(), pdu);
+      ssb_proc->process(current_grid->get_writer(), pdu_ref);
     }
 
     l1_tracer << trace_event("process_ssb", process_ssb_tp);
@@ -199,14 +208,16 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
     state.on_task_creation();
   }
 
+  // Copy the configuration and get the reference for the asynchronous processing.
+  nzp_csi_rs_generator::config_t& config_ref = nzp_csi_rs_list.emplace_back(config);
+
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, config]() {
+  bool enqueued = executor.execute([this, &config_ref]() {
     trace_point process_nzp_csi_rs_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
-      resource_grid_mapper& mapper = current_grid->get_mapper();
-      csi_rs_proc->map(mapper, config);
+      csi_rs_proc->map(current_grid->get_writer(), config_ref);
     }
 
     l1_tracer << trace_event("process_nzp_csi_rs", process_nzp_csi_rs_tp);
@@ -238,6 +249,12 @@ bool downlink_processor_single_executor_impl::configure_resource_grid(const reso
 
   current_grid = std::move(grid);
   rg_context   = context;
+
+  // Clear temporary transmission PDUs and configurations.
+  pdcch_list.clear();
+  pdsch_list.clear();
+  ssb_list.clear();
+  nzp_csi_rs_list.clear();
 
   // update internal state to allow processing PDUs and increase the pending task counter.
   state.on_resource_grid_configured();

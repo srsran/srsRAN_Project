@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/du/du_high/adapters/mac_test_mode_adapter.h"
+#include "lib/du/du_high/test_mode/mac_test_mode_adapter.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"

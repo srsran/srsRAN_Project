@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
@@ -51,8 +52,11 @@ private:
   /// Provides an implementation of the modulator.
   std::unique_ptr<modulation_mapper> modulator;
 
-  /// Provides an implementation of the the pseudo-random generator.
+  /// Provides an implementation of the pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
+
+  /// Provides an implementation of the resource grid mapper.
+  std::unique_ptr<resource_grid_mapper> mapper;
 
   /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.2.3 Scrambling.
   ///
@@ -71,22 +75,24 @@ private:
   /// \brief Maps the modulated symbols to resource elements in the grid. Implements TS 38.211 section 7.3.2.5 Mapping
   /// to physical resources.
   ///
-  /// \param[out] mapper   Provides the destination resource grid.
+  /// \param[out] grid   Provides the destination resource grid.
   /// \param[in] d_pdcch Provides the block of complex-valued symbols to map.
   /// \param[in] config  Provides the mapper configuration.
-  void map(resource_grid_mapper& mapper, const re_buffer_reader<>& d_pdcch, const config_t& config);
+  void map(resource_grid_writer& grid, const re_buffer_reader<>& d_pdcch, const config_t& config);
 
 public:
   // See interface for the documentation.
-  void modulate(resource_grid_mapper& grid, span<const uint8_t> data, const config_t& config) override;
+  void modulate(resource_grid_writer& grid, span<const uint8_t> data, const config_t& config) override;
 
   /// Generic PDCCH modulator instance constructor.
   pdcch_modulator_impl(std::unique_ptr<modulation_mapper>       modulator_,
-                       std::unique_ptr<pseudo_random_generator> scrambler_) :
-    modulator(std::move(modulator_)), scrambler(std::move(scrambler_))
+                       std::unique_ptr<pseudo_random_generator> scrambler_,
+                       std::unique_ptr<resource_grid_mapper>    mapper_) :
+    modulator(std::move(modulator_)), scrambler(std::move(scrambler_)), mapper(std::move(mapper_))
   {
     srsran_assert(modulator, "Invalid modulator");
     srsran_assert(scrambler, "Invalid scrambler");
+    srsran_assert(mapper, "Invalid resource grid mapper");
   }
 };
 

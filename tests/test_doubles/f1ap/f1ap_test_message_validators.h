@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/f1ap/f1ap_ue_id_types.h"
-#include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
 #include <optional>
 

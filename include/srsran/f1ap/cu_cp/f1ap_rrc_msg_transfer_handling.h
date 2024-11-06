@@ -24,7 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 
 namespace srsran {
 namespace srs_cu_cp {

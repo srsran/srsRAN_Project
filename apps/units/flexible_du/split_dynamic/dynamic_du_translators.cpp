@@ -22,12 +22,13 @@
 
 #include "dynamic_du_translators.h"
 #include "apps/services/worker_manager_config.h"
-#include "apps/units/flexible_du/du_high/du_high_config_translators.h"
-#include "apps/units/flexible_du/du_low/du_low_config_translator.h"
-#include "apps/units/flexible_du/fapi/fapi_config_translator.h"
+#include "apps/units/flexible_du/o_du_high/du_high/du_high_config_translators.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_translators.h"
+#include "apps/units/flexible_du/o_du_low/du_low_config_translator.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_translator.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_translator.h"
 #include "dynamic_du_unit_config.h"
+
 #include "srsran/du/du_cell_config.h"
 
 using namespace srsran;
@@ -76,17 +77,16 @@ void srsran::fill_dynamic_du_worker_manager_config(worker_manager_config&       
   if (std::holds_alternative<ru_sdr_unit_config>(unit_cfg.ru_cfg)) {
     is_blocking_mode_enable = std::get<ru_sdr_unit_config>(unit_cfg.ru_cfg).device_driver == "zmq";
   }
-  unsigned nof_cells = unit_cfg.du_high_cfg.config.cells_cfg.size();
-  fill_du_high_worker_manager_config(config, unit_cfg.du_high_cfg.config, is_blocking_mode_enable);
+  unsigned nof_cells = unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
+  fill_o_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg, is_blocking_mode_enable);
   fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_cells);
-  fill_fapi_worker_manager_config(config, unit_cfg.fapi_cfg, nof_cells);
 
   if (std::holds_alternative<ru_sdr_unit_config>(unit_cfg.ru_cfg)) {
     fill_sdr_worker_manager_config(config, std::get<ru_sdr_unit_config>(unit_cfg.ru_cfg));
   }
 
   if (std::holds_alternative<ru_ofh_unit_parsed_config>(unit_cfg.ru_cfg)) {
-    auto cells = generate_du_cell_config(unit_cfg.du_high_cfg.config);
+    auto cells = generate_du_cell_config(unit_cfg.odu_high_cfg.du_high_cfg.config);
     fill_ofh_worker_manager_config(config, std::get<ru_ofh_unit_parsed_config>(unit_cfg.ru_cfg).config, cells);
   }
 

@@ -18,7 +18,3 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(srsran_du_high_adapters
-        mac_test_mode_adapter.cpp
-        f1ap_test_mode_adapter.cpp)
-target_link_libraries(srsran_du_high_adapters srslog srsran_support srsran_du_manager srsran_mac srsran_f1ap_du srsran_e2)

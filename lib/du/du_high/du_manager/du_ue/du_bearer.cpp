@@ -22,7 +22,6 @@
 
 #include "du_bearer.h"
 #include "../converters/rlc_config_helpers.h"
-#include "srsran/du/du_high/du_manager/du_manager_params.h"
 #include "srsran/f1u/du/f1u_bearer_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/srslog/srslog.h"

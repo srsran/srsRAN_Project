@@ -30,8 +30,8 @@
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
-#include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {

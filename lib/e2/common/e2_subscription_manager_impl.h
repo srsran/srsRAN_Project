@@ -34,8 +34,10 @@ namespace srsran {
 class e2_subscription_manager_impl : public e2_subscription_manager
 {
 public:
-  explicit e2_subscription_manager_impl(e2_message_notifier& notif_, e2sm_manager& e2sm_mngr_);
+  explicit e2_subscription_manager_impl(e2sm_manager& e2sm_mngr_);
   virtual ~e2_subscription_manager_impl() = default;
+
+  void stop() override;
 
   /// \brief  Handles the subscription request message.
   /// \param[in] msg  The subscription request message.
@@ -50,10 +52,13 @@ public:
 
   /// \brief  Starts the subscription procedure associated with the given ric instance id.
   /// \param[in] ric_request_id  The ric request id.
+  /// \param[in] ran_func_id  The RAN function id.
   /// \param[in] ev_mng The event manager that will be used to start the subscription procedure.
+  /// \param[in] tx_pdu_notifier The E2 message notifier.
   void start_subscription(const asn1::e2ap::ric_request_id_s& ric_request_id,
+                          uint16_t                            ran_func_id,
                           e2_event_manager&                   ev_mng,
-                          uint16_t                            ran_func_id) override;
+                          e2_message_notifier&                tx_pdu_notifier) override;
 
   /// @brief  Stops the subscription procedure associated with the given ric instance id.
   /// @param[in] ric_request_id  The ric request id.
@@ -101,7 +106,6 @@ private:
   std::map<e2_subscription_key_t, e2_subscription_t>     subscriptions;
   std::map<std::string, std::unique_ptr<e2sm_interface>> e2sm_iface_list;
   std::map<uint16_t, std::string>                        supported_ran_functions;
-  e2_message_notifier&                                   notif;
   e2sm_manager&                                          e2sm_mngr;
   srslog::basic_logger&                                  logger;
 };

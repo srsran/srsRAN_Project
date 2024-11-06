@@ -21,44 +21,94 @@
  */
 
 #include "f1ap_du_test_helpers.h"
+#include "test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srsran::srs_du;
 
-TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_is_received_lower_layer_srb_notifier_receives_rrc_pdu)
+class f1ap_du_dl_rrc_message_transfer_test : public f1ap_du_test
 {
-  // Run Test Preamble.
-  run_f1_setup_procedure();
-  ue_test_context* ue = run_f1ap_ue_create(to_du_ue_index(0));
-  ASSERT_TRUE(ue->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
+protected:
+  f1ap_du_dl_rrc_message_transfer_test()
+  {
+    // Run Test Preamble.
+    run_f1_setup_procedure();
+    test_ue = run_f1ap_ue_create(to_du_ue_index(0));
 
-  // Test section
-  byte_buffer  test_rrc_msg = byte_buffer::create({0x1, 0x2, 0x3}).value();
+    f1c_gw.clear_tx_pdus();
+  }
+
+  ue_test_context* test_ue = nullptr;
+};
+
+TEST_F(f1ap_du_dl_rrc_message_transfer_test,
+       when_dl_rrc_message_transfer_is_received_lower_layer_srb_notifier_receives_rrc_pdu)
+{
+  // Forward DL RRC Message Transfer
+  byte_buffer  test_rrc_msg = test_helpers::create_dl_dcch_rrc_container(0, {0x1, 0x2, 0x3});
   f1ap_message msg          = generate_f1ap_dl_rrc_message_transfer(srb_id_t::srb1, test_rrc_msg);
+  ASSERT_TRUE(test_ue->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
   f1ap->handle_message(msg);
-  ASSERT_FALSE(ue->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
-  ASSERT_EQ(ue->f1c_bearers[1].rx_sdu_notifier.last_pdu, test_rrc_msg);
+
+  // The RRC container should be forwarded to lower layers.
+  ASSERT_FALSE(test_ue->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
+  ASSERT_EQ(test_ue->f1c_bearers[1].rx_sdu_notifier.last_pdu, test_rrc_msg);
 }
 
-TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_is_received_gnb_cu_ue_f1ap_id_is_updated)
+TEST_F(f1ap_du_dl_rrc_message_transfer_test, when_dl_rrc_message_transfer_is_received_gnb_cu_ue_f1ap_id_is_updated)
 {
-  // Run Test Preamble.
-  run_f1_setup_procedure();
-  ue_test_context* ue = run_f1ap_ue_create(to_du_ue_index(0));
-  ASSERT_TRUE(ue->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
-
-  // Test Section.
-  byte_buffer  test_rrc_msg = byte_buffer::create({0x1, 0x2, 0x3}).value();
+  // Forward DL RRC Message Transfer
+  byte_buffer  test_rrc_msg = test_helpers::create_dl_dcch_rrc_container(0, {0x1, 0x2, 0x3});
   f1ap_message msg          = generate_f1ap_dl_rrc_message_transfer(srb_id_t::srb1, test_rrc_msg);
   msg.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_cu_ue_f1ap_id = 5;
   // The DL RRC Message Transfer should update the gNB-CU UE F1AP ID.
   f1ap->handle_message(msg);
-  test_ues[0].f1c_bearers[1].bearer->handle_sdu(byte_buffer_chain::create(test_rrc_msg.copy()).value());
+
+  // Forward SRB1 Rx SDU, and observe that the new gNB-CU UE F1AP ID is used.
+  test_ue->f1c_bearers[1].bearer->handle_sdu(byte_buffer_chain::create(test_rrc_msg.copy()).value());
   ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_cu_ue_f1ap_id,
             msg.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_cu_ue_f1ap_id)
       << "Invalid gNB-CU UE F1AP ID";
+}
+
+TEST_F(
+    f1ap_du_dl_rrc_message_transfer_test,
+    when_dl_rrc_message_transfer_contains_rrc_delivery_status_request_then_rrc_delivery_status_is_reported_after_container_delivery)
+{
+  uint32_t pdcp_sn = 5;
+
+  // Forward DL RRC Message Transfer
+  byte_buffer         test_rrc_msg = test_helpers::create_dl_dcch_rrc_container(pdcp_sn, {0x1, 0x2, 0x3});
+  f1ap_message        msg          = generate_f1ap_dl_rrc_message_transfer(srb_id_t::srb1, test_rrc_msg);
+  gnb_du_ue_f1ap_id_t du_ue_id =
+      int_to_gnb_du_ue_f1ap_id(msg.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+  msg.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_delivery_status_request_present = true;
+  msg.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_delivery_status_request.value =
+      asn1::f1ap::rrc_delivery_status_request_opts::true_value;
+  f1ap->handle_message(msg);
+
+  // When lower layers report delivery for PDUs with PDCP SN lower than the SN of the DLRRCMessageTransfer, nothing
+  // happens.
+  test_ue->f1c_bearers[1].bearer->handle_transmit_notification(0);
+  test_ue->f1c_bearers[1].bearer->handle_delivery_notification(0);
+  test_ue->f1c_bearers[1].bearer->handle_transmit_notification(pdcp_sn);
+  this->tick();
+  ASSERT_FALSE(f1c_gw.pop_tx_pdu().has_value());
+  // PDCP SN matching the one of the DLRRCMessageTransfer was delivered. The F1AP-DU should send back to the CU-CP an
+  // RRCDeliveryReport
+  test_ue->f1c_bearers[1].bearer->handle_delivery_notification(pdcp_sn);
+  this->tick();
+  auto ret = f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(ret.has_value());
+  ASSERT_EQ(ret.value().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::rrc_delivery_report);
+  const asn1::f1ap::rrc_delivery_report_s& report = ret.value().pdu.init_msg().value.rrc_delivery_report();
+  ASSERT_EQ(report->gnb_du_ue_f1ap_id, gnb_du_ue_f1ap_id_to_uint(du_ue_id));
+  ASSERT_EQ(report->srb_id, 1);
+  ASSERT_EQ(report->rrc_delivery_status.trigger_msg, pdcp_sn);
+  ASSERT_EQ(report->rrc_delivery_status.delivery_status, pdcp_sn);
 }
 
 TEST_F(f1ap_du_test,

@@ -53,11 +53,11 @@ struct pdsch_antenna_ports_mapping {
 ///         layers etc. If the given input configuration does not match any of the rows in the table, the function
 ///         triggers an asserts. But if input configuration matches more than one row in the table, the first matching
 ///         row information is returned.
-pdsch_antenna_ports_mapping get_pdsch_antenna_port_mapping(unsigned         nof_layers,
-                                                           unsigned         nof_dl_antenna_ports,
-                                                           dmrs_config_type dmrs_cfg_type,
-                                                           dmrs_max_length  dmrs_max_len,
-                                                           bool             are_both_cws_enabled);
+const pdsch_antenna_ports_mapping& get_pdsch_antenna_port_mapping(unsigned         nof_layers,
+                                                                  unsigned         nof_dl_antenna_ports,
+                                                                  dmrs_config_type dmrs_cfg_type,
+                                                                  dmrs_max_length  dmrs_max_len,
+                                                                  bool             are_both_cws_enabled);
 
 /// \brief Returns the PDSCH antenna ports mapping row index in TS 38.212, tables 7.3.1.2.2-1/2/3/4.
 /// \param[in] nof_layers Number of layers.

@@ -139,11 +139,8 @@ int main()
                 modulator->reset();
                 dmrs->reset();
 
-                // Create mapper.
-                resource_grid_mapper& mapper = grid.get_mapper();
-
                 // Process PDU.
-                pdcch->process(mapper, pdu);
+                pdcch->process(grid.get_writer(), pdu);
 
                 // Calculate ideal allocation mask.
                 bounded_bitset<MAX_RB> rb_mask = pdcch_processor_impl::compute_rb_mask(pdu.coreset, pdu.dci);
@@ -166,7 +163,7 @@ int main()
                 TESTASSERT_EQ(modulator_entry.config.scaling, convert_dB_to_amplitude(dci.data_power_offset_dB));
                 TESTASSERT_EQ(pdu.dci.precoding, modulator_entry.config.precoding);
                 TESTASSERT_EQ(const_span<uint8_t>(modulator_entry.bits), const_span<uint8_t>(encoder_entry.encoded));
-                TESTASSERT_EQ((void*)modulator_entry.mapper, (void*)&mapper);
+                TESTASSERT_EQ((void*)modulator_entry.grid, (void*)&grid.get_writer());
 
                 // Check PDCCH DMRS inputs.
                 TESTASSERT_EQ(dmrs->get_nof_entries(), 1);

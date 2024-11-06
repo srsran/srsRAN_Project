@@ -27,50 +27,35 @@
 
 namespace srsran {
 
-class pdcp_tx_metrics : pdcp_tx_metrics_interface
+class pdcp_tx_metrics
 {
   pdcp_tx_metrics_container metrics = {};
   std::mutex                metrics_mutex;
 
 public:
-  void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
+  void add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_sdus += num_sdus_;
     metrics.num_sdu_bytes += num_sdu_bytes_;
   }
 
-  void metrics_add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
+  void add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_pdus += num_pdus_;
     metrics.num_pdu_bytes += num_pdu_bytes_;
   }
 
-  void metrics_add_discard_timouts(uint32_t num_discard_timeouts_)
-  {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics.num_discard_timeouts += num_discard_timeouts_;
-  }
+  void add_discard_timouts(uint32_t num_discard_timeouts_) { metrics.num_discard_timeouts += num_discard_timeouts_; }
 
-  pdcp_tx_metrics_container get_metrics() final
-  {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    return metrics;
-  }
+  pdcp_tx_metrics_container get_metrics() { return metrics; }
 
-  pdcp_tx_metrics_container get_metrics_and_reset() final
+  pdcp_tx_metrics_container get_metrics_and_reset()
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    pdcp_tx_metrics_container   ret = metrics;
-    metrics                         = {};
+    pdcp_tx_metrics_container ret = metrics;
+    metrics                       = {};
     return ret;
   }
 
-  void reset_metrics() final
-  {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics = {};
-  }
+  void reset_metrics() { metrics = {}; }
 };
 } // namespace srsran

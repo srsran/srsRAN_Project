@@ -19,6 +19,7 @@
 #
 
 add_subdirectory(pdsch)
+add_subdirectory(pucch)
 add_subdirectory(pusch)
 add_subdirectory(uci)
 
@@ -30,29 +31,6 @@ set_directory_properties(PROPERTIES LABELS "phy")
 add_executable(pdcch_processor_unittest pdcch_processor_unittest.cpp)
 target_link_libraries(pdcch_processor_unittest srsran_channel_processors srslog)
 add_test(pdcch_processor_unittest pdcch_processor_unittest)
-
-add_executable(pucch_processor_format1_unittest pucch_processor_format1_unittest.cpp)
-target_link_libraries(pucch_processor_format1_unittest
-        srsran_channel_equalizer
-        srsran_channel_processors
-        srslog
-        gtest
-        gtest_main)
-add_test(pucch_processor_format1_unittest pucch_processor_format1_unittest)
-
-add_executable(pucch_processor_validators_test
-        pucch_processor_validator_format0_test.cpp
-        pucch_processor_validator_format1_test.cpp
-        pucch_processor_validator_format2_test.cpp)
-target_link_libraries(pucch_processor_validators_test
-        srsran_channel_equalizer
-        srsran_channel_processors
-        srsran_phy_support
-        srslog
-        srsran_upper_phy_support
-        gtest
-        gtest_main)
-add_test(pucch_processor_validators_test pucch_processor_validators_test)
 
 add_executable(ssb_processor_unittest ssb_processor_unittest.cpp)
 target_link_libraries(ssb_processor_unittest srsran_channel_processors srslog)
@@ -74,13 +52,14 @@ if (USE_PHY_TESTVECTORS)
     add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
     target_link_libraries(pdcch_modulator_test
             srsran_channel_processors
+            srsran_channel_precoder
             srslog
             srsran_channel_modulation
             srsran_sequence_generators)
     add_test_vector(pdcch_modulator_test pdcch_modulator_test_data.tar.gz "")
 
     add_executable(pdcch_processor_vectortest pdcch_processor_vectortest.cpp)
-    target_link_libraries(pdcch_processor_vectortest srsran_channel_processors srslog gtest gtest_main)
+    target_link_libraries(pdcch_processor_vectortest srsran_channel_processors srsran_channel_precoder srslog gtest gtest_main)
     add_test_vector(pdcch_processor_vectortest pdcch_processor_test_data.tar.gz "")
 
     add_executable(prach_detector_vectortest prach_detector_vectortest.cpp)
@@ -90,51 +69,6 @@ if (USE_PHY_TESTVECTORS)
     add_executable(prach_generator_vectortest prach_generator_vectortest.cpp)
     target_link_libraries(prach_generator_vectortest srsran_channel_processors srsran_generic_funcs srslog gtest gtest_main)
     add_test_vector(prach_generator_vectortest prach_generator_test_data.tar.gz "")
-
-    add_executable(pucch_demodulator_format2_test pucch_demodulator_format2_test.cpp)
-    target_link_libraries(pucch_demodulator_format2_test
-            srsran_channel_processors
-            srsran_channel_equalizer
-            srsran_phy_support
-            srslog
-            srsran_upper_phy_support
-            gtest
-            gtest_main)
-    add_test_vector(pucch_demodulator_format2_test pucch_demodulator_format2_test_data.tar.gz "")
-
-    add_executable(pucch_detector_test pucch_detector_test.cpp)
-    target_link_libraries(pucch_detector_test srsran_channel_processors srsran_channel_equalizer srslog gtest gtest_main)
-    add_test_vector(pucch_detector_test pucch_detector_test_data.tar.gz "")
-
-    add_executable(pucch_processor_format0_vectortest pucch_processor_format0_vectortest.cpp)
-    target_link_libraries(pucch_processor_format0_vectortest
-            srsran_channel_equalizer
-            srsran_phy_support
-            srsran_channel_processors
-            srslog
-            gtest
-            gtest_main)
-    add_test_vector(pucch_processor_format0_vectortest pucch_processor_format0_test_data.tar.gz "")
-
-    add_executable(pucch_processor_format1_vectortest pucch_processor_format1_vectortest.cpp)
-    target_link_libraries(pucch_processor_format1_vectortest
-            srsran_channel_equalizer
-            srsran_phy_support
-            srsran_channel_processors
-            srslog
-            gtest
-            gtest_main)
-    add_test_vector(pucch_processor_format1_vectortest pucch_processor_format1_test_data.tar.gz "")
-
-    add_executable(pucch_processor_format2_vectortest pucch_processor_format2_vectortest.cpp)
-    target_link_libraries(pucch_processor_format2_vectortest
-            srsran_channel_processors
-            srsran_channel_equalizer
-            srsran_phy_support
-            gtest
-            gtest_main)
-    add_test(pucch_processor_format2_vectortest pucch_processor_format2_vectortest)
-    add_test_vector(pucch_processor_format2_vectortest pucch_processor_format2_test_data.tar.gz "")
 
     add_executable(ssb_processor_vectortest ssb_processor_vectortest.cpp)
     target_link_libraries(ssb_processor_vectortest srsran_channel_processors srslog)

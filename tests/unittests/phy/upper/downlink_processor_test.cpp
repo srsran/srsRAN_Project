@@ -87,7 +87,7 @@ TEST(downlinkProcessorTest, worksInOrder)
   ASSERT_TRUE(pdcch_ref.is_process_called());
 
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_pdsch({shared_transport_block(data)}, {});
   ASSERT_TRUE(pdsch_ref.is_process_called());
 
   dl_processor->process_nzp_csi_rs({});
@@ -133,7 +133,7 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_pdsch({shared_transport_block(data)}, {});
   dl_processor->process_nzp_csi_rs({});
 
   ASSERT_FALSE(pdcch_ref.is_process_called());
@@ -190,7 +190,7 @@ TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
   pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_pdsch({shared_transport_block(data)}, {});
   dl_processor->finish_processing_pdus();
 
   ASSERT_TRUE(pdcch_ref.is_process_called());
@@ -232,7 +232,7 @@ TEST(downlinkProcessorTest, processPduBeforeConfigureDoesNothing)
   std::vector<uint8_t> data = {1, 2, 3, 4};
 
   dl_processor->process_pdcch(pdu);
-  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_pdsch({shared_transport_block(data)}, {});
   dl_processor->process_nzp_csi_rs({});
 
   ASSERT_FALSE(pdcch_ref.is_process_called());
@@ -292,7 +292,7 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_pdsch({shared_transport_block(data)}, {});
   dl_processor->process_nzp_csi_rs({});
   ASSERT_TRUE(!gw.sent);
 
@@ -306,7 +306,7 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
 
   dl_processor->process_ssb({});
   dl_processor->process_pdcch(pdu);
-  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_pdsch({shared_transport_block(data)}, {});
   dl_processor->process_nzp_csi_rs({});
   ASSERT_FALSE(gw.sent);
 

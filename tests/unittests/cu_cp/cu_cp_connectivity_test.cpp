@@ -182,7 +182,7 @@ TEST_F(cu_cp_connectivity_test, when_a_du_with_non_matching_gnb_id_connects_then
   // DU sends F1 Setup Request.
   gnb_du_id_t  du_id    = int_to_gnb_du_id(0x55);
   f1ap_message f1ap_pdu = test_helpers::generate_f1_setup_request(
-      du_id, nr_cell_identity::create(0x0).value()); // the gnb-id does not match.
+      du_id, {{nr_cell_identity::create(0x0).value()}}); // the gnb-id does not match.
   get_du(du_idx).push_ul_pdu(f1ap_pdu);
 
   // Ensure the F1 Setup Failure is received for the DU.

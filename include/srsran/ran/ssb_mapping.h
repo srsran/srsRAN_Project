@@ -29,7 +29,7 @@
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include <array>
 #include <cassert>
 

@@ -22,21 +22,14 @@
 
 #pragma once
 
-#include "../../config/ue_configuration.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
 
-class ue_repository;
 class cell_configuration;
-class ue_cell_configuration;
-
-/// Retrieves the time resource allocation table for PUSCH.
-/// \remark See TS 38.214, Section 6.1.2.1.1 - Determination of the resource allocation table to be used for PUSCH.
-span<const pusch_time_domain_resource_allocation>
-get_pusch_time_domain_resource_table(const cell_configuration& cell_cfg, const search_space_info* ss_info);
+struct search_space_info;
 
 /// \brief Returns the list of all applicable PUSCH Time Domain resource indexes based on cell, UE configuration and
 /// nof. symbols in PUSCH slot for a PDCCH slot.

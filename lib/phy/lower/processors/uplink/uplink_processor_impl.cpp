@@ -31,7 +31,7 @@
 #include "srsran/srsvec/compare.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/zero.h"
-#include "srsran/support/stats.h"
+#include "srsran/support/math/stats.h"
 
 using namespace srsran;
 

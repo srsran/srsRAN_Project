@@ -26,7 +26,7 @@
 #include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>
@@ -110,11 +110,12 @@ int main(int argc, char** argv)
   for (unsigned i_rx_port = 1; i_rx_port <= max_simo_rx_ports; ++i_rx_port) {
     channel_topologies.emplace_back(std::make_pair(i_rx_port, 1));
   }
-  // MIMO 2x2 and 2x4. Only for ZF.
-  if (equalizer_type == channel_equalizer_algorithm_type::zf) {
-    channel_topologies.emplace_back(std::make_pair(2, 2));
-    channel_topologies.emplace_back(std::make_pair(4, 2));
-  }
+
+  // Add multi-layer MIMO topologies that could be supported.
+  channel_topologies.emplace_back(std::make_pair(2, 2));
+  channel_topologies.emplace_back(std::make_pair(4, 2));
+  channel_topologies.emplace_back(std::make_pair(4, 3));
+  channel_topologies.emplace_back(std::make_pair(4, 4));
 
   for (auto topology : channel_topologies) {
     // Get dimensions.
@@ -122,6 +123,11 @@ int main(int argc, char** argv)
     unsigned nof_tx_layers    = topology.second;
     unsigned nof_ofdm_symbols = MAX_NSYMB_PER_SLOT;
     unsigned nof_subcarriers  = nof_prb * NRE;
+
+    // Skip topology if it is not supported.
+    if (!equalizer->is_supported(nof_rx_ports, nof_tx_layers)) {
+      continue;
+    }
 
     // Create input and output data tensors.
     dynamic_re_buffer<cbf16_t> rx_symbols(nof_rx_ports, nof_subcarriers * nof_ofdm_symbols);

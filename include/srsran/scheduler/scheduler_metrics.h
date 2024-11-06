@@ -28,7 +28,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/support/stats.h"
+#include "srsran/support/math/stats.h"
 #include <optional>
 
 namespace srsran {
@@ -71,6 +71,12 @@ struct scheduler_cell_event {
   rnti_t     rnti = rnti_t::INVALID_RNTI;
   event_type type;
 };
+
+inline const char* sched_event_to_string(scheduler_cell_event::event_type ev)
+{
+  std::array<const char*, 3> names = {"ue_add", "ue_reconf", "ue_rem"};
+  return names[std::min(static_cast<size_t>(ev), names.size() - 1)];
+}
 
 /// \brief Snapshot of the metrics for a cell and its UEs.
 struct scheduler_cell_metrics {

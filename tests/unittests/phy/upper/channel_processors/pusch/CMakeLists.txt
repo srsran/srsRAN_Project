@@ -45,7 +45,7 @@ if (USE_PHY_TESTVECTORS)
 
     if (ENABLE_PUSCH_HWACC)
         set_source_files_properties(pusch_decoder_vectortest.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PUSCH_ENABLED")
-        list(APPEND PUSCH_DECODER_LIBRARIES hal_hwacc_pusch)
+        list(APPEND PUSCH_DECODER_LIBRARIES srsran_hal_pusch)
     endif (ENABLE_PUSCH_HWACC)
 
     target_link_libraries(pusch_decoder_test ${PUSCH_DECODER_LIBRARIES})
@@ -76,7 +76,7 @@ if (USE_PHY_TESTVECTORS)
 
     if (ENABLE_PUSCH_HWACC)
         set_source_files_properties(pusch_processor_vectortest.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PUSCH_ENABLED")
-        list(APPEND PUSCH_PROCESSOR_LIBRARIES hal_hwacc_pusch)
+        list(APPEND PUSCH_PROCESSOR_LIBRARIES srsran_hal_pusch)
     endif (ENABLE_PUSCH_HWACC)
 
     target_link_libraries(pusch_processor_vectortest ${PUSCH_PROCESSOR_LIBRARIES})

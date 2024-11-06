@@ -183,6 +183,46 @@ protected:
     // Setup bearer
     cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup);
   }
+
+  struct upf_info_t {
+    int         sock_fd = -1;
+    sockaddr_in upf_addr;
+  };
+
+  upf_info_t init_upf()
+  {
+    int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sock_fd < 0) {
+      return {sock_fd, {}};
+    }
+
+    int         upf_port = 0; // Random free port selected by the OS: Avoid port conflicts with other tests.
+    sockaddr_in upf_addr;
+    upf_addr.sin_family      = AF_INET;
+    upf_addr.sin_port        = htons(upf_port);
+    upf_addr.sin_addr.s_addr = inet_addr(upf_addr_str.c_str());
+
+    int ret = 0;
+
+    ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
+    if (ret < 0) {
+      fmt::print(stderr, "Failed to bind socket to `{}:{}` - {}\n", upf_addr_str, upf_port, strerror(errno));
+      return {ret, {}};
+    }
+
+    // Find out the port that was assigned
+    socklen_t upf_addr_len = sizeof(upf_addr);
+    ret                    = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &upf_addr_len);
+    if (ret < 0) {
+      fmt::print(stderr, "Failed to read port of socket bound to `{}:0` - {}", upf_addr_str, strerror(errno));
+      return {ret, {}};
+    }
+    if (upf_addr_len != sizeof(upf_addr)) {
+      fmt::print(stderr, "Mismatching upf_addr_len after getsockname()");
+      return {-1, {}};
+    }
+    return {sock_fd, upf_addr};
+  }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -205,24 +245,53 @@ TEST_F(cu_up_test, when_e1ap_connection_established_then_e1ap_connected)
 //////////////////////////////////////////////////////////////////////////////////////
 /* User Data Flow                                                                   */
 //////////////////////////////////////////////////////////////////////////////////////
-
 TEST_F(cu_up_test, dl_data_flow)
 {
   cu_up_configuration cfg = get_default_cu_up_config();
   test_logger.debug("Using network_interface_config: {}", cfg.net_cfg);
+
+  // Initialize UPF simulator on a random port.
+  upf_info_t upf_info  = init_upf();
+  cfg.net_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
+  ASSERT_GE(upf_info.sock_fd, 0);
+
+  // Initialize CU-UP
   init(cfg);
 
+  // Create DRB
   create_drb();
 
-  int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  ASSERT_GE(sock_fd, 0);
+  // We send a UL message to set desired buffer size in DL bearer
+  // UL message 1
+  nru_ul_message nru_msg1     = {};
+  const uint8_t  t_pdu_arr1[] = {
+       0x80, 0x00, 0x00, 0x45, 0x00, 0x00, 0x54, 0xe8, 0x83, 0x40, 0x00, 0x40, 0x01, 0xfa, 0x00, 0xac, 0x10, 0x00,
+       0x03, 0xac, 0x10, 0x00, 0x01, 0x08, 0x00, 0x2c, 0xbe, 0xb4, 0xa4, 0x00, 0x01, 0xd3, 0x45, 0x61, 0x63, 0x00,
+       0x00, 0x00, 0x00, 0x1a, 0x20, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+       0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+       0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
+  span<const uint8_t> t_pdu_span1  = {t_pdu_arr1};
+  byte_buffer         t_pdu_buf1   = byte_buffer::create(t_pdu_span1).value();
+  nru_msg1.t_pdu                   = byte_buffer_chain::create(std::move(t_pdu_buf1)).value();
+  nru_dl_data_delivery_status ddds = {};
+  ddds.desired_buffer_size_for_drb = 1 << 20; // 1MBi RLC SDU size
+  nru_msg1.data_delivery_status    = ddds;
 
+  f1u_bearer.handle_pdu(std::move(nru_msg1));
+
+  // We wait here for the UL PDU to arrive, to make sure the DDDS has been processed.
+  // receive message 1
+  std::array<uint8_t, 128> rx_buf;
+  int                      ret;
+  ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+
+  // Now that the disered buffer size is updated, we push DL PDUs
   sockaddr_in cu_up_addr;
   cu_up_addr.sin_family      = AF_INET;
   cu_up_addr.sin_port        = htons(cu_up->get_n3_bind_port().value());
   cu_up_addr.sin_addr.s_addr = inet_addr(cfg.net_cfg.n3_bind_addr.c_str());
 
-  // teid=2, qfi=1
+  // DL PDU teid=2, qfi=1
   const uint8_t gtpu_ping_vec[] = {
       0x34, 0xff, 0x00, 0x5c, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x85, 0x01, 0x00, 0x01, 0x00, 0x45,
       0x00, 0x00, 0x54, 0x9b, 0xfb, 0x00, 0x00, 0x40, 0x01, 0x56, 0x5a, 0xc0, 0xa8, 0x04, 0x01, 0xc0, 0xa8,
@@ -231,19 +300,17 @@ TEST_F(cu_up_test, dl_data_flow)
       0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
       0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
 
-  int ret = 0;
-
   // send message 1
-  ret = sendto(sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
-  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << sock_fd << " to `" << cfg.net_cfg.n3_bind_addr << ":"
-                    << cu_up->get_n3_bind_port().value() << "` - " << strerror(errno);
+  ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `" << cfg.net_cfg.n3_bind_addr
+                    << ":" << cu_up->get_n3_bind_port().value() << "` - " << strerror(errno);
 
   // send message 2
-  ret = sendto(sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
-  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << sock_fd << " to `" << cfg.net_cfg.n3_bind_addr << ":"
-                    << cu_up->get_n3_bind_port().value() << "` - " << strerror(errno);
+  ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `" << cfg.net_cfg.n3_bind_addr
+                    << ":" << cu_up->get_n3_bind_port().value() << "` - " << strerror(errno);
 
-  close(sock_fd);
+  close(upf_info.sock_fd);
 
   // check reception of message 1
   nru_dl_message          sdu1 = f1u_bearer.wait_tx_sdu();
@@ -269,30 +336,10 @@ TEST_F(cu_up_test, ul_data_flow)
   cu_up_configuration cfg = get_default_cu_up_config();
 
   //> Test preamble: listen on a free port
-
-  int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  ASSERT_GE(sock_fd, 0);
-
-  int         upf_port = 0; // Random free port selected by the OS: Avoid port conflicts with other tests.
-  sockaddr_in upf_addr;
-  upf_addr.sin_family      = AF_INET;
-  upf_addr.sin_port        = htons(upf_port);
-  upf_addr.sin_addr.s_addr = inet_addr(upf_addr_str.c_str());
-
-  int ret = 0;
-
-  ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
-  ASSERT_GE(ret, 0) << "Failed to bind socket to `" << upf_addr_str << ":" << upf_port << "` - " << strerror(errno);
-
-  // Find out the port that was assigned
-  socklen_t upf_addr_len = sizeof(upf_addr);
-  ret                    = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &upf_addr_len);
-  ASSERT_EQ(upf_addr_len, sizeof(upf_addr)) << "Mismatching upf_addr_len after getsockname()";
-  ASSERT_GE(ret, 0) << "Failed to read port of socket bound to `" << upf_addr_str << ":0` - " << strerror(errno);
+  upf_info_t upf_info = init_upf();
 
   //> Test main part: create CU-UP and transmit data
-
-  cfg.net_cfg.upf_port = ntohs(upf_addr.sin_port);
+  cfg.net_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
   test_logger.debug("Using network_interface_config: {}", cfg.net_cfg);
   init(cfg);
 
@@ -333,16 +380,16 @@ TEST_F(cu_up_test, ul_data_flow)
   uint16_t gtpu_hdr_len = 16;
 
   // receive message 1
-  ret = recv(sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  int ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(t_pdu_span1.begin() + f1u_hdr_len, t_pdu_span1.end(), rx_buf.begin() + gtpu_hdr_len));
 
   // receive message 2
-  ret = recv(sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(t_pdu_span2.begin() + f1u_hdr_len, t_pdu_span2.end(), rx_buf.begin() + gtpu_hdr_len));
 
-  close(sock_fd);
+  close(upf_info.sock_fd);
 }
 
 int main(int argc, char** argv)

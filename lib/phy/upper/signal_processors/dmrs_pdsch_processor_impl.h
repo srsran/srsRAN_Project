@@ -25,9 +25,11 @@
 #include "srsran/adt/complex.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 namespace srsran {
 
@@ -62,6 +64,7 @@ private:
 
   /// Pseudo-random sequence generator instance.
   std::unique_ptr<pseudo_random_generator> prg;
+  std::unique_ptr<resource_grid_mapper>    mapper;
 
   /// \brief Implements TS 38.211 section 7.4.1.1.1 Sequence generation.
   ///
@@ -90,14 +93,16 @@ private:
   static_re_buffer<MAX_PORTS, MAX_DMRS_PER_SYMBOL * MAX_DMRS_SYMBOLS> temp_re;
 
 public:
-  dmrs_pdsch_processor_impl(std::unique_ptr<pseudo_random_generator> pseudo_random_generator) :
-    prg(std::move(pseudo_random_generator))
+  dmrs_pdsch_processor_impl(std::unique_ptr<pseudo_random_generator> pseudo_random_generator_,
+                            std::unique_ptr<resource_grid_mapper>    mapper_) :
+    prg(std::move(pseudo_random_generator_)), mapper(std::move(mapper_))
   {
     srsran_assert(prg, "Invalid PRG.");
+    srsran_assert(mapper, "Invalid mapper.");
   }
 
   // See interface for documentation.
-  void map(resource_grid_mapper& mapper, const config_t& config) override;
+  void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
 } // namespace srsran

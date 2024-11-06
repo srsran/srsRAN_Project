@@ -25,7 +25,7 @@
 #include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;

@@ -24,13 +24,20 @@
 
 using namespace srsran;
 
-slice_ue::slice_ue(const ue& u_) : u(u_), bearers(MAX_NOF_RB_LCIDS), lcg_ids(MAX_NOF_LCGS) {}
+slice_ue::slice_ue(const ue& u_) : u(u_) {}
 
 void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
 {
   srsran_assert(lcid < MAX_NOF_RB_LCIDS, "Invalid LCID={} to add for a slice UE", lcid);
-  bearers.set(lcid);
   srsran_assert(lcg_id < MAX_NOF_LCGS, "Invalid LCG ID={} for bearer with LCID={}", lcg_id, lcid);
+
+  if (lcid >= bearers.size()) {
+    bearers.resize(lcid + 1);
+  }
+  bearers.set(lcid);
+  if (lcg_id >= lcg_ids.size()) {
+    lcg_ids.resize(lcg_id + 1);
+  }
   lcg_ids.set(lcg_id);
 }
 

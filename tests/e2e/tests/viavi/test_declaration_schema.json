@@ -45,6 +45,12 @@
                     },
                     "enable_dddsu": {
                         "type": "boolean"
+                    },
+                    "ul_heavy_7u2d": {
+                        "type": "boolean"
+                    },
+                    "ul_heavy_6u3d": {
+                        "type": "boolean"
                     }
                 },
                 "required": [

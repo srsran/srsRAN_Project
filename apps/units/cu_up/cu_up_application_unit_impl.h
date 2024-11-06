@@ -46,7 +46,7 @@ public:
   void on_loggers_registration() override;
 
   // See interface for documentation.
-  std::unique_ptr<srs_cu_up::cu_up_interface> create_cu_up_unit(const cu_up_unit_dependencies& dependencies) override;
+  cu_up_unit create_cu_up_unit(const cu_up_unit_dependencies& dependencies) override;
 
   // See interface for documentation.
   cu_up_unit_config&       get_cu_up_unit_config() override { return unit_cfg; }

@@ -22,7 +22,7 @@
 
 #include "srsran/srsvec/compare.h"
 #include "srsran/srsvec/simd.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include <numeric>
 
 using namespace srsran;

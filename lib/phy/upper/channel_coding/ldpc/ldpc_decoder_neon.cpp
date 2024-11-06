@@ -147,6 +147,16 @@ void ldpc_decoder_neon::analyze_var_to_check_msgs(span<log_likelihood_ratio>    
   }
 }
 
+void ldpc_decoder_neon::scale(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
+{
+  neon::neon_const_span in_neon(in, node_size_neon);
+  neon::neon_span       out_neon(out, node_size_neon);
+  for (unsigned i_block = 0; i_block != node_size_neon; ++i_block) {
+    out_neon.set_at(
+        i_block, neon::scale_s8(in_neon.get_at(i_block), scaling_factor, log_likelihood_ratio::max().to_value_type()));
+  }
+}
+
 void ldpc_decoder_neon::compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
                                                   span<const log_likelihood_ratio> /*this_var_to_check*/,
                                                   span<const log_likelihood_ratio> rotated_node,
@@ -173,8 +183,6 @@ void ldpc_decoder_neon::compute_check_to_var_msgs(span<log_likelihood_ratio> thi
     uint8x16_t mask_is_min_u8 = vceqq_s8(this_var_index_s8, min_var_to_check_index_neon.get_at(i_block));
     int8x16_t  check_to_var_s8 =
         vbslq_s8(mask_is_min_u8, second_min_var_to_check_neon.get_at(i_block), min_var_to_check_neon.get_at(i_block));
-    // Scale the message to compensate for approximations.
-    check_to_var_s8 = neon::scale_s8(check_to_var_s8, scaling_factor, log_likelihood_ratio::max().to_value_type());
 
     // Sign of the cumulative product of all variable-to-check messages but the current one (same as multiplying the
     // sign of all messages by the sign of the current one).

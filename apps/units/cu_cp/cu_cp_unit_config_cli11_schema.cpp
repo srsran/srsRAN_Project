@@ -48,7 +48,8 @@ static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& lo
 
 static void configure_cli11_pcap_args(CLI::App& app, cu_cp_unit_pcap_config& pcap_params)
 {
-  add_option(app, "--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e2ap_cu_cp_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")
+      ->capture_default_str();
   add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
   add_option(app, "--ngap_filename", pcap_params.ngap.filename, "N3 GTP-U PCAP file output path")
       ->capture_default_str();
@@ -538,7 +539,7 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_confi
 
 static void configure_cli11_e2_args(CLI::App& app, e2_config& e2_params)
 {
-  add_option(app, "--enable_cu_e2", e2_params.enable_unit_e2, "Enable DU E2 agent")->capture_default_str();
+  add_option(app, "--enable_cu_cp_e2", e2_params.enable_unit_e2, "Enable CU E2 agent")->capture_default_str();
   add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
   add_option(app, "--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
   add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
@@ -611,4 +612,7 @@ void srsran::autoderive_cu_cp_parameters_after_parsing(CLI::App& app, cu_cp_unit
       cell.gnb_id_bit_length = unit_cfg.gnb_id.bit_length;
     }
   }
+
+  // If CU CP E2 agent is disabled do not enable e2ap pcap for it.
+  unit_cfg.pcap_cfg.e2ap.enabled = unit_cfg.e2_cfg.enable_unit_e2 && unit_cfg.pcap_cfg.e2ap.enabled;
 }

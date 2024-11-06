@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../support/pusch/pusch_td_resource_indices.h"
-#include "ue.h"
+#include "../ue_context/ue.h"
 
 namespace srsran {
 

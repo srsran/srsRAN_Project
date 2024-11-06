@@ -32,6 +32,7 @@ struct cu_up_dlt_pcaps {
   std::unique_ptr<dlt_pcap> n3;
   std::unique_ptr<dlt_pcap> f1u;
   std::unique_ptr<dlt_pcap> e1ap;
+  std::unique_ptr<dlt_pcap> e2ap;
   void                      close()
   {
     n3.reset();
@@ -54,6 +55,9 @@ inline cu_up_dlt_pcaps create_cu_up_dlt_pcaps(const cu_up_unit_pcap_config&   pc
 
   pcaps.f1u = pcap_cfg.f1u.enabled ? create_gtpu_pcap(pcap_cfg.f1u.filename, exec_getter.get_executor("f1u_pcap_exec"))
                                    : create_null_dlt_pcap();
+
+  pcaps.e2ap = pcap_cfg.e2ap.enabled ? create_e2ap_pcap(pcap_cfg.e2ap.filename, exec_getter.get_executor("pcap_exec"))
+                                     : create_null_dlt_pcap();
 
   return pcaps;
 }

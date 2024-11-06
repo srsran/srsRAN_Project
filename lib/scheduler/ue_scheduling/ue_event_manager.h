@@ -24,7 +24,7 @@
 
 #include "../config/sched_config_manager.h"
 #include "../slicing/slice_scheduler.h"
-#include "ue.h"
+#include "../ue_context/ue.h"
 #include "ue_fallback_scheduler.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
@@ -38,6 +38,7 @@ class scheduler_event_logger;
 class uci_scheduler_impl;
 class cell_harq_manager;
 class srs_scheduler;
+class pdu_indication_pool;
 
 struct cell_creation_event {
   cell_resource_allocator& cell_res_grid;
@@ -90,8 +91,10 @@ private:
   class ue_dl_buffer_occupancy_manager;
 
   struct common_event_t {
-    du_ue_index_t           ue_index = MAX_NOF_DU_UES;
-    unique_function<void()> callback;
+    using callback_type = unique_function<void(), 64, true>;
+
+    du_ue_index_t ue_index = MAX_NOF_DU_UES;
+    callback_type callback;
 
     template <typename Callable>
     common_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
@@ -99,10 +102,12 @@ private:
     }
   };
   struct cell_event_t {
-    du_ue_index_t                   ue_index = MAX_NOF_DU_UES;
-    unique_function<void(ue_cell&)> callback;
-    const char*                     event_name;
-    bool                            warn_if_ignored;
+    using callback_type = unique_function<void(ue_cell&), 32, true>;
+
+    du_ue_index_t ue_index = MAX_NOF_DU_UES;
+    callback_type callback;
+    const char*   event_name;
+    bool          warn_if_ignored;
 
     template <typename Callable>
     cell_event_t(du_ue_index_t ue_index_, Callable&& c, const char* event_name_, bool log_warn_if_event_ignored) :
@@ -135,9 +140,6 @@ private:
                        std::optional<float>                   pucch_snr);
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
-  ue_repository&        ue_db;
-  srslog::basic_logger& logger;
-
   /// List of added and configured cells.
   struct du_cell {
     const cell_configuration* cfg            = nullptr;
@@ -150,6 +152,12 @@ private:
     cell_metrics_handler*     metrics        = nullptr;
     scheduler_event_logger*   ev_logger      = nullptr;
   };
+
+  ue_repository&        ue_db;
+  srslog::basic_logger& logger;
+
+  std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
+
   std::array<du_cell, MAX_NOF_DU_CELLS> du_cells{};
 
   /// Pending Events list per cell.

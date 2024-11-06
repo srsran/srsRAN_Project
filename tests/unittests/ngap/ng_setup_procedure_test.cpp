@@ -28,6 +28,30 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+/// Test the ng setup procedure timeout
+TEST_F(ngap_test, when_ng_setup_procedure_times_out_then_amf_not_connected)
+{
+  // Action 1: Launch NG setup procedure
+  test_logger.info("Launch ng setup request procedure...");
+  unsigned                                 max_setup_retries = 1;
+  async_task<ngap_ng_setup_result>         t                 = ngap->handle_ng_setup_request(max_setup_retries);
+  lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
+
+  // Status: AMF received NG Setup Request.
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
+
+  // Status: Fail NG setup procedure (AMF doesn't respond).
+  for (unsigned msec_elapsed = 0; msec_elapsed < 5000; ++msec_elapsed) {
+    ASSERT_FALSE(t.ready());
+    this->tick();
+  }
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(std::holds_alternative<ngap_ng_setup_failure>(t.get()));
+}
+
 /// Test successful ng setup procedure
 TEST_F(ngap_test, when_ng_setup_response_received_then_amf_connected)
 {

@@ -29,9 +29,11 @@
 
 namespace srsran {
 
+enum class e2_type_t { DU, CU_UP, CU_CP };
 /// \brief E2AP configuration
 struct e2ap_configuration {
-  gnb_id_t                   gnb_id = {0, 22};
+  e2_type_t                  e2_type = e2_type_t::DU;
+  gnb_id_t                   gnb_id  = {0, 22};
   std::string                plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
   std::optional<gnb_du_id_t> gnb_du_id;
   unsigned                   max_setup_retries = 5;

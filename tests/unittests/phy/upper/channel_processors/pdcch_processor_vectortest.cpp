@@ -66,12 +66,19 @@ protected:
       std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
       ASSERT_NE(prg_factory, nullptr);
 
+      std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+      ASSERT_NE(precoding_factory, nullptr);
+
+      std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+          create_resource_grid_mapper_factory(precoding_factory);
+      ASSERT_NE(rg_mapper_factory, nullptr);
+
       std::shared_ptr<pdcch_modulator_factory> modulator_factory =
-          create_pdcch_modulator_factory_sw(mod_factory, prg_factory);
+          create_pdcch_modulator_factory_sw(mod_factory, prg_factory, rg_mapper_factory);
       ASSERT_NE(modulator_factory, nullptr);
 
       std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_pdcch_factory =
-          create_dmrs_pdcch_processor_factory_sw(prg_factory);
+          create_dmrs_pdcch_processor_factory_sw(prg_factory, rg_mapper_factory);
       ASSERT_NE(dmrs_pdcch_factory, nullptr);
 
       std::shared_ptr<pdcch_processor_factory> factory =
@@ -103,19 +110,16 @@ TEST_P(PdcchProcessorFixture, FromVector)
   ASSERT_TRUE(validator->is_valid(test_case.config));
 
   // Prepare resource grid and resource grid mapper spies.
-  resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
-  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
+  resource_grid_writer_spy grid(max_ports, max_symb, max_prb);
 
   // Process.
-  processor->process(*mapper, test_case.config);
+  processor->process(grid, test_case.config);
 
   // Load output golden data
   const std::vector<resource_grid_writer_spy::expected_entry_t> expected = test_case.data.read();
 
-  // Tolerance: max BF16 error times sqrt(2), since we are taking the modulus.
-  constexpr float tolerance = M_SQRT2f32 / 256.0;
   // Assert resource grid entries.
-  grid.assert_entries(expected, tolerance);
+  grid.assert_entries(expected);
 }
 
 // Creates test suite that combines all possible parameters.

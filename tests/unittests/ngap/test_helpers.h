@@ -366,6 +366,11 @@ public:
     });
   }
 
+  void on_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) override
+  {
+    logger.error("DL non UE associated NRPPa transport failed. Cause: NRPPa transport messages not supported.");
+  }
+
   ue_index_t                                 last_ue = ue_index_t::invalid;
   ngap_init_context_setup_request            last_init_ctxt_setup_request;
   cu_cp_pdu_session_resource_setup_request   last_request;

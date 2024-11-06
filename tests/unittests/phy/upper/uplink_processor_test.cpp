@@ -23,7 +23,7 @@
 #include "../../../lib/phy/upper/uplink_processor_impl.h"
 #include "../support/prach_buffer_test_doubles.h"
 #include "channel_processors/prach_detector_test_doubles.h"
-#include "channel_processors/pucch_processor_test_doubles.h"
+#include "channel_processors/pucch/pucch_processor_test_doubles.h"
 #include "channel_processors/pusch/pusch_processor_test_doubles.h"
 #include "signal_processors/srs/srs_estimator_test_doubles.h"
 #include "upper_phy_rx_results_notifier_test_doubles.h"

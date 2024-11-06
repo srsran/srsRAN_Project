@@ -45,7 +45,7 @@ public:
 
 /// \brief Creates a generic channel equalizer factory.
 /// \param[in] type Selects the channel equalizer algorithm type.
-/// \return A generic chanel equalizer factory.
+/// \return A generic channel equalizer factory.
 std::shared_ptr<channel_equalizer_factory>
 create_channel_equalizer_generic_factory(channel_equalizer_algorithm_type type = channel_equalizer_algorithm_type::zf);
 

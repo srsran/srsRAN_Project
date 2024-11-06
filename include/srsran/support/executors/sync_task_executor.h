@@ -47,7 +47,7 @@ public:
     std::condition_variable cvar;
     bool                    done = false;
 
-    bool ret = get(executor).execute([&mutex, &cvar, &done, task = std::move(task)]() {
+    bool ret = get(executor).execute([&mutex, &cvar, &done, &task]() {
       task();
 
       mutex.lock();

@@ -51,9 +51,7 @@ void cu_up_application_unit_impl::on_loggers_registration()
 {
   register_cu_up_loggers(unit_cfg.loggers);
 }
-std::unique_ptr<srs_cu_up::cu_up_interface>
-
-cu_up_application_unit_impl::create_cu_up_unit(const cu_up_unit_dependencies& dependencies)
+cu_up_unit cu_up_application_unit_impl::create_cu_up_unit(const cu_up_unit_dependencies& dependencies)
 {
   return build_cu_up(unit_cfg, dependencies);
 }

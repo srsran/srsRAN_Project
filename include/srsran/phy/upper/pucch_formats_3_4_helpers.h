@@ -1,0 +1,134 @@
+/*
+ *
+ * Copyright 2021-2024 Software Radio Systems Limited
+ *
+ * This file is part of srsRAN.
+ *
+ * srsRAN is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * srsRAN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * A copy of the GNU Affero General Public License can be found in
+ * the LICENSE file in the top-level directory of this distribution
+ * and at http://www.gnu.org/licenses/.
+ *
+ */
+
+/// \file
+/// \brief Helper functions for PUCCH Format 3 and PUCCH Format 4.
+
+#pragma once
+
+#include "srsran/adt/bounded_integer.h"
+#include "srsran/phy/support/mask_types.h"
+#include "srsran/ran/pucch/pucch_constants.h"
+
+namespace srsran {
+
+/// \brief DM-RS symbol mask for PUCCH Format 3 and PUCCH Format 4.
+///
+/// \param[in] nof_symbols       Number of symbols assigned to PUCCH resource.
+/// \param[in] frequency_hopping Set to \c true if intra-slot frequency hopping is enabled for the PUCCH resource,
+/// set to \c false otherwise.
+/// \param[in] additional_dmrs   Whether \e additionalDMRS parameter is set for the PUCCH resource.
+/// \returns The symbol mask for symbols containing DM-RS for that configuration, as per TS38.211 Table 6.4.1.3.3.2-1.
+inline symbol_slot_mask get_pucch_formats_3_4_dmrs_symbol_mask(
+    bounded_integer<unsigned, pucch_constants::FORMAT3_MIN_NSYMB, pucch_constants::FORMAT3_MAX_NSYMB> nof_symbols,
+    bool                                                                                              frequency_hopping,
+    bool                                                                                              additional_dmrs)
+{
+  symbol_slot_mask mask(nof_symbols.value());
+
+  switch (nof_symbols.value()) {
+    case 4:
+      if (frequency_hopping) {
+        mask.set(0);
+        mask.set(2);
+      } else {
+        mask.set(1);
+      }
+      break;
+    case 5:
+      mask.set(0);
+      mask.set(3);
+      break;
+    case 6:
+    case 7:
+      mask.set(1);
+      mask.set(4);
+      break;
+    case 8:
+      mask.set(1);
+      mask.set(5);
+      break;
+    case 9:
+      mask.set(1);
+      mask.set(6);
+      break;
+    case 10:
+      if (additional_dmrs) {
+        mask.set(1);
+        mask.set(3);
+        mask.set(6);
+        mask.set(8);
+      } else {
+        mask.set(2);
+        mask.set(7);
+      }
+      break;
+    case 11:
+      if (additional_dmrs) {
+        mask.set(1);
+        mask.set(3);
+        mask.set(6);
+        mask.set(9);
+      } else {
+        mask.set(2);
+        mask.set(7);
+      }
+      break;
+    case 12:
+      if (additional_dmrs) {
+        mask.set(1);
+        mask.set(4);
+        mask.set(7);
+        mask.set(10);
+      } else {
+        mask.set(2);
+        mask.set(8);
+      }
+      break;
+    case 13:
+      if (additional_dmrs) {
+        mask.set(1);
+        mask.set(4);
+        mask.set(7);
+        mask.set(11);
+      } else {
+        mask.set(2);
+        mask.set(9);
+      }
+      break;
+    case 14:
+      if (additional_dmrs) {
+        mask.set(1);
+        mask.set(5);
+        mask.set(8);
+        mask.set(12);
+      } else {
+        mask.set(3);
+        mask.set(10);
+      }
+      break;
+  }
+
+  return mask;
+}
+
+} // namespace srsran

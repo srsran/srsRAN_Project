@@ -225,7 +225,7 @@ variables:
     TEST_MODE: coverage
     ENABLE_GCOV: "True"
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke relwithdeb:
   extends: .build_and_unit
@@ -236,7 +236,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke tsan:
   extends: .build_and_unit
@@ -248,7 +248,7 @@ variables:
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke rhel:
   extends: .build_and_unit
@@ -259,7 +259,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke archlinux:
   extends: .build_and_unit
@@ -271,7 +271,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke dpdk:
   extends: .build_and_unit
@@ -285,7 +285,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     DPDK_VERSION: "23.11.1_avx2"
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke valgrind:
   extends: .build_and_unit
@@ -296,7 +296,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: valgrind
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke avx512:
   extends: .build_and_unit
@@ -307,7 +307,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: x86-64-v4
-  tags: ["amd64-avx2-avx512"]
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
 
 .smoke arm:
   extends: .build_and_unit
@@ -318,7 +318,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: armv8-a
-  tags: ["arm64"]
+    INFRASTRUCTURE_TAG: arm64
 
 .smoke arm neon:
   extends: .build_and_unit
@@ -329,7 +329,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     MARCH: armv8.2-a+crypto+fp16+dotprod
-  tags: ["arm64"]
+    INFRASTRUCTURE_TAG: arm64
 
 # Combinations to use in schedules matrix
 
@@ -784,7 +784,7 @@ smoke asan:
     ENABLE_ASAN: "True"
     TEST_MODE: asan
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 # Packaging
 
@@ -805,7 +805,7 @@ package:
     DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
     MAKEFLAGS: -j${KUBERNETES_CPU_LIMIT}
     extraopts: -DMARCH=x86-64-v3
-  tags: ["amd64-avx2"]
+  tags: [amd64-avx2]
   parallel:
     matrix:
       - OS_VERSION: "22.04"
@@ -822,7 +822,7 @@ install-package:
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-  tags: ["amd64-avx2"]
+  tags: [amd64-avx2]
   script:
     - gnb --version
   parallel:
@@ -853,7 +853,7 @@ export on amd64:
     COMPILER: gcc
     TEST_MODE: none
     ENABLE_EXPORT: "True"
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
@@ -862,7 +862,8 @@ export on amd64:
 
 export on amd64 avx512:
   extends: export on amd64
-  tags: ["amd64-avx2-avx512"]
+  variables:
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
@@ -877,10 +878,10 @@ ubuntu-24.10 amd64 avx2:
       when: delayed
       start_in: 210 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: ubuntu-24.10
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -892,10 +893,10 @@ ubuntu-24.04 amd64 avx2:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: ubuntu-24.04
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -907,10 +908,10 @@ ubuntu-24.04 amd64 avx512:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: ubuntu-24.04
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -922,10 +923,10 @@ ubuntu-23.10 amd64 avx2:
       when: delayed
       start_in: 150 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: ubuntu-23.10
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -937,10 +938,10 @@ ubuntu-23.10 amd64 avx512:
       when: delayed
       start_in: 150 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: ubuntu-23.10
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -952,10 +953,10 @@ ubuntu-22.04 amd64 avx2:
       when: delayed
       start_in: 180 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: ubuntu-22.04
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -967,10 +968,10 @@ rhel-8 amd64 avx2:
       when: delayed
       start_in: 240 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: rhel-8
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -984,10 +985,10 @@ ubuntu-24.04 arm neon:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: ubuntu-24.04
     MARCH: armv8.2-a+crypto+fp16+dotprod
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -999,10 +1000,10 @@ ubuntu-23.10 arm neon:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: ubuntu-23.10
     MARCH: armv8.2-a+crypto+fp16+dotprod
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1022,7 +1023,7 @@ ubuntu dpdk:
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1046,10 +1047,10 @@ archlinux amd64 native:
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
-  tags: ["amd64"]
   variables:
     OS: archlinux-latest
     ENABLE_WERROR: "False"
+    INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1061,11 +1062,11 @@ archlinux amd64 avx2:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: archlinux-latest
     ENABLE_WERROR: "False"
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1075,11 +1076,11 @@ archlinux amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: archlinux-latest
     ENABLE_WERROR: "False"
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1091,10 +1092,10 @@ debian 12 amd64 native:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["amd64"]
   variables:
     OS: debian-12
     ENABLE_WERROR: "False"
+    INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1106,11 +1107,11 @@ debian 12 amd64 avx2:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: debian-12
     ENABLE_WERROR: "False"
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1122,11 +1123,11 @@ debian 12 amd64 avx512:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: debian-12
     ENABLE_WERROR: "False"
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1170,7 +1171,8 @@ debian 12 amd64 avx512:
 
 sanitizers amd64 native:
   extends: .weekly sanitizers
-  tags: ["amd64"]
+  variables:
+    INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
@@ -1195,7 +1197,7 @@ sanitizers amd64 avx2:
   extends: .weekly sanitizers
   variables:
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
@@ -1223,7 +1225,7 @@ sanitizers amd64 avx512:
   extends: .weekly sanitizers
   variables:
     MARCH: x86-64-v4
-  tags: ["amd64-avx2-avx512"]
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
@@ -1246,13 +1248,14 @@ sanitizers amd64 avx512:
 
 sanitizers arm native:
   extends: .weekly sanitizers
-  tags: ["arm64"]
+  variables:
+    INFRASTRUCTURE_TAG: arm64
 
 sanitizers arm neon:
   extends: .weekly sanitizers
   variables:
     MARCH: armv8.2-a+crypto+fp16+dotprod
-  tags: ["arm64"]
+    INFRASTRUCTURE_TAG: arm64
 
 # UHD Alternatives
 
@@ -1265,7 +1268,7 @@ build uhd alt:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
     MARCH: x86-64-v3
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - OS: ubuntu-24.10
@@ -1290,9 +1293,9 @@ ubuntu-24.10 amd64 native:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["amd64"]
   variables:
     OS: ubuntu-24.10
+    INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1304,10 +1307,10 @@ ubuntu-24.10 amd64 avx512:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: ubuntu-24.10
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1319,9 +1322,9 @@ ubuntu-24.10 arm native:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: ubuntu-24.10
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1333,10 +1336,10 @@ ubuntu-24.10 arm neon:
       when: delayed
       start_in: 90 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: ubuntu-24.10
     MARCH: armv8.2-a+crypto+fp16+dotprod
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1348,9 +1351,9 @@ ubuntu-24.04 amd64 native:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["amd64"]
   variables:
     OS: ubuntu-24.04
+    INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1362,9 +1365,9 @@ ubuntu-24.04 arm native:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: ubuntu-24.04
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1376,9 +1379,9 @@ ubuntu-23.10 amd64 native:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["amd64"]
   variables:
     OS: ubuntu-23.10
+    INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1390,9 +1393,9 @@ ubuntu-23.10 arm native:
       when: delayed
       start_in: 30 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: ubuntu-23.10
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1404,9 +1407,9 @@ ubuntu-22.04 amd64 native:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["amd64"]
   variables:
     OS: ubuntu-22.04
+    INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1418,10 +1421,10 @@ ubuntu-22.04 amd64 avx512:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: ubuntu-22.04
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1433,9 +1436,9 @@ ubuntu-22.04 arm native:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: ubuntu-22.04
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1447,10 +1450,10 @@ ubuntu-22.04 arm neon:
       when: delayed
       start_in: 60 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: ubuntu-22.04
     MARCH: armv8.2-a+crypto+fp16+dotprod
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1462,9 +1465,9 @@ rhel-8 amd64 native:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["amd64"]
   variables:
     OS: rhel-8
+    INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1476,10 +1479,10 @@ rhel-8 amd64 avx512:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: rhel-8
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1491,9 +1494,9 @@ rhel-8 arm native:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: rhel-8
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1505,10 +1508,10 @@ rhel-8 arm neon:
       when: delayed
       start_in: 120 minutes
   interruptible: false
-  tags: ["arm64"]
   variables:
     OS: rhel-8
     MARCH: armv8.2-a+crypto+fp16+dotprod
+    INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1529,10 +1532,10 @@ ubuntu-22.04 amd64 avx2 dpdk:
       when: delayed
       start_in: 240 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: ubuntu-22.04
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1545,10 +1548,10 @@ ubuntu-22.04 amd64 avx512 dpdk:
       when: delayed
       start_in: 270 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: ubuntu-22.04
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1561,10 +1564,10 @@ ubuntu-23.10 amd64 avx2 dpdk:
       when: delayed
       start_in: 300 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: ubuntu-23.10
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1577,10 +1580,10 @@ ubuntu-23.10 amd64 avx512 dpdk:
       when: delayed
       start_in: 330 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: ubuntu-23.10
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1593,10 +1596,10 @@ ubuntu-24.04 amd64 avx2 dpdk:
       when: delayed
       start_in: 360 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: ubuntu-24.04
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1609,10 +1612,10 @@ ubuntu-24.04 amd64 avx512 dpdk:
       when: delayed
       start_in: 390 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: ubuntu-24.04
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1625,10 +1628,10 @@ ubuntu-24.10 amd64 avx2 dpdk:
       when: delayed
       start_in: 420 minutes
   interruptible: false
-  tags: ["amd64-avx2"]
   variables:
     OS: ubuntu-24.10
     MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1641,10 +1644,10 @@ ubuntu-24.10 amd64 avx512 dpdk:
       when: delayed
       start_in: 450 minutes
   interruptible: false
-  tags: ["amd64-avx2-avx512"]
   variables:
     OS: ubuntu-24.10
     MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1656,7 +1659,6 @@ ubuntu-24.10 amd64 avx512 dpdk:
 
 check-affinity-manager-nocpu:
   image: ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu-24.04:${DOCKER_BUILDER_VERSION}
-  tags: ["amd64"]
   stage: build and unit tests
   needs:
     - job: "smoke release update cache"
@@ -1667,6 +1669,7 @@ check-affinity-manager-nocpu:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
   timeout: 15 minutes
+  tags: [amd64]
   script:
     - cd build/apps/gnb
     - |
@@ -1718,7 +1721,7 @@ basic package:
   variables:
     <<: *package_variables
     OS_VERSION: "24.04"
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
   needs: []
 
 basic tsan:
@@ -1745,7 +1748,7 @@ basic asan:
     TEST_MODE: none
     MARCH: x86-64-v3
     BUILD_ARGS: -DEXIT_TIMEOUT=60
-  tags: ["amd64-avx2"]
+    INFRASTRUCTURE_TAG: amd64-avx2
   after_script:
     - *build_after_script
   artifacts:
@@ -1785,7 +1788,7 @@ basic avx512 dpdk:
     MARCH: x86-64-v4
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: AUTO
-  tags: ["amd64-avx2-avx512"]
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   after_script:
     - *build_after_script
   artifacts:
@@ -1810,7 +1813,7 @@ custom build:
   interruptible: false # Web jobs are standalone
   variables:
     ENABLE_ZEROMQ: ""
-  tags: ["${INFRASTRUCTURE_TAG}"]
+    INFRASTRUCTURE_TAG: ${INFRASTRUCTURE_TAG}
   after_script:
     - *build_after_script
   artifacts:

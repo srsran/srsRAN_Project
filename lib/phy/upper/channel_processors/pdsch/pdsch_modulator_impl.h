@@ -36,6 +36,7 @@ class pdsch_modulator_impl : public pdsch_modulator
 private:
   std::unique_ptr<modulation_mapper>       modulator;
   std::unique_ptr<pseudo_random_generator> scrambler;
+  std::unique_ptr<resource_grid_mapper>    mapper;
 
   /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.1.1 Scrambling.
   ///
@@ -58,11 +59,11 @@ private:
   /// Implements TS 38.211 sections 7.3.1.4 Antenna port mapping, 7.3.1.5 Layer mapping, 7.3.1.5 Mapping to virtual
   /// resource blocks and 7.3.1.6 Mapping from virtual to physical resource blocks.
   ///
-  /// \param[out] mapper Resource grid mapping interface.
+  /// \param[out] grid   Resource grid writer interface.
   /// \param[in] data_re PDSCH resource elements.
   /// \param[in] config  PDSCH modulator configuration parameters.
   /// \note The number of layers and codewords is deduced from the parameters.
-  static void map(resource_grid_mapper& mapper, span<const ci8_t> data_re, float scaling, const config_t& config);
+  void map(resource_grid_writer& grid, span<const ci8_t> data_re, float scaling, const config_t& config);
 
   /// Temporary buffer for scrambled sequence.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_b_hat;
@@ -72,16 +73,17 @@ private:
 public:
   /// \brief Generic PDSCH modulator instance constructor.
   pdsch_modulator_impl(std::unique_ptr<modulation_mapper>       modulator_,
-                       std::unique_ptr<pseudo_random_generator> scrambler_) :
-    modulator(std::move(modulator_)), scrambler(std::move(scrambler_))
+                       std::unique_ptr<pseudo_random_generator> scrambler_,
+                       std::unique_ptr<resource_grid_mapper>    mapper_) :
+    modulator(std::move(modulator_)), scrambler(std::move(scrambler_)), mapper(std::move(mapper_))
   {
     srsran_assert(modulator, "Invalid modulator");
     srsran_assert(scrambler, "Invalid scrambler");
+    srsran_assert(mapper, "Invalid mapper");
   }
 
   // See interface for the documentation.
-  void
-  modulate(resource_grid_mapper& mapper, srsran::span<const bit_buffer> codewords, const config_t& config) override;
+  void modulate(resource_grid_writer& grid, srsran::span<const bit_buffer> codewords, const config_t& config) override;
 };
 
 } // namespace srsran

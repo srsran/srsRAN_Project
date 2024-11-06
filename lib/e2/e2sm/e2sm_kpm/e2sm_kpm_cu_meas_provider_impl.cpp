@@ -26,13 +26,9 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm;
 using namespace srsran;
 
-e2sm_kpm_cu_meas_provider_impl::e2sm_kpm_cu_meas_provider_impl() : logger(srslog::fetch_basic_logger("E2SM-KPM"))
-{
-  supported_metrics.emplace(
-      "PdcpReordDelayUl",
-      e2sm_kpm_supported_metric_t{
-          NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_cu_meas_provider_impl::get_pdcp_reordering_delay_ul});
-}
+e2sm_kpm_cu_meas_provider_impl::e2sm_kpm_cu_meas_provider_impl() : logger(srslog::fetch_basic_logger("E2SM-KPM")) {}
+
+e2sm_kpm_cu_cp_meas_provider_impl::e2sm_kpm_cu_cp_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl() {}
 
 bool e2sm_kpm_cu_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metric_defs)
 {
@@ -146,10 +142,51 @@ bool e2sm_kpm_cu_meas_provider_impl::get_meas_data(const asn1::e2sm::meas_type_c
   return (this->*metric_meas_getter_func)(label_info_list, ues, cell_global_id, items);
 }
 
+bool e2sm_kpm_cu_meas_provider_impl::handle_no_meas_data_available(
+    const std::vector<asn1::e2sm::ue_id_c>&        ues,
+    std::vector<asn1::e2sm::meas_record_item_c>&   items,
+    asn1::e2sm::meas_record_item_c::types::options value_type)
+{
+  if (ues.empty()) {
+    // Fill with zero if E2 Node Measurement (Report Style 1)
+    meas_record_item_c meas_record_item;
+    if (value_type == asn1::e2sm::meas_record_item_c::types::options::integer) {
+      meas_record_item.set_integer() = 0;
+    } else if (value_type == asn1::e2sm::meas_record_item_c::types::options::real) {
+      meas_record_item.set_real();
+      meas_record_item.real().value = 0;
+    } else if (value_type == asn1::e2sm::meas_record_item_c::types::options::not_satisfied) {
+      meas_record_item.set_not_satisfied();
+    } else {
+      meas_record_item.set_no_value();
+    }
+    items.push_back(meas_record_item);
+    return true;
+  }
+  return false;
+}
+
 float e2sm_kpm_cu_meas_provider_impl::bytes_to_kbits(float value)
 {
   constexpr unsigned nof_bits_per_byte = 8;
   return (nof_bits_per_byte * value / 1e3);
+}
+
+void e2sm_kpm_cu_meas_provider_impl::report_metrics(const pdcp_metrics_container& metrics)
+{
+  printf("report pdcp metrics %d\n", metrics.rx.reordering_delay_us);
+  ue_aggr_pdcp_metrics[metrics.ue_index].push_back(metrics);
+  if (ue_aggr_pdcp_metrics[metrics.ue_index].size() > max_pdcp_metrics) {
+    ue_aggr_pdcp_metrics[metrics.ue_index].pop_front();
+  }
+}
+
+e2sm_kpm_cu_up_meas_provider_impl::e2sm_kpm_cu_up_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl()
+{
+  supported_metrics.emplace(
+      "DRB.PdcpReordDelayUl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_cu_up_meas_provider_impl::get_pdcp_reordering_delay_ul});
 }
 
 bool e2sm_kpm_cu_meas_provider_impl::get_pdcp_reordering_delay_ul(const asn1::e2sm::label_info_list_l label_info_list,
@@ -158,5 +195,42 @@ bool e2sm_kpm_cu_meas_provider_impl::get_pdcp_reordering_delay_ul(const asn1::e2
                                                                   std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
+  if (ue_aggr_pdcp_metrics.empty()) {
+    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::real);
+  }
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.PDCP supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  if (ues.empty()) {
+    // E2 level measurements.
+    meas_record_item_c meas_record_item;
+    float              av_ue_reordering_delay_us = 0;
+    for (auto& pdcp_metric : ue_aggr_pdcp_metrics) {
+      int num_reordering_records = std::accumulate(
+          pdcp_metric.second.begin(),
+          pdcp_metric.second.end(),
+          0,
+          [](size_t sum, const pdcp_metrics_container& metric) { return sum + metric.rx.reordering_counter; });
+      int tot_reordering_delay_us = std::accumulate(
+          pdcp_metric.second.begin(),
+          pdcp_metric.second.end(),
+          0,
+          [](size_t sum, const pdcp_metrics_container& metric) { return sum + metric.rx.reordering_delay_us; });
+      if (num_reordering_records && tot_reordering_delay_us) {
+        av_ue_reordering_delay_us += (float)tot_reordering_delay_us / (float)num_reordering_records;
+      }
+    }
+    if (av_ue_reordering_delay_us) {
+      meas_record_item.set_real();
+      meas_record_item.real().value = (float)av_ue_reordering_delay_us / ue_aggr_pdcp_metrics.size();
+      items.push_back(meas_record_item);
+      meas_collected = true;
+    } else {
+      logger.warning("Invalid PDCP reordering delay value.");
+      return meas_collected;
+    }
+  }
   return meas_collected;
 }

@@ -24,6 +24,7 @@
 
 #include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/qos/five_qi.h"
 
 namespace srsran {
@@ -53,9 +54,8 @@ struct cu_cp_unit_f1u_config {
 
 /// QoS configuration.
 struct cu_up_unit_qos_config {
-  five_qi_t             five_qi       = uint_to_five_qi(9);
-  std::string           mode          = "am";
-  unsigned              rlc_sdu_queue = 4096;
+  five_qi_t             five_qi = uint_to_five_qi(9);
+  std::string           mode    = "am";
   cu_cp_unit_f1u_config f1u_cu_up;
 };
 
@@ -84,6 +84,8 @@ struct cu_up_unit_config {
   std::vector<cu_up_unit_qos_config> qos_cfg;
   /// Test mode.
   cu_up_unit_test_mode_config test_mode_cfg;
+  /// E2 configuration.
+  e2_config e2_cfg;
 };
 
 } // namespace srsran

@@ -27,32 +27,12 @@
 #include <memory>
 
 namespace srsran {
-struct worker_manager;
-class ru_uplink_plane_rx_symbol_notifier;
-class ru_timing_notifier;
-class ru_error_notifier;
+struct flexible_du_ru_config;
+struct flexible_du_ru_dependencies;
 
-namespace srs_du {
-struct du_cell_config;
-}
-
-/// Open Fronthaul RU factory configuration.
-struct ru_ofh_factory_config {
-  ru_ofh_unit_config                 ru_cfg;
-  unsigned                           max_processing_delay_slots;
-  span<const srs_du::du_cell_config> du_cells;
-};
-
-/// Open Fronthaul RU factory dependencies.
-struct ru_ofh_factory_dependencies {
-  worker_manager*                     workers         = nullptr;
-  ru_uplink_plane_rx_symbol_notifier* symbol_notifier = nullptr;
-  ru_timing_notifier*                 timing_notifier = nullptr;
-  ru_error_notifier*                  error_notifier  = nullptr;
-};
-
-/// Converts and returns the given gnb application configuration to a Radio Unit configuration.
-std::unique_ptr<radio_unit> create_ofh_radio_unit(const ru_ofh_factory_config& config,
-                                                  ru_ofh_factory_dependencies& dependencies);
+/// Creates an Open Fronthaul Radio Unit using the given configuration.
+std::unique_ptr<radio_unit> create_ofh_radio_unit(const ru_ofh_unit_config&          ru_cfg,
+                                                  const flexible_du_ru_config&       ru_config,
+                                                  const flexible_du_ru_dependencies& ru_dependencies);
 
 } // namespace srsran

@@ -23,10 +23,14 @@
 #include "srsran/du/du_cell_config_validation.h"
 #include "du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "srsran/asn1/rrc_nr/serving_cell.h"
+#include "srsran/du/du_update_config_helpers.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_frequency_mapping.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/ran/ssb_mapping.h"
 #include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include "srsran/scheduler/sched_consts.h"
@@ -708,6 +712,52 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
   return {};
 }
 
+static check_outcome check_prach_config(const du_cell_config& cell_cfg)
+{
+  CHECK_TRUE(cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.has_value(),
+             "Rach config common not present in UL BWP");
+
+  const rach_config_common& rach_cfg = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
+
+  const auto prach_cfg = prach_configuration_get(frequency_range::FR1,
+                                                 band_helper::get_duplex_mode(cell_cfg.dl_carrier.band),
+                                                 rach_cfg.rach_cfg_generic.prach_config_index);
+  CHECK_NEQ(prach_cfg.format, srsran::prach_format_type::invalid, "The PRACH format is invalid");
+
+  // Derive PRACH duration information.
+  // The parameter \c is_last_prach_occasion is arbitrarily set to false, as it doesn't affect the PRACH number of PRBs.
+  const bool                       is_last_prach_occasion = false;
+  const prach_preamble_information info =
+      is_long_preamble(prach_cfg.format)
+          ? get_prach_preamble_long_info(prach_cfg.format)
+          : get_prach_preamble_short_info(
+                prach_cfg.format,
+                to_ra_subcarrier_spacing(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs),
+                is_last_prach_occasion);
+  const unsigned prach_nof_prbs =
+      prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
+
+  const uint8_t prach_prb_stop =
+      rach_cfg.rach_cfg_generic.msg1_frequency_start + rach_cfg.rach_cfg_generic.msg1_fdm * prach_nof_prbs;
+
+  prb_interval prb_interval_no_pucch = config_helpers::find_largest_prb_interval_without_pucch(
+      cell_cfg.pucch_cfg, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+
+  // This is to preserve a guardband between the PUCCH and PRACH.
+  const unsigned pucch_to_prach_guardband = is_long_preamble(prach_cfg.format) ? 0U : 3U;
+
+  CHECK_TRUE(prach_prb_stop + pucch_to_prach_guardband <= prb_interval_no_pucch.stop(),
+             "With the given prach_frequency_start={}, the PRACH opportunities in prbs=[{}, {}) overlap with the PUCCH "
+             "resources/guardband in PRBs=[{}, {})",
+             rach_cfg.rach_cfg_generic.msg1_frequency_start,
+             rach_cfg.rach_cfg_generic.msg1_frequency_start,
+             prach_prb_stop,
+             prb_interval_no_pucch.stop() - pucch_to_prach_guardband,
+             cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+
+  return {};
+}
+
 check_outcome srs_du::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.pci, MAX_PCI, "cell PCI");
@@ -718,12 +768,16 @@ check_outcome srs_du::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_ssb_configuration(cell_cfg));
   HANDLE_ERROR(check_tdd_ul_dl_config(cell_cfg));
   const pucch_builder_params& pucch_cfg = cell_cfg.pucch_cfg;
-  HANDLE_ERROR(srs_du::pucch_parameters_validator(pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint(),
-                                                  pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint(),
-                                                  pucch_cfg.f0_or_f1_params,
-                                                  pucch_cfg.f2_params,
-                                                  cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
-                                                  pucch_cfg.max_nof_symbols));
+  HANDLE_ERROR(srs_du::pucch_parameters_validator(
+      pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * pucch_cfg.nof_cell_harq_pucch_res_sets +
+          pucch_cfg.nof_sr_resources,
+      pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() * pucch_cfg.nof_cell_harq_pucch_res_sets +
+          pucch_cfg.nof_csi_resources,
+      pucch_cfg.f0_or_f1_params,
+      pucch_cfg.f2_params,
+      cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+      pucch_cfg.max_nof_symbols));
+  HANDLE_ERROR(check_prach_config(cell_cfg));
   HANDLE_ERROR(config_validators::validate_csi_meas_cfg(cell_cfg.ue_ded_serv_cell_cfg, cell_cfg.tdd_ul_dl_cfg_common));
   HANDLE_ERROR(check_dl_config_dedicated(cell_cfg));
   HANDLE_ERROR(check_ul_config_dedicated(cell_cfg));

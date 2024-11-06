@@ -23,9 +23,9 @@
 #pragma once
 
 #include "bwp_configuration.h"
-#include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
+#include "srsran/ran/meas_gap_config.h"
 #include "srsran/ran/pdcch/downlink_preemption.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pdsch/pdsch_prb_bundling.h"
@@ -37,6 +37,7 @@
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tci.h"
+#include "srsran/ran/time_alignment_config.h"
 
 namespace srsran {
 
@@ -259,13 +260,16 @@ struct serving_cell_config {
   /// \c CSI-MeasConfig.
   std::optional<csi_meas_config> csi_meas_cfg;
   /// Timing Advance Group ID to which this cell belongs to.
-  tag_id_t tag_id;
+  time_alignment_group::id_t tag_id{0};
 };
 
-/// UE-dedicated configuration for serving cell, as per TS38.331.
+/// UE-dedicated configuration for serving cell.
 struct cell_config_dedicated {
-  serv_cell_index_t   serv_cell_idx;
+  serv_cell_index_t serv_cell_idx;
+  /// Serving Cell Configuration as per TS 38.331.
   serving_cell_config serv_cell_cfg;
+  /// Measurement Gap Configuration for the cell.
+  std::optional<meas_gap_config> meas_gap_cfg;
 };
 
 } // namespace srsran

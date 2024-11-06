@@ -43,4 +43,13 @@ mac_lc_config make_default_srb_mac_lc_config(lcid_t lcid);
 /// \brief Generates default DRB MAC Logical Channel configuration for DRBs.
 mac_lc_config make_default_drb_mac_lc_config();
 
+/// Returns the \c prioritized_bit_rate enum value greater than or equal to given bitrate in bit per second.
+prioritized_bit_rate get_pbr_ceil(uint64_t bitrate_bps);
+
+/// \brief Generates DRB MAC Logical Channel configuration for GBR DRBs.
+mac_lc_config make_gbr_drb_mac_lc_config(const gbr_qos_flow_information& gbr_qos_flow_info);
+
+/// \brief Generates DRB MAC Logical Channel configuration for non-GBR DRBs.
+mac_lc_config make_non_gbr_drb_mac_lc_config();
+
 } // namespace srsran

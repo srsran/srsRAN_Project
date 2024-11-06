@@ -5,7 +5,7 @@
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
 #include <string>

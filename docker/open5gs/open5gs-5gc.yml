@@ -146,6 +146,10 @@ smf:
     connect:
       - identity: pcrf.localdomain
         address: 127.0.0.9
+  security_indication:
+    # Uncomment to enable UP integrity protection
+    #integrity_protection_indication: preferred
+    #confidentiality_protection_indication: preferred
 
 amf:
   sbi:

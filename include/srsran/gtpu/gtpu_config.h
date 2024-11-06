@@ -49,9 +49,12 @@ struct gtpu_tunnel_ngu_config {
   } tx;
 };
 
+enum class nru_node { du, cu_up, invalid };
+
 /// \brief Configurable parameters for GTP-U NR-U tunnels
 struct gtpu_tunnel_nru_config {
   struct gtpu_tunnel_nru_rx_config {
+    nru_node    node = nru_node::invalid;
     gtpu_teid_t local_teid;
   } rx;
   struct gtpu_tunnel_nru_tx_config {
@@ -119,6 +122,29 @@ struct formatter<srsran::gtpu_tunnel_ngu_config> {
   }
 };
 
+//
+template <>
+struct formatter<srsran::nru_node> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::nru_node& node, FormatContext& ctx)
+  {
+    switch (node) {
+      case srsran::nru_node::du:
+        return format_to(ctx.out(), "du");
+      case srsran::nru_node::cu_up:
+        return format_to(ctx.out(), "cu_up");
+      default:
+        return format_to(ctx.out(), "invalid");
+    }
+  }
+};
+
 // GTP-U NR-U RX config
 template <>
 struct formatter<srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config> {
@@ -132,7 +158,7 @@ struct formatter<srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config> {
   auto format(const srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config& cfg, FormatContext& ctx)
 
   {
-    return format_to(ctx.out(), "local_teid={}", cfg.local_teid);
+    return format_to(ctx.out(), "node={} local_teid={}", cfg.node, cfg.local_teid);
   }
 };
 

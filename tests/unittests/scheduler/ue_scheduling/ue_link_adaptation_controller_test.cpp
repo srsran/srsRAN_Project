@@ -21,7 +21,7 @@
  */
 
 #include "lib/scheduler/support/mcs_calculator.h"
-#include "lib/scheduler/ue_scheduling/ue_link_adaptation_controller.h"
+#include "lib/scheduler/ue_context/ue_link_adaptation_controller.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>

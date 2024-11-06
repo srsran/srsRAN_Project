@@ -175,7 +175,7 @@ void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_
 
   // Schedule UE Context Setup Procedure.
   du_mng.get_ue_handler(du_ue_index)
-      .schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, ues, du_mng, du_ue_index));
+      .schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, ues, du_mng, du_ue_index, ctxt));
 }
 
 void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg)
@@ -289,7 +289,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   }
 
   // Forward SDU to lower layers.
-  srb_bearer->handle_pdu(msg->rrc_container.copy());
+  srb_bearer->handle_pdu(msg->rrc_container.copy(), msg->rrc_delivery_status_request_present);
 }
 
 void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_release_request& request)

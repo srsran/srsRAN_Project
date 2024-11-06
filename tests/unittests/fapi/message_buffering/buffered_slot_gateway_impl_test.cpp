@@ -208,15 +208,9 @@ static bool operator==(const ul_dci_request_message& lhs, const ul_dci_request_m
          lhs.pdus == rhs.pdus && lhs.is_last_message_in_slot == rhs.is_last_message_in_slot;
 }
 
-static bool operator==(const tlv_custom_payload& lhs, const tlv_custom_payload& rhs)
-{
-  return lhs.length == rhs.length && lhs.payload == rhs.payload;
-}
-
 static bool operator==(const tx_data_req_pdu& lhs, const tx_data_req_pdu& rhs)
 {
-  return lhs.pdu_length == rhs.pdu_length && lhs.pdu_index == rhs.pdu_index && lhs.cw_index == rhs.cw_index &&
-         lhs.tlv_custom == rhs.tlv_custom;
+  return lhs.pdu_index == rhs.pdu_index && lhs.cw_index == rhs.cw_index && lhs.pdu.get_buffer() == rhs.pdu.get_buffer();
 }
 
 static bool operator==(const tx_data_request_message& lhs, const tx_data_request_message& rhs)

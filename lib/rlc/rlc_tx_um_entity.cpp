@@ -131,11 +131,6 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
     return 0;
   }
 
-  // Multiple threads can read from the SDU queue and change the
-  // RLC UM TX state (current SDU, tx_next and next_so).
-  // As such we need to lock to access these variables.
-  std::lock_guard<std::mutex> lock(mutex);
-
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
     srsran_sanity_check(next_so == 0, "New TX SDU, but next_so={} > 0.", next_so);
@@ -321,8 +316,6 @@ void rlc_tx_um_entity::update_mac_buffer_state()
 // TS 38.322 v16.2.0 Sec 5.5
 uint32_t rlc_tx_um_entity::get_buffer_state()
 {
-  std::lock_guard<std::mutex> lock(mutex);
-
   // minimum bytes needed to tx all queued SDUs + each header
   rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
   uint32_t                        queue_bytes = queue_state.n_bytes + queue_state.n_sdus * head_len_full;

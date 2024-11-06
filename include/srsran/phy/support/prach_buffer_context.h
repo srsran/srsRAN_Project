@@ -37,17 +37,17 @@ namespace srsran {
 /// It contains the necessary parameters for the lower PHY to capture and demodulate the PRACH sequences. Also, it
 /// provides the upper PHY with the necessary information to perform the sequence detection.
 struct prach_buffer_context {
-  /// Sector identifier.
-  unsigned sector;
   /// Port identifier within the sector.
   static_vector<uint8_t, MAX_PORTS> ports;
   /// Slot context within the system frame.
   slot_point slot;
+  /// Sector identifier.
+  uint8_t sector;
   /// \brief OFDM symbol index within the slot that marks the start of the acquisition window for the first time-domain
   /// PRACH occasion.
   ///
   /// Here, OFDM symbol indexing assumes a subcarrier spacing equal to \c pusch_scs.
-  unsigned start_symbol;
+  uint8_t start_symbol;
   /// Preamble format.
   prach_format_type format;
   /// \brief Offset, in PRBs, between Point A and the PRB overlapping with the lowest RE of the first frequency-domain
@@ -55,39 +55,39 @@ struct prach_buffer_context {
   ///
   /// Corresponds to parameter \f$k_1/N_{\textup{sc}}^{\textup{RB}}\f$ in TS38.211 Section 5.3.2. The number of PRBs is
   /// computed assuming a subcarrier spacing equal to \c pusch_scs.
-  unsigned rb_offset;
+  uint16_t rb_offset;
   /// \brief Number of PRACH time-domain occasions within the slot.
   ///
   /// Corresponds to parameter \f$N_\textup{t}^\textup{RA,slot}\f$ as per TS38.211 Section 5.3.2. It is selected from
   /// TS38.211 Tables 6.3.3.2-2, 6.3.3.2-3 and 6.3.3.2-4.
   ///
   /// Possible values are from one to seven. Set to one for long preambles.
-  unsigned nof_td_occasions;
+  uint8_t nof_td_occasions;
   /// \brief Number of PRACH frequency-domain occasions for each of the time-domain occasion.
   ///
   /// Corresponds to the higher layer parameter \e msg1-FDM (TS38.331 Section 6.3.2, Information Element \e
   /// RACH-ConfigGeneric). Possible values are 1, 2, 4 and 8.
-  unsigned nof_fd_occasions;
+  uint8_t nof_fd_occasions;
   /// \brief Uplink resource grid size in PRBs.
   ///
   /// Corresponds to parameter \f$N_{grid}^{size,\mu}\f$ in TS38.211 Section 5.3.2. The number of PRBs is computed
   /// assuming a subcarrier spacing equal to \c pusch_scs.
-  unsigned nof_prb_ul_grid;
+  uint16_t nof_prb_ul_grid;
   /// PUSCH subcarrier spacing, parameter \f$\mu\f$ in TS38.211 Section 5.3.2.
   subcarrier_spacing pusch_scs;
   /// Root sequence index {0, ..., 837}.
-  unsigned root_sequence_index;
+  uint16_t root_sequence_index;
   /// Restricted set configuration.
   restricted_set_config restricted_set;
   /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 section 6.3.3.1. Range {0,
   /// ..., 15}.
-  unsigned zero_correlation_zone;
+  uint8_t zero_correlation_zone;
   /// Start of preamble logical index to monitor the PRACH occasions signaled in this slot. Range {0, ..., 63}.
-  unsigned start_preamble_index;
+  uint8_t start_preamble_index;
   /// \brief Number of preamble indices to monitor {1, ..., 64}.
   ///
   /// The sum <tt>start_preamble_index + nof_preamble_indices</tt> should not exceed 64.
-  unsigned nof_preamble_indices;
+  uint8_t nof_preamble_indices;
 };
 
 } // namespace srsran

@@ -39,15 +39,14 @@ static byte_buffer generate_rrc_container(uint32_t pdcp_sn, unsigned pdu_len)
       pdcp_sn_size::size12bits, true, pdcp_sn, pdu_len, test_rgen::uniform_int<uint8_t>());
 }
 
-gnb_du_served_cells_item_s
-srsran::test_helpers::generate_served_cells_item(nr_cell_identity nci, pci_t nrpci, unsigned tac)
+gnb_du_served_cells_item_s srsran::test_helpers::generate_served_cells_item(const served_cell_item_info& info)
 {
   gnb_du_served_cells_item_s served_cells_item;
   served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
-  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nci.value());
-  served_cells_item.served_cell_info.nr_pci              = nrpci;
+  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(info.nci.value());
+  served_cells_item.served_cell_info.nr_pci              = info.pci;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
-  served_cells_item.served_cell_info.five_gs_tac.from_number(tac);
+  served_cells_item.served_cell_info.five_gs_tac.from_number(info.tac);
 
   served_plmns_item_s served_plmn;
   served_plmn.plmn_id.from_string("00f110");
@@ -75,8 +74,8 @@ srsran::test_helpers::generate_served_cells_item(nr_cell_identity nci, pci_t nrp
   return served_cells_item;
 }
 
-f1ap_message
-srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, nr_cell_identity nci, pci_t pci, unsigned tac)
+f1ap_message srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t                               gnb_du_id,
+                                                             const std::vector<served_cell_item_info>& cells)
 {
   f1ap_message msg;
   msg.pdu.set_init_msg();
@@ -89,9 +88,11 @@ srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, nr_cell_i
   setup_req->gnb_du_name.from_string("srsDU");
   setup_req->gnb_du_rrc_version.latest_rrc_version.from_number(1);
   setup_req->gnb_du_served_cells_list_present = true;
-  setup_req->gnb_du_served_cells_list.resize(1);
-  setup_req->gnb_du_served_cells_list[0].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
-  setup_req->gnb_du_served_cells_list[0].value().gnb_du_served_cells_item() = generate_served_cells_item(nci, pci, tac);
+  setup_req->gnb_du_served_cells_list.resize(cells.size());
+  for (unsigned i = 0; i != cells.size(); ++i) {
+    setup_req->gnb_du_served_cells_list[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
+    setup_req->gnb_du_served_cells_list[i].value().gnb_du_served_cells_item() = generate_served_cells_item(cells[i]);
+  }
 
   return msg;
 }
@@ -184,7 +185,8 @@ static drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid)
 f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t                cu_ue_id,
                                                                    std::optional<gnb_du_ue_f1ap_id_t> du_ue_id,
                                                                    uint32_t                     rrc_container_pdcp_sn,
-                                                                   const std::vector<drb_id_t>& drbs_to_setup)
+                                                                   const std::vector<drb_id_t>& drbs_to_setup,
+                                                                   nr_cell_global_id_t          nr_cgi)
 {
   using namespace asn1::f1ap;
   f1ap_message msg;
@@ -198,6 +200,10 @@ f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1a
     dl_msg->gnb_du_ue_f1ap_id         = (unsigned)*du_ue_id;
   }
 
+  // spCell.
+  dl_msg->sp_cell_id.plmn_id = nr_cgi.plmn_id.to_bytes();
+  dl_msg->sp_cell_id.nr_cell_id.from_number(nr_cgi.nci.value());
+
   // SRB2.
   dl_msg->srbs_to_be_setup_list_present = true;
   dl_msg->srbs_to_be_setup_list.resize(1);
@@ -205,7 +211,7 @@ f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1a
   srbs_to_be_setup_item_s& srb2 = dl_msg->srbs_to_be_setup_list[0]->srbs_to_be_setup_item();
   srb2.srb_id                   = 2;
 
-  // drbs-to-be-setup
+  // drbs-to-be-setup.
   dl_msg->drbs_to_be_setup_list_present = drbs_to_setup.size() > 0;
   dl_msg->drbs_to_be_setup_list.resize(drbs_to_setup.size());
   unsigned count = 0;
@@ -413,6 +419,14 @@ static asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t
   drb_info.drb_qos.reflective_qos_attribute_present = true;
   drb_info.drb_qos.reflective_qos_attribute.value =
       qos_flow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
+  drb_info.flows_mapped_to_drb_list.resize(1);
+  drb_info.flows_mapped_to_drb_list[0].qos_flow_id = 0;
+  auto& qos_flow                                   = drb_info.flows_mapped_to_drb_list[0].qos_flow_level_qos_params;
+  auto& desc                                       = qos_flow.qos_characteristics.set_non_dyn_5qi();
+  desc.five_qi                                     = 8;
+  qos_flow.ngra_nalloc_retention_prio.pre_emption_cap.value = pre_emption_cap_opts::shall_not_trigger_pre_emption;
+  qos_flow.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
+      pre_emption_vulnerability_opts::not_pre_emptable;
   drb_info.snssai.sst.from_string("01");
   drb_info.snssai.sd.from_string("0027db");
   drb.rlc_mode.value                  = rlc_mode_opts::rlc_am;

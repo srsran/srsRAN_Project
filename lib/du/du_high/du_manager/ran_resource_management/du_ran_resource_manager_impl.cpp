@@ -92,6 +92,9 @@ du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_i
   // UE initialized PCell.
   // Note: In case of lack of RAN resource availability, the return will be error type.
   error_type<std::string> err = allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX);
+  if (not err.has_value()) {
+    logger.info("Failed to create a configuration for ue={}. Cause: {}", static_cast<unsigned>(ue_index), err.error());
+  }
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index),
                                       err.has_value() ? std::string{} : err.error()};
 }

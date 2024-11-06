@@ -29,9 +29,9 @@
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/gnb_du_id.h"
-#include "srsran/ran/lcid.h"
-#include "srsran/ran/nr_cell_identity.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
 
 namespace srsran {
@@ -40,14 +40,18 @@ struct f1ap_message;
 
 namespace test_helpers {
 
+struct served_cell_item_info {
+  nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value();
+  pci_t            pci = 0;
+  unsigned         tac = 7;
+};
+
 /// \brief Generate a dummy F1AP Served Cell Item.
-asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(nr_cell_identity nci, pci_t nrpci, unsigned tac = 7);
+asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(const served_cell_item_info& info);
 
 /// \brief Generates dummy F1AP SETUP REQUEST message.
-f1ap_message generate_f1_setup_request(gnb_du_id_t      gnb_du_id = int_to_gnb_du_id(0x11),
-                                       nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value(),
-                                       pci_t            pci = 0,
-                                       unsigned         tac = 7);
+f1ap_message generate_f1_setup_request(gnb_du_id_t                               gnb_du_id = int_to_gnb_du_id(0x11),
+                                       const std::vector<served_cell_item_info>& cells     = {served_cell_item_info{}});
 
 /// \brief Generates dummy F1 SETUP RESPONSE message based on the request.
 f1ap_message generate_f1_setup_response(const f1ap_message& f1_setup_request);
@@ -62,7 +66,8 @@ f1ap_message generate_f1_removal_response(const f1ap_message& f1_removal_request
 f1ap_message create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t                cu_ue_id,
                                              std::optional<gnb_du_ue_f1ap_id_t> du_ue_id,
                                              uint32_t                           rrc_container_pdcp_sn,
-                                             const std::vector<drb_id_t>&       drbs_to_setup);
+                                             const std::vector<drb_id_t>&       drbs_to_setup,
+                                             nr_cell_global_id_t                nr_cgi);
 
 /// \brief Generates F1AP Initial UL RRC TRANSFER message.
 f1ap_message create_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,

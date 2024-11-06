@@ -98,6 +98,7 @@ smoke zmq:
     PYTEST_ARGS: "-x"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
     E2E_LOG_LEVEL: "info"
+  timeout: 1 hour
   needs:
     - job: "smoke relwithdeb cached"
       artifacts: true
@@ -267,6 +268,7 @@ amari 32UE 2x2 mimo:
 
 cudu amari 8UE:
   extends: .zmq
+  timeout: 1h
   variables:
     TESTBED: zmq_cudu
     MARKERS: "zmq and not smoke"
@@ -277,6 +279,7 @@ cudu amari 8UE:
 
 cudu amari 32UE:
   extends: .zmq
+  timeout: 1h
   variables:
     TESTBED: zmq_cudu
     MARKERS: "zmq and not smoke"
@@ -287,6 +290,7 @@ cudu amari 32UE:
 
 cudu amari 64UE:
   extends: .zmq
+  timeout: 2h
   variables:
     TESTBED: zmq_cudu
     MARKERS: "zmq and not smoke"
@@ -479,9 +483,10 @@ viavi:
     - *retina-needs
   parallel:
     matrix:
-      - KEYWORDS: [
+      - KEYWORDS:
+          [
             "ideal and 1UE",
-            "ideal and 32UE and not experimental and not dddsu",
+            "ideal and 32UE and not experimental",
             "fading and 1UE",
             "fading and 32UE",
             "birth-death and 1UE",
@@ -499,19 +504,6 @@ viavi-extended:
       artifacts: true
     - *retina-needs
 
-viavi-dddsu:
-  extends: .viavi
-  needs:
-    - job: "basic avx512 dpdk"
-      artifacts: true
-    - *retina-needs
-  allow_failure: true
-  parallel:
-    matrix:
-      - KEYWORDS: [
-            "dddsu",
-          ]
-
 viavi-debug:
   extends: .viavi
   variables:
@@ -524,8 +516,8 @@ viavi-debug:
 ################################################################################
 # Garbage collector
 ################################################################################
-
-.demolition:
+retina setup:
+  stage: ci
   extends:
     - .prepare_test
   rules:
@@ -540,17 +532,5 @@ viavi-debug:
   script:
     - |
       retina-garbage-collector --mode demolition
-
-retina setup:
-  stage: ci
-  extends: .demolition
   needs:
     - *retina-needs
-
-retina post:
-  stage: .post
-  extends: .demolition
-  dependencies:
-    - load retina variables
-  when: manual
-  allow_failure: true

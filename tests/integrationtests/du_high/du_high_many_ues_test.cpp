@@ -46,6 +46,11 @@ static du_high_env_sim_params create_custom_params()
   params.pucch_cfg->nof_ue_pucch_f0_or_f1_res_harq = 8;
   params.pucch_cfg->nof_ue_pucch_f2_res_harq       = 8;
   params.pucch_cfg->nof_sr_resources               = 1;
+  // Set the PRACH frequency start to avoid PRACH collisions with the PUCCH on the upper RBs of the BWP (this would
+  // trigger an error and abort the test).
+  // NOTE: this results in the PRACH overlapping with the PUCCH resources on the lower RBs of the BWP, but it doesn't
+  // trigger any error, as it the parameter was user-defined (which skips the validator for prach_frequency_start).
+  params.prach_frequency_start.emplace(3U);
   return params;
 }
 

@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/scheduler/ue_scheduling/ue_cell.h"
+#include "lib/scheduler/ue_context/ue_cell.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include <gtest/gtest.h>
 

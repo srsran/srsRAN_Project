@@ -22,12 +22,12 @@
 
 #include "ptrs_pdsch_generator_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/ran/precoding/precoding_weight_matrix_formatters.h"
 #include "srsran/ran/ptrs/ptrs_pattern.h"
 
 using namespace srsran;
 
-void ptrs_pdsch_generator_generic_impl::generate(resource_grid_mapper&                      mapper,
-                                                 const ptrs_pdsch_generator::configuration& config)
+void ptrs_pdsch_generator_generic_impl::generate(resource_grid_writer& grid, const configuration& config)
 {
   // Get the number of ports used for PT-RS: it is equal to the number of layers used for the PDSCH transmission.
   unsigned nof_ports = config.precoding.get_nof_layers();
@@ -118,6 +118,6 @@ void ptrs_pdsch_generator_generic_impl::generate(resource_grid_mapper&          
     map_pattern.re_mask.set(pattern.re_offset[0]);
 
     // Map sequence in the resource grid.
-    mapper.map(sequence, map_pattern, port_precoding);
+    mapper->map(grid, sequence, map_pattern, port_precoding);
   }
 }

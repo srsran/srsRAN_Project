@@ -22,7 +22,7 @@
 
 #include "ssb_processor_impl.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

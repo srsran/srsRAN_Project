@@ -24,9 +24,9 @@
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/dynlink_manager.h"
-#include "srsran/support/event_tracing.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
 
@@ -68,9 +68,9 @@
 #include "apps/units/cu_up/cu_up_application_unit.h"
 #include "apps/units/cu_up/cu_up_unit_config.h"
 #include "apps/units/cu_up/pcap_factory.h"
-#include "apps/units/flexible_du/du_high/du_high_config.h"
-#include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
+#include "apps/units/flexible_du/o_du_high/du_high/du_high_config.h"
+#include "apps/units/flexible_du/o_du_high/du_high/pcap_factory.h"
 
 #include <atomic>
 #include <yaml-cpp/node/convert.h>
@@ -372,38 +372,50 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
-  // Create CU-CP dependencies.
-  cu_cp_build_dependencies cu_cp_dependencies;
-  cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
-  cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.timers         = cu_timers;
-  cu_cp_dependencies.ngap_pcap      = cu_cp_dlt_pcaps.ngap.get();
-  cu_cp_dependencies.broker         = epoll_broker.get();
+  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+  std::vector<app_services::metrics_config> metrics_configs;
 
   // Instantiate E2AP client gateways.
   std::unique_ptr<e2_connection_client> e2_gw_du =
       create_du_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *du_pcaps.e2ap);
-  std::unique_ptr<e2_connection_client> e2_gw_cu =
+  std::unique_ptr<e2_connection_client> e2_gw_cu_cp =
       create_cu_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap);
+  std::unique_ptr<e2_connection_client> e2_gw_cu_up =
+      create_cu_e2_client_gateway(gnb_cfg.e2_cfg, *epoll_broker, *cu_up_dlt_pcaps.e2ap);
+
+  // Create CU-CP dependencies.
+  cu_cp_build_dependencies cu_cp_dependencies;
+  cu_cp_dependencies.cu_cp_executor   = workers.cu_cp_exec;
+  cu_cp_dependencies.cu_cp_e2_exec    = workers.cu_e2_exec;
+  cu_cp_dependencies.timers           = cu_timers;
+  cu_cp_dependencies.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
+  cu_cp_dependencies.broker           = epoll_broker.get();
+  cu_cp_dependencies.metrics_notifier = &metrics_notifier_forwarder;
+  cu_cp_dependencies.e2_gw            = e2_gw_cu_cp.get();
 
   // create CU-CP.
   auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
   srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
+  metrics_configs                      = std::move(cu_cp_obj_and_cmds.metrics);
 
-  // Create and start CU-UP
+  // Create CU-UP
   cu_up_unit_dependencies cu_up_unit_deps;
   cu_up_unit_deps.workers          = &workers;
+  cu_up_unit_deps.cu_up_e2_exec    = workers.cu_e2_exec;
   cu_up_unit_deps.e1ap_conn_client = e1_gw.get();
   cu_up_unit_deps.f1u_gateway      = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();
   cu_up_unit_deps.timers           = cu_timers;
   cu_up_unit_deps.io_brk           = epoll_broker.get();
+  cu_up_unit_deps.e2_gw            = e2_gw_cu_up.get();
+  cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
-
+  auto cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
+  for (auto& metric : cu_up_obj.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
   // Instantiate one DU.
-  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
-  du_unit_dependencies                      du_dependencies;
+  du_unit_dependencies du_dependencies;
   du_dependencies.workers            = &workers;
   du_dependencies.f1c_client_handler = f1c_gw.get();
   du_dependencies.f1u_gw             = f1u_conn->get_f1u_du_gateway();
@@ -414,13 +426,16 @@ int main(int argc, char** argv)
   du_dependencies.json_sink          = &json_sink;
   du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
-  auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies);
+  auto du_inst_and_cmds = du_app_unit->create_flexible_du_unit(du_dependencies, gnb_cfg.du_multicell_enabled);
 
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
-  // Only DU has metrics now. When CU returns metrics, create the vector of metrics as it is done for the commands.
+  for (auto& metric : du_inst_and_cmds.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
+
   app_services::metrics_manager metrics_mngr(
-      srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, du_inst_and_cmds.metrics);
+      srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, metrics_configs);
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
@@ -449,7 +464,7 @@ int main(int argc, char** argv)
   // Connect F1-C to CU-CP and start listening for new F1-C connection requests.
   f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
-  cu_up_obj->start();
+  cu_up_obj.unit->start();
 
   // Start processing.
   du_inst.get_power_controller().start();
@@ -466,7 +481,7 @@ int main(int argc, char** argv)
   du_inst.get_power_controller().stop();
 
   // Stop CU-UP activity.
-  cu_up_obj->stop();
+  cu_up_obj.unit->stop();
 
   // Stop CU-CP activity.
   cu_cp_obj.stop();

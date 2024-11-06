@@ -57,7 +57,7 @@ enum class csi_report_quantities {
   other
 };
 
-/// Collects Chanel State Information (CSI) report configuration parameters.
+/// Collects Channel State Information (CSI) report configuration parameters.
 struct csi_report_configuration {
   /// \brief Number of CSI-RS resources in the corresponding resource set.
   ///

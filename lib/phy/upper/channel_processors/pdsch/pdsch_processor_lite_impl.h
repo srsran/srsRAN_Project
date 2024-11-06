@@ -27,12 +27,11 @@
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsran/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/srsvec/bit.h"
 
 namespace srsran {
 
@@ -107,32 +106,33 @@ public:
                             std::unique_ptr<ldpc_rate_matcher>       rate_matcher_,
                             std::unique_ptr<pseudo_random_generator> scrambler_,
                             std::unique_ptr<modulation_mapper>       modulator_,
-                            std::unique_ptr<dmrs_pdsch_processor>    dmrs_) :
+                            std::unique_ptr<dmrs_pdsch_processor>    dmrs_,
+                            std::unique_ptr<ptrs_pdsch_generator>    ptrs_,
+                            std::unique_ptr<resource_grid_mapper>    mapper_) :
     segmenter(std::move(segmenter_)),
     encoder(std::move(encoder_)),
     rate_matcher(std::move(rate_matcher_)),
     scrambler(std::move(scrambler_)),
     modulator(std::move(modulator_)),
     dmrs(std::move(dmrs_)),
+    ptrs(std::move(ptrs_)),
+    mapper(std::move(mapper_)),
     subprocessor(*segmenter, *encoder, *rate_matcher, *scrambler, *modulator)
   {
     srsran_assert(segmenter != nullptr, "Invalid segmenter pointer.");
     srsran_assert(scrambler != nullptr, "Invalid scrambler pointer.");
     srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+    srsran_assert(ptrs != nullptr, "Invalid ptrs pointer.");
+    srsran_assert(mapper != nullptr, "Invalid resource grid mapper pointer.");
   }
 
   // See interface for documentation.
-  void process(resource_grid_mapper&                                        mapper,
-               pdsch_processor_notifier&                                    notifier,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override;
+  void process(resource_grid_writer&                                           grid,
+               pdsch_processor_notifier&                                       notifier,
+               static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+               const pdu_t&                                                    pdu) override;
 
 private:
-  /// \brief Processes DM-RS.
-  /// \param[out] mapper Resource grid mapper interface.
-  /// \param[in]  pdu Necessary parameters to process the DM-RS.
-  void process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu);
-
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_tx> segmenter;
   /// Pointer to an LDPC encoder.
@@ -145,6 +145,10 @@ private:
   std::unique_ptr<modulation_mapper> modulator;
   /// Pointer to DM-RS processor.
   std::unique_ptr<dmrs_pdsch_processor> dmrs;
+  /// Pointer to PT-RS generator.
+  std::unique_ptr<ptrs_pdsch_generator> ptrs;
+  /// Pointer to resource grid mapper.
+  std::unique_ptr<resource_grid_mapper> mapper;
   /// Internal block processor.
   pdsch_block_processor subprocessor;
 };

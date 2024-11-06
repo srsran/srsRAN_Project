@@ -52,10 +52,12 @@ public:
   /// \param[in] executor_             Asynchronous task executor.
   pdsch_processor_concurrent_impl(std::shared_ptr<codeblock_processor_pool>  cb_processor_pool_,
                                   std::unique_ptr<pseudo_random_generator>   scrambler_,
+                                  std::unique_ptr<resource_grid_mapper>      mapper_,
                                   std::shared_ptr<pdsch_dmrs_generator_pool> dmrs_generator_pool_,
                                   std::shared_ptr<pdsch_ptrs_generator_pool> ptrs_generator_pool_,
                                   task_executor&                             executor_) :
     scrambler(std::move(scrambler_)),
+    mapper(std::move(mapper_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
     dmrs_generator_pool(std::move(dmrs_generator_pool_)),
     ptrs_generator_pool(std::move(ptrs_generator_pool_)),
@@ -64,40 +66,29 @@ public:
     srsran_assert(scrambler, "Invalid scrambler pointer.");
     srsran_assert(cb_processor_pool, "Invalid CB processor pool pointer.");
     srsran_assert(dmrs_generator_pool, "Invalid DM-RS pointer.");
+    srsran_assert(ptrs_generator_pool, "Invalid PT-RS pointer.");
   }
 
   // See interface for documentation.
-  void process(resource_grid_mapper&                                        mapper,
-               pdsch_processor_notifier&                                    notifier,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override;
+  void process(resource_grid_writer&                                           grid,
+               pdsch_processor_notifier&                                       notifier,
+               static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+               const pdu_t&                                                    pdu) override;
 
 private:
-  /// \brief Computes the number of RE used for mapping PDSCH data.
-  ///
-  /// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.
-  ///
-  /// \param[in] pdu Describes a PDSCH transmission.
-  /// \return The number of resource elements.
-  static unsigned compute_nof_data_re(const pdu_t& pdu);
-
   /// Saves process() parameters for future uses during an asynchronous execution.
-  void save_inputs(resource_grid_mapper&                                        mapper,
-                   pdsch_processor_notifier&                                    notifier,
-                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                   const pdu_t&                                                 pdu);
+  void save_inputs(resource_grid_writer&                                           grid,
+                   pdsch_processor_notifier&                                       notifier,
+                   static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+                   const pdu_t&                                                    pdu);
 
   /// Creates code block processing batches and starts the asynchronous processing.
   void fork_cb_batches();
 
-  /// Processes PDSCH DM-RS.
-  void process_dmrs();
-
-  /// Processes PDSCH PT-RS.
-  void process_ptrs();
-
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
+  /// Resource grid mapper.
+  std::unique_ptr<resource_grid_mapper> mapper;
   /// Pool of code block processors.
   std::shared_ptr<codeblock_processor_pool> cb_processor_pool;
   /// DM-RS processor.
@@ -107,9 +98,9 @@ private:
   /// Asynchronous task executor.
   task_executor& executor;
 
-  resource_grid_mapper*     mapper;
+  resource_grid_writer*     grid;
   pdsch_processor_notifier* notifier;
-  span<const uint8_t>       data;
+  shared_transport_block    data;
   pdsch_processor::pdu_t    config;
 
   /// Transport block size of the current transmission.

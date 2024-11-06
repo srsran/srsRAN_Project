@@ -22,7 +22,7 @@
 
 #include "crc_calculator_lut_impl.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 #if __SSE4_1__
 #include <immintrin.h>
@@ -58,26 +58,26 @@ crc_calculator_lut_impl::crc_table_s::crc_table_s(unsigned polynom_, unsigned or
 }
 
 crc_calculator_lut_impl::crc_calculator_lut_impl(crc_generator_poly poly_) :
-  table(crc_tables.at(poly_)), order(table.order), crcmask(table.crcmask), crc(0), poly(poly_)
+  table(crc_tables.at(poly_)), order(table.order), crcmask(table.crcmask), poly(poly_)
 {
   // Do nothing
 }
 
-crc_calculator_checksum_t srsran::crc_calculator_lut_impl::calculate_byte(span<const uint8_t> input)
+crc_calculator_checksum_t srsran::crc_calculator_lut_impl::calculate_byte(span<const uint8_t> input) const
 {
-  reset();
+  uint32_t crc = 0;
 
   // For each byte
   for (uint8_t byte : input) {
-    put_byte(byte);
+    crc = put_byte(crc, byte);
   }
 
-  return get_checksum();
+  return get_checksum(crc);
 }
 
-crc_calculator_checksum_t crc_calculator_lut_impl::calculate_bit(srsran::span<const uint8_t> input)
+crc_calculator_checksum_t crc_calculator_lut_impl::calculate_bit(srsran::span<const uint8_t> input) const
 {
-  reset();
+  uint32_t crc = 0;
 
   int a = 0;
 
@@ -101,7 +101,7 @@ crc_calculator_checksum_t crc_calculator_lut_impl::calculate_bit(srsran::span<co
 #else  // __SSE4_1__
     uint8_t byte = (uint8_t)(srsvec::bit_pack(pter, 8) & 0xff);
 #endif // __SSE4_1__
-    put_byte(byte);
+    crc = put_byte(crc, byte);
   }
 
   for (unsigned i = nbytes; i < nbytes + a; i++) {
@@ -109,21 +109,22 @@ crc_calculator_checksum_t crc_calculator_lut_impl::calculate_bit(srsran::span<co
     for (unsigned k = 0; k < res8; k++) {
       byte |= (uint8_t)((input[i * 8 + k]) << (7U - k));
     }
-    put_byte(byte);
+    crc = put_byte(crc, byte);
   }
 
-  crc = (uint32_t)get_checksum();
+  crc = (uint32_t)get_checksum(crc);
 
   // Reverse CRC res8 positions
   if (a == 1) {
-    reversecrcbit(8 - res8);
+    crc = reversecrcbit(crc, 8 - res8);
   }
 
-  return get_checksum();
+  return get_checksum(crc);
 }
-crc_calculator_checksum_t crc_calculator_lut_impl::calculate(const bit_buffer& input)
+crc_calculator_checksum_t crc_calculator_lut_impl::calculate(const bit_buffer& input) const
 {
-  reset();
+  // reset();
+  uint32_t crc = 0;
 
   // Pack bits into bytes.
   unsigned nbytes = input.size() / 8;
@@ -132,21 +133,21 @@ crc_calculator_checksum_t crc_calculator_lut_impl::calculate(const bit_buffer& i
   // Extract and calculate CRC for each byte.
   for (unsigned i_byte = 0; i_byte != nbytes; ++i_byte) {
     uint8_t byte = input.get_byte(i_byte);
-    put_byte(byte);
+    crc          = put_byte(crc, byte);
   }
 
   // Process remainder bits.
   if (res8 > 0) {
     uint8_t remainder = input.extract(nbytes * 8, res8);
-    put_byte(remainder << (8 - res8));
+    crc               = put_byte(crc, remainder << (8 - res8));
   }
 
-  crc = (uint32_t)get_checksum();
+  crc = (uint32_t)get_checksum(crc);
 
   if (res8 > 0) {
     // Reverse CRC res8 positions
-    reversecrcbit(8 - res8);
+    crc = reversecrcbit(crc, 8 - res8);
   }
 
-  return get_checksum();
+  return get_checksum(crc);
 }

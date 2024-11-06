@@ -41,13 +41,13 @@ public:
   crc_calculator_clmul_impl(crc_generator_poly poly_) : poly(poly_), crc_calc_lut(poly) {}
 
   // See interface for documentation.
-  crc_calculator_checksum_t calculate_byte(span<const uint8_t> data) override;
+  crc_calculator_checksum_t calculate_byte(span<const uint8_t> data) const override;
 
   // See interface for documentation.
-  crc_calculator_checksum_t calculate_bit(span<const uint8_t> data) override;
+  crc_calculator_checksum_t calculate_bit(span<const uint8_t> data) const override;
 
   // See interface for documentation.
-  crc_calculator_checksum_t calculate(const bit_buffer& data) override;
+  crc_calculator_checksum_t calculate(const bit_buffer& data) const override;
 
   // See interface for documentation.
   crc_generator_poly get_generator_poly() const override { return poly; };

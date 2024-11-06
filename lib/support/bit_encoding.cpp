@@ -21,7 +21,7 @@
  */
 
 #include "srsran/support/bit_encoding.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

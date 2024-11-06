@@ -24,7 +24,7 @@
 #include "srsran/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include <gtest/gtest.h>
 #include <random>
 

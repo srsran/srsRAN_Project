@@ -200,6 +200,7 @@ void srsran_scheduler_adapter::handle_ul_phr_indication(const mac_phr_ce_info& p
   ind.cell_index = phr.cell_index;
   ind.ue_index   = phr.ue_index;
   ind.rnti       = phr.rnti;
+  ind.slot_rx    = phr.slot_rx;
   ind.phr        = phr.phr;
   sched_impl->handle_ul_phr_indication(ind);
 }

@@ -22,31 +22,24 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_unit.h"
+#include "apps/units/flexible_du/split_helpers/flexible_du_factory.h"
 #include "split_8_du_unit_config.h"
 
 namespace srsran {
 
-namespace app_services {
-class metrics_notifier;
-}
+class split8_du_factory : public flexible_du_factory
+{
+  const split_8_du_unit_config& unit_config;
 
-class e2_connection_client;
-class f1ap_message_notifier;
-class console_helper;
-class metrics_log_helper;
-class metrics_plotter_json;
-class metrics_plotter_stdout;
-class mac_pcap;
-class timer_manager;
-class upper_phy_rg_gateway;
-class upper_phy_rx_symbol_request_notifier;
+public:
+  explicit split8_du_factory(const split_8_du_unit_config& config_) :
+    flexible_du_factory({config_.odu_high_cfg, config_.du_low_cfg}), unit_config(config_)
+  {
+  }
 
-namespace srs_du {
-class f1c_connection_client;
-class f1u_du_gateway;
-} // namespace srs_du
-
-du_unit create_split_8_du(const split_8_du_unit_config& du_8_cfg, const du_unit_dependencies& dependencies);
+private:
+  std::unique_ptr<radio_unit> create_radio_unit(const flexible_du_ru_config&       ru_config,
+                                                const flexible_du_ru_dependencies& ru_dependencies) override;
+};
 
 } // namespace srsran

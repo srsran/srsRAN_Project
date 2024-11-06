@@ -38,16 +38,16 @@ uci_cell_decoder::uci_cell_decoder(const sched_cell_configuration_request_messag
 static auto convert_mac_harq_bits_to_sched_harq_values(bool harq_status,
                                                        const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
 {
-  static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> ret(
-      payload.size(), harq_status ? mac_harq_ack_report_status::nack : mac_harq_ack_report_status::dtx);
+  harq_ack_report_list harqs(payload.size(),
+                             harq_status ? mac_harq_ack_report_status::nack : mac_harq_ack_report_status::dtx);
   if (harq_status) {
-    for (unsigned i = 0, e = ret.size(); i != e; ++i) {
+    for (unsigned i = 0, e = harqs.size(); i != e; ++i) {
       if (payload.test(i)) {
-        ret[i] = srsran::mac_harq_ack_report_status::ack;
+        harqs[i] = srsran::mac_harq_ack_report_status::ack;
       }
     }
   }
-  return ret;
+  return harqs;
 }
 
 static csi_report_data decode_csi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
@@ -146,7 +146,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
             convert_mac_harq_bits_to_sched_harq_values(pusch->harq_info.value().is_valid, pusch->harq_info->payload);
 
         // Report ACK for RLF detection purposes.
-        for (auto harq : pdu.harqs) {
+        for (mac_harq_ack_report_status harq : pdu.harqs) {
           rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, harq == mac_harq_ack_report_status::ack);
         }
       }
@@ -191,7 +191,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
                                                                pucch_f2f3f4->harq_info->payload);
 
         // Report ACK for RLF detection purposes.
-        for (const mac_harq_ack_report_status& harq_st : pdu.harqs) {
+        for (mac_harq_ack_report_status harq_st : pdu.harqs) {
           rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, harq_st == mac_harq_ack_report_status::ack);
         }
       }

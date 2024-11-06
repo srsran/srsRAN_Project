@@ -22,62 +22,73 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "ofdm_demodulator_test_data.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "srsran/phy/lower/modulation/modulation_factories.h"
-#include "srsran/srsvec/sc_prod.h"
-#include "srsran/support/test_utils.h"
+#include <fmt/ostream.h>
+#include <gtest/gtest.h>
 
-/// Defines the maximum allowed error at the OFDM demodulator output.
-static constexpr float ASSERT_MAX_ERROR = 5e-3;
+namespace srsran {
+
+static std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
+{
+  fmt::print(os,
+             "numerology={} bw_rb={} dft_size={} cp={} wo={} sf={} cf={:.3f}MHz",
+             test_case.test_config.config.numerology,
+             test_case.test_config.config.bw_rb,
+             test_case.test_config.config.dft_size,
+             test_case.test_config.config.cp.to_string(),
+             test_case.test_config.config.nof_samples_window_offset,
+             test_case.test_config.config.scale,
+             test_case.test_config.config.center_freq_hz / 1e6);
+  return os;
+}
+
+} // namespace srsran
 
 using namespace srsran;
 
-int main()
+class ofdm_demodulator_tester : public ::testing::TestWithParam<test_case_t>
 {
-  // Create a DFT factory.
-  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
-  if (!dft_factory) {
-    dft_factory = create_dft_processor_factory_generic();
+protected:
+  std::unique_ptr<ofdm_slot_demodulator> demodulator;
+
+  void SetUp() override
+  {
+    const test_case_t& test_case = GetParam();
+
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_generic();
+    ASSERT_TRUE(dft_factory);
+
+    ofdm_factory_generic_configuration factory_config = {.dft_factory = dft_factory};
+
+    std::shared_ptr<ofdm_demodulator_factory> ofdm_factory = create_ofdm_demodulator_factory_generic(factory_config);
+    ASSERT_TRUE(ofdm_factory);
+
+    demodulator = ofdm_factory->create_ofdm_slot_demodulator(test_case.test_config.config);
+    ASSERT_TRUE(demodulator);
   }
-  TESTASSERT(dft_factory);
+};
 
-  // Prepare OFDM demodulator factory configuration.
-  ofdm_factory_generic_configuration ofdm_common_config;
-  ofdm_common_config.dft_factory = dft_factory;
+TEST_P(ofdm_demodulator_tester, vector)
+{
+  const test_case_t& test_case = GetParam();
 
-  // Create OFDM demodulator factory.
-  std::shared_ptr<ofdm_demodulator_factory> ofdm_factory = create_ofdm_demodulator_factory_generic(ofdm_common_config);
-  TESTASSERT(ofdm_factory);
+  resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, test_case.test_config.config.bw_rb);
 
-  // Run all defined tests
-  for (const test_case_t& test_case : ofdm_demodulator_test_data) {
-    resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, test_case.test_config.config.bw_rb);
+  // Load the input data.
+  std::vector<cf_t> data(demodulator->get_slot_size(test_case.test_config.slot_idx));
+  data = test_case.data.read();
 
-    // Create FFTW configuration;
-    dft_processor::configuration config;
-    config.size = test_case.test_config.config.dft_size;
-    config.dir  = dft_processor::direction::DIRECT;
+  // Demodulate signal.
+  demodulator->demodulate(grid, data, test_case.test_config.port_idx, test_case.test_config.slot_idx);
 
-    // Create DFT processor
-    std::unique_ptr<dft_processor> dft = dft_factory->create(config);
+  // Load the golden data.
+  const std::vector<resource_grid_writer_spy::expected_entry_t> demodulated = test_case.demodulated.read();
 
-    // Create OFDM modulator.
-    std::unique_ptr<ofdm_slot_demodulator> ofdm =
-        ofdm_factory->create_ofdm_slot_demodulator(test_case.test_config.config);
-    TESTASSERT(ofdm != nullptr);
-
-    // Load the input data.
-    std::vector<cf_t> data(ofdm->get_slot_size(test_case.test_config.slot_idx));
-    data = test_case.data.read();
-
-    // Demodulate signal.
-    ofdm->demodulate(grid, data, test_case.test_config.port_idx, test_case.test_config.slot_idx);
-
-    // Load the golden data.
-    const std::vector<resource_grid_writer_spy::expected_entry_t> demodulated = test_case.demodulated.read();
-
-    // Assert resource grid entries.
-    grid.assert_entries(demodulated, ASSERT_MAX_ERROR);
-  }
-
-  return 0;
+  // Assert resource grid entries.
+  grid.assert_entries(demodulated);
 }
+
+INSTANTIATE_TEST_SUITE_P(ofdm_demodulator_vectortest,
+                         ofdm_demodulator_tester,
+                         ::testing::ValuesIn(ofdm_demodulator_test_data));

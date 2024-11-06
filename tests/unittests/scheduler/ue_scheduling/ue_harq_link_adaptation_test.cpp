@@ -22,7 +22,7 @@
 
 #include "../test_utils/config_generators.h"
 #include "../test_utils/dummy_test_components.h"
-#include "lib/scheduler/ue_scheduling/ue.h"
+#include "lib/scheduler/ue_context/ue.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

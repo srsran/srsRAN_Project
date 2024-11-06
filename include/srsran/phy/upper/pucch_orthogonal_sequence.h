@@ -28,7 +28,7 @@
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/pucch/pucch_constants.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
 

@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include <string_view>
 
 namespace srsran {

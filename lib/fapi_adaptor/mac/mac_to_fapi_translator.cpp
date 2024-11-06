@@ -197,7 +197,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
                                cell_nof_prbs);
 
   bool is_pdsch_pdu_present_in_dl_tti = msg.num_pdus_of_each_type[static_cast<size_t>(fapi::dl_pdu_type::PDSCH)] != 0;
-  bool is_ul_dci_present              = dl_res.dl_res->ul_pdcchs.size() != 0;
+  bool is_ul_dci_present              = !dl_res.dl_res->ul_pdcchs.empty();
 
   if (!is_pdsch_pdu_present_in_dl_tti && !is_ul_dci_present) {
     builder.set_last_message_in_slot_flag();
@@ -236,7 +236,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
   // Add SIB1 PDUs to the Tx_Data.request message.
   for (const auto& pdu : dl_data.si_pdus) {
-    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    builder.add_pdu(fapi_index, pdu.cw_index, pdu.pdu);
     if (pdu.cw_index == 0) {
       ++fapi_index;
     }
@@ -244,7 +244,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
   // Add RAR PDUs to the Tx_Data.request message.
   for (const auto& pdu : dl_data.rar_pdus) {
-    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    builder.add_pdu(fapi_index, pdu.cw_index, pdu.pdu);
     if (pdu.cw_index == 0) {
       ++fapi_index;
     }
@@ -252,7 +252,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
   // Add UE specific PDUs to the Tx_Data.request message.
   for (const auto& pdu : dl_data.ue_pdus) {
-    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    builder.add_pdu(fapi_index, pdu.cw_index, pdu.pdu);
     if (pdu.cw_index == 0) {
       ++fapi_index;
     }
@@ -260,7 +260,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
   // Add Paging PDU to the Tx_Data.request message.
   for (const auto& pdu : dl_data.paging_pdus) {
-    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    builder.add_pdu(fapi_index, pdu.cw_index, pdu.pdu);
     if (pdu.cw_index == 0) {
       ++fapi_index;
     }

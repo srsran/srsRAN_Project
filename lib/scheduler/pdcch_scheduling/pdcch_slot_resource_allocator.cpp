@@ -27,6 +27,12 @@
 
 using namespace srsran;
 
+pdcch_slot_allocator::pdcch_slot_allocator()
+{
+  dfs_tree.reserve(MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UL_PDCCH_PDUS_PER_SLOT);
+  saved_dfs_tree.reserve(MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UL_PDCCH_PDUS_PER_SLOT);
+}
+
 pdcch_slot_allocator::~pdcch_slot_allocator() {}
 
 void pdcch_slot_allocator::clear()

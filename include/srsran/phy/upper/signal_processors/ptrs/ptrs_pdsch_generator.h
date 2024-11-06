@@ -34,7 +34,7 @@
 
 namespace srsran {
 
-class resource_grid_mapper;
+class resource_grid_writer;
 
 /// Interface for the Phase Tracking Reference Signals (PT-RS) for PDSCH generator.
 class ptrs_pdsch_generator
@@ -80,9 +80,9 @@ public:
   virtual ~ptrs_pdsch_generator() = default;
 
   /// \brief Generates and maps PT-RS for PDSCH.
-  /// \param [out] mapper Destination resource grid.
+  /// \param [out] grid Destination resource grid.
   /// \param [in]  config Required configuration to generate and map the signal.
-  virtual void generate(resource_grid_mapper& mapper, const configuration& config) = 0;
+  virtual void generate(resource_grid_writer& grid, const configuration& config) = 0;
 };
 
 } // namespace srsran

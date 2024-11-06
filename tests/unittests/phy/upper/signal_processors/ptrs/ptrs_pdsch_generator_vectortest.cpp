@@ -71,41 +71,48 @@ protected:
         create_pseudo_random_generator_sw_factory();
     report_fatal_error_if_not(pseudo_random_gen_factory, "Failed to create factory.");
 
+    std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+    report_fatal_error_if_not(precoding_factory, "Failed to create factory.");
+
+    std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory_ =
+        create_resource_grid_mapper_factory(precoding_factory);
+    report_fatal_error_if_not(rg_mapper_factory_, "Failed to create factory.");
+
+    rg_mapper_factory = rg_mapper_factory_;
+
     std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
-        create_ptrs_pdsch_generator_generic_factory(pseudo_random_gen_factory);
+        create_ptrs_pdsch_generator_generic_factory(pseudo_random_gen_factory, rg_mapper_factory_);
     report_fatal_error_if_not(ptrs_pdsch_gen_factory, "Failed to create factory.");
 
     ptrs_pdsch_gen = ptrs_pdsch_gen_factory->create();
     report_fatal_error_if_not(ptrs_pdsch_gen, "Failed to create factory.");
   }
 
-  static std::unique_ptr<ptrs_pdsch_generator> ptrs_pdsch_gen;
+  static std::unique_ptr<ptrs_pdsch_generator>         ptrs_pdsch_gen;
+  static std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory;
 };
 
-std::unique_ptr<ptrs_pdsch_generator> PtrsPdschGeneratorFixture::ptrs_pdsch_gen = nullptr;
+std::unique_ptr<ptrs_pdsch_generator>         PtrsPdschGeneratorFixture::ptrs_pdsch_gen    = nullptr;
+std::shared_ptr<resource_grid_mapper_factory> PtrsPdschGeneratorFixture::rg_mapper_factory = nullptr;
 
 } // namespace
 
 TEST_P(PtrsPdschGeneratorFixture, FromTestVector)
 {
   // Prepare resource grid and resource grid mapper spies.
-  resource_grid_writer_spy              grid(precoding_constants::MAX_NOF_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
-  std::unique_ptr<resource_grid_mapper> mapper =
-      create_resource_grid_mapper(precoding_constants::MAX_NOF_PORTS, NRE * MAX_NOF_PRBS, grid);
+  resource_grid_writer_spy grid(precoding_constants::MAX_NOF_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
 
   const test_case_t&                         test_case = GetParam();
   const ptrs_pdsch_generator::configuration& config    = test_case.config;
 
   // Generate signal.
-  ptrs_pdsch_gen->generate(*mapper, config);
+  ptrs_pdsch_gen->generate(grid, config);
 
   // Load output golden data.
   const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
 
-  // Tolerance: max BF16 error times sqrt(2), since we are taking the modulus.
-  constexpr float tolerance = M_SQRT2f32 / 256.0;
   // Assert resource grid entries.
-  grid.assert_entries(testvector_symbols, tolerance);
+  grid.assert_entries(testvector_symbols, std::sqrt(config.precoding.get_nof_ports()));
 }
 
 // Creates test suite that combines all possible parameters.

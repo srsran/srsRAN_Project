@@ -28,7 +28,7 @@
 #pragma once
 
 #include "srsran/ran/sch/ldpc_base_graph.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/units.h"
 #include <array>
 

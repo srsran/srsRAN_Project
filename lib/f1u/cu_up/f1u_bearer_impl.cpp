@@ -76,6 +76,10 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
   // handle transmit notifications
   if (msg.data_delivery_status.has_value()) {
     nru_dl_data_delivery_status& status = msg.data_delivery_status.value();
+
+    // Desired buffer size
+    rx_delivery_notifier.on_desired_buffer_size_notification(status.desired_buffer_size_for_drb);
+
     // Highest transmitted PDCP SN
     if (status.highest_transmitted_pdcp_sn.has_value()) {
       uint32_t pdcp_sn = status.highest_transmitted_pdcp_sn.value();

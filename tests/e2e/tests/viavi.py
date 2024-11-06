@@ -71,6 +71,8 @@ class _ViaviConfiguration:
     expected_nof_kos: int = 0
     warning_as_errors: bool = True
     enable_dddsu: bool = False
+    ul_heavy_7u2d: bool = False
+    ul_heavy_6u3d: bool = False
 
 
 # pylint: disable=too-many-instance-attributes
@@ -111,6 +113,8 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 expected_nof_kos=test_declaration["expected_nof_kos"],
                 warning_as_errors=test_declaration["warning_as_errors"],
                 enable_dddsu=test_declaration.get("enable_dddsu", False),
+                ul_heavy_7u2d=test_declaration.get("ul_heavy_7u2d", False),
+                ul_heavy_6u3d=test_declaration.get("ul_heavy_6u3d", False),
             )
         )
     return test_declaration_list
@@ -143,6 +147,14 @@ def viavi_manual_test_timeout(request):
     return request.config.getoption("viavi_manual_test_timeout")
 
 
+@pytest.fixture
+def viavi_manual_extra_gnb_arguments(request):
+    """
+    Extra GNB arguments
+    """
+    return request.config.getoption("viavi_manual_extra_gnb_arguments")
+
+
 @mark.viavi_manual
 # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def test_viavi_manual(
@@ -158,6 +170,7 @@ def test_viavi_manual(
     viavi_manual_campaign_filename: str,  # pylint: disable=redefined-outer-name
     viavi_manual_test_name: str,  # pylint: disable=redefined-outer-name
     viavi_manual_test_timeout: int,  # pylint: disable=redefined-outer-name
+    viavi_manual_extra_gnb_arguments: str,  # pylint: disable=redefined-outer-name
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
@@ -168,7 +181,10 @@ def test_viavi_manual(
     Runs a test using Viavi
     """
     test_declaration = get_viavi_configuration_from_testname(
-        viavi_manual_campaign_filename, viavi_manual_test_name, viavi_manual_test_timeout
+        viavi_manual_campaign_filename,
+        viavi_manual_test_name,
+        viavi_manual_test_timeout,
+        viavi_manual_extra_gnb_arguments,
     )
 
     _test_viavi(
@@ -347,6 +363,8 @@ def _test_viavi(
                 "max_puschs_per_slot": test_declaration.max_puschs_per_slot,
                 "max_pdschs_per_slot": test_declaration.max_pdschs_per_slot,
                 "enable_dddsu": test_declaration.enable_dddsu,
+                "ul_heavy_7u2d": test_declaration.ul_heavy_7u2d,
+                "ul_heavy_6u3d": test_declaration.ul_heavy_6u3d,
                 "enable_qos_viavi": test_declaration.enable_qos_viavi,
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
@@ -583,7 +601,9 @@ def get_str_number_criteria(number_criteria: float) -> str:
     return str(number_criteria)
 
 
-def get_viavi_configuration_from_testname(campaign_filename: str, test_name: str, timeout: int) -> _ViaviConfiguration:
+def get_viavi_configuration_from_testname(
+    campaign_filename: str, test_name: str, timeout: int, extra_gnb_arguments=""
+) -> _ViaviConfiguration:
     """
     Get Viavi configuration from dict
     """
@@ -599,4 +619,5 @@ def get_viavi_configuration_from_testname(campaign_filename: str, test_name: str
 
     test_declaration.campaign_filename = campaign_filename
     test_declaration.test_timeout = timeout
+    test_declaration.gnb_extra_commands += " " + extra_gnb_arguments
     return test_declaration

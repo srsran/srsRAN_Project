@@ -156,10 +156,12 @@ int main(int argc, char** argv)
   sec_cfg.integ_algo  = static_cast<security::integrity_algorithm>(args.algo);
   sec_cfg.cipher_algo = static_cast<security::ciphering_algorithm>(args.algo);
 
-  pdcp_tx_gen_frame frame = {};
-  // Create RLC entities
+  pdcp_tx_gen_frame                        frame = {};
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
+      std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{100}, nullptr, worker);
+  // Create PDCP entities
   std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
+      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
   pdcp_tx_state st = {args.count, args.count};
   pdcp_tx->set_state(st);
   pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);

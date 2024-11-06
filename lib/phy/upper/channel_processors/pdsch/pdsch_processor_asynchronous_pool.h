@@ -48,29 +48,29 @@ public:
   explicit pdsch_processor_wrapper(unsigned                         index_,
                                    pdsch_processor_free_list&       free_list_,
                                    std::unique_ptr<pdsch_processor> processor_) :
-    index(index_), free_list(free_list_), notifier(nullptr), processor(std::move(processor_))
+    index(index_), free_list(free_list_), processor(std::move(processor_))
   {
     srsran_assert(processor, "Invalid PDSCH processor.");
   }
 
   /// Creates a PDSCH processor wrapper from another PDSCH processor wrapper.
-  pdsch_processor_wrapper(pdsch_processor_wrapper&& other) :
+  pdsch_processor_wrapper(pdsch_processor_wrapper&& other) noexcept :
     index(other.index), free_list(other.free_list), notifier(other.notifier), processor(std::move(other.processor))
   {
     other.notifier = nullptr;
   }
 
   // See pdsch_processor interface for documentation.
-  void process(resource_grid_mapper&                                                         mapper,
-               pdsch_processor_notifier&                                                     notifier_,
-               static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdsch_processor::pdu_t&                                                 pdu) override
+  void process(resource_grid_writer&                                                            grid,
+               pdsch_processor_notifier&                                                        notifier_,
+               static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
+               const pdsch_processor::pdu_t&                                                    pdu) override
   {
     // Save original notifier.
     notifier = &notifier_;
 
     // Process.
-    processor->process(mapper, *this, data, pdu);
+    processor->process(grid, *this, std::move(data), pdu);
   }
 
 private:
@@ -110,14 +110,14 @@ public:
     unsigned index = 0;
     for (std::unique_ptr<pdsch_processor>& processor : processors_) {
       free_list.push_blocking(index);
-      processors.emplace_back(detail::pdsch_processor_wrapper(index++, free_list, std::move(processor)));
+      processors.emplace_back(index++, free_list, std::move(processor));
     }
   }
 
-  void process(resource_grid_mapper&                                        mapper,
-               pdsch_processor_notifier&                                    notifier,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override
+  void process(resource_grid_writer&                                           grid,
+               pdsch_processor_notifier&                                       notifier,
+               static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+               const pdu_t&                                                    pdu) override
   {
     // Try to get a worker.
     std::optional<unsigned> index;
@@ -135,7 +135,7 @@ public:
     }
 
     // Process PDSCH.
-    processors[index.value()].process(mapper, notifier, data, pdu);
+    processors[index.value()].process(grid, notifier, std::move(data), pdu);
   }
 
 private:

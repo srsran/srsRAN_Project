@@ -30,6 +30,7 @@
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/cu_up/cu_up_manager.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
+#include "srsran/e2/e2_cu_factory.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
@@ -90,6 +91,8 @@ private:
   fifo_async_task_scheduler main_ctrl_loop;
 
   unique_timer statistics_report_timer;
+  // E2 Agent.
+  std::unique_ptr<e2_agent> e2agent;
 };
 
 } // namespace srsran::srs_cu_up

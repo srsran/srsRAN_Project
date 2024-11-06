@@ -56,7 +56,7 @@ void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_ha
   }
 }
 
-void pdcch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_reader<>& d_pdcch, const config_t& config)
+void pdcch_modulator_impl::map(resource_grid_writer& grid, const re_buffer_reader<>& d_pdcch, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
   static const re_prb_mask re_mask = {true, false, true, true, true, false, true, true, true, false, true, true};
@@ -68,10 +68,10 @@ void pdcch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_rea
   pattern.re_mask = re_mask;
 
   // Actual mapping.
-  mapper.map(d_pdcch, pattern, config.precoding);
+  mapper->map(grid, d_pdcch, pattern, config.precoding);
 }
 
-void pdcch_modulator_impl::modulate(resource_grid_mapper&            mapper,
+void pdcch_modulator_impl::modulate(resource_grid_writer&            grid,
                                     span<const uint8_t>              data,
                                     const pdcch_modulator::config_t& config)
 {
@@ -86,5 +86,5 @@ void pdcch_modulator_impl::modulate(resource_grid_mapper&            mapper,
   modulate(d_pdcch.get_slice(0), b_hat, config.scaling);
 
   // Map to resource elements.
-  map(mapper, d_pdcch, config);
+  map(grid, d_pdcch, config);
 }

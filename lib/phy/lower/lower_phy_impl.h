@@ -41,7 +41,7 @@
 #include "srsran/phy/lower/processors/downlink/downlink_processor.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor.h"
 #include "srsran/phy/support/resource_grid_pool.h"
-#include "srsran/support/stats.h"
+#include "srsran/support/math/stats.h"
 
 namespace srsran {
 

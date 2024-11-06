@@ -51,6 +51,11 @@ public:
     }
   }
 
+  void on_desired_buffer_size_notification(uint32_t desired_buffer_size) override
+  {
+    pdcp_tx_handler->handle_desired_buffer_size_notification(desired_buffer_size);
+  }
+
   void on_transmit_notification(uint32_t highest_pdcp_sn) override
   {
     pdcp_tx_handler->handle_transmit_notification(highest_pdcp_sn);

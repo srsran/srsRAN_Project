@@ -160,25 +160,14 @@ public:
   /// without considering any writing order.
   ///
   /// \param[in] expected_entries Provides a list of golden symbols to assert.
+  /// \param[in] scaling Optional parameter that provides a scaling factor to apply on the values.
   /// \note The test is terminated in case of mismatch.
-  void assert_entries(span<const expected_entry_t> expected_entries) const
-  {
-    assert_entries(expected_entries, ASSERT_MAX_ERROR);
-  }
-
-  /// \brief Asserts that the mapped resource elements match with a list of expected entries.
-  ///
-  /// This method asserts that mapped resource elements using the put() methods match a list of expected entries
-  /// without considering any writing order, while using a parametrizable maximum error threshold.
-  ///
-  /// \param[in] expected_entries Provides a list of golden symbols to assert.
-  /// \param[in] max_error Provides the maximum allowable error when comparing the data in the entries.
-  /// \note The test is terminated in case of mismatch.
-  void assert_entries(span<const expected_entry_t> expected_entries, float max_error) const
+  void assert_entries(span<const expected_entry_t> expected_entries, float scaling = 1) const
   {
     // Count the number of writen RE.
-    unsigned re_count = std::count_if(
-        data.get_data().begin(), data.get_data().end(), [](cbf16_t value) { return (value != cbf16_t()); });
+    unsigned re_count = std::count_if(data.get_data().begin(), data.get_data().end(), [](cbf16_t value) {
+      return (std::abs(to_cf(value)) > near_zero);
+    });
 
     // Make sure the number of elements match.
     TESTASSERT_EQ(expected_entries.size(), re_count);
@@ -202,9 +191,11 @@ public:
                  entry.subcarrier);
 
       // Convert value to cf and compare with the expected value.
-      cf_t  value = to_cf(value_cbf16);
-      float err   = std::abs(entry.value - value);
-      TESTASSERT(err < max_error,
+      cf_t  value = to_cf(value_cbf16) * scaling;
+      float error = std::abs(entry.value - value);
+      // Calculate maximum error allowed introduced by BFloat16 compression.
+      float max_error = std::abs(entry.value) / 128.0;
+      TESTASSERT(error < max_error,
                  "Mismatched value {} but expected {}. port={} symbol={} subcarrier={}.",
                  value,
                  entry.value,
@@ -353,14 +344,24 @@ public:
 
   void write(span<const expected_entry_t> entries_)
   {
-    unsigned current_max_sc = max_prb * NRE;
+    unsigned current_max_sc   = max_prb * NRE;
+    unsigned current_max_symb = max_symb;
+    unsigned current_max_port = max_ports;
     for (const expected_entry_t& e : entries_) {
       write(e);
       if (e.subcarrier > current_max_sc) {
         current_max_sc = e.subcarrier;
       }
+      if (e.symbol > current_max_symb) {
+        current_max_symb = e.symbol;
+      }
+      if (e.port > current_max_port) {
+        current_max_port = e.port;
+      }
     }
-    max_prb = current_max_sc / NRE + 1;
+    max_prb   = current_max_sc / NRE + 1;
+    max_symb  = current_max_symb + 1;
+    max_ports = current_max_port + 1;
   }
 
   void write(const expected_entry_t& entry)
@@ -440,16 +441,16 @@ public:
   /// Resets all counters.
   void clear() { set_all_zero_count = 0; }
 
-  resource_grid_mapper& get_mapper() override { return *this; }
-
-  void map(const re_buffer_reader<>& /* input */,
+  void map(resource_grid_writer& grid,
+           const re_buffer_reader<>& /* input */,
            const re_pattern& /* pattern */,
            const precoding_configuration& /* precoding */) override
   {
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
 
-  void map(symbol_buffer&                 buffer,
+  void map(resource_grid_writer&          grid,
+           symbol_buffer&                 buffer,
            const re_pattern_list&         pattern,
            const re_pattern_list&         reserved,
            const precoding_configuration& precoding,
@@ -530,15 +531,16 @@ public:
 
   void set_all_zero() override { ++set_all_zero_count; }
 
-  resource_grid_mapper& get_mapper() override { return *this; }
-
-  void
-  map(const re_buffer_reader<>& input, const re_pattern& pattern, const precoding_configuration& precoding) override
+  void map(resource_grid_writer&          grid,
+           const re_buffer_reader<>&      input,
+           const re_pattern&              pattern,
+           const precoding_configuration& precoding) override
   {
     failure();
   }
 
-  void map(symbol_buffer& /* buffer */,
+  void map(resource_grid_writer& grid,
+           symbol_buffer& /* buffer */,
            const re_pattern_list& /* pattern */,
            const re_pattern_list& /* reserved */,
            const precoding_configuration& /* precoding */,

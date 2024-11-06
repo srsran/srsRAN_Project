@@ -20,21 +20,26 @@
 
 set_directory_properties(PROPERTIES LABELS "du_high;integrationtest")
 
-add_executable(du_high_test du_high_test.cpp
-        du_high_many_ues_test.cpp
-        du_high_many_cells_test.cpp
-        paging_test.cpp
-        test_utils/du_high_env_simulator.cpp)
-target_link_libraries(du_high_test
+add_library(du_high_worker_manager test_utils/du_high_worker_manager.cpp test_utils/du_high_env_simulator.cpp)
+target_include_directories(du_high_worker_manager PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_high_worker_manager
         srsran_du_high
         f1ap_du_test_helpers
-        srsran_gateway
-        gtest
-        gtest_main
         pdcp_test_doubles
         sched_test_doubles
         mac_test_doubles
         f1ap_test_doubles)
+
+add_executable(du_high_test du_high_test.cpp
+        du_high_many_ues_test.cpp
+        du_high_many_cells_test.cpp
+        paging_test.cpp)
+target_link_libraries(du_high_test
+        srsran_du_high
+        du_high_worker_manager
+        srsran_gateway
+        gtest
+        gtest_main)
 target_include_directories(du_high_test PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(du_high_test du_high_test)
 set_tests_properties(du_high_test PROPERTIES LABELS "tsan")

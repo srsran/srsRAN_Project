@@ -68,17 +68,17 @@ public:
   ///\brief Calculates the checksum from a byte buffer (8 packed bits in every input byte).
   ///\param[in] data Provides the byte buffer.
   ///\return The resulting CRC checksum.
-  virtual crc_calculator_checksum_t calculate_byte(span<const uint8_t> data) = 0;
+  virtual crc_calculator_checksum_t calculate_byte(span<const uint8_t> data) const = 0;
 
   ///\brief Calculates the checksum from a bit buffer (1 bit in for every input byte).
   ///\param[in] data Provides the byte buffer.
   ///\return The resulting CRC checksum.
-  virtual crc_calculator_checksum_t calculate_bit(span<const uint8_t> data) = 0;
+  virtual crc_calculator_checksum_t calculate_bit(span<const uint8_t> data) const = 0;
 
   ///\brief Calculates the checksum from a bit buffer.
   ///\param[in] data Input data.
   ///\return The resulting CRC checksum.
-  virtual crc_calculator_checksum_t calculate(const bit_buffer& data) = 0;
+  virtual crc_calculator_checksum_t calculate(const bit_buffer& data) const = 0;
 
   ///\brief Returns the identifier of the generator polynomial.
   virtual crc_generator_poly get_generator_poly() const = 0;

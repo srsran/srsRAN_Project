@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/scheduler/ue_scheduling/ue.h"
+#include "lib/scheduler/ue_context/ue.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/support/srsran_test.h"

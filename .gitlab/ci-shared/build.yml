@@ -121,7 +121,7 @@ variables:
     - |
       launch_tests_srsran() {
         cd ${SRSRANDIR}/build
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+        echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         set -x
         ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml "$@"
         { set +x; } 2>/dev/null
@@ -129,7 +129,7 @@ variables:
     - |
       launch_tests_plugin() {
         cd ${CI_PROJECT_DIR}/build
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+        echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         set -x
         ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml "$@"
         { set +x; } 2>/dev/null

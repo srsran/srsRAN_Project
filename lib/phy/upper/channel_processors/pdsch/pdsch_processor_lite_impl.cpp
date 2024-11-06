@@ -21,40 +21,22 @@
  */
 
 #include "pdsch_processor_lite_impl.h"
+#include "pdsch_processor_helpers.h"
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
-#include "srsran/ran/dmrs.h"
 
 using namespace srsran;
 
-/// \brief Computes the number of RE used for mapping PDSCH data.
+/// \brief Looks at the output of the validator and, if unsuccessful, fills msg with the error message.
 ///
-/// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.
-///
-/// \param[in] pdu Describes a PDSCH transmission.
-/// \return The number of resource elements.
-static unsigned compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
+/// This is used to call the validator inside the process methods only if asserts are active.
+[[maybe_unused]] static bool handle_validation(std::string& msg, const error_type<std::string>& err)
 {
-  // Copy reserved RE and merge DM-RS pattern.
-  re_pattern_list reserved_re = pdu.reserved;
-  reserved_re.merge(pdu.dmrs.get_dmrs_pattern(
-      pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask));
-
-  // Generate allocation mask.
-  bounded_bitset<MAX_RB> prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
-
-  // Calculate the number of RE allocated in the grid.
-  unsigned nof_grid_re = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols;
-
-  // Calculate the number of reserved resource elements.
-  unsigned nof_reserved_re = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
-
-  // Subtract the number of reserved RE from the number of allocated RE.
-  srsran_assert(nof_grid_re > nof_reserved_re,
-                "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
-                nof_grid_re,
-                nof_reserved_re);
-  return nof_grid_re - nof_reserved_re;
+  bool is_success = err.has_value();
+  if (!is_success) {
+    msg = err.error();
+  }
+  return is_success;
 }
 
 void pdsch_block_processor::configure_new_transmission(span<const uint8_t>           data,
@@ -65,7 +47,7 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
   unsigned nof_layers = pdu.precoding.get_nof_layers();
 
   // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
-  unsigned nof_re_pdsch = compute_nof_data_re(pdu);
+  unsigned nof_re_pdsch = pdsch_compute_nof_data_re(pdu);
 
   // Init scrambling initial state.
   scrambler.init((static_cast<unsigned>(pdu.rnti) << 15U) + (i_cw << 14U) + pdu.n_id);
@@ -172,15 +154,16 @@ bool pdsch_block_processor::empty() const
   return codeblock_symbols.empty() && (next_i_cb == d_segments.size());
 }
 
-void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
-                                        pdsch_processor_notifier&                                    notifier,
-                                        static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                                        const pdu_t&                                                 pdu)
+void pdsch_processor_lite_impl::process(resource_grid_writer&                                           grid,
+                                        pdsch_processor_notifier&                                       notifier,
+                                        static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
+                                        const pdu_t&                                                    pdu)
 {
-  pdsch_processor_validator_impl::assert_pdu(pdu);
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdsch_processor_validator_impl().is_valid(pdu)), "{}", msg);
 
   // Configure new transmission.
-  subprocessor.configure_new_transmission(data[0], 0, pdu);
+  subprocessor.configure_new_transmission(data.front().get_buffer(), 0, pdu);
 
   // Get the PRB allocation mask.
   const bounded_bitset<MAX_RB> prb_allocation_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
@@ -230,37 +213,16 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
   precoding2 *= scaling;
 
   // Map PDSCH.
-  mapper.map(subprocessor, allocation, reserved, precoding2);
+  mapper->map(grid, subprocessor, allocation, reserved, precoding2);
+
+  if (pdu.ptrs) {
+    // Prepare PT-RS configuration and generate.
+    pdsch_process_ptrs(grid, *ptrs, pdu);
+  }
 
   // Process DM-RS.
-  process_dmrs(mapper, pdu);
+  pdsch_process_dmrs(grid, *dmrs, pdu);
 
   // Notify the end of the processing.
   notifier.on_finish_processing();
-}
-
-void pdsch_processor_lite_impl::process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu)
-{
-  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
-
-  // Select the DM-RS reference point.
-  unsigned dmrs_reference_point_k_rb = 0;
-  if (pdu.ref_point == pdu_t::PRB0) {
-    dmrs_reference_point_k_rb = pdu.bwp_start_rb;
-  }
-
-  // Prepare DM-RS configuration.
-  dmrs_pdsch_processor::config_t dmrs_config;
-  dmrs_config.slot                 = pdu.slot;
-  dmrs_config.reference_point_k_rb = dmrs_reference_point_k_rb;
-  dmrs_config.type                 = pdu.dmrs;
-  dmrs_config.scrambling_id        = pdu.scrambling_id;
-  dmrs_config.n_scid               = pdu.n_scid;
-  dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
-  dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask_bitset;
-  dmrs_config.precoding            = pdu.precoding;
-
-  // Put DM-RS.
-  dmrs->map(mapper, dmrs_config);
 }

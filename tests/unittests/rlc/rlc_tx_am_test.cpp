@@ -2049,12 +2049,19 @@ TEST_P(rlc_tx_am_test, retx_count_trigger_max_retx_without_segmentation)
     pdu_buf.resize(pdu_len);
     EXPECT_EQ(pdu_len, (sdu_size + header_min_size));
 
-    pdu_buf.resize(sdu_size + header_min_size);
-    pdu_len = rlc->pull_pdu(pdu_buf);
-    pdu_buf.resize(pdu_len);
-    EXPECT_EQ(pdu_len, (sdu_size + header_min_size));
+    if (n_retx != config.max_retx_thresh) {
+      pdu_buf.resize(sdu_size + header_min_size);
+      pdu_len = rlc->pull_pdu(pdu_buf);
+      pdu_buf.resize(pdu_len);
+      EXPECT_EQ(pdu_len, (sdu_size + header_min_size));
 
-    EXPECT_EQ(rlc->get_buffer_state(), 0);
+      EXPECT_EQ(rlc->get_buffer_state(), 0);
+    } else {
+      // max_retx already reached, last PDU is not read.
+      pdu_buf.resize(sdu_size + header_min_size);
+      pdu_len = rlc->pull_pdu(pdu_buf);
+      EXPECT_EQ(pdu_len, 0);
+    }
   }
 
   // Finally, max_retx has been reached for both SNs

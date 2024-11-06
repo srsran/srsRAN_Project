@@ -30,6 +30,8 @@
 
 namespace srsran {
 
+class pdcp_metrics_notifier;
+
 /// PDCP NR SRB or DRB information.
 enum class pdcp_rb_type { srb, drb };
 
@@ -51,6 +53,30 @@ constexpr uint32_t pcdp_sn_cardinality(uint16_t sn_size)
 constexpr uint32_t pdcp_window_size(uint16_t sn_size)
 {
   return pcdp_sn_cardinality(sn_size - 1);
+}
+
+/// \brief Returns the PDCP header size
+/// \param sn_size Length of the sequence number field in bits
+/// \return size of the data PDU header
+constexpr uint32_t pdcp_data_header_size(pdcp_sn_size sn_size)
+{
+  return sn_size == pdcp_sn_size::size12bits ? 2 : 3;
+}
+
+/// \brief Returns the PDCP trailer size
+/// \param rb_type whether this is a SRB or DRB.
+/// \param integrity_enabled wether integrity is enabled or not.
+/// \return size of the
+constexpr uint32_t pdcp_data_trailer_size(pdcp_rb_type rb_type, bool integrity_enabled)
+{
+  constexpr uint32_t mac_i_size = 4;
+  if (rb_type == pdcp_rb_type::srb) {
+    return mac_i_size;
+  }
+  if (integrity_enabled) {
+    return mac_i_size;
+  }
+  return 0;
 }
 
 /// Maximum supported PDCP SDU size, see TS 38.323, section 4.3.1.
@@ -131,9 +157,8 @@ struct pdcp_custom_config_base {
 };
 
 struct pdcp_custom_config_tx : public pdcp_custom_config_base {
-  uint16_t rlc_sdu_queue = 4096;
-  bool     warn_on_drop  = false;
-  bool     test_mode     = false;
+  bool warn_on_drop = false;
+  bool test_mode    = false;
 };
 
 struct pdcp_custom_config_rx : public pdcp_custom_config_base {
@@ -148,9 +173,10 @@ struct pdcp_custom_config_rx : public pdcp_custom_config_base {
 /// these parameters to the CU-UP, so it's necessary for the
 /// CU-UP to store these configurations itself.
 struct pdcp_custom_config {
-  timer_duration        metrics_period;
-  pdcp_custom_config_tx tx = {};
-  pdcp_custom_config_rx rx = {};
+  timer_duration         metrics_period;
+  pdcp_metrics_notifier* metrics_notifier = nullptr;
+  pdcp_custom_config_tx  tx               = {};
+  pdcp_custom_config_rx  rx               = {};
 };
 
 /// \brief Configurable parameters for PDCP that are common
@@ -254,9 +280,7 @@ inline pdcp_config pdcp_make_default_srb_config()
   config.rx.t_reordering          = pdcp_t_reordering::infinity;
 
   // Custom config
-  config.custom                  = {};
-  config.custom.tx.rlc_sdu_queue = 512;
-
+  config.custom = {};
   return config;
 }
 } // namespace srsran
@@ -353,10 +377,9 @@ struct formatter<srsran::pdcp_custom_config_tx> {
   auto format(srsran::pdcp_custom_config_tx cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
-                     "count_notify={} count_max={} rlc_sdu_queue={} warn_on_drop={} test_mode={}",
+                     "count_notify={} count_max={} warn_on_drop={} test_mode={}",
                      cfg.max_count.notify,
                      cfg.max_count.hard,
-                     cfg.rlc_sdu_queue,
                      cfg.warn_on_drop,
                      cfg.test_mode);
   }

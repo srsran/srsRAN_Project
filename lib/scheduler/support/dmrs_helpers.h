@@ -127,7 +127,7 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
   dmrs.n_scid             = false;
-  const pdsch_antenna_ports_mapping ant_mapping =
+  const pdsch_antenna_ports_mapping& ant_mapping =
       get_pdsch_antenna_port_mapping(nof_layers,
                                      nof_dl_antenna_ports,
                                      dmrs.config_type,

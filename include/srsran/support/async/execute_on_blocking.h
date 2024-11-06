@@ -30,7 +30,7 @@ namespace srsran {
 
 namespace detail {
 
-template <typename TaskExecutor, typename OnFailureToDispatch, bool IsExecute>
+template <bool IsExecute, typename TaskExecutor, typename OnFailureToDispatch>
 auto dispatch_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispatch&& on_failure)
 {
   struct blocking_dispatch_on_awaiter {
@@ -81,43 +81,16 @@ auto dispatch_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureTo
   return blocking_dispatch_on_awaiter{exec, timers, std::forward<OnFailureToDispatch>(on_failure)};
 }
 
-} // namespace detail
-
-/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
-/// to execute fails, the awaitable yields and will retry the dispatch at a later point, until it succeeds.
-/// \param[in] exec Executor used to dispatch coroutine to a new execution context.
-/// \param[in] timers Timer service used to handle reattempts to dispatch task to new execution context.
-/// \param[in] on_failure Callback invoked in case the dispatch to executor fails at first attempt.
-template <typename TaskExecutor, typename OnFailureToDispatch = noop_operation>
-auto execute_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispatch&& on_failure = noop_operation{})
-{
-  return detail::dispatch_on_blocking<TaskExecutor, OnFailureToDispatch, true>(
-      exec, timers, std::forward<OnFailureToDispatch>(on_failure));
-}
-
-/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
-/// to defer fails, the awaitable yields and will retry the dispatch at a later point, until it succeeds.
-/// \param[in] exec Executor used to dispatch coroutine to a new execution context.
-/// \param[in] timers Timer service used to handle reattempts to dispatch task to new execution context.
-/// \param[in] on_failure Callback invoked in case the dispatch to executor fails at first attempt.
-template <typename TaskExecutor, typename OnFailureToDispatch = noop_operation>
-auto defer_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispatch&& on_failure = noop_operation{})
-{
-  return detail::dispatch_on_blocking<TaskExecutor, OnFailureToDispatch, false>(
-      exec, timers, std::forward<OnFailureToDispatch>(on_failure));
-}
-
-/// \brief Returns an async_task<ReturnType> that runs a given invocable task in a \c dispatch_exec executor, and once
-/// the task is complete, it resumes the suspended coroutine in a \c return_exec executor.
-template <typename DispatchTaskExecutor,
+template <bool IsExecute,
+          typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
           typename OnFailureToDispatch = noop_operation>
-auto execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
-                                      CurrentTaskExecutor&  return_exec,
-                                      timer_manager&        timers,
-                                      Callable&&            callable,
-                                      OnFailureToDispatch&& on_failure = noop_operation{})
+auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                       CurrentTaskExecutor&  return_exec,
+                                       timer_manager&        timers,
+                                       Callable&&            callable,
+                                       OnFailureToDispatch&& on_failure = noop_operation{})
 {
   using return_type = detail::function_return_t<decltype(&Callable::operator())>;
 
@@ -132,13 +105,13 @@ auto execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
       CORO_BEGIN(ctx);
 
       // Dispatch execution context switch.
-      CORO_AWAIT(execute_on_blocking(dispatch_exec, timers, on_failure));
+      CORO_AWAIT(dispatch_on_blocking<IsExecute>(dispatch_exec, timers, on_failure));
 
       // Run task.
       task();
 
       // Continuation in the original executor.
-      CORO_AWAIT(execute_on_blocking(return_exec, timers, on_failure));
+      CORO_AWAIT(dispatch_on_blocking<IsExecute>(return_exec, timers, on_failure));
 
       CORO_RETURN();
     });
@@ -155,17 +128,78 @@ auto execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
       CORO_BEGIN(ctx);
 
       // Dispatch execution context switch.
-      CORO_AWAIT(execute_on_blocking(dispatch_exec, timers, on_failure));
+      CORO_AWAIT(dispatch_on_blocking<IsExecute>(dispatch_exec, timers, on_failure));
 
       // Run task.
       ret = task();
 
       // Continuation in the original executor.
-      CORO_AWAIT(execute_on_blocking(return_exec, timers, on_failure));
+      CORO_AWAIT(dispatch_on_blocking<IsExecute>(return_exec, timers, on_failure));
 
       CORO_RETURN(ret);
     });
   }
+}
+
+} // namespace detail
+
+/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
+/// to execute fails, the awaitable yields and will retry the dispatch at a later point, until it succeeds.
+/// \param[in] exec Executor used to dispatch coroutine to a new execution context.
+/// \param[in] timers Timer service used to handle reattempts to dispatch task to new execution context.
+/// \param[in] on_failure Callback invoked in case the dispatch to executor fails at first attempt.
+template <typename TaskExecutor, typename OnFailureToDispatch = noop_operation>
+auto execute_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispatch&& on_failure = noop_operation{})
+{
+  return detail::dispatch_on_blocking<true, TaskExecutor, OnFailureToDispatch>(
+      exec, timers, std::forward<OnFailureToDispatch>(on_failure));
+}
+
+/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
+/// to defer fails, the awaitable yields and will retry the dispatch at a later point, until it succeeds.
+/// \param[in] exec Executor used to dispatch coroutine to a new execution context.
+/// \param[in] timers Timer service used to handle reattempts to dispatch task to new execution context.
+/// \param[in] on_failure Callback invoked in case the dispatch to executor fails at first attempt.
+template <typename TaskExecutor, typename OnFailureToDispatch = noop_operation>
+auto defer_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispatch&& on_failure = noop_operation{})
+{
+  return detail::dispatch_on_blocking<false, TaskExecutor, OnFailureToDispatch>(
+      exec, timers, std::forward<OnFailureToDispatch>(on_failure));
+}
+
+/// \brief Returns an async_task<ReturnType> that runs a given invocable task in a \c dispatch_exec executor, and once
+/// the task is complete, it resumes the suspended coroutine in a \c return_exec executor.
+template <typename DispatchTaskExecutor,
+          typename CurrentTaskExecutor,
+          typename Callable,
+          typename OnFailureToDispatch = noop_operation>
+auto execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                      CurrentTaskExecutor&  return_exec,
+                                      timer_manager&        timers,
+                                      Callable&&            callable,
+                                      OnFailureToDispatch&& on_failure = noop_operation{})
+{
+  return detail::dispatch_and_continue_on_blocking<true>(dispatch_exec,
+                                                         return_exec,
+                                                         timers,
+                                                         std::forward<Callable>(callable),
+                                                         std::forward<OnFailureToDispatch>(on_failure));
+}
+template <typename DispatchTaskExecutor,
+          typename CurrentTaskExecutor,
+          typename Callable,
+          typename OnFailureToDispatch = noop_operation>
+auto defer_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                    CurrentTaskExecutor&  return_exec,
+                                    timer_manager&        timers,
+                                    Callable&&            callable,
+                                    OnFailureToDispatch&& on_failure = noop_operation{})
+{
+  return detail::dispatch_and_continue_on_blocking<false>(dispatch_exec,
+                                                          return_exec,
+                                                          timers,
+                                                          std::forward<Callable>(callable),
+                                                          std::forward<OnFailureToDispatch>(on_failure));
 }
 
 } // namespace srsran

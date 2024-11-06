@@ -162,11 +162,10 @@ void du_bearer_resource_manager::setup_srbs(du_ue_resource_config&              
     auto srb_config_it        = srb_config.find(srb_id);
     if (srb_config_it != srb_config.end()) {
       new_srb.rlc_cfg = srb_config_it->second.rlc;
-      new_srb.mac_cfg = srb_config_it->second.mac;
     } else {
       new_srb.rlc_cfg = make_default_srb_rlc_config();
-      new_srb.mac_cfg = make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
     }
+    new_srb.mac_cfg = make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
   }
 }
 
@@ -204,7 +203,11 @@ std::vector<drb_id_t> du_bearer_resource_manager::setup_drbs(du_ue_resource_conf
     new_drb.qos               = drb_to_setup.qos_info.drb_qos;
     new_drb.f1u               = qos.f1u;
     new_drb.rlc_cfg           = qos.rlc;
-    new_drb.mac_cfg           = qos.mac;
+    new_drb.mac_cfg           = make_non_gbr_drb_mac_lc_config();
+    if (drb_to_setup.qos_info.drb_qos.gbr_qos_info.has_value()) {
+      // Populate MAC LC configuration for GBR DRB if GBR QoS information is present.
+      new_drb.mac_cfg = make_gbr_drb_mac_lc_config(*drb_to_setup.qos_info.drb_qos.gbr_qos_info);
+    }
 
     // Update pdcp_sn_len in RLC config
     auto& rlc_cfg = new_drb.rlc_cfg;

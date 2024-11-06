@@ -44,25 +44,30 @@ public:
 
 private:
   /// Fairness parameters.
+  /// Coefficient used to tweak decision in favor of fairness or throughput.
   const double fairness_coeff;
+  /// Coefficient used to compute exponential moving average.
   const double exp_avg_alpha = 0.01;
 
   /// Holds the information needed to compute priority of a UE in a priority queue.
   struct ue_ctxt {
     ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_pf* parent_) :
-      ue_index(ue_index_), cell_index(cell_index_), parent(parent_)
+      ue_index(ue_index_), cell_index(cell_index_), parent(parent_), dl_avg_rate_per_lc(lcid_t::MAX_NOF_RB_LCIDS)
     {
+      std::fill(dl_avg_rate_per_lc.begin(), dl_avg_rate_per_lc.end(), 0);
     }
 
-    /// Returns average DL rate expressed in bytes per slot.
-    [[nodiscard]] double dl_avg_rate() const { return dl_nof_samples == 0 ? 0 : dl_avg_rate_; }
-    /// Returns average UL rate expressed in bytes per slot.
-    [[nodiscard]] double ul_avg_rate() const { return ul_nof_samples == 0 ? 0 : ul_avg_rate_; }
+    /// Returns average DL rate expressed in bytes per slot of the UE.
+    [[nodiscard]] double total_dl_avg_rate() const { return dl_nof_samples == 0 ? 0 : total_dl_avg_rate_; }
+    /// Returns average UL rate expressed in bytes per slot of the UE.
+    [[nodiscard]] double total_ul_avg_rate() const { return ul_nof_samples == 0 ? 0 : total_ul_avg_rate_; }
 
-    void compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id);
-    void compute_ul_prio(const slice_ue& u, const ue_resource_grid_view& res_grid, ran_slice_id_t slice_id);
+    /// Computes the priority of the UE to be scheduled in DL based on the QoS and proportional fair metric.
+    void compute_dl_prio(const slice_ue& u, ran_slice_id_t slice_id, slot_point pdcch_slot, slot_point pdsch_slot);
+    /// Computes the priority of the UE to be scheduled in UL based on the proportional fair metric.
+    void compute_ul_prio(const slice_ue& u, ran_slice_id_t slice_id, slot_point pdcch_slot, slot_point pusch_slot);
 
-    void save_dl_alloc(uint32_t alloc_bytes);
+    void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info, const slice_ue& u);
     void save_ul_alloc(uint32_t alloc_bytes);
 
     const du_ue_index_t      ue_index;
@@ -74,31 +79,40 @@ private:
     /// UL priority value of the UE.
     double ul_prio = 0;
 
-    bool                                  has_empty_dl_harq = false;
-    bool                                  has_empty_ul_harq = false;
-    std::optional<dl_harq_process_handle> dl_retx_h;
-    std::optional<ul_harq_process_handle> ul_retx_h;
+    bool has_empty_dl_harq = false;
+    bool has_empty_ul_harq = false;
     /// Flag indicating whether SR indication from the UE is received or not.
     bool sr_ind_received = false;
 
   private:
+    /// Average DL rate expressed in bytes per slot experienced by UE in each of its logical channel.
+    static_vector<double, lcid_t::MAX_NOF_RB_LCIDS> dl_avg_rate_per_lc;
     /// Average DL rate expressed in bytes per slot experienced by UE.
-    double dl_avg_rate_ = 0;
+    double total_dl_avg_rate_ = 0;
     /// Average UL rate expressed in bytes per slot experienced by UE.
-    double ul_avg_rate_ = 0;
+    double total_ul_avg_rate_ = 0;
     /// Nof. DL samples over which average DL bitrate is computed.
     uint32_t dl_nof_samples = 0;
     /// Nof. UL samples over which average DL bitrate is computed.
     uint32_t ul_nof_samples = 0;
   };
 
+  dl_alloc_result schedule_dl_retxs(ue_pdsch_allocator&          pdsch_alloc,
+                                    const ue_resource_grid_view& res_grid,
+                                    dl_ran_slice_candidate&      slice_candidate,
+                                    dl_harq_pending_retx_list    harq_pending_retx_list);
+  ul_alloc_result schedule_ul_retxs(ue_pusch_allocator&          pusch_alloc,
+                                    const ue_resource_grid_view& res_grid,
+                                    ul_ran_slice_candidate&      slice_candidate,
+                                    ul_harq_pending_retx_list    harq_pending_retx_list);
+
   /// \brief Attempts to allocate PDSCH for a UE.
   /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.
-  alloc_result
+  dl_alloc_result
   try_dl_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, ue_pdsch_allocator& pdsch_alloc, unsigned max_rbs);
   /// \brief Attempts to allocate PUSCH for a UE.
   /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.
-  alloc_result
+  ul_alloc_result
   try_ul_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, ue_pusch_allocator& pusch_alloc, unsigned max_rbs);
 
   slotted_id_table<du_ue_index_t, ue_ctxt, MAX_NOF_DU_UES> ue_history_db;
@@ -128,7 +142,7 @@ private:
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(ue_ctxt* elem)
     {
-      if (not elem->dl_retx_h.has_value() and not elem->has_empty_dl_harq) {
+      if (not elem->has_empty_dl_harq) {
         return;
       }
       base_type::push(elem);
@@ -153,7 +167,7 @@ private:
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(ue_ctxt* elem)
     {
-      if (not elem->ul_retx_h.has_value() and not elem->has_empty_ul_harq) {
+      if (not elem->has_empty_ul_harq) {
         return;
       }
       base_type::push(elem);

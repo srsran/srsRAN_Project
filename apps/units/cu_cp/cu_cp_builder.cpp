@@ -21,6 +21,7 @@
  */
 
 #include "cu_cp_builder.h"
+#include "apps/services/metrics/metrics_config.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "cu_cp_commands.h"
 #include "cu_cp_config_translators.h"
@@ -37,6 +38,7 @@ cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_bu
   srsran_assert(dependencies.cu_cp_e2_exec, "Invalid E2 executor");
   srsran_assert(dependencies.ngap_pcap, "Invalid NGAP PCAP");
   srsran_assert(dependencies.broker, "Invalid IO broker");
+  srsran_assert(dependencies.metrics_notifier, "Invalid metrics notifier");
 
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(cu_cp_unit_cfg);
   cu_cp_cfg.services.cu_cp_executor        = dependencies.cu_cp_executor;

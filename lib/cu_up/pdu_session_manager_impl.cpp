@@ -301,6 +301,12 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   auto& pdcp_rx_ctrl = new_drb->pdcp->get_rx_upper_control_interface();
   pdcp_rx_ctrl.configure_security(sec_128, integrity_enabled, ciphering_enabled);
 
+  // if using testmode, make sure that desired buffer size is not 0
+  if (test_mode_config.enabled) {
+    pdcp_tx_lower_interface& pdcp_tx_lower = new_drb->pdcp->get_tx_lower_interface();
+    pdcp_tx_lower.handle_desired_buffer_size_notification(UINT32_MAX);
+  }
+
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
   new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
@@ -315,7 +321,13 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
   gtpu_teid_t f1u_ul_teid = ret.value();
 
-  up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
+  // Create UL UP TNL address.
+  expected<std::string> bind_addr = f1u_gw.get_cu_bind_address();
+  if (not bind_addr.has_value()) {
+    logger.log_error("Could not get bind address for F1-U tunnel");
+    return drb_result;
+  }
+  up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(bind_addr.value()),
                                              f1u_ul_teid);
 
   new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
@@ -338,13 +350,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   new_drb->f1u_ul_teid = f1u_ul_teid;
 
-  // Advertise either local or external IP address of F1-U interface
-  if (net_config.f1u_ext_addr.empty() || net_config.f1u_ext_addr == "auto") {
-    drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
-  } else {
-    drb_result.gtp_tunnel =
-        up_transport_layer_info{transport_layer_address::create_from_string(net_config.f1u_ext_addr), f1u_ul_teid};
-  }
+  drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
 
   // Connect F1-U GW bearer RX adapter to NR-U bearer
   new_drb->f1u_gateway_rx_to_nru_adapter.connect_nru_bearer(new_drb->f1u->get_rx_pdu_handler());
@@ -422,7 +428,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       logger.log_info("Replacing F1-U tunnel. old_ul_teid={} new_ul_teid={}", old_f1u_ul_teid, drb->f1u_ul_teid);
 
       // Create UL UP TNL address.
-      up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
+      expected<std::string> bind_addr = f1u_gw.get_cu_bind_address();
+      if (not bind_addr.has_value()) {
+        logger.log_error("Could not get bind address for F1-U tunnel");
+        continue;
+      }
+      up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(bind_addr.value()),
                                                  drb->f1u_ul_teid);
 
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
@@ -441,14 +452,6 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                               ue_ul_exec);
 
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
-
-      // Advertise either local or external IP address of F1-U interface
-      if (net_config.f1u_ext_addr.empty() || net_config.f1u_ext_addr == "auto") {
-        drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
-      } else {
-        drb_result.gtp_tunnel = up_transport_layer_info{
-            transport_layer_address::create_from_string(net_config.f1u_ext_addr), drb->f1u_ul_teid};
-      }
 
       drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
 

@@ -245,8 +245,8 @@ TEST_F(cu_cp_paging_test, when_valid_paging_message_received_then_paging_is_only
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
   // Connect second DU and run F1Setup
-  unsigned du_idx2 = setup_du(
-      test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x12), nr_cell_identity::create(6577).value(), 1, 8));
+  unsigned du_idx2 = setup_du(test_helpers::generate_f1_setup_request(
+      int_to_gnb_du_id(0x12), {{nr_cell_identity::create(6577).value(), 1, 8}}));
 
   // Inject NGAP Paging with only mandatory values and await F1AP Paging
   ASSERT_TRUE(send_minimal_ngap_paging_and_await_f1ap_paging(du_idx));
@@ -261,8 +261,8 @@ TEST_F(cu_cp_paging_test, when_valid_paging_message_received_then_paging_is_only
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
   // Connect second DU and run F1Setup
-  unsigned du_idx2 = setup_du(
-      test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x12), nr_cell_identity::create(6577).value(), 1, 7));
+  unsigned du_idx2 = setup_du(test_helpers::generate_f1_setup_request(
+      int_to_gnb_du_id(0x12), {{nr_cell_identity::create(6577).value(), 1, 7}}));
 
   // Inject NGAP Paging with only mandatory values and await F1AP Paging
   ASSERT_TRUE(send_minimal_ngap_paging_and_await_f1ap_paging(du_idx));

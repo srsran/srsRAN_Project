@@ -44,10 +44,10 @@ public:
   }
 
   // See interface for documentation.
-  void process(resource_grid_mapper& mapper, const pdu_t& pdu) override
+  void process(resource_grid_writer& grid, const pdu_t& pdu) override
   {
     pdcch_processor& processor = processors->get();
-    return processor.process(mapper, pdu);
+    return processor.process(grid, pdu);
   }
 
 private:

@@ -49,6 +49,9 @@ private:
   /// Pseudo-random sequence generator instance.
   std::unique_ptr<pseudo_random_generator> prg;
 
+  /// Resource grid mapper instance.
+  std::unique_ptr<resource_grid_mapper> mapper;
+
   /// Temporary sequence storage.
   std::array<cf_t, MAX_NOF_DMRS_PER_SYMBOL> temp_sequence;
 
@@ -72,19 +75,22 @@ private:
   ///
   /// This method implements the signal mapping as described in TS 38.211 Section 7.4.1.3.2.
   ///
-  /// \param[out] mapper          Resource grid mapper interface.
-  /// \param[in] d_pdcch          PDCCH resource elements to map in the resource grid.
-  /// \param[in] config           PDCCH modulator parameters.
-  void mapping(resource_grid_mapper& mapper, const re_buffer_reader<>& d_pdcch, const config_t& config);
+  /// \param[out] grid   Resource grid writer interface.
+  /// \param[in] d_pdcch PDCCH resource elements to map in the resource grid.
+  /// \param[in] config  PDCCH modulator parameters.
+  void mapping(resource_grid_writer& grid, const re_buffer_reader<>& d_pdcch, const config_t& config);
 
 public:
-  explicit dmrs_pdcch_processor_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
+  explicit dmrs_pdcch_processor_impl(std::unique_ptr<pseudo_random_generator> prg_,
+                                     std::unique_ptr<resource_grid_mapper>    mapper_) :
+    prg(std::move(prg_)), mapper(std::move(mapper_))
   {
     srsran_assert(prg, "Invalid PRG.");
+    srsran_assert(mapper, "Invalid resource grid mapper.");
   }
 
   // See interface for documentation.
-  void map(resource_grid_mapper& grid, const config_t& config) override;
+  void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
 } // namespace srsran

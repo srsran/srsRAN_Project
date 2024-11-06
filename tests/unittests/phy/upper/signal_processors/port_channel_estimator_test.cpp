@@ -27,6 +27,7 @@
 /// vectors.
 
 #include "port_channel_estimator_test_data.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 
@@ -43,14 +44,15 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
   const port_channel_estimator::layer_dmrs_pattern& dmrs_pattern = tc.cfg.dmrs_pattern[0];
   std::string                                       hops =
       (dmrs_pattern.hopping_symbol_index.has_value() ? "intraslot frequency hopping" : "no frequency hopping");
-  return os << fmt::format(
-             "Symbol allocation [{}, {}], {} allocated PRBs, RE pattern 0x{:x}, {}, DM-RS-to-data scaling {}",
-             tc.cfg.first_symbol,
-             tc.cfg.nof_symbols,
-             dmrs_pattern.rb_mask.count(),
-             dmrs_pattern.re_pattern,
-             hops,
-             tc.cfg.scaling);
+  return os << fmt::format("Symbol allocation [{}, {}], {} layers, {} allocated PRBs, RE pattern 0x{:x}, {}, "
+                           "DM-RS-to-data scaling {}",
+                           tc.cfg.first_symbol,
+                           tc.cfg.nof_symbols,
+                           tc.cfg.dmrs_pattern.size(),
+                           dmrs_pattern.rb_mask.count(),
+                           dmrs_pattern.re_pattern,
+                           hops,
+                           tc.cfg.scaling);
 }
 
 } // namespace srsran
@@ -103,11 +105,12 @@ bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> exp
   for (const auto& this_expected : expected) {
     unsigned i_symbol = this_expected.symbol;
     unsigned i_sc     = this_expected.subcarrier;
+    unsigned i_layer  = this_expected.port;
     cf_t     value    = this_expected.value;
 
     if (i_symbol != old_symbol) {
       old_symbol      = i_symbol;
-      computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, 0);
+      computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, i_layer);
     }
 
     cf_t ref = to_cf(computed_symbol[i_sc]) - value;
@@ -124,10 +127,18 @@ TEST_P(ChannelEstFixture, test)
 
   const port_channel_estimator::configuration& cfg = test_params.cfg;
 
-  // For now, single-layer/single-port transmissions only.
-  ASSERT_EQ(cfg.dmrs_pattern.size(), 1) << "For now, only single-layer transmissions.";
-  ASSERT_EQ(cfg.rx_ports.size(), 1) << "For now, only single-port reception is implemented.";
+  // For now, we consider at most 2 layers.
+  unsigned nof_layers = cfg.dmrs_pattern.size();
+  ASSERT_LE(nof_layers, 2) << "For now, at most two transmission layers are supported.";
 
+  if ((nof_layers == 2) && (get_pusch_processor_phy_capabilities().max_nof_layers < 2)) {
+    GTEST_SKIP() << "The 2-layer channel estimator is not supported in this version - skipping the test.";
+  }
+
+  // The test only considers a single port.
+  ASSERT_EQ(cfg.rx_ports.size(), 1) << "The channel estimator test only considers a single Rx port.";
+
+  // The second layer, if present, has the same pattern of the first one.
   const port_channel_estimator::layer_dmrs_pattern& dmrs_pattern = cfg.dmrs_pattern[0];
 
   unsigned nof_dmrs_symbols     = dmrs_pattern.symbols.count();
@@ -136,8 +147,8 @@ TEST_P(ChannelEstFixture, test)
   unsigned nof_dmrs_pilots      = nof_dmrs_scs * nof_dmrs_symbols;
 
   std::vector<cf_t> pilots = test_params.pilots.read();
-  ASSERT_EQ(pilots.size(), nof_dmrs_pilots)
-      << fmt::format("Number of DM-RS pilots mismatch: configured {}, provided {}.", nof_dmrs_symbols, pilots.size());
+  ASSERT_EQ(pilots.size(), nof_dmrs_pilots * nof_layers) << fmt::format(
+      "Number of DM-RS pilots mismatch: configured {}, provided {}.", nof_dmrs_pilots * nof_layers, pilots.size());
 
   std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_params.grid.read();
   ASSERT_EQ(grid_entries.size(), nof_dmrs_pilots) << fmt::format(
@@ -146,22 +157,28 @@ TEST_P(ChannelEstFixture, test)
   unsigned nof_allocated_res = nof_allocatd_rblocks * NRE * cfg.nof_symbols;
 
   std::vector<resource_grid_reader_spy::expected_entry_t> expected_estimates = test_params.estimates.read();
-  ASSERT_EQ(expected_estimates.size(), nof_allocated_res) << fmt::format(
-      "Number of channel estimates mismatch: configured {}, provided {}", nof_allocated_res, expected_estimates.size());
+  ASSERT_EQ(expected_estimates.size(), nof_allocated_res * nof_layers)
+      << fmt::format("Number of channel estimates mismatch: configured {}, provided {}",
+                     nof_allocated_res * nof_layers,
+                     expected_estimates.size());
 
   channel_estimate::channel_estimate_dimensions dims;
   dims.nof_prb       = test_params.grid_size_prbs;
   dims.nof_symbols   = MAX_NSYMB_PER_SLOT;
   dims.nof_rx_ports  = 1;
-  dims.nof_tx_layers = 1;
+  dims.nof_tx_layers = nof_layers;
   channel_estimate estimates(dims);
 
   re_measurement_dimensions pilot_dims;
   pilot_dims.nof_subc    = nof_dmrs_scs;
   pilot_dims.nof_symbols = nof_dmrs_symbols;
-  pilot_dims.nof_slices  = 1;
+  pilot_dims.nof_slices  = nof_layers;
   dmrs_symbol_list pilots_arranged(pilot_dims);
-  pilots_arranged.set_slice(pilots, 0);
+  span<cf_t>       pilot_read = pilots;
+  for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+    pilots_arranged.set_slice(pilot_read.first(nof_dmrs_pilots), i_layer);
+    pilot_read = pilot_read.last(pilot_read.size() - nof_dmrs_pilots);
+  }
 
   resource_grid_reader_spy grid;
   grid.write(grid_entries);

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/format/format_utils.h"
 #include "fmt/format.h"

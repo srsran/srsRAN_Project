@@ -20,8 +20,8 @@
  *
  */
 
-#include "lib/scheduler/ue_scheduling/dl_logical_channel_manager.h"
-#include "lib/scheduler/ue_scheduling/ta_manager.h"
+#include "lib/scheduler/ue_context/dl_logical_channel_manager.h"
+#include "lib/scheduler/ue_context/ta_manager.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "srsran/ran/duplex_mode.h"
@@ -77,7 +77,8 @@ TEST_P(ta_manager_tester, ta_cmd_is_not_triggered_when_reported_ul_n_ta_update_i
 {
   const uint8_t      new_ta_cmd = 33;
   static const float ul_sinr    = expert_cfg.ue.ta_update_measurement_ul_sinr_threshold - 10;
-  ta_mgr.handle_ul_n_ta_update_indication(0, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
+  ta_mgr.handle_ul_n_ta_update_indication(
+      time_alignment_group::id_t{0}, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
 
   for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_slot_period * 2; ++count) {
     run_slot();
@@ -97,7 +98,8 @@ TEST_P(ta_manager_tester, ta_cmd_is_successfully_triggered)
 {
   const uint8_t      new_ta_cmd = 33;
   static const float ul_sinr    = expert_cfg.ue.ta_update_measurement_ul_sinr_threshold + 10;
-  ta_mgr.handle_ul_n_ta_update_indication(0, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
+  ta_mgr.handle_ul_n_ta_update_indication(
+      time_alignment_group::id_t{0}, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
 
   std::optional<dl_msg_lc_info> ta_cmd_mac_ce_alloc;
   for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_slot_period * 2; ++count) {
@@ -124,7 +126,8 @@ TEST_P(ta_manager_tester, verify_computed_new_ta_cmd_based_on_multiple_n_ta_diff
   const std::vector<uint8_t> ta_values_reported = {34, 35, 45, 34, 33};
   const float                ul_sinr            = expert_cfg.ue.ta_update_measurement_ul_sinr_threshold + 10;
   for (const auto ta : ta_values_reported) {
-    ta_mgr.handle_ul_n_ta_update_indication(0, compute_n_ta_diff_leading_to_new_ta_cmd(ta), ul_sinr);
+    ta_mgr.handle_ul_n_ta_update_indication(
+        time_alignment_group::id_t{0}, compute_n_ta_diff_leading_to_new_ta_cmd(ta), ul_sinr);
   }
 
   std::optional<dl_msg_lc_info> ta_cmd_mac_ce_alloc;

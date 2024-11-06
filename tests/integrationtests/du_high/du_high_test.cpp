@@ -104,7 +104,7 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
   })) {
     for (unsigned i = 0; i != phy.cells[0].last_dl_data.value().ue_pdus.size(); ++i) {
       if (phy.cells[0].last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
-        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.size();
+        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.get_buffer().size();
       }
     }
     phy.cells[0].last_dl_data.reset();
@@ -214,7 +214,8 @@ TEST_F(du_high_tester, when_ue_context_setup_received_for_inexistent_ue_then_ue_
 
   gnb_cu_ue_f1ap_id_t cu_ue_id =
       int_to_gnb_cu_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(0, (uint64_t)gnb_cu_ue_f1ap_id_t::max));
-  f1ap_message cu_cp_msg = test_helpers::create_ue_context_setup_request(cu_ue_id, std::nullopt, 0, {drb_id_t::drb1});
+  f1ap_message cu_cp_msg = test_helpers::create_ue_context_setup_request(
+      cu_ue_id, std::nullopt, 0, {drb_id_t::drb1}, {plmn_identity::test_value(), nr_cell_identity::create(0).value()});
   this->du_hi->get_f1ap_message_handler().handle_message(cu_cp_msg);
 
   ASSERT_TRUE(this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }));

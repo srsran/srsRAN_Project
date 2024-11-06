@@ -29,7 +29,7 @@ if (ENABLE_PDSCH_HWACC)
     set(PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES srsran_channel_processors srsran_sched srslog)
     if (DPDK_FOUND)
         set_source_files_properties(pdsch_encoder_hwacc_benchmark.cpp PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND")
-        list(APPEND PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES hal_hwacc_pdsch)
+        list(APPEND PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES srsran_hal_pdsch)
     endif (DPDK_FOUND)
     target_link_libraries(pdsch_encoder_hwacc_benchmark ${PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES})
 endif (ENABLE_PDSCH_HWACC)
@@ -46,7 +46,7 @@ set(PDSCH_PROCESSOR_LIBRARIES srsran_phy_support
 
 if (ENABLE_PDSCH_HWACC)
     set_source_files_properties(pdsch_processor_benchmark.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PDSCH_ENABLED")
-    list(APPEND PDSCH_PROCESSOR_LIBRARIES hal_hwacc_pdsch)
+    list(APPEND PDSCH_PROCESSOR_LIBRARIES srsran_hal_pdsch)
 endif (ENABLE_PDSCH_HWACC)
 
 target_link_libraries(pdsch_processor_benchmark ${PDSCH_PROCESSOR_LIBRARIES})

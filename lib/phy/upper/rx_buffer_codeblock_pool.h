@@ -26,7 +26,7 @@
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/span.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include <cstdint>
 #include <vector>

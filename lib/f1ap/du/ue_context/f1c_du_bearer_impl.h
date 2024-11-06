@@ -57,11 +57,13 @@ public:
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
-  void             handle_pdu(byte_buffer pdu) override;
+  void             handle_pdu(byte_buffer pdu, bool rrc_delivery_status_request = false) override;
   async_task<bool> handle_pdu_and_await_delivery(byte_buffer               sdu,
                                                  bool                      report_rrc_delivery_status,
                                                  std::chrono::milliseconds time_to_wait) override;
-  async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds time_to_wait) override;
+  async_task<bool> handle_pdu_and_await_transmission(byte_buffer               pdu,
+                                                     bool                      report_rrc_delivery_status,
+                                                     std::chrono::milliseconds time_to_wait) override;
 
 private:
   f1ap_ue_context&          ue_ctxt;
@@ -95,11 +97,13 @@ public:
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
-  void             handle_pdu(byte_buffer sdu) override;
+  void             handle_pdu(byte_buffer sdu, bool rrc_delivery_status_request = false) override;
   async_task<bool> handle_pdu_and_await_delivery(byte_buffer               pdu,
                                                  bool                      report_rrc_delivery_status,
                                                  std::chrono::milliseconds time_to_wait) override;
-  async_task<bool> handle_pdu_and_await_transmission(byte_buffer pdu, std::chrono::milliseconds time_to_wait) override;
+  async_task<bool> handle_pdu_and_await_transmission(byte_buffer               pdu,
+                                                     bool                      report_rrc_delivery_status,
+                                                     std::chrono::milliseconds time_to_wait) override;
 
 private:
   using event_source_type   = protocol_transaction_event_source<bool>;
@@ -128,7 +132,7 @@ private:
   void handle_notification(uint32_t highest_pdcp_sn, bool tx_or_delivery);
 
   /// Handle RRC Delivery Report as per TS 38.473, Section 8.4.4.
-  void handle_rrc_delivery_report(uint32_t triggering_pdcp_sn);
+  void handle_rrc_delivery_report(uint32_t trigger_pdcp_sn, uint32_t highest_in_order_pdcp_sn);
 
   f1ap_ue_context&       ue_ctxt;
   srb_id_t               srb_id;
@@ -143,6 +147,10 @@ private:
 
   std::optional<uint32_t> last_pdcp_sn_transmitted;
   std::optional<uint32_t> last_pdcp_sn_delivered;
+
+  // List of pending RRC delivery status reports for this SRB.
+  std::deque<uint32_t> pending_rrc_delivery_status_reports;
+
   // Pool of events for PDU transmission and delivery. Each entry is represented by the PDCP SN (negative if
   // the pool element is negative) and the event flag to wait for.
   unsync_fixed_size_object_pool<event_context> event_pool;

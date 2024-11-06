@@ -25,7 +25,7 @@
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/ran/sch/sch_mcs.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 namespace srsran {
 

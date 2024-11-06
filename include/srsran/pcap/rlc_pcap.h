@@ -24,7 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/rlc/rlc_config.h"
 #include "fmt/format.h"
 #include <cstdint>

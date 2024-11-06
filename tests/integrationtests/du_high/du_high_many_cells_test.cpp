@@ -124,7 +124,8 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   }
 
   // Forward several DRB PDUs to all UEs.
-  const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+  const unsigned nof_pdcp_pdus = 100;
+  const unsigned pdcp_pdu_size = 128;
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
     for (auto& bearer : cu_up_sim.bearers) {
       nru_dl_message f1u_pdu{
@@ -134,9 +135,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   }
 
   // synchronization point - Wait for PDUs to reach RLC SDU queues.
-  for (unsigned i = 0; i != this->workers.ue_workers.size(); ++i) {
-    this->workers.ue_workers[i].wait_pending_tasks();
-  }
+  this->workers.flush_pending_dl_pdus();
 
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
   std::vector<unsigned> bytes_sched_per_cell(GetParam().nof_cells, 0);
@@ -172,7 +171,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
         continue;
       }
       for (unsigned i = 0; i != phy_cell.last_dl_data.value().ue_pdus.size(); ++i) {
-        auto& ue_grant = phy_cell.last_dl_res.value().dl_res->ue_grants[i];
+        const auto& ue_grant = phy_cell.last_dl_res.value().dl_res->ue_grants[i];
         ASSERT_EQ(ue_grant.pdsch_cfg.rnti, to_rnti(0x4601 + c))
             << fmt::format("c-rnti={} scheduled in the wrong cell={}", ue_grant.pdsch_cfg.rnti, c);
 
@@ -182,7 +181,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
                         ue_grant.tb_list[0].lc_chs_to_sched.end(),
                         // is DRB data
                         [](const dl_msg_lc_info& lc) { return lc.lcid.is_sdu() and lc.lcid.to_lcid() > LCID_SRB3; })) {
-          unsigned pdu_size = phy_cell.last_dl_data.value().ue_pdus[i].pdu.size();
+          unsigned pdu_size = phy_cell.last_dl_data.value().ue_pdus[i].pdu.get_buffer().size();
           bytes_sched_per_cell[c] += pdu_size;
           largest_pdu_per_cell[c] = std::max(largest_pdu_per_cell[c], pdu_size);
         }

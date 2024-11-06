@@ -22,7 +22,7 @@
 
 #include "pdcch_processor_impl.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 using namespace pdcch_constants;
@@ -63,7 +63,7 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
   return result;
 }
 
-void pdcch_processor_impl::process(resource_grid_mapper& mapper, const pdcch_processor::pdu_t& pdu)
+void pdcch_processor_impl::process(resource_grid_writer& grid, const pdcch_processor::pdu_t& pdu)
 {
   const coreset_description& coreset = pdu.coreset;
   const dci_description&     dci     = pdu.dci;
@@ -96,7 +96,7 @@ void pdcch_processor_impl::process(resource_grid_mapper& mapper, const pdcch_pro
   modulator_config.precoding          = dci.precoding;
 
   // Modulate.
-  modulator->modulate(mapper, encoded, modulator_config);
+  modulator->modulate(grid, encoded, modulator_config);
 
   unsigned reference_point_k_rb =
       coreset.cce_to_reg_mapping == cce_to_reg_mapping_type::CORESET0 ? coreset.bwp_start_rb : 0;
@@ -114,5 +114,5 @@ void pdcch_processor_impl::process(resource_grid_mapper& mapper, const pdcch_pro
   dmrs_pdcch_config.precoding            = dci.precoding;
 
   // Generate DMRS.
-  dmrs->map(mapper, dmrs_pdcch_config);
+  dmrs->map(grid, dmrs_pdcch_config);
 }

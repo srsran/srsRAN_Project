@@ -26,7 +26,7 @@
 #include "quantizer.h"
 #include "srsran/ofh/compression/compression_properties.h"
 #include "srsran/srsvec/prod.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include "srsran/support/units.h"
 
 using namespace srsran;

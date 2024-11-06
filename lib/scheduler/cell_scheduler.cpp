@@ -26,6 +26,14 @@
 
 using namespace srsran;
 
+/// Obtain duration after which we consider that the scheduler did not perform its operations within the RT deadline.
+static std::chrono::microseconds get_tracer_thres(const cell_configuration& cell_cfg)
+{
+  std::chrono::microseconds slot_dur{1000 >>
+                                     to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)};
+  return cell_cfg.expert_cfg.log_high_latency_diagnostics ? slot_dur : std::chrono::microseconds{0};
+}
+
 cell_scheduler::cell_scheduler(const scheduler_expert_config&                  sched_cfg,
                                const sched_cell_configuration_request_message& msg,
                                const cell_configuration&                       cell_cfg_,
@@ -48,7 +56,11 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   sib1_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   si_msg_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   pucch_guard_sch(cell_cfg),
-  pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
+  pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg),
+  res_usage_tracer(fmt::format("cell_sched_{}", cell_cfg.cell_index),
+                   logger_event_tracer<true>{sched_cfg.log_high_latency_diagnostics ? &logger.warning : nullptr},
+                   get_tracer_thres(cell_cfg),
+                   8)
 {
   // Register new cell in the UE scheduler.
   ue_sched.add_cell(ue_scheduler_cell_params{
@@ -86,6 +98,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
 {
   // Mark the start of the slot.
   auto slot_start_tp = std::chrono::high_resolution_clock::now();
+  res_usage_tracer.start();
 
   // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
   if (SRSRAN_LIKELY(res_grid.slot_tx().valid())) {
@@ -127,12 +140,15 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   // > Schedule Paging.
   pg_sch.run_slot(res_grid);
 
+  res_usage_tracer.add_section("sched_common");
+
   // > Schedule UE DL and UL data.
   ue_sched.run_slot(sl_tx);
 
   // > Mark stop of the slot processing
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();
   auto slot_dur     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
+  res_usage_tracer.stop("sched_ue");
 
   // > Log processed events.
   event_logger.log();

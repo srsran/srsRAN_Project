@@ -28,7 +28,7 @@
 #include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/srsvec/mean.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 #include <algorithm>
 #include <array>
 #include <cmath>

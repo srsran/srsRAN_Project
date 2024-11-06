@@ -43,17 +43,17 @@ public:
     srsran_assert(processor, "Invalid processor.");
   }
 
-  void process(resource_grid_mapper&                                        mapper,
-               pdsch_processor_notifier&                                    notifier_,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
-               const pdu_t&                                                 pdu_) override
+  void process(resource_grid_writer&                                           grid,
+               pdsch_processor_notifier&                                       notifier_,
+               static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data_,
+               const pdu_t&                                                    pdu_) override
   {
     notifier = &notifier_;
-    data     = data_.front();
+    data     = shared_transport_block(data_.front());
     pdu      = pdu_;
 
     start = std::chrono::steady_clock::now();
-    processor->process(mapper, *this, data_, pdu);
+    processor->process(grid, *this, std::move(data_), pdu);
   }
 
 private:
@@ -71,22 +71,22 @@ private:
         // Detailed log information, including a list of all PDU fields.
         logger.debug(pdu.slot.sfn(),
                      pdu.slot.slot_index(),
-                     data.data(),
-                     data.size(),
+                     data.get_buffer().data(),
+                     data.get_buffer().size(),
                      "PDSCH: {:s} tbs={} {}\n  {:n}",
                      pdu,
-                     data.size(),
+                     data.get_buffer().size(),
                      time_ns,
                      pdu);
       } else {
         // Single line log entry.
         logger.info(pdu.slot.sfn(),
                     pdu.slot.slot_index(),
-                    data.data(),
-                    data.size(),
+                    data.get_buffer().data(),
+                    data.get_buffer().size(),
                     "PDSCH: {:s} tbs={} {}",
                     pdu,
-                    data.size(),
+                    data.get_buffer().size(),
                     time_ns);
       }
     }
@@ -98,6 +98,9 @@ private:
     pdsch_processor_notifier* notifier_ = notifier;
     notifier                            = nullptr;
 
+    // Release ownership of the TB buffer.
+    data.release();
+
     // Notify original callback. Processor will be available after returning.
     notifier_->on_finish_processing();
   }
@@ -106,7 +109,7 @@ private:
   bool                                               enable_logging_broadcast;
   std::unique_ptr<pdsch_processor>                   processor;
   pdsch_processor_notifier*                          notifier;
-  span<const uint8_t>                                data;
+  shared_transport_block                             data;
   pdu_t                                              pdu;
   std::chrono::time_point<std::chrono::steady_clock> start;
 };

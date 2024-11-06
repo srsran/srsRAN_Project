@@ -62,8 +62,9 @@ public:
   handle_subscription_delete(const asn1::e2ap::ric_sub_delete_request_s& msg) = 0;
   /// \brief start the subscription request
   virtual void start_subscription(const asn1::e2ap::ric_request_id_s& ric_request_id,
+                                  uint16_t                            ran_func_id,
                                   e2_event_manager&                   ev_mng,
-                                  uint16_t                            ran_func_id) = 0;
+                                  e2_message_notifier&                tx_pdu_notifier) = 0;
   /// \brief void stop the subscription request
   virtual void stop_subscription(const asn1::e2ap::ric_request_id_s&         ric_request_id,
                                  e2_event_manager&                           ev_mng,
@@ -82,6 +83,8 @@ public:
   virtual e2sm_interface* get_e2sm_interface(const std::string oid) = 0;
 
   virtual void add_ran_function_oid(uint16_t ran_func_id, std::string oid) = 0;
+
+  virtual void stop() = 0;
 };
 
 class e2_subscription_manager : public e2_subscription_proc, public e2_subscriber_mgmt

@@ -35,7 +35,8 @@ void generate_valid_f1_setup_request(
     du_setup_request& setup_request,
     gnb_du_id_t       gnb_du_id = int_to_gnb_du_id(0x11),
     nr_cell_identity  nrcell_id = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(),
-    pci_t             pci       = 0);
+    pci_t             pci       = 0,
+    unsigned          tac       = 7);
 
 /// \brief Generate a dummy F1 Setup Request base to extend.
 void generate_f1_setup_request_base(du_setup_request& setup_request);

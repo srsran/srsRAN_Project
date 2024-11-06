@@ -22,7 +22,6 @@
 
 #include "ru_ofh_config_translator.h"
 #include "apps/services/worker_manager_config.h"
-#include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "ru_ofh_config.h"
 #include "srsran/du/du_cell_config.h"
 
@@ -98,9 +97,10 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
     out_cfg.sector_configs.emplace_back();
     ru_ofh_sector_configuration& sector_cfg = out_cfg.sector_configs.back();
 
-    sector_cfg.interface                   = cell_cfg.network_interface;
-    sector_cfg.is_promiscuous_mode_enabled = cell_cfg.enable_promiscuous_mode;
-    sector_cfg.mtu_size                    = cell_cfg.mtu_size;
+    sector_cfg.interface                    = cell_cfg.network_interface;
+    sector_cfg.is_promiscuous_mode_enabled  = cell_cfg.enable_promiscuous_mode;
+    sector_cfg.is_link_status_check_enabled = cell_cfg.check_link_status;
+    sector_cfg.mtu_size                     = cell_cfg.mtu_size;
     if (!parse_mac_address(cell_cfg.du_mac_address, sector_cfg.mac_src_address)) {
       srsran_terminate("Invalid Distributed Unit MAC address");
     }

@@ -24,27 +24,39 @@
 using namespace srsran;
 using namespace asn1::e2ap;
 
-e2_subscription_setup_procedure::e2_subscription_setup_procedure(e2_message_notifier&  ric_notif_,
+e2_subscription_setup_procedure::e2_subscription_setup_procedure(const asn1::e2ap::ric_sub_request_s& request_,
+                                                                 e2_event_manager&                    event_manager_,
+                                                                 e2_message_notifier&                 ric_notif_,
                                                                  e2_subscription_proc& subscription_mngr_,
                                                                  timer_factory         timers_,
                                                                  srslog::basic_logger& logger_) :
-  logger(logger_), ric_notif(ric_notif_), subscription_mngr(subscription_mngr_), timers(timers_)
+  request(request_),
+  event_manager(event_manager_),
+  logger(logger_),
+  ric_notif(ric_notif_),
+  subscription_mngr(subscription_mngr_),
+  timers(timers_)
 {
 }
 
-void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2ap::ric_sub_request_s request_,
-                                                                 e2_event_manager&                   event_manager)
+void e2_subscription_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
+  CORO_BEGIN(ctx);
+  logger.debug("\"{}\" initialized", name());
   logger.info("E2AP: Received subscription request");
+
   e2_subscribe_reponse_message response;
-  response = subscription_mngr.handle_subscription_setup(request_);
+  response = subscription_mngr.handle_subscription_setup(request);
   if (response.success) {
-    event_manager.add_sub_del_req(request_->ric_request_id, timers);
-    subscription_mngr.start_subscription(response.request_id, event_manager, request_->ran_function_id);
+    event_manager.add_sub_del_req(request->ric_request_id, timers);
+    subscription_mngr.start_subscription(response.request_id, request->ran_function_id, event_manager, ric_notif);
     send_e2_subscription_setup_response(response);
   } else {
     send_e2_subscription_setup_failure(response);
   }
+
+  logger.debug("\"{}\" finalized", name());
+  CORO_RETURN();
 }
 
 void e2_subscription_setup_procedure::send_e2_subscription_setup_response(const e2_subscribe_reponse_message& response)

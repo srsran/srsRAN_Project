@@ -276,12 +276,14 @@ static void fill_cu_cp_log_section(YAML::Node node, const cu_cp_unit_logger_conf
 
 static void fill_cu_cp_pcap_section(YAML::Node node, const cu_cp_unit_pcap_config& config)
 {
-  node["ngap_filename"] = config.ngap.filename;
-  node["ngap_enable"]   = config.ngap.enabled;
-  node["f1ap_filename"] = config.f1ap.filename;
-  node["f1ap_enable"]   = config.f1ap.enabled;
-  node["e1ap_filename"] = config.e1ap.filename;
-  node["e1ap_enable"]   = config.e1ap.enabled;
+  node["ngap_filename"]       = config.ngap.filename;
+  node["ngap_enable"]         = config.ngap.enabled;
+  node["f1ap_filename"]       = config.f1ap.filename;
+  node["f1ap_enable"]         = config.f1ap.enabled;
+  node["e1ap_filename"]       = config.e1ap.filename;
+  node["e1ap_enable"]         = config.e1ap.enabled;
+  node["e2ap_cu_cp_filename"] = config.e2ap.filename;
+  node["e2ap_cu_cp_enable"]   = config.e2ap.enabled;
 }
 
 static void fill_cu_cp_metrics_section(YAML::Node node, const cu_cp_unit_metrics_config& config)

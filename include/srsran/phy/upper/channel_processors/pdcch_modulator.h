@@ -31,7 +31,7 @@
 
 namespace srsran {
 
-class resource_grid_mapper;
+class resource_grid_writer;
 
 /// \brief Describes a PDCCH modulator interface.
 ///
@@ -62,12 +62,12 @@ public:
   virtual ~pdcch_modulator() = default;
 
   /// \brief Modulates a PDCCH codeword according to TS38.211 Section 7.3.2.
-  /// \param[out] mapper Resource grid mapper interface.
+  /// \param[out] grid   Resource grid writer interface.
   /// \param[in] data    PDCCH codeword to modulate.
   /// \param[in] config  Necessary parameters for modulating PDCCH.
   /// \remark The codeword length shall be consistent with the resource mapping.
   /// \remark An assertion is triggered if the number of precoding layers is not one.
-  virtual void modulate(resource_grid_mapper& mapper, span<const uint8_t> data, const config_t& config) = 0;
+  virtual void modulate(resource_grid_writer& grid, span<const uint8_t> data, const config_t& config) = 0;
 };
 
 } // namespace srsran

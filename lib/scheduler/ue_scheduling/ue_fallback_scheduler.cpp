@@ -28,7 +28,6 @@
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
-#include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/srslog/srslog.h"

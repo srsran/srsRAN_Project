@@ -27,7 +27,7 @@
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/event_tracing.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include <memory>
 #include <vector>
 

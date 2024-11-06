@@ -43,12 +43,14 @@ static void fill_cu_up_metrics_section(YAML::Node node, const cu_up_unit_metrics
 
 static void fill_cu_up_pcap_section(YAML::Node node, const cu_up_unit_pcap_config& config)
 {
-  node["n3_filename"]   = config.n3.filename;
-  node["n3_enable"]     = config.n3.enabled;
-  node["f1u_filename"]  = config.f1u.filename;
-  node["f1u_enable"]    = config.f1u.enabled;
-  node["e1ap_filename"] = config.e1ap.filename;
-  node["e1ap_enable"]   = config.e1ap.enabled;
+  node["n3_filename"]         = config.n3.filename;
+  node["n3_enable"]           = config.n3.enabled;
+  node["f1u_filename"]        = config.f1u.filename;
+  node["f1u_enable"]          = config.f1u.enabled;
+  node["e1ap_filename"]       = config.e1ap.filename;
+  node["e1ap_enable"]         = config.e1ap.enabled;
+  node["e2ap_cu_up_filename"] = config.e2ap.filename;
+  node["e2ap_enable"]         = config.e2ap.enabled;
 }
 
 static void fill_cu_up_log_section(YAML::Node node, const cu_up_unit_logger_config& config)
@@ -71,29 +73,6 @@ static YAML::Node build_cu_up_section(const cu_up_unit_config& config)
   return node;
 }
 
-static void fill_um_bidir_section(YAML::Node node, const cu_up_unit_qos_config& config)
-{
-  YAML::Node node_tx    = node["tx"];
-  node_tx["queue-size"] = config.rlc_sdu_queue;
-}
-
-static void fill_am_section(YAML::Node node, const cu_up_unit_qos_config& config)
-{
-  YAML::Node node_tx    = node["tx"];
-  node_tx["queue-size"] = config.rlc_sdu_queue;
-}
-
-static void fill_cu_up_rlc_qos_section(YAML::Node node, const cu_up_unit_qos_config& config)
-{
-  node["mode"] = config.mode;
-
-  if (config.mode == "um_bidir") {
-    fill_um_bidir_section(node["um_bidir"], config);
-  } else if (config.mode == "am") {
-    fill_am_section(node["am"], config);
-  }
-}
-
 static void fill_cu_up_f1_qos_section(YAML::Node node, const cu_cp_unit_f1u_config& config)
 {
   node["backoff_timer"] = config.t_notify;
@@ -102,7 +81,6 @@ static void fill_cu_up_f1_qos_section(YAML::Node node, const cu_cp_unit_f1u_conf
 static void fill_cu_up_qos_entry(YAML::Node node, const cu_up_unit_qos_config& config)
 {
   node["five_qi"] = five_qi_to_uint(config.five_qi);
-  fill_cu_up_rlc_qos_section(node["rlc"], config);
   fill_cu_up_f1_qos_section(node["f1u_cu_up"], config.f1u_cu_up);
 }
 

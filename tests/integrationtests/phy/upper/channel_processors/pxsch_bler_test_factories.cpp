@@ -135,9 +135,20 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
   std::shared_ptr<channel_modulation_factory> channel_mod_factory = create_channel_modulation_sw_factory();
   report_fatal_error_if_not(channel_mod_factory, "Failed to create factory.");
 
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+  report_fatal_error_if_not(precoding_factory, "Failed to create factory.");
+
+  std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+      create_resource_grid_mapper_factory(precoding_factory);
+  report_fatal_error_if_not(rg_mapper_factory, "Failed to create factory.");
+
   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_proc_factory =
-      create_dmrs_pdsch_processor_factory_sw(pseudo_random_gen_factory);
+      create_dmrs_pdsch_processor_factory_sw(pseudo_random_gen_factory, rg_mapper_factory);
   report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Failed to create factory.");
+
+  std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
+      create_ptrs_pdsch_generator_generic_factory(pseudo_random_gen_factory, rg_mapper_factory);
+  report_fatal_error_if_not(ptrs_pdsch_gen_factory, "Failed to create factory.");
 
 #if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
   if (pxsch_type.find("acc100") != std::string::npos) {
@@ -157,10 +168,11 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
     report_fatal_error_if_not(pdsch_encoder_factory, "Failed to create factory.");
 
     std::shared_ptr<pdsch_modulator_factory> pdsch_modulator_factory =
-        create_pdsch_modulator_factory_sw(channel_mod_factory, pseudo_random_gen_factory);
+        create_pdsch_modulator_factory_sw(channel_mod_factory, pseudo_random_gen_factory, rg_mapper_factory);
     report_fatal_error_if_not(pdsch_modulator_factory, "Failed to create factory.");
 
-    return create_pdsch_processor_factory_sw(pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_proc_factory);
+    return create_pdsch_processor_factory_sw(
+        pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_proc_factory, ptrs_pdsch_gen_factory);
   }
 #endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
 
@@ -168,8 +180,10 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
                                                       ldpc_encoder_factory,
                                                       ldpc_rate_matcher_factory,
                                                       pseudo_random_gen_factory,
+                                                      rg_mapper_factory,
                                                       channel_mod_factory,
                                                       dmrs_pdsch_proc_factory,
+                                                      ptrs_pdsch_gen_factory,
                                                       executor,
                                                       max_nof_threads);
 }

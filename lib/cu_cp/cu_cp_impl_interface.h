@@ -114,6 +114,9 @@ public:
   /// \brief Handles UE index allocation request for N2 handover at target gNB
   virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
 
+  /// \brief Handles a DL non UE associated NRPPa transport.
+  virtual void handle_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) = 0;
+
   /// \brief Handle N2 AMF connection drop.
   virtual void handle_n2_disconnection() = 0;
 };
@@ -261,9 +264,9 @@ class cu_cp_mobility_manager_handler
 public:
   virtual ~cu_cp_mobility_manager_handler() = default;
 
-  /// \brief Handle an Inter DU handover.
-  virtual async_task<cu_cp_inter_du_handover_response>
-  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+  /// \brief Handle an Intra CU handover.
+  virtual async_task<cu_cp_intra_cu_handover_response>
+  handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request& request,
                                    du_index_t&                            source_du_index,
                                    du_index_t&                            target_du_index) = 0;
 };

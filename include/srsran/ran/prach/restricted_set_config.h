@@ -22,12 +22,14 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace srsran {
 
 /// \brief PRACH Restricted set configuration.
 ///
 /// PRACH \f$N_{CS}\f$ restricted set configuration. Used for interpreting TS38.211 Tables 6.3.3.1-5 and 6.3.3.1-6.
-enum class restricted_set_config { UNRESTRICTED, TYPE_A, TYPE_B };
+enum class restricted_set_config : uint8_t { UNRESTRICTED, TYPE_A, TYPE_B };
 
 inline const char* to_string(restricted_set_config config)
 {

@@ -23,9 +23,9 @@
 #pragma once
 
 #include "ul_bsr.h"
-#include "srsran/mac/lcid_dl_sch.h"
-#include "srsran/mac/phr_report.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/logical_channel/lcid_dl_sch.h"
+#include "srsran/ran/logical_channel/phr_report.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_point.h"
 
@@ -60,6 +60,7 @@ struct mac_phr_ce_info {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   rnti_t          rnti;
+  slot_point      slot_rx;
   phr_report      phr;
 };
 

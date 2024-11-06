@@ -132,23 +132,13 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
   }
 }
 
-resource_grid_mapper_impl::resource_grid_mapper_impl(unsigned                          nof_ports_,
-                                                     unsigned                          nof_subc_,
-                                                     resource_grid_writer&             writer_,
-                                                     std::unique_ptr<channel_precoder> precoder_) :
-  nof_ports(nof_ports_), nof_subc(nof_subc_), writer(writer_), precoder(std::move(precoder_))
+resource_grid_mapper_impl::resource_grid_mapper_impl(std::unique_ptr<channel_precoder> precoder_) :
+  precoder(std::move(precoder_))
 {
-  srsran_assert(nof_ports <= max_nof_ports,
-                "The number of ports (i.e., {}) exceeds the maximum number of ports (i.e., {}).",
-                nof_ports,
-                static_cast<unsigned>(max_nof_ports));
-  srsran_assert(nof_subc <= max_nof_subcarriers,
-                "The number of subcarriers (i.e., {}) exceeds the maximum number of subcarriers (i.e., {}).",
-                nof_subc,
-                static_cast<unsigned>(max_nof_subcarriers));
 }
 
-void resource_grid_mapper_impl::map(const re_buffer_reader<>&      input,
+void resource_grid_mapper_impl::map(resource_grid_writer&          writer,
+                                    const re_buffer_reader<>&      input,
                                     const re_pattern&              pattern,
                                     const precoding_configuration& precoding)
 {
@@ -160,10 +150,10 @@ void resource_grid_mapper_impl::map(const re_buffer_reader<>&      input,
                 nof_layers);
 
   unsigned nof_precoding_ports = precoding.get_nof_ports();
-  srsran_assert(nof_precoding_ports <= nof_ports,
+  srsran_assert(nof_precoding_ports <= writer.get_nof_ports(),
                 "The precoding number of ports (i.e., {}) exceeds the grid number of ports (i.e., {}).",
                 precoding.get_nof_ports(),
-                nof_ports);
+                writer.get_nof_ports());
 
   // Temporary intermediate buffer for storing precoded symbols.
   precoding_buffer_type precoding_buffer;
@@ -186,7 +176,7 @@ void resource_grid_mapper_impl::map(const re_buffer_reader<>&      input,
                 "At least one OFDM symbol must be used by the allocation pattern.");
 
   // Get the symbol RE mask. It is the same for all allocated OFDM symbols.
-  bounded_bitset<max_nof_subcarriers> symbol_re_mask(nof_subc);
+  bounded_bitset<max_nof_subcarriers> symbol_re_mask(writer.get_nof_subc());
   pattern.get_inclusion_mask(symbol_re_mask, first_symbol);
 
   // Find the highest used subcarrier. Skip symbol if no active subcarrier.
@@ -276,7 +266,8 @@ void resource_grid_mapper_impl::map(const re_buffer_reader<>&      input,
                 input.get_nof_re());
 }
 
-void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
+void resource_grid_mapper_impl::map(resource_grid_writer&          writer,
+                                    symbol_buffer&                 buffer,
                                     const re_pattern_list&         pattern,
                                     const re_pattern_list&         reserved,
                                     const precoding_configuration& precoding,
@@ -284,7 +275,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
 {
   // Temporary intermediate buffer for storing precoded symbols.
   static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB, cbf16_t> precoding_buffer_copy;
-  modular_re_buffer_writer<cbf16_t, MAX_PORTS>                                precoding_buffer_view;
+  modular_re_buffer<cbf16_t, MAX_PORTS>                                       precoding_buffer_view;
 
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();
@@ -293,7 +284,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
   unsigned nof_antennas = precoding.get_nof_ports();
 
   // Verify that the number of layers is consistent with the number of ports.
-  interval<unsigned, true> nof_antennas_range(1, nof_ports);
+  interval<unsigned, true> nof_antennas_range(1, writer.get_nof_ports());
   srsran_assert(nof_antennas_range.contains(nof_antennas),
                 "The number of antennas (i.e., {}) must be in range {}",
                 nof_antennas,

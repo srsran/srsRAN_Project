@@ -27,7 +27,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/security/security.h"
 
 #include <string>

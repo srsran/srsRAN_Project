@@ -22,10 +22,8 @@
 
 #include "split6_du_application_unit_impl.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
-#include "apps/units/flexible_du/du_high/du_high_config_translators.h"
-#include "apps/units/flexible_du/du_high/du_high_config_yaml_writer.h"
-#include "apps/units/flexible_du/fapi/fapi_config_translator.h"
-#include "apps/units/flexible_du/fapi/fapi_config_yaml_writer.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_translators.h"
+#include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_yaml_writer.h"
 #include "split6_du_factory.h"
 #include "split6_du_unit_cli11_schema.h"
 #include "split6_du_unit_config_validator.h"
@@ -35,11 +33,11 @@ using namespace srsran;
 
 split6_du_application_unit_impl::split6_du_application_unit_impl(std::string_view app_name)
 {
-  unit_cfg.du_high_cfg.config.pcaps.e2ap.filename = fmt::format("/tmp/{}_e2ap.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
-  unit_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
+  unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.mac.filename  = fmt::format("/tmp/{}_mac.pcap", app_name);
+  // Note: do not update the default e2ap pcap filename.
 }
 
 void split6_du_application_unit_impl::on_loggers_registration()
@@ -68,8 +66,8 @@ void split6_du_application_unit_impl::on_parsing_configuration_registration(CLI:
   plugin->on_parsing_configuration_registration(app);
 }
 
-du_unit split6_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
-                                                                 bool                        use_multicell)
+o_du_unit split6_du_application_unit_impl::create_flexible_du_unit(const du_unit_dependencies& dependencies,
+                                                                   bool                        use_multicell)
 {
   auto fapi_ctrl = plugin->create_fapi_adaptor(dependencies);
   report_error_if_not(!fapi_ctrl.empty(), "Could not create FAPI adaptor");
@@ -81,15 +79,12 @@ du_unit split6_du_application_unit_impl::create_flexible_du_unit(const du_unit_d
 
 void split6_du_application_unit_impl::dump_config(YAML::Node& node) const
 {
-  fill_du_high_config_in_yaml_schema(node, unit_cfg.du_high_cfg.config);
-  fill_fapi_config_in_yaml_schema(node, unit_cfg.fapi_cfg);
+  fill_o_du_high_config_in_yaml_schema(node, unit_cfg.odu_high_cfg);
 }
 
 void split6_du_application_unit_impl::fill_worker_manager_config(worker_manager_config& config)
 {
   // Split 6 always runs in non blocking mode.
-  bool     is_blocking_mode_enable = false;
-  unsigned nof_cells               = unit_cfg.du_high_cfg.config.cells_cfg.size();
-  fill_du_high_worker_manager_config(config, unit_cfg.du_high_cfg.config, is_blocking_mode_enable);
-  fill_fapi_worker_manager_config(config, unit_cfg.fapi_cfg, nof_cells);
+  bool is_blocking_mode_enable = false;
+  fill_o_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg, is_blocking_mode_enable);
 }

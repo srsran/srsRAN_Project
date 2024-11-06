@@ -35,7 +35,7 @@
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include <gtest/gtest.h>
 #include <optional>
 #include <sys/types.h>

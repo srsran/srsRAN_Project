@@ -8,6 +8,7 @@
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/ssb_properties.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/support/shared_transport_block.h"
 
 namespace srsran {
 
@@ -60,12 +61,12 @@ struct mac_dl_sched_result {
 struct mac_dl_data_result {
   /// Describes the parameters related to a downlink PDU.
   struct dl_pdu {
-    dl_pdu(unsigned cw_index_, span<const uint8_t> pdu_) : cw_index(cw_index_), pdu(pdu_) {}
+    dl_pdu(unsigned cw_index_, shared_transport_block&& pdu_) : cw_index(cw_index_), pdu(std::move(pdu_)) {}
 
     /// Codeword index.
     unsigned cw_index;
     /// PDU contents.
-    span<const uint8_t> pdu;
+    shared_transport_block pdu;
   };
 
   slot_point                                      slot;

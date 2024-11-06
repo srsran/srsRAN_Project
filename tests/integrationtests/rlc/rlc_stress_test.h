@@ -29,6 +29,7 @@
 #include "rlc_stress_test_traffic.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/pdcp/pdcp_entity.h"
+#include "srsran/pdcp/pdcp_metrics.h"
 #include "srsran/rlc/rlc_entity.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/support/executors/task_worker.h"
@@ -37,6 +38,14 @@
 #include <unistd.h>
 
 namespace srsran {
+
+class mock_pdcp_metrics_notifier : public pdcp_metrics_notifier
+{
+  void report_metrics(const pdcp_metrics_container& metrics) override { metrics_list.push_back(metrics); }
+
+public:
+  std::vector<pdcp_metrics_container> metrics_list;
+};
 
 /// \brief Stack emulator used to stress test the RLC TX/RX entities.
 /// This emulator will try to mimic a real gNB stack as closely as possible.
@@ -59,8 +68,14 @@ public:
 
   void set_peer_stack(stress_stack* peer_stack_) { peer_stack = peer_stack_; }
 
-  pdcp_metrics_container get_pdcp_metrics() { return pdcp->get_metrics(); }
-  rlc_metrics            get_rlc_metrics() { return rlc->get_metrics(); }
+  pdcp_metrics_container get_pdcp_metrics()
+  {
+    if (pdcp_metrics_notifier.metrics_list.empty())
+      return {};
+    auto m = pdcp_metrics_notifier.metrics_list.back();
+    return m;
+  }
+  rlc_metrics get_rlc_metrics() { return rlc->get_metrics(); }
 
   // Mutex and condition variables for stopping workers
   std::mutex              mutex_pcell;
@@ -85,6 +100,7 @@ private:
   task_worker                    pcell_worker;
   std::unique_ptr<task_executor> ue_executor;
   std::unique_ptr<task_executor> pcell_executor;
+  mock_pdcp_metrics_notifier     pdcp_metrics_notifier;
 
   // Security
   security::sec_128_as_config sec_cfg;

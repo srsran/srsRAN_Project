@@ -33,12 +33,12 @@ using namespace srsran;
 /// \brief Test correct metrics counting of PDCP data SDUs/PDUs.
 TEST_P(pdcp_tx_metrics_test, sdu_pdu)
 {
-  init(GetParam());
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_discard_timer::ms150);
 
   auto test_pdu_gen = [this](uint32_t tx_next) {
     srsran::test_delimit_logger delimiter("TX SDU/PDU metrics test. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
-    pdcp_tx->reset_metrics();
+
     pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
@@ -49,14 +49,21 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
     pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + 1, sn_size));
 
     uint32_t exp_sdu_size = 2;
-    auto     m            = pdcp_tx->get_metrics();
+    tick_all(100);
+    if (metrics_notif.metrics_list.empty()) {
+      FAIL() << "No metrics notification received";
+    }
+    auto m = metrics_notif.metrics_list.back().tx;
     ASSERT_EQ(m.num_sdus, 1);
     ASSERT_EQ(m.num_sdu_bytes, exp_sdu_size);
     ASSERT_EQ(m.num_pdus, 1);
     ASSERT_EQ(m.num_pdu_bytes, pdu_hdr_len + exp_sdu_size + mac_hdr_len);
     ASSERT_EQ(m.num_discard_timeouts, 0);
-    tick_all(10);
-    m = pdcp_tx->get_metrics();
+    tick_all(100);
+    if (metrics_notif.metrics_list.empty()) {
+      FAIL() << "No metrics notification received";
+    }
+    m = metrics_notif.metrics_list.back().tx;
     ASSERT_EQ(m.num_discard_timeouts, 1);
   };
 

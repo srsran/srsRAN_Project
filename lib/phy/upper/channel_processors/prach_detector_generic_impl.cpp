@@ -37,7 +37,7 @@
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/srsvec/zero.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 

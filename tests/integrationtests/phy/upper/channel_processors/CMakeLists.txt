@@ -33,9 +33,9 @@ set(PXSCH_BLER_TEST_LIBRARIES srsran_ran
 
 if (ENABLE_PDSCH_HWACC AND ENABLE_PUSCH_HWACC)
     set_source_files_properties(pxsch_bler_test.cpp pxsch_bler_test_factories.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PDSCH_ENABLED; HWACC_PUSCH_ENABLED")
-    list(APPEND PXSCH_BLER_TEST_LIBRARIES  hal_hwacc_pusch
-        hal_hwacc_pdsch
-        hal_bbdev_factory)
+    list(APPEND PXSCH_BLER_TEST_LIBRARIES  srsran_hal_pusch
+        srsran_hal_pdsch
+        srsran_hal_bbdev)
 endif (ENABLE_PDSCH_HWACC AND ENABLE_PUSCH_HWACC)
 
 target_link_libraries(pxsch_bler_test ${PXSCH_BLER_TEST_LIBRARIES})

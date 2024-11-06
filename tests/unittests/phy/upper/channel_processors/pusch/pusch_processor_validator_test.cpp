@@ -29,6 +29,7 @@
 #include "srsran/support/format/fmt_optional.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
+#include <regex>
 
 using namespace srsran;
 
@@ -105,7 +106,7 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.uci.csi_part2_size.entries.front().parameters.front().width = 10;
        return pdu;
      },
-     R"(CSI Part 1 UCI field length \(i\.e\., 0) does not correspond with the CSI Part 2)"},
+     R"(CSI Part 1 UCI field length \(i\.e\., 0\) does not correspond with the CSI Part 2 \(i\.e\., entries=\[params=\[offset=0 width=10\] map=\[1\]\]\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = {true};
@@ -137,7 +138,7 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.nof_symbols        = 13;
        return pdu;
      },
-     R"(The index of the last OFDM symbol carrying DM-RS \(i\.e\., 13) must be less than or equal to the last symbol allocated to transmission \(i\.e\., 12\)\.)"},
+     R"(The index of the last OFDM symbol carrying DM-RS \(i\.e\., 13\) must be less than or equal to the last symbol allocated to transmission \(i\.e\., 12\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.start_symbol_index     = 0;
@@ -331,6 +332,12 @@ protected:
     pdu_validator = pusch_proc_factory->create_validator();
     ASSERT_NE(pdu_validator, nullptr);
   }
+
+  static void TearDownTestSuite()
+  {
+    pdu_validator.reset();
+    pusch_proc.reset();
+  }
 };
 
 std::unique_ptr<pusch_processor>     PuschProcessorFixture::pusch_proc;
@@ -344,7 +351,10 @@ TEST_P(PuschProcessorFixture, PuschProcessorValidatortest)
   const test_case_t& param = GetParam();
 
   // Make sure the configuration is invalid.
-  ASSERT_FALSE(pdu_validator->is_valid(param.get_pdu()));
+  error_type<std::string> validator_out = pdu_validator->is_valid(param.get_pdu());
+  ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
+  ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.expr)))
+      << "The assertion message doesn't match the expected pattern.";
 
   // Prepare resource grid.
   resource_grid_reader_spy grid;

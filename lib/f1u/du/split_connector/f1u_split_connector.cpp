@@ -22,7 +22,7 @@
 
 #include "f1u_split_connector.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -90,7 +90,7 @@ expected<std::string> f1u_split_connector::get_du_bind_address(gnb_du_id_t gnb_d
 {
   std::string ip_address;
 
-  if (f1u_ext_addr == "auto") {
+  if (f1u_ext_addr == "auto" || f1u_ext_addr == "") {
     if (not udp_session->get_bind_address(ip_address)) {
       return make_unexpected(default_error_t{});
     }

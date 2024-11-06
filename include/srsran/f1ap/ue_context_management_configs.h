@@ -24,9 +24,9 @@
 
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/cause/f1ap_cause.h"
-#include "srsran/ran/lcid.h"
 #include "srsran/ran/qos/qos_flow_id.h"
 #include "srsran/ran/qos/qos_parameters.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_mode.h"

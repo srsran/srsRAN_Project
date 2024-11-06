@@ -177,7 +177,7 @@ static inline uint32_t crc32_calc_pclmulqdq(span<const uint8_t> data, const crc_
   return crc32_reduce_64_to_32(fold, k, _mm_set_epi64x(0UL, params.p));
 }
 
-crc_calculator_checksum_t crc_calculator_clmul_impl::calculate_byte(span<const uint8_t> data)
+crc_calculator_checksum_t crc_calculator_clmul_impl::calculate_byte(span<const uint8_t> data) const
 {
   if (poly == crc_generator_poly::CRC24A) {
     return crc32_calc_pclmulqdq(data, crc24A_ctx) >> 8U;
@@ -190,12 +190,12 @@ crc_calculator_checksum_t crc_calculator_clmul_impl::calculate_byte(span<const u
   return crc_calc_lut.calculate_byte(data);
 }
 
-crc_calculator_checksum_t crc_calculator_clmul_impl::calculate_bit(span<const uint8_t> data)
+crc_calculator_checksum_t crc_calculator_clmul_impl::calculate_bit(span<const uint8_t> data) const
 {
   return crc_calc_lut.calculate_bit(data);
 }
 
-crc_calculator_checksum_t crc_calculator_clmul_impl::calculate(const bit_buffer& data)
+crc_calculator_checksum_t crc_calculator_clmul_impl::calculate(const bit_buffer& data) const
 {
   unsigned nbytes          = data.size() / 8;
   unsigned remainder_nbits = data.size() % 8;
@@ -214,23 +214,17 @@ crc_calculator_checksum_t crc_calculator_clmul_impl::calculate(const bit_buffer&
     return crc;
   }
 
-  // Reset the LUT algorithm with the current CRC.
-  crc_calc_lut.reset(crc);
-
   // Extract from the data the latest byte with zero padding.
   uint8_t last_byte = data.extract(nbytes * 8, remainder_nbits) << (8U - remainder_nbits);
 
   // Insert the latest byte into the LUT algorithm.
-  crc_calc_lut.put_byte(last_byte);
+  crc = crc_calc_lut.put_byte(crc, last_byte);
 
   // Update checksum.
-  crc = crc_calc_lut.get_checksum();
-
-  // Reset CRC prior to reverse.
-  crc_calc_lut.reset(crc);
+  crc = crc_calc_lut.get_checksum(crc);
 
   // Reverse the padded.
-  crc_calc_lut.reversecrcbit(8 - remainder_nbits);
+  crc = crc_calc_lut.reversecrcbit(crc, 8 - remainder_nbits);
 
-  return crc_calc_lut.get_checksum();
+  return crc_calc_lut.get_checksum(crc);
 }

@@ -48,9 +48,8 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   proc_logger.log_proc_started();
 
-  if (request.drbs_to_setup.empty() and request.drbs_to_mod.empty() and request.srbs_to_setup.empty() and
-      request.drbs_to_rem.empty() and request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
-    // No SCells, DRBs or SRBs to setup or release so nothing to do.
+  if (not changed_detected()) {
+    // Nothing to do (e.g. No SCells, DRBs or SRBs to setup or release)
     proc_logger.log_proc_completed();
     CORO_EARLY_RETURN(make_empty_ue_config_response());
   }
@@ -69,7 +68,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   update_ue_context();
 
   // > Update MAC bearers.
-  CORO_AWAIT_VALUE(mac_ue_reconfiguration_response mac_res, update_mac_mux_and_demux());
+  CORO_AWAIT_VALUE(mac_res, update_mac_mux_and_demux());
 
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
@@ -82,7 +81,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 async_task<void> ue_configuration_procedure::stop_drbs_to_rem()
 {
   // Request traffic to stop for DRBs that are going to be removed.
-  return ue->handle_drb_traffic_stop_request(request.drbs_to_rem);
+  return ue->handle_drb_stop_request(request.drbs_to_rem);
 }
 
 void ue_configuration_procedure::update_ue_context()
@@ -349,8 +348,23 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     calculate_cell_group_config_diff(asn1_cell_group, prev_ue_res_cfg, ue->resources.value());
   }
 
-  // Include reconfiguration with sync if HandoverPreparationInformation is included.
+  // Include RRC ReconfigWithSync if HandoverPreparationInformation is included.
   if (not request.ho_prep_info.empty()) {
+    if (not request.spcell_id.has_value()) {
+      proc_logger.log_proc_failure("Failed to handle HandoverPreparation IE. Cause: No Spcell ID provided");
+      return make_ue_config_failure();
+    }
+    auto target_cell_it = std::find_if(du_params.ran.cells.begin(), du_params.ran.cells.end(), [this](const auto& e) {
+      return e.nr_cgi == request.spcell_id;
+    });
+    if (target_cell_it == du_params.ran.cells.end()) {
+      proc_logger.log_proc_failure("Failed to handle HandoverPreparation IE. Cause: No Spcell ID {}:{} found",
+                                   request.spcell_id->plmn_id,
+                                   request.spcell_id->nci);
+      return make_ue_config_failure();
+    }
+
+    // Parse HandoverPreparationInformation.
     asn1::rrc_nr::ho_prep_info_s ho_prep_info;
     {
       asn1::cbit_ref    bref{request.ho_prep_info};
@@ -360,12 +374,8 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
         return make_ue_config_failure();
       }
     }
-    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present =
-        calculate_reconfig_with_sync_diff(asn1_cell_group.sp_cell_cfg.recfg_with_sync,
-                                          du_params.ran.cells[0],
-                                          ue->resources.value(),
-                                          ho_prep_info,
-                                          ue->rnti);
+    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present = calculate_reconfig_with_sync_diff(
+        asn1_cell_group.sp_cell_cfg.recfg_with_sync, *target_cell_it, ue->resources.value(), ho_prep_info, ue->rnti);
     if (not asn1_cell_group.sp_cell_cfg.recfg_with_sync_present) {
       proc_logger.log_proc_failure("Failed to calculate ReconfigWithSync");
       return make_ue_config_failure();
@@ -418,4 +428,11 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_empty_ue_config
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
   return resp;
+}
+
+bool ue_configuration_procedure::changed_detected() const
+{
+  return !request.drbs_to_setup.empty() || !request.drbs_to_mod.empty() || !request.srbs_to_setup.empty() ||
+         !request.drbs_to_rem.empty() || !request.scells_to_setup.empty() || !request.scells_to_rem.empty() ||
+         !request.ho_prep_info.empty() || request.full_config_required;
 }

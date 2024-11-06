@@ -1224,12 +1224,11 @@ tx_data_request_message unittest::build_valid_tx_data_request()
   msg.pdus.emplace_back();
   tx_data_req_pdu& pdu = msg.pdus.back();
 
-  pdu.pdu_length        = units::bytes(generate_uint16());
-  pdu.cw_index          = generate_bool();
-  pdu.pdu_index         = 4231;
-  pdu.tlv_custom.length = units::bytes{12};
+  pdu.cw_index  = generate_bool();
+  pdu.pdu_index = 4231;
 
-  pdu.tlv_custom.payload = &msg.padding[0];
+  static std::array<uint8_t, 4> data;
+  pdu.pdu = shared_transport_block(data);
 
   return msg;
 }

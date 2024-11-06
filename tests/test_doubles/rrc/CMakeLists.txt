@@ -18,6 +18,6 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(rrc_test_doubles rrc_test_messages.cpp rrc_test_message_validators.cpp)
+add_library(rrc_test_doubles rrc_test_messages.cpp rrc_test_message_validators.cpp rrc_packed_test_messages.cpp)
 set_target_properties(rrc_test_doubles PROPERTIES UNITY_BUILD ON)
 target_link_libraries(rrc_test_doubles rrc_nr_asn1 srsran_support srslog)

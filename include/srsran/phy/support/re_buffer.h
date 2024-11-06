@@ -357,7 +357,7 @@ private:
   std::array<span<const T>, MaxNofSlices> data;
 };
 
-/// \brief Implements a modular resource element buffer writer.
+/// \brief Implements a modular resource element buffer.
 ///
 /// In this implementation, each slice is a view to an external block of contiguous REs that must be loaded with the
 /// \ref set_slice method.
@@ -365,9 +365,15 @@ private:
 /// \tparam T            Resource element type.
 /// \tparam MaxNofSlices Maximum number of slices.
 template <typename T, unsigned MaxNofSlices>
-class modular_re_buffer_writer : public re_buffer_writer<T>
+class modular_re_buffer : public re_buffer_writer<T>, public re_buffer_reader<T>
 {
 public:
+  /// Constructs a modular resource element buffer.
+  modular_re_buffer() : nof_slices(0), nof_re(0) {}
+
+  /// Constructs a modular resource element buffer for a given number of slices and resource elements.
+  modular_re_buffer(unsigned nof_slices_, unsigned nof_re_) { resize(nof_slices_, nof_re_); }
+
   /// \brief Resizes the buffer view to a desired number of RE and slices.
   /// \param[in] nof_slices Number of slices.
   /// \param[in] nof_re     Number of resource elements.
@@ -406,6 +412,17 @@ public:
 
   // See interface for documentation.
   span<T> get_slice(unsigned i_slice) override
+  {
+    srsran_assert(i_slice < nof_slices,
+                  "The slice index (i.e., {}) exceeds the number of slices (i.e., {}).",
+                  i_slice,
+                  nof_slices);
+    srsran_assert(!data[i_slice].empty(), "Data for slice {} is empty.", i_slice);
+    return data[i_slice];
+  }
+
+  // See interface for documentation.
+  span<const T> get_slice(unsigned i_slice) const override
   {
     srsran_assert(i_slice < nof_slices,
                   "The slice index (i.e., {}) exceeds the number of slices (i.e., {}).",

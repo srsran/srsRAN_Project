@@ -28,12 +28,15 @@
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/pdcp/pdcp_tx_metrics.h"
 #include "srsran/security/security.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 
 struct pdcp_metrics_container {
+  uint32_t                  ue_index;
   pdcp_tx_metrics_container tx;
   pdcp_rx_metrics_container rx;
+  timer_duration            metrics_period;
 };
 
 /// Interface for the PDCP bearer.
@@ -49,7 +52,7 @@ public:
   virtual pdcp_tx_upper_data_interface&    get_tx_upper_data_interface()    = 0;
   virtual pdcp_rx_upper_control_interface& get_rx_upper_control_interface() = 0;
   virtual pdcp_rx_lower_interface&         get_rx_lower_interface()         = 0;
-  virtual pdcp_metrics_container           get_metrics()                    = 0;
+  virtual void                             stop()                           = 0;
 };
 
 } // namespace srsran

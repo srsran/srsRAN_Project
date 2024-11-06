@@ -32,7 +32,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_rrc_msg_transfer_handling.h"
 #include "srsran/f1ap/f1ap_message_handler.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
-#include "srsran/ran/lcid.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {

@@ -2672,7 +2672,7 @@ static bool calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s&
   }
 
   // TAG-ID.
-  out.tag_id = dest.tag_id;
+  out.tag_id = dest.tag_id.value();
 
   return out.init_dl_bwp_present || out.ul_cfg_present || out.pdsch_serving_cell_cfg_present ||
          out.csi_meas_cfg_present;
@@ -2861,11 +2861,11 @@ static void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_con
   }
 }
 
-asn1::rrc_nr::tag_s srsran::srs_du::make_asn1_rrc_tag_config(const tag& cfg)
+asn1::rrc_nr::tag_s srsran::srs_du::make_asn1_rrc_tag_config(const time_alignment_group& cfg)
 {
   tag_s tag_cfg{};
 
-  tag_cfg.tag_id = cfg.tag_id;
+  tag_cfg.tag_id = cfg.tag_id.value();
   switch (cfg.ta_timer) {
     case time_alignment_timer::ms500:
       tag_cfg.time_align_timer = time_align_timer_opts::ms500;
@@ -3017,8 +3017,8 @@ static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cf
       out.tag_cfg.tag_to_release_list,
       src.tag_config,
       dest.tag_config,
-      [](const tag& t) { return make_asn1_rrc_tag_config(t); },
-      [](const tag& t) { return t.tag_id; });
+      [](const time_alignment_group& t) { return make_asn1_rrc_tag_config(t); },
+      [](const time_alignment_group& t) { return t.tag_id.value(); });
   if (out.tag_cfg.tag_to_add_mod_list.size() > 0 || out.tag_cfg.tag_to_release_list.size() > 0) {
     out.tag_cfg_present = true;
   }
