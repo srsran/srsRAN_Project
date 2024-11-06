@@ -81,6 +81,7 @@ enum class nr_band {
   n102 = 102,
   n104 = 104,
   // NTN bands
+  n254 = 254,
   n255 = 255,
   n256 = 256,
   // FR2 bands.
