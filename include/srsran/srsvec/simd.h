@@ -394,6 +394,20 @@ inline simd_f_t srsran_simd_f_sub(simd_f_t a, simd_f_t b)
 #endif /* __AVX512F__ */
 }
 
+inline simd_f_t srsran_simd_f_precise_rcp(simd_f_t x)
+{
+  // Initial approximation of 1/x
+  simd_f_t approx = srsran_simd_f_rcp(x);
+
+  // Refine using one Newton-Raphson iteration.
+  simd_f_t mult       = srsran_simd_f_mul(x, approx);
+  simd_f_t two        = srsran_simd_f_set1(2.0f);
+  simd_f_t correction = srsran_simd_f_sub(two, mult);
+  simd_f_t refined    = srsran_simd_f_mul(approx, correction);
+
+  return refined;
+}
+
 inline simd_f_t srsran_simd_f_add(simd_f_t a, simd_f_t b)
 {
 #ifdef __AVX512F__
@@ -1321,6 +1335,53 @@ inline void srsran_simd_cf_fprintf(std::FILE* stream, simd_cf_t a)
   std::fprintf(stream, "];\n");
 }
 
+
+/// Adds two complex SIMD registers.
+inline simd_cf_t operator+(simd_cf_t left, simd_cf_t right)
+{
+  return srsran_simd_cf_add(left, right);
+}
+
+/// Multiplies two complex SIMD registers.
+inline simd_cf_t operator*(simd_cf_t left, simd_cf_t right)
+{
+  return srsran_simd_cf_prod(left, right);
+}
+
+/// Multiplies two complex SIMD registers.
+inline simd_cf_t& operator*=(simd_cf_t& left, const simd_cf_t& right)
+{
+  left = srsran_simd_cf_prod(left, right);
+  return left;
+}
+
+/// Multiplies a complex SIMD register by a real literal.
+inline simd_cf_t& operator*=(simd_cf_t& left, float right)
+{
+  left = srsran_simd_cf_mul(left, srsran_simd_f_set1(right));
+  return left;
+}
+
+/// Subtract two complex SIMD registers.
+inline simd_cf_t& operator-=(simd_cf_t& left, const simd_cf_t& right)
+{
+  left = srsran_simd_cf_sub(left, right);
+  return left;
+}
+
+/// Add two complex SIMD registers.
+inline simd_cf_t& operator+=(simd_cf_t& left, const simd_cf_t& right)
+{
+  left = srsran_simd_cf_add(left, right);
+  return left;
+}
+
+/// Negate a complex SIMD register.
+inline simd_cf_t operator-(simd_cf_t value)
+{
+  return srsran_simd_cf_neg(value);
+}
+
 #endif /* SRSRAN_SIMD_CF_SIZE */
 
 #if SRSRAN_SIMD_I_SIZE
@@ -1453,6 +1514,25 @@ inline simd_i_t srsran_simd_i_and(simd_i_t a, simd_i_t b)
 #else
 #ifdef __ARM_NEON
   return vandq_s32(a, b);
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
+inline simd_sel_t srsran_simd_sel_set_ones()
+{
+#ifdef __AVX512F__
+  return ~static_cast<simd_sel_t>(0);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  return _mm256_castsi256_ps(_mm256_set1_epi32(0xFFFFFFFF));
+#else
+#ifdef __SSE4_1__
+  return _mm_castsi256_ps(_mm_set1_epi32(0xFFFFFFFF));
+#else
+#ifdef __ARM_NEON
+  return vdupq_n_s32(-1);
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
