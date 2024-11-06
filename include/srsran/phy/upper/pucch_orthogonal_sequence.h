@@ -141,10 +141,10 @@ public:
   }
 
 private:
-  static constexpr auto one     = cf_t(1.0f, 0.0f);
-  static constexpr auto neg_one = cf_t(-1.0f, 0.0f);
-  static constexpr auto j       = cf_t(0.0f, 1.0f);
-  static constexpr auto neg_j   = cf_t(0.0f, -1.0f);
+  static constexpr auto one     = cf_t(1.0F, 0.0F);
+  static constexpr auto neg_one = cf_t(-1.0F, 0.0F);
+  static constexpr auto j       = cf_t(0.0F, 1.0F);
+  static constexpr auto neg_j   = cf_t(0.0F, -1.0F);
 
   static constexpr std::array<std::array<cf_t, NRE>, 2> pucch_format4_length2 = {{
       {one, one, one, one, one, one, one, one, one, one, one, one},

@@ -33,10 +33,10 @@ void pucch_demodulator_format4::demodulate(span<log_likelihood_ratio>           
       config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
 
   // Number of REs per OFDM symbol. PUCCH Format 4 only gets a PRB.
-  const unsigned nof_re_symb = NRE;
+  unsigned nof_re_symb = NRE;
 
   // Number of data Resource Elements in a slot for a single Rx port.
-  const unsigned nof_re_port = (config.nof_symbols - dmrs_symb_mask.count()) * nof_re_symb;
+  unsigned nof_re_port = (config.nof_symbols - dmrs_symb_mask.count()) * nof_re_symb;
 
   // Assert that allocations are valid.
   srsran_assert(config.first_prb * NRE <= grid.get_nof_subc(),
@@ -61,7 +61,7 @@ void pucch_demodulator_format4::demodulate(span<log_likelihood_ratio>           
 
   // Assert that the number of RE returned by the channel equalizer matches the expected number of LLR.
   srsran_assert(eq_re.size() / config.occ_length == llr.size() / get_bits_per_symbol(mod_scheme),
-                "Number of equalized RE (i.e. {}) does not match the expected LLR data length (i.e. {})",
+                "Number of equalized REs (i.e. {}) does not match the expected LLR data length (i.e. {})",
                 eq_re.size() / config.occ_length,
                 llr.size() / get_bits_per_symbol(mod_scheme));
 
@@ -90,7 +90,7 @@ void pucch_demodulator_format4::demodulate(span<log_likelihood_ratio>           
   demapper->demodulate_soft(llr, original, noise_vars, mod_scheme);
 
   // Descramble, as per TS38.211 Section 6.3.2.6.1.
-  const unsigned c_init = (config.rnti * pow2(15)) + config.n_id;
+  unsigned c_init = (config.rnti * pow2(15)) + config.n_id;
   descrambler->init(c_init);
   descrambler->apply_xor(llr, llr);
 }
@@ -106,8 +106,8 @@ void pucch_demodulator_format4::inverse_blockwise_spreading(span<cf_t>        or
 
   for (unsigned k = 0; k != NRE; ++k) {
     for (unsigned l = 0, l_end = eq_re.size() / NRE; l != l_end; ++l) {
-      const unsigned original_index = (l * mod) + (k % mod);
-      const unsigned spread_index   = (l * 12) + k;
+      unsigned original_index = (l * mod) + (k % mod);
+      unsigned spread_index   = (l * 12) + k;
       original[original_index] += eq_re[spread_index] / wn[k];
       noise_vars[original_index] += eq_noise_vars[spread_index];
     }

@@ -120,12 +120,12 @@ inline symbol_slot_mask get_pucch_formats_3_4_dmrs_symbol_mask(
   return mask;
 }
 
-/// \brief Gets REs and channel estimates given a PUCCH Format 3/4 resource, performs equalization and transform
-/// deprecoding.
+/// \brief Gets REs and channel estimates given a PUCCH Format 3/4 resource, performs equalization and reverts
+/// transform precoding.
 ///
 /// Extracts and loads the inner buffers with the PUCCH control data RE from the provided \c resource_grid, and their
 /// corresponding channel estimates from \c channel_ests. The DM-RS RE are skipped. Equalization and transform
-/// deprecoding is done symbol by symbol.
+/// precoding reversion is done symbol by symbol.
 ///
 /// \param[out] eq_re              Destination buffer for resource elements at the equalizer output.
 /// \param[out] eq_noise_vars      Destination buffer for noise variances at the equalizer output.
@@ -141,28 +141,28 @@ inline symbol_slot_mask get_pucch_formats_3_4_dmrs_symbol_mask(
 /// \param[in]  second_hop_prb     Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274}
 ///                                if intra-slot frequency hopping is enabled, empty otherwise.
 /// \param[in]  rx_ports           Port indexes used for the PUCCH reception.
-inline void pucch_3_4_extract_and_equalize(span<cf_t>                    eq_re,
-                                           span<float>                   eq_noise_vars,
-                                           channel_equalizer&            equalizer,
-                                           transform_precoder&           precoder,
-                                           const resource_grid_reader&   grid,
-                                           const channel_estimate&       estimates,
-                                           const symbol_slot_mask&       dmrs_symb_mask,
-                                           const unsigned                start_symbol_index,
-                                           const unsigned                nof_symbols,
-                                           const unsigned                nof_prb,
-                                           const unsigned                first_prb,
-                                           const std::optional<unsigned> second_hop_prb,
-                                           span<const uint8_t>           rx_ports)
+inline void pucch_3_4_extract_and_equalize(span<cf_t>                  eq_re,
+                                           span<float>                 eq_noise_vars,
+                                           channel_equalizer&          equalizer,
+                                           transform_precoder&         precoder,
+                                           const resource_grid_reader& grid,
+                                           const channel_estimate&     estimates,
+                                           const symbol_slot_mask&     dmrs_symb_mask,
+                                           unsigned                    start_symbol_index,
+                                           unsigned                    nof_symbols,
+                                           unsigned                    nof_prb,
+                                           unsigned                    first_prb,
+                                           std::optional<unsigned>     second_hop_prb,
+                                           span<const uint8_t>         rx_ports)
 {
   // Number of receive antenna ports.
   auto nof_rx_ports = static_cast<unsigned>(rx_ports.size());
 
   // Number of REs per OFDM symbol.
-  const unsigned nof_re_symb = nof_prb * NRE;
+  unsigned nof_re_symb = nof_prb * NRE;
 
   // Index of the first symbol allocated to the second hop, when intra-slot frequency hopping is enabled.
-  const unsigned second_hop_start = (nof_symbols / 2) + start_symbol_index;
+  unsigned second_hop_start = (nof_symbols / 2) + start_symbol_index;
 
   // Extract the Rx port noise variances from the channel estimation.
   std::array<float, MAX_PORTS> noise_var_estimates;
@@ -178,7 +178,7 @@ inline void pucch_3_4_extract_and_equalize(span<cf_t>                    eq_re,
       continue;
     }
 
-    // Calculate the lowest resource element containing PUCCH Format 3 within the OFDM symbol.
+    // Calculate the lowest resource element containing the PUCCH resource within the OFDM symbol.
     unsigned first_subc = first_prb * NRE;
     if (second_hop_prb.has_value() && (i_symbol >= second_hop_start)) {
       // Intra-slot frequency hopping.
