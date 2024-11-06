@@ -47,6 +47,8 @@ public:
 
   void deactivate();
 
+  void release_resources();
+
   ue_cell* find_cell(du_cell_index_t cell_index)
   {
     srsran_assert(cell_index < MAX_NOF_DU_CELLS, "Invalid cell_index={}", cell_index);

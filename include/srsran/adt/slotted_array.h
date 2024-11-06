@@ -293,6 +293,19 @@ public:
     return false;
   }
 
+  /// Takes the element out of the container pointed by the given index
+  /// \param idx Position of the erased element in the array
+  T take(size_t idx) noexcept
+  {
+    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    srsran_assert(this->contains(idx), "Empty position in index {}", idx);
+
+    this->nof_elems--;
+    T obj = std::move(*this->vec[idx]);
+    this->vec[idx].reset();
+    return obj;
+  }
+
   /// Erase object pointed by the given iterator. Iterator must point to valid element
   /// \param it container iterator
   void erase(iterator it) noexcept { erase(this->extract_iterator_index(it)); }
@@ -553,6 +566,10 @@ public:
   /// Erase object pointed by the given iterator. Iterator must point to valid element
   /// \param it container iterator
   void erase(iterator it) noexcept { sl_ar.erase(it); }
+
+  /// Takes the element out of the container pointed by the given index
+  /// \param id ID of the taken element in the table
+  T take(key_type id) noexcept { return sl_ar.take(id); }
 
   /// Clear all elements of the container
   void clear() noexcept { sl_ar.clear(); }

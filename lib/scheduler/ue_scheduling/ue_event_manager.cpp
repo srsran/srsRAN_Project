@@ -185,7 +185,7 @@ ue_event_manager::ue_event_manager(ue_repository& ue_db_) :
 {
 }
 
-ue_event_manager::~ue_event_manager() {}
+ue_event_manager::~ue_event_manager() = default;
 
 void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
 {
@@ -234,6 +234,9 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
   if (not common_events.try_push(common_event_t{INVALID_DU_UE_INDEX, std::move(handle_ue_creation_impl)})) {
     logger.warning("ue={}: Discarding UE creation. Cause: Event queue is full", ue_idx);
   }
+
+  // Destroy any pending UEs in the repository outside the critical section.
+  ue_db.destroy_pending_ues();
 }
 
 void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
@@ -332,6 +335,9 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
   if (not common_events.try_push(common_event_t{ue_index, std::move(handle_ue_deletion_impl)})) {
     logger.warning("ue={}: Discarding UE deletion. Cause: Event queue is full", ue_index);
   }
+
+  // Destroy any pending UEs in the repository outside the critical section.
+  ue_db.destroy_pending_ues();
 }
 
 void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
