@@ -10,7 +10,6 @@
 
 #include "pdcp_entity_rx.h"
 #include "../security/security_engine_impl.h"
-#include "../support/sdu_window_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/format/fmt_optional.h"
@@ -29,7 +28,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
-  rx_window(create_rx_window(cfg.sn_size)),
+  rx_window(logger, pdcp_window_size(pdcp_sn_size_to_uint(cfg.sn_size))),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
   ue_ul_timer_factory(ue_ul_timer_factory_),
@@ -90,7 +89,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
   // Log PDU
   logger.log_debug(buf.begin(), buf.end(), "RX PDU. pdu_len={}", buf.length());
   // Sanity check
-  if (buf.length() == 0) {
+  if (buf.empty()) {
     metrics.add_dropped_pdus(1);
     logger.log_error("Dropping empty PDU.");
     return;
@@ -251,19 +250,18 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
   }
 
   // Check if PDU has been received
-  if (rx_window->has_sn(rcvd_count)) {
-    const pdcp_rx_sdu_info& sdu_info = (*rx_window)[rcvd_count];
+  if (rx_window.has_sn(rcvd_count)) {
+    const pdcp_rx_sdu_info& sdu_info = rx_window[rcvd_count];
     if (sdu_info.count == rcvd_count) {
       logger.log_debug("Duplicate PDU dropped. count={}", rcvd_count);
       return; // PDU already present, drop.
-    } else {
-      logger.log_error("Removing old PDU with count={} for new PDU with count={}", sdu_info.count, rcvd_count);
-      rx_window->remove_sn(rcvd_count);
     }
+    logger.log_error("Removing old PDU with count={} for new PDU with count={}", sdu_info.count, rcvd_count);
+    rx_window.remove_sn(rcvd_count);
   }
 
   // Store PDU in Rx window
-  pdcp_rx_sdu_info& sdu_info = rx_window->add_sn(rcvd_count);
+  pdcp_rx_sdu_info& sdu_info = rx_window.add_sn(rcvd_count);
   sdu_info.sdu               = std::move(pdu);
   sdu_info.count             = rcvd_count;
   sdu_info.time_of_arrival   = time_start;
@@ -331,15 +329,15 @@ void pdcp_entity_rx::handle_control_pdu(byte_buffer_chain pdu)
 // Update RX_DELIV after submitting to higher layers
 void pdcp_entity_rx::deliver_all_consecutive_counts()
 {
-  while (st.rx_deliv != st.rx_next && rx_window->has_sn(st.rx_deliv)) {
-    pdcp_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
+  while (st.rx_deliv != st.rx_next && rx_window.has_sn(st.rx_deliv)) {
+    pdcp_rx_sdu_info& sdu_info = rx_window[st.rx_deliv];
     logger.log_info("RX SDU. count={}", st.rx_deliv);
 
     // Pass PDCP SDU to the upper layers
     metrics.add_sdus(1, sdu_info.sdu.length());
     record_reordering_dealy(sdu_info.time_of_arrival);
     upper_dn.on_new_sdu(std::move(sdu_info.sdu));
-    rx_window->remove_sn(st.rx_deliv);
+    rx_window.remove_sn(st.rx_deliv);
 
     // Update RX_DELIV
     st.rx_deliv = st.rx_deliv + 1;
@@ -352,15 +350,15 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
 void pdcp_entity_rx::deliver_all_sdus()
 {
   for (uint32_t count = st.rx_deliv; count < st.rx_next; count++) {
-    if (rx_window->has_sn(count)) {
-      pdcp_rx_sdu_info& sdu_info = (*rx_window)[count];
+    if (rx_window.has_sn(count)) {
+      pdcp_rx_sdu_info& sdu_info = rx_window[count];
       logger.log_info("RX SDU. count={}", count);
 
       // Pass PDCP SDU to the upper layers
       metrics.add_sdus(1, sdu_info.sdu.length());
       record_reordering_dealy(sdu_info.time_of_arrival);
       upper_dn.on_new_sdu(std::move(sdu_info.sdu));
-      rx_window->remove_sn(count);
+      rx_window.remove_sn(count);
     }
   }
 }
@@ -369,8 +367,8 @@ void pdcp_entity_rx::deliver_all_sdus()
 void pdcp_entity_rx::discard_all_sdus()
 {
   while (st.rx_deliv != st.rx_next) {
-    if (rx_window->has_sn(st.rx_deliv)) {
-      rx_window->remove_sn(st.rx_deliv);
+    if (rx_window.has_sn(st.rx_deliv)) {
+      rx_window.remove_sn(st.rx_deliv);
       logger.log_debug("Discarded RX SDU. count={}", st.rx_next);
     }
 
@@ -404,31 +402,11 @@ byte_buffer pdcp_entity_rx::compile_status_report()
   for (uint32_t i = bitmap_begin; i < bitmap_end; i++) {
     // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
     // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
-    unsigned bit = rx_window->has_sn(i) ? 1 : 0;
+    unsigned bit = rx_window.has_sn(i) ? 1 : 0;
     enc.pack(bit, 1);
   }
 
   return buf;
-}
-
-std::unique_ptr<sdu_window<pdcp_rx_sdu_info>> pdcp_entity_rx::create_rx_window(pdcp_sn_size sn_size_)
-{
-  std::unique_ptr<sdu_window<pdcp_rx_sdu_info>> rx_window_;
-  switch (sn_size_) {
-    case pdcp_sn_size::size12bits:
-      rx_window_ = std::make_unique<sdu_window_impl<pdcp_rx_sdu_info,
-                                                    pdcp_window_size(pdcp_sn_size_to_uint(pdcp_sn_size::size12bits)),
-                                                    pdcp_bearer_logger>>(logger);
-      break;
-    case pdcp_sn_size::size18bits:
-      rx_window_ = std::make_unique<sdu_window_impl<pdcp_rx_sdu_info,
-                                                    pdcp_window_size(pdcp_sn_size_to_uint(pdcp_sn_size::size18bits)),
-                                                    pdcp_bearer_logger>>(logger);
-      break;
-    default:
-      srsran_assertion_failure("Cannot create rx_window for unsupported sn_size={}.", pdcp_sn_size_to_uint(sn_size_));
-  }
-  return rx_window_;
 }
 
 /*
@@ -554,15 +532,15 @@ void pdcp_entity_rx::handle_t_reordering_expire()
   metrics.add_t_reordering_timeouts(1);
   // Deliver all PDCP SDU(s) with associated COUNT value(s) < RX_REORD
   while (st.rx_deliv != st.rx_reord) {
-    if (rx_window->has_sn(st.rx_deliv)) {
-      pdcp_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
+    if (rx_window.has_sn(st.rx_deliv)) {
+      pdcp_rx_sdu_info& sdu_info = rx_window[st.rx_deliv];
       logger.log_info("RX SDU. count={}", st.rx_deliv);
 
       // Pass PDCP SDU to the upper layers
       metrics.add_sdus(1, sdu_info.sdu.length());
       record_reordering_dealy(sdu_info.time_of_arrival);
       upper_dn.on_new_sdu(std::move(sdu_info.sdu));
-      rx_window->remove_sn(st.rx_deliv);
+      rx_window.remove_sn(st.rx_deliv);
     }
 
     // Update RX_DELIV

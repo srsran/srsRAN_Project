@@ -9,7 +9,6 @@
  */
 
 #include "rlc_rx_um_entity.h"
-#include "../support/sdu_window_impl.h"
 
 using namespace srsran;
 
@@ -26,7 +25,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(gnb_du_id_t                       gnb_du_id,
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),
-  rx_window(create_rx_window(cfg.sn_field_length)),
+  rx_window(logger, window_size(to_number(cfg.sn_field_length))),
   reassembly_timer(ue_timer_factory.create_timer()),
   pcap_context(ue_index, rb_id, config)
 {
@@ -104,12 +103,12 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
   /*
    * - if all byte segments with SN = x are received:
    */
-  if (rx_window->has_sn(header.sn) && (*rx_window)[header.sn].fully_received) {
+  if (rx_window.has_sn(header.sn) && rx_window[header.sn].fully_received) {
     /*
      * - reassemble the RLC SDU from all byte segments with SN = x, remove RLC headers and deliver the reassembled
      *   RLC SDU to upper layer;
      */
-    rlc_rx_um_sdu_info&         sdu_info = (*rx_window)[header.sn];
+    rlc_rx_um_sdu_info&         sdu_info = rx_window[header.sn];
     expected<byte_buffer_chain> sdu      = reassemble_sdu(sdu_info, header.sn);
     if (!sdu) {
       logger.log_error("Dropped SDU, failed to reassemble. sn={}", header.sn);
@@ -138,13 +137,13 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
       // move rx_next_reassembly forward and remove all fully received SDUs from rx_window
       for (sn_upd = (st.rx_next_reassembly) % mod; rx_mod_base(sn_upd) < rx_mod_base(st.rx_next_highest);
            sn_upd = (sn_upd + 1) % mod) {
-        if (rx_window->has_sn(sn_upd)) {
-          if (not(*rx_window)[sn_upd].fully_received) {
+        if (rx_window.has_sn(sn_upd)) {
+          if (not rx_window[sn_upd].fully_received) {
             break; // first SDU not fully received
           }
           // rx_next_reassembly serves as the lower edge of the receiving window
           // As such, we remove any SDU from the window if we update this value
-          rx_window->remove_sn(sn_upd);
+          rx_window.remove_sn(sn_upd);
         } else {
           break; // first SDU not fully received
         }
@@ -173,13 +172,13 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
                       (st.rx_next_highest - um_window_size) % mod,
                       st.rx_next_highest,
                       sn_upd);
-      if (rx_window->has_sn(sn_upd)) {
-        if (not(*rx_window)[sn_upd].fully_received) {
+      if (rx_window.has_sn(sn_upd)) {
+        if (not rx_window[sn_upd].fully_received) {
           // count incomplete SDUs as lost
           logger.log_info("Discarding incomplete SDU. sn={}", sn_upd);
           metrics.metrics_add_lost_pdus(1);
         }
-        rx_window->remove_sn(sn_upd);
+        rx_window.remove_sn(sn_upd);
       } else {
         // count non-existing SDUs as lost
         logger.log_info("Discarding SDU. sn={}", sn_upd);
@@ -194,10 +193,10 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
     // Since sn_upd just entered the reassembly window in the previous loop (and everything below was cleaned),
     // we continue (and clean) until we face any SN that is not fully received
     for (; rx_mod_base(sn_upd) < rx_mod_base(st.rx_next_highest); sn_upd = (sn_upd + 1) % mod) {
-      if (rx_window->has_sn(sn_upd) && (*rx_window)[sn_upd].fully_received) {
+      if (rx_window.has_sn(sn_upd) && rx_window[sn_upd].fully_received) {
         // rx_next_reassembly serves as the lower edge of the receiving window
         // As such, we remove any SDU from the window if we update this value
-        rx_window->remove_sn(sn_upd);
+        rx_window.remove_sn(sn_upd);
       } else {
         break; // first SDU not fully received
       }
@@ -229,7 +228,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
       stop_reassembly_timer = true;
     }
     if (st.rx_next_highest == st.rx_next_reassembly + 1) {
-      if (rx_window->has_sn(st.rx_next_highest) && not(*rx_window)[st.rx_next_highest].has_gap) {
+      if (rx_window.has_sn(st.rx_next_highest) && not rx_window[st.rx_next_highest].has_gap) {
         stop_reassembly_timer = true;
       }
     }
@@ -255,7 +254,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
       restart_reassembly_timer = true;
     }
     if (rx_mod_base(st.rx_next_highest) == rx_mod_base(st.rx_next_reassembly + 1)) {
-      if (rx_window->has_sn(st.rx_next_highest) && (*rx_window)[st.rx_next_highest].has_gap) {
+      if (rx_window.has_sn(st.rx_next_highest) && rx_window[st.rx_next_highest].has_gap) {
         restart_reassembly_timer = true;
       }
     }
@@ -279,8 +278,8 @@ bool rlc_rx_um_entity::handle_segment_data_sdu(const rlc_um_pdu_header& header, 
   logger.log_debug("RX SDU segment. payload_len={} {}", payload.length(), header);
 
   // Add new SN to RX window if no segments have been received yet
-  rlc_rx_um_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : ([&]() -> rlc_rx_um_sdu_info& {
-    rlc_rx_um_sdu_info& sdu = rx_window->add_sn(header.sn);
+  rlc_rx_um_sdu_info& rx_sdu = rx_window.has_sn(header.sn) ? rx_window[header.sn] : ([&]() -> rlc_rx_um_sdu_info& {
+    rlc_rx_um_sdu_info& sdu = rx_window.add_sn(header.sn);
     sdu.time_of_arrival     = std::chrono::steady_clock::now();
     return sdu;
   })();
@@ -449,13 +448,13 @@ void rlc_rx_um_entity::on_expired_reassembly_timer()
   for (; rx_mod_base(sn_upd) < rx_mod_base(st.rx_next_highest); sn_upd = (sn_upd + 1) % mod) {
     if (rx_mod_base(sn_upd) < rx_mod_base(st.rx_timer_trigger)) {
       // remove anything below rx_timer_trigger
-      if (rx_window->has_sn(sn_upd)) {
-        if (not(*rx_window)[sn_upd].fully_received) {
+      if (rx_window.has_sn(sn_upd)) {
+        if (not rx_window[sn_upd].fully_received) {
           // count incomplete SDUs as lost
           logger.log_info("Discarding incomplete SDU. sn={}", sn_upd);
           metrics.metrics_add_lost_pdus(1);
         }
-        rx_window->remove_sn(sn_upd);
+        rx_window.remove_sn(sn_upd);
       } else {
         // count non-existing SDUs as lost
         logger.log_info("Discarding SDU. sn={}", sn_upd);
@@ -463,8 +462,8 @@ void rlc_rx_um_entity::on_expired_reassembly_timer()
       }
     } else {
       // continue removing fully received SDUs starting from rx_timer_trigger; stop at first incomplete or unseen SDU.
-      if (rx_window->has_sn(sn_upd) && (*rx_window)[sn_upd].fully_received) {
-        rx_window->remove_sn(sn_upd);
+      if (rx_window.has_sn(sn_upd) && rx_window[sn_upd].fully_received) {
+        rx_window.remove_sn(sn_upd);
       } else {
         break; // first SDU not fully received
       }
@@ -485,7 +484,7 @@ void rlc_rx_um_entity::on_expired_reassembly_timer()
     restart_reassembly_timer = true;
   }
   if (rx_mod_base(st.rx_next_highest) == rx_mod_base(st.rx_next_reassembly + 1)) {
-    if (rx_window->has_sn(st.rx_next_highest) && (*rx_window)[st.rx_next_highest].has_gap) {
+    if (rx_window.has_sn(st.rx_next_highest) && rx_window[st.rx_next_highest].has_gap) {
       restart_reassembly_timer = true;
     }
   }
@@ -511,24 +510,4 @@ bool rlc_rx_um_entity::sn_invalid_for_rx_buffer(const uint32_t sn)
 {
   return (rx_mod_base(st.rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
           rx_mod_base(sn) < rx_mod_base(st.rx_next_reassembly));
-}
-
-std::unique_ptr<sdu_window<rlc_rx_um_sdu_info>> rlc_rx_um_entity::create_rx_window(rlc_um_sn_size sn_size)
-{
-  std::unique_ptr<sdu_window<rlc_rx_um_sdu_info>> rx_window_;
-  switch (sn_size) {
-    case rlc_um_sn_size::size6bits:
-      rx_window_ = std::make_unique<
-          sdu_window_impl<rlc_rx_um_sdu_info, window_size(to_number(rlc_um_sn_size::size6bits)), rlc_bearer_logger>>(
-          logger);
-      break;
-    case rlc_um_sn_size::size12bits:
-      rx_window_ = std::make_unique<
-          sdu_window_impl<rlc_rx_um_sdu_info, window_size(to_number(rlc_um_sn_size::size12bits)), rlc_bearer_logger>>(
-          logger);
-      break;
-    default:
-      srsran_assertion_failure("Cannot create rx_window for unsupported sn_size={}.", to_number(sn_size));
-  }
-  return rx_window_;
 }

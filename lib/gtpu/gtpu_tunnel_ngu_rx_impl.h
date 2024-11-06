@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "../support/sdu_window_impl.h"
 #include "gtpu_tunnel_base_rx.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_rx.h"
 #include "srsran/psup/psup_packing.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
@@ -53,7 +53,7 @@ public:
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
     config(cfg),
-    rx_window(std::make_unique<sdu_window_impl<gtpu_rx_sdu_info, gtpu_rx_window_size, gtpu_tunnel_logger>>(logger)),
+    rx_window(logger, gtpu_rx_window_size),
     ue_dl_timer_factory(ue_dl_timer_factory_)
   {
     if (config.t_reordering.count() != 0) {
@@ -160,12 +160,12 @@ protected:
     }
 
     // Check if PDU has been received
-    if (rx_window->has_sn(sn)) {
+    if (rx_window.has_sn(sn)) {
       logger.log_warning("Duplicate PDU dropped. sn={} pdu_len={}", sn, pdu_len);
       return;
     }
 
-    gtpu_rx_sdu_info& rx_sdu_info = rx_window->add_sn(sn);
+    gtpu_rx_sdu_info& rx_sdu_info = rx_window.add_sn(sn);
     rx_sdu_info.sdu               = std::move(rx_sdu);
     rx_sdu_info.qos_flow_id       = pdu_session_info.qos_flow_id;
     rx_sdu_info.sn                = sn;
@@ -209,10 +209,10 @@ protected:
 
   void deliver_all_consecutive_sdus()
   {
-    while (st.rx_deliv != st.rx_next && rx_window->has_sn(st.rx_deliv)) {
-      gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
+    while (st.rx_deliv != st.rx_next && rx_window.has_sn(st.rx_deliv)) {
+      gtpu_rx_sdu_info& sdu_info = rx_window[st.rx_deliv];
       deliver_sdu(sdu_info);
-      rx_window->remove_sn(st.rx_deliv);
+      rx_window.remove_sn(st.rx_deliv);
 
       // Update RX_DELIV
       st.rx_deliv = st.rx_deliv + 1;
@@ -232,10 +232,10 @@ protected:
     }
 
     while (st.rx_deliv != st.rx_reord) {
-      if (rx_window->has_sn(st.rx_deliv)) {
-        gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
+      if (rx_window.has_sn(st.rx_deliv)) {
+        gtpu_rx_sdu_info& sdu_info = rx_window[st.rx_deliv];
         deliver_sdu(sdu_info);
-        rx_window->remove_sn(st.rx_deliv);
+        rx_window.remove_sn(st.rx_deliv);
       }
 
       // Update RX_DELIV
@@ -267,7 +267,7 @@ private:
   gtpu_rx_state st = {};
 
   /// Rx window
-  std::unique_ptr<sdu_window<gtpu_rx_sdu_info>> rx_window;
+  sdu_window<gtpu_rx_sdu_info, gtpu_tunnel_logger> rx_window;
 
   /// Rx reordering timer
   unique_timer reordering_timer;

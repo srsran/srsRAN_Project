@@ -98,7 +98,7 @@ private:
   const uint32_t am_window_size;
 
   /// Rx window
-  std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> rx_window;
+  sdu_window<rlc_rx_am_sdu_info, rlc_bearer_logger> rx_window;
   /// Indicates the rx_window has not been changed, i.e. no need to rebuild status report.
   static const bool rx_window_not_changed = false;
   /// Indicates the rx_window has been changed, i.e. need to rebuild status report.
@@ -159,7 +159,7 @@ public:
       reassembly_timer.stop();
       stopped = true;
     }
-  };
+  }
 
   // Rx/Tx interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }
@@ -303,11 +303,6 @@ private:
   ///
   /// \param timeout_id The timer ID
   void on_expired_reassembly_timer();
-
-  /// Creates the rx_window according to sn_size
-  /// \param sn_size Size of the sequence number (SN)
-  /// \return unique pointer to rx_window instance
-  std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> create_rx_window(rlc_am_sn_size sn_size);
 
   void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };

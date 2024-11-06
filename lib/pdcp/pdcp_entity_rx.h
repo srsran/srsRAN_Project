@@ -41,8 +41,8 @@ struct pdcp_rx_state {
 };
 
 struct pdcp_rx_sdu_info {
-  byte_buffer                           sdu   = {};
-  uint32_t                              count = {};
+  byte_buffer                           sdu;
+  uint32_t                              count = 0;
   std::chrono::system_clock::time_point time_of_arrival;
 };
 
@@ -121,7 +121,7 @@ private:
   pdcp_rx_state st = {};
 
   /// Rx window
-  std::unique_ptr<sdu_window<pdcp_rx_sdu_info>> rx_window;
+  sdu_window<pdcp_rx_sdu_info, pdcp_bearer_logger> rx_window;
 
   /// Rx reordering timer
   unique_timer reordering_timer;
@@ -162,11 +162,6 @@ private:
   pdcp_rx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;
   unique_timer             metrics_timer;
-
-  /// Creates the rx_window according to sn_size
-  /// \param sn_size Size of the sequence number (SN)
-  /// \return unique pointer to rx_window instance
-  std::unique_ptr<sdu_window<pdcp_rx_sdu_info>> create_rx_window(pdcp_sn_size sn_size_);
 
   void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };
