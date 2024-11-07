@@ -61,6 +61,8 @@ variables:
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     MARCH: "" # Empty for cmake default
     MTUNE: "" # Empty for cmake default
+    # CACHE
+    CCACHE_MAXSIZE: 3G
     # TEST
     TEST_EXECUTION_TIMEOUT: 0
     # CI
