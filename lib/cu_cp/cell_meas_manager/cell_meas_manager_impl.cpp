@@ -187,14 +187,14 @@ std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
 
 void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results)
 {
-  logger.debug("ue={} Received measurement result with meas_id={}", ue_index, meas_results.meas_id);
+  logger.debug("ue={}: Received measurement result with meas_id={}", ue_index, meas_results.meas_id);
 
   auto& ue_meas_context = ue_mng.get_measurement_context(ue_index);
 
   // Verify meas_id is valid.
   if (ue_meas_context.meas_id_to_meas_context.find(meas_results.meas_id) ==
       ue_meas_context.meas_id_to_meas_context.end()) {
-    logger.debug("ue={} Measurement result for unknown meas_id={} received", ue_index, meas_results.meas_id);
+    logger.debug("ue={}: Measurement result for unknown meas_id={} received", ue_index, meas_results.meas_id);
     return;
   }
 
