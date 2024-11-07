@@ -736,6 +736,7 @@ smoke valgrind update cache:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
+    when: on_failure
   cache:
     - *cache_build_set
 
