@@ -35,7 +35,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 80.0e+6
-    expected_nof_kos: 3
+    expected_nof_kos: 10
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -49,7 +49,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 80.0e+6
-    expected_nof_kos: 3
+    expected_nof_kos: 10
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -91,7 +91,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 3
+    expected_nof_kos: 10
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -105,7 +105,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 3
+    expected_nof_kos: 10
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -147,7 +147,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 4
+    expected_nof_kos: 10
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -161,7 +161,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 4
+    expected_nof_kos: 10
     warning_as_errors: true
     enable_dddsu: true
 
@@ -176,7 +176,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 4
+    expected_nof_kos: 10
     warning_as_errors: true
     ul_heavy_7u2d: true
 
@@ -191,7 +191,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 4
+    expected_nof_kos: 10
     warning_as_errors: true
     ul_heavy_6u3d: true
 
@@ -220,7 +220,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 3
+    expected_nof_kos: 10
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -234,7 +234,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: 3
+    expected_nof_kos: 10
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -248,7 +248,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 80.0e+6
-    expected_nof_kos: 3
+    expected_nof_kos: 10
     warning_as_errors: false
 
   - campaign_filename: *campaign_filename
@@ -262,5 +262,5 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 80.0e+6
-    expected_nof_kos: 3
+    expected_nof_kos: 10
     warning_as_errors: false
