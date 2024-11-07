@@ -65,7 +65,8 @@ protected:
 TEST_F(ngap_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
 {
   // Populate message
-  ngap_context_t ngap_ctxt = {{411, 22}, "srsgnb01", {{7, {{plmn_identity::test_value(), {{1}}}}}}, {}, 256};
+  ngap_context_t ngap_ctxt = {
+      {411, 22}, "srsgnb01", {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}}, {}, 256};
 
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();

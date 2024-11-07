@@ -121,8 +121,8 @@ protected:
       cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
       cucfg.services.timers         = &timers;
       cucfg.services.cu_cp_executor = &ctrl_worker;
-      cucfg.ngaps.push_back(
-          cu_cp_configuration::ngap_params{adapter.get(), {{7, {{plmn_identity::test_value(), {{1}}}}}}});
+      cucfg.ngaps.push_back(cu_cp_configuration::ngap_params{
+          adapter.get(), {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}}});
       return cucfg;
     }())
   {

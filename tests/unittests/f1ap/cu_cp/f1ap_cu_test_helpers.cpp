@@ -147,7 +147,7 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
     f1ap_drb_to_setup drb_item;
     drb_item.drb_id                                               = drb;
     drb_item.qos_info.drb_qos.alloc_retention_prio.prio_level_arp = 1;
-    drb_item.qos_info.s_nssai.sst                                 = 1;
+    drb_item.qos_info.s_nssai.sst                                 = slice_service_type{1};
     drb_item.mode                                                 = rlc_mode::am;
     drb_item.pdcp_sn_len                                          = pdcp_sn_size::size12bits;
 

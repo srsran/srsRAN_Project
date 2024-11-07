@@ -214,7 +214,7 @@ static f1ap_drb_info drb_info_from_f1ap_asn1(const asn1::f1ap::qos_info_c& asn1_
   non_dyn_5qi_descriptor& nondyn_5qi               = out.drb_qos.qos_desc.get_nondyn_5qi();
   nondyn_5qi.five_qi                               = uint_to_five_qi(asn1_non_dyn_5qi.five_qi);
   out.drb_qos.alloc_retention_prio.prio_level_arp  = asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level;
-  out.s_nssai.sst                                  = asn1_drb_info.snssai.sst.to_number();
+  out.s_nssai.sst                                  = slice_service_type{(uint8_t)asn1_drb_info.snssai.sst.to_number()};
   if (asn1_drb_info.snssai.sd_present) {
     out.s_nssai.sd = slice_differentiator::create(asn1_drb_info.snssai.sd.to_number()).value();
   }

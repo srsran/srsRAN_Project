@@ -27,7 +27,12 @@ ngap_test::ngap_test() :
     cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
-    cucfg.ngaps.push_back(cu_cp_configuration::ngap_params{&n2_gw, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
+    cucfg.ngaps.push_back(cu_cp_configuration::ngap_params{
+        &n2_gw,
+        {supported_tracking_area{
+            7,
+            {plmn_item{plmn_identity::test_value(),
+                       std::vector<s_nssai_t>{s_nssai_t{slice_service_type{1}, slice_differentiator{}}}}}}}});
     return cucfg;
   }())
 {

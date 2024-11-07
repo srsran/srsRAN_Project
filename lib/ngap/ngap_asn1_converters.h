@@ -480,7 +480,7 @@ inline void asn1_to_handov_type(ngap_handov_type& handov_type, const asn1::ngap:
 inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
 {
   s_nssai_t s_nssai;
-  s_nssai.sst = asn1_s_nssai.sst.to_number();
+  s_nssai.sst = slice_service_type{(uint8_t)asn1_s_nssai.sst.to_number()};
   if (asn1_s_nssai.sd_present) {
     s_nssai.sd = slice_differentiator::create(asn1_s_nssai.sd.to_number()).value();
   }

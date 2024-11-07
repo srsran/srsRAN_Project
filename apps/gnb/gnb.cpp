@@ -152,7 +152,7 @@ static void autoderive_slicing_args(du_high_unit_config& du_hi_cfg, cu_cp_unit_c
   std::vector<s_nssai_t> du_slices;
   for (const auto& cell_cfg : du_hi_cfg.cells_cfg) {
     for (const auto& slice : cell_cfg.cell.slice_cfg) {
-      s_nssai_t nssai{slice.sst, slice_differentiator::create(slice.sd).value()};
+      s_nssai_t nssai{slice_service_type{slice.sst}, slice_differentiator::create(slice.sd).value()};
       if (du_slices.end() == std::find(du_slices.begin(), du_slices.end(), nssai)) {
         du_slices.push_back(nssai);
       }

@@ -126,11 +126,11 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
         cur_control_params.rrm_policy_group.emplace();
         cur_control_params = ctrl_cfg.param_list.back();
         cur_control_params.rrm_policy_group.value().pol_member.s_nssai.sst =
-            ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
+            slice_service_type{(uint8_t)ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number()};
         ctrl_cfg.param_list.push_back(cur_control_params);
       } else {
         ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sst =
-            ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
+            slice_service_type{(uint8_t)ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number()};
       }
     }
   } else if (action_params[ran_param_id] == "SD") {

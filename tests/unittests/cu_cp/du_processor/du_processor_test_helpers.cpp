@@ -106,7 +106,8 @@ du_processor_test::du_processor_test() :
     cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
-    cu_cp_cfg.ngaps.push_back(cu_cp_configuration::ngap_params{nullptr, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
+    cu_cp_cfg.ngaps.push_back(
+        cu_cp_configuration::ngap_params{nullptr, {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}}});
 
     return cucfg;
   }()),

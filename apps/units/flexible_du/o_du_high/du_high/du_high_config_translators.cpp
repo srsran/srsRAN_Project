@@ -709,7 +709,8 @@ srsran::generate_du_slicing_rrm_policy_config(span<const std::string>           
   for (const auto& plmn : plmns) {
     for (const auto& cfg : slice_cfg) {
       rrm_policy_cfgs.emplace_back();
-      rrm_policy_cfgs.back().rrc_member.s_nssai = {cfg.sst, slice_differentiator::create(cfg.sd).value()};
+      rrm_policy_cfgs.back().rrc_member.s_nssai =
+          s_nssai_t{slice_service_type{cfg.sst}, slice_differentiator::create(cfg.sd).value()};
       rrm_policy_cfgs.back().rrc_member.plmn_id = plmn_identity::parse(plmn).value();
       rrm_policy_cfgs.back().min_prb            = (nof_cell_crbs * cfg.sched_cfg.min_prb_policy_ratio) / 100;
       rrm_policy_cfgs.back().max_prb            = (nof_cell_crbs * cfg.sched_cfg.max_prb_policy_ratio) / 100;

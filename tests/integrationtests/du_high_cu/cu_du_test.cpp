@@ -50,8 +50,8 @@ protected:
     srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();
     cu_cfg.services.cu_cp_executor        = &workers.exec_mapper->du_control_executor(); // reuse du-high ctrl exec
     cu_cfg.services.timers                = &timers;
-    cu_cfg.ngaps.push_back(
-        srs_cu_cp::cu_cp_configuration::ngap_params{&*amf, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
+    cu_cfg.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_params{
+        &*amf, {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}}});
 
     // create CU-CP.
     cu_cp_obj = create_cu_cp(cu_cfg);

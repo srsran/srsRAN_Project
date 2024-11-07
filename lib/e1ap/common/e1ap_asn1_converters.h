@@ -161,7 +161,7 @@ inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(srsran::s_nssai_t snssai)
 inline srsran::s_nssai_t e1ap_asn1_to_snssai(asn1::e1ap::snssai_s asn1_snssai)
 {
   srsran::s_nssai_t snssai;
-  snssai.sst = asn1_snssai.sst.to_number();
+  snssai.sst = slice_service_type{(uint8_t)asn1_snssai.sst.to_number()};
 
   if (asn1_snssai.sd_present) {
     snssai.sd = slice_differentiator::create(asn1_snssai.sd.to_number()).value();

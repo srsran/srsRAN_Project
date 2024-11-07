@@ -38,7 +38,7 @@ protected:
   {
     du_mng = std::make_unique<du_manager_test_bench>(
         std::vector<du_cell_config>{config_helpers::make_default_du_cell_config()});
-    dummy_slice_info = s_nssai_t{.sst = 1};
+    dummy_slice_info = s_nssai_t{.sst = slice_service_type{1}};
   }
 
   void SetUp() override
@@ -57,7 +57,7 @@ protected:
       std::vector<du_cell_config>{config_helpers::make_default_du_cell_config()});
   dummy_teid_pool        teid_pool;
   dummy_rlc_rlf_notifier rlf_notifier;
-  s_nssai_t              dummy_slice_info = s_nssai_t{.sst = 1};
+  s_nssai_t              dummy_slice_info = s_nssai_t{.sst = slice_service_type{1}};
 
   std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
   {

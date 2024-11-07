@@ -19,8 +19,8 @@ namespace srsran {
 class slice_service_type
 {
 public:
-  slice_service_type() = default;
-  slice_service_type(uint8_t val_) : val(val_) {}
+  constexpr slice_service_type() = default;
+  constexpr explicit slice_service_type(uint8_t val_) : val(val_) {}
 
   /// Determines whether the SST is within the range of standardized SSTs, as per TS 23.501.
   bool is_standardized() const { return val < 128; }
@@ -73,6 +73,7 @@ struct s_nssai_t {
   slice_differentiator sd;
 
   bool operator==(const s_nssai_t& other) const { return sst == other.sst && sd == other.sd; }
+  bool operator!=(const s_nssai_t& other) const { return not(*this == other); }
 };
 
 } // namespace srsran

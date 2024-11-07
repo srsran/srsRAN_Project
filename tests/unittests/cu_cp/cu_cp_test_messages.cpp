@@ -46,7 +46,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
     (void)item.pdu_session_nas_pdu.resize(2);
     item.pdu_session_nas_pdu[0] = 0xaa;
     item.pdu_session_nas_pdu[1] = 0xbb;
-    item.s_nssai.sst            = 1;
+    item.s_nssai.sst            = slice_service_type{1};
 
     item.pdu_session_aggregate_maximum_bit_rate_dl = 100;
     item.pdu_session_aggregate_maximum_bit_rate_ul = 100;

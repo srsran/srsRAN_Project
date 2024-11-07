@@ -292,7 +292,7 @@ struct cu_cp_unit_config {
   /// QoS configuration.
   std::vector<cu_cp_unit_qos_config> qos_cfg;
   /// Network slice configuration.
-  std::vector<s_nssai_t> slice_cfg = {s_nssai_t{1}};
+  std::vector<s_nssai_t> slice_cfg = {s_nssai_t{slice_service_type{1}}};
   /// E2 configuration.
   e2_config e2_cfg;
 };

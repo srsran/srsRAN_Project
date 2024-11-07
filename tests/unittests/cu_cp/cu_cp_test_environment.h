@@ -33,12 +33,15 @@ struct cu_cp_test_amf_config {
 };
 
 struct cu_cp_test_env_params {
-  cu_cp_test_env_params(unsigned                                                 max_nof_cu_ups_      = 8,
-                        unsigned                                                 max_nof_dus_         = 8,
-                        unsigned                                                 max_nof_ues_         = 8192,
-                        unsigned                                                 max_nof_drbs_per_ue_ = 8,
-                        const std::vector<std::vector<supported_tracking_area>>& amf_config_ =
-                            {{supported_tracking_area{7, {{plmn_identity::test_value(), {{1}}}}}}}) :
+  cu_cp_test_env_params(
+      unsigned                                                 max_nof_cu_ups_      = 8,
+      unsigned                                                 max_nof_dus_         = 8,
+      unsigned                                                 max_nof_ues_         = 8192,
+      unsigned                                                 max_nof_drbs_per_ue_ = 8,
+      const std::vector<std::vector<supported_tracking_area>>& amf_config_          = {{supported_tracking_area{
+          7,
+          {plmn_item{plmn_identity::test_value(),
+                     std::vector<s_nssai_t>{s_nssai_t{slice_service_type{1}, slice_differentiator{}}}}}}}}) :
     max_nof_cu_ups(max_nof_cu_ups_),
     max_nof_dus(max_nof_dus_),
     max_nof_ues(max_nof_ues_),
