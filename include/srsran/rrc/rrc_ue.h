@@ -290,6 +290,9 @@ public:
 
   /// \brief Get all SRBs of the UE.
   virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() = 0;
+
+  /// \brief Get the RRC connection state of the UE.
+  virtual rrc_state get_rrc_state() const = 0;
 };
 
 class rrc_ue_cu_cp_ue_notifier
