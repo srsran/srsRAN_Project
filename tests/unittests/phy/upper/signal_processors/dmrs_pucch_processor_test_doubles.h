@@ -59,12 +59,21 @@ public:
     return spy;
   }
 
+  std::unique_ptr<dmrs_pucch_processor> create_formats3_4() override
+  {
+    std::unique_ptr<dmrs_pucch_processor_spy> spy = std::make_unique<dmrs_pucch_processor_spy>();
+    formats3_4_entries.push_back(spy.get());
+    return spy;
+  }
+
   std::vector<dmrs_pucch_processor_spy*>& get_format1_entries() { return format1_entries; }
   std::vector<dmrs_pucch_processor_spy*>& get_format2_entries() { return format2_entries; }
+  std::vector<dmrs_pucch_processor_spy*>& get_formats3_4_entries() { return formats3_4_entries; }
 
 private:
   std::vector<dmrs_pucch_processor_spy*> format1_entries;
   std::vector<dmrs_pucch_processor_spy*> format2_entries;
+  std::vector<dmrs_pucch_processor_spy*> formats3_4_entries;
 };
 
 } // namespace srsran

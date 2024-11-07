@@ -9,7 +9,7 @@
  */
 
 #include "dmrs_pucch_processor_format2_impl.h"
-#include "srsran/srsvec/prod.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 
 using namespace srsran;
 
@@ -19,7 +19,7 @@ using namespace srsran;
 static const bounded_bitset<NRE> format2_prb_re_mask =
     {false, true, false, false, true, false, false, true, false, false, true, false};
 
-unsigned dmrs_pucch_processor_format2_impl::c_init(unsigned symbol, const dmrs_pucch_processor::config_t& config)
+unsigned dmrs_pucch_processor_format2_impl::c_init(unsigned symbol, const config_t& config)
 {
   uint64_t n_slot = config.slot.slot_index();
   uint64_t n_id   = config.n_id_0;
@@ -27,10 +27,10 @@ unsigned dmrs_pucch_processor_format2_impl::c_init(unsigned symbol, const dmrs_p
   return ((get_nsymb_per_slot(config.cp) * n_slot + symbol + 1) * (2 * n_id + 1) * pow2(17) + 2 * n_id) % pow2(31);
 }
 
-void dmrs_pucch_processor_format2_impl::generate_sequence(span<cf_t>                            sequence,
-                                                          unsigned                              symbol,
-                                                          unsigned                              starting_prb,
-                                                          const dmrs_pucch_processor::config_t& config)
+void dmrs_pucch_processor_format2_impl::generate_sequence(span<cf_t>      sequence,
+                                                          unsigned        symbol,
+                                                          unsigned        starting_prb,
+                                                          const config_t& config)
 {
   // Initialize pseudo-random generator.
   prg->init(c_init(symbol, config));
@@ -59,7 +59,7 @@ dmrs_pucch_processor_format2_impl::generate_dmrs_pattern(const config_t& config)
     mask.rb_mask2.resize(config.second_hop_prb + config.nof_prb);
     mask.rb_mask2.fill(config.second_hop_prb, config.second_hop_prb + config.nof_prb, true);
 
-    // Set the hopping symbol index, indicating the start of the second hop. Recall that PUCCH Format 1 occupies a
+    // Set the hopping symbol index, indicating the start of the second hop. Recall that PUCCH Format 2 occupies a
     // maximum of 2 OFDM symbols.
     mask.hopping_symbol_index = config.start_symbol_index + 1;
   }
@@ -71,9 +71,9 @@ dmrs_pucch_processor_format2_impl::generate_dmrs_pattern(const config_t& config)
   return mask;
 }
 
-void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&                     estimate,
-                                                 const resource_grid_reader&           grid,
-                                                 const dmrs_pucch_processor::config_t& config)
+void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&           estimate,
+                                                 const resource_grid_reader& grid,
+                                                 const config_t&             config)
 {
   srsran_assert((!config.intra_slot_hopping || (config.nof_symbols > pucch_constants::FORMAT2_MIN_NSYMB)),
                 "Frequency hopping requires {} OFDM symbols.",

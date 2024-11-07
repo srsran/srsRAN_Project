@@ -19,11 +19,14 @@
 #include "pss_processor_impl.h"
 #include "pucch/dmrs_pucch_processor_format1_impl.h"
 #include "pucch/dmrs_pucch_processor_format2_impl.h"
+#include "pucch/dmrs_pucch_processor_formats_3_4_impl.h"
 #include "sss_processor_impl.h"
+
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator_factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 
 using namespace srsran;
 
@@ -93,13 +96,16 @@ class dmrs_pucch_estimator_sw_factory : public dmrs_pucch_estimator_factory
 public:
   dmrs_pucch_estimator_sw_factory(std::shared_ptr<pseudo_random_generator_factory>&      prg_factory_,
                                   std::shared_ptr<low_papr_sequence_collection_factory>& lpc_factory_,
+                                  std::shared_ptr<low_papr_sequence_generator_factory>&  lpg_factory_,
                                   std::shared_ptr<port_channel_estimator_factory>&       ch_estimator_factory_) :
     prg_factory(std::move(prg_factory_)),
     lpc_factory(std::move(lpc_factory_)),
+    lpg_factory(std::move(lpg_factory_)),
     ch_estimator_factory(std::move(ch_estimator_factory_))
   {
     srsran_assert(prg_factory, "Invalid sequence generator factory.");
     srsran_assert(lpc_factory, "Invalid sequence collection factory.");
+    srsran_assert(lpg_factory, "Invalid sequence generator factory.");
     srsran_assert(ch_estimator_factory, "Invalid channel estimator factory.");
   }
 
@@ -125,9 +131,18 @@ public:
         prg_factory->create(), ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::filter));
   }
 
+  std::unique_ptr<dmrs_pucch_processor> create_formats3_4() override
+  {
+    return std::make_unique<dmrs_pucch_processor_formats_3_4_impl>(
+        prg_factory->create(),
+        lpg_factory->create(),
+        ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::mean, /*compensate_cfo =*/false));
+  }
+
 private:
   std::shared_ptr<pseudo_random_generator_factory>      prg_factory;
   std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory;
+  std::shared_ptr<low_papr_sequence_generator_factory>  lpg_factory;
   std::shared_ptr<port_channel_estimator_factory>       ch_estimator_factory;
 };
 
@@ -295,9 +310,10 @@ srsran::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_gen
 std::shared_ptr<dmrs_pucch_estimator_factory>
 srsran::create_dmrs_pucch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory>      prg_factory,
                                                std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory,
+                                               std::shared_ptr<low_papr_sequence_generator_factory>  lpg_factory,
                                                std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory)
 {
-  return std::make_shared<dmrs_pucch_estimator_sw_factory>(prg_factory, lpc_factory, ch_estimator_factory);
+  return std::make_shared<dmrs_pucch_estimator_sw_factory>(prg_factory, lpc_factory, lpg_factory, ch_estimator_factory);
 }
 
 std::shared_ptr<dmrs_pusch_estimator_factory> srsran::create_dmrs_pusch_estimator_factory_sw(

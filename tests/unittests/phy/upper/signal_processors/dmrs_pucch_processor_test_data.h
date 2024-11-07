@@ -10,7 +10,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 13-12-2023 (seed 0):
+// This file was generated using the following MATLAB class on 07-11-2024 (seed 0):
 //   + "srsPUCCHdmrsUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
@@ -34,14 +34,30 @@ static const std::vector<test_case_t> dmrs_pucch_processor_test_data = {
   {{pucch_format::FORMAT_2, {0, 4}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 1, 2, 51, false, 0, 1, 9, 0, false, 771, 771, {1}}, {"test_data/dmrs_pucch_processor_test_output5.dat"}},
   {{pucch_format::FORMAT_2, {0, 8}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 9, 2, 48, true, 27, 1, 0, 0, false, 98, 98, {7}}, {"test_data/dmrs_pucch_processor_test_output6.dat"}},
   {{pucch_format::FORMAT_2, {0, 8}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 2, 7, true, 12, 4, 7, 0, false, 745, 745, {7}}, {"test_data/dmrs_pucch_processor_test_output7.dat"}},
-  {{pucch_format::FORMAT_1, {1, 12}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 14, 21, false, 0, 1, 4, 6, false, 173, 173, {7}}, {"test_data/dmrs_pucch_processor_test_output8.dat"}},
-  {{pucch_format::FORMAT_1, {1, 13}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 11, 17, false, 0, 1, 9, 1, false, 332, 332, {7}}, {"test_data/dmrs_pucch_processor_test_output9.dat"}},
-  {{pucch_format::FORMAT_1, {1, 13}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 1, 12, 31, true, 29, 1, 4, 1, false, 634, 634, {4}}, {"test_data/dmrs_pucch_processor_test_output10.dat"}},
-  {{pucch_format::FORMAT_1, {1, 10}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 6, 7, 51, true, 17, 1, 8, 0, false, 555, 555, {0}}, {"test_data/dmrs_pucch_processor_test_output11.dat"}},
-  {{pucch_format::FORMAT_2, {1, 17}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 9, 1, 11, false, 0, 3, 4, 0, false, 970, 970, {3}}, {"test_data/dmrs_pucch_processor_test_output12.dat"}},
-  {{pucch_format::FORMAT_2, {1, 15}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 2, 43, false, 0, 9, 0, 0, false, 395, 395, {5}}, {"test_data/dmrs_pucch_processor_test_output13.dat"}},
-  {{pucch_format::FORMAT_2, {1, 7}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 5, 2, 11, true, 33, 5, 8, 0, false, 931, 931, {5}}, {"test_data/dmrs_pucch_processor_test_output14.dat"}},
-  {{pucch_format::FORMAT_2, {1, 4}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 2, 2, 39, true, 2, 13, 9, 0, false, 698, 698, {1}}, {"test_data/dmrs_pucch_processor_test_output15.dat"}},
+  {{pucch_format::FORMAT_3, {0, 6}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 14, 21, false, 0, 16, 4, 0, true, 173, 173, {7}}, {"test_data/dmrs_pucch_processor_test_output8.dat"}},
+  {{pucch_format::FORMAT_3, {0, 7}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 1, 11, 12, false, 0, 4, 7, 0, true, 332, 332, {2}}, {"test_data/dmrs_pucch_processor_test_output9.dat"}},
+  {{pucch_format::FORMAT_3, {0, 7}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 7, 4, 30, true, 43, 8, 6, 0, false, 634, 634, {4}}, {"test_data/dmrs_pucch_processor_test_output10.dat"}},
+  {{pucch_format::FORMAT_3, {0, 3}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 2, 5, 21, true, 35, 3, 5, 0, true, 555, 555, {7}}, {"test_data/dmrs_pucch_processor_test_output11.dat"}},
+  {{pucch_format::FORMAT_4, {0, 0}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 3, 4, 40, false, 0, 1, 11, 0, true, 970, 970, {6}}, {"test_data/dmrs_pucch_processor_test_output12.dat"}},
+  {{pucch_format::FORMAT_4, {0, 4}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 13, 9, false, 0, 1, 2, 0, false, 395, 395, {4}}, {"test_data/dmrs_pucch_processor_test_output13.dat"}},
+  {{pucch_format::FORMAT_4, {0, 4}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 5, 4, 5, true, 27, 1, 10, 0, false, 931, 931, {1}}, {"test_data/dmrs_pucch_processor_test_output14.dat"}},
+  {{pucch_format::FORMAT_4, {0, 9}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 5, 4, 20, true, 7, 1, 1, 1, true, 698, 698, {5}}, {"test_data/dmrs_pucch_processor_test_output15.dat"}},
+  {{pucch_format::FORMAT_1, {1, 7}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 1, 10, 37, false, 0, 1, 11, 4, false, 293, 293, {7}}, {"test_data/dmrs_pucch_processor_test_output16.dat"}},
+  {{pucch_format::FORMAT_1, {1, 2}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 4, 8, 43, false, 0, 1, 7, 3, false, 243, 243, {5}}, {"test_data/dmrs_pucch_processor_test_output17.dat"}},
+  {{pucch_format::FORMAT_1, {1, 6}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 4, 7, 28, true, 18, 1, 11, 0, false, 280, 280, {4}}, {"test_data/dmrs_pucch_processor_test_output18.dat"}},
+  {{pucch_format::FORMAT_1, {1, 15}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 14, 36, true, 43, 1, 5, 0, false, 691, 691, {3}}, {"test_data/dmrs_pucch_processor_test_output19.dat"}},
+  {{pucch_format::FORMAT_2, {1, 14}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 2, 1, 18, false, 0, 11, 0, 0, false, 31, 31, {7}}, {"test_data/dmrs_pucch_processor_test_output20.dat"}},
+  {{pucch_format::FORMAT_2, {1, 14}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 5, 1, 34, false, 0, 1, 7, 0, false, 642, 642, {4}}, {"test_data/dmrs_pucch_processor_test_output21.dat"}},
+  {{pucch_format::FORMAT_2, {1, 4}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 10, 2, 14, true, 26, 12, 10, 0, false, 360, 360, {5}}, {"test_data/dmrs_pucch_processor_test_output22.dat"}},
+  {{pucch_format::FORMAT_2, {1, 11}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 4, 2, 26, true, 12, 8, 9, 0, false, 407, 407, {2}}, {"test_data/dmrs_pucch_processor_test_output23.dat"}},
+  {{pucch_format::FORMAT_3, {1, 19}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 2, 10, 9, false, 0, 10, 11, 0, true, 39, 39, {0}}, {"test_data/dmrs_pucch_processor_test_output24.dat"}},
+  {{pucch_format::FORMAT_3, {1, 16}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 3, 6, 50, false, 0, 2, 1, 0, true, 21, 21, {0}}, {"test_data/dmrs_pucch_processor_test_output25.dat"}},
+  {{pucch_format::FORMAT_3, {1, 5}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 13, 18, true, 22, 2, 1, 0, true, 459, 459, {2}}, {"test_data/dmrs_pucch_processor_test_output26.dat"}},
+  {{pucch_format::FORMAT_3, {1, 0}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 2, 11, 41, true, 1, 8, 8, 0, true, 959, 959, {2}}, {"test_data/dmrs_pucch_processor_test_output27.dat"}},
+  {{pucch_format::FORMAT_4, {1, 3}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 10, 45, false, 0, 1, 8, 1, true, 859, 859, {5}}, {"test_data/dmrs_pucch_processor_test_output28.dat"}},
+  {{pucch_format::FORMAT_4, {1, 14}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 1, 10, 24, false, 0, 1, 5, 2, false, 260, 260, {6}}, {"test_data/dmrs_pucch_processor_test_output29.dat"}},
+  {{pucch_format::FORMAT_4, {1, 9}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 11, 40, true, 14, 1, 9, 0, true, 302, 302, {2}}, {"test_data/dmrs_pucch_processor_test_output30.dat"}},
+  {{pucch_format::FORMAT_4, {1, 16}, cyclic_prefix::NORMAL, pucch_group_hopping::NEITHER, 0, 14, 45, true, 32, 1, 7, 1, true, 652, 652, {7}}, {"test_data/dmrs_pucch_processor_test_output31.dat"}},
     // clang-format on
 };
 

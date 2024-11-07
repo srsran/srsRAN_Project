@@ -64,7 +64,7 @@ private:
   /// \param[in]  pucch_config PUCCH configuration.
   /// \param[in]  gen_config   Additional parameters required to calculate the sequences.
   /// \param[in]  symbol       OFDM symbol index.
-  void generate_sequence(span<srsran::cf_t>                sequence,
+  void generate_sequence(span<cf_t>                        sequence,
                          const config_t&                   pucch_config,
                          const sequence_generation_config& gen_config,
                          unsigned                          symbol) const;

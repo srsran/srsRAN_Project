@@ -90,7 +90,7 @@ protected:
     ASSERT_NE(port_chan_estimator_factory, nullptr) << "Cannot create port channel estimator factory.";
 
     std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
-        create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, port_chan_estimator_factory);
+        create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, lpg_factory, port_chan_estimator_factory);
     ASSERT_NE(estimator_factory, nullptr) << "Cannot create DM-RS PUCCH estimator factory.";
 
     // Create factories required by the PUCCH demodulator factory.

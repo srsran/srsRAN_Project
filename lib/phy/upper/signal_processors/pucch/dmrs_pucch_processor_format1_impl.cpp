@@ -123,10 +123,10 @@ dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(const config_t& config)
   return mask;
 }
 
-void dmrs_pucch_processor_format1_impl::generate_sequence(span<srsran::cf_t>                    sequence,
-                                                          const dmrs_pucch_processor::config_t& pucch_config,
-                                                          const sequence_generation_config&     cfg,
-                                                          unsigned                              symbol) const
+void dmrs_pucch_processor_format1_impl::generate_sequence(span<cf_t>                        sequence,
+                                                          const config_t&                   pucch_config,
+                                                          const sequence_generation_config& cfg,
+                                                          unsigned                          symbol) const
 {
   // Compute alpha index.
   unsigned alpha_idx = helper.get_alpha_index(
@@ -143,9 +143,9 @@ void dmrs_pucch_processor_format1_impl::generate_sequence(span<srsran::cf_t>    
   srsvec::sc_prod(r_uv, w_i_m, sequence);
 }
 
-void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&                     estimate,
-                                                 const resource_grid_reader&           grid,
-                                                 const dmrs_pucch_processor::config_t& config)
+void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&           estimate,
+                                                 const resource_grid_reader& grid,
+                                                 const config_t&             config)
 {
   srsran_assert(config.nof_prb <= 1, "PUCCH Format 1 occupies a single PRB.");
 

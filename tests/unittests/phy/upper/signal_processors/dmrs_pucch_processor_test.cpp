@@ -73,7 +73,8 @@ protected:
       ASSERT_NE(port_chan_estimator_factory, nullptr) << "Cannot create port channel estimator factory.";
 
       // Create DM-RS for PUCCH estimator factory.
-      estimator_factory = create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, port_chan_estimator_factory);
+      estimator_factory =
+          create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, lpg_factory, port_chan_estimator_factory);
       ASSERT_NE(estimator_factory, nullptr) << "Cannot create PUCCH estimator factory.";
     }
   }
@@ -91,9 +92,11 @@ protected:
         break;
       case pucch_format::FORMAT_2:
         dmrs_pucch = estimator_factory->create_format2();
-      case pucch_format::FORMAT_0:
+        break;
       case pucch_format::FORMAT_3:
       case pucch_format::FORMAT_4:
+        dmrs_pucch = estimator_factory->create_formats3_4();
+      case pucch_format::FORMAT_0:
       case pucch_format::NOF_FORMATS:
       default:
         break;
