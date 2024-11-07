@@ -435,8 +435,9 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
       context.state = rrc_state::connected;
 
     } else {
-      logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: {}",
+      logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: {}. Requesting UE release",
                        transaction.failure_cause() == protocol_transaction_failure::timeout ? "timeout" : "canceled");
+      on_ue_release_required(ngap_cause_radio_network_t::ho_fail_in_target_5_gc_ngran_node_or_target_sys);
     }
 
     CORO_RETURN(procedure_result);
