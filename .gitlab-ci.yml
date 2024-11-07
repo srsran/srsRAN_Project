@@ -491,6 +491,14 @@ pages:
       cd ..
     - mkdir public/doxygen
     - rsync -a build/docs/html/ public/doxygen/
+    - |
+      # Remove bigger file if size is bigger than 900MB
+      while [ $(du -s public | awk '{print $1}') -gt 921600 ]; do
+        file_to_remove=$(find public -type f ! -name "*.html" ! -name "*.js" -exec ls -l {} + | sort -k5 -n -r | awk 'NR==1' | awk '{print $NF}')
+        file_size=$(du -h "$file_to_remove" | awk '{print $1}')
+        echo "Removing file: $file_to_remove (Size: $file_size)"
+        rm -f "$file_to_remove"
+      done
   after_script:
     - |
       if [ $CI_JOB_STATUS = "failed" ]; then
