@@ -269,8 +269,8 @@ struct cu_cp_unit_config {
   uint8_t max_nof_drbs_per_ue = 8;
   /// Inactivity timer in seconds.
   int inactivity_timer = 120;
-  /// PDU session setup timeout in seconds (must be larger than T310).
-  unsigned pdu_session_setup_timeout = 3;
+  /// PDU session request timeout in seconds (must be larger than T310).
+  unsigned request_pdu_session_timeout = 3;
   /// Loggers configuration.
   cu_cp_unit_logger_config loggers;
   /// PCAPs configuration.

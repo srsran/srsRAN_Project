@@ -231,12 +231,12 @@ static YAML::Node build_cu_cp_section(const cu_cp_unit_config& config)
 {
   YAML::Node node;
 
-  node["max_nof_dus"]               = config.max_nof_dus;
-  node["max_nof_cu_ups"]            = config.max_nof_cu_ups;
-  node["max_nof_ues"]               = config.max_nof_ues;
-  node["max_nof_drbs_per_ue"]       = static_cast<unsigned>(config.max_nof_drbs_per_ue);
-  node["inactivity_timer"]          = config.inactivity_timer;
-  node["pdu_session_setup_timeout"] = config.pdu_session_setup_timeout;
+  node["max_nof_dus"]                 = config.max_nof_dus;
+  node["max_nof_cu_ups"]              = config.max_nof_cu_ups;
+  node["max_nof_ues"]                 = config.max_nof_ues;
+  node["max_nof_drbs_per_ue"]         = static_cast<unsigned>(config.max_nof_drbs_per_ue);
+  node["inactivity_timer"]            = config.inactivity_timer;
+  node["request_pdu_session_timeout"] = config.request_pdu_session_timeout;
 
   node["amf"] = build_cu_cp_amf_section(config.amf_config);
   if (!config.extra_amfs.empty()) {

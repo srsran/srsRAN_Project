@@ -376,10 +376,10 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
       ->check(CLI::Range(1, 7200));
 
   add_option(app,
-             "--pdu_session_setup_timeout",
-             cu_cp_params.pdu_session_setup_timeout,
-             "Timeout for the setup of a PDU session after an InitialUeMessage was sent to the core, in "
-             "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
+             "--request_pdu_session_timeout",
+             cu_cp_params.request_pdu_session_timeout,
+             "Timeout for requesting a PDU session after the InitialUeMessage was sent to the core, in "
+             "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released.")
       ->capture_default_str();
 
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF configuration");

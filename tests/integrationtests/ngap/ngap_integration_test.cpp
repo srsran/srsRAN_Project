@@ -126,10 +126,10 @@ protected:
       return cucfg;
     }())
   {
-    cfg.gnb_id                    = cu_cp_cfg.node.gnb_id;
-    cfg.ran_node_name             = cu_cp_cfg.node.ran_node_name;
-    cfg.supported_tas             = cu_cp_cfg.ngaps.front().supported_tas;
-    cfg.pdu_session_setup_timeout = cu_cp_cfg.ue.pdu_session_setup_timeout;
+    cfg.gnb_id                      = cu_cp_cfg.node.gnb_id;
+    cfg.ran_node_name               = cu_cp_cfg.node.ran_node_name;
+    cfg.supported_tas               = cu_cp_cfg.ngaps.front().supported_tas;
+    cfg.request_pdu_session_timeout = cu_cp_cfg.ue.request_pdu_session_timeout;
   }
 
   void SetUp() override

@@ -201,7 +201,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp_cfg.f1ap.proc_timeout = std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
 
   // > UE config
-  cu_cp_cfg.ue.pdu_session_setup_timeout =
+  cu_cp_cfg.ue.request_pdu_session_timeout =
       std::chrono::seconds(10); // procedure timeouts should only occur intentionally
 
   // create CU-CP instance.

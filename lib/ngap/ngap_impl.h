@@ -159,8 +159,8 @@ private:
   /// \param[in] amf_ue_id The AMF UE ID.
   void schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, std::optional<amf_ue_id_t> amf_ue_id = {});
 
-  /// \brief Callback for the PDU Session Setup Timer expiration. Triggers the release of the UE.
-  void on_pdu_session_setup_timer_expired(ue_index_t ue_index);
+  /// \brief Callback for the PDU Session Request Timer expiration. Triggers the release of the UE.
+  void on_request_pdu_session_timer_expired(ue_index_t ue_index);
 
   /// \brief Log NGAP RX PDU.
   void log_rx_pdu(const ngap_message& msg);
