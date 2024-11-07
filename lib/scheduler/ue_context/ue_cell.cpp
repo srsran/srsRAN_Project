@@ -13,6 +13,7 @@
 #include "../support/mcs_calculator.h"
 #include "../support/pdcch_aggregation_level_calculator.h"
 #include "../support/prbs_calculator.h"
+#include "ue_drx_controller.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/srslog/srslog.h"
@@ -29,7 +30,8 @@ constexpr unsigned DEFAULT_NOF_DL_HARQS = 8;
 ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  rnti_t                       crnti_val,
                  const ue_cell_configuration& ue_cell_cfg_,
-                 cell_harq_manager&           cell_harq_pool) :
+                 cell_harq_manager&           cell_harq_pool,
+                 ue_drx_controller&           drx_ctrl_) :
   ue_index(ue_index_),
   cell_index(ue_cell_cfg_.cell_cfg_common.cell_index),
   harqs(cell_harq_pool.add_ue(ue_index,
@@ -42,6 +44,7 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   cell_cfg(ue_cell_cfg_.cell_cfg_common),
   ue_cfg(&ue_cell_cfg_),
   expert_cfg(cell_cfg.expert_cfg.ue),
+  drx_ctrl(drx_ctrl_),
   logger(srslog::fetch_basic_logger("SCHED")),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
   ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state)
@@ -111,7 +114,15 @@ void ue_cell::set_fallback_state(bool set_fallback)
   logger.debug("ue={} rnti={}: {} fallback mode", ue_index, rnti(), in_fallback_mode ? "Entering" : "Leaving");
 }
 
-bool ue_cell::is_dl_enabled(slot_point dl_slot) const
+bool ue_cell::is_pdcch_enabled(slot_point dl_slot) const
+{
+  if (not active) {
+    return false;
+  }
+  return cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled(dl_slot);
+}
+
+bool ue_cell::is_pdsch_enabled(slot_point dl_slot) const
 {
   if (not active) {
     return false;
