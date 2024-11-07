@@ -46,12 +46,6 @@ static interval<unsigned, true> parse_cpu_range(const std::string& value)
   return {range[0], range[1]};
 }
 
-/// Obtain CPU description at the start of the application. This value is affected by commands or tools like taskset,
-/// which limit the number of cores available to the application. However, frameworks (e.g. DPDK) that affect the
-/// affinities of the main thread in the main() function will not affect this value.
-const cpu_architecture_info::cpu_description cpu_architecture_info::cpu_desc =
-    cpu_architecture_info::discover_cpu_architecture();
-
 cpu_architecture_info::cpu_description cpu_architecture_info::discover_cpu_architecture()
 {
   // Check if custom cgroups exist in the system (possibly left from a previous run).
