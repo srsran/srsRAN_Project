@@ -57,6 +57,7 @@ void ue::slot_indication(slot_point sl_tx)
   }
 
   ta_mgr.slot_indication(sl_tx);
+  drx.slot_indication(sl_tx);
 }
 
 void ue::deactivate()

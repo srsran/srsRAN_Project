@@ -12,6 +12,7 @@
 #include "../support/dci_builder.h"
 #include "../support/mcs_calculator.h"
 #include "../support/sched_result_helpers.h"
+#include "../ue_context/ue_drx_controller.h"
 #include "ue_pdsch_alloc_param_candidate_searcher.h"
 #include "ue_pusch_alloc_param_candidate_searcher.h"
 #include "srsran/ran/pdcch/coreset.h"
@@ -92,7 +93,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
 
   // Fetch PDCCH resource grid allocator.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
-  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
+  if (not ue_cc->is_pdcch_enabled(pdcch_alloc.slot)) {
     logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: DL is not active in the PDCCH slot={}",
                    u.ue_index,
                    u.crnti,
@@ -475,6 +476,9 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
     }
 
     h_dl->save_grant_params(pdsch_sched_ctx, msg.pdsch_cfg);
+
+    // Update DRX state given the new allocation.
+    u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 
     return {alloc_status::success,
             h_dl->get_grant_params().tbs_bytes,
@@ -997,6 +1001,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
 
     // In case there is a SR pending. Reset it.
     u.reset_sr_indication();
+
+    // Update DRX state given the new allocation.
+    u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 
     return {alloc_status::success, h_ul->get_grant_params().tbs_bytes, crbs.length()};
   }

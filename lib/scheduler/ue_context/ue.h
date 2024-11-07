@@ -174,6 +174,9 @@ public:
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;
 
+  /// \brief Retrieves UE DRX controller.
+  ue_drx_controller& drx_controller() { return drx; }
+
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
   /// \remark Excludes SRB0.
