@@ -36,7 +36,6 @@ using namespace srsran;
 static constexpr subcarrier_spacing scs                              = subcarrier_spacing::kHz30;
 static constexpr uint16_t           rnti                             = 0x1234;
 static constexpr unsigned           bwp_start_rb                     = 0;
-static constexpr unsigned           nof_layers                       = 1;
 static constexpr unsigned           nof_ofdm_symbols                 = 14;
 static const symbol_slot_mask       dmrs_symbol_mask                 = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0};
 static constexpr unsigned           nof_ldpc_iterations              = 10;
@@ -56,6 +55,7 @@ static std::string                  channel_fading_distribution      = "uniform-
 static float                        sinr_dB                          = 60.0F;
 static unsigned                     nof_corrupted_re_per_ofdm_symbol = 0;
 static unsigned                     nof_rx_ports                     = 2;
+static unsigned                     nof_layers                       = 1;
 static unsigned                     bwp_size_rb                      = 273;
 static pusch_mcs_table              mcs_table                        = pusch_mcs_table::qam64;
 static sch_mcs_index                mcs_index                        = 20;
@@ -330,6 +330,7 @@ private:
                                                   channel_fading_distribution,
                                                   sinr_dB,
                                                   nof_corrupted_re_per_ofdm_symbol,
+                                                  nof_layers,
                                                   nof_rx_ports,
                                                   MAX_RB * NRE,
                                                   nof_ofdm_symbols,
@@ -502,6 +503,8 @@ static void usage(std::string_view prog)
   fmt::print("\t-S       SINR. [Default {}]\n", sinr_dB);
   fmt::print("\t-N       Number of corrupted RE per OFDM symbol. [Default {}]\n", nof_corrupted_re_per_ofdm_symbol);
   fmt::print("\t-P       Number of receive ports. [Default {}]\n", nof_rx_ports);
+  fmt::print("\t-L       Number of transmit layers. It must not exceed the number of ports. [Default {}]\n",
+             nof_layers);
   fmt::print("\t-B       Number of allocated PRBs (same as BWP size). [Default {}]\n", bwp_size_rb);
   fmt::print("\t-M       MCS table. [Default {}]\n", mcs_table);
   fmt::print("\t-m       MCS index. [Default {}]\n", mcs_index);
@@ -515,7 +518,7 @@ static void usage(std::string_view prog)
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "C:F:S:N:P:R:B:M:m:DT:vh")) != -1) {
+  while ((opt = getopt(argc, argv, "C:F:S:N:P:L:R:B:M:m:DT:vh")) != -1) {
     switch (opt) {
       case 'C':
         if (optarg != nullptr) {
@@ -538,6 +541,9 @@ static void parse_args(int argc, char** argv)
         break;
       case 'P':
         nof_rx_ports = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'L':
+        nof_layers = std::strtol(optarg, nullptr, 10);
         break;
       case 'B':
         bwp_size_rb = std::strtol(optarg, nullptr, 10);
