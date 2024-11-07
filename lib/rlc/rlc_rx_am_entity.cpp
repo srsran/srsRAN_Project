@@ -115,7 +115,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   auto on_function_exit = make_scope_exit([&]() {
     logger.log_debug(
         "Post-processing for AMD PDU: status_changed={} status_requested={}", status_changed, status_requested);
-    if (status_changed) {
+    if (status_changed || status_requested) {
       refresh_status_report();
     }
     if (status_requested) {
