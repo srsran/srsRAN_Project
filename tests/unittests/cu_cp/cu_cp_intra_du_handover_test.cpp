@@ -157,6 +157,22 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool timeout_rrc_reconfiguration_and_await_f1ap_ue_context_release_command()
+  {
+    // Fail RRC Reconfiguration (UE doesn't respond) and wait for F1AP UE Context Release Command.
+    if (tick_until(
+            std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
+            [&]() { return false; },
+            false)) {
+      return false;
+    }
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive UE Context Release Command");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(f1ap_pdu),
+                              "Invalid UE Context Release Command");
+    return true;
+  }
+
   [[nodiscard]] bool send_rrc_reconfiguration_complete()
   {
     get_du(du_idx).push_ul_pdu(generate_ul_rrc_message_transfer(
@@ -226,6 +242,31 @@ TEST_F(cu_cp_intra_du_handover_test, when_bearer_context_modification_fails_then
   ASSERT_EQ(report.ues.size(), 1) << "UE should be removed";
 }
 
+TEST_F(cu_cp_intra_du_handover_test, when_rrc_reconfiguration_fails_then_ho_fails)
+{
+  // Inject Measurement Report and await F1AP UE Context Setup Request.
+  ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
+
+  // Inject UE Context Setup Response and await Bearer Context Modification Request.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Response and await UE Context Modification Request.
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+
+  // Inject UE Context Modification Response.
+  ASSERT_TRUE(send_ue_context_modification_response());
+
+  // Let the RRC Reconfiguration timeout and await F1AP UE Context Release Command for target UE.
+  ASSERT_TRUE(timeout_rrc_reconfiguration_and_await_f1ap_ue_context_release_command());
+
+  // // Inject F1AP UE Context Release Complete for target UE.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete(target_cu_ue_id, target_du_ue_id));
+
+  // STATUS: Target UE should be removed from DU.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 1) << "Target UE should be removed";
+}
+
 TEST_F(cu_cp_intra_du_handover_test, when_ho_succeeds_then_source_ue_is_removed)
 {
   // Inject Measurement Report and await F1AP UE Context Setup Request.
@@ -248,5 +289,5 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_succeeds_then_source_ue_is_removed)
 
   // STATUS: Source UE should be removed from DU.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_EQ(report.ues.size(), 1) << "UE should be removed";
+  ASSERT_EQ(report.ues.size(), 1) << "Source UE should be removed";
 }
