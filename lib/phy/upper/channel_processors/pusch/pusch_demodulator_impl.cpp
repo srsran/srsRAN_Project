@@ -188,6 +188,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
                     "Transform precoding is only possible with one layer (i.e. {}).",
                     config.nof_tx_layers);
       precoder->deprecode_ofdm_symbol(eq_re, eq_re);
+      precoder->deprecode_ofdm_symbol_noise(eq_noise_vars, eq_noise_vars);
     }
 
     // Estimate post equalization Signal-to-Interference-plus-Noise Ratio.

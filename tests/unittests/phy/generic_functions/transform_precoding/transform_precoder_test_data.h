@@ -10,7 +10,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 19-07-2024 (seed 0):
+// This file was generated using the following MATLAB class on 08-11-2024 (seed 0):
 //   + "srsTransformPrecoderUnittest.m"
 
 #include "srsran/adt/complex.h"
@@ -19,66 +19,68 @@
 namespace srsran {
 
 struct test_case_t {
-  unsigned          M_rb;
-  file_vector<cf_t> deprecode_input;
-  file_vector<cf_t> deprecode_output;
+  unsigned           M_rb;
+  file_vector<cf_t>  deprecode_data_input;
+  file_vector<float> deprecode_noise_input;
+  file_vector<cf_t>  deprecode_data_output;
+  file_vector<float> deprecode_noise_output;
 };
 
 static const std::vector<test_case_t> transform_precoder_test_data = {
     // clang-format off
-  {1, {"test_data/transform_precoder_test_input0.dat"}, {"test_data/transform_precoder_test_output0.dat"}},
-  {2, {"test_data/transform_precoder_test_input1.dat"}, {"test_data/transform_precoder_test_output1.dat"}},
-  {3, {"test_data/transform_precoder_test_input2.dat"}, {"test_data/transform_precoder_test_output2.dat"}},
-  {4, {"test_data/transform_precoder_test_input3.dat"}, {"test_data/transform_precoder_test_output3.dat"}},
-  {5, {"test_data/transform_precoder_test_input4.dat"}, {"test_data/transform_precoder_test_output4.dat"}},
-  {6, {"test_data/transform_precoder_test_input5.dat"}, {"test_data/transform_precoder_test_output5.dat"}},
-  {8, {"test_data/transform_precoder_test_input6.dat"}, {"test_data/transform_precoder_test_output6.dat"}},
-  {9, {"test_data/transform_precoder_test_input7.dat"}, {"test_data/transform_precoder_test_output7.dat"}},
-  {10, {"test_data/transform_precoder_test_input8.dat"}, {"test_data/transform_precoder_test_output8.dat"}},
-  {12, {"test_data/transform_precoder_test_input9.dat"}, {"test_data/transform_precoder_test_output9.dat"}},
-  {15, {"test_data/transform_precoder_test_input10.dat"}, {"test_data/transform_precoder_test_output10.dat"}},
-  {16, {"test_data/transform_precoder_test_input11.dat"}, {"test_data/transform_precoder_test_output11.dat"}},
-  {18, {"test_data/transform_precoder_test_input12.dat"}, {"test_data/transform_precoder_test_output12.dat"}},
-  {20, {"test_data/transform_precoder_test_input13.dat"}, {"test_data/transform_precoder_test_output13.dat"}},
-  {24, {"test_data/transform_precoder_test_input14.dat"}, {"test_data/transform_precoder_test_output14.dat"}},
-  {25, {"test_data/transform_precoder_test_input15.dat"}, {"test_data/transform_precoder_test_output15.dat"}},
-  {27, {"test_data/transform_precoder_test_input16.dat"}, {"test_data/transform_precoder_test_output16.dat"}},
-  {30, {"test_data/transform_precoder_test_input17.dat"}, {"test_data/transform_precoder_test_output17.dat"}},
-  {32, {"test_data/transform_precoder_test_input18.dat"}, {"test_data/transform_precoder_test_output18.dat"}},
-  {36, {"test_data/transform_precoder_test_input19.dat"}, {"test_data/transform_precoder_test_output19.dat"}},
-  {40, {"test_data/transform_precoder_test_input20.dat"}, {"test_data/transform_precoder_test_output20.dat"}},
-  {45, {"test_data/transform_precoder_test_input21.dat"}, {"test_data/transform_precoder_test_output21.dat"}},
-  {48, {"test_data/transform_precoder_test_input22.dat"}, {"test_data/transform_precoder_test_output22.dat"}},
-  {50, {"test_data/transform_precoder_test_input23.dat"}, {"test_data/transform_precoder_test_output23.dat"}},
-  {54, {"test_data/transform_precoder_test_input24.dat"}, {"test_data/transform_precoder_test_output24.dat"}},
-  {60, {"test_data/transform_precoder_test_input25.dat"}, {"test_data/transform_precoder_test_output25.dat"}},
-  {64, {"test_data/transform_precoder_test_input26.dat"}, {"test_data/transform_precoder_test_output26.dat"}},
-  {72, {"test_data/transform_precoder_test_input27.dat"}, {"test_data/transform_precoder_test_output27.dat"}},
-  {75, {"test_data/transform_precoder_test_input28.dat"}, {"test_data/transform_precoder_test_output28.dat"}},
-  {80, {"test_data/transform_precoder_test_input29.dat"}, {"test_data/transform_precoder_test_output29.dat"}},
-  {81, {"test_data/transform_precoder_test_input30.dat"}, {"test_data/transform_precoder_test_output30.dat"}},
-  {90, {"test_data/transform_precoder_test_input31.dat"}, {"test_data/transform_precoder_test_output31.dat"}},
-  {96, {"test_data/transform_precoder_test_input32.dat"}, {"test_data/transform_precoder_test_output32.dat"}},
-  {100, {"test_data/transform_precoder_test_input33.dat"}, {"test_data/transform_precoder_test_output33.dat"}},
-  {108, {"test_data/transform_precoder_test_input34.dat"}, {"test_data/transform_precoder_test_output34.dat"}},
-  {120, {"test_data/transform_precoder_test_input35.dat"}, {"test_data/transform_precoder_test_output35.dat"}},
-  {125, {"test_data/transform_precoder_test_input36.dat"}, {"test_data/transform_precoder_test_output36.dat"}},
-  {128, {"test_data/transform_precoder_test_input37.dat"}, {"test_data/transform_precoder_test_output37.dat"}},
-  {135, {"test_data/transform_precoder_test_input38.dat"}, {"test_data/transform_precoder_test_output38.dat"}},
-  {144, {"test_data/transform_precoder_test_input39.dat"}, {"test_data/transform_precoder_test_output39.dat"}},
-  {150, {"test_data/transform_precoder_test_input40.dat"}, {"test_data/transform_precoder_test_output40.dat"}},
-  {160, {"test_data/transform_precoder_test_input41.dat"}, {"test_data/transform_precoder_test_output41.dat"}},
-  {162, {"test_data/transform_precoder_test_input42.dat"}, {"test_data/transform_precoder_test_output42.dat"}},
-  {180, {"test_data/transform_precoder_test_input43.dat"}, {"test_data/transform_precoder_test_output43.dat"}},
-  {192, {"test_data/transform_precoder_test_input44.dat"}, {"test_data/transform_precoder_test_output44.dat"}},
-  {200, {"test_data/transform_precoder_test_input45.dat"}, {"test_data/transform_precoder_test_output45.dat"}},
-  {216, {"test_data/transform_precoder_test_input46.dat"}, {"test_data/transform_precoder_test_output46.dat"}},
-  {225, {"test_data/transform_precoder_test_input47.dat"}, {"test_data/transform_precoder_test_output47.dat"}},
-  {240, {"test_data/transform_precoder_test_input48.dat"}, {"test_data/transform_precoder_test_output48.dat"}},
-  {243, {"test_data/transform_precoder_test_input49.dat"}, {"test_data/transform_precoder_test_output49.dat"}},
-  {250, {"test_data/transform_precoder_test_input50.dat"}, {"test_data/transform_precoder_test_output50.dat"}},
-  {256, {"test_data/transform_precoder_test_input51.dat"}, {"test_data/transform_precoder_test_output51.dat"}},
-  {270, {"test_data/transform_precoder_test_input52.dat"}, {"test_data/transform_precoder_test_output52.dat"}},
+  {1, {"test_data/transform_precoder_test_input_data0.dat"}, {"test_data/transform_precoder_test_input_noise0.dat"}, {"test_data/transform_precoder_test_output_data0.dat"}, {"test_data/transform_precoder_test_output_noise0.dat"}},
+  {2, {"test_data/transform_precoder_test_input_data2.dat"}, {"test_data/transform_precoder_test_input_noise2.dat"}, {"test_data/transform_precoder_test_output_data2.dat"}, {"test_data/transform_precoder_test_output_noise2.dat"}},
+  {3, {"test_data/transform_precoder_test_input_data4.dat"}, {"test_data/transform_precoder_test_input_noise4.dat"}, {"test_data/transform_precoder_test_output_data4.dat"}, {"test_data/transform_precoder_test_output_noise4.dat"}},
+  {4, {"test_data/transform_precoder_test_input_data6.dat"}, {"test_data/transform_precoder_test_input_noise6.dat"}, {"test_data/transform_precoder_test_output_data6.dat"}, {"test_data/transform_precoder_test_output_noise6.dat"}},
+  {5, {"test_data/transform_precoder_test_input_data8.dat"}, {"test_data/transform_precoder_test_input_noise8.dat"}, {"test_data/transform_precoder_test_output_data8.dat"}, {"test_data/transform_precoder_test_output_noise8.dat"}},
+  {6, {"test_data/transform_precoder_test_input_data10.dat"}, {"test_data/transform_precoder_test_input_noise10.dat"}, {"test_data/transform_precoder_test_output_data10.dat"}, {"test_data/transform_precoder_test_output_noise10.dat"}},
+  {8, {"test_data/transform_precoder_test_input_data12.dat"}, {"test_data/transform_precoder_test_input_noise12.dat"}, {"test_data/transform_precoder_test_output_data12.dat"}, {"test_data/transform_precoder_test_output_noise12.dat"}},
+  {9, {"test_data/transform_precoder_test_input_data14.dat"}, {"test_data/transform_precoder_test_input_noise14.dat"}, {"test_data/transform_precoder_test_output_data14.dat"}, {"test_data/transform_precoder_test_output_noise14.dat"}},
+  {10, {"test_data/transform_precoder_test_input_data16.dat"}, {"test_data/transform_precoder_test_input_noise16.dat"}, {"test_data/transform_precoder_test_output_data16.dat"}, {"test_data/transform_precoder_test_output_noise16.dat"}},
+  {12, {"test_data/transform_precoder_test_input_data18.dat"}, {"test_data/transform_precoder_test_input_noise18.dat"}, {"test_data/transform_precoder_test_output_data18.dat"}, {"test_data/transform_precoder_test_output_noise18.dat"}},
+  {15, {"test_data/transform_precoder_test_input_data20.dat"}, {"test_data/transform_precoder_test_input_noise20.dat"}, {"test_data/transform_precoder_test_output_data20.dat"}, {"test_data/transform_precoder_test_output_noise20.dat"}},
+  {16, {"test_data/transform_precoder_test_input_data22.dat"}, {"test_data/transform_precoder_test_input_noise22.dat"}, {"test_data/transform_precoder_test_output_data22.dat"}, {"test_data/transform_precoder_test_output_noise22.dat"}},
+  {18, {"test_data/transform_precoder_test_input_data24.dat"}, {"test_data/transform_precoder_test_input_noise24.dat"}, {"test_data/transform_precoder_test_output_data24.dat"}, {"test_data/transform_precoder_test_output_noise24.dat"}},
+  {20, {"test_data/transform_precoder_test_input_data26.dat"}, {"test_data/transform_precoder_test_input_noise26.dat"}, {"test_data/transform_precoder_test_output_data26.dat"}, {"test_data/transform_precoder_test_output_noise26.dat"}},
+  {24, {"test_data/transform_precoder_test_input_data28.dat"}, {"test_data/transform_precoder_test_input_noise28.dat"}, {"test_data/transform_precoder_test_output_data28.dat"}, {"test_data/transform_precoder_test_output_noise28.dat"}},
+  {25, {"test_data/transform_precoder_test_input_data30.dat"}, {"test_data/transform_precoder_test_input_noise30.dat"}, {"test_data/transform_precoder_test_output_data30.dat"}, {"test_data/transform_precoder_test_output_noise30.dat"}},
+  {27, {"test_data/transform_precoder_test_input_data32.dat"}, {"test_data/transform_precoder_test_input_noise32.dat"}, {"test_data/transform_precoder_test_output_data32.dat"}, {"test_data/transform_precoder_test_output_noise32.dat"}},
+  {30, {"test_data/transform_precoder_test_input_data34.dat"}, {"test_data/transform_precoder_test_input_noise34.dat"}, {"test_data/transform_precoder_test_output_data34.dat"}, {"test_data/transform_precoder_test_output_noise34.dat"}},
+  {32, {"test_data/transform_precoder_test_input_data36.dat"}, {"test_data/transform_precoder_test_input_noise36.dat"}, {"test_data/transform_precoder_test_output_data36.dat"}, {"test_data/transform_precoder_test_output_noise36.dat"}},
+  {36, {"test_data/transform_precoder_test_input_data38.dat"}, {"test_data/transform_precoder_test_input_noise38.dat"}, {"test_data/transform_precoder_test_output_data38.dat"}, {"test_data/transform_precoder_test_output_noise38.dat"}},
+  {40, {"test_data/transform_precoder_test_input_data40.dat"}, {"test_data/transform_precoder_test_input_noise40.dat"}, {"test_data/transform_precoder_test_output_data40.dat"}, {"test_data/transform_precoder_test_output_noise40.dat"}},
+  {45, {"test_data/transform_precoder_test_input_data42.dat"}, {"test_data/transform_precoder_test_input_noise42.dat"}, {"test_data/transform_precoder_test_output_data42.dat"}, {"test_data/transform_precoder_test_output_noise42.dat"}},
+  {48, {"test_data/transform_precoder_test_input_data44.dat"}, {"test_data/transform_precoder_test_input_noise44.dat"}, {"test_data/transform_precoder_test_output_data44.dat"}, {"test_data/transform_precoder_test_output_noise44.dat"}},
+  {50, {"test_data/transform_precoder_test_input_data46.dat"}, {"test_data/transform_precoder_test_input_noise46.dat"}, {"test_data/transform_precoder_test_output_data46.dat"}, {"test_data/transform_precoder_test_output_noise46.dat"}},
+  {54, {"test_data/transform_precoder_test_input_data48.dat"}, {"test_data/transform_precoder_test_input_noise48.dat"}, {"test_data/transform_precoder_test_output_data48.dat"}, {"test_data/transform_precoder_test_output_noise48.dat"}},
+  {60, {"test_data/transform_precoder_test_input_data50.dat"}, {"test_data/transform_precoder_test_input_noise50.dat"}, {"test_data/transform_precoder_test_output_data50.dat"}, {"test_data/transform_precoder_test_output_noise50.dat"}},
+  {64, {"test_data/transform_precoder_test_input_data52.dat"}, {"test_data/transform_precoder_test_input_noise52.dat"}, {"test_data/transform_precoder_test_output_data52.dat"}, {"test_data/transform_precoder_test_output_noise52.dat"}},
+  {72, {"test_data/transform_precoder_test_input_data54.dat"}, {"test_data/transform_precoder_test_input_noise54.dat"}, {"test_data/transform_precoder_test_output_data54.dat"}, {"test_data/transform_precoder_test_output_noise54.dat"}},
+  {75, {"test_data/transform_precoder_test_input_data56.dat"}, {"test_data/transform_precoder_test_input_noise56.dat"}, {"test_data/transform_precoder_test_output_data56.dat"}, {"test_data/transform_precoder_test_output_noise56.dat"}},
+  {80, {"test_data/transform_precoder_test_input_data58.dat"}, {"test_data/transform_precoder_test_input_noise58.dat"}, {"test_data/transform_precoder_test_output_data58.dat"}, {"test_data/transform_precoder_test_output_noise58.dat"}},
+  {81, {"test_data/transform_precoder_test_input_data60.dat"}, {"test_data/transform_precoder_test_input_noise60.dat"}, {"test_data/transform_precoder_test_output_data60.dat"}, {"test_data/transform_precoder_test_output_noise60.dat"}},
+  {90, {"test_data/transform_precoder_test_input_data62.dat"}, {"test_data/transform_precoder_test_input_noise62.dat"}, {"test_data/transform_precoder_test_output_data62.dat"}, {"test_data/transform_precoder_test_output_noise62.dat"}},
+  {96, {"test_data/transform_precoder_test_input_data64.dat"}, {"test_data/transform_precoder_test_input_noise64.dat"}, {"test_data/transform_precoder_test_output_data64.dat"}, {"test_data/transform_precoder_test_output_noise64.dat"}},
+  {100, {"test_data/transform_precoder_test_input_data66.dat"}, {"test_data/transform_precoder_test_input_noise66.dat"}, {"test_data/transform_precoder_test_output_data66.dat"}, {"test_data/transform_precoder_test_output_noise66.dat"}},
+  {108, {"test_data/transform_precoder_test_input_data68.dat"}, {"test_data/transform_precoder_test_input_noise68.dat"}, {"test_data/transform_precoder_test_output_data68.dat"}, {"test_data/transform_precoder_test_output_noise68.dat"}},
+  {120, {"test_data/transform_precoder_test_input_data70.dat"}, {"test_data/transform_precoder_test_input_noise70.dat"}, {"test_data/transform_precoder_test_output_data70.dat"}, {"test_data/transform_precoder_test_output_noise70.dat"}},
+  {125, {"test_data/transform_precoder_test_input_data72.dat"}, {"test_data/transform_precoder_test_input_noise72.dat"}, {"test_data/transform_precoder_test_output_data72.dat"}, {"test_data/transform_precoder_test_output_noise72.dat"}},
+  {128, {"test_data/transform_precoder_test_input_data74.dat"}, {"test_data/transform_precoder_test_input_noise74.dat"}, {"test_data/transform_precoder_test_output_data74.dat"}, {"test_data/transform_precoder_test_output_noise74.dat"}},
+  {135, {"test_data/transform_precoder_test_input_data76.dat"}, {"test_data/transform_precoder_test_input_noise76.dat"}, {"test_data/transform_precoder_test_output_data76.dat"}, {"test_data/transform_precoder_test_output_noise76.dat"}},
+  {144, {"test_data/transform_precoder_test_input_data78.dat"}, {"test_data/transform_precoder_test_input_noise78.dat"}, {"test_data/transform_precoder_test_output_data78.dat"}, {"test_data/transform_precoder_test_output_noise78.dat"}},
+  {150, {"test_data/transform_precoder_test_input_data80.dat"}, {"test_data/transform_precoder_test_input_noise80.dat"}, {"test_data/transform_precoder_test_output_data80.dat"}, {"test_data/transform_precoder_test_output_noise80.dat"}},
+  {160, {"test_data/transform_precoder_test_input_data82.dat"}, {"test_data/transform_precoder_test_input_noise82.dat"}, {"test_data/transform_precoder_test_output_data82.dat"}, {"test_data/transform_precoder_test_output_noise82.dat"}},
+  {162, {"test_data/transform_precoder_test_input_data84.dat"}, {"test_data/transform_precoder_test_input_noise84.dat"}, {"test_data/transform_precoder_test_output_data84.dat"}, {"test_data/transform_precoder_test_output_noise84.dat"}},
+  {180, {"test_data/transform_precoder_test_input_data86.dat"}, {"test_data/transform_precoder_test_input_noise86.dat"}, {"test_data/transform_precoder_test_output_data86.dat"}, {"test_data/transform_precoder_test_output_noise86.dat"}},
+  {192, {"test_data/transform_precoder_test_input_data88.dat"}, {"test_data/transform_precoder_test_input_noise88.dat"}, {"test_data/transform_precoder_test_output_data88.dat"}, {"test_data/transform_precoder_test_output_noise88.dat"}},
+  {200, {"test_data/transform_precoder_test_input_data90.dat"}, {"test_data/transform_precoder_test_input_noise90.dat"}, {"test_data/transform_precoder_test_output_data90.dat"}, {"test_data/transform_precoder_test_output_noise90.dat"}},
+  {216, {"test_data/transform_precoder_test_input_data92.dat"}, {"test_data/transform_precoder_test_input_noise92.dat"}, {"test_data/transform_precoder_test_output_data92.dat"}, {"test_data/transform_precoder_test_output_noise92.dat"}},
+  {225, {"test_data/transform_precoder_test_input_data94.dat"}, {"test_data/transform_precoder_test_input_noise94.dat"}, {"test_data/transform_precoder_test_output_data94.dat"}, {"test_data/transform_precoder_test_output_noise94.dat"}},
+  {240, {"test_data/transform_precoder_test_input_data96.dat"}, {"test_data/transform_precoder_test_input_noise96.dat"}, {"test_data/transform_precoder_test_output_data96.dat"}, {"test_data/transform_precoder_test_output_noise96.dat"}},
+  {243, {"test_data/transform_precoder_test_input_data98.dat"}, {"test_data/transform_precoder_test_input_noise98.dat"}, {"test_data/transform_precoder_test_output_data98.dat"}, {"test_data/transform_precoder_test_output_noise98.dat"}},
+  {250, {"test_data/transform_precoder_test_input_data100.dat"}, {"test_data/transform_precoder_test_input_noise100.dat"}, {"test_data/transform_precoder_test_output_data100.dat"}, {"test_data/transform_precoder_test_output_noise100.dat"}},
+  {256, {"test_data/transform_precoder_test_input_data102.dat"}, {"test_data/transform_precoder_test_input_noise102.dat"}, {"test_data/transform_precoder_test_output_data102.dat"}, {"test_data/transform_precoder_test_output_noise102.dat"}},
+  {270, {"test_data/transform_precoder_test_input_data104.dat"}, {"test_data/transform_precoder_test_input_noise104.dat"}, {"test_data/transform_precoder_test_output_data104.dat"}, {"test_data/transform_precoder_test_output_noise104.dat"}},
     // clang-format on
 };
 
