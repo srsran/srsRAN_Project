@@ -400,6 +400,14 @@ protected:
     tester->sdu_queue.pop();
   }
 
+  void tick_all(uint32_t ticks)
+  {
+    for (uint i = 0; i < ticks; ++i) {
+      timers.tick();
+      ue_worker.run_pending_tasks();
+    }
+  }
+
   void tick()
   {
     timers.tick();
@@ -644,7 +652,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
 
 /// Verify proper handling of polling bit for PDU duplicates inside the Rx window: The status-required state shall still
 /// change but the duplicated SDU shall be discarded
-TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
+TEST_P(rlc_rx_am_test, rx_sdu_duplicate_with_one_polling_bit)
 {
   EXPECT_FALSE(rlc->status_report_required());
 
@@ -680,7 +688,60 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 
   // Check if polling bit was considered, despite duplicate SN
   EXPECT_TRUE(rlc->status_report_required());
+  auto& status = rlc->get_status_pdu();
+  EXPECT_EQ(status.ack_sn, 0);
   EXPECT_EQ(tester->status_trigger_counter, 1);
+
+  // Check if duplicate SDU was properly ignored
+  ASSERT_EQ(tester->sdu_queue.size(), 0);
+}
+
+/// Verify proper handling of polling bit for PDU duplicates inside the Rx window: The status-required state shall still
+/// change but the duplicated SDU shall be discarded
+TEST_P(rlc_rx_am_test, rx_sdu_duplicate_two_polling_bits)
+{
+  EXPECT_FALSE(rlc->status_report_required());
+
+  uint32_t sn_state = 0; // one SDU inside rx window and duplicate will be outside.
+  uint32_t sdu_size = 4;
+
+  // Create SDU and PDU with full SDU
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
+  sn_state++;
+
+  // Set polling bit of PDUs
+  *(pdu_list.front().begin()) |= 0b01000000; // set P = 1;
+
+  // Push into RLC
+  byte_buffer_slice pdu = byte_buffer_slice::create(pdu_list.front()).value();
+  rlc->handle_pdu(std::move(pdu));
+
+  // Check if polling bit has not changed
+  EXPECT_TRUE(rlc->status_report_required());
+  auto& status1 = rlc->get_status_pdu();
+  EXPECT_EQ(status1.ack_sn, 1);
+  EXPECT_EQ(tester->status_trigger_counter, 1);
+
+  // Check if SDU was properly unpacked and forwarded
+  ASSERT_EQ(tester->sdu_queue.size(), 1);
+  EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
+  EXPECT_EQ(tester->sdu_queue.front(), sdu);
+  tester->sdu_queue.pop();
+
+  // Let t-StatusProhibit expire
+  tick_all(config.t_status_prohibit + 1);
+
+  // Push into RLC
+  pdu = byte_buffer_slice::create(pdu_list.front()).value();
+  rlc->handle_pdu(std::move(pdu));
+
+  // Check if polling bit was considered, despite duplicate SN
+  EXPECT_TRUE(rlc->status_report_required());
+  auto& status2 = rlc->get_status_pdu();
+  EXPECT_EQ(status2.ack_sn, 1); // Check the status report is not stale.
+  EXPECT_EQ(tester->status_trigger_counter, 2);
 
   // Check if duplicate SDU was properly ignored
   ASSERT_EQ(tester->sdu_queue.size(), 0);
