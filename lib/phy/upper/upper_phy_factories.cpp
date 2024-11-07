@@ -791,7 +791,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
     // Create concurrent PDSCH processor factory base.
     pdsch_proc_factory =
-        create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
+        create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
                                                      ldpc_enc_factory,
                                                      ldpc_rm_factory,
                                                      prg_factory,

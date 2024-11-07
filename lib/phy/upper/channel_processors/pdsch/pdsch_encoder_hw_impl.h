@@ -16,6 +16,7 @@
 #include "srsran/hal/hw_accelerator.h"
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc.h"
 #include "srsran/phy/upper/channel_coding/crc_calculator.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_buffer.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
@@ -86,8 +87,13 @@ private:
   /// Pointer to a Hardware-accelerated PDSCH encoder.
   std::unique_ptr<hal::hw_accelerator_pdsch_enc> encoder;
 
-  /// Buffer for storing data segments obtained after transport block segmentation.
-  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
+  /// Pointer to an LDPC segmenter output buffer interface.
+  const ldpc_segmenter_buffer* segment_buffer;
+
+  /// \brief Temporary codeblock message.
+  ///
+  /// It contains codeblock information bits, codeblock CRC (if applicable) and filler bits.
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data;
 
   /// Buffer for storing temporary encoded and packed codeblock.
   static_vector<uint8_t, CODEWORD_MAX_SIZE.value()> codeblock_packed;
@@ -97,10 +103,9 @@ private:
   /// \param[in]  transport_block The transport block to encode (packed, one byte per entry).
   /// \param[in]  d_segs          Buffer storing the data segments comprising the transport block.
   /// \param[in]  cfg             PDSCH configuration parameters.
-  void set_hw_enc_tb_configuration(hal::hw_pdsch_encoder_configuration&                      hw_cfg,
-                                   span<const uint8_t>                                       transport_block,
-                                   const static_vector<described_segment, MAX_NOF_SEGMENTS>& d_segs,
-                                   const segmenter_config&                                   cfg);
+  void set_hw_enc_tb_configuration(hal::hw_pdsch_encoder_configuration& hw_cfg,
+                                   span<const uint8_t>                  transport_block,
+                                   const segmenter_config&              cfg);
 
   /// \brief Computes the segmentation parameters required by the hardware-accelerated PDSCH encoder function.
   /// \param[out] hw_cfg   Hardware-accelerated PDSCH encoder configuration parameters.

@@ -16,6 +16,7 @@
 
 #include "ldpc_segmenter_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_buffer.h"
 #include "srsran/srsvec/bit.h"
 
 #include <gtest/gtest.h>
@@ -108,17 +109,23 @@ TEST_P(LDPCSegmenterFixture, LDPCSegmenterTest)
   const std::vector<uint8_t> trans_block    = test_data.trans_block.read();
   const std::vector<uint8_t> segments_check = test_data.segments.read();
 
-  static_vector<described_segment, MAX_NOF_SEGMENTS> segments;
-  segmenter_tx->segment(segments, trans_block, seg_cfg);
+  // Initialize the segmenter.
+  const ldpc_segmenter_buffer&                segment_buffer = segmenter_tx->new_transmission(trans_block, seg_cfg);
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data;
+  cb_data.resize(segment_buffer.get_segment_length().value());
 
-  EXPECT_EQ(segments.size(), test_data.nof_segments) << "Wrong number of segments.";
+  EXPECT_EQ(segment_buffer.get_nof_codeblocks(), test_data.nof_segments) << "Wrong number of segments.";
 
   std::vector<uint8_t> segment_data(test_data.segment_length);
 
   unsigned seg_offset = 0;
-  for (const auto& seg : segments) {
-    srsvec::bit_unpack(segment_data, seg.get_data());
-    span<uint8_t> filler_bits = span<uint8_t>(segment_data).last(seg.get_metadata().cb_specific.nof_filler_bits);
+  for (unsigned i_cb = 0, i_cb_end = segment_buffer.get_nof_codeblocks(); i_cb != i_cb_end; ++i_cb) {
+    // Copy codeblock data, including TB and/or CB CRC if applicable, as well as filler and zero padding bits.
+    segment_buffer.read_codeblock(cb_data, trans_block, i_cb);
+
+    srsvec::bit_unpack(segment_data, cb_data);
+    span<uint8_t> filler_bits =
+        span<uint8_t>(segment_data).last(segment_buffer.get_cb_metadata(i_cb).cb_specific.nof_filler_bits);
     std::fill(filler_bits.begin(), filler_bits.end(), FILLER_BIT);
 
     EXPECT_EQ(span<const uint8_t>(segment_data),
@@ -127,7 +134,7 @@ TEST_P(LDPCSegmenterFixture, LDPCSegmenterTest)
     seg_offset += test_data.segment_length;
   }
 
-  std::vector<log_likelihood_ratio> cw_llrs(segments[0].get_metadata().tb_common.cw_length);
+  std::vector<log_likelihood_ratio> cw_llrs(segment_buffer.get_cb_metadata(0).tb_common.cw_length);
   std::generate(cw_llrs.begin(), cw_llrs.end(), [n = static_cast<int8_t>(-127)]() mutable {
     int8_t r = std::clamp(n, LLR_MIN.to_value_type(), LLR_MAX.to_value_type());
     ++n;

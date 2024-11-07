@@ -576,7 +576,7 @@ static pdsch_processor_factory& get_processor_factory()
   std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rm_factory = create_ldpc_rate_matcher_factory_sw();
   TESTASSERT(ldpc_rm_factory);
 
-  // Create LDPC desegmenter factory.
+  // Create LDPC segmenter factory.
   std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_segm_tx_factory =
       create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
   TESTASSERT(ldpc_segm_tx_factory);
@@ -646,7 +646,7 @@ static pdsch_processor_factory& get_processor_factory()
         "pdsch_proc", nof_pdsch_processor_concurrent_threads, 1024);
     executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
 
-    pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
+    pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_segm_tx_factory,
                                                                       ldpc_enc_factory,
                                                                       ldpc_rm_factory,
                                                                       prg_factory,

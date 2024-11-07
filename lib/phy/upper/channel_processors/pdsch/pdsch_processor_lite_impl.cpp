@@ -57,38 +57,46 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
   encoder_config.nof_layers     = nof_layers;
   encoder_config.nof_ch_symbols = nof_re_pdsch * nof_layers;
 
-  // Clear the buffer.
-  d_segments.clear();
+  // Initialize the segmenter.
+  segment_buffer = &segmenter.new_transmission(data, encoder_config);
 
-  // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
-  segmenter.segment(d_segments, data, encoder_config);
+  cb_size = segment_buffer->get_segment_length();
 
   // Initialize the codeblock counter.
   next_i_cb = 0;
+
+  // Save the pointer to the input data.
+  transport_block = data;
 }
 
 void pdsch_block_processor::new_codeblock()
 {
-  srsran_assert(next_i_cb < d_segments.size(),
+  srsran_assert(next_i_cb < segment_buffer->get_nof_codeblocks(),
                 "The codeblock index (i.e., {}) exceeds the number of codeblocks (i.e., {})",
                 next_i_cb,
-                d_segments.size());
+                segment_buffer->get_nof_codeblocks());
 
-  // Select segment description.
-  const described_segment& descr_seg = d_segments[next_i_cb];
+  // Prepare codeblock data.
+  cb_data.resize(cb_size.value());
+
+  // Retrieve segment description.
+  const codeblock_metadata cb_metadata = segment_buffer->get_cb_metadata(next_i_cb);
 
   // Rate Matching output length.
-  unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;
+  unsigned rm_length = segment_buffer->get_rm_length(next_i_cb);
 
   // Number of symbols.
   unsigned nof_symbols = rm_length / get_bits_per_symbol(modulation);
 
+  // Copy codeblock data, including TB and/or CB CRC if applicable, as well as filler and zero padding bits.
+  segment_buffer->read_codeblock(cb_data, transport_block, next_i_cb);
+
   // Encode the segment into a codeblock.
-  const ldpc_encoder_buffer& rm_buffer = encoder.encode(descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+  const ldpc_encoder_buffer& rm_buffer = encoder.encode(cb_data, cb_metadata.tb_common);
 
   // Rate match the codeblock.
   temp_codeblock.resize(rm_length);
-  rate_matcher.rate_match(temp_codeblock, rm_buffer, descr_seg.get_metadata());
+  rate_matcher.rate_match(temp_codeblock, rm_buffer, cb_metadata);
 
   // Apply scrambling sequence in-place.
   scrambler.apply_xor(temp_codeblock, temp_codeblock);
@@ -128,8 +136,8 @@ unsigned pdsch_block_processor::get_max_block_size() const
     return codeblock_symbols.size();
   }
 
-  if (next_i_cb != d_segments.size()) {
-    unsigned rm_length       = d_segments[next_i_cb].get_metadata().cb_specific.rm_length;
+  if (next_i_cb != segment_buffer->get_nof_codeblocks()) {
+    unsigned rm_length       = segment_buffer->get_rm_length(next_i_cb);
     unsigned bits_per_symbol = get_bits_per_symbol(modulation);
     return rm_length / bits_per_symbol;
   }
@@ -139,7 +147,7 @@ unsigned pdsch_block_processor::get_max_block_size() const
 
 bool pdsch_block_processor::empty() const
 {
-  return codeblock_symbols.empty() && (next_i_cb == d_segments.size());
+  return codeblock_symbols.empty() && (next_i_cb == segment_buffer->get_nof_codeblocks());
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_writer&                                           grid,

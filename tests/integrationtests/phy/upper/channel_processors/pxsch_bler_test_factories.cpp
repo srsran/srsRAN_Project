@@ -164,7 +164,7 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
   }
 #endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
 
-  return create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
+  return create_pdsch_concurrent_processor_factory_sw(segmenter_factory,
                                                       ldpc_encoder_factory,
                                                       ldpc_rate_matcher_factory,
                                                       pseudo_random_gen_factory,

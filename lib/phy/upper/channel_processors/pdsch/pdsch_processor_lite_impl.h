@@ -13,6 +13,7 @@
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_buffer.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
@@ -67,8 +68,12 @@ private:
   pseudo_random_generator& scrambler;
   /// Modulation mapper.
   modulation_mapper& modulator;
-  /// Buffer for storing data segments obtained after transport block segmentation.
-  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments;
+  /// Pointer to an LDPC segmenter output buffer interface.
+  const ldpc_segmenter_buffer* segment_buffer;
+  /// \brief Temporary codeblock message.
+  ///
+  /// It contains codeblock information bits, codeblock CRC (if applicable) and filler bits.
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data;
   /// Temporary packed bits.
   static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock;
   /// Current transmission modulation.
@@ -79,6 +84,10 @@ private:
   std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
   /// Current view of the codeblock modulated symbols.
   span<ci8_t> codeblock_symbols;
+  /// Codeblock size. It includes information, CRC, and filler bits.
+  units::bits cb_size;
+  /// Local pointer to the input data.
+  span<const uint8_t> transport_block;
 
   /// Processes a new codeblock and writes the new data in \ref temp_codeblock_symbols.
   void new_codeblock();
