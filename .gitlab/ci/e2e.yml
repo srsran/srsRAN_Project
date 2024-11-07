@@ -93,11 +93,17 @@ smoke zmq:
       allow_failure: false
   interruptible: true
   variables:
-    TESTBED: zmq
-    MARKERS: "smoke"
-    PYTEST_ARGS: "-x"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
-    E2E_LOG_LEVEL: "info"
+    TESTBED: "" # Check before_script
+    MARKERS: smoke
+    PYTEST_ARGS: -x ${EXTRA_SMOKE_ZMQ}
+    RETINA_PARAM_ARGS: gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True
+    E2E_LOG_LEVEL: info
+  before_script:
+    - |
+      export TESTBED=zmq
+      if [ -n "${EXTRA_SMOKE_ZMQ}" ]; then
+        echo export TESTBED=zmq_smoke
+      fi
   timeout: 1 hour
   needs:
     - job: "smoke relwithdeb cached"
@@ -210,7 +216,11 @@ amari 8UE:
   parallel:
     matrix:
       - KEYWORDS:
-          ["reestablishment and sequentially", "handover and sequentially", "attach_detach"]
+          [
+            "reestablishment and sequentially",
+            "handover and sequentially",
+            "attach_detach",
+          ]
 
 amari 8UE beta:
   extends: amari 8UE

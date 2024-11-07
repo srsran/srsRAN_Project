@@ -47,7 +47,7 @@ variables:
       dotenv: ${SRSRANDIR}/.gitlab/ci/e2e/.env
 
 .prepare_test:
-  variables:
+  variables: &setup_kube_variables
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
   before_script: &setup_kube_config
@@ -75,13 +75,10 @@ variables:
     KUBERNETES_MEMORY_LIMIT: 2Gi
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "20G"
     KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "20G"
-    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
-    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+    <<: *setup_kube_variables
     GROUP: zmq
   tags:
     - "${RETINA_TAG}"
-  extends:
-    - .prepare_test
   artifacts:
     paths:
       - ${SRSRANDIR}/tests/e2e/log
@@ -90,6 +87,7 @@ variables:
     reports:
       junit: ${SRSRANDIR}/tests/e2e/out.xml
   script:
+    - *setup_kube_config
     - |
       # Print E2E parameters
       echo "GROUP=${GROUP}"
