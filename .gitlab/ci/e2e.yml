@@ -210,22 +210,7 @@ amari 8UE:
   parallel:
     matrix:
       - KEYWORDS:
-          ["reestablishment and sequentially", "handover and sequentially"]
-
-amari 8UE [attach_detach 2024-03-15]:
-  extends: .zmq-uesim
-  variables:
-    MARKERS: "zmq and not smoke"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-    KEYWORDS: "attach_detach"
-  allow_failure: true
-
-amari 8UE [attach_detach 2023-09-08]:
-  extends: .zmq
-  variables:
-    MARKERS: "zmq and not smoke"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-    KEYWORDS: "attach_detach"
+          ["reestablishment and sequentially", "handover and sequentially", "attach_detach"]
 
 amari 8UE beta:
   extends: amari 8UE
