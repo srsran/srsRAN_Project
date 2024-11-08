@@ -471,7 +471,8 @@ viavi:
       - KEYWORDS:
           [
             "ideal and 1UE",
-            "ideal and 32UE and not experimental",
+            "ideal and 32UE and not experimental and not tdd",
+            "tdd",
             "fading and 1UE",
             "fading and 32UE",
             "birth-death and 1UE",
