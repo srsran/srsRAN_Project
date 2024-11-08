@@ -24,8 +24,9 @@ class ul_logical_channel_manager;
 class ue_drx_controller
 {
 public:
-  ue_drx_controller(const cell_configuration&         cell_cfg_common_,
-                    const std::optional<drx_config>&  drx_cfg_,
+  ue_drx_controller(const subcarrier_spacing          scs_common,
+                    std::chrono::milliseconds         conres_timer,
+                    const std::optional<drx_config>&  drx_cfg,
                     const ul_logical_channel_manager& ul_lc_mng,
                     slot_point                        ul_ccch_slot_rx);
 
@@ -45,7 +46,8 @@ private:
   /// Whether the UE is within DRX active time.
   bool is_active_time(slot_point dl_slot) const;
 
-  const cell_configuration&         cell_cfg_common;
+  const subcarrier_spacing          scs_common;
+  std::chrono::milliseconds         conres_timer;
   const std::optional<drx_config>&  drx_cfg;
   const ul_logical_channel_manager& ul_lc_mng;
   slot_point                        ul_ccch_slot_rx;

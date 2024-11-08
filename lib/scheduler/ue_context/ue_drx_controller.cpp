@@ -9,20 +9,23 @@
  */
 
 #include "ue_drx_controller.h"
-#include "../config/ue_configuration.h"
 #include "ul_logical_channel_manager.h"
 
 using namespace srsran;
 
-ue_drx_controller::ue_drx_controller(const cell_configuration&         cell_cfg_common_,
+ue_drx_controller::ue_drx_controller(subcarrier_spacing                scs_common_,
+                                     std::chrono::milliseconds         conres_timer_,
                                      const std::optional<drx_config>&  drx_cfg_,
                                      const ul_logical_channel_manager& ul_lc_mng_,
                                      slot_point                        ul_ccch_slot_rx_) :
-  cell_cfg_common(cell_cfg_common_), drx_cfg(drx_cfg_), ul_lc_mng(ul_lc_mng_), ul_ccch_slot_rx(ul_ccch_slot_rx_)
+  scs_common(scs_common_),
+  conres_timer(conres_timer_),
+  drx_cfg(drx_cfg_),
+  ul_lc_mng(ul_lc_mng_),
+  ul_ccch_slot_rx(ul_ccch_slot_rx_)
 {
   if (drx_cfg.has_value()) {
-    const subcarrier_spacing scs              = cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs;
-    const unsigned           nof_slots_per_sf = get_nof_slots_per_subframe(scs);
+    const unsigned nof_slots_per_sf = get_nof_slots_per_subframe(scs_common);
 
     active_window_period = drx_cfg.value().long_cycle.count() * nof_slots_per_sf;
     unsigned win_start   = drx_cfg.value().long_start_offset.count() * nof_slots_per_sf;
@@ -94,9 +97,7 @@ void ue_drx_controller::on_con_res_start()
     return;
   }
 
-  const subcarrier_spacing scs = cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs;
-  const unsigned conres_slots  = cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer.count() *
-                                get_nof_slots_per_subframe(scs);
+  const unsigned conres_slots = conres_timer.count() * get_nof_slots_per_subframe(scs_common);
 
   slot_point new_time_end = ul_ccch_slot_rx + conres_slots;
 

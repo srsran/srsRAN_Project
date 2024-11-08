@@ -82,7 +82,11 @@ protected:
   ue_cell_configuration                    ue_cc_cfg;
   cell_harq_manager                        cell_harqs{1, MAX_NOF_HARQS};
   ul_logical_channel_manager               ul_lc_ch_mng;
-  ue_drx_controller                        drx_controller{cell_cfg, std::nullopt, ul_lc_ch_mng, {}};
+  ue_drx_controller                        drx_controller{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                                   cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
+                                   std::nullopt,
+                                   ul_lc_ch_mng,
+                                   {}};
 };
 
 TEST_F(ue_cell_tester, when_dl_nof_prb_allocated_increases_estimated_dl_rate_increases)

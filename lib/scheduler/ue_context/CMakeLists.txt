@@ -16,4 +16,4 @@ set(SOURCES
         ue.cpp
         ue_cell.cpp)
 
-add_library(sched_ue_context OBJECT ${SOURCES})
+add_library(sched_ue_context STATIC ${SOURCES})
