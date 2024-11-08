@@ -69,8 +69,9 @@ rlc_rx_am_entity::rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
   }
 
   // initialize cached status report
-  static_assert(std::atomic<rlc_am_status_pdu*>::is_always_lock_free,
-                "RLC RX AM: atomic<rlc_am_status_pdu*> must always be lock free");
+  if (!std::atomic<rlc_am_status_pdu*>::is_always_lock_free) {
+    logger.log_error("The status PDU exchange is not lock free. TX real-time performance can be impaired.");
+  }
   rlc_am_status_pdu& init_cached_status = *status_cached.load(std::memory_order_relaxed);
   init_cached_status.ack_sn             = st.rx_next_highest;
   status_report_size.store(init_cached_status.get_packed_size(), std::memory_order_relaxed);
