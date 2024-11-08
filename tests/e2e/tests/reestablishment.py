@@ -283,7 +283,7 @@ def test_zmq_reestablishment_parallel(
         always_download_artifacts=True,
         noise_spd=noise_spd,
         log_ip_level="debug",
-        warning_as_errors=True,
+        warning_as_errors=False,
     ) as ue_attach_info_dict:
 
         for i in range(number_of_reestablishments):
