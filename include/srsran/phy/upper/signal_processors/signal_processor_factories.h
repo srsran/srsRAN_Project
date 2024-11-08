@@ -7,7 +7,7 @@
 #include "srsran/phy/upper/signal_processors/dmrs_pbch_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pucch_processor.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pucch_estimator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
@@ -54,10 +54,8 @@ create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_f
 class dmrs_pucch_estimator_factory
 {
 public:
-  virtual ~dmrs_pucch_estimator_factory()                           = default;
-  virtual std::unique_ptr<dmrs_pucch_processor> create_format1()    = 0;
-  virtual std::unique_ptr<dmrs_pucch_processor> create_format2()    = 0;
-  virtual std::unique_ptr<dmrs_pucch_processor> create_formats3_4() = 0;
+  virtual ~dmrs_pucch_estimator_factory()                = default;
+  virtual std::unique_ptr<dmrs_pucch_estimator> create() = 0;
 };
 
 std::shared_ptr<dmrs_pucch_estimator_factory>

@@ -9,7 +9,7 @@
  */
 
 #include "../../../support/resource_grid_test_doubles.h"
-#include "../../signal_processors/dmrs_pucch_processor_test_doubles.h"
+#include "../../signal_processors/dmrs_pucch_estimator_test_doubles.h"
 #include "../uci/uci_decoder_test_doubles.h"
 #include "pucch_detector_test_doubles.h"
 #include "srsran/ran/pucch/pucch_constants.h"
@@ -91,7 +91,7 @@ protected:
     ASSERT_NE(validator, nullptr) << "Cannot create PUCCH processor validator.";
 
     // Select spies.
-    dmrs_spy = dmrs_factory_spy->get_format1_entries().back();
+    dmrs_spy = dmrs_factory_spy->get_entries().back();
     ASSERT_NE(dmrs_spy, nullptr);
 
     detector_spy = detector_factory_spy->get_entries().back();
@@ -146,7 +146,7 @@ protected:
 
   std::unique_ptr<pucch_processor>     processor;
   std::unique_ptr<pucch_pdu_validator> validator;
-  dmrs_pucch_processor_spy*            dmrs_spy;
+  dmrs_pucch_estimator_spy*            dmrs_spy;
   pucch_detector_spy*                  detector_spy;
 };
 
@@ -169,25 +169,21 @@ TEST_P(PucchProcessorFormat1Fixture, UnitTest)
   const pucch_processor_result result = processor->process(grid, config);
 
   // Verify channel estimator configuration.
-  ASSERT_EQ(dmrs_spy->get_entries().size(), 1);
-  const dmrs_pucch_processor_spy::entry_t& dmrs_entry = dmrs_spy->get_entries().front();
-  ASSERT_EQ(dmrs_entry.config.format, pucch_format::FORMAT_1);
+  ASSERT_EQ(dmrs_spy->get_format1_entries().size(), 1);
+  const dmrs_pucch_estimator_spy::entry_format1_t& dmrs_entry = dmrs_spy->get_format1_entries().front();
   ASSERT_EQ(dmrs_entry.config.slot, config.slot);
   ASSERT_EQ(dmrs_entry.config.cp, config.cp);
   ASSERT_EQ(dmrs_entry.config.group_hopping, pucch_group_hopping::NEITHER);
   ASSERT_EQ(dmrs_entry.config.start_symbol_index, config.start_symbol_index);
   ASSERT_EQ(dmrs_entry.config.nof_symbols, config.nof_symbols);
   ASSERT_EQ(dmrs_entry.config.starting_prb, config.starting_prb + config.bwp_start_rb);
-  ASSERT_EQ(dmrs_entry.config.intra_slot_hopping, config.second_hop_prb.has_value());
+  ASSERT_EQ(dmrs_entry.config.second_hop_prb.has_value(), config.second_hop_prb.has_value());
   if (config.second_hop_prb.has_value()) {
     ASSERT_EQ(dmrs_entry.config.second_hop_prb, config.second_hop_prb.value() + config.bwp_start_rb);
   }
-  ASSERT_EQ(dmrs_entry.config.nof_prb, 0);
   ASSERT_EQ(dmrs_entry.config.initial_cyclic_shift, config.initial_cyclic_shift);
   ASSERT_EQ(dmrs_entry.config.time_domain_occ, config.time_domain_occ);
-  ASSERT_EQ(dmrs_entry.config.additional_dmrs, false);
   ASSERT_EQ(dmrs_entry.config.n_id, config.n_id);
-  ASSERT_EQ(dmrs_entry.config.n_id_0, 0);
   ASSERT_EQ(span<const uint8_t>(dmrs_entry.config.ports), span<const uint8_t>(config.ports));
 
   // Verify PUCCH detector.

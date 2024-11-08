@@ -8,9 +8,9 @@
  *
  */
 
-#include "dmrs_pucch_processor_format1_impl.h"
-#include "../../../../../include/srsran/phy/upper/pucch_orthogonal_sequence.h"
+#include "dmrs_pucch_estimator_format1.h"
 #include "srsran/phy/upper/pucch_helper.h"
+#include "srsran/phy/upper/pucch_orthogonal_sequence.h"
 #include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
@@ -23,9 +23,9 @@ static const bounded_bitset<MAX_NSYMB_PER_SLOT> pucch_format1_dmrs_symb_mask =
     {true, false, true, false, true, false, true, false, true, false, true, false, true, false};
 
 // Implements TS38.211 Table 6.4.1.3.1.1-1: Number of DM-RS symbols and the corresponding N_PUCCH.
-static unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config, unsigned m_prime)
+static unsigned dmrs_pucch_symbols(const dmrs_pucch_estimator::format1_configuration& config, unsigned m_prime)
 {
-  if (config.intra_slot_hopping) {
+  if (config.second_hop_prb.has_value()) {
     if (m_prime == 0) {
       switch (config.nof_symbols) {
         case 4:
@@ -91,8 +91,8 @@ static unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config,
   return 0;
 }
 
-dmrs_pucch_processor_format1_impl::layer_dmrs_pattern
-dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(const config_t& config)
+dmrs_pucch_estimator_format1::layer_dmrs_pattern
+dmrs_pucch_estimator_format1::generate_dmrs_pattern(const dmrs_pucch_estimator::format1_configuration& config)
 {
   layer_dmrs_pattern mask;
 
@@ -103,10 +103,10 @@ dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(const config_t& config)
   mask.rb_mask.resize(config.starting_prb + 1);
   mask.rb_mask.set(config.starting_prb);
 
-  if (config.intra_slot_hopping) {
+  if (config.second_hop_prb.has_value()) {
     // Set second hop PRB allocation.
-    mask.rb_mask2.resize(config.second_hop_prb + 1);
-    mask.rb_mask2.set(config.second_hop_prb);
+    mask.rb_mask2.resize(config.second_hop_prb.value() + 1);
+    mask.rb_mask2.set(config.second_hop_prb.value());
 
     // Set the hopping symbol index, indicating the start of the second hop. In case of a PUCCH allocation with an odd
     // number of symbols, the second hop is one symbol larger than the first one. See TS38.211 Table 6.3.2.4.1-1.
@@ -123,10 +123,10 @@ dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(const config_t& config)
   return mask;
 }
 
-void dmrs_pucch_processor_format1_impl::generate_sequence(span<cf_t>                        sequence,
-                                                          const config_t&                   pucch_config,
-                                                          const sequence_generation_config& cfg,
-                                                          unsigned                          symbol) const
+void dmrs_pucch_estimator_format1::generate_sequence(span<cf_t>                                         sequence,
+                                                     const dmrs_pucch_estimator::format1_configuration& pucch_config,
+                                                     const sequence_generation_config&                  cfg,
+                                                     unsigned                                           symbol) const
 {
   // Compute alpha index.
   unsigned alpha_idx = helper.get_alpha_index(
@@ -143,18 +143,16 @@ void dmrs_pucch_processor_format1_impl::generate_sequence(span<cf_t>            
   srsvec::sc_prod(r_uv, w_i_m, sequence);
 }
 
-void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&           estimate,
-                                                 const resource_grid_reader& grid,
-                                                 const config_t&             config)
+void dmrs_pucch_estimator_format1::estimate(channel_estimate&                                  estimate,
+                                            const resource_grid_reader&                        grid,
+                                            const dmrs_pucch_estimator::format1_configuration& config)
 {
-  srsran_assert(config.nof_prb <= 1, "PUCCH Format 1 occupies a single PRB.");
-
   unsigned nof_rx_ports = config.ports.size();
 
   // Prepare DM-RS symbol buffer dimensions. Recall that PUCCH Format 1 occupies a single PRB.
   re_measurement_dimensions dims;
   dims.nof_subc = NRE;
-  if (config.intra_slot_hopping) {
+  if (config.second_hop_prb.has_value()) {
     // Consider the number of DM-RS symbols of both hops.
     dims.nof_symbols = dmrs_pucch_symbols(config, 0) + dmrs_pucch_symbols(config, 1);
   } else {
@@ -174,7 +172,8 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&           est
 
   // Generate DM-RS sequences for even-numbered symbols within the PUCCH allocation, as per TS38.211
   // Section 6.4.1.3.1.
-  for (unsigned i_hop = 0, i_symb = config.start_symbol_index; i_hop < (config.intra_slot_hopping ? 2 : 1); ++i_hop) {
+  for (unsigned i_hop = 0, i_symb = config.start_symbol_index; i_hop < (config.second_hop_prb.has_value() ? 2 : 1);
+       ++i_hop) {
     // Get number of symbols carrying DM-RS in the current hop.
     unsigned nof_dmrs_symb_hop = dmrs_pucch_symbols(config, i_hop);
 

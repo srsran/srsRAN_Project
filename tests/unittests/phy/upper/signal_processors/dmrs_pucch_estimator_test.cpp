@@ -9,7 +9,7 @@
  */
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "dmrs_pucch_processor_test_data.h"
+#include "dmrs_pucch_estimator_test_data.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -18,25 +18,67 @@ using namespace srsran;
 
 namespace srsran {
 
-std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
+std::ostream& operator<<(std::ostream& os, const dmrs_pucch_estimator::common_configuration& cc)
 {
-  const dmrs_pucch_processor::config_t& cc = test_case.config;
   fmt::print(os,
-             "PUCCH Format {}, SCS {} kHz, intra-slot fr. hop. {}, shift {}, occ {}, +DM-RS {}, port {}",
-             cc.format,
+             "SCS {} kHz, intra-slot fr. hop. {}, port {}",
              15U * (1U << cc.slot.numerology()),
-             (cc.intra_slot_hopping ? "ON" : "OFF"),
-             cc.initial_cyclic_shift,
-             cc.time_domain_occ,
-             (cc.additional_dmrs ? "ON" : "OFF"),
+             (cc.second_hop_prb.has_value() ? "ON" : "OFF"),
              cc.ports[0]);
   return os;
 }
+
+std::ostream& operator<<(std::ostream& os, const dmrs_pucch_estimator::format1_configuration& config)
+{
+  fmt::print(os,
+             "PUCCH Format 1 {}, CP {}, OCC {}",
+             static_cast<const dmrs_pucch_estimator::common_configuration&>(config),
+             config.initial_cyclic_shift,
+             config.time_domain_occ);
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dmrs_pucch_estimator::format2_configuration& config)
+{
+  fmt::print(os,
+             "PUCCH Format 2 {}, PRBs {}, nid0 {}",
+             static_cast<const dmrs_pucch_estimator::common_configuration&>(config),
+             config.nof_prb,
+             config.n_id_0);
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dmrs_pucch_estimator::format3_configuration& config)
+{
+  fmt::print(os,
+             "PUCCH Format 3 {}, PRBs {}, +DMRS {}",
+             static_cast<const dmrs_pucch_estimator::common_configuration&>(config),
+             config.nof_prb,
+             (config.additional_dmrs ? "ON" : "OFF"));
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dmrs_pucch_estimator::format4_configuration& config)
+{
+  fmt::print(os,
+             "PUCCH Format 4 {}, +DMRS {}, OCC {}",
+             static_cast<const dmrs_pucch_estimator::common_configuration&>(config),
+             (config.additional_dmrs ? "ON" : "OFF"),
+             config.occ_index);
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
+{
+  std::visit([&os](const auto& config) { fmt::print(os, "{}", config); }, test_case.config);
+  return os;
+}
+
 } // namespace srsran
 
 namespace {
 
-class DmrsPucchProcessorFixture : public ::testing::TestWithParam<test_case_t>
+class DmrsPucchEstimatorFixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
   // The factory only needs to be created once.
@@ -84,33 +126,17 @@ protected:
     // Check the factory again, since ASSERT_* is not fatal in SetUpTestSuite in old googletest releases.
     ASSERT_NE(estimator_factory, nullptr) << "Cannot create PUCCH estimator factory.";
 
-    const test_case_t& test_case = GetParam();
-    // Create DMRS-PUCCH processor.
-    switch (test_case.config.format) {
-      case pucch_format::FORMAT_1:
-        dmrs_pucch = estimator_factory->create_format1();
-        break;
-      case pucch_format::FORMAT_2:
-        dmrs_pucch = estimator_factory->create_format2();
-        break;
-      case pucch_format::FORMAT_3:
-      case pucch_format::FORMAT_4:
-        dmrs_pucch = estimator_factory->create_formats3_4();
-      case pucch_format::FORMAT_0:
-      case pucch_format::NOF_FORMATS:
-      default:
-        break;
-    }
-    ASSERT_NE(dmrs_pucch, nullptr) << "Cannot create PUCCH processor.";
+    dmrs_pucch = estimator_factory->create();
+    ASSERT_NE(dmrs_pucch, nullptr) << "Cannot create PUCCH estimator.";
   }
 
   static std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory;
-  std::unique_ptr<dmrs_pucch_processor>                dmrs_pucch = nullptr;
+  std::unique_ptr<dmrs_pucch_estimator>                dmrs_pucch = nullptr;
 };
 
-std::shared_ptr<dmrs_pucch_estimator_factory> DmrsPucchProcessorFixture::estimator_factory = nullptr;
+std::shared_ptr<dmrs_pucch_estimator_factory> DmrsPucchEstimatorFixture::estimator_factory = nullptr;
 
-TEST_P(DmrsPucchProcessorFixture, DmrsPucchProcessorTest)
+TEST_P(DmrsPucchEstimatorFixture, DmrsPucchEstimatorTest)
 {
   // Fixed BW
   const unsigned nof_prb = 52;
@@ -124,21 +150,24 @@ TEST_P(DmrsPucchProcessorFixture, DmrsPucchProcessorTest)
   resource_grid_reader_spy grid;
   grid.write(testvector_symbols);
 
-  // Object to store channel estimation results
-  channel_estimate::channel_estimate_dimensions ch_est_dims = {};
-  ch_est_dims.nof_prb                                       = nof_prb;
-  ch_est_dims.nof_symbols                                   = get_nsymb_per_slot(test_case.config.cp);
-  ch_est_dims.nof_tx_layers                                 = 1;
-  ch_est_dims.nof_rx_ports                                  = 1;
-  channel_estimate estimate(ch_est_dims);
+  std::visit(
+      [this, &grid](const auto& config) {
+        // Object to store channel estimation results
+        channel_estimate::channel_estimate_dimensions ch_est_dims = {};
+        ch_est_dims.nof_prb                                       = nof_prb;
+        ch_est_dims.nof_symbols                                   = get_nsymb_per_slot(config.cp);
+        ch_est_dims.nof_tx_layers                                 = 1;
+        ch_est_dims.nof_rx_ports                                  = 1;
+        channel_estimate estimate(ch_est_dims);
 
-  // Estimate channel
-  dmrs_pucch->estimate(estimate, grid, test_case.config);
+        dmrs_pucch->estimate(estimate, grid, config);
 
-  ASSERT_NEAR(estimate.get_noise_variance(0), 0, 1e-2) << "Expected an ideal channel!";
+        ASSERT_NEAR(estimate.get_noise_variance(0), 0, 1e-2) << "Expected an ideal channel!";
+      },
+      test_case.config);
 }
 
-INSTANTIATE_TEST_SUITE_P(DmrsPucchProcessorSuite,
-                         DmrsPucchProcessorFixture,
-                         ::testing::ValuesIn(dmrs_pucch_processor_test_data));
+INSTANTIATE_TEST_SUITE_P(DmrsPucchEstimatorSuite,
+                         DmrsPucchEstimatorFixture,
+                         ::testing::ValuesIn(dmrs_pucch_estimator_test_data));
 } // namespace
