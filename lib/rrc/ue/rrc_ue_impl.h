@@ -69,6 +69,7 @@ public:
   byte_buffer                           get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                                                  unsigned                                     transaction_id) override;
   byte_buffer                           handle_rrc_handover_command(byte_buffer cmd) override;
+  bool                                  handle_rrc_handover_preparation_info(byte_buffer pdu) override;
   void                                  create_srb(const srb_creation_message& msg) override;
   static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override;
   rrc_state                             get_rrc_state() const override;
