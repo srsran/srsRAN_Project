@@ -16,8 +16,9 @@ using namespace srsran;
 
 ue_drx_controller::ue_drx_controller(const cell_configuration&         cell_cfg_common_,
                                      const std::optional<drx_config>&  drx_cfg_,
-                                     const ul_logical_channel_manager& ul_lc_mng_) :
-  cell_cfg_common(cell_cfg_common_), drx_cfg(drx_cfg_), ul_lc_mng(ul_lc_mng_)
+                                     const ul_logical_channel_manager& ul_lc_mng_,
+                                     slot_point                        ul_ccch_slot_rx_) :
+  cell_cfg_common(cell_cfg_common_), drx_cfg(drx_cfg_), ul_lc_mng(ul_lc_mng_), ul_ccch_slot_rx(ul_ccch_slot_rx_)
 {
   if (drx_cfg.has_value()) {
     const subcarrier_spacing scs              = cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs;
@@ -32,7 +33,11 @@ ue_drx_controller::ue_drx_controller(const cell_configuration&         cell_cfg_
 
 void ue_drx_controller::slot_indication(slot_point dl_slot)
 {
-  if (dl_slot >= active_time_end) {
+  if (not drx_cfg.has_value()) {
+    return;
+  }
+
+  if (active_time_end.valid() and dl_slot >= active_time_end) {
     active_time_end = {};
   }
 
@@ -83,7 +88,7 @@ void ue_drx_controller::on_new_pdcch_alloc(slot_point pdcch_slot)
   }
 }
 
-void ue_drx_controller::on_con_res_start(slot_point msg3_slot_rx)
+void ue_drx_controller::on_con_res_start()
 {
   if (not drx_cfg.has_value()) {
     return;
@@ -93,7 +98,7 @@ void ue_drx_controller::on_con_res_start(slot_point msg3_slot_rx)
   const unsigned conres_slots  = cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer.count() *
                                 get_nof_slots_per_subframe(scs);
 
-  slot_point new_time_end = msg3_slot_rx + conres_slots;
+  slot_point new_time_end = ul_ccch_slot_rx + conres_slots;
 
   if (not active_time_end.valid() or active_time_end < new_time_end) {
     // "the Active Time includes the time while [...] ra-ContentionResolutionTimer [...] is running."

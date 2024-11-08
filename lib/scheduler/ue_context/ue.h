@@ -25,6 +25,7 @@ struct ue_creation_command {
   const ue_configuration& cfg;
   bool                    starts_in_fallback;
   cell_harq_manager&      pcell_harq_pool;
+  slot_point              ul_ccch_slot_rx;
 };
 
 /// Parameters used to reconfigure a UE.

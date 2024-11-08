@@ -26,7 +26,8 @@ class ue_drx_controller
 public:
   ue_drx_controller(const cell_configuration&         cell_cfg_common_,
                     const std::optional<drx_config>&  drx_cfg_,
-                    const ul_logical_channel_manager& ul_lc_mng);
+                    const ul_logical_channel_manager& ul_lc_mng,
+                    slot_point                        ul_ccch_slot_rx);
 
   /// Update DRX controller state.
   void slot_indication(slot_point dl_slot);
@@ -38,7 +39,7 @@ public:
   void on_new_pdcch_alloc(slot_point dl_slot);
 
   /// Update DRX active time based on ContentionResolutionTimer.
-  void on_con_res_start(slot_point msg3_slot_rx);
+  void on_con_res_start();
 
 private:
   /// Whether the UE is within DRX active time.
@@ -47,6 +48,7 @@ private:
   const cell_configuration&         cell_cfg_common;
   const std::optional<drx_config>&  drx_cfg;
   const ul_logical_channel_manager& ul_lc_mng;
+  slot_point                        ul_ccch_slot_rx;
   unsigned                          active_window_period;
   interval<unsigned>                active_window;
   unsigned                          inactivity_dur;

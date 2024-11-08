@@ -153,6 +153,8 @@ struct sched_ue_creation_request_message {
   rnti_t        crnti;
   /// Whether the UE starts in fallback mode, i.e. without using its dedicated configuration.
   bool starts_in_fallback;
+  /// Slot at which UL-CCCH message was received, in case of RA-based UE creation. Invalid, otherwise.
+  slot_point ul_ccch_slot_rx;
   /// Configuration to be applied to the new UE.
   sched_ue_config_request cfg;
   /// Time Alignment Group configuration.

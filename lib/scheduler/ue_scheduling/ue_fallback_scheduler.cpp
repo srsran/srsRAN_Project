@@ -144,6 +144,8 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
     logger.error("ue_index={} not found in the scheduler", ue_index);
     return;
   }
+  auto& u = ues[ue_index];
+  u.drx_controller().on_con_res_start();
 
   auto ue_it = std::find_if(pending_dl_ues_new_tx.begin(),
                             pending_dl_ues_new_tx.end(),
