@@ -107,12 +107,12 @@ private:
   /// Pre-allocated status reports for (re)-building, caching, and sharing with TX entity
   std::array<rlc_am_status_pdu, 3> status_buf;
 
-  /// Status report for (re)-building
-  rlc_am_status_pdu* status_builder = &status_buf[0];
-  /// Status report for caching
-  std::atomic<rlc_am_status_pdu*> status_cached = &status_buf[1];
-  /// Status report for sharing
-  rlc_am_status_pdu* status_shared = &status_buf[2];
+  /// Status report owned by writer for (re)-building
+  rlc_am_status_pdu* status_owned_by_writer = &status_buf[0];
+  /// Status report for exchange that is accessed by writer and reader
+  std::atomic<rlc_am_status_pdu*> status_for_exchange = &status_buf[1];
+  /// Status report owned by reader for transmission
+  rlc_am_status_pdu* status_owned_by_reader = &status_buf[2];
 
   /// Size of the cached status report
   std::atomic<uint32_t> status_report_size;

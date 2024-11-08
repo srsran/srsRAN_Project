@@ -72,9 +72,9 @@ rlc_rx_am_entity::rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
   if (!std::atomic<rlc_am_status_pdu*>::is_always_lock_free) {
     logger.log_error("The status PDU exchange is not lock free. TX real-time performance can be impaired.");
   }
-  rlc_am_status_pdu& init_cached_status = *status_cached.load(std::memory_order_relaxed);
-  init_cached_status.ack_sn             = st.rx_next_highest;
-  status_report_size.store(init_cached_status.get_packed_size(), std::memory_order_relaxed);
+  rlc_am_status_pdu& init_status_for_exchange = *status_for_exchange.load(std::memory_order_relaxed);
+  init_status_for_exchange.ack_sn             = st.rx_next_highest;
+  status_report_size.store(init_status_for_exchange.get_packed_size(), std::memory_order_relaxed);
 
   logger.log_info("RLC AM configured. {}", cfg);
 }
@@ -538,7 +538,7 @@ expected<byte_buffer_chain> rlc_rx_am_entity::reassemble_sdu(rlc_rx_am_sdu_info&
 
 void rlc_rx_am_entity::refresh_status_report()
 {
-  status_builder->reset();
+  status_owned_by_writer->reset();
   /*
    * - for the RLC SDUs with SN such that RX_Next <= SN < RX_Highest_Status that has not been completely
    *   received yet, in increasing SN order of RLC SDUs and increasing byte segment order within RLC SDUs,
@@ -562,7 +562,7 @@ void rlc_rx_am_entity::refresh_status_report()
         nack.nack_sn = i;
         nack.has_so  = false;
         logger.log_debug("Adding nack={}.", nack);
-        status_builder->push_nack(nack);
+        status_owned_by_writer->push_nack(nack);
       } else if (not rx_window[i].fully_received) {
         srsran_assert(std::holds_alternative<rlc_rx_am_sdu_info::segment_set_t>(rx_window[i].sdu_data),
                       "Invalid sdu_data variant of incomplete SDU in rx_window. sn={}",
@@ -582,7 +582,7 @@ void rlc_rx_am_entity::refresh_status_report()
             nack.so_start = last_so;
             nack.so_end   = segm->so - 1; // set to last missing byte
             logger.log_debug("Adding nack={}.", nack);
-            status_builder->push_nack(nack);
+            status_owned_by_writer->push_nack(nack);
 
             // Sanity check
             if (nack.so_start > nack.so_end) {
@@ -611,7 +611,7 @@ void rlc_rx_am_entity::refresh_status_report()
           nack.so_start = last_so;
           nack.so_end   = rlc_am_status_nack::so_end_of_sdu;
           logger.log_debug("Adding nack={}.", nack);
-          status_builder->push_nack(nack);
+          status_owned_by_writer->push_nack(nack);
           // Sanity check
           srsran_assert(nack.so_start <= nack.so_end, "Invalid segment offsets in nack={}.", nack);
         }
@@ -623,16 +623,16 @@ void rlc_rx_am_entity::refresh_status_report()
    * - set the ACK_SN to the SN of the next not received RLC SDU which is not
    * indicated as missing in the resulting STATUS PDU.
    */
-  status_builder->ack_sn = stop_sn;
-  logger.log_debug("Refreshed status_report. {}", *status_builder);
+  status_owned_by_writer->ack_sn = stop_sn;
+  logger.log_debug("Refreshed status_report. {}", *status_owned_by_writer);
   store_status_report();
 }
 
 void rlc_rx_am_entity::store_status_report()
 {
-  // Minor inacurracy between status_report_size and status_cached is tolerated here
-  uint32_t latest_status_report_size = status_builder->get_packed_size();
-  status_builder = status_cached.exchange(status_builder, std::memory_order_relaxed);
+  // Minor inacurracy between status_report_size and status_for_exchange is tolerated here
+  uint32_t latest_status_report_size = status_owned_by_writer->get_packed_size();
+  status_owned_by_writer             = status_for_exchange.exchange(status_owned_by_writer, std::memory_order_relaxed);
   status_report_size.store(latest_status_report_size, std::memory_order_release);
 }
 
@@ -645,8 +645,8 @@ rlc_am_status_pdu& rlc_rx_am_entity::get_status_pdu()
     }
     status_prohibit_timer_is_running.store(true, std::memory_order_relaxed);
   }
-  status_shared = status_cached.exchange(status_shared, std::memory_order_relaxed);
-  return *status_shared;
+  status_owned_by_reader = status_for_exchange.exchange(status_owned_by_reader, std::memory_order_relaxed);
+  return *status_owned_by_reader;
 }
 
 uint32_t rlc_rx_am_entity::get_status_pdu_length()
