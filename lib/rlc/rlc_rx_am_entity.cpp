@@ -630,8 +630,9 @@ void rlc_rx_am_entity::refresh_status_report()
 void rlc_rx_am_entity::store_status_report()
 {
   // Minor inacurracy between status_report_size and status_cached is tolerated here
-  status_report_size.store(status_builder->get_packed_size(), std::memory_order_relaxed);
+  uint32_t latest_status_report_size = status_builder->get_packed_size();
   status_builder = status_cached.exchange(status_builder, std::memory_order_relaxed);
+  status_report_size.store(latest_status_report_size, std::memory_order_release);
 }
 
 rlc_am_status_pdu& rlc_rx_am_entity::get_status_pdu()
@@ -649,7 +650,7 @@ rlc_am_status_pdu& rlc_rx_am_entity::get_status_pdu()
 
 uint32_t rlc_rx_am_entity::get_status_pdu_length()
 {
-  return status_report_size.load(std::memory_order_relaxed);
+  return status_report_size.load(std::memory_order_acquire);
 }
 
 bool rlc_rx_am_entity::status_report_required()
