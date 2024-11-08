@@ -77,6 +77,8 @@ protected:
 
   static void TearDownTestSuite() { precoder.reset(); }
 
+  void SetUp() override { ASSERT_NE(precoder, nullptr); }
+
   static std::unique_ptr<transform_precoder> precoder;
 };
 

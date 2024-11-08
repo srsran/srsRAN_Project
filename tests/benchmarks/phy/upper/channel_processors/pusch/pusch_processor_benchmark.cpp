@@ -499,14 +499,8 @@ create_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calcula
   return create_sw_pusch_decoder_factory(crc_calculator_factory);
 }
 
-static pusch_processor_factory& get_pusch_processor_factory()
+static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
 {
-  static std::shared_ptr<pusch_processor_factory> pusch_proc_factory = nullptr;
-
-  if (pusch_proc_factory) {
-    return *pusch_proc_factory;
-  }
-
   // Create pseudo-random sequence generator.
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
@@ -599,7 +593,8 @@ static pusch_processor_factory& get_pusch_processor_factory()
   pusch_proc_factory_config.dec_nof_iterations         = 2;
   pusch_proc_factory_config.dec_enable_early_stop      = true;
   pusch_proc_factory_config.max_nof_concurrent_threads = nof_threads;
-  pusch_proc_factory                                   = create_pusch_processor_factory_sw(pusch_proc_factory_config);
+  std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
+      create_pusch_processor_factory_sw(pusch_proc_factory_config);
   TESTASSERT(pusch_proc_factory);
 
   pusch_proc_factory_config.decoder_factory =
@@ -619,20 +614,20 @@ static pusch_processor_factory& get_pusch_processor_factory()
   pusch_proc_factory = create_pusch_processor_pool(pusch_proc_pool_config);
   TESTASSERT(pusch_proc_factory);
 
-  return *pusch_proc_factory;
+  return pusch_proc_factory;
 }
 
 // Instantiates the PUSCH processor and validator.
 static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_validator>> create_processor()
 {
-  pusch_processor_factory& pusch_proc_factory = get_pusch_processor_factory();
+  std::shared_ptr<pusch_processor_factory> pusch_proc_factory = create_pusch_processor_factory();
 
   // Create PUSCH processor.
-  std::unique_ptr<pusch_processor> processor = pusch_proc_factory.create();
+  std::unique_ptr<pusch_processor> processor = pusch_proc_factory->create();
   TESTASSERT(processor);
 
   // Create PUSCH processor validator.
-  std::unique_ptr<pusch_pdu_validator> validator = pusch_proc_factory.create_validator();
+  std::unique_ptr<pusch_pdu_validator> validator = pusch_proc_factory->create_validator();
   TESTASSERT(validator);
 
   return std::make_tuple(std::move(processor), std::move(validator));
@@ -881,6 +876,7 @@ int main(int argc, char** argv)
     worker_pool->stop();
   }
   processor.reset();
+  validator.reset();
 
   return 0;
 }

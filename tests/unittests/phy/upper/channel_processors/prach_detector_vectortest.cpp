@@ -64,36 +64,46 @@ using PrachDetectorParams = test_case_t;
 class PrachDetectorFixture : public ::testing::TestWithParam<PrachDetectorParams>
 {
 protected:
-  std::unique_ptr<prach_detector>           detector;
-  std::unique_ptr<prach_detector_validator> validator;
+  static std::unique_ptr<prach_detector>           detector;
+  static std::unique_ptr<prach_detector_validator> validator;
 
-  void SetUp() override
+  static void SetUpTestSuite()
   {
     std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
     if (!dft_factory) {
       dft_factory = create_dft_processor_factory_generic();
     }
-    ASSERT_TRUE(dft_factory);
+    ASSERT_NE(dft_factory, nullptr);
 
     std::shared_ptr<prach_generator_factory> generator_factory = create_prach_generator_factory_sw();
-    ASSERT_TRUE(generator_factory);
+    ASSERT_NE(generator_factory, nullptr);
 
     std::shared_ptr<prach_detector_factory> detector_factory =
         create_prach_detector_factory_sw(dft_factory, generator_factory);
-    ASSERT_TRUE(detector_factory);
+    ASSERT_NE(detector_factory, nullptr);
 
-#if 0
-    srslog::init();
-    detector = detector_factory->create(srslog::fetch_basic_logger("PRACH"), true);
-#else
     detector = detector_factory->create();
-#endif
-    ASSERT_TRUE(detector);
+    ASSERT_NE(detector, nullptr);
 
     validator = detector_factory->create_validator();
-    ASSERT_TRUE(validator);
+    ASSERT_NE(validator, nullptr);
+  }
+
+  static void TearDownTestSuite()
+  {
+    detector.reset();
+    validator.reset();
+  }
+
+  void SetUp() override
+  {
+    ASSERT_NE(detector, nullptr);
+    ASSERT_NE(validator, nullptr);
   }
 };
+
+std::unique_ptr<prach_detector>           PrachDetectorFixture::detector  = nullptr;
+std::unique_ptr<prach_detector_validator> PrachDetectorFixture::validator = nullptr;
 
 TEST_P(PrachDetectorFixture, FromVector)
 {

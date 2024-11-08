@@ -109,6 +109,8 @@ protected:
     }
   }
 
+  static void TearDownTestSuite() { demodulator.reset(); }
+
   void SetUp() override
   {
     const test_case_t& test_case = GetParam();
