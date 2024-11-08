@@ -221,3 +221,89 @@ TEST(mac_to_fapi_translator, last_message_is_notified)
   ASSERT_TRUE(notifier_spy.has_on_last_message_method_called());
   ASSERT_EQ(slot, notifier_spy.slot());
 }
+
+TEST(mac_to_fapi_translator, dl_tti_message_with_all_pdus_passes)
+{
+  slot_message_gateway_spy       gateway_spy;
+  slot_last_message_notifier_spy notifier_spy;
+  unsigned                       nof_prbs        = 51U;
+  auto                           pm_tools        = generate_precoding_matrix_tables(1);
+  auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
+  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
+                                    gateway_spy,
+                                    notifier_spy,
+                                    std::move(std::get<0>(pm_tools)),
+                                    std::move(std::get<0>(uci_part2_tools)),
+                                    nof_prbs);
+
+  const unittests::mac_dl_sched_result_test_helper& result_test =
+      srsran::unittests::build_valid_mac_dl_sched_result_with_all_supported_pdus();
+  const mac_dl_sched_result& result = result_test.result;
+  translator.on_new_downlink_scheduler_results(result);
+
+  const fapi::ul_dci_request_message& ul_dci_msg = gateway_spy.ul_dci_request_msg();
+  ASSERT_EQ(ul_dci_msg.pdus.size(), MAX_UL_PDCCH_PDUS_PER_SLOT);
+
+  const fapi::dl_tti_request_message& dl_tti_msg = gateway_spy.dl_tti_request_msg();
+  ASSERT_EQ(dl_tti_msg.pdus.size(), MAX_DL_PDUS_PER_SLOT);
+}
+
+TEST(mac_to_fapi_translator, tx_data_message_with_all_pdus_passes)
+{
+  slot_message_gateway_spy       gateway_spy;
+  slot_last_message_notifier_spy notifier_spy;
+  unsigned                       nof_prbs        = 51U;
+  auto                           pm_tools        = generate_precoding_matrix_tables(1);
+  auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
+  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
+                                    gateway_spy,
+                                    notifier_spy,
+                                    std::move(std::get<0>(pm_tools)),
+                                    std::move(std::get<0>(uci_part2_tools)),
+                                    nof_prbs);
+
+  const unittests::mac_dl_sched_result_test_helper& result_test =
+      srsran::unittests::build_valid_mac_dl_sched_result_with_all_supported_pdus();
+  const mac_dl_sched_result& result = result_test.result;
+  translator.on_new_downlink_scheduler_results(result);
+
+  const mac_dl_data_result& data_result = srsran::unittests::build_valid_mac_data_result_with_all_supported_pdu();
+  translator.on_new_downlink_data(data_result);
+
+  const fapi::tx_data_request_message& tx_data_msg = gateway_spy.tx_data_request_msg();
+  ASSERT_EQ(tx_data_msg.pdus.size(),
+            MAX_SI_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT);
+
+  const fapi::ul_dci_request_message& ul_dci_msg = gateway_spy.ul_dci_request_msg();
+  ASSERT_EQ(ul_dci_msg.pdus.size(), MAX_UL_PDCCH_PDUS_PER_SLOT);
+
+  const fapi::dl_tti_request_message& dl_tti_msg = gateway_spy.dl_tti_request_msg();
+  ASSERT_EQ(dl_tti_msg.pdus.size(), MAX_DL_PDUS_PER_SLOT);
+}
+
+TEST(mac_to_fapi_translator, ul_tti_message_with_all_pdus_passes)
+{
+  slot_message_gateway_spy       gateway_spy;
+  slot_last_message_notifier_spy notifier_spy;
+  unsigned                       nof_prbs        = 51U;
+  auto                           pm_tools        = generate_precoding_matrix_tables(1);
+  auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
+  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
+                                    gateway_spy,
+                                    notifier_spy,
+                                    std::move(std::get<0>(pm_tools)),
+                                    std::move(std::get<0>(uci_part2_tools)),
+                                    nof_prbs);
+
+  srslog::fetch_basic_logger("FAPI").set_level(srslog::basic_levels::debug);
+
+  ASSERT_FALSE(gateway_spy.has_ul_tti_request_method_called());
+
+  const unittests::mac_ul_sched_result_test_helper& result_test =
+      srsran::unittests::build_valid_mac_ul_sched_result_with_all_supported_pdus();
+  const mac_ul_sched_result& result = result_test.result;
+  translator.on_new_uplink_scheduler_results(result);
+
+  const fapi::ul_tti_request_message& msg = gateway_spy.ul_tti_request_msg();
+  ASSERT_EQ(msg.pdus.size(), MAX_UL_PDUS_PER_SLOT);
+}
