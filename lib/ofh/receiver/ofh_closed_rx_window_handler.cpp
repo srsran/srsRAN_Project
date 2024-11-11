@@ -62,7 +62,7 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
                    ctx_value.context.sector);
   }
 
-  logger.debug("Notifying UL symbol in slot '{}', symbol '{}' for sector#{}",
+  logger.debug("Notifying incomplete UL symbol in slot '{}', symbol '{}' for sector#{}",
                notification_context.slot,
                notification_context.symbol,
                notification_context.sector);
@@ -93,5 +93,6 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
                    ctx_value.context.sector);
   }
 
-  logger.debug("Notifying PRACH in slot '{}' for sector#{}", ctx_value.context.slot, ctx_value.context.sector);
+  logger.debug(
+      "Notifying incomplete PRACH in slot '{}' for sector#{}", ctx_value.context.slot, ctx_value.context.sector);
 }
