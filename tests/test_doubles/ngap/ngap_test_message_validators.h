@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/cu_types.h"
 
 namespace srsran {
@@ -55,6 +56,8 @@ bool is_expected_pdu_session_resource_setup_response(
     const srs_cu_cp::ngap_message&       ngap_pdu,
     const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
     const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup);
+
+byte_buffer get_rrc_container(const srs_cu_cp::ngap_message& msg);
 
 } // namespace test_helpers
 } // namespace srsran
