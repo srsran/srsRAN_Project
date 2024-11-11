@@ -11,6 +11,7 @@
 #pragma once
 
 #include "du_bearer_resource_manager.h"
+#include "du_drx_resource_manager.h"
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
 #include "du_srs_resource_manager.h"
@@ -100,16 +101,19 @@ private:
     ue_resource_context(const du_ran_resource_manager_impl& parent_);
   };
 
-  /// Current UE Resource Allocations.
+  // Current UE Resource Allocations.
   slotted_array<ue_resource_context, MAX_NOF_DU_UES, false> ue_res_pool;
 
-  /// Allocator of UE PUCCH resources.
+  // Allocator of UE PUCCH resources.
   du_pucch_resource_manager pucch_res_mng;
 
-  /// Allocator of UE bearer resources.
+  // Allocator of UE bearer resources.
   du_bearer_resource_manager bearer_res_mng;
 
   std::unique_ptr<du_srs_resource_manager> srs_res_mng;
+
+  // Allocator of DRX and measGap resources.
+  du_drx_resource_manager drx_res_mng;
 };
 
 } // namespace srs_du
