@@ -168,10 +168,10 @@ pucch_detector_format0::detect(const srsran::resource_grid_reader&          grid
     float sum_noise_var = 0.0F;
 
     for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
-      // Calculate group sequence.
+      // Compute group sequence.
       unsigned u;
       unsigned v;
-      helper.compute_group_sequence(pucch_group_hopping::NEITHER, config.n_id, u, v);
+      std::tie(u, v) = helper.compute_group_sequence(pucch_group_hopping::NEITHER, config.n_id);
 
       // Calculate cyclic shift.
       unsigned         alpha    = helper.get_alpha_index(config.slot,

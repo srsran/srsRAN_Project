@@ -47,13 +47,13 @@ public:
     /// Higher layer parameter \e hoppingID if configured (Cell-specific scrambling ID for group hopping and sequence
     /// hopping), otherwise the physical cell identifier.
     unsigned n_id;
-    /// Port indexes the PUCCH transmission is mapped onto.
+    /// Port indices the PUCCH transmission is mapped onto.
     static_vector<uint8_t, DMRS_MAX_NPORTS> ports;
   };
 
   /// Collects specific PUCCH Format 1 parameters.
   struct format1_configuration : common_configuration {
-    /// Initial cyclic shift, used by Formats 0 and 1 as defined in TS38.211 Section 6.3.2.2.2.
+    /// Initial cyclic shift, as defined in TS38.211 Section 6.3.2.2.2.
     unsigned initial_cyclic_shift;
     /// Orthogonal Cover Code Index.
     unsigned time_domain_occ;
@@ -61,7 +61,7 @@ public:
 
   /// Collects specific PUCCH Format 2 parameters.
   struct format2_configuration : common_configuration {
-    /// Number of PRBs, applicable for Formats 2 and 3 (see PUCCH-Resource IE in TS38.331).
+    /// Number of PRBs, see PUCCH-Resource IE in TS38.331.
     unsigned nof_prb;
     /// \brief DM-RS scrambling identity, defined in TS38.211 Section 6.4.1.3.2.1.
     ///
@@ -75,7 +75,6 @@ public:
     /// Number of PRBs.
     unsigned nof_prb;
     /// \brief Additional DM-RS flag (true if enabled), indicating two DM-RS symbols per hop.
-    /// \remark Applicable to PUCCH Formats 3 and 4.
     /// \remark See PUCCH-Format-Config IE in TS38.331.
     bool additional_dmrs;
   };
@@ -83,7 +82,6 @@ public:
   /// Collects specific PUCCH Format 4 parameters.
   struct format4_configuration : common_configuration {
     /// \brief Additional DM-RS flag (true if enabled), indicating two DM-RS symbols per hop.
-    /// \remark Applicable to PUCCH Formats 3 and 4.
     /// \remark See PUCCH-Format-Config IE in TS38.331.
     bool additional_dmrs;
     /// Orthogonal Cover Code Index.

@@ -46,47 +46,31 @@ public:
   void
   estimate(channel_estimate& estimate, const resource_grid_reader& grid, const format1_configuration& config) override
   {
-    format1_entries.emplace_back();
-    entry_format1_t& entry = format1_entries.back();
-    entry.estimate         = &estimate;
-    entry.grid             = &grid;
-    entry.config           = config;
+    format1_entries.emplace_back(entry_format1_t{&estimate, &grid, config});
   }
 
   void
   estimate(channel_estimate& estimate, const resource_grid_reader& grid, const format2_configuration& config) override
   {
-    format2_entries.emplace_back();
-    entry_format2_t& entry = format2_entries.back();
-    entry.estimate         = &estimate;
-    entry.grid             = &grid;
-    entry.config           = config;
+    format2_entries.emplace_back(entry_format2_t{&estimate, &grid, config});
   }
 
   void
   estimate(channel_estimate& estimate, const resource_grid_reader& grid, const format3_configuration& config) override
   {
-    format3_entries.emplace_back();
-    entry_format3_t& entry = format3_entries.back();
-    entry.estimate         = &estimate;
-    entry.grid             = &grid;
-    entry.config           = config;
+    format3_entries.emplace_back(entry_format3_t{&estimate, &grid, config});
   }
 
   void
   estimate(channel_estimate& estimate, const resource_grid_reader& grid, const format4_configuration& config) override
   {
-    format4_entries.emplace_back();
-    entry_format4_t& entry = format4_entries.back();
-    entry.estimate         = &estimate;
-    entry.grid             = &grid;
-    entry.config           = config;
+    format4_entries.emplace_back(entry_format4_t{&estimate, &grid, config});
   }
 
-  const std::vector<entry_format1_t>& get_format1_entries() const { return format1_entries; }
-  const std::vector<entry_format2_t>& get_format2_entries() const { return format2_entries; }
-  const std::vector<entry_format3_t>& get_format3_entries() const { return format3_entries; }
-  const std::vector<entry_format4_t>& get_format4_entries() const { return format4_entries; }
+  span<const entry_format1_t> get_format1_entries() const { return format1_entries; }
+  span<const entry_format2_t> get_format2_entries() const { return format2_entries; }
+  span<const entry_format3_t> get_format3_entries() const { return format3_entries; }
+  span<const entry_format4_t> get_format4_entries() const { return format4_entries; }
 
   void clear()
   {

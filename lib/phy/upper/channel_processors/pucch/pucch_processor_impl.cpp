@@ -66,14 +66,14 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   // Prepare channel estimation.
   dmrs_pucch_estimator::format1_configuration estimator_config;
-  estimator_config.slot                 = config.slot;
-  estimator_config.cp                   = config.cp;
-  estimator_config.start_symbol_index   = config.start_symbol_index;
-  estimator_config.nof_symbols          = config.nof_symbols;
-  estimator_config.starting_prb         = config.starting_prb + config.bwp_start_rb;
-  estimator_config.second_hop_prb       = config.second_hop_prb.has_value()
-                                              ? std::optional{config.second_hop_prb.value() + config.bwp_start_rb}
-                                              : std::nullopt;
+  estimator_config.slot               = config.slot;
+  estimator_config.cp                 = config.cp;
+  estimator_config.start_symbol_index = config.start_symbol_index;
+  estimator_config.nof_symbols        = config.nof_symbols;
+  estimator_config.starting_prb       = config.starting_prb + config.bwp_start_rb;
+  estimator_config.second_hop_prb     = transform_optional(
+      config.second_hop_prb,
+      [bwp_start_rb = config.bwp_start_rb](unsigned second_hop_prb) { return second_hop_prb + bwp_start_rb; }),
   estimator_config.initial_cyclic_shift = config.initial_cyclic_shift;
   estimator_config.time_domain_occ      = config.time_domain_occ;
   estimator_config.n_id                 = config.n_id;
@@ -153,12 +153,12 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   estimator_config.start_symbol_index = config.start_symbol_index;
   estimator_config.nof_symbols        = config.nof_symbols;
   estimator_config.starting_prb       = config.bwp_start_rb + config.starting_prb;
-  estimator_config.second_hop_prb     = config.second_hop_prb.has_value()
-                                            ? std::optional{config.second_hop_prb.value() + config.bwp_start_rb}
-                                            : std::nullopt;
-  estimator_config.nof_prb            = config.nof_prb;
-  estimator_config.n_id               = config.n_id;
-  estimator_config.n_id_0             = config.n_id_0;
+  estimator_config.second_hop_prb     = transform_optional(
+      config.second_hop_prb,
+      [bwp_start_rb = config.bwp_start_rb](unsigned second_hop_prb) { return second_hop_prb + bwp_start_rb; }),
+  estimator_config.nof_prb = config.nof_prb;
+  estimator_config.n_id    = config.n_id;
+  estimator_config.n_id_0  = config.n_id_0;
   estimator_config.ports.assign(config.ports.begin(), config.ports.end());
 
   // Prepare channel estimate.

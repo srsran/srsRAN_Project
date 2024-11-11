@@ -163,16 +163,18 @@ void dmrs_pucch_estimator_format1::estimate(channel_estimate&                   
   // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);
 
-  unsigned u, v;
   // Compute group sequence.
-  helper.compute_group_sequence(config.group_hopping, config.n_id, u, v);
+  unsigned u;
+  unsigned v;
+  std::tie(u, v) = helper.compute_group_sequence(config.group_hopping, config.n_id);
 
   // Index to write into the DM-RS buffer.
   unsigned i_dmrs_symb = 0;
 
   // Generate DM-RS sequences for even-numbered symbols within the PUCCH allocation, as per TS38.211
   // Section 6.4.1.3.1.
-  for (unsigned i_hop = 0, i_symb = config.start_symbol_index; i_hop < (config.second_hop_prb.has_value() ? 2 : 1);
+  for (unsigned i_hop = 0, i_symb = config.start_symbol_index, last_hop = (config.second_hop_prb.has_value() ? 2 : 1);
+       i_hop != last_hop;
        ++i_hop) {
     // Get number of symbols carrying DM-RS in the current hop.
     unsigned nof_dmrs_symb_hop = dmrs_pucch_symbols(config, i_hop);
@@ -198,9 +200,9 @@ void dmrs_pucch_estimator_format1::estimate(channel_estimate&                   
   est_cfg.cp           = config.cp;
   est_cfg.first_symbol = config.start_symbol_index;
   est_cfg.nof_symbols  = config.nof_symbols;
-  est_cfg.dmrs_pattern = {generate_dmrs_pattern(config)};
-  est_cfg.rx_ports     = config.ports;
-  est_cfg.scaling      = 1.0F;
+  est_cfg.dmrs_pattern.assign(1, generate_dmrs_pattern(config));
+  est_cfg.rx_ports = config.ports;
+  est_cfg.scaling  = 1.0F;
 
   // Perform estimation for each receive port.
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {

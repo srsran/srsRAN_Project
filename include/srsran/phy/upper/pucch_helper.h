@@ -34,7 +34,10 @@ public:
   }
 
   /// Computes the NR-PUCCH group sequence (TS 38.211 clause 6.3.2.2.1 Group and sequence hopping).
-  void compute_group_sequence(pucch_group_hopping group_hopping, unsigned n_id, unsigned& u, unsigned& v)
+  /// \param[in] group_hopping Group hopping configuration.
+  /// \param[in] n_id          Scrambling identifier.
+  /// \return A pair of sequence group u and sequence number v.
+  static std::pair<unsigned, unsigned> compute_group_sequence(pucch_group_hopping group_hopping, unsigned n_id)
   {
     unsigned f_gh = 0;
     unsigned f_ss = 0;
@@ -45,14 +48,13 @@ public:
         break;
       case pucch_group_hopping::ENABLE:
         srsran_terminate("Group hopping is not implemented");
-        return;
       case pucch_group_hopping::DISABLE:
         srsran_terminate("Hopping is not implemented");
-        return;
     }
 
-    u = (f_gh + f_ss) % low_papr_sequence_collection::NOF_GROUPS;
-    v = 0;
+    unsigned u = (f_gh + f_ss) % low_papr_sequence_collection::NOF_GROUPS;
+    unsigned v = 0;
+    return {u, v};
   }
 
   /// \brief Computes the NR alpha index (1-NRE) (TS 38.211 clause 6.3.2.2.2 Cyclic shift hopping)

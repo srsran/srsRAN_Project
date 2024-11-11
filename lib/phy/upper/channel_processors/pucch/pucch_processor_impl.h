@@ -95,8 +95,7 @@ public:
     detector(std::move(detector_)),
     demodulator(std::move(demodulator_)),
     decoder(std::move(decoder_)),
-    estimates(estimates_dimensions),
-    max_sizes(estimates_dimensions)
+    estimates(estimates_dimensions)
   {
     srsran_assert(channel_estimator, "Invalid channel estimator.");
     srsran_assert(detector, "Invalid detector.");
@@ -117,8 +116,6 @@ private:
   std::unique_ptr<uci_decoder> decoder;
   /// Temporal channel estimates.
   channel_estimate estimates;
-  /// Maximum RB, symbol and channel sizes handled by the processor.
-  channel_estimate::channel_estimate_dimensions max_sizes;
   /// Temporal LLR storage.
   std::array<log_likelihood_ratio, pucch_constants::MAX_NOF_LLR> temp_llr;
 };

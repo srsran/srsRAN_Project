@@ -29,7 +29,7 @@ namespace srsran {
 /// set to \c false otherwise.
 /// \param[in] additional_dmrs   Whether \e additionalDMRS parameter is set for the PUCCH resource.
 /// \returns The symbol mask for symbols containing DM-RS for that configuration, as per TS38.211 Table 6.4.1.3.3.2-1.
-inline symbol_slot_mask get_pucch_formats_3_4_dmrs_symbol_mask(
+inline symbol_slot_mask get_pucch_formats3_4_dmrs_symbol_mask(
     bounded_integer<unsigned, pucch_constants::FORMAT3_MIN_NSYMB, pucch_constants::FORMAT3_MAX_NSYMB> nof_symbols,
     bool                                                                                              frequency_hopping,
     bool                                                                                              additional_dmrs)

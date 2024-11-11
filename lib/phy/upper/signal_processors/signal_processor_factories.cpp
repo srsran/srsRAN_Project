@@ -19,7 +19,7 @@
 #include "pss_processor_impl.h"
 #include "pucch/dmrs_pucch_estimator_format1.h"
 #include "pucch/dmrs_pucch_estimator_format2.h"
-#include "pucch/dmrs_pucch_estimator_formats_3_4.h"
+#include "pucch/dmrs_pucch_estimator_formats3_4.h"
 #include "pucch/dmrs_pucch_estimator_impl.h"
 #include "sss_processor_impl.h"
 #include "srsran/phy/support/support_factories.h"
@@ -126,15 +126,15 @@ public:
     std::unique_ptr<dmrs_pucch_estimator_format2> estimator_format2 = std::make_unique<dmrs_pucch_estimator_format2>(
         prg_factory->create(), ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::filter));
 
-    std::unique_ptr<dmrs_pucch_estimator_formats_3_4> estimator_formats_3_4 =
-        std::make_unique<dmrs_pucch_estimator_formats_3_4>(
+    std::unique_ptr<dmrs_pucch_estimator_formats3_4> estimator_formats3_4 =
+        std::make_unique<dmrs_pucch_estimator_formats3_4>(
             prg_factory->create(),
             lpg_factory->create(),
             ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::mean,
                                          /*compensate_cfo =*/false));
 
     return std::make_unique<dmrs_pucch_estimator_impl>(
-        std::move(estimator_format1), std::move(estimator_format2), std::move(estimator_formats_3_4));
+        std::move(estimator_format1), std::move(estimator_format2), std::move(estimator_formats3_4));
   }
 
 private:

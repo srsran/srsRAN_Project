@@ -19,14 +19,14 @@
 namespace srsran {
 
 /// Generic implementation of a DM-RS channel estimator for PUCCH Formats 3 and 4.
-class dmrs_pucch_estimator_formats_3_4
+class dmrs_pucch_estimator_formats3_4
 {
 public:
   using layer_dmrs_pattern = port_channel_estimator::layer_dmrs_pattern;
 
-  dmrs_pucch_estimator_formats_3_4(std::unique_ptr<pseudo_random_generator>     prg_,
-                                   std::unique_ptr<low_papr_sequence_generator> low_papr_generator_,
-                                   std::unique_ptr<port_channel_estimator>      ch_est_) :
+  dmrs_pucch_estimator_formats3_4(std::unique_ptr<pseudo_random_generator>     prg_,
+                                  std::unique_ptr<low_papr_sequence_generator> low_papr_generator_,
+                                  std::unique_ptr<port_channel_estimator>      ch_est_) :
     helper(std::move(prg_)), low_papr_generator(std::move(low_papr_generator_)), ch_estimator(std::move(ch_est_))
   {
     srsran_assert(low_papr_generator, "Invalid sequence generator.");
@@ -44,6 +44,7 @@ public:
                 const dmrs_pucch_estimator::format4_configuration& config);
 
 private:
+  /// PUCCH helper functions.
   pucch_helper helper;
 
   /// PUCCH Formats 3 and 4 implementation expects pre-generated sequence collection on instantiation.
@@ -56,29 +57,29 @@ private:
 
   /// Common configuration parameters for PUCCH Formats 3 and 4.
   struct estimate_config {
-    // Slot timing and numerology.
+    /// Slot timing and numerology.
     slot_point slot;
-    // Cyclic Prefix.
+    /// Cyclic Prefix.
     cyclic_prefix cp;
-    // Group and sequence hopping configuration.
+    /// Group and sequence hopping configuration.
     pucch_group_hopping group_hopping;
-    // Parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.2.2.
+    /// Parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.2.2.
     unsigned n_id;
-    // Number of PRBs.
+    /// Number of PRBs.
     unsigned nof_prb;
-    // Number of OFDM symbols assigned to resource.
+    /// Number of OFDM symbols assigned to resource.
     unsigned nof_symbols;
-    // Start PRB index.
+    /// Start PRB index.
     unsigned starting_prb;
-    // Index of first PRB of the second hop if intra-slot frequency hopping is enabled, empty otherwise.
+    /// Index of first PRB of the second hop if intra-slot frequency hopping is enabled, empty otherwise.
     std::optional<unsigned> second_hop_prb;
-    // Start symbol index.
+    /// Start symbol index.
     unsigned start_symbol_index;
-    // Additional DM-RS flag.
+    /// Additional DM-RS flag.
     bool additional_dmrs;
-    // Orthogonal Cover Code.
+    /// Orthogonal Cover Code.
     unsigned occ_index;
-    // Port indexes the PUCCH transmission is mapped onto.
+    /// Port indices the PUCCH transmission is mapped onto.
     const static_vector<uint8_t, DMRS_MAX_NPORTS>& ports;
   };
 
