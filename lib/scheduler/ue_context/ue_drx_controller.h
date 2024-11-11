@@ -50,7 +50,7 @@ private:
 
   const subcarrier_spacing          scs_common;
   std::chrono::milliseconds         conres_timer;
-  const std::optional<drx_config>&  drx_cfg;
+  const std::optional<drx_config>   drx_cfg;
   const ul_logical_channel_manager& ul_lc_mng;
   std::optional<slot_point>         ul_ccch_slot_rx;
   srslog::basic_logger&             logger;
