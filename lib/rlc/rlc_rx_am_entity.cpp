@@ -632,7 +632,7 @@ void rlc_rx_am_entity::store_status_report()
 {
   // Minor inacurracy between status_report_size and status_for_exchange is tolerated here
   uint32_t latest_status_report_size = status_owned_by_writer->get_packed_size();
-  status_owned_by_writer             = status_for_exchange.exchange(status_owned_by_writer, std::memory_order_relaxed);
+  status_owned_by_writer             = status_for_exchange.exchange(status_owned_by_writer, std::memory_order_release);
   status_report_size.store(latest_status_report_size, std::memory_order_release);
 }
 
@@ -645,7 +645,7 @@ rlc_am_status_pdu& rlc_rx_am_entity::get_status_pdu()
     }
     status_prohibit_timer_is_running.store(true, std::memory_order_relaxed);
   }
-  status_owned_by_reader = status_for_exchange.exchange(status_owned_by_reader, std::memory_order_relaxed);
+  status_owned_by_reader = status_for_exchange.exchange(status_owned_by_reader, std::memory_order_acquire);
   return *status_owned_by_reader;
 }
 
