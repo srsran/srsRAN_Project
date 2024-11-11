@@ -118,24 +118,8 @@ variables:
         { set +x; } 2>/dev/null
       }
     - |
-      build_plugin() {
-        target="$1"
-        shift      
-        set -x
-        builder.sh -m "-j${KUBERNETES_CPU_REQUEST} ${target}" ${BUILD_CMD} "$@" ${CI_PROJECT_DIR}
-        { set +x; } 2>/dev/null
-      }
-    - |
       launch_tests_srsran() {
         cd ${SRSRANDIR}/build
-        echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-        set -x
-        ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml "$@"
-        { set +x; } 2>/dev/null
-      }
-    - |
-      launch_tests_plugin() {
-        cd ${CI_PROJECT_DIR}/build
         echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         set -x
         ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml "$@"
