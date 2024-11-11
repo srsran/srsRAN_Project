@@ -24,7 +24,6 @@
 
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/shared_resource_grid.h"
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/conversion.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/executors/task_worker.h"
@@ -122,7 +121,7 @@ public:
               span<const cbf16_t> samples = buffer.get_symbol(i_port, 0, 0, i_replica);
 
               // Convert samples to complex float.
-              span<cf_t> samples_cf = temp_prach_buffer.first(samples.size());
+              span<cf_t> samples_cf = span<cf_t>(temp_prach_buffer).first(samples.size());
               srsvec::convert(samples_cf, samples);
 
               // Write file.
@@ -154,8 +153,8 @@ private:
   srslog::basic_logger&                        logger;
   std::ofstream                                file;
   task_worker                                  worker;
-  srsvec::aligned_vec<cf_t>                    temp_buffer;
-  srsvec::aligned_vec<cf_t>                    temp_prach_buffer;
+  std::vector<cf_t>                            temp_buffer;
+  std::vector<cf_t>                            temp_prach_buffer;
   unsigned                                     nof_symbols;
   unsigned                                     start_port;
   unsigned                                     end_port;

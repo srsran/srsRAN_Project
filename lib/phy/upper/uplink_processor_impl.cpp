@@ -128,18 +128,23 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
   switch (pdu.context.format) {
     case pucch_format::FORMAT_0:
       proc_result = pucch_proc->process(grid.get_reader(), pdu.format0);
+      l1_tracer << trace_event("pucch0", tp);
       break;
     case pucch_format::FORMAT_1:
       proc_result = pucch_proc->process(grid.get_reader(), pdu.format1);
+      l1_tracer << trace_event("pucch1", tp);
       break;
     case pucch_format::FORMAT_2:
       proc_result = pucch_proc->process(grid.get_reader(), pdu.format2);
+      l1_tracer << trace_event("pucch2", tp);
       break;
     case pucch_format::FORMAT_3:
       proc_result = pucch_proc->process(grid.get_reader(), pdu.format3);
+      l1_tracer << trace_event("pucch3", tp);
       break;
     case pucch_format::FORMAT_4:
       proc_result = pucch_proc->process(grid.get_reader(), pdu.format4);
+      l1_tracer << trace_event("pucch4", tp);
       break;
     default:
       srsran_assert(0, "Invalid PUCCH format={}", pdu.context.format);
@@ -152,8 +157,6 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
 
   // Notify the PUCCH results.
   notifier.on_new_pucch_results(result);
-
-  l1_tracer << trace_event("process_pucch", tp);
 }
 
 void uplink_processor_impl::process_srs(upper_phy_rx_results_notifier&   notifier,

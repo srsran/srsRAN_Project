@@ -362,6 +362,7 @@ static YAML::Node build_du_high_pusch_section(const du_high_unit_pusch_config& c
   node["max_ue_mcs"]               = config.max_ue_mcs;
   node["max_consecutive_kos"]      = config.max_consecutive_kos;
   node["mcs_table"]                = to_string(config.mcs_table);
+  node["max_rank"]                 = config.max_rank;
   node["msg3_delta_preamble"]      = config.msg3_delta_preamble;
   node["p0_nominal_with_grant"]    = config.p0_nominal_with_grant;
   node["max_puschs_per_slot"]      = config.max_puschs_per_slot;

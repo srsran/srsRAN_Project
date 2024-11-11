@@ -732,6 +732,11 @@ smoke valgrind update cache:
       start_in: 30 minutes
   interruptible: false
   retry: 2
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    when: on_failure
   cache:
     - *cache_build_set
 

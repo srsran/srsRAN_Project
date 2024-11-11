@@ -224,9 +224,10 @@ static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
 {
   asn1_request->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ids.cu_ue_f1ap_id);
 
-  asn1_request->gnb_du_ue_f1ap_id_present = ue_ids.du_ue_f1ap_id != gnb_du_ue_f1ap_id_t::invalid;
+  asn1_request->gnb_du_ue_f1ap_id_present =
+      ue_ids.du_ue_f1ap_id && ue_ids.du_ue_f1ap_id != gnb_du_ue_f1ap_id_t::invalid;
   if (asn1_request->gnb_du_ue_f1ap_id_present) {
-    asn1_request->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ids.du_ue_f1ap_id);
+    asn1_request->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(*ue_ids.du_ue_f1ap_id);
   }
 
   asn1_request->sp_cell_id    = cgi_to_asn1(request.sp_cell_id);

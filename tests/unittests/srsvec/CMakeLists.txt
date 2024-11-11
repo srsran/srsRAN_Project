@@ -22,10 +22,6 @@ add_executable(srsvec_add_test srsvec_add_test.cpp)
 target_link_libraries(srsvec_add_test srsvec srslog)
 add_test(srsvec_add_test srsvec_add_test)
 
-add_executable(srsvec_aligned_test srsvec_aligned_test.cpp)
-target_link_libraries(srsvec_aligned_test srsvec srslog)
-add_test(srsvec_aligned_test srsvec_aligned_test)
-
 add_executable(srsvec_bit_test srsvec_bit_test.cpp)
 target_link_libraries(srsvec_bit_test srsvec srslog gtest gtest_main)
 add_test(srsvec_bit_test srsvec_bit_test)

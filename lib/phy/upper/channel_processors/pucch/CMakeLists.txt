@@ -28,4 +28,5 @@ add_library(srsran_pucch_detector STATIC
 add_library(srsran_pucch_demodulator STATIC
         factories.cpp
         pucch_demodulator_format2.cpp
-        pucch_demodulator_format3.cpp)
+        pucch_demodulator_format3.cpp
+        pucch_demodulator_format4.cpp)

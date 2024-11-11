@@ -21,7 +21,7 @@
  */
 
 #include "ru_ofh_config_translator.h"
-#include "apps/services/worker_manager_config.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
 #include "ru_ofh_config.h"
 #include "srsran/du/du_cell_config.h"
 

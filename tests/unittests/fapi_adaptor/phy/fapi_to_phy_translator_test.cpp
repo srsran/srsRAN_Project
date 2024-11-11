@@ -95,7 +95,10 @@ public:
     return default_success_t();
   }
   error_type<std::string> is_valid(const pusch_processor::pdu_t& pdu) const override { return default_success_t(); }
-  bool                    is_valid(const srs_estimator_configuration& config) const override { return true; }
+  error_type<std::string> is_valid(const srs_estimator_configuration& config) const override
+  {
+    return default_success_t();
+  }
 };
 
 class resource_grid_pool_dummy : public resource_grid_pool, private shared_resource_grid::pool_interface

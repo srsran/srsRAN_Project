@@ -188,7 +188,14 @@ public:
                                                     prg_factory->create(),
                                                     precoder_factory->create());
 
-    return std::make_unique<pucch_demodulator_impl>(std::move(demodulator_format2), std::move(demodulator_format3));
+    std::unique_ptr<pucch_demodulator_format4> demodulator_format4 =
+        std::make_unique<pucch_demodulator_format4>(equalizer_factory->create(),
+                                                    demodulation_factory->create_demodulation_mapper(),
+                                                    prg_factory->create(),
+                                                    precoder_factory->create());
+
+    return std::make_unique<pucch_demodulator_impl>(
+        std::move(demodulator_format2), std::move(demodulator_format3), std::move(demodulator_format4));
   }
 
   pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory_,

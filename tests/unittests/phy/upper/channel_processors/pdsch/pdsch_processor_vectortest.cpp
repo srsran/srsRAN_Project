@@ -295,7 +295,7 @@ private:
           "pdsch_proc", NOF_CONCURRENT_THREADS, 128);
       executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
 
-      return create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
+      return create_pdsch_concurrent_processor_factory_sw(ldpc_segmenter_tx_factory,
                                                           ldpc_encoder_factory,
                                                           ldpc_rate_matcher_factory,
                                                           prg_factory,

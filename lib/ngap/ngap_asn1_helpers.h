@@ -123,9 +123,10 @@ inline void fill_ngap_ng_setup_result(ngap_ng_setup_result& result, const asn1::
 
     for (const auto& asn1_slice_support_item : asn1_plmn_support_item.slice_support_list) {
       slice_support_item_t slice_support_item = {};
-      slice_support_item.s_nssai.sst          = asn1_slice_support_item.s_nssai.sst.to_number();
+      slice_support_item.s_nssai.sst = slice_service_type{(uint8_t)asn1_slice_support_item.s_nssai.sst.to_number()};
       if (asn1_slice_support_item.s_nssai.sd_present) {
-        slice_support_item.s_nssai.sd = asn1_slice_support_item.s_nssai.sd.to_number();
+        slice_support_item.s_nssai.sd =
+            slice_differentiator::create(asn1_slice_support_item.s_nssai.sd.to_number()).value();
       }
       plmn_support_item.slice_support_list.push_back(slice_support_item);
     }
@@ -256,9 +257,9 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
 
   // s-NSSAI
   if (asn1_session_item.s_nssai.sd_present) {
-    setup_item.s_nssai.sd = asn1_session_item.s_nssai.sd.to_number();
+    setup_item.s_nssai.sd = slice_differentiator::create(asn1_session_item.s_nssai.sd.to_number()).value();
   }
-  setup_item.s_nssai.sst = asn1_session_item.s_nssai.sst.to_number();
+  setup_item.s_nssai.sst = slice_service_type{(uint8_t)asn1_session_item.s_nssai.sst.to_number()};
 
   // pDUSessionResourceSetupRequestTransfer
   asn1::ngap::pdu_session_res_setup_request_transfer_s asn1_setup_req_transfer;

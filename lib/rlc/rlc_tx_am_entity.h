@@ -38,7 +38,7 @@ namespace srsran {
 
 /// Container to hold a SDU for transmission, the progress in case of segmentation, and associated meta data
 struct rlc_tx_am_sdu_info {
-  byte_buffer                           sdu     = {};    ///< SDU buffer
+  byte_buffer                           sdu;             ///< SDU buffer
   bool                                  is_retx = false; ///< Determines whether this SDU is a PDCP retransmission
   std::optional<uint32_t>               pdcp_sn;         ///< Optional PDCP sequence number
   std::chrono::system_clock::time_point time_of_arrival;
@@ -105,7 +105,7 @@ private:
   const uint32_t am_window_size;
 
   /// TX window
-  std::unique_ptr<sdu_window<rlc_tx_am_sdu_info>> tx_window;
+  sdu_window<rlc_tx_am_sdu_info, rlc_bearer_logger> tx_window;
 
   /// Recycler for discarded PDUs (from tx_window) that shall be deleted by a different executor off the critical path
   rlc_pdu_recycler pdu_recycler;
@@ -349,11 +349,6 @@ private:
   /// Safe execution from: pcell_executor
   /// \param force_notify forces a notification of the lower layer regardless of the current/previous buffer state.
   void update_mac_buffer_state(bool force_notify);
-
-  /// Creates the tx_window according to sn_size
-  /// \param sn_size Size of the sequence number (SN)
-  /// \return unique pointer to tx_window instance
-  std::unique_ptr<sdu_window<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
 
   void log_state(srslog::basic_levels level)
   {

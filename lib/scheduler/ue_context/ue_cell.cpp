@@ -304,7 +304,7 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
 
 void ue_cell::handle_srs_channel_matrix(const srs_channel_matrix& channel_matrix)
 {
-  channel_state.update_srs_channel_matrix(channel_matrix, ue_cfg->get_pusch_codebook_subset());
+  channel_state.update_srs_channel_matrix(channel_matrix, ue_cfg->get_pusch_codebook_config());
 }
 
 void ue_cell::handle_csi_report(const csi_report_data& csi_report)

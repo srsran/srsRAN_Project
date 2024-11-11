@@ -46,10 +46,10 @@ inline void fill_e1ap_cu_up_e1_setup_request(cu_up_e1_setup_request&            
 
     for (const auto& asn1_slice_support_item : asn1_plmn_item.slice_support_list) {
       slice_support_item_t slice_support;
-      slice_support.s_nssai.sst = asn1_slice_support_item.snssai.sst.to_number();
+      slice_support.s_nssai.sst = slice_service_type{(uint8_t)asn1_slice_support_item.snssai.sst.to_number()};
 
       if (asn1_slice_support_item.snssai.sd_present) {
-        slice_support.s_nssai.sd = asn1_slice_support_item.snssai.sd.to_number();
+        slice_support.s_nssai.sd = slice_differentiator::create(asn1_slice_support_item.snssai.sd.to_number()).value();
       }
 
       plmn.slice_support_list.push_back(slice_support);

@@ -31,7 +31,7 @@ install(TARGETS srsdu
 
 target_link_libraries(srsdu
         srsran_app_services
-        srsgnb_app_f1u_du_split_connector
+        srsran_f1u_du_split_connector
         srsran_cu_cp
         srsran_network
         srsran_e2

@@ -261,8 +261,7 @@ bool du_srs_policy_max_ul_rate::alloc_resources(cell_group_config& cell_grp_cfg)
                     cells[primary_cell_index].cell_cfg.ul_carrier.nof_ant == 2 or
                     cells[primary_cell_index].cell_cfg.ul_carrier.nof_ant == 4,
                 "The number of UL antenna ports is not valid");
-  only_ue_srs_res.nof_ports =
-      static_cast<srs_config::srs_resource::nof_srs_ports>(cells[primary_cell_index].cell_cfg.ul_carrier.nof_ant);
+  only_ue_srs_res.nof_ports                    = srs_config::srs_resource::nof_srs_ports::port1;
   only_ue_srs_res.tx_comb.size                 = cells[primary_cell_index].cell_cfg.srs_cfg.tx_comb;
   only_ue_srs_res.tx_comb.tx_comb_offset       = du_res.tx_comb_offset.to_uint();
   only_ue_srs_res.tx_comb.tx_comb_cyclic_shift = du_res.cs;

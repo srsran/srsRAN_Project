@@ -323,7 +323,7 @@ shared_transport_block dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t          
 
   auto shared_buffer = harq_buffers.allocate_dl_harq_buffer(ue_idx, h_id);
   if (not shared_buffer or shared_buffer->get_buffer().size() < tb_size_bytes) {
-    logger.error(
+    logger.warning(
         "DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available", ue_idx, rnti, h_id);
     return make_shared_zero_buffer(tb_size_bytes);
   }
@@ -472,10 +472,10 @@ dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t h_id, unsigned tb
 
   auto shared_buffer = harq_buffers.allocate_dl_harq_buffer(ue_idx, h_id);
   if (not shared_buffer or shared_buffer->get_buffer().size() < tbs_bytes) {
-    logger.error("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
-                 ue_mng.get_ue_index(rnti),
-                 rnti,
-                 h_id);
+    logger.warning("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
+                   ue_mng.get_ue_index(rnti),
+                   rnti,
+                   h_id);
     return make_shared_zero_buffer(tbs_bytes);
   }
 

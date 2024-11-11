@@ -26,7 +26,6 @@
 #include "cu_cp_unit_logger_config.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/nr_band.h"
-#include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/s_nssai.h"
@@ -35,9 +34,14 @@
 namespace srsran {
 
 struct cu_cp_unit_plmn_item {
+  struct tai_slice_t {
+    uint8_t  sst = 0;
+    uint32_t sd  = 0xffffffU;
+  };
+
   std::string plmn_id;
   /// Supported Slices by the RAN node.
-  std::vector<s_nssai_t> tai_slice_support_list;
+  std::vector<tai_slice_t> tai_slice_support_list;
 };
 
 struct cu_cp_unit_supported_ta_item {
@@ -277,8 +281,8 @@ struct cu_cp_unit_config {
   uint8_t max_nof_drbs_per_ue = 8;
   /// Inactivity timer in seconds.
   int inactivity_timer = 120;
-  /// PDU session setup timeout in seconds (must be larger than T310).
-  unsigned pdu_session_setup_timeout = 3;
+  /// PDU session request timeout in seconds (must be larger than T310).
+  unsigned request_pdu_session_timeout = 3;
   /// Loggers configuration.
   cu_cp_unit_logger_config loggers;
   /// PCAPs configuration.
@@ -300,7 +304,7 @@ struct cu_cp_unit_config {
   /// QoS configuration.
   std::vector<cu_cp_unit_qos_config> qos_cfg;
   /// Network slice configuration.
-  std::vector<s_nssai_t> slice_cfg = {s_nssai_t{1}};
+  std::vector<s_nssai_t> slice_cfg = {s_nssai_t{slice_service_type{1}}};
   /// E2 configuration.
   e2_config e2_cfg;
 };

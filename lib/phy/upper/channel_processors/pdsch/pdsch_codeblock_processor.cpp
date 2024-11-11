@@ -24,8 +24,9 @@
 
 using namespace srsran;
 
-pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const uint8_t>  data,
-                                                                     const configuration& config)
+pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const uint8_t>          data,
+                                                                     const ldpc_segmenter_buffer& segment_buffer,
+                                                                     const configuration&         config)
 {
   using namespace units::literals;
 
@@ -36,7 +37,6 @@ pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const 
   scrambler->advance(config.metadata.cb_specific.cw_offset);
 
   // Prepare codeblock data.
-  units::bits nof_used_bits = 0_bits;
   cb_data.resize(config.cb_size.value());
 
   // Calculate transport block size.
@@ -51,7 +51,7 @@ pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const 
       tbs);
 
   // Rate Matching output length.
-  unsigned rm_length = config.metadata.cb_specific.rm_length;
+  unsigned rm_length = segment_buffer.get_rm_length(config.cb_index);
 
   // Extract modulation.
   modulation_scheme modulation = config.metadata.tb_common.mod;
@@ -60,67 +60,8 @@ pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const 
   unsigned bits_per_symbol = get_bits_per_symbol(modulation);
   srsran_assert(bits_per_symbol >= 1, "Number of bits per resource element must be greater than or equal to 1.");
 
-  // Copy codeblock data.
-  {
-    bit_buffer message = cb_data.first(config.cb_info_size.value());
-    srsvec::copy_offset(message, data, config.tb_offset.value());
-    nof_used_bits += units::bits(config.cb_info_size);
-  }
-
-  // Append transport block CRC if applicable.
-  if ((config.tb_offset + config.cb_info_size) == tbs) {
-    constexpr units::bits MAX_BITS_CRC16{3824};
-    crc_calculator&       tb_crc          = (tbs <= MAX_BITS_CRC16) ? *crc16 : *crc24a;
-    units::bits           nof_tb_crc_bits = units::bits(get_crc_size(tb_crc.get_generator_poly()));
-
-    crc_calculator_checksum_t tb_checksum = tb_crc.calculate_byte(data);
-    for (unsigned i_checksum_byte = 0, i_checksum_byte_end = nof_tb_crc_bits.truncate_to_bytes().value();
-         i_checksum_byte != i_checksum_byte_end;
-         ++i_checksum_byte) {
-      // Extract byte from the CRC.
-      unsigned tb_crc_byte = (tb_checksum >> (nof_tb_crc_bits.value() - (i_checksum_byte + 1) * 8)) & 0xffUL;
-      // Insert the byte at the end of the bit buffer.
-      cb_data.insert(tb_crc_byte, nof_used_bits.value(), 8);
-      // Increment the number of bits.
-      nof_used_bits += 8_bits;
-    }
-
-    // Insert zero padding bits.
-    for (units::bits nof_used_bits_end = nof_used_bits + config.zero_pad; nof_used_bits != nof_used_bits_end;) {
-      // Calculate the number of zeros to pad, no more than a byte at a time.
-      units::bits nof_zeros = std::min<units::bits>(8_bits, nof_used_bits_end - nof_used_bits);
-      // Insert the zeros at the end of the bit buffer.
-      cb_data.insert(0UL, nof_used_bits.value(), nof_zeros.value());
-      // Increment the number of bits.
-      nof_used_bits += nof_zeros;
-    }
-  }
-
-  // Append codeblock CRC if applicable.
-  if (config.has_cb_crc) {
-    crc_calculator& cb_crc = *crc24b;
-
-    crc_calculator_checksum_t cb_checksum = cb_crc.calculate(cb_data.first(nof_used_bits.value()));
-    for (unsigned i_checksum_byte = 0, i_checksum_byte_end = 3; i_checksum_byte != i_checksum_byte_end;
-         ++i_checksum_byte) {
-      // Extract byte from the CRC.
-      unsigned cb_crc_byte = (cb_checksum >> (24 - (i_checksum_byte + 1) * 8)) & 0xffUL;
-      // Insert the byte at the end of the bit buffer.
-      cb_data.insert(cb_crc_byte, nof_used_bits.value(), 8);
-      // Increment the number of bits.
-      nof_used_bits += 8_bits;
-    }
-  }
-
-  // Append filler bits as zeros.
-  while (nof_used_bits != config.cb_size) {
-    // Calculate the number of zeros to pad, no more than a byte at a time.
-    units::bits nof_zeros = std::min<units::bits>(8_bits, units::bits(config.cb_size) - nof_used_bits);
-    // Insert the zeros at the end of the bit buffer.
-    cb_data.insert(0UL, nof_used_bits.value(), nof_zeros.value());
-    // Increment the number of bits.
-    nof_used_bits += nof_zeros;
-  }
+  // Copy codeblock data, including TB and/or CB CRC if applicable, as well as filler and zero padding bits.
+  segment_buffer.read_codeblock(cb_data, data, config.cb_index);
 
   // Encode the segment into a codeblock.
   const ldpc_encoder_buffer& rm_buffer = encoder->encode(cb_data, config.metadata.tb_common);

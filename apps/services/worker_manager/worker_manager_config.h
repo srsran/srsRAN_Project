@@ -83,6 +83,8 @@ struct worker_manager_config {
     unsigned nof_cells;
     /// Real-time mode enabled flag.
     bool is_rt_mode_enabled;
+    /// Multicell DU enabled flag.
+    bool is_du_multicell_enabled;
   };
 
   // CU-UP worker configuration

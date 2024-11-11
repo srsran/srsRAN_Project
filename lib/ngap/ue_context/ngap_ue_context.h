@@ -42,7 +42,7 @@ struct ngap_ue_context {
   ngap_cu_cp_ue_notifier* ue = nullptr;
   guami_t                 serving_guami;
   uint64_t                aggregate_maximum_bit_rate_dl = 0;
-  unique_timer            pdu_session_setup_timer       = {};
+  unique_timer            request_pdu_session_timer     = {};
   bool                    release_requested             = false;
   bool                    release_scheduled             = false;
   byte_buffer    last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
@@ -55,7 +55,7 @@ struct ngap_ue_context {
                   task_executor&          task_exec_) :
     ue_ids({ue_index_, ran_ue_id_}), ue(&ue_notifier_), logger("NGAP", {ue_index_, ran_ue_id_})
   {
-    pdu_session_setup_timer = timers_.create_unique_timer(task_exec_);
+    request_pdu_session_timer = timers_.create_unique_timer(task_exec_);
   }
 
   [[nodiscard]] ngap_cu_cp_ue_notifier* get_cu_cp_ue() const { return ue; }

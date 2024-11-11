@@ -27,7 +27,6 @@
 
 #include "srsran/phy/upper/channel_coding/polar/polar_decoder.h"
 #include "srsran/phy/upper/channel_coding/polar/polar_encoder.h"
-#include "srsran/srsvec/aligned_vec.h"
 
 namespace srsran {
 
@@ -52,7 +51,7 @@ private:
     /// \f$log_2\f$ of the code size.
     uint8_t code_size_log;
     /// Number of bits of the encoder input/output vector, for all stages.
-    srsvec::aligned_vec<uint16_t> code_stage_size;
+    std::vector<uint16_t> code_stage_size;
     /// Stores the type of all nodes in stage 0.
     std::vector<node_rate> node_type_alloc;
     /// Stores the type of all nodes, stage by stage (e.g., <tt>node_type[0]</tt> is the same as \c node_type_alloc).
@@ -66,21 +65,21 @@ private:
     /// True if the last bit is decoded. False otherwise.
     bool flag_finished;
     /// Indicates the active node at each stage of the algorithm at a given moment.
-    srsvec::aligned_vec<uint16_t> active_node_per_stage;
+    std::vector<uint16_t> active_node_per_stage;
   };
 
   /// Structure with pointers needed to obtain the node_type.
   struct tmp_node_s {
     /// \brief Denotes whether a node is of type [RATE_0](#polar_decoder_impl::node_rate) (value 0) or of another
     /// type (value 1).
-    srsvec::aligned_vec<uint8_t> is_not_rate_0;
+    std::vector<uint8_t> is_not_rate_0;
     /// \brief Denotes whether a node is of type [RATE_1](#polar_decoder_impl::node_rate) (value 1) or of another type
     /// (value 0).
     span<uint8_t> is_rate_1;
     /// List of even-valued node indices.
-    srsvec::aligned_vec<uint16_t> i_even;
+    std::vector<uint16_t> i_even;
     /// List of odd-valued node indices.
-    srsvec::aligned_vec<uint16_t> i_odd;
+    std::vector<uint16_t> i_odd;
 
     /// \brief Allocates memory resources for the computation of the node_type.
     /// \param[in] nMax \f$log_2\f$ of the maximum number of bits in the codeword.
@@ -94,13 +93,13 @@ private:
   };
 
   /// LLR values for stage 0 (i.e., received LLRs).
-  srsvec::aligned_vec<log_likelihood_ratio> llr_alloc;
+  std::vector<log_likelihood_ratio> llr_alloc;
   /// Pointers to the upper half of the LLR values for all stages.
   std::vector<span<log_likelihood_ratio>> llr0;
   /// Pointers to the lower half of LLR values for all stages.
   std::vector<span<log_likelihood_ratio>> llr1;
   /// Temporary estimated bits.
-  srsvec::aligned_vec<uint8_t> est_bit;
+  std::vector<uint8_t> est_bit;
   /// Decoder inner parameters.
   params_s param;
   /// Decoder state.

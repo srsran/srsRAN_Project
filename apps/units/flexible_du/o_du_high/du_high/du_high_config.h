@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "apps/services/os_sched_affinity_manager.h"
+#include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -180,6 +180,8 @@ struct du_high_unit_pusch_config {
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
   std::vector<unsigned> rv_sequence = {0};
+  /// Maximum rank. Limits the number of layers for PUSCH transmissions.
+  unsigned max_rank = 4;
   /// MCS table to use for PUSCH
   pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
   /// \c msg3-DeltaPreamble, TS 38.331. Values: {-1,...,6}.
@@ -569,8 +571,10 @@ struct du_high_unit_cell_slice_sched_config {
 
 /// Slice configuration for a cell.
 struct du_high_unit_cell_slice_config {
-  /// Slice identifier.
-  s_nssai_t s_nssai = s_nssai_t{1};
+  /// Slice/Service Type.
+  uint8_t sst;
+  /// Slice Differentiator.
+  uint32_t sd;
   /// Slice scheduling configuration.
   du_high_unit_cell_slice_sched_config sched_cfg;
 };

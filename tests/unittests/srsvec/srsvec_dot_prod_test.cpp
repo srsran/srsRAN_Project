@@ -20,7 +20,6 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
@@ -34,12 +33,12 @@ static void test_dot_prod_ccc(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   for (cf_t& v : x) {
     v = {dist(rgen), dist(rgen)};
   }
 
-  srsvec::aligned_vec<cf_t> y(N);
+  std::vector<cf_t> y(N);
   for (cf_t& v : y) {
     v = {dist(rgen), dist(rgen)};
   }
@@ -63,7 +62,7 @@ static void test_avg_power_cf(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   for (cf_t& v : x) {
     v = {dist(rgen), dist(rgen)};
   }
@@ -89,7 +88,7 @@ static void test_avg_power_cbf16(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cbf16_t> x(N);
+  std::vector<cbf16_t> x(N);
   for (cbf16_t& v : x) {
     v = cbf16_t(dist(rgen), dist(rgen));
   }

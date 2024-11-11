@@ -200,7 +200,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
                                   target_ue->get_rrc_ue()->generate_meas_config(source_rrc_context.meas_cfg),
                                   true, /* Reestablish SRBs */
                                   true /* Reestablish DRBs */,
-                                  true, /* Update keys */
+                                  target_ue->get_security_manager().get_ncc(), /* Update keys */
                                   target_cell_sib1.copy(),
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", request.source_ue_index, name());

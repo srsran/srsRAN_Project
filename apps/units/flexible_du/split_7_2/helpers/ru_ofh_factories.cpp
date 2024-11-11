@@ -21,7 +21,7 @@
  */
 
 #include "ru_ofh_factories.h"
-#include "apps/services/worker_manager.h"
+#include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_du/split_helpers/flexible_du_configs.h"
 #include "ru_ofh_config_translator.h"
 #include "srsran/ru/ru_ofh_factory.h"

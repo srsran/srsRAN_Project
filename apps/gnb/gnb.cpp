@@ -20,29 +20,8 @@
  *
  */
 
-#include "srsran/support/backtrace.h"
-#include "srsran/support/config_parsers.h"
-#include "srsran/support/cpu_features.h"
-#include "srsran/support/dynlink_manager.h"
-#include "srsran/support/io/io_broker_factory.h"
-#include "srsran/support/signal_handling.h"
-#include "srsran/support/tracing/event_tracing.h"
-#include "srsran/support/versioning/build_info.h"
-#include "srsran/support/versioning/version.h"
-
-#include "srsran/du/du_power_controller.h"
-#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
-#include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
-#include "srsran/f1u/local_connector/f1u_local_connector.h"
-#include "srsran/gtpu/ngu_gateway.h"
-#include "srsran/ngap/gateways/n2_connection_client_factory.h"
-
-#include "gnb_appconfig.h"
-#include "gnb_appconfig_cli11_schema.h"
-#include "gnb_appconfig_translators.h"
-#include "gnb_appconfig_validators.h"
-#include "gnb_appconfig_yaml_writer.h"
-
+#include "apps/cu/adapters/e2_gateways.h"
+#include "apps/du/adapters/e2_gateways.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
@@ -51,16 +30,7 @@
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/stdin_command_dispatcher.h"
-#include "apps/services/worker_manager.h"
-
-#include "apps/cu/adapters/e2_gateways.h"
-#include "apps/du/adapters/e2_gateways.h"
-#include "apps/services/e2/e2_metric_connector_manager.h"
-
-// Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
-// This include is not unused - it helps prevent false alarms from the thread sanitizer.
-#include "srsran/support/tsan_options.h"
-
+#include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/cu_cp/cu_cp_application_unit.h"
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
@@ -71,13 +41,34 @@
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
 #include "apps/units/flexible_du/o_du_high/du_high/du_high_config.h"
 #include "apps/units/flexible_du/o_du_high/du_high/pcap_factory.h"
-
+#include "gnb_appconfig.h"
+#include "gnb_appconfig_cli11_schema.h"
+#include "gnb_appconfig_translators.h"
+#include "gnb_appconfig_validators.h"
+#include "gnb_appconfig_yaml_writer.h"
+#include "srsran/du/du_power_controller.h"
+#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
+#include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
+#include "srsran/f1u/local_connector/f1u_local_connector.h"
+#include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/ngap/gateways/n2_connection_client_factory.h"
+#include "srsran/support/backtrace.h"
+#include "srsran/support/config_parsers.h"
+#include "srsran/support/cpu_features.h"
+#include "srsran/support/dynlink_manager.h"
+#include "srsran/support/io/io_broker_factory.h"
+#include "srsran/support/signal_handling.h"
+#include "srsran/support/tracing/event_tracing.h"
+#include "srsran/support/versioning/build_info.h"
+#include "srsran/support/versioning/version.h"
 #include <atomic>
 #include <yaml-cpp/node/convert.h>
-
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #endif
+// Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
+// This include is not unused - it helps prevent false alarms from the thread sanitizer.
+#include "srsran/support/tsan_options.h"
 
 using namespace srsran;
 
@@ -173,8 +164,9 @@ static void autoderive_slicing_args(du_high_unit_config& du_hi_cfg, cu_cp_unit_c
   std::vector<s_nssai_t> du_slices;
   for (const auto& cell_cfg : du_hi_cfg.cells_cfg) {
     for (const auto& slice : cell_cfg.cell.slice_cfg) {
-      if (du_slices.end() == std::find(du_slices.begin(), du_slices.end(), slice.s_nssai)) {
-        du_slices.push_back(slice.s_nssai);
+      s_nssai_t nssai{slice_service_type{slice.sst}, slice_differentiator::create(slice.sd).value()};
+      if (du_slices.end() == std::find(du_slices.begin(), du_slices.end(), nssai)) {
+        du_slices.push_back(nssai);
       }
     }
   }
@@ -241,7 +233,8 @@ int main(int argc, char** argv)
     // If test mode is enabled, we auto-enable "no_core" option and generate a amf config with no core.
     if (du_app_unit->get_du_high_unit_config().is_testmode_enabled()) {
       cu_cp_app_unit->get_cu_cp_unit_config().amf_config.no_core           = true;
-      cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf.supported_tas = {{7, {{"00101", {s_nssai_t{1}}}}}};
+      cu_cp_app_unit->get_cu_cp_unit_config().amf_config.amf.supported_tas = {
+          {7, {{"00101", {cu_cp_unit_plmn_item::tai_slice_t{1}}}}}};
     }
 
     cu_cp_app_unit->on_configuration_parameters_autoderivation(app);

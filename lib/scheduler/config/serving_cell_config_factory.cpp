@@ -441,7 +441,7 @@ ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_con
 pusch_config srsran::config_helpers::make_default_pusch_config(const cell_config_builder_params_extended& params)
 {
   // Default PUSCH transmission scheme is codebook with at maximum one layer. It assumes the UE Capability parameter
-  // pusch-TransCoherence is fullCoherent.
+  // pusch-TransCoherence is nonCoherent.
   static constexpr unsigned                  max_rank        = 1;
   static constexpr tx_scheme_codebook_subset codebook_subset = tx_scheme_codebook_subset::non_coherent;
 

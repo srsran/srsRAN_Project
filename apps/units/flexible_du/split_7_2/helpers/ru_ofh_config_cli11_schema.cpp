@@ -22,7 +22,7 @@
 
 #include "ru_ofh_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
-#include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
+#include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "ru_ofh_config.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"

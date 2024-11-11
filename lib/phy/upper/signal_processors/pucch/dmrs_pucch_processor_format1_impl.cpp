@@ -21,14 +21,14 @@
  */
 
 #include "dmrs_pucch_processor_format1_impl.h"
+#include "../../../../../include/srsran/phy/upper/pucch_orthogonal_sequence.h"
 #include "srsran/phy/upper/pucch_helper.h"
-#include "srsran/phy/upper/pucch_orthogonal_sequence.h"
 #include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
 // Pre-generated orthogonal cover code.
-static const pucch_orthogonal_sequence occ;
+static const pucch_orthogonal_sequence_format1 occ;
 
 // DM-RS symbol allocation pattern for PUCCH Format 1, as defined in TS38.211 Section 6.4.1.3.1.2.
 static const bounded_bitset<MAX_NSYMB_PER_SLOT> pucch_format1_dmrs_symb_mask =

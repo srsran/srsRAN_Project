@@ -24,7 +24,6 @@
 
 #include "srsran/phy/upper/channel_modulation/evm_calculator.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsran/srsvec/aligned_vec.h"
 
 namespace srsran {
 
@@ -54,7 +53,7 @@ private:
   /// Data after hard-decision.
   dynamic_bit_buffer temp_hard_bits;
   /// Modulated data.
-  srsvec::aligned_vec<cf_t> temp_modulated;
+  std::vector<cf_t> temp_modulated;
 };
 
 } // namespace srsran

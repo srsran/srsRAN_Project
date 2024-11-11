@@ -38,7 +38,7 @@ namespace srs_du {
 class test_ue_info_manager
 {
 public:
-  test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_);
+  test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_, uint16_t nof_cells_);
 
   du_ue_index_t rnti_to_du_ue_idx(rnti_t rnti) const
   {
@@ -52,7 +52,7 @@ public:
 
   bool is_test_ue(rnti_t rnti) const
   {
-    return (rnti >= rnti_start) and (rnti < to_rnti(to_value(rnti_start) + nof_ues));
+    return (rnti >= rnti_start) and (rnti < to_rnti(to_value(rnti_start) + nof_ues * nof_cells));
   }
 
   void add_ue(rnti_t rnti, du_ue_index_t ue_idx_, const sched_ue_config_request& sched_ue_cfg_req_);
@@ -97,6 +97,7 @@ private:
   // Parameters received from configuration.
   rnti_t   rnti_start;
   uint16_t nof_ues;
+  uint16_t nof_cells;
 
   // Mapping between UE RNTI and test UE information.
   std::unordered_map<rnti_t, test_ue_info> rnti_to_ue_info_lookup;
@@ -207,7 +208,8 @@ class mac_test_mode_adapter final : public mac_interface,
 {
 public:
   explicit mac_test_mode_adapter(const srs_du::du_test_mode_config::test_mode_ue_config& test_ue_cfg,
-                                 mac_result_notifier&                                    phy_notifier_);
+                                 mac_result_notifier&                                    phy_notifier_,
+                                 unsigned                                                nof_cells);
   ~mac_test_mode_adapter() override;
 
   void connect(std::unique_ptr<mac_interface> mac_ptr);

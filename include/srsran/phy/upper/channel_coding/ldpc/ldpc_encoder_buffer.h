@@ -29,7 +29,7 @@ namespace srsran {
 
 /// \brief LDPC encoder output buffer interface.
 ///
-/// This interface allows the LDPC encoder to provide the encoded bits to the rate matcher without using anintermediate
+/// This interface allows the LDPC encoder to provide the encoded bits to the rate matcher without using an intermediate
 /// buffer.
 class ldpc_encoder_buffer
 {

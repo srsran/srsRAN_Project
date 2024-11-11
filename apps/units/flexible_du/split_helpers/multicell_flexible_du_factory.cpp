@@ -22,20 +22,14 @@
 
 #include "multicell_flexible_du_factory.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
-#include "apps/services/worker_manager.h"
+#include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_du/flexible_du_commands.h"
 #include "apps/units/flexible_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_du/o_du_high/o_du_high_unit_factory.h"
 #include "apps/units/flexible_du/o_du_low/o_du_low_unit_factory.h"
-#include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_factories.h"
-#include "apps/units/flexible_du/split_8/helpers/ru_sdr_factories.h"
 #include "multicell_flexible_du_impl.h"
-
-#include "srsran/du/o_du.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
-#include "srsran/pcap/rlc_pcap.h"
-#include "srsran/ru/ru_dummy_factory.h"
 
 using namespace srsran;
 

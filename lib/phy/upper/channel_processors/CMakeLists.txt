@@ -40,6 +40,7 @@ target_link_libraries(srsran_pdcch_processor srsran_ran)
 
 add_library(srsran_prach_detector STATIC
         prach_detector_generic_impl.cpp
+        prach_detector_generic_thresholds.cpp
         prach_generator_impl.cpp
         prach_detector_phy_validator_impl.cpp)
 target_link_libraries(srsran_prach_detector srsran_ran srsvec)

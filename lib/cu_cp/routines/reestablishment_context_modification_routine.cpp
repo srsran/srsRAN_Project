@@ -139,7 +139,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
                                   {} /* TODO: include meas config in context*/,
                                   true /* Reestablish SRBs */,
                                   true /* Reestablish DRBs */,
-                                  false /* don't update keys */,
+                                  std::nullopt /* don't update keys */,
                                   {},
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", ue_index, name());

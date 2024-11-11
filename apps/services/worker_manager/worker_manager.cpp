@@ -255,15 +255,17 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   }
 
   // Instantiate DU-high executor mapper.
-  du_high_executors.resize(du_hi.nof_cells);
-  for (unsigned i = 0; i != du_hi.nof_cells; ++i) {
-    auto&             du_item     = du_high_executors[i];
-    const std::string cell_id_str = std::to_string(i);
-
-    // DU-high executor mapper creation.
-    srs_du::du_high_executor_config cfg;
-    cfg.cell_executors = srs_du::du_high_executor_config::dedicated_cell_worker_list{
-        {*exec_map.at("slot_exec#" + cell_id_str), *exec_map.at("cell_exec#" + cell_id_str)}};
+  srs_du::du_high_executor_config cfg;
+  if (du_hi.is_du_multicell_enabled) {
+    // DU multicell enabled. Create one executor mapper.
+    du_high_executors.resize(1);
+    auto&                                                       du_item = du_high_executors[0];
+    srs_du::du_high_executor_config::dedicated_cell_worker_list cell_workers;
+    for (unsigned i = 0; i != du_hi.nof_cells; ++i) {
+      const std::string cell_id_str = std::to_string(i);
+      cell_workers.push_back({*exec_map.at("slot_exec#" + cell_id_str), *exec_map.at("cell_exec#" + cell_id_str)});
+    }
+    cfg.cell_executors.emplace<srs_du::du_high_executor_config::dedicated_cell_worker_list>(std::move(cell_workers));
     cfg.ue_executors.policy            = srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell;
     cfg.ue_executors.max_nof_strands   = 1;
     cfg.ue_executors.ctrl_queue_size   = task_worker_queue_size;
@@ -275,6 +277,28 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
     cfg.trace_exec_tasks               = false;
 
     du_item.du_high_exec_mapper = srs_du::create_du_high_executor_mapper(cfg);
+  } else {
+    // DU single cell enabled. Create one executor mapper per DU/cell.
+    du_high_executors.resize(du_hi.nof_cells);
+    for (unsigned i = 0; i != du_hi.nof_cells; ++i) {
+      auto&             du_item     = du_high_executors[i];
+      const std::string cell_id_str = std::to_string(i);
+
+      // DU-high executor mapper creation.
+      cfg.cell_executors = srs_du::du_high_executor_config::dedicated_cell_worker_list{
+          {*exec_map.at("slot_exec#" + cell_id_str), *exec_map.at("cell_exec#" + cell_id_str)}};
+      cfg.ue_executors.policy            = srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell;
+      cfg.ue_executors.max_nof_strands   = 1;
+      cfg.ue_executors.ctrl_queue_size   = task_worker_queue_size;
+      cfg.ue_executors.pdu_queue_size    = du_hi.pdu_queue_size;
+      cfg.ue_executors.pool_executor     = exec_map.at("low_prio_exec");
+      cfg.ctrl_executors.task_queue_size = task_worker_queue_size;
+      cfg.ctrl_executors.pool_executor   = exec_map.at("high_prio_exec");
+      cfg.is_rt_mode_enabled             = du_hi.is_rt_mode_enabled;
+      cfg.trace_exec_tasks               = false;
+
+      du_item.du_high_exec_mapper = srs_du::create_du_high_executor_mapper(cfg);
+    }
   }
 
   if (du_low) {
@@ -541,7 +565,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
 {
   using namespace execution_config_helper;
 
-  // Radio Unit worker and executor. As the radio is unique per gNB, use the first cell of the affinity manager.
+  // Radio Unit worker and executor. As the radio is unique per application, use the first cell of the affinity manager.
   create_prio_worker("radio",
                      task_worker_queue_size,
                      {{"radio_exec"}},

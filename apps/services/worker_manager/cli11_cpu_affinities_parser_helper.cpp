@@ -21,7 +21,7 @@
  */
 
 #include "cli11_cpu_affinities_parser_helper.h"
-#include "apps/services/os_sched_affinity_manager.h"
+#include "os_sched_affinity_manager.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/interval.h"
 

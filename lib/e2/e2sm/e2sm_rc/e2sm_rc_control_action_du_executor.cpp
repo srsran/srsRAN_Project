@@ -120,37 +120,45 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
   if (action_params[ran_param_id] == "PLMN Identity") {
     srs_du::control_config_params cur_control_params = {};
     cur_control_params.rrm_policy_group.emplace();
-    cur_control_params.rrm_policy_group.value().pol_member.plmn_id =
-        plmn_identity::parse(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_string()).value();
+    if (ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().size() != 3) {
+      logger.error("E2SM-RC Slice-level PRB quota Control Request: PLMN (param_id={}) encoded not correctly.",
+                   ran_param_id);
+      return;
+    }
+    std::array<uint8_t, 3> plmn_bytes;
+    std::copy(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().begin(),
+              ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().end(),
+              plmn_bytes.begin());
+    cur_control_params.rrm_policy_group.value().pol_member.plmn_id.from_bytes(plmn_bytes);
     ctrl_cfg.param_list.push_back(cur_control_params);
   } else if (action_params[ran_param_id] == "SST") {
     if (ctrl_cfg.param_list.size()) {
-      if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sst) {
+      if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sst.value() != 0) {
         srs_du::control_config_params cur_control_params = {};
         cur_control_params.rrm_policy_group.emplace();
         cur_control_params = ctrl_cfg.param_list.back();
         cur_control_params.rrm_policy_group.value().pol_member.s_nssai.sst =
-            ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
+            slice_service_type{(uint8_t)ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number()};
         ctrl_cfg.param_list.push_back(cur_control_params);
       } else {
         ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sst =
-            ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
+            slice_service_type{(uint8_t)ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number()};
       }
     }
   } else if (action_params[ran_param_id] == "SD") {
     if (ctrl_cfg.param_list.size()) {
-      if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd.has_value()) {
+      if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd.is_set()) {
         srs_du::control_config_params cur_control_params = {};
         cur_control_params.rrm_policy_group.emplace();
         cur_control_params = ctrl_cfg.param_list.back();
-        cur_control_params.rrm_policy_group.value().pol_member.s_nssai.sd.emplace();
         cur_control_params.rrm_policy_group.value().pol_member.s_nssai.sd =
-            ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
+            slice_differentiator::create(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number())
+                .value();
         ctrl_cfg.param_list.push_back(cur_control_params);
       } else {
-        ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd.emplace();
         ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd =
-            ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
+            slice_differentiator::create(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number())
+                .value();
       }
     }
   } else if (action_params[ran_param_id] == "Min PRB Policy Ratio") {
@@ -269,7 +277,7 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
   srs_du::control_config_params req = du_config_req_.param_list[0];
   if (req.rrm_policy_group.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
-    min_prb_outcome.ran_param_id = 10;
+    min_prb_outcome.ran_param_id = 11;
     if (req.rrm_policy_group.value().min_prb_policy_ratio.has_value()) {
       min_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_group.value().min_prb_policy_ratio.value();
       ctrl_outcome.ran_p_list.push_back(min_prb_outcome);
@@ -278,7 +286,7 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
 
   if (req.rrm_policy_group.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s max_prb_outcome;
-    max_prb_outcome.ran_param_id = 11;
+    max_prb_outcome.ran_param_id = 12;
     if (req.rrm_policy_group.value().max_prb_policy_ratio.has_value()) {
       max_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_group.value().max_prb_policy_ratio.value();
       ctrl_outcome.ran_p_list.push_back(max_prb_outcome);

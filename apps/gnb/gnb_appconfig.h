@@ -24,10 +24,10 @@
 
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/e2/e2_appconfig.h"
+#include "apps/services/hal/hal_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
-#include "apps/services/os_sched_affinity_manager.h"
+#include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include "srsran/ran/gnb_id.h"
-#include "srsran/support/executors/unique_thread.h"
 #include <string>
 
 namespace srsran {
@@ -42,42 +42,6 @@ struct cu_up_appconfig {
 struct metrics_appconfig {
   std::string addr = "127.0.0.1";
   uint16_t    port = 55555;
-};
-
-/// CPU affinities configuration for the gNB app.
-struct cpu_affinities_appconfig {
-  /// CPUs isolation.
-  std::optional<os_sched_affinity_bitmask> isolated_cpus;
-  /// Low priority workers CPU affinity mask.
-  os_sched_affinity_config low_priority_cpu_cfg = {sched_affinity_mask_types::low_priority,
-                                                   {},
-                                                   sched_affinity_mask_policy::mask};
-};
-
-/// Non real time thread configuration for the gNB.
-struct non_rt_threads_appconfig {
-  /// Number of non real time threads for processing of CP and UP data in the upper layers
-  unsigned nof_non_rt_threads = 4;
-};
-
-/// Expert threads configuration of the gNB app.
-struct expert_threads_appconfig {
-  /// Non real time thread configuration of the gNB app.
-  non_rt_threads_appconfig non_rt_threads;
-};
-
-/// Expert configuration of the gNB app.
-struct expert_execution_appconfig {
-  /// gNB CPU affinities.
-  cpu_affinities_appconfig affinities;
-  /// Expert thread configuration of the gNB app.
-  expert_threads_appconfig threads;
-};
-
-/// HAL configuration of the gNB app.
-struct hal_appconfig {
-  /// EAL configuration arguments.
-  std::string eal_args;
 };
 
 /// Monolithic gnb application configuration.

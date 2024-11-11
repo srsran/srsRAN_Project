@@ -31,7 +31,7 @@
 using namespace srsran;
 
 // Pre-generated orthogonal cover code.
-static const pucch_orthogonal_sequence occ;
+static const pucch_orthogonal_sequence_format1 occ;
 
 static void validate_config(const pucch_detector::format1_configuration& config)
 {

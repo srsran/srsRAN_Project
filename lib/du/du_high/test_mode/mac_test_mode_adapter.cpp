@@ -73,8 +73,8 @@ size_t get_ring_size(const mac_cell_creation_request& cell_cfg)
 
 } // namespace
 
-test_ue_info_manager::test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_) :
-  rnti_start(rnti_start_), nof_ues(nof_ues_), pending_tasks(128)
+test_ue_info_manager::test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_, uint16_t nof_cells_) :
+  rnti_start(rnti_start_), nof_ues(nof_ues_), nof_cells(nof_cells_), pending_tasks(128)
 {
 }
 
@@ -476,9 +476,10 @@ void phy_test_mode_adapter::phy_cell::on_cell_results_completion(slot_point slot
 // ----
 
 mac_test_mode_adapter::mac_test_mode_adapter(const srs_du::du_test_mode_config::test_mode_ue_config& test_ue_cfg_,
-                                             mac_result_notifier&                                    phy_notifier_) :
+                                             mac_result_notifier&                                    phy_notifier_,
+                                             unsigned                                                nof_cells) :
   test_ue(test_ue_cfg_),
-  ue_info_mgr(test_ue.rnti, test_ue.nof_ues),
+  ue_info_mgr(test_ue.rnti, test_ue.nof_ues, nof_cells),
   phy_notifier(std::make_unique<phy_test_mode_adapter>(phy_notifier_))
 {
 }
@@ -620,14 +621,15 @@ void mac_test_mode_adapter::handle_ue_config_applied(du_ue_index_t ue_idx)
 }
 
 std::unique_ptr<mac_interface> srsran::srs_du::create_du_high_mac(const mac_config&                  mac_cfg,
-                                                                  const srs_du::du_test_mode_config& test_cfg)
+                                                                  const srs_du::du_test_mode_config& test_cfg,
+                                                                  unsigned                           nof_cells)
 {
   if (not test_cfg.test_ue.has_value()) {
     return create_mac(mac_cfg);
   }
 
   // Create a MAC test mode adapter that wraps the real MAC.
-  auto mac_testmode = std::make_unique<mac_test_mode_adapter>(*test_cfg.test_ue, mac_cfg.phy_notifier);
+  auto mac_testmode = std::make_unique<mac_test_mode_adapter>(*test_cfg.test_ue, mac_cfg.phy_notifier, nof_cells);
   mac_testmode->connect(create_mac(mac_config{mac_cfg.ul_ccch_notifier,
                                               mac_cfg.ue_exec_mapper,
                                               mac_cfg.cell_exec_mapper,

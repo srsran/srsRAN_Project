@@ -27,6 +27,7 @@
 #include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/ran/srs/srs_channel_matrix_formatters.h"
 #include "srsran/ran/srs/srs_resource_formatter.h"
+#include <limits>
 
 namespace fmt {
 
@@ -77,7 +78,9 @@ struct formatter<srsran::srs_estimator_result> {
 
   {
     helper.format_always(ctx, "t_align={:.1}us", config.time_alignment.time_alignment * 1e6);
-    helper.format_always(ctx, "noise_var={:.3e}", config.noise_variance);
+    helper.format_always(ctx, "epre={:.3e}dB", config.epre_dB.value_or(std::numeric_limits<float>::quiet_NaN()));
+    helper.format_always(
+        ctx, "noise_var={:.3e}", config.noise_variance.value_or(std::numeric_limits<float>::quiet_NaN()));
 
     // Get matrix Frobenius norm.
     float frobenius_norm = config.channel_matrix.frobenius_norm();

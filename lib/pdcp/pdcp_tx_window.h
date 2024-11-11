@@ -46,7 +46,7 @@ class pdcp_tx_window
 public:
   pdcp_tx_window(pdcp_rb_type rb_type_, pdcp_rlc_mode rlc_mode_, pdcp_sn_size sn_size_, pdcp_bearer_logger logger_);
 
-  bool has_sn(uint32_t count);
+  bool has_sn(uint32_t count) const;
 
   /// \brief Remove SDU from TX window
   /// This method removes an SDU from the TX window. It will keep track of the PDU bytes in the window
@@ -69,21 +69,22 @@ public:
   uint32_t get_pdu_bytes(security::integrity_enabled integrity) const;
 
 private:
+  pdcp_bearer_logger logger;
+
   /// \brief Tx window.
   /// This container is used to store discard timers of transmitted SDUs and, only for AM, a copy of the SDU for data
   /// recovery procedure. Upon expiry of a discard timer, the PDCP Tx entity instructs the lower layers to discard the
   /// associated PDCP PDU. See section 5.2.1 and 7.3 of TS 38.323.
-  std::unique_ptr<sdu_window<pdcp_tx_sdu_info>> tx_window;
+  sdu_window<pdcp_tx_sdu_info, pdcp_bearer_logger> tx_window;
 
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
   void create_tx_window();
 
-  pdcp_rb_type       rb_type;
-  pdcp_rlc_mode      rlc_mode;
-  pdcp_sn_size       sn_size;
-  pdcp_bearer_logger logger;
+  pdcp_rb_type  rb_type;
+  pdcp_rlc_mode rlc_mode;
+  pdcp_sn_size  sn_size;
 
   uint32_t sdu_bytes = 0;
   uint32_t nof_sdus  = 0;

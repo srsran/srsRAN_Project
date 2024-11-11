@@ -21,7 +21,7 @@
  */
 
 /// \file
-/// \brief Generation of PUCCH Format 1 orthogonal sequences.
+/// \brief Generation of PUCCH orthogonal sequences.
 
 #pragma once
 
@@ -35,49 +35,11 @@
 namespace srsran {
 
 /// Generator of orthogonal sequences \e w for PUCCH Format 1.
-class pucch_orthogonal_sequence
+class pucch_orthogonal_sequence_format1
 {
-private:
-  /// Alias for sequence table type.
-  using w_array =
-      std::array<std::array<std::array<cf_t, pucch_constants::FORMAT1_N_MAX>, pucch_constants::FORMAT1_N_MAX>,
-                 pucch_constants::FORMAT1_N_MAX>;
-
-  /// \brief Coefficients \f$\phi(m)\f$ for sequence generation.
-  ///
-  /// See TS38.211 Table 6.3.2.4.1-2: Orthogonal sequences for PUCCH Format 1.
-  static constexpr std::array<
-      std::array<std::array<unsigned, pucch_constants::FORMAT1_N_MAX>, pucch_constants::FORMAT1_N_MAX>,
-      pucch_constants::FORMAT1_N_MAX>
-      pucch_format1_phi = {
-          {{{{0}, {}, {}, {}, {}, {}, {}}},
-           {{{0, 0}, {0, 1}, {}, {}, {}, {}, {}}},
-           {{{0, 0, 0}, {0, 1, 2}, {0, 2, 1}, {}, {}, {}, {}}},
-           {{{0, 0, 0, 0}, {0, 2, 0, 2}, {0, 0, 2, 2}, {0, 2, 2, 0}, {}, {}, {}}},
-           {{{0, 0, 0, 0, 0}, {0, 1, 2, 3, 4}, {0, 2, 4, 1, 3}, {0, 3, 1, 4, 2}, {0, 4, 3, 2, 1}, {}, {}}},
-           {{{0, 0, 0, 0, 0, 0},
-             {0, 1, 2, 3, 4, 5},
-             {0, 2, 4, 0, 2, 4},
-             {0, 3, 0, 3, 0, 3},
-             {0, 4, 2, 0, 4, 2},
-             {0, 5, 4, 3, 2, 1},
-             {}}},
-           {{{0, 0, 0, 0, 0, 0, 0},
-             {0, 1, 2, 3, 4, 5, 6},
-             {0, 2, 4, 6, 1, 3, 5},
-             {0, 3, 6, 2, 5, 1, 4},
-             {0, 4, 1, 5, 2, 6, 3},
-             {0, 5, 3, 1, 6, 4, 2},
-             {0, 6, 5, 4, 3, 2, 1}}}}};
-
-  /// Table with the actual sequences \e w.
-  w_array orthogonal_sequence;
-  /// Table with the conjugated sequences \e w.
-  w_array orthogonal_sequence_conj;
-
 public:
   /// Constructor: builds the sequences \e w from the coefficients in \ref pucch_format1_phi.
-  pucch_orthogonal_sequence()
+  pucch_orthogonal_sequence_format1()
   {
     for (unsigned n_pucch = 0, max_n_pucch = pucch_constants::FORMAT1_N_MAX; n_pucch != max_n_pucch; ++n_pucch) {
       for (unsigned i_seq = 0; i_seq != pucch_constants::FORMAT1_N_MAX; ++i_seq) {
@@ -128,6 +90,85 @@ public:
 
     return span<const cf_t>(orthogonal_sequence_conj[n_pucch - 1][i]).first(n_pucch);
   }
+
+private:
+  /// Alias for sequence table type.
+  using w_array =
+      std::array<std::array<std::array<cf_t, pucch_constants::FORMAT1_N_MAX>, pucch_constants::FORMAT1_N_MAX>,
+                 pucch_constants::FORMAT1_N_MAX>;
+
+  /// \brief Coefficients \f$\phi(m)\f$ for sequence generation.
+  ///
+  /// See TS38.211 Table 6.3.2.4.1-2: Orthogonal sequences for PUCCH Format 1.
+  static constexpr std::array<
+      std::array<std::array<unsigned, pucch_constants::FORMAT1_N_MAX>, pucch_constants::FORMAT1_N_MAX>,
+      pucch_constants::FORMAT1_N_MAX>
+      pucch_format1_phi = {
+          {{{{0}, {}, {}, {}, {}, {}, {}}},
+           {{{0, 0}, {0, 1}, {}, {}, {}, {}, {}}},
+           {{{0, 0, 0}, {0, 1, 2}, {0, 2, 1}, {}, {}, {}, {}}},
+           {{{0, 0, 0, 0}, {0, 2, 0, 2}, {0, 0, 2, 2}, {0, 2, 2, 0}, {}, {}, {}}},
+           {{{0, 0, 0, 0, 0}, {0, 1, 2, 3, 4}, {0, 2, 4, 1, 3}, {0, 3, 1, 4, 2}, {0, 4, 3, 2, 1}, {}, {}}},
+           {{{0, 0, 0, 0, 0, 0},
+             {0, 1, 2, 3, 4, 5},
+             {0, 2, 4, 0, 2, 4},
+             {0, 3, 0, 3, 0, 3},
+             {0, 4, 2, 0, 4, 2},
+             {0, 5, 4, 3, 2, 1},
+             {}}},
+           {{{0, 0, 0, 0, 0, 0, 0},
+             {0, 1, 2, 3, 4, 5, 6},
+             {0, 2, 4, 6, 1, 3, 5},
+             {0, 3, 6, 2, 5, 1, 4},
+             {0, 4, 1, 5, 2, 6, 3},
+             {0, 5, 3, 1, 6, 4, 2},
+             {0, 6, 5, 4, 3, 2, 1}}}}};
+
+  /// Table with the actual sequences \e w.
+  w_array orthogonal_sequence;
+  /// Table with the conjugated sequences \e w.
+  w_array orthogonal_sequence_conj;
+};
+
+/// Generator of orthogonal sequences \e w for PUCCH Format 4.
+class pucch_orthogonal_sequence_format4
+{
+public:
+  /// \brief Gets an entire PUCCH Format 4 orthogonal sequence.
+  ///
+  /// \param[in] n_pucch   Length of the PUCCH Format 4 sequence
+  ///                      \f$N_{\text{SF},m'}^{\text{PUCCH},4} \in \{2, 4\}\f$.
+  /// \param[in] i         Sequence index \f$i \in \{0, \dots, N_{\text{SF},m'}^{\text{PUCCH},4} - 1\}\f$.
+  /// \returns The requested sequence.
+  /// \warning An assertion is thrown if the inputs do not match the limits above.
+  static span<const cf_t> get_sequence(unsigned n_pucch, unsigned i)
+  {
+    srsran_assert((n_pucch == 2) || (n_pucch == 4), "Invalid n_pucch {}: valid values 2 or 4.", n_pucch);
+    srsran_assert(i < n_pucch, "Invalid sequence index i = {}, valid values from 0 to {}.", i, n_pucch - 1);
+
+    if (n_pucch == 2) {
+      return pucch_format4_length2[i];
+    }
+    return pucch_format4_length4[i];
+  }
+
+private:
+  static constexpr auto one     = cf_t(1.0F, 0.0F);
+  static constexpr auto neg_one = cf_t(-1.0F, 0.0F);
+  static constexpr auto j       = cf_t(0.0F, 1.0F);
+  static constexpr auto neg_j   = cf_t(0.0F, -1.0F);
+
+  static constexpr std::array<std::array<cf_t, NRE>, 2> pucch_format4_length2 = {{
+      {one, one, one, one, one, one, one, one, one, one, one, one},
+      {one, one, one, one, one, one, neg_one, neg_one, neg_one, neg_one, neg_one, neg_one},
+  }};
+
+  static constexpr std::array<std::array<cf_t, NRE>, 4> pucch_format4_length4 = {{
+      {one, one, one, one, one, one, one, one, one, one, one, one},
+      {one, one, one, neg_j, neg_j, neg_j, neg_one, neg_one, neg_one, j, j, j},
+      {one, one, one, neg_one, neg_one, neg_one, one, one, one, neg_one, neg_one, neg_one},
+      {one, one, one, j, j, j, neg_one, neg_one, neg_one, neg_j, neg_j, neg_j},
+  }};
 };
 
 } // namespace srsran

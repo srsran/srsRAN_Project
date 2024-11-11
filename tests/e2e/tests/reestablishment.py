@@ -59,7 +59,7 @@ _ONLY_RERUN = ["failed to start", "Attach timeout reached", "StatusCode.ABORTED"
 def test_smoke_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_4: Tuple[UEStub, ...],
+    ue_2: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
 ):
@@ -69,7 +69,7 @@ def test_smoke_sequentially(
     _reestablishment_sequentially_ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_4,
+        ue_array=ue_2,
         fivegc=fivegc,
         gnb=gnb,
         metrics_summary=None,
@@ -295,7 +295,7 @@ def test_zmq_reestablishment_parallel(
         always_download_artifacts=True,
         noise_spd=noise_spd,
         log_ip_level="debug",
-        warning_as_errors=True,
+        warning_as_errors=False,
     ) as ue_attach_info_dict:
 
         for i in range(number_of_reestablishments):

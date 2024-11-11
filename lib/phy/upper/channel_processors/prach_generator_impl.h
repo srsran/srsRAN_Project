@@ -24,7 +24,6 @@
 
 #include "srsran/phy/upper/channel_processors/prach_generator.h"
 #include "srsran/ran/prach/prach_constants.h"
-#include "srsran/srsvec/aligned_vec.h"
 
 namespace srsran {
 
@@ -45,7 +44,7 @@ private:
   static constexpr unsigned SHORT = prach_constants::SHORT_SEQUENCE_LENGTH;
 
   /// Temporary sequence.
-  srsvec::aligned_vec<cf_t> sequence;
+  std::vector<cf_t> sequence;
 
   /// Calculates sequence number \f$u\f$ as per TS38.211 Table 6.3.3.1-3.
   static unsigned get_sequence_number_long(unsigned root_sequence_index);

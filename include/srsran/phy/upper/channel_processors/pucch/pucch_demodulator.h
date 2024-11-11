@@ -35,7 +35,7 @@ class pucch_demodulator
 public:
   /// Collects PUCCH Format 2 demodulation parameters.
   struct format2_configuration {
-    /// Port indexes used for the PUCCH reception.
+    /// Port indices used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
     /// Lowest PRB index used for the PUCCH transmission within the resource grid {0, ..., 274}.
     unsigned first_prb;
@@ -58,7 +58,7 @@ public:
 
   /// Collects PUCCH Format 3 demodulation parameters.
   struct format3_configuration {
-    /// Port indexes used for the PUCCH reception.
+    /// Port indices used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
     /// Lowest PRB index used for the PUCCH transmission within the resource grid {0, ..., 274}.
     unsigned first_prb;
@@ -71,7 +71,7 @@ public:
     unsigned nof_prb;
     /// Start symbol index within the slot {0, ..., 13}.
     unsigned start_symbol_index;
-    /// Number of symbols for the PUCCH transmission {4, ... , 14}.
+    /// Number of symbols for the PUCCH transmission {4, ..., 14}.
     unsigned nof_symbols;
     /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.2.5.1.
     uint16_t rnti;
@@ -87,7 +87,35 @@ public:
 
   /// Collects PUCCH Format 4 demodulation parameters.
   struct format4_configuration {
-    // Add here PUCCH demodulator parameters...
+    /// Port indices used for the PUCCH reception.
+    static_vector<uint8_t, MAX_PORTS> rx_ports;
+    /// Lowest PRB index used for the PUCCH transmission within the resource grid {0, ..., 274}.
+    unsigned first_prb;
+    /// \brief Index of the first PRB after frequency hopping as per TS38.213 Section 9.2.1.
+    ///
+    /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
+    /// enabled, empty otherwise.
+    std::optional<unsigned> second_hop_prb;
+    /// Start symbol index within the slot {0, ..., 13}.
+    unsigned start_symbol_index;
+    /// Number of symbols for the PUCCH transmission {4, ..., 14}.
+    unsigned nof_symbols;
+    /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.2.5.1.
+    uint16_t rnti;
+    /// Scrambling identifier, see parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.5.1. Range is {0, ..., 1023}.
+    unsigned n_id;
+    /// Set to higher layer parameter \e additionalDMRS described in TS38.331 Section 6.3.2, Information Element \e
+    /// PUCCH-FormatConfig.
+    bool additional_dmrs;
+    /// Set to higher layer parameter \e pi2BPSK described in TS38.331 Section 6.3.2, Information Element \e
+    /// PUCCH-FormatConfig.
+    bool pi2_bpsk;
+    /// Set to higher layer parameter \e occ-Length described in TS38.331 Section 6.3.2, Information Element \e
+    /// PUCCH-format4.
+    unsigned occ_length;
+    /// Set to higher layer parameter \e occ-Index described in TS38.331 Section 6.3.2, Information Element \e
+    /// PUCCH-format4.
+    unsigned occ_index;
   };
 
   /// Default destructor.

@@ -101,8 +101,8 @@ TEST_F(ngap_nas_message_routine_test, when_initial_context_setup_request_is_not_
   ASSERT_EQ(ngap->get_nof_ues(), 1);
 
   // tick timers
-  // Status: NGAP does not receive new Initial Context Setup Request until pdu_session_setup_timer has ended.
-  for (unsigned msec_elapsed = 0; msec_elapsed < cu_cp_cfg.ue.pdu_session_setup_timeout.count() * 1000;
+  // Status: NGAP does not receive new Initial Context Setup Request until request_pdu_session_timer has ended.
+  for (unsigned msec_elapsed = 0; msec_elapsed < cu_cp_cfg.ue.request_pdu_session_timeout.count() * 1000;
        ++msec_elapsed) {
     this->tick();
   }

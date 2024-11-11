@@ -23,6 +23,7 @@
 #include "cu_cp_unit_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "cu_cp_unit_config.h"
+#include "srsran/ran/nr_cell_identity.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 
@@ -61,7 +62,7 @@ static void configure_cli11_pcap_args(CLI::App& app, cu_cp_unit_pcap_config& pca
   add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
 }
 
-static void configure_cli11_tai_slice_support_args(CLI::App& app, s_nssai_t& config)
+static void configure_cli11_tai_slice_support_args(CLI::App& app, cu_cp_unit_plmn_item::tai_slice_t& config)
 {
   add_option(app, "--sst", config.sst, "Slice Service Type")->capture_default_str()->check(CLI::Range(0, 255));
   add_option(app, "--sd", config.sd, "Service Differentiator")->capture_default_str()->check(CLI::Range(0, 0xffffff));
@@ -387,10 +388,10 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
       ->check(CLI::Range(1, 7200));
 
   add_option(app,
-             "--pdu_session_setup_timeout",
-             cu_cp_params.pdu_session_setup_timeout,
-             "Timeout for the setup of a PDU session after an InitialUeMessage was sent to the core, in "
-             "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
+             "--request_pdu_session_timeout",
+             cu_cp_params.request_pdu_session_timeout,
+             "Timeout for requesting a PDU session after the InitialUeMessage was sent to the core, in "
+             "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released.")
       ->capture_default_str();
 
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF configuration");

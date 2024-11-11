@@ -20,20 +20,15 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
-#include "srsran/srsvec/simd.h"
-#include "srsran/support/error_handling.h"
-#include <cstdlib>
+#pragma once
 
-void* srsran::srsvec::detail::mem_alloc(std::size_t size)
-{
-  void* ptr = nullptr;
-  int   ret = ::posix_memalign(&ptr, SIMD_BYTE_ALIGN * 8, size);
-  report_fatal_error_if_not(ret == 0 && ptr, "Failed posix_memalign.");
-  return ptr;
-}
+#include "CLI/CLI11.hpp"
 
-void srsran::srsvec::detail::mem_free(void* ptr)
-{
-  ::free(ptr);
-}
+namespace srsran {
+
+struct e2_appconfig;
+
+/// Configures the given CLI11 application with the E2 application configuration schema.
+void configure_cli11_with_e2_appconfig_schema(CLI::App& app, e2_appconfig& config);
+
+} // namespace srsran

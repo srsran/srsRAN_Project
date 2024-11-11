@@ -25,6 +25,7 @@
 #include "srsran/phy/upper/channel_coding/crc_calculator.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_buffer.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
@@ -52,6 +53,8 @@ class pdsch_codeblock_processor
 public:
   /// Collects the parameters necessary for processing a PDSCH codeblock.
   struct configuration {
+    /// Index of the codeblock within the transport block.
+    unsigned cb_index;
     /// Position of the codeblock relative to the first bit of the transport block.
     units::bits tb_offset;
     /// Codeblock number of information bits.
@@ -77,27 +80,15 @@ public:
   };
 
   /// Builds a codeblock processor with the required dependencies.
-  pdsch_codeblock_processor(std::unique_ptr<crc_calculator>          crc24a_,
-                            std::unique_ptr<crc_calculator>          crc24b_,
-                            std::unique_ptr<crc_calculator>          crc16_,
-                            std::unique_ptr<ldpc_encoder>            encoder_,
+  pdsch_codeblock_processor(std::unique_ptr<ldpc_encoder>            encoder_,
                             std::unique_ptr<ldpc_rate_matcher>       rate_matcher_,
                             std::unique_ptr<pseudo_random_generator> scrambler_,
                             std::unique_ptr<modulation_mapper>       modulator_) :
-    crc24a(std::move(crc24a_)),
-    crc24b(std::move(crc24b_)),
-    crc16(std::move(crc16_)),
     encoder(std::move(encoder_)),
     rate_matcher(std::move(rate_matcher_)),
     scrambler(std::move(scrambler_)),
     modulator(std::move(modulator_))
   {
-    srsran_assert(crc24a, "Invalid CRC calculator.");
-    srsran_assert(crc24b, "Invalid CRC calculator.");
-    srsran_assert(crc16, "Invalid CRC calculator.");
-    srsran_assert(crc24a->get_generator_poly() == crc_generator_poly::CRC24A, "Invalid CRC calculator.");
-    srsran_assert(crc24b->get_generator_poly() == crc_generator_poly::CRC24B, "Invalid CRC calculator.");
-    srsran_assert(crc16->get_generator_poly() == crc_generator_poly::CRC16, "Invalid CRC calculator.");
     srsran_assert(encoder, "Invalid LDPC encoder.");
     srsran_assert(rate_matcher, "Invalid LDPC rate matcher.");
     srsran_assert(scrambler, "Invalid scrambler.");
@@ -112,7 +103,7 @@ public:
   /// \param[in]  data       Original transport block data without CRC.
   /// \param[in]  config     Required parameters for processing a codeblock.
   /// \return A struct with the results.
-  result process(span<const uint8_t> data, const configuration& config);
+  result process(span<const uint8_t> data, const ldpc_segmenter_buffer& segment_buffer, const configuration& config);
 
   /// Gets the QAM modulation scaling, as per TS38.211 Section 5.1.
   float get_scaling(modulation_scheme modulation)
@@ -122,12 +113,6 @@ public:
   }
 
 private:
-  /// Pointer to CRC24A.
-  std::unique_ptr<crc_calculator> crc24a;
-  /// Pointer to CRC24B.
-  std::unique_ptr<crc_calculator> crc24b;
-  /// Pointer to CRC16.
-  std::unique_ptr<crc_calculator> crc16;
   /// Pointer to an LDPC encoder.
   std::unique_ptr<ldpc_encoder> encoder;
   /// Pointer to an LDPC rate matcher.

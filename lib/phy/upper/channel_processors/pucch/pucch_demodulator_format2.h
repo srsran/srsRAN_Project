@@ -59,9 +59,6 @@ public:
                   const pucch_demodulator::format2_configuration& config);
 
 private:
-  /// PUCCH uses a single TX layer.
-  static constexpr unsigned SINGLE_TX_LAYER = 1;
-
   /// \brief Gets PUCCH Resource Elements and channel estimation coefficients given a PUCCH Format 2 allocation.
   ///
   /// Extracts and loads the inner buffers with the PUCCH control data RE from the provided \c resource_grid, and their

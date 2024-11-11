@@ -261,7 +261,7 @@ TEST_F(ngap_validator_test, when_unique_and_duplicate_pdu_session_id_then_pdu_se
 // Test handling of PduSessionResourceSetupRequest with non-GBR QoS flows but no PDU Session Aggregate Maximum Bit Rate
 TEST_F(
     ngap_validator_test,
-    when_pdu_session_request_contains_non_gbr_qos_flows_but_no_aggregate_maximum_bitrate_then_pdu_session_setup_fails)
+    when_request_pdu_session_contains_non_gbr_qos_flows_but_no_aggregate_maximum_bitrate_then_pdu_session_setup_fails)
 {
   pdu_session_id_t psi       = uint_to_pdu_session_id(1);
   ue_index_t       ue_index  = uint_to_ue_index(0);

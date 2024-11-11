@@ -21,7 +21,6 @@
  */
 
 #include "srsran/srsvec/add.h"
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
 
@@ -35,17 +34,17 @@ void test_cf_add(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  std::vector<cf_t> x(N);
   for (cf_t& v : x) {
     v = cf_t(dist(rgen), dist(rgen));
   }
 
-  srsvec::aligned_vec<cf_t> y(N);
+  std::vector<cf_t> y(N);
   for (cf_t& v : y) {
     v = cf_t(dist(rgen), dist(rgen));
   }
 
-  srsvec::aligned_vec<cf_t> z(N);
+  std::vector<cf_t> z(N);
 
   srsvec::add(x, y, z);
 
@@ -60,17 +59,17 @@ void test_float_add(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<float> x(N);
+  std::vector<float> x(N);
   for (float& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<float> y(N);
+  std::vector<float> y(N);
   for (float& v : y) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<float> z(N);
+  std::vector<float> z(N);
 
   srsvec::add(x, y, z);
 
@@ -85,17 +84,17 @@ void test_i16_add(std::size_t N)
 {
   std::uniform_int_distribution<int16_t> dist(INT16_MIN / 2, INT16_MAX / 2);
 
-  srsvec::aligned_vec<int16_t> x(N);
+  std::vector<int16_t> x(N);
   for (int16_t& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<int16_t> y(N);
+  std::vector<int16_t> y(N);
   for (int16_t& v : y) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<int16_t> z(N);
+  std::vector<int16_t> z(N);
 
   srsvec::add(x, y, z);
 
@@ -110,17 +109,17 @@ void test_i8_add(std::size_t N)
 {
   std::uniform_int_distribution<int8_t> dist(INT8_MIN / 2, INT8_MAX / 2);
 
-  srsvec::aligned_vec<int8_t> x(N);
+  std::vector<int8_t> x(N);
   for (int8_t& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<int8_t> y(N);
+  std::vector<int8_t> y(N);
   for (int8_t& v : y) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<int8_t> z(N);
+  std::vector<int8_t> z(N);
 
   srsvec::add(x, y, z);
 

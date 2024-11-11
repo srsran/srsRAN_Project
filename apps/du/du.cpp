@@ -41,20 +41,12 @@
 #include "du_appconfig_translators.h"
 #include "du_appconfig_validators.h"
 
-#include "apps/services/worker_manager.h"
+#include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
 #include "apps/du/adapters/e2_gateways.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "srsran/e2/gateways/e2_connection_client.h"
-
-// Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
-// This include is not unused - it helps prevent false alarms from the thread sanitizer.
-#include "du_appconfig_yaml_writer.h"
-
-#include "srsran/support/tsan_options.h"
-
-#include <atomic>
 
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
@@ -66,12 +58,15 @@
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
 #include "apps/units/flexible_du/o_du_high/du_high/du_high_config.h"
 #include "apps/units/flexible_du/o_du_high/du_high/pcap_factory.h"
-
+#include "du_appconfig_yaml_writer.h"
 #include "srsran/du/du_power_controller.h"
-
+#include <atomic>
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #endif
+// Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
+// This include is not unused - it helps prevent false alarms from the thread sanitizer.
+#include "srsran/support/tsan_options.h"
 
 using namespace srsran;
 

@@ -25,7 +25,6 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_coding/polar/polar_encoder.h"
-#include "srsran/srsvec/aligned_vec.h"
 
 namespace srsran {
 

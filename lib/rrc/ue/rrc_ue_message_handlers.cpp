@@ -144,11 +144,9 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
   }
 
   // Log Rx message
-  if (logger.get_basic_logger().debug.enabled()) {
-    fmt::memory_buffer fmtbuf;
-    fmt::format_to(fmtbuf, "{} DCCH UL", srb_id);
-    log_rrc_message(logger, Rx, rrc_pdu, ul_dcch_msg, to_c_str(fmtbuf));
-  }
+  fmt::memory_buffer fmtbuf;
+  fmt::format_to(fmtbuf, "{} DCCH UL", srb_id);
+  log_rrc_message(logger, Rx, rrc_pdu, ul_dcch_msg, to_c_str(fmtbuf));
 
   switch (ul_dcch_msg.msg.c1().type().value) {
     case ul_dcch_msg_type_c::c1_c_::types_opts::options::ul_info_transfer:
@@ -447,8 +445,9 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
       context.state = rrc_state::connected;
 
     } else {
-      logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: {}",
+      logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: {}. Requesting UE release",
                        transaction.failure_cause() == protocol_transaction_failure::timeout ? "timeout" : "canceled");
+      on_ue_release_required(ngap_cause_radio_network_t::ho_fail_in_target_5_gc_ngran_node_or_target_sys);
     }
 
     CORO_RETURN(procedure_result);

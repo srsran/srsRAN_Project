@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/phy/generic_functions/dft_processor.h"
-#include "srsran/srsvec/aligned_vec.h"
 
 namespace srsran {
 
@@ -43,9 +42,9 @@ private:
   /// Stores the DFT direction.
   direction dir;
   /// DFT input buffer ownership.
-  srsvec::aligned_vec<cf_t> input;
+  std::vector<cf_t> input;
   /// DFT output buffer ownership.
-  srsvec::aligned_vec<cf_t> output;
+  std::vector<cf_t> output;
   /// Generic FFT.
   std::unique_ptr<generic_dft_N> generic_dft;
 

@@ -35,6 +35,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_factory.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/support/error_handling.h"
@@ -347,6 +348,14 @@ create_ul_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
 
 static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(const upper_phy_config& config)
 {
+  // Verify the PUSCH processor capabilities.
+  pusch_processor_phy_capabilities pusch_capabilities = get_pusch_processor_phy_capabilities();
+  report_fatal_error_if_not(pusch_capabilities.max_nof_layers >= config.pusch_max_nof_layers,
+                            "The configured PUSCH maximum number of layers (i.e., {}) exceeds the maximum PUSCH "
+                            "processor capable number of layers (i.e., {}).",
+                            pusch_capabilities.max_nof_layers,
+                            config.pusch_max_nof_layers);
+
   std::shared_ptr<low_papr_sequence_generator_factory> sequence_factory =
       create_low_papr_sequence_generator_sw_factory();
   report_fatal_error_if_not(sequence_factory, "Invalid sequence factory.");
@@ -424,7 +433,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
     decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
     decoder_config.executor                  = config.pusch_decoder_executor;
     decoder_config.nof_prb                   = config.ul_bw_rb;
-    decoder_config.nof_layers                = 1;
+    decoder_config.nof_layers                = config.pusch_max_nof_layers;
     pusch_config.decoder_factory             = create_pusch_decoder_factory_sw(decoder_config);
   } else {
     pusch_decoder_factory_hw_configuration decoder_config;
@@ -478,7 +487,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
 
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols        = MAX_NSYMB_PER_SLOT;
-  pusch_config.ch_estimate_dimensions.nof_tx_layers      = 1;
+  pusch_config.ch_estimate_dimensions.nof_tx_layers      = config.pusch_max_nof_layers;
   pusch_config.ch_estimate_dimensions.nof_prb            = config.ul_bw_rb;
   pusch_config.ch_estimate_dimensions.nof_rx_ports       = config.nof_rx_ports;
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
@@ -794,7 +803,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
     // Create concurrent PDSCH processor factory base.
     pdsch_proc_factory =
-        create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
+        create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
                                                      ldpc_enc_factory,
                                                      ldpc_rm_factory,
                                                      prg_factory,

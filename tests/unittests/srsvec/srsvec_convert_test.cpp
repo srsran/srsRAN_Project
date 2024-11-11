@@ -20,7 +20,6 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/conversion.h"
 #include "srsran/support/srsran_test.h"
 #include <fmt/ostream.h>
@@ -66,12 +65,12 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexInt16)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(size);
+  std::vector<cf_t> x(size);
   for (cf_t& v : x) {
     v = cf_t(dist(rgen), dist(rgen));
   }
 
-  srsvec::aligned_vec<int16_t> z(2 * size);
+  std::vector<int16_t> z(2 * size);
 
   float scale = 1000.0F;
 
@@ -89,12 +88,12 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Complex)
 {
   std::uniform_int_distribution<int16_t> dist(INT16_MIN, INT16_MAX);
 
-  srsvec::aligned_vec<int16_t> x(2 * size);
+  std::vector<int16_t> x(2 * size);
   for (int16_t& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<cf_t> z(size);
+  std::vector<cf_t> z(size);
 
   float scale = 1000.0F;
 
@@ -111,12 +110,12 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestFloatInt16)
 {
   std::uniform_real_distribution<float> dist(-1, 1);
 
-  srsvec::aligned_vec<float> x(size);
+  std::vector<float> x(size);
   for (float& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<int16_t> z(size);
+  std::vector<int16_t> z(size);
 
   float scale = 1000.0F;
 
@@ -132,12 +131,12 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float)
 {
   std::uniform_int_distribution<int16_t> dist(INT16_MIN, INT16_MAX);
 
-  srsvec::aligned_vec<int16_t> x(size);
+  std::vector<int16_t> x(size);
   for (int16_t& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<float> z(size);
+  std::vector<float> z(size);
 
   float scale = 1000.0F;
 
@@ -155,11 +154,11 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexComplex16Random)
   static constexpr float                range = std::numeric_limits<float>::max() / 2;
   std::uniform_real_distribution<float> dist(-range, range);
 
-  srsvec::aligned_vec<cf_t> in(size);
+  std::vector<cf_t> in(size);
   std::generate(in.begin(), in.end(), [&dist]() { return cf_t(dist(rgen), dist(rgen)); });
 
-  srsvec::aligned_vec<cf_t>    out(size);
-  srsvec::aligned_vec<cbf16_t> data_cbf16(size);
+  std::vector<cf_t>    out(size);
+  std::vector<cbf16_t> data_cbf16(size);
 
   // Convert from single precission to BF16.
   srsvec::convert(data_cbf16, in);
@@ -190,14 +189,14 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexComplex16Special)
   static const std::vector<float>    values          = {nan, infinity, neg_infinity, one_round_down, one_round_up};
   static const std::vector<uint16_t> expected_values = {0x7fc0, 0x7f80, 0xff80, 0x3f80, 0x3f82};
 
-  srsvec::aligned_vec<cf_t> in(size);
+  std::vector<cf_t> in(size);
   std::generate(in.begin(), in.end(), [n = 0]() mutable {
     float re = values[(n++) % values.size()];
     float im = values[(n++) % values.size()];
     return cf_t(re, im);
   });
 
-  srsvec::aligned_vec<cbf16_t> data_cbf16(size);
+  std::vector<cbf16_t> data_cbf16(size);
 
   // Convert from single precission to BF16.
   srsvec::convert(data_cbf16, in);
@@ -215,11 +214,11 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestFloatFloat16Random)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<float> in(size);
+  std::vector<float> in(size);
   std::generate(in.begin(), in.end(), [&dist]() { return dist(rgen); });
 
   // Convert from single precision to brain float.
-  srsvec::aligned_vec<bf16_t> data_bf16(size);
+  std::vector<bf16_t> data_bf16(size);
   srsvec::convert(data_bf16, in);
 
   // Assert conversion to BF16.
@@ -228,7 +227,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestFloatFloat16Random)
   }
 
   // Convert back to single precision float.
-  srsvec::aligned_vec<float> out(size);
+  std::vector<float> out(size);
   srsvec::convert(out, data_bf16);
 
   // Assert conversion from BF16.
@@ -244,15 +243,15 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float16Random)
 
   float int16_scale = (1 << 15) - 1;
 
-  srsvec::aligned_vec<float> in(size);
+  std::vector<float> in(size);
   std::generate(in.begin(), in.end(), [&dist]() { return dist(rgen); });
 
   // Convert from single precision to int16.
-  srsvec::aligned_vec<int16_t> in_int16(size);
+  std::vector<int16_t> in_int16(size);
   srsvec::convert(in, int16_scale, in_int16);
 
   // Convert from int16 to brain float.
-  srsvec::aligned_vec<bf16_t> data_bf16(size);
+  std::vector<bf16_t> data_bf16(size);
   srsvec::convert(data_bf16, in_int16, int16_scale);
 
   // Assert conversion to BF16.
@@ -261,7 +260,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float16Random)
   }
 
   // Convert from brain float back to int16.
-  srsvec::aligned_vec<int16_t> out_int16(size);
+  std::vector<int16_t> out_int16(size);
   srsvec::convert(out_int16, data_bf16, int16_scale);
 
   // Assert conversion from BF16.
@@ -270,7 +269,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float16Random)
   }
 
   // Convert int16 to float and compare with original data.
-  srsvec::aligned_vec<float> out(size);
+  std::vector<float> out(size);
   srsvec::convert(out_int16, int16_scale, out);
 
   for (size_t i = 0; i != size; ++i) {
@@ -288,14 +287,14 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestScaledInt16ComplexFloat16Random)
 
   const unsigned size_i16 = size * 2;
 
-  srsvec::aligned_vec<int16_t> in(size_i16);
-  srsvec::aligned_vec<float>   gain(size_i16);
+  std::vector<int16_t> in(size_i16);
+  std::vector<float>   gain(size_i16);
 
   std::generate(in.begin(), in.end(), [&dist_i]() { return dist_i(rgen); });
   std::generate(gain.begin(), gain.end(), [&dist_f]() { return int16_gain * float(dist_f(rgen)); });
 
   // Convert from int16 to brain float.
-  srsvec::aligned_vec<cbf16_t> data_cbf16(size);
+  std::vector<cbf16_t> data_cbf16(size);
   srsvec::convert(data_cbf16, in, gain);
 
   // Assert conversion to cbf16.

@@ -21,6 +21,7 @@
  */
 
 #include "pxsch_bler_test_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
@@ -176,7 +177,7 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
   }
 #endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
 
-  return create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
+  return create_pdsch_concurrent_processor_factory_sw(segmenter_factory,
                                                       ldpc_encoder_factory,
                                                       ldpc_rate_matcher_factory,
                                                       pseudo_random_gen_factory,
@@ -194,6 +195,8 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
                                                                                    bool           dec_enable_early_stop,
                                                                                    const std::string& pxsch_type)
 {
+  pusch_processor_phy_capabilities pusch_processor_phy_cap = get_pusch_processor_phy_capabilities();
+
   std::shared_ptr<dft_processor_factory> dft_proc_factory = create_dft_processor_factory_fftw_slow();
   report_fatal_error_if_not(dft_proc_factory, "Failed to create factory.");
 
@@ -286,13 +289,15 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
   report_fatal_error_if_not(uci_dec_factory, "Failed to create factory.");
 
   pusch_processor_factory_sw_configuration pusch_proc_factory_config;
-  pusch_proc_factory_config.estimator_factory      = chan_est_factory;
-  pusch_proc_factory_config.demodulator_factory    = pusch_demod_factory;
-  pusch_proc_factory_config.demux_factory          = demux_factory;
-  pusch_proc_factory_config.decoder_factory        = pusch_dec_factory;
-  pusch_proc_factory_config.uci_dec_factory        = uci_dec_factory;
-  pusch_proc_factory_config.ch_estimate_dimensions = {
-      MAX_NOF_PRBS, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_RX_PORTS, 1};
+  pusch_proc_factory_config.estimator_factory          = chan_est_factory;
+  pusch_proc_factory_config.demodulator_factory        = pusch_demod_factory;
+  pusch_proc_factory_config.demux_factory              = demux_factory;
+  pusch_proc_factory_config.decoder_factory            = pusch_dec_factory;
+  pusch_proc_factory_config.uci_dec_factory            = uci_dec_factory;
+  pusch_proc_factory_config.ch_estimate_dimensions     = {.nof_prb       = MAX_NOF_PRBS,
+                                                          .nof_symbols   = MAX_NSYMB_PER_SLOT,
+                                                          .nof_rx_ports  = pusch_constants::MAX_NOF_RX_PORTS,
+                                                          .nof_tx_layers = pusch_processor_phy_cap.max_nof_layers};
   pusch_proc_factory_config.dec_nof_iterations         = nof_ldpc_iterations;
   pusch_proc_factory_config.dec_enable_early_stop      = dec_enable_early_stop;
   pusch_proc_factory_config.max_nof_concurrent_threads = max_nof_threads;

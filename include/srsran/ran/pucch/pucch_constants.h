@@ -71,6 +71,15 @@ static constexpr unsigned FORMAT3_MAX_NSYMB = 14;
 /// Maximum number of PRBs allocated for PUCCH Format 3.
 static constexpr unsigned FORMAT3_MAX_NPRB = 16;
 
+/// Minimum number of OFDM symbols allocated to a PUCCH Format 4 transmission.
+static constexpr unsigned FORMAT4_MIN_NSYMB = 4;
+
+/// Maximum number of symbols that PUCCH Format 4 can transmit.
+static constexpr unsigned FORMAT4_MAX_NSYMB = 14;
+
+/// Maximum number of PRBs allocated for PUCCH Format 4.
+static constexpr unsigned FORMAT4_MAX_NPRB = 1;
+
 /// \brief Maximum number of resource elements used by PUCCH.
 ///
 /// It corresponds to PUCCH Format 3 with a bandwidth of 16 PRBs and a duration of 14 symbols, two of which are occupied

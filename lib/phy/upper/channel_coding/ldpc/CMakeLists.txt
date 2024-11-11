@@ -27,7 +27,8 @@ set(ldpc_sources
         ldpc_decoder_generic.cpp
         ldpc_rate_matcher_impl.cpp
         ldpc_rate_dematcher_impl.cpp
-        ldpc_segmenter_impl.cpp
+        ldpc_segmenter_tx_impl.cpp
+        ldpc_segmenter_rx_impl.cpp
         )
 
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")

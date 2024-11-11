@@ -19,7 +19,6 @@
 #
 
 add_subdirectory(o_du_high)
-add_subdirectory(support)
 if (NOT DU_SPLIT_6)
     add_subdirectory(split_helpers)
 endif ()

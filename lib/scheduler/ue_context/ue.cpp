@@ -81,9 +81,18 @@ void ue::deactivate()
   ul_lc_ch_mgr.deactivate();
 
   // Cancel HARQ retransmissions in all UE cells.
-  for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
-    if (ue_du_cells[i] != nullptr) {
-      ue_du_cells[i]->deactivate();
+  for (auto& cell : ue_du_cells) {
+    if (cell != nullptr) {
+      cell->deactivate();
+    }
+  }
+}
+
+void ue::release_resources()
+{
+  for (auto& cell : ue_du_cells) {
+    if (cell != nullptr) {
+      cell->harqs.reset();
     }
   }
 }
@@ -99,7 +108,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
 
   // Cell configuration.
   // Handle removed cells.
-  for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
+  for (unsigned i = 0, e = ue_du_cells.size(); i != e; ++i) {
     if (ue_du_cells[i] != nullptr) {
       if (not ue_ded_cfg->contains(to_du_cell_index(i))) {
         // TODO: Handle SCell deletions.
@@ -107,7 +116,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
     }
   }
   // Handle new cell creations or reconfigurations.
-  for (unsigned ue_cell_index = 0; ue_cell_index != ue_ded_cfg->nof_cells(); ++ue_cell_index) {
+  for (unsigned ue_cell_index = 0, e = ue_ded_cfg->nof_cells(); ue_cell_index != e; ++ue_cell_index) {
     du_cell_index_t cell_index   = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
     auto&           ue_cell_inst = ue_du_cells[cell_index];
     if (ue_cell_inst == nullptr) {
@@ -123,7 +132,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
 
   // Recompute mapping of UE cell indexing to DU cell indexing.
   ue_cells.resize(ue_ded_cfg->nof_cells(), nullptr);
-  for (unsigned ue_cell_index = 0; ue_cell_index != ue_ded_cfg->nof_cells(); ++ue_cell_index) {
+  for (unsigned ue_cell_index = 0, e = ue_ded_cfg->nof_cells(); ue_cell_index != e; ++ue_cell_index) {
     auto& ue_cell_inst =
         ue_du_cells[ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index];
     ue_cells[ue_cell_index] = ue_cell_inst.get();

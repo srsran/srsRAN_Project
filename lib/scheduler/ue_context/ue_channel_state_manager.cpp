@@ -75,11 +75,16 @@ bool ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_repo
   return true;
 }
 
-void ue_channel_state_manager::update_srs_channel_matrix(const srsran::srs_channel_matrix& channel_matrix,
-                                                         tx_scheme_codebook_subset         cb_subset)
+void ue_channel_state_manager::update_srs_channel_matrix(const srs_channel_matrix& channel_matrix,
+                                                         tx_scheme_codebook        codebook_cfg)
 {
-  float norm                  = channel_matrix.frobenius_norm();
-  last_pusch_tpmi_select_info = get_tpmi_select_info(channel_matrix, norm * norm, cb_subset);
+  // [Implementation-defined] Assume noise variance is 30dB below the average received power.
+  float norm      = channel_matrix.frobenius_norm();
+  float noise_var = norm * norm / 1000;
+
+  // Calculate TPMI information.
+  last_pusch_tpmi_select_info =
+      get_tpmi_select_info(channel_matrix, noise_var, codebook_cfg.max_rank.value(), codebook_cfg.codebook_subset);
 }
 
 SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_nof_ul_layers() const

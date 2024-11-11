@@ -24,6 +24,7 @@
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/rtsan.h"
 #include <gtest/gtest.h>
 #include <list>
 
@@ -55,6 +56,7 @@ public:
   // rlc_tx_upper_layer_data_notifier interface
   void on_transmitted_sdu(uint32_t max_tx_pdcp_sn, uint32_t desired_buf_size) override
   {
+    SRSRAN_RTSAN_SCOPED_DISABLER(d);
     // store in list
     highest_transmitted_pdcp_sn_list.push_back(max_tx_pdcp_sn);
     desired_buf_size_list.push_back(desired_buf_size);
@@ -62,18 +64,21 @@ public:
 
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override
   {
+    SRSRAN_RTSAN_SCOPED_DISABLER(d);
     // store in list
     highest_delivered_pdcp_sn_list.push_back(max_deliv_pdcp_sn);
   }
 
   void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override
   {
+    SRSRAN_RTSAN_SCOPED_DISABLER(d);
     // store in list
     highest_retransmitted_pdcp_sn_list.push_back(max_retx_pdcp_sn);
   }
 
   void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override
   {
+    SRSRAN_RTSAN_SCOPED_DISABLER(d);
     // store in list
     highest_delivered_retransmitted_pdcp_sn_list.push_back(max_deliv_retx_pdcp_sn);
   }

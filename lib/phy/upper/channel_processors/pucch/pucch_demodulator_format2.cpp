@@ -72,7 +72,7 @@ void pucch_demodulator_format2::demodulate(span<log_likelihood_ratio>           
 
   // Resize data and channel estimation buffers.
   ch_re.resize(nof_rx_ports, nof_re_port);
-  ch_estimates.resize(nof_re_port, nof_rx_ports, SINGLE_TX_LAYER);
+  ch_estimates.resize(nof_re_port, nof_rx_ports, pucch_constants::MAX_LAYERS);
 
   // Resize equalized data and post equalization noise variance buffers.
   eq_re.resize(nof_re_port);

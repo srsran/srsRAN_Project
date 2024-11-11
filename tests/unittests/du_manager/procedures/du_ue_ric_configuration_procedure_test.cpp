@@ -60,16 +60,24 @@ TEST_F(du_ue_ric_config_tester,
 {
   std::vector<control_config_params> param_list;
   rrm_policy_ratio_group             pol;
-  pol.max_prb_policy_ratio = 10;
+  pol.max_prb_policy_ratio = 50;
   pol.min_prb_policy_ratio = 5;
+
+  unsigned int nof_prbs         = get_max_Nprb(params.ran.cells[0].dl_carrier.carrier_bw_mhz,
+                                       params.ran.cells[0].scs_common,
+                                       band_helper::get_freq_range(params.ran.cells[0].dl_carrier.band));
+  int          expected_min_prb = static_cast<int>((1.0 * pol.min_prb_policy_ratio.value() / 100) * nof_prbs);
+  int          expected_max_prb = static_cast<int>((1.0 * pol.max_prb_policy_ratio.value() / 100) * nof_prbs);
+
   param_list.emplace_back(control_config_params{std::nullopt, std::nullopt, pol});
   start_procedure(du_mac_sched_control_config{(uint64_t)test_ue->f1ap_ue_id, param_list});
 
   ASSERT_TRUE(mac.last_ue_reconf_msg.has_value()) << "MAC should have received new configuration";
   ASSERT_EQ(mac.last_ue_reconf_msg->ue_index, test_ue->ue_index);
   ASSERT_TRUE(mac.last_ue_reconf_msg->sched_cfg.res_alloc_cfg.has_value());
-  prb_interval expected_prbs{5, 10};
+  prb_interval expected_prbs{expected_min_prb, expected_max_prb};
   ASSERT_EQ(mac.last_ue_reconf_msg->sched_cfg.res_alloc_cfg->pdsch_grant_size_limits, expected_prbs);
+  ASSERT_EQ(mac.last_ue_reconf_msg->sched_cfg.res_alloc_cfg->pusch_grant_size_limits, expected_prbs);
   ASSERT_FALSE(mac.last_ue_reconf_msg->sched_cfg.cells.has_value()) << "Cells should not have been configured";
   ASSERT_FALSE(mac.last_ue_reconf_msg->sched_cfg.lc_config_list.has_value())
       << "Logical channels should not have been configured";

@@ -52,6 +52,8 @@ const char* __tsan_default_suppressions()
       "called_from_lib:libpgm-5.2.so\n"
       "called_from_lib:libusb*\n"
       "called_from_lib:libuhd*\n"
+      "called_from_lib:librte_eal*\n"
+      "called_from_lib:librte_net_iavf*\n"
       // Races detected inside uninstrumented libraries. This may hide legit races if any of the libraries appear in the
       // backtrace
       "race:libusb*\n"

@@ -24,10 +24,7 @@
 #include "apps/units/flexible_du/o_du_high/o_du_high_unit_config_cli11_schema.h"
 #include "apps/units/flexible_du/o_du_low/du_low_config_cli11_schema.h"
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_cli11_schema.h"
-#include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
 #include "split_7_2_du_unit_config.h"
-#include "srsran/support/cli11_utils.h"
-#include "srsran/support/config_parsers.h"
 
 using namespace srsran;
 

@@ -21,7 +21,6 @@
  */
 
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>
@@ -165,7 +164,7 @@ int main(int argc, char** argv)
   TESTASSERT(rate_dematcher);
 
   // Create Tx data and fill
-  srsvec::aligned_vec<uint8_t> data_tx(K);
+  std::vector<uint8_t> data_tx(K);
   for (uint8_t& v : data_tx) {
     v = dist(rgen);
   }
@@ -174,32 +173,32 @@ int main(int argc, char** argv)
   code->set(K, E, nMax, bil);
 
   // Allocate TX data
-  srsvec::aligned_vec<uint8_t> allocated_tx(code->get_N());
+  std::vector<uint8_t> allocated_tx(code->get_N());
   allocator->allocate(allocated_tx, data_tx, *code);
 
   // Encoder TX data
-  srsvec::aligned_vec<uint8_t> encoded_tx(code->get_N());
+  std::vector<uint8_t> encoded_tx(code->get_N());
   encoder->encode(encoded_tx, allocated_tx, code->get_n());
 
   // Rate matching
-  srsvec::aligned_vec<uint8_t> rate_matched_tx(E);
+  std::vector<uint8_t> rate_matched_tx(E);
   rate_matcher->rate_match(rate_matched_tx, encoded_tx, *code);
 
   // Modulate
-  srsvec::aligned_vec<log_likelihood_ratio> rate_matched_rx(E);
+  std::vector<log_likelihood_ratio> rate_matched_rx(E);
   std::transform(
       rate_matched_tx.begin(), rate_matched_tx.end(), rate_matched_rx.begin(), [](uint8_t b) { return (1 - 2 * b); });
 
   // Undo rate matching
-  srsvec::aligned_vec<log_likelihood_ratio> encoded_rx(code->get_N());
+  std::vector<log_likelihood_ratio> encoded_rx(code->get_N());
   rate_dematcher->rate_dematch(encoded_rx, rate_matched_rx, *code);
 
   // Decode Rx data
-  srsvec::aligned_vec<uint8_t> allocated_rx(code->get_N());
+  std::vector<uint8_t> allocated_rx(code->get_N());
   decoder->decode(allocated_rx, encoded_rx, *code);
 
   // Deallocate RX data
-  srsvec::aligned_vec<uint8_t> data_rx(K);
+  std::vector<uint8_t> data_rx(K);
   deallocator->deallocate(data_rx, allocated_rx, *code);
 
   // Assert decoded message

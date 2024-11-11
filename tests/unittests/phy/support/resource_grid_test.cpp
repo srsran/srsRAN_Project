@@ -23,7 +23,6 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/zero.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
@@ -90,7 +89,7 @@ void test_mask_bitset(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
 
   // Put elements in grid.
   unsigned                     symbol_idx = symbol_dist(rgen);
-  srsvec::aligned_vec<cf_t>    symbols_gold(nof_elements);
+  std::vector<cf_t>            symbols_gold(nof_elements);
   bounded_bitset<MAX_RB * NRE> mask(nof_subc);
 
   // Fill mask and generate symbols.
@@ -141,8 +140,8 @@ void test_mask_bitset(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   }
 
   // Get elements using the same mask.
-  srsvec::aligned_vec<cf_t> symbols(nof_elements);
-  span<cf_t>                symbol_buffer_get = grid->get_reader().get(symbols, port_gold, symbol_idx, 0, mask);
+  std::vector<cf_t> symbols(nof_elements);
+  span<cf_t>        symbol_buffer_get = grid->get_reader().get(symbols, port_gold, symbol_idx, 0, mask);
 
   // Make sure all symbols are used.
   TESTASSERT(symbol_buffer_get.empty(), "Symbol buffer - not empty.");
@@ -172,8 +171,8 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   unsigned port_gold = port_dist(rgen);
 
   // Put elements in grid
-  unsigned                  symbol_idx = symbol_dist(rgen);
-  srsvec::aligned_vec<cf_t> symbols_gold(nof_elements);
+  unsigned          symbol_idx = symbol_dist(rgen);
+  std::vector<cf_t> symbols_gold(nof_elements);
 
   // Select initial subcarrier
   unsigned k_init = subc_dist(rgen);
@@ -213,7 +212,7 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   }
 
   // Get elements
-  srsvec::aligned_vec<cf_t> symbols(nof_elements);
+  std::vector<cf_t> symbols(nof_elements);
   grid->get_reader().get(symbols, port_gold, symbol_idx, k_init);
 
   // Assert symbols

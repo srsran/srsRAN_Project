@@ -61,9 +61,16 @@ variables:
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     MARCH: "" # Empty for cmake default
     MTUNE: "" # Empty for cmake default
+    # CACHE
+    CCACHE_MAXSIZE: 3G
     # TEST
     TEST_EXECUTION_TIMEOUT: 0
     # CI
+    TRANSFER_METER_FREQUENCY: 5s
+    ARTIFACT_COMPRESSION_LEVEL: slowest
+    CACHE_COMPRESSION_LEVEL: slowest
+    CACHE_REQUEST_TIMEOUT: 5 # minutes - 10 by default
+    # K8
     KUBERNETES_CPU_REQUEST: 6
     KUBERNETES_CPU_LIMIT: 6
     KUBERNETES_MEMORY_REQUEST: 12Gi

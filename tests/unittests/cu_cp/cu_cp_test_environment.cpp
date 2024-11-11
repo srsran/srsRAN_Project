@@ -213,7 +213,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp_cfg.f1ap.proc_timeout = std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
 
   // > UE config
-  cu_cp_cfg.ue.pdu_session_setup_timeout =
+  cu_cp_cfg.ue.request_pdu_session_timeout =
       std::chrono::seconds(10); // procedure timeouts should only occur intentionally
 
   // create CU-CP instance.
@@ -726,7 +726,7 @@ bool cu_cp_test_environment::send_bearer_context_modification_response_and_await
 
   // Inject Bearer Context Modification Response and wait for UE Context Modification Request
   get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(
-      ue_ctx.cu_cp_e1ap_id.value(), ue_ctx.cu_up_e1ap_id.value(), {{psi, drb_test_params{drb_id, qfi}}}));
+      ue_ctx.cu_cp_e1ap_id.value(), ue_ctx.cu_up_e1ap_id.value(), {{psi, drb_test_params{drb_id, qfi}}}, {}));
   bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
   report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
@@ -765,7 +765,8 @@ bool cu_cp_test_environment::send_bearer_context_modification_response_and_await
     const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add,
     const std::map<pdu_session_id_t, drb_id_t>&        pdu_sessions_to_modify,
     const std::optional<std::vector<srb_id_t>>&        expected_srbs_to_add_mod,
-    const std::optional<std::vector<drb_id_t>>&        expected_drbs_to_add_mod)
+    const std::optional<std::vector<drb_id_t>>&        expected_drbs_to_add_mod,
+    const std::vector<pdu_session_id_t>&               pdu_sessions_failed_to_modify)
 {
   f1ap_message f1ap_pdu;
   srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
@@ -773,8 +774,11 @@ bool cu_cp_test_environment::send_bearer_context_modification_response_and_await
   auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
 
   // Inject E1AP Bearer Context Modification Response and wait for DL RRC Message (containing RRC Reconfiguration)
-  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(
-      ue_ctx.cu_cp_e1ap_id.value(), ue_ctx.cu_up_e1ap_id.value(), pdu_sessions_to_add, pdu_sessions_to_modify));
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(ue_ctx.cu_cp_e1ap_id.value(),
+                                                                                 ue_ctx.cu_up_e1ap_id.value(),
+                                                                                 pdu_sessions_to_add,
+                                                                                 pdu_sessions_to_modify,
+                                                                                 pdu_sessions_failed_to_modify));
   bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   report_fatal_error_if_not(result, "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
   report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),

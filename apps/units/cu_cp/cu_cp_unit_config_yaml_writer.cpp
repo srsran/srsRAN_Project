@@ -26,13 +26,13 @@
 
 using namespace srsran;
 
-static YAML::Node build_cu_cp_tai_slice_section(const s_nssai_t& config)
+static YAML::Node build_cu_cp_tai_slice_section(const cu_cp_unit_plmn_item::tai_slice_t& config)
 {
   YAML::Node node;
 
-  node["sst"] = static_cast<unsigned>(config.sst);
+  node["sst"] = config.sst;
   if (config.sd) {
-    node["sd"] = config.sd.value();
+    node["sd"] = config.sd;
   }
 
   return node;
@@ -243,12 +243,12 @@ static YAML::Node build_cu_cp_section(const cu_cp_unit_config& config)
 {
   YAML::Node node;
 
-  node["max_nof_dus"]               = config.max_nof_dus;
-  node["max_nof_cu_ups"]            = config.max_nof_cu_ups;
-  node["max_nof_ues"]               = config.max_nof_ues;
-  node["max_nof_drbs_per_ue"]       = static_cast<unsigned>(config.max_nof_drbs_per_ue);
-  node["inactivity_timer"]          = config.inactivity_timer;
-  node["pdu_session_setup_timeout"] = config.pdu_session_setup_timeout;
+  node["max_nof_dus"]                 = config.max_nof_dus;
+  node["max_nof_cu_ups"]              = config.max_nof_cu_ups;
+  node["max_nof_ues"]                 = config.max_nof_ues;
+  node["max_nof_drbs_per_ue"]         = static_cast<unsigned>(config.max_nof_drbs_per_ue);
+  node["inactivity_timer"]            = config.inactivity_timer;
+  node["request_pdu_session_timeout"] = config.request_pdu_session_timeout;
 
   node["amf"] = build_cu_cp_amf_section(config.amf_config);
   if (!config.extra_amfs.empty()) {
@@ -394,8 +394,8 @@ static void build_cu_cp_slicing_section(YAML::Node node, span<const s_nssai_t> s
 {
   for (const auto& slice : slice_cfg) {
     YAML::Node node_entry;
-    node_entry["sst"] = static_cast<unsigned>(slice.sst);
-    if (slice.sd) {
+    node_entry["sst"] = slice.sst.value();
+    if (slice.sd.is_set()) {
       node_entry["sd"] = slice.sd.value();
     }
     node["slicing"].push_back(node_entry);

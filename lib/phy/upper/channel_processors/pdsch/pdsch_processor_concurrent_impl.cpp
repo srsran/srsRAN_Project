@@ -142,52 +142,39 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_writer&     grid
   // Calculate number of codeblocks.
   nof_cb = ldpc::compute_nof_codeblocks(tbs, config.ldpc_base_graph);
 
-  // Number of segments that will have a short rate-matched length. In TS38.212 Section 5.4.2.1, these correspond to
-  // codeblocks whose length E_r is computed by rounding down - floor. For the remaining codewords, the length is
-  // rounded up.
-  unsigned nof_short_segments = nof_cb - (nof_re_pdsch % nof_cb);
-
-  // Compute number of CRC bits for the transport block.
-  units::bits nof_tb_crc_bits = ldpc::compute_tb_crc_size(tbs);
-
-  // Compute number of CRC bits for each codeblock.
-  units::bits nof_cb_crc_bits = (nof_cb > 1) ? 24_bits : 0_bits;
-
-  // Calculate the total number of bits including transport block and codeblock CRC.
-  units::bits nof_tb_bits_out = tbs + nof_tb_crc_bits + units::bits(nof_cb_crc_bits * nof_cb);
-
-  // Compute the number of information bits that is assigned to a codeblock.
-  cb_info_bits = units::bits(divide_ceil(nof_tb_bits_out.value(), nof_cb)) - nof_cb_crc_bits;
-
-  unsigned lifting_size = ldpc::compute_lifting_size(tbs, config.ldpc_base_graph, nof_cb);
-  segment_length        = ldpc::compute_codeblock_size(config.ldpc_base_graph, lifting_size);
-
   modulation_scheme modulation = config.codewords.front().modulation;
   units::bits       bits_per_symbol(get_bits_per_symbol(modulation));
-
-  units::bits full_codeblock_size = ldpc::compute_full_codeblock_size(config.ldpc_base_graph, segment_length);
-  units::bits cw_length           = units::bits(nof_re_pdsch * nof_layers * bits_per_symbol);
-  zero_pad                        = (cb_info_bits + nof_cb_crc_bits) * nof_cb - nof_tb_bits_out;
 
   // Calculate rate match buffer size.
   units::bits Nref = ldpc::compute_N_ref(config.tbs_lbrm, nof_cb);
 
-  // Prepare codeblock metadata.
-  cb_metadata.tb_common.base_graph        = config.ldpc_base_graph;
-  cb_metadata.tb_common.lifting_size      = static_cast<ldpc::lifting_size_t>(lifting_size);
-  cb_metadata.tb_common.rv                = config.codewords.front().rv;
-  cb_metadata.tb_common.mod               = modulation;
-  cb_metadata.tb_common.Nref              = Nref.value();
-  cb_metadata.tb_common.cw_length         = cw_length.value();
-  cb_metadata.cb_specific.full_length     = full_codeblock_size.value();
-  cb_metadata.cb_specific.rm_length       = 0;
-  cb_metadata.cb_specific.nof_filler_bits = (segment_length - cb_info_bits - nof_cb_crc_bits).value();
-  cb_metadata.cb_specific.cw_offset       = 0;
-  cb_metadata.cb_specific.nof_crc_bits    = nof_tb_crc_bits.value();
+  // Initialize the segmenter.
+  segmenter_config segmenter_cfg;
+  segmenter_cfg.base_graph     = config.ldpc_base_graph;
+  segmenter_cfg.rv             = config.codewords.front().rv;
+  segmenter_cfg.mod            = modulation;
+  segmenter_cfg.Nref           = Nref.value();
+  segmenter_cfg.nof_layers     = nof_layers;
+  segmenter_cfg.nof_ch_symbols = nof_ch_symbols;
 
-  // Calculate RM length for each codeblock.
-  rm_length.resize(nof_cb);
-  cw_offset.resize(nof_cb);
+  // Initialize the segmenter.
+  segment_buffer = &segmenter->new_transmission(data.get_buffer(), segmenter_cfg);
+
+  // Retrieve the segment length.
+  segment_length = segment_buffer->get_segment_length();
+
+  // Number of segments that will have a short rate-matched length. In TS38.212 Section 5.4.2.1, these correspond to
+  // codeblocks whose length E_r is computed by rounding down - floor. For the remaining codewords, the length is
+  // rounded up.
+  unsigned nof_short_segments = segment_buffer->get_nof_short_segments();
+
+  // Compute the number of information bits that is assigned to a codeblock.
+  cb_info_bits = segment_buffer->get_cb_info_bits(0);
+
+  units::bits cw_length = segment_buffer->get_cw_length();
+  zero_pad              = segment_buffer->get_zero_pad();
+
+  // Calculate RE offset for each codeblock.
   re_offset.resize(nof_cb);
   unsigned re_count_sum = 0;
   for (unsigned i_cb = 0; i_cb != nof_cb; ++i_cb) {
@@ -196,12 +183,6 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_writer&     grid
     if (i_cb < nof_short_segments) {
       rm_length_re = nof_re_pdsch / nof_cb;
     }
-
-    // Convert RM length from RE to bits.
-    rm_length[i_cb] = rm_length_re * nof_layers * bits_per_symbol;
-
-    // Set and increment CW offset.
-    cw_offset[i_cb] = re_count_sum * nof_layers * bits_per_symbol;
 
     // Set RE offset for the resource mapper.
     re_offset[i_cb] = re_count_sum;
@@ -288,24 +269,21 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
       absolute_i_cb = nof_cb - 1 - absolute_i_cb;
 
       // Limit the codeblock number of information bits.
-      units::bits nof_info_bits = std::min<units::bits>(cb_info_bits, tbs - cb_info_bits * absolute_i_cb);
+      units::bits nof_info_bits = segment_buffer->get_cb_info_bits(absolute_i_cb);
 
       // Set CB processor configuration.
       pdsch_codeblock_processor::configuration cb_config;
+      cb_config.cb_index     = absolute_i_cb;
       cb_config.tb_offset    = cb_info_bits * absolute_i_cb;
       cb_config.has_cb_crc   = nof_cb > 1;
       cb_config.cb_info_size = nof_info_bits;
       cb_config.cb_size      = segment_length;
       cb_config.zero_pad     = zero_pad;
-      cb_config.metadata     = cb_metadata;
+      cb_config.metadata     = segment_buffer->get_cb_metadata(absolute_i_cb);
       cb_config.c_init       = scrambler->get_state();
 
-      // Update codeblock specific metadata fields.
-      cb_config.metadata.cb_specific.cw_offset = cw_offset[absolute_i_cb].value();
-      cb_config.metadata.cb_specific.rm_length = rm_length[absolute_i_cb].value();
-
       // Process codeblock.
-      pdsch_codeblock_processor::result result = cb_processor.process(data.get_buffer(), cb_config);
+      pdsch_codeblock_processor::result result = cb_processor.process(data.get_buffer(), *segment_buffer, cb_config);
 
       // Build resource grid mapper adaptor.
       resource_grid_mapper::symbol_buffer_adapter buffer(result.cb_symbols);

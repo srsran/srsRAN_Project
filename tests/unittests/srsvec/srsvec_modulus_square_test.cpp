@@ -20,7 +20,6 @@
  *
  */
 
-#include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/modulus_square.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
@@ -35,12 +34,12 @@ void test_modulus_square(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> input(N);
+  std::vector<cf_t> input(N);
   for (cf_t& v : input) {
     v = {dist(rgen), dist(rgen)};
   }
 
-  srsvec::aligned_vec<float> result(N);
+  std::vector<float> result(N);
 
   srsvec::modulus_square(result, input);
 

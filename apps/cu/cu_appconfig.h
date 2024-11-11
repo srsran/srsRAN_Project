@@ -22,9 +22,10 @@
 
 #pragma once
 
-#include "apps/gnb/gnb_appconfig.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
+#include "apps/services/e2/e2_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
+#include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include <string>
 
 namespace srsran {
@@ -46,7 +47,7 @@ struct cu_f1ap_appconfig {
 
 } // namespace srs_cu
 
-/// Monolithic gnb application configuration.
+/// CU application configuration.
 struct cu_appconfig {
   /// Default constructor to update the log filename.
   cu_appconfig() { log_cfg.filename = "/tmp/cu.log"; }

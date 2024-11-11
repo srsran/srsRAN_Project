@@ -30,7 +30,7 @@
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
-#include <mutex>
+#include <atomic>
 #include <set>
 
 namespace srsran {
@@ -110,7 +110,7 @@ private:
   const uint32_t am_window_size;
 
   /// Rx window
-  std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> rx_window;
+  sdu_window<rlc_rx_am_sdu_info, rlc_bearer_logger> rx_window;
   /// Indicates the rx_window has not been changed, i.e. no need to rebuild status report.
   static const bool rx_window_not_changed = false;
   /// Indicates the rx_window has been changed, i.e. need to rebuild status report.
@@ -119,19 +119,16 @@ private:
   /// Pre-allocated status reports for (re)-building, caching, and sharing with TX entity
   std::array<rlc_am_status_pdu, 3> status_buf;
 
-  /// Status report for (re)-building
-  rlc_am_status_pdu* status_builder = &status_buf[0];
-  /// Status report for caching
-  rlc_am_status_pdu* status_cached = &status_buf[1];
-  /// Status report for sharing
-  rlc_am_status_pdu* status_shared = &status_buf[2];
+  /// Status report owned by writer for (re)-building
+  rlc_am_status_pdu* status_owned_by_writer = &status_buf[0];
+  /// Status report for exchange that is accessed by writer and reader
+  std::atomic<rlc_am_status_pdu*> status_for_exchange = &status_buf[1];
+  /// Status report owned by reader for transmission
+  rlc_am_status_pdu* status_owned_by_reader = &status_buf[2];
 
   /// Size of the cached status report
   std::atomic<uint32_t> status_report_size;
   std::atomic<bool>     status_prohibit_timer_is_running{false};
-
-  /// Mutex for controlled access to the cached status report, e.g. read by the Tx entity in a different executor
-  std::mutex status_report_mutex;
 
   /// \brief t-StatusProhibit
   /// This timer is used by the receiving side of an AM RLC entity in order to prohibit transmission of a STATUS PDU
@@ -171,7 +168,7 @@ public:
       reassembly_timer.stop();
       stopped = true;
     }
-  };
+  }
 
   // Rx/Tx interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }
@@ -315,11 +312,6 @@ private:
   ///
   /// \param timeout_id The timer ID
   void on_expired_reassembly_timer();
-
-  /// Creates the rx_window according to sn_size
-  /// \param sn_size Size of the sequence number (SN)
-  /// \return unique pointer to rx_window instance
-  std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> create_rx_window(rlc_am_sn_size sn_size);
 
   void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };

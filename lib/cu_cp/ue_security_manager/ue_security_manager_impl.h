@@ -38,9 +38,10 @@ public:
   [[nodiscard]] bool                        is_security_context_initialized() const;
   [[nodiscard]] security::sec_as_config     get_up_as_config() const;
   [[nodiscard]] security::sec_128_as_config get_up_128_as_config() const;
+  [[nodiscard]] uint8_t                     get_ncc() const;
 
   // ngap_ue_security_manager
-  bool               init_security_context(security::security_context sec_ctxt);
+  bool               init_security_context(const security::security_context& sec_ctxt);
   [[nodiscard]] bool is_security_enabled() const;
 
   // rrc_ue_security_manager

@@ -48,10 +48,10 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
 }
 
 // Handle RRC reconfiguration result.
-bool handle_procedure_response(cu_cp_pdu_session_resource_release_response&      response_msg,
-                               const cu_cp_pdu_session_resource_release_command& release_cmd,
-                               bool                                              rrc_reconfig_result,
-                               const srslog::basic_logger&                       logger)
+bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_release_response&      response_msg,
+                                         const cu_cp_pdu_session_resource_release_command& release_cmd,
+                                         bool                                              rrc_reconfig_result,
+                                         const srslog::basic_logger&                       logger)
 {
   // Let all PDU sessions fail if response is negative.
   if (!rrc_reconfig_result) {
@@ -79,19 +79,19 @@ void pdu_session_resource_release_routine::operator()(
     next_config = up_resource_mng.calculate_update(release_cmd);
   }
 
-  // Inform the CU-UP about the release of the bearer context
+  // Inform the CU-UP about the release of the bearer context.
   if (next_config.pdu_sessions_to_remove_list.size() == up_resource_mng.get_nof_pdu_sessions()) {
     bearer_context_release_command.ue_index = release_cmd.ue_index;
     bearer_context_release_command.cause    = e1ap_cause_radio_network_t::unspecified;
 
     /// NOTE: Only the Bearer Context at the CU-UP will be released. We don't want to release the UE.
 
-    // Request BearerContextRelease
+    // Request BearerContextRelease.
     CORO_AWAIT(e1ap_bearer_ctxt_mng.handle_bearer_context_release_command(bearer_context_release_command));
 
-  } else { // Inform CU-UP about the release of a bearer
+  } else { // Inform CU-UP about the release of a bearer.
 
-    // prepare BearerContextModificationRequest and call e1 notifier
+    // Prepare BearerContextModificationRequest and call E1 notifier.
     bearer_context_modification_request.ue_index = release_cmd.ue_index;
 
     for (const auto& pdu_session_res_to_release : next_config.pdu_sessions_to_remove_list) {
@@ -100,20 +100,20 @@ void pdu_session_resource_release_routine::operator()(
       bearer_context_modification_request.ng_ran_bearer_context_mod_request = bearer_context_mod_request;
     }
 
-    // call E1AP procedure and wait for BearerContextModificationResponse
+    // Call E1AP procedure and wait for BearerContextModificationResponse.
     CORO_AWAIT_VALUE(
         bearer_context_modification_response,
         e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
-    // Handle BearerContextModificationResponse
+    // Handle BearerContextModificationResponse.
     if (not bearer_context_modification_response.success) {
       logger.warning("ue={}: \"{}\" failed to release bearer(s) at CU-UP", release_cmd.ue_index, name());
     }
   }
 
-  // Release DRB resources at DU
+  // Release DRB resources at DU.
   {
-    // prepare UeContextModificationRequest and call F1 notifier
+    // Prepare UeContextModificationRequest and call F1 notifier.
     ue_context_mod_request.ue_index = release_cmd.ue_index;
     for (const auto& drb_id : next_config.drb_to_remove_list) {
       ue_context_mod_request.drbs_to_be_released_list.push_back(drb_id);
@@ -122,16 +122,16 @@ void pdu_session_resource_release_routine::operator()(
     CORO_AWAIT_VALUE(ue_context_modification_response,
                      f1ap_ue_ctxt_mng.handle_ue_context_modification_request(ue_context_mod_request));
 
-    // Handle UE Context Modification Response
+    // Handle UEContextModificationResponse.
     if (not ue_context_modification_response.success) {
       logger.warning("ue={}: \"{}\" failed to release bearer(s) at DU", release_cmd.ue_index, name());
     }
   }
 
   {
-    // prepare RRC Reconfiguration and call RRC UE notifier
+    // Prepare RRCReconfiguration and call RRC UE notifier.
     {
-      // get NAS PDUs as received by AMF
+      // Get NAS PDUs as received by AMF.
       std::vector<byte_buffer> nas_pdus;
       if (!release_cmd.nas_pdu.empty()) {
         nas_pdus.push_back(release_cmd.nas_pdu);
@@ -146,7 +146,7 @@ void pdu_session_resource_release_routine::operator()(
                                   rrc_ue->generate_meas_config(),
                                   false,
                                   false,
-                                  false,
+                                  std::nullopt,
                                   {},
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", release_cmd.ue_index, name());
@@ -156,8 +156,8 @@ void pdu_session_resource_release_routine::operator()(
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue->handle_rrc_reconfiguration_request(rrc_reconfig_args));
 
-    // Handle RRC Reconfiguration result.
-    if (not handle_procedure_response(response_msg, release_cmd, rrc_reconfig_result, logger)) {
+    // Handle RRCReconfiguration result.
+    if (not handle_rrc_reconfiguration_response(response_msg, release_cmd, rrc_reconfig_result, logger)) {
       logger.warning("ue={}: \"{}\" RRC reconfiguration failed", release_cmd.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_release_response(false));
     }

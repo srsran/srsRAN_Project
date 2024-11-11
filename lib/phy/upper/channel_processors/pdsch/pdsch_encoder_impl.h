@@ -27,6 +27,7 @@
 
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_buffer.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
 #include "srsran/phy/upper/codeblock_metadata.h"
@@ -63,8 +64,10 @@ private:
   /// Pointer to an LDPC rate matcher.
   std::unique_ptr<ldpc_rate_matcher> rate_matcher;
 
-  /// Buffer for storing data segments obtained after transport block segmentation.
-  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments;
+  /// \brief Temporary codeblock message.
+  ///
+  /// It contains codeblock information bits, codeblock CRC (if applicable) and filler bits.
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data;
   /// \brief Maximum codeblock length.
   ///
   /// This is the maximum length of an encoded codeblock, achievable with base graph 1 (rate 1/3).

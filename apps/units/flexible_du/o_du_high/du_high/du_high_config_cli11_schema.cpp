@@ -22,7 +22,7 @@
 
 #include "du_high_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
-#include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
+#include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
@@ -658,6 +658,13 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
       ->default_str("qam64")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
   add_option(app,
+             "--max_rank",
+             pusch_params.max_rank,
+             "Maximum number of PUSCH transmission layers. The actual maximum is limited by the number of receive "
+             "ports and UE capabilities.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 4));
+  add_option(app,
              "--msg3_delta_preamble",
              pusch_params.msg3_delta_preamble,
              "msg3-DeltaPreamble, Power offset between msg3 and RACH preamble transmission")
@@ -1165,10 +1172,8 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
 
 static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_config& slice_params)
 {
-  add_option(app, "--sst", slice_params.s_nssai.sst, "Slice Service Type")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 255));
-  add_option(app, "--sd", slice_params.s_nssai.sd, "Service Differentiator")
+  add_option(app, "--sst", slice_params.sst, "Slice Service Type")->capture_default_str()->check(CLI::Range(0, 255));
+  add_option(app, "--sd", slice_params.sd, "Service Differentiator")
       ->capture_default_str()
       ->check(CLI::Range(0, 0xffffff));
 

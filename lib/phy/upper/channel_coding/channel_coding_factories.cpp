@@ -27,7 +27,8 @@
 #include "ldpc/ldpc_encoder_generic.h"
 #include "ldpc/ldpc_rate_dematcher_impl.h"
 #include "ldpc/ldpc_rate_matcher_impl.h"
-#include "ldpc/ldpc_segmenter_impl.h"
+#include "ldpc/ldpc_segmenter_rx_impl.h"
+#include "ldpc/ldpc_segmenter_tx_impl.h"
 #include "polar/polar_allocator_impl.h"
 #include "polar/polar_code_impl.h"
 #include "polar/polar_deallocator_impl.h"
@@ -223,19 +224,19 @@ public:
 
   std::unique_ptr<ldpc_segmenter_tx> create() override
   {
-    ldpc_segmenter_impl::sch_crc sch_crc = {
+    ldpc_segmenter_tx_impl::sch_crc sch_crc = {
         crc_factory->create(crc_generator_poly::CRC16),
         crc_factory->create(crc_generator_poly::CRC24A),
         crc_factory->create(crc_generator_poly::CRC24B),
     };
-    return ldpc_segmenter_impl::create_ldpc_segmenter_impl_tx(sch_crc);
+    return std::make_unique<ldpc_segmenter_tx_impl>(sch_crc);
   }
 };
 
 class ldpc_segmenter_rx_factory_sw : public ldpc_segmenter_rx_factory
 {
 public:
-  std::unique_ptr<ldpc_segmenter_rx> create() override { return ldpc_segmenter_impl::create_ldpc_segmenter_impl_rx(); }
+  std::unique_ptr<ldpc_segmenter_rx> create() override { return std::make_unique<ldpc_segmenter_rx_impl>(); }
 };
 
 class polar_factory_sw : public polar_factory

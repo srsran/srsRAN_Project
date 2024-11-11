@@ -91,6 +91,7 @@ channel_emulator::channel_emulator(std::string        delay_profile,
                                    std::string        fading_distribution_,
                                    float              sinr_dB,
                                    unsigned           nof_corrupted_re_per_symbol,
+                                   unsigned           nof_tx_ports,
                                    unsigned           nof_rx_ports,
                                    unsigned           nof_subc,
                                    unsigned           nof_symbols,
@@ -98,7 +99,7 @@ channel_emulator::channel_emulator(std::string        delay_profile,
                                    subcarrier_spacing scs,
                                    task_executor&     executor_) :
   nof_ofdm_symbols(nof_symbols),
-  freq_domain_channel({nof_subc, nof_rx_ports}),
+  freq_domain_channel({nof_subc, nof_rx_ports, nof_tx_ports}),
   temp_channel(nof_subc),
   emulators(max_nof_threads, sinr_dB, nof_corrupted_re_per_symbol, nof_subc),
   executor(executor_)
@@ -156,42 +157,53 @@ channel_emulator::channel_emulator(std::string        delay_profile,
 void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_reader& tx_grid)
 {
   unsigned nof_rx_ports = freq_domain_channel.get_dimension_size(1);
+  unsigned nof_tx_ports = freq_domain_channel.get_dimension_size(2);
   unsigned nof_taps     = taps_channel_response.get_dimension_size(1);
 
   // Channel emulator.
   std::atomic<unsigned> count = {0}, completed = {0};
   for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
-    // Get view of the frequency domain response for this port.
-    span<cf_t> chan_freq_respone = freq_domain_channel.get_view({i_rx_port});
+    // Generate frequency domain channel response for each transmit port.
+    for (unsigned i_tx_port = 0; i_tx_port != nof_tx_ports; ++i_tx_port) {
+      // Get view of the frequency domain response for this port.
+      span<cf_t> chan_freq_respone = freq_domain_channel.get_view({i_rx_port, i_tx_port});
 
-    // Generate frequency domain response for the entire slot.
-    srsvec::zero(chan_freq_respone);
-    for (unsigned i_tap = 0; i_tap != nof_taps; ++i_tap) {
-      // Select tap from the fading distribution.
-      cf_t tap;
-      switch (fading_distribution) {
-        case rayleigh:
-          tap = dist_rayleigh(rgen);
-          break;
-        case uniform_phase:
-          tap = std::polar(1.0F, dist_uniform_phase(rgen));
-          break;
-        case invalid_distribution:
-          tap = std::numeric_limits<float>::quiet_NaN();
-          break;
+      // Generate frequency domain response for the entire slot.
+      for (unsigned i_tap = 0; i_tap != nof_taps; ++i_tap) {
+        // Select intermediate tap frequency domain buffer. Use final buffer for the first tap and skip accumulation.
+        span<cf_t> tap_channel = temp_channel;
+        if (i_tap == 0) {
+          tap_channel = chan_freq_respone;
+        }
+
+        // Select tap from the fading distribution.
+        cf_t tap;
+        switch (fading_distribution) {
+          case rayleigh:
+            tap = dist_rayleigh(rgen);
+            break;
+          case uniform_phase:
+            tap = std::polar(1.0F, dist_uniform_phase(rgen));
+            break;
+          case invalid_distribution:
+            tap = std::numeric_limits<float>::quiet_NaN();
+            break;
+        }
+
+        // Multiply tap frequency response by a fading distribution tap.
+        srsvec::sc_prod(taps_channel_response.get_view({i_tap}), tap, tap_channel);
+
+        // Accumulate tap frequency response. Bypass accumulation for the first tap.
+        if (i_tap != 0) {
+          srsvec::add(chan_freq_respone, tap_channel, chan_freq_respone);
+        }
       }
-
-      // Multiply tap frequency response by a fading distribution tap.
-      srsvec::sc_prod(taps_channel_response.get_view({i_tap}), tap, temp_channel);
-
-      // Accumulate tap frequency response.
-      srsvec::add(chan_freq_respone, temp_channel, chan_freq_respone);
     }
 
     // Run channel for each symbol with the same frequency response.
     for (unsigned i_symbol = 0; i_symbol != nof_ofdm_symbols; ++i_symbol) {
-      bool success = executor.execute([this, &rx_grid, &tx_grid, chan_freq_respone, i_rx_port, i_symbol, &completed]() {
-        emulators.get().run(rx_grid, tx_grid, chan_freq_respone, i_rx_port, i_symbol);
+      bool success = executor.execute([this, &rx_grid, &tx_grid, i_rx_port, i_symbol, &completed]() {
+        emulators.get().run(rx_grid, tx_grid, freq_domain_channel, i_rx_port, i_symbol);
         ++completed;
       });
       report_fatal_error_if_not(success, "Failed to enqueue concurrent channel emulate.");
@@ -207,21 +219,36 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
 
 void channel_emulator::concurrent_channel_emulator::run(resource_grid_writer&       rx_grid,
                                                         const resource_grid_reader& tx_grid,
-                                                        span<const cf_t>            freq_response,
-                                                        unsigned                    i_port,
+                                                        const tensor<3, cf_t>&      freq_response,
+                                                        unsigned                    i_rx_port,
                                                         unsigned                    i_symbol)
 {
   using namespace std::complex_literals;
+  unsigned nof_tx_ports = freq_response.get_dimension_size(2);
 
-  // Get OFDM symbol.
-  tx_grid.get(temp_ofdm_symbol, 0, i_symbol, 0);
+  // For each transmit port.
+  for (unsigned i_tx_port = 0; i_tx_port != nof_tx_ports; ++i_tx_port) {
+    // Select temporary buffer.
+    span<cf_t> single_ofdm_symbol = temp_single_ofdm_symbol;
+    if (i_tx_port == 0) {
+      single_ofdm_symbol = temp_ofdm_symbol;
+    }
 
-  // Apply frequency domain fading channel.
-  srsvec::prod(temp_ofdm_symbol, freq_response, temp_ofdm_symbol);
+    // Get OFDM symbol.
+    tx_grid.get(single_ofdm_symbol, i_tx_port, i_symbol, 0);
+
+    // Apply frequency domain fading channel.
+    srsvec::prod(single_ofdm_symbol, freq_response.get_view({i_rx_port, i_tx_port}), single_ofdm_symbol);
+
+    // Skip accumulating for the first transmit port.
+    if (i_tx_port != 0) {
+      srsvec::add(temp_ofdm_symbol, single_ofdm_symbol, temp_ofdm_symbol);
+    }
+  }
 
   // Apply AWGN.
-  std::generate(temp_awgn.begin(), temp_awgn.end(), [this]() { return dist_awgn(rgen); });
-  srsvec::add(temp_ofdm_symbol, temp_awgn, temp_ofdm_symbol);
+  std::generate(temp_single_ofdm_symbol.begin(), temp_single_ofdm_symbol.end(), [this]() { return dist_awgn(rgen); });
+  srsvec::add(temp_ofdm_symbol, temp_single_ofdm_symbol, temp_ofdm_symbol);
 
   // Corrupt REs.
   std::set<unsigned> corrupted_i_subc;
@@ -237,5 +264,5 @@ void channel_emulator::concurrent_channel_emulator::run(resource_grid_writer&   
   }
 
   // Write the OFDM symbol back to the grid.
-  rx_grid.put(i_port, i_symbol, 0, temp_ofdm_symbol);
+  rx_grid.put(i_rx_port, i_symbol, 0, temp_ofdm_symbol);
 }

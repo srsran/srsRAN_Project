@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <cstdint>
 
@@ -45,6 +46,7 @@ inline bool pdcp_sn_size_from_uint(pdcp_sn_size& sn_size, uint16_t num)
 /// \brief Convert PDCP SN size from enum to unsigned integer.
 constexpr uint8_t pdcp_sn_size_to_uint(pdcp_sn_size sn_size)
 {
+  srsran_assert(sn_size != pdcp_sn_size::invalid, "Invalid PDCP SN size");
   return static_cast<uint8_t>(sn_size);
 }
 

@@ -31,8 +31,11 @@
 #include "srsran/ran/srs/srs_constants.h"
 #include "srsran/ran/srs/srs_information.h"
 #include "srsran/srsvec/add.h"
+#include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/mean.h"
 #include "srsran/srsvec/prod.h"
+#include "srsran/srsvec/sc_prod.h"
+#include "srsran/srsvec/subtract.h"
 
 using namespace srsran;
 
@@ -67,8 +70,8 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
   srsran_assert(!config.ports.empty(), "Receive port list is empty.");
 
   unsigned nof_rx_ports         = config.ports.size();
-  unsigned nof_antenna_ports    = static_cast<unsigned>(config.resource.nof_antenna_ports);
-  unsigned nof_symbols          = static_cast<unsigned>(config.resource.nof_symbols);
+  auto     nof_antenna_ports    = static_cast<unsigned>(config.resource.nof_antenna_ports);
+  auto     nof_symbols          = static_cast<unsigned>(config.resource.nof_symbols);
   unsigned nof_symbols_per_slot = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   srsran_assert(config.resource.start_symbol.value() + nof_symbols <= nof_symbols_per_slot,
                 "The start symbol index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the number of symbols "
@@ -81,7 +84,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
   subcarrier_spacing scs = to_subcarrier_spacing(config.slot.numerology());
 
   // Extract comb size.
-  unsigned comb_size = static_cast<unsigned>(config.resource.comb_size);
+  auto comb_size = static_cast<unsigned>(config.resource.comb_size);
 
   srs_information common_info = get_srs_information(config.resource, 0);
 
@@ -103,14 +106,30 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
   static_tensor<3, cf_t, max_seq_length * srs_constants::max_nof_rx_ports * srs_constants::max_nof_tx_ports> temp_lse(
       {sequence_length, nof_rx_ports, nof_antenna_ports});
 
+  // All sequences of pilots.
+  static_tensor<2, cf_t, max_seq_length * srs_constants::max_nof_tx_ports> all_sequences(
+      {sequence_length, nof_antenna_ports});
+
+  // Auxiliary buffer for noise computation.
+  static_tensor<3, cf_t, 2 * max_seq_length * srs_constants::max_nof_rx_ports> temp_noise(
+      {sequence_length, 2, nof_rx_ports});
+  srsvec::zero(temp_noise.get_data());
+
+  srs_information info_port0         = get_srs_information(config.resource, /*antenna_port*/ 0);
+  bool            interleaved_pilots = (nof_antenna_ports == 4) && (info_port0.n_cs >= info_port0.n_cs_max / 2);
+
+  float epre = 0;
   // Iterate transmit ports.
   for (unsigned i_antenna_port = 0; i_antenna_port != nof_antenna_ports; ++i_antenna_port) {
     // Obtain SRS information for a given SRS antenna port.
     srs_information info = get_srs_information(config.resource, i_antenna_port);
 
-    // Generate sequence.
-    static_vector<cf_t, max_seq_length> sequence(info.sequence_length);
+    // Generate sequence and store them in all_sequences.
+    span<cf_t> sequence = all_sequences.get_view({i_antenna_port});
     deps.sequence_generator->generate(sequence, info.sequence_group, info.sequence_number, info.n_cs, info.n_cs_max);
+
+    // For the current Tx antenna, keep track of all the LSEs at all Rx ports.
+    modular_re_buffer_reader<cf_t, srs_constants::max_nof_rx_ports> port_lse(nof_rx_ports, sequence_length);
 
     // Iterate receive ports.
     for (unsigned i_rx_port_index = 0; i_rx_port_index != nof_rx_ports; ++i_rx_port_index) {
@@ -118,6 +137,9 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
 
       // View to the mean LSE for a port combination.
       span<cf_t> mean_lse = temp_lse.get_view({i_rx_port_index, i_antenna_port});
+      // View for noise computation: with interleaved pilots, we need to keep track of two different sets of REs - those
+      // for odd-indexed ports and those for even-indexed ports.
+      span<cf_t> noise_help = temp_noise.get_view({(interleaved_pilots) ? i_antenna_port % 2 : 0U, i_rx_port_index});
 
       // Extract sequence for all symbols and average LSE.
       for (unsigned i_symbol     = config.resource.start_symbol.value(),
@@ -127,6 +149,13 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
         // Extract received sequence.
         static_vector<cf_t, max_seq_length> rx_sequence(info.sequence_length);
         grid.get(rx_sequence, i_rx_port, i_symbol, info.mapping_initial_subcarrier, info.comb_size);
+
+        // Since the same SRS sequence is sent over all symbols, it makes sense to average out the noise. When pilots
+        // are interleaved, we need to keep track of two different sets of REs.
+        if ((i_antenna_port == 0) || (interleaved_pilots && (i_antenna_port == 1))) {
+          srsvec::add(noise_help, rx_sequence, noise_help);
+          epre += srsvec::average_power(rx_sequence);
+        }
 
         // Temporary LSE.
         span<cf_t> lse = rx_sequence;
@@ -150,23 +179,25 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
         srsvec::sc_prod(mean_lse, 1.0 / static_cast<float>(nof_symbols), mean_lse);
       }
 
-      // Estimate TA.
-      time_alignment_measurement ta_meas = deps.ta_estimator->estimate(mean_lse, info.comb_size, scs, max_ta);
-
-      // Combine time alignment measurement.
-      result.time_alignment.time_alignment += ta_meas.time_alignment;
-      result.time_alignment.min        = std::max(result.time_alignment.min, ta_meas.min);
-      result.time_alignment.max        = std::min(result.time_alignment.max, ta_meas.max);
-      result.time_alignment.resolution = std::max(result.time_alignment.resolution, ta_meas.resolution);
+      port_lse.set_slice(i_rx_port_index, mean_lse);
     }
+    // Estimate TA.
+    time_alignment_measurement ta_meas = deps.ta_estimator->estimate(port_lse, info.comb_size, scs, max_ta);
+
+    // Combine time alignment measurements.
+    result.time_alignment.time_alignment += ta_meas.time_alignment;
+    result.time_alignment.min        = std::max(result.time_alignment.min, ta_meas.min);
+    result.time_alignment.max        = std::min(result.time_alignment.max, ta_meas.max);
+    result.time_alignment.resolution = std::max(result.time_alignment.resolution, ta_meas.resolution);
   }
 
   // Average time alignment across all paths.
-  result.time_alignment.time_alignment /= nof_antenna_ports * nof_rx_ports;
+  result.time_alignment.time_alignment /= nof_antenna_ports;
 
+  float noise_var = 0;
   // Compensate time alignment and estimate channel coefficients.
-  for (unsigned i_antenna_port = 0; i_antenna_port != nof_antenna_ports; ++i_antenna_port) {
-    for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
+  for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
+    for (unsigned i_antenna_port = 0; i_antenna_port != nof_antenna_ports; ++i_antenna_port) {
       // View to the mean LSE for a port combination.
       span<cf_t> mean_lse = temp_lse.get_view({i_rx_port, i_antenna_port});
 
@@ -174,7 +205,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       srs_information info = get_srs_information(config.resource, i_antenna_port);
 
       // Calculate subcarrier phase shift in radians.
-      float phase_shift_subcarrier =
+      auto phase_shift_subcarrier =
           static_cast<float>(TWOPI * result.time_alignment.time_alignment * scs_to_khz(scs) * 1000 * comb_size);
 
       // Calculate the initial phase shift in radians.
@@ -186,11 +217,44 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       // Calculate channel wideband coefficient.
       cf_t coefficient = srsvec::mean(mean_lse);
       result.channel_matrix.set_coefficient(coefficient, i_rx_port, i_antenna_port);
+
+      // View for noise computation: with interleaved pilots, we need to keep track of two different sets of REs - those
+      // for odd-indexed ports and those for even-indexed ports.
+      span<cf_t> noise_help = temp_noise.get_view({(interleaved_pilots) ? i_antenna_port % 2 : 0U, i_rx_port});
+
+      if ((i_antenna_port == 0) || (interleaved_pilots && (i_antenna_port == 1))) {
+        compensate_phase_shift(noise_help, phase_shift_subcarrier, phase_shift_offset);
+      }
+
+      // We recover the signal by multiplying the SRS sequence by the channel coefficient and we remove it from
+      // noise_help. Recall that the latter contains the contribution of all symbols, so the reconstructed symbol must
+      // also be counted nof_symbols times.
+      static_vector<cf_t, max_seq_length> recovered_signal(noise_help.size());
+      srsvec::sc_prod(
+          all_sequences.get_view({i_antenna_port}), static_cast<float>(nof_symbols) * coefficient, recovered_signal);
+      srsvec::subtract(noise_help, recovered_signal, noise_help);
+    }
+    span<cf_t> noise_help = temp_noise.get_view({0U, i_rx_port});
+    noise_var += srsvec::average_power(noise_help) * noise_help.size();
+
+    if (interleaved_pilots) {
+      noise_help = temp_noise.get_view({1U, i_rx_port});
+      noise_var += srsvec::average_power(noise_help) * noise_help.size();
     }
   }
 
-  // Set noise variance to zero.
-  result.noise_variance = near_zero;
+  // At this point, noise_var contains the sum of all the squared errors between the received signal and the
+  // reconstructed one. For each Rx port, the number of degrees of freedom used to estimate the channel coefficients is
+  // usually equal nof_antenna_ports, but when pilots are interleaved, in which case it's 2. Also, when interleaving
+  // pilots, we look at double the samples.
+  unsigned nof_estimates     = (interleaved_pilots ? 2 : nof_antenna_ports);
+  unsigned correction_factor = (interleaved_pilots ? 2 : 1);
+  noise_var /= static_cast<float>((nof_symbols * sequence_length - nof_estimates) * correction_factor * nof_rx_ports);
+  epre /= static_cast<float>(nof_symbols * correction_factor * nof_rx_ports);
+
+  // Set noise variance and EPRE.
+  result.noise_variance = noise_var;
+  result.epre_dB        = convert_power_to_dB(epre);
 
   return result;
 }

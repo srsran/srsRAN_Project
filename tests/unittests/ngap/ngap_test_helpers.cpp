@@ -39,7 +39,12 @@ ngap_test::ngap_test() :
     cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
-    cucfg.ngaps.push_back(cu_cp_configuration::ngap_params{&n2_gw, {{7, {{plmn_identity::test_value(), {{1}}}}}}});
+    cucfg.ngaps.push_back(cu_cp_configuration::ngap_params{
+        &n2_gw,
+        {supported_tracking_area{
+            7,
+            {plmn_item{plmn_identity::test_value(),
+                       std::vector<s_nssai_t>{s_nssai_t{slice_service_type{1}, slice_differentiator{}}}}}}}});
     return cucfg;
   }())
 {
@@ -48,10 +53,10 @@ ngap_test::ngap_test() :
   srslog::init();
 
   ngap_configuration ngap_cfg{};
-  ngap_cfg.gnb_id                    = cu_cp_cfg.node.gnb_id;
-  ngap_cfg.ran_node_name             = cu_cp_cfg.node.ran_node_name;
-  ngap_cfg.supported_tas             = cu_cp_cfg.ngaps.front().supported_tas;
-  ngap_cfg.pdu_session_setup_timeout = cu_cp_cfg.ue.pdu_session_setup_timeout;
+  ngap_cfg.gnb_id                      = cu_cp_cfg.node.gnb_id;
+  ngap_cfg.ran_node_name               = cu_cp_cfg.node.ran_node_name;
+  ngap_cfg.supported_tas               = cu_cp_cfg.ngaps.front().supported_tas;
+  ngap_cfg.request_pdu_session_timeout = cu_cp_cfg.ue.request_pdu_session_timeout;
   ngap = create_ngap(ngap_cfg, cu_cp_notifier, *cu_cp_cfg.ngaps.front().n2_gw, timers, ctrl_worker);
 
   cu_cp_notifier.connect_ngap(ngap->get_ngap_ue_context_removal_handler());

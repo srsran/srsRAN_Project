@@ -22,7 +22,7 @@
 
 #include "du_low_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
-#include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
+#include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_low_config.h"
 #include "srsran/adt/expected.h"
 #include "srsran/support/cli11_utils.h"

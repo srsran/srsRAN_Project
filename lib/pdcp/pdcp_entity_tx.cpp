@@ -22,7 +22,6 @@
 
 #include "pdcp_entity_tx.h"
 #include "../security/security_engine_impl.h"
-#include "../support/sdu_window_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/srsran_assert.h"

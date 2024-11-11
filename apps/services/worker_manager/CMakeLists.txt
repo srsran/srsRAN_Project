@@ -19,7 +19,14 @@
 #
 
 set(SOURCES
-        cli11_cpu_affinities_parser_helper.cpp)
+        worker_manager.cpp
+        worker_manager_cli11_schema.cpp)
 
-add_library(srsran_flexible_du_support STATIC ${SOURCES})
-target_include_directories(srsran_flexible_du_support PRIVATE ${CMAKE_SOURCE_DIR})
+add_library(srsran_cpu_affinities_helper STATIC cli11_cpu_affinities_parser_helper.cpp)
+
+add_library(srsran_worker_manager_app_service STATIC ${SOURCES})
+target_include_directories(srsran_worker_manager_app_service PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srsran_worker_manager_app_service
+        srsran_cpu_affinities_helper
+        srsran_du_high # TODO: Temp
+        srsran_cu_up) # TODO: Temp

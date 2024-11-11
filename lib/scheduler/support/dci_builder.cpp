@@ -420,7 +420,7 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
       nof_layers, use_transform_precoder, dmrs_config_type::type1, dmrs_max_length::len1);
   f0_1.precoding_info_nof_layers =
       get_pusch_precoding_info_row_index(nof_layers,
-                                         ue_cell_cfg.get_pusch_max_rank(),
+                                         ue_cell_cfg.get_pusch_codebook_config().max_rank.value(),
                                          srs_resource_configuration::one_two_four_enum::four,
                                          use_transform_precoder,
                                          dmrs_config_type::type1,

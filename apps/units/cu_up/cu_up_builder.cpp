@@ -22,7 +22,7 @@
 
 #include "cu_up_builder.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
-#include "apps/services/worker_manager.h"
+#include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/cu_up/metrics/cu_up_pdcp_metrics_consumers.h"
 #include "apps/units/cu_up/metrics/cu_up_pdcp_metrics_producer.h"
 #include "cu_up_unit_config.h"

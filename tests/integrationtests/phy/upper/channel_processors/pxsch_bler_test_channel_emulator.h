@@ -55,6 +55,7 @@ public:
   ///                                        uniform-phase.
   /// \param[in] sinr_dB                     Signal-to-Interference-plus-Noise Ratio.
   /// \param[in] nof_corrupted_re_per_symbol Number of corrupted RE per OFDM symbol. Set to zero for no corrupted RE.
+  /// \param[in] nof_tx_ports                Number of transmit ports.
   /// \param[in] nof_rx_ports                Number of receive ports.
   /// \param[in] nof_subc                    Number of resource grid subcarriers.
   /// \param[in] nof_symbols                 Number of OFDM symbols per slot.
@@ -65,6 +66,7 @@ public:
                    std::string        fading_distribution,
                    float              sinr_dB,
                    unsigned           nof_corrupted_re_per_symbol,
+                   unsigned           nof_tx_ports,
                    unsigned           nof_rx_ports,
                    unsigned           nof_subc,
                    unsigned           nof_symbols,
@@ -89,7 +91,7 @@ private:
       dist_corrupted_re(0, nof_subc - 1),
       nof_corrupted_re(nof_corrupted_re_),
       temp_ofdm_symbol(nof_subc),
-      temp_awgn(nof_subc)
+      temp_single_ofdm_symbol(nof_subc)
     {
     }
 
@@ -101,7 +103,7 @@ private:
     /// \param[in]  i_symbol      OFDM symbol index within the slot.
     void run(resource_grid_writer&       rx_grid,
              const resource_grid_reader& tx_grid,
-             span<const cf_t>            freq_response,
+             const tensor<3, cf_t>&      freq_response,
              unsigned                    i_port,
              unsigned                    i_symbol);
 
@@ -118,8 +120,8 @@ private:
     unsigned nof_corrupted_re;
     /// Temporary OFDM frequency domain symbol.
     std::vector<cf_t> temp_ofdm_symbol;
-    /// Temporary generated noise for adding to an OFDM symbol.
-    std::vector<cf_t> temp_awgn;
+    /// Temporary single OFDM frequency domain symbol.
+    std::vector<cf_t> temp_single_ofdm_symbol;
   };
 
   enum {
@@ -136,7 +138,7 @@ private:
   /// Uniform real distribution for phase.
   std::uniform_real_distribution<float> dist_uniform_phase = std::uniform_real_distribution<float>(-M_PI, M_PI);
   /// Temporary channel sum.
-  dynamic_tensor<2, cf_t> freq_domain_channel;
+  dynamic_tensor<3, cf_t> freq_domain_channel;
   /// Temporary channel.
   std::vector<cf_t> temp_channel;
   /// Frequency response of each of the channel taps.

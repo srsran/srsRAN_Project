@@ -218,6 +218,9 @@ struct du_cell_config {
   /// Defines the maximum allowable channel delay in slots when runnning in NTN mode. see TS38.300 section 16.14.2.
   unsigned ntn_cs_koffset = 0;
 
+  /// PUSCH Maximum of transmission layers. Limits the PUSCH maximum rank the UE is configrued with.
+  unsigned pusch_max_nof_layers = 1;
+
   /// List of RAN slices to support in the scheduler.
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 };

@@ -492,9 +492,9 @@ inline void asn1_to_handov_type(ngap_handov_type& handov_type, const asn1::ngap:
 inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
 {
   s_nssai_t s_nssai;
-  s_nssai.sst = asn1_s_nssai.sst.to_number();
+  s_nssai.sst = slice_service_type{(uint8_t)asn1_s_nssai.sst.to_number()};
   if (asn1_s_nssai.sd_present) {
-    s_nssai.sd = asn1_s_nssai.sd.to_number();
+    s_nssai.sd = slice_differentiator::create(asn1_s_nssai.sd.to_number()).value();
   }
 
   return s_nssai;
@@ -503,9 +503,9 @@ inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
 inline asn1::ngap::s_nssai_s s_nssai_to_asn1(const s_nssai_t& s_nssai)
 {
   asn1::ngap::s_nssai_s asn1_s_nssai;
-  asn1_s_nssai.sst.from_number(s_nssai.sst);
+  asn1_s_nssai.sst.from_number(s_nssai.sst.value());
 
-  if (s_nssai.sd.has_value()) {
+  if (s_nssai.sd.is_set()) {
     asn1_s_nssai.sd_present = true;
     asn1_s_nssai.sd.from_number(s_nssai.sd.value());
   }
@@ -526,8 +526,8 @@ inline bool asn1_to_security_context(security::security_context&           sec_c
                                      const asn1::ngap::ue_security_cap_s&  asn1_sec_cap,
                                      const asn1::ngap::security_context_s& asn1_sec_ctxt)
 {
-  // TODO: Handle next_hop_chaining_count
   copy_asn1_key(sec_ctxt.k, asn1_sec_ctxt.next_hop_nh);
+  sec_ctxt.ncc = asn1_sec_ctxt.next_hop_chaining_count;
   fill_supported_algorithms(sec_ctxt.supported_int_algos, asn1_sec_cap.nr_integrity_protection_algorithms);
   fill_supported_algorithms(sec_ctxt.supported_enc_algos, asn1_sec_cap.nr_encryption_algorithms);
   srslog::fetch_basic_logger("NGAP").debug(asn1_sec_ctxt.next_hop_nh.data(), 32, "K_gnb");

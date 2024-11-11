@@ -280,8 +280,9 @@ protected:
   static constexpr ran_slice_id_t drb2_slice_id{3};
 
   rb_ratio_slice_scheduler_test() :
-    slice_scheduler_test({{{plmn_identity::test_value(), s_nssai_t{1}}, MIN_SLICE_RB, MAX_SLICE_RB},
-                          {{plmn_identity::test_value(), s_nssai_t{2}}, MIN_SLICE_RB, MAX_SLICE_RB}})
+    slice_scheduler_test(
+        {{{plmn_identity::test_value(), s_nssai_t{slice_service_type{1}}}, MIN_SLICE_RB, MAX_SLICE_RB},
+         {{plmn_identity::test_value(), s_nssai_t{slice_service_type{2}}}, MIN_SLICE_RB, MAX_SLICE_RB}})
   {
   }
 
@@ -295,7 +296,7 @@ protected:
     req.starts_in_fallback  = false;
     if (lc_cfgs.size() == 0) {
       (*req.cfg.lc_config_list)[drb1_idx].rrm_policy.plmn_id = plmn_identity::test_value();
-      (*req.cfg.lc_config_list)[drb1_idx].rrm_policy.s_nssai = s_nssai_t{1};
+      (*req.cfg.lc_config_list)[drb1_idx].rrm_policy.s_nssai = s_nssai_t{slice_service_type{1}};
     } else {
       *req.cfg.lc_config_list = lc_cfgs;
     }

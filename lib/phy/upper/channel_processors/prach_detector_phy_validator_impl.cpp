@@ -45,10 +45,9 @@ error_type<std::string> srsran::validate_prach_detector_phy(prach_format_type   
   th_params.zero_correlation_zone = zero_correlation_zone;
   th_params.combine_symbols       = true;
 
-  const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
-  auto                                      flag = threshold_and_margin_table.check_flag(th_params);
+  auto flag = detail::get_threshold_flag(th_params);
 
-  if (flag == detail::threshold_and_margin_finder::threshold_flag::red) {
+  if (flag == detail::threshold_flag::red) {
     fmt::print("\nThe PRACH detector does not support the configuration {{Format {}, ZCZ {}, SCS {}, Rx ports {}}}.\n",
                to_string(format),
                zero_correlation_zone,
