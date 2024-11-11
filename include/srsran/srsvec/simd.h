@@ -1519,6 +1519,25 @@ inline simd_i_t srsran_simd_i_and(simd_i_t a, simd_i_t b)
 #endif /* __AVX512F__ */
 }
 
+inline simd_sel_t srsran_simd_sel_set_ones()
+{
+#ifdef __AVX512F__
+  return ~static_cast<simd_sel_t>(0);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  return _mm256_castsi256_ps(_mm256_set1_epi32(0xffffffff));
+#else
+#ifdef __SSE4_1__
+  return _mm_castsi256_ps(_mm_set1_epi32(0xffffffff));
+#else
+#ifdef __ARM_NEON
+  return vdupq_n_u32(0xffffffff);
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
 inline simd_sel_t srsran_simd_sel_and(simd_sel_t a, simd_sel_t b)
 {
 #ifdef __AVX512F__
