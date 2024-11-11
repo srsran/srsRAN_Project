@@ -120,8 +120,10 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
   if (action_params[ran_param_id] == "PLMN Identity") {
     srs_du::control_config_params cur_control_params = {};
     cur_control_params.rrm_policy_group.emplace();
-    cur_control_params.rrm_policy_group.value().pol_member.plmn_id =
-        plmn_identity::parse(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_string()).value();
+    uint32_t num = (uint32_t)(ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number() >> 40); 
+    uint8_t* p = (uint8_t*)&num;
+    std::array<uint8_t, 3> arr = {p[0], p[1], p[2]};
+    cur_control_params.rrm_policy_group.value().pol_member.plmn_id = plmn_identity::from_bytes(arr).value();
     ctrl_cfg.param_list.push_back(cur_control_params);
   } else if (action_params[ran_param_id] == "SST") {
     if (ctrl_cfg.param_list.size()) {
