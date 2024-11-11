@@ -64,7 +64,8 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   test_cfg(test_cfg_),
   pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot),
   bearer_res_mng(srb_config, qos_config, logger),
-  srs_res_mng(std::make_unique<du_srs_policy_max_ul_rate>(cell_cfg_list))
+  srs_res_mng(std::make_unique<du_srs_policy_max_ul_rate>(cell_cfg_list)),
+  drx_res_mng(cell_cfg_list)
 {
 }
 
@@ -199,6 +200,9 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
       return make_unexpected(fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", cell_index));
     }
 
+    // Configure DRX Config
+    drx_res_mng.alloc_resources(ue_res.cell_group);
+
   } else {
     srsran_assert(not ue_res.cell_group.cells.contains(serv_cell_index), "Reallocation of SCell detected");
     ue_res.cell_group.cells.emplace(serv_cell_index);
@@ -221,6 +225,7 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
                   "Double deallocation of same UE cell resources detected");
     pucch_res_mng.dealloc_resources(ue_res.cell_group);
     srs_res_mng->dealloc_resources(ue_res.cell_group);
+    drx_res_mng.dealloc_resources(ue_res.cell_group);
     ue_res.cell_group.cells[0].serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.
