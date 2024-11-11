@@ -34,7 +34,8 @@ protected:
   std::optional<drx_config>       drx_cfg;
   ul_logical_channel_manager      ul_lc_ch_mng;
   slot_point                      ul_ccch_slot{to_numerology_value(scs), 0};
-  ue_drx_controller               drx{scs, conres_timer, drx_cfg, ul_lc_ch_mng, ul_ccch_slot};
+  srslog::basic_logger&           logger = srslog::fetch_basic_logger("SCHED");
+  ue_drx_controller               drx{scs, conres_timer, drx_cfg, ul_lc_ch_mng, ul_ccch_slot, logger};
 
   slot_point next_slot{to_numerology_value(scs),
                        test_rgen::uniform_int<unsigned>(0, 10240) * get_nof_slots_per_subframe(scs) - 1};

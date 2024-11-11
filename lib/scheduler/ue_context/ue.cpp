@@ -28,7 +28,8 @@ ue::ue(const ue_creation_command& cmd) :
       cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
       cmd.cfg.drx_cfg(),
       ul_lc_ch_mgr,
-      cmd.ul_ccch_slot_rx)
+      cmd.ul_ccch_slot_rx,
+      logger)
 {
   // Apply configuration.
   handle_reconfiguration_request(ue_reconf_command{cmd.cfg});

@@ -12,6 +12,7 @@
 
 #include "srsran/ran/drx_config.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/srslog/logger.h"
 #include <optional>
 
 namespace srsran {
@@ -24,11 +25,12 @@ class ul_logical_channel_manager;
 class ue_drx_controller
 {
 public:
-  ue_drx_controller(const subcarrier_spacing          scs_common,
+  ue_drx_controller(subcarrier_spacing                scs_common,
                     std::chrono::milliseconds         conres_timer,
                     const std::optional<drx_config>&  drx_cfg,
                     const ul_logical_channel_manager& ul_lc_mng,
-                    slot_point                        ul_ccch_slot_rx);
+                    std::optional<slot_point>         ul_ccch_slot_rx,
+                    srslog::basic_logger&             logger);
 
   /// Update DRX controller state.
   void slot_indication(slot_point dl_slot);
@@ -50,7 +52,8 @@ private:
   std::chrono::milliseconds         conres_timer;
   const std::optional<drx_config>&  drx_cfg;
   const ul_logical_channel_manager& ul_lc_mng;
-  slot_point                        ul_ccch_slot_rx;
+  std::optional<slot_point>         ul_ccch_slot_rx;
+  srslog::basic_logger&             logger;
 
   // Converted config parameters from milliseconds to slots.
   unsigned           active_window_period;

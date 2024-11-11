@@ -29,9 +29,9 @@ struct du_ue_creation_request {
   rnti_t tc_rnti;
   /// \brief UL-CCCH message received from the UE in Msg3. Empty if the UE is created by upper layers.
   byte_buffer ul_ccch_msg;
-  /// \brief Slot at which the UL-CCCH message was received in the PUSCH. Invalid slot if the UE is created by upper
-  /// layers.
-  slot_point slot_rx;
+  /// \brief If present, it represents the slot at which the UL-CCCH message was received in the PUSCH. Absent, when
+  /// the UE is created by command from upper layers.
+  std::optional<slot_point> slot_rx;
 };
 
 /// \brief Handles the creation of a UE and respective bearers in the DU UE manager, MAC, F1.

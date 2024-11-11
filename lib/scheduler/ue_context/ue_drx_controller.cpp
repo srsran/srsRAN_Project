@@ -17,12 +17,14 @@ ue_drx_controller::ue_drx_controller(subcarrier_spacing                scs_commo
                                      std::chrono::milliseconds         conres_timer_,
                                      const std::optional<drx_config>&  drx_cfg_,
                                      const ul_logical_channel_manager& ul_lc_mng_,
-                                     slot_point                        ul_ccch_slot_rx_) :
+                                     std::optional<slot_point>         ul_ccch_slot_rx_,
+                                     srslog::basic_logger&             logger_) :
   scs_common(scs_common_),
   conres_timer(conres_timer_),
   drx_cfg(drx_cfg_),
   ul_lc_mng(ul_lc_mng_),
-  ul_ccch_slot_rx(ul_ccch_slot_rx_)
+  ul_ccch_slot_rx(ul_ccch_slot_rx_),
+  logger(logger_)
 {
   if (drx_cfg.has_value()) {
     const unsigned nof_slots_per_sf = get_nof_slots_per_subframe(scs_common);
@@ -96,10 +98,14 @@ void ue_drx_controller::on_con_res_start()
   if (not drx_cfg.has_value()) {
     return;
   }
+  if (not ul_ccch_slot_rx.has_value() or not ul_ccch_slot_rx.value().valid()) {
+    logger.error("Setting conRes timer but slot of UL-CCCH was not registered");
+    return;
+  }
 
   const unsigned conres_slots = conres_timer.count() * get_nof_slots_per_subframe(scs_common);
 
-  slot_point new_time_end = ul_ccch_slot_rx + conres_slots;
+  slot_point new_time_end = ul_ccch_slot_rx.value() + conres_slots;
 
   if (not active_time_end.valid() or active_time_end < new_time_end) {
     // "the Active Time includes the time while [...] ra-ContentionResolutionTimer [...] is running."
