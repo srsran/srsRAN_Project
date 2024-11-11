@@ -2726,6 +2726,92 @@ srsran::srs_du::make_asn1_rrc_scheduling_request(const scheduling_request_to_add
   return req;
 }
 
+static asn1::rrc_nr::drx_cfg_s make_asn1_drx_config(const drx_config& cfg)
+{
+  drx_cfg_s out;
+
+  out.drx_on_dur_timer.set(drx_cfg_s::drx_on_dur_timer_c_::types_opts::milli_seconds);
+  if (not asn1::number_to_enum(out.drx_on_dur_timer.milli_seconds(), cfg.on_duration_timer.count())) {
+    report_fatal_error("Invalid on duration DRX timer value {}", cfg.on_duration_timer.count());
+  }
+
+  if (not asn1::number_to_enum(out.drx_inactivity_timer, cfg.inactivity_timer.count())) {
+    report_fatal_error("Invalid Inactivity timer value {}", cfg.inactivity_timer.count());
+  }
+
+  out.drx_retx_timer_dl.value = drx_cfg_s::drx_retx_timer_dl_opts::sl0;
+  out.drx_retx_timer_ul.value = drx_cfg_s::drx_retx_timer_ul_opts::sl0;
+
+  auto&    out_cycle = out.drx_long_cycle_start_offset;
+  unsigned offset    = cfg.long_start_offset.count();
+  switch (cfg.long_cycle.count()) {
+    case 10:
+      out_cycle.set_ms10() = offset;
+      break;
+    case 20:
+      out_cycle.set_ms20() = offset;
+      break;
+    case 32:
+      out_cycle.set_ms32() = offset;
+      break;
+    case 40:
+      out_cycle.set_ms40() = offset;
+      break;
+    case 60:
+      out_cycle.set_ms60() = offset;
+      break;
+    case 64:
+      out_cycle.set_ms64() = offset;
+      break;
+    case 70:
+      out_cycle.set_ms70() = offset;
+      break;
+    case 80:
+      out_cycle.set_ms70() = offset;
+      break;
+    case 128:
+      out_cycle.set_ms128() = offset;
+      break;
+    case 160:
+      out_cycle.set_ms160() = offset;
+      break;
+    case 256:
+      out_cycle.set_ms256() = offset;
+      break;
+    case 320:
+      out_cycle.set_ms320() = offset;
+      break;
+    case 512:
+      out_cycle.set_ms320() = offset;
+      break;
+    case 640:
+      out_cycle.set_ms640() = offset;
+      break;
+    case 1024:
+      out_cycle.set_ms1024() = offset;
+      break;
+    case 1280:
+      out_cycle.set_ms1280() = offset;
+      break;
+    case 2048:
+      out_cycle.set_ms2048() = offset;
+      break;
+    case 2560:
+      out_cycle.set_ms2560() = offset;
+      break;
+    case 5120:
+      out_cycle.set_ms5120() = offset;
+      break;
+    case 10240:
+      out_cycle.set_ms10240() = offset;
+      break;
+    default:
+      report_fatal_error("Invalid DRX config offset={}", offset);
+  }
+
+  return out;
+}
+
 static void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_config& cfg)
 {
   switch (cfg.retx_timer) {
@@ -2983,6 +3069,10 @@ static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cf
                                                  const mac_cell_group_config&        src,
                                                  const mac_cell_group_config&        dest)
 {
+  // drx-Config.
+  calculate_setup_release(
+      out.drx_cfg, src.drx_cfg, dest.drx_cfg, [](const drx_config& newcfg) { return make_asn1_drx_config(newcfg); });
+
   calculate_addmodremlist_diff(
       out.sched_request_cfg.sched_request_to_add_mod_list,
       out.sched_request_cfg.sched_request_to_release_list,

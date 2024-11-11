@@ -25,6 +25,13 @@ struct drx_config {
   std::chrono::milliseconds on_duration_timer;
   /// Duration of the UE inactivity timer.
   std::chrono::milliseconds inactivity_timer;
+
+  bool operator==(const drx_config& other) const
+  {
+    return long_cycle == other.long_cycle && long_start_offset == other.long_start_offset &&
+           on_duration_timer == other.on_duration_timer && inactivity_timer == other.inactivity_timer;
+  }
+  bool operator!=(const drx_config& other) const { return not(*this == other); }
 };
 
 namespace drx_helper {

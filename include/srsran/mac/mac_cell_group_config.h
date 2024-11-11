@@ -13,6 +13,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/mac/bsr_config.h"
 #include "srsran/mac/phr_config.h"
+#include "srsran/ran/drx_config.h"
 #include "srsran/ran/sr_configuration.h"
 #include "srsran/ran/time_alignment_config.h"
 
@@ -20,6 +21,8 @@ namespace srsran {
 
 /// \c MAC-CellGroupConfig, TS 38.331.
 struct mac_cell_group_config {
+  /// \c drx-Config.
+  std::optional<drx_config> drx_cfg;
   /// \c schedulingRequestConfig.
   std::vector<scheduling_request_to_addmod> scheduling_request_config;
   /// \c bsr-Config.

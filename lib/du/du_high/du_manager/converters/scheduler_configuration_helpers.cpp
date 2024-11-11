@@ -116,6 +116,7 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
                        .qos_info     = *get_5qi_to_qos_characteristics_mapping(drb.qos.qos_desc.get_5qi()),
                        .gbr_qos_info = drb.qos.gbr_qos_info});
   }
+  sched_cfg.drx_cfg = ue_res_cfg.cell_group.mcg_cfg.drx_cfg;
 
   return sched_cfg;
 }
