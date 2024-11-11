@@ -19,7 +19,7 @@ namespace srsran {
 struct drx_config {
   /// Period of the DRX cycle. See "drx-LongCycleStartOffset" in TS 38.331.
   std::chrono::milliseconds long_cycle;
-  /// Start Offset of the DRX long cycle..  See "drx-LongCycleStartOffset" in TS 38.331. Values {0,...,long_cycle - 1}
+  /// Start Offset of the DRX long cycle. See "drx-LongCycleStartOffset" in TS 38.331. Values {0,...,long_cycle - 1}.
   std::chrono::milliseconds long_start_offset;
   /// Duration at the beginning of a DRX cycle.
   std::chrono::milliseconds on_duration_timer;

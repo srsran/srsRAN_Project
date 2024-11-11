@@ -51,9 +51,11 @@ private:
   const std::optional<drx_config>&  drx_cfg;
   const ul_logical_channel_manager& ul_lc_mng;
   slot_point                        ul_ccch_slot_rx;
-  unsigned                          active_window_period;
-  interval<unsigned>                active_window;
-  unsigned                          inactivity_dur;
+
+  // Converted config parameters from milliseconds to slots.
+  unsigned           active_window_period;
+  interval<unsigned> active_window;
+  unsigned           inactivity_dur;
 
   // End slot for the active window. When invalid, the UE is not in active window.
   slot_point active_time_end;

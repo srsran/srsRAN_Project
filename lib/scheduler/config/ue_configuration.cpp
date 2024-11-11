@@ -839,10 +839,9 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
 
       if (not du_cells.contains(cell_index)) {
         // New Cell.
-        du_cells.emplace(
-            cell_index,
-            std::make_unique<ue_cell_configuration>(
-                crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, ded_cell.meas_gap_cfg, e > 1));
+        du_cells.emplace(cell_index,
+                         std::make_unique<ue_cell_configuration>(
+                             crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, ded_cell.meas_gap_cfg, e > 1));
       } else {
         // Reconfiguration of existing cell.
         du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg, ded_cell.meas_gap_cfg);
