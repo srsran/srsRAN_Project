@@ -17,7 +17,7 @@ from google.protobuf.empty_pb2 import Empty
 from retina.launcher.public import MetricsSummary
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import Metrics
-from retina.viavi.client import ViaviFailureManager
+from retina.viavi.client import ViaviKPIs
 
 
 @dataclass
@@ -46,7 +46,7 @@ class KPIs:
 def get_kpis(
     gnb: RanStub,
     ue_array: Sequence[RanStub] = (),
-    viavi_failure_manager: Optional[ViaviFailureManager] = None,
+    viavi_kpis: Optional[ViaviKPIs] = None,
     metrics_summary: Optional[MetricsSummary] = None,
 ) -> KPIs:
     """
@@ -83,8 +83,8 @@ def get_kpis(
             kpis.nof_handovers += ue_info.nof_handovers
 
     # Viavi
-    if viavi_failure_manager:
-        nof_failure = viavi_failure_manager.get_nof_failure_by_group_procedure("EMM_PROCEDURE", "attach")
+    if viavi_kpis:
+        nof_failure = viavi_kpis.get_nof_procedure_failure_by_group("EMM_PROCEDURE", "attach")
         if nof_failure:
             kpis.nof_attach_failures += nof_failure
 

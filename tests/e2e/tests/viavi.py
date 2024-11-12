@@ -26,7 +26,7 @@ from retina.launcher.utils import configure_artifacts
 from retina.protocol.base_pb2 import FiveGCDefinition, PLMN, StartInfo
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
-from retina.viavi.client import CampaignStatusEnum, Viavi
+from retina.viavi.client import CampaignStatusEnum, Viavi, ViaviKPIs
 from rich.console import Console
 from rich.table import Table
 
@@ -465,8 +465,8 @@ def check_metrics_criteria(
     is_ok = True
 
     # Check metrics
-    viavi_failure_manager = viavi.get_test_failures()
-    kpis: KPIs = get_kpis(gnb, viavi_failure_manager=viavi_failure_manager, metrics_summary=metrics_summary)
+    viavi_kpis: ViaviKPIs = viavi.get_test_kpis()
+    kpis: KPIs = get_kpis(gnb, viavi_kpis=viavi_kpis, metrics_summary=metrics_summary)
 
     criteria_result: List[_ViaviResult] = []
     criteria_dl_brate_aggregate = check_criteria(
@@ -487,23 +487,47 @@ def check_metrics_criteria(
         )
     )
 
-    criteria_nof_ko_dl = check_criteria(kpis.nof_ko_dl, test_configuration.expected_nof_kos, operator.lt)
+    criteria_nof_ko_dl_gnb = check_criteria(kpis.nof_ko_dl, test_configuration.expected_nof_kos + 100, operator.lt)
     criteria_result.append(
         _ViaviResult(
-            "DL KOs",
-            test_configuration.expected_nof_kos,
+            "DL KOs (gnb)",
+            test_configuration.expected_nof_kos + 100,
             kpis.nof_ko_dl,
-            criteria_nof_ko_dl,
+            criteria_nof_ko_dl_gnb,
         )
     )
 
-    criteria_nof_ko_ul = check_criteria(kpis.nof_ko_ul, test_configuration.expected_nof_kos, operator.lt)
+    criteria_nof_ko_dl_viavi = check_criteria(
+        viavi_kpis.dl_data.num_tbs_errors, test_configuration.expected_nof_kos, operator.lt
+    )
     criteria_result.append(
         _ViaviResult(
-            "UL KOs",
+            "DL KOs (viavi)",
+            test_configuration.expected_nof_kos,
+            kpis.nof_ko_dl,
+            criteria_nof_ko_dl_viavi,
+        )
+    )
+
+    criteria_nof_ko_ul_gnb = check_criteria(kpis.nof_ko_ul, test_configuration.expected_nof_kos, operator.lt)
+    criteria_result.append(
+        _ViaviResult(
+            "UL KOs (gnb)",
             test_configuration.expected_nof_kos,
             kpis.nof_ko_ul,
-            criteria_nof_ko_ul,
+            criteria_nof_ko_ul_gnb,
+        )
+    )
+
+    criteria_nof_ko_ul_viavi = check_criteria(
+        viavi_kpis.ul_data.num_tbs_nack, test_configuration.expected_nof_kos, operator.lt
+    )
+    criteria_result.append(
+        _ViaviResult(
+            "UL KOs (viavi)",
+            test_configuration.expected_nof_kos,
+            kpis.nof_ko_ul,
+            criteria_nof_ko_ul_viavi,
         )
     )
 
@@ -513,13 +537,13 @@ def check_metrics_criteria(
     )
 
     # Check procedure table
-    viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)
-    criteria_procedure_table = viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST) == 0
+    viavi_kpis.print_procedure_failures(_OMIT_VIAVI_FAILURE_LIST)
+    criteria_procedure_table = viavi_kpis.get_number_of_procedure_failures(_OMIT_VIAVI_FAILURE_LIST) == 0
     criteria_result.append(
         _ViaviResult(
             "Procedure table",
             0,
-            viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST),
+            viavi_kpis.get_number_of_procedure_failures(_OMIT_VIAVI_FAILURE_LIST),
             criteria_procedure_table,
         )
     )
@@ -527,8 +551,10 @@ def check_metrics_criteria(
     is_ok = (
         criteria_dl_brate_aggregate
         and criteria_ul_brate_aggregate
-        and criteria_nof_ko_dl
-        and criteria_nof_ko_ul
+        and criteria_nof_ko_dl_gnb
+        and criteria_nof_ko_dl_viavi
+        and criteria_nof_ko_ul_gnb
+        and criteria_nof_ko_ul_viavi
         and criteria_procedure_table
     )
 
