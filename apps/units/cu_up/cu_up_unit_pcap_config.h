@@ -29,8 +29,8 @@ struct cu_up_unit_pcap_config {
     bool        enabled = false;
   } e1ap;
   struct {
-    std::string filename;
-    bool        enabled = false;
+    std::string filename = "/tmp/cu_up_e2ap.pcap";
+    bool        enabled  = false;
   } e2ap;
 
   /// When using the gNB app, there is no point in instantiating
