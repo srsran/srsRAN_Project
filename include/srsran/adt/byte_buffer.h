@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/detail/byte_buffer_memory_resource.h"
 #include "srsran/adt/detail/byte_buffer_range_helpers.h"
 #include "srsran/adt/detail/intrusive_ptr.h"
 #include "srsran/adt/expected.h"
@@ -161,8 +162,8 @@ class byte_buffer
     node_t* segment_in_cb_memory_block = nullptr;
     /// Intrusive ptr reference counter.
     intrusive_ptr_atomic_ref_counter ref_count;
-    /// Whether failures to allocate segments using pool should fallback to malloc.
-    bool malloc_fallback = false;
+    /// Memory resource used to allocate/deallocate segments.
+    byte_buffer_memory_resource* segment_pool;
 
     void destroy_node(node_t* node) const;
 
@@ -281,7 +282,7 @@ public:
   [[nodiscard]] bool append(uint8_t byte)
   {
     if (empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
-      if (not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM)) {
+      if (not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, byte_buffer_segment_pool_default_segment_size())) {
         return false;
       }
     }
@@ -391,13 +392,13 @@ public:
 private:
   bool has_ctrl_block() const { return ctrl_blk_ptr != nullptr; }
 
-  [[nodiscard]] node_t* add_head_segment(size_t headroom, bool use_fallback = false);
+  [[nodiscard]] node_t* add_head_segment(size_t headroom, byte_buffer_memory_resource* segment_pool, size_t sz_hint);
 
-  [[nodiscard]] node_t* create_segment(size_t headroom);
+  [[nodiscard]] node_t* create_segment(size_t headroom, size_t sz_hint);
 
-  [[nodiscard]] bool append_segment(size_t headroom_suggestion);
+  [[nodiscard]] bool append_segment(size_t headroom_suggestion, size_t sz_hint);
 
-  [[nodiscard]] bool prepend_segment(size_t headroom_suggestion);
+  [[nodiscard]] bool prepend_segment(size_t headroom_suggestion, size_t sz_hint);
 
   /// \brief Removes last segment of the byte_buffer.
   /// Note: This operation is O(N), as it requires recomputing the tail.
