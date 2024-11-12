@@ -737,5 +737,10 @@ int main(int argc, char** argv)
   // Prints radio notification summary (number of overflow, underflow and other events).
   notification_handler.print();
 
+  // Destroy physical layer components in the correct order.
+  lower_phy_instance.reset();
+  upper_phy.reset();
+  radio.reset();
+
   return 0;
 }
