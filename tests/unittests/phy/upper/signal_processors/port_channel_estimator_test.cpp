@@ -172,8 +172,7 @@ TEST_P(ChannelEstFixture, test)
   ch_estimator->compute(estimates, grid, 0, pilots_arranged, cfg);
 
   // Calculate the tolerance for the measured TA. It assumes a DFT size of 4096 and a maximum error of ±1 sample.
-  double tolerance_ta_us = 1e3 / (4096 * scs_to_khz(test_params.cfg.scs));
-
+  double tolerance_ta_us = 1e6 * phy_time_unit::from_timing_advance(1, test_params.cfg.scs).to_seconds();
   ASSERT_TRUE(are_estimates_ok(expected_estimates, estimates));
   ASSERT_NEAR(estimates.get_rsrp(0, 0), test_params.rsrp, 5e-4);
   ASSERT_NEAR(estimates.get_epre(0, 0), test_params.epre, 5e-4);

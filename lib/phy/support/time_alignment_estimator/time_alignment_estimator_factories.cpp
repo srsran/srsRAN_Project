@@ -30,11 +30,19 @@ public:
 
   std::unique_ptr<time_alignment_estimator> create() override
   {
-    dft_processor::configuration dft_proc_config;
-    dft_proc_config.size = time_alignment_estimator_dft_impl::dft_size;
-    dft_proc_config.dir  = time_alignment_estimator_dft_impl::dft_direction;
+    time_alignment_estimator_dft_impl::collection_dft_processors dft_processors;
+    for (unsigned dft_size     = time_alignment_estimator_dft_impl::min_dft_size,
+                  dft_size_max = time_alignment_estimator_dft_impl::max_dft_size;
+         dft_size <= dft_size_max;
+         dft_size *= 2) {
+      dft_processor::configuration dft_proc_config;
+      dft_proc_config.size = dft_size;
+      dft_proc_config.dir  = time_alignment_estimator_dft_impl::dft_direction;
 
-    return std::make_unique<time_alignment_estimator_dft_impl>(dft_proc_factory->create(dft_proc_config));
+      dft_processors.emplace(dft_size, dft_proc_factory->create(dft_proc_config));
+    }
+
+    return std::make_unique<time_alignment_estimator_dft_impl>(std::move(dft_processors));
   }
 
 private:
