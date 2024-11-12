@@ -147,6 +147,8 @@ public:
 
   static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override { return srb_vec; }
 
+  rrc_state get_rrc_state() const override { return rrc_state::connected; };
+
   // RRC UE Setup proc notifier
   void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override{};
   void on_ue_release_required(const ngap_cause_t& cause) override{};

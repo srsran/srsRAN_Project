@@ -499,21 +499,29 @@ def check_metrics_criteria(
         )
     )
 
-    criteria_nof_ko_aggregate = check_criteria(kpis.nof_ko_aggregate, test_configuration.expected_nof_kos, operator.lt)
+    criteria_nof_ko_dl = check_criteria(kpis.nof_ko_dl, test_configuration.expected_nof_kos, operator.lt)
     criteria_result.append(
         _ViaviResult(
-            "Number of KOs & retrxs",
+            "DL KOs",
             test_configuration.expected_nof_kos,
-            kpis.nof_ko_aggregate,
-            criteria_nof_ko_aggregate,
+            kpis.nof_ko_dl,
+            criteria_nof_ko_dl,
+        )
+    )
+
+    criteria_nof_ko_ul = check_criteria(kpis.nof_ko_ul, test_configuration.expected_nof_kos, operator.lt)
+    criteria_result.append(
+        _ViaviResult(
+            "UL KOs",
+            test_configuration.expected_nof_kos,
+            kpis.nof_ko_ul,
+            criteria_nof_ko_ul,
         )
     )
 
     criteria_nof_errors = check_criteria(gnb_error_count, 0, operator.eq)
     criteria_result.append(
-        _ViaviResult(
-            "Number of errors" + (" & warnings" if warning_as_errors else ""), 0, gnb_error_count, criteria_nof_errors
-        )
+        _ViaviResult("Errors" + (" & warnings" if warning_as_errors else ""), 0, gnb_error_count, criteria_nof_errors)
     )
 
     # Check procedure table
@@ -531,7 +539,8 @@ def check_metrics_criteria(
     is_ok = (
         criteria_dl_brate_aggregate
         and criteria_ul_brate_aggregate
-        and criteria_nof_ko_aggregate
+        and criteria_nof_ko_dl
+        and criteria_nof_ko_ul
         and criteria_procedure_table
     )
 

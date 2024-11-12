@@ -78,6 +78,7 @@ struct mac_ue_create_request {
   physical_cell_group_config              phy_cell_group_cfg;
   bool                                    initial_fallback = true;
   const byte_buffer*                      ul_ccch_msg      = nullptr;
+  std::optional<slot_point>               ul_ccch_slot_rx;
 
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;

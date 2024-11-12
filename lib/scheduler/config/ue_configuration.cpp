@@ -602,10 +602,12 @@ ue_cell_configuration::ue_cell_configuration(const ue_cell_configuration& other)
 }
 
 void ue_cell_configuration::reconfigure(const serving_cell_config&            cell_cfg_ded_req,
-                                        const std::optional<meas_gap_config>& meas_gaps_)
+                                        const std::optional<meas_gap_config>& meas_gaps_,
+                                        const std::optional<drx_config>&      drx_cfg_)
 {
   cell_cfg_ded = cell_cfg_ded_req;
   meas_gap_cfg = meas_gaps_;
+  drx_cfg      = drx_cfg_;
 
   // Clear previous lookup tables.
   bwp_table     = {};
@@ -799,7 +801,7 @@ ue_configuration::ue_configuration(du_ue_index_t                         ue_inde
                                    rnti_t                                crnti_,
                                    const cell_common_configuration_list& common_cells,
                                    const sched_ue_config_request&        cfg_req) :
-  ue_index(ue_index_), crnti(crnti_)
+  ue_index(ue_index_), crnti(crnti_), ue_drx_cfg(cfg_req.drx_cfg)
 {
   update(common_cells, cfg_req);
 }

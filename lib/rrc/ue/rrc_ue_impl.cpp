@@ -112,6 +112,11 @@ static_vector<srb_id_t, MAX_NOF_SRBS> rrc_ue_impl::get_srbs()
   return srb_ids;
 }
 
+rrc_state rrc_ue_impl::get_rrc_state() const
+{
+  return context.state;
+}
+
 void rrc_ue_impl::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)
 {
   send_dl_ccch(dl_ccch_msg);

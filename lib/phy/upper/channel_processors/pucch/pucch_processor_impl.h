@@ -27,7 +27,7 @@
 #include "srsran/phy/upper/channel_processors/pucch/pucch_detector.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pucch_processor.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pucch_estimator.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 
 namespace srsran {
@@ -97,23 +97,19 @@ public:
 
   /// PUCCH processor constructor.
   pucch_processor_impl(std::unique_ptr<pucch_pdu_validator>                 pdu_validator_,
-                       std::unique_ptr<dmrs_pucch_processor>                channel_estimator_format_1_,
-                       std::unique_ptr<dmrs_pucch_processor>                channel_estimator_format_2_,
+                       std::unique_ptr<dmrs_pucch_estimator>                channel_estimator_,
                        std::unique_ptr<pucch_detector>                      detector_,
                        std::unique_ptr<pucch_demodulator>                   demodulator_,
                        std::unique_ptr<uci_decoder>                         decoder_,
                        const channel_estimate::channel_estimate_dimensions& estimates_dimensions) :
     pdu_validator(std::move(pdu_validator_)),
-    channel_estimator_format_1(std::move(channel_estimator_format_1_)),
-    channel_estimator_format_2(std::move(channel_estimator_format_2_)),
+    channel_estimator(std::move(channel_estimator_)),
     detector(std::move(detector_)),
     demodulator(std::move(demodulator_)),
     decoder(std::move(decoder_)),
-    estimates(estimates_dimensions),
-    max_sizes(estimates_dimensions)
+    estimates(estimates_dimensions)
   {
-    srsran_assert(channel_estimator_format_1, "Invalid channel estimator for PUCCH Format 1.");
-    srsran_assert(channel_estimator_format_2, "Invalid channel estimator for PUCCH Format 2.");
+    srsran_assert(channel_estimator, "Invalid channel estimator.");
     srsran_assert(detector, "Invalid detector.");
     srsran_assert(demodulator, "Invalid PUCCH demodulator.");
     srsran_assert(decoder, "Invalid UCI decoder.");
@@ -122,10 +118,8 @@ public:
 private:
   /// PUCCH PDU validator for all formats.
   std::unique_ptr<pucch_pdu_validator> pdu_validator;
-  /// Channel estimator for PUCCH Format 1.
-  std::unique_ptr<dmrs_pucch_processor> channel_estimator_format_1;
-  /// Channel estimator for PUCCH Format 2.
-  std::unique_ptr<dmrs_pucch_processor> channel_estimator_format_2;
+  /// Channel estimator.
+  std::unique_ptr<dmrs_pucch_estimator> channel_estimator;
   /// PUCCH detector for 1 or 2 bits, using format 0 and 1.
   std::unique_ptr<pucch_detector> detector;
   /// PUCCH demodulator for more than 2 bits, using formats 2, 3 and 4.
@@ -134,8 +128,6 @@ private:
   std::unique_ptr<uci_decoder> decoder;
   /// Temporal channel estimates.
   channel_estimate estimates;
-  /// Maximum RB, symbol and channel sizes handled by the processor.
-  channel_estimate::channel_estimate_dimensions max_sizes;
   /// Temporal LLR storage.
   std::array<log_likelihood_ratio, pucch_constants::MAX_NOF_LLR> temp_llr;
 };

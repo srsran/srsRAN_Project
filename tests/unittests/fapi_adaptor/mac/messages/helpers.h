@@ -72,15 +72,22 @@ dl_ssb_pdu build_valid_dl_ssb_pdu();
 
 /// Helper struct to manage the pointer life cycle of a MAC DL scheduling result.
 struct mac_dl_sched_result_test_helper {
-  std::array<bwp_configuration, 2>     bwp_cfg;
-  std::array<coreset_configuration, 2> coreset_cfg;
-  sib_information_test_helper          sib1;
-  dl_sched_result                      sched_result;
-  mac_dl_sched_result                  result;
+  std::array<bwp_configuration, 2>                          bwp_cfg;
+  std::array<bwp_configuration, MAX_DL_PDCCH_PDUS_PER_SLOT> bwp_cfg_pdcch;
+  std::array<coreset_configuration, 2>                      coreset_cfg;
+  sib_information_test_helper                               sib1;
+  rar_information_test_helper                               rar;
+  dl_paging_allocation_test_helper                          dl_paging;
+  dl_msg_allocation_test_helper                             dl_msg_alloc;
+  dl_sched_result                                           sched_result;
+  mac_dl_sched_result                                       result;
 };
 
 /// Builds and returns a valid MAC data result.
 mac_dl_data_result build_valid_mac_data_result();
+
+/// Builds and returns a valid MAC data result.
+mac_dl_data_result build_valid_mac_data_result_with_all_supported_pdu();
 
 /// Builds and returns a valid PRACH occassion.
 prach_occasion_info build_valid_prach_occassion();
@@ -117,17 +124,24 @@ pucch_info_test_helper build_valid_pucch_format_2_pdu();
 /// Builds and returns a valid MAC DL sched result.
 mac_dl_sched_result_test_helper build_valid_mac_dl_sched_result();
 
+/// Builds and returns a valid MAC DL sched result with all the PDUs filled.
+mac_dl_sched_result_test_helper build_valid_mac_dl_sched_result_with_all_supported_pdus();
+
 /// Helper struct to manage the pointer life cycle of a MAC UL scheduling result.
 struct mac_ul_sched_result_test_helper {
   pucch_info_test_helper    pucch_f1;
   pucch_info_test_helper    pucch_f2;
   ul_sched_info_test_helper pusch;
+  srs_info_helper           srs;
   ul_sched_result           sched_result;
   mac_ul_sched_result       result;
 };
 
 /// Builds and returns a valid MAC UL sched result.
 mac_ul_sched_result_test_helper build_valid_mac_ul_sched_result();
+
+/// Builds and returns a valid MAC UL sched result with all PDUs filled.
+mac_ul_sched_result_test_helper build_valid_mac_ul_sched_result_with_all_supported_pdus();
 
 } // namespace unittests
 } // namespace srsran

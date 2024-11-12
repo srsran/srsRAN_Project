@@ -205,7 +205,8 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
   std::unique_ptr<ue> u = std::make_unique<ue>(
       ue_creation_command{ev.next_config(),
                           ev.get_fallback_command().has_value() and ev.get_fallback_command().value(),
-                          *du_cells[ev.next_config().pcell_common_cfg().cell_index].cell_harqs});
+                          *du_cells[ev.next_config().pcell_common_cfg().cell_index].cell_harqs,
+                          ev.get_ul_ccch_slot_rx()});
   const du_ue_index_t ue_idx = u->ue_index;
 
   auto handle_ue_creation_impl = [this, u = std::move(u), ev = std::move(ev)]() mutable {

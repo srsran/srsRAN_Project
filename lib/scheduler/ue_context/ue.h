@@ -25,6 +25,7 @@
 #include "dl_logical_channel_manager.h"
 #include "ta_manager.h"
 #include "ue_cell.h"
+#include "ue_drx_controller.h"
 #include "ul_logical_channel_manager.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/mac_scheduler.h"
@@ -33,9 +34,10 @@ namespace srsran {
 
 /// Parameters used to create a UE.
 struct ue_creation_command {
-  const ue_configuration& cfg;
-  bool                    starts_in_fallback;
-  cell_harq_manager&      pcell_harq_pool;
+  const ue_configuration&   cfg;
+  bool                      starts_in_fallback;
+  cell_harq_manager&        pcell_harq_pool;
+  std::optional<slot_point> ul_ccch_slot_rx;
 };
 
 /// Parameters used to reconfigure a UE.
@@ -185,6 +187,9 @@ public:
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;
 
+  /// \brief Retrieves UE DRX controller.
+  ue_drx_controller& drx_controller() { return drx; }
+
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
   /// \remark Excludes SRB0.
@@ -225,6 +230,9 @@ private:
 
   /// UE Timing Advance Manager.
   ta_manager ta_mgr;
+
+  // Controller of DRX active timer.
+  ue_drx_controller drx;
 };
 
 } // namespace srsran

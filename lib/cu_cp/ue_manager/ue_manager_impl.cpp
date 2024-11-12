@@ -249,6 +249,12 @@ std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_reques
     ue_report.rnti  = ue.second.get_c_rnti();
     ue_report.du_id = ue.second.get_du_id();
     ue_report.pci   = ue.second.get_pci();
+
+    if (ue.second.get_rrc_ue() == nullptr) {
+      ue_report.rrc_connection_state = rrc_state::idle;
+    } else {
+      ue_report.rrc_connection_state = ue.second.get_rrc_ue()->get_rrc_ue_control_message_handler().get_rrc_state();
+    }
   }
 
   return report;

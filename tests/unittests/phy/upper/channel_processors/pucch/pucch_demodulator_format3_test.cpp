@@ -27,7 +27,7 @@
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_demodulator.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
-#include "srsran/phy/upper/pucch_formats_3_4_helpers.h"
+#include "srsran/phy/upper/pucch_formats3_4_helpers.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/srsvec/conversion.h"
 #include "srsran/support/format/fmt_optional.h"
@@ -140,7 +140,7 @@ protected:
     unsigned nof_rx_ports = config.rx_ports.size();
 
     // Prepare the resource grid.
-    symbol_slot_mask dmrs_symb_mask = get_pucch_formats_3_4_dmrs_symbol_mask(
+    symbol_slot_mask dmrs_symb_mask = get_pucch_formats3_4_dmrs_symbol_mask(
         config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
     unsigned nof_test_symbols = test_case.context.config.rx_ports.size() *
                                 (config.nof_symbols - dmrs_symb_mask.count()) * test_case.context.config.nof_prb * NRE;

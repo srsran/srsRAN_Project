@@ -26,6 +26,7 @@
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/rrc/rrc_ue.h"
 #include <chrono>
 #include <memory>
 
@@ -41,6 +42,8 @@ struct metrics_report {
     gnb_du_id_t du_id;
     /// PCI of the UE's PCell.
     pci_t pci;
+    /// RRC connection state of the UE.
+    rrc_state rrc_connection_state;
   };
   struct cell_info {
     nr_cell_global_id_t cgi;

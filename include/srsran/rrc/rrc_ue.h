@@ -47,6 +47,9 @@ struct dl_dcch_msg_s;
 namespace srsran {
 namespace srs_cu_cp {
 
+/// RRC states (3GPP 38.331 v15.5.1 Sec 4.2.1)
+enum class rrc_state { idle = 0, connected, connected_inactive };
+
 class rrc_ue_controller
 {
 public:
@@ -299,6 +302,9 @@ public:
 
   /// \brief Get all SRBs of the UE.
   virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() = 0;
+
+  /// \brief Get the RRC connection state of the UE.
+  virtual rrc_state get_rrc_state() const = 0;
 };
 
 class rrc_ue_cu_cp_ue_notifier

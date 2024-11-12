@@ -156,6 +156,8 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
     logger.error("ue_index={} not found in the scheduler", ue_index);
     return;
   }
+  auto& u = ues[ue_index];
+  u.drx_controller().on_con_res_start();
 
   auto ue_it = std::find_if(pending_dl_ues_new_tx.begin(),
                             pending_dl_ues_new_tx.end(),
@@ -734,6 +736,9 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                                
   // Mark resources as occupied in the Resource grid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
 
+  // Update DRX controller state.
+  u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
+
   auto result = fill_dl_srb_grant(u,
                                   pdsch_alloc.slot,
                                   h_dl_retx,
@@ -942,6 +947,9 @@ ue_fallback_scheduler::schedule_dl_srb0(ue&                                   u,
 
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
+
+  // Update DRX controller state.
+  u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 
   std::optional<bool> is_srb0;
   if (not result.is_srb_data_pending) {
@@ -1160,6 +1168,9 @@ ue_fallback_scheduler::schedule_dl_srb1(ue&                                   u,
 
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
+
+  // Update DRX controller state.
+  u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 
   auto [nof_srb1_scheduled_bytes, h_dl] = fill_dl_srb_grant(u,
                                                             pdsch_alloc.slot,
@@ -1575,6 +1586,9 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
   // Mark resources as occupied in the ResourceGrid.
   pusch_alloc.ul_res_grid.fill(
       grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, pusch_td.symbols, ue_grant_crbs});
+
+  // Update DRX controller state.
+  u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 
   fill_ul_srb_grant(u,
                     pdcch_alloc.slot,

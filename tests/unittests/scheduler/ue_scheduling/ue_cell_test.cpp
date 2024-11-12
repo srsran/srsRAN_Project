@@ -21,6 +21,8 @@
  */
 
 #include "lib/scheduler/ue_context/ue_cell.h"
+#include "lib/scheduler/ue_context/ue_drx_controller.h"
+#include "lib/scheduler/ue_context/ul_logical_channel_manager.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include <gtest/gtest.h>
 
@@ -91,11 +93,19 @@ protected:
   serving_cell_config                      serv_cell_cfg;
   ue_cell_configuration                    ue_cc_cfg;
   cell_harq_manager                        cell_harqs{1, MAX_NOF_HARQS};
+  ul_logical_channel_manager               ul_lc_ch_mng;
+  srslog::basic_logger&                    logger = srslog::fetch_basic_logger("SCHED");
+  ue_drx_controller                        drx_controller{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                                   cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
+                                   std::nullopt,
+                                   ul_lc_ch_mng,
+                                   {},
+                                   logger};
 };
 
 TEST_F(ue_cell_tester, when_dl_nof_prb_allocated_increases_estimated_dl_rate_increases)
 {
-  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs};
+  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs, drx_controller};
 
   double current_rate = 0;
 
@@ -120,7 +130,7 @@ TEST_F(ue_cell_tester, when_mcs_increases_estimated_dl_rate_increases)
   // Maximum MCS value for 64QAM MCS table.
   const sch_mcs_index max_mcs = 28;
 
-  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs};
+  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs, drx_controller};
 
   double current_rate = 0;
 
@@ -144,7 +154,7 @@ TEST_F(ue_cell_tester, when_mcs_increases_estimated_dl_rate_increases)
 
 TEST_F(ue_cell_tester, when_ul_nof_prb_allocated_increases_estimated_ul_rate_increases)
 {
-  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs};
+  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs, drx_controller};
 
   double current_rate = 0;
 
@@ -169,7 +179,7 @@ TEST_F(ue_cell_tester, when_mcs_increases_estimated_ul_rate_increases)
   // Maximum MCS value for 64QAM MCS table.
   const sch_mcs_index max_mcs = 28;
 
-  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs};
+  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs, drx_controller};
 
   double current_rate = 0;
 

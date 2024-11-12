@@ -24,7 +24,8 @@ set(SOURCES
         ta_manager.cpp
         ue_channel_state_manager.cpp
         ue_link_adaptation_controller.cpp
+        ue_drx_controller.cpp
         ue.cpp
         ue_cell.cpp)
 
-add_library(sched_ue_context OBJECT ${SOURCES})
+add_library(sched_ue_context STATIC ${SOURCES})

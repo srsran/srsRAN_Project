@@ -56,7 +56,7 @@ dl_alloc_result scheduler_time_pf::schedule_dl_retxs(ue_pdsch_allocator&        
 
       // [Implementation-defined] Skip UE if PDCCH is already allocated for this UE in this slot.
       if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti()) or
-          not ue_cc.is_dl_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index))) {
+          not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index))) {
         continue;
       }
 
@@ -150,7 +150,7 @@ ul_alloc_result scheduler_time_pf::schedule_ul_retxs(ue_pusch_allocator&        
                     "Policy scheduler called for UE={} in fallback",
                     ue_cc.ue_index);
 
-      if (not ue_cc.is_dl_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
+      if (not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
           not ue_cc.is_ul_enabled(slice_candidate.get_slot_tx())) {
         // Either the PDCCH slot or PUSCH slots are not available.
         continue;
@@ -348,7 +348,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
   srsran_assert(ue_cc->is_active() and not ue_cc->is_in_fallback_mode(),
                 "Policy scheduler called for UE={} in fallback",
                 ue_cc->ue_index);
-  if (not ue_cc->is_dl_enabled(pdcch_slot) or not ue_cc->is_dl_enabled(pdsch_slot)) {
+  if (not ue_cc->is_pdcch_enabled(pdcch_slot) or not ue_cc->is_pdsch_enabled(pdsch_slot)) {
     // Cannot allocate PDCCH/PDSCH for this UE in this slot.
     return;
   }
@@ -424,7 +424,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   srsran_assert(ue_cc->is_active() and not ue_cc->is_in_fallback_mode(),
                 "Policy scheduler called for UE={} in fallback",
                 ue_cc->ue_index);
-  if (not ue_cc->is_dl_enabled(pdcch_slot) or not ue_cc->is_ul_enabled(pusch_slot)) {
+  if (not ue_cc->is_pdcch_enabled(pdcch_slot) or not ue_cc->is_ul_enabled(pusch_slot)) {
     // Cannot allocate PDCCH/PUSCH for this UE in the provided slots.
     return;
   }

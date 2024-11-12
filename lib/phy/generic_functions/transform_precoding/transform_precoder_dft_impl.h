@@ -61,6 +61,9 @@ public:
   // See interface for documentation.
   void deprecode_ofdm_symbol(span<cf_t> out, span<const cf_t> in) override;
 
+  // See interface for documentation.
+  void deprecode_ofdm_symbol_noise(span<float> out, span<const float> in) override;
+
 private:
   /// Collection of valid DFT processors.
   collection_dft_processors dft_processors;

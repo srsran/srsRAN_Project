@@ -47,7 +47,8 @@ class KPIs:
     dl_brate_max: float = 0
     ul_bler_aggregate: float = 0
     dl_bler_aggregate: float = 0
-    nof_ko_aggregate: int = 0
+    nof_ko_ul: int = 0
+    nof_ko_dl: int = 0
     nof_attach_failures: int = 0
     nof_reestablishments: int = 0
     nof_handovers: int = 0
@@ -77,7 +78,8 @@ def get_kpis(
     kpis.dl_brate_min = gnb_metrics.total.dl_bitrate_min
     kpis.dl_brate_max = gnb_metrics.total.dl_bitrate_max
 
-    kpis.nof_ko_aggregate = gnb_metrics.total.dl_nof_ko + gnb_metrics.total.ul_nof_ko
+    kpis.nof_ko_dl = gnb_metrics.total.dl_nof_ko
+    kpis.nof_ko_ul = gnb_metrics.total.ul_nof_ko
 
     total_ul_ko_ok = gnb_metrics.total.ul_nof_ok + gnb_metrics.total.ul_nof_ko
     total_dl_ko_ok = gnb_metrics.total.dl_nof_ok + gnb_metrics.total.dl_nof_ko

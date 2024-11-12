@@ -35,6 +35,7 @@
 namespace srsran {
 
 struct ul_crc_pdu_indication;
+class ue_drx_controller;
 
 struct grant_prbs_mcs {
   /// MCS to use for the UE's PxSCH.
@@ -56,7 +57,8 @@ public:
   ue_cell(du_ue_index_t                ue_index_,
           rnti_t                       crnti_val,
           const ue_cell_configuration& ue_cell_cfg_,
-          cell_harq_manager&           cell_harq_pool);
+          cell_harq_manager&           cell_harq_pool,
+          ue_drx_controller&           drx_ctrl);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -84,7 +86,8 @@ public:
 
   void set_fallback_state(bool in_fallback);
 
-  bool is_dl_enabled(slot_point dl_slot) const;
+  bool is_pdcch_enabled(slot_point dl_slot) const;
+  bool is_pdsch_enabled(slot_point dl_slot) const;
   bool is_ul_enabled(slot_point ul_slot) const;
 
   struct dl_ack_info_result {
@@ -168,6 +171,7 @@ private:
   const cell_configuration&         cell_cfg;
   const ue_cell_configuration*      ue_cfg;
   const scheduler_ue_expert_config& expert_cfg;
+  ue_drx_controller&                drx_ctrl;
   srslog::basic_logger&             logger;
 
   /// \brief Whether cell is currently active.

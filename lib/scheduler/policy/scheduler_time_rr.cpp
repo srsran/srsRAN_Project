@@ -264,7 +264,7 @@ static dl_alloc_result alloc_dl_retxs(const slice_ue_repository&   ue_db,
 
       // [Implementation-defined] Skip UE if PDCCH is already allocated for this UE in this slot.
       if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti()) or
-          not ue_cc.is_dl_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index))) {
+          not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index))) {
         continue;
       }
 
@@ -305,8 +305,8 @@ static dl_alloc_result alloc_dl_ue_newtx(const slice_ue&               u,
                   ue_cc.ue_index);
 
     if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti()) or
-        not ue_cc.is_dl_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
-        not ue_cc.is_dl_enabled(slice_candidate.get_slot_tx())) {
+        not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
+        not ue_cc.is_pdsch_enabled(slice_candidate.get_slot_tx())) {
       // UE is either already allocated for this slot (e.g. a reTx already took place) or it is not active.
       return {alloc_status::skip_ue};
     }
@@ -345,7 +345,7 @@ static ul_alloc_result alloc_ul_retxs(const slice_ue_repository&   ue_db,
                     "policy scheduler called for UE={} in fallback",
                     ue_cc.ue_index);
 
-      if (not ue_cc.is_dl_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
+      if (not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
           not ue_cc.is_ul_enabled(slice_candidate.get_slot_tx())) {
         // Either the PDCCH slot or PUSCH slots are not available.
         continue;
@@ -389,7 +389,7 @@ static ul_alloc_result alloc_ul_ue_newtx(const slice_ue&               u,
                   "policy scheduler called for UE={} in fallback",
                   ue_cc.ue_index);
 
-    if (not ue_cc.is_dl_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
+    if (not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
         not ue_cc.is_ul_enabled(slice_candidate.get_slot_tx())) {
       // Either the PDCCH slot or PUSCH slots are not available.
       continue;

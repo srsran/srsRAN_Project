@@ -35,7 +35,13 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
-  ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr)
+  ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr),
+  drx(cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
+      cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
+      cmd.cfg.drx_cfg(),
+      ul_lc_ch_mgr,
+      cmd.ul_ccch_slot_rx,
+      logger)
 {
   // Apply configuration.
   handle_reconfiguration_request(ue_reconf_command{cmd.cfg});
@@ -68,6 +74,7 @@ void ue::slot_indication(slot_point sl_tx)
   }
 
   ta_mgr.slot_indication(sl_tx);
+  drx.slot_indication(sl_tx);
 }
 
 void ue::deactivate()
@@ -120,7 +127,8 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
     du_cell_index_t cell_index   = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
     auto&           ue_cell_inst = ue_du_cells[cell_index];
     if (ue_cell_inst == nullptr) {
-      ue_cell_inst = std::make_unique<ue_cell>(ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), pcell_harq_pool);
+      ue_cell_inst =
+          std::make_unique<ue_cell>(ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), pcell_harq_pool, drx);
       if (ue_cell_index >= ue_cells.size()) {
         ue_cells.resize(ue_cell_index + 1);
       }

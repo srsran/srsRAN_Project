@@ -256,6 +256,38 @@ static void add_dl_pdcch_pdus_to_result(mac_dl_sched_result_test_helper& helper)
   }
 }
 
+static void add_all_dl_pdcch_pdus_to_result(mac_dl_sched_result_test_helper& helper)
+{
+  for (unsigned i = 0; i != MAX_DL_PDCCH_PDUS_PER_SLOT; ++i) {
+    pdcch_dl_information info{
+        generate_dci_context(helper.bwp_cfg_pdcch[std::min<unsigned>(i, helper.bwp_cfg_pdcch.size() - 1U)],
+                             helper.coreset_cfg[std::min<unsigned>(i, helper.coreset_cfg.size() - 1U)]),
+        generate_dci_dl_info()};
+    helper.sched_result.dl_pdcchs.push_back(std::move(info));
+  }
+
+  // Add the DCIs payload.
+  for (unsigned i = 0; i != MAX_DL_PDCCH_PDUS_PER_SLOT; ++i) {
+    helper.result.dl_pdcch_pdus.push_back(generate_dci_payload());
+  }
+}
+
+static void add_all_ul_pdcch_pdus_to_result(mac_dl_sched_result_test_helper& helper)
+{
+  for (unsigned i = 0; i != MAX_UL_PDCCH_PDUS_PER_SLOT; ++i) {
+    pdcch_ul_information info{
+        generate_dci_context(helper.bwp_cfg_pdcch[std::min<unsigned>(i, helper.bwp_cfg_pdcch.size() - 1U)],
+                             helper.coreset_cfg[std::min<unsigned>(i, helper.coreset_cfg.size() - 1U)]),
+        {}};
+    helper.sched_result.ul_pdcchs.push_back(std::move(info));
+  }
+
+  // Add the DCIs payload.
+  for (unsigned i = 0; i != MAX_UL_PDCCH_PDUS_PER_SLOT; ++i) {
+    helper.result.ul_pdcch_pdus.push_back(generate_dci_payload());
+  }
+}
+
 static pdsch_information fill_valid_pdsch_information(coreset_configuration& coreset_cfg,
                                                       bwp_configuration&     bwp_config,
                                                       pdsch_information&     info,
@@ -410,6 +442,97 @@ mac_dl_sched_result_test_helper unittests::build_valid_mac_dl_sched_result()
   return helper;
 }
 
+static csi_rs_info build_valid_csi_pdu(mac_dl_sched_result_test_helper& helper)
+{
+  csi_rs_info result;
+  result.bwp_cfg              = &helper.bwp_cfg[0];
+  result.crbs                 = {40, 120};
+  result.type                 = csi_rs_type::CSI_RS_ZP;
+  result.row                  = 1;
+  result.freq_domain          = bounded_bitset<12, false>(12);
+  result.symbol0              = 0;
+  result.symbol1              = 4;
+  result.cdm_type             = csi_rs_cdm_type::no_CDM;
+  result.freq_density         = csi_rs_freq_density_type::one;
+  result.scrambling_id        = 0;
+  result.power_ctrl_offset    = 0;
+  result.power_ctrl_offset_ss = 0;
+
+  return result;
+}
+
+mac_dl_sched_result_test_helper unittests::build_valid_mac_dl_sched_result_with_all_supported_pdus()
+{
+  mac_dl_sched_result_test_helper helper;
+  mac_dl_sched_result&            result = helper.result;
+
+  for (unsigned i = 0, e = helper.coreset_cfg.size(); i != e; ++i) {
+    helper.coreset_cfg[i] = generate_coreset_configuration();
+    helper.bwp_cfg[i]     = generate_bwp_configuration();
+  }
+
+  for (unsigned i = 0; i != MAX_DL_PDCCH_PDUS_PER_SLOT; ++i) {
+    helper.bwp_cfg_pdcch[i] = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz240, {0 + i, 20 + i}};
+  }
+
+  result.slot   = slot_point(4, generate_sfn(), generate_slot());
+  result.dl_res = &helper.sched_result;
+
+  // Add DL PDCCH PDUs.
+  add_all_dl_pdcch_pdus_to_result(helper);
+
+  // Add UL PDCCH PDU.
+  add_all_ul_pdcch_pdus_to_result(helper);
+
+  // Add SIB1 PDU.
+  helper.sib1 = build_valid_sib1_information_pdu();
+  // Fix the BWP and CORESET pointers.
+  helper.sib1.pdu.pdsch_cfg.bwp_cfg     = &helper.sib1.bwp_cfg;
+  helper.sib1.pdu.pdsch_cfg.coreset_cfg = &helper.sib1.coreset_cfg;
+  for (unsigned i = 0; i != MAX_SI_PDUS_PER_SLOT; ++i) {
+    helper.sched_result.bc.sibs.push_back(helper.sib1.pdu);
+  }
+
+  // Add RAR PDU.
+  helper.rar = build_valid_rar_information_pdu();
+  // Fix the BWP and CORESET pointers.
+  helper.rar.pdu.pdsch_cfg.bwp_cfg     = &helper.rar.bwp_cfg;
+  helper.rar.pdu.pdsch_cfg.coreset_cfg = &helper.rar.coreset_cfg;
+  for (unsigned i = 0; i != MAX_RAR_PDUS_PER_SLOT; ++i) {
+    helper.sched_result.rar_grants.push_back(helper.rar.pdu);
+  }
+
+  // Add paging PDU.
+  helper.dl_paging = build_valid_dl_paging_pdu();
+  // Fix the BWP and CORESET pointers.
+  helper.dl_paging.pdu.pdsch_cfg.bwp_cfg     = &helper.dl_paging.bwp_cfg;
+  helper.dl_paging.pdu.pdsch_cfg.coreset_cfg = &helper.dl_paging.coreset_cfg;
+  for (unsigned i = 0; i != MAX_PAGING_PDUS_PER_SLOT; ++i) {
+    helper.sched_result.paging_grants.push_back(helper.dl_paging.pdu);
+  }
+
+  // Add downlink UE PDU.
+  helper.dl_msg_alloc = build_valid_dl_msg_alloc_pdu();
+  // Fix the BWP and CORESET pointers.
+  helper.dl_msg_alloc.pdu.pdsch_cfg.bwp_cfg     = &helper.dl_msg_alloc.bwp_cfg;
+  helper.dl_msg_alloc.pdu.pdsch_cfg.coreset_cfg = &helper.dl_msg_alloc.coreset_cfg;
+  for (unsigned i = 0; i != MAX_UE_PDUS_PER_SLOT; ++i) {
+    helper.sched_result.ue_grants.push_back(helper.dl_msg_alloc.pdu);
+  }
+
+  // Add CSI PDU.
+  for (unsigned i = 0; i != MAX_CSI_RS_PDUS_PER_SLOT; ++i) {
+    helper.sched_result.csi_rs.push_back(build_valid_csi_pdu(helper));
+  }
+
+  // Add SSBs.
+  for (unsigned i = 0; i != MAX_SSB_PER_SLOT; ++i) {
+    result.ssb_pdus.push_back(build_valid_dl_ssb_pdu());
+  }
+
+  return helper;
+}
+
 prach_occasion_info unittests::build_valid_prach_occassion()
 {
   prach_occasion_info prach;
@@ -494,11 +617,11 @@ srs_info_helper unittests::build_valid_srs_pdu()
   pdu.sequence_id          = 4;
   pdu.bw_index             = 2;
   pdu.tx_comb              = tx_comb_size::n2;
-  pdu.comb_offset          = 2;
+  pdu.comb_offset          = 1;
   pdu.cyclic_shift         = 2;
   pdu.freq_position        = 32;
   pdu.freq_shift           = 21;
-  pdu.freq_hopping         = 12;
+  pdu.freq_hopping         = 3;
   pdu.group_or_seq_hopping = srs_group_or_sequence_hopping::neither;
   pdu.resource_type        = srs_resource_type::aperiodic;
   pdu.t_srs_period         = srs_periodicity::sl8;
@@ -556,7 +679,7 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_2_pdu()
 
 mac_ul_sched_result_test_helper srsran::unittests::build_valid_mac_ul_sched_result()
 {
-  mac_ul_sched_result_test_helper helper;
+  mac_ul_sched_result_test_helper helper{{}, {}, {}, build_valid_srs_pdu(), {}, {}};
   mac_ul_sched_result&            result = helper.result;
   result.slot                            = slot_point(4, generate_sfn(), generate_slot());
   result.ul_res                          = &helper.sched_result;
@@ -580,11 +703,68 @@ mac_ul_sched_result_test_helper srsran::unittests::build_valid_mac_ul_sched_resu
   return helper;
 }
 
+mac_ul_sched_result_test_helper unittests::build_valid_mac_ul_sched_result_with_all_supported_pdus()
+{
+  mac_ul_sched_result_test_helper helper{{}, {}, {}, build_valid_srs_pdu(), {}, {}};
+  mac_ul_sched_result&            result = helper.result;
+  result.slot                            = slot_point(4, generate_sfn(), generate_slot());
+  result.ul_res                          = &helper.sched_result;
+
+  // Add PUCCH PDUs.
+  for (unsigned i = 0; i != MAX_PUCCH_PDUS_PER_SLOT; ++i) {
+    helper.pucch_f1              = build_valid_pucch_format_1_pdu();
+    helper.pucch_f1.info.bwp_cfg = &helper.pucch_f1.bwp_cfg;
+    helper.sched_result.pucchs.push_back(helper.pucch_f1.info);
+  }
+
+  // Add PUSCH PDU.
+  for (unsigned i = 0; i != MAX_PUSCH_PDUS_PER_SLOT; ++i) {
+    helper.pusch                        = build_valid_pusch_pdu();
+    helper.pusch.info.pusch_cfg.bwp_cfg = &helper.pusch.bwp_cfg;
+    helper.sched_result.puschs.push_back(helper.pusch.info);
+  }
+
+  // Add PRACH.
+  for (unsigned i = 0; i != MAX_PRACH_OCCASIONS_PER_SLOT; ++i) {
+    helper.sched_result.prachs.push_back(build_valid_prach_occassion());
+  }
+
+  // Add SRS.
+  for (unsigned i = 0; i != MAX_SRS_PDUS_PER_SLOT; ++i) {
+    helper.sched_result.srss.push_back(helper.srs.pdu);
+  }
+
+  return helper;
+}
+
 mac_dl_data_result srsran::unittests::build_valid_mac_data_result()
 {
   mac_dl_data_result result;
 
   result.si_pdus.push_back({1, {}});
+
+  return result;
+}
+
+mac_dl_data_result unittests::build_valid_mac_data_result_with_all_supported_pdu()
+{
+  mac_dl_data_result result;
+
+  for (unsigned i = 0; i != MAX_SI_PDUS_PER_SLOT; ++i) {
+    result.si_pdus.push_back({1, {}});
+  }
+
+  for (unsigned i = 0; i != MAX_RAR_PDUS_PER_SLOT; ++i) {
+    result.rar_pdus.push_back({1, {}});
+  }
+
+  for (unsigned i = 0; i != MAX_UE_PDUS_PER_SLOT; ++i) {
+    result.ue_pdus.push_back({1, {}});
+  }
+
+  for (unsigned i = 0; i != MAX_PAGING_PDUS_PER_SLOT; ++i) {
+    result.paging_pdus.push_back({1, {}});
+  }
 
   return result;
 }

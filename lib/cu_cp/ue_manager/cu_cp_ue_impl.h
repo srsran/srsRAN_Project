@@ -138,7 +138,7 @@ public:
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter() { return rrc_ue_cu_cp_ev_notifier; }
 
   /// \brief Get the RRC UE of the UE.
-  rrc_ue_interface* get_rrc_ue() { return rrc_ue; }
+  rrc_ue_interface* get_rrc_ue() const { return rrc_ue; }
 
 private:
   // common context

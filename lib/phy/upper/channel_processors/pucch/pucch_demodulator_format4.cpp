@@ -26,7 +26,7 @@
 #include "pucch_demodulator_format4.h"
 #include "srsran/phy/support/mask_types.h"
 #include "srsran/phy/support/resource_grid_reader.h"
-#include "srsran/phy/upper/pucch_formats_3_4_helpers.h"
+#include "srsran/phy/upper/pucch_formats3_4_helpers.h"
 #include "srsran/phy/upper/pucch_orthogonal_sequence.h"
 #include "srsran/srsvec/sc_prod.h"
 
@@ -41,7 +41,7 @@ void pucch_demodulator_format4::demodulate(span<log_likelihood_ratio>           
   modulation_scheme mod_scheme = config.pi2_bpsk ? modulation_scheme::PI_2_BPSK : modulation_scheme::QPSK;
 
   // Get a boolean mask of the OFDM symbols carrying DM-RS.
-  symbol_slot_mask dmrs_symb_mask = get_pucch_formats_3_4_dmrs_symbol_mask(
+  symbol_slot_mask dmrs_symb_mask = get_pucch_formats3_4_dmrs_symbol_mask(
       config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
 
   // Number of REs per OFDM symbol. PUCCH Format 4 only gets a PRB.
