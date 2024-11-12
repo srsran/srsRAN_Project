@@ -42,12 +42,9 @@ o_du_unit multicell_flexible_du_factory::create_flexible_du(const du_unit_depend
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
   }
 
-  // Initialize and configure the HAL.
-  // :TODO: review it. It should be managed internally in the DU low.
-  hal_upper_phy_config du_low_hal_cfg = make_du_low_hal_config_and_dependencies(du_lo, du_cells.size());
-
   static constexpr unsigned du_id       = 0U;
-  o_du_low_unit_config      odu_low_cfg = {du_lo, du_low_hal_cfg, prach_ports, du_cells, max_pusch_per_slot, du_id};
+  o_du_low_unit_config      odu_low_cfg = {
+           du_lo, prach_ports, du_cells, max_pusch_per_slot, du_id, static_cast<unsigned>(du_cells.size())};
 
   o_du_low_unit_dependencies odu_low_dependencies = {
       du_impl->get_upper_ru_dl_rg_adapter(), du_impl->get_upper_ru_ul_request_adapter(), *dependencies.workers};

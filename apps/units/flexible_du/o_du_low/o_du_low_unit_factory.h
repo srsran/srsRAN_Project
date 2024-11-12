@@ -23,9 +23,6 @@ struct du_cell_config;
 struct du_low_unit_config;
 struct worker_manager;
 
-hal_upper_phy_config make_du_low_hal_config_and_dependencies(const du_low_unit_config& du_low_unit_cfg,
-                                                             unsigned                  nof_cells);
-
 /// ORAN DU low unit.
 struct o_du_low_unit {
   std::unique_ptr<srs_du::o_du_low> o_du_lo;
@@ -34,11 +31,11 @@ struct o_du_low_unit {
 /// ORAN DU low unit configuration.
 struct o_du_low_unit_config {
   const du_low_unit_config&                   du_low_unit_cfg;
-  const hal_upper_phy_config&                 hal_config;
   std::vector<srs_du::cell_prach_ports_entry> prach_ports;
   span<const srs_du::du_cell_config>          du_cells;
   span<const unsigned>                        max_puschs_per_slot;
   unsigned                                    du_id;
+  unsigned                                    nof_cells;
 };
 
 /// ORAN DU low unit dependencies.
