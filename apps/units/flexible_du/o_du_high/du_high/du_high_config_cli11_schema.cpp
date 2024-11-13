@@ -14,6 +14,8 @@
 #include "apps/services/logger/metrics_logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
+#include "srsran/adt/ranges/transform.h"
+#include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/support/cli11_utils.h"
@@ -584,6 +586,27 @@ static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_sc
   CLI::App* ta_sched_cfg_subcmd =
       add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
   configure_cli11_ta_scheduler_expert_args(*ta_sched_cfg_subcmd, expert_params.ta_sched_cfg);
+}
+
+static void configure_cli11_drx_args(CLI::App& app, du_high_unit_drx_config& drx_params)
+{
+  auto to_uint = [](std::chrono::milliseconds msec) -> unsigned { return msec.count(); };
+
+  add_option(app,
+             "--on_duration_timer",
+             drx_params.on_duration_timer,
+             "Minimum duration in milliseconds that the UE stays in active mode, when DRX is configured.")
+      ->capture_default_str()
+      ->check(CLI::IsMember(views::transform(drx_helper::valid_on_duration_timer_values(), to_uint)));
+  add_option(app,
+             "--inactivity_timer",
+             drx_params.inactivity_timer,
+             "Duration in milliseconds that the UE stays active after PDCCH reception, when DRX is configured.")
+      ->capture_default_str()
+      ->check(CLI::IsMember(views::transform(drx_helper::valid_inactivity_timer_values(), to_uint)));
+  add_option(app, "--long_cycle", drx_params.long_cycle, "Duration in milliseconds between UE DRX long cycles")
+      ->capture_default_str()
+      ->check(CLI::IsMember(views::transform(drx_helper::valid_long_cycle_values(), to_uint)));
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common_config& ul_common_params)
@@ -1332,6 +1355,9 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   // Scheduler expert configuration.
   CLI::App* sched_expert_subcmd = add_subcommand(app, "sched_expert_cfg", "Scheduler expert parameters");
   configure_cli11_scheduler_expert_args(*sched_expert_subcmd, cell_params.sched_expert_cfg);
+
+  CLI::App* drx_subcmd = add_subcommand(app, "drx", "DRX parameters");
+  configure_cli11_drx_args(*drx_subcmd, cell_params.drx_cfg);
 
   // Slicing configuration.
   auto slicing_lambda = [&cell_params](const std::vector<std::string>& values) {

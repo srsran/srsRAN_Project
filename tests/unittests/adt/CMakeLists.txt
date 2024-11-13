@@ -19,7 +19,8 @@ add_test(interval_test interval_test)
 add_executable(byte_buffer_test
         byte_buffer_segment_test.cpp
         byte_buffer_test.cpp
-        byte_buffer_chain_test.cpp)
+        byte_buffer_chain_test.cpp
+        transform_view_test.cpp)
 target_link_libraries(byte_buffer_test srslog srsran_support gtest gtest_main)
 add_test(byte_buffer_test byte_buffer_test)
 set_tests_properties(byte_buffer_test PROPERTIES LABELS "tsan")
@@ -63,6 +64,10 @@ add_test(unique_function_test unique_function_test)
 add_executable(filter_view_test filter_view_test.cpp)
 target_link_libraries(filter_view_test srslog)
 add_test(filter_view_test filter_view_test)
+
+add_executable(transform_view_test transform_view_test.cpp)
+target_link_libraries(transform_view_test srslog gtest gtest_main)
+add_test(transform_view_test transform_view_test)
 
 add_executable(strong_type_test strong_type_test.cpp)
 target_link_libraries(strong_type_test srslog gtest gtest_main)

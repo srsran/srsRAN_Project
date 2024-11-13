@@ -81,6 +81,15 @@ struct du_high_unit_scheduler_expert_config {
   du_high_unit_ta_sched_expert_config ta_sched_cfg;
 };
 
+struct du_high_unit_drx_config {
+  /// drx-onDurationTimer in milliseconds, as per TS 38.331.
+  unsigned on_duration_timer;
+  /// drx-InactivityTimer in milliseconds, as per TS 38.331.
+  unsigned inactivity_timer;
+  /// drx-LongCycle in milliseconds, as per TS 38.331.
+  unsigned long_cycle;
+};
+
 struct du_high_unit_ssb_config {
   /// SSB period in milliseconds.
   unsigned ssb_period_msec = 10;
@@ -635,6 +644,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_csi_config csi_cfg;
   /// Scheduler expert configuration.
   du_high_unit_scheduler_expert_config sched_expert_cfg;
+  /// DRX configuration used when cell corresponds to PCell.
+  du_high_unit_drx_config drx_cfg;
   /// Network slice configuration.
   std::vector<du_high_unit_cell_slice_config> slice_cfg;
 };

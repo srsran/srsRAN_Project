@@ -36,11 +36,14 @@ struct drx_config {
 
 namespace drx_helper {
 
-/// Valid drx-LongCycle values as per TS 38.331, "drx-LongCycleStartOffset".
+/// Valid LongCycle values as per TS 38.331, "drx-LongCycleStartOffset".
 span<const std::chrono::milliseconds> valid_long_cycle_values();
 
-/// Valid drx-onDurationTimer values as per TS 38.331, "drx-LongCycleStartOffset".
+/// Valid onDurationTimer values as per TS 38.331, "drx-LongCycleStartOffset".
 span<const std::chrono::milliseconds> valid_on_duration_timer_values();
+
+/// Valid InactivityTimer values as per TS 38.331, "drx-InactivityTyimer".
+span<const std::chrono::milliseconds> valid_inactivity_timer_values();
 
 } // namespace drx_helper
 
