@@ -56,7 +56,7 @@ class _ViaviConfiguration:
     # test/fail criteria
     expected_ul_bitrate: float = 0
     expected_dl_bitrate: float = 0
-    expected_nof_kos: int = 0
+    expected_nof_kos: float = 0  # Infinity value is represented in a float
     warning_as_errors: bool = True
     enable_dddsu: bool = False
     ul_heavy_7u2d: bool = False
@@ -589,6 +589,10 @@ def get_str_number_criteria(number_criteria: float) -> str:
     """
     Get string number criteria
     """
+    if number_criteria == float("inf"):
+        return "∞"
+    if number_criteria == float("-inf"):
+        return "-∞"
     if number_criteria >= 1_000_000_000:
         return f"{number_criteria / 1_000_000_000:.1f}G"
     if number_criteria >= 1_000_000:
