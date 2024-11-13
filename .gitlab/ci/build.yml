@@ -598,7 +598,7 @@ valgrind changed tests:
   allow_failure:
     exit_codes: 124 # timeout command's exit code when the time is reached
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-memcheck/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
