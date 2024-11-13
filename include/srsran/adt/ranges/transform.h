@@ -98,6 +98,9 @@ private:
   TransformFunc pred;
 };
 
+/// Apply a transformation over an existing range.
+/// \param[in] r Range to transform
+/// \param[in] p Predicate that transforms each value, one-by-one.
 template <typename Range, typename Pred>
 transform_view<Range, Pred> transform(Range&& r, Pred&& p)
 {
