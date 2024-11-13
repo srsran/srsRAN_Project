@@ -573,12 +573,15 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.emplace();
     }
+
     // Set DMRS additional position.
     out_cell.ue_ded_serv_cell_cfg.ul_config.value()
         .init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs->additional_positions =
         uint_to_dmrs_additional_positions(base_cell.pusch_cfg.dmrs_add_pos);
+
     // Set UL MCS table.
     out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = base_cell.pusch_cfg.mcs_table;
+
     // Configure PUSCH transform precoding.
     if (base_cell.pusch_cfg.enable_transform_precoding) {
       pusch_config& pusch_cfg  = out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value();
@@ -586,9 +589,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_enabled.emplace(
           dmrs_uplink_config::transform_precoder_enabled{std::nullopt, false, false});
     }
-    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
-      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.emplace();
-    }
+
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.emplace();
     }
@@ -671,6 +672,14 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
+    }
+
+    // DRX params. Long cycle != 0 if enabled.
+    if (base_cell.drx_cfg.long_cycle != 0) {
+      srs_du::drx_params& drx = out_cell.mcg_params.drx.emplace();
+      drx.on_duration         = std::chrono::milliseconds{base_cell.drx_cfg.on_duration_timer};
+      drx.long_cycle          = std::chrono::milliseconds{base_cell.drx_cfg.long_cycle};
+      drx.inactivity_timer    = std::chrono::milliseconds{base_cell.drx_cfg.inactivity_timer};
     }
 
     // Slicing configuration.

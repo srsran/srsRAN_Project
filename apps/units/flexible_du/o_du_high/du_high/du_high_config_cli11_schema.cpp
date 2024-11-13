@@ -604,9 +604,12 @@ static void configure_cli11_drx_args(CLI::App& app, du_high_unit_drx_config& drx
              "Duration in milliseconds that the UE stays active after PDCCH reception, when DRX is configured.")
       ->capture_default_str()
       ->check(CLI::IsMember(views::transform(drx_helper::valid_inactivity_timer_values(), to_uint)));
-  add_option(app, "--long_cycle", drx_params.long_cycle, "Duration in milliseconds between UE DRX long cycles")
+  add_option(app,
+             "--long_cycle",
+             drx_params.long_cycle,
+             "Duration in milliseconds between UE DRX long cycles. The value 0 is used to disable DRX")
       ->capture_default_str()
-      ->check(CLI::IsMember(views::transform(drx_helper::valid_long_cycle_values(), to_uint)));
+      ->check(CLI::IsMember(views::transform(drx_helper::valid_long_cycle_values(), to_uint)) | CLI::IsMember({0}));
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common_config& ul_common_params)

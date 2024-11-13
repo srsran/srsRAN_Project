@@ -81,13 +81,14 @@ struct du_high_unit_scheduler_expert_config {
   du_high_unit_ta_sched_expert_config ta_sched_cfg;
 };
 
+/// DRX configuration.
 struct du_high_unit_drx_config {
   /// drx-onDurationTimer in milliseconds, as per TS 38.331.
-  unsigned on_duration_timer;
+  unsigned on_duration_timer = 10;
   /// drx-InactivityTimer in milliseconds, as per TS 38.331.
-  unsigned inactivity_timer;
+  unsigned inactivity_timer = 0;
   /// drx-LongCycle in milliseconds, as per TS 38.331.
-  unsigned long_cycle;
+  unsigned long_cycle = 0;
 };
 
 struct du_high_unit_ssb_config {
