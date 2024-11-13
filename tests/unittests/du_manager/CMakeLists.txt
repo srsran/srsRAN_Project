@@ -10,7 +10,8 @@ set_directory_properties(PROPERTIES LABELS "du_manager")
 
 include_directories(../../..)
 
-add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_manager_procedure_test_helpers.cpp)
+add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_manager_procedure_test_helpers.cpp
+        du_drx_resource_manager_test.cpp)
 target_include_directories(du_manager_test_helpers PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_manager_test_helpers srsran_du_manager srsran_support srslog)
 
@@ -64,7 +65,7 @@ target_include_directories(du_ue_config_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_ue_config_test du_manager_test_helpers rrc_test_doubles pdcp_test_doubles gtest gtest_main)
 gtest_discover_tests(du_ue_config_test)
 
-add_executable(du_ran_resource_manager_test du_ran_resource_manager_test.cpp)
+add_executable(du_ran_resource_manager_test du_ran_resource_manager_test.cpp du_drx_resource_manager_test.cpp)
 target_include_directories(du_ran_resource_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_ran_resource_manager_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_ran_resource_manager_test)

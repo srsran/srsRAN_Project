@@ -41,7 +41,8 @@ public:
     auto min_it = std::min_element(offset_count[cell_idx].begin(),
                                    offset_count[cell_idx].end(),
                                    [](const auto& lhs, const auto& rhs) { return lhs.second < rhs.second; });
-    return std::chrono::milliseconds(min_it->second);
+    min_it->second++;
+    return min_it->first;
   }
 
   void deallocate(du_cell_index_t cell_idx, std::chrono::milliseconds offset)
@@ -57,7 +58,7 @@ private:
 };
 
 du_drx_resource_manager::du_drx_resource_manager(span<const du_cell_config> cell_cfg_list_) :
-  cell_cfg_list(cell_cfg_list_)
+  cell_cfg_list(cell_cfg_list_), offset_pool(std::make_unique<drx_offset_pool>(cell_cfg_list_))
 {
 }
 
@@ -90,4 +91,7 @@ void du_drx_resource_manager::dealloc_resources(cell_group_config& cell_grp_cfg)
   // Return offset back to the pool.
   drx_config& drx = cell_grp_cfg.mcg_cfg.drx_cfg.value();
   offset_pool->deallocate(cell_grp_cfg.cells[0].serv_cell_cfg.cell_index, drx.long_start_offset);
+
+  // Clear DRX config.
+  cell_grp_cfg.mcg_cfg.drx_cfg.reset();
 }
