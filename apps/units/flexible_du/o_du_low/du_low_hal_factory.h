@@ -13,11 +13,6 @@
 #include "du_low_config.h"
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
-#include "srsran/srslog/srslog.h"
-
-#ifdef DPDK_FOUND
-#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
-#endif // DPDK_FOUND
 
 namespace srsran {
 
@@ -27,20 +22,11 @@ struct o_du_low_hal_dependencies {
   std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory = nullptr;
 };
 
-#ifdef DPDK_FOUND
-/// \brief Creates and initializes a bbdev-based hardware accelerator.
-/// \param[in] bbdev_app_cfg Struct containing the DU low HAL configuration.
-/// \param[in] logger        SRS logger.
-/// \param[in] nof_hwacc_dus Number of DU-low instances to be managed by the hardware accelerator.
-/// \return A pointer to the bbdev-based accelerator interface on success, nullptr otherwise.
-std::shared_ptr<dpdk::bbdev_acc>
-init_bbdev_hwacc(const bbdev_appconfig& bbdev_app_cfg, srslog::basic_logger& logger, unsigned nof_hwacc_dus);
-#endif // DPDK_FOUND
-
 /// \brief Initializes the HAL depencies of the DU low unit.
-/// \param[out] hal_dependencies Struct containing the DU low unit dependencies.
-/// \param[in]  du_low_unit_cfg  Struct defining the DU low configuration.
-/// \param[in]  nof_cells        Number of cells to be handled by the HAL.
-o_du_low_hal_dependencies make_du_low_hal_dependencies(const du_low_unit_config& du_low_unit_cfg, unsigned nof_cells);
+/// \param[out] hal_config Struct defining the DU low HAL configuration
+/// \param[in]  nof_cells  Number of cells to be handled by the HAL.
+/// \return  Struct containing the DU low unit dependencies.
+o_du_low_hal_dependencies make_du_low_hal_dependencies(const std::optional<du_low_unit_hal_config>& hal_config,
+                                                       unsigned                                     nof_cells);
 
 } // namespace srsran

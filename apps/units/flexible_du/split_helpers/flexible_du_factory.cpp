@@ -25,8 +25,8 @@ using namespace srsran;
 
 o_du_unit flexible_du_factory::create_flexible_du(const du_unit_dependencies& dependencies)
 {
-  o_du_unit odu_unit;
-  unsigned  nof_cells           = config.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
+  o_du_unit      odu_unit;
+  const unsigned nof_cells      = config.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
   odu_unit.e2_metric_connectors = std::make_unique<
       e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>(nof_cells);
 
@@ -36,7 +36,7 @@ o_du_unit flexible_du_factory::create_flexible_du(const du_unit_dependencies& de
   auto du_cells = generate_du_cell_config(du_hi);
 
   std::vector<std::unique_ptr<srs_du::o_du>> du_insts;
-  auto                                       du_impl = std::make_unique<flexible_du_impl>(du_cells.size());
+  auto                                       du_impl = std::make_unique<flexible_du_impl>(nof_cells);
 
   std::vector<srs_du::cell_prach_ports_entry> prach_ports;
   std::vector<unsigned>                       max_pusch_per_slot;
@@ -44,6 +44,9 @@ o_du_unit flexible_du_factory::create_flexible_du(const du_unit_dependencies& de
     prach_ports.push_back(high.cell.prach_cfg.ports);
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
   }
+
+  // O-DU low factory is common for all the cells.
+  o_du_low_unit_factory odu_low_factory(du_lo.hal_config, nof_cells);
 
   // Create O-DU low.
   std::vector<o_du_low_unit> du_low_units;
@@ -57,7 +60,7 @@ o_du_unit flexible_du_factory::create_flexible_du(const du_unit_dependencies& de
 
     o_du_low_unit_dependencies odu_low_dependencies = {
         du_impl->get_upper_ru_dl_rg_adapter(), du_impl->get_upper_ru_ul_request_adapter(), *dependencies.workers};
-    du_low_units.push_back(make_o_du_low_unit(odu_low_cfg, odu_low_dependencies));
+    du_low_units.push_back(odu_low_factory.create(odu_low_cfg, odu_low_dependencies));
   }
 
   // Create O-DU high.

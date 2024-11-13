@@ -59,17 +59,20 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
   out_cfg.nof_concurrent_threads = upper_phy_threads_cfg.nof_dl_threads;
 }
 
-o_du_low_unit srsran::make_o_du_low_unit(const o_du_low_unit_config&       params,
-                                         const o_du_low_unit_dependencies& dependencies)
+o_du_low_unit_factory::o_du_low_unit_factory(const std::optional<du_low_unit_hal_config>& hal_config,
+                                             unsigned                                     nof_cells) :
+  hal_dependencies(make_du_low_hal_dependencies(hal_config, nof_cells))
+{
+}
+
+o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       params,
+                                            const o_du_low_unit_dependencies& dependencies)
 {
   srs_du::o_du_low_config o_du_low_cfg;
   o_du_low_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
 
   generate_o_du_low_config(
       o_du_low_cfg, params.du_low_unit_cfg, params.du_cells, params.max_puschs_per_slot, params.du_id);
-
-  // Fill the HAL dependencies.
-  o_du_low_hal_dependencies hal_dependencies = make_du_low_hal_dependencies(params.du_low_unit_cfg, params.nof_cells);
 
   // Fill the PRACH ports.
   o_du_low_cfg.prach_ports = params.prach_ports;
