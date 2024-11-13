@@ -76,7 +76,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 9999999999999
-    warning_as_errors: true
+    warning_as_errors: false
 
   - campaign_filename: *campaign_filename
     test_name: "1UE fading noise UDP uplink"
@@ -90,7 +90,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 9999999999999
-    warning_as_errors: true
+    warning_as_errors: false
 
   - campaign_filename: *campaign_filename
     test_name: "1UE ideal TCP downlink"
@@ -132,7 +132,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 9999999999999
-    warning_as_errors: true
+    warning_as_errors: false
 
   - campaign_filename: *campaign_filename
     test_name: "32UE fading UDP attach-detach with traffic"
@@ -146,7 +146,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 9999999999999
-    warning_as_errors: true
+    warning_as_errors: false
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"

@@ -268,11 +268,8 @@ static const auto profiles = to_array<configuration_profile>({
 });
 
 /// Global instances.
-static std::mutex                             stop_execution_mutex;
-static std::atomic<bool>                      stop               = {false};
-static std::unique_ptr<upper_phy_ssb_example> upper_phy          = nullptr;
-static std::unique_ptr<lower_phy>             lower_phy_instance = nullptr;
-static std::unique_ptr<radio_session>         radio              = nullptr;
+static std::mutex        stop_execution_mutex;
+static std::atomic<bool> stop = {false};
 
 static void stop_execution()
 {
@@ -286,12 +283,6 @@ static void stop_execution()
 
   // Signal program to stop.
   stop = true;
-
-  // Stop radio. It stops blocking the radio transmit and receive operations. The timing handler prevents the PHY from
-  // free running.
-  if (radio != nullptr) {
-    radio->stop();
-  }
 }
 
 /// Function to call when the application is interrupted.
@@ -474,6 +465,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
                                                        lower_phy_metrics_notifier*   metrics_notifier,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
                                                        lower_phy_timing_notifier*    timing_notifier,
+                                                       baseband_gateway&             bb_gateway,
                                                        srslog::basic_logger*         logger)
 {
   lower_phy_configuration phy_config;
@@ -485,7 +477,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
   phy_config.ta_offset                      = n_ta_offset::n0;
   phy_config.cp                             = cp;
   phy_config.dft_window_offset              = 0.5F;
-  phy_config.bb_gateway                     = &radio->get_baseband_gateway(0);
+  phy_config.bb_gateway                     = &bb_gateway;
   phy_config.rx_symbol_notifier             = rx_symbol_notifier;
   phy_config.timing_notifier                = timing_notifier;
   phy_config.error_notifier                 = error_notifier;
@@ -618,7 +610,7 @@ int main(int argc, char** argv)
   radio_notifier_spy notification_handler(log_level);
 
   // Create radio.
-  radio = factory->create(radio_config, *async_task_executor, notification_handler);
+  std::unique_ptr<radio_session> radio = factory->create(radio_config, *async_task_executor, notification_handler);
   srsran_assert(radio, "Failed to create radio.");
 
   // Create symbol handler.
@@ -637,6 +629,7 @@ int main(int argc, char** argv)
   phy_rx_symbol_request_adapter phy_rx_symbol_req_adapter;
 
   // Create lower physical layer.
+  std::unique_ptr<lower_phy> lower_phy_instance = nullptr;
   {
     // Prepare lower physical layer configuration.
     lower_phy_configuration phy_config = create_lower_phy_configuration(rx_task_executor.get(),
@@ -648,6 +641,7 @@ int main(int argc, char** argv)
                                                                         &metrics_adapter,
                                                                         &rx_symbol_adapter,
                                                                         &timing_adapter,
+                                                                        radio->get_baseband_gateway(0),
                                                                         &logger);
     lower_phy_instance                 = create_lower_phy(phy_config);
     srsran_assert(lower_phy_instance, "Failed to create lower physical layer.");
@@ -706,7 +700,7 @@ int main(int argc, char** argv)
   upper_phy_sample_config.enable_ul_processing         = enable_ul_processing;
   upper_phy_sample_config.enable_prach_processing      = enable_prach_processing;
   upper_phy_sample_config.data_modulation              = data_mod_scheme;
-  upper_phy                                            = upper_phy_ssb_example::create(upper_phy_sample_config);
+  std::unique_ptr<upper_phy_ssb_example> upper_phy     = upper_phy_ssb_example::create(upper_phy_sample_config);
   srsran_assert(upper_phy, "Failed to create upper physical layer.");
 
   // Connect adapters.
@@ -733,6 +727,12 @@ int main(int argc, char** argv)
   // Stop execution.
   stop_execution();
 
+  // Stop radio. It stops blocking the radio transmit and receive operations. The timing handler prevents the PHY from
+  // free running.
+  if (radio != nullptr) {
+    radio->stop();
+  }
+
   // Stop the timing handler. It stops blocking notifier and allows the PHY to free run.
   upper_phy->stop();
 
@@ -748,6 +748,11 @@ int main(int argc, char** argv)
 
   // Prints radio notification summary (number of overflow, underflow and other events).
   notification_handler.print();
+
+  // Destroy physical layer components in the correct order.
+  lower_phy_instance.reset();
+  upper_phy.reset();
+  radio.reset();
 
   return 0;
 }

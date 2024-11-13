@@ -21,25 +21,18 @@
  */
 
 #include "../../../support/resource_grid_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "pucch_processor_test_fixture.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/formatters.h"
-#include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "srsran/ran/pucch/pucch_constants.h"
-#include "fmt/ostream.h"
-#include "gtest/gtest.h"
+#include <fmt/ostream.h>
+#include <gtest/gtest.h>
 #include <regex>
 
 using namespace srsran;
 
 namespace {
-
-// Maximum channel dimensions used to construct the PUCCH processor.
-channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB,
-                                                                MAX_NSYMB_PER_SLOT - 1,
-                                                                1,
-                                                                pucch_constants::MAX_LAYERS};
 
 // Maximum number of UCI payload bits supported by the current PUCCH Format 2 implementation.
 constexpr unsigned PUCCH_F2_IMPL_MAX_NBITS = 1706;
@@ -99,9 +92,22 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
   return os;
 }
 
+} // namespace
+
+using PucchProcessorFormat2Param   = test_case_t;
+using PucchProcessorFormat2Fixture = PucchProcessorTestFixture<PucchProcessorFormat2Param, MAX_NSYMB_PER_SLOT - 1, 1>;
+template <>
+std::unique_ptr<pucch_processor> PucchProcessorFormat2Fixture::processor = nullptr;
+template <>
+std::unique_ptr<pucch_pdu_validator> PucchProcessorFormat2Fixture::validator = nullptr;
+
+// Maximum channel dimensions used to construct the PUCCH processor.
+static constexpr channel_estimate::channel_estimate_dimensions max_dimensions =
+    PucchProcessorFormat2Fixture::channel_estimate_dimensions;
+
 // Test cases are implemented as lambda functions that generate and return an invalid PUCCH Format 2 configuration,
 // along with the expected assert message.
-const std::vector<test_case_t> pucch_processor_validator_test_data = {
+const std::vector<test_case_t> processoressor_validator_test_data = {
     {
         [] {
           test_params entry         = {};
@@ -231,118 +237,15 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
         },
     }};
 
-class PucchProcessorFormat2Fixture : public ::testing::TestWithParam<test_case_t>
-{
-protected:
-  static std::unique_ptr<pucch_processor>     pucch_proc;
-  static std::unique_ptr<pucch_pdu_validator> pucch_validator;
-
-  static void SetUpTestSuite()
-  {
-    if (!(pucch_proc && pucch_validator)) {
-      // Create factories required by the PUCCH demodulator factory.
-      std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
-      ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory.";
-
-      std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
-      ASSERT_NE(demod_factory, nullptr) << "Cannot create channel modulation factory.";
-
-      std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-      ASSERT_NE(prg_factory, nullptr) << "Cannot create pseudo-random generator factory.";
-
-      std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
-      if (!dft_factory) {
-        dft_factory = create_dft_processor_factory_generic();
-      }
-      ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
-
-      std::shared_ptr<transform_precoder_factory> precoding_factory =
-          create_dft_transform_precoder_factory(dft_factory, pucch_constants::FORMAT3_MAX_NPRB + 1);
-      ASSERT_NE(precoding_factory, nullptr) << "Cannot create transform precoder factory";
-
-      // Create PUCCH demodulator factory.
-      std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
-          create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, precoding_factory);
-      ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
-
-      // Create factories required by the PUCCH channel estimator factory.
-      std::shared_ptr<low_papr_sequence_generator_factory> lpg_factory =
-          create_low_papr_sequence_generator_sw_factory();
-      ASSERT_NE(lpg_factory, nullptr) << "Cannot create low PAPR sequence generator factory.";
-
-      std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory =
-          create_low_papr_sequence_collection_sw_factory(lpg_factory);
-      ASSERT_NE(lpc_factory, nullptr) << "Cannot create low PAPR sequence collection factory.";
-
-      std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
-          create_time_alignment_estimator_dft_factory(dft_factory);
-      ASSERT_NE(ta_estimator_factory, nullptr) << "Cannot create TA estimator factory.";
-
-      // Create channel estimator factory.
-      std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-          create_port_channel_estimator_factory_sw(ta_estimator_factory);
-      ASSERT_NE(port_chan_estimator_factory, nullptr) << "Cannot create port channel estimator factory.";
-
-      std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
-          create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, lpg_factory, port_chan_estimator_factory);
-      ASSERT_NE(estimator_factory, nullptr) << "Cannot create DM-RS PUCCH estimator factory.";
-
-      // Create PUCCH detector factory.
-      std::shared_ptr<pucch_detector_factory> detector_factory =
-          create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory);
-      ASSERT_NE(detector_factory, nullptr) << "Cannot create PUCCH detector factory.";
-
-      // Create short block detector factory.
-      std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-      ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
-
-      // Create polar decoder factory.
-      std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
-      ASSERT_NE(polar_dec_factory, nullptr) << "Invalid polar decoder factory.";
-
-      // Create CRC calculator factory.
-      std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-      ASSERT_NE(crc_calc_factory, nullptr) << "Invalid CRC calculator factory.";
-
-      // Create UCI decoder factory.
-      std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-          create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
-      ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
-
-      // Create PUCCH processor factory.
-      std::shared_ptr<pucch_processor_factory> processor_factory = create_pucch_processor_factory_sw(
-          estimator_factory, detector_factory, pucch_demod_factory, uci_dec_factory, max_dimensions);
-      ASSERT_NE(processor_factory, nullptr) << "Cannot create PUCCH processor factory.";
-
-      // Create PUCCH processor.
-      pucch_proc = processor_factory->create();
-      ASSERT_NE(pucch_proc, nullptr) << "Cannot create PUCCH processor.";
-
-      // Create PUCCH processor validator.
-      pucch_validator = processor_factory->create_validator();
-      ASSERT_NE(pucch_validator, nullptr) << "Cannot create PUCCH validator.";
-    }
-  }
-
-  static void TearDownTestSuite()
-  {
-    pucch_validator.reset();
-    pucch_proc.reset();
-  }
-};
-
-std::unique_ptr<pucch_processor>     PucchProcessorFormat2Fixture::pucch_proc;
-std::unique_ptr<pucch_pdu_validator> PucchProcessorFormat2Fixture::pucch_validator;
-
 TEST_P(PucchProcessorFormat2Fixture, PucchProcessorValidatortest)
 {
-  ASSERT_NE(pucch_proc, nullptr) << "PUCCH processor not created.";
-  ASSERT_NE(pucch_validator, nullptr) << "PUCCH validator not created.";
+  ASSERT_NE(processor, nullptr) << "PUCCH processor not created.";
+  ASSERT_NE(validator, nullptr) << "PUCCH validator not created.";
 
   const test_case_t& param = GetParam();
 
   // Make sure the configuration is invalid.
-  error_type<std::string> validator_out = pucch_validator->is_valid(param.get_test_params().config);
+  error_type<std::string> validator_out = validator->is_valid(param.get_test_params().config);
   ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
   ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.get_test_params().assert_message)))
       << "The assertion message doesn't match the expected pattern.";
@@ -352,13 +255,11 @@ TEST_P(PucchProcessorFormat2Fixture, PucchProcessorValidatortest)
 
   // Process PUCCH PDU.
 #ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pucch_proc->process(grid, param.get_test_params().config); }, param.get_test_params().assert_message);
+  ASSERT_DEATH({ processor->process(grid, param.get_test_params().config); }, param.get_test_params().assert_message);
 #endif // ASSERTS_ENABLED
 }
 
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(PucchProcessorValidatortest,
                          PucchProcessorFormat2Fixture,
-                         ::testing::ValuesIn(pucch_processor_validator_test_data));
-
-} // namespace
+                         ::testing::ValuesIn(processoressor_validator_test_data));

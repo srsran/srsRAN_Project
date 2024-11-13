@@ -25,14 +25,12 @@
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch/factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
-#ifdef DPDK_FOUND
-#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_factories.h"
-#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
-#endif // DPDK_FOUND
 #include <memory>
 #include <variant>
 
@@ -182,33 +180,15 @@ struct downlink_processor_factory_sw_config {
       pdsch_processor;
   /// Number of concurrent threads processing downlink transmissions.
   unsigned nof_concurrent_threads;
+  /// \brief Optional hardware-accelerated PDSCH encoder factory.
+  ///
+  /// if the optional is not set, a software PDSCH encoder factory will be used.
+  std::optional<std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory>> hw_encoder_factory;
 };
 
 /// Creates a full software based downlink processor factory.
 std::shared_ptr<downlink_processor_factory>
 create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config&   config,
-                                     std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory);
-
-/// \brief Downlink processor hardware-accelerated factory configuration.
-struct downlink_processor_factory_hw_config {
-  /// \brief CRC calculator type.
-  ///
-  /// Use of there options:
-  /// - \c auto: let the factory select the most efficient given the CPU architecture, or
-  /// - \c lut: for using a look-up table CRC calculator, or
-  /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
-  std::string crc_calculator_type;
-#ifdef HWACC_PDSCH_ENABLED
-  /// Hardware-accelerated PDSCH encoder factory configuration structure.
-  hal::bbdev_hwacc_pdsch_enc_factory_configuration hwacc_pdsch_enc_cfg = {};
-#endif // HWACC_PDSCH_ENABLED
-  /// Number of concurrent threads processing downlink transmissions.
-  unsigned nof_concurrent_threads;
-};
-
-/// Creates a full hardware-accelerated based downlink processor factory.
-std::shared_ptr<downlink_processor_factory>
-create_downlink_processor_factory_hw(const downlink_processor_factory_hw_config&   config,
                                      std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory);
 
 /// Describes all downlink processors in a pool.
@@ -231,20 +211,6 @@ struct downlink_processor_pool_config {
 
 /// \brief Creates and returns a downlink processor pool.
 std::unique_ptr<downlink_processor_pool> create_dl_processor_pool(downlink_processor_pool_config config);
-
-/// HAL configuration parameters for the upper PHY.
-struct hal_upper_phy_config {
-  /// Set to true for a hardware-accelerated PUSCH processor implementation.
-  bool hwacc_pusch_processor = false;
-  /// Set to true for a hardware-accelerated PDSCH processor implementation.
-  bool hwacc_pdsch_processor = false;
-#ifdef DPDK_FOUND
-  /// Hardware-accelerated PUSCH decoder function configuration structure.
-  hal::bbdev_hwacc_pusch_dec_factory_configuration hwacc_pusch_dec_cfg = {};
-  /// Hardware-accelerated PDSCH encoder factory configuration structure.
-  hal::bbdev_hwacc_pdsch_enc_factory_configuration hwacc_pdsch_enc_cfg = {};
-#endif // DPDK_FOUND
-};
 
 /// Upper PHY configuration parameters used to create a new upper PHY object.
 struct upper_phy_config {
@@ -348,8 +314,10 @@ struct upper_phy_config {
   task_executor* srs_executor;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
-  /// HAL configuration.
-  hal_upper_phy_config hal_config;
+  /// \brief Optional hardware-accelerated PUSCH decoder factory.
+  ///
+  /// if the optional is not set, a software PUSCH decoder factory will be used.
+  std::optional<std::shared_ptr<hal::hw_accelerator_pusch_dec_factory>> hw_decoder_factory;
 };
 
 /// Returns true if the given upper PHY configuration is valid, otherwise false.

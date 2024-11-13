@@ -57,19 +57,15 @@ o_du_unit flexible_du_factory::create_flexible_du(const du_unit_dependencies& de
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
   }
 
-  // Initialize and configure the HAL.
-  // :TODO: review it. It should be managed internally in the DU low.
-  hal_upper_phy_config du_low_hal_cfg = make_du_low_hal_config_and_dependencies(du_lo, du_cells.size());
-
   // Create O-DU low.
   std::vector<o_du_low_unit> du_low_units;
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     o_du_low_unit_config odu_low_cfg = {du_lo,
-                                        du_low_hal_cfg,
                                         {prach_ports[i]},
                                         span<const srs_du::du_cell_config>(&du_cells[i], 1),
                                         span<const unsigned>(&max_pusch_per_slot[i], 1),
-                                        i};
+                                        i,
+                                        nof_cells};
 
     o_du_low_unit_dependencies odu_low_dependencies = {
         du_impl->get_upper_ru_dl_rg_adapter(), du_impl->get_upper_ru_ul_request_adapter(), *dependencies.workers};

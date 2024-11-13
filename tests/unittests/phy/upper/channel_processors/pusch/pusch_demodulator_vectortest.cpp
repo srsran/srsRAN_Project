@@ -128,8 +128,6 @@ protected:
     // Prepare descrambled codeword data.
     codeword = test_case.codeword.read();
   }
-
-  ~PuschDemodulatorFixture() = default;
 };
 
 TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
