@@ -87,7 +87,7 @@ struct du_high_unit_drx_config {
   unsigned on_duration_timer = 10;
   /// drx-InactivityTimer in milliseconds, as per TS 38.331.
   unsigned inactivity_timer = 0;
-  /// drx-LongCycle in milliseconds, as per TS 38.331.
+  /// drx-LongCycle in milliseconds, as per TS 38.331. The value 0 is used for disabling DRX.
   unsigned long_cycle = 0;
 };
 
