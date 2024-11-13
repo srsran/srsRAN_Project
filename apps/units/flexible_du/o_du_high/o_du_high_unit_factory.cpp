@@ -123,8 +123,7 @@ build_scheduler_du_metrics(std::vector<app_services::metrics_config>&           
   unit_commands.push_back(std::make_unique<toggle_stdout_metrics_app_command>(*metrics_stdout));
   sched_metrics_cfg.consumers.push_back(std::move(metrics_stdout));
 
-  if (du_high_unit_cfg.loggers.metrics_level == srslog::basic_levels::info ||
-      du_high_unit_cfg.loggers.metrics_level == srslog::basic_levels::debug) {
+  if (du_high_unit_cfg.loggers.metrics_level.level == srslog::basic_levels::info) {
     sched_metrics_cfg.consumers.push_back(
         std::make_unique<scheduler_cell_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
   }
@@ -154,7 +153,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
 
   // RLC metrics.
   if (!du_high_unit_cfg.metrics.enable_json_metrics && !du_high_unit_cfg.e2_cfg.enable_unit_e2 &&
-      du_high_unit_cfg.loggers.metrics_level != srslog::basic_levels::info) {
+      du_high_unit_cfg.loggers.metrics_level.level != srslog::basic_levels::info) {
     return out;
   }
 
@@ -168,7 +167,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   rlc_metrics_cfg.producers.push_back(std::move(rlc_metric_gen));
 
   // Consumers.
-  if (du_high_unit_cfg.loggers.metrics_level == srslog::basic_levels::info) {
+  if (du_high_unit_cfg.loggers.metrics_level.level == srslog::basic_levels::info) {
     rlc_metrics_cfg.consumers.push_back(
         std::make_unique<rlc_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
   }

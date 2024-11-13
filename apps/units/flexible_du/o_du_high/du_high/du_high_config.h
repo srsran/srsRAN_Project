@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "apps/services/logger/metrics_logger_appconfig.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/band_helper.h"
@@ -41,13 +42,14 @@ namespace srsran {
 
 /// DU high logging functionalities.
 struct du_high_unit_logger_config {
-  srslog::basic_levels du_level      = srslog::basic_levels::warning;
-  srslog::basic_levels mac_level     = srslog::basic_levels::warning;
-  srslog::basic_levels rlc_level     = srslog::basic_levels::warning;
-  srslog::basic_levels f1ap_level    = srslog::basic_levels::warning;
-  srslog::basic_levels f1u_level     = srslog::basic_levels::warning;
-  srslog::basic_levels gtpu_level    = srslog::basic_levels::warning;
-  srslog::basic_levels metrics_level = srslog::basic_levels::none;
+  srslog::basic_levels du_level   = srslog::basic_levels::warning;
+  srslog::basic_levels mac_level  = srslog::basic_levels::warning;
+  srslog::basic_levels rlc_level  = srslog::basic_levels::warning;
+  srslog::basic_levels f1ap_level = srslog::basic_levels::warning;
+  srslog::basic_levels f1u_level  = srslog::basic_levels::warning;
+  srslog::basic_levels gtpu_level = srslog::basic_levels::warning;
+
+  metrics_logger_appconfig metrics_level;
 
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;

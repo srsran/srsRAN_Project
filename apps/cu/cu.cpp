@@ -130,8 +130,8 @@ static void register_app_logs(const logger_appconfig& log_cfg,
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
-  metrics_logger.set_level(log_cfg.metrics_level);
-  metrics_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+  metrics_logger.set_level(log_cfg.metrics_level.level);
+  metrics_logger.set_hex_dump_max_size(log_cfg.metrics_level.hex_max_size);
 
   // Register units logs.
   cu_cp_app_unit.on_loggers_registration();

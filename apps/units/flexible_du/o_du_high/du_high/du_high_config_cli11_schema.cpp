@@ -11,6 +11,7 @@
 #include "du_high_config_cli11_schema.h"
 #include "apps/services/e2/e2_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
+#include "apps/services/logger/metrics_logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
 #include "srsran/ran/du_types.h"
@@ -63,21 +64,6 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
   app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
   app_services::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
   app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
-
-  auto metric_level_check = [](const std::string& value) -> std::string {
-    if (auto level = srslog::str_to_basic_level(value);
-        !level.has_value() || level.value() == srslog::basic_levels::debug ||
-        level.value() == srslog::basic_levels::error || level.value() == srslog::basic_levels::warning) {
-      return "Log level value not supported. Accepted values [none,info]";
-    }
-
-    return {};
-  };
-
-  add_option_function<std::string>(
-      app, "--metrics_level", app_services::capture_log_level_function(log_params.metrics_level), "Metrics log level")
-      ->default_str(srslog::basic_level_to_string(log_params.metrics_level))
-      ->check(metric_level_check);
 
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
@@ -1625,6 +1611,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
       ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>(pow(2, 36) - 1)));
 
   // Loggers section.
+  configure_cli11_with_metrics_logger_appconfig_schema(app, parsed_cfg.config.loggers.metrics_level);
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.config.loggers);
 
