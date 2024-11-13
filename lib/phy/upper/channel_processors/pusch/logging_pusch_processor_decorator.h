@@ -126,9 +126,10 @@ private:
     }
 
     // Calculate the return latency if available.
-    std::chrono::nanoseconds time_return_ns(0);
-    if (time_return != std::chrono::time_point<std::chrono::steady_clock>()) {
-      time_return_ns = time_return - time_start;
+    std::chrono::nanoseconds                           time_return_ns(0);
+    std::chrono::time_point<std::chrono::steady_clock> time_return_local = time_return.load();
+    if (time_return_local != std::chrono::time_point<std::chrono::steady_clock>()) {
+      time_return_ns = time_return_local - time_start;
     }
 
     // Calculate the final time.
@@ -172,15 +173,18 @@ private:
     notifier_->on_sch(sch);
   }
 
-  srslog::basic_logger&                              logger;
-  std::unique_ptr<pusch_processor>                   processor;
-  span<uint8_t>                                      data;
-  pdu_t                                              pdu;
-  pusch_processor_result_notifier*                   notifier;
-  std::chrono::time_point<std::chrono::steady_clock> time_start;
-  std::chrono::time_point<std::chrono::steady_clock> time_uci;
-  std::chrono::time_point<std::chrono::steady_clock> time_return;
-  fmt::pusch_results_wrapper                         results;
+  srslog::basic_logger&                                           logger;
+  std::unique_ptr<pusch_processor>                                processor;
+  span<uint8_t>                                                   data;
+  pdu_t                                                           pdu;
+  pusch_processor_result_notifier*                                notifier;
+  std::chrono::time_point<std::chrono::steady_clock>              time_start;
+  std::chrono::time_point<std::chrono::steady_clock>              time_uci;
+  std::atomic<std::chrono::time_point<std::chrono::steady_clock>> time_return;
+  fmt::pusch_results_wrapper                                      results;
+
+  // Makes sure atomics are lock free.
+  static_assert(std::atomic<decltype(time_return)>::is_always_lock_free);
 };
 
 } // namespace srsran
