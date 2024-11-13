@@ -504,7 +504,7 @@ def check_metrics_criteria(
         _ViaviResult(
             "DL KOs (viavi)",
             test_configuration.expected_nof_kos,
-            kpis.nof_ko_dl,
+            viavi_kpis.dl_data.num_tbs_errors,
             criteria_nof_ko_dl_viavi,
         )
     )
@@ -526,7 +526,7 @@ def check_metrics_criteria(
         _ViaviResult(
             "UL KOs (viavi)",
             test_configuration.expected_nof_kos,
-            kpis.nof_ko_ul,
+            viavi_kpis.ul_data.num_tbs_nack,
             criteria_nof_ko_ul_viavi,
         )
     )
