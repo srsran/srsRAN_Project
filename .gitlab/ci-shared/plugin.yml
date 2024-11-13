@@ -16,7 +16,7 @@ variables:
   SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
   # srsRAN references
   SRSRANDIR: &srsran_dir ${CI_PROJECT_DIR}/srsgnb
-  SRSRAN_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/softwareradiosystems/srsgnb.git
+  SRSRAN_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/softwareradiosystems/srsgnb.git
 
 ######
 # CI #

@@ -229,6 +229,14 @@ variables:
 
 .smoke relwithdeb:
   extends: .build_and_unit
+  script: &smoke_script
+    - |
+      if [[ $CI_MERGE_REQUEST_LABELS != *"no-plugin"* ]]; then
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
+      fi
+    - *srs_functions
+    - build_srsgnb
+    - launch_tests
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
@@ -240,6 +248,8 @@ variables:
 
 .smoke tsan:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: clang
@@ -275,6 +285,8 @@ variables:
 
 .smoke dpdk:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: clang
@@ -300,6 +312,8 @@ variables:
 
 .smoke avx512:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
@@ -311,6 +325,8 @@ variables:
 
 .smoke arm:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
@@ -322,6 +338,8 @@ variables:
 
 .smoke arm neon:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
