@@ -33,7 +33,7 @@ struct o_du_low_hal_dependencies {
 /// \param[in] logger        SRS logger.
 /// \param[in] nof_hwacc_dus Number of DU-low instances to be managed by the hardware accelerator.
 /// \return A pointer to the bbdev-based accelerator interface on success, nullptr otherwise.
-static std::shared_ptr<dpdk::bbdev_acc>
+std::shared_ptr<dpdk::bbdev_acc>
 init_bbdev_hwacc(const bbdev_appconfig& bbdev_app_cfg, srslog::basic_logger& logger, unsigned nof_hwacc_dus);
 #endif // DPDK_FOUND
 
