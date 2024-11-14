@@ -10,15 +10,21 @@
 
 #pragma once
 
-#include "srsran/cu_up/cu_up.h"
-#include "srsran/cu_up/cu_up_config.h"
-#include <memory>
-
 namespace srsran {
 namespace srs_cu_up {
 
-/// Creates an instance of a CU-UP with the given parameters.
-std::unique_ptr<cu_up_interface> create_cu_up(const cu_up_config& cfg, const cu_up_dependencies& dependencies);
+/// CU-UP power controller interface that allows to start/stop the CU-UP.
+class cu_up_power_controller
+{
+public:
+  virtual ~cu_up_power_controller() = default;
+
+  /// Starts the CU-UP.
+  virtual void start() = 0;
+
+  /// Stops the CU-UP.
+  virtual void stop() = 0;
+};
 
 } // namespace srs_cu_up
 } // namespace srsran

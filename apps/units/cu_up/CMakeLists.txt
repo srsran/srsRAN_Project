@@ -15,8 +15,8 @@ set(SOURCES
         cu_up_unit_config_translators.cpp
         cu_up_unit_config_validator.cpp
         cu_up_unit_config_yaml_writer.cpp
-        cu_up_wrapper.cpp)
+        o_cu_up_unit_impl.cpp)
 
 add_library(srsran_cu_up_app_unit STATIC ${SOURCES})
 target_include_directories(srsran_cu_up_app_unit PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_cu_up_app_unit srsran_cu_up srsran_cu_up_unit_metrics_helpers srsran_e2_app_service)
+target_link_libraries(srsran_cu_up_app_unit srsran_o_cu_up srsran_cu_up_unit_metrics_helpers srsran_e2_app_service)

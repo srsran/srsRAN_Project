@@ -32,13 +32,13 @@ class e2_event_manager;
 class e2_impl final : public e2_interface
 {
 public:
-  e2_impl(e2ap_configuration&      cfg_,
-          e2ap_e2agent_notifier&   agent_notifier_,
-          timer_factory            timers_,
-          e2_connection_client&    e2_client_,
-          e2_subscription_manager& subscription_mngr_,
-          e2sm_manager&            e2sm_mngr_,
-          task_executor&           task_exec_);
+  e2_impl(const e2ap_configuration& cfg_,
+          e2ap_e2agent_notifier&    agent_notifier_,
+          timer_factory             timers_,
+          e2_connection_client&     e2_client_,
+          e2_subscription_manager&  subscription_mngr_,
+          e2sm_manager&             e2sm_mngr_,
+          task_executor&            task_exec_);
 
   void start() override{};
   void stop() override{};
@@ -97,7 +97,7 @@ private:
   void set_allowed_ran_functions(const uint16_t ran_function_id);
 
   srslog::basic_logger&                               logger;
-  e2ap_configuration&                                 cfg;
+  const e2ap_configuration&                           cfg;
   timer_factory                                       timers;
   std::map<uint16_t, asn1::e2ap::ran_function_item_s> candidate_ran_functions;
   std::map<uint16_t, asn1::e2ap::ran_function_item_s> allowed_ran_functions;

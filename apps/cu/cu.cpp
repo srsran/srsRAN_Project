@@ -347,7 +347,7 @@ int main(int argc, char** argv)
   cu_f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
   // Create and start CU-UP
-  cu_up_unit_dependencies cu_up_unit_deps;
+  o_cu_up_unit_dependencies cu_up_unit_deps;
   cu_up_unit_deps.workers          = &workers;
   cu_up_unit_deps.cu_up_e2_exec    = workers.cu_e2_exec;
   cu_up_unit_deps.e1ap_conn_client = e1_gw.get();
@@ -367,7 +367,7 @@ int main(int argc, char** argv)
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
-  cu_up_obj_wrapper.unit->start();
+  cu_up_obj_wrapper.unit->get_power_controller().start();
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -377,7 +377,7 @@ int main(int argc, char** argv)
   }
 
   // Stop CU-UP activity.
-  cu_up_obj_wrapper.unit->stop();
+  cu_up_obj_wrapper.unit->get_power_controller().stop();
 
   // Stop CU-CP activity.
   cu_cp_obj.stop();

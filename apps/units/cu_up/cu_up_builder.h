@@ -11,8 +11,7 @@
 #pragma once
 
 #include "apps/services/metrics/metrics_config.h"
-#include "cu_up_wrapper.h"
-#include "srsran/cu_up/cu_up.h"
+#include "o_cu_up_unit_impl.h"
 #include "srsran/support/timers.h"
 #include <memory>
 
@@ -32,8 +31,8 @@ class io_broker;
 struct worker_manager;
 class e2_connection_client;
 
-/// CU-UP unit dependencies.
-struct cu_up_unit_dependencies {
+/// ORAN CU-UP unit dependencies.
+struct o_cu_up_unit_dependencies {
   worker_manager*                  workers;
   task_executor*                   cu_up_e2_exec    = nullptr;
   e2_connection_client*            e2_gw            = nullptr;
@@ -45,13 +44,13 @@ struct cu_up_unit_dependencies {
   io_broker*                       io_brk           = nullptr;
 };
 
-/// Wraps the CU-CP and its supported application commands.
-struct cu_up_unit {
-  std::unique_ptr<cu_up_wrapper>            unit    = nullptr;
-  std::vector<app_services::metrics_config> metrics = {};
+/// ORAN CU-CP unit.
+struct o_cu_up_unit {
+  std::unique_ptr<srs_cu_up::o_cu_up>       unit;
+  std::vector<app_services::metrics_config> metrics;
 };
 
-/// Builds the CU UP using the given arguments.
-cu_up_unit build_cu_up(const cu_up_unit_config& unit_cfg, const cu_up_unit_dependencies& dependencies);
+/// Builds the ORAN CU-UP unit using the given arguments.
+o_cu_up_unit build_o_cu_up(const cu_up_unit_config& unit_cfg, const o_cu_up_unit_dependencies& dependencies);
 
 } // namespace srsran

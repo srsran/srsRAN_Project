@@ -11,17 +11,12 @@
 #pragma once
 
 #include "srsran/cu_up/cu_up_executor_mapper.h"
-#include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/e1ap/gateways/e1_connection_client.h"
-#include "srsran/e2/e2_cu.h"
-#include "srsran/e2/e2ap_configuration.h"
-#include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
-#include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 #include <map>
 
@@ -66,11 +61,6 @@ struct n3_interface_config {
   bool                      warn_on_drop;
 };
 
-struct e1ap_config_params {
-  e1_connection_client*    e1_conn_client = nullptr;
-  e1ap_connection_manager* e1ap_conn_mng  = nullptr;
-};
-
 struct cu_up_test_mode_config {
   bool     enabled           = false;
   bool     integrity_enabled = true;
@@ -79,34 +69,42 @@ struct cu_up_test_mode_config {
   uint16_t nia_algo          = 2;
 };
 
-/// Configuration passed to CU-UP.
-struct cu_up_configuration {
-  cu_up_executor_mapper* exec_mapper = nullptr;
-  e1ap_config_params     e1ap;
-  f1u_cu_up_gateway*     f1u_gateway = nullptr;
-  ngu_gateway*           ngu_gw      = nullptr;
-  timer_manager*         timers      = nullptr;
-  dlt_pcap*              gtpu_pcap   = nullptr;
-
-  std::map<five_qi_t, cu_up_qos_config> qos; // 5QI as key
-
+/// CU-UP configuration.
+struct cu_up_config {
+  /// 5QI as key.
+  std::map<five_qi_t, cu_up_qos_config> qos;
+  /// Network interface configuration.
   network_interface_config net_cfg;
-  n3_interface_config      n3_cfg;
-  cu_up_test_mode_config   test_mode_cfg;
-
-  unsigned    cu_up_id   = 0;
+  /// N3 configuration.
+  n3_interface_config n3_cfg;
+  /// Test mode configuration.
+  cu_up_test_mode_config test_mode_cfg;
+  /// CU-UP identifier.
+  unsigned cu_up_id = 0;
+  /// CU-UP name.
   std::string cu_up_name = "srs_cu_up_01";
-  std::string plmn       = "00101"; ///< Full PLMN as string (without possible filler digit) e.g. "00101"
+  /// Full PLMN as string (without possible filler digit) e.g. "00101".
+  std::string plmn = "00101";
+  /// CU-UP statistics report period in seconds.
+  std::chrono::seconds statistics_report_period;
+};
 
-  std::chrono::seconds statistics_report_period; // CU-UP statistics report period in seconds
-  /// E2AP configuration.
-  e2ap_configuration e2ap_config;
-  /// E2 connection client.
-  e2_connection_client* e2_client = nullptr;
-  /// E2 CU metrics interface.
-  e2_cu_metrics_interface* e2_cu_metric_iface = nullptr;
+/// CU-UP dependencies.
+struct cu_up_dependencies {
+  /// Executor mapper.
+  cu_up_executor_mapper* exec_mapper = nullptr;
+  /// F1-U gateway.
+  f1u_cu_up_gateway* f1u_gateway = nullptr;
+  /// NGU gateway.
+  ngu_gateway* ngu_gw = nullptr;
+  /// Time manager.
+  timer_manager* timers = nullptr;
+  /// PCAP.
+  dlt_pcap* gtpu_pcap = nullptr;
   /// PDCP metrics notifier.
   pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
+  /// E1AP connection client.
+  e1_connection_client* e1_conn_client = nullptr;
 };
 
 } // namespace srs_cu_up

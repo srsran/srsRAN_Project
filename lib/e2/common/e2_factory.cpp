@@ -44,11 +44,11 @@ std::unique_ptr<e2_agent> srsran::create_e2_du_agent(e2ap_configuration&        
   return e2_ext;
 }
 
-std::unique_ptr<e2_agent> srsran::create_e2_cu_agent(e2ap_configuration&      e2ap_cfg_,
-                                                     e2_connection_client&    e2_client_,
-                                                     e2_cu_metrics_interface* e2_metrics_var,
-                                                     timer_factory            timers_,
-                                                     task_executor&           e2_exec_)
+std::unique_ptr<e2_agent> srsran::create_e2_cu_agent(const e2ap_configuration& e2ap_cfg_,
+                                                     e2_connection_client&     e2_client_,
+                                                     e2_cu_metrics_interface*  e2_metrics_var,
+                                                     timer_factory             timers_,
+                                                     task_executor&            e2_exec_)
 {
   std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_cu_metrics_var = e2_metrics_var;
   auto                                                             e2_ext =

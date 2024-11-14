@@ -8,16 +8,15 @@
 
 set(SOURCES
         cu_up_executor_mapper.cpp
-      cu_up_factory.cpp
-      cu_up_impl.cpp
-      cu_up_manager_impl.cpp
-      ue_manager.cpp
-      pdu_session_manager_impl.cpp
-      routines/initial_cu_up_setup_routine.cpp
+        cu_up_factory.cpp
+        cu_up_impl.cpp
+        cu_up_manager_impl.cpp
+        pdu_session_manager_impl.cpp
+        routines/initial_cu_up_setup_routine.cpp
+        ue_manager.cpp
 )
 
 add_library(srsran_cu_up STATIC ${SOURCES})
-
 target_link_libraries(srsran_cu_up
         srsran_e1ap_common
         srsran_e1ap_cu_up
@@ -28,6 +27,10 @@ target_link_libraries(srsran_cu_up
         e1ap_asn1
         srsran_sdap
         srsran_security
-        srsran_e2
         srsran_support
         srslog)
+
+add_library(srsran_o_cu_up STATIC
+        o_cu_up_factory.cpp
+        o_cu_up_impl.cpp)
+target_link_libraries(srsran_o_cu_up PRIVATE srsran_cu_up srsran_e2)

@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include "srsran/cu_up/cu_up.h"
-#include "srsran/cu_up/cu_up_config.h"
+#include "srsran/cu_up/o_cu_up.h"
+#include "srsran/cu_up/o_cu_up_config.h"
 #include <memory>
 
 namespace srsran {
 namespace srs_cu_up {
 
-/// Creates an instance of a CU-UP with the given parameters.
-std::unique_ptr<cu_up_interface> create_cu_up(const cu_up_config& cfg, const cu_up_dependencies& dependencies);
+/// ORAN CU-UP interface with the given configuration and dependencies.
+std::unique_ptr<o_cu_up> create_o_cu_up(const o_cu_up_config& config, o_cu_up_dependencies&& dependencies);
 
 } // namespace srs_cu_up
 } // namespace srsran

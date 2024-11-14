@@ -380,7 +380,7 @@ int main(int argc, char** argv)
   metrics_configs                      = std::move(cu_cp_obj_and_cmds.metrics);
 
   // Create CU-UP
-  cu_up_unit_dependencies cu_up_unit_deps;
+  o_cu_up_unit_dependencies cu_up_unit_deps;
   cu_up_unit_deps.workers          = &workers;
   cu_up_unit_deps.cu_up_e2_exec    = workers.cu_e2_exec;
   cu_up_unit_deps.e1ap_conn_client = e1_gw.get();
@@ -445,7 +445,7 @@ int main(int argc, char** argv)
   // Connect F1-C to CU-CP and start listening for new F1-C connection requests.
   f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
-  cu_up_obj.unit->start();
+  cu_up_obj.unit->get_power_controller().start();
 
   // Start processing.
   du_inst.get_power_controller().start();
@@ -462,7 +462,7 @@ int main(int argc, char** argv)
   du_inst.get_power_controller().stop();
 
   // Stop CU-UP activity.
-  cu_up_obj.unit->stop();
+  cu_up_obj.unit->get_power_controller().stop();
 
   // Stop CU-CP activity.
   cu_cp_obj.stop();

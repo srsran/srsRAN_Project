@@ -11,7 +11,8 @@
 #pragma once
 
 #include "apps/services/e2/e2_metric_connector_manager.h"
-#include "srsran/cu_up/cu_up.h"
+#include "srsran/cu_up/cu_up_power_controller.h"
+#include "srsran/cu_up/o_cu_up.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
 #include "srsran/gtpu/ngu_gateway.h"
 
@@ -20,29 +21,26 @@ namespace srsran {
 using e2_cu_metrics_connector_manager =
     e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
 
-/// \brief CU-UP wrapper. Wraps a CU-UP interface and a NGU gateway.
+/// \brief ORAN CU-UP unit implementation.
 ///
-/// The wrapper purpose is to manage the life of the given NGU gateway and the CU-UP interface.
-class cu_up_wrapper : public srs_cu_up::cu_up_interface
+/// This implementation purpose is to manage the life of the given NGU gateway and the CU-UP interface.
+class o_cu_up_unit_impl : public srs_cu_up::o_cu_up
 {
 public:
-  cu_up_wrapper(std::unique_ptr<srs_cu_up::ngu_gateway>          gateway_,
-                std::unique_ptr<e2_cu_metrics_connector_manager> e2_metric_connector_,
-                std::unique_ptr<srs_cu_up::cu_up_interface>      cu_up_);
+  o_cu_up_unit_impl(std::unique_ptr<srs_cu_up::ngu_gateway>          gateway_,
+                    std::unique_ptr<e2_cu_metrics_connector_manager> e2_metric_connector_,
+                    std::unique_ptr<srs_cu_up::o_cu_up>              cu_up_);
 
   // See interface for documentation.
-  void start() override;
+  srs_cu_up::cu_up_interface& get_cu_up() override;
 
   // See interface for documentation.
-  void stop() override;
-
-  // See interface for documentation.
-  std::optional<uint16_t> get_n3_bind_port() override;
+  srs_cu_up::cu_up_power_controller& get_power_controller() override;
 
 private:
   std::unique_ptr<srs_cu_up::ngu_gateway>          gateway;
   std::unique_ptr<e2_cu_metrics_connector_manager> e2_metric_connector;
-  std::unique_ptr<srs_cu_up::cu_up_interface>      cu_up;
+  std::unique_ptr<srs_cu_up::o_cu_up>              cu_up;
 };
 
 } // namespace srsran

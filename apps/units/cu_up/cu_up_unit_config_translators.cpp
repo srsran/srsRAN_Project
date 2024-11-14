@@ -17,9 +17,9 @@
 
 using namespace srsran;
 
-srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const cu_up_unit_config& config)
+srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& config)
 {
-  srs_cu_up::cu_up_configuration out_cfg;
+  srs_cu_up::cu_up_config out_cfg;
   out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics.cu_up_statistics_report_period};
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
   out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;

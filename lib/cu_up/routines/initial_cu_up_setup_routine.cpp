@@ -16,8 +16,9 @@
 using namespace srsran;
 using namespace srs_cu_up;
 
-initial_cu_up_setup_routine::initial_cu_up_setup_routine(const cu_up_configuration& cfg_) :
-  cfg(cfg_), logger(srslog::fetch_basic_logger("CU-UP"))
+initial_cu_up_setup_routine::initial_cu_up_setup_routine(const cu_up_config&      cfg_,
+                                                         e1ap_connection_manager& e1ap_conn_mng_) :
+  cfg(cfg_), e1ap_conn_mng(e1ap_conn_mng_), logger(srslog::fetch_basic_logger("CU-UP"))
 {
 }
 
@@ -28,7 +29,7 @@ void initial_cu_up_setup_routine::operator()(coro_context<async_task<void>>& ctx
   logger.debug("cu-up={}: \"{}\" initialized.", cfg.cu_up_id, name());
 
   // Connect to CU-CP.
-  if (not cfg.e1ap.e1ap_conn_mng->connect_to_cu_cp()) {
+  if (not e1ap_conn_mng.connect_to_cu_cp()) {
     report_fatal_error("Failed to connect to CU-CP");
   }
 
@@ -59,7 +60,7 @@ async_task<cu_up_e1_setup_response> initial_cu_up_setup_routine::start_cu_up_e1_
   request_msg.supported_plmns.push_back(plmn_item);
 
   // Initiate E1 Setup Request.
-  return cfg.e1ap.e1ap_conn_mng->handle_cu_up_e1_setup_request(request_msg);
+  return e1ap_conn_mng.handle_cu_up_e1_setup_request(request_msg);
 }
 
 void initial_cu_up_setup_routine::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& resp)

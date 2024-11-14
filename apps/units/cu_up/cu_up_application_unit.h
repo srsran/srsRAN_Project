@@ -23,8 +23,8 @@ class cu_up_application_unit : public application_unit
 public:
   virtual ~cu_up_application_unit() = default;
 
-  /// Creates a CU-UP using the given dependencies.
-  virtual cu_up_unit create_cu_up_unit(const cu_up_unit_dependencies& dependencies) = 0;
+  /// Creates an ORAN CU-UP using the given dependencies.
+  virtual o_cu_up_unit create_cu_up_unit(const o_cu_up_unit_dependencies& dependencies) = 0;
 
   /// Returns the CU-UP unit configuration of this CU-UP application unit.
   virtual cu_up_unit_config&       get_cu_up_unit_config()       = 0;
