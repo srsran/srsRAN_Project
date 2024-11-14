@@ -689,7 +689,8 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
 }
 
 static bool validate_tdd_ul_dl_pattern_unit_config(const tdd_ul_dl_pattern_unit_config& config,
-                                                   subcarrier_spacing                   common_scs)
+                                                   subcarrier_spacing                   common_scs,
+                                                   std::optional<unsigned>              dmrs_add_pos = std::nullopt)
 {
   // NOTE: TDD pattern is assumed to use common SCS as reference SCS.
   if (common_scs > subcarrier_spacing::kHz120) {
@@ -709,13 +710,32 @@ static bool validate_tdd_ul_dl_pattern_unit_config(const tdd_ul_dl_pattern_unit_
     return false;
   }
 
+  // This input is provided when the CSI is enabled. If so, we need to make sure that the CSI-RS resources (whose
+  // symbols depends on the DMRS position) fit within the given TDD pattern.
+  if (dmrs_add_pos.has_value()) {
+    // We ensure that DSUUU pattern has enough DL symbols in the Special slot (S) to accommodate the CSI-RS resources.
+    // By default, in our configuration, the CSI-RS resources are in symbols {4,8}, or in symbols {6,10} id the
+    // dmrs-AdditionalPosition is 3.
+    const unsigned max_csi_rs_symbol = dmrs_add_pos.value() != 3U ? 8U : 10U;
+    if (config.nof_dl_slots < 2U and config.nof_dl_symbols <= max_csi_rs_symbol) {
+      fmt::print("Invalid TDD pattern. Cause: CSI-RS resources do not fit in the grid. When CSI-RS is enabled, the TDD "
+                 "pattern must have at least 2 initial DL slots, or, 1 initial DL slot and {} DL symbols in the "
+                 "special slot with dmrs-AdditionalPosition={}\n",
+                 max_csi_rs_symbol + 1,
+                 dmrs_add_pos.value());
+      return false;
+    }
+  }
+
   return true;
 }
 
 /// Validates the given TDD UL DL pattern application configuration. Returns true on success, otherwise false.
-static bool validate_tdd_ul_dl_unit_config(const du_high_unit_tdd_ul_dl_config& config, subcarrier_spacing common_scs)
+static bool validate_tdd_ul_dl_unit_config(const du_high_unit_tdd_ul_dl_config& config,
+                                           subcarrier_spacing                   common_scs,
+                                           std::optional<unsigned>              dmrs_add_pos = std::nullopt)
 {
-  if (not validate_tdd_ul_dl_pattern_unit_config(config.pattern1, common_scs)) {
+  if (not validate_tdd_ul_dl_pattern_unit_config(config.pattern1, common_scs, dmrs_add_pos)) {
     return false;
   }
   if (config.pattern2.has_value() and not validate_tdd_ul_dl_pattern_unit_config(config.pattern2.value(), common_scs)) {
@@ -942,7 +962,10 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   }
 
   if (band_helper::get_duplex_mode(band) == duplex_mode::TDD and config.tdd_ul_dl_cfg.has_value() and
-      !validate_tdd_ul_dl_unit_config(config.tdd_ul_dl_cfg.value(), config.common_scs)) {
+      !validate_tdd_ul_dl_unit_config(
+          config.tdd_ul_dl_cfg.value(),
+          config.common_scs,
+          config.csi_cfg.csi_rs_enabled ? std::optional<unsigned>{config.pdsch_cfg.dmrs_add_pos} : std::nullopt)) {
     return false;
   }
 
