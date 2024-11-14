@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/ran/srs/srs_channel_matrix.h"
 
 namespace fmt {

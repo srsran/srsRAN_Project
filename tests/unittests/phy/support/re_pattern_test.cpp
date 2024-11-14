@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #if defined(__GNUC__) && (__GNUC__ > 10) && (__GNUC__ < 14) && defined(__OPTIMIZE__)
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #pragma message "GCC versions greater than 10 give a likely false array-bounds alarm."

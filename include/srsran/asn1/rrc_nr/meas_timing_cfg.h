@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "meas_cfg.h"
+#include "srsran/asn1/rrc_nr/meas_cfg.h"
 
 namespace asn1 {
 namespace rrc_nr {

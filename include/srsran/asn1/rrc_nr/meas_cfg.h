@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "dl_ccch_msg_ies.h"
-#include "sys_info.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg_ies.h"
+#include "srsran/asn1/rrc_nr/sys_info.h"
 
 namespace asn1 {
 namespace rrc_nr {

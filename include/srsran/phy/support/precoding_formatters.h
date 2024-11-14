@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/ran/precoding/precoding_weight_matrix_formatters.h"
 

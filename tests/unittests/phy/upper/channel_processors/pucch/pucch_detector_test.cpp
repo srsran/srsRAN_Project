@@ -18,7 +18,6 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
-
 #include <gtest/gtest.h>
 
 using namespace srsran;

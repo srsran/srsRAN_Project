@@ -15,7 +15,6 @@
 #include "srsran/ran/pusch/pusch_antenna_ports_mapping.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-
 #include <algorithm>
 
 using namespace srsran;

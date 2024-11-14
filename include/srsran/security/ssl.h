@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "mbedtls/aes.h"
-#include "mbedtls/cmac.h"
-#include "mbedtls/md.h"
+#include <mbedtls/aes.h>
+#include <mbedtls/cmac.h>
+#include <mbedtls/md.h>
 
 namespace srsran {
 namespace security {

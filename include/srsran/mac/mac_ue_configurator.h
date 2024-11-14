@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "mac_cell_group_config.h"
 #include "srsran/mac/bsr_config.h"
+#include "srsran/mac/mac_cell_group_config.h"
 #include "srsran/mac/mac_sdu_handler.h"
 #include "srsran/mac/phr_config.h"
 #include "srsran/ran/logical_channel/lcid.h"

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "security_engine.h"
+#include "srsran/security/security_engine.h"
 
 namespace srsran {
 namespace security {

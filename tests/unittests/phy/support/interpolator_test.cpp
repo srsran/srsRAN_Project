@@ -12,7 +12,6 @@
 /// \brief Interpolator unit test.
 
 #include "srsran/phy/support/support_factories.h"
-
 #include <gtest/gtest.h>
 
 using namespace srsran;

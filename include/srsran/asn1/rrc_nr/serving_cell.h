@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "bwp_cfg.h"
+#include "srsran/asn1/rrc_nr/bwp_cfg.h"
 
 namespace asn1 {
 namespace rrc_nr {

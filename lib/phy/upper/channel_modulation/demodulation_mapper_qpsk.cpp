@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #include "demodulation_mapper_qpsk.h"
 
 #ifdef __AVX2__

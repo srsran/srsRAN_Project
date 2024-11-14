@@ -13,8 +13,7 @@
 
 #pragma once
 
-#include "sch_mcs.h"
-
+#include "srsran/ran/sch/sch_mcs.h"
 #include <array>
 
 namespace srsran {

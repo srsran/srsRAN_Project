@@ -17,7 +17,6 @@
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/meas_types.h"
-
 #include <string>
 #include <vector>
 

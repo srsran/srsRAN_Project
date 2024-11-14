@@ -15,7 +15,6 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ran/sch/modulation_scheme.h"
-
 #include <memory>
 
 namespace srsran {

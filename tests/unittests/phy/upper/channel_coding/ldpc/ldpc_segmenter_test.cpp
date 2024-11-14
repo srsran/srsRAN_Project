@@ -18,7 +18,6 @@
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_buffer.h"
 #include "srsran/srsvec/bit.h"
-
 #include <gtest/gtest.h>
 
 using namespace srsran;

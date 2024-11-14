@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "e2.h"
-#include "e2ap_configuration.h"
-#include "e2sm/e2sm_manager.h"
-#include "subscription/e2_subscription.h"
+#include "srsran/e2/e2.h"
+#include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/e2/gateways/e2_connection_client.h"
+#include "srsran/e2/subscription/e2_subscription.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/timers.h"

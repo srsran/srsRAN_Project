@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "e2_connection_client.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 
 namespace srsran {

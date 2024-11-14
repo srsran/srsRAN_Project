@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "bwp_configuration.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/meas_gap_config.h"
@@ -26,6 +25,7 @@
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tci.h"
 #include "srsran/ran/time_alignment_config.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
 
 namespace srsran {
 

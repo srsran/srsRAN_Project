@@ -9,7 +9,6 @@
  */
 
 #include "ue_configuration.h"
-
 #include "../support/pdcch/pdcch_mapping.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"

@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/phy/generic_functions/precoding/channel_precoder.h"
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_mapper.h"

@@ -13,7 +13,6 @@
 ///
 /// Tests all the operators and functions defined for the type.
 #include "../../srslog/testing_helpers.h"
-
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/support/srsran_test.h"
 #include <random>

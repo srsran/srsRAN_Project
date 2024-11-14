@@ -12,7 +12,6 @@
 
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/ran/srs/srs_constants.h"
-
 #include <cstdint>
 #include <optional>
 

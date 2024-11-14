@@ -20,7 +20,6 @@
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/ran/uci/uci_mapping.h"
-
 #include <variant>
 
 namespace srsran {

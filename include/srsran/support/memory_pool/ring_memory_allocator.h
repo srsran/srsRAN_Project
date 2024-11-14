@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "heap_memory_resource.h"
+#include "srsran/support/memory_pool/heap_memory_resource.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {

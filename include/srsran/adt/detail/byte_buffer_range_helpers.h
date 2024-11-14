@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "byte_buffer_segment_list.h"
+#include "srsran/adt/detail/byte_buffer_segment_list.h"
 
 namespace srsran {
 namespace detail {

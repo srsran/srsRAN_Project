@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "ngap_types.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include <variant>
 

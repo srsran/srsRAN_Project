@@ -15,7 +15,6 @@
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/srslog/logger.h"
-
 #include <atomic>
 
 namespace srsran {

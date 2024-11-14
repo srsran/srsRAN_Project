@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "baseband_gateway_buffer_test_doubles.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include <random>

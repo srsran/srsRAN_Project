@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"

@@ -9,15 +9,13 @@
  */
 
 #include "pdu_session_manager_impl.h"
-
-#include <utility>
-
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_up/e1ap_config_converters.h"
 #include "srsran/f1u/cu_up/f1u_bearer_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
+#include <utility>
 
 using namespace srsran;
 using namespace srs_cu_up;

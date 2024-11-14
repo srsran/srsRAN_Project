@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "srsran/asn1/rrc_nr/common.h"
 
 namespace asn1 {
 namespace rrc_nr {

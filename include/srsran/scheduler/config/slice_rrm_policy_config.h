@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "scheduler_expert_config.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/s_nssai.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 
 namespace srsran {
 

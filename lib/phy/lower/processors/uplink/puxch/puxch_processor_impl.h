@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "../../resource_grid_request_pool.h"
 #include "srsran/adt/circular_array.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/phy/constants.h"
-
 #include <cstdint>
 
 namespace srsran {

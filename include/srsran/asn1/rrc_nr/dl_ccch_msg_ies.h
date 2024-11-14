@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "radio_bearer_cfg.h"
-#include "serving_cell.h"
+#include "srsran/asn1/rrc_nr/radio_bearer_cfg.h"
+#include "srsran/asn1/rrc_nr/serving_cell.h"
 
 namespace asn1 {
 namespace rrc_nr {

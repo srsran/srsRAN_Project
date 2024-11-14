@@ -10,7 +10,6 @@
 
 #include <dlfcn.h>
 #include <iostream>
-
 #include <set>
 
 extern "C" {

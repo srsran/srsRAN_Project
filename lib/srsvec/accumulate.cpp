@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #include "srsran/srsvec/accumulate.h"
 #include "srsran/srsvec/simd.h"
 #include "srsran/support/srsran_assert.h"

@@ -11,7 +11,6 @@
 #include "radio_uhd_impl.h"
 #include "radio_uhd_device.h"
 #include <thread>
-
 #include <uhd/utils/thread_priority.h>
 
 using namespace srsran;

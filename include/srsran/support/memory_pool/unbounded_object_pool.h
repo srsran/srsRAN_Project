@@ -11,7 +11,7 @@
 #pragma once
 
 #ifdef ENABLE_TSAN
-#include "sanitizer/tsan_interface.h"
+#include <sanitizer/tsan_interface.h>
 #endif
 
 #include "cameron314/concurrentqueue.h"

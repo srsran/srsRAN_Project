@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "f1u_rx_pdu_handler.h"
-#include "f1u_tx_sdu_handler.h"
+#include "srsran/f1u/cu_up/f1u_rx_pdu_handler.h"
+#include "srsran/f1u/cu_up/f1u_tx_sdu_handler.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
 namespace srsran {

@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #pragma once
 
 #include "srsran/phy/upper/channel_coding/crc_calculator.h"

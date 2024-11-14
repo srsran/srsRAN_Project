@@ -9,11 +9,11 @@
  */
 
 #include "transform_precoder_test_data.h"
+#include "srsran/phy/constants.h"
 #include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "srsran/phy/generic_functions/transform_precoding/transform_precoder.h"
 #include "srsran/phy/generic_functions/transform_precoding/transform_precoding_factories.h"
 #include <gtest/gtest.h>
-#include <srsran/phy/constants.h>
 
 using namespace srsran;
 

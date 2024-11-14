@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {

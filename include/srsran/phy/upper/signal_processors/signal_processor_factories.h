@@ -1,6 +1,5 @@
 #pragma once
 
-#include "port_channel_estimator_parameters.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator_factories.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
@@ -11,6 +10,7 @@
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
+#include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
 #include "srsran/phy/upper/signal_processors/pss_processor.h"
 #include "srsran/phy/upper/signal_processors/sss_processor.h"
 #include "srsran/srslog/srslog.h"

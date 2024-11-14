@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "meas_types.h"
+#include "srsran/rrc/meas_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {

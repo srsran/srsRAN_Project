@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #include "demodulation_mapper_qam16.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 

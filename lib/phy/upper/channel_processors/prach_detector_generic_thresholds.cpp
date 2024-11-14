@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #include "prach_detector_generic_thresholds.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/to_array.h"

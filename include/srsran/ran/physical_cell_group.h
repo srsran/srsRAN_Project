@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "rnti.h"
+#include "srsran/ran/rnti.h"
 #include <optional>
 
 namespace srsran {

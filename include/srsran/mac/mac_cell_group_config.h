@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "bsr_config.h"
-#include "phr_config.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/mac/bsr_config.h"
+#include "srsran/mac/phr_config.h"
 #include "srsran/ran/sr_configuration.h"
 #include "srsran/ran/time_alignment_config.h"
 

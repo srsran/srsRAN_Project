@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "security.h"
+#include "srsran/security/security.h"
 #include <cmath>
 #include <cstdint>
 #include <cstdio>

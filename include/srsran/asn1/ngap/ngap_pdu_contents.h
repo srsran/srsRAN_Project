@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ngap_ies.h"
+#include "srsran/asn1/ngap/ngap_ies.h"
 
 namespace asn1 {
 namespace ngap {

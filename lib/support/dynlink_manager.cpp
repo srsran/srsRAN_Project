@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #include "srsran/support/dynlink_manager.h"
 #include <dlfcn.h>
 #include <string>

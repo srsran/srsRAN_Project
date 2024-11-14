@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "serv_cell_index.h"
+#include "srsran/ran/serv_cell_index.h"
 #include <cstdint>
 #include <type_traits>
 

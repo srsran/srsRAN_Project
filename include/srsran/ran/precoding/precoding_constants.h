@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/ran/resource_block.h"
 #include "srsran/support/math/math_utils.h"
 

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "e2sm_common_ies.h"
+#include "srsran/asn1/e2sm/e2sm_common_ies.h"
 
 namespace asn1 {
 namespace e2sm {

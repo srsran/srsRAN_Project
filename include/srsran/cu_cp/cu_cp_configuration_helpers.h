@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
 
 namespace srsran {
 namespace config_helpers {

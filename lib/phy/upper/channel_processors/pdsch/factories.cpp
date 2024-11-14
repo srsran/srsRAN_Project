@@ -20,7 +20,6 @@
 #include "pdsch_processor_pool.h"
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/phy/support/support_factories.h"
-
 #include <memory>
 
 using namespace srsran;

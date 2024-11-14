@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "e2.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/e2/e2.h"
 #include "srsran/pdcp/pdcp_metrics.h"
 
 namespace srsran {

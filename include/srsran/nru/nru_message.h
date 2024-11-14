@@ -13,7 +13,6 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/adt/static_vector.h"
-
 #include <cstdint>
 #include <optional>
 

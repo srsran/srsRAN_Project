@@ -9,8 +9,8 @@
  */
 
 #pragma once
-#include "srsran/phy/support/re_pattern.h"
 
+#include "srsran/phy/support/re_pattern.h"
 #include <fmt/format.h>
 
 namespace fmt {

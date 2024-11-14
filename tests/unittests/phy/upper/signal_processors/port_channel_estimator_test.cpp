@@ -18,7 +18,6 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
-
 #include <gtest/gtest.h>
 
 using namespace srsran;

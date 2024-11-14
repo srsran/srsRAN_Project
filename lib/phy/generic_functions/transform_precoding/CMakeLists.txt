@@ -8,7 +8,7 @@
 
 set(transform_precoding_sources
         transform_precoder_dft_impl.cpp
-        tansform_precoding_factories.cpp)
+        transform_precoding_factories.cpp)
 
 add_library(srsran_transform_precoding STATIC ${transform_precoding_sources})
 

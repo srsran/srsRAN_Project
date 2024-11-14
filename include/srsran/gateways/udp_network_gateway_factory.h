@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "udp_network_gateway.h"
+#include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 #include <utility>

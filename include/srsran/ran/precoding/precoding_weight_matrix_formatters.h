@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/ran/precoding/precoding_weight_matrix.h"
 #include "srsran/support/format/delimited_formatter.h"
 

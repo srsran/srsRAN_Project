@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/amplitude_controller/amplitude_controller.h"

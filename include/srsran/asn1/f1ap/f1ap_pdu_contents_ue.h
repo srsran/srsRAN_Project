@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "f1ap_pdu_items.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_items.h"
 
 namespace asn1 {
 namespace f1ap {

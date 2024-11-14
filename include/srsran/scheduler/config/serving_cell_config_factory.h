@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "cell_config_builder_params.h"
-#include "serving_cell_config.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
+#include "srsran/scheduler/config/cell_config_builder_params.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 
 namespace srsran {
 namespace config_helpers {

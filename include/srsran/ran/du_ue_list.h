@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "du_types.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/ran/du_types.h"
 
 namespace srsran {
 

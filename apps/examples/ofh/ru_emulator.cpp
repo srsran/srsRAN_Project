@@ -17,12 +17,15 @@
 #include "ru_emulator_transceiver.h"
 #include "srsran/adt/circular_map.h"
 #include "srsran/adt/expected.h"
+#include "srsran/adt/to_array.h"
 #include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ofh/ecpri/ecpri_constants.h"
 #include "srsran/ofh/ecpri/ecpri_packet_properties.h"
 #include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_factories.h"
 #include "srsran/ofh/ofh_constants.h"
+#include "srsran/ofh/ofh_factories.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/srslog/logger.h"
@@ -34,9 +37,6 @@
 #include "fmt/chrono.h"
 #include <arpa/inet.h>
 #include <random>
-#include <srsran/adt/to_array.h>
-#include <srsran/ofh/ofh_factories.h>
-#include <srsran/ran/cyclic_prefix.h>
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #endif

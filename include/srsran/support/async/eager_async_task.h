@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "coroutine.h"
-#include "detail/base_task.h"
+#include "srsran/support/async/coroutine.h"
+#include "srsran/support/async/detail/base_task.h"
 
 namespace srsran {
 

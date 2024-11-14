@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "e2.h"
+#include "srsran/e2/e2.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 

@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include "s3g.h"
-#include "security.h"
-#include "ssl.h"
-#include "zuc.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
+#include "srsran/security/s3g.h"
+#include "srsran/security/security.h"
+#include "srsran/security/ssl.h"
+#include "srsran/security/zuc.h"
 
 namespace srsran {
 namespace security {

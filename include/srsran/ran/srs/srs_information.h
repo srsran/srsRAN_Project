@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srs_resource_configuration.h"
+#include "srsran/ran/srs/srs_resource_configuration.h"
+
 namespace srsran {
 
 /// \brief Collects Sounding Reference Signal information.

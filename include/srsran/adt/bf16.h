@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "strong_type.h"
+#include "srsran/adt/strong_type.h"
 #include <cmath>
 #include <cstdint>
 #include <cstring>

@@ -10,14 +10,13 @@
 
 #pragma once
 
-#include "meas_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/rb_id.h"
+#include "srsran/rrc/meas_types.h"
 #include "srsran/security/security.h"
-
 #include <string>
 #include <vector>
 

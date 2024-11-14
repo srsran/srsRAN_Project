@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #include "rlc_metrics_aggregator.h"
 
 using namespace srsran;

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ran/cu_types.h"
+
 namespace srsran {
 
 namespace srs_cu_cp {

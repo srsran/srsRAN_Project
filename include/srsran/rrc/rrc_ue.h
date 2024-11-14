@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "rrc_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/asn1/rrc_nr/ue_cap.h"
@@ -18,6 +17,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/rrc/rrc_types.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"

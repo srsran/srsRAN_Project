@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "manual_event.h"
 #include "srsran/adt/expected.h"
+#include "srsran/support/async/manual_event.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "restricted_set_config.h"
 #include "srsran/adt/bounded_integer.h"
+#include "srsran/ran/prach/restricted_set_config.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <chrono>
 #include <optional>

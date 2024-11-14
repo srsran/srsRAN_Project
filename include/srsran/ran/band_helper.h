@@ -19,7 +19,6 @@
 #include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/ssb_properties.h"
-
 #include <cstdint>
 #include <optional>
 

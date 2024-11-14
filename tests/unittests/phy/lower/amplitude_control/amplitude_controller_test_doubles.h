@@ -7,7 +7,9 @@
  * the distribution.
  *
  */
+
 #pragma once
+
 #include "../../phy_test_utils.h"
 #include "srsran/phy/lower/amplitude_controller/amplitude_controller.h"
 #include "srsran/phy/lower/amplitude_controller/amplitude_controller_factories.h"

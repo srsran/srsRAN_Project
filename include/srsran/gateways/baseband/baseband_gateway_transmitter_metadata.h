@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "baseband_gateway_timestamp.h"
+#include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
 #include <optional>
 
 namespace srsran {

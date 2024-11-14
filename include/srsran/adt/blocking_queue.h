@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ring_buffer.h"
+#include "srsran/adt/ring_buffer.h"
 #include <condition_variable>
 #include <functional>
 #include <mutex>

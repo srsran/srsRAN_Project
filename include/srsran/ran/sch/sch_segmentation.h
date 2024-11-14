@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ldpc_base_graph.h"
+#include "srsran/ran/sch/ldpc_base_graph.h"
 #include "srsran/support/units.h"
 
 namespace srsran {

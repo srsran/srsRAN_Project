@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/adt/bounded_bitset.h"
 
 namespace srsran {

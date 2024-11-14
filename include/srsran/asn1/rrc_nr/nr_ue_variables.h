@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ul_dcch_msg_ies.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 
 namespace asn1 {
 namespace rrc_nr {

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "detail/priority_task_queue.h"
-#include "unique_thread.h"
+#include "srsran/support/executors/detail/priority_task_queue.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/executors/unique_thread.h"
 
 namespace srsran {
 

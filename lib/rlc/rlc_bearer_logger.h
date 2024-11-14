@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #pragma once
 
 #include "srsran/ran/gnb_du_id.h"

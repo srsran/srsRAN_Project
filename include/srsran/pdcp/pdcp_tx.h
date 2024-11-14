@@ -32,6 +32,7 @@
  *    inherit or if a notifier that the PDCP will keep as a member.
  *
  */
+
 namespace srsran {
 
 /// This interface represents the data exit point of the transmitting side of a PDCP entity.

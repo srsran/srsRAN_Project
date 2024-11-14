@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #pragma once
 
 #include "../../proc_logger.h"

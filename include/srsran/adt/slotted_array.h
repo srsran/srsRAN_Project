@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "span.h"
-#include "tiny_optional.h"
+#include "srsran/adt/span.h"
+#include "srsran/adt/tiny_optional.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
 
