@@ -342,6 +342,7 @@ int main(int argc, char** argv)
     return -1;
   }
   srslog::set_default_sink(*log_sink);
+  srslog::fetch_basic_logger("ALL").set_level(app_params.log_level);
   srslog::fetch_basic_logger("PDCP").set_level(app_params.log_level);
 
   if (app_params.algo != -1 && app_params.algo != 0 && app_params.algo != 1 && app_params.algo != 2 &&
