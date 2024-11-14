@@ -104,12 +104,10 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 
   dl_alloc_result alloc_result = {alloc_status::invalid_params};
   unsigned        rem_rbs      = slice_candidate.remaining_rbs();
-  while (not dl_queue.empty() and rem_rbs > 0) {
-    ue_ctxt& ue = *dl_queue.top();
-    if (alloc_result.status != alloc_status::skip_slot) {
-      alloc_result = try_dl_alloc(ue, ues, pdsch_alloc, rem_rbs);
-    }
-    ue.save_dl_alloc(alloc_result.alloc_bytes, alloc_result.tb_info, ues[ue.ue_index]);
+  while (not dl_queue.empty() and rem_rbs > 0 and alloc_result.status != alloc_status::skip_slot) {
+    ue_ctxt& ue  = *dl_queue.top();
+    alloc_result = try_dl_alloc(ue, ues, pdsch_alloc, rem_rbs);
+    ue.save_dl_alloc(alloc_result.alloc_bytes, alloc_result.tb_info);
     dl_queue.pop();
     rem_rbs = slice_candidate.remaining_rbs();
   }
@@ -198,11 +196,9 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
 
   ul_alloc_result alloc_result = {alloc_status::invalid_params};
   unsigned        rem_rbs      = slice_candidate.remaining_rbs();
-  while (not ul_queue.empty() and rem_rbs > 0) {
-    ue_ctxt& ue = *ul_queue.top();
-    if (alloc_result.status != alloc_status::skip_slot) {
-      alloc_result = try_ul_alloc(ue, ues, pusch_alloc, rem_rbs);
-    }
+  while (not ul_queue.empty() and rem_rbs > 0 and alloc_result.status != alloc_status::skip_slot) {
+    ue_ctxt& ue  = *ul_queue.top();
+    alloc_result = try_ul_alloc(ue, ues, pusch_alloc, rem_rbs);
     ue.save_ul_alloc(alloc_result.alloc_bytes);
     ul_queue.pop();
     rem_rbs = slice_candidate.remaining_rbs();
@@ -317,7 +313,11 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
                                                  slot_point      pdcch_slot,
                                                  slot_point      pdsch_slot)
 {
-  dl_prio              = forbid_prio;
+  dl_prio = forbid_prio;
+
+  // Process previous slot allocated bytes and compute average.
+  compute_dl_avg_rate(u);
+
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr) {
     return;
@@ -391,7 +391,11 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
                                                  slot_point      pdcch_slot,
                                                  slot_point      pusch_slot)
 {
-  ul_prio              = forbid_prio;
+  ul_prio = forbid_prio;
+
+  // Process bytes allocated in previous slot and compute average.
+  compute_ul_avg_rate();
+
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr) {
     return;
@@ -474,56 +478,87 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   sr_ind_received = u.has_pending_sr();
 }
 
-void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t              total_alloc_bytes,
-                                               const dl_msg_tb_info& tb_info,
-                                               const slice_ue&       u)
+void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u)
 {
-  span<const sched_drb_info> drbs_qos_info = u.get_drbs_qos_info();
-  // [Implementation-defined] DL average rate is computed only for DRBs.
+  // Redimension LCID arrays to the UE configured bearers.
+  dl_alloc_bytes_per_lc.resize(u.get_bearers().size(), 0);
+  dl_avg_rate_per_lc.resize(dl_alloc_bytes_per_lc.size(), 0);
+
   // Compute DL average rate on a per-logical channel basis.
-  for (const sched_drb_info& drb_qos_info : drbs_qos_info) {
-    lcid_t lcid = drb_qos_info.lcid;
-    if (not u.contains(lcid)) {
-      // Skip if LC does not belong to this slice.
-      continue;
+  for (unsigned i = 0; i != dl_alloc_bytes_per_lc.size(); ++i) {
+    if (not u.contains(uint_to_lcid(i))) {
+      // Skip LCIDs that are not configured.
+      dl_alloc_bytes_per_lc[i] = 0;
+      dl_avg_rate_per_lc[i]    = 0;
     }
-    const auto* it = std::find_if(tb_info.lc_chs_to_sched.begin(),
-                                  tb_info.lc_chs_to_sched.end(),
-                                  [lcid](const dl_msg_lc_info& lc_info) { return lc_info.lcid == lcid; });
-    // [Implementation-defined] If a DRB is not scheduled then we consider nof. scheduled bytes for that LCID to be 0.
-    unsigned sched_bytes = 0;
-    if (it != tb_info.lc_chs_to_sched.end()) {
-      sched_bytes = it->sched_bytes;
-    }
+
+    unsigned sched_bytes = dl_alloc_bytes_per_lc[i];
+
     if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
       // Fast start before transitioning to exponential average.
-      dl_avg_rate_per_lc[lcid] =
-          dl_avg_rate_per_lc[lcid] + (sched_bytes - dl_avg_rate_per_lc[lcid]) / (dl_nof_samples + 1);
+      dl_avg_rate_per_lc[i] += (sched_bytes - dl_avg_rate_per_lc[i]) / (dl_nof_samples + 1);
     } else {
-      dl_avg_rate_per_lc[lcid] =
-          (1 - parent->exp_avg_alpha) * dl_avg_rate_per_lc[lcid] + (parent->exp_avg_alpha) * sched_bytes;
+      dl_avg_rate_per_lc[i] =
+          (1 - parent->exp_avg_alpha) * dl_avg_rate_per_lc[i] + (parent->exp_avg_alpha) * sched_bytes;
     }
+
+    // Flush allocated bytes for the current slot.
+    dl_alloc_bytes_per_lc[i] = 0;
   }
 
   // Compute DL average rate of the UE.
   if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
     // Fast start before transitioning to exponential average.
-    total_dl_avg_rate_ = total_dl_avg_rate_ + (total_alloc_bytes - total_dl_avg_rate_) / (dl_nof_samples + 1);
+    total_dl_avg_rate_ = total_dl_avg_rate_ + (dl_sum_alloc_bytes - total_dl_avg_rate_) / (dl_nof_samples + 1);
   } else {
-    total_dl_avg_rate_ = (1 - parent->exp_avg_alpha) * total_dl_avg_rate_ + (parent->exp_avg_alpha) * total_alloc_bytes;
+    total_dl_avg_rate_ =
+        (1 - parent->exp_avg_alpha) * total_dl_avg_rate_ + (parent->exp_avg_alpha) * dl_sum_alloc_bytes;
   }
+
+  // Flush allocated bytes for the current slot.
+  dl_sum_alloc_bytes = 0;
+
+  // Increment number of samples.
   dl_nof_samples++;
+}
+
+void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate()
+{
+  if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
+    // Fast start before transitioning to exponential average.
+    total_ul_avg_rate_ = total_ul_avg_rate_ + (ul_sum_alloc_bytes - total_ul_avg_rate_) / (ul_nof_samples + 1);
+  } else {
+    total_ul_avg_rate_ =
+        (1 - parent->exp_avg_alpha) * total_ul_avg_rate_ + (parent->exp_avg_alpha) * ul_sum_alloc_bytes;
+  }
+
+  // Increment number of samples.
+  ul_nof_samples++;
+
+  // Flush allocated bytes for the current slot.
+  ul_sum_alloc_bytes = 0;
+}
+
+void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)
+{
+  for (const auto& tb : tb_info.lc_chs_to_sched) {
+    if (not tb.lcid.is_sdu()) {
+      // Ignore CEs.
+      continue;
+    }
+    const lcid_t lcid = tb.lcid.to_lcid();
+    if (lcid >= dl_alloc_bytes_per_lc.size()) {
+      // It can happen that an LCID of another slice can be added to a given grant.
+      continue;
+    }
+    dl_alloc_bytes_per_lc[lcid] += tb.sched_bytes;
+  }
+  dl_sum_alloc_bytes += total_alloc_bytes;
 }
 
 void scheduler_time_pf::ue_ctxt::save_ul_alloc(uint32_t alloc_bytes)
 {
-  if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
-    // Fast start before transitioning to exponential average.
-    total_ul_avg_rate_ = total_ul_avg_rate_ + (alloc_bytes - total_ul_avg_rate_) / (ul_nof_samples + 1);
-  } else {
-    total_ul_avg_rate_ = (1 - parent->exp_avg_alpha) * total_ul_avg_rate_ + (parent->exp_avg_alpha) * alloc_bytes;
-  }
-  ul_nof_samples++;
+  ul_sum_alloc_bytes += alloc_bytes;
 }
 
 bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,

@@ -57,7 +57,7 @@ private:
     /// Computes the priority of the UE to be scheduled in UL based on the proportional fair metric.
     void compute_ul_prio(const slice_ue& u, ran_slice_id_t slice_id, slot_point pdcch_slot, slot_point pusch_slot);
 
-    void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info, const slice_ue& u);
+    void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info);
     void save_ul_alloc(uint32_t alloc_bytes);
 
     const du_ue_index_t      ue_index;
@@ -73,15 +73,23 @@ private:
     bool sr_ind_received = false;
 
   private:
-    /// Average DL rate expressed in bytes per slot experienced by UE in each of its logical channel.
+    void compute_dl_avg_rate(const slice_ue& u);
+    void compute_ul_avg_rate();
+
+    // Sum of DL bytes allocated for a given slot, before it is taken into account in the average rate computation.
+    static_vector<unsigned, MAX_NOF_RB_LCIDS> dl_alloc_bytes_per_lc;
+    unsigned                                  dl_sum_alloc_bytes = 0;
+    // Sum of UL bytes allocated for a given slot, before it is taken into account in the average rate computation.
+    unsigned ul_sum_alloc_bytes = 0;
+    // Average DL rate expressed in bytes per slot experienced by UE in each of its logical channel.
     static_vector<double, lcid_t::MAX_NOF_RB_LCIDS> dl_avg_rate_per_lc;
-    /// Average DL rate expressed in bytes per slot experienced by UE.
+    // Average DL rate expressed in bytes per slot experienced by UE.
     double total_dl_avg_rate_ = 0;
-    /// Average UL rate expressed in bytes per slot experienced by UE.
+    // Average UL rate expressed in bytes per slot experienced by UE.
     double total_ul_avg_rate_ = 0;
-    /// Nof. DL samples over which average DL bitrate is computed.
+    // Nof. DL samples over which average DL bitrate is computed.
     uint32_t dl_nof_samples = 0;
-    /// Nof. UL samples over which average DL bitrate is computed.
+    // Nof. UL samples over which average DL bitrate is computed.
     uint32_t ul_nof_samples = 0;
   };
 
