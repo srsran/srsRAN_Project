@@ -172,6 +172,9 @@ std::vector<byte_buffer_chain> gen_pdu_list(uint64_t                      nof_sd
       0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
   pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
+  const uint32_t max_pdu_size = sdu_len + 9;
+  pdcp_tx->handle_desired_buffer_size_notification(nof_sdus * max_pdu_size);
+
   // Prepare SDU list for benchmark
   for (uint64_t i = 0; i < nof_sdus; i++) {
     byte_buffer sdu_buf = {};
