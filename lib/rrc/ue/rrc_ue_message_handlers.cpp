@@ -193,6 +193,10 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
   }
 
   std::vector<byte_buffer> rrc_pdus = pdcp_unpacking_result.pop_pdus();
+  if (rrc_pdus.empty()) {
+    logger.log_warning("PDCP unpacking did not provide any SDU");
+    return;
+  }
   for (byte_buffer& pdu : rrc_pdus) {
     handle_pdu(srb_id, std::move(pdu));
   }
