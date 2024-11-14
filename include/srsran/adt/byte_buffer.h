@@ -397,9 +397,7 @@ public:
 private:
   bool has_ctrl_block() const { return ctrl_blk_ptr != nullptr; }
 
-  [[nodiscard]] bool default_construct_unsafe(byte_buffer_memory_resource& segment_pool,
-                                              unsigned sz_hint = byte_buffer_segment_pool_default_segment_size() -
-                                                                 sizeof(node_t) - sizeof(control_block));
+  [[nodiscard]] bool default_construct_unsafe(byte_buffer_memory_resource& segment_pool, unsigned sz_hint);
 
   [[nodiscard]] bool append(span<const uint8_t> bytes, byte_buffer_memory_resource& segment_pool);
 

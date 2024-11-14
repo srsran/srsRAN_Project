@@ -194,7 +194,8 @@ void byte_buffer::control_block::destroy_cb()
 expected<byte_buffer> byte_buffer::create(byte_buffer_memory_resource& segment_pool)
 {
   byte_buffer result;
-  if (not result.default_construct_unsafe(segment_pool)) {
+  if (not result.default_construct_unsafe(segment_pool,
+                                          default_segment_size - sizeof(control_block) - sizeof(node_t))) {
     return make_unexpected(default_error_t{});
   }
   return result;
@@ -373,7 +374,7 @@ bool byte_buffer::append(span<const uint8_t> bytes, byte_buffer_memory_resource&
   if (bytes.empty()) {
     // No bytes are being appended. However, we may still need to create a control block to store the pool.
     if (not has_ctrl_block()) {
-      return default_construct_unsafe(segment_pool);
+      return default_construct_unsafe(segment_pool, default_segment_size - sizeof(control_block) - sizeof(node_t));
     }
     return true;
   }
