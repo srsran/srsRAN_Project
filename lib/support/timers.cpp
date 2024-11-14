@@ -231,16 +231,26 @@ void timer_manager::handle_timer_commands()
       create_timer_handle(cmd.cmd_id, std::move(std::get<cmd_t::create>(cmd.action).frontend));
       continue;
     }
+    const auto t_idx = static_cast<size_t>(cmd.id);
+
+    if (t_idx >= timers.size()) {
+      // Second command ended up being processed before timer creation due to reordering.
+      // Grow timers list to avoid bad accesses. The cmd will be added to tmp_skipped_cmds below in this iteration.
+      if (t_idx > timers.size() + 1024) {
+        logger.error("Detected corrupted timer_id={}. Current timer list size is {}", t_idx, timers.size());
+      }
+      timers.resize(t_idx + 1);
+    }
 
     // The timer already exists.
-    timer_handle& timer = timers[static_cast<size_t>(cmd.id)];
+    timer_handle& timer = timers[t_idx];
 
     if (cmd.cmd_id - timer.backend.cmd_id >= std::numeric_limits<cmd_id_t>::max() / 2) {
       // Note: This should not happen. It means that there was some corruption of the cmd_id.
       logger.warning(
           "Discarding cmd_id={} for timer={}. Cause: cmd_id is below the last processed cmd_id={} by the timer",
           cmd.cmd_id,
-          timer.frontend->id,
+          cmd.id,
           timer.backend.cmd_id);
       continue;
     }
@@ -251,7 +261,7 @@ void timer_manager::handle_timer_commands()
       logger.debug("The processing of cmd_id={} for timer={} was postponed. Cause: There are commands in between "
                    "[{},{}) not yet processed",
                    cmd.cmd_id,
-                   timer.frontend->id,
+                   cmd.id,
                    timer.backend.cmd_id + 1,
                    cmd.cmd_id);
       continue;
@@ -261,7 +271,7 @@ void timer_manager::handle_timer_commands()
     handle_timer_command(timer, cmd);
   }
 
-  constexpr static unsigned max_skip_slot_thres = 4;
+  constexpr static unsigned max_skip_slot_thres = 16;
   // Sort skipped cmds by cmd_id.
   std::sort(tmp_skipped_cmds.begin(), tmp_skipped_cmds.end(), [](const auto& lhs, const auto& rhs) {
     return lhs.second.cmd_id < rhs.second.cmd_id;
@@ -272,12 +282,11 @@ void timer_manager::handle_timer_commands()
       // already processed.
       continue;
     }
-    timer_handle& timer = timers[static_cast<size_t>(cmd.id)];
+    const auto t_idx = static_cast<size_t>(cmd.id);
 
-    if (timer.frontend == nullptr) {
-      // Timer was deleted in the meantime.
-      cmd.id = timer_id_t::invalid;
-    } else if (cmd.cmd_id == timer.backend.cmd_id + 1) {
+    timer_handle& timer = timers[t_idx];
+
+    if (cmd.cmd_id == timer.backend.cmd_id + 1) {
       // Now the command can be processed in order.
       handle_timer_command(timer, cmd);
       cmd.id = timer_id_t::invalid;
@@ -286,15 +295,17 @@ void timer_manager::handle_timer_commands()
       logger.warning(
           "Discarding cmd_id={} for timer={}. Cause: cmd_id is below the last processed cmd_id={} by the timer",
           cmd.cmd_id,
-          timer.frontend->id,
+          t_idx,
           timer.backend.cmd_id);
       cmd.id = timer_id_t::invalid;
-    } else if (p.first - cur_time > max_skip_slot_thres) {
+    } else if (cur_time - p.first > max_skip_slot_thres) {
       logger.warning("Discarding cmd_ids=[{},{}) for timer={}. Cause: The cmd_ids went missing",
                      timer.backend.cmd_id + 1,
                      cmd.cmd_id - 1,
-                     timer.frontend->id);
-      handle_timer_command(timer, cmd);
+                     t_idx);
+      if (timer.frontend != nullptr) {
+        handle_timer_command(timer, cmd);
+      }
       cmd.id = timer_id_t::invalid;
     }
   }
@@ -307,6 +318,7 @@ void timer_manager::handle_timer_commands()
 void timer_manager::handle_timer_command(timer_handle& timer, const cmd_t& cmd)
 {
   srsran_sanity_check(not std::holds_alternative<cmd_t::create>(cmd.action), "Invalid action type");
+  srsran_assert(timer.frontend != nullptr, "Invalid timer frontend");
 
   // Update the timer backend cmd_id to match frontend.
   timer.backend.cmd_id = cmd.cmd_id;
