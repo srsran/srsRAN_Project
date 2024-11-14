@@ -30,6 +30,9 @@ public:
                 ul_harq_pending_retx_list    harq_pending_retx_list) override;
 
 private:
+  // Value used to flag that the UE cannot be allocated in a given slot.
+  static constexpr double forbid_prio = std::numeric_limits<double>::lowest();
+
   /// Fairness parameters.
   /// Coefficient used to tweak decision in favor of fairness or throughput.
   const double fairness_coeff;
@@ -62,12 +65,10 @@ private:
     const scheduler_time_pf* parent;
 
     /// DL priority value of the UE.
-    double dl_prio = 0;
+    double dl_prio = forbid_prio;
     /// UL priority value of the UE.
-    double ul_prio = 0;
+    double ul_prio = forbid_prio;
 
-    bool has_empty_dl_harq = false;
-    bool has_empty_ul_harq = false;
     /// Flag indicating whether SR indication from the UE is received or not.
     bool sr_ind_received = false;
 
@@ -129,7 +130,7 @@ private:
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(ue_ctxt* elem)
     {
-      if (not elem->has_empty_dl_harq) {
+      if (elem->dl_prio == forbid_prio) {
         return;
       }
       base_type::push(elem);
@@ -154,7 +155,7 @@ private:
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(ue_ctxt* elem)
     {
-      if (not elem->has_empty_ul_harq) {
+      if (elem->ul_prio == forbid_prio) {
         return;
       }
       base_type::push(elem);

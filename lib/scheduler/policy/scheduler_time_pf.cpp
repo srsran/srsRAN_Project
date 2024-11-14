@@ -165,9 +165,6 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  ul_ran_slice_candidate&      slice_candidate,
                                  ul_harq_pending_retx_list    harq_pending_retx_list)
 {
-  // Clear the existing contents of the queue.
-  ul_queue.clear();
-
   const slice_ue_repository& ues = slice_candidate.get_slice_ues();
   // Remove deleted users from history.
   for (auto it = ue_history_db.begin(); it != ue_history_db.end();) {
@@ -190,6 +187,8 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
     return;
   }
 
+  // Clear the existing contents of the queue.
+  ul_queue.clear();
   for (const auto& u : ues) {
     ue_ctxt& ctxt = ue_history_db[u.ue_index()];
     ctxt.compute_ul_prio(
@@ -218,18 +217,14 @@ dl_alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
   dl_alloc_result alloc_result = {alloc_status::invalid_params};
   ue_pdsch_grant  grant{&ues[ctxt.ue_index], ctxt.cell_index};
 
-  if (ctxt.has_empty_dl_harq) {
-    grant.h_id                  = INVALID_HARQ_ID;
-    grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_dl_newtx_bytes();
-    grant.max_nof_rbs           = max_rbs;
-    alloc_result                = pdsch_alloc.allocate_dl_grant(grant);
-    if (alloc_result.status == alloc_status::success) {
-      ctxt.has_empty_dl_harq = false;
-    }
-    return alloc_result;
+  grant.h_id                  = INVALID_HARQ_ID;
+  grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_dl_newtx_bytes();
+  grant.max_nof_rbs           = max_rbs;
+  alloc_result                = pdsch_alloc.allocate_dl_grant(grant);
+  if (alloc_result.status == alloc_status::success) {
+    ctxt.dl_prio = forbid_prio;
   }
-
-  return {alloc_status::skip_ue};
+  return alloc_result;
 }
 
 ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
@@ -240,18 +235,14 @@ ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
   ul_alloc_result alloc_result = {alloc_status::invalid_params};
   ue_pusch_grant  grant{&ues[ctxt.ue_index], ctxt.cell_index};
 
-  if (ctxt.has_empty_ul_harq) {
-    grant.h_id                  = INVALID_HARQ_ID;
-    grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_ul_newtx_bytes();
-    grant.max_nof_rbs           = max_rbs;
-    alloc_result                = pusch_alloc.allocate_ul_grant(grant);
-    if (alloc_result.status == alloc_status::success) {
-      ctxt.has_empty_ul_harq = false;
-    }
-    return alloc_result;
+  grant.h_id                  = INVALID_HARQ_ID;
+  grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_ul_newtx_bytes();
+  grant.max_nof_rbs           = max_rbs;
+  alloc_result                = pusch_alloc.allocate_ul_grant(grant);
+  if (alloc_result.status == alloc_status::success) {
+    ctxt.ul_prio = forbid_prio;
   }
-
-  return {alloc_status::skip_ue};
+  return alloc_result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -326,8 +317,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
                                                  slot_point      pdcch_slot,
                                                  slot_point      pdsch_slot)
 {
-  has_empty_dl_harq    = false;
-  dl_prio              = 0;
+  dl_prio              = forbid_prio;
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr) {
     return;
@@ -339,61 +329,61 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
     // Cannot allocate PDCCH/PDSCH for this UE in this slot.
     return;
   }
-
-  // Calculate DL priority.
-  has_empty_dl_harq = ue_cc->harqs.has_empty_dl_harqs();
-  if (has_empty_dl_harq and u.has_pending_dl_newtx_bytes()) {
-    // NOTE: It does not matter whether it's a reTx or newTx since DL priority is computed based on estimated
-    // instantaneous achievable rate to the average throughput of the user.
-    // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
-    const auto* ss_info = ue_cc->cfg().find_search_space(
-        ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
-    if (ss_info == nullptr) {
-      return;
-    }
-    span<const pdsch_time_domain_resource_allocation> pdsch_td_res_list = ss_info->pdsch_time_domain_list;
-    // [Implementation-defined] We pick the first element since PDSCH time domain resource list is sorted in descending
-    // order of nof. PDSCH symbols. And, we want to calculate estimate of instantaneous achievable rate with maximum
-    // nof. PDSCH symbols.
-    const pdsch_time_domain_resource_allocation& pdsch_td_cfg = pdsch_td_res_list.front();
-
-    pdsch_config_params pdsch_cfg;
-    switch (ss_info->get_dl_dci_format()) {
-      case dci_dl_format::f1_0:
-        pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cc->cfg().cell_cfg_common, &ue_cc->cfg(), pdsch_td_cfg);
-        break;
-      case dci_dl_format::f1_1:
-        pdsch_cfg = get_pdsch_config_f1_1_c_rnti(
-            ue_cc->cfg(), pdsch_td_cfg, ue_cc->channel_state_manager().get_nof_dl_layers());
-        break;
-      default:
-        report_fatal_error("Unsupported PDCCH DCI DL format");
-    }
-
-    std::optional<sch_mcs_index> mcs = ue_cc->link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
-    if (not mcs.has_value()) {
-      // CQI is either 0, or > 15.
-      has_empty_dl_harq = false;
-      return;
-    }
-
-    // Calculate DL PF priority.
-    // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
-    const double estimated_rate = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
-    const double current_total_avg_rate = total_dl_avg_rate();
-    double       pf_weight              = 0;
-    if (current_total_avg_rate != 0) {
-      pf_weight = estimated_rate / pow(current_total_avg_rate, parent->fairness_coeff);
-    } else {
-      pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
-    }
-    const double rate_weight = compute_dl_rate_weight(
-        u, dl_avg_rate_per_lc, ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
-    dl_prio = rate_weight * pf_weight;
-
+  if (not ue_cc->harqs.has_empty_dl_harqs() or not u.has_pending_dl_newtx_bytes()) {
+    // No available HARQs or no pending data.
     return;
   }
-  has_empty_dl_harq = false;
+
+  // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
+  const auto* ss_info =
+      ue_cc->cfg().find_search_space(ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
+  if (ss_info == nullptr) {
+    return;
+  }
+  span<const pdsch_time_domain_resource_allocation> pdsch_td_res_list = ss_info->pdsch_time_domain_list;
+  // [Implementation-defined] We pick the first element since PDSCH time domain resource list is sorted in descending
+  // order of nof. PDSCH symbols. And, we want to calculate estimate of instantaneous achievable rate with maximum
+  // nof. PDSCH symbols.
+  const pdsch_time_domain_resource_allocation& pdsch_td_cfg = pdsch_td_res_list.front();
+
+  pdsch_config_params pdsch_cfg;
+  switch (ss_info->get_dl_dci_format()) {
+    case dci_dl_format::f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cc->cfg().cell_cfg_common, &ue_cc->cfg(), pdsch_td_cfg);
+      break;
+    case dci_dl_format::f1_1:
+      pdsch_cfg =
+          get_pdsch_config_f1_1_c_rnti(ue_cc->cfg(), pdsch_td_cfg, ue_cc->channel_state_manager().get_nof_dl_layers());
+      break;
+    default:
+      report_fatal_error("Unsupported PDCCH DCI DL format");
+  }
+
+  std::optional<sch_mcs_index> mcs = ue_cc->link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
+  if (not mcs.has_value()) {
+    // CQI is either 0 or above 15, which means no DL.
+    return;
+  }
+
+  // Calculate DL PF priority.
+  // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
+  const double estimated_rate = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
+  const double current_total_avg_rate = total_dl_avg_rate();
+  double       pf_weight              = 0;
+  if (current_total_avg_rate != 0) {
+    if (parent->fairness_coeff >= 10) {
+      // avoid overflow
+      pf_weight = 1 / current_total_avg_rate;
+    } else {
+      pf_weight = estimated_rate / pow(current_total_avg_rate, parent->fairness_coeff);
+    }
+  } else {
+    // give the highest priority to new UE.
+    pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
+  }
+  const double rate_weight = compute_dl_rate_weight(
+      u, dl_avg_rate_per_lc, ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
+  dl_prio = rate_weight * pf_weight;
 }
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
@@ -401,9 +391,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
                                                  slot_point      pdcch_slot,
                                                  slot_point      pusch_slot)
 {
-  has_empty_ul_harq    = false;
-  ul_prio              = 0;
-  sr_ind_received      = false;
+  ul_prio              = forbid_prio;
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr) {
     return;
@@ -415,69 +403,75 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
     // Cannot allocate PDCCH/PUSCH for this UE in the provided slots.
     return;
   }
-
-  // Calculate UL priority.
-  has_empty_ul_harq = ue_cc->harqs.has_empty_ul_harqs();
-  sr_ind_received   = u.has_pending_sr();
-  if (has_empty_ul_harq and u.pending_ul_newtx_bytes() > 0) {
-    // NOTE: It does not matter whether it's a reTx or newTx since UL priority is computed based on estimated
-    // instantaneous achievable rate to the average throughput of the user.
-    // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
-    const auto* ss_info = ue_cc->cfg().find_search_space(
-        ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
-    if (ss_info == nullptr) {
-      return;
-    }
-    span<const pusch_time_domain_resource_allocation> pusch_td_res_list = ss_info->pusch_time_domain_list;
-    // [Implementation-defined] We pick the first element since PUSCH time domain resource list is sorted in descending
-    // order of nof. PUSCH symbols. And, we want to calculate estimate of instantaneous achievable rate with maximum
-    // nof. PUSCH symbols.
-    const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_res_list.front();
-    // [Implementation-defined] We assume nof. HARQ ACK bits is zero at PUSCH slot as a simplification in calculating
-    // estimated instantaneous achievable rate.
-    constexpr unsigned nof_harq_ack_bits = 0;
-    const bool is_csi_report_slot = csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_slot);
-
-    pusch_config_params pusch_cfg;
-    switch (ss_info->get_ul_dci_format()) {
-      case dci_ul_format::f0_0:
-        pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cc->cfg().cell_cfg_common,
-                                                 &ue_cc->cfg(),
-                                                 ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp,
-                                                 pusch_td_cfg,
-                                                 nof_harq_ack_bits,
-                                                 is_csi_report_slot);
-        break;
-      case dci_ul_format::f0_1:
-        pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cc->cfg(),
-                                                 pusch_td_cfg,
-                                                 ue_cc->channel_state_manager().get_nof_ul_layers(),
-                                                 nof_harq_ack_bits,
-                                                 is_csi_report_slot);
-        break;
-      default:
-        report_fatal_error("Unsupported PDCCH DCI UL format");
-    }
-
-    sch_mcs_index mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
-
-    // Calculate UL PF priority.
-    // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
-    const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
-    const double current_avg_rate = total_ul_avg_rate();
-    double       pf_weight        = 0;
-    if (current_avg_rate != 0) {
-      pf_weight = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
-    } else {
-      pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
-    }
-    const double rate_weight = compute_ul_rate_weight(
-        u, current_avg_rate, ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs);
-    ul_prio = rate_weight * pf_weight;
-
+  if (not ue_cc->harqs.has_empty_ul_harqs()) {
+    // No HARQs for newTxs.
     return;
   }
-  has_empty_ul_harq = false;
+
+  if (u.pending_ul_newtx_bytes() == 0) {
+    // No new bytes to allocate.
+    return;
+  }
+
+  // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
+  const auto* ss_info =
+      ue_cc->cfg().find_search_space(ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
+  if (ss_info == nullptr) {
+    return;
+  }
+
+  span<const pusch_time_domain_resource_allocation> pusch_td_res_list = ss_info->pusch_time_domain_list;
+  // [Implementation-defined] We pick the first element since PUSCH time domain resource list is sorted in descending
+  // order of nof. PUSCH symbols. And, we want to calculate estimate of instantaneous achievable rate with maximum
+  // nof. PUSCH symbols.
+  const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_res_list.front();
+  // [Implementation-defined] We assume nof. HARQ ACK bits is zero at PUSCH slot as a simplification in calculating
+  // estimated instantaneous achievable rate.
+  constexpr unsigned nof_harq_ack_bits = 0;
+  const bool is_csi_report_slot = csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_slot);
+
+  pusch_config_params pusch_cfg;
+  switch (ss_info->get_ul_dci_format()) {
+    case dci_ul_format::f0_0:
+      pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cc->cfg().cell_cfg_common,
+                                               &ue_cc->cfg(),
+                                               ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp,
+                                               pusch_td_cfg,
+                                               nof_harq_ack_bits,
+                                               is_csi_report_slot);
+      break;
+    case dci_ul_format::f0_1:
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cc->cfg(),
+                                               pusch_td_cfg,
+                                               ue_cc->channel_state_manager().get_nof_ul_layers(),
+                                               nof_harq_ack_bits,
+                                               is_csi_report_slot);
+      break;
+    default:
+      report_fatal_error("Unsupported PDCCH DCI UL format");
+  }
+
+  sch_mcs_index mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
+
+  // Calculate UL PF priority.
+  // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
+  const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
+  const double current_avg_rate = total_ul_avg_rate();
+  double       pf_weight        = 0;
+  if (current_avg_rate != 0) {
+    if (parent->fairness_coeff > 10) {
+      // avoid overflow
+      pf_weight = 1 / current_avg_rate;
+    } else {
+      pf_weight = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
+    }
+  } else {
+    pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
+  }
+  const double rate_weight = compute_ul_rate_weight(
+      u, current_avg_rate, ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs);
+  ul_prio         = rate_weight * pf_weight;
+  sr_ind_received = u.has_pending_sr();
 }
 
 void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t              total_alloc_bytes,
