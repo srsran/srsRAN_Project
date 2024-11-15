@@ -22,14 +22,21 @@ class du_drx_resource_manager
 {
 public:
   du_drx_resource_manager(span<const du_cell_config> cell_cfg_list_);
+  du_drx_resource_manager(du_drx_resource_manager&&) noexcept = default;
   ~du_drx_resource_manager();
+
+  du_drx_resource_manager& operator=(du_drx_resource_manager&&) noexcept = default;
+
+  /// \brief Set the default DRX config when UE is created.
+  void handle_ue_creation(cell_group_config& cell_grp_cfg);
 
   /// \brief Reserve gaps for DRX/measGaps for a given UE. The resources are stored in the UE's cell group config.
   /// \return true if allocation was successful.
-  void alloc_resources(cell_group_config& cell_grp_cfg);
+  void
+  handle_ue_cap_update(cell_group_config& cell_grp_cfg, bool long_drx_cycle_supported, bool short_drx_cycle_supported);
 
   /// \brief Deallocate DRX/measGaps resources previously given to a UE. The resources are returned back to a pool.
-  void dealloc_resources(cell_group_config& cell_grp_cfg);
+  void handle_ue_removal(cell_group_config& cell_grp_cfg);
 
 private:
   span<const du_cell_config> cell_cfg_list;

@@ -10,8 +10,7 @@ set_directory_properties(PROPERTIES LABELS "du_manager")
 
 include_directories(../../..)
 
-add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_manager_procedure_test_helpers.cpp
-        du_drx_resource_manager_test.cpp)
+add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_manager_procedure_test_helpers.cpp)
 target_include_directories(du_manager_test_helpers PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_manager_test_helpers srsran_du_manager srsran_support srslog)
 

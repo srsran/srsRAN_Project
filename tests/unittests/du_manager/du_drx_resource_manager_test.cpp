@@ -52,6 +52,9 @@ protected:
                     cell_config_dedicated{serv_cell_index_t::SERVING_CELL_PCELL_IDX,
                                           config_helpers::create_default_initial_ue_serving_cell_config(params)});
 
+    // On UE creation, handle_ue_creation is always called.
+    drx.handle_ue_creation(u);
+
     return u;
   }
 
@@ -89,19 +92,17 @@ protected:
   cell_group_config* test_ue = nullptr;
 };
 
-TEST_F(du_no_drx_resource_manager_test, when_drx_disabled_then_no_drx_config_is_generated)
+TEST_F(du_no_drx_resource_manager_test, when_gnb_does_not_support_drx_but_ue_does_then_no_drx_config_is_generated)
 {
-  // The result of alloc_resources should be an empty DRX config
-  drx.alloc_resources(*test_ue);
+  // The UE starts without DRX config.
   ASSERT_FALSE(test_ue->mcg_cfg.drx_cfg.has_value());
 
-  // Even if we force a DRX config, the alloc_resources will empty it.
-  test_ue->mcg_cfg.drx_cfg.emplace();
-  drx.alloc_resources(*test_ue);
+  // Once UE capabilities are configured, the result should still an empty DRX config.
+  drx.handle_ue_cap_update(*test_ue, true, true);
   ASSERT_FALSE(test_ue->mcg_cfg.drx_cfg.has_value());
 
   // Deallocation should be a no-op, but it is good practice to see if it does not crash.
-  drx.dealloc_resources(*test_ue);
+  drx.handle_ue_removal(*test_ue);
   ASSERT_FALSE(test_ue->mcg_cfg.drx_cfg.has_value());
 }
 
@@ -115,13 +116,32 @@ protected:
   }
 };
 
-TEST_F(du_drx_resource_manager_test, when_one_ue_is_created_then_drx_config_is_valid)
+TEST_F(du_drx_resource_manager_test, when_gnb_and_ue_support_drx_then_drx_config_is_valid)
 {
   cell_group_config& test_ue = add_ue(to_du_ue_index(0));
 
-  drx.alloc_resources(test_ue);
+  // DRX supported.
+  drx.handle_ue_cap_update(test_ue, true, true);
   ASSERT_TRUE(test_ue.mcg_cfg.drx_cfg.has_value());
   ASSERT_TRUE(this->is_valid_drx_config(test_ue.mcg_cfg.drx_cfg));
+
+  // Removal of UE should remove DRX config.
+  drx.handle_ue_removal(test_ue);
+  ASSERT_FALSE(test_ue.mcg_cfg.drx_cfg.has_value());
+}
+
+TEST_F(du_drx_resource_manager_test, when_gnb_supports_drx_but_ue_does_not_then_drx_is_not_set)
+{
+  cell_group_config& test_ue = add_ue(to_du_ue_index(0));
+
+  // DRX supported.
+  drx.handle_ue_cap_update(test_ue, false, false);
+  ASSERT_FALSE(test_ue.mcg_cfg.drx_cfg.has_value());
+  ASSERT_FALSE(this->is_valid_drx_config(test_ue.mcg_cfg.drx_cfg));
+
+  // Removal of UE should be no-op.
+  drx.handle_ue_removal(test_ue);
+  ASSERT_FALSE(test_ue.mcg_cfg.drx_cfg.has_value());
 }
 
 TEST_F(du_drx_resource_manager_test, when_multiple_ues_are_created_then_drx_configs_avoid_same_offset)
@@ -134,7 +154,7 @@ TEST_F(du_drx_resource_manager_test, when_multiple_ues_are_created_then_drx_conf
 
   std::set<std::chrono::milliseconds> offsets;
   for (cell_group_config* u : test_ues) {
-    drx.alloc_resources(*u);
+    drx.handle_ue_cap_update(*u, true, true);
     ASSERT_TRUE(u->mcg_cfg.drx_cfg.has_value());
     ASSERT_TRUE(this->is_valid_drx_config(u->mcg_cfg.drx_cfg));
     auto p = offsets.insert(u->mcg_cfg.drx_cfg->long_start_offset);
@@ -155,7 +175,7 @@ TEST_F(du_drx_resource_manager_test, when_ue_drx_resources_are_deallocated_then_
   // Allocate DRX config and build histogram of DRX offsets.
   std::map<std::chrono::milliseconds, unsigned> histogram;
   for (cell_group_config* u : test_ues) {
-    drx.alloc_resources(*u);
+    drx.handle_ue_cap_update(*u, true, true);
     ASSERT_TRUE(this->is_valid_drx_config(u->mcg_cfg.drx_cfg));
     if (histogram.count(u->mcg_cfg.drx_cfg->long_start_offset)) {
       histogram[u->mcg_cfg.drx_cfg->long_start_offset]++;
@@ -189,14 +209,14 @@ TEST_F(du_drx_resource_manager_test, when_ue_drx_resources_are_deallocated_then_
       break;
     }
     if (u->mcg_cfg.drx_cfg->long_start_offset == selected_offset) {
-      drx.dealloc_resources(*u);
+      drx.handle_ue_removal(*u);
       rem_count++;
     }
   }
 
   // Next UE allocation should get assigned the previously selected DRX offset that is now in minority.
   auto& u = add_ue(to_du_ue_index(nof_ues));
-  drx.alloc_resources(u);
+  drx.handle_ue_cap_update(u, true, true);
   ASSERT_TRUE(this->is_valid_drx_config(u.mcg_cfg.drx_cfg));
   ASSERT_EQ(u.mcg_cfg.drx_cfg->long_start_offset, selected_offset);
 }

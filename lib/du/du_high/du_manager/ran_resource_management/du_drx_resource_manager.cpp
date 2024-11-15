@@ -64,25 +64,50 @@ du_drx_resource_manager::du_drx_resource_manager(span<const du_cell_config> cell
 
 du_drx_resource_manager::~du_drx_resource_manager() = default;
 
-void du_drx_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
+void du_drx_resource_manager::handle_ue_creation(cell_group_config& cell_grp_cfg)
 {
-  const du_cell_index_t pcell_index = cell_grp_cfg.cells[0].serv_cell_cfg.cell_index;
-  const du_cell_config& pcell_cfg   = cell_cfg_list[pcell_index];
-
+  // UE always starts with DRX disabled.
   cell_grp_cfg.mcg_cfg.drx_cfg.reset();
-  if (not pcell_cfg.mcg_params.drx.has_value()) {
+}
+
+void du_drx_resource_manager::handle_ue_cap_update(cell_group_config& cell_grp_cfg,
+                                                   bool               long_drx_cycle_supported,
+                                                   bool /* unused */)
+{
+  std::optional<drx_config>& current_ue_drx   = cell_grp_cfg.mcg_cfg.drx_cfg;
+  const du_cell_index_t      pcell_index      = cell_grp_cfg.cells[0].serv_cell_cfg.cell_index;
+  const du_cell_config&      pcell_cfg_common = cell_cfg_list[pcell_index];
+
+  // If both UE and gNB cell are configured to support long DRX cycle.
+  const bool long_drx_cycle_enable_cmd = long_drx_cycle_supported and pcell_cfg_common.mcg_params.drx.has_value() and
+                                         pcell_cfg_common.mcg_params.drx.value().long_cycle.count() != 0;
+  // Previous UE DRX state.
+  const bool prev_ue_long_drx_support = current_ue_drx.has_value() and current_ue_drx->long_cycle.count() != 0;
+  if (long_drx_cycle_enable_cmd == prev_ue_long_drx_support) {
+    // No change detected in UE state. Early exit.
     return;
   }
 
-  cell_grp_cfg.mcg_cfg.drx_cfg.emplace();
-  drx_config& drx       = cell_grp_cfg.mcg_cfg.drx_cfg.value();
-  drx.long_cycle        = pcell_cfg.mcg_params.drx->long_cycle;
+  if (current_ue_drx.has_value()) {
+    // UE had a DRX already configured. Deallocate its resources before proceeding.
+    handle_ue_removal(cell_grp_cfg);
+  }
+
+  if (not long_drx_cycle_enable_cmd) {
+    // gNB cell does not have DRX configured. No point in proceeding.
+    return;
+  }
+
+  // Enable DRX for the UE.
+  current_ue_drx.emplace();
+  drx_config& drx       = current_ue_drx.value();
+  drx.long_cycle        = pcell_cfg_common.mcg_params.drx->long_cycle;
   drx.long_start_offset = offset_pool->allocate(pcell_index);
-  drx.on_duration_timer = pcell_cfg.mcg_params.drx->on_duration;
-  drx.inactivity_timer  = pcell_cfg.mcg_params.drx->inactivity_timer;
+  drx.on_duration_timer = pcell_cfg_common.mcg_params.drx->on_duration;
+  drx.inactivity_timer  = pcell_cfg_common.mcg_params.drx->inactivity_timer;
 }
 
-void du_drx_resource_manager::dealloc_resources(cell_group_config& cell_grp_cfg)
+void du_drx_resource_manager::handle_ue_removal(cell_group_config& cell_grp_cfg)
 {
   if (not cell_grp_cfg.mcg_cfg.drx_cfg.has_value()) {
     return;

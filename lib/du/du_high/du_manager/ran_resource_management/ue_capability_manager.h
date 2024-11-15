@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "du_drx_resource_manager.h"
 #include "du_ue_resource_config.h"
 
 namespace asn1 {
@@ -75,7 +76,15 @@ void decode_advanced_ue_nr_caps(ue_capability_summary& ue_capability, const asn1
 class ue_capability_manager
 {
 public:
-  explicit ue_capability_manager(span<const du_cell_config> cell_cfg_list, srslog::basic_logger& logger_);
+  explicit ue_capability_manager(span<const du_cell_config> cell_cfg_list,
+                                 du_drx_resource_manager&   drx_mng_,
+                                 srslog::basic_logger&      logger_);
+
+  /// \brief Called on creation of a new UE.
+  ///
+  /// This method is used to set the right default values for several of the UE resources that depend on the UE
+  /// capabilities.
+  void handle_ue_creation(du_ue_resource_config& ue_res_cfg);
 
   /// \brief Called on each UE capability RAT list container received from the CU-CP, to update the UE DU-specific
   /// resources.
@@ -83,6 +92,9 @@ public:
   /// capabilities received.
   /// \param[in] ue_cap_rat_list packed UE capability RAT list container.
   void update(du_ue_resource_config& ue_res_cfg, const byte_buffer& ue_cap_rat_list);
+
+  /// \brief Called on UE removal, to release its resources.
+  void release(du_ue_resource_config& ue_res_cfg);
 
 private:
   // Helper function to decode a packed UE capability RAT list. Returns true, if the packed container was successfully
@@ -98,12 +110,15 @@ private:
   unsigned select_srs_nof_ports(du_cell_index_t cell_idx) const;
   /// Selects the PUSCH maximum number of layers.
   unsigned select_pusch_max_rank(du_cell_index_t cell_idx) const;
+  // Updates the DRX config of the UE.
+  void update_drx(du_ue_resource_config& ue_res_cfg);
 
   span<const du_cell_config> base_cell_cfg_list;
-  srslog::basic_logger&      logger;
+  // Allocator of DRX and measGap resources for the cellGroup.
+  du_drx_resource_manager& drx_res_mng;
+  srslog::basic_logger&    logger;
 
   // Flag that tells whether this is the first time that update is called.
-  bool                                 first_update = true;
   std::optional<ue_capability_summary> ue_caps;
 };
 

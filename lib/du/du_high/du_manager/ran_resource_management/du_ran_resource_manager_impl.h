@@ -98,7 +98,7 @@ private:
     /// Processor of UE capabilities.
     ue_capability_manager ue_cap_manager;
 
-    ue_resource_context(const du_ran_resource_manager_impl& parent_);
+    ue_resource_context(du_ran_resource_manager_impl& parent_);
   };
 
   // Current UE Resource Allocations.
@@ -112,7 +112,7 @@ private:
 
   std::unique_ptr<du_srs_resource_manager> srs_res_mng;
 
-  // Allocator of DRX and measGap resources.
+  // Allocator of DRX and measGap resources for the DU.
   du_drx_resource_manager drx_res_mng;
 };
 

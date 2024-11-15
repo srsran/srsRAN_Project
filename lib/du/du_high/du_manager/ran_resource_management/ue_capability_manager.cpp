@@ -50,8 +50,8 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
   return ue_caps;
 }
 
-SRSRAN_WEAK_SYMB void srsran::srs_du::decode_advanced_ue_nr_caps(srsran::srs_du::ue_capability_summary& ue_capability,
-                                                                 const asn1::rrc_nr::ue_nr_cap_s&       ue_caps)
+SRSRAN_WEAK_SYMB void srsran::srs_du::decode_advanced_ue_nr_caps(ue_capability_summary&           ue_capability,
+                                                                 const asn1::rrc_nr::ue_nr_cap_s& ue_caps)
 {
   // Advanced UE capabilities is not implemented.
 }
@@ -119,20 +119,36 @@ static void set_ul_mimo(serving_cell_config&      cell_cfg,
   }
 }
 
-ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_, srslog::basic_logger& logger_) :
-  base_cell_cfg_list(cell_cfg_list_), logger(logger_)
+ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_,
+                                             du_drx_resource_manager&   drx_mng_,
+                                             srslog::basic_logger&      logger_) :
+  base_cell_cfg_list(cell_cfg_list_), drx_res_mng(drx_mng_), logger(logger_)
 {
+}
+
+void ue_capability_manager::handle_ue_creation(du_ue_resource_config& ue_res_cfg)
+{
+  du_cell_index_t      cell_idx  = to_du_cell_index(0);
+  serving_cell_config& pcell_cfg = ue_res_cfg.cell_group.cells[cell_idx].serv_cell_cfg;
+
+  // Set default MCS tables and disable UL MIMO.
+  set_pdsch_mcs_table(pcell_cfg, select_pdsch_mcs_table(cell_idx));
+  set_pusch_mcs_table(pcell_cfg, select_pusch_mcs_table(cell_idx));
+  set_ul_mimo(
+      pcell_cfg, select_pusch_max_rank(cell_idx), select_srs_nof_ports(cell_idx), select_tx_codebook_subset(cell_idx));
+
+  // Initialize UE with DRX disabled.
+  drx_res_mng.handle_ue_creation(ue_res_cfg.cell_group);
 }
 
 void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const byte_buffer& ue_cap_rat_list)
 {
   // Decode new UE capabilities.
-  if (not decode_ue_capability_list(ue_cap_rat_list) and not first_update) {
+  if (not decode_ue_capability_list(ue_cap_rat_list)) {
     // No changes detected in the UE capabilities, and update(...) was called before. In this case, we can do not need
     // to apply any extra changes to the ue_res_cfg that weren't already applied.
     return;
   }
-  first_update = false;
 
   du_cell_index_t      cell_idx  = to_du_cell_index(0);
   serving_cell_config& pcell_cfg = ue_res_cfg.cell_group.cells[cell_idx].serv_cell_cfg;
@@ -146,6 +162,15 @@ void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const byte
   // Setup UL MIMO parameters.
   set_ul_mimo(
       pcell_cfg, select_pusch_max_rank(cell_idx), select_srs_nof_ports(cell_idx), select_tx_codebook_subset(cell_idx));
+
+  // Setup DRX config.
+  update_drx(ue_res_cfg);
+}
+
+void ue_capability_manager::release(du_ue_resource_config& ue_res_cfg)
+{
+  // Deallocate DRX resources.
+  drx_res_mng.handle_ue_removal(ue_res_cfg.cell_group);
 }
 
 bool ue_capability_manager::decode_ue_capability_list(const byte_buffer& ue_cap_rat_list)
@@ -259,4 +284,16 @@ unsigned ue_capability_manager::select_pusch_max_rank(du_cell_index_t cell_idx) 
   }
 
   return std::min(pusch_max_rank, ue_caps->bands.at(band).pusch_max_rank);
+}
+
+void ue_capability_manager::update_drx(du_ue_resource_config& ue_res_cfg)
+{
+  cell_group_config& cell_group = ue_res_cfg.cell_group;
+
+  // If UE capabilities are not available or DRX is disabled, disable DRX
+  const bool long_drx_supported  = ue_caps.has_value() and ue_caps->long_drx_cycle_supported;
+  const bool short_drx_supported = ue_caps.has_value() and ue_caps->short_drx_cycle_supported;
+
+  // Allocate DRX resources if DRX is enabled in the gNB.
+  drx_res_mng.handle_ue_cap_update(cell_group, long_drx_supported, short_drx_supported);
 }

@@ -76,7 +76,8 @@ du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_i
     return make_unexpected(std::string("Double allocation of same UE not supported"));
   }
   ue_res_pool.emplace(ue_index, *this);
-  auto& mcg = ue_res_pool[ue_index].cg_cfg;
+  auto& ue_res = ue_res_pool[ue_index];
+  auto& mcg    = ue_res.cg_cfg;
 
   // UE initialized PCell.
   // Note: In case of lack of RAN resource availability, the return will be error type.
@@ -84,6 +85,10 @@ du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_i
   if (not err.has_value()) {
     logger.info("Failed to create a configuration for ue={}. Cause: {}", static_cast<unsigned>(ue_index), err.error());
   }
+
+  // Initialize correct defaults for UE RAN resources dependent on UE capabilities.
+  ue_res.ue_cap_manager.handle_ue_creation(ue_res.cg_cfg);
+
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index),
                                       err.has_value() ? std::string{} : err.error()};
 }
@@ -153,11 +158,13 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
 void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
 {
   srsran_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
-  du_ue_resource_config& ue_mcg = ue_res_pool[ue_index].cg_cfg;
+  ue_resource_context&   ue_res = ue_res_pool[ue_index];
+  du_ue_resource_config& ue_mcg = ue_res.cg_cfg;
 
   for (const auto& sc : ue_mcg.cell_group.cells) {
     deallocate_cell_resources(ue_index, sc.serv_cell_idx);
   }
+  ue_res.ue_cap_manager.release(ue_mcg);
   ue_res_pool.erase(ue_index);
 }
 
@@ -200,9 +207,6 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
       return make_unexpected(fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", cell_index));
     }
 
-    // Configure DRX Config
-    drx_res_mng.alloc_resources(ue_res.cell_group);
-
   } else {
     srsran_assert(not ue_res.cell_group.cells.contains(serv_cell_index), "Reallocation of SCell detected");
     ue_res.cell_group.cells.emplace(serv_cell_index);
@@ -216,7 +220,8 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
 
 void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index)
 {
-  du_ue_resource_config& ue_res = ue_res_pool[ue_index].cg_cfg;
+  ue_resource_context&   ue_res_updater = ue_res_pool[ue_index];
+  du_ue_resource_config& ue_res         = ue_res_updater.cg_cfg;
 
   // Return resources back to free lists.
   if (serv_cell_index == SERVING_CELL_PCELL_IDX) {
@@ -225,7 +230,6 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
                   "Double deallocation of same UE cell resources detected");
     pucch_res_mng.dealloc_resources(ue_res.cell_group);
     srs_res_mng->dealloc_resources(ue_res.cell_group);
-    drx_res_mng.dealloc_resources(ue_res.cell_group);
     ue_res.cell_group.cells[0].serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.
@@ -233,7 +237,7 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
   }
 }
 
-du_ran_resource_manager_impl::ue_resource_context::ue_resource_context(const du_ran_resource_manager_impl& parent) :
-  ue_cap_manager(parent.cell_cfg_list, parent.logger)
+du_ran_resource_manager_impl::ue_resource_context::ue_resource_context(du_ran_resource_manager_impl& parent) :
+  ue_cap_manager(parent.cell_cfg_list, parent.drx_res_mng, parent.logger)
 {
 }
