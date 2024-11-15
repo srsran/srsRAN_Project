@@ -1161,6 +1161,10 @@ static bool validate_rlc_am_appconfig(id_type id, const du_high_unit_rlc_am_conf
     fmt::print("RLC AM TX queue size cannot be 0. {}\n", id);
     return false;
   }
+  if (config.tx.queue_size_bytes == 0) {
+    fmt::print("RLC AM TX queue size bytes cannot be 0. {}\n", id);
+    return false;
+  }
 
   // Validate RX.
 
