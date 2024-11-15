@@ -217,11 +217,6 @@ static bool validate_security_appconfig(const cu_cp_unit_security_config& config
 /// Validates the given PDCP configuration. Returns true on success, otherwise false.
 static bool validate_pdcp_appconfig(five_qi_t five_qi, const cu_cp_unit_pdcp_config& config)
 {
-  if (config.integrity_protection_required) {
-    fmt::print("PDCP DRB integrity protection is not supported yet. {}\n", five_qi);
-    return false;
-  }
-
   // Check TX.
   if (config.tx.sn_field_length != 12 && config.tx.sn_field_length != 18) {
     fmt::print("PDCP TX SN length is neither 12 or 18 bits. {} SN={}\n", five_qi, config.tx.sn_field_length);

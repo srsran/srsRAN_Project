@@ -489,9 +489,6 @@ static void configure_cli11_pdcp_rx_args(CLI::App& app, cu_cp_unit_pdcp_rx_confi
 
 static void configure_cli11_pdcp_args(CLI::App& app, cu_cp_unit_pdcp_config& pdcp_params)
 {
-  add_option(app, "integrity_required", pdcp_params.integrity_protection_required, "DRB Integrity required")
-      ->capture_default_str();
-
   // Transmission section.
   CLI::App* pdcp_tx_subcmd = app.add_subcommand("tx", "PDCP TX parameters");
   configure_cli11_pdcp_tx_args(*pdcp_tx_subcmd, pdcp_params.tx);

@@ -328,7 +328,6 @@ static void fill_cu_cp_rlc_qos_section(YAML::Node node, const cu_cp_unit_rlc_con
 
 static void fill_cu_cp_pdcp_qos_section(YAML::Node node, const cu_cp_unit_pdcp_config& config)
 {
-  node["integrity_required"] = config.integrity_protection_required;
   {
     YAML::Node tx_node                = node["tx"];
     tx_node["sn"]                     = config.tx.sn_field_length;

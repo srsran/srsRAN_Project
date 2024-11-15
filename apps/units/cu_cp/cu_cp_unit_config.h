@@ -234,8 +234,6 @@ struct cu_cp_unit_pdcp_tx_config {
 };
 
 struct cu_cp_unit_pdcp_config {
-  /// Whether DRB integrity is required.
-  bool                      integrity_protection_required;
   cu_cp_unit_pdcp_tx_config tx;
   cu_cp_unit_pdcp_rx_config rx;
 };
