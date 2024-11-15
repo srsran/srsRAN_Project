@@ -2767,7 +2767,7 @@ static asn1::rrc_nr::drx_cfg_s make_asn1_drx_config(const drx_config& cfg)
       out_cycle.set_ms70() = offset;
       break;
     case 80:
-      out_cycle.set_ms70() = offset;
+      out_cycle.set_ms80() = offset;
       break;
     case 128:
       out_cycle.set_ms128() = offset;
@@ -2782,7 +2782,7 @@ static asn1::rrc_nr::drx_cfg_s make_asn1_drx_config(const drx_config& cfg)
       out_cycle.set_ms320() = offset;
       break;
     case 512:
-      out_cycle.set_ms320() = offset;
+      out_cycle.set_ms512() = offset;
       break;
     case 640:
       out_cycle.set_ms640() = offset;
@@ -3070,7 +3070,7 @@ static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cf
                                                  const mac_cell_group_config&        dest)
 {
   // drx-Config.
-  calculate_setup_release(
+  out.drx_cfg_present = calculate_setup_release(
       out.drx_cfg, src.drx_cfg, dest.drx_cfg, [](const drx_config& newcfg) { return make_asn1_drx_config(newcfg); });
 
   calculate_addmodremlist_diff(
@@ -3112,7 +3112,8 @@ static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cf
 
   out.skip_ul_tx_dyn = dest.skip_uplink_tx_dynamic;
 
-  return out.sched_request_cfg_present || out.bsr_cfg_present || out.tag_cfg_present || out.phr_cfg_present;
+  return out.drx_cfg_present || out.sched_request_cfg_present || out.bsr_cfg_present || out.tag_cfg_present ||
+         out.phr_cfg_present;
 }
 
 static static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> fill_rlc_bearers(const du_ue_resource_config& res)
