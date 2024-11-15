@@ -12,6 +12,10 @@
 
 using namespace srsran;
 
+// [Implementation-defined] Limit for the coefficient of the proportional fair metric to avoid issues with double
+// imprecision.
+constexpr unsigned MAX_PF_COEFF = 10;
+
 scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_) :
   fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff)
 {
@@ -371,14 +375,16 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
   const double current_total_avg_rate = total_dl_avg_rate();
   double       pf_weight              = 0;
   if (current_total_avg_rate != 0) {
-    if (parent->fairness_coeff >= 10) {
-      // avoid overflow
+    if (parent->fairness_coeff >= MAX_PF_COEFF) {
+      // For very high coefficients, the pow(.) will be very high, leading to pf_weight of 0 due to lack of precision.
+      // In such scenarios, we change the way to compute the PF weight. Instead, we completely disregard the estimated
+      // rate, as its impact is minimal.
       pf_weight = 1 / current_total_avg_rate;
     } else {
       pf_weight = estimated_rate / pow(current_total_avg_rate, parent->fairness_coeff);
     }
   } else {
-    // give the highest priority to new UE.
+    // Give the highest priority to new UE.
     pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
   }
   const double rate_weight = compute_dl_rate_weight(
@@ -463,8 +469,10 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   const double current_avg_rate = total_ul_avg_rate();
   double       pf_weight        = 0;
   if (current_avg_rate != 0) {
-    if (parent->fairness_coeff > 10) {
-      // avoid overflow
+    if (parent->fairness_coeff >= MAX_PF_COEFF) {
+      // For very high coefficients, the pow(.) will be very high, leading to pf_weight of 0 due to lack of precision.
+      // In such scenarios, we change the way to compute the PF weight. Instead, we completely disregard the estimated
+      // rate, as its impact is minimal.
       pf_weight = 1 / current_avg_rate;
     } else {
       pf_weight = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
