@@ -145,10 +145,10 @@ static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o
                                                       const cu_cp_unit_config& cu_cp_cfg)
 {
   // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
-  if (o_cu_up_cfg.cu_up_cfg.upf_cfg.bind_addr == "auto") {
-    o_cu_up_cfg.cu_up_cfg.upf_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+  if (o_cu_up_cfg.cu_up_cfg.ngu_cfg.bind_addr == "auto") {
+    o_cu_up_cfg.cu_up_cfg.ngu_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
   }
-  o_cu_up_cfg.cu_up_cfg.upf_cfg.no_core = cu_cp_cfg.amf_config.no_core;
+  o_cu_up_cfg.cu_up_cfg.ngu_cfg.no_core = cu_cp_cfg.amf_config.no_core;
   o_cu_up_cfg.e2_cfg.pcaps.enabled = o_cu_up_cfg.e2_cfg.base_config.enable_unit_e2 && o_cu_up_cfg.e2_cfg.pcaps.enabled;
 }
 

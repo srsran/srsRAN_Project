@@ -17,29 +17,27 @@
 
 using namespace srsran;
 
-static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_params)
+static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
 {
-  add_option(app, "--bind_addr", upf_params.bind_addr, "Local IP address to bind for N3 interface")
+  add_option(app, "--bind_addr", ngu_params.bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--bind_interface", upf_params.bind_interface, "Network device to bind for N3 interface")
+  add_option(app, "--bind_interface", ngu_params.bind_interface, "Network device to bind for N3 interface")
       ->capture_default_str();
   add_option(app,
              "--ext_addr",
-             upf_params.ext_addr,
+             ngu_params.ext_addr,
              "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--udp_max_rx_msgs", upf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
-  add_option(
-      app, "--pool_threshold", upf_params.pool_threshold, "Pool accupancy threshold after which packets are dropped")
-      ->check(CLI::Range(0.0, 1.0));
-  add_option(app, "--no_core", upf_params.no_core, "Allow gNB to run without a core");
+  add_option(app, "--no_core", ngu_params.no_core, "Allow gNB to run without a core");
+
+  configure_cli11_with_udp_config_schema(app, ngu_params.udp_config);
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)
 {
   // UPF section.
-  CLI::App* upf_subcmd = add_subcommand(app, "upf", "UPF parameters")->configurable();
-  configure_cli11_upf_args(*upf_subcmd, cu_up_params.upf_cfg);
+  CLI::App* ngu_subcmd = add_subcommand(app, "ngu", "NG-U parameters")->configurable();
+  configure_cli11_ngu_args(*ngu_subcmd, cu_up_params.ngu_cfg);
 
   add_option(app, "--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")
       ->capture_default_str();

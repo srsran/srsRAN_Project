@@ -23,11 +23,11 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
   out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;
 
-  out_cfg.net_cfg.n3_bind_addr      = config.upf_cfg.bind_addr;
-  out_cfg.net_cfg.n3_ext_addr       = config.upf_cfg.ext_addr;
-  out_cfg.net_cfg.n3_bind_interface = config.upf_cfg.bind_interface;
-  out_cfg.net_cfg.n3_rx_max_mmsg    = config.upf_cfg.udp_rx_max_msgs;
-  out_cfg.net_cfg.pool_threshold    = config.upf_cfg.pool_threshold;
+  out_cfg.net_cfg.n3_bind_addr      = config.ngu_cfg.bind_addr;
+  out_cfg.net_cfg.n3_ext_addr       = config.ngu_cfg.ext_addr;
+  out_cfg.net_cfg.n3_bind_interface = config.ngu_cfg.bind_interface;
+  out_cfg.net_cfg.n3_rx_max_mmsg    = config.ngu_cfg.udp_config.rx_max_mmsg;
+  out_cfg.net_cfg.pool_threshold    = config.ngu_cfg.udp_config.pool_occupancy_threshold;
 
   out_cfg.test_mode_cfg.enabled           = config.test_mode_cfg.enabled;
   out_cfg.test_mode_cfg.integrity_enabled = config.test_mode_cfg.integrity_enabled;

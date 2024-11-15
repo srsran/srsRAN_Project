@@ -65,7 +65,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
   config.cu_up_cfg.net_cfg.f1u_bind_addr = address.value();
   // Create NG-U gateway.
   std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
-  if (not unit_cfg.cu_up_cfg.upf_cfg.no_core) {
+  if (not unit_cfg.cu_up_cfg.ngu_cfg.no_core) {
     udp_network_gateway_config ngu_gw_config = {};
     ngu_gw_config.bind_address               = config.cu_up_cfg.net_cfg.n3_bind_addr;
     ngu_gw_config.bind_port                  = config.cu_up_cfg.net_cfg.n3_bind_port;
