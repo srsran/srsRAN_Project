@@ -112,10 +112,10 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
     // RLC
     cfg.rlc.mode                   = rlc_mode::um_bidir;
     cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
-    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size12bits;
-    cfg.rlc.um.rx.t_reassembly     = 100;
     cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
     cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.t_reassembly     = 100;
     cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify              = 10;

@@ -7,6 +7,19 @@
 qos:
   -
     five_qi: 1 # E.g. Conversational Voice
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: -1
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
     rlc:
       mode: um-bidir
       um-bidir:
@@ -17,22 +30,21 @@ qos:
         rx:
           sn: 12
           t-reassembly: 50
-    pdcp:
-      integrity_required: false
-      tx:
-        sn: 12
-        discard_timer: -1
-        status_report_required: false
-      rx:
-        sn: 12
-        t_reordering: 80
-        out_of_order_delivery: false
-    f1u_du:
-      backoff_timer: 10
-    f1u_cu_up:
-      backoff_timer: 10
   -
     five_qi: 2 # E.g. Conversational Video
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: -1
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
     rlc:
       mode: um-bidir
       um-bidir:
@@ -43,20 +55,6 @@ qos:
         rx:
           sn: 12
           t-reassembly: 50
-    pdcp:
-      integrity_required: false
-      tx:
-        sn: 12
-        discard_timer: -1
-        status_report_required: false
-      rx:
-        sn: 12
-        t_reordering: 80
-        out_of_order_delivery: false
-    f1u_du:
-      backoff_timer: 10
-    f1u_cu_up:
-      backoff_timer: 10
   -
     five_qi: 5 # E.g. IMS signaling
     rlc:
@@ -90,6 +88,20 @@ qos:
       backoff_timer: 10
   -
     five_qi: 7 # E.g. Voice, Video (live streaming)
+    pdcp:
+      integrity_required: false
+      tx:
+        sn: 12
+        discard_timer: -1
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
     rlc:
       mode: um-bidir
       um-bidir:
@@ -99,49 +111,34 @@ qos:
           queue-bytes: 6172672
         rx:
           sn: 12
-          t-reassembly: 50
+          t-reassembly: 100
+  -
+    five_qi: 9 # E.g. Buffered video streaming, TCP-based traffic
     pdcp:
-      integrity_required: false
       tx:
-        sn: 12
+        sn: 18
         discard_timer: -1
         status_report_required: false
       rx:
-        sn: 12
-        t_reordering: 80
+        sn: 18
+        t_reordering: 220
         out_of_order_delivery: false
-    f1u_du:
-      backoff_timer: 10
     f1u_cu_up:
       backoff_timer: 10
-  -
-    five_qi: 9 # E.g. Buffered video streaming, TCP-based traffic
+    f1u_du:
+      backoff_timer: 10
     rlc:
       mode: am
       am:
         tx:
-          sn: 12
-          t-poll-retransmit: 80
-          max-retx-threshold: 4
-          poll-pdu: 64
-          poll-byte: 125
+          sn: 18
+          t-poll-retransmit: 20
+          max-retx-threshold: 32
+          poll-pdu: 16
+          poll-byte: -1
           queue-size: 16384
           queue-bytes: 6172672
         rx:
-          sn: 12
-          t-reassembly: 80
+          sn: 18
+          t-reassembly: 20
           t-status-prohibit: 10
-    pdcp:
-      integrity_required: false
-      tx:
-        sn: 12
-        discard_timer: -1
-        status_report_required: false
-      rx:
-        sn: 12
-        t_reordering: 80
-        out_of_order_delivery: false
-    f1u_du:
-      backoff_timer: 10
-    f1u_cu_up:
-      backoff_timer: 10
