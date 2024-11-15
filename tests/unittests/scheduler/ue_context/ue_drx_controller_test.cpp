@@ -53,7 +53,7 @@ TEST_F(drx_disabled_ue_drx_controller_test, when_no_drx_config_provided_pdcch_is
   const unsigned NOF_TESTS = 16;
   for (unsigned i = 0; i != NOF_TESTS; ++i) {
     tick();
-    ASSERT_TRUE(drx.is_pdcch_enabled(cur_slot));
+    ASSERT_TRUE(drx.is_pdcch_enabled());
   }
 }
 
@@ -74,7 +74,7 @@ TEST_F(ue_drx_controller_test, when_drx_config_provided_slot_offset_and_on_durat
     tick();
 
     const unsigned slot_mod         = cur_slot.to_uint() % period_slots;
-    bool           enabled          = drx.is_pdcch_enabled(cur_slot);
+    bool           enabled          = drx.is_pdcch_enabled();
     bool           in_active_window = slot_mod >= offset_slot and slot_mod < (offset_slot + on_dur_slots);
 
     ASSERT_EQ(enabled, in_active_window);
@@ -95,7 +95,7 @@ TEST_F(ue_drx_controller_test, when_pdcch_sent_then_on_duration_extended_by_inac
       drx.on_new_pdcch_alloc(cur_slot);
     }
 
-    bool enabled = drx.is_pdcch_enabled(cur_slot);
+    bool enabled = drx.is_pdcch_enabled();
     if (i < offset_slot) {
       ASSERT_FALSE(enabled);
     } else if (i < active_end) {
@@ -115,7 +115,7 @@ TEST_F(ue_drx_controller_test, when_sr_is_pending_then_drx_is_in_active_time)
   for (unsigned i = 0; i != period_slots; ++i) {
     tick();
 
-    ASSERT_TRUE(drx.is_pdcch_enabled(cur_slot));
+    ASSERT_TRUE(drx.is_pdcch_enabled());
   }
 
   ul_lc_ch_mng.reset_sr_indication();
@@ -124,7 +124,7 @@ TEST_F(ue_drx_controller_test, when_sr_is_pending_then_drx_is_in_active_time)
     tick();
 
     const unsigned slot_mod         = cur_slot.to_uint() % period_slots;
-    bool           enabled          = drx.is_pdcch_enabled(cur_slot);
+    bool           enabled          = drx.is_pdcch_enabled();
     bool           in_active_window = slot_mod >= offset_slot and slot_mod < (offset_slot + on_dur_slots);
 
     ASSERT_EQ(enabled, in_active_window);
@@ -141,14 +141,14 @@ TEST_F(ue_drx_controller_test, when_conres_timer_is_running_then_drx_is_active)
 
   for (unsigned i = 0; i != con_res_timer_slots; ++i) {
     tick();
-    ASSERT_TRUE(drx.is_pdcch_enabled(cur_slot)) << "DRX should be active while ra-ConResTimer is running";
+    ASSERT_TRUE(drx.is_pdcch_enabled()) << "DRX should be active while ra-ConResTimer is running";
   }
 
   for (unsigned i = 0; i != period_slots; ++i) {
     tick();
 
     const unsigned slot_mod         = cur_slot.to_uint() % period_slots;
-    bool           enabled          = drx.is_pdcch_enabled(cur_slot);
+    bool           enabled          = drx.is_pdcch_enabled();
     bool           in_active_window = slot_mod >= offset_slot and slot_mod < (offset_slot + on_dur_slots);
 
     ASSERT_EQ(enabled, in_active_window);

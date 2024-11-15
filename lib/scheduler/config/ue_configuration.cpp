@@ -788,7 +788,7 @@ ue_configuration::ue_configuration(du_ue_index_t                         ue_inde
                                    rnti_t                                crnti_,
                                    const cell_common_configuration_list& common_cells,
                                    const sched_ue_config_request&        cfg_req) :
-  ue_index(ue_index_), crnti(crnti_), ue_drx_cfg(cfg_req.drx_cfg)
+  ue_index(ue_index_), crnti(crnti_)
 {
   update(common_cells, cfg_req);
 }
@@ -817,6 +817,9 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
     drb_qos_list = cfg_req.drb_info_list;
   }
 
+  // Update DRX config
+  ue_drx_cfg = cfg_req.drx_cfg;
+
   // Update UE dedicated cell configs.
   if (cfg_req.cells.has_value()) {
     // Check if any cell has been removed.
@@ -843,7 +846,7 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
                              crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, ded_cell.meas_gap_cfg, e > 1));
       } else {
         // Reconfiguration of existing cell.
-        du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg, ded_cell.meas_gap_cfg);
+        du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg, ded_cell.meas_gap_cfg, cfg_req.drx_cfg);
       }
     }
 

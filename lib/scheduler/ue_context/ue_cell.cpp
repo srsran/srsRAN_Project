@@ -120,7 +120,7 @@ bool ue_cell::is_pdcch_enabled(slot_point dl_slot) const
   if (not active) {
     return false;
   }
-  return cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled(dl_slot);
+  return cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled();
 }
 
 bool ue_cell::is_pdsch_enabled(slot_point dl_slot) const
