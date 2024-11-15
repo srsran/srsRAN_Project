@@ -243,7 +243,7 @@ struct pdcp_config {
 
 /// \brief Make default SRB parameters for PDCP
 /// Ref: 3GPP TS 38.331, section 9.2.1
-inline pdcp_config pdcp_make_default_srb_config(uint32_t max_nof_crypto_workers)
+inline pdcp_config pdcp_make_default_srb_config()
 {
   pdcp_config config = {};
   // common TX/RX parameters
