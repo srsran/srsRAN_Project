@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/csi_report/csi_report_pusch_size.h"

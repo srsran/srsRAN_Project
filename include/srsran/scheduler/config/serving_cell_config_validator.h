@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "serving_cell_config.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/support/config/validator_result.h"
 
 namespace srsran {

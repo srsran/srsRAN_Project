@@ -25,6 +25,7 @@ add_subdirectory(ecpri)
 add_subdirectory(ethernet)
 add_subdirectory(receiver)
 add_subdirectory(serdes)
+add_subdirectory(support)
 add_subdirectory(transmitter)
 
 add_executable(slot_symbol_point_test slot_symbol_point_test.cpp)

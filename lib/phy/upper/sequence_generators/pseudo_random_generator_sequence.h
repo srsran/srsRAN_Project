@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/adt/interval.h"
 
 namespace srsran {

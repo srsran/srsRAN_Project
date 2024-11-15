@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "expected.h"
 #include "srsran/adt/detail/type_traits.h"
+#include "srsran/adt/expected.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
 #include <optional>

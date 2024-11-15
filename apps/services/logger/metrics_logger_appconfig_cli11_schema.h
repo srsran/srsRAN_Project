@@ -22,13 +22,13 @@
 
 #pragma once
 
-#include "srsran/gateways/sctp_network_gateway.h"
+#include <CLI/CLI11.hpp>
 
 namespace srsran {
 
-struct e2_appconfig;
+struct metrics_logger_appconfig;
 
-/// Converts and returns the given gnb application configuration to a E2AP Network Gateway configuration.
-sctp_network_connector_config generate_e2ap_nw_config(const e2_appconfig& config, int ppid);
+/// Configures the given CLI11 application with the metrics logger application configuration schema.
+void configure_cli11_with_metrics_logger_appconfig_schema(CLI::App& app, metrics_logger_appconfig& config);
 
 } // namespace srsran

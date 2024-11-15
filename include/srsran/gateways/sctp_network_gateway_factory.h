@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "sctp_network_gateway.h"
+#include "srsran/gateways/sctp_network_gateway.h"
 #include <memory>
 #include <utility>
 

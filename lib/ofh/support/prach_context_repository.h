@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "context_repository_helpers.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ofh_constants.h"
@@ -187,9 +188,6 @@ private:
 /// PRACH context repository.
 class prach_context_repository
 {
-  /// System frame number maximum value in this repository.
-  static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
-
   std::vector<prach_context> buffer;
   //: TODO: make this lock free
   mutable std::mutex mutex;
@@ -197,16 +195,14 @@ class prach_context_repository
   /// Returns the entry of the repository for the given slot.
   prach_context& entry(slot_point slot)
   {
-    slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
-    unsigned   index = entry_slot.system_slot() % buffer.size();
+    unsigned index = calculate_repository_index(slot, buffer.size());
     return buffer[index];
   }
 
   /// Returns the entry of the repository for the given slot.
   const prach_context& entry(slot_point slot) const
   {
-    slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
-    unsigned   index = entry_slot.system_slot() % buffer.size();
+    unsigned index = calculate_repository_index(slot, buffer.size());
     return buffer[index];
   }
 

@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #include "srsran/ran/uci/uci_part2_size_calculator.h"
 #include <gtest/gtest.h>
 

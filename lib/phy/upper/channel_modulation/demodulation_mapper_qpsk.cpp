@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #include "demodulation_mapper_qpsk.h"
 
 #ifdef __AVX2__

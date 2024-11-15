@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "srsran/srsvec/copy.h"

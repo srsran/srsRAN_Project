@@ -32,21 +32,6 @@ static void fill_du_appconfig_metrics_section(YAML::Node node, const srs_du::met
   node["port"] = config.port;
 }
 
-static void fill_du_appconfig_e2_section(YAML::Node node, const e2_appconfig& config)
-{
-  node["enable_du_e2"]           = config.enable_du_e2;
-  node["addr"]                   = config.ip_addr;
-  node["port"]                   = config.port;
-  node["bind_addr"]              = config.bind_addr;
-  node["sctp_rto_initial"]       = config.sctp_rto_initial;
-  node["sctp_rto_min"]           = config.sctp_rto_min;
-  node["sctp_rto_max"]           = config.sctp_rto_max;
-  node["sctp_init_max_attempts"] = config.sctp_init_max_attempts;
-  node["sctp_max_init_timeo"]    = config.sctp_max_init_timeo;
-  node["e2sm_kpm_enabled"]       = config.e2sm_kpm_enabled;
-  node["e2sm_rc_enabled"]        = config.e2sm_rc_enabled;
-}
-
 static void fill_du_appconfig_hal_section(YAML::Node node, const std::optional<hal_appconfig>& config)
 {
   if (!config.has_value()) {
@@ -103,7 +88,6 @@ void srsran::fill_du_appconfig_in_yaml_schema(YAML::Node& node, const du_appconf
 {
   fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
   fill_du_appconfig_metrics_section(node["metrics"], config.metrics_cfg);
-  fill_du_appconfig_e2_section(node["e2"], config.e2_cfg);
   fill_du_appconfig_hal_section(node, config.hal_config);
   fill_du_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_du_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);

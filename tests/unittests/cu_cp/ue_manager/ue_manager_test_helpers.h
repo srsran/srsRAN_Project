@@ -27,7 +27,6 @@
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/executors/manual_task_worker.h"
-
 #include <gtest/gtest.h>
 #include <memory>
 

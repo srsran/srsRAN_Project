@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "coreset.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
+#include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/subcarrier_spacing.h"
 

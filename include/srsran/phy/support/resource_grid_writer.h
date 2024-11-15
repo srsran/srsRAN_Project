@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"

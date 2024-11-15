@@ -23,7 +23,6 @@
 #pragma once
 
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
-#include "apps/services/e2/e2_appconfig.h"
 #include "apps/services/hal/hal_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
@@ -58,8 +57,6 @@ struct gnb_appconfig {
   gnb_id_t gnb_id = {411, 22};
   /// Node name.
   std::string ran_node_name = "srsgnb01";
-  /// E2 configuration.
-  e2_appconfig e2_cfg;
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
   /// Expert configuration.

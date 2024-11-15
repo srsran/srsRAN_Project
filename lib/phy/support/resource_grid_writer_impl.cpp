@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #include "resource_grid_writer_impl.h"
 #include "srsran/adt/interval.h"
 #include "srsran/phy/support/resource_grid.h"

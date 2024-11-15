@@ -23,7 +23,6 @@
 #pragma once
 
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
-#include "apps/services/e2/e2_appconfig.h"
 #include "apps/services/hal/hal_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
@@ -65,8 +64,6 @@ struct du_appconfig {
   logger_appconfig log_cfg;
   /// Metrics configuration.
   srs_du::metrics_appconfig metrics_cfg;
-  /// E2 configuration.
-  e2_appconfig e2_cfg;
   /// F1-C configuration.
   srs_du::f1ap_appconfig f1ap_cfg;
   /// F1-U configuration.

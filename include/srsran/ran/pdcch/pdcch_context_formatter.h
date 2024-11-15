@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/ran/pdcch/pdcch_context.h"
 
 namespace fmt {

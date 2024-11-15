@@ -20,11 +20,10 @@
  *
  */
 
-#include "transform_precoder_dft_impl.h"
 #include "srsran/phy/generic_functions/transform_precoding/transform_precoding_factories.h"
+#include "transform_precoder_dft_impl.h"
+#include "srsran/phy/constants.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
-
-#include <srsran/phy/constants.h>
 
 using namespace srsran;
 

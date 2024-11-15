@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "rrc_config.h"
+#include "srsran/rrc/rrc_config.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
 

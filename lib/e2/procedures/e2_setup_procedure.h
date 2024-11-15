@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #pragma once
 
 #include "../common/e2ap_asn1_utils.h"

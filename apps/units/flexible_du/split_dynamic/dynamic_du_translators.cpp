@@ -28,7 +28,6 @@
 #include "apps/units/flexible_du/split_7_2/helpers/ru_ofh_config_translator.h"
 #include "apps/units/flexible_du/split_8/helpers/ru_sdr_config_translator.h"
 #include "dynamic_du_unit_config.h"
-
 #include "srsran/du/du_cell_config.h"
 
 using namespace srsran;

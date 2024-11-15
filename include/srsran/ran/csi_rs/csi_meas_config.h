@@ -22,15 +22,14 @@
 
 #pragma once
 
-#include "csi_report_config.h"
-#include "csi_resource_config.h"
-#include "csi_rs_id.h"
-#include "csi_rs_pattern.h"
-#include "csi_rs_types.h"
-#include "frequency_allocation_type.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/csi_rs/csi_report_config.h"
+#include "srsran/ran/csi_rs/csi_resource_config.h"
+#include "srsran/ran/csi_rs/csi_rs_id.h"
+#include "srsran/ran/csi_rs/csi_rs_pattern.h"
+#include "srsran/ran/csi_rs/csi_rs_types.h"
+#include "srsran/ran/csi_rs/frequency_allocation_type.h"
 #include "srsran/ran/tci.h"
-
 #include <variant>
 
 namespace srsran {

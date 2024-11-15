@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "resource_usage.h"
 #include "srsran/adt/span.h"
 #include "srsran/support/compiler.h"
+#include "srsran/support/tracing/resource_usage.h"
 #include <chrono>
 #include <string>
 #include <vector>

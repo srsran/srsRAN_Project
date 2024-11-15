@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "ethernet_unique_buffer.h"
 #include "srsran/adt/span.h"
+#include "srsran/ofh/ethernet/ethernet_unique_buffer.h"
 
 namespace srsran {
 namespace ether {

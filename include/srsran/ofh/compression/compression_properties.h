@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "compression_params.h"
+#include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/support/units.h"
 

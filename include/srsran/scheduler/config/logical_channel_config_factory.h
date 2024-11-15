@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "logical_channel_config.h"
+#include "srsran/scheduler/config/logical_channel_config.h"
 
 namespace srsran {
 namespace config_helpers {

@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "pcch_msg_ies.h"
+#include "srsran/asn1/rrc_nr/pcch_msg_ies.h"
 
 namespace asn1 {
 namespace rrc_nr {

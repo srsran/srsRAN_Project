@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "e1ap_cu_cp.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 #include <memory>

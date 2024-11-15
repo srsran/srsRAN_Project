@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #include "srsran/support/dynlink_manager.h"
 #include <dlfcn.h>
 #include <string>

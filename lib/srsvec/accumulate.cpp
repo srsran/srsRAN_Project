@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #include "srsran/srsvec/accumulate.h"
 #include "srsran/srsvec/simd.h"
 #include "srsran/support/srsran_assert.h"

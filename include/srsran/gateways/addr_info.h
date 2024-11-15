@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "netinet/in.h"
+#include <netinet/in.h>
 
 inline const char* ipproto_to_string(int protocol)
 {

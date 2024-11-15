@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #include "lib/rlc/rlc_metrics_aggregator.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"

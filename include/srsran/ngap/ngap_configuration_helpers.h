@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "ngap_configuration.h"
+#include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ran/s_nssai.h"
 
 namespace srsran {

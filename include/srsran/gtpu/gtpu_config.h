@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "gtpu_teid.h"
+#include "srsran/gtpu/gtpu_teid.h"
 #include "fmt/format.h"
 #include <chrono>
 #include <cstdint>

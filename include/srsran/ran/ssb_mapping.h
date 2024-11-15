@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "band_helper.h"
 #include "srsran/phy/constants.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/frequency_range.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/slot_point.h"

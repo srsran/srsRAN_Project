@@ -21,7 +21,9 @@
  */
 
 #include "du_high_config_cli11_schema.h"
+#include "apps/services/e2/e2_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
+#include "apps/services/logger/metrics_logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
 #include "srsran/ran/du_types.h"
@@ -74,21 +76,6 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
   app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
   app_services::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
   app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
-
-  auto metric_level_check = [](const std::string& value) -> std::string {
-    if (auto level = srslog::str_to_basic_level(value);
-        !level.has_value() || level.value() == srslog::basic_levels::debug ||
-        level.value() == srslog::basic_levels::error || level.value() == srslog::basic_levels::warning) {
-      return "Log level value not supported. Accepted values [none,info]";
-    }
-
-    return {};
-  };
-
-  add_option_function<std::string>(
-      app, "--metrics_level", app_services::capture_log_level_function(log_params.metrics_level), "Metrics log level")
-      ->default_str(srslog::basic_level_to_string(log_params.metrics_level))
-      ->check(metric_level_check);
 
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
@@ -1623,25 +1610,6 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(f1u_du_subcmd);
 }
 
-static void configure_cli11_e2_args(CLI::App& app, e2_config& e2_params)
-{
-  add_option(app, "--enable_du_e2", e2_params.enable_unit_e2, "Enable DU E2 agent")->capture_default_str();
-  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
-  add_option(app, "--port", e2_params.port, "RIC port")->check(CLI::Range(20000, 40000))->capture_default_str();
-  add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
-      ->capture_default_str()
-      ->check(CLI::ValidIPV4);
-  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value")->capture_default_str();
-  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min")->capture_default_str();
-  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max")->capture_default_str();
-  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts")
-      ->capture_default_str();
-  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout")
-      ->capture_default_str();
-  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module")->capture_default_str();
-  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module")->capture_default_str();
-}
-
 void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)
 {
   add_option(app, "--gnb_id", parsed_cfg.config.gnb_id.id, "gNodeB identifier")->capture_default_str();
@@ -1655,6 +1623,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
       ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>(pow(2, 36) - 1)));
 
   // Loggers section.
+  configure_cli11_with_metrics_logger_appconfig_schema(app, parsed_cfg.config.loggers.metrics_level);
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.config.loggers);
 
@@ -1756,8 +1725,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   configure_cli11_test_mode_args(*test_mode_subcmd, parsed_cfg.config.test_mode_cfg);
 
   // E2 section.
-  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
-  configure_cli11_e2_args(*e2_subcmd, parsed_cfg.config.e2_cfg);
+  configure_cli11_with_e2_config_schema(app, parsed_cfg.config.e2_cfg, "--enable_du_e2", "Enable DU E2 agent");
 }
 
 static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)

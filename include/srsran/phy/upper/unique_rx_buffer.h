@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/phy/upper/rx_buffer.h"
 #include "srsran/support/srsran_assert.h"
 

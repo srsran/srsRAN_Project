@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "rrc_ue_config.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/rrc/rrc_ue_config.h"

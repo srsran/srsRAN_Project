@@ -33,7 +33,6 @@
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/rlc/rlc_entity.h"
-
 #include <map>
 
 namespace srsran {

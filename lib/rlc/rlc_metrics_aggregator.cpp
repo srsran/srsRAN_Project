@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #include "rlc_metrics_aggregator.h"
 
 using namespace srsran;

@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
 

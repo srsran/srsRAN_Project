@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "du_low_hal_factory.h"
 #include "srsran/adt/span.h"
 #include "srsran/du/du_low/o_du_low.h"
 #include "srsran/du/du_low/o_du_low_config.h"
@@ -57,7 +58,16 @@ struct o_du_low_unit_dependencies {
   worker_manager&                       workers;
 };
 
-/// Creates an ORAN DU low unit with the given parameters.
-o_du_low_unit make_o_du_low_unit(const o_du_low_unit_config& params, const o_du_low_unit_dependencies& dependencies);
+/// ORAN DU low unit factory.
+class o_du_low_unit_factory
+{
+  o_du_low_hal_dependencies hal_dependencies;
+
+public:
+  o_du_low_unit_factory(const std::optional<du_low_unit_hal_config>& hal_config, unsigned nof_cells);
+
+  /// Creates an ORAN DU low unit with the given parameters.
+  o_du_low_unit create(const o_du_low_unit_config& params, const o_du_low_unit_dependencies& dependencies);
+};
 
 } // namespace srsran

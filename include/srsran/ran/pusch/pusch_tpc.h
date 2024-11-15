@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/ran/du_types.h"
-
 #include <cstdint>
 
 namespace srsran {

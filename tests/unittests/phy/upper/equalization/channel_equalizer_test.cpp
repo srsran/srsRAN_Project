@@ -28,7 +28,6 @@
 #include "srsran/srsvec/zero.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
-#include <srsran/phy/constants.h>
 
 using namespace srsran;
 

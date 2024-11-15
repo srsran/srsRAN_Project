@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "ngap.h"
-#include "ngap_configuration.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_configuration.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 

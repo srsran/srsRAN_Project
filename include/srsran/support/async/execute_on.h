@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "async_task.h"
-#include "detail/function_signature.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/detail/function_signature.h"
 #include <thread>
 
 namespace srsran {

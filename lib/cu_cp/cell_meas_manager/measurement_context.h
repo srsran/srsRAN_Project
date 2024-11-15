@@ -27,7 +27,6 @@
 #include "srsran/ran/pci.h"
 #include "srsran/rrc/meas_types.h"
 #include "srsran/srslog/srslog.h"
-
 #include <map>
 #include <unordered_map>
 

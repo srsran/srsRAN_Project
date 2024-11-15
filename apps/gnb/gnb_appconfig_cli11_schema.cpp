@@ -22,7 +22,6 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
-#include "apps/services/e2/e2_cli11_schema.h"
 #include "apps/services/hal/hal_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
@@ -71,9 +70,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
-
-  // E2 section.
-  configure_cli11_with_e2_appconfig_schema(app, gnb_cfg.e2_cfg);
 
   // HAL section.
   gnb_cfg.hal_config.emplace();

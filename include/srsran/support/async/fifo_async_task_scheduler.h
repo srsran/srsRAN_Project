@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include "async_queue.h"
-#include "async_task.h"
-#include "eager_async_task.h"
 #include "srsran/adt/unique_function.h"
+#include "srsran/support/async/async_queue.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/eager_async_task.h"
 #include "srsran/support/async/event_sender_receiver.h"
 
 namespace srsran {

@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #pragma once
 
 #include "srsran/ran/cu_types.h"

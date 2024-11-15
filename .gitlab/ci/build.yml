@@ -229,6 +229,14 @@ variables:
 
 .smoke relwithdeb:
   extends: .build_and_unit
+  script: &smoke_script
+    - |
+      if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* ]]; then
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
+      fi
+    - *srs_functions
+    - build_srsgnb
+    - launch_tests
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
@@ -240,6 +248,8 @@ variables:
 
 .smoke tsan:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: clang
@@ -275,6 +285,8 @@ variables:
 
 .smoke dpdk:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: clang
@@ -300,6 +312,8 @@ variables:
 
 .smoke avx512:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
@@ -311,6 +325,8 @@ variables:
 
 .smoke arm:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
@@ -322,6 +338,8 @@ variables:
 
 .smoke arm neon:
   extends: .build_and_unit
+  script:
+    - *smoke_script
   variables:
     OS: ubuntu-24.04
     COMPILER: gcc
@@ -348,7 +366,7 @@ smoke relwithdeb cached:
   extends: .smoke relwithdeb
   timeout: 1 hour
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR
   after_script:
@@ -361,7 +379,7 @@ smoke relwithdeb cached:
 smoke split 7.2 cached:
   extends: smoke relwithdeb cached
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR
       changes: &split_changes
@@ -383,7 +401,7 @@ smoke tsan cached:
   stage: manual
   timeout: 1 hour
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
@@ -397,7 +415,7 @@ smoke rhel cached:
   stage: manual
   timeout: 1 hour
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
@@ -411,7 +429,7 @@ smoke archlinux cached:
   stage: manual
   timeout: 1 hour
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
@@ -425,7 +443,7 @@ smoke dpdk cached:
   stage: manual
   timeout: 1 hour
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
@@ -446,7 +464,7 @@ smoke avx512 cached:
   stage: manual
   timeout: 1 hour
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
       changes:
@@ -464,7 +482,7 @@ smoke arm cached:
   stage: manual
   timeout: 1 hour
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
       changes:
@@ -482,7 +500,7 @@ smoke arm neon cached:
   stage: manual
   timeout: 1 hour
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
       changes:
@@ -498,7 +516,7 @@ smoke arm neon cached:
 smoke relwithdeb clean:
   extends: .smoke relwithdeb
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
   after_script:
     - *build_after_script
   artifacts:
@@ -507,7 +525,7 @@ smoke relwithdeb clean:
 smoke split 7.2 clean:
   extends: smoke relwithdeb clean
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       changes:
         <<: *split_changes
   variables:
@@ -524,41 +542,41 @@ smoke split 8 clean:
 smoke tsan clean:
   extends: .smoke tsan
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
 smoke rhel clean:
   extends: .smoke rhel
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
 smoke archlinux clean:
   extends: .smoke archlinux
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
 smoke dpdk clean:
   extends: .smoke dpdk
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
 smoke avx512 clean:
   extends: .smoke avx512
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       changes:
         <<: *instruction_set_changes
 
 smoke arm clean:
   extends: .smoke arm
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       changes:
         <<: *instruction_set_changes
 
 smoke arm neon clean:
   extends: .smoke arm neon
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       changes:
         <<: *instruction_set_changes
 
@@ -567,7 +585,7 @@ smoke arm neon clean:
 intermediate commits cached:
   extends: .smoke release
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR
   timeout: 2 hour
@@ -598,7 +616,7 @@ valgrind changed tests:
   allow_failure:
     exit_codes: 124 # timeout command's exit code when the time is reached
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-memcheck/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
@@ -635,7 +653,7 @@ valgrind changed tests:
 intermediate commits clean:
   extends: intermediate commits cached
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
 #################
 # Build Nightly #

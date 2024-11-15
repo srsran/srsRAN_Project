@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "async_task.h"
-#include "coroutine.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/coroutine.h"
 
 namespace srsran {
 

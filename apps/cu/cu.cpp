@@ -20,7 +20,6 @@
  *
  */
 
-#include "apps/cu/adapters/e2_gateways.h"
 #include "apps/cu/cu_appconfig_cli11_schema.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
@@ -42,6 +41,7 @@
 #include "cu_appconfig_yaml_writer.h"
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
+#include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gateways/udp_network_gateway.h"
@@ -142,8 +142,8 @@ static void register_app_logs(const logger_appconfig& log_cfg,
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
-  metrics_logger.set_level(log_cfg.metrics_level);
-  metrics_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+  metrics_logger.set_level(log_cfg.metrics_level.level);
+  metrics_logger.set_hex_dump_max_size(log_cfg.metrics_level.hex_max_size);
 
   // Register units logs.
   cu_cp_app_unit.on_loggers_registration();
@@ -317,10 +317,10 @@ int main(int argc, char** argv)
   io_timer_source time_source{app_timers, *epoll_broker, std::chrono::milliseconds{1}};
 
   // Instantiate E2AP client gateway.
-  std::unique_ptr<e2_connection_client> e2_gw_cu_cp =
-      create_cu_e2_client_gateway(cu_cfg.e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap);
-  std::unique_ptr<e2_connection_client> e2_gw_cu_up =
-      create_cu_e2_client_gateway(cu_cfg.e2_cfg, *epoll_broker, *cu_up_dlt_pcaps.e2ap);
+  std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(generate_e2_client_gateway_config(
+      cu_cp_app_unit->get_cu_cp_unit_config().e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap, E2_CP_PPID));
+  std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(generate_e2_client_gateway_config(
+      cu_up_app_unit->get_cu_up_unit_config().e2_cfg, *epoll_broker, *cu_up_dlt_pcaps.e2ap, E2_UP_PPID));
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 

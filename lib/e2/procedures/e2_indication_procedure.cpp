@@ -22,7 +22,6 @@
 
 #include "e2_indication_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
-
 #include "srsran/support/async/async_timer.h"
 
 using namespace srsran;

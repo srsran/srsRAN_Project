@@ -19,7 +19,6 @@
 #
 
 set(SOURCES
-        e2_appconfig_translators.cpp
         e2_cli11_schema.cpp)
 
 add_library(srsran_e2_app_service STATIC ${SOURCES})

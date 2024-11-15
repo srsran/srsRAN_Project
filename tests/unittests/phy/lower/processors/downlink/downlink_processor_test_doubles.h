@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "../../../../gateways/baseband/baseband_gateway_buffer_test_doubles.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"

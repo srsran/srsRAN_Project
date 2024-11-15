@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/gateways/baseband/baseband_gateway_base.h"
 #include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
 

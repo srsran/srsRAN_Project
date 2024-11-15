@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "rrc_types.h"
 #include "srsran/pdcp/pdcp_t_reordering.h"
+#include "srsran/rrc/rrc_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {

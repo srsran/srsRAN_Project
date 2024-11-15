@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/detail/byte_buffer_memory_resource.h"
 #include "srsran/adt/detail/byte_buffer_range_helpers.h"
 #include "srsran/adt/detail/intrusive_ptr.h"
 #include "srsran/adt/expected.h"
@@ -47,6 +48,12 @@ size_t get_byte_buffer_segment_pool_capacity();
 /// \brief Get an estimate of the number of segments of the byte buffer segment pool that are currently available for
 /// allocation in the caller thread.
 size_t get_byte_buffer_segment_pool_current_size_approx();
+
+/// \brief Default byte buffer segment pool.
+byte_buffer_memory_resource& get_default_byte_buffer_segment_pool();
+
+/// \brief Default byte buffer segment pool with fallback to the heap on failure to allocate.
+byte_buffer_memory_resource& get_default_fallback_byte_buffer_segment_pool();
 
 /// \brief Non-owning view to a byte sequence.
 ///
@@ -173,8 +180,8 @@ class byte_buffer
     node_t* segment_in_cb_memory_block = nullptr;
     /// Intrusive ptr reference counter.
     intrusive_ptr_atomic_ref_counter ref_count;
-    /// Whether failures to allocate segments using pool should fallback to malloc.
-    bool malloc_fallback = false;
+    /// Memory resource used to allocate/deallocate segments.
+    byte_buffer_memory_resource* segment_pool;
 
     void destroy_node(node_t* node) const;
 
@@ -208,21 +215,23 @@ public:
   /// Explicit copy ctor. User should use copy() method for copy assignments.
   explicit byte_buffer(const byte_buffer&) noexcept = default;
 
-  /// Creates a byte_buffer with contents provided by a span of bytes.
-  static expected<byte_buffer> create(span<const uint8_t> bytes)
-  {
-    byte_buffer buf;
-    if (not buf.append(bytes)) {
-      return make_unexpected(default_error_t{});
-    }
-    return buf;
-  }
+  /// Move constructor.
+  byte_buffer(byte_buffer&& other) noexcept = default;
 
-  /// Creates a byte_buffer with data initialized via a initializer list.
-  static expected<byte_buffer> create(std::initializer_list<uint8_t> lst)
-  {
-    return create(span<const uint8_t>(lst.begin(), lst.size()));
-  }
+  /// Creates an empty byte_buffer with a custom segment memory pool.
+  static expected<byte_buffer> create(byte_buffer_memory_resource& segment_pool);
+
+  /// Creates a byte_buffer with contents provided by a span of bytes.
+  /// \param[in] bytes span of bytes to assign to the byte_buffer.
+  /// \param[in] segment_pool memory pool used to allocate segments.
+  static expected<byte_buffer>
+  create(span<const uint8_t> bytes, byte_buffer_memory_resource& segment_pool = get_default_byte_buffer_segment_pool());
+
+  /// Creates a byte_buffer with data initialized via an initializer list.
+  /// \param[in] lst initializer list with bytes to assign to the byte_buffer.
+  /// \param[in] pool memory pool used to allocate segments.
+  static expected<byte_buffer> create(const std::initializer_list<uint8_t>& lst,
+                                      byte_buffer_memory_resource& pool = get_default_byte_buffer_segment_pool());
 
   /// Creates a byte_buffer with data assigned from a range of bytes.
   template <typename It>
@@ -234,9 +243,6 @@ public:
     }
     return buf;
   }
-
-  /// Move constructor.
-  byte_buffer(byte_buffer&& other) noexcept = default;
 
   /// Creates a byte_buffer that in case it fails to allocate from the default pool, it resorts to malloc as fallback.
   byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other = {}) noexcept;
@@ -260,12 +266,12 @@ public:
   template <typename Iterator>
   [[nodiscard]] bool append(Iterator begin, Iterator end)
   {
-    static_assert(std::is_same<std::decay_t<decltype(*begin)>, uint8_t>::value or
-                      std::is_same<std::decay_t<decltype(*begin)>, const uint8_t>::value,
+    static_assert(std::is_same_v<std::decay_t<decltype(*begin)>, uint8_t> or
+                      std::is_same_v<std::decay_t<decltype(*begin)>, const uint8_t>,
                   "Iterator value type is not uint8_t");
     using iter_category = typename std::iterator_traits<Iterator>::iterator_category;
 
-    if (std::is_same<iter_category, std::random_access_iterator_tag>::value) {
+    if constexpr (std::is_same_v<iter_category, std::random_access_iterator_tag>) {
       return append(span<const uint8_t>(&*begin, &*end));
     }
     // TODO: use segment-wise copy if it is a byte buffer-like type.
@@ -293,7 +299,7 @@ public:
   [[nodiscard]] bool append(uint8_t byte)
   {
     if (empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
-      if (not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM)) {
+      if (not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, byte_buffer_segment_pool_default_segment_size())) {
         return false;
       }
     }
@@ -306,7 +312,7 @@ public:
   [[nodiscard]] bool append(const byte_buffer_view& view);
 
   /// Appends an owning view of bytes into current byte buffer.
-  [[nodiscard]] bool append(const byte_buffer_slice& view);
+  [[nodiscard]] bool append(const byte_buffer_slice& slice);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
   [[nodiscard]] bool prepend(span<const uint8_t> bytes);
@@ -384,7 +390,7 @@ public:
   {
     return detail::compare_byte_buffer_range(lhs, r);
   }
-  template <typename T, std::enable_if_t<std::is_convertible<T, span<const uint8_t>>::value, int> = 0>
+  template <typename T, std::enable_if_t<std::is_convertible_v<T, span<const uint8_t>>, int> = 0>
   friend bool operator==(const T& r, const byte_buffer& rhs)
   {
     return detail::compare_byte_buffer_range(rhs, r);
@@ -394,7 +400,7 @@ public:
   {
     return !(lhs == r);
   }
-  template <typename T, std::enable_if_t<std::is_convertible<T, span<const uint8_t>>::value, int> = 0>
+  template <typename T, std::enable_if_t<std::is_convertible_v<T, span<const uint8_t>>, int> = 0>
   friend bool operator!=(const T& r, const byte_buffer& rhs)
   {
     return !(rhs == r);
@@ -403,19 +409,21 @@ public:
 private:
   bool has_ctrl_block() const { return ctrl_blk_ptr != nullptr; }
 
-  [[nodiscard]] node_t* add_head_segment(size_t headroom, bool use_fallback = false);
+  [[nodiscard]] bool default_construct_unsafe(byte_buffer_memory_resource& segment_pool, unsigned sz_hint);
 
-  [[nodiscard]] node_t* create_segment(size_t headroom);
+  [[nodiscard]] bool append(span<const uint8_t> bytes, byte_buffer_memory_resource& segment_pool);
 
-  [[nodiscard]] bool append_segment(size_t headroom_suggestion);
+  [[nodiscard]] node_t* add_head_segment(size_t headroom, byte_buffer_memory_resource& segment_pool, size_t sz_hint);
 
-  [[nodiscard]] bool prepend_segment(size_t headroom_suggestion);
+  [[nodiscard]] node_t* create_segment(size_t headroom, size_t sz_hint);
+
+  [[nodiscard]] bool append_segment(size_t headroom_suggestion, size_t sz_hint);
+
+  [[nodiscard]] bool prepend_segment(size_t headroom_suggestion, size_t sz_hint);
 
   /// \brief Removes last segment of the byte_buffer.
   /// Note: This operation is O(N), as it requires recomputing the tail.
   void pop_last_segment();
-
-  static void warn_alloc_failure();
 
   intrusive_ptr<control_block> ctrl_blk_ptr;
 };

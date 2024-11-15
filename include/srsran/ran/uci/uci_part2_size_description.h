@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/adt/static_vector.h"
 
 namespace srsran {

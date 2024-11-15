@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "serving_cell.h"
+#include "srsran/asn1/rrc_nr/serving_cell.h"
 
 namespace asn1 {
 namespace rrc_nr {

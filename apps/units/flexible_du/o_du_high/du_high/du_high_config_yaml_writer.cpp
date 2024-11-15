@@ -21,6 +21,7 @@
  */
 
 #include "du_high_config_yaml_writer.h"
+#include "apps/services/logger/metrics_logger_appconfig_yaml_writer.h"
 #include "du_high_config.h"
 #include "srsran/adt/span.h"
 
@@ -51,6 +52,8 @@ static void fill_du_high_pcap_section(YAML::Node node, const du_high_unit_pcap_c
 
 static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_config& config)
 {
+  fill_metrics_logger_appconfig_in_yaml_schema(node, config.metrics_level);
+
   node["mac_level"]                        = srslog::basic_level_to_string(config.mac_level);
   node["rlc_level"]                        = srslog::basic_level_to_string(config.rlc_level);
   node["f1ap_level"]                       = srslog::basic_level_to_string(config.f1ap_level);

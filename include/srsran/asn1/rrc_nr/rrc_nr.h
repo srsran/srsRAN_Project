@@ -28,9 +28,9 @@
 
 #pragma once
 
-#include "cell_group_config.h"
-#include "ho_prep_info.h"
-#include "nr_sidelink_preconf.h"
+#include "srsran/asn1/rrc_nr/cell_group_config.h"
+#include "srsran/asn1/rrc_nr/ho_prep_info.h"
+#include "srsran/asn1/rrc_nr/nr_sidelink_preconf.h"
 
 namespace asn1 {
 namespace rrc_nr {

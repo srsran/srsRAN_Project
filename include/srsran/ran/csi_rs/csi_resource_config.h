@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "csi_rs_constants.h"
-#include "csi_rs_id.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/csi_rs/csi_rs_constants.h"
+#include "srsran/ran/csi_rs/csi_rs_id.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include <variant>
 

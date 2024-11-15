@@ -32,7 +32,6 @@
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/srslog/srslog.h"
-
 #include <set>
 #include <vector>
 

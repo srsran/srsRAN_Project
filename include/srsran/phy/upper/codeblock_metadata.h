@@ -24,10 +24,10 @@
 /// \brief Codeblock metadata and related types and constants.
 #pragma once
 
-#include "log_likelihood_ratio.h"
 #include "srsran/adt/bit_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
 // TODO(david,borja): fix dependency.
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/ran/sch/modulation_scheme.h"

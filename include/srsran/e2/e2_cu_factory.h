@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "e2_cu.h"
-#include "e2_factory.h"
+#include "srsran/e2/e2_cu.h"
+#include "srsran/e2/e2_factory.h"
 
 namespace srsran {
 /// Creates a instance of an E2 interface (with subscription manager)

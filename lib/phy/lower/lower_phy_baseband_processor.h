@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/baseband_gateway_timestamp.h"

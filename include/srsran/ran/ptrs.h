@@ -22,11 +22,10 @@
 
 #pragma once
 
-#include "ssb_configuration.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/ssb_configuration.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-
 #include <cstdint>
 
 namespace srsran {

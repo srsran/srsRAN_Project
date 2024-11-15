@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include "resource_block_group.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/resource_allocation/sliv.h"
 #include "srsran/ran/resource_block.h"
+#include "srsran/scheduler/resource_block_group.h"
 
 namespace srsran {
 

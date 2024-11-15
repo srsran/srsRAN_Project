@@ -22,12 +22,11 @@
 
 #pragma once
 
-#include "tx_scheme_configuration.h"
 #include "srsran/adt/interval.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pusch/pusch_constants.h"
+#include "srsran/ran/pusch/tx_scheme_configuration.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"
-
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {

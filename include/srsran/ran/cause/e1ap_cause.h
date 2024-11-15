@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "srsran/ran/cause/common.h"
 #include "fmt/format.h"
 #include <variant>
 

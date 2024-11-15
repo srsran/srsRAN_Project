@@ -22,10 +22,6 @@
 
 #pragma once
 
-#include "ru_downlink_plane.h"
-#include "ru_error_notifier.h"
-#include "ru_timing_notifier.h"
-#include "ru_uplink_plane.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/upper_phy_error_handler.h"
@@ -33,6 +29,10 @@
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_request_notifier.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
+#include "srsran/ru/ru_downlink_plane.h"
+#include "srsran/ru/ru_error_notifier.h"
+#include "srsran/ru/ru_timing_notifier.h"
+#include "srsran/ru/ru_uplink_plane.h"
 
 namespace srsran {
 

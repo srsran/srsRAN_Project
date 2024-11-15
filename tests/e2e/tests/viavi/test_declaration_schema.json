@@ -38,7 +38,7 @@
                         "type": "integer"
                     },
                     "expected_nof_kos": {
-                        "type": "integer"
+                        "type": "number"
                     },
                     "warning_as_errors": {
                         "type": "boolean"

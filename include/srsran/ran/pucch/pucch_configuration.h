@@ -25,10 +25,9 @@
 
 #pragma once
 
-#include "pucch_mapping.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/sr_configuration.h"
-
 #include <cstdint>
 #include <variant>
 #include <vector>

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "async_task.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "five_qi.h"
+#include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/qos/packet_error_rate.h"
 #include <optional>
 

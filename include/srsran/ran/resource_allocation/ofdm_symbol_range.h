@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "sliv.h"
 #include "srsran/adt/interval.h"
 #include "srsran/ran/frame_types.h"
+#include "srsran/ran/resource_allocation/sliv.h"
 
 namespace srsran {
 

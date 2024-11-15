@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "subcarrier_spacing.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include <cstdint>
 
 namespace srsran {

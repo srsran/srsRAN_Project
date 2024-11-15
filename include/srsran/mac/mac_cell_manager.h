@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "cell_configuration.h"
-#include "mac_ue_configurator.h"
+#include "srsran/mac/cell_configuration.h"
+#include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/slot_point.h"
 

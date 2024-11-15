@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "ngap_types.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_types.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"
 

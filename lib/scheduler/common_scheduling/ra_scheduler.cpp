@@ -244,6 +244,14 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
     const unsigned slot_idx = prach_format_is_long ? msg.slot_rx.subframe_index() : msg.slot_rx.slot_index();
     const uint16_t ra_rnti  = get_ra_rnti(slot_idx, prach_occ.start_symbol, prach_occ.frequency_index);
 
+    if (prach_occ.preambles.empty()) {
+      // As per FAPI, this should not occur.
+      logger.warning(
+          "ra-rnti={}: Discarding PRACH occasion. Cause: There are no preambles detected for this PRACH occasion",
+          ra_rnti);
+      continue;
+    }
+
     pending_rar_t* rar_req = nullptr;
     for (pending_rar_t& rar : pending_rars) {
       if (to_value(rar.ra_rnti) == ra_rnti and rar.prach_slot_rx == msg.slot_rx) {
@@ -494,6 +502,14 @@ void ra_scheduler::schedule_pending_rars(cell_resource_allocator& res_alloc, slo
     if (not rar_req.rar_window.contains(pdcch_slot)) {
       // RAR window hasn't started yet for this RAR. Given that the RARs are in order of slot, we can stop here.
       break;
+    }
+    if (rar_req.tc_rntis.empty()) {
+      // This should never happen, unless there was some corruption of the queue.
+      logger.warning(
+          "ra-rnti={}: Discarding RAR scheduling request. Cause: There are no TC-RNTIs associated with this RAR",
+          rar_req.ra_rnti);
+      it = pending_rars.erase(it);
+      continue;
     }
 
     // Try to schedule DCIs + RBGs for RAR Grants

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "context_repository_helpers.h"
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/serdes/ofh_cplane_message_properties.h"
@@ -47,34 +48,28 @@ struct ul_cplane_context {
 /// Uplink Control-Plane context repository.
 class uplink_cplane_context_repository
 {
-  /// System frame number maximum value in this repository.
-  static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
-
   using repo_entry = std::array<ul_cplane_context, MAX_SUPPORTED_EAXC_ID_VALUE>;
 
   std::vector<repo_entry> repo;
-  unsigned                size = 0;
   //: TODO: make this lock free
   mutable std::mutex mutex;
 
   /// Returns the entry of the repository for the given slot and eAxC.
   ul_cplane_context& entry(slot_point slot, unsigned eaxc)
   {
-    slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
-    unsigned   index = entry_slot.system_slot() % size;
+    unsigned index = calculate_repository_index(slot, repo.size());
     return repo[index][eaxc];
   }
 
   /// Returns the entry of the repository for the given slot and eAxC.
   const ul_cplane_context& entry(slot_point slot, unsigned eaxc) const
   {
-    slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
-    unsigned   index = entry_slot.system_slot() % size;
+    unsigned index = calculate_repository_index(slot, repo.size());
     return repo[index][eaxc];
   }
 
 public:
-  explicit uplink_cplane_context_repository(unsigned size_) : repo(size_), size(size_) {}
+  explicit uplink_cplane_context_repository(unsigned size_) : repo(size_) {}
 
   /// Add the given context to the repo at the given slot and eAxC.
   void add(slot_point slot, unsigned eaxc, const ul_cplane_context& context)

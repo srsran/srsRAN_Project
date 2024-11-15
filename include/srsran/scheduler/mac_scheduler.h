@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include "scheduler_configurator.h"
-#include "scheduler_dl_buffer_state_indication_handler.h"
-#include "scheduler_feedback_handler.h"
-#include "scheduler_paging_handler.h"
-#include "scheduler_slot_handler.h"
+#include "srsran/scheduler/scheduler_configurator.h"
+#include "srsran/scheduler/scheduler_dl_buffer_state_indication_handler.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
+#include "srsran/scheduler/scheduler_paging_handler.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

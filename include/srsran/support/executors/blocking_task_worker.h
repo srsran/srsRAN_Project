@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "task_executor.h"
 #include "srsran/adt/blocking_queue.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 

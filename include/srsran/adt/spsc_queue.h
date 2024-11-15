@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "concurrent_queue.h"
 #include "rigtorp/SPSCQueue.h"
+#include "srsran/adt/concurrent_queue.h"
 #include "srsran/support/error_handling.h"
 #include <chrono>
 #include <thread>

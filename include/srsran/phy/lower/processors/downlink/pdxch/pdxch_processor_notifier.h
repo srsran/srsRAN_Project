@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {

@@ -25,7 +25,6 @@
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
-
 #include "srsran/ngap/gateways/n2_connection_client.h"
 
 namespace srsran {

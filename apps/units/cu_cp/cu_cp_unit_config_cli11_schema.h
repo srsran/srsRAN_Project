@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-
 #include "CLI/CLI11.hpp"
 
 namespace srsran {

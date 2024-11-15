@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "memory_block_list.h"
+#include "srsran/support/memory_pool/memory_block_list.h"
 
 namespace srsran {
 

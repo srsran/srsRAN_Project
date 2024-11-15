@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/ran/plmn_identity.h"
-
 #include <limits>
 
 namespace srsran {

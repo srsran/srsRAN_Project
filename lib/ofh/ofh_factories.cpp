@@ -171,7 +171,7 @@ create_txrx(const sector_configuration&                     sector_cfg,
 std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuration& sector_cfg,
                                                        sector_dependencies&&       sector_deps)
 {
-  unsigned repository_size = sector_cfg.max_processing_delay_slots * 4;
+  unsigned repository_size = calculate_repository_size(sector_cfg.scs, sector_cfg.max_processing_delay_slots * 4);
 
   auto cp_repo    = std::make_shared<uplink_cplane_context_repository>(repository_size);
   auto prach_repo = std::make_shared<prach_context_repository>(repository_size);

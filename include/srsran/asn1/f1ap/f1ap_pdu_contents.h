@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "f1ap_pdu_contents_ue.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 
 namespace asn1 {
 namespace f1ap {

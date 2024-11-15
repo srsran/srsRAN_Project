@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "interpolator.h"
 #include "srsran/phy/generic_functions/precoding/precoding_factories.h"
+#include "srsran/phy/support/interpolator.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_pool.h"
 #include "srsran/phy/support/resource_grid_mapper.h"

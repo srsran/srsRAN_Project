@@ -23,13 +23,14 @@
 #include "logger_appconfig_cli11_schema.h"
 #include "logger_appconfig.h"
 #include "logger_appconfig_cli11_utils.h"
+#include "metrics_logger_appconfig_cli11_schema.h"
 #include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
 
 static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params)
 {
-  auto metric_level_check = [](const std::string& value) -> std::string {
+  auto config_level_check = [](const std::string& value) -> std::string {
     if (auto level = srslog::str_to_basic_level(value); !level.has_value() ||
                                                         level.value() == srslog::basic_levels::error ||
                                                         level.value() == srslog::basic_levels::warning) {
@@ -49,11 +50,7 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
   add_option_function<std::string>(
       app, " --config_level", app_services::capture_log_level_function(log_params.config_level), "Config log level")
       ->default_str(srslog::basic_level_to_string(log_params.config_level))
-      ->check(metric_level_check);
-  add_option_function<std::string>(
-      app, "--metrics_level", app_services::capture_log_level_function(log_params.metrics_level), "Metrics log level")
-      ->default_str(srslog::basic_level_to_string(log_params.metrics_level))
-      ->check(metric_level_check);
+      ->check(config_level_check);
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
@@ -80,12 +77,25 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
         continue;
       }
 
-      // Config and metrics loggers have only subset of levels.
-      if (option->check_name("--config_level") || option->check_name("--metrics_level")) {
+      // Config logger have only subset of levels.
+      if (option->check_name("--config_level")) {
         if (log_params.all_level == srslog::basic_levels::error) {
           option->default_val<std::string>("none");
           continue;
         }
+      }
+
+      // Metrics logger have only subset of levels.
+      if (option->check_name("--metrics_level") && !is_valid_metrics_levels(log_params.all_level)) {
+        // When all level is debug, set the metrics to info.
+        if (log_params.all_level == srslog::basic_levels::debug) {
+          option->default_val<std::string>("info");
+          continue;
+        }
+
+        // For the rest of not valid cases, disable the metrics logger.
+        option->default_val<std::string>("none");
+        continue;
       }
 
       option->default_val<std::string>(srslog::basic_level_to_string(log_params.all_level));
@@ -95,7 +105,9 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
 
 void srsran::configure_cli11_with_logger_appconfig_schema(CLI::App& app, logger_appconfig& config)
 {
+  configure_cli11_with_metrics_logger_appconfig_schema(app, config.metrics_level);
+
   // Logging section.
-  CLI::App* log_subcmd = app.add_subcommand("log", "Logging configuration")->configurable();
+  CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, config);
 }

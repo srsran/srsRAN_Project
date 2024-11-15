@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "e2_du.h"
-#include "e2_factory.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
+#include "srsran/e2/e2_du.h"
+#include "srsran/e2/e2_factory.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 
 namespace srsran {

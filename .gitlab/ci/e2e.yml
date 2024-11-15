@@ -338,7 +338,6 @@ test mode ru tsan:
       artifacts: true
     - *txrx-lib
     - *retina-needs
-  allow_failure: true
 
 test mode ru asan:
   extends: test mode ru

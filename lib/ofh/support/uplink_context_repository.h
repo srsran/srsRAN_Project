@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "context_repository_helpers.h"
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/phy/support/resource_grid.h"
@@ -140,9 +141,6 @@ private:
 /// Uplink context repository.
 class uplink_context_repository
 {
-  /// System frame number maximum value in this repository.
-  static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
-
   std::vector<std::array<uplink_context, MAX_NSYMB_PER_SLOT>> buffer;
   //: TODO: make this lock free
   mutable std::mutex mutex;
@@ -152,8 +150,7 @@ class uplink_context_repository
   {
     srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index '{}'", symbol);
 
-    slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
-    unsigned   index = entry_slot.system_slot() % buffer.size();
+    unsigned index = calculate_repository_index(slot, buffer.size());
     return buffer[index][symbol];
   }
 
@@ -162,8 +159,7 @@ class uplink_context_repository
   {
     srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index '{}'", symbol);
 
-    slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
-    unsigned   index = entry_slot.system_slot() % buffer.size();
+    unsigned index = calculate_repository_index(slot, buffer.size());
     return buffer[index][symbol];
   }
 

@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/ran/pusch/pusch_context.h"
 
 namespace fmt {

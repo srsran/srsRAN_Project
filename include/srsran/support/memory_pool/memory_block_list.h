@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "memory_pool_utils.h"
+#include "srsran/support/memory_pool/memory_pool_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include <mutex>
 #include <utility>

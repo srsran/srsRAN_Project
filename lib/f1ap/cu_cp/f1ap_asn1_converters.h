@@ -29,7 +29,6 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/nr_cgi.h"
-
 #include <string>
 #include <variant>
 #include <vector>

@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "resource_grid.h"
-#include "resource_grid_context.h"
-#include "shared_resource_grid.h"
+#include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/shared_resource_grid.h"
 #include <vector>
 
 namespace srsran {

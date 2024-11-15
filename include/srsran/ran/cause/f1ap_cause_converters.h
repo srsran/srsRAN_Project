@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "f1ap_cause.h"
-#include "ngap_cause.h"
+#include "srsran/ran/cause/f1ap_cause.h"
+#include "srsran/ran/cause/ngap_cause.h"
 
 namespace srsran {
 

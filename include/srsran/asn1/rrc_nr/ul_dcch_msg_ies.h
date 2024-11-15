@@ -28,10 +28,10 @@
 
 #pragma once
 
-#include "bcch_bch_msg.h"
-#include "dl_dcch_msg_ies.h"
-#include "ue_cap.h"
-#include "ul_ccch_msg_ies.h"
+#include "srsran/asn1/rrc_nr/bcch_bch_msg.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
+#include "srsran/asn1/rrc_nr/ue_cap.h"
+#include "srsran/asn1/rrc_nr/ul_ccch_msg_ies.h"
 
 namespace asn1 {
 namespace rrc_nr {

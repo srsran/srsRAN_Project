@@ -29,7 +29,6 @@
 #include "srsran/ran/qos/qos_prio_level.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/sdap/sdap_config.h"
-
 #include "fmt/format.h"
 
 namespace srsran {

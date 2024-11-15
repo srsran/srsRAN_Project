@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "awaiter_memory_storage.h"
+#include "srsran/support/async/awaiter_memory_storage.h"
 #include "srsran/support/async/detail/function_signature.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"

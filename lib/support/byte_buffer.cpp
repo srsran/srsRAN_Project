@@ -27,9 +27,12 @@
 
 using namespace srsran;
 
+static constexpr size_t default_pool_nof_segments = 16384;
+static constexpr size_t default_segment_size      = 2048;
+
 size_t srsran::byte_buffer_segment_pool_default_segment_size()
 {
-  return 2048;
+  return default_segment_size;
 }
 
 /// Get default byte buffer segment pool. Initialize pool if not initialized before.
@@ -37,9 +40,7 @@ detail::byte_buffer_segment_pool& srsran::detail::get_default_byte_buffer_segmen
 {
   // Initialize byte buffer segment pool, if not yet initialized.
   // Note: In case of unit tests, this function will be called rather than init_byte_buffer_segment_pool(...).
-  static constexpr size_t default_byte_buffer_segment_pool_size = 16384;
-  static auto&            pool = detail::byte_buffer_segment_pool::get_instance(default_byte_buffer_segment_pool_size,
-                                                                     byte_buffer_segment_pool_default_segment_size());
+  static auto& pool = detail::byte_buffer_segment_pool::get_instance(default_pool_nof_segments, default_segment_size);
   return pool;
 }
 
@@ -65,17 +66,121 @@ size_t srsran::get_byte_buffer_segment_pool_current_size_approx()
   return pool.get_central_cache_approx_size() + pool.get_local_cache_size();
 }
 
+// ------ memory resource -------
+
+namespace {
+
+/// Warn when the default segment pool is depleted.
+void byte_buffer_warn_alloc_failure()
+{
+  static srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
+  logger.warning("POOL: Failure to allocate byte buffer segment");
+}
+
+/// Memory resource wrapper of the default byte buffer segment pool.
+class default_segment_pool_memory_resource final : public byte_buffer_memory_resource
+{
+public:
+  default_segment_pool_memory_resource(bool log_on_failure_) :
+    log_on_failure(log_on_failure_), default_pool(detail::get_default_byte_buffer_segment_pool())
+  {
+  }
+
+  bool owns_segment(void* block) const { return default_pool.owns_segment(block); }
+
+private:
+  span<uint8_t> do_allocate(size_t /* unused */, size_t /* unused */) override
+  {
+    // Fetch default pool.
+    const size_t block_size = default_pool.memory_block_size();
+
+    // Allocate new block.
+    void* mem_block = default_pool.allocate_node(block_size);
+    if (SRSRAN_LIKELY(mem_block != nullptr)) {
+      // Allocation from pool was successful.
+      return {static_cast<uint8_t*>(mem_block), block_size};
+    }
+
+    // Pool is depleted.
+    if (log_on_failure) {
+      byte_buffer_warn_alloc_failure();
+    }
+    return {};
+  }
+
+  void do_deallocate(void* block) override
+  {
+    // Return block back to the pool.
+    default_pool.deallocate_node(block);
+  }
+
+  bool do_is_equal(const byte_buffer_memory_resource& other) const noexcept override { return this == &other; }
+
+  const bool                        log_on_failure;
+  detail::byte_buffer_segment_pool& default_pool;
+};
+
+/// \brief Memory resource wrapper of the default byte buffer segment pool, but that on pool depletion, performs as
+/// a fallback an allocation on the heap with operator new.
+class default_fallback_segment_pool_memory_resource final : public byte_buffer_memory_resource
+{
+public:
+  default_fallback_segment_pool_memory_resource() : pool(false) {}
+
+  span<uint8_t> do_allocate(size_t recommended_bytes, size_t alignment) override
+  {
+    // Allocate using the default segment pool.
+    span<uint8_t> block = pool.allocate(recommended_bytes, alignment);
+
+    if (block.empty()) {
+      // Allocation failed. Resort to the heap as fallback.
+      void* heap_block = new uint8_t[recommended_bytes];
+      return {static_cast<uint8_t*>(heap_block), recommended_bytes};
+    }
+
+    return block;
+  }
+
+  void do_deallocate(void* block) override
+  {
+    if (pool.owns_segment(block)) {
+      // The block comes from the default byte buffer pool.
+      pool.deallocate(block);
+      return;
+    }
+
+    // The block comes from the heap.
+    delete[] static_cast<uint8_t*>(block);
+  }
+
+  bool do_is_equal(const byte_buffer_memory_resource& other) const noexcept override { return this == &other; }
+
+private:
+  default_segment_pool_memory_resource pool;
+};
+
+} // namespace
+
+byte_buffer_memory_resource& srsran::get_default_byte_buffer_segment_pool()
+{
+  static default_segment_pool_memory_resource default_mem_resource{true};
+  return default_mem_resource;
+}
+
+byte_buffer_memory_resource& srsran::get_default_fallback_byte_buffer_segment_pool()
+{
+  static default_fallback_segment_pool_memory_resource default_fallback_mem_resource;
+  return default_fallback_mem_resource;
+}
+
 // ------- byte_buffer class -------
 
 void byte_buffer::control_block::destroy_node(node_t* node) const
 {
+  void* block = node;
   node->~node_t();
   if (node != segment_in_cb_memory_block) {
-    if (not this->malloc_fallback or detail::byte_buffer_segment_pool::get_instance().owns_segment(node)) {
-      detail::byte_buffer_segment_pool::get_instance().deallocate_node(node);
-    } else {
-      delete[] reinterpret_cast<uint8_t*>(node);
-    }
+    segment_pool->deallocate(block);
   }
 }
 
@@ -90,26 +195,44 @@ byte_buffer::control_block::~control_block()
 
 void byte_buffer::control_block::destroy_cb()
 {
-  bool pool_used = not this->malloc_fallback or detail::byte_buffer_segment_pool::get_instance().owns_segment(this);
+  void*                        block = this;
+  byte_buffer_memory_resource* pool  = this->segment_pool;
   this->~control_block();
-  if (pool_used) {
-    detail::get_default_byte_buffer_segment_pool().deallocate_node(this);
-  } else {
-    delete[] reinterpret_cast<uint8_t*>(this);
-  }
+  pool->deallocate(block);
 }
 
 // ----- byte_buffer -----
 
-byte_buffer::byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other) noexcept
+expected<byte_buffer> byte_buffer::create(byte_buffer_memory_resource& segment_pool)
 {
-  // Append new head segment to linked list with fallback allocator mode.
-  node_t* n = add_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
-  srsran_sanity_check(n != nullptr, "Should never fail to append segment if fallback is enabled");
+  byte_buffer result;
+  if (not result.default_construct_unsafe(segment_pool,
+                                          default_segment_size - sizeof(control_block) - sizeof(node_t))) {
+    return make_unexpected(default_error_t{});
+  }
+  return result;
+}
 
-  bool var = this->append(other);
-  srsran_sanity_check(var, "Should never fail to append segment if fallback is enabled");
-  (void)var;
+expected<byte_buffer> byte_buffer::create(span<const uint8_t> bytes, byte_buffer_memory_resource& segment_pool)
+{
+  byte_buffer result;
+  if (not result.append(bytes, segment_pool)) {
+    return make_unexpected(default_error_t{});
+  }
+  return result;
+}
+
+expected<byte_buffer> byte_buffer::create(const std::initializer_list<uint8_t>& lst, byte_buffer_memory_resource& pool)
+{
+  return create(span<const uint8_t>(lst.begin(), lst.size()), pool);
+}
+
+byte_buffer::byte_buffer(fallback_allocation_tag /* unused */, span<const uint8_t> other) noexcept
+{
+  // Create new byte buffer with default_fallback_pool.
+  // Note: We can retrieve the value() directly as the default fallback pool is supposed to never fail.
+  bool ret = append(other, get_default_fallback_byte_buffer_segment_pool());
+  srsran_sanity_check(ret, "Should never fail to append segment if fallback is enabled");
 }
 
 byte_buffer::byte_buffer(fallback_allocation_tag tag, const std::initializer_list<uint8_t>& other) noexcept :
@@ -117,10 +240,12 @@ byte_buffer::byte_buffer(fallback_allocation_tag tag, const std::initializer_lis
 {
 }
 
-byte_buffer::byte_buffer(fallback_allocation_tag tag, const byte_buffer& other) noexcept
+byte_buffer::byte_buffer(fallback_allocation_tag /* unused */, const byte_buffer& other) noexcept
 {
   // Append new head segment to linked list with fallback allocator mode.
-  node_t* n = add_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
+  node_t* n = add_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM,
+                               get_default_fallback_byte_buffer_segment_pool(),
+                               other.length() + DEFAULT_FIRST_SEGMENT_HEADROOM);
   srsran_sanity_check(n != nullptr, "Should never fail to append segment if fallback is enabled");
 
   for (span<const uint8_t> seg : other.segments()) {
@@ -152,27 +277,7 @@ expected<byte_buffer> byte_buffer::deep_copy(fallback_allocation_tag tag) const
 
 bool byte_buffer::append(span<const uint8_t> bytes)
 {
-  if (bytes.empty()) {
-    // no bytes to append.
-    return true;
-  }
-  if (not has_ctrl_block() and not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM)) {
-    // failed to allocate head segment.
-    return false;
-  }
-
-  // segment-wise copy.
-  for (size_t count = 0; count < bytes.size();) {
-    if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0)) {
-      return false;
-    }
-    size_t              to_write = std::min(ctrl_blk_ptr->segments.tail->tailroom(), bytes.size() - count);
-    span<const uint8_t> subspan  = bytes.subspan(count, to_write);
-    ctrl_blk_ptr->segments.tail->append(subspan);
-    count += to_write;
-    ctrl_blk_ptr->pkt_len += to_write;
-  }
-  return true;
+  return append(bytes, get_default_byte_buffer_segment_pool());
 }
 
 bool byte_buffer::append(const std::initializer_list<uint8_t>& bytes)
@@ -186,13 +291,14 @@ bool byte_buffer::append(const byte_buffer& other)
   if (other.empty()) {
     return true;
   }
-  if (not has_ctrl_block() and not append_segment(other.ctrl_blk_ptr->segments.head->headroom())) {
+  if (not has_ctrl_block() and not append_segment(other.ctrl_blk_ptr->segments.head->headroom(),
+                                                  other.ctrl_blk_ptr->segments.head->headroom() + other.length())) {
     return false;
   }
   for (node_t* seg = other.ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
     auto* other_it = seg->begin();
     while (other_it != seg->end()) {
-      if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0)) {
+      if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0, seg->length())) {
         return false;
       }
       auto to_append =
@@ -219,8 +325,13 @@ bool byte_buffer::append(byte_buffer&& other)
     // Use lvalue append.
     return append(other);
   }
+  if (*other.ctrl_blk_ptr->segment_pool != *ctrl_blk_ptr->segment_pool) {
+    // The pools are different. Deep copy segments.
+    return append(other);
+  }
+
   // This is the last reference to "after". Shallow copy, except control segment.
-  node_t* node = create_segment(0);
+  node_t* node = create_segment(0, other.ctrl_blk_ptr->segment_in_cb_memory_block->length());
   if (node == nullptr) {
     return false;
   }
@@ -259,31 +370,67 @@ bool byte_buffer::append(const byte_buffer_view& view)
   return true;
 }
 
-byte_buffer::node_t* byte_buffer::add_head_segment(size_t headroom, bool use_fallback)
+bool byte_buffer::default_construct_unsafe(byte_buffer_memory_resource& segment_pool, unsigned sz_hint)
 {
-  auto&        pool       = detail::get_default_byte_buffer_segment_pool();
-  const size_t block_size = pool.memory_block_size();
+  if (&segment_pool == &get_default_byte_buffer_segment_pool()) {
+    // No need to create a control block yet, if the pool is default one.
+    return true;
+  }
+  // create head segment and assign segment pool to the control block.
+  node_t* n = add_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, segment_pool, sz_hint);
+  return n != nullptr;
+}
 
-  // Allocate new node.
-  void* mem_block = pool.allocate_node(block_size);
-  if (mem_block == nullptr) {
-    if (not use_fallback) {
-      // Pool is depleted.
-      byte_buffer::warn_alloc_failure();
-      return nullptr;
+bool byte_buffer::append(span<const uint8_t> bytes, byte_buffer_memory_resource& segment_pool)
+{
+  if (bytes.empty()) {
+    // No bytes are being appended. However, we may still need to create a control block to store the pool.
+    if (not has_ctrl_block()) {
+      return default_construct_unsafe(segment_pool, default_segment_size - sizeof(control_block) - sizeof(node_t));
     }
-    // Use heap as fallback.
-    mem_block = new uint8_t[block_size];
+    return true;
+  }
+
+  if (not has_ctrl_block()) {
+    // Create control block.
+    node_t* n =
+        add_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, segment_pool, bytes.size() + DEFAULT_FIRST_SEGMENT_HEADROOM);
+    if (n == nullptr) {
+      return false;
+    }
+  }
+
+  // segment-wise copy.
+  for (size_t offset = 0; offset < bytes.size();) {
+    if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0, bytes.size() - offset)) {
+      return false;
+    }
+    size_t              to_write = std::min(ctrl_blk_ptr->segments.tail->tailroom(), bytes.size() - offset);
+    span<const uint8_t> subspan  = bytes.subspan(offset, to_write);
+    ctrl_blk_ptr->segments.tail->append(subspan);
+    offset += to_write;
+    ctrl_blk_ptr->pkt_len += to_write;
+  }
+  return true;
+}
+
+byte_buffer::node_t*
+byte_buffer::add_head_segment(size_t headroom, byte_buffer_memory_resource& segment_pool, size_t sz_hint)
+{
+  // Allocate new node.
+  span<uint8_t> mem_block = segment_pool.allocate(sz_hint + sizeof(control_block) + sizeof(node_t));
+  if (mem_block.empty()) {
+    return nullptr;
   }
 
   // Construct linear allocator pointing to allocated segment memory block.
-  linear_memory_allocator arena{mem_block, block_size};
+  linear_memory_allocator arena{mem_block.data(), mem_block.size()};
 
   // Create control block using allocator.
   void* cb_region = arena.allocate(sizeof(control_block), alignof(control_block));
   ctrl_blk_ptr    = new (cb_region) control_block{};
   srsran_sanity_check(ctrl_blk_ptr != nullptr, "Something went wrong with the creation of the control block");
-  ctrl_blk_ptr->malloc_fallback = use_fallback;
+  ctrl_blk_ptr->segment_pool = &segment_pool;
 
   // For first segment of byte_buffer, add a headroom.
   void*   segment_header_region = arena.allocate(sizeof(node_t), alignof(node_t));
@@ -302,24 +449,16 @@ byte_buffer::node_t* byte_buffer::add_head_segment(size_t headroom, bool use_fal
   return node;
 }
 
-byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
+byte_buffer::node_t* byte_buffer::create_segment(size_t headroom, size_t sz_hint)
 {
-  auto&        pool       = detail::get_default_byte_buffer_segment_pool();
-  const size_t block_size = pool.memory_block_size();
-
   // Allocate memory block.
-  void* mem_block = pool.allocate_node(block_size);
-  if (mem_block == nullptr) {
-    if (not ctrl_blk_ptr->malloc_fallback) {
-      byte_buffer::warn_alloc_failure();
-      return nullptr;
-    }
-    // Use malloc as fallback.
-    mem_block = new uint8_t[block_size];
+  span<uint8_t> mem_block = ctrl_blk_ptr->segment_pool->allocate(sz_hint + sizeof(node_t));
+  if (mem_block.empty()) {
+    return nullptr;
   }
 
   // Create a linear allocator pointing to the allocated memory block.
-  linear_memory_allocator arena{mem_block, block_size};
+  linear_memory_allocator arena{mem_block.data(), mem_block.size()};
 
   void*  segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
   size_t segment_size  = arena.nof_bytes_left();
@@ -328,12 +467,12 @@ byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
       node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
 }
 
-bool byte_buffer::append_segment(size_t headroom_suggestion)
+bool byte_buffer::append_segment(size_t headroom_suggestion, size_t sz_hint)
 {
   if (not has_ctrl_block()) {
-    return add_head_segment(headroom_suggestion) != nullptr;
+    return add_head_segment(headroom_suggestion, get_default_byte_buffer_segment_pool(), sz_hint) != nullptr;
   }
-  node_t* segment = create_segment(headroom_suggestion);
+  node_t* segment = create_segment(headroom_suggestion, sz_hint);
   if (segment == nullptr) {
     return false;
   }
@@ -342,12 +481,12 @@ bool byte_buffer::append_segment(size_t headroom_suggestion)
   return true;
 }
 
-bool byte_buffer::prepend_segment(size_t headroom_suggestion)
+bool byte_buffer::prepend_segment(size_t headroom_suggestion, size_t sz_hint)
 {
   if (not has_ctrl_block()) {
-    return add_head_segment(headroom_suggestion) != nullptr;
+    return add_head_segment(headroom_suggestion, get_default_byte_buffer_segment_pool(), sz_hint) != nullptr;
   }
-  node_t* segment = create_segment(headroom_suggestion);
+  node_t* segment = create_segment(headroom_suggestion, sz_hint);
   if (segment == nullptr) {
     return false;
   }
@@ -381,7 +520,7 @@ bool byte_buffer::prepend(span<const uint8_t> bytes)
   }
   for (size_t count = 0; count < bytes.size();) {
     if (ctrl_blk_ptr->segments.head->headroom() == 0) {
-      if (not prepend_segment(bytes.size() - count)) {
+      if (not prepend_segment(bytes.size() - count, bytes.size() - count)) {
         return false;
       }
     }
@@ -405,7 +544,7 @@ bool byte_buffer::prepend(const byte_buffer& other)
     return append(other);
   }
   for (span<const uint8_t> seg : other.segments()) {
-    node_t* node = create_segment(0);
+    node_t* node = create_segment(0, seg.size());
     if (node == nullptr) {
       return false;
     }
@@ -428,12 +567,16 @@ bool byte_buffer::prepend(byte_buffer&& other)
     return append(std::move(other));
   }
   if (not other.ctrl_blk_ptr->ref_count.unique()) {
-    // Deep copy of segments.
+    // "other" is not the last reference to the underlying byte buffer control block. Deep copy of segments.
+    return prepend(other);
+  }
+  if (*other.ctrl_blk_ptr->segment_pool != *ctrl_blk_ptr->segment_pool) {
+    // The pools are different. Deep copy segments.
     return prepend(other);
   }
 
   // This is the last reference to "other". Shallow copy, except control segment.
-  node_t* node = create_segment(0);
+  node_t* node = create_segment(0, other.ctrl_blk_ptr->segment_in_cb_memory_block->length());
   if (node == nullptr) {
     return false;
   }
@@ -464,7 +607,7 @@ byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
   size_t rem_bytes = nof_bytes;
   while (rem_bytes > 0) {
     if (empty() or ctrl_blk_ptr->segments.head->headroom() == 0) {
-      if (not prepend_segment(rem_bytes)) {
+      if (not prepend_segment(rem_bytes, rem_bytes)) {
         return {};
       }
     }
@@ -561,7 +704,7 @@ bool byte_buffer::resize(size_t new_sz)
   if (new_sz > prev_len) {
     for (size_t to_add = new_sz - prev_len; to_add > 0;) {
       if (not has_ctrl_block() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
-        if (not append_segment(0)) {
+        if (not append_segment(0, to_add)) {
           return false;
         }
       }
@@ -585,12 +728,6 @@ bool byte_buffer::resize(size_t new_sz)
   }
   ctrl_blk_ptr->pkt_len = new_sz;
   return true;
-}
-
-void byte_buffer::warn_alloc_failure()
-{
-  static srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
-  logger.warning("POOL: Failure to allocate byte buffer segment");
 }
 
 expected<byte_buffer> srsran::make_byte_buffer(const std::string& hex_str)

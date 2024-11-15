@@ -22,6 +22,11 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/io/io_broker.h"
+#include "srsran/support/io/sctp_socket.h"
 #include <arpa/inet.h>
 #include <condition_variable>
 #include <gtest/gtest.h>
@@ -30,12 +35,6 @@
 #include <queue>
 #include <sys/socket.h>
 #include <sys/types.h>
-
-#include "srsran/adt/byte_buffer.h"
-#include "srsran/gateways/sctp_network_gateway.h"
-#include "srsran/srslog/srslog.h"
-#include "srsran/support/io/io_broker.h"
-#include "srsran/support/io/sctp_socket.h"
 
 namespace srsran {
 

@@ -46,6 +46,7 @@
  *    inherit or a notifier that the RLC will keep as a member.
  *
  */
+
 namespace srsran {
 
 /***************************************

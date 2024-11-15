@@ -23,6 +23,7 @@
 #pragma once
 
 #include "external/fmt/include/fmt/core.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/versioning/build_info.h"
 
 namespace srsran {

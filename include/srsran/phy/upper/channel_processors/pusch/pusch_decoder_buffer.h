@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/adt/span.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 

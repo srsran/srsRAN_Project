@@ -25,7 +25,7 @@
 #include "helpers.h"
 #include "srsran/adt/circular_map.h"
 #include "srsran/ofh/ofh_constants.h"
-#include <srsran/ofh/receiver/ofh_sequence_id_checker.h>
+#include "srsran/ofh/receiver/ofh_sequence_id_checker.h"
 
 namespace srsran {
 

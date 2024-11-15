@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "resource_grid.h"
+#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
