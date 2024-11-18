@@ -377,6 +377,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       fmt::format_to(buffer, " crc_delay_ms=n/a");
     }
     fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr, false));
+    fmt::format_to(buffer, " sr_count={}", ue.sr_count);
     if (ue.last_ta.has_value()) {
       fmt::format_to(buffer, " last_ta={}s", float_to_eng_string(ue.last_ta->to_seconds<float>(), 0, false));
     } else {

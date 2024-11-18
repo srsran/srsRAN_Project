@@ -42,6 +42,7 @@ struct scheduler_ue_metrics {
   unsigned                     ul_nof_ok;
   unsigned                     ul_nof_nok;
   unsigned                     bsr;
+  unsigned                     sr_count;
   unsigned                     dl_bs;
   std::optional<phy_time_unit> last_ta;
   std::optional<int>           last_phr;

@@ -35,6 +35,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned count_uci_harqs        = 0;
       unsigned count_crc_acks         = 0;
       unsigned count_crc_pdus         = 0;
+      unsigned count_sr               = 0;
       unsigned dl_mcs                 = 0;
       unsigned nof_dl_cws             = 0;
       unsigned ul_mcs                 = 0;
@@ -132,6 +133,9 @@ public:
 
   /// \brief Handle UCI PDU indication.
   void handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu);
+
+  /// \brief Handle SR indication.
+  void handle_sr_indication(du_ue_index_t ue_index);
 
   /// \brief Handle UL BSR indication.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr);

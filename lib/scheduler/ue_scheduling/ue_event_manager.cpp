@@ -542,6 +542,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                   // Log SR event.
                   du_cells[ue_cc.cell_index].ev_logger->enqueue(
                       scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
+
+                  // Report SR to metrics.
+                  du_cells[ue_cc.cell_index].metrics->handle_sr_indication(ue_cc.ue_index);
                 }
 
                 const bool is_uci_valid = not pucch_f0f1->harqs.empty() or pucch_f0f1->sr_detected;
@@ -577,6 +580,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                   // Log SR event.
                   du_cells[ue_cc.cell_index].ev_logger->enqueue(
                       scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
+
+                  // Report SR to metrics.
+                  du_cells[ue_cc.cell_index].metrics->handle_sr_indication(ue_cc.ue_index);
                 }
 
                 // Process CSI.

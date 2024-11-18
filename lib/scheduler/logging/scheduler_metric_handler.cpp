@@ -159,6 +159,14 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
   }
 }
 
+void cell_metrics_handler::handle_sr_indication(du_ue_index_t ue_index)
+{
+  if (ues.contains(ue_index)) {
+    auto& u = ues[ue_index];
+    u.data.count_sr++;
+  }
+}
+
 void cell_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
 {
   if (ues.contains(bsr.ue_index)) {
@@ -352,6 +360,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
   ret.ul_delay_ms      = data.count_crc_pdus > 0 ? data.sum_ul_delay_ms / data.count_crc_pdus : 0;
   ret.bsr              = last_bsr;
+  ret.sr_count         = data.count_sr;
   ret.dl_bs            = 0;
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
