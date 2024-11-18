@@ -48,12 +48,17 @@ async_task<void> reset_procedure::handle_reset()
   switch (msg->reset_type.type().value) {
     case reset_choice::types_opts::f1_interface:
       // Request DU to remove all UEs.
-      return du_mng.request_reset({});
+      if (ue_mng.nof_ues() != 0) {
+        return du_mng.request_reset({});
+      }
       break;
-    case reset_choice::types_opts::part_of_f1_interface:
+    case reset_choice::types_opts::part_of_f1_interface: {
       // Request DU to remove a subset of UEs.
-      return du_mng.request_reset(create_ues_to_reset());
-      break;
+      std::vector<du_ue_index_t> ues_to_rem = create_ues_to_reset();
+      if (not ues_to_rem.empty()) {
+        return du_mng.request_reset(ues_to_rem);
+      }
+    } break;
     case reset_choice::types_opts::choice_ext:
       break;
     default:
