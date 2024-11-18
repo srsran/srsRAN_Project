@@ -50,8 +50,8 @@ public:
   void on_e2_disconnection() override;
 
 private:
-  srslog::basic_logger& logger;
-  e2ap_configuration    cfg;
+  srslog::basic_logger&     logger;
+  const e2ap_configuration& cfg;
 
   void build_e2_kpm_du(std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
                        srs_du::f1ap_ue_id_translator*                                   f1ap_ue_id_translator);

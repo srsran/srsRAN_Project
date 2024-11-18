@@ -69,3 +69,6 @@ target_link_libraries(srsran_cu_cp
         srsran_e2
         ${CMAKE_DL_LIBS}
 )
+
+add_library(srsran_o_cu_cp o_cu_cp_factory.cpp o_cu_cp_impl.cpp)
+target_link_libraries(srsran_o_cu_cp PRIVATE srsran_cu_cp)

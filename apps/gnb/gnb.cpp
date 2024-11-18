@@ -375,9 +375,9 @@ int main(int argc, char** argv)
   cu_cp_dependencies.e2_gw            = e2_gw_cu_cp.get();
 
   // create CU-CP.
-  auto              cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
-  srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
-  metrics_configs                      = std::move(cu_cp_obj_and_cmds.metrics);
+  auto                cu_cp_obj_and_cmds = cu_cp_app_unit->create_cu_cp(cu_cp_dependencies);
+  srs_cu_cp::o_cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
+  metrics_configs                        = std::move(cu_cp_obj_and_cmds.metrics);
 
   // Create CU-UP
   o_cu_up_unit_dependencies cu_up_unit_deps;
@@ -431,19 +431,19 @@ int main(int argc, char** argv)
   app_services::stdin_command_dispatcher command_parser(*epoll_broker, commands);
 
   // Connect E1AP to CU-CP.
-  e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());
+  e1_gw->attach_cu_cp(cu_cp_obj.get_cu_cp().get_e1_handler());
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
-  cu_cp_obj.start();
+  cu_cp_obj.get_cu_cp().start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (not cu_cp_obj.get_ng_handler().amfs_are_connected()) {
+  if (not cu_cp_obj.get_cu_cp().get_ng_handler().amfs_are_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
 
   // Connect F1-C to CU-CP and start listening for new F1-C connection requests.
-  f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
+  f1c_gw->attach_cu_cp(cu_cp_obj.get_cu_cp().get_f1c_handler());
 
   cu_up_obj.unit->get_power_controller().start();
 
@@ -465,7 +465,7 @@ int main(int argc, char** argv)
   cu_up_obj.unit->get_power_controller().stop();
 
   // Stop CU-CP activity.
-  cu_cp_obj.stop();
+  cu_cp_obj.get_cu_cp().stop();
 
   gnb_logger.info("Closing PCAP files...");
   cu_cp_dlt_pcaps.close();

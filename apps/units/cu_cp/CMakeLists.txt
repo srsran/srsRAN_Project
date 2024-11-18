@@ -10,13 +10,12 @@
 set(SOURCES
         cu_cp_application_unit_impl.cpp
         cu_cp_builder.cpp
-        cu_cp_wrapper.cpp
         cu_cp_unit_config_cli11_schema.cpp
         cu_cp_config_translators.cpp
         cu_cp_unit_config_validator.cpp
         cu_cp_unit_config_yaml_writer.cpp
-        cu_cp_wrapper.cpp)
+        o_cu_cp_unit_impl.cpp)
 
 add_library(srsran_cu_cp_app_unit STATIC ${SOURCES})
 target_include_directories(srsran_cu_cp_app_unit PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_cu_cp_app_unit srsran_e2_app_service)
+target_link_libraries(srsran_cu_cp_app_unit srsran_o_cu_cp srsran_e2_app_service)

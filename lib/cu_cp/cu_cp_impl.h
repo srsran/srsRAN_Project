@@ -206,9 +206,6 @@ private:
   unique_timer statistics_report_timer;
 
   std::atomic<bool> stopped{false};
-
-  // E2 Agent.
-  std::unique_ptr<e2_agent> e2agent;
 };
 
 } // namespace srs_cu_cp
