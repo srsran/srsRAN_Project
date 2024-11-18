@@ -775,6 +775,19 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   app.add_option("--end_rb", pusch_params.end_rb, "End RB for resource allocation of UE PUSCHs")
       ->capture_default_str()
       ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--target_sinr", pusch_params.target_pusch_sinr, "Target PUSCH SINR in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(-5.0, 30.0));
+  app.add_option("--ref_path_loss",
+                 pusch_params.path_loss_for_target_pusch_sinr,
+                 "Reference path-loss for target PUSCH SINR in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(50.0, 120.0));
+  app.add_option("--pl_compensation_factor",
+                 pusch_params.path_loss_compensation_factor,
+                 "Fractional path-loss compensation factor in PUSCH power control")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}));
   app.add_option("--enable_transform_precoding",
                  pusch_params.enable_transform_precoding,
                  "Enable transform precoding for PUSCH.")

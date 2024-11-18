@@ -627,6 +627,19 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     b_offsets.beta_offset_csi_p2_idx_1 = base_cell.pusch_cfg.beta_offset_csi_p2_idx_1;
     b_offsets.beta_offset_csi_p2_idx_2 = base_cell.pusch_cfg.beta_offset_csi_p2_idx_2;
 
+    // Set PUSCH power control parameters.
+    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_pwr_ctrl.has_value()) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_pwr_ctrl.emplace(
+          pusch_config::pusch_power_control{});
+    }
+    auto& pusch_pwr_ctrl =
+        out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_pwr_ctrl.value();
+    if (pusch_pwr_ctrl.p0_alphasets.empty()) {
+      pusch_pwr_ctrl.p0_alphasets.emplace_back();
+    }
+    pusch_pwr_ctrl.p0_alphasets.front().p0_pusch_alpha =
+        float_to_alpha(base_cell.pusch_cfg.path_loss_compensation_factor);
+
     // Parameters for PUCCH-Config.
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.emplace();
@@ -858,8 +871,10 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   if (std::holds_alternative<time_pf_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
     out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
   }
-  out_cfg.ue.ta_cmd_offset_threshold    = app_sched_expert_cfg.ta_sched_cfg.ta_cmd_offset_threshold;
-  out_cfg.ue.ta_measurement_slot_period = app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_period;
+  out_cfg.ue.target_pusch_sinr               = pusch.target_pusch_sinr;
+  out_cfg.ue.path_loss_for_target_pusch_sinr = pusch.path_loss_for_target_pusch_sinr;
+  out_cfg.ue.ta_cmd_offset_threshold         = app_sched_expert_cfg.ta_sched_cfg.ta_cmd_offset_threshold;
+  out_cfg.ue.ta_measurement_slot_period      = app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_period;
   out_cfg.ue.ta_update_measurement_ul_sinr_threshold =
       app_sched_expert_cfg.ta_sched_cfg.ta_update_measurement_ul_sinr_threshold;
 

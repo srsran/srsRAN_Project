@@ -225,6 +225,16 @@ struct du_high_unit_pusch_config {
   /// End RB for resource allocation of UE PUSCHs.
   unsigned end_rb = MAX_NOF_PRBS;
 
+  /// Target PUSCH SINR to be achieved with close-loop power control, in dB.
+  float target_pusch_sinr{10.0f};
+  /// Path-loss at which the Target PUSCH SINR is expected to be achieved, in dB.
+  /// This is used to compute the path loss compensation for PUSCH fractional power control. The value must be positive.
+  /// Only relevant if \c path_loss_compensation_factor is set to a value different from 1.0.
+  float path_loss_for_target_pusch_sinr{70.0f};
+  /// Factor "alpha" for fractional path-loss compensation in PUSCH power control.
+  /// Values: {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}.
+  float path_loss_compensation_factor{1.0f};
+
   /// Set to true to enable transform precoding in PUSCH.
   bool enable_transform_precoding = false;
 };
