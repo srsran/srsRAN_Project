@@ -39,14 +39,8 @@ public:
   error_type<std::string> is_valid(const pucch_processor::format0_configuration& config) const override;
   error_type<std::string> is_valid(const pucch_processor::format1_configuration& config) const override;
   error_type<std::string> is_valid(const pucch_processor::format2_configuration& config) const override;
-  error_type<std::string> is_valid(const pucch_processor::format3_configuration& config) const override
-  {
-    return default_success_t();
-  }
-  error_type<std::string> is_valid(const pucch_processor::format4_configuration& config) const override
-  {
-    return default_success_t();
-  }
+  error_type<std::string> is_valid(const pucch_processor::format3_configuration& config) const override;
+  error_type<std::string> is_valid(const pucch_processor::format4_configuration& config) const override;
 
 private:
   /// Maximum transmit and receive resource grid dimensions handled by the PUCCH processor.
@@ -57,8 +51,8 @@ private:
 class pucch_processor_impl : public pucch_processor
 {
 public:
-  /// Maximum supported PUCCH Format 2 UCI payload length in number of bits.
-  static constexpr unsigned FORMAT2_MAX_UCI_NBITS = 1706;
+  /// Maximum supported UCI payload length in number of bits for PUCCH Formats 2, 3 and 4.
+  static constexpr unsigned FORMATS_2_3_4_MAX_UCI_NBITS = 1706;
 
   // See interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override;
@@ -70,18 +64,10 @@ public:
   pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override;
 
   // See interface for documentation.
-  pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) override
-  {
-    // TBD.
-    return {};
-  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) override;
 
   // See interface for documentation.
-  pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) override
-  {
-    // TBD.
-    return {};
-  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) override;
 
   /// PUCCH processor constructor.
   pucch_processor_impl(std::unique_ptr<pucch_pdu_validator>                 pdu_validator_,

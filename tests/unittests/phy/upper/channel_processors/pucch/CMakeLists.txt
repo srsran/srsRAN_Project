@@ -25,7 +25,9 @@ add_test(pucch_processor_format1_unittest pucch_processor_format1_unittest)
 add_executable(pucch_processor_validators_test
         pucch_processor_validator_format0_test.cpp
         pucch_processor_validator_format1_test.cpp
-        pucch_processor_validator_format2_test.cpp)
+        pucch_processor_validator_format2_test.cpp
+        pucch_processor_validator_format3_test.cpp
+        pucch_processor_validator_format4_test.cpp)
 target_link_libraries(pucch_processor_validators_test
         srsran_channel_equalizer
         srsran_channel_processors
@@ -117,4 +119,28 @@ if (USE_PHY_TESTVECTORS)
             gtest_main)
     add_test(pucch_processor_format2_vectortest pucch_processor_format2_vectortest)
     add_test_vector(pucch_processor_format2_vectortest pucch_processor_format2_test_data.tar.gz "")
+
+    add_executable(pucch_processor_format3_vectortest pucch_processor_format3_vectortest.cpp)
+    target_link_libraries(pucch_processor_format3_vectortest
+            srsran_channel_processors
+            srsran_channel_equalizer
+            srsran_generic_funcs
+            srsran_phy_support
+            srsran_transform_precoding
+            gtest
+            gtest_main)
+    add_test(pucch_processor_format3_vectortest pucch_processor_format3_vectortest)
+    add_test_vector(pucch_processor_format3_vectortest pucch_processor_format3_test_data.tar.gz "")
+
+    add_executable(pucch_processor_format4_vectortest pucch_processor_format4_vectortest.cpp)
+    target_link_libraries(pucch_processor_format4_vectortest
+            srsran_channel_processors
+            srsran_channel_equalizer
+            srsran_generic_funcs
+            srsran_phy_support
+            srsran_transform_precoding
+            gtest
+            gtest_main)
+    add_test(pucch_processor_format4_vectortest pucch_processor_format4_vectortest)
+    add_test_vector(pucch_processor_format4_vectortest pucch_processor_format4_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)

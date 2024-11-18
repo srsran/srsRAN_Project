@@ -21,7 +21,7 @@ using namespace srsran;
 
 namespace srsran {
 
-std::ostream& operator<<(std::ostream& os, test_case_t test_case)
+std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
   fmt::print(os,
              "grid: {} RB x {} symb, PUCCH config: {}",

@@ -9,6 +9,7 @@
  */
 
 #include "pucch_processor_impl.h"
+#include "srsran/phy/upper/pucch_formats3_4_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/support/transform_optional.h"
 
@@ -66,14 +67,12 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   // Prepare channel estimation.
   dmrs_pucch_estimator::format1_configuration estimator_config;
-  estimator_config.slot               = config.slot;
-  estimator_config.cp                 = config.cp;
-  estimator_config.start_symbol_index = config.start_symbol_index;
-  estimator_config.nof_symbols        = config.nof_symbols;
-  estimator_config.starting_prb       = config.starting_prb + config.bwp_start_rb;
-  estimator_config.second_hop_prb     = transform_optional(
-      config.second_hop_prb,
-      [bwp_start_rb = config.bwp_start_rb](unsigned second_hop_prb) { return second_hop_prb + bwp_start_rb; }),
+  estimator_config.slot                 = config.slot;
+  estimator_config.cp                   = config.cp;
+  estimator_config.start_symbol_index   = config.start_symbol_index;
+  estimator_config.nof_symbols          = config.nof_symbols;
+  estimator_config.starting_prb         = config.starting_prb + config.bwp_start_rb;
+  estimator_config.second_hop_prb       = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
   estimator_config.initial_cyclic_shift = config.initial_cyclic_shift;
   estimator_config.time_domain_occ      = config.time_domain_occ;
   estimator_config.n_id                 = config.n_id;
@@ -153,12 +152,9 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   estimator_config.start_symbol_index = config.start_symbol_index;
   estimator_config.nof_symbols        = config.nof_symbols;
   estimator_config.starting_prb       = config.bwp_start_rb + config.starting_prb;
-  estimator_config.second_hop_prb     = transform_optional(
-      config.second_hop_prb,
-      [bwp_start_rb = config.bwp_start_rb](unsigned second_hop_prb) { return second_hop_prb + bwp_start_rb; }),
-  estimator_config.nof_prb = config.nof_prb;
-  estimator_config.n_id    = config.n_id;
-  estimator_config.n_id_0  = config.n_id_0;
+  estimator_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
+  estimator_config.nof_prb            = config.nof_prb;
+  estimator_config.n_id_0             = config.n_id_0;
   estimator_config.ports.assign(config.ports.begin(), config.ports.end());
 
   // Prepare channel estimate.
@@ -196,6 +192,183 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   // UCI decoder configuration.
   uci_decoder::configuration decoder_config;
   decoder_config.modulation = modulation_scheme::QPSK;
+
+  // Decode UCI payload.
+  result.message.set_status(decoder->decode(result.message.get_full_payload(), llr, decoder_config));
+
+  // Expected UCI payload length in number of bits.
+  unsigned expected_nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
+
+  // Assert that the decoded UCI payload has the expected number of bits.
+  srsran_assert(result.message.get_full_payload().size() == expected_nof_uci_bits,
+                "Decoded UCI payload length, i.e., {}, does not match expected number of UCI bits, i.e., {}.",
+                result.message.get_full_payload().size(),
+                expected_nof_uci_bits);
+
+  return result;
+}
+
+pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&  grid,
+                                                     const format3_configuration& config)
+{
+  // Check that the PUCCH Format 3 configuration is valid.
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdu_validator->is_valid(config)), "{}", msg);
+
+  pucch_processor_result result;
+
+  // PUCCH UCI message configuration.
+  pucch_uci_message::configuration pucch_uci_message_config;
+  pucch_uci_message_config.nof_sr        = config.nof_sr;
+  pucch_uci_message_config.nof_harq_ack  = config.nof_harq_ack;
+  pucch_uci_message_config.nof_csi_part1 = config.nof_csi_part1;
+  pucch_uci_message_config.nof_csi_part2 = config.nof_csi_part2;
+
+  result.message = pucch_uci_message(pucch_uci_message_config);
+
+  // Channel estimator configuration.
+  dmrs_pucch_estimator::format3_configuration estimator_config;
+  estimator_config.slot               = config.slot;
+  estimator_config.cp                 = config.cp;
+  estimator_config.group_hopping      = pucch_group_hopping::NEITHER;
+  estimator_config.start_symbol_index = config.start_symbol_index;
+  estimator_config.nof_symbols        = config.nof_symbols;
+  estimator_config.starting_prb       = config.bwp_start_rb + config.starting_prb;
+  estimator_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
+  estimator_config.nof_prb            = config.nof_prb;
+  estimator_config.n_id               = config.n_id_hopping;
+  estimator_config.ports.assign(config.ports.begin(), config.ports.end());
+  estimator_config.additional_dmrs = config.additional_dmrs;
+
+  // Prepare channel estimate.
+  channel_estimate::channel_estimate_dimensions dims;
+  dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
+  dims.nof_symbols   = get_nsymb_per_slot(config.cp);
+  dims.nof_rx_ports  = config.ports.size();
+  dims.nof_tx_layers = pucch_constants::MAX_LAYERS;
+
+  estimates.resize(dims);
+
+  // Perform channel estimation.
+  channel_estimator->estimate(estimates, grid, estimator_config);
+
+  estimates.get_channel_state_information(result.csi);
+
+  const symbol_slot_mask dmrs_symb_mask = get_pucch_formats3_4_dmrs_symbol_mask(
+      config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
+  const modulation_scheme mod_scheme = config.pi2_bpsk ? modulation_scheme::PI_2_BPSK : modulation_scheme::QPSK;
+
+  span<log_likelihood_ratio> llr = span<log_likelihood_ratio>(temp_llr).first(
+      NRE * config.nof_prb * (config.nof_symbols - dmrs_symb_mask.count()) * get_bits_per_symbol(mod_scheme));
+
+  // PUCCH Format 3 demodulator configuration.
+  pucch_demodulator::format3_configuration demod_config;
+  demod_config.rx_ports           = config.ports;
+  demod_config.first_prb          = config.bwp_start_rb + config.starting_prb;
+  demod_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
+  demod_config.nof_prb            = config.nof_prb;
+  demod_config.start_symbol_index = config.start_symbol_index;
+  demod_config.nof_symbols        = config.nof_symbols;
+  demod_config.rnti               = config.rnti;
+  demod_config.n_id               = config.n_id_scrambling;
+  demod_config.additional_dmrs    = config.additional_dmrs;
+  demod_config.pi2_bpsk           = config.pi2_bpsk;
+
+  // Perform demodulation.
+  demodulator->demodulate(llr, grid, estimates, demod_config);
+
+  // UCI decoder configuration.
+  uci_decoder::configuration decoder_config;
+  decoder_config.modulation = mod_scheme;
+
+  // Decode UCI payload.
+  result.message.set_status(decoder->decode(result.message.get_full_payload(), llr, decoder_config));
+
+  // Expected UCI payload length in number of bits.
+  unsigned expected_nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
+
+  // Assert that the decoded UCI payload has the expected number of bits.
+  srsran_assert(result.message.get_full_payload().size() == expected_nof_uci_bits,
+                "Decoded UCI payload length, i.e., {}, does not match expected number of UCI bits, i.e., {}.",
+                result.message.get_full_payload().size(),
+                expected_nof_uci_bits);
+
+  return result;
+}
+
+pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&  grid,
+                                                     const format4_configuration& config)
+{
+  // Check that the PUCCH Format 4 configuration is valid.
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdu_validator->is_valid(config)), "{}", msg);
+
+  pucch_processor_result result;
+
+  // PUCCH UCI message configuration.
+  pucch_uci_message::configuration pucch_uci_message_config;
+  pucch_uci_message_config.nof_sr        = config.nof_sr;
+  pucch_uci_message_config.nof_harq_ack  = config.nof_harq_ack;
+  pucch_uci_message_config.nof_csi_part1 = config.nof_csi_part1;
+  pucch_uci_message_config.nof_csi_part2 = config.nof_csi_part2;
+
+  result.message = pucch_uci_message(pucch_uci_message_config);
+
+  // Channel estimator configuration.
+  dmrs_pucch_estimator::format4_configuration estimator_config;
+  estimator_config.slot               = config.slot;
+  estimator_config.cp                 = config.cp;
+  estimator_config.group_hopping      = pucch_group_hopping::NEITHER;
+  estimator_config.start_symbol_index = config.start_symbol_index;
+  estimator_config.nof_symbols        = config.nof_symbols;
+  estimator_config.starting_prb       = config.bwp_start_rb + config.starting_prb;
+  estimator_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
+  estimator_config.n_id               = config.n_id_hopping;
+  estimator_config.ports.assign(config.ports.begin(), config.ports.end());
+  estimator_config.additional_dmrs = config.additional_dmrs;
+  estimator_config.occ_index       = config.occ_index;
+
+  // Prepare channel estimate.
+  channel_estimate::channel_estimate_dimensions dims;
+  dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
+  dims.nof_symbols   = get_nsymb_per_slot(config.cp);
+  dims.nof_rx_ports  = config.ports.size();
+  dims.nof_tx_layers = pucch_constants::MAX_LAYERS;
+
+  estimates.resize(dims);
+
+  // Perform channel estimation.
+  channel_estimator->estimate(estimates, grid, estimator_config);
+
+  estimates.get_channel_state_information(result.csi);
+
+  const symbol_slot_mask dmrs_symb_mask = get_pucch_formats3_4_dmrs_symbol_mask(
+      config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
+  const modulation_scheme mod_scheme = config.pi2_bpsk ? modulation_scheme::PI_2_BPSK : modulation_scheme::QPSK;
+
+  span<log_likelihood_ratio> llr = span<log_likelihood_ratio>(temp_llr).first(
+      NRE * (config.nof_symbols - dmrs_symb_mask.count()) * get_bits_per_symbol(mod_scheme) / config.occ_length);
+
+  // PUCCH Format 4 demodulator configuration.
+  pucch_demodulator::format4_configuration demod_config;
+  demod_config.rx_ports           = config.ports;
+  demod_config.first_prb          = config.bwp_start_rb + config.starting_prb;
+  demod_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
+  demod_config.start_symbol_index = config.start_symbol_index;
+  demod_config.nof_symbols        = config.nof_symbols;
+  demod_config.rnti               = config.rnti;
+  demod_config.n_id               = config.n_id_scrambling;
+  demod_config.additional_dmrs    = config.additional_dmrs;
+  demod_config.pi2_bpsk           = config.pi2_bpsk;
+  demod_config.occ_index          = config.occ_index;
+  demod_config.occ_length         = config.occ_length;
+
+  // Perform demodulation.
+  demodulator->demodulate(llr, grid, estimates, demod_config);
+
+  // UCI decoder configuration.
+  uci_decoder::configuration decoder_config;
+  decoder_config.modulation = mod_scheme;
 
   // Decode UCI payload.
   result.message.set_status(decoder->decode(result.message.get_full_payload(), llr, decoder_config));
@@ -413,12 +586,187 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
 
   // UCI payload exceeds the UCI payload size boundaries.
   if (nof_uci_bits < pucch_constants::FORMAT2_MIN_UCI_NBITS ||
-      nof_uci_bits > pucch_processor_impl::FORMAT2_MAX_UCI_NBITS) {
+      nof_uci_bits > pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS) {
     return make_unexpected(
         fmt::format("UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
                     nof_uci_bits,
                     pucch_constants::FORMAT2_MIN_UCI_NBITS,
-                    static_cast<unsigned>(pucch_processor_impl::FORMAT2_MAX_UCI_NBITS)));
+                    static_cast<unsigned>(pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS)));
+  }
+
+  return default_success_t();
+}
+
+error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor::format3_configuration& config) const
+{
+  // The BWP size exceeds the grid dimensions.
+  if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
+    return make_unexpected(
+        fmt::format("BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
+                    config.bwp_start_rb + config.bwp_size_rb,
+                    ce_dims.nof_prb));
+  }
+
+  // None of the occupied PRB within the BWP can exceed the BWP dimensions.
+  if (config.starting_prb + config.nof_prb > config.bwp_size_rb) {
+    return make_unexpected(fmt::format("PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
+                                       config.starting_prb + config.nof_prb,
+                                       config.bwp_size_rb));
+  }
+
+  // None of the occupied symbols can exceed the configured maximum slot size, or the slot size given by the CP.
+  if (config.start_symbol_index + config.nof_symbols > get_nsymb_per_slot(config.cp)) {
+    return make_unexpected(fmt::format(
+        "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
+        "{} CP, i.e., {}.",
+        config.start_symbol_index + config.nof_symbols,
+        config.cp.to_string(),
+        get_nsymb_per_slot(config.cp)));
+  }
+
+  if (config.start_symbol_index + config.nof_symbols > ce_dims.nof_symbols) {
+    return make_unexpected(fmt::format("OFDM symbol allocation goes up to symbol {}, exceeding the configured maximum "
+                                       "number of slot symbols, i.e., {}.",
+                                       config.start_symbol_index + config.nof_symbols,
+                                       ce_dims.nof_symbols));
+  }
+
+  // The number of receive ports is either zero or exceeds the configured maximum number of receive ports.
+  if (config.ports.empty()) {
+    return make_unexpected(fmt::format("The number of receive ports cannot be zero."));
+  }
+
+  if (config.ports.size() > ce_dims.nof_rx_ports) {
+    return make_unexpected(fmt::format(
+        "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
+        config.ports.size(),
+        ce_dims.nof_rx_ports));
+  }
+
+  // CSI Part 2 is not supported.
+  if (config.nof_csi_part2 != 0) {
+    return make_unexpected(fmt::format("CSI Part 2 is not currently supported."));
+  }
+
+  // Count total number of payload bits.
+  unsigned nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
+
+  // Calculate effective code rate.
+  symbol_slot_mask dmrs_symb_mask = get_pucch_formats3_4_dmrs_symbol_mask(
+      config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
+  float effective_code_rate = pucch_format3_code_rate(
+      config.nof_prb, config.nof_symbols - dmrs_symb_mask.count(), config.pi2_bpsk, nof_uci_bits);
+
+  // The code rate shall not exceed the maximum.
+  if (effective_code_rate > pucch_constants::MAX_CODE_RATE) {
+    return make_unexpected(fmt::format("The effective code rate (i.e., {}) exceeds the maximum allowed {}.",
+                                       effective_code_rate,
+                                       static_cast<float>(pucch_constants::MAX_CODE_RATE)));
+  }
+
+  // UCI payload exceeds the UCI payload size boundaries.
+  if (nof_uci_bits < pucch_constants::FORMAT3_MIN_UCI_NBITS ||
+      nof_uci_bits > pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS) {
+    return make_unexpected(
+        fmt::format("UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
+                    nof_uci_bits,
+                    pucch_constants::FORMAT3_MIN_UCI_NBITS,
+                    static_cast<unsigned>(pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS)));
+  }
+
+  // The number of allocated PRBs is outside the allowed range.
+  static constexpr interval<unsigned, true> nof_prb_range(1, 16);
+  if (!nof_prb_range.contains(config.nof_prb)) {
+    return make_unexpected(
+        fmt::format("Number of PRBs (i.e., {}) is outside the allowed range for PUCCH Format 3 (i.e., {}).",
+                    config.nof_prb,
+                    nof_prb_range));
+  }
+
+  return default_success_t();
+}
+
+error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor::format4_configuration& config) const
+{
+  // The BWP size exceeds the grid dimensions.
+  if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
+    return make_unexpected(
+        fmt::format("BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
+                    config.bwp_start_rb + config.bwp_size_rb,
+                    ce_dims.nof_prb));
+  }
+
+  // None of the occupied PRB within the BWP can exceed the BWP dimensions.
+  if (config.starting_prb + 1 > config.bwp_size_rb) {
+    return make_unexpected(fmt::format("PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
+                                       config.starting_prb + 1,
+                                       config.bwp_size_rb));
+  }
+
+  // None of the occupied symbols can exceed the configured maximum slot size, or the slot size given by the CP.
+  if (config.start_symbol_index + config.nof_symbols > get_nsymb_per_slot(config.cp)) {
+    return make_unexpected(fmt::format(
+        "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
+        "{} CP, i.e., {}.",
+        config.start_symbol_index + config.nof_symbols,
+        config.cp.to_string(),
+        get_nsymb_per_slot(config.cp)));
+  }
+
+  if (config.start_symbol_index + config.nof_symbols > ce_dims.nof_symbols) {
+    return make_unexpected(fmt::format("OFDM symbol allocation goes up to symbol {}, exceeding the configured maximum "
+                                       "number of slot symbols, i.e., {}.",
+                                       config.start_symbol_index + config.nof_symbols,
+                                       ce_dims.nof_symbols));
+  }
+
+  // The number of receive ports is either zero or exceeds the configured maximum number of receive ports.
+  if (config.ports.empty()) {
+    return make_unexpected(fmt::format("The number of receive ports cannot be zero."));
+  }
+
+  if (config.ports.size() > ce_dims.nof_rx_ports) {
+    return make_unexpected(fmt::format(
+        "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
+        config.ports.size(),
+        ce_dims.nof_rx_ports));
+  }
+
+  // CSI Part 2 is not supported.
+  if (config.nof_csi_part2 != 0) {
+    return make_unexpected(fmt::format("CSI Part 2 is not currently supported."));
+  }
+
+  // Count total number of payload bits.
+  unsigned nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
+
+  // Calculate effective code rate.
+  symbol_slot_mask dmrs_symb_mask = get_pucch_formats3_4_dmrs_symbol_mask(
+      config.nof_symbols, config.second_hop_prb.has_value(), config.additional_dmrs);
+  float effective_code_rate = pucch_format4_code_rate(
+      config.occ_length, config.nof_symbols - dmrs_symb_mask.count(), config.pi2_bpsk, nof_uci_bits);
+
+  // The code rate shall not exceed the maximum.
+  if (effective_code_rate > pucch_constants::MAX_CODE_RATE) {
+    return make_unexpected(fmt::format("The effective code rate (i.e., {}) exceeds the maximum allowed {}.",
+                                       effective_code_rate,
+                                       static_cast<float>(pucch_constants::MAX_CODE_RATE)));
+  }
+
+  // UCI payload exceeds the UCI payload size boundaries.
+  if (nof_uci_bits < pucch_constants::FORMAT4_MIN_UCI_NBITS ||
+      nof_uci_bits > pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS) {
+    return make_unexpected(
+        fmt::format("UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
+                    nof_uci_bits,
+                    pucch_constants::FORMAT4_MIN_UCI_NBITS,
+                    static_cast<unsigned>(pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS)));
+  }
+
+  // The OCC length is invalid.
+  if ((config.occ_length != 2) && (config.occ_length != 4)) {
+    return make_unexpected(
+        fmt::format("Invalid OCC length value (i.e., {}). Valid values are 2 and 4.", config.occ_length));
   }
 
   return default_success_t();

@@ -144,32 +144,88 @@ struct formatter<srsran::pucch_processor::format2_configuration> {
 /// \brief Custom formatter for \c pucch_processor::format3_configuration.
 template <>
 struct formatter<srsran::pucch_processor::format3_configuration> {
+  /// Helper used to parse formatting options and format fields.
+  srsran::delimited_formatter helper;
+
+  /// Default constructor.
+  formatter() = default;
+
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
-    return ctx.begin();
+    return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor::format3_configuration& config, FormatContext& ctx)
   {
-    return format_to(ctx.out(), "format3_configuration");
+    if (config.context.has_value()) {
+      helper.format_always(ctx, config.context.value());
+    } else {
+      helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
+    }
+    helper.format_always(ctx, "format=3");
+    helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
+    helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + config.nof_prb);
+    helper.format_always(
+        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
+    helper.format_always(
+        ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
+
+    helper.format_if_verbose(ctx, "n_id_scr={}", config.n_id_scrambling);
+    helper.format_if_verbose(ctx, "n_id_hop={}", config.n_id_hopping);
+    helper.format_if_verbose(ctx, "slot={}", config.slot);
+    helper.format_if_verbose(ctx, "cp={}", config.cp.to_string());
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(config.ports));
+    helper.format_if_verbose(ctx, "mod={}", config.pi2_bpsk ? "pi/2-BPSK" : "QPSK");
+    helper.format_if_verbose(ctx, "+DM-RS={}", config.additional_dmrs ? "ON" : "OFF");
+
+    return ctx.out();
   }
 };
 
 /// \brief Custom formatter for \c pucch_processor::format4_configuration.
 template <>
 struct formatter<srsran::pucch_processor::format4_configuration> {
+  /// Helper used to parse formatting options and format fields.
+  srsran::delimited_formatter helper;
+
+  /// Default constructor.
+  formatter() = default;
+
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
-    return ctx.begin();
+    return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor::format4_configuration& config, FormatContext& ctx)
   {
-    return format_to(ctx.out(), "format4_configuration");
+    if (config.context.has_value()) {
+      helper.format_always(ctx, config.context.value());
+    } else {
+      helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
+    }
+    helper.format_always(ctx, "format=3");
+    helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
+    helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + 1);
+    helper.format_always(
+        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
+    helper.format_always(
+        ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
+
+    helper.format_if_verbose(ctx, "n_id_scr={}", config.n_id_scrambling);
+    helper.format_if_verbose(ctx, "n_id_hop={}", config.n_id_hopping);
+    helper.format_if_verbose(ctx, "slot={}", config.slot);
+    helper.format_if_verbose(ctx, "cp={}", config.cp.to_string());
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(config.ports));
+    helper.format_if_verbose(ctx, "mod={}", config.pi2_bpsk ? "pi/2-BPSK" : "QPSK");
+    helper.format_if_verbose(ctx, "+DM-RS={}", config.additional_dmrs ? "ON" : "OFF");
+    helper.format_if_verbose(ctx, "occ={}", config.occ_index);
+    helper.format_if_verbose(ctx, "occ_len={}", config.occ_length);
+
+    return ctx.out();
   }
 };
 

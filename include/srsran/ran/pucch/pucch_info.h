@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_integer.h"
+#include "srsran/phy/constants.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/uci/uci_info.h"
@@ -21,6 +22,18 @@ namespace srsran {
 inline unsigned get_pucch_format2_E_total(unsigned nof_prb, unsigned nof_symbols)
 {
   return 16U * nof_symbols * nof_prb;
+}
+
+/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per Table 6.3.1.4-1 TS 38.212.
+inline unsigned get_pucch_format3_E_total(unsigned nof_prb, unsigned nof_symbols, bool pi2_bpsk)
+{
+  return (pi2_bpsk ? 12U : 24U) * nof_symbols * nof_prb;
+}
+
+/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per Table 6.3.1.4-1 TS 38.212.
+inline unsigned get_pucch_format4_E_total(unsigned spreading_factor, unsigned nof_symbols, bool pi2_bpsk)
+{
+  return (pi2_bpsk ? 12U : 24U) * nof_symbols / spreading_factor;
 }
 
 /// \brief Calculates the effective code rate for a PUCCH Format 2 transmission, for CSI of 1 part only.
@@ -41,6 +54,54 @@ inline float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, uns
 
   // PUCCH format 2 channel bits are modulated as QPSK and mapped to two of every three resource elements.
   const unsigned nof_channel_bits = (nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC * nof_symbols * 2);
+
+  // Calculate code rate.
+  return static_cast<float>(payload_plus_crc_bits) / static_cast<float>(nof_channel_bits);
+}
+
+/// \brief Calculates the effective code rate for a PUCCH Format 3 transmission, for CSI of 1 part only.
+/// \param[in] nof_prb           Transmission bandwidth in PRB.
+/// \param[in] nof_data_symbols  Number of symbols in the resource that contain data.
+/// \param[in] nof_payload_bits  Total number of payload bits.
+/// \return The effective code rate of the PUCCH Format 3 transmission.
+inline float
+pucch_format3_code_rate(unsigned nof_prb, unsigned nof_data_symbols, bool pi2_bpsk, unsigned nof_payload_bits)
+{
+  // As per Table 6.3.1.4.1-1, TS 38.212, for UCI of transmissions of CSI of one part only,
+  // \f$E_{UCI}\f$ = \f$E_{tot}\f$.
+  const unsigned e_uci = get_pucch_format3_E_total(nof_prb, nof_data_symbols, pi2_bpsk);
+
+  // As per Sections 6.3.1.2.1 and 6.3.1.4.1, TS 38.212, the parameter \f$E\f$ used to derive the number of
+  // code-blocks is \f$E_{UCI}\f$.
+  const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
+
+  // PUCCH format 3 channel bits are modulated as either QPSK or pi/2-BPSK and mapped to all REs
+  // of the symbols that contain data.
+  const unsigned nof_channel_bits = (nof_prb * NRE * nof_data_symbols * (pi2_bpsk ? 1 : 2));
+
+  // Calculate code rate.
+  return static_cast<float>(payload_plus_crc_bits) / static_cast<float>(nof_channel_bits);
+}
+
+/// \brief Calculates the effective code rate for a PUCCH Format 4 transmission, for CSI of 1 part only.
+/// \param[in] spreading_factor  Spreading factor.
+/// \param[in] nof_data_symbols  Number of symbols in the resource that contain data.
+/// \param[in] nof_payload_bits  Total number of payload bits.
+/// \return The effective code rate of the PUCCH Format 4 transmission.
+inline float
+pucch_format4_code_rate(unsigned spreading_factor, unsigned nof_data_symbols, bool pi2_bpsk, unsigned nof_payload_bits)
+{
+  // As per Table 6.3.1.4.1-1, TS 38.212, for UCI of transmissions of CSI of one part only,
+  // \f$E_{UCI}\f$ = \f$E_{tot}\f$.
+  const unsigned e_uci = get_pucch_format4_E_total(spreading_factor, nof_data_symbols, pi2_bpsk);
+
+  // As per Sections 6.3.1.2.1 and 6.3.1.4.1, TS 38.212, the parameter \f$E\f$ used to derive the number of
+  // code-blocks is \f$E_{UCI}\f$.
+  const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
+
+  // PUCCH format 4 channel bits are modulated as either QPSK or pi/2-BPSK and mapped to all REs
+  // of the symbols that contain data.
+  const unsigned nof_channel_bits = (NRE * nof_data_symbols * (pi2_bpsk ? 1 : 2));
 
   // Calculate code rate.
   return static_cast<float>(payload_plus_crc_bits) / static_cast<float>(nof_channel_bits);

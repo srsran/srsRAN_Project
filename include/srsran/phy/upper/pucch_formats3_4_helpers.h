@@ -198,8 +198,9 @@ inline void pucch_3_4_extract_and_equalize(span<cf_t>                  eq_re,
       re_symb.set_slice(i_port, re_symb_view);
 
       // Extract estimates from the estimates buffer.
-      estimates_symb.set_channel(
-          estimates.get_symbol_ch_estimate(i_symbol, i_port).subspan(first_subc, nof_re_symb), i_port, 0);
+      span<const cbf16_t> estimates_symb_view =
+          estimates.get_symbol_ch_estimate(i_symbol, i_port).subspan(first_subc, nof_re_symb);
+      estimates_symb.set_channel(estimates_symb_view, i_port, 0);
     }
 
     // Get a view of the equalized RE buffer for a single symbol.
@@ -218,6 +219,7 @@ inline void pucch_3_4_extract_and_equalize(span<cf_t>                  eq_re,
 
     // Revert transform precoding for a single symbol.
     precoder.deprecode_ofdm_symbol(eq_re_symb, eq_re_symb);
+    precoder.deprecode_ofdm_symbol_noise(eq_noise_vars_symb, eq_noise_vars_symb);
 
     // Advance the equalized RE and noise vars views.
     eq_re         = eq_re.last(eq_re.size() - nof_re_symb);

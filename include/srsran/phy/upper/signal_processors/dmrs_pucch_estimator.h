@@ -42,17 +42,17 @@ public:
     /// \brief Index of first PRB of the second hop if intra-slot frequency hopping is enabled, empty otherwise.
     /// \remark see PUCCH-Resource IE in TS38.331.
     std::optional<unsigned> second_hop_prb;
-    /// \brief Parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.2.2.
-    ///
-    /// Higher layer parameter \e hoppingID if configured (Cell-specific scrambling ID for group hopping and sequence
-    /// hopping), otherwise the physical cell identifier.
-    unsigned n_id;
     /// Port indices the PUCCH transmission is mapped onto.
     static_vector<uint8_t, DMRS_MAX_NPORTS> ports;
   };
 
   /// Collects specific PUCCH Format 1 parameters.
   struct format1_configuration : common_configuration {
+    /// \brief Parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.2.2.
+    ///
+    /// Higher layer parameter \e hoppingID if configured (Cell-specific scrambling ID for group hopping and sequence
+    /// hopping), otherwise the physical cell identifier.
+    unsigned n_id;
     /// Initial cyclic shift, as defined in TS38.211 Section 6.3.2.2.2.
     unsigned initial_cyclic_shift;
     /// Orthogonal Cover Code Index.
@@ -72,6 +72,11 @@ public:
 
   /// Collects specific PUCCH Format 3 parameters.
   struct format3_configuration : common_configuration {
+    /// \brief Parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.2.2.
+    ///
+    /// Higher layer parameter \e hoppingID if configured (Cell-specific scrambling ID for group hopping and sequence
+    /// hopping), otherwise the physical cell identifier.
+    unsigned n_id;
     /// Number of PRBs.
     unsigned nof_prb;
     /// \brief Additional DM-RS flag (true if enabled), indicating two DM-RS symbols per hop.
@@ -81,6 +86,11 @@ public:
 
   /// Collects specific PUCCH Format 4 parameters.
   struct format4_configuration : common_configuration {
+    /// \brief Parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.2.2.
+    ///
+    /// Higher layer parameter \e hoppingID if configured (Cell-specific scrambling ID for group hopping and sequence
+    /// hopping), otherwise the physical cell identifier.
+    unsigned n_id;
     /// \brief Additional DM-RS flag (true if enabled), indicating two DM-RS symbols per hop.
     /// \remark See PUCCH-Format-Config IE in TS38.331.
     bool additional_dmrs;
