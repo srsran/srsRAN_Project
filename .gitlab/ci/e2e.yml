@@ -493,7 +493,18 @@ viavi-extended:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
-    KEYWORDS: "extended"
+    KEYWORDS: "extended and not 24h"
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
+
+viavi-extended-24h:
+  extends: .viavi
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    KEYWORDS: "extended and 24h"
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
