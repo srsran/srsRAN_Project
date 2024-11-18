@@ -40,6 +40,7 @@ add_backward(srsdu)
 target_include_directories(srsdu PRIVATE ${CMAKE_SOURCE_DIR})
 install(TARGETS srsdu RUNTIME)
 target_link_libraries(srsdu PRIVATE srsdu_base srsran_flexible_du_split_dynamic)
+notify_binary_target(srsdu)
 
 
 # Add the targets for the rest of the splits.
@@ -54,4 +55,5 @@ foreach(NAME LIB IN ZIP_LISTS EXTENSIONS LIBRARIES)
     target_include_directories(${TARGET} PRIVATE ${CMAKE_SOURCE_DIR})
     target_link_libraries(${TARGET} PRIVATE srsdu_base ${LIB})
     set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../${NAME}" RUNTIME_OUTPUT_NAME "srsdu")
+    notify_binary_target(${TARGET})
 endforeach ()

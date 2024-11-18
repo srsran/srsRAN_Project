@@ -406,6 +406,14 @@ endforeach()
 add_custom_target(all_srsran_headers SOURCES ${ALL_HEADER_FILES})
 
 ########################################################################
+# Simple function to notify binary targets.
+########################################################################
+
+function(notify_binary_target)
+    message(STATUS "Adding binary target:${ARGV}")
+endfunction()
+
+########################################################################
 # Add the subdirectories
 ########################################################################
 
@@ -445,7 +453,7 @@ endif ()
 if(ENABLE_EXPORT)
   export(EXPORT srsran_export NAMESPACE srsran:: FILE "${CMAKE_BINARY_DIR}/srsran.cmake")
 else(ENABLE_EXPORT)
-  # Remove any previous export file (if it exists), since it will become outdated.
+  # Remove any previous export file (if it   exists), since it will become outdated.
   file(REMOVE "${CMAKE_BINARY_DIR}/srsran.cmake")
 endif(ENABLE_EXPORT)
 

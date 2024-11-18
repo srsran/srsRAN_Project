@@ -34,3 +34,4 @@ target_link_libraries(srscu PRIVATE
 add_backward(srscu)
 
 target_include_directories(srscu PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
+notify_binary_target(srscu)
