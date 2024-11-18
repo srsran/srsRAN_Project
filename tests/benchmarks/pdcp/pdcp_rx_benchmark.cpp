@@ -71,6 +71,8 @@ struct bench_params {
   unsigned nof_crypto_threads = 8;
   unsigned crypto_queue_size  = 4096;
   bool     print_timing_info  = false;
+  unsigned nof_sdus           = 1024;
+  unsigned sdu_len            = 1500;
 };
 
 struct app_params {
@@ -87,6 +89,8 @@ static void usage(const char* prog, const bench_params& params, const app_params
   fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", app.algo);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-w Number of crypto workers [Default {}]\n", params.nof_crypto_threads);
+  fmt::print("\t-p Number of SDUs per repetition [Default {}]\n", params.nof_sdus);
+  fmt::print("\t-s SDU length [Default {}]\n", params.sdu_len);
   fmt::print("\t-q Queue size of crypto worker pool [Default {}]\n", params.crypto_queue_size);
   fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n", app.log_level);
   fmt::print("\t-f Log filename to use [Default {}]\n", app.log_filename);
@@ -96,13 +100,19 @@ static void usage(const char* prog, const bench_params& params, const app_params
 static void parse_args(int argc, char** argv, bench_params& params, app_params& app)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "a:R:w:q:l:f:th")) != -1) {
+  while ((opt = getopt(argc, argv, "a:R:w:p:s:q:l:f:th")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
       case 'w':
         params.nof_crypto_threads = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'p':
+        params.nof_sdus = std::strtol(optarg, nullptr, 10);
+        break;
+      case 's':
+        params.sdu_len = std::strtol(optarg, nullptr, 10);
         break;
       case 'q':
         params.crypto_queue_size = std::strtol(optarg, nullptr, 10);
@@ -233,8 +243,8 @@ void benchmark_pdcp_rx(bench_params                  params,
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
   std::unique_ptr<pdcp_entity_rx>          pdcp_rx;
 
-  uint64_t nof_sdus = 1024;
-  uint32_t sdu_len  = 1500;
+  uint64_t nof_sdus = params.nof_sdus;
+  uint32_t sdu_len  = params.sdu_len;
 
   // Prepare
   auto prepare = [&]() mutable {
