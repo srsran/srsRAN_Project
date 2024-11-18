@@ -25,6 +25,7 @@ from retina.client.exception import ErrorReportedByAgent
 from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import Metrics, PingRequest, PingResponse, PLMN, StartInfo, StopResponse, UEDefinition
+from retina.protocol.exit_codes import exit_code_to_message
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -703,7 +704,9 @@ def _stop_stub(
 
         if stop_info.exit_code:
             retina_data.download_artifacts = True
-            error_msg = f"{name} crashed with exit code {stop_info.exit_code}. "
+            error_msg = (
+                f"{name} crashed with exit code {stop_info.exit_code} ({exit_code_to_message(stop_info.exit_code)}). "
+            )
 
         if log_search:
             log_msg = f"{name} has {stop_info.error_count} errors and {stop_info.warning_count} warnings. "
