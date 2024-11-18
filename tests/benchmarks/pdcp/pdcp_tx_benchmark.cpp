@@ -41,6 +41,8 @@ public:
 struct bench_params {
   unsigned nof_repetitions   = 10;
   bool     print_timing_info = false;
+  unsigned nof_sdus          = 1024;
+  unsigned sdu_len           = 1500;
 };
 
 struct app_params {
@@ -55,6 +57,8 @@ static void usage(const char* prog, const bench_params& params, const app_params
   fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", app.algo);
   fmt::print("\t-t Print timing information [Default {}]\n", params.print_timing_info);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  fmt::print("\t-p Number of SDUs per repetition [Default {}]\n", params.nof_sdus);
+  fmt::print("\t-s SDU length [Default {}]\n", params.sdu_len);
   fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n", app.log_level);
   fmt::print("\t-f Log filename to use [Default {}]\n", app.log_filename);
   fmt::print("\t-h Show this message\n");
@@ -63,10 +67,16 @@ static void usage(const char* prog, const bench_params& params, const app_params
 static void parse_args(int argc, char** argv, bench_params& params, app_params& app)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "a:R:l:f:th")) != -1) {
+  while ((opt = getopt(argc, argv, "a:R:p:s:l:f:th")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'p':
+        params.nof_sdus = std::strtol(optarg, nullptr, 10);
+        break;
+      case 's':
+        params.sdu_len = std::strtol(optarg, nullptr, 10);
         break;
       case 'a':
         app.algo = std::strtol(optarg, nullptr, 10);
@@ -106,8 +116,8 @@ void benchmark_pdcp_tx(bench_params                  params,
   timer_manager      timers;
   manual_task_worker worker{64};
 
-  int nof_sdus = 1024;
-  int sdu_len  = 1500;
+  int nof_sdus = params.nof_sdus;
+  int sdu_len  = params.sdu_len;
 
   // Set TX config
   pdcp_tx_config config         = {};
