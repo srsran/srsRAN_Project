@@ -415,7 +415,7 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
           cell_phr.serv_cell_id < u.nof_cells(), "Invalid serving cell index={}", cell_phr.serv_cell_id);
       auto& ue_cc = u.get_cell(cell_phr.serv_cell_id);
 
-      ue_cc.channel_state_manager().handle_phr(cell_phr);
+      ue_cc.get_ul_power_control().handle_phr(cell_phr);
 
       // Log event.
       scheduler_event_logger::phr_event event{};

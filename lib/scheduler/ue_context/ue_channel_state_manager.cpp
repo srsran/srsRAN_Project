@@ -10,7 +10,6 @@
 
 #include "ue_channel_state_manager.h"
 #include "srsran/srslog/srslog.h"
-#include <algorithm>
 
 using namespace srsran;
 
@@ -18,8 +17,8 @@ ue_channel_state_manager::ue_channel_state_manager(const scheduler_ue_expert_con
                                                    unsigned                          nof_dl_ports_) :
   nof_dl_ports(nof_dl_ports_),
   pusch_snr_db(expert_cfg.initial_ul_sinr),
-  wideband_cqi(expert_cfg.initial_cqi),
-  logger(srslog::fetch_basic_logger("SCHED"))
+  average_pusch_sinr_dB(alpha_ema_sinr),
+  wideband_cqi(expert_cfg.initial_cqi)
 {
   // Set initial precoding value when no CSI has yet been received.
   if (nof_dl_ports == 2) {
@@ -30,9 +29,6 @@ ue_channel_state_manager::ue_channel_state_manager(const scheduler_ue_expert_con
         pdsch_precoding_info::prg_info{
             pdsch_precoding_info::prg_info::typeI_single_panel_4ports_mode1{0, std::nullopt, 0}});
   }
-
-  // Initialize PUSCH PRB grid.
-  std::fill(pusch_nof_prbs_grid.begin(), pusch_nof_prbs_grid.end(), pusch_prbs_entry{slot_point{}, 0});
 }
 
 bool ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_report)
@@ -63,6 +59,12 @@ bool ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_repo
   return true;
 }
 
+void ue_channel_state_manager::update_pusch_snr(float snr_db)
+{
+  pusch_snr_db = snr_db;
+  average_pusch_sinr_dB.push(static_cast<float>(snr_db));
+}
+
 void ue_channel_state_manager::update_srs_channel_matrix(const srs_channel_matrix& channel_matrix,
                                                          tx_scheme_codebook        codebook_cfg)
 {
@@ -80,11 +82,6 @@ SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_nof_ul_layers() const
   return 1;
 }
 
-SRSRAN_WEAK_SYMB void ue_channel_state_manager::handle_phr(const cell_ph_report& phr)
-{
-  latest_phr.emplace(ue_phr_report{phr, std::nullopt});
-}
-
 SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_recommended_pusch_tpmi(unsigned nof_layers) const
 {
   if (last_pusch_tpmi_select_info.has_value() &&
@@ -92,15 +89,4 @@ SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_recommended_pusch_tpmi(u
     return last_pusch_tpmi_select_info.value().get_tpmi_select(nof_layers).tpmi;
   }
   return 0;
-}
-
-void ue_channel_state_manager::save_pusch_nof_prbs(slot_point slot_rx, unsigned nof_prbs)
-{
-  pusch_nof_prbs_grid[slot_rx.to_uint()] = {slot_rx, nof_prbs};
-}
-
-SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::adapt_pusch_prbs_to_phr(unsigned nof_prbs) const
-{
-  // Dummy function. This feature is only available in the SRSRAN 5G Enterprise version.
-  return nof_prbs;
 }

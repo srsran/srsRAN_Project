@@ -47,7 +47,8 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   drx_ctrl(drx_ctrl_),
   logger(srslog::fetch_basic_logger("SCHED")),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
-  ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state)
+  ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state),
+  ul_pwr_control(ue_cell_cfg_, channel_state)
 {
 }
 

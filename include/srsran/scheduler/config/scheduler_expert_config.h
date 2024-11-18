@@ -85,6 +85,11 @@ struct scheduler_ue_expert_config {
   uint8_t min_k1 = 4;
   /// Maximum number of PDCCH grant allocation attempts per slot. Default: Unlimited.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
+  /// Target PUSCH SINR to be achieved with Close-loop power control, in dB.
+  float target_pusch_sinr{10.0f};
+  /// Path-loss at which the Target PUSCH SINR is expected to be achieved, in dB.
+  /// This is used to compute the path loss compensation for PUSCH fractional power control.
+  float path_loss_for_target_pusch_sinr{70.0f};
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.

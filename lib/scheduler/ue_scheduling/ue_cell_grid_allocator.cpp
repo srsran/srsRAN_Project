@@ -760,7 +760,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     // If this is not a retx, then we need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the
     // nominal TX power to meet the max TX power.
     if (not is_retx) {
-      const unsigned nof_prbs_adjusted_to_phr = ue_cc->channel_state_manager().adapt_pusch_prbs_to_phr(crbs.length());
+      const unsigned nof_prbs_adjusted_to_phr = ue_cc->get_ul_power_control().adapt_pusch_prbs_to_phr(crbs.length());
       if (nof_prbs_adjusted_to_phr < crbs.length()) {
         crbs.resize(nof_prbs_adjusted_to_phr);
       }
@@ -995,7 +995,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     ue_cc->last_pusch_allocated_slot = pusch_alloc.slot;
 
     // Update the number of PRBs used in the PUSCH allocation.
-    ue_cc->channel_state_manager().save_pusch_nof_prbs(pusch_alloc.slot, crbs.length());
+    ue_cc->get_ul_power_control().save_pusch_nof_prbs(pusch_alloc.slot, crbs.length());
 
     h_ul->save_grant_params(pusch_sched_ctx, msg.pusch_cfg);
 
