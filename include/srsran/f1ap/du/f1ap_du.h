@@ -162,6 +162,11 @@ public:
   /// Called when the F1-C interface shutdowns unexpectedly.
   virtual void on_f1c_disconnection() = 0;
 
+  /// Request the reset of UE transaction information.
+  ///
+  /// \param[in] List of UEs for which to reset the context. If list is empty, all UEs are removed.
+  virtual async_task<void> request_reset(const std::vector<du_ue_index_t>& ues_to_reset) = 0;
+
   /// \brief Search for an unused DU UE index.
   virtual du_ue_index_t find_free_ue_index() = 0;
 

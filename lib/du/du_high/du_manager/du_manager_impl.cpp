@@ -148,6 +148,11 @@ du_ue_index_t du_manager_impl::find_unused_du_ue_index()
   return ue_mng.find_unused_du_ue_index();
 }
 
+async_task<void> du_manager_impl::handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset)
+{
+  return ue_mng.handle_f1_reset_request(ues_to_reset);
+}
+
 async_task<f1ap_ue_context_creation_response>
 du_manager_impl::handle_ue_context_creation(const f1ap_ue_context_creation_request& request)
 {

@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_impl.h"
+#include "../f1ap_asn1_utils.h"
 #include "asn1_helpers.h"
 #include "f1ap_du_connection_handler.h"
 #include "log_helpers.h"
@@ -21,9 +22,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/f1ap_message.h"
-#include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/support/async/event_signal.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;

@@ -66,6 +66,11 @@ public:
 
   void on_f1c_disconnection() override { return du_mng->handle_du_stop_request(); }
 
+  async_task<void> request_reset(const std::vector<du_ue_index_t>& ues_to_reset) override
+  {
+    return du_mng->handle_f1_reset_request(ues_to_reset);
+  }
+
   du_ue_index_t find_free_ue_index() override { return du_mng->find_unused_du_ue_index(); }
 
   async_task<f1ap_ue_context_creation_response>

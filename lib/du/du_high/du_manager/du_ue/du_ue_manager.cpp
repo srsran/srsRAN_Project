@@ -45,6 +45,12 @@ du_ue_index_t du_ue_manager::find_unused_du_ue_index()
   return INVALID_DU_UE_INDEX;
 }
 
+async_task<void> du_ue_manager::handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset)
+{
+  // TODO
+  return launch_no_op_task();
+}
+
 void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
 {
   du_ue_index_t ue_idx_candidate = find_unused_du_ue_index();
