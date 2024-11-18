@@ -68,6 +68,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     std::optional<int>                     last_phr;
     std::optional<phy_time_unit>           last_ta;
     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
+    std::optional<float>                   last_dl_olla;
+    std::optional<float>                   last_ul_olla;
     non_persistent_data                    data;
 
     scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period);

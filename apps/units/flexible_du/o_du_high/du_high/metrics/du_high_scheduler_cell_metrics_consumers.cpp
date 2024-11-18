@@ -342,6 +342,10 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       fmt::format_to(buffer, " dl_error_rate={}%", 0);
     }
     fmt::format_to(buffer, " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
+    fmt::format_to(buffer, " dl_nof_prbs={}", ue.tot_dl_prbs_used);
+    if (ue.last_dl_olla.has_value()) {
+      fmt::format_to(buffer, " dl_olla={}", ue.last_dl_olla);
+    }
 
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
       fmt::format_to(buffer, " pusch_snr_db={:.1f}", std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
@@ -376,8 +380,12 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       fmt::format_to(buffer, " ul_error_rate={}%", 0);
       fmt::format_to(buffer, " crc_delay_ms=n/a");
     }
+    fmt::format_to(buffer, " ul_nof_prbs={}", ue.tot_ul_prbs_used);
     fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr, false));
     fmt::format_to(buffer, " sr_count={}", ue.sr_count);
+    if (ue.last_ul_olla.has_value()) {
+      fmt::format_to(buffer, " ul_olla={}", ue.last_ul_olla);
+    }
     if (ue.last_ta.has_value()) {
       fmt::format_to(buffer, " last_ta={}s", float_to_eng_string(ue.last_ta->to_seconds<float>(), 0, false));
     } else {

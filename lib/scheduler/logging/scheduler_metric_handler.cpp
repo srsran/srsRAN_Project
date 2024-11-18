@@ -273,6 +273,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     } else if (dl_grant.pdsch_cfg.rbs.is_type1()) {
       u.data.tot_dl_prbs_used += full_dl_slot ? (dl_grant.pdsch_cfg.rbs.type1().length()) : 0;
     }
+    u.last_dl_olla = dl_grant.context.olla_offset;
   }
 
   for (const ul_sched_info& ul_grant : slot_result.ul.puschs) {
@@ -293,6 +294,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     }
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
+    u.last_ul_olla = ul_grant.context.olla_offset;
     u.data.nof_puschs++;
   }
 
@@ -358,6 +360,8 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pusch_rsrp_db    = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
                                                          : -std::numeric_limits<float>::infinity();
   ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
+  ret.last_dl_olla     = last_dl_olla;
+  ret.last_ul_olla     = last_ul_olla;
   ret.ul_delay_ms      = data.count_crc_pdus > 0 ? data.sum_ul_delay_ms / data.count_crc_pdus : 0;
   ret.bsr              = last_bsr;
   ret.sr_count         = data.count_sr;

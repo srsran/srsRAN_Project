@@ -44,6 +44,8 @@ struct scheduler_ue_metrics {
   unsigned                     bsr;
   unsigned                     sr_count;
   unsigned                     dl_bs;
+  std::optional<float>         last_dl_olla;
+  std::optional<float>         last_ul_olla;
   std::optional<phy_time_unit> last_ta;
   std::optional<int>           last_phr;
   /// CQI statistics over the metrics report interval.
