@@ -9,6 +9,7 @@
  */
 
 #include "du_ue_manager.h"
+#include "../procedures/du_ue_reset_procedure.h"
 #include "../procedures/du_ue_ric_configuration_procedure.h"
 #include "../procedures/ue_configuration_procedure.h"
 #include "../procedures/ue_creation_procedure.h"
@@ -47,8 +48,7 @@ du_ue_index_t du_ue_manager::find_unused_du_ue_index()
 
 async_task<void> du_ue_manager::handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset)
 {
-  // TODO
-  return launch_no_op_task();
+  return launch_async<du_ue_reset_procedure>(ues_to_reset, *this, cfg);
 }
 
 void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
