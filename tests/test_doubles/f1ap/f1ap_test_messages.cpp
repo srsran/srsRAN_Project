@@ -139,6 +139,39 @@ f1ap_message srsran::test_helpers::generate_f1_removal_response(const f1ap_messa
   return resp;
 }
 
+f1ap_message srsran::test_helpers::create_f1ap_reset_message(
+    const std::vector<std::pair<std::optional<gnb_du_ue_f1ap_id_t>, std::optional<gnb_cu_ue_f1ap_id_t>>>& ues_to_reset)
+{
+  f1ap_message msg;
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_RESET);
+
+  asn1::f1ap::reset_s& reset = msg.pdu.init_msg().value.reset();
+  reset->cause.set_misc();
+  reset->cause.misc().value = asn1::f1ap::cause_misc_opts::unspecified;
+
+  if (ues_to_reset.empty()) {
+    auto& f1 = reset->reset_type.set_f1_interface();
+    f1.value = asn1::f1ap::reset_all_opts::reset_all;
+  } else {
+    auto& lst = reset->reset_type.set_part_of_f1_interface();
+    lst.resize(ues_to_reset.size());
+    for (unsigned i = 0; i != ues_to_reset.size(); ++i) {
+      lst[i].load_info_obj(ASN1_F1AP_ID_UE_ASSOCIATED_LC_F1_CONN_ITEM);
+      auto& conn                     = lst[i].value().ue_associated_lc_f1_conn_item();
+      conn.gnb_du_ue_f1ap_id_present = ues_to_reset[i].first.has_value();
+      if (conn.gnb_du_ue_f1ap_id_present) {
+        conn.gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ues_to_reset[i].first.value());
+      }
+      conn.gnb_cu_ue_f1ap_id_present = ues_to_reset[i].second.has_value();
+      if (conn.gnb_cu_ue_f1ap_id_present) {
+        conn.gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ues_to_reset[i].second.value());
+      }
+    }
+  }
+
+  return msg;
+}
+
 static drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid)
 {
   using namespace asn1::f1ap;

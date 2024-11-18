@@ -175,6 +175,42 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   }
 }
 
+TEST_F(du_high_tester, when_f1ap_reset_received_then_ues_are_removed)
+{
+  // Create UE.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  // CU-UP forwards many DRB PDUs.
+  const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    nru_dl_message f1u_pdu{
+        .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
+    cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
+  }
+
+  // DU receives F1 RESET.
+  cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message msg = test_helpers::create_f1ap_reset_message();
+  this->du_hi->get_f1ap_message_handler().handle_message(msg);
+  this->test_logger.info("STATUS: RESET received by DU. Waiting for F1AP RESET ACK...");
+
+  // Wait for F1 RESET ACK to be sent to the CU.
+  EXPECT_TRUE(this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }));
+  ASSERT_TRUE(test_helpers::is_valid_f1_reset_ack(msg, cu_notifier.last_f1ap_msgs.back()));
+
+  // Confirm that no traffic is being sent for the reset UE.
+  const unsigned NOF_SLOT_CHECKS = 100;
+  ASSERT_FALSE(this->run_until(
+      [this, rnti]() {
+        const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+        return pdsch != nullptr;
+      },
+      NOF_SLOT_CHECKS));
+}
+
 TEST_F(du_high_tester, when_du_high_is_stopped_then_ues_are_removed)
 {
   // Create UE.
