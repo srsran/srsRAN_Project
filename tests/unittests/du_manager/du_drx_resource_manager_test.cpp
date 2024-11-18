@@ -98,7 +98,7 @@ TEST_F(du_no_drx_resource_manager_test, when_gnb_does_not_support_drx_but_ue_doe
   ASSERT_FALSE(test_ue->mcg_cfg.drx_cfg.has_value());
 
   // Once UE capabilities are configured, the result should still an empty DRX config.
-  drx.handle_ue_cap_update(*test_ue, true, true);
+  drx.handle_ue_cap_update(*test_ue, true);
   ASSERT_FALSE(test_ue->mcg_cfg.drx_cfg.has_value());
 
   // Deallocation should be a no-op, but it is good practice to see if it does not crash.
@@ -121,7 +121,7 @@ TEST_F(du_drx_resource_manager_test, when_gnb_and_ue_support_drx_then_drx_config
   cell_group_config& test_ue = add_ue(to_du_ue_index(0));
 
   // DRX supported.
-  drx.handle_ue_cap_update(test_ue, true, true);
+  drx.handle_ue_cap_update(test_ue, true);
   ASSERT_TRUE(test_ue.mcg_cfg.drx_cfg.has_value());
   ASSERT_TRUE(this->is_valid_drx_config(test_ue.mcg_cfg.drx_cfg));
 
@@ -135,7 +135,7 @@ TEST_F(du_drx_resource_manager_test, when_gnb_supports_drx_but_ue_does_not_then_
   cell_group_config& test_ue = add_ue(to_du_ue_index(0));
 
   // DRX supported.
-  drx.handle_ue_cap_update(test_ue, false, false);
+  drx.handle_ue_cap_update(test_ue, false);
   ASSERT_FALSE(test_ue.mcg_cfg.drx_cfg.has_value());
   ASSERT_FALSE(this->is_valid_drx_config(test_ue.mcg_cfg.drx_cfg));
 
@@ -154,7 +154,7 @@ TEST_F(du_drx_resource_manager_test, when_multiple_ues_are_created_then_drx_conf
 
   std::set<std::chrono::milliseconds> offsets;
   for (cell_group_config* u : test_ues) {
-    drx.handle_ue_cap_update(*u, true, true);
+    drx.handle_ue_cap_update(*u, true);
     ASSERT_TRUE(u->mcg_cfg.drx_cfg.has_value());
     ASSERT_TRUE(this->is_valid_drx_config(u->mcg_cfg.drx_cfg));
     auto p = offsets.insert(u->mcg_cfg.drx_cfg->long_start_offset);
@@ -175,7 +175,7 @@ TEST_F(du_drx_resource_manager_test, when_ue_drx_resources_are_deallocated_then_
   // Allocate DRX config and build histogram of DRX offsets.
   std::map<std::chrono::milliseconds, unsigned> histogram;
   for (cell_group_config* u : test_ues) {
-    drx.handle_ue_cap_update(*u, true, true);
+    drx.handle_ue_cap_update(*u, true);
     ASSERT_TRUE(this->is_valid_drx_config(u->mcg_cfg.drx_cfg));
     if (histogram.count(u->mcg_cfg.drx_cfg->long_start_offset)) {
       histogram[u->mcg_cfg.drx_cfg->long_start_offset]++;
@@ -183,14 +183,6 @@ TEST_F(du_drx_resource_manager_test, when_ue_drx_resources_are_deallocated_then_
       histogram.emplace(u->mcg_cfg.drx_cfg->long_start_offset, 1);
     }
   }
-
-  // Print histogram:
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, "Histogram : [");
-  for (const auto& bin : histogram) {
-    fmt::format_to(fmtbuf, "{}: {}, ", bin.first.count(), bin.second);
-  }
-  fmt::print("{}]\n", fmt::to_string(fmtbuf));
 
   // Select one DRX offset at random, and deallocate DRX resources of some UEs that picked it.
   // > Select offset at random.
@@ -216,7 +208,7 @@ TEST_F(du_drx_resource_manager_test, when_ue_drx_resources_are_deallocated_then_
 
   // Next UE allocation should get assigned the previously selected DRX offset that is now in minority.
   auto& u = add_ue(to_du_ue_index(nof_ues));
-  drx.handle_ue_cap_update(u, true, true);
+  drx.handle_ue_cap_update(u, true);
   ASSERT_TRUE(this->is_valid_drx_config(u.mcg_cfg.drx_cfg));
   ASSERT_EQ(u.mcg_cfg.drx_cfg->long_start_offset, selected_offset);
 }

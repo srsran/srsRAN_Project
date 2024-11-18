@@ -32,8 +32,7 @@ public:
 
   /// \brief Reserve gaps for DRX/measGaps for a given UE. The resources are stored in the UE's cell group config.
   /// \return true if allocation was successful.
-  void
-  handle_ue_cap_update(cell_group_config& cell_grp_cfg, bool long_drx_cycle_supported, bool short_drx_cycle_supported);
+  void handle_ue_cap_update(cell_group_config& cell_grp_cfg, bool long_drx_cycle_supported);
 
   /// \brief Deallocate DRX/measGaps resources previously given to a UE. The resources are returned back to a pool.
   void handle_ue_removal(cell_group_config& cell_grp_cfg);

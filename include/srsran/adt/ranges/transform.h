@@ -20,6 +20,7 @@ namespace srsran {
 
 namespace views {
 
+/// Converts a Range into another via the \c TransformFunc predicate.
 template <typename Range, typename TransformFunc>
 class transform_view
 {

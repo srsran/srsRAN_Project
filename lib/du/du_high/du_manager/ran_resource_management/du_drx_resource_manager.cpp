@@ -22,13 +22,13 @@ public:
     offset_count.reserve(cells.size());
     for (unsigned i = 0; i != cells.size(); ++i) {
       if (cells[i].mcg_params.drx.has_value()) {
-        // cell has DRX configured.
+        // Cell has DRX configured.
         offset_count.resize(i + 1);
 
-        // initialize pool of offsets.
+        // Initialize pool of offsets.
         const drx_params& params   = cells[i].mcg_params.drx.value();
         const unsigned    nof_bins = params.long_cycle.count() / params.on_duration.count();
-        for (unsigned j = 0; j < nof_bins; ++j) {
+        for (unsigned j = 0; j != nof_bins; ++j) {
           offset_count[i].insert(std::make_pair(j * params.on_duration, 0));
         }
       }
@@ -47,9 +47,9 @@ public:
 
   void deallocate(du_cell_index_t cell_idx, std::chrono::milliseconds offset)
   {
-    srsran_sanity_check(offset_count[cell_idx].count(offset) > 0 and offset_count[cell_idx].at(offset) > 0,
-                        "invalid offset {}",
-                        offset.count());
+    srsran_assert(offset_count[cell_idx].count(offset) > 0 and offset_count[cell_idx].at(offset) > 0,
+                  "invalid offset {}",
+                  offset.count());
     offset_count[cell_idx].at(offset)--;
   }
 
@@ -70,9 +70,7 @@ void du_drx_resource_manager::handle_ue_creation(cell_group_config& cell_grp_cfg
   cell_grp_cfg.mcg_cfg.drx_cfg.reset();
 }
 
-void du_drx_resource_manager::handle_ue_cap_update(cell_group_config& cell_grp_cfg,
-                                                   bool               long_drx_cycle_supported,
-                                                   bool /* unused */)
+void du_drx_resource_manager::handle_ue_cap_update(cell_group_config& cell_grp_cfg, bool long_drx_cycle_supported)
 {
   std::optional<drx_config>& current_ue_drx   = cell_grp_cfg.mcg_cfg.drx_cfg;
   const du_cell_index_t      pcell_index      = cell_grp_cfg.cells[0].serv_cell_cfg.cell_index;

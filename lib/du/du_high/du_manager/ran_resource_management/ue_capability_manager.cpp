@@ -291,9 +291,8 @@ void ue_capability_manager::update_drx(du_ue_resource_config& ue_res_cfg)
   cell_group_config& cell_group = ue_res_cfg.cell_group;
 
   // If UE capabilities are not available or DRX is disabled, disable DRX
-  const bool long_drx_supported  = ue_caps.has_value() and ue_caps->long_drx_cycle_supported;
-  const bool short_drx_supported = ue_caps.has_value() and ue_caps->short_drx_cycle_supported;
+  const bool long_drx_supported = ue_caps.has_value() and ue_caps->long_drx_cycle_supported;
 
   // Allocate DRX resources if DRX is enabled in the gNB.
-  drx_res_mng.handle_ue_cap_update(cell_group, long_drx_supported, short_drx_supported);
+  drx_res_mng.handle_ue_cap_update(cell_group, long_drx_supported);
 }
