@@ -333,7 +333,8 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                  dci,
                                    unsigned                      time_resource,
                                    sch_mcs_index                 mcs_index,
                                    uint8_t                       rv,
-                                   const ul_harq_process_handle& h_ul)
+                                   const ul_harq_process_handle& h_ul,
+                                   uint8_t                       tpc_command)
 {
   const bwp_configuration& active_ul_bwp = ss_info.bwp->ul_common->generic_params;
 
@@ -345,7 +346,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                  dci,
   f0_0.N_ul_hop               = 0;
   f0_0.hopping_offset         = 0;
   f0_0.frequency_hopping_flag = 0;
-  f0_0.tpc_command            = 1;
+  f0_0.tpc_command            = tpc_command;
   f0_0.ul_sul_indicator       = {};
 
   // PDCCH params.
@@ -382,7 +383,8 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
                                    const ul_harq_process_handle& h_ul,
                                    unsigned                      dai,
                                    unsigned                      nof_layers,
-                                   unsigned                      tpmi)
+                                   unsigned                      tpmi,
+                                   uint8_t                       tpc_command)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
   srsran_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
@@ -398,7 +400,7 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
   f0_1.payload_size = dci_sz.format0_1_ue_size.value();
 
   f0_1.ul_sul_indicator        = {};
-  f0_1.tpc_command             = 1;
+  f0_1.tpc_command             = tpc_command;
   f0_1.srs_request             = 0;
   f0_1.dmrs_seq_initialization = 0;
   bool use_transform_precoder  = ue_cell_cfg.use_pusch_transform_precoding_dci_0_1();

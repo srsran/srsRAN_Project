@@ -20,14 +20,18 @@ class ul_power_control
 {
 public:
   ul_power_control(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
+
   /// Update UE with the latest PHR for a given cell.
   void handle_phr(const cell_ph_report& phr);
 
-  /// Save the number of PUSCH PRBs allocated for a given slot.
-  void save_pusch_nof_prbs(slot_point slot, unsigned nof_prbs);
+  /// Save the PUSCH power control parameters after each PUSCH transmission.
+  void update_pusch_pw_ctrl_state(slot_point slot, unsigned nof_prbs);
 
   /// Adapt the number of PUSCH PRBs to the PHR.
   unsigned adapt_pusch_prbs_to_phr(unsigned nof_prbs) const;
+
+  /// Compute the TPC command for the PUSCH with the objective set to reach the target SINR.
+  uint8_t compute_tpc_command(slot_point pusch_slot);
 
 private:
   /// \brief Number of indexes -> nof_layers for precoding (Options: 1, 2, 3, 4 layers).

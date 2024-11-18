@@ -40,13 +40,22 @@ SRSRAN_WEAK_SYMB void ul_power_control::handle_phr(const cell_ph_report& phr)
   latest_phr.emplace(ue_phr_report{phr, std::nullopt});
 }
 
-void ul_power_control::save_pusch_nof_prbs(slot_point slot_rx, unsigned nof_prbs)
+void ul_power_control::update_pusch_pw_ctrl_state(slot_point slot_rx, unsigned nof_prbs)
 {
-  pusch_pw_ctrl_grid[slot_rx.to_uint()] = {slot_rx, nof_prbs};
+  const int latest_f_cl_pw_control =
+      latest_pusch_pw_control.has_value() ? latest_pusch_pw_control.value().f_cl_pw_control : 0;
+  pusch_pw_ctrl_grid[slot_rx.to_uint()] = {slot_rx, nof_prbs, latest_f_cl_pw_control};
 }
 
 SRSRAN_WEAK_SYMB unsigned ul_power_control::adapt_pusch_prbs_to_phr(unsigned nof_prbs) const
 {
   // Dummy function. This feature is only available in the SRSRAN 5G Enterprise version.
   return nof_prbs;
+}
+
+SRSRAN_WEAK_SYMB uint8_t ul_power_control::compute_tpc_command(slot_point pusch_slot)
+{
+  // Dummy function. This feature is only available in the SRSRAN 5G Enterprise version.
+  static constexpr uint8_t default_tpc = 1;
+  return default_tpc;
 }

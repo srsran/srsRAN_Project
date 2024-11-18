@@ -282,6 +282,13 @@ public:
 
   static bool bernoulli(double p) { return std::bernoulli_distribution(p)(get()); }
 
+  template <typename FloatingPoint>
+  static FloatingPoint normal_dist(FloatingPoint mean, FloatingPoint stddev)
+  {
+    srsran_assert(std::is_floating_point<FloatingPoint>::value, "result_type must be a floating point type");
+    return std::normal_distribution<FloatingPoint>(mean, stddev)(get());
+  }
+
   /// Return a vector of integers with specified size filled with random values.
   template <typename Integer>
   static std::vector<Integer> random_vector(size_t sz)
