@@ -111,6 +111,68 @@ static void fill_format2_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   builder.set_bit_length_parameters(convert_sr_bits_to_unsigned(f2.sr_bits), f2.harq_ack_nof_bits, f2.csi_part1_bits);
 }
 
+/// Fills the Format 3 parameters.
+static void fill_format3_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
+{
+  const pucch_format_3& f3 = mac_pdu.format_3;
+
+  // Hopping parameters.
+  const prb_interval& hop_prbs            = mac_pdu.resources.second_hop_prbs;
+  const bool          intra_slot_freq_hop = hop_prbs.empty() ? false : true;
+  builder.set_hopping_information_parameters(
+      intra_slot_freq_hop, hop_prbs.start(), f3.group_hopping, f3.n_id_hopping, f3.initial_cyclic_shift);
+
+  // Common parameters.
+  builder.set_common_parameters(mac_pdu.format, f3.slot_repetition, f3.pi_2_bpsk);
+
+  // Scrambling.
+  builder.set_scrambling_parameters(f3.n_id_scambling);
+  // TODO: rename this method? n_id_0_scrambling is also used for formats 3 and 4 from Rel-16.
+  builder.set_format2_parameters(f3.n_id_0_scrambling);
+
+  // DM-RS.
+  builder.set_dmrs_parameters(f3.additional_dmrs, f3.m_0_cyclic_shift);
+
+  // Max coding rate.
+  builder.set_maintenance_v3_basic_parameters({static_cast<unsigned>(f3.max_code_rate)}, {});
+
+  // Bit lengths.
+  builder.set_bit_length_parameters(convert_sr_bits_to_unsigned(f3.sr_bits), f3.harq_ack_nof_bits, f3.csi_part1_bits);
+}
+
+/// Fills the Format 4 parameters.
+static void fill_format4_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
+{
+  const pucch_format_4& f4 = mac_pdu.format_4;
+
+  // Hopping parameters.
+  const prb_interval& hop_prbs            = mac_pdu.resources.second_hop_prbs;
+  const bool          intra_slot_freq_hop = hop_prbs.empty() ? false : true;
+  builder.set_hopping_information_parameters(
+      intra_slot_freq_hop, hop_prbs.start(), f4.group_hopping, f4.n_id_hopping, f4.initial_cyclic_shift);
+
+  // Common parameters.
+  builder.set_common_parameters(mac_pdu.format, f4.slot_repetition, f4.pi_2_bpsk);
+
+  // Scrambling.
+  builder.set_scrambling_parameters(f4.n_id_scambling);
+  // TODO: rename this method? n_id_0_scrambling is also used for formats 3 and 4 from Rel-16.
+  builder.set_format2_parameters(f4.n_id_0_scrambling);
+
+  // DM-RS.
+  builder.set_dmrs_parameters(f4.additional_dmrs, f4.m_0_cyclic_shift);
+
+  // Specific format 4 parameters.
+  uint8_t occ_len = (f4.n_sf_pucch_f4 == pucch_format_4_sf::sf2) ? 2 : 4;
+  builder.set_format4_parameters(f4.orthog_seq_idx, occ_len);
+
+  // Max coding rate.
+  builder.set_maintenance_v3_basic_parameters({static_cast<unsigned>(f4.max_code_rate)}, {});
+
+  // Bit lengths.
+  builder.set_bit_length_parameters(convert_sr_bits_to_unsigned(f4.sr_bits), f4.harq_ack_nof_bits, f4.csi_part1_bits);
+}
+
 static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
 {
   switch (mac_pdu.format) {
@@ -121,6 +183,12 @@ static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pu
       break;
     case pucch_format::FORMAT_2:
       fill_format2_parameters(builder, mac_pdu);
+      break;
+    case pucch_format::FORMAT_3:
+      fill_format3_parameters(builder, mac_pdu);
+      break;
+    case pucch_format::FORMAT_4:
+      fill_format4_parameters(builder, mac_pdu);
       break;
     default:
       srsran_assert(0, "Invalid PUCCH format={}", mac_pdu.format);

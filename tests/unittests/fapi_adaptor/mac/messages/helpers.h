@@ -109,6 +109,12 @@ pucch_info_test_helper build_valid_pucch_format_1_pdu();
 /// Build and returns a valid PUCCH format 2 PDU.
 pucch_info_test_helper build_valid_pucch_format_2_pdu();
 
+/// Build and returns a valid PUCCH format 3 PDU.
+pucch_info_test_helper build_valid_pucch_format_3_pdu();
+
+/// Build and returns a valid PUCCH format 4 PDU.
+pucch_info_test_helper build_valid_pucch_format_4_pdu();
+
 /// Builds and returns a valid MAC DL sched result.
 mac_dl_sched_result_test_helper build_valid_mac_dl_sched_result();
 
