@@ -24,14 +24,14 @@ namespace srs_cu_up {
 class e1_connection_client;
 }
 
-struct cu_up_unit_config;
+struct o_cu_up_unit_config;
 class dlt_pcap;
 class f1u_cu_up_gateway;
 class io_broker;
 struct worker_manager;
 class e2_connection_client;
 
-/// ORAN CU-UP unit dependencies.
+/// O-RAN CU-UP unit dependencies.
 struct o_cu_up_unit_dependencies {
   worker_manager*                  workers;
   task_executor*                   cu_up_e2_exec    = nullptr;
@@ -44,13 +44,13 @@ struct o_cu_up_unit_dependencies {
   io_broker*                       io_brk           = nullptr;
 };
 
-/// ORAN CU-CP unit.
+/// O-RAN CU-CP unit.
 struct o_cu_up_unit {
   std::unique_ptr<srs_cu_up::o_cu_up>       unit;
   std::vector<app_services::metrics_config> metrics;
 };
 
-/// Builds the ORAN CU-UP unit using the given arguments.
-o_cu_up_unit build_o_cu_up(const cu_up_unit_config& unit_cfg, const o_cu_up_unit_dependencies& dependencies);
+/// Builds the O-RAN CU-UP unit using the given arguments.
+o_cu_up_unit build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_cu_up_unit_dependencies& dependencies);
 
 } // namespace srsran

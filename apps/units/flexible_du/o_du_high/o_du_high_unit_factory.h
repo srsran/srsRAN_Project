@@ -49,20 +49,20 @@ using e2_du_metrics_connector_manager =
 /// Prints basic DU info in the stdout and in the GNB logs.
 void announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg);
 
-/// ORAN DU high unit.
+/// O-RAN DU high unit.
 struct o_du_high_unit {
   std::unique_ptr<srs_du::o_du_high>                              o_du_hi;
   std::vector<std::unique_ptr<app_services::application_command>> commands;
   std::vector<app_services::metrics_config>                       metrics;
 };
 
-/// ORAN DU high unit parameters.
+/// O-RAN DU high unit parameters.
 struct o_du_high_unit_params {
   const o_du_high_unit_config& o_du_hi_cfg;
   unsigned                     du_index;
 };
 
-/// ORAN DU high unit dependencies.
+/// O-RAN DU high unit dependencies.
 struct o_du_high_unit_dependencies {
   srs_du::du_high_executor_mapper& execution_mapper;
   srs_du::f1c_connection_client&   f1c_client_handler;
@@ -77,7 +77,7 @@ struct o_du_high_unit_dependencies {
   srs_du::o_du_high_dependencies   o_du_hi_dependencies;
 };
 
-/// Creates the ORAN DU high unit with the given configuration.
+/// Creates the O-RAN DU high unit with the given configuration.
 o_du_high_unit make_o_du_high_unit(const o_du_high_unit_params&  o_du_high_unit_cfg,
                                    o_du_high_unit_dependencies&& dependencies);
 

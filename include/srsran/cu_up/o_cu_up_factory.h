@@ -17,7 +17,7 @@
 namespace srsran {
 namespace srs_cu_up {
 
-/// ORAN CU-UP interface with the given configuration and dependencies.
+/// O-RAN CU-UP interface with the given configuration and dependencies.
 std::unique_ptr<o_cu_up> create_o_cu_up(const o_cu_up_config& config, o_cu_up_dependencies&& dependencies);
 
 } // namespace srs_cu_up

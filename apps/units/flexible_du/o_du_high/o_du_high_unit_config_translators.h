@@ -16,7 +16,7 @@
 
 namespace srsran {
 
-/// Fills the ORAN DU high worker manager parameters of the given worker manager configuration.
+/// Fills the O-RAN DU high worker manager parameters of the given worker manager configuration.
 void fill_o_du_high_worker_manager_config(worker_manager_config&       config,
                                           const o_du_high_unit_config& unit_cfg,
                                           bool                         is_blocking_mode_enabled = false)

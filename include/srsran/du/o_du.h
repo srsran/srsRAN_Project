@@ -21,19 +21,19 @@ namespace srs_du {
 class o_du_high;
 class o_du_low;
 
-/// ORAN Distributed Unit interface. Includes the ORAN DU high, ORAN DU low and a DU power controller in an object.
+/// O-RAN Distributed Unit interface. Includes the O-RAN DU high, O-RAN DU low and a DU power controller in an object.
 class o_du
 {
 public:
   virtual ~o_du() = default;
 
-  /// Returns the power controller of this ORAN DU.
+  /// Returns the power controller of this O-RAN DU.
   virtual du_power_controller& get_power_controller() = 0;
 
-  /// Returns the ORAN DU high of this ORAN DU.
+  /// Returns the O-RAN DU high of this O-RAN DU.
   virtual o_du_high& get_o_du_high() = 0;
 
-  /// Returns the ORAN DU low of this ORAN DU.
+  /// Returns the O-RAN DU low of this O-RAN DU.
   virtual o_du_low& get_o_du_low() = 0;
 };
 

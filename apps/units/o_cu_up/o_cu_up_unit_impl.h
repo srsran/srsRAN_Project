@@ -21,7 +21,7 @@ namespace srsran {
 using e2_cu_metrics_connector_manager =
     e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
 
-/// \brief ORAN CU-UP unit implementation.
+/// \brief O-RAN CU-UP unit implementation.
 ///
 /// This implementation purpose is to manage the life of the given NGU gateway and the CU-UP interface.
 class o_cu_up_unit_impl : public srs_cu_up::o_cu_up

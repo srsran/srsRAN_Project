@@ -20,7 +20,7 @@
 namespace srsran {
 namespace srs_cu_up {
 
-/// ORAN CU-UP implementation.
+/// O-RAN CU-UP implementation.
 class o_cu_up_impl : public o_cu_up, public cu_up_power_controller
 {
 public:
@@ -45,7 +45,7 @@ private:
   std::unique_ptr<cu_up_interface> cu_up;
 };
 
-/// ORAN CU-UP implementation with E2.
+/// O-RAN CU-UP implementation with E2.
 class o_cu_up_with_e2_impl : public o_cu_up_impl
 {
 public:

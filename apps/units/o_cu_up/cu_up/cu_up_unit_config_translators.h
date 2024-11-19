@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/cu_up/cu_up_config.h"
-#include "srsran/e2/e2ap_configuration.h"
 
 namespace srsran {
 
@@ -26,7 +25,5 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> generate_cu_up_qos_config(const
 
 /// Fills the CU-UP worker manager parameters of the given worker manager configuration.
 void fill_cu_up_worker_manager_config(worker_manager_config& config, const cu_up_unit_config& unit_cfg);
-
-e2ap_configuration generate_e2_config(const cu_up_unit_config& cu_cp);
 
 } // namespace srsran

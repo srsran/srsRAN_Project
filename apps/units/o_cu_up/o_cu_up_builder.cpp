@@ -8,13 +8,14 @@
  *
  */
 
-#include "cu_up_builder.h"
+#include "o_cu_up_builder.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/worker_manager/worker_manager.h"
-#include "apps/units/cu_up/metrics/cu_up_pdcp_metrics_consumers.h"
-#include "apps/units/cu_up/metrics/cu_up_pdcp_metrics_producer.h"
-#include "cu_up_unit_config.h"
-#include "cu_up_unit_config_translators.h"
+#include "cu_up/cu_up_unit_config_translators.h"
+#include "cu_up/metrics/cu_up_pdcp_metrics_consumers.h"
+#include "cu_up/metrics/cu_up_pdcp_metrics_producer.h"
+#include "e2/o_cu_up_e2_config_translators.h"
+#include "o_cu_up_unit_config.h"
 #include "srsran/cu_up/o_cu_up_factory.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
 
@@ -44,12 +45,12 @@ static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metri
   return out;
 }
 
-o_cu_up_unit srsran::build_o_cu_up(const cu_up_unit_config& unit_cfg, const o_cu_up_unit_dependencies& dependencies)
+o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_cu_up_unit_dependencies& dependencies)
 {
   o_cu_up_unit              ocu_unit = {};
   srs_cu_up::o_cu_up_config config;
-  config.cu_up_cfg     = generate_cu_up_config(unit_cfg);
-  config.cu_up_cfg.qos = generate_cu_up_qos_config(unit_cfg);
+  config.cu_up_cfg     = generate_cu_up_config(unit_cfg.cu_up_cfg);
+  config.cu_up_cfg.qos = generate_cu_up_qos_config(unit_cfg.cu_up_cfg);
 
   srs_cu_up::o_cu_up_dependencies ocu_up_dependencies;
   ocu_up_dependencies.cu_dependencies.exec_mapper    = dependencies.workers->cu_up_exec_mapper.get();
@@ -64,7 +65,7 @@ o_cu_up_unit srsran::build_o_cu_up(const cu_up_unit_config& unit_cfg, const o_cu
   config.cu_up_cfg.net_cfg.f1u_bind_addr = address.value();
   // Create NG-U gateway.
   std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
-  if (not unit_cfg.upf_cfg.no_core) {
+  if (not unit_cfg.cu_up_cfg.upf_cfg.no_core) {
     udp_network_gateway_config ngu_gw_config = {};
     ngu_gw_config.bind_address               = config.cu_up_cfg.net_cfg.n3_bind_addr;
     ngu_gw_config.bind_port                  = config.cu_up_cfg.net_cfg.n3_bind_port;
@@ -79,14 +80,14 @@ o_cu_up_unit srsran::build_o_cu_up(const cu_up_unit_config& unit_cfg, const o_cu
 
   auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
 
-  if (unit_cfg.e2_cfg.enable_unit_e2) {
-    config.e2ap_cfg                        = generate_e2_config(unit_cfg);
+  if (unit_cfg.e2_cfg.config.enable_unit_e2) {
+    config.e2ap_cfg                        = generate_e2_config(unit_cfg.e2_cfg.config);
     ocu_up_dependencies.e2_client          = dependencies.e2_gw;
     ocu_up_dependencies.e2_cu_metric_iface = &(*e2_metric_connectors).get_e2_metrics_interface(0);
   }
   auto pdcp_metric_notifier = build_pdcp_metrics(ocu_unit.metrics,
                                                  *dependencies.metrics_notifier,
-                                                 unit_cfg.e2_cfg.enable_unit_e2,
+                                                 unit_cfg.e2_cfg.config.enable_unit_e2,
                                                  e2_metric_connectors->get_e2_metric_notifier(0));
 
   for (auto& qos_ : config.cu_up_cfg.qos) {

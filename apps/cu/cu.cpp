@@ -21,9 +21,9 @@
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/cu_cp/pcap_factory.h"
-#include "apps/units/cu_up/cu_up_application_unit.h"
-#include "apps/units/cu_up/cu_up_unit_config.h"
-#include "apps/units/cu_up/pcap_factory.h"
+#include "apps/units/o_cu_up/o_cu_up_application_unit.h"
+#include "apps/units/o_cu_up/o_cu_up_unit_config.h"
+#include "apps/units/o_cu_up/pcap_factory.h"
 #include "cu_appconfig.h"
 #include "cu_appconfig_validator.h"
 #include "cu_appconfig_yaml_writer.h"
@@ -108,9 +108,9 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const logger_appconfig& log_cfg,
-                              cu_cp_application_unit& cu_cp_app_unit,
-                              cu_up_application_unit& cu_up_app_unit)
+static void register_app_logs(const logger_appconfig&   log_cfg,
+                              cu_cp_application_unit&   cu_cp_app_unit,
+                              o_cu_up_application_unit& cu_up_app_unit)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
@@ -144,14 +144,15 @@ static void fill_cu_worker_manager_config(worker_manager_config& config, const c
   config.low_prio_sched_config = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
 }
 
-static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_cfg, const cu_cp_unit_config& cu_cp_cfg)
+static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o_cu_up_cfg,
+                                                      const cu_cp_unit_config& cu_cp_cfg)
 {
   // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
-  if (cu_up_cfg.upf_cfg.bind_addr == "auto") {
-    cu_up_cfg.upf_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+  if (o_cu_up_cfg.cu_up_cfg.upf_cfg.bind_addr == "auto") {
+    o_cu_up_cfg.cu_up_cfg.upf_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
   }
-  cu_up_cfg.upf_cfg.no_core       = cu_cp_cfg.amf_config.no_core;
-  cu_up_cfg.pcap_cfg.e2ap.enabled = cu_up_cfg.e2_cfg.enable_unit_e2 && cu_up_cfg.pcap_cfg.e2ap.enabled;
+  o_cu_up_cfg.cu_up_cfg.upf_cfg.no_core = cu_cp_cfg.amf_config.no_core;
+  o_cu_up_cfg.e2_cfg.pcaps.enabled      = o_cu_up_cfg.e2_cfg.config.enable_unit_e2 && o_cu_up_cfg.e2_cfg.pcaps.enabled;
 }
 
 int main(int argc, char** argv)
@@ -183,14 +184,14 @@ int main(int argc, char** argv)
   auto cu_cp_app_unit = create_cu_cp_application_unit("cu");
   cu_cp_app_unit->on_parsing_configuration_registration(app);
 
-  auto cu_up_app_unit = create_cu_up_application_unit("cu");
+  auto cu_up_app_unit = create_o_cu_up_application_unit("cu");
   cu_up_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &cu_cp_app_unit, &cu_up_app_unit]() {
     cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
 
-    autoderive_cu_up_parameters_after_parsing(cu_up_app_unit->get_cu_up_unit_config(),
+    autoderive_cu_up_parameters_after_parsing(cu_up_app_unit->get_o_cu_up_unit_config(),
                                               cu_cp_app_unit->get_cu_cp_unit_config());
   });
 
@@ -260,8 +261,8 @@ int main(int argc, char** argv)
   // Create layer specific PCAPs.
   cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       create_cu_cp_dlt_pcap(cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg, *workers.get_executor_getter());
-  cu_up_dlt_pcaps cu_up_dlt_pcaps =
-      create_cu_up_dlt_pcaps(cu_up_app_unit->get_cu_up_unit_config().pcap_cfg, *workers.get_executor_getter());
+  o_cu_up_dlt_pcaps cu_up_dlt_pcaps =
+      create_o_cu_up_dlt_pcaps(cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter());
 
   // Create IO broker.
   const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -308,7 +309,7 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(generate_e2_client_gateway_config(
       cu_cp_app_unit->get_cu_cp_unit_config().e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap, E2_CP_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(generate_e2_client_gateway_config(
-      cu_up_app_unit->get_cu_up_unit_config().e2_cfg, *epoll_broker, *cu_up_dlt_pcaps.e2ap, E2_UP_PPID));
+      cu_up_app_unit->get_o_cu_up_unit_config().e2_cfg.config, *epoll_broker, *cu_up_dlt_pcaps.e2ap, E2_UP_PPID));
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
@@ -358,7 +359,7 @@ int main(int argc, char** argv)
   cu_up_unit_deps.e2_gw            = e2_gw_cu_up.get();
   cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
-  auto cu_up_obj_wrapper = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
+  auto cu_up_obj_wrapper = cu_up_app_unit->create_o_cu_up_unit(cu_up_unit_deps);
   for (auto& metric : cu_up_obj_wrapper.metrics) {
     metrics_configs.push_back(std::move(metric));
   }

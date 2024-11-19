@@ -16,7 +16,7 @@
 
 namespace srsran {
 
-/// Registers the ORAN DU high loggers in the logger service.
+/// Registers the O-RAN DU high loggers in the logger service.
 inline void register_o_du_high_loggers(const o_du_high_unit_config& unit_config)
 {
   register_du_high_loggers(unit_config.du_high_cfg.config.loggers);

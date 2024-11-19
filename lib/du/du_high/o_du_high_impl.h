@@ -19,13 +19,13 @@
 namespace srsran {
 namespace srs_du {
 
-/// ORAN DU high implementation dependencies.
+/// O-RAN DU high implementation dependencies.
 struct o_du_high_impl_dependencies {
   srslog::basic_logger*                                        logger;
   std::vector<std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>> du_high_adaptor;
 };
 
-/// ORAN DU high implementation.
+/// O-RAN DU high implementation.
 class o_du_high_impl : public o_du_high, public du_power_controller
 {
 public:
@@ -55,7 +55,7 @@ public:
   /// Sets the DU high to the given one.
   void set_du_high(std::unique_ptr<du_high> updated_du_high);
 
-  /// Returns the MAC result notifier of this ORAN DU high.
+  /// Returns the MAC result notifier of this O-RAN DU high.
   mac_result_notifier& get_mac_result_notifier() { return *du_high_result_notifier; }
 
 private:

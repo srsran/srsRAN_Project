@@ -20,7 +20,6 @@ install(TARGETS gnb
 target_link_libraries(gnb
         srsran_app_services
         srsran_f1u_connector
-        srsran_cu_cp
         srsran_network
         srsran_ngap
         ngap_asn1
@@ -34,7 +33,7 @@ target_link_libraries(gnb
         srsran_f1c_gateway
         srsran_e1_gateway
         srsran_cu_cp_app_unit
-        srsran_cu_up_app_unit
+        srsran_o_cu_up_app_unit
         )
 
 if (DPDK_FOUND)

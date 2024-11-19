@@ -16,7 +16,7 @@
 
 namespace srsran {
 
-/// ORAN DU low unit HAL dependencies.
+/// O-RAN DU low unit HAL dependencies.
 struct o_du_low_hal_dependencies {
   std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory = nullptr;
   std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory = nullptr;

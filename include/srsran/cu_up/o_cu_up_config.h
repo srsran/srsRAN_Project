@@ -18,7 +18,7 @@
 namespace srsran {
 namespace srs_cu_up {
 
-/// ORAN CU-UP configuration.
+/// O-RAN CU-UP configuration.
 struct o_cu_up_config {
   /// CU-UP configuration.
   cu_up_config cu_up_cfg;
@@ -26,7 +26,7 @@ struct o_cu_up_config {
   e2ap_configuration e2ap_cfg;
 };
 
-/// ORAN CU-UP dependencies.
+/// O-RAN CU-UP dependencies.
 struct o_cu_up_dependencies {
   /// CU-UP dependencies.
   cu_up_dependencies cu_dependencies;

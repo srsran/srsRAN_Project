@@ -26,7 +26,7 @@ struct du_cell_config;
 
 /// Flexible DU unit configuration.
 struct flexible_du_unit_config {
-  /// ORAN DU high configuration.
+  /// O-RAN DU high configuration.
   const o_du_high_unit_config& odu_high_cfg;
   /// DU low configuration.
   const du_low_unit_config& du_low_cfg;

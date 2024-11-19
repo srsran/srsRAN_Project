@@ -20,8 +20,8 @@ target_link_libraries(srscu
         srsran_app_services
         srsran_support
         srsran_versioning
+		srsran_o_cu_up_app_unit
         srsran_cu_cp_app_unit
-        srsran_cu_up_app_unit
         srsran_ngap
         srsran_f1c_gateway
         srsran_e1_gateway
@@ -34,4 +34,3 @@ target_link_libraries(srscu
 add_backward(srscu)
 
 target_include_directories(srscu PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
-

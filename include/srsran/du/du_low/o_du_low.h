@@ -24,7 +24,7 @@ namespace srs_du {
 
 class du_low;
 
-/// ORAN DU low interface. O-DU low groups the DU low with the PHY-FAPI adaptor.
+/// O-RAN DU low interface. O-DU low groups the DU low with the PHY-FAPI adaptor.
 class o_du_low
 {
 public:
@@ -34,10 +34,10 @@ public:
   /// Returns the upper PHY of this DU low.
   virtual du_low& get_du_low() = 0;
 
-  /// Returns a reference to the FAPI slot-based message gateway for the given cell of this ORAN DU low.
+  /// Returns a reference to the FAPI slot-based message gateway for the given cell of this O-RAN DU low.
   virtual fapi::slot_message_gateway& get_slot_message_gateway(unsigned cell_id) = 0;
 
-  /// Returns a reference to the FAPI slot-based last message notifier for the given cell of this ORAN DU low.
+  /// Returns a reference to the FAPI slot-based last message notifier for the given cell of this O-RAN DU low.
   virtual fapi::slot_last_message_notifier& get_slot_last_message_notifier(unsigned cell_id) = 0;
 
   /// Configures the FAPI slot-based, time-specific message notifier for the given cell to the given one.

@@ -9,10 +9,9 @@
  */
 
 #include "cu_up_unit_config_cli11_schema.h"
-#include "apps/services/e2/e2_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
-#include "apps/units/cu_up/cu_up_unit_config.h"
-#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
+#include "apps/units/o_cu_up/cu_up/cu_up_unit_config.h"
+#include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 
@@ -72,9 +71,6 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
 
 static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pcap_params)
 {
-  add_option(app, "--e2ap_cu_up_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")
-      ->capture_default_str();
-  add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
   add_option(app, "--n3_filename", pcap_params.n3.filename, "N3 GTP-U PCAP file output path")->capture_default_str();
   add_option(app, "--n3_enable", pcap_params.n3.enabled, "Enable N3 GTP-U packet capture")->always_capture_default();
   add_option(app, "--f1u_filename", pcap_params.f1u.filename, "F1-U GTP-U PCAP file output path")
@@ -140,9 +136,6 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
-
-  // E2 section.
-  configure_cli11_with_e2_config_schema(app, unit_cfg.e2_cfg, "--enable_cu_up_e2", "Enable CU-UP E2 agent");
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {

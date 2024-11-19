@@ -7,5 +7,5 @@
 #
 
 add_subdirectory(cu_cp)
-add_subdirectory(cu_up)
 add_subdirectory(flexible_du)
+add_subdirectory(o_cu_up)

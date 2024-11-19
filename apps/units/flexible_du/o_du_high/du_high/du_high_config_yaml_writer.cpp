@@ -40,8 +40,6 @@ static void fill_du_high_pcap_section(YAML::Node node, const du_high_unit_pcap_c
 
 static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_config& config)
 {
-  fill_metrics_logger_appconfig_in_yaml_schema(node, config.metrics_level);
-
   node["mac_level"]                        = srslog::basic_level_to_string(config.mac_level);
   node["rlc_level"]                        = srslog::basic_level_to_string(config.rlc_level);
   node["f1ap_level"]                       = srslog::basic_level_to_string(config.f1ap_level);
@@ -750,6 +748,7 @@ void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_
   node["gnb_id_bit_length"] = static_cast<unsigned>(config.gnb_id.bit_length);
   node["gnb_du_id"]         = static_cast<uint64_t>(config.gnb_du_id);
 
+  fill_metrics_logger_appconfig_in_yaml_schema(node, config.loggers.metrics_level);
   fill_du_high_log_section(node["log"], config.loggers);
   fill_du_high_metrics_section(node["metrics"], config.metrics);
   fill_du_high_pcap_section(node["pcap"], config.pcaps);

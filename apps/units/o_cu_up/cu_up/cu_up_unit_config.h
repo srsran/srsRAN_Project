@@ -10,9 +10,8 @@
 
 #pragma once
 
-#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
+#include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
-#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/ran/qos/five_qi.h"
 
 namespace srsran {
@@ -72,8 +71,6 @@ struct cu_up_unit_config {
   std::vector<cu_up_unit_qos_config> qos_cfg;
   /// Test mode.
   cu_up_unit_test_mode_config test_mode_cfg;
-  /// E2 configuration.
-  e2_config e2_cfg;
 };
 
 } // namespace srsran

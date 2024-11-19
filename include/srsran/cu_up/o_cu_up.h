@@ -16,16 +16,16 @@ namespace srs_cu_up {
 class cu_up_interface;
 class cu_up_power_controller;
 
-/// ORAN CU-UP interface.
+/// O-RAN CU-UP interface.
 class o_cu_up
 {
 public:
   virtual ~o_cu_up() = default;
 
-  /// Returns the CU-UP of this ORAN CU-UP.
+  /// Returns the CU-UP of this O-RAN CU-UP.
   virtual cu_up_interface& get_cu_up() = 0;
 
-  /// Returns the power controller of this ORAN CU-UP.
+  /// Returns the power controller of this O-RAN CU-UP.
   virtual cu_up_power_controller& get_power_controller() = 0;
 };
 

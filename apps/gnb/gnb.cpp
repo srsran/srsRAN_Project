@@ -21,12 +21,12 @@
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/cu_cp/pcap_factory.h"
-#include "apps/units/cu_up/cu_up_application_unit.h"
-#include "apps/units/cu_up/cu_up_unit_config.h"
-#include "apps/units/cu_up/pcap_factory.h"
 #include "apps/units/flexible_du/flexible_du_application_unit.h"
 #include "apps/units/flexible_du/o_du_high/du_high/du_high_config.h"
 #include "apps/units/flexible_du/o_du_high/du_high/pcap_factory.h"
+#include "apps/units/o_cu_up/o_cu_up_application_unit.h"
+#include "apps/units/o_cu_up/o_cu_up_unit_config.h"
+#include "apps/units/o_cu_up/pcap_factory.h"
 #include "gnb_appconfig.h"
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig_translators.h"
@@ -113,7 +113,7 @@ static void initialize_log(const std::string& filename)
 
 static void register_app_logs(const logger_appconfig&       log_cfg,
                               cu_cp_application_unit&       cu_cp_app_unit,
-                              cu_up_application_unit&       cu_up_app_unit,
+                              o_cu_up_application_unit&     cu_up_app_unit,
                               flexible_du_application_unit& du_app_unit)
 {
   // Set log-level of app and all non-layer specific components to app level.
@@ -206,7 +206,7 @@ int main(int argc, char** argv)
   auto cu_cp_app_unit = create_cu_cp_application_unit("gnb");
   cu_cp_app_unit->on_parsing_configuration_registration(app);
 
-  auto cu_up_app_unit = create_cu_up_application_unit("gnb");
+  auto cu_up_app_unit = create_o_cu_up_application_unit("gnb");
   cu_up_app_unit->on_parsing_configuration_registration(app);
 
   auto du_app_unit = create_flexible_du_application_unit("gnb");
@@ -226,7 +226,7 @@ int main(int argc, char** argv)
     }
 
     cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
-    autoderive_cu_up_parameters_after_parsing(cu_up_app_unit->get_cu_up_unit_config(),
+    autoderive_cu_up_parameters_after_parsing(cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg,
                                               cu_cp_app_unit->get_cu_cp_unit_config());
   });
 
@@ -323,12 +323,12 @@ int main(int argc, char** argv)
   // Create layer specific PCAPs.
   // In the gNB app, there is no point in instantiating two pcaps for each node of E1 and F1.
   // We disable one accordingly.
-  cu_up_app_unit->get_cu_up_unit_config().pcap_cfg.disable_e1_pcaps();
+  cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg.pcap_cfg.disable_e1_pcaps();
   du_app_unit->get_du_high_unit_config().pcaps.disable_f1_pcaps();
   cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       create_cu_cp_dlt_pcap(cu_cp_app_unit->get_cu_cp_unit_config().pcap_cfg, *workers.get_executor_getter());
-  cu_up_dlt_pcaps cu_up_dlt_pcaps =
-      create_cu_up_dlt_pcaps(cu_up_app_unit->get_cu_up_unit_config().pcap_cfg, *workers.get_executor_getter());
+  o_cu_up_dlt_pcaps cu_up_dlt_pcaps =
+      create_o_cu_up_dlt_pcaps(cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter());
   flexible_du_pcaps du_pcaps = create_du_pcaps(du_app_unit->get_du_high_unit_config().pcaps, workers);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
@@ -362,7 +362,7 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(generate_e2_client_gateway_config(
       cu_cp_app_unit->get_cu_cp_unit_config().e2_cfg, *epoll_broker, *cu_cp_dlt_pcaps.e2ap, E2_CP_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(generate_e2_client_gateway_config(
-      cu_up_app_unit->get_cu_up_unit_config().e2_cfg, *epoll_broker, *cu_up_dlt_pcaps.e2ap, E2_UP_PPID));
+      cu_up_app_unit->get_o_cu_up_unit_config().e2_cfg.config, *epoll_broker, *cu_up_dlt_pcaps.e2ap, E2_UP_PPID));
 
   // Create CU-CP dependencies.
   cu_cp_build_dependencies cu_cp_dependencies;
@@ -391,7 +391,7 @@ int main(int argc, char** argv)
   cu_up_unit_deps.e2_gw            = e2_gw_cu_up.get();
   cu_up_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
 
-  auto cu_up_obj = cu_up_app_unit->create_cu_up_unit(cu_up_unit_deps);
+  auto cu_up_obj = cu_up_app_unit->create_o_cu_up_unit(cu_up_unit_deps);
   for (auto& metric : cu_up_obj.metrics) {
     metrics_configs.push_back(std::move(metric));
   }
