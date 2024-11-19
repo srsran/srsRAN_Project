@@ -51,9 +51,6 @@ private:
 class pucch_processor_impl : public pucch_processor
 {
 public:
-  /// Maximum supported UCI payload length in number of bits for PUCCH Formats 2, 3 and 4.
-  static constexpr unsigned FORMATS_2_3_4_MAX_UCI_NBITS = 1706;
-
   // See interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override;
 

@@ -586,12 +586,12 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
 
   // UCI payload exceeds the UCI payload size boundaries.
   if (nof_uci_bits < pucch_constants::FORMAT2_MIN_UCI_NBITS ||
-      nof_uci_bits > pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS) {
+      nof_uci_bits > pucch_constants::FORMATS_2_3_4_MAX_UCI_NBITS) {
     return make_unexpected(
         fmt::format("UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
                     nof_uci_bits,
                     pucch_constants::FORMAT2_MIN_UCI_NBITS,
-                    static_cast<unsigned>(pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS)));
+                    static_cast<unsigned>(pucch_constants::FORMATS_2_3_4_MAX_UCI_NBITS)));
   }
 
   return default_success_t();
@@ -665,13 +665,11 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
   }
 
   // UCI payload exceeds the UCI payload size boundaries.
-  if (nof_uci_bits < pucch_constants::FORMAT3_MIN_UCI_NBITS ||
-      nof_uci_bits > pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS) {
-    return make_unexpected(
-        fmt::format("UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
-                    nof_uci_bits,
-                    pucch_constants::FORMAT3_MIN_UCI_NBITS,
-                    static_cast<unsigned>(pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS)));
+  interval<unsigned, true> nof_uci_bits_range(pucch_constants::FORMAT4_MIN_UCI_NBITS,
+                                              pucch_constants::FORMATS_2_3_4_MAX_UCI_NBITS);
+  if (!nof_uci_bits_range.contains(nof_uci_bits)) {
+    return make_unexpected(fmt::format(
+        "UCI Payload length (i.e., {}) is outside the supported range (i.e., {}).", nof_uci_bits, nof_uci_bits_range));
   }
 
   // The number of allocated PRBs is outside the allowed range.
@@ -754,13 +752,11 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
   }
 
   // UCI payload exceeds the UCI payload size boundaries.
-  if (nof_uci_bits < pucch_constants::FORMAT4_MIN_UCI_NBITS ||
-      nof_uci_bits > pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS) {
-    return make_unexpected(
-        fmt::format("UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
-                    nof_uci_bits,
-                    pucch_constants::FORMAT4_MIN_UCI_NBITS,
-                    static_cast<unsigned>(pucch_processor_impl::FORMATS_2_3_4_MAX_UCI_NBITS)));
+  interval<unsigned, true> nof_uci_bits_range(pucch_constants::FORMAT4_MIN_UCI_NBITS,
+                                              pucch_constants::FORMATS_2_3_4_MAX_UCI_NBITS);
+  if (!nof_uci_bits_range.contains(nof_uci_bits)) {
+    return make_unexpected(fmt::format(
+        "UCI Payload length (i.e., {}) is outside the supported range (i.e., {}).", nof_uci_bits, nof_uci_bits_range));
   }
 
   // The OCC length is invalid.

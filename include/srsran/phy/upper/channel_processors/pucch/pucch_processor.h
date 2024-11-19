@@ -74,7 +74,7 @@ public:
     unsigned nof_harq_ack;
     /// Set to \c true if the PUCCH is used for reporting scheduling request.
     bool sr_opportunity;
-    /// Port indexes used for the PUCCH reception.
+    /// Port indices used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> ports;
   };
 
@@ -107,7 +107,7 @@ public:
     unsigned n_id;
     /// Number of expected HARQ-ACK bits {0, 1, 2} (see also \ref PUCCH_payload_size "here").
     unsigned nof_harq_ack;
-    /// Port indexes used for the PUCCH reception.
+    /// Port indices used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> ports;
     /// Initial cyclic shift {0, ..., 11}.
     unsigned initial_cyclic_shift;
@@ -127,7 +127,7 @@ public:
     slot_point slot;
     /// Cyclic prefix configuration for the slot.
     cyclic_prefix cp;
-    /// Port indexes used for the PUCCH reception.
+    /// Port indices used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> ports;
     /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
     unsigned bwp_size_rb;
@@ -181,7 +181,7 @@ public:
     slot_point slot;
     /// Cyclic prefix configuration for the slot.
     cyclic_prefix cp;
-    /// Port indexes used for the PUCCH reception.
+    /// Port indices used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> ports;
     /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
     unsigned bwp_size_rb;
@@ -242,7 +242,7 @@ public:
     slot_point slot;
     /// Cyclic prefix configuration for the slot.
     cyclic_prefix cp;
-    /// Port indexes used for the PUCCH reception.
+    /// Port indices used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> ports;
     /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
     unsigned bwp_size_rb;

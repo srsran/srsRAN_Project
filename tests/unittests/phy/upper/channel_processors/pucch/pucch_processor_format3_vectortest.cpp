@@ -9,6 +9,7 @@
  */
 
 #include "pucch_processor_format3_test_data.h"
+#include "pucch_processor_test_fixture.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
@@ -42,142 +43,38 @@ std::ostream& operator<<(std::ostream& os, span<const uint8_t> data)
 
 } // namespace srsran
 
-class PucchProcessorF3Fixture : public ::testing::TestWithParam<PucchProcessorF3Params>
-{
-protected:
-  // PUCCH processor factory.
-  static std::shared_ptr<pucch_processor_factory> processor_factory;
-  // PUCCH processor.
-  std::unique_ptr<pucch_processor> processor;
-  // PUCCH processor validator.
-  std::unique_ptr<pucch_pdu_validator> validator;
-
-  static void SetUpTestSuite()
-  {
-    if (!processor_factory) {
-      // Create factories required by the PUCCH demodulator factory.
-      std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
-      ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory.";
-
-      std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
-      ASSERT_NE(demod_factory, nullptr) << "Cannot create channel modulation factory.";
-
-      std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-      ASSERT_NE(prg_factory, nullptr) << "Cannot create pseudo-random generator factory.";
-
-      std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
-      if (!dft_factory) {
-        dft_factory = create_dft_processor_factory_generic();
-      }
-      ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
-
-      std::shared_ptr<transform_precoder_factory> precoding_factory =
-          create_dft_transform_precoder_factory(dft_factory, pucch_constants::FORMAT3_MAX_NPRB + 1);
-      ASSERT_NE(precoding_factory, nullptr) << "Cannot create transform precoder factory";
-
-      // Create PUCCH demodulator factory.
-      std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
-          create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, precoding_factory);
-      ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
-
-      // Create factories required by the PUCCH channel estimator factory.
-      std::shared_ptr<low_papr_sequence_generator_factory> lpg_factory =
-          create_low_papr_sequence_generator_sw_factory();
-      ASSERT_NE(lpg_factory, nullptr) << "Cannot create low PAPR sequence generator factory.";
-
-      std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory =
-          create_low_papr_sequence_collection_sw_factory(lpg_factory);
-      ASSERT_NE(lpc_factory, nullptr) << "Cannot create low PAPR sequence collection factory.";
-
-      std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
-          create_time_alignment_estimator_dft_factory(dft_factory);
-      ASSERT_NE(ta_estimator_factory, nullptr) << "Cannot create TA estimator factory.";
-
-      // Create channel estimator factory.
-      std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-          create_port_channel_estimator_factory_sw(ta_estimator_factory);
-      ASSERT_NE(port_chan_estimator_factory, nullptr) << "Cannot create port channel estimator factory.";
-
-      std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
-          create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, lpg_factory, port_chan_estimator_factory);
-      ASSERT_NE(estimator_factory, nullptr) << "Cannot create DM-RS PUCCH estimator factory.";
-
-      // Create PUCCH detector factory.
-      std::shared_ptr<pucch_detector_factory> detector_factory =
-          create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory);
-      ASSERT_NE(detector_factory, nullptr) << "Cannot create PUCCH detector factory.";
-
-      // Create short block detector factory.
-      std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-      ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
-
-      // Create polar decoder factory.
-      std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
-      ASSERT_NE(polar_dec_factory, nullptr) << "Invalid polar decoder factory.";
-
-      // Create CRC calculator factory.
-      std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-      ASSERT_NE(crc_calc_factory, nullptr) << "Invalid CRC calculator factory.";
-
-      // Create UCI decoder factory.
-      std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-          create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
-      ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
-
-      channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
-      channel_estimate_dimensions.nof_tx_layers = 1;
-      channel_estimate_dimensions.nof_rx_ports  = 4;
-      channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
-      channel_estimate_dimensions.nof_prb       = MAX_RB;
-
-      // Create PUCCH processor factory.
-      processor_factory = create_pucch_processor_factory_sw(
-          estimator_factory, detector_factory, pucch_demod_factory, uci_dec_factory, channel_estimate_dimensions);
-      ASSERT_NE(processor_factory, nullptr) << "Cannot create PUCCH processor factory.";
-    }
-  }
-
-  void SetUp() override
-  {
-    // Assert PUCCH Processor factory.
-    ASSERT_NE(processor_factory, nullptr) << "Cannot create PUCCH processor factory.";
-
-    // Create PUCCH processor.
-    processor = processor_factory->create();
-    ASSERT_NE(processor, nullptr) << "Cannot create PUCCH processor.";
-
-    // Create PUCCH validator.
-    validator = processor_factory->create_validator();
-    ASSERT_NE(validator, nullptr) << "Cannot create PUCCH validator.";
-  }
-};
-
-std::shared_ptr<pucch_processor_factory> PucchProcessorF3Fixture::processor_factory = nullptr;
+using PucchProcessorFormat3Param = test_case_t;
+using PucchProcessorF3Fixture    = PucchProcessorTestFixture<PucchProcessorFormat3Param>;
+template <>
+std::unique_ptr<pucch_processor> PucchProcessorF3Fixture::processor = nullptr;
+template <>
+std::unique_ptr<pucch_pdu_validator> PucchProcessorF3Fixture::validator = nullptr;
 
 TEST_P(PucchProcessorF3Fixture, PucchProcessorF3VectorTest)
 {
   const test_case_t&                            test_case = GetParam();
   const context_t&                              context   = test_case.context;
   const pucch_processor::format3_configuration& config    = context.config;
+  std::vector<uint8_t>                          uci_bits  = test_case.uci_bits.read();
 
   // Prepare resource grid.
   resource_grid_reader_spy grid(16, 14, MAX_NOF_PRBS);
   grid.write(test_case.grid.read());
 
   // Make sure configuration is valid.
-  ASSERT_TRUE(validator->is_valid(config));
+  error_type<std::string> validation = validator->is_valid(config);
+  ASSERT_TRUE(validation.has_value()) << fmt::format("PUCCH configuration validation failed with message:\n {}",
+                                                     validation.error());
 
   // Process PUCCH.
   pucch_processor_result result = processor->process(grid, config);
 
   // Assert expected UCI payload.
   ASSERT_EQ(result.message.get_status(), uci_status::valid);
-  ASSERT_EQ(span<const uint8_t>(result.message.get_harq_ack_bits()), span<const uint8_t>(test_case.context.harq_ack));
-  ASSERT_EQ(span<const uint8_t>(result.message.get_sr_bits()), span<const uint8_t>(test_case.context.sr));
-  ASSERT_EQ(span<const uint8_t>(result.message.get_csi_part1_bits()),
-            span<const uint8_t>(test_case.context.csi_part_1));
-  ASSERT_EQ(span<const uint8_t>(result.message.get_csi_part2_bits()),
-            span<const uint8_t>(test_case.context.csi_part_2));
+  ASSERT_EQ(span<const uint8_t>(result.message.get_harq_ack_bits()), span<const uint8_t>(uci_bits));
+  ASSERT_EQ(span<const uint8_t>(result.message.get_sr_bits()), span<const uint8_t>());
+  ASSERT_EQ(span<const uint8_t>(result.message.get_csi_part1_bits()), span<const uint8_t>());
+  ASSERT_EQ(span<const uint8_t>(result.message.get_csi_part2_bits()), span<const uint8_t>());
 }
 
 // Creates test suite that combines all possible parameters.

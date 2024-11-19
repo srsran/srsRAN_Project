@@ -177,8 +177,8 @@ struct formatter<srsran::pucch_processor::format3_configuration> {
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_if_verbose(ctx, "cp={}", config.cp.to_string());
     helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(config.ports));
-    helper.format_if_verbose(ctx, "mod={}", config.pi2_bpsk ? "pi/2-BPSK" : "QPSK");
-    helper.format_if_verbose(ctx, "+DM-RS={}", config.additional_dmrs ? "ON" : "OFF");
+    helper.format_if_verbose(ctx, "pi2_bpsk={}", config.pi2_bpsk);
+    helper.format_if_verbose(ctx, "add_dmrs={}", config.additional_dmrs);
 
     return ctx.out();
   }
@@ -207,7 +207,7 @@ struct formatter<srsran::pucch_processor::format4_configuration> {
     } else {
       helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
     }
-    helper.format_always(ctx, "format=3");
+    helper.format_always(ctx, "format=4");
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + 1);
     helper.format_always(
@@ -220,8 +220,8 @@ struct formatter<srsran::pucch_processor::format4_configuration> {
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_if_verbose(ctx, "cp={}", config.cp.to_string());
     helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(config.ports));
-    helper.format_if_verbose(ctx, "mod={}", config.pi2_bpsk ? "pi/2-BPSK" : "QPSK");
-    helper.format_if_verbose(ctx, "+DM-RS={}", config.additional_dmrs ? "ON" : "OFF");
+    helper.format_if_verbose(ctx, "pi2_bpsk={}", config.pi2_bpsk);
+    helper.format_if_verbose(ctx, "add_dmrs={}", config.additional_dmrs);
     helper.format_if_verbose(ctx, "occ={}", config.occ_index);
     helper.format_if_verbose(ctx, "occ_len={}", config.occ_length);
 
