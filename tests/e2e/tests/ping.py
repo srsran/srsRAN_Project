@@ -249,7 +249,7 @@ def test_zmq_32(
     "band, common_scs, bandwidth, ciphering",
     (
         param(3, 15, 5, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
-        param(3, 15, 10, False, marks=mark.test, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(3, 15, 10, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
         param(3, 15, 20, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
         param(3, 15, 50, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
         param(3, 15, 50, True, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),

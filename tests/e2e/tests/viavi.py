@@ -11,7 +11,7 @@ Launch tests in Viavi
 """
 import logging
 import operator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -61,6 +61,7 @@ class _ViaviConfiguration:
     enable_dddsu: bool = False
     ul_heavy_7u2d: bool = False
     ul_heavy_6u3d: bool = False
+    warning_allowlist: List[str] = field(default_factory=list)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -103,6 +104,7 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 enable_dddsu=test_declaration.get("enable_dddsu", False),
                 ul_heavy_7u2d=test_declaration.get("ul_heavy_7u2d", False),
                 ul_heavy_6u3d=test_declaration.get("ul_heavy_6u3d", False),
+                warning_allowlist=test_declaration.get("warning_allowlist", []),
             )
         )
     return test_declaration_list
@@ -357,6 +359,11 @@ def _test_viavi(
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
                 "rlc_metrics": True,
+                "warning_extra_regex": (
+                    (r"(?!.*" + r")(?!.*".join(test_declaration.warning_allowlist) + r")")
+                    if test_declaration.warning_allowlist
+                    else ""
+                ),
             },
         },
     }
