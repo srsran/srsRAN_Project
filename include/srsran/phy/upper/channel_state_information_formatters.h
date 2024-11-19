@@ -69,14 +69,14 @@ struct formatter<srsran::channel_state_information> {
 
       // Print the measurements that are present.
       if (epre_dB.has_value()) {
-        helper.format_if_verbose(ctx, "epre={:+.1f}dB", epre_dB.value());
+        helper.format_always(ctx, "epre={:+.1f}dB", epre_dB.value());
       } else {
-        helper.format_if_verbose(ctx, "epre=na");
+        helper.format_always(ctx, "epre=na");
       }
       if (rsrp_dB.has_value()) {
-        helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", rsrp_dB.value());
+        helper.format_always(ctx, "rsrp={:+.1f}dB", rsrp_dB.value());
       } else {
-        helper.format_if_verbose(ctx, "rsrp=na");
+        helper.format_always(ctx, "rsrp=na");
       }
       if (sinr_dB.has_value()) {
         helper.format_if_verbose(ctx, "sinr={:+.1f}dB", sinr_dB.value());

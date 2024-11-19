@@ -241,10 +241,10 @@ struct formatter<srsran::pucch_processor_result> {
     }
 
     if (result.detection_metric.has_value()) {
-      helper.format_if_verbose(ctx, "detection_metric={:.1f}", result.detection_metric.value());
+      helper.format_always(ctx, "metric={:.1f}", result.detection_metric.value());
     }
 
-    helper.format_if_verbose(ctx, result.csi);
+    helper.format_always(ctx, result.csi);
     return ctx.out();
   }
 };
