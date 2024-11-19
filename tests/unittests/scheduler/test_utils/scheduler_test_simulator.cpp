@@ -31,11 +31,28 @@ scheduler_test_simulator::scheduler_test_simulator(unsigned           tx_rx_dela
     l.set_level(srslog::basic_levels::debug);
     return l;
   }()),
+  test_logger(srslog::fetch_basic_logger("TEST", true)),
   sched_cfg(make_custom_scheduler_expert_config(enable_csi_rs_pdsch_multiplexing)),
   sched(create_scheduler(scheduler_config{sched_cfg, notif, metric_notif})),
   next_slot(test_helpers::generate_random_slot_point(max_scs))
 {
+  test_logger.set_level(srslog::basic_levels::debug);
+
   logger.set_context(next_slot.sfn(), next_slot.slot_index());
+  test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+
+  srslog::flush();
+}
+
+scheduler_test_simulator::~scheduler_test_simulator()
+{
+  // Let any pending allocations complete.
+  const unsigned max_k = std::max(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1, SCHEDULER_MAX_K2);
+  for (unsigned i = 0; i < max_k; i++) {
+    run_slot();
+  }
+
+  // Flush logs before exiting.
   srslog::flush();
 }
 
@@ -72,7 +89,10 @@ void scheduler_test_simulator::run_slot(du_cell_index_t cell_idx)
 {
   srsran_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", cell_idx);
   logger.set_context(next_slot.sfn(), next_slot.slot_index());
+  test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+
   last_sched_res_list[cell_idx] = &sched->slot_indication(next_slot, cell_idx);
+
   test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res_list[cell_idx]);
   ++next_slot;
 }

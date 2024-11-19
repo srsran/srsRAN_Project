@@ -122,7 +122,7 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
         continue;
       }
 
-      uci_indication uci_ind = create_uci_indication(this->last_result_slot(), ue_idx, pucch);
+      uci_indication uci_ind = test_helper::create_uci_indication(this->last_result_slot(), ue_idx, pucch);
       this->sched->handle_uci_indication(uci_ind);
     }
   }

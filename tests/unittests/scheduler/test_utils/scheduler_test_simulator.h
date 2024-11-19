@@ -28,6 +28,7 @@ public:
   explicit scheduler_test_simulator(unsigned           tx_rx_delay_                     = 4,
                                     subcarrier_spacing max_scs                          = subcarrier_spacing::kHz15,
                                     bool               enable_csi_rs_pdsch_multiplexing = true);
+  ~scheduler_test_simulator();
 
   slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }
 
@@ -65,6 +66,7 @@ public:
 
   const unsigned                      tx_rx_delay;
   srslog::basic_logger&               logger;
+  srslog::basic_logger&               test_logger;
   const scheduler_expert_config       sched_cfg;
   sched_cfg_dummy_notifier            notif;
   scheduler_ue_metrics_dummy_notifier metric_notif;

@@ -12,7 +12,8 @@ target_link_libraries(scheduler_test_utils srslog mac_configuration_helpers sche
 add_library(scheduler_test_suite
         scheduler_test_suite.cpp
         scheduler_output_test_helpers.cpp
-        scheduler_test_simulator.cpp)
+        scheduler_test_simulator.cpp
+        indication_generators.cpp)
 target_link_libraries(scheduler_test_suite srsran_sched gtest)
 
 add_library(uci_test_utils ../uci_and_pucch/uci_test_utils.cpp)

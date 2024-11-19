@@ -98,7 +98,7 @@ TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
   const size_t MAX_PUSCH_DELAY = 16, MAX_RETX_DELAY = 16;
 
   bench.sched->handle_rach_indication(
-      create_rach_indication(bench.next_slot_rx(), {create_preamble(0, this->ue_rnti)}));
+      test_helper::create_rach_indication(bench.next_slot_rx(), {test_helper::create_preamble(0, this->ue_rnti)}));
 
   const ul_sched_info* grant = run_until_next_pusch_alloc(MAX_PUSCH_DELAY);
   ASSERT_NE(grant, nullptr) << "No Msg3 was scheduled";

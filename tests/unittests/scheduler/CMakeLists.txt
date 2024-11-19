@@ -40,15 +40,18 @@ add_executable(scheduler_test
         scheduler_ue_removal_test.cpp
         scheduler_tdd_test.cpp
         scheduler_ue_fallback_mode_test.cpp
-        scheduler_ta_cmd_test.cpp)
+        scheduler_ta_cmd_test.cpp
+        multi_cell_scheduler_test.cpp
+)
 target_link_libraries(scheduler_test
         srsran_sched
         sched_config
         scheduler_test_suite
+        sched_test_doubles
         gtest
         gtest_main)
-gtest_discover_tests(scheduler_test)
 add_test(scheduler_test scheduler_test)
+gtest_discover_tests(scheduler_test)
 
 add_executable(scheduler_test_doubles_test test_doubles/test_pucch_res_test_builder_helper.cpp)
 target_link_libraries(scheduler_test_doubles_test
@@ -78,12 +81,3 @@ target_link_libraries(scheduler_metrics_handler_test
         gtest
         gtest_main)
 add_test(scheduler_metrics_handler_test scheduler_metrics_handler_test)
-
-add_executable(multi_cell_scheduler_test multi_cell_scheduler_test.cpp)
-target_link_libraries(multi_cell_scheduler_test
-        srsran_sched
-        sched_config
-        scheduler_test_suite
-        gtest
-        gtest_main)
-add_test(multi_cell_scheduler_test multi_cell_scheduler_test)
