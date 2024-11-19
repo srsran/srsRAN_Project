@@ -16,10 +16,10 @@ namespace srsran {
 
 class ue_cell_configuration;
 
-class ul_power_control
+class ul_power_controller
 {
 public:
-  ul_power_control(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
+  ul_power_controller(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
 
   /// Update UE with the latest PHR for a given cell.
   void handle_phr(const cell_ph_report& phr);
