@@ -30,7 +30,7 @@ public:
   {
     builder_params =
         duplx_mode == duplex_mode::TDD ? cell_config_builder_profiles::tdd() : cell_config_builder_profiles::fdd();
-    builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz10;
+    builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
 
     // Create cell config with space for two PDCCHs in the SearchSpace#1.
     sched_cell_configuration_request_message cell_cfg_req =
