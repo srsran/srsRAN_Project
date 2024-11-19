@@ -10,8 +10,8 @@
 
 #include "../tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "lib/scheduler/config/sched_config_manager.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "srsran/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 #include <random>
 
@@ -22,7 +22,7 @@ class sched_pucch_res_builder_tester : public ::testing::TestWithParam<bool>
 protected:
   sched_pucch_res_builder_tester() :
     cell_cfg(config_helpers::make_default_scheduler_expert_config(),
-             test_helpers::make_default_sched_cell_configuration_request()),
+             sched_config_helper::make_default_sched_cell_configuration_request()),
     cell_cfg_dedicated(config_helpers::create_default_initial_ue_spcell_cell_config()),
     pucch_builder(GetParam() ? pucch_res_builder_test_helper(cell_cfg.ul_cfg_common.init_ul_bwp, std::nullopt)
                              : pucch_res_builder_test_helper())

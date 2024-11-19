@@ -9,7 +9,8 @@
  */
 
 #include "lib/scheduler/cell/resource_grid.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -159,7 +160,7 @@ TEST(cell_resource_grid_test, test_all)
 TEST(pusch_resource_allocation_test, test_all)
 {
   scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  cell_configuration      cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
+  cell_configuration      cell_cfg{sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()};
   cell_resource_allocator res_grid_alloc{cell_cfg};
   bwp_configuration       bwp_cfg{};
   bwp_cfg.crbs = {0, 52};

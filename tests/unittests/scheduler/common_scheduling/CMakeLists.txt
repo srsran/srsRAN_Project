@@ -19,6 +19,7 @@ target_link_libraries(common_scheduler_test
         sched_config_manager
         mac_configuration_helpers
         scheduler_test_suite
+        sched_test_doubles
         gtest
         gtest_main)
 add_test(common_scheduler_test common_scheduler_test)

@@ -16,7 +16,7 @@ namespace srsran {
 namespace cell_config_builder_profiles {
 
 /// Create cell build parameters for a TDD band.
-cell_config_builder_params tdd();
+cell_config_builder_params tdd(subcarrier_spacing scs = subcarrier_spacing::kHz30);
 
 /// Create cell build parameters for a FDD band.
 cell_config_builder_params fdd();

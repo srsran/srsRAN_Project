@@ -23,6 +23,7 @@
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/ran/uci/uci_constants.h"
+#include "srsran/scheduler/config/logical_channel_group.h"
 #include "srsran/scheduler/harq_id.h"
 #include <variant>
 

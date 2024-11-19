@@ -10,7 +10,8 @@
 
 #include "lib/scheduler/config/cell_configuration.h"
 #include "lib/scheduler/logging/scheduler_metrics_handler.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -31,7 +32,7 @@ protected:
       std::chrono::milliseconds period = std::chrono::milliseconds{test_rgen::uniform_int<unsigned>(2, 100)}) :
     report_period(period),
     cell_cfg(config_helpers::make_default_scheduler_expert_config(),
-             test_helpers::make_default_sched_cell_configuration_request()),
+             sched_config_helper::make_default_sched_cell_configuration_request()),
     metrics(period, metrics_notif, cell_cfg)
   {
     metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});

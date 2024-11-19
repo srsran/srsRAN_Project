@@ -15,6 +15,8 @@
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -33,48 +35,22 @@ class base_scheduler_tdd_tester : public scheduler_test_simulator
 protected:
   base_scheduler_tdd_tester(const tdd_test_params& testparams) : scheduler_test_simulator(4, testparams.tdd_cfg.ref_scs)
   {
+    params                      = cell_config_builder_profiles::tdd(testparams.tdd_cfg.ref_scs);
+    params.csi_rs_enabled       = testparams.csi_rs_enabled;
+    params.tdd_ul_dl_cfg_common = testparams.tdd_cfg;
+    params.min_k1               = testparams.min_k;
+    params.min_k2               = testparams.min_k;
+
     // Add Cell.
-    this->add_cell([this, &testparams]() {
-      params.scs_common       = testparams.tdd_cfg.ref_scs;
-      params.dl_f_ref_arfcn   = 520002;
-      params.band             = nr_band::n41;
-      params.channel_bw_mhz   = bs_channel_bandwidth::MHz20;
-      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-          params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
-      static const uint8_t                                   ss0_idx = 0;
-      std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-          band_helper::get_ssb_coreset0_freq_location(params.dl_f_ref_arfcn,
-                                                      *params.band,
-                                                      nof_crbs,
-                                                      params.scs_common,
-                                                      params.scs_common,
-                                                      ss0_idx,
-                                                      params.max_coreset0_duration);
-      if (!ssb_freq_loc.has_value()) {
-        report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", params.pci);
-      }
-      params.offset_to_point_a    = (*ssb_freq_loc).offset_to_point_A;
-      params.k_ssb                = (*ssb_freq_loc).k_ssb;
-      params.coreset0_index       = (*ssb_freq_loc).coreset0_idx;
-      params.search_space0_index  = ss0_idx;
-      params.csi_rs_enabled       = testparams.csi_rs_enabled;
-      params.tdd_ul_dl_cfg_common = testparams.tdd_cfg;
-      params.min_k1               = testparams.min_k;
-      params.min_k2               = testparams.min_k;
-
-      sched_cell_configuration_request_message sched_cell_cfg_req =
-          test_helpers::make_default_sched_cell_configuration_request(params);
-
-      return sched_cell_cfg_req;
-    }());
+    this->add_cell(sched_config_helper::make_default_sched_cell_configuration_request(params));
 
     // Add UE
-    auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request(params, {ue_drb_lcid});
+    auto ue_cfg     = sched_config_helper::create_default_sched_ue_creation_request(params, {ue_drb_lcid});
     ue_cfg.ue_index = ue_idx;
     ue_cfg.crnti    = ue_rnti;
     // Increase PUCCH Format 2 code rate to support TDD configuration of DDDDDDDDSU.
     (*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->format_2_common_param->max_c_rate =
-        srsran::max_pucch_code_rate::dot_35;
+        max_pucch_code_rate::dot_35;
 
     this->add_ue(ue_cfg);
   }

@@ -13,7 +13,7 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "srsran/ran/duplex_mode.h"
-#include "srsran/ran/prach/prach_helper.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

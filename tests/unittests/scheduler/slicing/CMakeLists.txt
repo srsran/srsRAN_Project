@@ -12,6 +12,7 @@ target_link_libraries(slice_scheduler_test
         scheduler_test_utils
         scheduler_test_suite
         mac_configuration_helpers
+        sched_test_doubles
         gtest
         gtest_main
 )

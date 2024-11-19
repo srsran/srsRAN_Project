@@ -10,6 +10,7 @@
 
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/ssb_mapping.h"
@@ -100,9 +101,9 @@ private:
                                                                            subcarrier_spacing init_bwp_scs,
                                                                            uint8_t            k_ssb)
   {
-    sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request();
-    msg.dl_carrier.arfcn_f_ref                       = freq_arfcn;
-    msg.dl_carrier.band                              = band_helper::get_band_from_dl_arfcn(freq_arfcn);
+    sched_cell_configuration_request_message msg = sched_config_helper::make_default_sched_cell_configuration_request();
+    msg.dl_carrier.arfcn_f_ref                   = freq_arfcn;
+    msg.dl_carrier.band                          = band_helper::get_band_from_dl_arfcn(freq_arfcn);
     msg.dl_cfg_common.freq_info_dl.offset_to_point_a = offset_to_point_A;
     msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
     msg.ssb_config.scs                               = init_bwp_scs;

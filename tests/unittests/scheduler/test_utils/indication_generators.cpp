@@ -23,12 +23,12 @@ rach_indication_message::preamble srsran::test_helper::create_preamble(unsigned 
 }
 
 rach_indication_message
-srsran::test_helper::create_rach_indication(slot_point                                            next_slot_rx,
+srsran::test_helper::create_rach_indication(slot_point                                            slot_rx,
                                             const std::vector<rach_indication_message::preamble>& preambles)
 {
   rach_indication_message rach_ind{};
   rach_ind.cell_index = to_du_cell_index(0);
-  rach_ind.slot_rx    = next_slot_rx;
+  rach_ind.slot_rx    = slot_rx;
   if (preambles.empty()) {
     return rach_ind;
   }

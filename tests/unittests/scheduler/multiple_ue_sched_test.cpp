@@ -9,14 +9,15 @@
  */
 
 #include "lib/scheduler/scheduler_impl.h"
-#include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
 #include "test_utils/dummy_test_components.h"
 #include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/search_space.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/test_utils.h"
@@ -151,7 +152,8 @@ protected:
 
   sched_cell_configuration_request_message create_custom_cell_config_request(duplex_mode mode) const
   {
-    return test_helpers::make_default_sched_cell_configuration_request(create_custom_cell_cfg_builder_params(mode));
+    return sched_config_helper::make_default_sched_cell_configuration_request(
+        create_custom_cell_cfg_builder_params(mode));
   }
 
   unsigned pdsch_tbs_scheduled_bytes_per_lc(const sched_test_ue& u, lcid_t lcid)
@@ -227,7 +229,7 @@ protected:
               const cell_config_builder_params& params,
               bool                              is_fallback = false)
   {
-    auto ue_creation_req               = test_helpers::create_default_sched_ue_creation_request(params);
+    auto ue_creation_req               = sched_config_helper::create_default_sched_ue_creation_request(params);
     ue_creation_req.starts_in_fallback = is_fallback;
 
     ue_creation_req.ue_index = ue_index;
@@ -766,7 +768,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
   config_helpers::cell_config_builder_params_extended extended_params{builder_params};
   const bool                                          enable_csi_rs_pdsch_multiplexing = true;
   setup_sched(create_expert_config(10, enable_csi_rs_pdsch_multiplexing),
-              test_helpers::make_default_sched_cell_configuration_request(extended_params));
+              sched_config_helper::make_default_sched_cell_configuration_request(extended_params));
 
   // NOTE: The buffer size must be high enough for the scheduler to keep allocating resources to the UE. In order to
   // avoid failing of test we ignore the min_buffer_size_in_bytes and max_buffer_size_in_bytes set in params.
@@ -901,7 +903,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
 
   // Pre-populate common UE creation request parameters.
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(params.duplx_mode);
-  auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
+  auto        ue_creation_req = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg_params);
 
   auto it = std::find_if(ue_creation_req.cfg.lc_config_list->begin(),
                          ue_creation_req.cfg.lc_config_list->end(),
@@ -1033,7 +1035,7 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
 
   // Pre-populate common UE creation request parameters.
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(params.duplx_mode);
-  auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
+  auto        ue_creation_req = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg_params);
 
   auto it = std::find_if(ue_creation_req.cfg.lc_config_list->begin(),
                          ue_creation_req.cfg.lc_config_list->end(),
@@ -1271,8 +1273,8 @@ TEST_F(single_ue_sched_tester, test_ue_scheduling_with_empty_spcell_cfg)
 {
   setup_sched(create_expert_config(10), create_custom_cell_config_request(srsran::duplex_mode::TDD));
   // Add UE.
-  const auto& cell_cfg_params        = create_custom_cell_cfg_builder_params(srsran::duplex_mode::TDD);
-  auto        ue_creation_req        = test_helpers::create_empty_spcell_cfg_sched_ue_creation_request(cell_cfg_params);
+  const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(srsran::duplex_mode::TDD);
+  auto        ue_creation_req = sched_config_helper::create_empty_spcell_cfg_sched_ue_creation_request(cell_cfg_params);
   ue_creation_req.starts_in_fallback = true;
 
   ue_creation_req.ue_index = to_du_ue_index(0);

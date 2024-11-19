@@ -11,16 +11,16 @@
 #include "../test_utils/config_generators.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
-#include "lib/scheduler/policy/scheduler_policy_factory.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/slicing/slice_scheduler.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
-#include "srsran/support/error_handling.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -40,7 +40,7 @@ protected:
       policy_scheduler_type   policy,
       scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config(),
       const sched_cell_configuration_request_message& msg =
-          test_helpers::make_default_sched_cell_configuration_request()) :
+          sched_config_helper::make_default_sched_cell_configuration_request()) :
     logger(srslog::fetch_basic_logger("SCHED", true)),
     res_logger(false, msg.pci),
     sched_cfg([&sched_cfg_, policy]() {
@@ -132,7 +132,7 @@ protected:
                                                        const std::initializer_list<lcid_t>& lcids_to_activate,
                                                        lcg_id_t                             lcg_id)
   {
-    sched_ue_creation_request_message req = test_helpers::create_default_sched_ue_creation_request();
+    sched_ue_creation_request_message req = sched_config_helper::create_default_sched_ue_creation_request();
     req.ue_index                          = ue_index;
     req.crnti                             = rnti;
     // Set LCG ID for SRBs provided in the LCIDs to activate list.
@@ -475,7 +475,7 @@ protected:
                                                                                  .nof_dl_symbols            = 5,
                                                                                  .nof_ul_slots              = 4,
                                                                                  .nof_ul_symbols            = 0}};
-      return test_helpers::make_default_sched_cell_configuration_request(builder_params);
+      return sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
     }())
   {
     next_slot = {to_numerology_value(subcarrier_spacing::kHz30), 0};

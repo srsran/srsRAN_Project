@@ -15,6 +15,8 @@ target_link_libraries(scheduler_cell_resource_test
         srslog
         mac_configuration_helpers
         sched_config
+        scheduler_test_utils
+        sched_test_doubles
         gtest
         gtest_main)
 gtest_discover_tests(scheduler_cell_resource_test)

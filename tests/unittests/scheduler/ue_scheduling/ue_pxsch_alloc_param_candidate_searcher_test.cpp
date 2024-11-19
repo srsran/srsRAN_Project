@@ -8,10 +8,13 @@
  *
  */
 
-#include "../test_utils/config_generators.h"
 #include "../test_utils/dummy_test_components.h"
+#include "../test_utils/sched_random_utils.h"
 #include "lib/scheduler/ue_scheduling/ue_pdsch_alloc_param_candidate_searcher.h"
 #include "lib/scheduler/ue_scheduling/ue_pusch_alloc_param_candidate_searcher.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -23,16 +26,16 @@ protected:
     cell_cfg(*[this]() {
       cell_cfg_list.emplace(to_du_cell_index(0),
                             std::make_unique<cell_configuration>(
-                                sched_cfg, test_helpers::make_default_sched_cell_configuration_request()));
+                                sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()));
       return cell_cfg_list[to_du_cell_index(0)].get();
     }()),
     logger(srslog::fetch_basic_logger("SCHED", true)),
-    next_slot(test_helpers::generate_random_slot_point(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs))
+    next_slot(test_helper::generate_random_slot_point(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs))
   {
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+    sched_ue_creation_request_message ue_creation_req = sched_config_helper::create_default_sched_ue_creation_request();
     ue_creation_req.ue_index                          = to_du_ue_index(0);
     ue_creation_req.crnti                             = to_rnti(0x4601 + (unsigned)ue_creation_req.ue_index);
     for (lcid_t lcid : std::array<lcid_t, 3>{uint_to_lcid(1), uint_to_lcid(2), uint_to_lcid(4)}) {

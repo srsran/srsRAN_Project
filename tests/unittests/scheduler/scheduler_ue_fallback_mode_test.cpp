@@ -15,6 +15,9 @@
 #include "test_utils/config_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "srsran/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -25,32 +28,13 @@ public:
   base_scheduler_conres_test(duplex_mode duplx_mode = duplex_mode::FDD) :
     scheduler_test_simulator(4, duplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
-    if (duplx_mode == duplex_mode::TDD) {
-      builder_params.dl_f_ref_arfcn = 520002;
-      builder_params.scs_common     = subcarrier_spacing::kHz30;
-      builder_params.band           = band_helper::get_band_from_dl_arfcn(builder_params.dl_f_ref_arfcn);
-      builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz10;
-      const unsigned nof_crbs       = band_helper::get_n_rbs_from_bw(
-          builder_params.channel_bw_mhz, builder_params.scs_common, band_helper::get_freq_range(*builder_params.band));
-      static const uint8_t                                   ss0_idx = 0;
-      std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-          band_helper::get_ssb_coreset0_freq_location(builder_params.dl_f_ref_arfcn,
-                                                      *builder_params.band,
-                                                      nof_crbs,
-                                                      builder_params.scs_common,
-                                                      builder_params.scs_common,
-                                                      ss0_idx,
-                                                      builder_params.max_coreset0_duration);
-      if (!ssb_freq_loc.has_value()) {
-        report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", builder_params.pci);
-      }
-      builder_params.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
-      builder_params.k_ssb             = ssb_freq_loc->k_ssb;
-      builder_params.coreset0_index    = ssb_freq_loc->coreset0_idx;
-    }
+    builder_params =
+        duplx_mode == duplex_mode::TDD ? cell_config_builder_profiles::tdd() : cell_config_builder_profiles::fdd();
+    builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz10;
+
     // Create cell config with space for two PDCCHs in the SearchSpace#1.
     sched_cell_configuration_request_message cell_cfg_req =
-        test_helpers::make_default_sched_cell_configuration_request(builder_params);
+        sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
     cell_cfg_req.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_nof_candidates(
         std::array<uint8_t, 5>{0, 0, 2, 0, 0});
     add_cell(cell_cfg_req);
@@ -61,7 +45,7 @@ public:
                   "This test assumes a setup with ZP CSI-RS enabled");
 
     // Create a UE with a DRB active.
-    auto ue_cfg               = test_helpers::create_default_sched_ue_creation_request(builder_params, {});
+    auto ue_cfg               = sched_config_helper::create_default_sched_ue_creation_request(builder_params, {});
     ue_cfg.ue_index           = ue_index;
     ue_cfg.crnti              = rnti;
     ue_cfg.starts_in_fallback = true;

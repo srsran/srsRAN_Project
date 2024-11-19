@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/du/du_high/du_qos_config.h"
-#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/ran/qos/five_qi.h"
 #include <map>
 

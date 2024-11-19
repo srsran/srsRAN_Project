@@ -22,8 +22,8 @@
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
-#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

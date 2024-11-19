@@ -10,6 +10,7 @@
 
 #include "config_generators.h"
 #include "lib/scheduler/logging/scheduler_metrics_ue_configurator.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 
 using namespace srsran;
 using namespace test_helpers;
@@ -49,8 +50,9 @@ test_sched_config_manager::test_sched_config_manager(const cell_config_builder_p
   metrics_handler(std::chrono::milliseconds{1000}, *metric_notifier),
   cfg_mng(scheduler_config{expert_cfg, *cfg_notifier, *metric_notifier}, metrics_handler)
 {
-  default_cell_req = test_helpers::make_default_sched_cell_configuration_request(builder_params);
-  default_ue_req   = test_helpers::create_default_sched_ue_creation_request(builder_params, {lcid_t::LCID_MIN_DRB});
+  default_cell_req = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
+  default_ue_req =
+      sched_config_helper::create_default_sched_ue_creation_request(builder_params, {lcid_t::LCID_MIN_DRB});
 }
 
 test_sched_config_manager::~test_sched_config_manager() {}

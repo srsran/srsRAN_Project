@@ -9,10 +9,11 @@
  */
 
 #include "lib/scheduler/common_scheduling/prach_scheduler.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -45,7 +46,7 @@ make_custom_sched_cell_configuration_request(const prach_test_params test_params
     params.dl_f_ref_arfcn = 520002;
   }
   sched_cell_configuration_request_message sched_req =
-      test_helpers::make_default_sched_cell_configuration_request(params);
+      sched_config_helper::make_default_sched_cell_configuration_request(params);
 
   // Change Carrier parameters when SCS is 15kHz.
   if (test_params.scs == subcarrier_spacing::kHz15) {

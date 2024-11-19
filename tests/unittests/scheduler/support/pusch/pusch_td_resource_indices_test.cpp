@@ -10,6 +10,7 @@
 
 #include "lib/scheduler/support/pusch/pusch_default_time_allocation.h"
 #include "lib/scheduler/support/pusch/pusch_td_resource_indices.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
@@ -62,7 +63,7 @@ protected:
     params.min_k2               = testparams.min_k;
 
     sched_cell_configuration_request_message sched_cell_cfg_req =
-        test_helpers::make_default_sched_cell_configuration_request(params);
+        sched_config_helper::make_default_sched_cell_configuration_request(params);
 
     // Generate cell configuration.
     cell_cfg = std::make_unique<cell_configuration>(expert_cfg, sched_cell_cfg_req);

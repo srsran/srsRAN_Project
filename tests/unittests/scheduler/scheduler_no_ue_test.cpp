@@ -16,10 +16,12 @@
 /// - handle RACH indication + RAR allocation.
 
 #include "lib/scheduler/scheduler_impl.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
+#include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
@@ -32,8 +34,9 @@ void test_no_ues()
   scheduler_impl                      sch{scheduler_config{sched_cfg, cfg_notif, metrics_notif}};
 
   // Action 1: Add Cell.
-  sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{sched_cfg, cell_cfg_msg};
+  sched_cell_configuration_request_message cell_cfg_msg =
+      sched_config_helper::make_default_sched_cell_configuration_request();
+  cell_configuration cell_cfg{sched_cfg, cell_cfg_msg};
   sch.handle_cell_configuration_request(cell_cfg_msg);
 
   slot_point sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10239)};
@@ -54,15 +57,17 @@ void test_rach_indication()
   scheduler_impl                      sch{scheduler_config{sched_cfg, cfg_notif, metrics_notif}};
 
   // Action 1: Add Cell.
-  sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{sched_cfg, cell_cfg_msg};
-  sch.handle_cell_configuration_request(test_helpers::make_default_sched_cell_configuration_request());
+  sched_cell_configuration_request_message cell_cfg_msg =
+      sched_config_helper::make_default_sched_cell_configuration_request();
+  cell_configuration cell_cfg{sched_cfg, cell_cfg_msg};
+  sch.handle_cell_configuration_request(sched_config_helper::make_default_sched_cell_configuration_request());
 
   // Action 2: Add RACH indication.
   // Note: RACH is added in a slot different than the SIB1 to avoid PDCCH conflicts.
   const unsigned tx_delay = 2;
   slot_point     sl_rx{0, 1}, sl_tx = sl_rx + tx_delay;
-  sch.handle_rach_indication(test_helpers::generate_rach_ind_msg(sl_rx, to_rnti(0x4601)));
+  sch.handle_rach_indication(
+      test_helper::create_rach_indication(sl_rx, {test_helper::create_preamble(0, to_rnti(0x4601))}));
 
   // Action 3: Run slot 0.
   const sched_result& res = sch.slot_indication(sl_tx, to_du_cell_index(0));

@@ -9,6 +9,7 @@
  */
 
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
@@ -40,7 +41,7 @@ protected:
       auto& added_cell = cell_cfg_builder_params_list.back();
       added_cell.pci   = cell_idx + 1;
 
-      auto sched_cell_cfg_req             = test_helpers::make_default_sched_cell_configuration_request(added_cell);
+      auto sched_cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(added_cell);
       sched_cell_cfg_req.cell_group_index = static_cast<du_cell_group_index_t>(cell_idx);
       sched_cell_cfg_req.cell_index       = to_du_cell_index(cell_idx);
       this->add_cell(sched_cell_cfg_req);
@@ -75,8 +76,8 @@ protected:
   void add_ue(uint16_t cell_idx, uint16_t ue_idx)
   {
     // Add UE
-    auto ue_cfg =
-        test_helpers::create_default_sched_ue_creation_request(cell_cfg_builder_params_list[cell_idx], {LCID_MIN_DRB});
+    auto ue_cfg = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg_builder_params_list[cell_idx],
+                                                                                {LCID_MIN_DRB});
     ue_cfg.ue_index                                 = to_du_ue_index(ue_idx);
     ue_cfg.crnti                                    = get_ue_crnti(ue_idx);
     (*ue_cfg.cfg.cells)[0].serv_cell_cfg.cell_index = to_du_cell_index(cell_idx);

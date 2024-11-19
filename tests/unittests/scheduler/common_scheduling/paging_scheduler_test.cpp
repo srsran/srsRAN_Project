@@ -13,13 +13,14 @@
 #include "lib/scheduler/scheduler_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <gtest/gtest.h>
 #include <random>
-#include <unordered_map>
 
 using namespace srsran;
 
@@ -45,7 +46,7 @@ struct paging_sched_test_bench {
 
   explicit paging_sched_test_bench(const scheduler_expert_config&                  expert_cfg_,
                                    const sched_cell_configuration_request_message& cell_req =
-                                       test_helpers::make_default_sched_cell_configuration_request()) :
+                                       sched_config_helper::make_default_sched_cell_configuration_request()) :
     expert_cfg{expert_cfg_},
     cell_cfg{expert_cfg, cell_req},
     res_grid{cell_cfg},
@@ -81,7 +82,7 @@ public:
 
   void setup_sched(const scheduler_expert_config&                  expert_cfg,
                    const sched_cell_configuration_request_message& msg =
-                       test_helpers::make_default_sched_cell_configuration_request())
+                       sched_config_helper::make_default_sched_cell_configuration_request())
   {
     current_slot = slot_point{to_numerology_value(msg.scs_common), 0};
 
@@ -146,7 +147,7 @@ public:
       cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
       cell_cfg.channel_bw_mhz = carrier_bw;
     }
-    return test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
+    return sched_config_helper::make_default_sched_cell_configuration_request(cell_cfg);
   }
 
   uint64_t generate_five_g_s_tmsi()

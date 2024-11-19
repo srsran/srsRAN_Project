@@ -23,7 +23,7 @@ namespace test_helper {
 rach_indication_message::preamble create_preamble(unsigned preamble_id, rnti_t tc_rnti);
 
 /// Create a RACH indication with one occation and multiple PRACH preambles.
-rach_indication_message create_rach_indication(slot_point                                            next_slot_rx,
+rach_indication_message create_rach_indication(slot_point                                            slot_rx,
                                                const std::vector<rach_indication_message::preamble>& preambles);
 
 /// Create dummy UCI indication based on a PUCCH PDU.

@@ -9,7 +9,7 @@
  */
 
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
 #include "srsran/ran/duplex_mode.h"
@@ -29,13 +29,13 @@ protected:
           duplex_mode == duplex_mode::FDD ? cell_config_builder_profiles::fdd() : cell_config_builder_profiles::tdd();
 
       sched_cell_configuration_request_message sched_cfg_req =
-          test_helpers::make_default_sched_cell_configuration_request(params);
+          sched_config_helper::make_default_sched_cell_configuration_request(params);
 
       return sched_cfg_req;
     }());
 
     // Add UE
-    this->add_ue(test_helpers::create_default_sched_ue_creation_request(params, {ue_drb_lcid}));
+    this->add_ue(sched_config_helper::create_default_sched_ue_creation_request(params, {ue_drb_lcid}));
   }
 
   uci_indication create_uci_indication(slot_point        uci_sl,
