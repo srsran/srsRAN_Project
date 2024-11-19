@@ -26,12 +26,16 @@ struct cu_up_unit_metrics_config {
   } pdcp;
 };
 
-struct cu_up_unit_ngu_config {
+struct cu_up_unit_ngu_socket_config {
   std::string   bind_addr      = "auto";
   std::string   bind_interface = "auto";
   std::string   ext_addr       = "auto";
-  bool          no_core        = false;
   udp_appconfig udp_config     = {};
+};
+
+struct cu_up_unit_ngu_config {
+  bool                               no_core = false;
+  std::vector<cu_up_unit_ngu_config> ngu_socket_cfg;
 };
 
 /// F1-U configuration at CU_UP side

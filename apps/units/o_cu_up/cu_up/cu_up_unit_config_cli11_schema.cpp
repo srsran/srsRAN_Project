@@ -17,20 +17,16 @@
 
 using namespace srsran;
 
+// static void configure_cli11_ngu_socket_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
+//{
+//   // TODO Fixup
+// }
+
 static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
 {
-  add_option(app, "--bind_addr", ngu_params.bind_addr, "Local IP address to bind for N3 interface")
-      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--bind_interface", ngu_params.bind_interface, "Network device to bind for N3 interface")
-      ->capture_default_str();
-  add_option(app,
-             "--ext_addr",
-             ngu_params.ext_addr,
-             "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
-      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
   add_option(app, "--no_core", ngu_params.no_core, "Allow gNB to run without a core");
 
-  configure_cli11_with_udp_config_schema(app, ngu_params.udp_config);
+  // Add option for multiple sockets, for usage with different slices, 5QIs or parallization.
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)

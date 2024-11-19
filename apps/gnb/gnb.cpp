@@ -168,9 +168,10 @@ static void autoderive_slicing_args(du_high_unit_config& du_hi_cfg, cu_cp_unit_c
 static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_cfg, const cu_cp_unit_config& cu_cp_cfg)
 {
   // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
+  /* TODO fixup
   if (cu_up_cfg.ngu_cfg.bind_addr == "auto") {
     cu_up_cfg.ngu_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
-  }
+  }*/
   cu_up_cfg.ngu_cfg.no_core = cu_cp_cfg.amf_config.no_core;
 }
 
