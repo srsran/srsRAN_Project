@@ -20,7 +20,7 @@ public:
   drx_offset_pool(span<const du_cell_config> cells)
   {
     offset_count.reserve(cells.size());
-    for (unsigned i = 0; i != cells.size(); ++i) {
+    for (unsigned i = 0, sz = cells.size(); i != sz; ++i) {
       if (cells[i].mcg_params.drx.has_value()) {
         // Cell has DRX configured.
         offset_count.resize(i + 1);
