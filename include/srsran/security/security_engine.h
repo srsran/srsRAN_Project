@@ -20,6 +20,21 @@ namespace srsran {
 namespace security {
 
 enum class security_error { buffer_failure, engine_failure, integrity_failure, ciphering_failure };
+inline const char* to_string(security_error sec_err)
+{
+  switch (sec_err) {
+    case security_error::buffer_failure:
+      return "buffer failure";
+    case security_error::engine_failure:
+      return "engine failure";
+    case security_error::integrity_failure:
+      return "integrity failure";
+    case security_error::ciphering_failure:
+      return "ciphering failure";
+    default:
+      return "invalid";
+  }
+}
 
 struct security_result {
   expected<byte_buffer, security_error> buf;
@@ -44,3 +59,21 @@ public:
 
 } // namespace security
 } // namespace srsran
+
+namespace fmt {
+
+template <>
+struct formatter<srsran::security::security_error> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::security::security_error sec_err, FormatContext& ctx)
+  {
+    return format_to(ctx.out(), "{}", to_string(sec_err));
+  }
+};
+} // namespace fmt
