@@ -60,6 +60,7 @@ async_task<void> reset_procedure::handle_reset()
       }
     } break;
     case reset_choice::types_opts::choice_ext:
+      logger.warning("Ignoring RESET message. Cause: choiceExt option not supported");
       break;
     default:
       report_fatal_error("Invalid F1 reset type");
