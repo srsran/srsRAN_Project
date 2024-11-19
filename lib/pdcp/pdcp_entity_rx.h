@@ -151,7 +151,7 @@ private:
   void record_reordering_dealy(std::chrono::system_clock::time_point time_of_arrival);
 
   /// Apply deciphering and integrity check to the PDU
-  expected<byte_buffer> apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count);
+  security::security_result apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count);
 
   /*
    * Notifiers and handlers

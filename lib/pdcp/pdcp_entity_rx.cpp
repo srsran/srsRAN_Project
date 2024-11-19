@@ -247,20 +247,50 @@ void pdcp_entity_rx::apply_security(pdcp_rx_sdu_info pdu_info)
   uint32_t rcvd_count = pdu_info.count;
 
   // Apply deciphering and integrity check
-  expected<byte_buffer> exp_buf = apply_deciphering_and_integrity_check(std::move(pdu_info.sdu), rcvd_count);
-  if (!exp_buf.has_value()) {
-    logger.log_warning("Failed deciphering and integrity check. count={}", rcvd_count);
+  security::security_result result = apply_deciphering_and_integrity_check(std::move(pdu_info.sdu), rcvd_count);
+
+  if (!result.buf.has_value()) {
+    auto handle_failure = [this, sec_err = result.buf.error(), count = result.count]() {
+      switch (sec_err) {
+        case srsran::security::security_error::integrity_failure:
+          logger.log_warning("Integrity failed, dropping PDU. count={}", count);
+          metrics.add_integrity_failed_pdus(1);
+          upper_cn.on_integrity_failure();
+          break;
+        case srsran::security::security_error::ciphering_failure:
+          logger.log_warning("Deciphering failed, dropping PDU. count={}", count);
+          upper_cn.on_protocol_failure();
+          break;
+        case srsran::security::security_error::buffer_failure:
+          logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", count);
+          upper_cn.on_protocol_failure();
+          break;
+        case srsran::security::security_error::engine_failure:
+          logger.log_error("Engine error when decrypting and verifying integrity, dropping PDU. count={}", count);
+          upper_cn.on_protocol_failure();
+          break;
+      }
+    };
+    if (not ue_ul_executor.execute(std::move(handle_failure))) {
+      logger.log_warning("Dropped PDU with security error, UE executor queue is full. count={} sec_err={}",
+                         rcvd_count,
+                         result.buf.error());
+    }
     return;
   }
+  logger.log_debug(result.buf.value().begin(), result.buf.value().end(), "Security passed. count={}", rcvd_count);
 
   // After checking the integrity, we can discard the header.
   unsigned hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
-  exp_buf.value().trim_head(hdr_size);
+  result.buf.value().trim_head(hdr_size);
 
-  pdu_info.sdu = std::move(exp_buf.value());
+  pdu_info.sdu = std::move(result.buf.value());
 
   // apply reordering in UE executor
-  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_reordering(std::move(pdu_info)); };
+  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
+    metrics.add_integrity_verified_pdus(1);
+    apply_reordering(std::move(pdu_info));
+  };
   if (not ue_ul_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, UE executor queue is full. count={}", rcvd_count);
   }
@@ -442,7 +472,7 @@ byte_buffer pdcp_entity_rx::compile_status_report()
 /*
  * Deciphering and Integrity Protection Helpers
  */
-expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
+security::security_result pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
 {
   // obtain the thread-specific ID of the worker
 
@@ -455,7 +485,7 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
     logger.log_error("Worker index exceeds number of crypto workers. worker_idx={} max_nof_crypto_workers={}",
                      worker_idx,
                      max_nof_crypto_workers);
-    return make_unexpected(default_error_t{});
+    return {.buf = make_unexpected(srsran::security::security_error::engine_failure), .count = count};
   }
   logger.log_debug("Using sec_engine with worker_idx={}. count={} pdu_len={}", worker_idx, count, buf.length());
 
@@ -465,11 +495,11 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
     if (is_srb()) {
       if (buf.length() <= security::sec_mac_len) {
         logger.log_warning("Failed to trim MAC-I from PDU. count={}", count);
-        return make_unexpected(default_error_t{});
+        return {.buf = make_unexpected(srsran::security::security_error::buffer_failure), .count = count};
       }
       buf.trim_tail(security::sec_mac_len);
     }
-    return buf;
+    return {.buf = std::move(buf), .count = count};
   }
 
   // TS 38.323, section 5.8: Deciphering
@@ -483,29 +513,7 @@ expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte
 
   unsigned                  hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
   security::security_result result   = sec_engine->decrypt_and_verify_integrity(std::move(buf), hdr_size, count);
-
-  if (!result.buf.has_value()) {
-    switch (result.buf.error()) {
-      case srsran::security::security_error::integrity_failure:
-        logger.log_warning("Integrity failed, dropping PDU. count={} worker_idx={}", result.count, worker_idx);
-        metrics.add_integrity_failed_pdus(1);
-        upper_cn.on_integrity_failure();
-        break;
-      case srsran::security::security_error::ciphering_failure:
-        logger.log_warning("Deciphering failed, dropping PDU. count={}", result.count);
-        upper_cn.on_protocol_failure();
-        break;
-      case srsran::security::security_error::buffer_failure:
-        logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", result.count);
-        upper_cn.on_protocol_failure();
-        break;
-    }
-    return make_unexpected(default_error_t{});
-  }
-  metrics.add_integrity_verified_pdus(1);
-  logger.log_debug(result.buf.value().begin(), result.buf.value().end(), "Integrity passed.");
-
-  return {std::move(result.buf.value())};
+  return result;
 }
 
 /*

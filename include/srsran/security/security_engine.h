@@ -13,12 +13,13 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "fmt/format.h"
 #include <cstdint>
 
 namespace srsran {
 namespace security {
 
-enum class security_error { buffer_failure, integrity_failure, ciphering_failure };
+enum class security_error { buffer_failure, engine_failure, integrity_failure, ciphering_failure };
 
 struct security_result {
   expected<byte_buffer, security_error> buf;
