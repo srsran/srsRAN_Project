@@ -8,6 +8,7 @@
  *
  */
 
+#include "../../../lib/ofh/ethernet/ethernet_rx_buffer_pool.h"
 #include "helpers.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/circular_map.h"
@@ -74,7 +75,7 @@ namespace {
 /// User-defined test parameters.
 struct test_parameters {
   bool                  silent                              = false;
-  srslog::basic_levels  log_level                           = srslog::basic_levels::info;
+  srslog::basic_levels  log_level                           = srslog::basic_levels::warning;
   std::string           log_filename                        = "stdout";
   bool                  is_prach_control_plane_enabled      = true;
   bool                  is_downlink_broadcast_enabled       = false;
@@ -311,49 +312,26 @@ private:
 class dummy_eth_receiver : public test_ether_receiver
 {
   static constexpr unsigned BUFFER_SIZE = 9600;
-  static constexpr unsigned QUEUE_SIZE  = 320;
 
 public:
-  dummy_eth_receiver(srslog::basic_logger& logger_, task_executor& executor_) :
-    test_ether_receiver(logger_), executor(executor_), write_pos(-1), read_pos(-1)
-  {
-    for (auto& buffer : queue) {
-      buffer.reserve(BUFFER_SIZE);
-    }
-  }
+  dummy_eth_receiver(srslog::basic_logger& logger_) : test_ether_receiver(logger_), buffer_pool(BUFFER_SIZE) {}
 
   void push_new_data(span<const uint8_t> frame) override
   {
-    {
-      std::lock_guard<std::mutex> lock(mutex);
-      int                         pos = (write_pos + 1) % QUEUE_SIZE;
-      if (pos == read_pos) {
-        logger.warning("Ethernet receiver dropped data - queue is full");
-        return;
-      }
-      queue[pos].resize(frame.size());
-      std::memcpy(queue[pos].data(), frame.data(), frame.size());
-      write_pos = pos;
+    auto exp_buffer = buffer_pool.reserve();
+    if (!exp_buffer.has_value()) {
+      logger.warning("Dummy Ethernet receiver: no buffer is available for receiving a packet");
+      return;
     }
-    while (!executor.defer([this]() {
-      {
-        std::lock_guard<std::mutex> lock(mutex);
-        read_pos = (read_pos + 1) % QUEUE_SIZE;
-      }
-      ether::unique_rx_buffer buffer(
-          dummy_eth_rx_buffer{span<const uint8_t>(queue[read_pos].data(), queue[read_pos].size())});
-      notifier.get().on_new_frame(std::move(buffer));
-    })) {
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
-    }
+    ether::ethernet_rx_buffer_impl buffer = std::move(exp_buffer.value());
+    std::memcpy(buffer.storage().data(), frame.data(), frame.size());
+    buffer.resize(frame.size());
+
+    notifier.get().on_new_frame(std::move(buffer));
   }
 
 private:
-  task_executor&                               executor;
-  std::array<std::vector<uint8_t>, QUEUE_SIZE> queue;
-  int                                          write_pos;
-  int                                          read_pos;
-  std::mutex                                   mutex;
+  ether::ethernet_rx_buffer_pool buffer_pool;
 };
 
 /// Ethernet receiver using loopback ('lo') interface.
@@ -468,7 +446,7 @@ public:
     }
   }
 
-  /// Generates UL packets with random IQ data for the specified slot and sends to loopback ethernet interface.
+  /// Generates UL packets with random IQ data for the specified slot and sends to an ethernet receiver.
   void send_uplink_data(slot_point slot)
   {
     if (!executor.execute([this, slot]() { send_uplink(slot); })) {
@@ -661,15 +639,12 @@ public:
   {
     std::uniform_real_distribution<float> dist(-1.0, +1.0);
 
-    std::shared_ptr<channel_precoder_factory> precoder_factory = create_channel_precoder_factory("auto");
-    report_fatal_error_if_not(precoder_factory, "Invalid factory");
-
     std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
     report_fatal_error_if_not(rg_factory, "Invalid factory");
 
     // Create resource grids according to TDD pattern.
     std::vector<std::unique_ptr<resource_grid>> dl_resource_grids;
-    for (unsigned rg_id = 0; rg_id != tdd_pattern.nof_dl_slots; rg_id++) {
+    for (unsigned rg_id = 0, e = processing_delay_slots * tdd_pattern.nof_dl_slots; rg_id != e; rg_id++) {
       // Downlink.
       dl_resource_grids.push_back(
           rg_factory->create(nof_antennas_dl, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
@@ -688,7 +663,7 @@ public:
 
     // Uplink.
     std::vector<std::unique_ptr<resource_grid>> ul_resource_grids;
-    for (unsigned rg_id = 0; rg_id != tdd_pattern.nof_ul_slots; rg_id++) {
+    for (unsigned rg_id = 0, e = processing_delay_slots * tdd_pattern.nof_ul_slots; rg_id != e; rg_id++) {
       ul_resource_grids.push_back(
           rg_factory->create(nof_antennas_ul, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
     }
@@ -698,7 +673,7 @@ public:
   /// Starts the DU emulator.
   void start()
   {
-    slot_point slot(0, to_numerology_value(test_params.scs));
+    slot_point slot(to_numerology_value(test_params.scs), 0);
     slot_duration_us   = std::chrono::microseconds(1000 * SUBFRAME_DURATION_MSEC / slot.nof_slots_per_subframe());
     symbol_duration_us = std::chrono::microseconds(static_cast<unsigned>(
         std::ceil(1e3 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(test_params.scs)))));
@@ -748,6 +723,7 @@ private:
         }
 
         ul_handler.handle_new_uplink_slot(context, ul_grid);
+        logger.info("DU emulator requested UL data in slot {}", slot);
       }
 
       // Sleep until the end of the slot.
@@ -756,7 +732,7 @@ private:
       std::this_thread::sleep_for(slot_duration_us - slot_sim_exec_time - 5us);
       slot_val = (++slot).to_uint();
     }
-    // Leave time fo the uplink slots to be processed.
+    // Leave time for the uplink slots to be processed.
     auto proc_time = processing_delay_slots * slot_duration_us + (T1a_max_cp_ul * symbol_duration_us) + 100ms;
     std::this_thread::sleep_for(proc_time);
     test_finished.store(true, std::memory_order_relaxed);
@@ -951,10 +927,10 @@ struct worker_manager {
       const std::string exec_name = "ru_rx_exec";
 
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::locking_mpmc, task_worker_queue_size},
+                                    {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
                                     {{exec_name}},
-                                    std::nullopt,
-                                    os_thread_realtime_priority::max() - 1};
+                                    std::chrono::microseconds{15},
+                                    os_thread_realtime_priority::max() - 5};
       if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
@@ -967,9 +943,9 @@ struct worker_manager {
       const std::string exec_name = "du_sim_exec";
 
       const single_worker du_sim_worker{name,
-                                        {concurrent_queue_policy::lockfree_spsc, 2},
+                                        {concurrent_queue_policy::locking_mpmc, 2},
                                         {{exec_name}},
-                                        std::chrono::microseconds{1},
+                                        std::nullopt,
                                         os_thread_realtime_priority::max() - 10};
       if (!exec_mng.add_execution_context(create_execution_context(du_sim_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", du_sim_worker.name);
@@ -985,8 +961,8 @@ struct worker_manager {
       const single_worker ru_sim_worker{name,
                                         {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
                                         {{exec_name}},
-                                        std::chrono::microseconds{1},
-                                        os_thread_realtime_priority::max() - 8};
+                                        std::chrono::microseconds{5},
+                                        os_thread_realtime_priority::max() - 2};
       if (!exec_mng.add_execution_context(create_execution_context(ru_sim_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_sim_worker.name);
       }
@@ -1094,7 +1070,7 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   sector_deps.eth_gateway = std::move(gateway);
 
   // Configure Ethernet receiver.
-  auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger, *workers.ru_rx_exec);
+  auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger);
   eth_receiver             = dummy_receiver.get();
   sector_deps.eth_receiver = std::move(dummy_receiver);
 
@@ -1117,6 +1093,7 @@ int main(int argc, char** argv)
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("OFH_TEST", false);
   logger.set_level(test_params.log_level);
+  srslog::fetch_basic_logger("PHY").set_level(srslog::basic_levels::error);
 
   unsigned nof_prb = get_max_Nprb(bs_channel_bandwidth_to_MHz(test_params.bw), test_params.scs, frequency_range::FR1);
 
