@@ -14,7 +14,7 @@
 
 #include "lib/scheduler/config/cell_configuration.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_bench.h"
+#include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/scheduler/scheduler_factory.h"
 #include "srsran/support/test_utils.h"

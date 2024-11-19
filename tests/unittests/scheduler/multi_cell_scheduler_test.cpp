@@ -9,7 +9,8 @@
  */
 
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_bench.h"
+#include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
+#include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 
@@ -20,13 +21,13 @@ struct multi_cell_scheduler_test_params {
   unsigned    nof_cells = 2;
 };
 
-class base_multi_cell_scheduler_tester : public scheduler_test_bench
+class base_multi_cell_scheduler_tester : public scheduler_test_simulator
 {
 protected:
   base_multi_cell_scheduler_tester(const multi_cell_scheduler_test_params& test_params) :
-    scheduler_test_bench(4,
-                         test_params.dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15
-                                                                   : subcarrier_spacing::kHz30)
+    scheduler_test_simulator(4,
+                             test_params.dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15
+                                                                       : subcarrier_spacing::kHz30)
   {
     cell_config_builder_params params{};
     params.scs_common =
@@ -101,7 +102,7 @@ protected:
     (*ue_cfg.cfg.cells)[0].serv_cell_cfg.cell_index = to_du_cell_index(cell_idx);
     (*ue_cfg.cfg.cells)[0].serv_cell_idx            = to_serv_cell_index(cell_idx);
 
-    scheduler_test_bench::add_ue(ue_cfg);
+    scheduler_test_simulator::add_ue(ue_cfg);
   }
 
   static rach_indication_message::preamble create_preamble()

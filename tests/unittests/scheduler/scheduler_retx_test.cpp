@@ -15,7 +15,7 @@
 #include "test_utils/config_generators.h"
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
-#include "test_utils/scheduler_test_bench.h"
+#include "test_utils/scheduler_test_simulator.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -76,7 +76,7 @@ protected:
 
   const rnti_t ue_rnti = to_rnti(0x4601);
 
-  scheduler_test_bench bench;
+  scheduler_test_simulator bench;
 };
 
 struct test_params {

@@ -14,9 +14,8 @@
 #include "test_utils/config_generators.h"
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
-#include "test_utils/scheduler_test_bench.h"
+#include "test_utils/scheduler_test_simulator.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <ostream>
@@ -29,10 +28,10 @@ struct tdd_test_params {
   unsigned                min_k = 4;
 };
 
-class base_scheduler_tdd_tester : public scheduler_test_bench
+class base_scheduler_tdd_tester : public scheduler_test_simulator
 {
 protected:
-  base_scheduler_tdd_tester(const tdd_test_params& testparams) : scheduler_test_bench(4, testparams.tdd_cfg.ref_scs)
+  base_scheduler_tdd_tester(const tdd_test_params& testparams) : scheduler_test_simulator(4, testparams.tdd_cfg.ref_scs)
   {
     // Add Cell.
     this->add_cell([this, &testparams]() {

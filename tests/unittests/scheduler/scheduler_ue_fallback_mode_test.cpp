@@ -14,16 +14,16 @@
 
 #include "test_utils/config_generators.h"
 #include "test_utils/result_test_helpers.h"
-#include "test_utils/scheduler_test_bench.h"
+#include "test_utils/scheduler_test_simulator.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
-class base_scheduler_conres_test : public scheduler_test_bench
+class base_scheduler_conres_test : public scheduler_test_simulator
 {
 public:
   base_scheduler_conres_test(duplex_mode duplx_mode = duplex_mode::FDD) :
-    scheduler_test_bench(4, duplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
+    scheduler_test_simulator(4, duplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
     if (duplx_mode == duplex_mode::TDD) {
       builder_params.dl_f_ref_arfcn = 520002;
@@ -65,7 +65,7 @@ public:
     ue_cfg.ue_index           = ue_index;
     ue_cfg.crnti              = rnti;
     ue_cfg.starts_in_fallback = true;
-    scheduler_test_bench::add_ue(ue_cfg, true);
+    scheduler_test_simulator::add_ue(ue_cfg, true);
   }
 
   ~base_scheduler_conres_test() { srslog::flush(); }

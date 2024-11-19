@@ -13,7 +13,7 @@
 
 #include "test_utils/config_generators.h"
 #include "test_utils/result_test_helpers.h"
-#include "test_utils/scheduler_test_bench.h"
+#include "test_utils/scheduler_test_simulator.h"
 #include "srsran/scheduler/resource_grid_util.h"
 #include <gtest/gtest.h>
 
@@ -37,7 +37,7 @@ srsran::log_sink_spy& test_spy = []() -> srsran::log_sink_spy& {
   return *spy;
 }();
 
-class sched_ue_removal_test : public scheduler_test_bench, public ::testing::Test
+class sched_ue_removal_test : public scheduler_test_simulator, public ::testing::Test
 {
 protected:
   sched_ue_removal_test() { add_cell(test_helpers::make_default_sched_cell_configuration_request()); }
@@ -48,7 +48,7 @@ protected:
     auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request({}, {test_lcid_drb});
     ue_cfg.ue_index = ue_index;
     ue_cfg.crnti    = rnti;
-    scheduler_test_bench::add_ue(ue_cfg, true);
+    scheduler_test_simulator::add_ue(ue_cfg, true);
   }
 
   bool is_rnti_scheduled(rnti_t rnti) const

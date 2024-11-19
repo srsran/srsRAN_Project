@@ -10,18 +10,18 @@
 
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_bench.h"
+#include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
-class scheduler_ta_cmd_tester : public scheduler_test_bench, public ::testing::TestWithParam<duplex_mode>
+class scheduler_ta_cmd_tester : public scheduler_test_simulator, public ::testing::TestWithParam<duplex_mode>
 {
 protected:
   scheduler_ta_cmd_tester() :
-    scheduler_test_bench(4, GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
+    scheduler_test_simulator(4, GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
     // Add Cell.
     this->add_cell([this, duplex_mode = GetParam()]() {
