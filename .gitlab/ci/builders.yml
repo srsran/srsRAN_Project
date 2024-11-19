@@ -275,6 +275,8 @@ ubuntu-dpdk-builder arm64:
     MULTI_ARCH_BUILD: "false"
     RHEL_CT_VERSION: none
     MODE: publish
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
   tags:
     - $PLATFORM
   rules:
@@ -468,7 +470,7 @@ image-build-publish [ubuntu, 24.04, amd64]:
       parallel:
         matrix:
           - os_version: "24.04"
-            uhd_version: ["4.7.0.0"] # "4.6.0.0" default    
+            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
