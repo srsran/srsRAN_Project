@@ -24,11 +24,13 @@ using namespace srsran;
 
 udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config                   config_,
                                                    network_gateway_data_notifier_with_src_addr& data_notifier_,
-                                                   task_executor&                               io_tx_executor_) :
+                                                   task_executor&                               io_tx_executor_,
+                                                   task_executor&                               io_rx_executor_) :
   config(std::move(config_)),
   data_notifier(data_notifier_),
   logger(srslog::fetch_basic_logger("UDP-GW")),
-  io_tx_executor(io_tx_executor_)
+  io_tx_executor(io_tx_executor_),
+  io_rx_executor(io_rx_executor_)
 {
   logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={}", config.rx_max_mmsg, config.pool_occupancy_threshold);
 
@@ -47,7 +49,10 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
 bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
 {
   io_subcriber = broker.register_fd(
-      get_socket_fd(), [this]() { receive(); }, [this](io_broker::error_code code) { handle_io_error(code); });
+      unique_fd(get_socket_fd()),
+      io_rx_executor,
+      [this]() { receive(); },
+      [this](io_broker::error_code code) { handle_io_error(code); });
   if (not io_subcriber.registered()) {
     logger.error("Failed to register UDP network gateway at IO broker. socket_fd={}", get_socket_fd());
     return false;
@@ -129,7 +134,7 @@ bool udp_network_gateway_impl::create_and_bind()
   struct addrinfo* result;
   for (result = results; result != nullptr; result = result->ai_next) {
     // create UDP socket
-    sock_fd = unique_fd{::socket(result->ai_family, result->ai_socktype, result->ai_protocol)};
+    sock_fd = unique_fd{::socket(result->ai_family, result->ai_socktype, result->ai_protocol), false};
     if (not sock_fd.is_open()) {
       ret = errno;
       continue;
@@ -220,6 +225,7 @@ void udp_network_gateway_impl::receive()
   }
 
   int rx_msgs = recvmmsg(sock_fd.value(), rx_msghdr.data(), config.rx_max_mmsg, MSG_WAITFORONE, nullptr);
+  srslog::fetch_basic_logger("IO-EPOLL").info("UDP rx {} packets, max is {}", rx_msgs, config.rx_max_mmsg);
   if (rx_msgs == -1 && errno != EAGAIN) {
     logger.error("Error reading from UDP socket: {}", strerror(errno));
     return;
@@ -397,7 +403,6 @@ bool udp_network_gateway_impl::set_reuse_addr()
 
 bool udp_network_gateway_impl::close_socket()
 {
-  io_subcriber.reset();
   if (not sock_fd.close()) {
     logger.error("Error closing socket: {}", strerror(errno));
     return false;

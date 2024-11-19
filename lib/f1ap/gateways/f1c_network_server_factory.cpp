@@ -102,7 +102,8 @@ public:
   f1c_sctp_server(const f1c_cu_sctp_gateway_config& params_) : params(params_)
   {
     // Create SCTP server.
-    sctp_server = create_sctp_network_server(sctp_network_server_config{params.sctp, params.broker, *this});
+    sctp_server = create_sctp_network_server(
+        sctp_network_server_config{params.sctp, params.broker, params.io_rx_executor, *this});
     report_error_if_not(sctp_server != nullptr, "Failed to create SCTP server");
   }
 

@@ -10,6 +10,7 @@
 
 #include "test_helpers.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include <linux/sctp.h>
 #include <netinet/sctp.h>
 #include <thread>
@@ -42,13 +43,15 @@ protected:
 
   void create_server(const sctp_network_connector_config& server_config)
   {
-    server = create_sctp_network_gateway({server_config, server_control_notifier, server_data_notifier});
+    server =
+        create_sctp_network_gateway({server_config, server_control_notifier, server_data_notifier, io_rx_executor});
     ASSERT_NE(server, nullptr);
   }
 
   void create_client(const sctp_network_connector_config& client_config)
   {
-    client = create_sctp_network_gateway({client_config, client_control_notifier, client_data_notifier});
+    client =
+        create_sctp_network_gateway({client_config, client_control_notifier, client_data_notifier, io_rx_executor});
     ASSERT_NE(client, nullptr);
   }
 
@@ -94,8 +97,9 @@ protected:
   std::unique_ptr<sctp_network_gateway> server, client;
 
 private:
-  std::thread       rx_thread;
-  std::atomic<bool> stop_token = {false};
+  inline_task_executor io_rx_executor;
+  std::thread          rx_thread;
+  std::atomic<bool>    stop_token = {false};
 };
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fails)

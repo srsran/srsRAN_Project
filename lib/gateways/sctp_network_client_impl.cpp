@@ -116,8 +116,13 @@ private:
   std::shared_ptr<std::atomic<bool>> closed_flag;
 };
 
-sctp_network_client_impl::sctp_network_client_impl(const sctp_network_gateway_config& sctp_cfg, io_broker& broker_) :
-  sctp_network_gateway_common_impl(sctp_cfg), broker(broker_), temp_recv_buffer(network_gateway_sctp_max_len)
+sctp_network_client_impl::sctp_network_client_impl(const sctp_network_gateway_config& sctp_cfg,
+                                                   io_broker&                         broker_,
+                                                   task_executor&                     io_rx_executor_) :
+  sctp_network_gateway_common_impl(sctp_cfg),
+  broker(broker_),
+  io_rx_executor(io_rx_executor_),
+  temp_recv_buffer(network_gateway_sctp_max_len)
 {
 }
 
@@ -243,7 +248,8 @@ sctp_network_client_impl::connect_to(const std::string&                         
 
   // Register the socket in the IO broker.
   io_sub = broker.register_fd(
-      socket.fd().value(),
+      unique_fd(socket.fd().value(), false),
+      io_rx_executor,
       [this]() { receive(); },
       [this](io_broker::error_code code) {
         std::string cause = fmt::format("IO error code={}", (int)code);
@@ -389,7 +395,8 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
 }
 
 std::unique_ptr<sctp_network_client> sctp_network_client_impl::create(const sctp_network_gateway_config& sctp_cfg,
-                                                                      io_broker&                         broker_)
+                                                                      io_broker&                         broker_,
+                                                                      task_executor&                     io_rx_executor)
 {
   // Validate arguments.
   if (sctp_cfg.if_name.empty()) {
@@ -398,7 +405,7 @@ std::unique_ptr<sctp_network_client> sctp_network_client_impl::create(const sctp
   }
 
   // Create a SCTP client instance.
-  std::unique_ptr<sctp_network_client_impl> client{new sctp_network_client_impl(sctp_cfg, broker_)};
+  std::unique_ptr<sctp_network_client_impl> client{new sctp_network_client_impl(sctp_cfg, broker_, io_rx_executor)};
 
   // If a bind address is provided, create a socket here and bind it.
   if (not sctp_cfg.bind_address.empty()) {

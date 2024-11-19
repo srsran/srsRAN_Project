@@ -20,11 +20,13 @@ using namespace srsran;
 
 sctp_network_gateway_impl::sctp_network_gateway_impl(const sctp_network_connector_config&   config_,
                                                      sctp_network_gateway_control_notifier& ctrl_notfier_,
-                                                     network_gateway_data_notifier&         data_notifier_) :
+                                                     network_gateway_data_notifier&         data_notifier_,
+                                                     task_executor&                         io_rx_executor_) :
   sctp_network_gateway_common_impl(config_),
   config(config_),
   ctrl_notifier(ctrl_notfier_),
-  data_notifier(data_notifier_)
+  data_notifier(data_notifier_),
+  io_rx_executor(io_rx_executor_)
 {
 }
 
@@ -275,7 +277,8 @@ void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
 bool sctp_network_gateway_impl::subscribe_to(io_broker& broker)
 {
   io_sub = broker.register_fd(
-      socket.fd().value(),
+      unique_fd(socket.fd().value(), false),
+      io_rx_executor,
       [this]() { receive(); },
       [this](io_broker::error_code code) {
         logger.info("Connection loss due to IO error code={}.", (int)code);

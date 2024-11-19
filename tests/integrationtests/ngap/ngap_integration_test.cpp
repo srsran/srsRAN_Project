@@ -9,7 +9,6 @@
  */
 
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
-#include "lib/ngap/ngap_asn1_helpers.h"
 #include "lib/ngap/ngap_error_indication_helper.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
@@ -17,6 +16,7 @@
 #include "srsran/ngap/ngap_configuration_helpers.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/timers.h"
@@ -37,7 +37,7 @@ public:
   ngap_network_adapter(const sctp_network_connector_config& nw_config_) :
     nw_config(nw_config_),
     epoll_broker(create_io_broker(io_broker_type::epoll)),
-    gw(create_sctp_network_gateway({nw_config, *this, *this}))
+    gw(create_sctp_network_gateway({nw_config, *this, *this, rx_executor}))
   {
     report_fatal_error_if_not(gw->create_and_connect(), "Failed to connect NGAP GW");
     if (!gw->subscribe_to(*epoll_broker)) {
@@ -63,7 +63,7 @@ public:
             return;
           }
         }
-        parent.gw->handle_pdu(std::move(pdu));
+        parent.gw->handle_pdu(pdu);
       }
 
     private:
@@ -95,6 +95,7 @@ private:
 
   /// We require a network gateway and a packer
   const sctp_network_connector_config&  nw_config;
+  inline_task_executor                  rx_executor;
   std::unique_ptr<io_broker>            epoll_broker;
   std::unique_ptr<sctp_network_gateway> gw;
 

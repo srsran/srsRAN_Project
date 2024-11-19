@@ -12,6 +12,7 @@
 #include "srsran/gateways/sctp_network_client_factory.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <condition_variable>
 #include <gtest/gtest.h>
@@ -31,7 +32,7 @@ public:
     client_broker(create_io_broker(srsran::io_broker_type::epoll)),
     assoc_factory(std::make_unique<server_assoc_handler_factory>(*this)),
     server_cfg([this]() {
-      sctp_network_server_config cfg{{}, *server_broker, *assoc_factory};
+      sctp_network_server_config cfg{{}, *server_broker, rx_executor, *assoc_factory};
       cfg.sctp.if_name      = "SERVER";
       cfg.sctp.ppid         = NGAP_PPID;
       cfg.sctp.bind_address = "127.0.0.1";
@@ -52,7 +53,7 @@ public:
       report_fatal_error_if_not(ret.second, "Failed to insert Client Association");
 
       // Create client.
-      sctp_network_client_config client_cfg{{}, *client_broker};
+      sctp_network_client_config client_cfg{{}, *client_broker, rx_executor};
       client_cfg.sctp.if_name   = fmt::format("client{}", i);
       client_cfg.sctp.ppid      = NGAP_PPID;
       ret.first->second->client = create_sctp_network_client(client_cfg);
@@ -152,6 +153,7 @@ protected:
   }
 
   srslog::basic_logger&                             logger;
+  inline_task_executor                              rx_executor;
   std::unique_ptr<io_broker>                        server_broker;
   std::unique_ptr<io_broker>                        client_broker;
   std::unique_ptr<sctp_network_association_factory> assoc_factory;
@@ -183,7 +185,7 @@ class sctp_network_link_test : public base_sctp_network_link_test, public ::test
 {
 public:
   sctp_network_link_test() : base_sctp_network_link_test(GetParam().nof_clients) {}
-  ~sctp_network_link_test() { srslog::flush(); }
+  ~sctp_network_link_test() override { srslog::flush(); }
 };
 
 static byte_buffer create_data(unsigned start_val, unsigned nof_vals)

@@ -98,7 +98,8 @@ public:
   ric_sctp_server(const ric_sctp_gateway_config& params_) : params(params_)
   {
     // Create SCTP server.
-    sctp_server = create_sctp_network_server(sctp_network_server_config{params.sctp, params.broker, *this});
+    sctp_server = create_sctp_network_server(
+        sctp_network_server_config{params.sctp, params.broker, params.io_rx_executor, *this});
   }
 
   void attach_ric(ric_e2_handler& ric_) override

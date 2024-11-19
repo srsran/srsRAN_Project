@@ -346,6 +346,9 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
   if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
     report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
   }
+
+  non_rt_low_prio_exec = exec_mng.executors().at("low_prio_exec");
+  non_rt_hi_prio_exec  = exec_mng.executors().at("high_prio_exec");
 }
 
 void worker_manager::associate_low_prio_executors(const worker_manager_config& config)

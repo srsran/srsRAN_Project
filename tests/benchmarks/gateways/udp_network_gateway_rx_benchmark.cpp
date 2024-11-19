@@ -14,11 +14,11 @@
 
 #include "udp_network_gateway_benchmark_helpers.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <arpa/inet.h>
 #include <getopt.h>
-#include <queue>
 
 using namespace srsran;
 
@@ -90,9 +90,10 @@ int main(int argc, char** argv)
   dummy_network_gateway_data_notifier_with_src_addr gw_dn{params.slow_inter_rx_us, params.nof_pdus};
   std::unique_ptr<udp_network_gateway>              gw;
 
-  manual_task_worker io_tx_executor{128};
+  inline_task_executor io_rx_executor;
+  manual_task_worker   io_tx_executor{128};
 
-  gw = create_udp_network_gateway({gw_cfg, gw_dn, io_tx_executor});
+  gw = create_udp_network_gateway({gw_cfg, gw_dn, io_tx_executor, io_rx_executor});
   gw->create_and_bind();
 
   std::unique_ptr<io_broker> epoll_broker;

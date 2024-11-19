@@ -27,8 +27,9 @@ class udp_network_gateway_impl final : public udp_network_gateway
 public:
   explicit udp_network_gateway_impl(udp_network_gateway_config                   config_,
                                     network_gateway_data_notifier_with_src_addr& data_notifier_,
-                                    task_executor&                               io_tx_executor_);
-  ~udp_network_gateway_impl() override { close_socket(); }
+                                    task_executor&                               io_tx_executor_,
+                                    task_executor&                               io_rx_executor_);
+  ~udp_network_gateway_impl() override { io_subcriber.reset(); }
 
   bool subscribe_to(io_broker& broker) override;
 
@@ -61,6 +62,7 @@ private:
   network_gateway_data_notifier_with_src_addr& data_notifier;
   srslog::basic_logger&                        logger;
   task_executor&                               io_tx_executor;
+  task_executor&                               io_rx_executor;
 
   unique_fd             sock_fd;
   io_broker::subscriber io_subcriber;

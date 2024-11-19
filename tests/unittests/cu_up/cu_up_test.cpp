@@ -17,10 +17,8 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include <arpa/inet.h>
 #include <chrono>
-#include <fcntl.h>
 #include <gtest/gtest.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 using namespace srsran;
@@ -92,7 +90,7 @@ protected:
     srslog::fetch_basic_logger("GTPU").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("E1AP").set_level(srslog::basic_levels::debug);
 
-    // create worker thread and executer
+    // create worker thread and executor
     worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
     executor = make_task_executor_ptr(*worker);
 
@@ -128,7 +126,7 @@ protected:
     deps.exec_mapper    = exec_pool.get();
     deps.e1_conn_client = &e1ap_client;
     deps.f1u_gateway    = f1u_gw.get();
-    ngu_gw              = create_udp_gtpu_gateway(cu_up_udp_cfg, *broker, *executor);
+    ngu_gw              = create_udp_gtpu_gateway(cu_up_udp_cfg, *broker, *executor, *executor);
     deps.ngu_gws.push_back(ngu_gw.get());
     deps.timers = app_timers.get();
     return deps;

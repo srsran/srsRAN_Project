@@ -35,12 +35,14 @@ public:
   static std::unique_ptr<udp_ngu_tnl_session> create(const udp_network_gateway_config&            cfg,
                                                      network_gateway_data_notifier_with_src_addr& data_notifier,
                                                      io_broker&                                   io_brk,
-                                                     task_executor&                               io_tx_executor)
+                                                     task_executor&                               io_tx_executor,
+                                                     task_executor&                               io_rx_executor)
   {
     std::unique_ptr<udp_ngu_tnl_session> conn(new udp_ngu_tnl_session(data_notifier));
 
     // Create a new UDP network gateway instance.
-    conn->udp_gw = create_udp_network_gateway(udp_network_gateway_creation_message{cfg, *conn, io_tx_executor});
+    conn->udp_gw =
+        create_udp_network_gateway(udp_network_gateway_creation_message{cfg, *conn, io_tx_executor, io_rx_executor});
 
     // Bind/open the gateway, start handling of incoming traffic from UPF, e.g. echo
     if (not conn->udp_gw->create_and_bind()) {
@@ -83,29 +85,34 @@ private:
 class udp_ngu_gateway final : public gtpu_gateway
 {
 public:
-  udp_ngu_gateway(const udp_network_gateway_config& cfg_, io_broker& io_brk_, task_executor& io_tx_executor_) :
-    cfg(cfg_), io_brk(io_brk_), io_tx_executor(io_tx_executor_)
+  udp_ngu_gateway(const udp_network_gateway_config& cfg_,
+                  io_broker&                        io_brk_,
+                  task_executor&                    io_tx_executor_,
+                  task_executor&                    io_rx_executor_) :
+    cfg(cfg_), io_brk(io_brk_), io_tx_executor(io_tx_executor_), io_rx_executor(io_rx_executor_)
   {
   }
 
   std::unique_ptr<gtpu_tnl_pdu_session> create(network_gateway_data_notifier_with_src_addr& data_notifier) override
   {
-    return udp_ngu_tnl_session::create(cfg, data_notifier, io_brk, io_tx_executor);
+    return udp_ngu_tnl_session::create(cfg, data_notifier, io_brk, io_tx_executor, io_rx_executor);
   }
 
 private:
   const udp_network_gateway_config cfg;
   io_broker&                       io_brk;
   task_executor&                   io_tx_executor;
+  task_executor&                   io_rx_executor;
 };
 
 } // namespace
 
 std::unique_ptr<gtpu_gateway> srsran::create_udp_gtpu_gateway(const udp_network_gateway_config& config,
                                                               io_broker&                        io_brk,
-                                                              task_executor&                    io_tx_executor)
+                                                              task_executor&                    io_tx_executor,
+                                                              task_executor&                    io_rx_executor)
 {
-  return std::make_unique<udp_ngu_gateway>(config, io_brk, io_tx_executor);
+  return std::make_unique<udp_ngu_gateway>(config, io_brk, io_tx_executor, io_rx_executor);
 }
 
 /* ---- No Core version ---- */

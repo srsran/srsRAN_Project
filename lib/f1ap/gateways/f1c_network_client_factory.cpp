@@ -100,7 +100,7 @@ public:
     pcap_writer(params.pcap), broker(params.broker), sctp_params(params.sctp)
   {
     // Create SCTP network adapter.
-    sctp_gateway = create_sctp_network_client(sctp_network_client_config{params.sctp, broker});
+    sctp_gateway = create_sctp_network_client(sctp_network_client_config{params.sctp, broker, params.io_rx_executor});
     report_error_if_not(sctp_gateway != nullptr, "Failed to create SCTP gateway client.\n");
   }
 

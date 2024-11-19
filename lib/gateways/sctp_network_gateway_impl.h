@@ -22,7 +22,8 @@ class sctp_network_gateway_impl final : public sctp_network_gateway_common_impl,
 public:
   explicit sctp_network_gateway_impl(const sctp_network_connector_config&   config_,
                                      sctp_network_gateway_control_notifier& ctrl_notifier_,
-                                     network_gateway_data_notifier&         data_notifier_);
+                                     network_gateway_data_notifier&         data_notifier_,
+                                     task_executor&                         io_rx_executor_);
 
   /// \brief Create and connect socket to given address.
   bool create_and_connect() override;
@@ -57,6 +58,7 @@ private:
   sctp_network_connector_config          config;
   sctp_network_gateway_control_notifier& ctrl_notifier;
   network_gateway_data_notifier&         data_notifier;
+  task_executor&                         io_rx_executor;
 
   bool client_mode = false;
 

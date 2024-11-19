@@ -15,5 +15,6 @@ using namespace srsran;
 
 std::unique_ptr<udp_network_gateway> srsran::create_udp_network_gateway(udp_network_gateway_creation_message msg)
 {
-  return std::make_unique<udp_network_gateway_impl>(msg.config, msg.data_notifier, msg.io_tx_executor);
+  return std::make_unique<udp_network_gateway_impl>(
+      msg.config, msg.data_notifier, msg.io_tx_executor, msg.io_rx_executor);
 }

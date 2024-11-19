@@ -16,8 +16,11 @@
 namespace srsran {
 
 /// Retuns the E2 SCTP gateway configuration from the given parameters.
-inline e2_sctp_gateway_config
-generate_e2_client_gateway_config(const e2_config& e2_cfg, io_broker& broker, dlt_pcap& f1ap_pcap, uint16_t ppid)
+inline e2_sctp_gateway_config generate_e2_client_gateway_config(const e2_config& e2_cfg,
+                                                                io_broker&       broker,
+                                                                task_executor&   io_rx_executor,
+                                                                dlt_pcap&        f1ap_pcap,
+                                                                uint16_t         ppid)
 {
   sctp_network_connector_config e2ap_sctp{};
   e2ap_sctp.if_name         = "E2AP";
@@ -27,7 +30,7 @@ generate_e2_client_gateway_config(const e2_config& e2_cfg, io_broker& broker, dl
   e2ap_sctp.ppid            = ppid;
   e2ap_sctp.bind_address    = e2_cfg.bind_addr;
 
-  return {e2ap_sctp, broker, f1ap_pcap};
+  return {e2ap_sctp, broker, io_rx_executor, f1ap_pcap};
 }
 
 } // namespace srsran

@@ -58,9 +58,12 @@ public:
 /// \param[in] config Configuration of the UDP network gateway.
 /// \param[in] io_brk IO broker that will manage the reception of new PDUs from the UDP socket.
 /// \param[in] io_tx_executor Executor that will be used to handle the transmission of PDUs to the UDP socket.
+/// \param[in] io_rx_executor Executor that will be used to handle the reception of PDUs on the UDP socket.
 /// \return Returns the instantiated GTP-U gateway. Returns nullptr, if the GTP-U gateway could not be established.
-std::unique_ptr<gtpu_gateway>
-create_udp_gtpu_gateway(const udp_network_gateway_config& config, io_broker& io_brk, task_executor& io_tx_executor);
+std::unique_ptr<gtpu_gateway> create_udp_gtpu_gateway(const udp_network_gateway_config& config,
+                                                      io_broker&                        io_brk,
+                                                      task_executor&                    io_tx_executor,
+                                                      task_executor&                    io_rx_executor);
 
 /// \brief Creates a GTP-U gateway that establishes a connection to a null/dummy UPF.
 ///

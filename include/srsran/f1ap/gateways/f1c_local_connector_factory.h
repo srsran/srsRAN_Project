@@ -17,6 +17,7 @@ namespace srsran {
 
 class dlt_pcap;
 class io_broker;
+class task_executor;
 
 class f1c_local_connector : public srs_du::f1c_connection_client, public srs_cu_cp::f1c_connection_server
 {};
@@ -35,6 +36,8 @@ struct f1c_local_sctp_connector_config {
   dlt_pcap& pcap;
   /// IO broker to handle the SCTP Rx data and notifications.
   io_broker& broker;
+  /// Execution context used to process received SCTP packets.
+  task_executor& io_rx_executor;
 };
 
 /// Creates an F1-C local connector using an SCTP socket as channel.

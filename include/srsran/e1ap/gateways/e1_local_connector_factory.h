@@ -17,6 +17,7 @@ namespace srsran {
 
 class dlt_pcap;
 class io_broker;
+class task_executor;
 
 class e1_local_connector : public srs_cu_up::e1_connection_client, public srs_cu_cp::e1_connection_server
 {};
@@ -35,6 +36,8 @@ struct e1_local_sctp_connector_config {
   dlt_pcap& pcap;
   /// IO broker to handle the SCTP Rx data and notifications.
   io_broker& broker;
+  /// Execution context used to process received SCTP packets.
+  task_executor& io_rx_executor;
   /// Port to bind the SCTP socket.
   int bind_port = 0;
 };

@@ -26,6 +26,7 @@ class sctp_network_server_impl : public sctp_network_server, public sctp_network
 {
   explicit sctp_network_server_impl(const sctp_network_gateway_config& sctp_cfg,
                                     io_broker&                         broker,
+                                    task_executor&                     io_rx_executor,
                                     sctp_network_association_factory&  assoc_factory);
 
 public:
@@ -33,6 +34,7 @@ public:
 
   static std::unique_ptr<sctp_network_server> create(const sctp_network_gateway_config& sctp_cfg,
                                                      io_broker&                         broker,
+                                                     task_executor&                     io_rx_executor,
                                                      sctp_network_association_factory&  assoc_factory);
 
   int get_socket_fd() const override { return socket.fd().value(); }
@@ -81,6 +83,7 @@ private:
   handle_sctp_comm_up(const struct sctp_assoc_change& assoc_change, const sockaddr& src_addr, socklen_t src_addr_len);
 
   io_broker&                        broker;
+  task_executor&                    io_rx_executor;
   sctp_network_association_factory& assoc_factory;
 
   association_map associations;

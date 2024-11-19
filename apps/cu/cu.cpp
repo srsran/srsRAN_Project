@@ -273,7 +273,8 @@ int main(int argc, char** argv)
   f1c_sctp_cfg.bind_address                = cu_cfg.f1ap_cfg.bind_addr;
   f1c_sctp_cfg.bind_port                   = F1AP_PORT;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
-  f1c_cu_sctp_gateway_config f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *cu_cp_dlt_pcaps.f1ap});
+  f1c_cu_sctp_gateway_config f1c_server_cfg(
+      {f1c_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Create F1-U GW (TODO factory and cleanup).
@@ -286,8 +287,8 @@ int main(int argc, char** argv)
   cu_f1u_gw_config.bind_port                    = GTPU_PORT;
   cu_f1u_gw_config.reuse_addr                   = false;
   cu_f1u_gw_config.pool_occupancy_threshold     = cu_cfg.nru_cfg.pool_occupancy_threshold;
-  std::unique_ptr<gtpu_gateway> cu_f1u_gw =
-      create_udp_gtpu_gateway(cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor());
+  std::unique_ptr<gtpu_gateway> cu_f1u_gw       = create_udp_gtpu_gateway(
+      cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
       {*cu_f1u_gw, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT, cu_cfg.nru_cfg.ext_addr});
 
@@ -301,17 +302,19 @@ int main(int argc, char** argv)
   timer_manager* cu_timers = &app_timers;
 
   // Create time source that ticks the timers
-  io_timer_source time_source{app_timers, *epoll_broker, std::chrono::milliseconds{1}};
+  io_timer_source time_source{app_timers, *epoll_broker, *workers.non_rt_hi_prio_exec, std::chrono::milliseconds{1}};
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_cp_app_unit->get_o_cu_cp_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
+                                        *workers.non_rt_hi_prio_exec,
                                         *cu_cp_dlt_pcaps.e2ap,
                                         E2_CP_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_up_app_unit->get_o_cu_up_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
+                                        *workers.non_rt_hi_prio_exec,
                                         *cu_up_dlt_pcaps.e2ap,
                                         E2_UP_PPID));
 
@@ -319,20 +322,22 @@ int main(int argc, char** argv)
 
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;
-  o_cucp_deps.cu_cp_executor   = workers.cu_cp_exec;
-  o_cucp_deps.cu_cp_e2_exec    = workers.cu_e2_exec;
-  o_cucp_deps.timers           = cu_timers;
-  o_cucp_deps.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
-  o_cucp_deps.broker           = epoll_broker.get();
-  o_cucp_deps.e2_gw            = e2_gw_cu_cp.get();
-  o_cucp_deps.metrics_notifier = &metrics_notifier_forwarder;
+  o_cucp_deps.cu_cp_executor       = workers.cu_cp_exec;
+  o_cucp_deps.cu_cp_n2_rx_executor = workers.non_rt_hi_prio_exec;
+  o_cucp_deps.cu_cp_e2_exec        = workers.cu_e2_exec;
+  o_cucp_deps.timers               = cu_timers;
+  o_cucp_deps.ngap_pcap            = cu_cp_dlt_pcaps.ngap.get();
+  o_cucp_deps.broker               = epoll_broker.get();
+  o_cucp_deps.e2_gw                = e2_gw_cu_cp.get();
+  o_cucp_deps.metrics_notifier     = &metrics_notifier_forwarder;
 
   // Create O-CU-CP.
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
   srs_cu_cp::o_cu_cp& o_cucp_obj  = *o_cucp_unit.unit;
 
   // Create console helper object for commands and metrics printing.
-  app_services::stdin_command_dispatcher    command_parser(*epoll_broker, o_cucp_unit.commands);
+  app_services::stdin_command_dispatcher command_parser(
+      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands);
   std::vector<app_services::metrics_config> metrics_configs = std::move(o_cucp_unit.metrics);
 
   // Connect E1AP to O-CU-CP.

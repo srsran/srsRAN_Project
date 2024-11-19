@@ -10,18 +10,21 @@
 
 #pragma once
 
+#include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/unique_thread.h"
+#include "srsran/support/io/unique_fd.h"
+#include <future>
 #include <mutex>
 #include <utility>
 
 namespace srsran {
 
 struct io_broker_config {
+  explicit io_broker_config(os_sched_affinity_bitmask mask_ = {}) : cpu_mask(std::move(mask_)) {}
+
   std::string                 thread_name = "io_broker_epoll";
   os_thread_realtime_priority thread_prio = os_thread_realtime_priority::no_realtime();
-  os_sched_affinity_bitmask   cpu_mask    = {};
-  /// Constructor receives CPU affinity mask.
-  io_broker_config(os_sched_affinity_bitmask mask_ = {}) : cpu_mask(mask_) {}
+  os_sched_affinity_bitmask   cpu_mask;
 };
 
 /// \brief Describes the interface for an (async) IO broker.
@@ -37,21 +40,26 @@ public:
   {
   public:
     subscriber() = default;
+
     subscriber(io_broker& broker_, int fd_) : broker(&broker_), fd(fd_) {}
+
     subscriber(subscriber&& other) noexcept
     {
       std::lock_guard<std::mutex> lock(other.mutex);
       broker = other.broker;
       fd     = std::exchange(other.fd, -1);
     }
+
     subscriber& operator=(subscriber&& other) noexcept
     {
       std::scoped_lock lock(mutex, other.mutex);
+
       reset_nolock();
       broker = other.broker;
       fd     = std::exchange(other.fd, -1);
       return *this;
     }
+
     ~subscriber() { reset(); }
 
     /// Checks whether the FD is connected to the broker.
@@ -62,18 +70,35 @@ public:
     }
 
     /// Resets the handle, deregistering the FD from the broker.
+    /// \note: This function will block until the FD has been removed from the broker.
     bool reset()
     {
       std::lock_guard<std::mutex> lock(mutex);
-      return reset_nolock();
+      std::promise<bool>          p;
+      std::future<bool>           fut = p.get_future();
+
+      bool ret = reset_nolock(&p);
+      fut.get();
+
+      return ret;
+    }
+
+    /// Returns the file descriptor value held by this subscriber.
+    int value() const
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      return fd;
     }
 
   private:
-    bool reset_nolock()
+    bool reset_nolock(std::promise<bool>* complete_notifier = nullptr)
     {
       int fd_tmp = std::exchange(fd, -1);
       if (fd_tmp >= 0) {
-        return broker->unregister_fd(fd_tmp);
+        return broker->unregister_fd(fd_tmp, complete_notifier);
+      }
+      if (complete_notifier) {
+        complete_notifier->set_value(false);
       }
       return false;
     }
@@ -95,20 +120,23 @@ public:
 
   /// \brief Register a file descriptor to be handled by the IO interface.
   /// \param[in] fd File descriptor to be registered.
+  /// \param[in] executor Execution context where the given callbacks will be called.
   /// \param[in] handler Callback that handles receive events.
   /// \param[in] err_handler Callback that handles error events.
   /// \return An RAII handle to the registered file descriptor. On destruction, the fd is automatically deregistered
   /// from the io_broker.
   [[nodiscard]] virtual subscriber register_fd(
-      int              fd,
+      unique_fd        fd,
+      task_executor&   executor,
       recv_callback_t  handler,
       error_callback_t err_handler = [](error_code) {}) = 0;
 
 private:
   /// \brief Unregister a file descriptor from the IO interface.
-  /// \param[in] fd File descriptor to be unregistered.
+  /// \param[in] fd                File descriptor to be unregistered.
+  /// \param[in] complete_notifier Synchronization primitive to wait for the deregistration of the FD to be completed.
   /// \return true if the file descriptor was successfully unregistered, false otherwise.
-  [[nodiscard]] virtual bool unregister_fd(int fd) = 0;
+  [[nodiscard]] virtual bool unregister_fd(int fd, std::promise<bool>* complete_notifier) = 0;
 };
 
 } // namespace srsran

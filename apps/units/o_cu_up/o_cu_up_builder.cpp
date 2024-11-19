@@ -75,8 +75,11 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
       n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
       n3_udp_cfg.reuse_addr                 = false; // TODO allow reuse_addr for multiple sockets
 
-      std::unique_ptr<gtpu_gateway> ngu_gw = create_udp_gtpu_gateway(
-          n3_udp_cfg, *dependencies.io_brk, dependencies.workers->cu_up_exec_mapper->io_ul_executor());
+      std::unique_ptr<gtpu_gateway> ngu_gw =
+          create_udp_gtpu_gateway(n3_udp_cfg,
+                                  *dependencies.io_brk,
+                                  dependencies.workers->cu_up_exec_mapper->io_ul_executor(),
+                                  *dependencies.workers->non_rt_low_prio_exec);
       ngu_gws.push_back(std::move(ngu_gw));
     }
   } else {

@@ -26,6 +26,8 @@ struct ric_sctp_gateway_config {
   sctp_network_gateway_config sctp;
   /// IO broker responsible for handling SCTP Rx data and notifications.
   io_broker& broker;
+  /// Execution context used to process received SCTP packets.
+  task_executor& io_rx_executor;
   /// PCAP writer for the E2AP messages.
   dlt_pcap& pcap;
   /// Sniffer that receives a copy of a received E2 message.
