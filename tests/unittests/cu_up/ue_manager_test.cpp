@@ -40,7 +40,7 @@ protected:
     ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, std::chrono::seconds(0)};
 
     // create DUT object
-    ue_mng = std::make_unique<ue_manager>(ue_manager_config{net_config, n3_config, test_mode_config},
+    ue_mng = std::make_unique<ue_manager>(ue_manager_config{n3_config, test_mode_config},
                                           ue_manager_dependencies{*e1ap,
                                                                   timers,
                                                                   *f1u_gw,
@@ -71,7 +71,6 @@ protected:
   timer_manager                                               timers;
   ue_context_cfg                                              ue_cfg;
   std::unique_ptr<ue_manager_ctrl>                            ue_mng;
-  network_interface_config                                    net_config;
   n3_interface_config                                         n3_config;
   cu_up_test_mode_config                                      test_mode_config{};
   srslog::basic_logger&                                       test_logger = srslog::fetch_basic_logger("TEST", false);

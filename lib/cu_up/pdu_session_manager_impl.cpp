@@ -23,7 +23,6 @@ using namespace srs_cu_up;
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                                       ue_index_,
                                                    std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos_cfg_,
                                                    const security::sec_as_config&                   security_info_,
-                                                   const network_interface_config&                  net_config_,
                                                    const n3_interface_config&                       n3_config_,
                                                    const cu_up_test_mode_config&                    test_mode_config_,
                                                    cu_up_ue_logger&                                 logger_,
@@ -44,7 +43,6 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_index(ue_index_),
   qos_cfg(std::move(qos_cfg_)),
   security_info(security_info_),
-  net_config(net_config_),
   n3_config(n3_config_),
   test_mode_config(test_mode_config_),
   logger(logger_),
@@ -103,9 +101,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
                    ul_tunnel_info.tp_address);
 
   // Advertise either local or external IP address of N3 interface
-  const std::string& n3_addr = net_config.n3_ext_addr.empty() || net_config.n3_ext_addr == "auto"
-                                   ? net_config.n3_bind_addr
-                                   : net_config.n3_ext_addr;
+  const std::string& n3_addr = "8.8.8.8"; // TODO get bind addr from GW.
   pdu_session_result.gtp_tunnel =
       up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
 
@@ -118,7 +114,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.ue_index                         = ue_index;
   msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
-  msg.cfg.tx.peer_port                 = net_config.upf_port;
+  msg.cfg.tx.peer_port                 = GTPU_PORT; // TODO get actual port from GW
   msg.cfg.rx.local_teid                = new_session->local_teid;
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
   msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
@@ -463,10 +459,10 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       logger.log_info("Attaching dl_teid={} to F1-U tunnel with ul_teid={}",
                       drb_to_mod.dl_up_params[0].up_tnl_info,
                       drb_iter->second->f1u_ul_teid);
-      f1u_gw.attach_dl_teid(
-          up_transport_layer_info(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
-                                  drb_iter->second->f1u_ul_teid),
-          drb_to_mod.dl_up_params[0].up_tnl_info);
+      f1u_gw.attach_dl_teid(up_transport_layer_info(transport_layer_address::create_from_string(
+                                                        "8.8.8.8") /*TODO get bind addr from gateway*/,
+                                                    drb_iter->second->f1u_ul_teid),
+                            drb_to_mod.dl_up_params[0].up_tnl_info);
 
       drb_iter->second->pdcp_to_f1u_adapter.connect_f1u(drb_iter->second->f1u->get_tx_sdu_handler());
     }

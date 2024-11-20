@@ -23,9 +23,8 @@ namespace srs_cu_up {
 
 /// UE manager configuration.
 struct ue_manager_config {
-  const network_interface_config& net_config;
-  const n3_interface_config&      n3_config;
-  const cu_up_test_mode_config&   test_mode_config;
+  const n3_interface_config&    n3_config;
+  const cu_up_test_mode_config& test_mode_config;
 };
 
 /// UE manager dependencies.
@@ -63,7 +62,6 @@ private:
   /// \return The UE index.
   ue_index_t get_next_ue_index();
 
-  const network_interface_config&             net_config;
   const n3_interface_config&                  n3_config;
   const cu_up_test_mode_config&               test_mode_config;
   e1ap_control_message_handler&               e1ap;

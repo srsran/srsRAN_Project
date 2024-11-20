@@ -23,7 +23,6 @@ namespace srsran::srs_cu_up {
 /// CU-UP manager implementation configuration.
 struct cu_up_manager_impl_config {
   std::map<five_qi_t, cu_up_qos_config> qos;
-  network_interface_config              net_cfg;
   n3_interface_config                   n3_cfg;
   cu_up_test_mode_config                test_mode_cfg;
 };

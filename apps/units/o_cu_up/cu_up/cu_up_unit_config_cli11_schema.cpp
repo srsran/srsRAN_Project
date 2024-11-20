@@ -17,16 +17,41 @@
 
 using namespace srsran;
 
-// static void configure_cli11_ngu_socket_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
-//{
-//   // TODO Fixup
-// }
+static void configure_cli11_ngu_socket_args(CLI::App& app, cu_up_unit_ngu_socket_config& ngu_sock_params)
+{
+  add_option(app, "--bind_addr", ngu_sock_params.bind_addr, "Local IP address to bind for N3 interface")
+      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
+  add_option(app, "--bind_interface", ngu_sock_params.bind_interface, "Network device to bind for N3 interface")
+      ->capture_default_str();
+  add_option(app,
+             "--ext_addr",
+             ngu_sock_params.ext_addr,
+             "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
+      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
+
+  configure_cli11_with_udp_config_schema(app, ngu_sock_params.udp_config);
+}
 
 static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
 {
   add_option(app, "--no_core", ngu_params.no_core, "Allow gNB to run without a core");
 
   // Add option for multiple sockets, for usage with different slices, 5QIs or parallization.
+  auto sock_lambda = [&ngu_params](const std::vector<std::string>& values) {
+    // Prepare the radio bearers
+    ngu_params.ngu_socket_cfg.resize(values.size());
+
+    // Format every QoS setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("NG-U socket parameters", "NG-U socket config, item #" + std::to_string(i));
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::capture);
+      configure_cli11_ngu_socket_args(subapp, ngu_params.ngu_socket_cfg[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  add_option_cell(app, "--socket", sock_lambda, "Configures UDP/IP socket parameters of the N3 interface");
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)

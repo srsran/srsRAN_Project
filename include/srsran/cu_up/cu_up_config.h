@@ -73,8 +73,6 @@ struct cu_up_test_mode_config {
 struct cu_up_config {
   /// 5QI as key.
   std::map<five_qi_t, cu_up_qos_config> qos;
-  /// Network interface configuration.
-  network_interface_config net_cfg;
   /// N3 configuration.
   n3_interface_config n3_cfg;
   /// Test mode configuration.

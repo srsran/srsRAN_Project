@@ -33,7 +33,6 @@ public:
   pdu_session_manager_impl(ue_index_t                                       ue_index_,
                            std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos_cfg_,
                            const security::sec_as_config&                   security_info_,
-                           const network_interface_config&                  net_config_,
                            const n3_interface_config&                       n3_config_,
                            const cu_up_test_mode_config&                    test_mode_config_,
                            cu_up_ue_logger&                                 logger_,
@@ -76,7 +75,6 @@ private:
   ue_index_t                                               ue_index;
   const std::map<five_qi_t, srs_cu_up::cu_up_qos_config>   qos_cfg;
   const security::sec_as_config&                           security_info;
-  const network_interface_config&                          net_config;
   const n3_interface_config&                               n3_config;
   cu_up_test_mode_config                                   test_mode_config;
   cu_up_ue_logger&                                         logger;

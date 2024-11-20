@@ -34,8 +34,8 @@ struct cu_up_unit_ngu_socket_config {
 };
 
 struct cu_up_unit_ngu_config {
-  bool                               no_core = false;
-  std::vector<cu_up_unit_ngu_config> ngu_socket_cfg;
+  bool                                      no_core = false;
+  std::vector<cu_up_unit_ngu_socket_config> ngu_socket_cfg;
 };
 
 /// F1-U configuration at CU_UP side

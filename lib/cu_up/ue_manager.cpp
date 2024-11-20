@@ -15,7 +15,6 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_dependencies& dependencies) :
-  net_config(config.net_config),
   n3_config(config.n3_config),
   test_mode_config(config.test_mode_config),
   e1ap(dependencies.e1ap),
@@ -69,7 +68,6 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
   std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx,
                                                                      ue_cfg,
                                                                      e1ap,
-                                                                     net_config,
                                                                      n3_config,
                                                                      test_mode_config,
                                                                      std::move(ue_exec_mapper),

@@ -18,14 +18,11 @@
 namespace srsran {
 namespace srs_cu_up {
 
-const network_interface_config net_config_default = {};
-
 /// Fixture base class for PDU session manager tests
 class pdu_session_manager_test_base
 {
 protected:
-  virtual ~pdu_session_manager_test_base()          = default;
-  virtual network_interface_config get_net_config() = 0;
+  virtual ~pdu_session_manager_test_base() = default;
 
   void init()
   {
@@ -48,11 +45,10 @@ protected:
 
     manual_task_worker teid_worker{128};
 
-    net_config      = get_net_config();
+    // TODO add dummy gateway
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
                                                                  qos,
                                                                  security_info,
-                                                                 net_config,
                                                                  n3_config,
                                                                  cu_up_test_mode_config{},
                                                                  logger,
@@ -91,7 +87,6 @@ protected:
   std::unique_ptr<pdu_session_manager_ctrl>                   pdu_session_mng;
   null_dlt_pcap                                               gtpu_pcap;
   security::sec_as_config                                     security_info;
-  network_interface_config                                    net_config;
   n3_interface_config                                         n3_config = {};
   cu_up_ue_logger                                             logger{"CU-UP", {MIN_UE_INDEX}};
 };
@@ -100,9 +95,8 @@ protected:
 class pdu_session_manager_test : public pdu_session_manager_test_base, public ::testing::Test
 {
 protected:
-  network_interface_config get_net_config() override { return net_config_default; }
-  void                     SetUp() override { init(); }
-  void                     TearDown() override { finish(); }
+  void SetUp() override { init(); }
+  void TearDown() override { finish(); }
 };
 
 /// Fixture class for PDU session manager tests with configurable N3 ext addr
@@ -110,12 +104,14 @@ class pdu_session_manager_test_set_n3_ext_addr : public pdu_session_manager_test
                                                  public ::testing::TestWithParam<const char*>
 {
 protected:
-  network_interface_config get_net_config() override
-  {
-    network_interface_config cfg = net_config_default;
+  // TODO is this still needed?
+  /*
+network_interface_config get_net_config() override
+{
     cfg.n3_ext_addr              = GetParam();
     return cfg;
-  }
+}
+  */
   void SetUp() override { init(); }
   void TearDown() override { finish(); }
 };
