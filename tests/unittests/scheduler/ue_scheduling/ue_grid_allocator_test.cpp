@@ -51,10 +51,7 @@ protected:
     srslog::init();
 
     // Initialize resource grid.
-    res_grid.slot_indication(current_slot);
-    pdcch_alloc.slot_indication(current_slot);
-    pucch_alloc.slot_indication(current_slot);
-    uci_alloc.slot_indication(current_slot);
+    slot_indication();
 
     alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
   }
@@ -68,7 +65,7 @@ protected:
     return next_slot;
   }
 
-  void run_slot()
+  void slot_indication(std::function<void()> on_each_slot = []() {})
   {
     ++current_slot;
     logger.set_context(current_slot.sfn(), current_slot.slot_index());
@@ -80,17 +77,24 @@ protected:
     uci_alloc.slot_indication(current_slot);
     ues.slot_indication(current_slot);
 
+    on_each_slot();
+
+    alloc.post_process_results();
+
     // Log scheduler results.
     res_logger.on_scheduler_result(res_grid[0].result);
   }
 
-  bool run_until(unique_function<bool()> condition, unsigned max_slot_count = 1000)
+  bool run_until(std::function<void()> to_run, unique_function<bool()> until, unsigned max_slot_count = 1000)
   {
+    if (until()) {
+      return true;
+    }
     for (unsigned count = 0; count != max_slot_count; ++count) {
-      if (condition()) {
+      slot_indication(to_run);
+      if (until()) {
         return true;
       }
-      run_slot();
     }
     return false;
   }
@@ -178,9 +182,8 @@ TEST_P(ue_grid_allocator_tester,
                        .h_id                  = INVALID_HARQ_ID,
                        .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   ASSERT_TRUE(crb_lims.contains(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1()));
 }
 
@@ -203,9 +206,8 @@ TEST_P(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_tabl
                              .h_id                  = INVALID_HARQ_ID,
                              .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
             srsran::pdsch_mcs_table::qam256);
 }
@@ -227,9 +229,8 @@ TEST_P(ue_grid_allocator_tester, allocates_pdsch_restricted_to_recommended_max_n
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id).status; },
+                        [&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   // Successfully allocates PDSCH corresponding to the grant.
   ASSERT_GE(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
             grant1.max_nof_rbs);
@@ -252,11 +253,8 @@ TEST_P(ue_grid_allocator_tester, allocates_pusch_restricted_to_recommended_max_n
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)).status ==
-           alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)); },
+                        [&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
   // Successfully allocates PUSCH corresponding to the grant.
   ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(), grant1.max_nof_rbs);
 }
@@ -279,11 +277,8 @@ TEST_P(ue_grid_allocator_tester, does_not_allocate_pusch_with_all_remaining_rbs_
   const crb_interval cell_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
                                   cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.stop()};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)).status ==
-           alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)); },
+                        [&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
   // Successfully allocates PUSCH corresponding to the grant.
   ASSERT_LT(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(), cell_crbs.length());
 }
@@ -309,11 +304,12 @@ TEST_P(ue_grid_allocator_tester, no_two_pdschs_are_allocated_in_same_slot_for_a_
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success or
-           alloc.allocate_dl_grant(grant2, dummy_slice_id).status == alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until(
+      [&]() {
+        alloc.allocate_dl_grant(grant1, dummy_slice_id).status;
+        alloc.allocate_dl_grant(grant2, dummy_slice_id).status;
+      },
+      [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
 
   // Only one PDSCH per slot per UE.
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.size(), 1);
@@ -328,8 +324,6 @@ TEST_P(ue_grid_allocator_tester, no_two_puschs_are_allocated_in_same_slot_for_a_
 
   const ue& u = add_ue(ue_creation_req);
 
-  slot_point pusch_slot = get_next_ul_slot(current_slot);
-
   // First PUSCH grant for the UE.
   const ue_pusch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
@@ -342,11 +336,13 @@ TEST_P(ue_grid_allocator_tester, no_two_puschs_are_allocated_in_same_slot_for_a_
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1, dummy_slice_id, pusch_slot).status == alloc_status::success or
-           alloc.allocate_ul_grant(grant2, dummy_slice_id, pusch_slot).status == alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul) != nullptr; }));
+  ASSERT_TRUE(run_until(
+      [&]() {
+        slot_point pusch_slot = get_next_ul_slot(current_slot);
+        alloc.allocate_ul_grant(grant1, dummy_slice_id, pusch_slot);
+        alloc.allocate_ul_grant(grant2, dummy_slice_id, pusch_slot);
+      },
+      [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul) != nullptr; }));
 
   // Only one PUSCH per slot per UE.
   ASSERT_EQ(res_grid[0].result.ul.puschs.size(), 1);
@@ -361,19 +357,19 @@ TEST_P(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
 
   const ue& u = add_ue(ue_creation_req);
 
-  slot_point pusch_slot = get_next_ul_slot(current_slot);
-
   // First PUSCH grant for the UE.
   const ue_pusch_grant grant1{.user                  = &slice_ues[u.ue_index],
                               .cell_index            = to_du_cell_index(0),
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
+  slot_point pusch_slot;
   ASSERT_TRUE(run_until(
-      [&]() { return alloc.allocate_ul_grant(grant1, dummy_slice_id, pusch_slot).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul) != nullptr; }));
-
-  run_slot();
+      [&]() {
+        pusch_slot = get_next_ul_slot(current_slot);
+        alloc.allocate_ul_grant(grant1, dummy_slice_id, pusch_slot);
+      },
+      [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul) != nullptr; }));
 
   // Second PUSCH grant for the UE trying to allocate PUSCH in a slot previous to grant1.
   const ue_pusch_grant grant2{.user                  = &slice_ues[u.ue_index],
@@ -381,9 +377,10 @@ TEST_P(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_FALSE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant2, dummy_slice_id, pusch_slot - 1).status == alloc_status::success;
-  }));
+  ul_alloc_result result = {alloc_status::invalid_params};
+  ASSERT_FALSE(run_until([&]() { result = alloc.allocate_ul_grant(grant2, dummy_slice_id, pusch_slot - 1); },
+                         [&]() { return result.status == alloc_status::success; },
+                         1));
 }
 
 TEST_P(ue_grid_allocator_tester, consecutive_pdschs_for_a_ue_are_allocated_in_increasing_order_of_time)
@@ -401,12 +398,9 @@ TEST_P(ue_grid_allocator_tester, consecutive_pdschs_for_a_ue_are_allocated_in_in
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   slot_point last_pdsch_slot = current_slot;
-
-  run_slot();
 
   // Second PDSCH grant in the same slot for the UE.
   const ue_pdsch_grant grant2{.user                  = &slice_ues[u.ue_index],
@@ -414,9 +408,8 @@ TEST_P(ue_grid_allocator_tester, consecutive_pdschs_for_a_ue_are_allocated_in_in
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant2, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant2, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   ASSERT_GE(current_slot, last_pdsch_slot);
 }
 
@@ -436,12 +429,9 @@ TEST_P(ue_grid_allocator_tester,
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   slot_point last_pdsch_ack_slot = current_slot + find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants)->context.k1;
-
-  run_slot();
 
   // Second PDSCH grant in the same slot for the UE.
   const ue_pdsch_grant grant2{.user                  = &slice_ues[u.ue_index],
@@ -449,9 +439,8 @@ TEST_P(ue_grid_allocator_tester,
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant2, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant2, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   ASSERT_GE(current_slot + find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants)->context.k1, last_pdsch_ack_slot);
 }
 
@@ -467,7 +456,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pdsch_even_with_large_ga
 
   // Ensure current slot is the middle of 1024 SFNs. i.e. current slot=511.0
   while (current_slot.sfn() != NOF_SFNS / 2) {
-    run_slot();
+    slot_indication();
   }
 
   // First PDSCH grant for the UE.
@@ -476,14 +465,14 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pdsch_even_with_large_ga
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
 
   // Ensure next PDSCH to be allocated slot is after wrap around of 1024 SFNs (large gap to last allocated PDSCH slot)
   // and current slot value is less than last allocated PDSCH slot. e.g. next PDSCH to be allocated slot=SFN 2, slot 2
   // after wrap around of 1024 SFNs.
   for (unsigned i = 0; i < current_slot.nof_slots_per_system_frame() / 2 + current_slot.nof_slots_per_frame(); ++i) {
-    run_slot();
+    slot_indication();
   }
 
   // Next PDSCH grant to be allocated.
@@ -492,9 +481,9 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pdsch_even_with_large_ga
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant2, dummy_slice_id).status == alloc_status::success; },
-                nof_slot_until_pdsch_is_allocated_threshold));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant2, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; },
+                        nof_slot_until_pdsch_is_allocated_threshold));
 }
 
 TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_gap_to_last_pusch_slot_allocated)
@@ -509,7 +498,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
 
   // Ensure current slot is the middle of 1024 SFNs. i.e. current slot=511.0
   while (current_slot.sfn() != NOF_SFNS / 2) {
-    run_slot();
+    slot_indication();
   }
 
   // First PUSCH grant for the UE.
@@ -518,16 +507,14 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)).status ==
-           alloc_status::success;
-  }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)); },
+                        [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul.puschs) != nullptr; }));
 
   // Ensure next PUSCH to be allocated slot is after wrap around of 1024 SFNs (large gap to last allocated PUSCH slot)
   // and current slot value is less than last allocated PUSCH slot. e.g. next PUSCH to be allocated slot=SFN 2, slot 2
   // after wrap around of 1024 SFNs.
   for (unsigned i = 0; i < current_slot.nof_slots_per_system_frame() / 2 + current_slot.nof_slots_per_frame(); ++i) {
-    run_slot();
+    slot_indication();
   }
 
   // Second PUSCH grant for the UE.
@@ -541,6 +528,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
         return alloc.allocate_ul_grant(grant2, dummy_slice_id, get_next_ul_slot(current_slot)).status ==
                alloc_status::success;
       },
+      [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul.puschs) != nullptr; },
       nof_slot_until_pusch_is_allocated_threshold));
 }
 
@@ -575,26 +563,29 @@ TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_dl_rbs_are_alloca
                                .h_id                  = INVALID_HARQ_ID,
                                .recommended_nof_bytes = sched_bytes};
 
-  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
+  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for
+  // allocation.
   const unsigned       total_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
   const ue_pdsch_grant grant2{.user                  = &slice_ues[u2.ue_index],
                               .cell_index            = to_du_cell_index(0),
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = sched_bytes};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success and
-           alloc.allocate_dl_grant(grant2, dummy_slice_id).status == alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() {
-    return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr and
-           find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants) != nullptr;
-  }));
+  ASSERT_TRUE(run_until(
+      [&]() {
+        alloc.allocate_dl_grant(grant1, dummy_slice_id);
+        alloc.allocate_dl_grant(grant2, dummy_slice_id);
+      },
+      [&]() {
+        return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr and
+               find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants) != nullptr;
+      }));
   // Successfully allocates PDSCH corresponding to the grant.
   ASSERT_GE(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.codewords.back().tb_size_bytes,
             sched_bytes);
 
-  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
+  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for
+  // allocation.
   const unsigned crbs_allocated =
       find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length();
 
@@ -616,9 +607,8 @@ TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_ul_rbs_are_alloca
 
   const unsigned recommended_nof_bytes_to_schedule = 200U;
 
-  const crb_interval   cell_crbs           = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
-                                              cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.stop()};
-  slot_point           pusch_to_alloc_slot = get_next_ul_slot(current_slot);
+  const crb_interval   cell_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
+                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.stop()};
   const ue_pusch_grant grant1{.user                  = &slice_ues[u1.ue_index],
                               .cell_index            = to_du_cell_index(0),
                               .h_id                  = INVALID_HARQ_ID,
@@ -627,14 +617,20 @@ TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_ul_rbs_are_alloca
                               .cell_index            = to_du_cell_index(0),
                               .h_id                  = INVALID_HARQ_ID,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
+  // The UE needs to have pending data for its grant to be extended.
+  ues[u2.ue_index].handle_bsr_indication(ul_bsr_indication_message{
+      to_du_cell_index(0), u2.ue_index, u2.crnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{lcg_id_t{0}, 3000}}});
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1, dummy_slice_id, pusch_to_alloc_slot).status == alloc_status::success and
-           alloc.allocate_ul_grant(grant2, dummy_slice_id, pusch_to_alloc_slot).status == alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() {
-    return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr and find_ue_pusch(u2.crnti, res_grid[0].result.ul);
-  }));
+  ASSERT_TRUE(run_until(
+      [&]() {
+        slot_point pusch_to_alloc_slot = get_next_ul_slot(current_slot);
+        alloc.allocate_ul_grant(grant1, dummy_slice_id, pusch_to_alloc_slot);
+        alloc.allocate_ul_grant(grant2, dummy_slice_id, pusch_to_alloc_slot);
+      },
+      [&]() {
+        return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr and
+               find_ue_pusch(u2.crnti, res_grid[0].result.ul) != nullptr;
+      }));
   // Successfully allocates PUSCH corresponding to the grant.
   ASSERT_GE(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.tb_size_bytes, grant1.recommended_nof_bytes);
 
@@ -678,9 +674,8 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   // Successfully allocates PDSCH.
   ASSERT_EQ(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
             std::max(expert_cfg.pdsch_nof_rbs.start(), max_nof_rbs_to_schedule));
@@ -705,9 +700,8 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   // Successfully allocates PDSCH.
   ASSERT_EQ(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
             std::min(expert_cfg.pdsch_nof_rbs.stop(), max_nof_rbs_to_schedule));
@@ -732,11 +726,8 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)).status ==
-           alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)); },
+                        [&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
   // Successfully allocates PUSCH.
   ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(),
             std::max(expert_cfg.pdsch_nof_rbs.start(), max_nof_rbs_to_schedule));
@@ -761,11 +752,8 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)).status ==
-           alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)); },
+                        [&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
   // Successfully allocates PUSCH.
   ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(),
             std::min(expert_cfg.pdsch_nof_rbs.stop(), max_nof_rbs_to_schedule));
@@ -813,9 +801,8 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pdsch_wit
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(
-      run_until([&]() { return alloc.allocate_dl_grant(grant1, dummy_slice_id).status == alloc_status::success; }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   // Successfully allocates PDSCH within RB limits.
   ASSERT_EQ(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1(), pdsch_vrb_limits);
 }
@@ -838,11 +825,8 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pusch_wit
                               .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)).status ==
-           alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_ul_grant(grant1, dummy_slice_id, get_next_ul_slot(current_slot)); },
+                        [&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
   // Successfully allocates PUSCH within RB limits.
   ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1(), pusch_vrb_limits);
 }

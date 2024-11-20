@@ -15,7 +15,6 @@
 #include "../ue_context/ue.h"
 #include "../ue_scheduling/ue_repository.h"
 #include "../ue_scheduling/ue_scheduler.h"
-#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 

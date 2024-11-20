@@ -691,9 +691,6 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       // Compute MCS and PRBs based on grant parameters.
       mcs_prbs = ue_cc->required_ul_prbs(pusch_td_cfg, grant.recommended_nof_bytes.value(), dci_type);
 
-      // Apply minimum RB limit per grant.
-      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.start());
-
       // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
       // all the space would be taken by the UCI bits. As a result of this, the effective code rate would be 0 and the
       // allocation would fail and be postponed to the next slot.
@@ -721,6 +718,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       if (nof_rbs_left > 0 and nof_rbs_left < 5) {
         mcs_prbs.n_prbs += nof_rbs_left;
       }
+
+      // Apply minimum RB limit per grant.
+      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.start());
 
       // Re-apply nof. PUSCH RBs to allocate limits.
       mcs_prbs.n_prbs = adjust_ue_max_ul_nof_rbs(expert_cfg, *ue_cc, dci_type, mcs_prbs.n_prbs);
