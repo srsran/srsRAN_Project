@@ -141,9 +141,21 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&  
   return (std::min(bwp_crb_limits.length(), slice_max_rbs) / nof_ues_to_be_scheduled_per_slot);
 }
 
-static bool can_allocate_dl_newtx(const slice_ue& ue_ref, ue_cell_index_t cell_index, srslog::basic_logger& logger)
+static bool can_allocate_dl_newtx(const ue_resource_grid_view& res_grid,
+                                  const ue_cell&               ue_cc,
+                                  slot_point                   pdsch_slot,
+                                  srslog::basic_logger&        logger)
 {
-  const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
+  srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
+                "policy scheduler called for UE={} in fallback",
+                ue_cc.ue_index);
+
+  if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, ue_cc.rnti()) or
+      not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or not ue_cc.is_pdsch_enabled(pdsch_slot)) {
+    // UE is either already allocated for this slot (e.g. a reTx already took place) or it is not active.
+    return false;
+  }
+
   if (not ue_cc.harqs.has_empty_dl_harqs()) {
     // No empty HARQs are available. Log this occurrence.
     if (ue_cc.harqs.find_pending_dl_retx().has_value()) {
@@ -166,9 +178,21 @@ static bool can_allocate_dl_newtx(const slice_ue& ue_ref, ue_cell_index_t cell_i
   return true;
 }
 
-static bool can_allocate_ul_newtx(const slice_ue& ue_ref, ue_cell_index_t cell_index, srslog::basic_logger& logger)
+static bool can_allocate_ul_newtx(const slice_ue&       ue_ref,
+                                  const ue_cell&        ue_cc,
+                                  slot_point            pdcch_slot,
+                                  slot_point            pusch_slot,
+                                  srslog::basic_logger& logger)
 {
-  const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
+  srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
+                "policy scheduler called for UE={} in fallback",
+                ue_cc.ue_index);
+
+  if (not ue_cc.is_pdcch_enabled(pdcch_slot) or not ue_cc.is_ul_enabled(pusch_slot)) {
+    // Either the PDCCH slot or PUSCH slots are not available.
+    return false;
+  }
+
   if (not ue_cc.harqs.has_empty_ul_harqs()) {
     // No empty HARQs are available. Log this occurrence.
     if (ue_cc.harqs.find_pending_ul_retx().has_value()) {
@@ -287,18 +311,8 @@ static dl_alloc_result alloc_dl_ue_newtx(const slice_ue&               u,
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
-    srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
-                  "policy scheduler called for UE={} in fallback",
-                  ue_cc.ue_index);
 
-    if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti()) or
-        not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
-        not ue_cc.is_pdsch_enabled(slice_candidate.get_slot_tx())) {
-      // UE is either already allocated for this slot (e.g. a reTx already took place) or it is not active.
-      return {alloc_status::skip_ue};
-    }
-
-    if (can_allocate_dl_newtx(u, to_ue_cell_index(i), logger)) {
+    if (can_allocate_dl_newtx(res_grid, ue_cc, slice_candidate.get_slot_tx(), logger)) {
       ue_pdsch_grant        grant{&u, ue_cc.cell_index, INVALID_HARQ_ID, u.pending_dl_newtx_bytes(), max_pdsch_rbs};
       const dl_alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
@@ -372,17 +386,9 @@ static ul_alloc_result alloc_ul_ue_newtx(const slice_ue&               u,
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
-    srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
-                  "policy scheduler called for UE={} in fallback",
-                  ue_cc.ue_index);
 
-    if (not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
-        not ue_cc.is_ul_enabled(slice_candidate.get_slot_tx())) {
-      // Either the PDCCH slot or PUSCH slots are not available.
-      continue;
-    }
-
-    if (can_allocate_ul_newtx(u, to_ue_cell_index(i), logger)) {
+    if (can_allocate_ul_newtx(
+            u, ue_cc, res_grid.get_pdcch_slot(ue_cc.cell_index), slice_candidate.get_slot_tx(), logger)) {
       ue_pusch_grant        grant{&u, ue_cc.cell_index, INVALID_HARQ_ID, pending_newtx_bytes, max_grant_rbs};
       const ul_alloc_result result = pusch_alloc.allocate_ul_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.

@@ -513,11 +513,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
                    grant.cell_index);
     return {alloc_status::skip_ue};
   }
-
-  if (ue_cc->is_in_fallback_mode()) {
-    // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
-    return {alloc_status::skip_ue};
-  }
+  srsran_assert(not ue_cc->is_in_fallback_mode(), "Invalid UE candidate");
 
   const ue_cell_configuration&          ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&             cell_cfg    = ue_cell_cfg.cell_cfg_common;
