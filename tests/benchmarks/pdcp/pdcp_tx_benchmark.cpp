@@ -212,7 +212,16 @@ int run_benchmark(bench_params params, int algo)
   auto int_algo  = static_cast<security::integrity_algorithm>(algo);
   auto ciph_algo = static_cast<security::ciphering_algorithm>(algo);
 
-  init_byte_buffer_segment_pool(1048576, byte_buffer_segment_pool_default_segment_size());
+  // coarsely estimate number of required byte_buffer segments; round up to next power of 2 that is larger than 64
+  size_t segments_per_sdu     = 1 + (params.sdu_len / byte_buffer_segment_pool_default_segment_size());
+  size_t segments_per_hdr     = 1;
+  size_t nof_segments_per_run = (segments_per_sdu + segments_per_hdr) * params.nof_sdus;
+  size_t nof_segments_pow_2   = 128;
+  while (nof_segments_pow_2 < nof_segments_per_run) {
+    nof_segments_pow_2 = nof_segments_pow_2 << 1;
+  }
+  srslog::fetch_basic_logger("ALL").debug("Init byte_buffer pool with nof_segments_pow_2={}", nof_segments_pow_2);
+  init_byte_buffer_segment_pool(nof_segments_pow_2, byte_buffer_segment_pool_default_segment_size());
 
   if (algo == 0) {
     benchmark_pdcp_tx(params,
