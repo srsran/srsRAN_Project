@@ -302,6 +302,17 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                    srs.sequence_id);
   }
 
+  if (log_broadcast) {
+    for (const prach_occasion_info& prach : result.ul.prachs) {
+      fmt::format_to(fmtbuf,
+                     "\n- PRACH: pci={} format={} nof_occasions={} nof_preambles={}",
+                     prach.pci,
+                     to_string(prach.format),
+                     prach.nof_prach_occasions,
+                     prach.nof_preamble_indexes);
+    }
+  }
+
   if (fmtbuf.size() > 0) {
     const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
                                 result.dl.ue_grants.size() + result.dl.bc.sibs.size();
