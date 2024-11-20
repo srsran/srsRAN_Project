@@ -146,7 +146,9 @@ static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o
 {
   // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
   if (o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.empty()) {
-    // TODO auto generate configs
+    cu_up_unit_ngu_socket_config sock_cfg;
+    sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+    o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
   }
   o_cu_up_cfg.cu_up_cfg.ngu_cfg.no_core = cu_cp_cfg.amf_config.no_core;
   o_cu_up_cfg.e2_cfg.pcaps.enabled = o_cu_up_cfg.e2_cfg.base_config.enable_unit_e2 && o_cu_up_cfg.e2_cfg.pcaps.enabled;
@@ -265,6 +267,17 @@ int main(int argc, char** argv)
   const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
+
+  // Create NG-U GWs
+  cu_up_unit_ngu_config& ngu_cfg = o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg.ngu_cfg;
+  for (srsran::cu_up_unit_ngu_socket_config& sock_cfg : ngu_cfg.ngu_socket_cfg) {
+    udp_network_gateway_config n3_udp_cfg = {};
+    n3_udp_cfg.bind_address               = sock_cfg.bind_addr;
+    n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_occupancy_threshold;
+    n3_udp_cfg.bind_port                  = GTPU_PORT;
+    n3_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_mmsg;
+    n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_occupancy_threshold;
+  }
 
   // Create F1-C GW (TODO cleanup port and PPID args with factory)
   sctp_network_gateway_config f1c_sctp_cfg = {};
