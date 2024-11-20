@@ -147,7 +147,8 @@ public:
 
   const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
 
-  ul_power_controller& get_ul_power_controller() { return ul_pwr_controller; }
+  ul_power_controller&       get_ul_power_controller() { return ul_pwr_controller; }
+  const ul_power_controller& get_ul_power_controller() const { return ul_pwr_controller; }
 
   /// \brief Returns an estimated DL rate in bytes per slot based on the given input parameters.
   double get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
