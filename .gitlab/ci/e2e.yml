@@ -102,7 +102,7 @@ smoke zmq:
     - |
       export TESTBED=zmq
       if [ -n "${EXTRA_SMOKE_ZMQ}" ]; then
-        echo export TESTBED=zmq_smoke
+        export TESTBED=zmq_smoke
       fi
   timeout: 1 hour
   needs:
