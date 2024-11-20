@@ -540,3 +540,28 @@ retina setup:
       retina-garbage-collector --mode demolition
   needs:
     - *retina-needs
+
+retina runners:
+  stage: ci
+  allow_failure: true
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      variables:
+        CI_DESCRIPTION: "Lab Runner Manager"
+        DISABLE_MODE: "nightly"
+        ON_SCHEDULE: "true"
+        NOTIFY_SLACK: "false"
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      variables:
+        CI_DESCRIPTION: "Lab Runner Manager"
+        DISABLE_MODE: "weekly"
+        ON_SCHEDULE: "true"
+        NOTIFY_SLACK: "false"
+  inherit:
+    variables: false
+  trigger:
+    project: softwareradiosystems/ci/infrastructure
+    branch: master
+  needs:
+    - job: "retina setup"
+      artifacts: false
