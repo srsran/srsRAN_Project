@@ -10,16 +10,16 @@
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   labels: 
-    - ${ZMQ_HOSTLABEL_0}
+    - ${ZMQ_HOSTLABEL_1}
   nof_ports: 4
   requirements:
     arch: amd64
     cpu:
-      requests: 3
-      limits: 3
+      requests: 4
+      limits: 4
     memory:
-      requests: "13G"
-      limits: "13G"
+      requests: "5G"
+      limits: "5G"
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
@@ -36,15 +36,15 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   labels: 
-    - ${ZMQ_HOSTLABEL_0}
+    - ${ZMQ_HOSTLABEL_1}
   requirements:
     arch: amd64
     cpu:
-      requests: 2
-      limits: 2
+      requests: 4
+      limits: 4
     memory:
-      requests: "13G"
-      limits: "13G"
+      requests: "5G"
+      limits: "5G"
     ephemeral-storage:
       requests: "15G"
       limits: "15G"
@@ -62,8 +62,8 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 1
-      limits: 1
+      requests: 2
+      limits: 2
     memory:
       requests: "4G"
       limits: "4G"
@@ -72,4 +72,4 @@
       limits: "6G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   labels: 
-    - ${ZMQ_HOSTLABEL_0}
+    - ${ZMQ_HOSTLABEL_1}
