@@ -89,6 +89,8 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
       h_ul->cancel_retxs();
     }
   }
+
+  get_ul_power_controller().reconfigure(ue_cell_cfg);
 }
 
 void ue_cell::set_fallback_state(bool set_fallback)
@@ -246,7 +248,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
   sch_mcs_description mcs_config =
       pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, false);
 
-  const unsigned nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
+  const auto nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   nof_symbols,

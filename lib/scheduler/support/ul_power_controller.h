@@ -21,8 +21,11 @@ class ul_power_controller
 public:
   ul_power_controller(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
 
+  /// Save the PUSCH power control configuration.
+  void reconfigure(const ue_cell_configuration& ue_cell_cfg);
+
   /// Update UE with the latest PHR for a given cell.
-  void handle_phr(const cell_ph_report& phr);
+  void handle_phr(const cell_ph_report& phr, slot_point slot_rx);
 
   /// Save the PUSCH power control parameters after each PUSCH transmission.
   void update_pusch_pw_ctrl_state(slot_point slot, unsigned nof_prbs);
@@ -47,8 +50,9 @@ private:
   //  SINR) for the PUSCH with the latest power adjustment is received, before a new power adjustment is computed.
   static constexpr unsigned tpc_adjust_prohibit_time_ms = 40U;
 
-  const ue_cell_configuration&    ue_cell_cfg;
-  const ue_channel_state_manager& channel_state_manager;
+  const int                                        p0_nominal_pusch;
+  std::optional<pusch_config::pusch_power_control> pusch_pwr_ctrl;
+  const ue_channel_state_manager&                  channel_state_manager;
 
   /// \brief Latest PHR received from the UE.
   struct ue_phr_report {
