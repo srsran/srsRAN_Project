@@ -219,7 +219,7 @@ if [[ "$MAKE_EXTRA" =~ (^|[[:space:]])[^-][^[:space:]]* ]]; then
     :
 else
     TARGETS=$(awk '/-- Adding binary target:/ {print substr($0, index($0,"target:")+7)}' cmake_output.log | tr '\n' ' ')
-    MAKE_EXTRA="$MAKE_EXTRA $TARGETS"
+    MAKE_EXTRA="$MAKE_EXTRA $TARGETS all"
 fi
 
 found=false
