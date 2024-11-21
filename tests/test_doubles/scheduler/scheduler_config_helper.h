@@ -25,8 +25,11 @@ cell_config_dedicated create_test_initial_ue_spcell_cell_config(const cell_confi
 
 /// Create a default UE creation request.
 sched_ue_creation_request_message
-create_default_sched_ue_creation_request(const cell_config_builder_params&    params      = {},
-                                         const std::initializer_list<lcid_t>& lcid_to_cfg = {});
+create_default_sched_ue_creation_request(const cell_config_builder_params& params      = {},
+                                         span<const lcid_t>                lcid_to_cfg = {});
+sched_ue_creation_request_message
+create_default_sched_ue_creation_request(const cell_config_builder_params&    params,
+                                         const std::initializer_list<lcid_t>& lcid_to_cfg);
 
 /// Create a UE creation request with no UE-dedicated config.
 sched_ue_creation_request_message

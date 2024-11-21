@@ -43,6 +43,7 @@ add_executable(scheduler_test
         scheduler_ue_fallback_mode_test.cpp
         scheduler_ta_cmd_test.cpp
         multi_cell_scheduler_test.cpp
+        multi_slice_scheduler_test.cpp
 )
 target_link_libraries(scheduler_test
         srsran_sched
@@ -52,7 +53,6 @@ target_link_libraries(scheduler_test
         gtest
         gtest_main)
 add_test(scheduler_test scheduler_test)
-gtest_discover_tests(scheduler_test)
 
 add_executable(scheduler_test_doubles_test test_doubles/test_pucch_res_test_builder_helper.cpp)
 target_link_libraries(scheduler_test_doubles_test

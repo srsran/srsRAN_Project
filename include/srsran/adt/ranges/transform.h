@@ -24,9 +24,10 @@ namespace views {
 template <typename Range, typename TransformFunc>
 class transform_view
 {
-  using range_value_type     = typename std::decay_t<Range>::value_type;
-  using transform_signature  = detail::function_signature<decltype(&std::decay_t<TransformFunc>::operator())>;
-  using transform_value_type = typename transform_signature::return_type;
+  using range_value_type = typename std::decay_t<Range>::value_type;
+  // using transform_signature  = detail::function_signature<decltype(&std::decay_t<TransformFunc>::operator())>;
+  // using transform_value_type = typename transform_signature::return_type;
+  using transform_value_type = std::invoke_result_t<TransformFunc, const range_value_type&>;
 
   template <typename Data>
   class iter_impl
