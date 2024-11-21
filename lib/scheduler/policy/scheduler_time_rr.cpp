@@ -220,7 +220,7 @@ static bool can_allocate_ul_newtx(const slice_ue&       ue_ref,
 /// \return Index of next UE to allocate and the allocation status.
 template <typename AllocUEFunc>
 static std::pair<du_ue_index_t, alloc_status>
-round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index, const AllocUEFunc& alloc_ue)
+round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index, AllocUEFunc& alloc_ue)
 {
   if (ue_db.empty()) {
     return std::make_pair(next_ue_index, alloc_status::skip_slot);
@@ -416,10 +416,10 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  dl_harq_pending_retx_list    harq_pending_retx_list)
 {
   const slice_ue_repository& ues      = slice_candidate.get_slice_ues();
-  const unsigned             max_rbs  = slice_candidate.remaining_rbs();
   const ran_slice_id_t       slice_id = slice_candidate.id();
 
-  if (ues.empty() or max_rbs == 0) {
+  unsigned max_pdsch_rbs = slice_candidate.remaining_rbs();
+  if (ues.empty() or max_pdsch_rbs == 0) {
     // No UEs to be scheduled or if there are no RBs to be scheduled in slice.
     return;
   }
@@ -430,16 +430,45 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
     return;
   }
 
-  const unsigned max_pdsch_rbs =
-      compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg, slice_candidate.get_slot_tx(), max_rbs);
-  if (max_pdsch_rbs > 0) {
-    // Then, schedule UEs with new transmissions.
-    auto drb_newtx_ue_function = [this, &res_grid, &slice_candidate, &pdsch_alloc, max_pdsch_rbs](const slice_ue& u) {
-      return alloc_dl_ue_newtx(u, res_grid, slice_candidate, pdsch_alloc, logger, max_pdsch_rbs);
-    };
-    auto result      = round_robin_apply(ues, next_dl_ue_index, drb_newtx_ue_function);
-    next_dl_ue_index = result.first;
+  // Schedule new Txs.
+  dl_sched_newtx(pdsch_alloc, res_grid, slice_candidate);
+}
+
+void scheduler_time_rr::dl_sched_newtx(ue_pdsch_allocator&          pdsch_alloc,
+                                       const ue_resource_grid_view& res_grid,
+                                       dl_ran_slice_candidate&      slice_candidate)
+{
+  const slice_ue_repository& ues            = slice_candidate.get_slice_ues();
+  unsigned                   max_rbs_per_ue = compute_max_nof_rbs_per_ue_per_slot(
+      ues, true, res_grid, expert_cfg, slice_candidate.get_slot_tx(), slice_candidate.remaining_rbs());
+  if (max_rbs_per_ue == 0) {
+    return;
   }
+  // Then, schedule UEs with new transmissions.
+
+  int rbs_missing = 0;
+
+  auto drb_newtx_ue_function =
+      [this, &res_grid, &slice_candidate, &pdsch_alloc, max_rbs_per_ue, rbs_missing](const slice_ue& u) mutable {
+        // Determine the max grant size in RBs, accounting the RBs that were left to be allocated earlier and the slice
+        // candidate max RBs, that changes on each allocation.
+        unsigned max_grant_size = std::max((int)max_rbs_per_ue + rbs_missing, 0);
+        max_grant_size          = std::min(max_grant_size, slice_candidate.remaining_rbs());
+        if (max_grant_size == 0) {
+          return dl_alloc_result{alloc_status::skip_slot};
+        }
+
+        // Allocate UE newtx.
+        auto result = alloc_dl_ue_newtx(u, res_grid, slice_candidate, pdsch_alloc, logger, max_grant_size);
+
+        if (result.status == alloc_status::success) {
+          // Check if the grant was too small and we need to compensate in the next grants.
+          rbs_missing += (max_rbs_per_ue - result.alloc_nof_rbs);
+        }
+        return result;
+      };
+  auto result      = round_robin_apply(ues, next_dl_ue_index, drb_newtx_ue_function);
+  next_dl_ue_index = result.first;
 }
 
 void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
