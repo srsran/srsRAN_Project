@@ -561,7 +561,7 @@ retina runners:
     variables: false
   trigger:
     project: softwareradiosystems/ci/infrastructure
-    branch: master
+    branch: main
   needs:
     - job: "retina setup"
       artifacts: false
