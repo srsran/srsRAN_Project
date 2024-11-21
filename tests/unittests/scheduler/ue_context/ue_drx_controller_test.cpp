@@ -8,6 +8,7 @@
  *
  */
 
+#include "../test_utils/sched_random_utils.h"
 #include "lib/scheduler/ue_context/ue_drx_controller.h"
 #include "lib/scheduler/ue_context/ul_logical_channel_manager.h"
 #include "srsran/support/test_utils.h"
@@ -45,8 +46,7 @@ protected:
   const unsigned inactivity_slots =
       drx_cfg.has_value() ? drx_cfg->inactivity_timer.count() * get_nof_slots_per_subframe(scs) : 0;
 
-  slot_point next_slot{to_numerology_value(scs),
-                       test_rgen::uniform_int<unsigned>(0, 10240) * get_nof_slots_per_subframe(scs) - 1};
+  slot_point next_slot{test_helper::generate_random_slot_point(scs)};
   slot_point cur_slot;
 };
 

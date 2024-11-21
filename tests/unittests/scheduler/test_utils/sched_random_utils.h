@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/slot_point.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/test_utils.h"
 
