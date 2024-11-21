@@ -229,7 +229,7 @@ TEST_P(ue_grid_allocator_tester, allocates_pdsch_restricted_to_recommended_max_n
                               .recommended_nof_bytes = sched_bytes,
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
-  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id).status; },
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id); },
                         [&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
   // Successfully allocates PDSCH corresponding to the grant.
   ASSERT_GE(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
@@ -306,8 +306,8 @@ TEST_P(ue_grid_allocator_tester, no_two_pdschs_are_allocated_in_same_slot_for_a_
 
   ASSERT_TRUE(run_until(
       [&]() {
-        alloc.allocate_dl_grant(grant1, dummy_slice_id).status;
-        alloc.allocate_dl_grant(grant2, dummy_slice_id).status;
+        alloc.allocate_dl_grant(grant1, dummy_slice_id);
+        alloc.allocate_dl_grant(grant2, dummy_slice_id);
       },
       [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
 
