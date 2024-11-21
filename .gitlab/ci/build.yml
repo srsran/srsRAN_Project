@@ -664,6 +664,8 @@ check builders ubuntu versions:
   stage: static
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 15 minutes    
   variables:
     VERSIONS_TO_IGNORE: "20.04"
   script:
@@ -676,7 +678,7 @@ smoke release update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   after_script:
@@ -692,7 +694,7 @@ smoke relwithdeb update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -703,7 +705,7 @@ smoke tsan update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   interruptible: false
   retry: 2
   cache:
@@ -714,7 +716,7 @@ smoke rhel update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -725,7 +727,7 @@ smoke archlinux update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -736,7 +738,7 @@ smoke dpdk update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -747,7 +749,7 @@ smoke valgrind update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   interruptible: false
   retry: 2
   after_script:
@@ -763,7 +765,7 @@ smoke avx512 update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   interruptible: false
   retry: 2
   cache:
@@ -774,7 +776,7 @@ smoke arm update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -785,7 +787,7 @@ smoke arm neon update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -796,7 +798,7 @@ smoke asan:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   variables:
@@ -817,7 +819,7 @@ package:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   variables: &package_variables
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
@@ -860,6 +862,8 @@ check package ubuntu versions:
   stage: static
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 15 minutes
 
 # Validate export on, enabled for test vector generation
 
@@ -868,7 +872,7 @@ export on amd64:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 60 minutes
+      start_in: 75 minutes
   interruptible: false
   variables:
     COMPILER: gcc
@@ -897,7 +901,7 @@ ubuntu-24.10 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 90 minutes
+      start_in: 105 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -912,7 +916,7 @@ ubuntu-24.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 120 minutes
+      start_in: 135 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -927,7 +931,7 @@ ubuntu-24.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 120 minutes
+      start_in: 135 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -942,7 +946,7 @@ ubuntu-22.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 150 minutes
+      start_in: 165 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -957,7 +961,7 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 180 minutes
+      start_in: 195 minutes
   interruptible: false
   variables:
     OS: rhel-8
@@ -974,7 +978,7 @@ ubuntu-24.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 60 minutes
+      start_in: 75 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -991,7 +995,7 @@ ubuntu dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 210 minutes
+      start_in: 225 minutes
   interruptible: false
   variables:
     ENABLE_UHD: "False"

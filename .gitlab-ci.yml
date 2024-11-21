@@ -120,8 +120,6 @@ matlab nightly:
         CI_DESCRIPTION: Nightly
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
-      when: delayed
-      start_in: 5 hours
   inherit:
     variables: false
   trigger:
@@ -137,8 +135,6 @@ plugin nightly:
         CI_DESCRIPTION: Nightly
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
-      when: delayed
-      start_in: 7 hours
   inherit:
     variables: false
   trigger:
@@ -154,8 +150,6 @@ matlab weekly:
         CI_DESCRIPTION: Weekly
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
-      when: delayed
-      start_in: 20 hours
   inherit:
     variables: false
   trigger:
