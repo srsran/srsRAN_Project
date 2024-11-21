@@ -376,26 +376,6 @@ smoke relwithdeb cached:
   cache:
     - *cache_build_get
 
-smoke split 7.2 cached:
-  extends: smoke relwithdeb cached
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
-      when: never
-    - if: $ON_MR
-      changes: &split_changes
-        paths:
-          - apps/units/flexible_du/split_*/**/*
-  variables:
-    BUILD_ARGS: -DDU_SPLIT_TYPE=SPLIT_7_2
-    ENABLE_ZEROMQ:
-  after_script: []
-  artifacts:
-
-smoke split 8 cached:
-  extends: smoke split 7.2 cached
-  variables:
-    BUILD_ARGS: -DDU_SPLIT_TYPE=SPLIT_8
-
 smoke tsan cached:
   extends: .smoke tsan
   stage: manual
@@ -521,23 +501,6 @@ smoke relwithdeb clean:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
-
-smoke split 7.2 clean:
-  extends: smoke relwithdeb clean
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
-      changes:
-        <<: *split_changes
-  variables:
-    BUILD_ARGS: -DDU_SPLIT_TYPE=SPLIT_7_2
-    ENABLE_ZEROMQ:
-  after_script: []
-  artifacts:
-
-smoke split 8 clean:
-  extends: smoke split 7.2 clean
-  variables:
-    BUILD_ARGS: -DDU_SPLIT_TYPE=SPLIT_8
 
 smoke tsan clean:
   extends: .smoke tsan
