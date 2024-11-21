@@ -102,7 +102,7 @@ static void fill_format2_parameters(fapi::ul_pucch_pdu_builder& builder, const p
 
   // Scrambling.
   builder.set_scrambling_parameters(f2.n_id_scambling);
-  builder.set_format2_parameters(f2.n_id_0_scrambling);
+  builder.set_dmrs_scrambling(f2.n_id_0_scrambling);
 
   // Max coding rate.
   builder.set_maintenance_v3_basic_parameters({static_cast<unsigned>(f2.max_code_rate)}, {});
@@ -127,11 +127,9 @@ static void fill_format3_parameters(fapi::ul_pucch_pdu_builder& builder, const p
 
   // Scrambling.
   builder.set_scrambling_parameters(f3.n_id_scambling);
-  // TODO: rename this method? n_id_0_scrambling is also used for formats 3 and 4 from Rel-16.
-  builder.set_format2_parameters(f3.n_id_0_scrambling);
 
   // DM-RS.
-  builder.set_dmrs_parameters(f3.additional_dmrs, f3.m_0_cyclic_shift);
+  builder.set_dmrs_parameters(f3.additional_dmrs, f3.n_id_0_scrambling, f3.m_0_cyclic_shift);
 
   // Max coding rate.
   builder.set_maintenance_v3_basic_parameters({static_cast<unsigned>(f3.max_code_rate)}, {});
@@ -156,15 +154,12 @@ static void fill_format4_parameters(fapi::ul_pucch_pdu_builder& builder, const p
 
   // Scrambling.
   builder.set_scrambling_parameters(f4.n_id_scambling);
-  // TODO: rename this method? n_id_0_scrambling is also used for formats 3 and 4 from Rel-16.
-  builder.set_format2_parameters(f4.n_id_0_scrambling);
 
   // DM-RS.
-  builder.set_dmrs_parameters(f4.additional_dmrs, f4.m_0_cyclic_shift);
+  builder.set_dmrs_parameters(f4.additional_dmrs, f4.n_id_0_scrambling, f4.m_0_cyclic_shift);
 
   // Specific format 4 parameters.
-  uint8_t occ_len = (f4.n_sf_pucch_f4 == pucch_format_4_sf::sf2) ? 2 : 4;
-  builder.set_format4_parameters(f4.orthog_seq_idx, occ_len);
+  builder.set_format4_parameters(f4.orthog_seq_idx, static_cast<uint8_t>(f4.n_sf_pucch_f4));
 
   // Max coding rate.
   builder.set_maintenance_v3_basic_parameters({static_cast<unsigned>(f4.max_code_rate)}, {});

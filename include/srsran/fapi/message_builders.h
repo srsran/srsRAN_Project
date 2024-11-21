@@ -2077,9 +2077,9 @@ public:
     return *this;
   }
 
-  /// Sets the PUCCH PDU format 2 parameters and returns a reference to the builder.
+  /// Sets the PUCCH PDU scrambling parameters for DM-RS and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder& set_format2_parameters(uint16_t nid0_pucch_dmrs_scrambling)
+  ul_pucch_pdu_builder& set_dmrs_scrambling(uint16_t nid0_pucch_dmrs_scrambling)
   {
     pdu.nid0_pucch_dmrs_scrambling = nid0_pucch_dmrs_scrambling;
 
@@ -2107,9 +2107,11 @@ public:
 
   /// Sets the PUCCH PDU DMRS parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder& set_dmrs_parameters(bool add_dmrs_flag, uint8_t m0_pucch_dmrs_cyclic_shift)
+  ul_pucch_pdu_builder&
+  set_dmrs_parameters(bool add_dmrs_flag, uint16_t nid0_pucch_dmrs_scrambling, uint8_t m0_pucch_dmrs_cyclic_shift)
   {
     pdu.add_dmrs_flag              = add_dmrs_flag;
+    pdu.nid0_pucch_dmrs_scrambling = nid0_pucch_dmrs_scrambling;
     pdu.m0_pucch_dmrs_cyclic_shift = m0_pucch_dmrs_cyclic_shift;
 
     return *this;

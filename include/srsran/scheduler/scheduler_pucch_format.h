@@ -37,20 +37,7 @@ inline sr_nof_bits operator+(sr_nof_bits x, sr_nof_bits y)
 }
 
 /// PUCCH Format 4 spreading factor.
-enum class pucch_format_4_sf { sf2, sf4 };
-
-/// Implements the == operator for \ref pucch_format_4_sf and unsigned char.
-inline bool operator==(pucch_format_4_sf x, unsigned char y)
-{
-  switch (x) {
-    case pucch_format_4_sf::sf2:
-      return y == 2;
-    case pucch_format_4_sf::sf4:
-      return y == 4;
-    default:
-      return false;
-  }
-}
+enum class pucch_format_4_sf { sf2 = 2, sf4 = 4 };
 
 /// PRBs and symbols used for PUCCH resources.
 struct pucch_resources {
