@@ -20,6 +20,16 @@ struct multi_slice_test_params {
   std::vector<slice_rrm_policy_config> slices;
 };
 
+static s_nssai_t get_nssai(unsigned sst, unsigned sd)
+{
+  return s_nssai_t{slice_service_type{(uint8_t)sst}, slice_differentiator::create(sd).value()};
+}
+
+static rrm_policy_member get_rrm_policy(unsigned sst, unsigned sd)
+{
+  return rrm_policy_member{plmn_identity::test_value(), get_nssai(sst, sd)};
+}
+
 class base_multi_slice_scheduler_tester : public scheduler_test_simulator
 {
 protected:
@@ -65,22 +75,17 @@ class single_slice_limited_max_rbs_scheduler_test : public base_multi_slice_sche
 protected:
   constexpr static unsigned max_slice_rbs = 10;
 
-  static s_nssai_t test_nssai() { return s_nssai_t{slice_service_type{1}, slice_differentiator::create(1).value()}; }
-
   single_slice_limited_max_rbs_scheduler_test() :
-    base_multi_slice_scheduler_tester(multi_slice_test_params{
-        {slice_rrm_policy_config{rrm_policy_member{plmn_identity::test_value(), test_nssai()}, 0, max_slice_rbs}}})
+    base_multi_slice_scheduler_tester(
+        multi_slice_test_params{{slice_rrm_policy_config{get_rrm_policy(1, 1), 0, max_slice_rbs}}})
   {
   }
-
-private:
-  unsigned ue_count = 0;
 };
 
 TEST_F(single_slice_limited_max_rbs_scheduler_test, single_ue_limited_to_max_rbs)
 {
   // Create UE and fill its buffer.
-  rnti_t rnti = this->add_ue({std::make_pair(LCID_MIN_DRB, test_nssai())});
+  rnti_t rnti = this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))});
   this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(0), LCID_MIN_DRB, 500});
 
   ASSERT_TRUE(this->run_slot_until(
@@ -97,7 +102,7 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, multi_ue_limited_to_max_rbs)
   unsigned            dl_bo   = test_rgen::uniform_int<unsigned>(1, 50);
   std::vector<rnti_t> rntis;
   for (unsigned i = 0; i < nof_ues; i++) {
-    rntis.push_back(this->add_ue({std::make_pair(LCID_MIN_DRB, test_nssai())}));
+    rntis.push_back(this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))}));
     this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(i), LCID_MIN_DRB, dl_bo});
   }
 
@@ -109,4 +114,50 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, multi_ue_limited_to_max_rbs)
   }
 
   ASSERT_TRUE(nof_rbs <= max_slice_rbs);
+}
+
+class multi_slice_with_prio_slice_scheduler_test : public base_multi_slice_scheduler_tester, public ::testing::Test
+{
+protected:
+  static constexpr unsigned slice1_min_rbs = 10;
+  static constexpr unsigned slice1_max_rbs = 20;
+
+  multi_slice_with_prio_slice_scheduler_test() :
+    base_multi_slice_scheduler_tester(
+        multi_slice_test_params{{slice_rrm_policy_config{get_rrm_policy(1, 1), slice1_min_rbs, slice1_max_rbs},
+                                 slice_rrm_policy_config{get_rrm_policy(1, 2), 0, MAX_NOF_PRBS}}})
+  {
+  }
+};
+
+TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs)
+{
+  // Create 3 UEs and fill its buffer.
+  this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(0), LCID_MIN_DRB, 10000});
+  this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(1), LCID_MIN_DRB, 10000});
+  this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 2))});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(2), LCID_MIN_DRB, 10000});
+
+  unsigned                nof_checks = 4;
+  std::array<unsigned, 3> rnti_sum_rbs{0};
+  for (unsigned i = 0; i < nof_checks; i++) {
+    ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_res_list[0]->dl.ue_grants.empty(); }));
+
+    std::array<unsigned, 3> rnti_rbs{0};
+    for (const dl_msg_alloc& msg : this->last_sched_res_list[0]->dl.ue_grants) {
+      unsigned idx = static_cast<unsigned>(msg.pdsch_cfg.rnti) - 0x4601;
+      rnti_rbs[idx] += msg.pdsch_cfg.rbs.type1().length();
+    }
+    ASSERT_GE(rnti_rbs[0] + rnti_rbs[1], slice1_min_rbs);
+    ASSERT_LE(rnti_rbs[0] + rnti_rbs[1], slice1_max_rbs);
+    ASSERT_GT(rnti_rbs[2], 0);
+
+    for (unsigned j = 0; j != rnti_rbs.size(); j++) {
+      rnti_sum_rbs[j] += rnti_rbs[j];
+    }
+  }
+
+  ASSERT_TRUE(std::all_of(rnti_sum_rbs.begin(), rnti_sum_rbs.end(), [](unsigned n) { return n > 0; }));
 }
