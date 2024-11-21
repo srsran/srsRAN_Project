@@ -7,10 +7,10 @@
 #
 
 add_executable(srscu
-    cu.cpp
-	cu_appconfig_cli11_schema.cpp
-	cu_appconfig_validator.cpp
-	cu_appconfig_yaml_writer.cpp
+        cu.cpp
+        cu_appconfig_cli11_schema.cpp
+        cu_appconfig_validator.cpp
+        cu_appconfig_yaml_writer.cpp
 )
 
 install(TARGETS srscu
@@ -20,7 +20,7 @@ target_link_libraries(srscu PRIVATE
         srsran_app_services
         srsran_support
         srsran_versioning
-        srsran_cu_cp_app_unit
+        srsran_o_cu_cp_app_unit
         srsran_o_cu_up_app_unit
         srsran_ngap
         srsran_f1c_gateway
@@ -29,7 +29,7 @@ target_link_libraries(srscu PRIVATE
         srsran_f1u_cu_up_split_connector
         srsran_pcap
         ngap_asn1
-        )
+)
 
 add_backward(srscu)
 

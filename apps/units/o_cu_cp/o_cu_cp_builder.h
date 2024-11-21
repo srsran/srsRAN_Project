@@ -24,7 +24,7 @@ class metrics_notifier;
 
 class dlt_pcap;
 class io_broker;
-struct cu_cp_unit_config;
+struct o_cu_cp_unit_config;
 struct worker_manager;
 
 namespace srs_cu_cp {
@@ -36,8 +36,8 @@ class e2_metric_connector_manager;
 class e2_connection_client;
 class e2_gateway_remote_connector;
 
-/// CU-CP build dependencies.
-struct cu_cp_build_dependencies {
+/// O-RAN CU-CP build dependencies.
+struct o_cu_cp_unit_dependencies {
   task_executor*                  cu_cp_executor   = nullptr;
   task_executor*                  cu_cp_e2_exec    = nullptr;
   timer_manager*                  timers           = nullptr;
@@ -47,14 +47,14 @@ struct cu_cp_build_dependencies {
   app_services::metrics_notifier* metrics_notifier = nullptr;
 };
 
-/// Wraps the CU-CP and its supported application commands.
-struct cu_cp_unit {
+/// O-RAN CU-CP unit.
+struct o_cu_cp_unit {
   std::unique_ptr<srs_cu_cp::o_cu_cp>                             unit;
   std::vector<std::unique_ptr<app_services::application_command>> commands;
   std::vector<app_services::metrics_config>                       metrics;
 };
 
-/// Builds a CU-CP object with the given configuration.
-cu_cp_unit build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies);
+/// Builds an O-RAN CU-CP unit with the given configuration and dependencies.
+o_cu_cp_unit build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_unit_dependencies& dependencies);
 
 } // namespace srsran

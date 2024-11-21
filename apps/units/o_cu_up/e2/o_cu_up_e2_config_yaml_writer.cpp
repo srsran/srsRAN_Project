@@ -23,8 +23,8 @@ static void fill_o_cu_up_e2_pcap_section(YAML::Node node, const o_cu_up_e2_pcap_
 void srsran::fill_o_cu_up_e2_config_in_yaml_schema(YAML::Node& node, const o_cu_up_e2_config& config)
 {
   YAML::Node e2_node         = node["e2"];
-  e2_node["enable_cu_up_e2"] = config.config.enable_unit_e2;
-  fill_e2_config_in_yaml_schema(e2_node, config.config);
+  e2_node["enable_cu_up_e2"] = config.base_config.enable_unit_e2;
+  fill_e2_config_in_yaml_schema(e2_node, config.base_config);
 
   // PCAPs.
   fill_o_cu_up_e2_pcap_section(node["pcap"], config.pcaps);

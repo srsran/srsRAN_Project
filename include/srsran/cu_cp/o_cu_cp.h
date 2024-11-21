@@ -16,16 +16,16 @@ namespace srs_cu_cp {
 class cu_cp;
 class cu_cp_power_controller;
 
-/// ORAN CU-CP interface.
+/// O-RAN CU-CP interface.
 class o_cu_cp
 {
 public:
   virtual ~o_cu_cp() = default;
 
-  /// Returns the CU-CP of this ORAN CU-CP.
+  /// Returns the CU-CP of this O-RAN CU-CP.
   virtual cu_cp& get_cu_cp() = 0;
 
-  /// Returns the power controller of this ORAN CU-CP.
+  /// Returns the power controller of this O-RAN CU-CP.
   virtual cu_cp_power_controller& get_power_controller() = 0;
 };
 

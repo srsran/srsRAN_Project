@@ -20,7 +20,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// ORAN CU-CP implementation.
+/// O-RAN CU-CP implementation.
 class o_cu_cp_impl : public o_cu_cp, public cu_cp_power_controller
 {
 public:
@@ -42,7 +42,7 @@ private:
   std::unique_ptr<cu_cp> cu_impl;
 };
 
-/// ORAN CU-CP with E2 implementation.
+/// O-RAN CU-CP with E2 implementation.
 class o_cu_cp_with_e2_impl : public o_cu_cp_impl
 {
 public:

@@ -14,9 +14,9 @@
 
 namespace srsran {
 
-struct cu_cp_unit_config;
+struct o_cu_cp_e2_config;
 
-/// Fills the given node with the CU-cP configuration values.
-void fill_cu_cp_config_in_yaml_schema(YAML::Node& node, const cu_cp_unit_config& config);
+/// Fills the given node with the O-RAN CU-CP E2 configuration values.
+void fill_o_cu_cp_e2_config_in_yaml_schema(YAML::Node& node, const o_cu_cp_e2_config& config);
 
 } // namespace srsran

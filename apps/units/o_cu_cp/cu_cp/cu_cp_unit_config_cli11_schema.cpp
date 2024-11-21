@@ -9,7 +9,6 @@
  */
 
 #include "cu_cp_unit_config_cli11_schema.h"
-#include "apps/services/e2/e2_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/ran/nr_cell_identity.h"
@@ -38,9 +37,6 @@ static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& lo
 
 static void configure_cli11_pcap_args(CLI::App& app, cu_cp_unit_pcap_config& pcap_params)
 {
-  add_option(app, "--e2ap_cu_cp_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")
-      ->capture_default_str();
-  add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
   add_option(app, "--ngap_filename", pcap_params.ngap.filename, "N3 GTP-U PCAP file output path")
       ->capture_default_str();
   add_option(app, "--ngap_enable", pcap_params.ngap.enabled, "Enable N3 GTP-U packet capture")
@@ -548,9 +544,6 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
 
-  // E2 section.
-  configure_cli11_with_e2_config_schema(app, unit_cfg.e2_cfg, "--enable_cu_cp_e2", "Enable CU E2 agent");
-
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
@@ -579,7 +572,4 @@ void srsran::autoderive_cu_cp_parameters_after_parsing(CLI::App& app, cu_cp_unit
       cell.gnb_id_bit_length = unit_cfg.gnb_id.bit_length;
     }
   }
-
-  // If CU CP E2 agent is disabled do not enable e2ap pcap for it.
-  unit_cfg.pcap_cfg.e2ap.enabled = unit_cfg.e2_cfg.enable_unit_e2 && unit_cfg.pcap_cfg.e2ap.enabled;
 }

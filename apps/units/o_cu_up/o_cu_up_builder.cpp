@@ -80,14 +80,14 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
 
   auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
 
-  if (unit_cfg.e2_cfg.config.enable_unit_e2) {
-    config.e2ap_cfg                        = generate_e2_config(unit_cfg.e2_cfg.config);
+  if (unit_cfg.e2_cfg.base_config.enable_unit_e2) {
+    config.e2ap_cfg                        = generate_e2_config(unit_cfg.e2_cfg.base_config);
     ocu_up_dependencies.e2_client          = dependencies.e2_gw;
     ocu_up_dependencies.e2_cu_metric_iface = &(*e2_metric_connectors).get_e2_metrics_interface(0);
   }
   auto pdcp_metric_notifier = build_pdcp_metrics(ocu_unit.metrics,
                                                  *dependencies.metrics_notifier,
-                                                 unit_cfg.e2_cfg.config.enable_unit_e2,
+                                                 unit_cfg.e2_cfg.base_config.enable_unit_e2,
                                                  e2_metric_connectors->get_e2_metric_notifier(0));
 
   for (auto& qos_ : config.cu_up_cfg.qos) {

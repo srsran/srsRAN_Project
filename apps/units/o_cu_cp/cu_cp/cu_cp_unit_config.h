@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
+#include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_pcap_config.h"
 #include "cu_cp_unit_logger_config.h"
-#include "srsran/e2/e2ap_configuration.h"
+#include "srsran/ran/gnb_id.h"
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/qos/five_qi.h"
@@ -291,8 +291,6 @@ struct cu_cp_unit_config {
   std::vector<cu_cp_unit_qos_config> qos_cfg;
   /// Network slice configuration.
   std::vector<s_nssai_t> slice_cfg = {s_nssai_t{slice_service_type{1}}};
-  /// E2 configuration.
-  e2_config e2_cfg;
 };
 
 } // namespace srsran

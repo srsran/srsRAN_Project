@@ -15,7 +15,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// ORAN CU-CP configuration.
+/// O-RAN CU-CP configuration.
 struct o_cu_cp_config {
   /// CU-CP configuration.
   cu_cp_configuration cu_cp_config;
@@ -23,7 +23,7 @@ struct o_cu_cp_config {
   e2ap_configuration e2ap_config;
 };
 
-/// ORAN CU-CP dependencies.
+/// O-RAN CU-CP dependencies.
 struct o_cu_cp_dependencies {
   /// E2 connection client.
   e2_connection_client* e2_client = nullptr;

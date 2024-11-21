@@ -14,16 +14,16 @@
 
 namespace srsran {
 
-/// O-RAN CU-UP E2 PCAP config.
-struct o_cu_up_e2_pcap_config {
-  std::string filename = "/tmp/cu_up_e2ap.pcap";
+/// O-RAN CU-CP E2 PCAP configuration.
+struct o_cu_cp_e2_pcap_config {
+  std::string filename = "/tmp/cu_cp_e2ap.pcap";
   bool        enabled  = false;
 };
 
-/// O-RAN CU-UP E2 configuration.
-struct o_cu_up_e2_config {
+/// O-RAN CU-CP E2 configuration.
+struct o_cu_cp_e2_config {
   e2_config              base_config;
-  o_cu_up_e2_pcap_config pcaps;
+  o_cu_cp_e2_pcap_config pcaps;
 };
 
 } // namespace srsran

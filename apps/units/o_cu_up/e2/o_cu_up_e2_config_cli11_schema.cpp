@@ -24,7 +24,7 @@ static void configure_cli11_pcap_args(CLI::App& app, o_cu_up_e2_pcap_config& pca
 void srsran::configure_cli11_with_o_cu_up_e2_config_schema(CLI::App& app, o_cu_up_e2_config& unit_cfg)
 {
   // E2 section.
-  configure_cli11_with_e2_config_schema(app, unit_cfg.config, "--enable_cu_up_e2", "Enable CU-UP E2 agent");
+  configure_cli11_with_e2_config_schema(app, unit_cfg.base_config, "--enable_cu_up_e2", "Enable CU-UP E2 agent");
 
   // PCAP section.
   CLI::App* pcap_subcmd = add_subcommand(app, "pcap", "Logging configuration")->configurable();

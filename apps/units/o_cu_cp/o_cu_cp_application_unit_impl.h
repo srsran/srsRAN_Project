@@ -10,16 +10,16 @@
 
 #pragma once
 
-#include "apps/units/cu_cp/cu_cp_application_unit.h"
-#include "apps/units/cu_cp/cu_cp_unit_config.h"
+#include "apps/units/o_cu_cp/o_cu_cp_application_unit.h"
+#include "apps/units/o_cu_cp/o_cu_cp_unit_config.h"
 
 namespace srsran {
 
-/// CU-CP application unit implementation.
-class cu_cp_application_unit_impl : public cu_cp_application_unit
+/// O-RAN CU-CP application unit implementation.
+class o_cu_cp_application_unit_impl : public o_cu_cp_application_unit
 {
 public:
-  explicit cu_cp_application_unit_impl(std::string_view app_name);
+  explicit o_cu_cp_application_unit_impl(std::string_view app_name);
 
   // See interface for documentation.
   void on_parsing_configuration_registration(CLI::App& app) override;
@@ -34,11 +34,11 @@ public:
   void on_loggers_registration() override;
 
   // See interface for documentation.
-  cu_cp_unit create_cu_cp(cu_cp_build_dependencies& dependencies) override;
+  o_cu_cp_unit create_o_cu_cp(o_cu_cp_unit_dependencies& dependencies) override;
 
   // See interface for documentation.
-  cu_cp_unit_config&       get_cu_cp_unit_config() override { return unit_cfg; }
-  const cu_cp_unit_config& get_cu_cp_unit_config() const override { return unit_cfg; }
+  o_cu_cp_unit_config&       get_o_cu_cp_unit_config() override { return unit_cfg; }
+  const o_cu_cp_unit_config& get_o_cu_cp_unit_config() const override { return unit_cfg; }
 
   // See interface for documentation.
   void dump_config(YAML::Node& node) const override;
@@ -47,7 +47,7 @@ public:
   void fill_worker_manager_config(worker_manager_config& config) override;
 
 private:
-  cu_cp_unit_config unit_cfg;
+  o_cu_cp_unit_config unit_cfg;
 };
 
 } // namespace srsran

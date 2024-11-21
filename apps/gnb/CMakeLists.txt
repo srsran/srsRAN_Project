@@ -28,9 +28,9 @@ target_link_libraries(gnb_base PRIVATE
         srsran_versioning
         srsran_f1c_gateway
         srsran_e1_gateway
-        srsran_cu_cp_app_unit
+        srsran_o_cu_cp_app_unit
         srsran_o_cu_up_app_unit
-        )
+)
 
 if (DPDK_FOUND)
     add_definitions(-DDPDK_FOUND)

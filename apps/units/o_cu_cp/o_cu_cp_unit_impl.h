@@ -20,9 +20,9 @@ namespace srsran {
 using e2_cu_metrics_connector_manager =
     e2_metric_connector_manager<e2_cu_metrics_connector, e2_cu_metrics_notifier, e2_cu_metrics_interface>;
 
-/// \brief CU-CP wrapper implementation.
+/// \brief O-RAN CU-CP unit implementation.
 ///
-/// The purpose of this wrapper is to keep the life cycle of the objects related only to the CU-CP.
+/// The purpose of this unit is to keep the life cycle of the objects related only to the O-RAN CU-CP.
 class o_cu_cp_unit_impl : public srs_cu_cp::o_cu_cp
 {
 public:
@@ -33,6 +33,7 @@ public:
   // See interface for documentation.
   srs_cu_cp::cu_cp& get_cu_cp() override;
 
+  // See interface for documentation.
   srs_cu_cp::cu_cp_power_controller& get_power_controller() override;
 
 private:
