@@ -35,22 +35,26 @@ detail::byte_buffer_segment_pool& srsran::detail::get_default_byte_buffer_segmen
 void srsran::init_byte_buffer_segment_pool(std::size_t nof_segments, std::size_t memory_block_size)
 {
   auto& pool = detail::byte_buffer_segment_pool::get_instance(nof_segments, memory_block_size);
-  report_fatal_error_if_not(nof_segments == pool.nof_memory_blocks(),
-                            "The pool was already initialized with a different number of segments ({} != {})",
-                            nof_segments,
-                            pool.nof_memory_blocks());
+  report_fatal_error_if_not(pool.nof_memory_blocks() >= nof_segments,
+                            "The pool was already initialized with a lower number of segments ({} < {})",
+                            pool.nof_memory_blocks(),
+                            nof_segments);
+  report_fatal_error_if_not(pool.memory_block_size() >= memory_block_size,
+                            "The pool was already initialized with a smaller block size ({} < {})",
+                            pool.memory_block_size(),
+                            memory_block_size);
   report_fatal_error_if_not(memory_block_size > 64U, "memory blocks must be larger than the segment control header");
 }
 
 size_t srsran::get_byte_buffer_segment_pool_capacity()
 {
-  auto& pool = detail::byte_buffer_segment_pool::get_instance();
+  auto& pool = detail::get_default_byte_buffer_segment_pool();
   return pool.nof_memory_blocks();
 }
 
 size_t srsran::get_byte_buffer_segment_pool_current_size_approx()
 {
-  auto& pool = detail::byte_buffer_segment_pool::get_instance();
+  auto& pool = detail::get_default_byte_buffer_segment_pool();
   return pool.get_central_cache_approx_size() + pool.get_local_cache_size();
 }
 
