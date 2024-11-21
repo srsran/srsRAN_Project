@@ -1082,8 +1082,8 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
     return;
   }
 
-  const ue&      ue_ref = ues[last_pusch.context.ue_index];
-  const ue_cell& ue_cc  = *ue_ref.find_cell(cell_cfg.cell_index);
+  ue&      ue_ref = ues[last_pusch.context.ue_index];
+  ue_cell& ue_cc  = *ue_ref.find_cell(cell_cfg.cell_index);
 
   if (ue_ref.pending_ul_newtx_bytes() == 0) {
     // No point in expanding UE grant if it has no more bytes to transmit.
@@ -1175,6 +1175,9 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
   // Update PUSCH.
   last_pusch.pusch_cfg.rbs           = new_vrbs;
   last_pusch.pusch_cfg.tb_size_bytes = mcs_tbs_info->tbs;
+
+  // Update the number of PRBs used in the PUSCH allocation.
+  ue_cc.get_ul_power_controller().update_pusch_pw_ctrl_state(pusch_alloc.slot, crbs.length());
 
   // Update HARQ.
   ul_harq_alloc_context pusch_sched_ctx;

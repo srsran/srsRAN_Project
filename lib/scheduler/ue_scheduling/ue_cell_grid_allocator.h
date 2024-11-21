@@ -41,6 +41,9 @@ public:
 
   ul_alloc_result allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot);
 
+  /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
+  ///
+  /// In particular, this function can redimension the existing grants to fill the remaining RBs if it deems necessary.
   void post_process_results();
 
 private:
