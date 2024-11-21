@@ -94,8 +94,19 @@ bool srsran::sockaddr_to_ip_str(const sockaddr* addr, std::string& ip_address, s
   }
 
   ip_address = addr_str;
-  logger.debug("Read bind port of UDP network gateway: {}", ip_address);
   return true;
+}
+
+uint16_t srsran::sockaddr_to_port(const sockaddr* addr, srslog::basic_logger& logger)
+{
+  if (addr->sa_family == AF_INET) {
+    return ntohs(((sockaddr_in*)addr)->sin_port);
+  }
+  if (addr->sa_family == AF_INET6) {
+    return ntohs(((sockaddr_in6*)addr)->sin6_port);
+  }
+  logger.error("Unhandled address family.");
+  return 0;
 }
 
 bool srsran::set_receive_timeout(const unique_fd& fd, std::chrono::seconds rx_timeout, srslog::basic_logger& logger)

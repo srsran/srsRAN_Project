@@ -37,6 +37,8 @@ bool bind_to_interface(const unique_fd& fd, const std::string& interface, srslog
 
 bool sockaddr_to_ip_str(const sockaddr* addr, std::string& ip_address, srslog::basic_logger& logger);
 
+uint16_t sockaddr_to_port(const sockaddr* addr, srslog::basic_logger& logger);
+
 /// Set a receive timeout for a socket.
 bool set_receive_timeout(const unique_fd& fd, std::chrono::seconds rx_timeout, srslog::basic_logger& logger);
 

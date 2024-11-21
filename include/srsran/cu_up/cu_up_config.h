@@ -28,7 +28,6 @@ namespace srs_cu_up {
 
 struct network_interface_config {
   /// Port of UPF for NG-U connection (TODO: Refactor to use UPF port that we get from E1).
-  int upf_port = GTPU_PORT; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
 
   /// Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   std::string n3_bind_addr = "127.0.1.1";
@@ -57,6 +56,7 @@ struct network_interface_config {
 };
 
 struct n3_interface_config {
+  int                       upf_port = GTPU_PORT;  // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
   std::chrono::milliseconds gtpu_reordering_timer; // N3 reordering timer
   bool                      warn_on_drop;
 };
@@ -123,8 +123,7 @@ struct formatter<srsran::srs_cu_up::network_interface_config> {
   auto format(const srsran::srs_cu_up::network_interface_config& cfg, FormatContext& ctx)
   {
     return format_to(ctx.out(),
-                     "upf_port={}, n3_bind_addr={}, n3_bind_port={}, f1u_bind_addr={}, f1u_bind_port={}",
-                     cfg.upf_port,
+                     "n3_bind_addr={}, n3_bind_port={}, f1u_bind_addr={}, f1u_bind_port={}",
                      cfg.n3_bind_addr,
                      cfg.n3_bind_port,
                      cfg.f1u_bind_addr,
