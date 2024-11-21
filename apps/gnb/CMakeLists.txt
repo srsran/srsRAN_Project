@@ -56,6 +56,9 @@ foreach(NAME LIB IN ZIP_LISTS EXTENSIONS LIBRARIES)
     add_backward(${NAME})
     target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR})
     target_link_libraries(${NAME} PRIVATE gnb_base ${LIB})
-    set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../${NAME}" RUNTIME_OUTPUT_NAME "gnb")
+    set_target_properties(${NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../${NAME}"   # Path to the binary.
+            RUNTIME_OUTPUT_NAME "gnb"                                           # Binary name.
+            EXCLUDE_FROM_ALL 1)                                                 # Do not build by default.
     notify_binary_target(${NAME})
 endforeach ()

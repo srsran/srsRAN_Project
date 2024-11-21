@@ -410,7 +410,7 @@ add_custom_target(all_srsran_headers SOURCES ${ALL_HEADER_FILES})
 ########################################################################
 
 function(notify_binary_target)
-    message(STATUS "Adding binary target:${ARGV}")
+    message(STATUS "Adding binary target: ${ARGV}")
 endfunction()
 
 ########################################################################
