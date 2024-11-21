@@ -32,6 +32,9 @@ private:
   void dl_sched_newtx(ue_pdsch_allocator&          pdsch_alloc,
                       const ue_resource_grid_view& res_grid,
                       dl_ran_slice_candidate&      slice_candidate);
+  void ul_sched_newtx(ue_pusch_allocator&          pusch_alloc,
+                      const ue_resource_grid_view& res_grid,
+                      ul_ran_slice_candidate&      slice_candidate);
 
   srslog::basic_logger& logger;
   du_ue_index_t         next_dl_ue_index, next_ul_ue_index;

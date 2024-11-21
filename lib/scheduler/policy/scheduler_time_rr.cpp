@@ -444,7 +444,6 @@ void scheduler_time_rr::dl_sched_newtx(ue_pdsch_allocator&          pdsch_alloc,
   if (max_rbs_per_ue == 0) {
     return;
   }
-  // Then, schedule UEs with new transmissions.
 
   int rbs_missing = 0;
 
@@ -491,13 +490,38 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 
   // Then, schedule UEs with new transmissions.
-  const unsigned max_grant_rbs =
-      compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, slice_candidate.get_slot_tx(), max_rbs);
-  if (max_grant_rbs > 0) {
-    auto data_tx_ue_function = [this, &pusch_alloc, &res_grid, &slice_candidate, max_grant_rbs](const slice_ue& u) {
-      return alloc_ul_ue_newtx(u, pusch_alloc, res_grid, slice_candidate, logger, max_grant_rbs);
-    };
-    auto result      = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
-    next_ul_ue_index = result.first;
+  ul_sched_newtx(pusch_alloc, res_grid, slice_candidate);
+}
+
+void scheduler_time_rr::ul_sched_newtx(ue_pusch_allocator&          pusch_alloc,
+                                       const ue_resource_grid_view& res_grid,
+                                       ul_ran_slice_candidate&      slice_candidate)
+{
+  const slice_ue_repository& ues            = slice_candidate.get_slice_ues();
+  const unsigned             max_rbs_per_ue = compute_max_nof_rbs_per_ue_per_slot(
+      ues, false, res_grid, expert_cfg, slice_candidate.get_slot_tx(), slice_candidate.remaining_rbs());
+  if (max_rbs_per_ue == 0) {
+    return;
   }
+
+  int  rbs_missing = 0;
+  auto data_tx_ue_function =
+      [this, &pusch_alloc, &res_grid, &slice_candidate, max_rbs_per_ue, rbs_missing](const slice_ue& u) mutable {
+        // Determine the max grant size in RBs, accounting the RBs that were left to be allocated earlier and the slice
+        // candidate max RBs, that changes on each allocation.
+        unsigned max_grant_size = std::max((int)max_rbs_per_ue + rbs_missing, 0);
+        max_grant_size          = std::min(max_grant_size, slice_candidate.remaining_rbs());
+        if (max_grant_size == 0) {
+          return ul_alloc_result{alloc_status::skip_slot};
+        }
+
+        ul_alloc_result result = alloc_ul_ue_newtx(u, pusch_alloc, res_grid, slice_candidate, logger, max_grant_size);
+        if (result.status == alloc_status::success) {
+          // Check if the grant was too small and we need to compensate in the next grants.
+          rbs_missing += (max_rbs_per_ue - result.alloc_nof_rbs);
+        }
+        return result;
+      };
+  auto result      = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
+  next_ul_ue_index = result.first;
 }
