@@ -25,7 +25,10 @@ static void assert_cu_up_dependencies_valid(const cu_up_dependencies& dependenci
   srsran_assert(dependencies.exec_mapper != nullptr, "Invalid CU-UP UE executor pool");
   srsran_assert(dependencies.e1_conn_client != nullptr, "Invalid E1 connection client");
   srsran_assert(dependencies.f1u_gateway != nullptr, "Invalid F1-U connector");
-  srsran_assert(dependencies.ngu_gw != nullptr, "Invalid N3 gateway");
+  srsran_assert(not dependencies.ngu_gws.empty(), "Invalid N3 gateway list");
+  for (auto* gw : dependencies.ngu_gws) {
+    srsran_assert(gw != nullptr, "Invalid N3 gateway");
+  }
   srsran_assert(dependencies.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
 }
 
@@ -35,16 +38,18 @@ static cu_up_manager_impl_config generate_cu_up_manager_impl_config(const cu_up_
 }
 
 static cu_up_manager_impl_dependencies
-generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&     dependencies,
-                                         e1ap_interface&               e1ap,
-                                         gtpu_network_gateway_adapter& gtpu_gw_adapter,
-                                         gtpu_demux&                   ngu_demux,
-                                         gtpu_teid_pool&               n3_teid_allocator,
-                                         gtpu_teid_pool&               f1u_teid_allocator)
+generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&                                dependencies,
+                                         e1ap_interface&                                          e1ap,
+                                         gtpu_network_gateway_adapter&                            gtpu_gw_adapter,
+                                         gtpu_demux&                                              ngu_demux,
+                                         const std::vector<std::unique_ptr<ngu_tnl_pdu_session>>& ngu_gws,
+                                         gtpu_teid_pool&                                          n3_teid_allocator,
+                                         gtpu_teid_pool&                                          f1u_teid_allocator)
 {
   return {e1ap,
           gtpu_gw_adapter,
           ngu_demux,
+          ngu_gws,
           n3_teid_allocator,
           f1u_teid_allocator,
           *dependencies.exec_mapper,
@@ -83,13 +88,17 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
 
   // Establish new NG-U session and connect the instantiated session to the GTP-U DEMUX adapter, so that the latter
   // is called when new NG-U DL PDUs are received.
-  ngu_session = dependencies.ngu_gw->create(gw_data_gtpu_demux_adapter);
-  if (ngu_session == nullptr) {
-    report_error("Unable to allocate the required NG-U network resources");
+  for (ngu_gateway* gw : dependencies.ngu_gws) {
+    std::unique_ptr<ngu_tnl_pdu_session> ngu_session = gw->create(gw_data_gtpu_demux_adapter);
+    if (ngu_session == nullptr) {
+      report_error("Unable to allocate the required NG-U network resources");
+    }
+    ngu_sessions.push_back(std::move(ngu_session));
   }
 
   // Connect GTPU GW adapter to NG-U session in order to send UL PDUs.
-  gtpu_gw_adapter.connect_network_gateway(*ngu_session);
+  // We use the first UDP GW for UL.
+  gtpu_gw_adapter.connect_network_gateway(*ngu_sessions[0]);
 
   // Create N3 TEID allocator
   gtpu_allocator_creation_request n3_alloc_msg = {};
@@ -111,7 +120,7 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
   cu_up_mng = std::make_unique<cu_up_manager_impl>(
       generate_cu_up_manager_impl_config(cfg),
       generate_cu_up_manager_impl_dependencies(
-          dependencies, *e1ap, gtpu_gw_adapter, *ngu_demux, *n3_teid_allocator, *f1u_teid_allocator));
+          dependencies, *e1ap, gtpu_gw_adapter, *ngu_demux, ngu_sessions, *n3_teid_allocator, *f1u_teid_allocator));
 
   /// > Connect E1AP to CU-UP manager
   e1ap_cu_up_mng_adapter.connect_cu_up_manager(*cu_up_mng);
@@ -212,7 +221,7 @@ void cu_up::stop()
   }
 
   // CU-UP stops listening to new GTPU Rx PDUs.
-  ngu_session.reset();
+  ngu_sessions.clear();
 
   logger.info("CU-UP stopped successfully");
 }

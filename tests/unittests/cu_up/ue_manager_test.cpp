@@ -44,6 +44,7 @@ protected:
                                           ue_manager_dependencies{*e1ap,
                                                                   timers,
                                                                   *f1u_gw,
+                                                                  {},
                                                                   *gtpu_tx_notifier,
                                                                   *gtpu_rx_demux,
                                                                   *gtpu_n3_allocator,

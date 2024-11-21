@@ -93,8 +93,6 @@ struct cu_up_dependencies {
   cu_up_executor_mapper* exec_mapper = nullptr;
   /// F1-U gateway.
   f1u_cu_up_gateway* f1u_gateway = nullptr;
-  /// NGU gateway.
-  ngu_gateway* ngu_gw = nullptr;
   /// Time manager.
   timer_manager* timers = nullptr;
   /// PCAP.
@@ -103,6 +101,8 @@ struct cu_up_dependencies {
   pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
   /// E1AP connection client.
   e1_connection_client* e1_conn_client = nullptr;
+  /// NG-U gateways
+  std::vector<srs_cu_up::ngu_gateway*> ngu_gws;
 };
 
 } // namespace srs_cu_up

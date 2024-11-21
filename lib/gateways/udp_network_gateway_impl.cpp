@@ -52,6 +52,7 @@ bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
     logger.error("Failed to register UDP network gateway at IO broker. socket_fd={}", get_socket_fd());
     return false;
   }
+  logger.debug("Registered UDP network gateway at IO broker. socket_fd={}", get_socket_fd());
   return true;
 }
 

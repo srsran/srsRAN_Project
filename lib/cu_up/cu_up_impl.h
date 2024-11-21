@@ -36,8 +36,11 @@ public:
   void stop() override;
 
   /// helper functions for testing
-  std::optional<uint16_t> get_n3_bind_port() override { return ngu_session->get_bind_port(); }
-  cu_up_manager*          get_cu_up_manager() { return cu_up_mng.get(); }
+  std::optional<uint16_t> get_n3_bind_port() override // TODO include index?
+  {
+    return ngu_sessions[0]->get_bind_port();
+  }
+  cu_up_manager* get_cu_up_manager() { return cu_up_mng.get(); }
 
 private:
   void disconnect();
@@ -58,14 +61,14 @@ private:
   std::unique_ptr<ue_executor_mapper> ctrl_exec_mapper;
 
   // Components
-  std::atomic<bool>                    e1ap_connected = {false};
-  std::unique_ptr<e1ap_interface>      e1ap;
-  std::unique_ptr<ngu_tnl_pdu_session> ngu_session;
-  std::unique_ptr<gtpu_demux>          ngu_demux;
-  std::unique_ptr<gtpu_echo>           ngu_echo;
-  std::unique_ptr<gtpu_teid_pool>      n3_teid_allocator;
-  std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;
-  std::unique_ptr<cu_up_manager>       cu_up_mng;
+  std::atomic<bool>                                 e1ap_connected = {false};
+  std::unique_ptr<e1ap_interface>                   e1ap;
+  std::vector<std::unique_ptr<ngu_tnl_pdu_session>> ngu_sessions;
+  std::unique_ptr<gtpu_demux>                       ngu_demux;
+  std::unique_ptr<gtpu_echo>                        ngu_echo;
+  std::unique_ptr<gtpu_teid_pool>                   n3_teid_allocator;
+  std::unique_ptr<gtpu_teid_pool>                   f1u_teid_allocator;
+  std::unique_ptr<cu_up_manager>                    cu_up_mng;
 
   // Adapters
   network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;

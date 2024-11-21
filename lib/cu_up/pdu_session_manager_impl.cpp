@@ -15,6 +15,7 @@
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
+#include "srsran/support/srsran_assert.h"
 #include <utility>
 
 using namespace srsran;
@@ -26,11 +27,12 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    const n3_interface_config&                       n3_config_,
                                                    const cu_up_test_mode_config&                    test_mode_config_,
                                                    cu_up_ue_logger&                                 logger_,
-                                                   unique_timer&                               ue_inactivity_timer_,
-                                                   timer_factory                               ue_dl_timer_factory_,
-                                                   timer_factory                               ue_ul_timer_factory_,
-                                                   timer_factory                               ue_ctrl_timer_factory_,
-                                                   f1u_cu_up_gateway&                          f1u_gw_,
+                                                   unique_timer&      ue_inactivity_timer_,
+                                                   timer_factory      ue_dl_timer_factory_,
+                                                   timer_factory      ue_ul_timer_factory_,
+                                                   timer_factory      ue_ctrl_timer_factory_,
+                                                   f1u_cu_up_gateway& f1u_gw_,
+                                                   const std::vector<std::unique_ptr<ngu_tnl_pdu_session>>& ngu_gws_,
                                                    gtpu_teid_pool&                             n3_teid_allocator_,
                                                    gtpu_teid_pool&                             f1u_teid_allocator_,
                                                    gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
@@ -59,7 +61,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_ctrl_exec(ue_ctrl_exec_),
   crypto_exec(crypto_exec_),
   gtpu_pcap(gtpu_pcap_),
-  f1u_gw(f1u_gw_)
+  f1u_gw(f1u_gw_),
+  ngu_gws(ngu_gws_)
 {
 }
 
@@ -101,7 +104,11 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
                    ul_tunnel_info.tp_address);
 
   // Advertise either local or external IP address of N3 interface
-  const std::string& n3_addr = "8.8.8.8"; // TODO get bind addr from GW.
+  // TODO select correct GW based on slice or UE info.
+  std::string n3_addr;
+  if (not ngu_gws[0]->get_bind_address(n3_addr)) {
+    report_error("Could not get NG-U bind addres to report to core.");
+  }
   pdu_session_result.gtp_tunnel =
       up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
 
@@ -459,8 +466,13 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       logger.log_info("Attaching dl_teid={} to F1-U tunnel with ul_teid={}",
                       drb_to_mod.dl_up_params[0].up_tnl_info,
                       drb_iter->second->f1u_ul_teid);
-      f1u_gw.attach_dl_teid(up_transport_layer_info(transport_layer_address::create_from_string(
-                                                        "8.8.8.8") /*TODO get bind addr from gateway*/,
+
+      expected<std::string> bind_addr = f1u_gw.get_cu_bind_address();
+      if (not bind_addr.has_value()) {
+        logger.log_error("Could not get bind address for F1-U tunnel");
+        continue;
+      }
+      f1u_gw.attach_dl_teid(up_transport_layer_info(transport_layer_address::create_from_string(bind_addr.value()),
                                                     drb_iter->second->f1u_ul_teid),
                             drb_to_mod.dl_up_params[0].up_tnl_info);
 

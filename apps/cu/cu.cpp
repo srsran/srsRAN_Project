@@ -268,17 +268,6 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  // Create NG-U GWs
-  cu_up_unit_ngu_config& ngu_cfg = o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg.ngu_cfg;
-  for (srsran::cu_up_unit_ngu_socket_config& sock_cfg : ngu_cfg.ngu_socket_cfg) {
-    udp_network_gateway_config n3_udp_cfg = {};
-    n3_udp_cfg.bind_address               = sock_cfg.bind_addr;
-    n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_occupancy_threshold;
-    n3_udp_cfg.bind_port                  = GTPU_PORT;
-    n3_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_mmsg;
-    n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_occupancy_threshold;
-  }
-
   // Create F1-C GW (TODO cleanup port and PPID args with factory)
   sctp_network_gateway_config f1c_sctp_cfg = {};
   f1c_sctp_cfg.if_name                     = "F1-C";

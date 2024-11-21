@@ -87,7 +87,11 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
     ngu_gws.push_back(std::move(ngu_gw));
   }
 
-  ocu_up_dependencies.cu_dependencies.ngu_gw = ngu_gws[0].get(); // TODO pass actual gateway to CU-UP
+  // Pass NG-U gateways to CU-UP
+  ocu_up_dependencies.cu_dependencies.ngu_gws.resize(ngu_gws.size());
+  for (size_t i = 0; i < ngu_gws.size(); i++) {
+    ocu_up_dependencies.cu_dependencies.ngu_gws[i] = ngu_gws[i].get();
+  }
 
   auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
 

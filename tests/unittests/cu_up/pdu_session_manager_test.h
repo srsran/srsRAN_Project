@@ -46,6 +46,7 @@ protected:
     manual_task_worker teid_worker{128};
 
     // TODO add dummy gateway
+    std::vector<std::unique_ptr<ngu_tnl_pdu_session>> ngu_gws_tmp;
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
                                                                  qos,
                                                                  security_info,
@@ -57,6 +58,7 @@ protected:
                                                                  timers_factory,
                                                                  timers_factory,
                                                                  *f1u_gw,
+                                                                 ngu_gws_tmp,
                                                                  *n3_allocator,
                                                                  *f1u_allocator,
                                                                  *gtpu_tx_notifier,

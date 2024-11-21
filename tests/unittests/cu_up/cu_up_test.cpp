@@ -101,6 +101,10 @@ protected:
     f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     broker       = create_io_broker(io_broker_type::epoll);
     upf_addr_str = "127.0.0.1";
+
+    // Set default UDP configs
+    cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
+    cu_up_udp_cfg.bind_address = "127.0.0.2"; // Random free port selected by the OS.
   }
 
   cu_up_config get_default_cu_up_config()
@@ -109,7 +113,6 @@ protected:
     cu_up_config cfg;
 
     cfg.qos[uint_to_five_qi(9)] = {};
-    // cfg.net_cfg.n3_bind_port         = 0; // Random free port selected by the OS.
 
     cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);
     cfg.n3_cfg.warn_on_drop          = false;
@@ -125,22 +128,18 @@ protected:
     deps.exec_mapper    = exec_pool.get();
     deps.e1_conn_client = &e1ap_client;
     deps.f1u_gateway    = f1u_gw.get();
-    deps.ngu_gw         = ngu_gw.get();
-    deps.timers         = app_timers.get();
+    deps.ngu_gws.push_back(ngu_gw.get());
+    deps.timers = app_timers.get();
     return deps;
   }
 
   void init(const cu_up_config& cfg, cu_up_dependencies&& deps)
   {
-    udp_network_gateway_config udp_cfg{};
-    // udp_cfg.bind_interface = cfg.net_cfg.n3_bind_interface;
-    // udp_cfg.bind_address   = cfg.net_cfg.n3_bind_addr;
-    // udp_cfg.bind_port      = cfg.net_cfg.n3_bind_port;
-    ngu_gw = create_udp_ngu_gateway(udp_cfg, *broker, *executor);
+    ngu_gw = create_udp_ngu_gateway(cu_up_udp_cfg, *broker, *executor);
 
     auto cfg_copy = cfg;
-    deps.ngu_gw   = ngu_gw.get();
-    cu_up         = std::make_unique<srs_cu_up::cu_up>(cfg_copy, std::move(deps));
+    deps.ngu_gws.push_back(ngu_gw.get());
+    cu_up = std::make_unique<srs_cu_up::cu_up>(cfg_copy, std::move(deps));
   }
 
   void TearDown() override
@@ -159,6 +158,8 @@ protected:
   std::unique_ptr<dummy_cu_up_executor_mapper> exec_pool;
   std::unique_ptr<srs_cu_up::cu_up>            cu_up;
   srslog::basic_logger&                        test_logger = srslog::fetch_basic_logger("TEST");
+
+  udp_network_gateway_config cu_up_udp_cfg{};
 
   std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;

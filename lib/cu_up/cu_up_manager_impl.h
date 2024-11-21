@@ -29,15 +29,16 @@ struct cu_up_manager_impl_config {
 
 /// CU-UP manager implementation dependencies.
 struct cu_up_manager_impl_dependencies {
-  e1ap_interface&               e1ap;
-  gtpu_network_gateway_adapter& gtpu_gw_adapter;
-  gtpu_demux&                   ngu_demux;
-  gtpu_teid_pool&               n3_teid_allocator;
-  gtpu_teid_pool&               f1u_teid_allocator;
-  cu_up_executor_mapper&        exec_mapper;
-  f1u_cu_up_gateway&            f1u_gateway;
-  timer_manager&                timers;
-  dlt_pcap&                     gtpu_pcap;
+  e1ap_interface&                                          e1ap;
+  gtpu_network_gateway_adapter&                            gtpu_gw_adapter;
+  gtpu_demux&                                              ngu_demux;
+  const std::vector<std::unique_ptr<ngu_tnl_pdu_session>>& ngu_gws;
+  gtpu_teid_pool&                                          n3_teid_allocator;
+  gtpu_teid_pool&                                          f1u_teid_allocator;
+  cu_up_executor_mapper&                                   exec_mapper;
+  f1u_cu_up_gateway&                                       f1u_gateway;
+  timer_manager&                                           timers;
+  dlt_pcap&                                                gtpu_pcap;
 };
 
 class cu_up_manager_impl final : public cu_up_manager

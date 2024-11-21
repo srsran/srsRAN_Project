@@ -39,6 +39,7 @@ static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_mana
   return {dependencies.e1ap,
           dependencies.timers,
           dependencies.f1u_gateway,
+          dependencies.ngu_gws,
           dependencies.gtpu_gw_adapter,
           dependencies.ngu_demux,
           dependencies.n3_teid_allocator,
