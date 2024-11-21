@@ -13,7 +13,6 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../policy/ue_allocator.h"
 #include "../slicing/ran_slice_candidate.h"
-#include "../uci_scheduling/uci_scheduler.h"
 #include "ue_repository.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 
@@ -42,6 +41,8 @@ public:
 
   ul_alloc_result allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot);
 
+  void post_process_results();
+
 private:
   struct cell_t {
     du_cell_index_t           cell_index;
@@ -61,6 +62,8 @@ private:
   {
     return *cells[cell_index].cell_alloc;
   }
+
+  void post_process_ul_results(du_cell_index_t cell_idx, slot_point pusch_slot);
 
   const scheduler_ue_expert_config& expert_cfg;
 
