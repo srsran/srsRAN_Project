@@ -50,11 +50,18 @@ ARG EXTRA_CMAKE_ARGS=""
 RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi && \
     LIB_UPPER=$(echo $LIB | tr '[:lower:]' '[:upper:]') && \
     export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" && \
-    if [ "$LIB_UPPER" = "UHD" ]; then SPLIT="SPLIT_8"; else SPLIT="SPLIT_7_2"; fi \
+    if [ "$LIB_UPPER" = "UHD" ]; then TARGETS="srsdu_split_8 gnb_split_8"; else TARGETS="srsdu_split_7_2 gnb_split_7_2"; fi \
     && \
-    /src/docker/scripts/builder.sh -m "-j${NUM_JOBS} install" \
-    -DBUILD_TESTS=False -DENABLE_${LIB_UPPER}=On -DDU_SPLIT_TYPE=${SPLIT} -DMARCH=${MARCH} -DCMAKE_INSTALL_PREFIX=/opt/srs \
-    ${EXTRA_CMAKE_ARGS} /src
+    /src/docker/scripts/builder.sh -m "-j${NUM_JOBS} srscu $TARGETS ru_emulator" \
+    -DBUILD_TESTS=False -DENABLE_${LIB_UPPER}=On -DMARCH=${MARCH} -DCMAKE_INSTALL_PREFIX=/opt/srs \
+    ${EXTRA_CMAKE_ARGS} /src \
+    && \
+    mkdir -p /opt/srs/bin /opt/srs/share/srsran && \
+    cp /src/build/apps/cu/srscu                 /opt/srs/bin/srscu       && \
+    cp /src/build/apps/du_split_*/srsdu         /opt/srs/bin/srsdu       && \
+    cp /src/build/apps/gnb_split_*/gnb          /opt/srs/bin/gnb         && \
+    cp /src/build/apps/examples/ofh/ru_emulator /opt/srs/bin/ru_emulator && \
+    cp /src/configs/*.yml /opt/srs/share/srsran/
 
 ################
 # Stage 2: Run #
