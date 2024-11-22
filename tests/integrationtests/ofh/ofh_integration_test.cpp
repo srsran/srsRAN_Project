@@ -632,42 +632,17 @@ class test_du_emulator
 public:
   test_du_emulator(srslog::basic_logger&      logger_,
                    task_executor&             executor_,
+                   resource_grid_pool&        dl_rg_pool_,
+                   resource_grid_pool&        ul_rg_pool_,
                    ru_downlink_plane_handler& dl_handler_,
-                   ru_uplink_plane_handler&   ul_handler_,
-                   unsigned                   nof_prb_) :
-    logger(logger_), executor(executor_), dl_handler(dl_handler_), ul_handler(ul_handler_), nof_prb(nof_prb_)
+                   ru_uplink_plane_handler&   ul_handler_) :
+    logger(logger_),
+    dl_rg_pool(dl_rg_pool_),
+    ul_rg_pool(ul_rg_pool_),
+    executor(executor_),
+    dl_handler(dl_handler_),
+    ul_handler(ul_handler_)
   {
-    std::uniform_real_distribution<float> dist(-1.0, +1.0);
-
-    std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
-    report_fatal_error_if_not(rg_factory, "Invalid factory");
-
-    // Create resource grids according to TDD pattern.
-    std::vector<std::unique_ptr<resource_grid>> dl_resource_grids;
-    for (unsigned rg_id = 0, e = processing_delay_slots * tdd_pattern.nof_dl_slots; rg_id != e; rg_id++) {
-      // Downlink.
-      dl_resource_grids.push_back(
-          rg_factory->create(nof_antennas_dl, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
-      resource_grid_writer& rg_writer = dl_resource_grids.back()->get_writer();
-
-      // Pre-generate random downlink data.
-      for (unsigned sym = 0; sym != get_nsymb_per_slot(cyclic_prefix::NORMAL); ++sym) {
-        for (unsigned port = 0; port != nof_antennas_dl; ++port) {
-          std::vector<cf_t> test_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
-          std::generate(test_data.begin(), test_data.end(), [&]() { return cf_t{dist(rgen), dist(rgen)}; });
-          rg_writer.put(port, sym, 0, test_data);
-        }
-      }
-    }
-    dl_rg_pool = create_generic_resource_grid_pool(std::move(dl_resource_grids));
-
-    // Uplink.
-    std::vector<std::unique_ptr<resource_grid>> ul_resource_grids;
-    for (unsigned rg_id = 0, e = processing_delay_slots * tdd_pattern.nof_ul_slots; rg_id != e; rg_id++) {
-      ul_resource_grids.push_back(
-          rg_factory->create(nof_antennas_ul, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
-    }
-    ul_rg_pool = create_generic_resource_grid_pool(std::move(ul_resource_grids));
   }
 
   /// Starts the DU emulator.
@@ -687,6 +662,11 @@ public:
 private:
   void run_test()
   {
+    // Max attempts of allocating resource grid from the pool.
+    static constexpr unsigned rg_alloc_max_attempts = 10;
+    // Sleep time of the simulator is reduced by this value to mitigate wake up latency.
+    static constexpr std::chrono::microseconds sleep_margin = 5us;
+
     for (unsigned test_slot_id = 0; test_slot_id != nof_test_slots; ++test_slot_id) {
       auto t0 = std::chrono::high_resolution_clock::now();
 
@@ -695,19 +675,26 @@ private:
       bool       is_dl_slot = (slot_id < tdd_pattern.nof_dl_slots);
       bool       is_ul_slot = (slot_id >= tdd_pattern.dl_ul_tx_period_nof_slots - tdd_pattern.nof_ul_slots);
 
+      srsran_assert(!(is_dl_slot & is_ul_slot), "Invalid slot type: both DL and UL can not be set simultaneously");
+
+      int alloc_attempts = rg_alloc_max_attempts;
       // Push downlink data.
       if (is_dl_slot) {
         resource_grid_context context{slot, 0};
         shared_resource_grid  dl_grid;
-        while (!dl_grid) {
-          dl_grid = dl_rg_pool->allocate_resource_grid(context);
+        while (!dl_grid && alloc_attempts--) {
+          dl_grid = dl_rg_pool.allocate_resource_grid(context);
           if (!dl_grid) {
             std::this_thread::sleep_for(std::chrono::microseconds(10));
           }
         }
 
-        dl_handler.handle_dl_data(context, dl_grid);
-        logger.info("DU emulator pushed DL data in slot {}", slot);
+        if (dl_grid) {
+          dl_handler.handle_dl_data(context, dl_grid);
+          logger.info("DU emulator pushed DL data in slot {}", slot);
+        } else {
+          logger.warning("No resource grid is available for processing DL slot");
+        }
       }
 
       // Request uplink data.
@@ -715,21 +702,27 @@ private:
         slot_id = tdd_pattern.dl_ul_tx_period_nof_slots - slot_id - 1;
         resource_grid_context context{slot, 0};
         shared_resource_grid  ul_grid;
-        while (!ul_grid) {
-          ul_grid = ul_rg_pool->allocate_resource_grid(context);
+        while (!ul_grid && alloc_attempts--) {
+          ul_grid = ul_rg_pool.allocate_resource_grid(context);
           if (!ul_grid) {
             std::this_thread::sleep_for(std::chrono::microseconds(10));
           }
         }
 
-        ul_handler.handle_new_uplink_slot(context, ul_grid);
-        logger.info("DU emulator requested UL data in slot {}", slot);
+        if (ul_grid) {
+          ul_handler.handle_new_uplink_slot(context, ul_grid);
+          logger.info("DU emulator requested UL data in slot {}", slot);
+        } else {
+          logger.warning("No resource grid is available for processing UL slot");
+        }
       }
 
       // Sleep until the end of the slot.
       auto t1                 = std::chrono::high_resolution_clock::now();
       auto slot_sim_exec_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
-      std::this_thread::sleep_for(slot_duration_us - slot_sim_exec_time - 5us);
+      if (slot_sim_exec_time < slot_duration_us) {
+        std::this_thread::sleep_for(slot_duration_us - slot_sim_exec_time - sleep_margin);
+      }
       slot_val = (++slot).to_uint();
     }
     // Leave time for the uplink slots to be processed.
@@ -738,14 +731,13 @@ private:
     test_finished.store(true, std::memory_order_relaxed);
   }
 
-  srslog::basic_logger&               logger;
-  std::unique_ptr<resource_grid_pool> dl_rg_pool;
-  std::unique_ptr<resource_grid_pool> ul_rg_pool;
-  task_executor&                      executor;
-  ru_downlink_plane_handler&          dl_handler;
-  ru_uplink_plane_handler&            ul_handler;
+  srslog::basic_logger&      logger;
+  resource_grid_pool&        dl_rg_pool;
+  resource_grid_pool&        ul_rg_pool;
+  task_executor&             executor;
+  ru_downlink_plane_handler& dl_handler;
+  ru_uplink_plane_handler&   ul_handler;
 
-  const unsigned            nof_prb;
   std::chrono::microseconds slot_duration_us;
   std::chrono::microseconds symbol_duration_us;
   std::atomic<bool>         test_finished{false};
@@ -1077,6 +1069,41 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   return dependencies;
 }
 
+static std::unique_ptr<resource_grid_pool>
+create_dl_resource_grid_pool(std::shared_ptr<resource_grid_factory> rg_factory, unsigned nof_prb)
+{
+  std::uniform_real_distribution<float>       dist(-1.0, +1.0);
+  std::vector<std::unique_ptr<resource_grid>> dl_resource_grids;
+
+  // Create resource grids according to TDD pattern.
+  for (unsigned rg_id = 0, e = processing_delay_slots * tdd_pattern.nof_dl_slots; rg_id != e; rg_id++) {
+    dl_resource_grids.push_back(
+        rg_factory->create(nof_antennas_dl, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
+    resource_grid_writer& rg_writer = dl_resource_grids.back()->get_writer();
+
+    // Pre-generate random downlink data.
+    for (unsigned sym = 0; sym != get_nsymb_per_slot(cyclic_prefix::NORMAL); ++sym) {
+      for (unsigned port = 0; port != nof_antennas_dl; ++port) {
+        std::vector<cf_t> test_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
+        std::generate(test_data.begin(), test_data.end(), [&]() { return cf_t{dist(rgen), dist(rgen)}; });
+        rg_writer.put(port, sym, 0, test_data);
+      }
+    }
+  }
+  return create_generic_resource_grid_pool(std::move(dl_resource_grids));
+}
+
+static std::unique_ptr<resource_grid_pool>
+create_ul_resource_grid_pool(std::shared_ptr<resource_grid_factory> rg_factory, unsigned nof_prb)
+{
+  std::vector<std::unique_ptr<resource_grid>> ul_resource_grids;
+  for (unsigned rg_id = 0, e = processing_delay_slots * tdd_pattern.nof_ul_slots; rg_id != e; rg_id++) {
+    ul_resource_grids.push_back(
+        rg_factory->create(nof_antennas_ul, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
+  }
+  return create_generic_resource_grid_pool(std::move(ul_resource_grids));
+}
+
 int main(int argc, char** argv)
 {
   std::unique_ptr<test_ether_receiver> eth_receiver_ptr;
@@ -1096,6 +1123,13 @@ int main(int argc, char** argv)
   srslog::fetch_basic_logger("PHY").set_level(srslog::basic_levels::error);
 
   unsigned nof_prb = get_max_Nprb(bs_channel_bandwidth_to_MHz(test_params.bw), test_params.scs, frequency_range::FR1);
+
+  // Set up resources used by the DU emulator.
+  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
+  report_fatal_error_if_not(rg_factory, "Invalid factory");
+
+  auto dl_rg_pool = create_dl_resource_grid_pool(rg_factory, nof_prb);
+  auto ul_rg_pool = create_ul_resource_grid_pool(rg_factory, nof_prb);
 
   worker_manager           workers;
   dummy_rx_symbol_notifier rx_symbol_notifier;
@@ -1130,7 +1164,8 @@ int main(int argc, char** argv)
   test_ru_emulator      ru_emulator(logger, *workers.test_ru_sim_exec, *eth_receiver, ul_compression_params, nof_prb);
 
   // Create DU emulator instance.
-  test_du_emulator du_emulator(logger, *workers.test_du_sim_exec, ru_dl_handler, ru_ul_handler, nof_prb);
+  test_du_emulator du_emulator(
+      logger, *workers.test_du_sim_exec, *dl_rg_pool, *ul_rg_pool, ru_dl_handler, ru_ul_handler);
 
   // Connect Ethernet gateway to the RU emulator.
   tx_gateway->connect_ru(&ru_emulator);
