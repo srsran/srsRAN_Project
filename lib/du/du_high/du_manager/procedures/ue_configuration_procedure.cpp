@@ -13,7 +13,6 @@
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/rlc/rlc_factory.h"
-#include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -393,7 +392,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
 
-  // Calculate ASN.1 measGapConfig to be sent in DU-to-CU container.
+  // Calculate ASN.1 measGapConfig to be sent in DU-to-CU RRC container.
   if (prev_ue_res_cfg.meas_gap != ue->resources->meas_gap) {
     asn1::rrc_nr::meas_gap_cfg_s meas_gap;
     calculate_meas_gap_config_diff(meas_gap, prev_ue_res_cfg.meas_gap, ue->resources->meas_gap);

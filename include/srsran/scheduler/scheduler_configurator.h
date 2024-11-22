@@ -145,6 +145,8 @@ struct sched_ue_config_request {
   std::vector<sched_drb_info> drb_info_list;
   /// DRX-Config.
   std::optional<drx_config> drx_cfg;
+  /// measGapConfig.
+  std::optional<meas_gap_config> meas_gap_cfg;
 };
 
 /// Request to create a new UE in scheduler.

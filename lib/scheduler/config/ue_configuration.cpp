@@ -843,10 +843,10 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
         // New Cell.
         du_cells.emplace(cell_index,
                          std::make_unique<ue_cell_configuration>(
-                             crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, ded_cell.meas_gap_cfg, e > 1));
+                             crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, cfg_req.meas_gap_cfg, e > 1));
       } else {
         // Reconfiguration of existing cell.
-        du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg, ded_cell.meas_gap_cfg, cfg_req.drx_cfg);
+        du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg, cfg_req.meas_gap_cfg, cfg_req.drx_cfg);
       }
     }
 
