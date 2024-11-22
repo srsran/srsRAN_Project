@@ -49,6 +49,9 @@ private:
   //  [Implementation-defined] This value should be enough to guarantee that the CRC indication (reporting the PUSCH
   //  SINR) for the PUSCH with the latest power adjustment is received, before a new power adjustment is computed.
   static constexpr unsigned tpc_adjust_prohibit_time_ms = 40U;
+  /// Minimum value for the closed-loop power control adjustment value. This is to avoid the power control going too
+  /// low.
+  static constexpr int min_f_cl_pw_control = -30;
 
   const bool                                       cl_pw_control_enabled;
   const int                                        p0_nominal_pusch;
