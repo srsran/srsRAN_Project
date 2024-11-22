@@ -44,14 +44,14 @@ add_executable(gnb gnb.cpp)
 add_backward(gnb)
 target_include_directories(gnb PRIVATE ${CMAKE_SOURCE_DIR})
 install(TARGETS gnb RUNTIME)
-target_link_libraries(gnb PRIVATE gnb_base srsran_flexible_du_split_dynamic)
+target_link_libraries(gnb PRIVATE gnb_base srsran_flexible_o_du_split_dynamic)
 notify_binary_target(gnb)
 
 # Add the targets for the rest of the splits.
 set(EXTENSIONS gnb_split_7_2 gnb_split_8)
-set(LIBRARIES srsran_flexible_du_split_7_2 srsran_flexible_du_split_8)
+set(LIBRARIES srsran_flexible_o_du_split_7_2 srsran_flexible_o_du_split_8)
 
-foreach(NAME LIB IN ZIP_LISTS EXTENSIONS LIBRARIES)
+foreach (NAME LIB IN ZIP_LISTS EXTENSIONS LIBRARIES)
     add_executable(${NAME} gnb.cpp)
     add_backward(${NAME})
     target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR})

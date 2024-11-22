@@ -8,7 +8,7 @@
  *
  */
 
-#include "apps/units/flexible_du/o_du_high/du_high/metrics/du_high_scheduler_cell_metrics_consumers.h"
+#include "apps/units/flexible_o_du/o_du_high/du_high/metrics/du_high_scheduler_cell_metrics_consumers.h"
 
 using namespace srsran;
 

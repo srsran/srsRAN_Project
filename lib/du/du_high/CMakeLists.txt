@@ -18,4 +18,4 @@ target_link_libraries(srsran_du_high PUBLIC srsran_du_high_adapters)
 add_library(srsran_o_du_high STATIC
         o_du_high_factory.cpp
         o_du_high_impl.cpp)
-target_link_libraries(srsran_o_du_high PUBLIC srsran_du_config_validators srsran_du_high srsran_mac_fapi_adaptor srsran_fapi)
+target_link_libraries(srsran_o_du_high PUBLIC srsran_du_config_validators srsran_du_high srsran_mac_fapi_adaptor srsran_fapi srsran_e2)

@@ -7,10 +7,10 @@
 #
 
 set(SOURCES
-    du_appconfig_cli11_schema.cpp
-    du_appconfig_validators.cpp
-    du_appconfig_translators.cpp
-    du_appconfig_yaml_writer.cpp)
+        du_appconfig_cli11_schema.cpp
+        du_appconfig_validators.cpp
+        du_appconfig_translators.cpp
+        du_appconfig_yaml_writer.cpp)
 
 
 add_library(srsdu_base STATIC ${SOURCES})
@@ -39,15 +39,15 @@ add_executable(srsdu du.cpp)
 add_backward(srsdu)
 target_include_directories(srsdu PRIVATE ${CMAKE_SOURCE_DIR})
 install(TARGETS srsdu RUNTIME)
-target_link_libraries(srsdu PRIVATE srsdu_base srsran_flexible_du_split_dynamic)
+target_link_libraries(srsdu PRIVATE srsdu_base srsran_flexible_o_du_split_dynamic)
 notify_binary_target(srsdu)
 
 
 # Add the targets for the rest of the splits.
 set(EXTENSIONS du_split_7_2 du_split_8)
-set(LIBRARIES srsran_flexible_du_split_7_2 srsran_flexible_du_split_8)
+set(LIBRARIES srsran_flexible_o_du_split_7_2 srsran_flexible_o_du_split_8)
 
-foreach(NAME LIB IN ZIP_LISTS EXTENSIONS LIBRARIES)
+foreach (NAME LIB IN ZIP_LISTS EXTENSIONS LIBRARIES)
     # Prepend srs to the target name to make it consistent with the dynamic one.
     set(TARGET "srs${NAME}")
     add_executable(${TARGET} du.cpp)
