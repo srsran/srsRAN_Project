@@ -266,7 +266,7 @@ void benchmark_pdcp_rx(bench_params                  params,
         srslog::fetch_basic_logger("PDCP").error("Unexpected num_max_count_reached={}", frame->num_max_count_reached);
       }
     }
-    pdcp_rx.release();
+    pdcp_rx.reset();
     pdu_list    = gen_pdu_list(nof_sdus, sdu_len, int_enabled, ciph_enabled, int_algo, ciph_algo);
     frame       = std::make_unique<pdcp_rx_test_frame>();
     metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, ul_exec);
