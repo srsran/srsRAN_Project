@@ -2136,7 +2136,7 @@ calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& 
   }
 }
 
-asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_config::srs_resource_set& cfg)
+static srs_res_set_s make_asn1_rrc_srs_res_set(const srs_config::srs_resource_set& cfg)
 {
   srs_res_set_s srs_res_set;
   srs_res_set.srs_res_set_id = cfg.id;
@@ -2314,7 +2314,7 @@ static void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_p
   }
 }
 
-asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg)
+static srs_res_s make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg)
 {
   srs_res_s res;
   res.srs_res_id = cfg.id.ue_res_id;
@@ -2666,8 +2666,7 @@ static bool calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s&
          out.csi_meas_cfg_present;
 }
 
-asn1::rrc_nr::sched_request_to_add_mod_s
-srsran::srs_du::make_asn1_rrc_scheduling_request(const scheduling_request_to_addmod& cfg)
+static sched_request_to_add_mod_s make_asn1_rrc_scheduling_request(const scheduling_request_to_addmod& cfg)
 {
   sched_request_to_add_mod_s req{};
   req.sched_request_id = cfg.sr_id;
@@ -2935,7 +2934,7 @@ static void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_con
   }
 }
 
-asn1::rrc_nr::tag_s srsran::srs_du::make_asn1_rrc_tag_config(const time_alignment_group& cfg)
+static tag_s make_asn1_rrc_tag_config(const time_alignment_group& cfg)
 {
   tag_s tag_cfg{};
 
@@ -3295,4 +3294,28 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
   // TODO
 
   return true;
+}
+
+static gap_cfg_s make_gap_cfg(const meas_gap_config& cfg)
+{
+  gap_cfg_s gap;
+
+  gap.gap_offset = cfg.offset;
+  gap.mgl.value  = (asn1::rrc_nr::gap_cfg_s::mgl_opts::options)cfg.mgl;
+  gap.mgrp.value = (asn1::rrc_nr::gap_cfg_s::mgrp_opts::options)cfg.mgrp;
+
+  return gap;
+}
+
+void srs_du::calculate_meas_gap_config_diff(meas_gap_cfg_s&                       out,
+                                            const std::optional<meas_gap_config>& src,
+                                            const std::optional<meas_gap_config>& dest)
+{
+  out = {};
+  out.gap_fr1.set_present();
+  out.ext =
+      calculate_setup_release(*out.gap_fr1, src, dest, [](const meas_gap_config& cfg) { return make_gap_cfg(cfg); });
+  if (not out.ext) {
+    out.gap_fr1.reset();
+  }
 }

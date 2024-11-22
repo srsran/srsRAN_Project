@@ -29,6 +29,12 @@ struct meas_gap_config {
   meas_gap_length mgl;
   /// Measurement Gap Repetition Period (MGRP).
   meas_gap_repetition_period mgrp;
+
+  bool operator==(const meas_gap_config& other) const
+  {
+    return offset == other.offset && mgl == other.mgl && mgrp == other.mgrp;
+  }
+  bool operator!=(const meas_gap_config& other) const { return !(*this == other); }
 };
 
 /// Convert measurement gap length into a float in milliseconds.

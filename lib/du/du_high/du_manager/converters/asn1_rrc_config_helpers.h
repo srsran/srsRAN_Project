@@ -44,14 +44,6 @@ make_asn1_rrc_pusch_pathloss_ref_rs(const pusch_config::pusch_power_control::pus
 asn1::rrc_nr::sri_pusch_pwr_ctrl_s
 make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& cfg);
 
-asn1::rrc_nr::srs_res_set_s make_asn1_rrc_srs_res_set(const srs_config::srs_resource_set& cfg);
-
-asn1::rrc_nr::srs_res_s make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg);
-
-asn1::rrc_nr::sched_request_to_add_mod_s make_asn1_rrc_scheduling_request(const scheduling_request_to_addmod& cfg);
-
-asn1::rrc_nr::tag_s make_asn1_rrc_tag_config(const time_alignment_group& cfg);
-
 /// \brief Fills ASN.1 CellGroupConfig struct.
 /// \param[out] out The ASN.1 CellGroupConfig struct to fill.
 /// \param[in] src Previous cell group configuration of UE.
@@ -66,6 +58,11 @@ bool calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync_s&    out,
                                        const du_ue_resource_config&        dest,
                                        const asn1::rrc_nr::ho_prep_info_s& ho_prep_info,
                                        rnti_t                              rnti);
+
+/// Fills ASN.1 measGapConfig struct based on changes in the UE configuration.
+void calculate_meas_gap_config_diff(asn1::rrc_nr::meas_gap_cfg_s&         out,
+                                    const std::optional<meas_gap_config>& src,
+                                    const std::optional<meas_gap_config>& dest);
 
 } // namespace srs_du
 } // namespace srsran
