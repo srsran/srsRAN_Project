@@ -206,9 +206,26 @@ public:
   template <typename T>
   static int norm_squared(const T& x);
 
-  // Documentation at definition (see below).
-  template <typename T, typename U, typename V>
-  static V dot_prod(const T& x, const U& y, V init);
+  /// \brief Dot product of a sequence of LLRs and a sequence of signs expressed as +1 or -1.
+  ///
+  /// Computes the dot product (a.k.a. inner product or scalar product) of the first input sequence and the signs
+  /// (+1, -1 or 0) of the second input sequence.
+  ///
+  /// \param[in] x      A sequence of (possibly constant) log-likelihood ratios.
+  /// \param[in] y      Sequence of 8-bit integers.
+  /// \return The dot product between the two sequences, i.e. \f$ x \cdot y + = \sum_i x_i \cdot
+  /// \operatorname{sign}(y_i)\f$.
+  /// \remark The two input spans must have the same length.
+  /// \remark This function treats the LLRs as integer values, thus neither saturation nor promotion applies.
+  static int32_t dot_prod_sign(span<const log_likelihood_ratio> x, span<const int8_t> y);
+
+  /// \brief Performs a saturated sum of the LLRs from two sequences of log-likelihood ratios, \c x and \c y, and it
+  /// stores the result in \c out.
+  /// \param[out] out Result.
+  /// \param[in ] x   First sequence of log-likelihood ratios.
+  /// \param[in ] y   Second sequence of log-likelihood ratios.
+  static void
+  sum(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> x, span<const log_likelihood_ratio> y);
 
 private:
   /// Actual LLR value.
@@ -257,34 +274,6 @@ struct is_llr_span_compatible<T,
 };
 
 } // namespace detail
-
-/// \brief Dot product of a sequence of LLRs and a sequence of values of an arithmetic type.
-///
-/// Computes the dot product (a.k.a. inner product or scalar product) of the two input sequences, adding an initial
-/// offset.
-/// \tparam T         A span (or any container convertible to a span) of log-likelihood ratios (either constant or
-///                   volatile).
-/// \tparam U         A span (or any container convertible to a span) of an arithmetic type.
-/// \tparam V         Output type (must be compatible with the product of objects of type \c T and \c U).
-/// \param[in] x      A sequence of (possibly constant) log-likelihood ratios.
-/// \param[in] y      A second sequence of values.
-/// \param[in] init   Initialization value.
-/// \return The dot product between the two spans plus \c init, i.e. \f$ x \cdot y + \textup{init} = \sum_i x_i y_i +
-/// \textup{init}\f$.
-/// \remark The two input spans must have the same length.
-/// \remark This function treats the LLRs as real values, thus neither saturation nor promotion apply.
-template <typename T, typename U, typename V>
-V log_likelihood_ratio::dot_prod(const T& x, const U& y, V init)
-{
-  static_assert(detail::is_llr_span_compatible<T>::value, "Template type is not compatible with a span of LLRs");
-  static_assert(srsvec::is_arithmetic_span_compatible<U>::value,
-                "Template type is not compatible with a span of arithmetics");
-  srsran_assert(x.size() == y.size(), "Input spans must have identical sizes: '{}' vs '{}'", x.size(), y.size());
-  return std::inner_product(
-      x.begin(), x.end(), y.begin(), init, std::plus<V>(), [](log_likelihood_ratio a, log_likelihood_ratio b) {
-        return a.to_int() * b.to_int();
-      });
-}
 
 /// \brief Clamps the input values between a lower and higher bound.
 ///

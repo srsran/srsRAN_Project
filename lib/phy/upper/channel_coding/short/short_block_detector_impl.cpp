@@ -12,7 +12,13 @@
 #include "short_block_encoder_impl.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
+#include "srsran/srsvec/fill.h"
+
+#if __AVX2__
+#include "../ldpc/avx2_support.h"
+#endif // __AVX2__
 
 using namespace srsran;
 
@@ -112,7 +118,7 @@ double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const l
   uint8_t  bit0       = 0U;
   // Brute-force ML detector: correlate all codewords with the LLRs and pick the best one.
   for (unsigned cdwd_idx = 0; cdwd_idx != nof_codewords; ++cdwd_idx) {
-    int metric     = log_likelihood_ratio::dot_prod(input, DETECT_TABLE[cdwd_idx], 0);
+    int metric     = log_likelihood_ratio::dot_prod_sign(input, DETECT_TABLE[cdwd_idx]);
     int metric_abs = std::abs(metric);
     if (metric_abs > max_metric) {
       max_metric = metric_abs;
@@ -135,12 +141,27 @@ double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const l
 // Recovers the original short codeblock from its rate-matched version.
 static void rate_dematch(span<log_likelihood_ratio> output, span<const log_likelihood_ratio> input)
 {
-  unsigned output_size = output.size();
-  unsigned input_size  = input.size();
+  // Copy the first samples in common.
+  unsigned nof_copy = std::min(input.size(), output.size());
+  srsvec::copy(output.first(nof_copy), input.first(nof_copy));
 
-  std::fill(output.begin(), output.end(), 0);
-  for (unsigned idx = 0; idx != input_size; ++idx) {
-    output[idx % output_size] += input[idx];
+  // Pad the output with zeros if longer than the input.
+  if (input.size() <= output.size()) {
+    srsvec::fill(output.last(output.size() - nof_copy), 0);
+    return;
+  }
+
+  // Combine the rest of LLRs in blocks.
+  input = input.last(input.size() - output.size());
+  while (!input.empty()) {
+    // Determine the block size.
+    unsigned block_size = std::min(output.size(), input.size());
+
+    // Combine block of LLR.
+    log_likelihood_ratio::sum(output.first(block_size), output.first(block_size), input.first(block_size));
+
+    // Advance input.
+    input = input.last(input.size() - block_size);
   }
 };
 

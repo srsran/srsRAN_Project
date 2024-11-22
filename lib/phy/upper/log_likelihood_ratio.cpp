@@ -10,6 +10,7 @@
 
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/copy.h"
 #include <cmath>
 #include <optional>
 
@@ -324,4 +325,185 @@ bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
 
   // Return false if it finds a zero in the soft bits.
   return srsvec::find(soft_bits, log_likelihood_ratio(0)) == soft_bits.end();
+}
+
+#ifdef __AVX2__
+static int32_t dot_prod_sign_avx2(__m256i x_epi8, __m256i y_epi8)
+{
+  // Negate x according to the sign of y.
+  x_epi8 = _mm256_sign_epi8(x_epi8, y_epi8);
+
+  // Convert to 16-bit integers.
+  __m256i x_low_epi16  = _mm256_cvtepi8_epi16(_mm256_castsi256_si128(x_epi8));
+  __m256i x_high_epi16 = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(x_epi8, 1));
+
+  // Sum 16-bit integer registers.
+  __m256i sum_epi16 = _mm256_add_epi16(x_low_epi16, x_high_epi16);
+
+  // Split in two 128-bit registers.
+  __m128i sum_low_epi16  = _mm256_castsi256_si128(sum_epi16);
+  __m128i sum_high_epi16 = _mm256_extracti128_si256(sum_epi16, 1);
+
+  // Reduce 128-bit registers.
+  __m128i reduced_sum_epi16 = _mm_add_epi16(sum_low_epi16, sum_high_epi16);
+
+  // Keep reducing values.
+  reduced_sum_epi16 = _mm_hadd_epi16(reduced_sum_epi16, reduced_sum_epi16);
+  reduced_sum_epi16 = _mm_hadd_epi16(reduced_sum_epi16, reduced_sum_epi16);
+  reduced_sum_epi16 = _mm_hadd_epi16(reduced_sum_epi16, reduced_sum_epi16);
+
+  // Extract the lowest 16-bit integer, convert to 32-bits and return.
+  int16_t result = _mm_extract_epi16(reduced_sum_epi16, 0);
+  return static_cast<int32_t>(result);
+}
+
+#endif // __AVX2__
+
+int32_t log_likelihood_ratio::dot_prod_sign(span<const srsran::log_likelihood_ratio> x, span<const int8_t> y)
+{
+  srsran_assert(x.size() == y.size(), "Sizes must be equal.");
+
+#ifdef __AVX2__
+  // Optimized calculation in AVX2 for 32 values.
+  if (x.size() == 32) {
+    __m256i x_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(x.data()));
+    __m256i y_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(y.data()));
+    return dot_prod_sign_avx2(x_epi8, y_epi8);
+  }
+#endif // __AVX2__
+
+  int32_t ret =
+      std::inner_product(x.begin(), x.end(), y.begin(), 0, std::plus<int32_t>(), [](log_likelihood_ratio a, int8_t b) {
+        return a.to_int() * std::copysign(1, b);
+      });
+
+  return ret;
+}
+
+#ifdef __AVX2__
+static inline __m256i avx2_sum_llr(__m256i in0_epi8, __m256i in1_epi8)
+{
+  __m256i LLR_MAX_epi8 = _mm256_set1_epi8(static_cast<int8_t>(LLR_MAX));
+  __m256i LLR_MIN_epi8 = _mm256_set1_epi8(static_cast<int8_t>(LLR_MIN));
+
+  __m256i result = _mm256_adds_epi8(in0_epi8, in1_epi8);
+
+  __m256i mask_epi8 = _mm256_cmpgt_epi8(result, LLR_MAX_epi8);
+  result            = _mm256_blendv_epi8(result, LLR_MAX_epi8, mask_epi8);
+
+  mask_epi8 = _mm256_cmpgt_epi8(LLR_MIN_epi8, result);
+  return _mm256_blendv_epi8(result, LLR_MIN_epi8, mask_epi8);
+}
+#endif // __AVX2__
+
+#ifdef __ARM_NEON
+static inline int8x16_t neon_sum_llr(int8x16_t in0_s8, int8x16_t in1_s8)
+{
+  const int8x16_t LLR_MAX_s8 = vdupq_n_s8(static_cast<int8_t>(LLR_MAX));
+  const int8x16_t LLR_MIN_s8 = vdupq_n_s8(static_cast<int8_t>(LLR_MIN));
+
+  int8x16_t result = vqaddq_s8(in0_s8, in1_s8);
+
+  uint8x16_t mask_s8 = vcgtq_s8(result, LLR_MAX_s8);
+  result             = vbslq_s8(mask_s8, LLR_MAX_s8, result);
+  mask_s8            = vcgtq_s8(LLR_MIN_s8, result);
+  result             = vbslq_s8(mask_s8, LLR_MIN_s8, result);
+
+  return result;
+}
+#endif // __ARM_NEON
+
+void log_likelihood_ratio::sum(span<log_likelihood_ratio>       out,
+                               span<const log_likelihood_ratio> in0,
+                               span<const log_likelihood_ratio> in1)
+{
+  srsran_assert(out.size() == in0.size(), "All sizes must be equal.");
+  srsran_assert(out.size() == in1.size(), "All sizes must be equal.");
+
+#if defined(__AVX2__)
+  unsigned index = 0;
+
+  static constexpr unsigned AVX2_SIZE_BYTE = 32;
+  __m256i*                  avx_out        = reinterpret_cast<__m256i*>(out.data());
+  const __m256i*            avx_in0        = reinterpret_cast<const __m256i*>(in0.data());
+  const __m256i*            avx_in1        = reinterpret_cast<const __m256i*>(in1.data());
+
+  for (unsigned index_end = (out.size() / AVX2_SIZE_BYTE); index != index_end; ++index) {
+    __m256i in0_epi8 = _mm256_loadu_si256(avx_in0++);
+    __m256i in1_epi8 = _mm256_loadu_si256(avx_in1++);
+    _mm256_storeu_si256(avx_out++, avx2_sum_llr(in0_epi8, in1_epi8));
+  }
+  index *= AVX2_SIZE_BYTE;
+
+  // Calculate the remainder of bits.
+  unsigned remainder = out.size() - index;
+
+  // Copy the end of the input bits in vectors of AVX register size.
+  std::array<log_likelihood_ratio, AVX2_SIZE_BYTE> in0_remainder;
+  std::array<log_likelihood_ratio, AVX2_SIZE_BYTE> in1_remainder;
+  srsvec::copy(span<log_likelihood_ratio>(in0_remainder).first(remainder), in0.last(remainder));
+  srsvec::copy(span<log_likelihood_ratio>(in1_remainder).first(remainder), in1.last(remainder));
+
+  // Load the remainder bits in AVX registers.
+  __m256i in0_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in0_remainder.data()));
+  __m256i in1_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in1_remainder.data()));
+
+  // Process last AVX block and store it in a vector of AVX register size.
+  std::array<log_likelihood_ratio, AVX2_SIZE_BYTE> out_remainder;
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(out_remainder.data()), avx2_sum_llr(in0_epi8, in1_epi8));
+
+  // Copy the last bits.
+  srsvec::copy(out.last(remainder), span<log_likelihood_ratio>(out_remainder).first(remainder));
+#elif defined(__ARM_NEON)
+  unsigned                  index          = 0;
+  unsigned                  out_size       = out.size();
+  static constexpr unsigned NEON_SIZE_BYTE = 16;
+
+  // Process batches of 32 values.
+  for (unsigned index_end = (out_size / 32) * 32; index != index_end; index += 32) {
+    int8x16x2_t in0_s8 = vld1q_s8_x2(reinterpret_cast<const int8_t*>(&in0[index]));
+    int8x16x2_t in1_s8 = vld1q_s8_x2(reinterpret_cast<const int8_t*>(&in1[index]));
+
+    int8x16x2_t result;
+    result.val[0] = neon_sum_llr(in0_s8.val[0], in1_s8.val[0]);
+    result.val[1] = neon_sum_llr(in0_s8.val[1], in1_s8.val[1]);
+
+    vst1q_s8_x2(reinterpret_cast<int8_t*>(&out[index]), result);
+  }
+
+  // Process batch of 16 values.
+  if (out_size & 0x10) {
+    int8x16_t in0_s8 = vld1q_s8(reinterpret_cast<const int8_t*>(&in0[index]));
+    int8x16_t in1_s8 = vld1q_s8(reinterpret_cast<const int8_t*>(&in1[index]));
+    int8x16_t result = neon_sum_llr(in0_s8, in1_s8);
+
+    vst1q_s8(reinterpret_cast<int8_t*>(&out[index]), result);
+    index += 16;
+  }
+
+  // Calculate the remainder of bits.
+  unsigned remainder = out.size() - index;
+
+  // Copy the end of the input bits in vectors of AVX register size.
+  std::array<log_likelihood_ratio, NEON_SIZE_BYTE> in0_remainder;
+  std::array<log_likelihood_ratio, NEON_SIZE_BYTE> in1_remainder;
+  srsvec::copy(span<log_likelihood_ratio>(in0_remainder).first(remainder), in0.last(remainder));
+  srsvec::copy(span<log_likelihood_ratio>(in1_remainder).first(remainder), in1.last(remainder));
+
+  // Load the remainder bits in NEON registers.
+  int8x16_t in0_s8 = vld1q_s8(reinterpret_cast<const int8_t*>(in0_remainder.data()));
+  int8x16_t in1_s8 = vld1q_s8(reinterpret_cast<const int8_t*>(in1_remainder.data()));
+
+  // Process last NEON block and store it in a vector of NEON register size.
+  std::array<log_likelihood_ratio, NEON_SIZE_BYTE> out_remainder;
+  vst1q_s8(reinterpret_cast<int8_t*>(out_remainder.data()), neon_sum_llr(in0_s8, in1_s8));
+
+  // Copy the last bits.
+  srsvec::copy(out.last(remainder), span<log_likelihood_ratio>(out_remainder).first(remainder));
+#else
+  std::transform(
+      in0.begin(), in0.end(), in1.begin(), out.begin(), [](log_likelihood_ratio left, log_likelihood_ratio right) {
+        return left + right;
+      });
+#endif
 }
