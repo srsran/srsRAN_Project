@@ -294,27 +294,15 @@ protected:
   std::reference_wrapper<ether::frame_notifier> notifier;
 };
 
-/// Dummy Ethernet receive buffer.
-class dummy_eth_rx_buffer : public ether::rx_buffer
-{
-public:
-  /// Constructor receive a view on external data buffer managed by \c dummy_eth_receiver.
-  explicit dummy_eth_rx_buffer(span<const uint8_t> data_span_) { data_span = data_span_; }
-
-  span<const uint8_t> data() const override { return data_span; };
-
-private:
-  span<const uint8_t> data_span;
-};
-
 /// Dummy Ethernet receiver that receives data from RU emulator and pushes them to the OFH receiver without using real
 /// Ethernet interface.
 class dummy_eth_receiver : public test_ether_receiver
 {
-  static constexpr unsigned BUFFER_SIZE = 9600;
-
 public:
-  dummy_eth_receiver(srslog::basic_logger& logger_) : test_ether_receiver(logger_), buffer_pool(BUFFER_SIZE) {}
+  dummy_eth_receiver(srslog::basic_logger& logger_, ether::ethernet_rx_buffer_pool& pool) :
+    test_ether_receiver(logger_), buffer_pool(pool)
+  {
+  }
 
   void push_new_data(span<const uint8_t> frame) override
   {
@@ -327,11 +315,11 @@ public:
     std::memcpy(buffer.storage().data(), frame.data(), frame.size());
     buffer.resize(frame.size());
 
-    notifier.get().on_new_frame(std::move(buffer));
+    notifier.get().on_new_frame(ether::unique_rx_buffer(std::move(buffer)));
   }
 
 private:
-  ether::ethernet_rx_buffer_pool buffer_pool;
+  ether::ethernet_rx_buffer_pool& buffer_pool;
 };
 
 /// Ethernet receiver using loopback ('lo') interface.
@@ -899,11 +887,11 @@ struct worker_manager {
 
     // Executor for Open Fronthaul messages transmission.
     {
-      const std::string name      = "ru_tx";
-      const std::string exec_name = "ru_tx_exec";
+      const std::string name      = "ru_txrx";
+      const std::string exec_name = "ru_txrx_exec";
 
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+                                    {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
                                     {{exec_name}},
                                     std::chrono::microseconds{5},
                                     os_thread_realtime_priority::max() - 1};
@@ -1040,6 +1028,7 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
                                                     ru_uplink_plane_rx_symbol_notifier* rx_symbol_notifier,
                                                     test_gateway*&                      tx_gateway,
                                                     test_ether_receiver*&               eth_receiver,
+                                                    ether::ethernet_rx_buffer_pool&     buffer_pool,
                                                     ru_error_notifier&                  error_notifier)
 {
   ru_ofh_dependencies dependencies;
@@ -1062,7 +1051,7 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   sector_deps.eth_gateway = std::move(gateway);
 
   // Configure Ethernet receiver.
-  auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger);
+  auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger, buffer_pool);
   eth_receiver             = dummy_receiver.get();
   sector_deps.eth_receiver = std::move(dummy_receiver);
 
@@ -1106,7 +1095,9 @@ create_ul_resource_grid_pool(std::shared_ptr<resource_grid_factory> rg_factory, 
 
 int main(int argc, char** argv)
 {
+  static constexpr unsigned            BUFFER_SIZE = 9600;
   std::unique_ptr<test_ether_receiver> eth_receiver_ptr;
+
   parse_args(argc, argv);
 
   // Set up logging.
@@ -1131,16 +1122,17 @@ int main(int argc, char** argv)
   auto dl_rg_pool = create_dl_resource_grid_pool(rg_factory, nof_prb);
   auto ul_rg_pool = create_ul_resource_grid_pool(rg_factory, nof_prb);
 
-  worker_manager           workers;
-  dummy_rx_symbol_notifier rx_symbol_notifier;
-  dummy_timing_notifier    timing_notifier;
-  test_gateway*            tx_gateway;
-  test_ether_receiver*     eth_receiver;
-  dummy_ru_error_notifier  error_notifier;
+  worker_manager                 workers;
+  dummy_rx_symbol_notifier       rx_symbol_notifier;
+  dummy_timing_notifier          timing_notifier;
+  test_gateway*                  tx_gateway;
+  test_ether_receiver*           eth_receiver;
+  dummy_ru_error_notifier        error_notifier;
+  ether::ethernet_rx_buffer_pool buffer_pool(BUFFER_SIZE);
 
   ru_ofh_configuration ru_cfg  = generate_ru_config();
   ru_ofh_dependencies  ru_deps = generate_ru_dependencies(
-      logger, workers, &timing_notifier, &rx_symbol_notifier, tx_gateway, eth_receiver, error_notifier);
+      logger, workers, &timing_notifier, &rx_symbol_notifier, tx_gateway, eth_receiver, buffer_pool, error_notifier);
 
   if (test_params.use_loopback_receiver) {
     ru_deps.sector_dependencies[0].eth_receiver.reset();
@@ -1152,11 +1144,6 @@ int main(int argc, char** argv)
   // Get RU downlink plane handler.
   auto& ru_dl_handler = ru_object->get_downlink_plane_handler();
   auto& ru_ul_handler = ru_object->get_uplink_plane_handler();
-
-  if (test_params.use_loopback_receiver) {
-    eth_receiver_ptr = std::make_unique<lo_eth_receiver>(logger);
-    eth_receiver     = eth_receiver_ptr.get();
-  }
 
   // Create RU emulator instance.
   ru_compression_params ul_compression_params{to_compression_type(test_params.data_compr_method),
