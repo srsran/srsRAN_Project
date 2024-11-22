@@ -902,6 +902,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   if (std::holds_alternative<time_pf_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
     out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
   }
+  out_cfg.ue.enable_closed_loop_pw_control   = pusch.enable_closed_loop_pw_control;
   out_cfg.ue.target_pusch_sinr               = pusch.target_pusch_sinr;
   out_cfg.ue.path_loss_for_target_pusch_sinr = pusch.path_loss_for_target_pusch_sinr;
   out_cfg.ue.ta_cmd_offset_threshold         = app_sched_expert_cfg.ta_sched_cfg.ta_cmd_offset_threshold;

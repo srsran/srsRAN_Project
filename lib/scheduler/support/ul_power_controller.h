@@ -50,6 +50,7 @@ private:
   //  SINR) for the PUSCH with the latest power adjustment is received, before a new power adjustment is computed.
   static constexpr unsigned tpc_adjust_prohibit_time_ms = 40U;
 
+  const bool                                       cl_pw_control_enabled;
   const int                                        p0_nominal_pusch;
   std::optional<pusch_config::pusch_power_control> pusch_pwr_ctrl;
   const ue_channel_state_manager&                  channel_state_manager;
