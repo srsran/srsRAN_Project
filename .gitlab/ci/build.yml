@@ -628,7 +628,7 @@ check builders ubuntu versions:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 15 minutes    
+      start_in: 15 minutes
   variables:
     VERSIONS_TO_IGNORE: "20.04"
   script:
