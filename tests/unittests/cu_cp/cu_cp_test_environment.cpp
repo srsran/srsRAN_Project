@@ -62,6 +62,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   // Initialize logging
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("NRPPA").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("NGAP").set_hex_dump_max_size(32);
   srslog::fetch_basic_logger("RRC").set_hex_dump_max_size(32);
