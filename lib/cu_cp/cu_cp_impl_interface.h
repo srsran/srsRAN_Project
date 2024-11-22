@@ -15,6 +15,7 @@
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/nrppa/nrppa.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
 #include <string>
@@ -110,6 +111,23 @@ public:
 
   /// \brief Handle N2 AMF connection drop.
   virtual void handle_n2_disconnection() = 0;
+};
+
+/// Interface for the NRPPa notifier to communicate with the CU-CP.
+class cu_cp_nrppa_handler
+{
+public:
+  virtual ~cu_cp_nrppa_handler() = default;
+
+  /// \brief Handle the creation of a new NRPPA UE. This will add the NRPPA adapters to the UE manager.
+  /// \param[in] ue_index The index of the new NRPPA UE.
+  /// \returns Pointer to the NRPPA UE notifier.
+  virtual nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Handle a UL NRPPa PDU.
+  /// \param[in] msg The NRPPa PDU.
+  /// \param[in] ue_index For UE associated messages the index of the UE.
+  virtual void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
 };
 
 /// Handler of E1AP-CU-CP events.
@@ -282,6 +300,7 @@ class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
                              public cu_cp_measurement_handler,
                              public cu_cp_measurement_config_handler,
                              public cu_cp_ngap_handler,
+                             public cu_cp_nrppa_handler,
                              public cu_cp_ue_context_manipulation_handler,
                              public cu_cp_mobility_manager_handler,
                              public cu_cp_ue_removal_handler
@@ -291,6 +310,7 @@ public:
 
   virtual cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler()               = 0;
   virtual cu_cp_ngap_handler&                    get_cu_cp_ngap_handler()               = 0;
+  virtual cu_cp_nrppa_handler&                   get_cu_cp_nrppa_handler()              = 0;
   virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()           = 0;
   virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler()         = 0;
   virtual cu_cp_measurement_handler&             get_cu_cp_measurement_handler()        = 0;

@@ -15,6 +15,7 @@
 #include "adapters/e1ap_adapters.h"
 #include "adapters/mobility_manager_adapters.h"
 #include "adapters/ngap_adapters.h"
+#include "adapters/nrppa_adapters.h"
 #include "adapters/rrc_du_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "cu_cp_controller/cu_cp_controller.h"
@@ -28,6 +29,7 @@
 #include "srsran/e2/e2_cu.h"
 #include "srsran/e2/e2_cu_factory.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/nrppa/nrppa.h"
 #include "srsran/ran/plmn_identity.h"
 #include <dlfcn.h>
 #include <memory>
@@ -65,7 +67,11 @@ public:
 
   bool amfs_are_connected() override;
 
-  // CU-UP handler
+  // NRPPA interface.
+  std::unique_ptr<nrppa_interface> create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg,
+                                                       nrppa_cu_cp_notifier&      cu_cp_notif);
+
+  // CU-UP handler.
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // cu_cp_rrc_ue_interface.
@@ -102,6 +108,9 @@ public:
   void handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) override;
   void handle_n2_disconnection() override;
 
+  // cu_cp_nrppa_handler.
+  void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override;
+
   // cu_cp_measurement_handler.
   std::optional<rrc_meas_cfg>
        handle_measurement_config_request(ue_index_t                  ue_index,
@@ -131,6 +140,7 @@ public:
   cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ng_handler&                      get_ng_handler() override { return *this; }
   cu_cp_ngap_handler&                    get_cu_cp_ngap_handler() override { return *this; }
+  cu_cp_nrppa_handler&                   get_cu_cp_nrppa_handler() override { return *this; }
   cu_cp_command_handler&                 get_command_handler() override { return *this; }
   cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
   cu_cp_measurement_handler&             get_cu_cp_measurement_handler() override { return *this; }
@@ -149,6 +159,9 @@ private:
 
   // NGAP UE creation handler.
   ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) override;
+
+  // NRPPA UE creation handler.
+  nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) override;
 
   // cu_cp_task_scheduler_handler.
   bool schedule_ue_task(ue_index_t ue_index, async_task<void> task) override;
@@ -195,6 +208,12 @@ private:
 
   // CU-UP connections being managed by the CU-CP.
   cu_up_processor_repository cu_up_db;
+
+  // NRPPa to CU-CP adapter.
+  nrppa_cu_cp_adapter nrppa_cu_cp_ev_notifier;
+
+  // NRPPA entity.
+  std::unique_ptr<nrppa_interface> nrppa_entity;
 
   // Handler of paging messages.
   paging_message_handler paging_handler;

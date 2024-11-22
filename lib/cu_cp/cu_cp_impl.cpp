@@ -25,6 +25,7 @@
 #include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/nrppa/nrppa.h"
 #include "srsran/rrc/rrc_du.h"
 #include <chrono>
 #include <dlfcn.h>
@@ -67,8 +68,11 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 {
   assert_cu_cp_configuration_valid(cfg);
 
+  nrppa_entity = create_nrppa_entity(cfg, nrppa_cu_cp_ev_notifier);
+
   // connect event notifiers to layers
-  ngap_cu_cp_ev_notifier.connect_cu_cp(*this, paging_handler);
+  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), paging_handler);
+  nrppa_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_nrppa_handler());
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
@@ -148,6 +152,12 @@ bool cu_cp_impl::amfs_are_connected()
 
   return true;
 };
+
+SRSRAN_WEAK_SYMB std::unique_ptr<srsran::srs_cu_cp::nrppa_interface>
+cu_cp_impl::create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg, nrppa_cu_cp_notifier& cu_cp_notif)
+{
+  return nullptr;
+}
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
@@ -603,6 +613,16 @@ void cu_cp_impl::handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buff
 void cu_cp_impl::handle_n2_disconnection()
 {
   // TODO
+}
+
+SRSRAN_WEAK_SYMB nrppa_cu_cp_ue_notifier* cu_cp_impl::handle_new_nrppa_ue(ue_index_t ue_index)
+{
+  return nullptr;
+}
+
+SRSRAN_WEAK_SYMB void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
+{
+  logger.info("UL NRPPa messages are not supported");
 }
 
 std::optional<rrc_meas_cfg>
