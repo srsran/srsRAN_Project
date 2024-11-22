@@ -12,6 +12,7 @@
 
 #include "du_bearer_resource_manager.h"
 #include "du_drx_resource_manager.h"
+#include "du_meas_config_manager.h"
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
 #include "du_srs_resource_manager.h"
@@ -111,6 +112,9 @@ private:
   du_bearer_resource_manager bearer_res_mng;
 
   std::unique_ptr<du_srs_resource_manager> srs_res_mng;
+
+  // measConfig resources.
+  du_meas_config_manager meas_cfg_mng;
 
   // Allocator of DRX and measGap resources for the DU.
   du_drx_resource_manager drx_res_mng;

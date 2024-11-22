@@ -65,6 +65,7 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot),
   bearer_res_mng(srb_config, qos_config, logger),
   srs_res_mng(std::make_unique<du_srs_policy_max_ul_rate>(cell_cfg_list)),
+  meas_cfg_mng(cell_cfg_list),
   drx_res_mng(cell_cfg_list)
 {
 }
@@ -136,6 +137,9 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       resp.failed_scells.push_back(sc.serv_cell_index);
     }
   }
+
+  // Update measGaps based on the UE measConfig.
+  meas_cfg_mng.update(ue_mcg, upd_req.meas_cfg);
 
   // > Process UE NR capabilities and update UE dedicated configuration only if test mode is not configured.
   if (not test_cfg.test_ue.has_value() or test_cfg.test_ue->rnti == rnti_t::INVALID_RNTI) {
