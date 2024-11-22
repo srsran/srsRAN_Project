@@ -883,6 +883,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.target_pusch_sinr               = pusch.target_pusch_sinr;
   out_cfg.ue.path_loss_for_target_pusch_sinr = pusch.path_loss_for_target_pusch_sinr;
   out_cfg.ue.ta_cmd_offset_threshold         = app_sched_expert_cfg.ta_sched_cfg.ta_cmd_offset_threshold;
+  out_cfg.ue.ta_target                       = app_sched_expert_cfg.ta_sched_cfg.ta_target;
   out_cfg.ue.ta_measurement_slot_period      = app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_period;
   out_cfg.ue.ta_update_measurement_ul_sinr_threshold =
       app_sched_expert_cfg.ta_sched_cfg.ta_update_measurement_ul_sinr_threshold;

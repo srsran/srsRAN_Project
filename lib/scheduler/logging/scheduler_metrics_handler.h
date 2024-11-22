@@ -15,6 +15,7 @@
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/support/math/stats.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -51,6 +52,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned nof_pusch_rsrp_reports = 0;
       unsigned tot_dl_prbs_used       = 0;
       unsigned tot_ul_prbs_used       = 0;
+      /// TA statistics over the metrics report interval, in seconds.
+      sample_statistics<float> ta;
       /// CQI statistics over the metrics report interval.
       sample_statistics<unsigned> cqi;
       /// RI statistics over the metrics report interval.
@@ -66,7 +69,6 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     rnti_t                                 rnti;
     unsigned                               last_bsr = 0;
     std::optional<int>                     last_phr;
-    std::optional<phy_time_unit>           last_ta;
     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
     std::optional<float>                   last_dl_olla;
     std::optional<float>                   last_ul_olla;

@@ -35,6 +35,9 @@ public:
   void handle_ul_n_ta_update_indication(time_alignment_group::id_t tag_id, int64_t n_ta_diff_, float ul_sinr);
 
 private:
+  /// TA command offset for a zero value.
+  static constexpr int ta_cmd_offset_zero = 31;
+
   /// State of the Timing Advance manager.
   enum class state_t {
     /// Waiting for start order to perform measurements.

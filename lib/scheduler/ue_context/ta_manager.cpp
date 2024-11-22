@@ -58,11 +58,11 @@ void ta_manager::slot_indication(slot_point current_sl)
       continue;
     }
 
-    // Send Timing Advance command only if the offset is greater than threshold.
+    // Send Timing Advance command only if the offset is equal to or greater than the threshold.
     // The new Timing Advance Command is a value ranging from [0,...,63] as per TS 38.213, clause 4.2. Hence, we
     // need to subtract a value of 31 (as per equation in the same clause) to get the change in Timing Advance Command.
     const unsigned new_t_a = compute_new_t_a(compute_avg_n_ta_difference(tag_id));
-    if (abs((int)new_t_a - 31) > expert_cfg.ta_cmd_offset_threshold) {
+    if (abs((int)new_t_a - ta_cmd_offset_zero) >= expert_cfg.ta_cmd_offset_threshold) {
       // Send Timing Advance Command to UE.
       dl_lc_ch_mgr->handle_mac_ce_indication(
           {.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = ta_cmd_ce_payload{.tag_id = tag_id, .ta_cmd = new_t_a}});
@@ -111,7 +111,7 @@ unsigned ta_manager::compute_new_t_a(int64_t n_ta_diff)
 {
   return static_cast<int>(std::round(static_cast<float>(n_ta_diff * pow2(to_numerology_value(ul_scs))) /
                                      static_cast<float>(16U * 64))) +
-         31;
+         ta_cmd_offset_zero - expert_cfg.ta_target;
 }
 
 void ta_manager::reset_measurements(uint8_t tag_id)

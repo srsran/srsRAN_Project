@@ -77,7 +77,7 @@ void cell_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& cr
       u.data.sum_ul_tb_bytes += tbs.value();
     }
     if (crc_pdu.time_advance_offset.has_value()) {
-      u.last_ta = crc_pdu.time_advance_offset;
+      u.data.ta.update(crc_pdu.time_advance_offset.value().to_seconds());
     }
   }
 }
@@ -134,7 +134,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
       }
 
       if (f1->time_advance_offset.has_value()) {
-        u.last_ta = f1->time_advance_offset;
+        u.data.ta.update(f1->time_advance_offset->to_seconds());
       }
     } else if (const auto* f2 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
       if (f2->ul_sinr_dB.has_value()) {
@@ -146,7 +146,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
       }
 
       if (f2->time_advance_offset.has_value()) {
-        u.last_ta = f2->time_advance_offset;
+        u.data.ta.update(f2->time_advance_offset->to_seconds());
       }
     } else {
       // PUSCH case.
@@ -369,9 +369,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
-  if (last_ta.has_value()) {
-    ret.last_ta = last_ta;
-  }
+  ret.ta_stats = data.ta;
   ret.last_phr = last_phr;
 
   // Reset UE stats metrics on every report.
