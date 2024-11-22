@@ -504,14 +504,13 @@ def check_metrics_criteria(
         )
     )
 
-    criteria_nof_ko_dl_viavi = check_criteria(
-        viavi_kpis.dl_data.num_tbs_errors, test_configuration.expected_nof_kos, operator.lt
-    )
+    viavi_dl_kos = viavi_kpis.dl_data.num_tbs_errors if viavi_kpis.dl_data.num_tbs_errors is not None else 0
+    criteria_nof_ko_dl_viavi = check_criteria(viavi_dl_kos, test_configuration.expected_nof_kos, operator.lt)
     criteria_result.append(
         _ViaviResult(
             "DL KOs (viavi)",
             test_configuration.expected_nof_kos,
-            viavi_kpis.dl_data.num_tbs_errors,
+            viavi_dl_kos,
             criteria_nof_ko_dl_viavi,
         )
     )
@@ -526,14 +525,13 @@ def check_metrics_criteria(
         )
     )
 
-    criteria_nof_ko_ul_viavi = check_criteria(
-        viavi_kpis.ul_data.num_tbs_nack, test_configuration.expected_nof_kos, operator.lt
-    )
+    viavi_ul_kos = viavi_kpis.ul_data.num_tbs_nack if viavi_kpis.ul_data.num_tbs_nack is not None else 0
+    criteria_nof_ko_ul_viavi = check_criteria(viavi_ul_kos, test_configuration.expected_nof_kos, operator.lt)
     criteria_result.append(
         _ViaviResult(
             "UL KOs (viavi)",
             test_configuration.expected_nof_kos,
-            viavi_kpis.ul_data.num_tbs_nack,
+            viavi_ul_kos,
             criteria_nof_ko_ul_viavi,
         )
     )
