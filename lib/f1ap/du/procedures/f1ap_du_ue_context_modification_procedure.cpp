@@ -108,6 +108,12 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
   }
 
   if (msg->cu_to_du_rrc_info_present) {
+    // >> measConfig IE.
+    // [TS 38.473, 8.3.4.2] If the MeasConfig IE is included in the CU to DU RRC Information IE in the UE CONTEXT
+    // MODIFICATION REQUEST message, the gNB-DU shall deduce that changes to the measurements’ configuration need to be
+    // applied.
+    du_request.meas_cfg = msg->cu_to_du_rrc_info.meas_cfg.copy();
+
     // >> Pass UE capabilities.
     du_request.ue_cap_rat_list = msg->cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
   }
@@ -151,10 +157,16 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->srbs_modified_list_present               = false;
   resp->full_cfg_present                         = false;
 
-  // > DU-to-CU RRC Container.
+  // > cellGroupConfig IE.
   if (not du_response.cell_group_cfg.empty()) {
     resp->du_to_cu_rrc_info_present        = true;
     resp->du_to_cu_rrc_info.cell_group_cfg = du_response.cell_group_cfg.copy();
+  }
+
+  // > measGapConfig IE.
+  if (not du_response.meas_gap_cfg.empty()) {
+    resp->du_to_cu_rrc_info_present      = true;
+    resp->du_to_cu_rrc_info.meas_gap_cfg = du_response.meas_gap_cfg.copy();
   }
 
   // > Full Config IE.
