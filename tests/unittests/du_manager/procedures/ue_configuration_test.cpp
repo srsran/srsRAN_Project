@@ -230,7 +230,7 @@ TEST_F(ue_config_tester, when_du_manager_completes_ue_configuration_procedure_th
   ASSERT_TRUE(proc.ready());
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
-  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, resp.du_to_cu_rrc_container, nullptr, true));
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, resp.cell_group_cfg, nullptr, true));
 }
 
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1c_bearers_are_connected)
@@ -431,7 +431,7 @@ TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_
   ASSERT_TRUE(proc.ready());
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
-  ASSERT_FALSE(resp.du_to_cu_rrc_container.empty());
+  ASSERT_FALSE(resp.cell_group_cfg.empty());
   ASSERT_TRUE(resp.drbs_setup.empty());
   ASSERT_TRUE(resp.failed_drbs_setups.empty());
 }
@@ -450,7 +450,7 @@ TEST_F(ue_config_tester, when_drbs_are_released_then_they_are_added_in_rrc_conta
   res             = this->configure_ue(req);
 
   ASSERT_TRUE(res.result);
-  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, nullptr, true));
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.cell_group_cfg, nullptr, true));
 }
 
 TEST_F(ue_config_tester, when_drb_to_be_released_does_not_exist_then_request_is_ignored)
@@ -468,7 +468,7 @@ TEST_F(ue_config_tester, when_drb_to_be_released_does_not_exist_then_request_is_
   ASSERT_TRUE(res.result);
   auto req_no_drb_release = req;
   req_no_drb_release.drbs_to_rem.clear();
-  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req_no_drb_release, res.du_to_cu_rrc_container, nullptr, true));
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req_no_drb_release, res.cell_group_cfg, nullptr, true));
 }
 
 TEST_F(ue_config_tester,
@@ -499,7 +499,7 @@ TEST_F(ue_config_tester,
       create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {}, {drb_id_t::drb1});
   f1ap_ue_context_update_response res = this->configure_ue(req);
   ASSERT_TRUE(res.result);
-  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, &reest_cfg_copy, true));
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.cell_group_cfg, &reest_cfg_copy, true));
 }
 
 TEST_F(ue_config_tester,
@@ -522,5 +522,5 @@ TEST_F(ue_config_tester,
 
   ASSERT_TRUE(res.result);
   req.srbs_to_setup.erase(req.srbs_to_setup.begin()); // Remove SRB1 for the checks.
-  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, nullptr, true));
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.cell_group_cfg, nullptr, true));
 }

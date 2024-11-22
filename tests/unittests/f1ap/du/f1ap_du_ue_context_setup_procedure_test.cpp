@@ -66,7 +66,7 @@ protected:
 
     auto& du_to_f1_resp                  = this->f1ap_du_cfg_handler.next_ue_context_update_response;
     du_to_f1_resp.result                 = true;
-    du_to_f1_resp.du_to_cu_rrc_container = byte_buffer::create({0x1, 0x2, 0x3}).value();
+    du_to_f1_resp.cell_group_cfg         = byte_buffer::create({0x1, 0x2, 0x3}).value();
     if (ue_ctx_setup.drbs_to_be_setup_list_present) {
       du_to_f1_resp.drbs_setup.resize(ue_ctx_setup.drbs_to_be_setup_list.size());
       for (size_t i = 0; i < ue_ctx_setup.drbs_to_be_setup_list.size(); ++i) {
@@ -156,7 +156,7 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number(),
             this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
   ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
-            this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg);
 }
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_the_rrc_container_is_sent_dl_via_srb1)
@@ -293,7 +293,7 @@ TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
   ASSERT_EQ(resp->srbs_setup_list[0]->srbs_setup_item().srb_id, 2);
   // > DUtoCURRCInformation included in response.
   ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
-            this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg);
 
   // F1AP sends RRC Container present in UE CONTEXT SETUP REQUEST via SRB1.
   ASSERT_EQ(test_ues[ue_index].f1c_bearers[1].rx_sdu_notifier.last_pdu,

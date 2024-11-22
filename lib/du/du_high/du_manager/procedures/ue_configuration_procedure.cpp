@@ -388,7 +388,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
 
   // Pack cellGroupConfig.
   {
-    asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
+    asn1::bit_ref     bref{resp.cell_group_cfg};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
@@ -411,7 +411,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_empty_ue_config
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
   // Pack cellGroupConfig.
   {
-    asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
+    asn1::bit_ref     bref{resp.cell_group_cfg};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }

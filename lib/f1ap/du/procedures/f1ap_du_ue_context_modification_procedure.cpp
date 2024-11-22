@@ -152,9 +152,9 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->full_cfg_present                         = false;
 
   // > DU-to-CU RRC Container.
-  if (not du_response.du_to_cu_rrc_container.empty()) {
+  if (not du_response.cell_group_cfg.empty()) {
     resp->du_to_cu_rrc_info_present        = true;
-    resp->du_to_cu_rrc_info.cell_group_cfg = du_response.du_to_cu_rrc_container.copy();
+    resp->du_to_cu_rrc_info.cell_group_cfg = du_response.cell_group_cfg.copy();
   }
 
   // > Full Config IE.
