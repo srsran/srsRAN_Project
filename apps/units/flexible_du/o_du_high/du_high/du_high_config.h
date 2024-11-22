@@ -285,14 +285,17 @@ struct du_high_unit_pucch_config {
   /// Set true for PUCCH Format 0 intra-slot frequency hopping.
   bool f0_intraslot_freq_hopping = false;
 
-  /// PUCCH F1 resource parameters.
+  /// \defgroup pucch_f1_params
+  /// \brief PUCCH F1 resource parameters.
+  /// @{
   /// \brief Enable Orthogonal Cover Code for PUCCH Format 1.
-  bool f1_enable_occ = true;
+  bool f1_enable_occ = false;
   /// \brief Number of different Initial Cyclic Shifts that can be used for PUCCH Format 1.
   /// Values: {1, 2, 3, 4, 6, 12}; 0 corresponds to "no cyclic shift".
   unsigned nof_cyclic_shift = 2;
   /// Set true for PUCCH Format 1 intra-slot frequency hopping.
   bool f1_intraslot_freq_hopping = false;
+  /// @}
 
   /// Max number of PRBs for PUCCH Format 2. Values {1,...,16}.
   unsigned f2_max_nof_rbs = 1;
