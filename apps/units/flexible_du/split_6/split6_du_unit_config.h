@@ -10,12 +10,9 @@
 
 #pragma once
 
-#include "apps/units/flexible_du/du_high/du_high_config.h"
-#include "apps/units/flexible_du/fapi/fapi_config.h"
 #include "apps/units/flexible_du/o_du_high/o_du_high_unit_config.h"
 
 namespace srsran {
-
 /// DU Split 6 unit configuration.
 struct split6_du_unit_config {
   /// O-DU high configuration.

@@ -10,8 +10,9 @@
 
 #include "split6_du_factory.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
-#include "apps/services/worker_manager.h"
+#include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_du/flexible_du_commands.h"
+#include "apps/units/flexible_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_du/o_du_high/o_du_high_unit_factory.h"
 #include "apps/units/flexible_du/split_helpers/o_du_high_factory.h"
 #include "split6_du_impl.h"
@@ -29,24 +30,23 @@ o_du_unit srsran::create_du_split6(const split6_du_unit_config&                 
       e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>(
       du_unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size());
 
-  auto du_cells = generate_du_cell_config(du_hi);
-
   std::vector<o_du_high_unit> du_high_insts;
 
   // Create O-DU high.
-  o_du_high_unit_factory_dependencies odu_hi_unit_dependencies = {du_dependencies.workers,
-                                                                  du_dependencies.f1c_client_handler,
-                                                                  du_dependencies.f1u_gw,
-                                                                  du_dependencies.timer_mng,
-                                                                  du_dependencies.mac_p,
-                                                                  du_dependencies.rlc_p,
-                                                                  du_dependencies.e2_client_handler,
+  o_du_high_unit_factory_dependencies odu_hi_unit_dependencies = {*du_dependencies.workers,
+                                                                  *du_dependencies.f1c_client_handler,
+                                                                  *du_dependencies.f1u_gw,
+                                                                  *du_dependencies.timer_mng,
+                                                                  *du_dependencies.mac_p,
+                                                                  *du_dependencies.rlc_p,
+                                                                  *du_dependencies.e2_client_handler,
                                                                   *(odu_unit.e2_metric_connectors),
-                                                                  du_dependencies.json_sink,
-                                                                  du_dependencies.metrics_notifier,
+                                                                  *du_dependencies.json_sink,
+                                                                  *du_dependencies.metrics_notifier,
                                                                   {}};
 
-  for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
+  const auto& du_hi_unit_cfg = du_unit_cfg.odu_high_cfg.du_high_cfg.config;
+  for (unsigned i = 0, e = du_hi_unit_cfg.cells_cfg.size(); i != e; ++i) {
     auto& sector_deps   = odu_hi_unit_dependencies.o_du_hi_dependencies.sectors.emplace_back();
     sector_deps.gateway = &fapi_adaptors[i]->get_message_interface_collection().get_slot_message_gateway();
     sector_deps.last_msg_notifier =
@@ -70,7 +70,7 @@ o_du_unit srsran::create_du_split6(const split6_du_unit_config&                 
   odu_unit.unit = std::make_unique<split6_du_impl>(std::move(fapi_adaptors), std::move(odu_high_insts));
   report_error_if_not(odu_unit.unit, "Invalid Distributed Unit");
 
-  announce_du_high_cells(du_hi);
+  announce_du_high_cells(du_hi_unit_cfg);
 
   return odu_unit;
 }
