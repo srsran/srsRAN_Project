@@ -161,7 +161,7 @@ void benchmark_pdcp_tx(bench_params                  params,
         srslog::fetch_basic_logger("PDCP").error("Unexpected num_max_count_reached={}", frame->num_max_count_reached);
       }
     }
-    pdcp_tx.release();
+    pdcp_tx.reset();
 
     // Prepare SDU list for benchmark
     sdu_list.clear();
