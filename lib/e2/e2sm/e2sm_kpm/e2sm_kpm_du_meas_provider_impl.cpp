@@ -19,11 +19,11 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
 {
   // Array of supported metrics.
   supported_metrics.emplace(
-      "CQI", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_cqi});
+      "CQI", e2sm_kpm_supported_metric_t{NO_LABEL, UNKNOWN_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_cqi});
   supported_metrics.emplace(
-      "RSRP", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_rsrp});
+      "RSRP", e2sm_kpm_supported_metric_t{NO_LABEL, UNKNOWN_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_rsrp});
   supported_metrics.emplace(
-      "RSRQ", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_rsrq});
+      "RSRQ", e2sm_kpm_supported_metric_t{NO_LABEL, UNKNOWN_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_rsrq});
 
   supported_metrics.emplace(
       "RRU.PrbAvailDl",
