@@ -578,23 +578,25 @@ public:
     report_fatal_error_if_not(bsr_mac_subpdu.append(lbsr_buff_sz), "Failed to allocate PDU");
 
     // Instantiate a DU-high object.
-    cfg.ran.gnb_du_id                              = (gnb_du_id_t)1;
-    cfg.ran.gnb_du_name                            = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
-    cfg.exec_mapper                                = &workers->get_exec_mapper();
-    cfg.f1c_client                                 = &sim_cu_cp;
-    cfg.f1u_gw                                     = &sim_cu_up;
-    cfg.phy_adapter                                = &sim_phy;
-    cfg.timers                                     = &timers;
+    cfg.ran.gnb_du_id   = (gnb_du_id_t)1;
+    cfg.ran.gnb_du_name = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
+
     cfg.ran.cells                                  = {config_helpers::make_default_du_cell_config(params)};
     cfg.ran.sched_cfg                              = config_helpers::make_default_scheduler_expert_config();
     cfg.ran.sched_cfg.log_high_latency_diagnostics = sched_tracing_enabled;
     cfg.ran.sched_cfg.ue.strategy_cfg              = strategy_cfg;
     cfg.ran.sched_cfg.ue.pdsch_nof_rbs             = {1, max_nof_rbs_per_dl_grant};
     cfg.ran.mac_cfg                                = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.ran.qos                   = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
-    cfg.mac_p                     = &mac_pcap;
-    cfg.rlc_p                     = &rlc_pcap;
-    cfg.sched_ue_metrics_notifier = &metrics_handler;
+    cfg.ran.qos = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
+
+    dependencies.exec_mapper               = &workers->get_exec_mapper();
+    dependencies.f1c_client                = &sim_cu_cp;
+    dependencies.f1u_gw                    = &sim_cu_up;
+    dependencies.phy_adapter               = &sim_phy;
+    dependencies.timers                    = &timers;
+    dependencies.mac_p                     = &mac_pcap;
+    dependencies.rlc_p                     = &rlc_pcap;
+    dependencies.sched_ue_metrics_notifier = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     cfg.ran.cells[0].pucch_cfg.nof_sr_resources               = 30;
@@ -609,7 +611,7 @@ public:
     cfg.ran.sched_cfg.ue.max_puschs_per_slot    = 61;
     cfg.ran.sched_cfg.ue.max_ul_grants_per_slot = 64;
 
-    du_hi = std::make_unique<du_high_impl>(cfg);
+    du_hi = std::make_unique<du_high_impl>(cfg, dependencies);
 
     // Create PDCP PDU Payload.
     report_fatal_error_if_not(
@@ -1042,6 +1044,7 @@ public:
   const unsigned             tx_rx_delay = 4;
   cell_config_builder_params params;
   du_high_configuration      cfg{};
+  du_high_dependencies       dependencies{};
   /// Size of the DL buffer status to push for DL Tx.
   unsigned     f1u_dl_pdu_bytes_per_slot;
   units::bytes f1u_pdu_size{DEFAULT_DL_PDU_SIZE};

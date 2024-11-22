@@ -205,26 +205,28 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_params&  o_du_hi
   // Assign different initial C-RNTIs to different DUs.
   du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601 + (0x1000 * o_du_high_unit_cfg.du_index));
   du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
-  du_hi_cfg.exec_mapper               = &dependencies.execution_mapper;
-  du_hi_cfg.f1c_client                = &dependencies.f1c_client_handler;
-  du_hi_cfg.f1u_gw                    = &dependencies.f1u_gw;
-  du_hi_cfg.phy_adapter               = nullptr;
-  du_hi_cfg.timers                    = &dependencies.timer_mng;
-  du_hi_cfg.mac_p                     = &dependencies.mac_p;
-  du_hi_cfg.rlc_p                     = &dependencies.rlc_p;
+
+  srs_du::du_high_dependencies& du_hi_deps = dependencies.o_du_hi_dependencies.du_hi;
+  du_hi_deps.exec_mapper                   = &dependencies.execution_mapper;
+  du_hi_deps.f1c_client                    = &dependencies.f1c_client_handler;
+  du_hi_deps.f1u_gw                        = &dependencies.f1u_gw;
+  du_hi_deps.phy_adapter                   = nullptr;
+  du_hi_deps.timers                        = &dependencies.timer_mng;
+  du_hi_deps.mac_p                         = &dependencies.mac_p;
+  du_hi_deps.rlc_p                         = &dependencies.rlc_p;
 
   if (du_high_unit_cfg.e2_cfg.enable_unit_e2) {
     // Connect E2 agent to RLC metric source.
-    du_hi_cfg.e2_client   = &dependencies.e2_client_handler;
-    du_hi_cfg.e2ap_config = generate_e2_config(du_high_unit_cfg);
-    du_hi_cfg.e2_du_metric_iface =
+    dependencies.o_du_hi_dependencies.e2_client = &dependencies.e2_client_handler;
+    o_du_high_cfg.e2ap_config                   = generate_e2_config(du_high_unit_cfg);
+    dependencies.o_du_hi_dependencies.e2_du_metric_iface =
         &(dependencies.e2_metric_connectors.get_e2_metrics_interface(o_du_high_unit_cfg.du_index));
   }
 
   // DU high metrics.
   o_du_high_unit odu_unit;
 
-  du_hi_cfg.sched_ue_metrics_notifier =
+  du_hi_deps.sched_ue_metrics_notifier =
       build_scheduler_du_metrics(odu_unit.metrics,
                                  odu_unit.commands,
                                  dependencies.metrics_notifier,
@@ -232,7 +234,7 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_params&  o_du_hi
                                  dependencies.json_sink,
                                  dependencies.e2_metric_connectors.get_e2_metric_notifier(o_du_high_unit_cfg.du_index));
 
-  du_hi_cfg.rlc_metrics_notif =
+  du_hi_deps.rlc_metrics_notif =
       build_rlc_du_metrics(odu_unit.metrics,
                            dependencies.metrics_notifier,
                            du_high_unit_cfg,

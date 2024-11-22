@@ -13,8 +13,6 @@
 #include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/du/du_high/du_manager/du_manager.h"
-#include "srsran/e2/e2_du.h"
-#include "srsran/e2/e2_du_factory.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/mac/mac.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -26,14 +24,14 @@ namespace srs_du {
 class du_high_impl final : public du_high
 {
 public:
-  explicit du_high_impl(const du_high_configuration& cfg_);
+  explicit du_high_impl(const du_high_configuration& cfg_, const du_high_dependencies& dependencies);
   ~du_high_impl();
 
   void start() override;
 
   void stop() override;
 
-  f1ap_message_handler& get_f1ap_message_handler() override;
+  f1ap_du& get_f1ap_du() override;
 
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) override;
 
@@ -68,9 +66,6 @@ private:
   std::unique_ptr<mac_interface>        mac;
 
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
-
-  // E2 Agent.
-  std::unique_ptr<e2_agent> e2agent;
 };
 
 } // namespace srs_du

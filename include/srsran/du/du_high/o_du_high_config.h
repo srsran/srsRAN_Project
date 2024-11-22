@@ -11,8 +11,12 @@
 #pragma once
 
 #include "srsran/du/du_high/du_high_configuration.h"
+#include "srsran/e2/e2ap_configuration.h"
 
 namespace srsran {
+
+class e2_du_metrics_interface;
+class e2_connection_client;
 
 namespace fapi {
 class slot_message_gateway;
@@ -33,6 +37,8 @@ struct o_du_high_config {
   srs_du::du_high_configuration du_hi;
   /// O-RAN DU high FAPI configuration.
   o_du_high_fapi_config fapi;
+  /// E2AP configuration.
+  e2ap_configuration e2ap_config;
 };
 
 /// O-RAN DU high sector dependencies. Contains the dependencies of one sector.
@@ -46,6 +52,9 @@ struct o_du_high_sector_dependencies {
 /// O-RAN DU high dependencies.
 struct o_du_high_dependencies {
   std::vector<o_du_high_sector_dependencies> sectors;
+  du_high_dependencies                       du_hi;
+  e2_connection_client*                      e2_client          = nullptr;
+  e2_du_metrics_interface*                   e2_du_metric_iface = nullptr;
 };
 
 } // namespace srs_du

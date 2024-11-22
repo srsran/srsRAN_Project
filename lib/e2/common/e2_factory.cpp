@@ -30,7 +30,7 @@ std::unique_ptr<e2_interface> srsran::create_e2(e2ap_configuration&      e2ap_cf
   return e2;
 }
 
-std::unique_ptr<e2_agent> srsran::create_e2_du_agent(e2ap_configuration&            e2ap_cfg_,
+std::unique_ptr<e2_agent> srsran::create_e2_du_agent(const e2ap_configuration&      e2ap_cfg_,
                                                      e2_connection_client&          e2_client_,
                                                      e2_du_metrics_interface*       e2_metrics_var,
                                                      srs_du::f1ap_ue_id_translator* f1ap_ue_id_translator_,

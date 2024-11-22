@@ -70,17 +70,19 @@ protected:
     phy_dummy phy;
 
     du_high_configuration du_cfg{};
-    du_cfg.exec_mapper     = workers.exec_mapper.get();
-    du_cfg.f1c_client      = &f1c_gw;
-    du_cfg.f1u_gw          = &f1u_gw;
-    du_cfg.phy_adapter     = &phy;
-    du_cfg.timers          = &timers;
     du_cfg.ran.cells       = {config_helpers::make_default_du_cell_config()};
     du_cfg.ran.sched_cfg   = config_helpers::make_default_scheduler_expert_config();
     du_cfg.ran.gnb_du_name = "test_du";
 
+    du_high_dependencies du_dependencies;
+    du_dependencies.exec_mapper = workers.exec_mapper.get();
+    du_dependencies.f1c_client  = &f1c_gw;
+    du_dependencies.f1u_gw      = &f1u_gw;
+    du_dependencies.phy_adapter = &phy;
+    du_dependencies.timers      = &timers;
+
     // create DU object
-    du_obj = make_du_high(std::move(du_cfg));
+    du_obj = make_du_high(std::move(du_cfg), du_dependencies);
 
     // start CU and DU
     du_obj->start();

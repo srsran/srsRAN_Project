@@ -62,7 +62,7 @@ TEST_F(paging_tester, when_paging_message_is_received_its_relayed_to_ue)
   cu_notifier.last_f1ap_msgs.clear();
   ASSERT_TRUE(not this->du_high_cfg.ran.cells.empty());
   const auto du_cell_cfg = this->du_high_cfg.ran.cells[0];
-  this->du_hi->get_f1ap_message_handler().handle_message(generate_paging_message(five_g_tmsi, du_cell_cfg.nr_cgi));
+  this->du_hi->get_f1ap_du().handle_message(generate_paging_message(five_g_tmsi, du_cell_cfg.nr_cgi));
   // Flag indicating whether UE is Paged or not.
   bool ue_is_paged{false};
 
