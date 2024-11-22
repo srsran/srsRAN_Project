@@ -60,7 +60,7 @@ public:
   bool start() override;
   void stop() override;
 
-  // NGAP interface
+  // NGAP interface.
   ngap_message_handler* get_ngap_message_handler(const plmn_identity& plmn) override;
 
   bool amfs_are_connected() override;
@@ -68,7 +68,7 @@ public:
   // CU-UP handler
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
-  // cu_cp_rrc_ue_interface
+  // cu_cp_rrc_ue_interface.
   rrc_ue_reestablishment_context_response
                    handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
@@ -78,11 +78,11 @@ public:
   async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
   async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
 
-  // cu_cp_ue_context_manipulation_handler
+  // cu_cp_ue_context_manipulation_handler.
   async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) override;
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
 
-  // cu_cp_ngap_handler
+  // cu_cp_ngap_handler.
   bool handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt) override;
   async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
   handle_new_initial_context_setup_request(const ngap_init_context_setup_request& request) override;
@@ -98,33 +98,34 @@ public:
                    handle_ngap_handover_request(const ngap_handover_request& request) override;
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
   ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) override;
-  void handle_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) override;
+  void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
+  void handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) override;
   void handle_n2_disconnection() override;
 
-  // cu_cp_measurement_handler
+  // cu_cp_measurement_handler.
   std::optional<rrc_meas_cfg>
        handle_measurement_config_request(ue_index_t                  ue_index,
                                          nr_cell_identity            nci,
                                          std::optional<rrc_meas_cfg> current_meas_config = {}) override;
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
-  // cu_cp_measurement_config_handler
+  // cu_cp_measurement_config_handler.
   bool handle_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override;
 
-  // cu_cp_mobility_manager_handler
+  // cu_cp_mobility_manager_handler.
   async_task<cu_cp_intra_cu_handover_response>
   handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request& request,
                                    du_index_t&                            source_du_index,
                                    du_index_t&                            target_du_index) override;
 
-  // cu_cp_ue_removal_handler
+  // cu_cp_ue_removal_handler.
   async_task<void> handle_ue_removal_request(ue_index_t ue_index) override;
   void             handle_pending_ue_task_cancellation(ue_index_t ue_index) override;
 
   cu_cp_mobility_command_handler& get_mobility_command_handler() override { return *mobility_mng; }
   metrics_handler&                get_metrics_handler() override { return *metrics_hdlr; }
 
-  // cu_cp public interface
+  // cu_cp public interface.
   cu_cp_f1c_handler&                     get_f1c_handler() override { return controller->get_f1c_handler(); }
   cu_cp_e1_handler&                      get_e1_handler() override { return controller->get_e1_handler(); }
   cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler() override { return *this; }
@@ -146,25 +147,28 @@ private:
 
   async_task<void> handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override;
 
-  // NGAP UE creation handler
+  // NGAP UE creation handler.
   ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) override;
 
-  // cu_cp_task_scheduler_handler
+  // cu_cp_task_scheduler_handler.
   bool schedule_ue_task(ue_index_t ue_index, async_task<void> task) override;
 
   void on_statistics_report_timer_expired();
 
   cu_cp_configuration cfg;
 
-  // logger
+  // Logger.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
 
-  // Components
+  // Components.
+  // UE manager.
   ue_manager ue_mng;
 
+  // Mobility manager.
   std::unique_ptr<mobility_manager> mobility_mng;
 
-  cell_meas_manager cell_meas_mng; // cell measurement manager
+  // Cell measurement manager.
+  cell_meas_manager cell_meas_mng;
 
   cu_cp_common_task_scheduler common_task_sched;
 
@@ -174,16 +178,16 @@ private:
   // Cell Measurement Manager to mobility manager adapters
   cell_meas_mobility_manager_adapter cell_meas_ev_notifier;
 
-  // E1AP to CU-CP adapter
+  // E1AP to CU-CP adapter.
   e1ap_cu_cp_adapter e1ap_ev_notifier;
 
-  // NGAP to CU-CP adapters
+  // NGAP to CU-CP adapters.
   ngap_cu_cp_adapter ngap_cu_cp_ev_notifier;
 
-  // Mobility manager to CU-CP adapter
+  // Mobility manager to CU-CP adapter.
   mobility_manager_adapter mobility_manager_ev_notifier;
 
-  // RRC DU to CU-CP adapters
+  // RRC DU to CU-CP adapter.
   rrc_du_cu_cp_adapter rrc_du_cu_cp_notifier;
 
   // DU connections being managed by the CU-CP.

@@ -354,9 +354,14 @@ public:
     });
   }
 
-  void on_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) override
+  void on_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override
   {
-    logger.error("DL non UE associated NRPPa transport failed. Cause: NRPPa transport messages not supported.");
+    logger.error("DL UE associated NRPPa transport failed. Cause: NRPPa transport PDUs not supported.");
+  }
+
+  void on_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) override
+  {
+    logger.error("DL non UE associated NRPPa transport failed. Cause: NRPPa transport PDUs not supported.");
   }
 
   ue_index_t                                 last_ue = ue_index_t::invalid;

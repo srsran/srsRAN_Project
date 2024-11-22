@@ -58,7 +58,7 @@ public:
   /// \returns Pointer to the NGAP UE notifier.
   virtual ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) = 0;
 
-  /// \brief Initialize security context by selecting security algorithms and generating K_rrc_enc and K_rrc_int
+  /// \brief Initialize security context by selecting security algorithms and generating K_rrc_enc and K_rrc_int.
   /// \param[in] ue_index Index of the UE.
   /// \param[in] sec_ctxt The received security context.
   /// \return True if the security context was successfully initialized, false otherwise.
@@ -99,11 +99,14 @@ public:
   /// \returns True if the Handover Command was successfully handled, false otherwise.
   virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 
-  /// \brief Handles UE index allocation request for N2 handover at target gNB
+  /// \brief Handles UE index allocation request for N2 handover at target gNB.
   virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
 
+  /// \brief Handles a DL UE associated NRPPa transport.
+  virtual void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
+
   /// \brief Handles a DL non UE associated NRPPa transport.
-  virtual void handle_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) = 0;
+  virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Handle N2 AMF connection drop.
   virtual void handle_n2_disconnection() = 0;
@@ -120,7 +123,7 @@ public:
   virtual void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
 };
 
-/// Interface used to handle DU specific procedures
+/// Interface used to handle DU specific procedures.
 class cu_cp_du_event_handler
 {
 public:
@@ -204,7 +207,7 @@ public:
   virtual void handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
 };
 
-/// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments
+/// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments.
 class cu_cp_rrc_ue_context_transfer_notifier
 {
 public:
@@ -214,7 +217,7 @@ public:
   virtual rrc_ue_reestablishment_context_response on_rrc_ue_context_transfer() = 0;
 };
 
-/// Interface to handle measurement requests
+/// Interface to handle measurement requests.
 class cu_cp_measurement_handler
 {
 public:
@@ -233,7 +236,7 @@ public:
   virtual void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;
 };
 
-/// Interface to handle measurement config update requests
+/// Interface to handle measurement config update requests.
 class cu_cp_measurement_config_handler
 {
 public:
@@ -259,7 +262,7 @@ public:
                                    du_index_t&                            target_du_index) = 0;
 };
 
-/// Interface to handle ue removals
+/// Interface to handle ue removals.
 class cu_cp_ue_removal_handler
 {
 public:
