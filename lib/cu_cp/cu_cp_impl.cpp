@@ -27,6 +27,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/nrppa/nrppa.h"
 #include "srsran/rrc/rrc_du.h"
+#include "srsran/support/compiler.h"
 #include <chrono>
 #include <dlfcn.h>
 #include <future>
@@ -51,7 +52,7 @@ static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(cfg),
-  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_ev_notifier, ue_mng),
+  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_mobility_notifier, cell_meas_ev_notifier, ue_mng),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
@@ -76,6 +77,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
+  cell_meas_ev_notifier.connect_cu_cp(get_cu_cp_positioning_measurement_handler());
 
   ngap_db = std::make_unique<ngap_repository>(
       ngap_repository_config{cfg, get_cu_cp_ngap_handler(), paging_handler, srslog::fetch_basic_logger("CU-CP")});
@@ -86,7 +88,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   mobility_mng = create_mobility_manager(
       cfg.mobility.mobility_manager_config, mobility_manager_ev_notifier, *ngap_db, du_db, ue_mng);
-  cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng);
+  cell_meas_mobility_notifier.connect_mobility_manager(*mobility_mng);
 
   // Start statistics report timer
   statistics_report_timer = cfg.services.timers->create_unique_timer(*cfg.services.cu_cp_executor);
@@ -641,6 +643,12 @@ void cu_cp_impl::handle_measurement_report(const ue_index_t ue_index, const rrc_
 bool cu_cp_impl::handle_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg)
 {
   return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
+}
+
+SRSRAN_WEAK_SYMB void cu_cp_impl::handle_valid_ue_measurement(const ue_index_t        ue_index,
+                                                              const rrc_meas_results& meas_results)
+{
+  logger.info("NRPPa messages are not supported");
 }
 
 async_task<cu_cp_intra_cu_handover_response>

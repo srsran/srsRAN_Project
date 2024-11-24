@@ -267,6 +267,16 @@ public:
                                                  const serving_cell_meas_config& serv_cell_cfg) = 0;
 };
 
+/// Interface to handle measurements for positioning.
+class cu_cp_positioning_measurement_handler
+{
+public:
+  virtual ~cu_cp_positioning_measurement_handler() = default;
+
+  /// \brief Handle a valid UE measurement report.
+  virtual void handle_valid_ue_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_result) = 0;
+};
+
 /// Interface to request handover.
 class cu_cp_mobility_manager_handler
 {
@@ -299,6 +309,7 @@ class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
                              public cu_cp_rrc_ue_interface,
                              public cu_cp_measurement_handler,
                              public cu_cp_measurement_config_handler,
+                             public cu_cp_positioning_measurement_handler,
                              public cu_cp_ngap_handler,
                              public cu_cp_nrppa_handler,
                              public cu_cp_ue_context_manipulation_handler,
@@ -308,15 +319,16 @@ class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
 public:
   virtual ~cu_cp_impl_interface() = default;
 
-  virtual cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler()               = 0;
-  virtual cu_cp_ngap_handler&                    get_cu_cp_ngap_handler()               = 0;
-  virtual cu_cp_nrppa_handler&                   get_cu_cp_nrppa_handler()              = 0;
-  virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()           = 0;
-  virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler()         = 0;
-  virtual cu_cp_measurement_handler&             get_cu_cp_measurement_handler()        = 0;
-  virtual cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() = 0;
-  virtual cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler()   = 0;
-  virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler()         = 0;
+  virtual cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler()                    = 0;
+  virtual cu_cp_ngap_handler&                    get_cu_cp_ngap_handler()                    = 0;
+  virtual cu_cp_nrppa_handler&                   get_cu_cp_nrppa_handler()                   = 0;
+  virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()                = 0;
+  virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler()              = 0;
+  virtual cu_cp_measurement_handler&             get_cu_cp_measurement_handler()             = 0;
+  virtual cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler()      = 0;
+  virtual cu_cp_positioning_measurement_handler& get_cu_cp_positioning_measurement_handler() = 0;
+  virtual cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler()        = 0;
+  virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler()              = 0;
 };
 
 } // namespace srs_cu_cp

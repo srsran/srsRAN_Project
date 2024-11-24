@@ -20,8 +20,13 @@ using namespace srs_cu_cp;
 
 cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
                                      cell_meas_mobility_manager_notifier& mobility_mng_notifier_,
+                                     cell_meas_manager_cu_cp_notifier&    cu_cp_notifier_,
                                      ue_manager&                          ue_mng_) :
-  cfg(cfg_), mobility_mng_notifier(mobility_mng_notifier_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
+  cfg(cfg_),
+  mobility_mng_notifier(mobility_mng_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
+  ue_mng(ue_mng_),
+  logger(srslog::fetch_basic_logger("CU-CP"))
 {
   srsran_assert(is_valid_configuration(cfg, ssb_freq_to_meas_object), "Invalid cell measurement configuration");
   generate_measurement_objects_for_serving_cells();
@@ -199,6 +204,9 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
   }
 
   auto& meas_ctxt = ue_meas_context.meas_id_to_meas_context.at(meas_results.meas_id);
+
+  // Forward measurement to CU-CP.
+  cu_cp_notifier.on_valid_ue_measurement(ue_index, meas_results);
 
   // Ignore id with periodic measurements.
 

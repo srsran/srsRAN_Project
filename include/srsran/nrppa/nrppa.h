@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/rrc/meas_types.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -56,13 +57,24 @@ public:
   virtual void handle_new_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
 };
 
+/// This interface is used to push UE measurements to the NRPPA interface.
+class nrppa_measurement_handler
+{
+public:
+  virtual ~nrppa_measurement_handler() = default;
+
+  /// Handle the incoming UE measurement.
+  virtual void handle_ue_measurement(ue_index_t ue_index, const rrc_meas_results& meas_result) = 0;
+};
+
 /// Combined entry point for the NRPPA object.
-class nrppa_interface : public nrppa_message_handler
+class nrppa_interface : public nrppa_message_handler, public nrppa_measurement_handler
 {
 public:
   virtual ~nrppa_interface() = default;
 
-  virtual nrppa_message_handler& get_nrppa_message_handler() = 0;
+  virtual nrppa_message_handler&     get_nrppa_message_handler()     = 0;
+  virtual nrppa_measurement_handler& get_nrppa_measurement_handler() = 0;
 };
 
 } // namespace srs_cu_cp
