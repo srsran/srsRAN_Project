@@ -406,14 +406,14 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
   bool use_transform_precoder  = ue_cell_cfg.use_pusch_transform_precoding_dci_0_1();
   f0_1.antenna_ports           = get_pusch_antenna_port_mapping_row_index(
       nof_layers, use_transform_precoder, dmrs_config_type::type1, dmrs_max_length::len1);
-  f0_1.precoding_info_nof_layers =
-      get_pusch_precoding_info_row_index(nof_layers,
-                                         ue_cell_cfg.get_pusch_codebook_config().max_rank.value(),
-                                         srs_resource_configuration::one_two_four_enum::four,
-                                         use_transform_precoder,
-                                         dmrs_config_type::type1,
-                                         dmrs_max_length::len1,
-                                         tpmi);
+  f0_1.precoding_info_nof_layers = get_pusch_precoding_info_row_index(
+      nof_layers,
+      ue_cell_cfg.get_pusch_codebook_config().max_rank.value(),
+      static_cast<srs_resource_configuration::one_two_four_enum>(ue_cell_cfg.get_srs_nof_ports()),
+      use_transform_precoder,
+      dmrs_config_type::type1,
+      dmrs_max_length::len1,
+      tpmi);
 
   // See 38.212, clause 7.3.1.1.2 - N^{UL,BWP}_RB for C-RNTI.
   const vrb_interval vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());
