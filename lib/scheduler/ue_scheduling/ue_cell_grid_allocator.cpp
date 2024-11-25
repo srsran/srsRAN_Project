@@ -1114,22 +1114,21 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
   const bwp_configuration& active_bwp = *last_pusch.pusch_cfg.bwp_cfg;
   crb_interval             crbs       = rb_helper::vrb_to_crb_ul_non_interleaved(vrbs, active_bwp.crbs.start());
   // Account for limits in number of RBs that can be allocated.
-  const unsigned max_crbs = adjust_ue_max_ul_nof_rbs(expert_cfg, ue_cc, dci_type, active_bwp.crbs.stop() - crbs.stop());
+  const unsigned max_crbs = adjust_ue_max_ul_nof_rbs(expert_cfg, ue_cc, dci_type, active_bwp.crbs.stop());
+  if (max_crbs <= crbs.length()) {
+    return;
+  }
 
-  crb_interval empty_crbs = rb_helper::find_empty_interval_of_length(used_crbs, max_crbs, crbs.stop());
-  if (empty_crbs.empty()) {
+  crb_interval empty_crbs = rb_helper::find_empty_interval_of_length(used_crbs, max_crbs - crbs.stop(), crbs.stop());
+  if (empty_crbs.empty() or empty_crbs.start() != crbs.stop()) {
     // Could not extend existing PUSCH.
     return;
   }
   // There are RBs empty to the left of the last allocation. Let's expand the allocation.
 
-  crb_interval new_crbs{crbs.start(), empty_crbs.stop()};
-  new_crbs.resize(adjust_nof_rbs_to_transform_precoding(new_crbs.length(), ue_cc, dci_type));
-
-  if (new_crbs.length() <= crbs.length()) {
-    // There is no growth possible.
-    return;
-  }
+  crb_interval old_crbs = crbs;
+  crbs                  = {old_crbs.start(), empty_crbs.stop()};
+  crbs.resize(adjust_nof_rbs_to_transform_precoding(crbs.length(), ue_cc, dci_type));
 
   // Find respective PDCCH.
   auto& pdcch_alloc = cell_alloc[pusch_slot - last_pusch.context.k2];
@@ -1144,10 +1143,9 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
   }
   pdcch_ul_information& pdcch = *it;
 
-  vrb_interval new_vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(new_crbs, active_bwp.crbs.start());
+  vrb_interval new_vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_bwp.crbs.start());
 
   // Mark resources as occupied in the ResourceGrid.
-  empty_crbs = {crbs.stop(), new_crbs.stop()};
   pusch_alloc.ul_res_grid.fill(grant_info{scs, last_pusch.pusch_cfg.symbols, empty_crbs});
 
   // Recompute MCS and TBS.
@@ -1163,7 +1161,7 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
   bool contains_dc =
       dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, crbs);
   std::optional<sch_mcs_tbs> mcs_tbs_info =
-      compute_ul_mcs_tbs(pusch_cfg, &ue_cc.cfg(), last_pusch.pusch_cfg.mcs_index, new_crbs.length(), contains_dc);
+      compute_ul_mcs_tbs(pusch_cfg, &ue_cc.cfg(), last_pusch.pusch_cfg.mcs_index, crbs.length(), contains_dc);
   if (not mcs_tbs_info.has_value()) {
     return;
   }
@@ -1181,7 +1179,7 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
 
   // Update HARQ.
   ul_harq_alloc_context pusch_sched_ctx;
-  pusch_sched_ctx.dci_cfg_type = h_ul->get_grant_params().dci_cfg_type;
+  pusch_sched_ctx.dci_cfg_type = dci_type;
   pusch_sched_ctx.olla_mcs     = h_ul->get_grant_params().olla_mcs;
   pusch_sched_ctx.slice_id     = h_ul->get_grant_params().slice_id;
   h_ul->save_grant_params(pusch_sched_ctx, last_pusch.pusch_cfg);
