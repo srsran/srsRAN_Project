@@ -229,6 +229,8 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
       // Re-apply nof. PDSCH RBs to allocate limits.
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.start());
       mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.stop());
+      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.start());
+      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop());
     }
 
     if (mcs_prbs.n_prbs == 0) {
@@ -721,6 +723,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
 
       // Apply minimum RB limit per grant.
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.start());
+      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.start());
+      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.stop());
 
       // Re-apply nof. PUSCH RBs to allocate limits.
       mcs_prbs.n_prbs = adjust_ue_max_ul_nof_rbs(expert_cfg, *ue_cc, dci_type, mcs_prbs.n_prbs);
