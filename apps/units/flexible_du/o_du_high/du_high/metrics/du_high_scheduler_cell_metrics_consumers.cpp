@@ -33,6 +33,9 @@ DECLARE_METRIC("dl_bs", metric_dl_bs, unsigned, "");
 DECLARE_METRIC("pusch_snr_db", metric_pusch_snr_db, float, "");
 DECLARE_METRIC("pucch_snr_db", metric_pucch_snr_db, float, "");
 DECLARE_METRIC("ta_ns", metric_ta_ns, std::string, "");
+DECLARE_METRIC("pusch_ta_ns", metric_pusch_ta_ns, std::string, "");
+DECLARE_METRIC("pucch_ta_ns", metric_pucch_ta_ns, std::string, "");
+DECLARE_METRIC("srs_ta_ns", metric_srs_ta_ns, std::string, "");
 DECLARE_METRIC("ul_mcs", metric_ul_mcs, uint8_t, "");
 DECLARE_METRIC("ul_brate", metric_ul_brate, double, "");
 DECLARE_METRIC("ul_nof_ok", metric_ul_nof_ok, unsigned, "");
@@ -52,6 +55,9 @@ DECLARE_METRIC_SET("ue_container",
                    metric_pusch_snr_db,
                    metric_pucch_snr_db,
                    metric_ta_ns,
+                   metric_pusch_ta_ns,
+                   metric_pucch_ta_ns,
+                   metric_srs_ta_ns,
                    metric_ul_mcs,
                    metric_ul_brate,
                    metric_ul_nof_ok,
@@ -190,8 +196,12 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const app_services::m
       fmt::print(" {:>3}%", 0);
     }
     fmt::print(" {}", scaled_fmt_integer(ue.bsr, true));
-    if (ue.ta_stats.get_nof_observations() > 0) {
-      fmt::print(" {}", float_to_eng_string(ue.ta_stats.get_mean(), 0, true));
+    if (ue.srs_ta_stats.get_nof_observations() > 0) {
+      fmt::print(" {}", float_to_eng_string(ue.srs_ta_stats.get_mean(), 0, true));
+    } else if (ue.pusch_ta_stats.get_nof_observations() > 0) {
+      fmt::print(" {}", float_to_eng_string(ue.pusch_ta_stats.get_mean(), 0, true));
+    } else if (ue.pucch_ta_stats.get_nof_observations() > 0) {
+      fmt::print(" {}", float_to_eng_string(ue.pucch_ta_stats.get_mean(), 0, true));
     } else {
       fmt::print("   n/a");
     }
@@ -243,6 +253,12 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     }
     output.write<metric_ta_ns>((ue.ri_stats.get_nof_observations() > 0) ? std::to_string(ue.ta_stats.get_mean() * 1e9)
                                                                         : "n/a");
+    output.write<metric_pusch_ta_ns>(
+        (ue.pusch_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.pusch_ta_stats.get_mean() * 1e9) : "n/a");
+    output.write<metric_pucch_ta_ns>(
+        (ue.pucch_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.pucch_ta_stats.get_mean() * 1e9) : "n/a");
+    output.write<metric_srs_ta_ns>(
+        (ue.srs_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.srs_ta_stats.get_mean() * 1e9) : "n/a");
     output.write<metric_ul_mcs>(ue.ul_mcs.to_uint());
     output.write<metric_ul_brate>(ue.ul_brate_kbps * 1e3);
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);
@@ -388,9 +404,14 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       fmt::format_to(buffer, " ul_olla={}", ue.last_ul_olla);
     }
     if (ue.ta_stats.get_nof_observations() > 0) {
-      fmt::print(" ta={}s", float_to_eng_string(ue.ta_stats.get_mean(), 0, false));
+      fmt::format_to(buffer, " ta={}s", float_to_eng_string(ue.ta_stats.get_mean(), 0, false));
     } else {
-      fmt::print(" ta=n/a");
+      fmt::format_to(buffer, " ta=n/a");
+    }
+    if (ue.srs_ta_stats.get_nof_observations() > 0) {
+      fmt::format_to(buffer, " srs_ta={}s", float_to_eng_string(ue.srs_ta_stats.get_mean(), 0, false));
+    } else {
+      fmt::format_to(buffer, " srs_ta=n/a");
     }
     if (ue.last_phr.has_value()) {
       fmt::format_to(buffer, " last_phr={}", ue.last_phr.value());

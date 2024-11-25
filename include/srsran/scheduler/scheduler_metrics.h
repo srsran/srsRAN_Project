@@ -49,6 +49,9 @@ struct scheduler_ue_metrics {
   std::optional<int>   last_phr;
   /// Time advance statistics in seconds.
   sample_statistics<float> ta_stats;
+  sample_statistics<float> pusch_ta_stats;
+  sample_statistics<float> pucch_ta_stats;
+  sample_statistics<float> srs_ta_stats;
   /// CQI statistics over the metrics report interval.
   sample_statistics<unsigned> cqi_stats;
   /// RI statistics over the metrics report interval.

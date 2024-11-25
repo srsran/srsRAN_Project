@@ -640,6 +640,9 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
                              // Notify UL TA update.
                              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
                                  ue_cc.cell_index, sinr_dB, srs_ptr->time_advance_offset.value());
+
+                             // Report the SRS PDU to the metrics handler.
+                             du_cells[ue_cc.cell_index].metrics->handle_srs_indication(*srs_ptr);
                            }
                          },
                          "SRS",

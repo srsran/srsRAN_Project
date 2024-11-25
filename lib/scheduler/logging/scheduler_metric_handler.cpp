@@ -78,6 +78,18 @@ void cell_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& cr
     }
     if (crc_pdu.time_advance_offset.has_value()) {
       u.data.ta.update(crc_pdu.time_advance_offset.value().to_seconds());
+      u.data.pusch_ta.update(crc_pdu.time_advance_offset.value().to_seconds());
+    }
+  }
+}
+
+void cell_metrics_handler::handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu)
+{
+  if (ues.contains(srs_pdu.ue_index)) {
+    auto& u = ues[srs_pdu.ue_index];
+    if (srs_pdu.time_advance_offset.has_value()) {
+      u.data.ta.update(srs_pdu.time_advance_offset.value().to_seconds());
+      u.data.srs_ta.update(srs_pdu.time_advance_offset.value().to_seconds());
     }
   }
 }
@@ -135,6 +147,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
 
       if (f1->time_advance_offset.has_value()) {
         u.data.ta.update(f1->time_advance_offset->to_seconds());
+        u.data.pucch_ta.update(f1->time_advance_offset->to_seconds());
       }
     } else if (const auto* f2 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
       if (f2->ul_sinr_dB.has_value()) {
@@ -147,6 +160,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
 
       if (f2->time_advance_offset.has_value()) {
         u.data.ta.update(f2->time_advance_offset->to_seconds());
+        u.data.pucch_ta.update(f2->time_advance_offset->to_seconds());
       }
     } else {
       // PUSCH case.
@@ -369,8 +383,11 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
-  ret.ta_stats = data.ta;
-  ret.last_phr = last_phr;
+  ret.ta_stats       = data.ta;
+  ret.pusch_ta_stats = data.pusch_ta;
+  ret.pucch_ta_stats = data.pucch_ta;
+  ret.srs_ta_stats   = data.srs_ta;
+  ret.last_phr       = last_phr;
 
   // Reset UE stats metrics on every report.
   reset();

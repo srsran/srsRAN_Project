@@ -54,6 +54,12 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned tot_ul_prbs_used       = 0;
       /// TA statistics over the metrics report interval, in seconds.
       sample_statistics<float> ta;
+      /// PUSCH TA statistics over the metrics report interval, in seconds.
+      sample_statistics<float> pusch_ta;
+      /// PUCCH TA statistics over the metrics report interval, in seconds.
+      sample_statistics<float> pucch_ta;
+      /// SRS TA statistics over the metrics report interval, in seconds.
+      sample_statistics<float> srs_ta;
       /// CQI statistics over the metrics report interval.
       sample_statistics<unsigned> cqi;
       /// RI statistics over the metrics report interval.
@@ -128,6 +134,9 @@ public:
 
   /// \brief Register CRC indication.
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
+
+  /// \brief Handle SRS indication.
+  void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu);
 
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
