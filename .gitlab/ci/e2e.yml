@@ -529,6 +529,8 @@ retina setup:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: always
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: always
   interruptible: false
   image:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
