@@ -1077,6 +1077,10 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
       last_pusch = &pusch;
     }
   }
+  if (last_pusch == nullptr) {
+    // There were no candidates for extension.
+    return;
+  }
 
   const vrb_interval& vrbs = last_pusch->pusch_cfg.rbs.type1();
   if (vrbs.length() >= expert_cfg.pusch_nof_rbs.length()) {
