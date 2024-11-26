@@ -64,9 +64,9 @@ protected:
     this->f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.resize(1);
     this->f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add[0].srb_id = srb_id_t::srb2;
 
-    auto& du_to_f1_resp                  = this->f1ap_du_cfg_handler.next_ue_context_update_response;
-    du_to_f1_resp.result                 = true;
-    du_to_f1_resp.cell_group_cfg         = byte_buffer::create({0x1, 0x2, 0x3}).value();
+    auto& du_to_f1_resp          = this->f1ap_du_cfg_handler.next_ue_context_update_response;
+    du_to_f1_resp.result         = true;
+    du_to_f1_resp.cell_group_cfg = byte_buffer::create({0x1, 0x2, 0x3}).value();
     if (ue_ctx_setup.drbs_to_be_setup_list_present) {
       du_to_f1_resp.drbs_setup.resize(ue_ctx_setup.drbs_to_be_setup_list.size());
       for (size_t i = 0; i < ue_ctx_setup.drbs_to_be_setup_list.size(); ++i) {
