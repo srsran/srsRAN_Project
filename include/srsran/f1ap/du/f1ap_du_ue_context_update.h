@@ -12,12 +12,9 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/f1ap/ue_context_management_configs.h"
-#include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/ran/s_nssai.h"
 
 namespace srsran {
 namespace srs_du {
@@ -59,8 +56,8 @@ struct f1ap_ue_context_update_request {
   /// \brief If true, the gnb-DU shall generate a cell group configuration using full configuration. Otherwise, delta,
   /// should be used.
   bool full_config_required;
-  /// \brief Optional measConfig. If present, the gnb-DU shall deduce which changes to measConfig need to be applied
-  /// as per TS 38.473, 8.3.1.2.
+  /// \brief measConfig selected by the CU-CP. If non-empty, the gnb-DU shall deduce which changes to measConfig need
+  /// to be applied as per TS 38.473, 8.3.1.2.
   byte_buffer meas_cfg;
   /// \brief Optional HO preparation information. If present, the gnb-DU shall proceed with a reconfiguration with sync
   /// as defined in TS 38.331, and TS 38.473, 8.3.1.2.
