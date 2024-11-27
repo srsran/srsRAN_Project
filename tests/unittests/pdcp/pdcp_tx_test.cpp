@@ -114,7 +114,7 @@ TEST_P(pdcp_tx_test, pdu_stall)
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     uint32_t pdu_size             = sn_size == pdcp_sn_size::size12bits ? pdu_size_snlen12 : pdu_size_snlen18;
-    uint32_t rlc_queue_size       = 4096;
+    uint32_t rlc_queue_size       = 16;
     uint32_t rlc_queue_size_bytes = rlc_queue_size * pdu_size;
     pdcp_tx->handle_desired_buffer_size_notification(rlc_queue_size_bytes);
     uint32_t window_size = pdcp_window_size(sn_size);
@@ -306,7 +306,7 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     uint32_t pdu_size             = sn_size == pdcp_sn_size::size12bits ? pdu_size_snlen12 : pdu_size_snlen18;
-    uint32_t rlc_queue_size       = 4096;
+    uint32_t rlc_queue_size       = 16;
     uint32_t rlc_queue_size_bytes = rlc_queue_size * pdu_size;
     pdcp_tx->handle_desired_buffer_size_notification(rlc_queue_size_bytes);
     uint32_t window_size = pdcp_window_size(sn_size);
