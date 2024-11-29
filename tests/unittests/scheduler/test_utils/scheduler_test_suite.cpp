@@ -254,9 +254,9 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
   }
 }
 
-void srsran::test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<const dl_msg_alloc> ues)
+void srsran::test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<const dl_msg_alloc> grants)
 {
-  for (const dl_msg_alloc& grant : ues) {
+  for (const dl_msg_alloc& grant : grants) {
     ASSERT_GT(grant.pdsch_cfg.codewords[0].tb_size_bytes, 0);
     ASSERT_GT(grant.pdsch_cfg.nof_layers, 0);
     if (grant.pdsch_cfg.dci_fmt == dci_dl_format::f1_1) {
@@ -267,6 +267,18 @@ void srsran::test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<
       const crb_interval crbs = prb_to_crb(grant.pdsch_cfg.bwp_cfg->crbs, prb_interval{vrbs.start(), vrbs.stop()});
       ASSERT_TRUE(grant.pdsch_cfg.bwp_cfg->crbs.contains(crbs)) << "PDSCH outside of DL BWP RB limits";
     }
+  }
+}
+
+void srsran::test_pusch_ue_consistency(const cell_configuration& cell_cfg, span<const ul_sched_info> grants)
+{
+  for (const ul_sched_info& grant : grants) {
+    ASSERT_GT(grant.pusch_cfg.nof_layers, 0);
+
+    // Check CRBs within BWP.
+    const vrb_interval vrbs = grant.pusch_cfg.rbs.type1();
+    const crb_interval crbs = prb_to_crb(grant.pusch_cfg.bwp_cfg->crbs, prb_interval{vrbs.start(), vrbs.stop()});
+    ASSERT_TRUE(grant.pusch_cfg.bwp_cfg->crbs.contains(crbs)) << "PUSCH outside of UL BWP RB limits";
   }
 }
 
@@ -449,6 +461,7 @@ void srsran::test_scheduler_result_consistency(const cell_configuration& cell_cf
   ASSERT_NO_FATAL_FAILURE(test_prach_opportunity_validity(cell_cfg, result.ul.prachs));
   ASSERT_NO_FATAL_FAILURE(test_pdsch_rar_consistency(cell_cfg, result.dl.rar_grants));
   ASSERT_NO_FATAL_FAILURE(test_pdsch_ue_consistency(cell_cfg, result.dl.ue_grants));
+  ASSERT_NO_FATAL_FAILURE(test_pusch_ue_consistency(cell_cfg, result.ul.puschs));
   ASSERT_NO_FATAL_FAILURE(test_pdcch_common_consistency(cell_cfg, sl_tx, result.dl.dl_pdcchs));
   ASSERT_NO_FATAL_FAILURE(test_dl_resource_grid_collisions(cell_cfg, result.dl));
   ASSERT_NO_FATAL_FAILURE(test_ul_resource_grid_collisions(cell_cfg, result.ul));
