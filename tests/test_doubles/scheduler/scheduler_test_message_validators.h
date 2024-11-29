@@ -9,7 +9,7 @@
  */
 
 /// \file
-/// \brief Validators of scheduler result messages
+/// \brief Validators of scheduler result messages.
 ///
 /// The validators in this file only perform checks that do not depend on any configuration or contextual information
 /// of the scheduler or DU-high.
