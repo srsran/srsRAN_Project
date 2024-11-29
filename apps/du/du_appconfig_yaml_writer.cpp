@@ -47,9 +47,10 @@ static void fill_du_appconfig_expert_execution_section(YAML::Node node, const ex
   }
 
   {
-    YAML::Node threads_node           = node["threads"];
-    YAML::Node non_rt_node            = threads_node["non_rt"];
-    non_rt_node["nof_non_rt_threads"] = config.threads.non_rt_threads.nof_non_rt_threads;
+    YAML::Node threads_node               = node["threads"];
+    YAML::Node non_rt_node                = threads_node["non_rt"];
+    non_rt_node["nof_non_rt_threads"]     = config.threads.non_rt_threads.nof_non_rt_threads;
+    non_rt_node["non_rt_task_queue_size"] = config.threads.non_rt_threads.non_rt_task_queue_size;
   }
 }
 

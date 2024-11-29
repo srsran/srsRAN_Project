@@ -136,8 +136,9 @@ static void register_app_logs(const logger_appconfig&   log_cfg,
 
 static void fill_cu_worker_manager_config(worker_manager_config& config, const cu_appconfig& unit_cfg)
 {
-  config.nof_low_prio_threads  = unit_cfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads;
-  config.low_prio_sched_config = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
+  config.nof_low_prio_threads     = unit_cfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads;
+  config.low_prio_task_queue_size = unit_cfg.expert_execution_cfg.threads.non_rt_threads.non_rt_task_queue_size;
+  config.low_prio_sched_config    = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
 }
 
 static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o_cu_up_cfg,

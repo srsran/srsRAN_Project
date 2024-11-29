@@ -25,6 +25,9 @@ static void configure_cli11_non_rt_threads_args(CLI::App& app, non_rt_threads_ap
              "Number of non real time threads for processing of CP and UP data in upper layers.")
       ->capture_default_str()
       ->check(CLI::Number);
+  add_option(app, "--non_rt_task_queue_size", config.non_rt_task_queue_size, "Non real time task worker queue size.")
+      ->capture_default_str()
+      ->check(CLI::Number);
 }
 
 static void configure_cli11_cpu_affinities_args(CLI::App& app, cpu_affinities_appconfig& config)
