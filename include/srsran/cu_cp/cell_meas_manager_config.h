@@ -86,7 +86,7 @@ struct formatter<srsran::srs_cu_cp::cell_meas_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::cell_meas_config cfg, FormatContext& ctx)
+  auto format(srsran::srs_cu_cp::cell_meas_config cfg, FormatContext& ctx) const
   {
     std::string ncell_str = "[ ";
     for (const auto& ncell : cfg.ncells) {

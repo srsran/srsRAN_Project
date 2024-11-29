@@ -83,7 +83,8 @@ struct conres_test_params {
 /// Formatter for test params.
 void PrintTo(const conres_test_params& value, ::std::ostream* os)
 {
-  *os << fmt::format("LCID={}, mode={}", value.msg4_lcid, value.duplx_mode == duplex_mode::TDD ? "TDD" : "FDD");
+  *os << fmt::format(
+      "LCID={}, mode={}", fmt::underlying(value.msg4_lcid), value.duplx_mode == duplex_mode::TDD ? "TDD" : "FDD");
 }
 
 class scheduler_con_res_msg4_test : public base_scheduler_conres_test,
@@ -269,8 +270,8 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_ss_is_us
   }
   ASSERT_TRUE(is_common_ss_used) << "UE in fallback should use common SS";
   // PDCCH monitoring must be active in this slot.
-  ASSERT_TRUE(ss_used != nullptr and pdcch_helper::is_pdcch_monitoring_active(next_slot, *ss_used))
-      << fmt::format("Common SS id={} is not monitored at slot={}", ss_used->get_id(), next_slot.slot_index());
+  ASSERT_TRUE(ss_used != nullptr and pdcch_helper::is_pdcch_monitoring_active(next_slot, *ss_used)) << fmt::format(
+      "Common SS id={} is not monitored at slot={}", fmt::underlying(ss_used->get_id()), next_slot.slot_index());
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,

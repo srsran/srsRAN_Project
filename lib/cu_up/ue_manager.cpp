@@ -37,7 +37,7 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", ue_index);
+  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", fmt::underlying(ue_index));
   return ue_db.find(ue_index) != ue_db.end() ? ue_db[ue_index].get() : nullptr;
 }
 
@@ -89,8 +89,9 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
 
 async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
 {
-  logger.debug("ue={}: Scheduling UE deletion", ue_index);
-  srsran_assert(ue_db.find(ue_index) != ue_db.end(), "Remove UE called for nonexistent ue_index={}", ue_index);
+  logger.debug("ue={}: Scheduling UE deletion", fmt::underlying(ue_index));
+  srsran_assert(
+      ue_db.find(ue_index) != ue_db.end(), "Remove UE called for nonexistent ue_index={}", fmt::underlying(ue_index));
 
   // Move UE context out from ue_db and erase the slot (from CU-UP shared ctrl executor)
   std::unique_ptr<ue_context> ue_ctxt = std::move(ue_db[ue_index]);
@@ -106,7 +107,7 @@ async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
     // Stop and delete
     CORO_AWAIT(ue_ctxt->stop());
     ue_ctxt.reset();
-    logger.info("ue={}: UE removed", ue_index);
+    logger.info("ue={}: UE removed", fmt::underlying(ue_index));
 
     // Continuation in the original executor.
     CORO_AWAIT(execute_on_blocking(ctrl_executor, timers));
@@ -131,7 +132,7 @@ void ue_manager::schedule_ue_async_task(ue_index_t ue_index, async_task<void> ta
 {
   ue_context* ue_ctx = find_ue(ue_index);
   if (ue_ctx == nullptr) {
-    logger.error("Cannot schedule UE task, could not find UE. ue_index={}", ue_index);
+    logger.error("Cannot schedule UE task, could not find UE. ue_index={}", fmt::underlying(ue_index));
     return;
   }
   ue_ctx->task_sched.schedule(std::move(task));

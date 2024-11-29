@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "fmt/format.h"
+#include "fmt/args.h"
 #include <chrono>
 
 namespace srslog {

@@ -102,13 +102,13 @@ static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
   const coreset_configuration& cs_cfg = *cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
   CHECK_TRUE(cs_cfg.duration >= 1, "Invalid CORESET#0 slot duration ({})", cs_cfg.duration);
   // Implicit, invariant values for CORESET#0 as per TS38.211-7.3.2.2.
-  CHECK_EQ(cs_cfg.id, 0, "CORESET#0 ID");
+  CHECK_EQ(fmt::underlying(cs_cfg.id), 0, "CORESET#0 ID");
   CHECK_TRUE(cs_cfg.interleaved.has_value(), "CORESET#0 must be interleaved");
   CHECK_EQ(cs_cfg.interleaved->interleaver_sz, 2, "CORESET#0 interleaver size (R)");
   CHECK_EQ(cs_cfg.interleaved->reg_bundle_sz, 6, "CORESET#0 REG Bundle size (L)");
   CHECK_EQ(cs_cfg.interleaved->shift_index, cell_cfg.pci, "CORESET#0 shift index should be equal to PCI");
-  CHECK_EQ(cs_cfg.precoder_granurality,
-           coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
+  CHECK_EQ(fmt::underlying(cs_cfg.precoder_granurality),
+           fmt::underlying(coreset_configuration::precoder_granularity_type::same_as_reg_bundle),
            "CORESET#0 Precoder Granularity");
 
   pdcch_type0_css_coreset_description coreset0_param =
@@ -141,26 +141,31 @@ static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
 
 static check_outcome is_search_space_valid(const search_space_configuration& ss_cfg)
 {
-  CHECK_EQ_OR_BELOW(ss_cfg.get_id(), srsran::MAX_SEARCH_SPACE_ID, "SearchSpace Id={}", ss_cfg.get_id());
-  CHECK_EQ_OR_BELOW(ss_cfg.get_coreset_id(),
-                    srsran::MAX_CORESET_ID,
+  CHECK_EQ_OR_BELOW(fmt::underlying(ss_cfg.get_id()),
+                    fmt::underlying(srsran::MAX_SEARCH_SPACE_ID),
+                    "SearchSpace Id={}",
+                    fmt::underlying(ss_cfg.get_id()));
+  CHECK_EQ_OR_BELOW(fmt::underlying(ss_cfg.get_coreset_id()),
+                    fmt::underlying(srsran::MAX_CORESET_ID),
                     "SearchSpace#{} CORESET Id={}",
-                    ss_cfg.get_id(),
-                    ss_cfg.get_coreset_id());
+                    fmt::underlying(ss_cfg.get_id()),
+                    fmt::underlying(ss_cfg.get_coreset_id()));
   const bool valid_period =
       is_valid_enum_number<asn1::rrc_nr::search_space_s::monitoring_slot_periodicity_and_offset_c_::types>(
           ss_cfg.get_monitoring_slot_periodicity());
-  CHECK_TRUE(
-      valid_period, "Invalid SearchSpace#{} slot period={}", ss_cfg.get_id(), ss_cfg.get_monitoring_slot_periodicity());
+  CHECK_TRUE(valid_period,
+             "Invalid SearchSpace#{} slot period={}",
+             fmt::underlying(ss_cfg.get_id()),
+             ss_cfg.get_monitoring_slot_periodicity());
   CHECK_BELOW(ss_cfg.get_monitoring_slot_offset(),
               ss_cfg.get_monitoring_slot_periodicity(),
               "SearchSpace#{} monitoring slot offset",
-              ss_cfg.get_id());
+              fmt::underlying(ss_cfg.get_id()));
   CHECK_EQ_OR_BELOW(ss_cfg.get_duration(),
                     ss_cfg.get_monitoring_slot_periodicity(),
                     "SearchSpace#{} monitoring slot duration",
-                    ss_cfg.get_id());
-  CHECK_NEQ(ss_cfg.get_duration(), 0, "SearchSpace#{} monitoring slot duration", ss_cfg.get_id());
+                    fmt::underlying(ss_cfg.get_id()));
+  CHECK_NEQ(ss_cfg.get_duration(), 0, "SearchSpace#{} monitoring slot duration", fmt::underlying(ss_cfg.get_id()));
   return {};
 }
 
@@ -172,27 +177,31 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
     HANDLE_ERROR(is_coreset0_params_valid(cell_cfg));
   }
   if (bwp.pdcch_common.sib1_search_space_id != srsran::MAX_NOF_SEARCH_SPACES) {
-    CHECK_EQ(bwp.pdcch_common.sib1_search_space_id, 0, "SearchSpaceSIB1 must be equal to 0 for initial DL BWP");
+    CHECK_EQ(fmt::underlying(bwp.pdcch_common.sib1_search_space_id),
+             0,
+             "SearchSpaceSIB1 must be equal to 0 for initial DL BWP");
   }
   if (bwp.pdcch_common.common_coreset.has_value()) {
-    CHECK_NEQ(bwp.pdcch_common.common_coreset->id, 0, "Common CORESET");
+    CHECK_NEQ(fmt::underlying(bwp.pdcch_common.common_coreset->id), 0, "Common CORESET");
   }
   for (const search_space_configuration& ss : bwp.pdcch_common.search_spaces) {
     HANDLE_ERROR(is_search_space_valid(ss));
-    CHECK_TRUE(ss.is_common_search_space(), "Common SearchSpace#{} type", ss.get_id());
+    CHECK_TRUE(ss.is_common_search_space(), "Common SearchSpace#{} type", fmt::underlying(ss.get_id()));
     const auto& dci_format_variant = ss.get_monitored_dci_formats();
     const auto& dci_format         = std::get<search_space_configuration::common_dci_format>(dci_format_variant);
-    CHECK_TRUE(dci_format.f0_0_and_f1_0, "Common SearchSpace#{} must enable DCI format1_0 and format0_0", ss.get_id());
+    CHECK_TRUE(dci_format.f0_0_and_f1_0,
+               "Common SearchSpace#{} must enable DCI format1_0 and format0_0",
+               fmt::underlying(ss.get_id()));
     if (ss.get_coreset_id() == 0) {
       CHECK_TRUE(bwp.pdcch_common.coreset0.has_value(),
                  "Common SearchSpace#{} points to CORESET#0 which is inactive",
-                 ss.get_id());
+                 fmt::underlying(ss.get_id()));
     } else {
       CHECK_TRUE(bwp.pdcch_common.common_coreset.has_value() and
                      ss.get_coreset_id() == bwp.pdcch_common.common_coreset->id,
                  "common SearchSpace#{} points to CORESET#{} which is inactive",
-                 ss.get_id(),
-                 ss.get_coreset_id());
+                 fmt::underlying(ss.get_id()),
+                 fmt::underlying(ss.get_coreset_id()));
     }
   }
   // PDSCH
@@ -387,12 +396,13 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
   const ssb_configuration& ssb_cfg = cell_cfg.ssb_cfg;
 
   // No mixed numerologies supported (yet).
-  CHECK_EQ(
-      ssb_cfg.scs, cell_cfg.scs_common, "SSB SCS must be equal to SCS common. Mixed numerologies are not supported.");
+  CHECK_EQ(fmt::underlying(ssb_cfg.scs),
+           fmt::underlying(cell_cfg.scs_common),
+           "SSB SCS must be equal to SCS common. Mixed numerologies are not supported.");
 
   // Only FR1 SCS supported (for now).
-  CHECK_EQ_OR_BELOW(ssb_cfg.scs,
-                    subcarrier_spacing::kHz30,
+  CHECK_EQ_OR_BELOW(fmt::underlying(ssb_cfg.scs),
+                    fmt::underlying(subcarrier_spacing::kHz30),
                     "SSB SCS must be kHz15 or kHz30.  FR2 frequencies are not supported yet in the SSB scheduler.");
 
   CHECK_EQ(ssb_cfg.ssb_bitmap,
@@ -606,14 +616,14 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                         "{}) for SearchSpace#{}.",
                         ss_start_symbol_idx,
                         ss_start_symbol_idx + cs_duration.value(),
-                        ss_cfg.get_id());
+                        fmt::underlying(ss_cfg.get_id()));
 
       // Ensuring there is enough DL symbols for PDSCH.
       CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
                         ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
                         "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than the minimum nof. "
                         "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
-                        ss_cfg.get_id());
+                        fmt::underlying(ss_cfg.get_id()));
     }
 
     if (tdd_cfg.pattern2.has_value() and tdd_cfg.pattern2.value().nof_dl_symbols > 0) {
@@ -624,14 +634,14 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                         "{}) for SearchSpace#{}.",
                         ss_start_symbol_idx,
                         ss_start_symbol_idx + cs_duration.value(),
-                        ss_cfg.get_id());
+                        fmt::underlying(ss_cfg.get_id()));
 
       // Ensuring there is enough DL symbols for PDSCH.
       CHECK_EQ_OR_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
                         ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
                         "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than the minimum nof. "
                         "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
-                        ss_cfg.get_id());
+                        fmt::underlying(ss_cfg.get_id()));
     }
   }
   // SearchSpaces in Dedicated PDCCH configuration.
@@ -658,7 +668,7 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
       }
     }
 
-    CHECK_TRUE(cs_duration.has_value(), "CORESET not configured for SearchSpace#{}", ss_cfg.get_id());
+    CHECK_TRUE(cs_duration.has_value(), "CORESET not configured for SearchSpace#{}", fmt::underlying(ss_cfg.get_id()));
 
     if (tdd_cfg.pattern1.nof_dl_symbols > 0) {
       // Ensuring there is atleast 1 OFDM symbol for PDSCH.
@@ -668,14 +678,14 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                   "{}) for SearchSpace#{}.",
                   ss_start_symbol_idx,
                   ss_start_symbol_idx + cs_duration.value(),
-                  ss_cfg.get_id());
+                  fmt::underlying(ss_cfg.get_id()));
 
       // Ensuring there is enough DL symbols for PDSCH.
       CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
                         ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
                         "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than the minimum nof. "
                         "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
-                        ss_cfg.get_id());
+                        fmt::underlying(ss_cfg.get_id()));
     }
 
     if (tdd_cfg.pattern2.has_value() and tdd_cfg.pattern2.value().nof_dl_symbols > 0) {
@@ -686,14 +696,14 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                   "{}) for SearchSpace#{}.",
                   ss_start_symbol_idx,
                   ss_start_symbol_idx + cs_duration.value(),
-                  ss_cfg.get_id());
+                  fmt::underlying(ss_cfg.get_id()));
 
       // Ensuring there is enough DL symbols for PDSCH.
       CHECK_EQ_OR_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
                         ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
                         "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than the minimum nof. "
                         "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
-                        ss_cfg.get_id());
+                        fmt::underlying(ss_cfg.get_id()));
     }
   }
 
@@ -710,7 +720,9 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
   const auto prach_cfg = prach_configuration_get(frequency_range::FR1,
                                                  band_helper::get_duplex_mode(cell_cfg.dl_carrier.band),
                                                  rach_cfg.rach_cfg_generic.prach_config_index);
-  CHECK_NEQ(prach_cfg.format, srsran::prach_format_type::invalid, "The PRACH format is invalid");
+  CHECK_NEQ(fmt::underlying(prach_cfg.format),
+            fmt::underlying(srsran::prach_format_type::invalid),
+            "The PRACH format is invalid");
 
   // Derive PRACH duration information.
   // The parameter \c is_last_prach_occasion is arbitrarily set to false, as it doesn't affect the PRACH number of PRBs.
@@ -749,7 +761,7 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
 check_outcome srs_du::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.pci, MAX_PCI, "cell PCI");
-  CHECK_EQ_OR_BELOW(cell_cfg.scs_common, subcarrier_spacing::kHz120, "SCS common");
+  CHECK_EQ_OR_BELOW(fmt::underlying(cell_cfg.scs_common), fmt::underlying(subcarrier_spacing::kHz120), "SCS common");
   HANDLE_ERROR(is_coreset0_ss0_idx_valid(cell_cfg));
   HANDLE_ERROR(check_dl_config_common(cell_cfg));
   HANDLE_ERROR(check_ul_config_common(cell_cfg));

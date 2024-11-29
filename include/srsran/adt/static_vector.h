@@ -12,6 +12,7 @@
 
 #include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
+#include <array>
 #include <iterator>
 #include <memory>
 

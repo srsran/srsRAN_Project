@@ -15,7 +15,7 @@
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/config/validator_helpers.h"
-#include "srsran/support/format/fmt_optional.h"
+#include "fmt/std.h"
 #include <numeric>
 
 using namespace srsran;
@@ -65,8 +65,8 @@ validator_result srsran::config_validators::validate_pdcch_cfg(const serving_cel
       const bool cst_id_found_in_coreset0 = ss.get_coreset_id() == 0;
       VERIFY(cset_id_found_in_ded or cst_id_found_in_common or cst_id_found_in_coreset0,
              "Coreset Id. {} indexed by SearchSpace Id. {} not found within the configured Coresets",
-             ss.get_coreset_id(),
-             ss.get_id());
+             fmt::underlying(ss.get_coreset_id()),
+             fmt::underlying(ss.get_id()));
     }
   }
 
@@ -107,7 +107,7 @@ static validator_result validate_zp_csi_rs(const serving_cell_config& ue_cell_cf
     });
     VERIFY(found,
            "CSI-IM does not overlap with ZP-CSI-RS. CSI-IM: {{period={} offset={} band={} symbol={}}}",
-           csi_im.csi_res_period,
+           csi_im.csi_res_period ? fmt::to_string(fmt::underlying(*csi_im.csi_res_period)) : "none",
            csi_im.csi_res_offset,
            csi_im.freq_band_rbs,
            csi_im.csi_im_res_element_pattern->symbol_location);
@@ -490,7 +490,7 @@ srsran::config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resour
     if (row_idx == 13 or row_idx == 14 or row_idx == 16 or row_idx == 17) {
       VERIFY(res_mapping.first_ofdm_symbol_in_td2.has_value(),
              "Missing parameter firstOFDMSymbolInTimeDomain2 for NZP-CSI-RS Resource Id. {} ",
-             res.res_id);
+             fmt::underlying(res.res_id));
     }
   }
 
@@ -542,7 +542,7 @@ srsran::config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resour
         VERIFY(csi_rs_period_slots % tdd_period_slots == 0,
                "Period={} of NZP-CSI-RS-ResourceId={} is not a multiple of the TDD pattern period={}",
                csi_rs_period_slots,
-               res.res_id,
+               fmt::underlying(res.res_id),
                tdd_period_slots);
 
         const cyclic_prefix     cp{cyclic_prefix::NORMAL};
@@ -551,7 +551,7 @@ srsran::config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resour
 
         VERIFY(not dl_symbols.empty(),
                "NZP-CSI-RS-ResourceId={} with offset={} is scheduled in slot={} with no DL symbols",
-               res.res_id,
+               fmt::underlying(res.res_id),
                res.csi_res_offset.value(),
                res.csi_res_offset.value() % tdd_period_slots);
 
@@ -562,7 +562,7 @@ srsran::config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resour
           VERIFY(max_symbol_idx < dl_symbols.stop(),
                  "NZP-CSI-RS-ResourceId={}, with slot offset {} and symbol index {}, falls outside DL symbols {} in "
                  "special slot.",
-                 res.res_id,
+                 fmt::underlying(res.res_id),
                  res.csi_res_offset.value(),
                  max_symbol_idx,
                  dl_symbols);
@@ -593,8 +593,9 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
                                                                    csi_meas_cfg.nzp_csi_rs_res_list,
                                                                    &nzp_csi_rs_resource_set::nzp_csi_rs_res,
                                                                    &nzp_csi_rs_resource::res_id);
-  VERIFY(
-      not nzp_id.has_value(), "ResourceId={} in NZP-CSI-RS-ResourceSet has no associated NZP-CSI-RS-Resource", *nzp_id);
+  VERIFY(not nzp_id.has_value(),
+         "ResourceId={} in NZP-CSI-RS-ResourceSet has no associated NZP-CSI-RS-Resource",
+         fmt::underlying(*nzp_id));
   // > CSI-IM-ResourceList
   VERIFY(has_unique_ids(csi_meas_cfg.csi_im_res_list, &csi_im_resource::res_id), "Duplication of CSI-IM-ResourceId");
   // > CSI-IM-ResourceSetList.
@@ -604,7 +605,9 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
                                                               csi_meas_cfg.csi_im_res_list,
                                                               &csi_im_resource_set::csi_ims_resources,
                                                               &csi_im_resource::res_id);
-  VERIFY(not im_id.has_value(), "ResourceId={} in CSI-IM-ResourceSet has no associated CSI-IM-Resource", *im_id);
+  VERIFY(not im_id.has_value(),
+         "ResourceId={} in CSI-IM-ResourceSet has no associated CSI-IM-Resource",
+         fmt::underlying(*im_id));
   VERIFY(has_unique_ids(csi_meas_cfg.csi_ssb_res_set_list, &csi_ssb_resource_set::res_set_id),
          "Duplication of CSI-SSB-ResourceSetId");
   VERIFY(has_unique_ids(csi_meas_cfg.csi_res_cfg_list, &csi_resource_config::res_cfg_id),
@@ -620,13 +623,13 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
         VERIFY_ID_EXISTS([res_set_id](const nzp_csi_rs_resource_set& rhs) { return rhs.res_set_id == res_set_id; },
                          csi_meas_cfg.nzp_csi_rs_res_set_list,
                          "NZP CSI-RS resource set id={} does not exist",
-                         res_set_id);
+                         fmt::underlying(res_set_id));
       }
       for (const auto& res_set_id : variant_value.csi_ssb_res_set_list) {
         VERIFY_ID_EXISTS([res_set_id](const csi_ssb_resource_set& rhs) { return rhs.res_set_id == res_set_id; },
                          csi_meas_cfg.csi_ssb_res_set_list,
                          "CSI SSB resource set id={} does not exist",
-                         res_set_id);
+                         fmt::underlying(res_set_id));
       }
     } else if (std::holds_alternative<csi_resource_config::csi_im_resource_set_list>(res_cfg.csi_rs_res_set_list)) {
       const auto& variant_value = std::get<csi_resource_config::csi_im_resource_set_list>(res_cfg.csi_rs_res_set_list);
@@ -634,7 +637,7 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
         VERIFY_ID_EXISTS([res_set_id](const csi_im_resource_set& rhs) { return rhs.res_set_id == res_set_id; },
                          csi_meas_cfg.csi_im_res_set_list,
                          "CSI IM resource set id={} does not exist",
-                         res_set_id);
+                         fmt::underlying(res_set_id));
       }
     }
     // TODO: BWP-Id and Resource Type validation.
@@ -646,7 +649,7 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
         [res_for_channel_meas](const csi_resource_config& rhs) { return rhs.res_cfg_id == res_for_channel_meas; },
         csi_meas_cfg.csi_res_cfg_list,
         "CSI Recourse Config id={} does not exist",
-        res_for_channel_meas);
+        fmt::underlying(res_for_channel_meas));
 
     if (rep_cfg.csi_im_res_for_interference.has_value()) {
       const auto csi_im_res_for_interference = rep_cfg.csi_im_res_for_interference.value();
@@ -654,7 +657,7 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
                            const csi_resource_config& rhs) { return rhs.res_cfg_id == csi_im_res_for_interference; },
                        csi_meas_cfg.csi_res_cfg_list,
                        "CSI Recourse Config id={} does not exist",
-                       csi_im_res_for_interference);
+                       fmt::underlying(csi_im_res_for_interference));
     }
 
     if (rep_cfg.nzp_csi_rs_res_for_interference.has_value()) {
@@ -665,7 +668,7 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
           },
           csi_meas_cfg.csi_res_cfg_list,
           "CSI Recourse Config id={} does not exist",
-          nzp_csi_rs_res_for_interference);
+          fmt::underlying(nzp_csi_rs_res_for_interference));
     }
 
     if (std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(

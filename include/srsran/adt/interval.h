@@ -172,8 +172,7 @@ namespace fmt {
 template <typename T, bool RightClosed>
 struct formatter<srsran::interval<T, RightClosed>> : public formatter<T> {
   template <typename FormatContext>
-  auto format(const srsran::interval<T, RightClosed>& interv, FormatContext& ctx)
-
+  auto format(const srsran::interval<T, RightClosed>& interv, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "[{}{}{}{}",

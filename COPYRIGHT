@@ -16,22 +16,24 @@ Copyright: 2013-2017 Google Inc.
 License:   MIT
 
 
-Files:     external/fmt/chrono.h
+Files:     external/fmt/args.h
+           external/fmt/base.h
+           external/fmt/chrono.h
            external/fmt/color.h
            external/fmt/compile.h
            external/fmt/core.h
            external/fmt/format.h
            external/fmt/format-inl.h
            external/fmt/LICENSE.rst
-           external/fmt/locale.h
            external/fmt/os.h
            external/fmt/ostream.h
-           external/fmt/posix.h
            external/fmt/printf.h
            external/fmt/ranges.h
+           external/fmt/std.h
+           external/fmt/xchar.h
            external/fmt/format.cc
            external/fmt/os.cc
-Copyright: 2012-2020 Victor Zverovich
+Copyright: 2012-2024 Victor Zverovich
 License:   MIT
 
 
@@ -91,13 +93,13 @@ License: BSD-2-clause (Simplified BSD)
    modification, are permitted provided that the following conditions are
    met:
    .
-   1. Redistributions of source code must retain the above copyright notice, 
+   1. Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
    .
    2. Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
-   
+
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR

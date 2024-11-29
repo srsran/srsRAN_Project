@@ -17,7 +17,7 @@ namespace srsran {
 /// HARQ values for UCI PUCCH Format 0 or Format 1.
 enum class uci_pucch_f0_or_f1_harq_values { nack, ack, dtx };
 
-inline constexpr const char* to_string(uci_pucch_f0_or_f1_harq_values value)
+constexpr const char* to_string(uci_pucch_f0_or_f1_harq_values value)
 {
   switch (value) {
     case uci_pucch_f0_or_f1_harq_values::nack:
@@ -27,7 +27,7 @@ inline constexpr const char* to_string(uci_pucch_f0_or_f1_harq_values value)
     case uci_pucch_f0_or_f1_harq_values::dtx:
       return "dtx";
     default:
-      srsran_assert(0, "invalid UCI PUCCH Format 0/1 HARQ value={}", value);
+      srsran_assert(0, "invalid UCI PUCCH Format 0/1 HARQ value={}", static_cast<unsigned>(value));
       break;
   }
   return "";

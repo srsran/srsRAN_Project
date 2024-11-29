@@ -99,7 +99,7 @@ void search_space_configuration::set_non_ss0_monitoring_symbols_within_slot(
   srsran_assert(not is_search_space0(), "Invalid access to monitoring symbols within slot of SearchSpace#0");
   srsran_assert(not symbols_within_slot.none(),
                 "None of the symbols are set in monitoring symbols within a slot when configuring SearchSpace#{}",
-                id);
+                fmt::underlying(id));
   monitoring_symbols_within_slot.clear();
   monitoring_symbols_within_slot.push_back(symbols_within_slot);
 }

@@ -130,7 +130,7 @@ inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rl
 {
   fmt::memory_buffer buffer;
   fmt::format_to(
-      buffer,
+      std::back_inserter(buffer),
       "num_sdus={} sdu_rate={}bps num_pdus={} pdu_rate={}bps",
       scaled_fmt_integer(m.num_sdus, false),
       float_to_eng_string(static_cast<float>(m.num_sdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
@@ -140,7 +140,7 @@ inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rl
   // No TM specific metrics for RX
   if ((m.mode == rlc_mode::um_bidir || m.mode == rlc_mode::um_unidir_ul)) {
     // Format UM specific metrics for RX
-    fmt::format_to(buffer,
+    fmt::format_to(std::back_inserter(buffer),
                    " num_sdu_segments={} sdu_segmments_rate={}bps",
                    scaled_fmt_integer(m.mode_specific.um.num_sdu_segments, false),
                    float_to_eng_string(static_cast<float>(m.mode_specific.um.num_sdu_segment_bytes) * 8 * 1000 /
@@ -149,7 +149,7 @@ inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rl
                                        false));
   } else if (m.mode == rlc_mode::am) {
     fmt::format_to(
-        buffer,
+        std::back_inserter(buffer),
         " num_sdu_segments={} sdu_segmments_rate={}bps ctrl_pdus={} ctrl_rate={}bps",
         scaled_fmt_integer(m.mode_specific.am.num_sdu_segments, false),
         float_to_eng_string(
@@ -176,7 +176,7 @@ struct formatter<srsran::rlc_rx_metrics> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_rx_metrics m, FormatContext& ctx)
+  auto format(srsran::rlc_rx_metrics m, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "num_pdus={} num_pdu_bytes={} num_lost_pdus={} num_malformed_pdus={} num_sdus={} num_sdu_bytes={}",

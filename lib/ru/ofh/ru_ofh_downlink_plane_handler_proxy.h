@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/ru/ru_downlink_plane.h"
+#include <algorithm>
+#include <vector>
 
 namespace srsran {
 

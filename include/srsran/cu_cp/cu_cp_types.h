@@ -607,7 +607,7 @@ struct formatter<srsran::srs_cu_cp::ue_index_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::ue_index_t& idx, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::ue_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::ue_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -626,7 +626,7 @@ struct formatter<srsran::srs_cu_cp::du_index_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::du_index_t& idx, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::du_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::du_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -645,7 +645,7 @@ struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::cu_up_index_t& idx, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::cu_up_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::cu_up_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -664,7 +664,7 @@ struct formatter<srsran::srs_cu_cp::du_cell_index_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::du_cell_index_t& idx, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::du_cell_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::du_cell_index_t::invalid) {
       return format_to(ctx.out(), "invalid");

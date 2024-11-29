@@ -562,7 +562,10 @@ static void assert_dci_size_config(search_space_id ss_id, const dci_size_config&
     }
     return is_success;
   };
-  srsran_assert(validate_dci_sz_cfg(), "Invalid DCI size configuration for SearchSpace={}: {}", ss_id, error_msg);
+  srsran_assert(validate_dci_sz_cfg(),
+                "Invalid DCI size configuration for SearchSpace={}: {}",
+                fmt::underlying(ss_id),
+                error_msg);
 }
 
 ue_cell_configuration::ue_cell_configuration(rnti_t                                crnti_,

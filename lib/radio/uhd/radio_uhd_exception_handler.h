@@ -11,6 +11,7 @@
 #pragma once
 
 #include "fmt/format.h"
+#include <functional>
 #include <string>
 
 #pragma GCC diagnostic push
@@ -32,7 +33,7 @@ public:
   void on_error(const S& format_str, Args&&... args)
   {
     fmt::memory_buffer str_buf;
-    fmt::format_to(str_buf, format_str, std::forward<Args>(args)...);
+    fmt::format_to(std::back_inserter(str_buf), format_str, std::forward<Args>(args)...);
     error_message = to_string(str_buf);
   }
 

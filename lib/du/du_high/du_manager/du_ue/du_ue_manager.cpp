@@ -29,7 +29,7 @@ du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& c
 {
   // Initialize a control loop for all UE indexes.
   const size_t max_number_of_pending_procedures = 16U;
-  for (size_t i = 0; i < MAX_NOF_DU_UES; ++i) {
+  for (size_t i = 0; i != MAX_NOF_DU_UES; ++i) {
     ue_ctrl_loop.emplace(i, max_number_of_pending_procedures);
   }
 }
@@ -75,9 +75,11 @@ async_task<f1ap_ue_context_creation_response>
 du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& msg)
 {
   srsran_assert(msg.ue_index != INVALID_DU_UE_INDEX, "Invalid DU UE index");
-  srsran_assert(not ue_db.contains(msg.ue_index), "Creating a ue={} but it already exists", msg.ue_index);
+  srsran_assert(
+      not ue_db.contains(msg.ue_index), "Creating a ue={} but it already exists", fmt::underlying(msg.ue_index));
   if (stop_accepting_ues) {
-    logger.info("ue={}: UE creation request ignored. Caused: The DU is being shut down.", msg.ue_index);
+    logger.info("ue={}: UE creation request ignored. Caused: The DU is being shut down.",
+                fmt::underlying(msg.ue_index));
     return launch_no_op_task(f1ap_ue_context_creation_response{false, rnti_t::INVALID_RNTI});
   }
 
@@ -108,7 +110,7 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
 async_task<void> du_ue_manager::handle_ue_deactivation_request(du_ue_index_t ue_index)
 {
   if (not ue_db.contains(ue_index)) {
-    logger.warning("ue={}: UE deactivation request for inexistent UE index", ue_index);
+    logger.warning("ue={}: UE deactivation request for inexistent UE index", fmt::underlying(ue_index));
     return launch_no_op_task();
   }
   return ue_db[ue_index].handle_activity_stop_request(false);
@@ -116,9 +118,9 @@ async_task<void> du_ue_manager::handle_ue_deactivation_request(du_ue_index_t ue_
 
 void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)
 {
-  srsran_assert(ue_db.contains(new_ue_index), "Invalid UE index={}", new_ue_index);
+  srsran_assert(ue_db.contains(new_ue_index), "Invalid UE index={}", fmt::underlying(new_ue_index));
   auto old_ue_it = find_ue(old_ue_index);
-  srsran_assert(old_ue_it != nullptr, "Invalid UE index={}", old_ue_index);
+  srsran_assert(old_ue_it != nullptr, "Invalid UE index={}", fmt::underlying(old_ue_index));
   auto& new_ue = ue_db[new_ue_index];
 
   // Retrieve the old UE context for the RRC connection reestablishment procedure, as defined in TS 48.473, 8.4.2.2 and
@@ -131,7 +133,7 @@ void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, d
 
 void du_ue_manager::handle_ue_config_applied(du_ue_index_t ue_index)
 {
-  srsran_assert(ue_db.contains(ue_index), "Invalid UE index={}", ue_index);
+  srsran_assert(ue_db.contains(ue_index), "Invalid UE index={}", fmt::underlying(ue_index));
 
   // Forward configuration to MAC.
   cfg.mac.ue_cfg.handle_ue_config_applied(ue_index);
@@ -183,12 +185,12 @@ async_task<void> du_ue_manager::stop()
 
 du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index)
 {
-  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
+  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
   return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 const du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index) const
 {
-  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
+  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
   return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 
@@ -241,26 +243,26 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
   // Note: The caller of this function can be a UE procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the UE. This achieved via a scheduled async task
 
-  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
-  logger.debug("ue={}: Scheduled deletion of UE context", ue_index);
+  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
+  logger.debug("ue={}: Scheduled deletion of UE context", fmt::underlying(ue_index));
 
   // Schedule UE removal task
   ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
-    srsran_assert(ue_db.contains(ue_index), "ue={}: Remove UE called for inexistent UE", ue_index);
+    srsran_assert(ue_db.contains(ue_index), "ue={}: Remove UE called for inexistent UE", fmt::underlying(ue_index));
     rnti_to_ue_index.erase(ue_db[ue_index].rnti);
     ue_db.erase(ue_index);
     ue_ctrl_loop[ue_index].clear_pending_tasks();
-    logger.debug("ue={}: Freeing UE context", ue_index);
+    logger.debug("ue={}: Freeing UE context", fmt::underlying(ue_index));
     CORO_RETURN();
   });
 }
 
 void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
 {
-  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
+  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
   srsran_assert(is_crnti(crnti), "Invalid c-rnti={}", crnti);
-  srsran_assert(ue_db.contains(ue_index), "Update C-RNTI called for inexistent ueId={}", ue_index);
+  srsran_assert(ue_db.contains(ue_index), "Update C-RNTI called for inexistent ueId={}", fmt::underlying(ue_index));
   du_ue& u = ue_db[ue_index];
 
   if (u.rnti == crnti) {

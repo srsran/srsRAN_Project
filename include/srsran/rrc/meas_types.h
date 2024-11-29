@@ -543,15 +543,14 @@ struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx)
-
+  auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx) const
   {
     std::string smtc1_str;
     std::string smtc2_str;
 
     if (meas_object.smtc1.has_value()) {
       smtc1_str = fmt::format(" smtc1: periodicity={} offset={} dur={}",
-                              meas_object.smtc1.value().periodicity_and_offset.periodicity,
+                              fmt::underlying(meas_object.smtc1.value().periodicity_and_offset.periodicity),
                               meas_object.smtc1.value().periodicity_and_offset.offset,
                               meas_object.smtc1.value().dur);
     }

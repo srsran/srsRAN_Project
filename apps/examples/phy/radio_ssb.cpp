@@ -64,7 +64,7 @@ static srslog::basic_levels log_level = srslog::basic_levels::warning;
 /// Program parameters.
 static subcarrier_spacing                        scs                        = subcarrier_spacing::kHz15;
 static unsigned                                  max_processing_delay_slots = 4;
-static cyclic_prefix                             cp                         = cyclic_prefix::NORMAL;
+static cyclic_prefix                             cy_prefix                  = cyclic_prefix::NORMAL;
 static double                                    dl_center_freq             = 3489.42e6;
 static double                                    ssb_center_freq            = 3488.16e6;
 static double                                    tx_gain                    = 60.0;
@@ -205,7 +205,7 @@ static const auto profiles = to_array<configuration_profile>({
          // parallel execution.
          for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
            fmt::memory_buffer buffer;
-           fmt::format_to(buffer, "inproc://{}#{}", getpid(), channel_id);
+           fmt::format_to(std::back_inserter(buffer), "inproc://{}#{}", getpid(), channel_id);
            tx_channel_args.emplace_back(to_string(buffer));
            rx_channel_args.emplace_back(to_string(buffer));
          }
@@ -238,7 +238,7 @@ static const auto profiles = to_array<configuration_profile>({
          // parallel execution.
          for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
            fmt::memory_buffer buffer;
-           fmt::format_to(buffer, "inproc://{}#{}", getpid(), channel_id);
+           fmt::format_to(std::back_inserter(buffer), "inproc://{}#{}", getpid(), channel_id);
            tx_channel_args.emplace_back(to_string(buffer));
            rx_channel_args.emplace_back(to_string(buffer));
          }
@@ -297,7 +297,7 @@ static void usage(std::string_view prog)
   fmt::print("\t-T Set thread profile (single, dual, quad). [Default {}]\n", thread_profile_name);
   fmt::print("\t-C Set clock source (internal, external, gpsdo). [Default {}]\n", clock_source);
   fmt::print("\t-S Set sync source (internal, external, gpsdo). [Default {}]\n", sync_source);
-  fmt::print("\t-v Logging level. [Default {}]\n", log_level);
+  fmt::print("\t-v Logging level. [Default {}]\n", fmt::underlying(log_level));
   fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
   fmt::print("\t-b Baseband gain back-off prior to clipping (in dB). [Default {}]\n", baseband_backoff_dB);
   fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
@@ -463,7 +463,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
   phy_config.time_alignment_calibration     = 0;
   phy_config.system_time_throttling         = 0.0F;
   phy_config.ta_offset                      = n_ta_offset::n0;
-  phy_config.cp                             = cp;
+  phy_config.cp                             = cy_prefix;
   phy_config.dft_window_offset              = 0.5F;
   phy_config.bb_gateway                     = &bb_gateway;
   phy_config.rx_symbol_notifier             = rx_symbol_notifier;
@@ -518,9 +518,9 @@ int main(int argc, char** argv)
   // Make sure parameters are valid.
   report_fatal_error_if_not(
       srate.is_valid(scs), "Sampling rate ({}) must be multiple of {}kHz.", srate, scs_to_khz(scs));
-  report_fatal_error_if_not(cp.is_valid(scs, srate.get_dft_size(scs)),
+  report_fatal_error_if_not(cy_prefix.is_valid(scs, srate.get_dft_size(scs)),
                             "The cyclic prefix ({}) numerology ({}) and sampling rate ({}) combination is invalid .",
-                            cp.to_string(),
+                            cy_prefix.to_string(),
                             to_numerology_value(scs),
                             srate);
 

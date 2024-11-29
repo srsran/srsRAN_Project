@@ -99,7 +99,7 @@ struct formatter<srsran::srs_cu_up::network_interface_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_up::network_interface_config& cfg, FormatContext& ctx)
+  auto format(const srsran::srs_cu_up::network_interface_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "f1u_bind_addr={} f1u_bind_port={}", cfg.f1u_bind_addr, cfg.f1u_bind_port);
   }

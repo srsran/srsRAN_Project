@@ -32,7 +32,8 @@ public:
                                               search_space_id               ss_id,
                                               aggregation_level             aggr_lvl) override
   {
-    TESTASSERT_EQ(ss_id, slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id);
+    TESTASSERT_EQ(fmt::underlying(ss_id),
+                  fmt::underlying(slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id));
     if (fail_pdcch_alloc_cond and fail_pdcch_alloc_cond(slot_alloc.slot)) {
       return nullptr;
     }

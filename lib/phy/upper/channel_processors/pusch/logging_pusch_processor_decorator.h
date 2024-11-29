@@ -13,7 +13,7 @@
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
-#include "srsran/support/format/fmt_optional.h"
+#include "fmt/std.h"
 #include <atomic>
 
 namespace fmt {
@@ -39,7 +39,7 @@ struct formatter<pusch_results_wrapper> {
   }
 
   template <typename FormatContext>
-  auto format(const pusch_results_wrapper& result, FormatContext& ctx)
+  auto format(const pusch_results_wrapper& result, FormatContext& ctx) const
   {
     // Format SCH message.
     if (result.sch.has_value()) {

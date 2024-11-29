@@ -26,6 +26,7 @@
 #include "srsran/support/file_vector.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/srsran_test.h"
+#include "fmt/std.h"
 #include <complex>
 #include <map>
 #include <mutex>
@@ -477,7 +478,7 @@ private:
 public:
   explicit shared_resource_grid_spy(resource_grid& grid_) : grid(grid_) {}
 
-  ~shared_resource_grid_spy()
+  ~shared_resource_grid_spy() override
   {
     report_fatal_error_if_not(ref_count == 0, "A grid is still active in {} scopes.", ref_count);
   }

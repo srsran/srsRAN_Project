@@ -169,7 +169,7 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
 {
   fmt::memory_buffer buffer;
   fmt::format_to(
-      buffer,
+      std::back_inserter(buffer),
       "num_sdus={} sdu_rate={}bps dropped_sdus={} discarded_sdus={} "
       "num_pdus_no_segm={} pdu_rate_no_segm={}bps",
       scaled_fmt_integer(m.tx_high.num_sdus, false),
@@ -183,13 +183,13 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
   if (m.tx_low.mode == rlc_mode::tm) {
     // No TM specific metrics for RX
   } else if ((m.tx_low.mode == rlc_mode::um_bidir || m.tx_low.mode == rlc_mode::um_unidir_dl)) {
-    fmt::format_to(buffer,
+    fmt::format_to(std::back_inserter(buffer),
                    " num_pdus_with_segm={} pdu_with_segm_rate={}bps",
                    m.tx_low.mode_specific.um.num_pdus_with_segmentation,
                    static_cast<float>(m.tx_low.mode_specific.um.num_pdu_bytes_with_segmentation) * 8 /
                        metrics_period.count());
   } else if (m.tx_low.mode == rlc_mode::am) {
-    fmt::format_to(buffer,
+    fmt::format_to(std::back_inserter(buffer),
                    " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={} "
                    "retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={}",
                    scaled_fmt_integer(m.tx_low.mode_specific.am.num_pdus_with_segmentation, false),
@@ -214,11 +214,11 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
                        1,
                        false));
   }
-  fmt::format_to(buffer, " pdu_latency_hist=[");
+  fmt::format_to(std::back_inserter(buffer), " pdu_latency_hist=[");
   for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {
-    fmt::format_to(buffer, " {}", float_to_eng_string(m.tx_low.pdu_latency_hist_ns[i], 1, false));
+    fmt::format_to(std::back_inserter(buffer), " {}", float_to_eng_string(m.tx_low.pdu_latency_hist_ns[i], 1, false));
   }
-  fmt::format_to(buffer, "] max_pull_latency={}us", m.tx_low.max_pdu_latency_ns * 1e-3);
+  fmt::format_to(std::back_inserter(buffer), "] max_pull_latency={}us", m.tx_low.max_pdu_latency_ns * 1e-3);
   return to_c_str(buffer);
 }
 } // namespace srsran
@@ -236,7 +236,7 @@ struct formatter<srsran::rlc_tx_metrics> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_tx_metrics m, FormatContext& ctx)
+  auto format(srsran::rlc_tx_metrics m, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_dropped_sdus={} num_discarded_sdus={} "

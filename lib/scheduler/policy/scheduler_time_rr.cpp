@@ -148,7 +148,7 @@ static bool can_allocate_dl_newtx(const ue_resource_grid_view& res_grid,
 {
   srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
                 "policy scheduler called for UE={} in fallback",
-                ue_cc.ue_index);
+                fmt::underlying(ue_cc.ue_index));
 
   if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, ue_cc.rnti()) or
       not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or not ue_cc.is_pdsch_enabled(pdsch_slot)) {
@@ -161,7 +161,7 @@ static bool can_allocate_dl_newtx(const ue_resource_grid_view& res_grid,
     if (ue_cc.harqs.find_pending_dl_retx().has_value()) {
       // HARQs are waiting for a grant for a retransmission.
       logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
-                   ue_cc.ue_index,
+                   fmt::underlying(ue_cc.ue_index),
                    ue_cc.rnti());
     } else {
       // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
@@ -170,7 +170,7 @@ static bool can_allocate_dl_newtx(const ue_resource_grid_view& res_grid,
           "ue={} rnti={} PDSCH allocation skipped. Cause: All the HARQs are allocated and waiting for their "
           "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
           "the scheduler.",
-          ue_cc.ue_index,
+          fmt::underlying(ue_cc.ue_index),
           ue_cc.rnti());
     }
     return false;
@@ -186,7 +186,7 @@ static bool can_allocate_ul_newtx(const slice_ue&       ue_ref,
 {
   srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
                 "policy scheduler called for UE={} in fallback",
-                ue_cc.ue_index);
+                fmt::underlying(ue_cc.ue_index));
 
   if (not ue_cc.is_pdcch_enabled(pdcch_slot) or not ue_cc.is_ul_enabled(pusch_slot)) {
     // Either the PDCCH slot or PUSCH slots are not available.
@@ -198,14 +198,14 @@ static bool can_allocate_ul_newtx(const slice_ue&       ue_ref,
     if (ue_cc.harqs.find_pending_ul_retx().has_value()) {
       // HARQs are waiting for a grant for a retransmission.
       logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: No available HARQs for new transmissions.",
-                   ue_cc.ue_index,
+                   fmt::underlying(ue_cc.ue_index),
                    ue_cc.rnti());
     } else {
       // All HARQs are waiting for their respective CRC. This may be a symptom of a slow PUSCH processing chain.
       logger.warning("ue={} rnti={} PUSCH allocation skipped. Cause: All the UE HARQs are busy waiting for "
                      "their respective CRC result. Check if any CRC PDU went missing in the lower layers or is "
                      "arriving too late to the scheduler.",
-                     ue_cc.ue_index,
+                     fmt::underlying(ue_cc.ue_index),
                      ue_cc.rnti());
     }
     return false;
@@ -271,7 +271,7 @@ static dl_alloc_result alloc_dl_retxs(const slice_ue_repository&   ue_db,
       const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
       srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
                     "policy scheduler called for UE={} in fallback",
-                    ue_cc.ue_index);
+                    fmt::underlying(ue_cc.ue_index));
 
       // [Implementation-defined] Skip UE if PDCCH is already allocated for this UE in this slot.
       if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti()) or
@@ -344,7 +344,7 @@ static ul_alloc_result alloc_ul_retxs(const slice_ue_repository&   ue_db,
       const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
       srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
                     "policy scheduler called for UE={} in fallback",
-                    ue_cc.ue_index);
+                    fmt::underlying(ue_cc.ue_index));
 
       if (not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
           not ue_cc.is_ul_enabled(slice_candidate.get_slot_tx())) {

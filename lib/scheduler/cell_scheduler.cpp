@@ -45,7 +45,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   si_msg_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   pucch_guard_sch(cell_cfg),
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg),
-  res_usage_tracer(fmt::format("cell_sched_{}", cell_cfg.cell_index),
+  res_usage_tracer(fmt::format("cell_sched_{}", fmt::underlying(cell_cfg.cell_index)),
                    logger_event_tracer<true>{sched_cfg.log_high_latency_diagnostics ? &logger.warning : nullptr},
                    get_tracer_thres(cell_cfg),
                    8)

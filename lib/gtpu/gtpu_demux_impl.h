@@ -68,7 +68,7 @@ struct formatter<srsran::gtpu_demux_cfg_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::gtpu_demux_cfg_t cfg, FormatContext& ctx)
+  auto format(srsran::gtpu_demux_cfg_t cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "warn_on_drop={} test_mode={}", cfg.warn_on_drop, cfg.test_mode);
   }

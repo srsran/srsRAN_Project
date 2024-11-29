@@ -39,6 +39,10 @@ std::ostream& operator<<(std::ostream& out, const srs_params& params)
 
 } // namespace
 
+template <>
+struct fmt::formatter<srs_params> : ostream_formatter {
+};
+
 static bool is_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
 {
   const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));

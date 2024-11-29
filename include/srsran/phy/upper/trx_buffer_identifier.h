@@ -80,8 +80,7 @@ struct formatter<srsran::trx_buffer_identifier> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::trx_buffer_identifier& value, FormatContext& ctx)
-
+  auto format(const srsran::trx_buffer_identifier& value, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "rnti={:#x} h_id={}", value.get_rnti(), value.get_harq());
   }

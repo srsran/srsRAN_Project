@@ -30,8 +30,7 @@ struct formatter<srsran::pusch_tpmi_select_info> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_tpmi_select_info& info, FormatContext& ctx)
-
+  auto format(const srsran::pusch_tpmi_select_info& info, FormatContext& ctx) const
   {
     unsigned max_nof_layers = info.get_max_nof_layers();
 

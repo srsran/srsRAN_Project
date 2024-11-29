@@ -193,7 +193,7 @@ struct formatter<srsran::srs_cu_cp::ue_event_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::ue_event_prefix& ue_prefix, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::ue_event_prefix& ue_prefix, FormatContext& ctx) const
   {
     using namespace srsran;
     auto ret = format_to(ctx.out(), "{:<4}", ue_prefix.direction);

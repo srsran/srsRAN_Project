@@ -612,7 +612,7 @@ byte_buffer srsran::srs_du::make_asn1_meas_time_cfg_buffer(const du_cell_config&
       freq_time.ssb_meas_timing_cfg.periodicity_and_offset.set_sf160() = 0;
       break;
     default:
-      report_fatal_error("Invalid SSB periodicity {}.", du_cfg.ssb_cfg.ssb_period);
+      report_fatal_error("Invalid SSB periodicity {}.", fmt::underlying(du_cfg.ssb_cfg.ssb_period));
   }
   meas_item.pci_present = true;
   meas_item.pci         = du_cfg.pci;

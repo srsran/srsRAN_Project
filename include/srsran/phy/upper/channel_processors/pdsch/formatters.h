@@ -31,8 +31,7 @@ struct formatter<srsran::pdsch_processor::codeword_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdsch_processor::codeword_description& codeword_descr, FormatContext& ctx)
-
+  auto format(const srsran::pdsch_processor::codeword_description& codeword_descr, FormatContext& ctx) const
   {
     helper.format_always(ctx, "mod={}", to_string(codeword_descr.modulation));
     helper.format_always(ctx, "rv={}", codeword_descr.rv);
@@ -57,8 +56,7 @@ struct formatter<srsran::pdsch_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdsch_processor::pdu_t& pdu, FormatContext& ctx)
-
+  auto format(const srsran::pdsch_processor::pdu_t& pdu, FormatContext& ctx) const
   {
     helper.format_always(ctx, "rnti=0x{:04x}", pdu.rnti);
     if (pdu.context.has_value()) {

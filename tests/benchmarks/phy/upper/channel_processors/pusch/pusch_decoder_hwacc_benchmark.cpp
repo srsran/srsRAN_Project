@@ -85,7 +85,7 @@ static void usage(const char* prog)
              dedicated_queue ? "dedicated_queue" : "shared_queue");
   fmt::print("\t-x       Use the host's memory for the soft-buffer [Default {}]\n", !ext_softbuffer);
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
-  fmt::print("\t-z       Force DEBUG logging level for the HAL [Default {}]\n", hal_log_level);
+  fmt::print("\t-z       Force DEBUG logging level for the HAL [Default {}]\n", fmt::underlying(hal_log_level));
   fmt::print("\teal_args EAL arguments\n");
 #endif // DPDK_FOUND
   fmt::print("\t-h This help\n");
@@ -482,7 +482,7 @@ int main(int argc, char** argv)
     fmt::print(
         "PUSCH RB={:<3} Mod={:<2} tbs={:<8}: latency gain {:<3.2f}%% (generic {:<10.2f} us, {:<5} {:<10.2f} us)\n",
         nof_prb,
-        cfg.mod,
+        fmt::underlying(cfg.mod),
         tbs,
         perf_gain,
         gen_lat,

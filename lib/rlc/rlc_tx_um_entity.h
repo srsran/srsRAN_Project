@@ -136,7 +136,7 @@ struct formatter<srsran::rlc_tx_um_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tx_um_state& st, FormatContext& ctx)
+  auto format(const srsran::rlc_tx_um_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "tx_next={}", st.tx_next);
   }

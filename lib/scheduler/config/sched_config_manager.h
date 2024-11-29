@@ -121,7 +121,7 @@ public:
 
   du_cell_group_index_t get_cell_group_index(du_ue_index_t ue_index) const
   {
-    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", fmt::underlying(ue_index));
     return ue_to_cell_group_index[ue_index].load(std::memory_order_relaxed);
   }
 

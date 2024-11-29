@@ -131,7 +131,7 @@ inline bool cpu_supports_feature(cpu_feature feature)
       return true;
 #endif // __ARM_NEON
     case cpu_feature::pmull:
-      return getauxval(AT_HWCAP) & HWCAP_PMULL;
+      return ::getauxval(AT_HWCAP) & HWCAP_PMULL;
 #endif // __aarch64__
     default:
       return false;
@@ -188,11 +188,14 @@ inline std::string get_cpu_feature_info()
   fmt::memory_buffer buffer;
   for (cpu_feature feature : detail::cpu_features_included) {
 #ifdef __x86_64__
-    format_to(
-        buffer, "{}{}{}", buffer.size() == 0 ? "" : " ", feature, cpu_supports_feature(feature) ? "(ok)" : "(na)");
+    fmt::format_to(std::back_inserter(buffer),
+                   "{}{}{}",
+                   buffer.size() == 0 ? "" : " ",
+                   feature,
+                   cpu_supports_feature(feature) ? "(ok)" : "(na)");
 #endif // __x86_64__
 #ifdef __aarch64__
-    format_to(buffer, "{}{}", buffer.size() == 0 ? "" : " ", feature);
+    fmt::format_to(std::back_inserter(buffer), "{}{}", buffer.size() == 0 ? "" : " ", feature);
 #endif // __aarch64__
   }
   return std::string{srsran::to_c_str(buffer)};
@@ -220,7 +223,7 @@ struct formatter<srsran::cpu_feature> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::cpu_feature feature, FormatContext& ctx)
+  auto format(const srsran::cpu_feature feature, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", srsran::to_string(feature));
   }

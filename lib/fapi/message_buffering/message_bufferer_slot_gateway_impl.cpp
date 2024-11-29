@@ -64,7 +64,7 @@ void message_bufferer_slot_gateway_impl::handle_message(T&& msg, P pool, Functio
 
   if (msg_pool_entry) {
     logger.warning("Detected unsent cached FAPI message type '{}' for slot '{}'",
-                   msg_pool_entry->message_type,
+                   fmt::underlying(msg_pool_entry->message_type),
                    slot_point(scs, msg_pool_entry->sfn, msg_pool_entry->slot));
   }
 
@@ -89,7 +89,8 @@ static void send_message(slot_point             slot,
   if (auto msg_type = pool_entry->message_type; pool_message_slot == slot) {
     func(*pool_entry);
   } else {
-    logger.warning("Detected unsent cached FAPI message id '{}' for slot '{}'", msg_type, pool_message_slot);
+    logger.warning(
+        "Detected unsent cached FAPI message id '{}' for slot '{}'", fmt::underlying(msg_type), pool_message_slot);
   }
 
   pool_entry.reset();

@@ -217,7 +217,8 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
       out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = cqi_table_t::table3;
       break;
     default:
-      report_error("Invalid MCS table={} for cell with pci={}\n", cell_cfg.pdsch_cfg.mcs_table, cell_cfg.pci);
+      report_error(
+          "Invalid MCS table={} for cell with pci={}\n", fmt::underlying(cell_cfg.pdsch_cfg.mcs_table), cell_cfg.pci);
   }
 
   // Generate zp-CSI-RS resources.

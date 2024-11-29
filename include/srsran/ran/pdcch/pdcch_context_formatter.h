@@ -25,9 +25,9 @@ public:
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcch_context& context, FormatContext& ctx)
+  auto format(const srsran::pdcch_context& context, FormatContext& ctx) const
   {
-    helper.format_always(ctx, "ss_id={}", context.ss_id);
+    helper.format_always(ctx, "ss_id={}", fmt::underlying(context.ss_id));
     helper.format_always(ctx, "format={}", context.dci_format);
     if (context.harq_feedback_timing.has_value()) {
       helper.format_if_verbose(ctx, "harq_feedback_timing={}", context.harq_feedback_timing.value());

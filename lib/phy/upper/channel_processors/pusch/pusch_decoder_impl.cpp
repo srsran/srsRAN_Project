@@ -131,7 +131,7 @@ span<log_likelihood_ratio> pusch_decoder_impl::get_next_block_view(unsigned bloc
   srsran_assert(state == internal_states::collecting,
                 "Invalid state. It was expected to be {} but it was {}.",
                 to_string(internal_states::collecting),
-                state);
+                to_string(state));
 
   // Makes sure the block size does not overflow the buffer.
   srsran_assert(softbits_count + block_size <= softbits_buffer.size(),
@@ -198,7 +198,7 @@ void pusch_decoder_impl::on_new_softbits(span<const log_likelihood_ratio> softbi
   srsran_assert(state == internal_states::collecting,
                 "Invalid state. It was expected to be {} but it was {}.",
                 to_string(internal_states::collecting),
-                state);
+                to_string(state));
 
   span<log_likelihood_ratio> block = get_next_block_view(softbits.size());
 

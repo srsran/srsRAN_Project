@@ -145,7 +145,7 @@ struct formatter_template {
   }
 
   template <typename FormatContext>
-  auto format(ComplexType value, FormatContext& ctx)
+  auto format(ComplexType value, FormatContext& ctx) const
   {
     const string_view format_str = string_view(format_buffer.data(), format_buffer.size());
     return format_to(ctx.out(), format_str, value.real(), value.imag());
@@ -174,7 +174,7 @@ struct formatter<srsran::cbf16_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::cbf16_t value, FormatContext& ctx)
+  auto format(srsran::cbf16_t value, FormatContext& ctx) const
   {
     return cf_formatter.format(srsran::to_cf(value), ctx);
   }

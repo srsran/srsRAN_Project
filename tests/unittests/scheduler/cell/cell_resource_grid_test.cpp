@@ -39,7 +39,7 @@ TEST(carrier_subslot_resource_grid_test, test_all)
   // Wideband Carrier, 15kHz case.
   {
     carrier_subslot_resource_grid carrier_grid(carrier_cfgs[0]);
-    TESTASSERT_EQ(subcarrier_spacing::kHz15, carrier_grid.scs());
+    TESTASSERT_EQ(fmt::underlying(subcarrier_spacing::kHz15), fmt::underlying(carrier_grid.scs()));
     TESTASSERT_EQ(52, carrier_grid.nof_rbs());
     TESTASSERT_EQ(0, carrier_grid.offset());
     crb_interval lims{0, 52};
@@ -73,7 +73,7 @@ TEST(carrier_subslot_resource_grid_test, test_all)
     carrier_cfg.offset_to_carrier    = 10;
     carrier_cfg.carrier_bandwidth    = 20;
     carrier_subslot_resource_grid carrier_grid(carrier_cfg);
-    TESTASSERT_EQ(subcarrier_spacing::kHz15, carrier_grid.scs());
+    TESTASSERT_EQ(fmt::underlying(subcarrier_spacing::kHz15), fmt::underlying(carrier_grid.scs()));
     TESTASSERT_EQ(20, carrier_grid.nof_rbs());
     TESTASSERT_EQ(10, carrier_grid.offset());
     crb_interval lims{10, 30};

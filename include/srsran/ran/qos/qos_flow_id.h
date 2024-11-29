@@ -47,7 +47,7 @@ struct formatter<srsran::qos_flow_id_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::qos_flow_id_t& qfi, FormatContext& ctx)
+  auto format(const srsran::qos_flow_id_t& qfi, FormatContext& ctx) const
   {
     switch (qfi) {
       case srsran::qos_flow_id_t::invalid:

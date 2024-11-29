@@ -23,6 +23,7 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include <chrono>
 #include <variant>
+#include <vector>
 
 namespace srsran {
 

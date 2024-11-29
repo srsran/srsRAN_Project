@@ -48,8 +48,8 @@ public:
     // Signal that this bearer needs its BO state updated.
     if (not pending_evs.try_push(key)) {
       parent.logger.warning("ue={} lcid={}: Discarding DL buffer occupancy update. Cause: Event queue is full",
-                            rlc_dl_bo.ue_index,
-                            rlc_dl_bo.lcid);
+                            fmt::underlying(rlc_dl_bo.ue_index),
+                            fmt::underlying(rlc_dl_bo.lcid));
     }
   }
 
@@ -66,8 +66,10 @@ public:
       // > Extract last DL BO value for the respective bearer and reset BO table position.
       dl_bo.bs = ue_dl_bo_table[key].exchange(-1, std::memory_order_release);
       if (dl_bo.bs < 0) {
-        parent.logger.warning(
-            "ue={} lcid={}: Invalid DL buffer occupancy value: {}", dl_bo.ue_index, dl_bo.lcid, dl_bo.bs);
+        parent.logger.warning("ue={} lcid={}: Invalid DL buffer occupancy value: {}",
+                              fmt::underlying(dl_bo.ue_index),
+                              fmt::underlying(dl_bo.lcid),
+                              dl_bo.bs);
         continue;
       }
 
@@ -199,7 +201,7 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
   auto handle_ue_creation_impl = [this, u = std::move(u), ev = std::move(ev)]() mutable {
     if (ue_db.contains(u->ue_index)) {
       logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
-                   u->ue_index,
+                   fmt::underlying(u->ue_index),
                    u->crnti);
       return;
     }
@@ -232,7 +234,7 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
 
   // Defer UE object addition to ue list to the slot indication handler.
   if (not common_events.try_push(common_event_t{INVALID_DU_UE_INDEX, std::move(handle_ue_creation_impl)})) {
-    logger.warning("ue={}: Discarding UE creation. Cause: Event queue is full", ue_idx);
+    logger.warning("ue={}: Discarding UE creation. Cause: Event queue is full", fmt::underlying(ue_idx));
   }
 
   // Destroy any pending UEs in the repository outside the critical section.
@@ -298,7 +300,7 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
   };
 
   if (not common_events.try_push(common_event_t{ue_index, std::move(handle_ue_reconf_impl)})) {
-    logger.warning("ue={}: Discarding UE reconfiguration. Cause: Event queue is full", ue_index);
+    logger.warning("ue={}: Discarding UE reconfiguration. Cause: Event queue is full", fmt::underlying(ue_index));
   }
 }
 
@@ -309,7 +311,7 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
   auto handle_ue_deletion_impl = [this, ev = std::move(ev)]() mutable {
     const du_ue_index_t ue_idx = ev.ue_index();
     if (not ue_db.contains(ue_idx)) {
-      logger.warning("Received request to delete ue={} that does not exist", ue_idx);
+      logger.warning("Received request to delete ue={} that does not exist", fmt::underlying(ue_idx));
       return;
     }
     const auto&     u         = ue_db[ue_idx];
@@ -333,7 +335,7 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
   };
 
   if (not common_events.try_push(common_event_t{ue_index, std::move(handle_ue_deletion_impl)})) {
-    logger.warning("ue={}: Discarding UE deletion. Cause: Event queue is full", ue_index);
+    logger.warning("ue={}: Discarding UE deletion. Cause: Event queue is full", fmt::underlying(ue_index));
   }
 
   // Destroy any pending UEs in the repository outside the critical section.
@@ -344,7 +346,7 @@ void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
 {
   auto handle_ue_config_applied_impl = [this, ue_idx]() {
     if (not ue_db.contains(ue_idx)) {
-      logger.warning("Received config application confirmation for ue={} that does not exist", ue_idx);
+      logger.warning("Received config application confirmation for ue={} that does not exist", fmt::underlying(ue_idx));
       return;
     }
     ue&   u     = ue_db[ue_idx];
@@ -361,7 +363,7 @@ void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
   };
 
   if (not common_events.try_push(common_event_t{ue_idx, handle_ue_config_applied_impl})) {
-    logger.warning("ue={}: Discarding UE config applied event. Cause: Event queue is full", ue_idx);
+    logger.warning("ue={}: Discarding UE config applied event. Cause: Event queue is full", fmt::underlying(ue_idx));
   }
 }
 
@@ -401,7 +403,7 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
   };
 
   if (not common_events.try_push(common_event_t{bsr_ind.ue_index, std::move(handle_ul_bsr_ind_impl)})) {
-    logger.warning("ue={}: Discarding UE BSR. Cause: Event queue is full", bsr_ind.ue_index);
+    logger.warning("ue={}: Discarding UE BSR. Cause: Event queue is full", fmt::underlying(bsr_ind.ue_index));
   }
 }
 
@@ -410,8 +412,9 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
   auto handle_phr_impl = [this, phr_ind = ind_pdu_pool->create_phr(phr_ind)]() {
     auto& u = ue_db[phr_ind->ue_index];
     for (const cell_ph_report& cell_phr : phr_ind->phr.get_phr()) {
-      srsran_sanity_check(
-          cell_phr.serv_cell_id < u.nof_cells(), "Invalid serving cell index={}", cell_phr.serv_cell_id);
+      srsran_sanity_check(cell_phr.serv_cell_id < u.nof_cells(),
+                          "Invalid serving cell index={}",
+                          fmt::underlying(cell_phr.serv_cell_id));
       auto& ue_cc = u.get_cell(cell_phr.serv_cell_id);
 
       ue_cc.get_ul_power_controller().handle_phr(cell_phr, phr_ind->slot_rx);
@@ -674,7 +677,8 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
   };
 
   if (not common_events.try_push(common_event_t{ce.ue_index, handle_mac_ce_impl})) {
-    logger.warning("ue={} lcid={}: DL MAC CE discarded. Cause: Event queue is full", ce.ue_index, ce.ce_lcid);
+    logger.warning(
+        "ue={} lcid={}: DL MAC CE discarded. Cause: Event queue is full", fmt::underlying(ce.ue_index), ce.ce_lcid);
   }
 }
 
@@ -762,7 +766,7 @@ void ue_event_manager::handle_error_indication(slot_point                       
     if (prev_slot_result == nullptr) {
       logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
                      "of the error indication have already been erased",
-                     cell_index,
+                     fmt::underlying(cell_index),
                      sl_tx);
       return;
     }
@@ -856,7 +860,7 @@ void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)
 
 void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 {
-  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index {}", cell_index);
+  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index {}", fmt::underlying(cell_index));
 
   // Process common events.
   process_common(sl, cell_index);
@@ -893,10 +897,13 @@ bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
 void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name, bool warn_if_ignored) const
 {
   srslog::log_channel& log_channel = warn_if_ignored ? logger.warning : logger.info;
-  log_channel("{} for ue={} discarded. Cause: UE with provided Id does not exist", event_name, ue_index);
+  log_channel(
+      "{} for ue={} discarded. Cause: UE with provided Id does not exist", event_name, fmt::underlying(ue_index));
 }
 
 void ue_event_manager::log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const
 {
-  logger.warning("Event for ue={} ignored. Cause: Cell {} is not configured.", ue_index, cell_index);
+  logger.warning("Event for ue={} ignored. Cause: Cell {} is not configured.",
+                 fmt::underlying(ue_index),
+                 fmt::underlying(cell_index));
 }

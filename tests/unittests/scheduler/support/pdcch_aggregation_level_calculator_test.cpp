@@ -58,7 +58,7 @@ void PrintTo(const pdcch_aggregation_level_calculation_test_params& value, ::std
 {
   *os << fmt::format("cqi={} cqi_table={} pdcch_candidates=[{}] dci_size={} bits expected_al={}",
                      value.cqi,
-                     value.cqi_table,
+                     fmt::underlying(value.cqi_table),
                      fmt::join(value.pdcch_candidates.begin(), value.pdcch_candidates.end(), ","),
                      value.dci_size_in_bits,
                      to_nof_cces(value.expected_aggr_level));

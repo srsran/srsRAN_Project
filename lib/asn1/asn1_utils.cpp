@@ -1540,9 +1540,9 @@ void json_writer::write_fieldname(const char* fieldname)
 {
   static constexpr const char* septable[] = {",\n", "\n", ""};
 
-  fmt::format_to(buffer, "{}{}", septable[sep], sep != NONE ? ident : "");
+  fmt::format_to(std::back_inserter(buffer), "{}{}", septable[sep], sep != NONE ? ident : "");
   if (strlen(fieldname) != 0) {
-    fmt::format_to(buffer, "\"{}\": ", fieldname);
+    fmt::format_to(std::back_inserter(buffer), "\"{}\": ", fieldname);
   }
   sep = NONE;
 }
@@ -1550,7 +1550,7 @@ void json_writer::write_fieldname(const char* fieldname)
 void json_writer::write_str(const char* fieldname, const char* value)
 {
   write_fieldname(fieldname);
-  fmt::format_to(buffer, "\"{}\"", value);
+  fmt::format_to(std::back_inserter(buffer), "\"{}\"", value);
   sep = COMMA;
 }
 
@@ -1572,7 +1572,7 @@ void json_writer::write_str(const std::string& value)
 void json_writer::write_int(const char* fieldname, int64_t value)
 {
   write_fieldname(fieldname);
-  fmt::format_to(buffer, "{}", value);
+  fmt::format_to(std::back_inserter(buffer), "{}", value);
   sep = COMMA;
 }
 void json_writer::write_int(int64_t value)
@@ -1583,7 +1583,7 @@ void json_writer::write_int(int64_t value)
 void json_writer::write_bool(const char* fieldname, bool value)
 {
   write_fieldname(fieldname);
-  fmt::format_to(buffer, "{}", value ? "true" : "false");
+  fmt::format_to(std::back_inserter(buffer), "{}", value ? "true" : "false");
   sep = COMMA;
 }
 void json_writer::write_bool(bool value)
@@ -1594,7 +1594,7 @@ void json_writer::write_bool(bool value)
 void json_writer::write_float(const char* fieldname, float value)
 {
   write_fieldname(fieldname);
-  fmt::format_to(buffer, "{}", value);
+  fmt::format_to(std::back_inserter(buffer), "{}", value);
   sep = COMMA;
 }
 
@@ -1605,7 +1605,7 @@ void json_writer::write_float(float value)
 void json_writer::write_null(const char* fieldname)
 {
   write_fieldname(fieldname);
-  fmt::format_to(buffer, "null");
+  fmt::format_to(std::back_inserter(buffer), "null");
   sep = COMMA;
 }
 void json_writer::write_null()
@@ -1616,28 +1616,28 @@ void json_writer::write_null()
 void json_writer::start_obj(const char* fieldname)
 {
   write_fieldname(fieldname);
-  fmt::format_to(buffer, "{{");
+  fmt::format_to(std::back_inserter(buffer), "{{");
   ident += "  ";
   sep = NEWLINE;
 }
 void json_writer::end_obj()
 {
   ident.erase(ident.size() - 2, 2);
-  fmt::format_to(buffer, "\n{}}}", ident);
+  fmt::format_to(std::back_inserter(buffer), "\n{}}}", ident);
   sep = COMMA;
 }
 
 void json_writer::start_array(const char* fieldname)
 {
   write_fieldname(fieldname);
-  fmt::format_to(buffer, "[");
+  fmt::format_to(std::back_inserter(buffer), "[");
   ident += "  ";
   sep = NEWLINE;
 }
 void json_writer::end_array()
 {
   ident.erase(ident.size() - 2, 2);
-  fmt::format_to(buffer, "\n{}]", ident);
+  fmt::format_to(std::back_inserter(buffer), "\n{}]", ident);
   sep = COMMA;
 }
 

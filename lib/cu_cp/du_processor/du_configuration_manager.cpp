@@ -136,12 +136,12 @@ du_configuration_manager::handle_du_config_update(const du_configuration_context
                                                   const du_config_update_request& req)
 {
   if (current_ctxt.id != req.gnb_du_id) {
-    logger.warning("du_id={}: Failed to update DU. Cause: DU ID mismatch", current_ctxt.id);
+    logger.warning("du_id={}: Failed to update DU. Cause: DU ID mismatch", fmt::underlying(current_ctxt.id));
     return nullptr;
   }
   auto it = dus.find(current_ctxt.id);
   if (it == dus.end()) {
-    logger.error("du_id={}: DU config update called for non-existent DU", current_ctxt.id);
+    logger.error("du_id={}: DU config update called for non-existent DU", fmt::underlying(current_ctxt.id));
     return nullptr;
   }
 
@@ -160,8 +160,9 @@ du_configuration_manager::handle_du_config_update(const du_configuration_context
     if (cell_it != it->second.served_cells.end()) {
       du_context.served_cells.erase(cell_it);
     } else {
-      logger.warning(
-          "du_id={}: Failed to remove cell nci={}. Cause: It was not previously set", current_ctxt.id, cgi.nci);
+      logger.warning("du_id={}: Failed to remove cell nci={}. Cause: It was not previously set",
+                     fmt::underlying(current_ctxt.id),
+                     cgi.nci);
     }
   }
   // > Add new cells.
@@ -189,7 +190,7 @@ void du_configuration_manager::rem_du(gnb_du_id_t du_id)
 {
   auto it = dus.find(du_id);
   if (it == dus.end()) {
-    logger.warning("du={}: Failed to remove DU. Cause: DU not found", du_id);
+    logger.warning("du={}: Failed to remove DU. Cause: DU not found", fmt::underlying(du_id));
     return;
   }
   dus.erase(it);

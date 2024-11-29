@@ -11,6 +11,7 @@
 #include "text_formatter.h"
 #include "srsran/srslog/detail/log_entry_metadata.h"
 #include "fmt/chrono.h"
+#include "fmt/ranges.h"
 
 using namespace srslog;
 
@@ -21,7 +22,7 @@ std::unique_ptr<log_formatter> text_formatter::clone() const
 
 void text_formatter::format_full_queue_error(fmt::memory_buffer& buffer)
 {
-  fmt::format_to(buffer, "### Potentially skipped log lines from this point onwards ###\n");
+  fmt::format_to(std::back_inserter(buffer), "### Potentially skipped log lines from this point onwards ###\n");
 }
 
 /// Formats into a hex dump a range of elements, storing the result in the input
@@ -33,7 +34,10 @@ static void format_hex_dump(const std::vector<uint8_t>& v, fmt::memory_buffer& b
   for (auto i = v.cbegin(), e = v.cend(); i != e;) {
     auto num_elements = std::min<size_t>(elements_per_line, std::distance(i, e));
 
-    fmt::format_to(buffer, "    {:04x}: {:02x}\n", std::distance(v.cbegin(), i), fmt::join(i, i + num_elements, " "));
+    fmt::format_to(std::back_inserter(buffer),
+                   "    {:04x}: {:02x}\n",
+                   std::distance(v.cbegin(), i),
+                   fmt::join(i, i + num_elements, " "));
 
     std::advance(i, num_elements);
   }
@@ -46,23 +50,26 @@ static void format_metadata(const detail::log_entry_metadata& metadata, fmt::mem
   std::tm current_time = fmt::gmtime(std::chrono::high_resolution_clock::to_time_t(metadata.tp));
   auto    us_fraction =
       std::chrono::duration_cast<std::chrono::microseconds>(metadata.tp.time_since_epoch()).count() % 1000000u;
-  fmt::format_to(buffer, "{:%F}T{:%H:%M:%S}.{:06} ", current_time, current_time, us_fraction);
+  fmt::format_to(std::back_inserter(buffer), "{:%F}T{:%H:%M:%S}.{:06} ", current_time, current_time, us_fraction);
 
   // Format optional fields if present.
   if (!metadata.log_name.empty()) {
-    fmt::format_to(buffer, "[{: <8}] ", metadata.log_name);
+    fmt::format_to(std::back_inserter(buffer), "[{: <8}] ", metadata.log_name);
   }
   if (metadata.log_tag != '\0') {
-    fmt::format_to(buffer, "[{}] ", metadata.log_tag);
+    fmt::format_to(std::back_inserter(buffer), "[{}] ", metadata.log_tag);
   }
   if (metadata.context.enabled) {
     fmt::memory_buffer ctx_buffer;
-    fmt::format_to(ctx_buffer, "{}.{}", uint32_t(metadata.context.value64 >> 32), uint32_t(metadata.context.value64));
+    fmt::format_to(std::back_inserter(ctx_buffer),
+                   "{}.{}",
+                   uint32_t(metadata.context.value64 >> 32),
+                   uint32_t(metadata.context.value64));
     ctx_buffer.push_back('\0');
-    fmt::format_to(buffer, "[{: >8}] ", ctx_buffer.data());
+    fmt::format_to(std::back_inserter(buffer), "[{: >8}] ", ctx_buffer.data());
   }
   if (metadata.log_label != nullptr && !metadata.log_label->empty()) {
-    fmt::format_to(buffer, "{}", *metadata.log_label);
+    fmt::format_to(std::back_inserter(buffer), "{}", *metadata.log_label);
   }
 }
 
@@ -74,19 +81,20 @@ void text_formatter::format(detail::log_entry_metadata&& metadata, fmt::memory_b
   // Message formatting.
   if (metadata.fmtstring) {
     if (metadata.store) {
-      fmt::basic_format_args<fmt::buffer_context<char>> args(*metadata.store);
+      fmt::basic_format_args<fmt::buffered_context<char>> args(*metadata.store);
       try {
-        fmt::vformat_to(buffer, fmt::to_string_view(metadata.fmtstring), args);
+        fmt::vformat_to(std::back_inserter(buffer), fmt::string_view(metadata.fmtstring), args);
       } catch (...) {
         fmt::print(stderr, "srsLog error - Invalid format string: \"{}\"\n", metadata.fmtstring);
-        fmt::format_to(buffer, " -> srsLog error - Invalid format string: \"{}\"", metadata.fmtstring);
+        fmt::format_to(
+            std::back_inserter(buffer), " -> srsLog error - Invalid format string: \"{}\"", metadata.fmtstring);
 #ifdef STOP_ON_WARNING
         std::abort();
 #endif
       }
-      fmt::format_to(buffer, "\n");
+      fmt::format_to(std::back_inserter(buffer), "\n");
     } else {
-      fmt::format_to(buffer, "{}\n", metadata.fmtstring);
+      fmt::format_to(std::back_inserter(buffer), "{}\n", metadata.fmtstring);
     }
   }
 
@@ -105,11 +113,11 @@ void text_formatter::format_context_begin(const detail::log_entry_metadata& md,
   format_metadata(md, buffer);
   if (do_one_line_ctx_format) {
     assert(scope_stack.empty() && "Stack should be empty");
-    fmt::format_to(buffer, "[");
+    fmt::format_to(std::back_inserter(buffer), "[");
     return;
   }
 
-  fmt::format_to(buffer, "Context dump for \"{}\"\n", ctx_name);
+  fmt::format_to(std::back_inserter(buffer), "Context dump for \"{}\"\n", ctx_name);
 }
 
 void text_formatter::format_context_end(const detail::log_entry_metadata& md,
@@ -121,20 +129,20 @@ void text_formatter::format_context_end(const detail::log_entry_metadata& md,
   }
 
   if (md.store) {
-    fmt::format_to(buffer, "]: ");
-    fmt::basic_format_args<fmt::buffer_context<char>> args(*md.store);
+    fmt::format_to(std::back_inserter(buffer), "]: ");
+    fmt::basic_format_args<fmt::buffered_context<char>> args(*md.store);
     try {
-      fmt::vformat_to(buffer, fmt::to_string_view(md.fmtstring), args);
+      fmt::vformat_to(std::back_inserter(buffer), fmt::string_view(md.fmtstring), args);
     } catch (...) {
       fmt::print(stderr, "srsLog error - Invalid format string: \"{}\"\n", md.fmtstring);
-      fmt::format_to(buffer, " -> srsLog error - Invalid format string: \"{}\"", md.fmtstring);
+      fmt::format_to(std::back_inserter(buffer), " -> srsLog error - Invalid format string: \"{}\"", md.fmtstring);
 #ifdef STOP_ON_WARNING
       std::abort();
 #endif
     }
-    fmt::format_to(buffer, "\n");
+    fmt::format_to(std::back_inserter(buffer), "\n");
   } else {
-    fmt::format_to(buffer, "]: {}\n", md.fmtstring);
+    fmt::format_to(std::back_inserter(buffer), "]: {}\n", md.fmtstring);
   }
   assert(scope_stack.empty() && "Stack should be empty");
 }
@@ -146,11 +154,11 @@ void text_formatter::format_metric_set_begin(fmt::string_view    set_name,
 {
   if (do_one_line_ctx_format) {
     scope_stack.emplace_back(size, set_name.data());
-    fmt::format_to(buffer, "[");
+    fmt::format_to(std::back_inserter(buffer), "[");
     return;
   }
 
-  fmt::format_to(buffer, "{: <{}}> Set: {}\n", ' ', get_indents(level), set_name);
+  fmt::format_to(std::back_inserter(buffer), "{: <{}}> Set: {}\n", ' ', get_indents(level), set_name);
 }
 
 void text_formatter::format_metric_set_end(fmt::string_view set_name, unsigned level, fmt::memory_buffer& buffer)
@@ -160,7 +168,7 @@ void text_formatter::format_metric_set_end(fmt::string_view set_name, unsigned l
   }
 
   scope_stack.pop_back();
-  fmt::format_to(buffer, "]");
+  fmt::format_to(std::back_inserter(buffer), "]");
 }
 
 void text_formatter::format_metric(fmt::string_view    metric_name,
@@ -172,7 +180,7 @@ void text_formatter::format_metric(fmt::string_view    metric_name,
 {
   if (do_one_line_ctx_format) {
     consume_element();
-    fmt::format_to(buffer,
+    fmt::format_to(std::back_inserter(buffer),
                    "{}_{}: {}{}{}{}",
                    get_current_set_name(),
                    metric_name,
@@ -183,7 +191,7 @@ void text_formatter::format_metric(fmt::string_view    metric_name,
     return;
   }
 
-  fmt::format_to(buffer,
+  fmt::format_to(std::back_inserter(buffer),
                  "{: <{}}{}: {}{}{}\n",
                  ' ',
                  get_indents(level),
@@ -201,5 +209,5 @@ void text_formatter::format_list_begin(fmt::string_view    list_name,
   if (do_one_line_ctx_format) {
     return;
   }
-  fmt::format_to(buffer, "{: <{}}> List: {}\n", ' ', get_indents(level), list_name);
+  fmt::format_to(std::back_inserter(buffer), "{: <{}}> List: {}\n", ' ', get_indents(level), list_name);
 }

@@ -113,7 +113,7 @@ push_sdus(bench_params params, const rlc_tx_am_config& config, rlc_tx_am_entity*
 void benchmark_tx_pdu(const bench_params& params)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "Benchmark RLC AM TX PDUs");
+  fmt::format_to(std::back_inserter(buffer), "Benchmark RLC AM TX PDUs");
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   // Set Tx config

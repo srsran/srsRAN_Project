@@ -331,7 +331,7 @@ struct formatter<srsran::gtpu_rx_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_rx_state& st, FormatContext& ctx)
+  auto format(const srsran::gtpu_rx_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "rx_deliv={} rx_reord={} rx_next={} ", st.rx_deliv, st.rx_reord, st.rx_next);
   }

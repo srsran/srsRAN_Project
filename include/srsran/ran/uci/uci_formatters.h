@@ -29,7 +29,7 @@ struct fmt::formatter<srsran::uci_part2_size_description::parameter> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::uci_part2_size_description::parameter& value, FormatContext& ctx)
+  auto format(const srsran::uci_part2_size_description::parameter& value, FormatContext& ctx) const
   {
     helper.format_always(ctx, "offset={}", value.offset);
     helper.format_always(ctx, "width={}", value.width);
@@ -53,7 +53,7 @@ struct fmt::formatter<srsran::uci_part2_size_description::entry> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::uci_part2_size_description::entry& value, FormatContext& ctx)
+  auto format(const srsran::uci_part2_size_description::entry& value, FormatContext& ctx) const
   {
     helper.format_always(
         ctx, "params=[{:,}]", srsran::span<const srsran::uci_part2_size_description::parameter>(value.parameters));
@@ -78,7 +78,7 @@ struct fmt::formatter<srsran::uci_part2_size_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::uci_part2_size_description& description, FormatContext& ctx)
+  auto format(const srsran::uci_part2_size_description& description, FormatContext& ctx) const
   {
     helper.format_always(
         ctx, "entries=[{:,}]", srsran::span<const srsran::uci_part2_size_description::entry>(description.entries));

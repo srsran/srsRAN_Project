@@ -317,7 +317,7 @@ struct formatter<srsran::rlc_rx_am_sdu_info> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_am_sdu_info& info, FormatContext& ctx)
+  auto format(const srsran::rlc_rx_am_sdu_info& info, FormatContext& ctx) const
   {
     if (std::holds_alternative<srsran::byte_buffer_slice>(info.sdu_data)) {
       // full SDU
@@ -349,7 +349,7 @@ struct formatter<srsran::rlc_rx_am_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_am_state& st, FormatContext& ctx)
+  auto format(const srsran::rlc_rx_am_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "rx_next={} rx_next_status_trigger={} rx_highest_status={} rx_next_highest={}",

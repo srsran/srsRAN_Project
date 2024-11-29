@@ -28,6 +28,7 @@
 #include "srsran/ru/ru_uplink_plane.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
+#include "fmt/std.h"
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <linux/if_packet.h>
@@ -111,7 +112,7 @@ static test_parameters test_params;
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-s silent]\n", prog);
-  fmt::print("\t-w Channel bandwidth [Default {}]\n", test_params.bw);
+  fmt::print("\t-w Channel bandwidth [Default {}]\n", fmt::underlying(test_params.bw));
   fmt::print("\t-c Subcarrier spacing. [Default {}]\n", to_string(test_params.scs));
   fmt::print("\t-d Array of downlink eAxCs [default is {}]\n", port_ids_to_str(test_params.dl_port_id));
   fmt::print("\t-u Array of uplink eAxCs [default is {}]\n", port_ids_to_str(test_params.ul_port_id));
@@ -136,7 +137,7 @@ static void usage(const char* prog)
              test_params.use_loopback_receiver);
   fmt::print("\t-N Number of slots processed in the test [Default {}]]\n", nof_test_slots);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", test_params.silent);
-  fmt::print("\t-v Logging level. [Default {}]\n", test_params.log_level);
+  fmt::print("\t-v Logging level. [Default {}]\n", fmt::underlying(test_params.log_level));
   fmt::print("\t-f Log file name. [Default {}]\n", test_params.log_filename);
   fmt::print("\t-h Show this message\n");
 }

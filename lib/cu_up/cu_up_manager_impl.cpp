@@ -188,7 +188,8 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
 {
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
-    logger.error("ue={}: Discarding E1 Bearer Context Release Command. UE context not found", msg.ue_index);
+    logger.error("ue={}: Discarding E1 Bearer Context Release Command. UE context not found",
+                 fmt::underlying(msg.ue_index));
     return launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();

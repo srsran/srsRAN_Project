@@ -20,7 +20,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
   fmt::print(os,
              "tbs={}; modulation={}; R={}; Oack={}; Ocsi1={}; Ocsi2={};",
              test_case.config.tbs,
-             test_case.config.mcs_descr.modulation,
+             fmt::underlying(test_case.config.mcs_descr.modulation),
              test_case.config.mcs_descr.get_normalised_target_code_rate(),
              test_case.config.nof_harq_ack_bits,
              test_case.config.nof_csi_part1_bits,

@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/ran/serv_cell_index.h"
 #include <cstdint>
 #include <type_traits>
 
@@ -33,18 +32,18 @@ enum du_cell_index_t : uint16_t {
 };
 
 /// Convert integer to DU UE index type.
-constexpr inline du_ue_index_t to_du_ue_index(std::underlying_type_t<du_ue_index_t> idx)
+constexpr du_ue_index_t to_du_ue_index(std::underlying_type_t<du_ue_index_t> idx)
 {
   return static_cast<du_ue_index_t>(idx);
 }
 
-constexpr inline bool is_du_ue_index_valid(du_ue_index_t ue_idx)
+constexpr bool is_du_ue_index_valid(du_ue_index_t ue_idx)
 {
   return ue_idx < MAX_NOF_DU_UES;
 }
 
 /// Convert integer to DU cell index type.
-inline du_cell_index_t to_du_cell_index(std::underlying_type_t<du_cell_index_t> idx)
+constexpr du_cell_index_t to_du_cell_index(std::underlying_type_t<du_cell_index_t> idx)
 {
   return static_cast<du_cell_index_t>(idx);
 }
@@ -57,7 +56,7 @@ enum ue_cell_index_t : uint16_t {
   INVALID_UE_CELL_INDEX = MAX_NOF_SCELL_INDEXES
 };
 
-inline ue_cell_index_t to_ue_cell_index(std::underlying_type_t<ue_cell_index_t> idx)
+constexpr ue_cell_index_t to_ue_cell_index(std::underlying_type_t<ue_cell_index_t> idx)
 {
   return static_cast<ue_cell_index_t>(idx);
 }

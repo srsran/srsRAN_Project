@@ -115,7 +115,7 @@ void du_ue_drb::stop()
 
 std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& drb_info)
 {
-  srsran_assert(not is_srb(drb_info.lcid), "Invalid DRB LCID={}", drb_info.lcid);
+  srsran_assert(not is_srb(drb_info.lcid), "Invalid DRB LCID={}", fmt::underlying(drb_info.lcid));
   srsran_assert(not drb_info.uluptnl_info_list.empty(), "Invalid UP TNL Info list");
 
   const du_ue_index_t ue_index  = drb_info.ue_index;
@@ -130,7 +130,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   // > Setup DL UP TNL info.
   expected<gtpu_teid_t> dl_teid = teid_pool.request_teid();
   if (not dl_teid.has_value()) {
-    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to allocate DL GTP-TEID.", ue_index);
+    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to allocate DL GTP-TEID.", fmt::underlying(ue_index));
     return nullptr;
   }
   // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
@@ -155,7 +155,8 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
       timer_factory{drb_info.du_params.services.timers, drb_info.du_params.services.ue_execs.ctrl_executor(ue_index)},
       drb_info.du_params.services.ue_execs.f1u_dl_pdu_executor(ue_index));
   if (drb->f1u_gw_bearer == nullptr) {
-    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to connect F1-U GW bearer to CU-UP.", ue_index);
+    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to connect F1-U GW bearer to CU-UP.",
+                                                 fmt::underlying(ue_index));
     return nullptr;
   }
 
@@ -174,7 +175,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
 
   drb->drb_f1u = srs_du::create_f1u_bearer(f1u_msg);
   if (drb->f1u_gw_bearer == nullptr) {
-    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to create F1-U bearer.", ue_index);
+    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to create F1-U bearer.", fmt::underlying(ue_index));
     return nullptr;
   }
 

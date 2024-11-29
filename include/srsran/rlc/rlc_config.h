@@ -12,9 +12,9 @@
 
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/rlc/rlc_mode.h"
-#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/timers.h"
+#include "fmt/std.h"
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -752,7 +752,7 @@ struct formatter<srsran::rlc_um_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_um_sn_size sn_size, FormatContext& ctx)
+  auto format(srsran::rlc_um_sn_size sn_size, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", to_number(sn_size));
   }
@@ -767,7 +767,7 @@ struct formatter<srsran::rlc_am_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_am_sn_size& sn_size, FormatContext& ctx)
+  auto format(const srsran::rlc_am_sn_size& sn_size, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", to_number(sn_size));
   }
@@ -782,7 +782,7 @@ struct formatter<srsran::rlc_dc_field> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_dc_field dc, FormatContext& ctx)
+  auto format(srsran::rlc_dc_field dc, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
@@ -798,7 +798,7 @@ struct formatter<srsran::rlc_si_field> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_si_field si, FormatContext& ctx)
+  auto format(srsran::rlc_si_field si, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"full", "first", "last", "mid"};
     return format_to(ctx.out(), "{}", options[to_number(si)]);
@@ -814,7 +814,7 @@ struct formatter<srsran::rlc_control_pdu_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_control_pdu_type cpt, FormatContext& ctx)
+  auto format(srsran::rlc_control_pdu_type cpt, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", to_number(cpt));
   }
@@ -830,7 +830,7 @@ struct formatter<srsran::rlc_tx_tm_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tx_tm_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_tx_tm_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "queue_size={}", cfg.queue_size);
   }
@@ -846,7 +846,7 @@ struct formatter<srsran::rlc_rx_tm_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_tm_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_rx_tm_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "");
   }
@@ -862,7 +862,7 @@ struct formatter<srsran::rlc_tm_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tm_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_tm_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
   }
@@ -878,7 +878,7 @@ struct formatter<srsran::rlc_tx_um_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tx_um_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_tx_um_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "tx_sn_size={} pdcp_sn_len={} queue_size={} queue_size_bytes={}",
@@ -899,7 +899,7 @@ struct formatter<srsran::rlc_rx_um_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_um_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_rx_um_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "rx_sn_size={} t_reassembly={}", cfg.sn_field_length, cfg.t_reassembly);
   }
@@ -915,7 +915,7 @@ struct formatter<srsran::rlc_um_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_um_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_um_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
   }
@@ -931,7 +931,7 @@ struct formatter<srsran::rlc_tx_am_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tx_am_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_tx_am_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "tx_sn_size={} pdcp_sn_len={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={} queue_size={} "
@@ -958,7 +958,7 @@ struct formatter<srsran::rlc_rx_am_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_am_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_rx_am_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "rx_sn_size={} t_reassembly={} t_status_prohibit={} max_sn_per_status={}",
@@ -979,7 +979,7 @@ struct formatter<srsran::rlc_am_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_am_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_am_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
   }
@@ -995,7 +995,7 @@ struct formatter<srsran::rlc_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_config& cfg, FormatContext& ctx)
+  auto format(const srsran::rlc_config& cfg, FormatContext& ctx) const
   {
     if (cfg.mode == srsran::rlc_mode::tm) {
       return format_to(ctx.out(), "{} {}", cfg.mode, cfg.tm);

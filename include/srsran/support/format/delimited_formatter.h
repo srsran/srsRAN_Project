@@ -106,7 +106,7 @@ public:
   /// \param[in] format Formatting string, containing format specifiers.
   /// \param[in] args Fields to be formatted.
   template <typename FormatContext, typename... Args>
-  void format_always(FormatContext& context, const char* format, Args&&... args)
+  void format_always(FormatContext& context, const char* format, Args&&... args) const
   {
     this->format_to(context, format, std::forward<Args>(args)...);
   }
@@ -125,7 +125,7 @@ public:
   /// \param[in] context Formatting context, including an output iterator used to write the formatted representation.
   /// \param[in] args Fields to be formatted.
   template <typename FormatContext, typename... Args>
-  void format_always(FormatContext& context, Args&&... args)
+  void format_always(FormatContext& context, Args&&... args) const
   {
     this->format_to(context, std::forward<Args>(args)...);
   }
@@ -143,7 +143,7 @@ public:
   /// \param[in] format Formatting string, containing format specifiers.
   /// \param[in] args Fields to be formatted.
   template <typename FormatContext, typename... Args>
-  void format_if_verbose(FormatContext& context, const char* format, Args&&... args)
+  void format_if_verbose(FormatContext& context, const char* format, Args&&... args) const
   {
     if (verbose) {
       this->format_to(context, format, std::forward<Args>(args)...);
@@ -163,7 +163,7 @@ public:
   /// \param[in] context Formatting context, including an output iterator used to write the formatted representation.
   /// \param[in] args Fields to be formatted.
   template <typename FormatContext, typename... Args>
-  void format_if_verbose(FormatContext& context, Args&&... args)
+  void format_if_verbose(FormatContext& context, Args&&... args) const
   {
     if (verbose) {
       this->format_to(context, std::forward<Args>(args)...);
@@ -176,12 +176,12 @@ public:
 private:
   /// Internal method used to format with any formatting options.
   template <typename FormatContext, typename... Args>
-  void format_to(FormatContext& context, const char* format, Args&&... args)
+  void format_to(FormatContext& context, const char* format, Args&&... args) const
   {
     if (!first) {
       // Buffer to hold the formatted string.
       fmt::memory_buffer temp_buffer;
-      fmt::format_to(temp_buffer, format, std::forward<Args>(args)...);
+      fmt::format_to(std::back_inserter(temp_buffer), format, std::forward<Args>(args)...);
 
       if (temp_buffer.size() > 0) {
         // Prepend delimiter to the formatted output.
@@ -200,13 +200,14 @@ private:
 
   /// Internal method used to format with the parsed formatting options.
   template <typename FormatContext, typename... Args>
-  void format_to(FormatContext& context, Args&&... args)
+  void format_to(FormatContext& context, Args&&... args) const
   {
     if (!first) {
       // Buffer to hold the formatted string.
       fmt::memory_buffer temp_buffer;
-      fmt::format_to(
-          temp_buffer, std::string_view(format_buffer.data(), format_buffer.size()), std::forward<Args>(args)...);
+      fmt::format_to(std::back_inserter(temp_buffer),
+                     std::string_view(format_buffer.data(), format_buffer.size()),
+                     std::forward<Args>(args)...);
 
       if (temp_buffer.size() > 0) {
         // Prepend delimiter to the formatted output.
@@ -225,7 +226,7 @@ private:
   }
 
   /// First field flag. It is used to determine when to insert delimiters between fields.
-  bool first = true;
+  mutable bool first = true;
   /// Verbose flag. Verbose format option includes all the fields of the structure in the formatted output.
   bool verbose = true;
 

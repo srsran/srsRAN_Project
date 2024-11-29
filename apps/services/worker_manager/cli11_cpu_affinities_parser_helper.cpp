@@ -29,9 +29,10 @@ static expected<Integer, std::string> parse_int(const std::string& value)
 
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
-  std::string error_message = fmt::format("Invalid CPU core selected '{}'. Valid CPU ids: {}",
-                                          cpu_idx,
-                                          os_sched_affinity_bitmask::available_cpus().get_cpu_ids());
+  std::string error_message =
+      fmt::format("Invalid CPU core selected '{}'. Valid CPU ids: {}",
+                  cpu_idx,
+                  span<const size_t>(os_sched_affinity_bitmask::available_cpus().get_cpu_ids()));
 
   os_sched_affinity_bitmask one_cpu_mask;
   if (cpu_idx >= one_cpu_mask.size()) {

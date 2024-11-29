@@ -26,8 +26,7 @@ struct formatter<srsran::radio_configuration::clock_sources::source> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::radio_configuration::clock_sources::source& source, FormatContext& ctx)
-
+  auto format(const srsran::radio_configuration::clock_sources::source& source, FormatContext& ctx) const
   {
     switch (source) {
       case srsran::radio_configuration::clock_sources::source::DEFAULT:
@@ -52,8 +51,7 @@ struct formatter<srsran::radio_configuration::radio> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::radio_configuration::radio& config, FormatContext& ctx)
-
+  auto format(const srsran::radio_configuration::radio& config, FormatContext& ctx) const
   {
     return fmt::format_to(ctx.out(), "clock_src={} sync_src={}", config.clock.clock, config.clock.sync);
   }

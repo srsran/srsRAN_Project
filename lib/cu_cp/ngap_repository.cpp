@@ -57,7 +57,7 @@ void ngap_repository::update_plmn_lookup(amf_index_t amf_index)
 {
   auto ngap = ngap_db.find(amf_index);
   if (ngap == ngap_db.end()) {
-    logger.error("NGAP not found for AMF index {}", amf_index);
+    logger.error("NGAP not found for AMF index {}", fmt::underlying(amf_index));
     return;
   }
 

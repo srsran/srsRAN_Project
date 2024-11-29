@@ -88,7 +88,7 @@ void scheduler_test_simulator::push_dl_buffer_state(const dl_buffer_state_indica
 
 void scheduler_test_simulator::run_slot(du_cell_index_t cell_idx)
 {
-  srsran_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", cell_idx);
+  srsran_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", fmt::underlying(cell_idx));
   logger.set_context(next_slot.sfn(), next_slot.slot_index());
   test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
 

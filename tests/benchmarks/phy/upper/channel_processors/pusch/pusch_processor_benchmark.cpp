@@ -225,7 +225,7 @@ static void usage(const char* prog)
              dedicated_queue ? "dedicated_queue" : "shared_queue");
   fmt::print("\t-x       Use the host's memory for the soft-buffer [Default {}]\n", !ext_softbuffer);
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
-  fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", hal_log_level);
+  fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", fmt::underlying(hal_log_level));
   fmt::print("\teal_args EAL arguments\n");
 #endif // HWACC_PUSCH_ENABLED
 
@@ -826,7 +826,7 @@ int main(int argc, char** argv)
 
     // Measurement description.
     fmt::memory_buffer meas_description;
-    fmt::format_to(meas_description,
+    fmt::format_to(std::back_inserter(meas_description),
                    "PUSCH RB={:<3} Mod={:<6} R={:<5.3f} rv={} n_layers={} - {:>5.1f} Mbps",
                    config.freq_alloc.get_nof_rb(),
                    to_string(config.mcs_descr.modulation),

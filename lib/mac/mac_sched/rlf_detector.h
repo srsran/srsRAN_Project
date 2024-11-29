@@ -45,7 +45,7 @@ public:
 
   void add_ue(du_ue_index_t ue_index, mac_ue_radio_link_notifier& notifier)
   {
-    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", fmt::underlying(ue_index));
 
     ues[ue_index].ko_counters[0] = 0;
     ues[ue_index].ko_counters[1] = 0;
@@ -56,7 +56,7 @@ public:
 
   void rem_ue(du_ue_index_t ue_index, du_cell_index_t cell_index)
   {
-    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", fmt::underlying(ue_index));
 
     ues[ue_index].ko_counters[0] = max_consecutive_kos[cell_index].max_consecutive_dl_kos + 1;
     ues[ue_index].ko_counters[1] = max_consecutive_kos[cell_index].max_consecutive_ul_kos + 1;
@@ -77,7 +77,7 @@ public:
 
   void handle_csi(du_ue_index_t ue_index, du_cell_index_t cell_index, bool csi_decoded)
   {
-    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", fmt::underlying(ue_index));
     auto& u = ues[ue_index];
 
     const unsigned csi_index = 2U;
@@ -90,7 +90,8 @@ public:
       if (current_count == max_consecutive_kos[cell_index].max_consecutive_csi_dtx) {
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
-          logger.info("ue={}: RLF detected. Cause: {} consecutive undecoded CSIs", ue_index, current_count);
+          logger.info(
+              "ue={}: RLF detected. Cause: {} consecutive undecoded CSIs", fmt::underlying(ue_index), current_count);
 
           // Notify upper layers.
           u.notifier->on_rlf_detected();
@@ -113,7 +114,7 @@ public:
 private:
   void handle_ack_common(du_ue_index_t ue_index, du_cell_index_t cell_index, bool ack, bool is_dl)
   {
-    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", fmt::underlying(ue_index));
     auto&          u           = ues[ue_index];
     const unsigned count_index = is_dl ? 0 : 1;
 
@@ -128,7 +129,7 @@ private:
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
           logger.info("ue={}: RLF detected. Cause: {} consecutive {} KOs.",
-                      ue_index,
+                      fmt::underlying(ue_index),
                       current_count,
                       is_dl ? "HARQ-ACK" : "CRC");
 

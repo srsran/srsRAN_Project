@@ -74,7 +74,7 @@ static const unsigned max_nof_threads = std::thread::hardware_concurrency();
 
 // General test configuration parameters.
 static constexpr subcarrier_spacing scs                   = subcarrier_spacing::kHz30;
-static constexpr cyclic_prefix      cp                    = cyclic_prefix::NORMAL;
+static constexpr cyclic_prefix      cy_prefix             = cyclic_prefix::NORMAL;
 static constexpr unsigned           bwp_start_rb          = 0;
 static constexpr unsigned           bwp_size_rb           = MAX_RB;
 static constexpr unsigned           max_nof_ports         = 4;
@@ -110,7 +110,7 @@ static const auto profile_set = to_array<test_profile>({
             "PUCCH Format 0 with frequency hopping, the maximum number of cyclic shifts and four receive ports.",
         .pucch_config = pucch_processor::format0_configuration{.context      = std::nullopt,
                                                                .slot         = slot_point(to_numerology_value(scs), 0),
-                                                               .cp           = cp,
+                                                               .cp           = cy_prefix,
                                                                .bwp_size_rb  = bwp_size_rb,
                                                                .bwp_start_rb = bwp_start_rb,
                                                                .starting_prb = 0,
@@ -131,7 +131,7 @@ static const auto profile_set = to_array<test_profile>({
                                                                .slot         = slot_point(to_numerology_value(scs), 0),
                                                                .bwp_size_rb  = bwp_size_rb,
                                                                .bwp_start_rb = bwp_start_rb,
-                                                               .cp           = cp,
+                                                               .cp           = cy_prefix,
                                                                .starting_prb = 0,
                                                                .second_hop_prb       = 5,
                                                                .n_id                 = 0,
@@ -148,7 +148,7 @@ static const auto profile_set = to_array<test_profile>({
             "PUCCH Format 2 with frequency hopping, the maximum HARQ-ACK feedback bits and four receive ports.",
         .pucch_config = pucch_processor::format2_configuration{.context      = std::nullopt,
                                                                .slot         = slot_point(to_numerology_value(scs), 0),
-                                                               .cp           = cp,
+                                                               .cp           = cy_prefix,
                                                                .ports        = {0, 1, 2, 3},
                                                                .bwp_size_rb  = bwp_size_rb,
                                                                .bwp_start_rb = bwp_start_rb,
@@ -170,7 +170,7 @@ static const auto profile_set = to_array<test_profile>({
             "PUCCH Format 2 with frequency hopping, the maximum HARQ-ACK feedback bits and four receive ports.",
         .pucch_config = pucch_processor::format2_configuration{.context      = std::nullopt,
                                                                .slot         = slot_point(to_numerology_value(scs), 0),
-                                                               .cp           = cp,
+                                                               .cp           = cy_prefix,
                                                                .ports        = {0, 1, 2, 3},
                                                                .bwp_size_rb  = bwp_size_rb,
                                                                .bwp_start_rb = bwp_start_rb,
@@ -192,7 +192,7 @@ static const auto profile_set = to_array<test_profile>({
             "PUCCH Format 2 with frequency hopping, the maximum HARQ-ACK feedback bits and four receive ports.",
         .pucch_config = pucch_processor::format2_configuration{.context      = std::nullopt,
                                                                .slot         = slot_point(to_numerology_value(scs), 0),
-                                                               .cp           = cp,
+                                                               .cp           = cy_prefix,
                                                                .ports        = {0, 1, 2, 3},
                                                                .bwp_size_rb  = bwp_size_rb,
                                                                .bwp_start_rb = bwp_start_rb,
@@ -361,7 +361,7 @@ static pucch_processor_factory& get_pucch_processor_factory()
 
   // Create PUCCH processor factory.
   channel_estimate::channel_estimate_dimensions max_dimensions = {.nof_prb       = bwp_size_rb,
-                                                                  .nof_symbols   = get_nsymb_per_slot(cp),
+                                                                  .nof_symbols   = get_nsymb_per_slot(cy_prefix),
                                                                   .nof_rx_ports  = max_nof_ports,
                                                                   .nof_tx_layers = pucch_constants::MAX_LAYERS};
   pucch_proc_factory                                           = create_pucch_processor_factory_sw(
@@ -467,7 +467,8 @@ int main(int argc, char** argv)
   std::mt19937 rgen(0);
 
   // Create resource grid.
-  std::unique_ptr<resource_grid> grid = create_resource_grid(max_nof_ports, get_nsymb_per_slot(cp), NRE * bwp_size_rb);
+  std::unique_ptr<resource_grid> grid =
+      create_resource_grid(max_nof_ports, get_nsymb_per_slot(cy_prefix), NRE * bwp_size_rb);
   TESTASSERT(grid);
 
   // Standard complex normal distribution with zero mean.
@@ -475,7 +476,7 @@ int main(int argc, char** argv)
 
   // Fill the grid with the random RE.
   for (unsigned i_rx_port = 0; i_rx_port != max_nof_ports; ++i_rx_port) {
-    for (unsigned i_symbol = 0, i_symbol_end = get_nsymb_per_slot(cp); i_symbol != i_symbol_end; ++i_symbol) {
+    for (unsigned i_symbol = 0, i_symbol_end = get_nsymb_per_slot(cy_prefix); i_symbol != i_symbol_end; ++i_symbol) {
       // Obtain view of the OFDM symbol.
       span<cbf16_t> re_view = grid->get_writer().get_view(i_rx_port, i_symbol);
 

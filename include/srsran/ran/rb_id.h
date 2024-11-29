@@ -130,7 +130,7 @@ struct formatter<srsran::drb_id_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::drb_id_t o, FormatContext& ctx)
+  auto format(srsran::drb_id_t o, FormatContext& ctx) const
   {
     switch (o) {
       case srsran::drb_id_t::invalid:
@@ -151,7 +151,7 @@ struct formatter<srsran::srb_id_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srb_id_t o, FormatContext& ctx)
+  auto format(srsran::srb_id_t o, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "SRB{}", srb_id_to_uint(o));
   }
@@ -167,7 +167,7 @@ struct formatter<srsran::rb_id_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rb_id_t o, FormatContext& ctx)
+  auto format(srsran::rb_id_t o, FormatContext& ctx) const
   {
     if (o.is_drb()) {
       return format_to(ctx.out(), "{}", o.get_drb_id());

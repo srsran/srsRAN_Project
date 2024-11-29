@@ -339,7 +339,7 @@ static bool decode_rx_message(rx_message_info& message_info, span<const uint8_t>
   // Decode and check the filter index in the byte 26, bits 0-3.
   auto filter_index = static_cast<filter_index_type>(packet[22] & 0x0f);
   if (filter_index != filter_index_type::standard_channel_filter && !is_a_prach_message(filter_index)) {
-    logger.warning("Packet is corrupt: unknown filter index = {} decoded", filter_index);
+    logger.warning("Packet is corrupt: unknown filter index = {} decoded", fmt::underlying(filter_index));
     return false;
   }
   message_info.filter_index = filter_index;
@@ -489,7 +489,7 @@ public:
     uint64_t malformed = corrupt_counter.calculate_acc_value();
     uint64_t dropped   = dropped_counter.calculate_acc_value();
 
-    fmt::format_to(buffer,
+    fmt::format_to(std::back_inserter(buffer),
                    "| {:%H:%M:%S} | {:^3} | {:^11} | {:^11} | {:^11} | {:^11} | {:^15} | {:^13} | {:^13} | {:^13} | "
                    "{:^15} | {:^14} | {:^14} | {:^14} | {:^15} | {:^15} | {:^11} | {:^11} | {:^11} |\n",
                    current_time,
@@ -585,7 +585,10 @@ private:
   {
     fmt::memory_buffer stats_format_buf;
     for (unsigned i = 0, e = eaxc.size(); i != e; ++i) {
-      fmt::format_to(stats_format_buf, "{}{}", seq_id_checker.calculate_statistics(eaxc[i]), (i == e - 1) ? "" : "/");
+      fmt::format_to(std::back_inserter(stats_format_buf),
+                     "{}{}",
+                     seq_id_checker.calculate_statistics(eaxc[i]),
+                     (i == e - 1) ? "" : "/");
     }
     return to_string(stats_format_buf);
   }

@@ -186,7 +186,7 @@ ue* slice_scheduler::fetch_ue_to_update(du_ue_index_t ue_idx)
 {
   if (not ues.contains(ue_idx)) {
     // UE should be added to the repository at this stage.
-    logger.warning("ue={}: Not configuring UE to slice scheduler. Cause: No UE context found", ue_idx);
+    logger.warning("ue={}: Not configuring UE to slice scheduler. Cause: No UE context found", fmt::underlying(ue_idx));
     return nullptr;
   }
 
@@ -202,8 +202,8 @@ ue* slice_scheduler::fetch_ue_to_update(du_ue_index_t ue_idx)
   const ue_cell* ue_cc = u.find_cell(cell_cfg.cell_index);
   if (ue_cc == nullptr) {
     logger.warning("ue={}: Not adding UE to slice scheduler. Cause: No UE context found in cell {}",
-                   ue_cfg.ue_index,
-                   cell_cfg.cell_index);
+                   fmt::underlying(ue_cfg.ue_index),
+                   fmt::underlying(cell_cfg.cell_index));
     return nullptr;
   }
   if (ue_cc->is_in_fallback_mode()) {

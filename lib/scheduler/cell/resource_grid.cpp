@@ -233,14 +233,14 @@ bool cell_slot_resource_grid::all_set(subcarrier_spacing scs, ofdm_symbol_range 
 cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs)
 {
   size_t idx = numerology_to_grid_idx[to_numerology_value(scs)];
-  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", scs);
+  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", fmt::underlying(scs));
   return carrier_grids[idx];
 }
 
 const cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs) const
 {
   size_t idx = numerology_to_grid_idx[to_numerology_value(scs)];
-  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", scs);
+  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", fmt::underlying(scs));
   return carrier_grids[idx];
 }
 

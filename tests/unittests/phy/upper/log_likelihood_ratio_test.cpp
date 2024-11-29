@@ -74,7 +74,7 @@ int main()
   TESTASSERT_EQ(0, log_likelihood_ratio::dot_prod_sign(llr_sequence, rhs), "dot_prod_llr not working.");
 
   fmt::memory_buffer buf;
-  fmt::format_to(buf, "{}", log_likelihood_ratio(1));
+  fmt::format_to(std::back_inserter(buf), "{}", log_likelihood_ratio(1));
   TESTASSERT_EQ(to_string(buf), "1");
 
   log_likelihood_ratio                   low  = -32;

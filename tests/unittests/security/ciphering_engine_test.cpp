@@ -170,7 +170,7 @@ TEST_P(fxt_nea3, ciphering_engine_nea3)
 std::string test_param_info_to_string(const ::testing::TestParamInfo<nea_test_set>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}", info.param.name);
+  fmt::format_to(std::back_inserter(buffer), "{}", info.param.name);
   return fmt::to_string(buffer);
 }
 

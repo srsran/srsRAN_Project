@@ -58,7 +58,7 @@ std::ostream& operator<<(std::ostream& os, const pucch_gen_params& params)
                             params.nof_res_f0,
                             params.f0_nof_symbols,
                             params.f0_intraslot_freq_hopping,
-                            params.nof_cyc_shifts,
+                            fmt::underlying(params.nof_cyc_shifts),
                             params.occ_supported);
   } else {
     f0_f1_str = fmt::format("F1: nof_res={} nof_symbols={} freq_hop={}",

@@ -293,7 +293,7 @@ struct formatter<srsran::slot_point> {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(srsran::slot_point slot, FormatContext& ctx)
+  auto format(srsran::slot_point slot, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}.{}", slot.sfn(), slot.slot_index());
   }

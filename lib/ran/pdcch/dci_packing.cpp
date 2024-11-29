@@ -13,6 +13,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/ran/pdcch/dci_packing_formatters.h"
 #include "srsran/support/math/math_utils.h"
+#include "fmt/std.h"
 
 using namespace srsran;
 
@@ -191,7 +192,7 @@ static units::bits ul_precoding_info_size_2port(tx_scheme_codebook_subset codebo
   using namespace units::literals;
   srsran_assert(codebook_subset != tx_scheme_codebook_subset::partial_and_non_coherent,
                 "Codebook subset \"partial and non-coherent\" is not supported with two ports.",
-                codebook_subset);
+                fmt::underlying(codebook_subset));
 
   if (codebook_subset == tx_scheme_codebook_subset::fully_and_partial_and_non_coherent) {
     return 4_bits;
@@ -206,7 +207,7 @@ static units::bits ul_precoding_info_size_2port_maxrank1(tx_scheme_codebook_subs
   using namespace units::literals;
   srsran_assert(codebook_subset != tx_scheme_codebook_subset::partial_and_non_coherent,
                 "Codebook subset \"partial and non-coherent\" is not supported with two ports.",
-                codebook_subset);
+                fmt::underlying(codebook_subset));
 
   if (codebook_subset == tx_scheme_codebook_subset::fully_and_partial_and_non_coherent) {
     return 3_bits;
@@ -1608,8 +1609,8 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
         return make_unexpected("The number of UL RBGs is required for resource allocation type 0.");
       }
       if (!nof_rb_groups_range.contains(config.nof_ul_rb_groups.value())) {
-        return make_unexpected(fmt::format(
-            "The number of UL RBGs {} is out of range {}.", config.nof_ul_rb_groups.value(), nof_rb_groups_range));
+        return make_unexpected(
+            fmt::format("The number of UL RBGs {} is out of range {}.", config.nof_ul_rb_groups, nof_rb_groups_range));
       }
     }
 
@@ -1620,8 +1621,8 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
         return make_unexpected("The number of DL RBGs is required for resource allocation type 0.");
       }
       if (!nof_rb_groups_range.contains(config.nof_dl_rb_groups.value())) {
-        return make_unexpected(fmt::format(
-            "The number of DL RBGs {} is out of range {}.", config.nof_dl_rb_groups.value(), nof_rb_groups_range));
+        return make_unexpected(
+            fmt::format("The number of DL RBGs {} is out of range {}.", config.nof_dl_rb_groups, nof_rb_groups_range));
       }
     }
 
@@ -1648,9 +1649,8 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
 
       // PUSCH max number of layers must be within the valid range.
       if (!pusch_max_layers_range.contains(config.pusch_max_layers.value())) {
-        return make_unexpected(fmt::format("Maximum number of PUSCH layers {} is out of range {}.",
-                                           config.pusch_max_layers.value(),
-                                           pusch_max_layers_range));
+        return make_unexpected(fmt::format(
+            "Maximum number of PUSCH layers {} is out of range {}.", config.pusch_max_layers, pusch_max_layers_range));
       }
 
       // Multiple layers on PUSCH are not currently supported.
@@ -1726,7 +1726,7 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
       // The Maximum PUSCH CBG per TB must be set to a valid value.
       if (!max_cbg_tb_is_valid(config.max_cbg_tb_pusch.value())) {
         return make_unexpected(
-            fmt::format("The maximum CBG per PUSCH TB {} is neither 2, 4, 6, nor 8.", config.max_cbg_tb_pusch.value()));
+            fmt::format("The maximum CBG per PUSCH TB {} is neither 2, 4, 6, nor 8.", config.max_cbg_tb_pusch));
       }
     }
 
@@ -1734,7 +1734,7 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
       // The Maximum PDSCH CBG per TB must be set to a valid value.
       if (!max_cbg_tb_is_valid(config.max_cbg_tb_pdsch.value())) {
         return make_unexpected(
-            fmt::format("The maximum CBG per PDSCH TB {} is neither 2, 4, 6, nor 8.", config.max_cbg_tb_pdsch.value()));
+            fmt::format("The maximum CBG per PDSCH TB {} is neither 2, 4, 6, nor 8.", config.max_cbg_tb_pdsch));
       }
     }
   }

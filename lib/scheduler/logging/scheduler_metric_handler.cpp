@@ -406,7 +406,7 @@ scheduler_metrics_handler::scheduler_metrics_handler(msecs                      
 cell_metrics_handler* scheduler_metrics_handler::add_cell(const cell_configuration& cell_cfg)
 {
   if (cells.contains(cell_cfg.cell_index)) {
-    srslog::fetch_basic_logger("SCHED").warning("Cell={} already exists", cell_cfg.cell_index);
+    srslog::fetch_basic_logger("SCHED").warning("Cell={} already exists", fmt::underlying(cell_cfg.cell_index));
     return nullptr;
   }
 

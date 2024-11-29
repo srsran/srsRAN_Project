@@ -53,7 +53,7 @@ void srsran::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
         "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, nof_crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
         "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
         cell.pci,
-        cell.dl_carrier.band,
+        fmt::underlying(cell.dl_carrier.band),
         cell.dl_carrier.arfcn_f_ref,
         cell.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
         to_string(cell.dl_cfg_common.init_dl_bwp.generic_params.scs),
@@ -197,7 +197,7 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
 
   // DU-high configuration.
   du_hi_cfg.ran.gnb_du_id   = du_high_unit_cfg.gnb_du_id;
-  du_hi_cfg.ran.gnb_du_name = fmt::format("srsdu{}", du_hi_cfg.ran.gnb_du_id);
+  du_hi_cfg.ran.gnb_du_name = fmt::format("srsdu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
   du_hi_cfg.ran.cells       = generate_du_cell_config(du_high_unit_cfg);
   // Validates the derived parameters.
   validates_derived_du_params(du_hi_cfg.ran.cells);

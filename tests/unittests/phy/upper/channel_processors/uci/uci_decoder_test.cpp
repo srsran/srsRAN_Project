@@ -51,8 +51,8 @@ int main()
 
     std::vector<uint8_t> message_test(message.size());
     uci_status           status = decoder->decode(message_test, llr, dec_cfg);
-    TESTASSERT_NEQ(status, uci_status::unknown, "Decoder in an unknown status.");
-    TESTASSERT_NEQ(status, uci_status::invalid, "Invalid detection.");
+    TESTASSERT_NEQ(fmt::underlying(status), fmt::underlying(uci_status::unknown), "Decoder in an unknown status.");
+    TESTASSERT_NEQ(fmt::underlying(status), fmt::underlying(uci_status::invalid), "Invalid detection.");
     TESTASSERT_EQ(span<const uint8_t>(message_test), span<const uint8_t>(message), "Detection went wrong.");
   }
 }

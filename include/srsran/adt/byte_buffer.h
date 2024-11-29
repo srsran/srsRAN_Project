@@ -599,7 +599,7 @@ struct formatter<srsran::byte_buffer> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer& buf, FormatContext& ctx)
+  auto format(const srsran::byte_buffer& buf, FormatContext& ctx) const
   {
     if (mode == hexadecimal) {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
@@ -612,7 +612,7 @@ struct formatter<srsran::byte_buffer> {
 template <>
 struct formatter<srsran::byte_buffer_slice> : public formatter<srsran::byte_buffer_view> {
   template <typename FormatContext>
-  auto format(const srsran::byte_buffer_slice& buf, FormatContext& ctx)
+  auto format(const srsran::byte_buffer_slice& buf, FormatContext& ctx) const
   {
     return formatter<srsran::byte_buffer_view>::format(buf.view(), ctx);
   }

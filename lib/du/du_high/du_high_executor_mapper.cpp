@@ -253,7 +253,7 @@ public:
 
   void rebind_executors(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
-    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue id={}", ue_index);
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue id={}", fmt::underlying(ue_index));
     ue_idx_to_exec_index[ue_index] = pcell_index % max_strands;
     while (strands.size() <= ue_idx_to_exec_index[ue_index]) {
       add_strand(pool_exec, ctrl_queue_size, pdu_queue_size, trace_enabled);

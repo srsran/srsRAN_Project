@@ -338,7 +338,7 @@ struct formatter<srsran::carrier_subslot_resource_grid> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::carrier_subslot_resource_grid& grid, FormatContext& ctx)
+  auto format(const srsran::carrier_subslot_resource_grid& grid, FormatContext& ctx) const
   {
     for (unsigned i = 0; i != srsran::NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++i) {
       format_to(ctx.out(), "\n{}", grid.used_crbs({0, grid.nof_rbs()}, {i, i + 1}));
@@ -356,7 +356,7 @@ struct formatter<srsran::cell_slot_resource_grid> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::cell_slot_resource_grid& grid, FormatContext& ctx)
+  auto format(const srsran::cell_slot_resource_grid& grid, FormatContext& ctx) const
   {
     auto scs_list = grid.active_scs();
     for (srsran::subcarrier_spacing scs : scs_list) {

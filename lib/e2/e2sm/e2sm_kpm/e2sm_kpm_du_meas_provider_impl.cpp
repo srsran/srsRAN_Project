@@ -154,7 +154,7 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const scheduler_cell_metrics
 
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
 {
-  logger.debug("Received RLC metrics: ue={} {}.", metrics.ue_index, metrics.rb_id.get_drb_id());
+  logger.debug("Received RLC metrics: ue={} {}.", fmt::underlying(metrics.ue_index), metrics.rb_id.get_drb_id());
   ue_aggr_rlc_metrics[metrics.ue_index].push_back(metrics);
   if (ue_aggr_rlc_metrics[metrics.ue_index].size() > max_rlc_metrics) {
     ue_aggr_rlc_metrics[metrics.ue_index].pop_front();

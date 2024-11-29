@@ -38,7 +38,7 @@ static void usage(const char* prog)
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-T Type of compression [{{'none', 'bfp'}}, default is {}]\n", method);
   fmt::print("\t-F Select compression factory [Default {}]\n", impl_type);
-  fmt::print("\t-B Channel bandwidth [Default {}]\n", bw);
+  fmt::print("\t-B Channel bandwidth [Default {}]\n", fmt::underlying(bw));
   fmt::print("\t-C Subcarrier spacing. [Default {}]\n", to_string(scs));
   fmt::print("\t-N Number of ports [from 1 to 4, default {}]\n", nof_ports);
   fmt::print("\t-h Show this message\n");
@@ -167,7 +167,7 @@ int main(int argc, char** argv)
   srsran_assert(decompressor != nullptr, "Failed to create OFH decompressor");
 
   fmt::memory_buffer meas_name;
-  fmt::format_to(meas_name,
+  fmt::format_to(std::back_inserter(meas_name),
                  "OFH compression: Method={}, Symbol duration is {:>6.3f} us, Implementation is {}, PRBs = {}, Number "
                  "of ports = {}",
                  method,

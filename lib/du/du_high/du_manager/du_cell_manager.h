@@ -57,7 +57,7 @@ private:
 
   void assert_cell_exists(du_cell_index_t cell_index) const
   {
-    srsran_assert(has_cell(cell_index), "cell_index={} does not exist", cell_index);
+    srsran_assert(has_cell(cell_index), "cell_index={} does not exist", fmt::underlying(cell_index));
   }
 
   void add_cell(const du_cell_config& cfg);

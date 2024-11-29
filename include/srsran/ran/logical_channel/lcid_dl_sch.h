@@ -118,7 +118,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::lcid_dl_sch_t> : public formatter<uint16_t> {
   template <typename FormatContext>
-  auto format(srsran::lcid_dl_sch_t lcid, FormatContext& ctx)
+  auto format(srsran::lcid_dl_sch_t lcid, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", (uint16_t)lcid);
   }

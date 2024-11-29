@@ -21,9 +21,8 @@ bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_inform
   uint8_t pdu_type = 0;
   decoder.unpack(pdu_type, 4);
   if (uint_to_psup_pdu_type(pdu_type) != dl_pdu_session_information.pdu_type) {
-    logger.error("Invalid PDU type. unpacked={} expected={}",
-                 uint_to_psup_pdu_type(pdu_type),
-                 dl_pdu_session_information.pdu_type);
+    logger.error(
+        "Invalid PDU type. unpacked={} expected={}", pdu_type, fmt::underlying(dl_pdu_session_information.pdu_type));
     return false;
   }
 

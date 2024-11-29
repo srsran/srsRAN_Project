@@ -13,6 +13,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/support/srsran_assert.h"
+#include "fmt/format.h"
 #include <cstdint>
 #include <cstdlib>
 #include <string>
@@ -103,7 +104,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::nr_cell_identity> : formatter<uint64_t> {
   template <typename FormatContext>
-  auto format(const srsran::nr_cell_identity& val, FormatContext& ctx)
+  auto format(const srsran::nr_cell_identity& val, FormatContext& ctx) const
   {
     return formatter<uint64_t>::format(val.value(), ctx);
   }

@@ -72,7 +72,7 @@ static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table m
       cqi_table = cqi_table_t::table3;
       break;
     default:
-      report_error("Invalid MCS table={}\n", mcs_table);
+      report_error("Invalid MCS table={}\n", fmt::underlying(mcs_table));
   }
 
   // Set MCS index table for PDSCH. See TS 38.214, Table 5.1.3.1-[1-3].

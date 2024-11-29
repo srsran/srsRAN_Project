@@ -201,14 +201,15 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
     if (not srs_res_mng->alloc_resources(ue_res.cell_group)) {
       // Deallocate dedicated Search Spaces.
       ue_res.cell_group.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
-      return make_unexpected(fmt::format("Unable to allocate SRS resources for cell={}", cell_index));
+      return make_unexpected(fmt::format("Unable to allocate SRS resources for cell={}", fmt::underlying(cell_index)));
     }
 
     if (not pucch_res_mng.alloc_resources(ue_res.cell_group)) {
       // Deallocate previously allocated SRS + dedicated Search Spaces.
       srs_res_mng->dealloc_resources(ue_res.cell_group);
       ue_res.cell_group.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
-      return make_unexpected(fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", cell_index));
+      return make_unexpected(
+          fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", fmt::underlying(cell_index)));
     }
 
   } else {

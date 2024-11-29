@@ -71,7 +71,7 @@ struct formatter<srsran::security::security_error> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::security::security_error sec_err, FormatContext& ctx)
+  auto format(srsran::security::security_error sec_err, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", to_string(sec_err));
   }

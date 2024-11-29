@@ -114,7 +114,8 @@ void ue_cell::set_fallback_state(bool set_fallback)
     }
   }
 
-  logger.debug("ue={} rnti={}: {} fallback mode", ue_index, rnti(), in_fallback_mode ? "Entering" : "Leaving");
+  logger.debug(
+      "ue={} rnti={}: {} fallback mode", fmt::underlying(ue_index), rnti(), in_fallback_mode ? "Entering" : "Leaving");
 }
 
 bool ue_cell::is_pdcch_enabled(slot_point dl_slot) const
@@ -275,7 +276,7 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   if (not h_ul.has_value() or h_ul->id() != crc_pdu.harq_id) {
     logger.warning("rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting CRC for PUSCH slot {}",
                    rnti(),
-                   crc_pdu.harq_id,
+                   fmt::underlying(crc_pdu.harq_id),
                    pusch_slot);
     return -1;
   }
@@ -310,7 +311,7 @@ void ue_cell::handle_csi_report(const csi_report_data& csi_report)
 {
   apply_link_adaptation_procedures(csi_report);
   if (not channel_state.handle_csi_report(csi_report)) {
-    logger.warning("ue={} rnti={}: Invalid CSI report received", ue_index, rnti());
+    logger.warning("ue={} rnti={}: Invalid CSI report received", fmt::underlying(ue_index), rnti());
   }
 }
 

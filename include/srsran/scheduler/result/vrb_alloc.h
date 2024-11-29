@@ -152,7 +152,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::vrb_alloc> : public formatter<srsran::rbg_bitmap> {
   template <typename FormatContext>
-  auto format(const srsran::vrb_alloc& grant, FormatContext& ctx)
+  auto format(const srsran::vrb_alloc& grant, FormatContext& ctx) const
   {
     if (grant.is_type0()) {
       if (this->mode == hexadecimal) {

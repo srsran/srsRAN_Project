@@ -12,14 +12,14 @@
 
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/support/format/fmt_basic_parser.h"
-#include "srsran/support/format/fmt_optional.h"
+#include "fmt/std.h"
 
 namespace fmt {
 
 template <>
 struct formatter<srsran::tdd_ul_dl_pattern> : public basic_parser {
   template <typename FormatContext>
-  auto format(const srsran::tdd_ul_dl_pattern& cfg, FormatContext& ctx)
+  auto format(const srsran::tdd_ul_dl_pattern& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "period={} dl_slots={} dl_symbols={} ul_slots={} ul_symbols={}",
@@ -34,9 +34,10 @@ struct formatter<srsran::tdd_ul_dl_pattern> : public basic_parser {
 template <>
 struct formatter<srsran::tdd_ul_dl_config_common> : public basic_parser {
   template <typename FormatContext>
-  auto format(const srsran::tdd_ul_dl_config_common& cfg, FormatContext& ctx)
+  auto format(const srsran::tdd_ul_dl_config_common& cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "scs={} pattern1={{{}}} pattern2={{{}}}", cfg.ref_scs, cfg.pattern1, cfg.pattern2);
+    return format_to(
+        ctx.out(), "scs={} pattern1={{{}}} pattern2={{{}}}", fmt::underlying(cfg.ref_scs), cfg.pattern1, cfg.pattern2);
   }
 };
 

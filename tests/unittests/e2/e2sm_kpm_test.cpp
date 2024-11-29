@@ -350,8 +350,9 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
       TESTASSERT_EQ(meas_values[i],
                     ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].integer());
     } else {
-      TESTASSERT_EQ(meas_record_item_c::types_opts::no_value,
-                    ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].type());
+      TESTASSERT_EQ(
+          fmt::underlying(meas_record_item_c::types_opts::no_value),
+          fmt::underlying(ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].type().value));
     }
   }
 
@@ -506,8 +507,9 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
         TESTASSERT_EQ(meas_values[i][ue_idx],
                       ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].integer());
       } else {
-        TESTASSERT_EQ(meas_record_item_c::types_opts::no_value,
-                      ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].type());
+        TESTASSERT_EQ(
+            fmt::underlying(meas_record_item_c::types_opts::no_value),
+            fmt::underlying(ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].type().value));
       }
     }
   }
@@ -651,7 +653,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
       if (cond_presence[i][ue_idx]) {
         TESTASSERT_EQ(meas_values[i][ue_idx], meas_record[0].integer());
       } else {
-        TESTASSERT_EQ(meas_record_item_c::types_opts::no_value, meas_record[0].type());
+        TESTASSERT_EQ(fmt::underlying(meas_record_item_c::types_opts::no_value),
+                      fmt::underlying(meas_record[0].type().value));
       }
     }
   }
@@ -776,7 +779,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
       if (cond_presence[i][ue_idx]) {
         TESTASSERT_EQ(meas_values[i][ue_idx], meas_record[0].integer());
       } else {
-        TESTASSERT_EQ(meas_record_item_c::types_opts::no_value, meas_record[0].type());
+        TESTASSERT_EQ(fmt::underlying(meas_record_item_c::types_opts::no_value),
+                      fmt::underlying(meas_record[0].type().value));
       }
     }
   }

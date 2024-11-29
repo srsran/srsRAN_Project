@@ -57,6 +57,10 @@ std::ostream& operator<<(std::ostream& os, span<const uint16_t> data)
 
 using namespace srsran;
 
+template <>
+struct fmt::formatter<srsran::ulsch_demultiplex::configuration> : ostream_formatter {
+};
+
 namespace {
 class UlschDemultiplexFixture : public ::testing::TestWithParam<test_case_t>
 {

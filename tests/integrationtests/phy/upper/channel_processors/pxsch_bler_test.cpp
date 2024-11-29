@@ -41,7 +41,7 @@ static const symbol_slot_mask       dmrs_symbol_mask                 = {0, 0, 1,
 static constexpr unsigned           nof_ldpc_iterations              = 10;
 static constexpr dmrs_type          dmrs                             = dmrs_type::TYPE1;
 static constexpr unsigned           nof_cdm_groups_without_data      = 2;
-static constexpr cyclic_prefix      cp                               = cyclic_prefix::NORMAL;
+static constexpr cyclic_prefix      cy_prefix                        = cyclic_prefix::NORMAL;
 static constexpr unsigned           rv                               = 0;
 static constexpr unsigned           n_id                             = 0;
 static constexpr unsigned           scrambling_id                    = 0;
@@ -272,7 +272,7 @@ private:
     pdsch_config.rnti                        = rnti;
     pdsch_config.bwp_size_rb                 = bwp_size_rb;
     pdsch_config.bwp_start_rb                = bwp_start_rb;
-    pdsch_config.cp                          = cp;
+    pdsch_config.cp                          = cy_prefix;
     pdsch_config.n_id                        = n_id;
     pdsch_config.ref_point                   = pdsch_processor::pdu_t::PRB0;
     pdsch_config.dmrs_symbol_mask            = dmrs_symbol_mask;
@@ -300,7 +300,7 @@ private:
     pusch_config.rnti               = rnti;
     pusch_config.bwp_size_rb        = bwp_size_rb;
     pusch_config.bwp_start_rb       = bwp_start_rb;
-    pusch_config.cp                 = cp;
+    pusch_config.cp                 = cy_prefix;
     pusch_config.mcs_descr          = mcs_descr;
     pusch_config.codeword           = {rv, ldpc_base_graph, true};
     pusch_config.uci                = {};
@@ -506,7 +506,7 @@ static void usage(std::string_view prog)
   fmt::print("\t-L       Number of transmit layers. It must not exceed the number of ports. [Default {}]\n",
              nof_layers);
   fmt::print("\t-B       Number of allocated PRBs (same as BWP size). [Default {}]\n", bwp_size_rb);
-  fmt::print("\t-M       MCS table. [Default {}]\n", mcs_table);
+  fmt::print("\t-M       MCS table. [Default {}]\n", fmt::underlying(mcs_table));
   fmt::print("\t-m       MCS index. [Default {}]\n", mcs_index);
   fmt::print("\t-R       Number of slots to process. [Default {}]\n", nof_repetitions);
   fmt::print("\t-T       PxSCH implementation type [auto,acc100][Default {}]\n", pxsch_type);

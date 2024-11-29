@@ -216,8 +216,9 @@ void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
 {
   // Buffer detected RACHs to be handled in next slot.
   if (not pending_rachs.try_push(msg)) {
-    logger.warning(
-        "cell={}: Discarding RACH indication for slot={}. Cause: Event queue is full", msg.cell_index, msg.slot_rx);
+    logger.warning("cell={}: Discarding RACH indication for slot={}. Cause: Event queue is full",
+                   fmt::underlying(msg.cell_index),
+                   msg.slot_rx);
   }
 }
 
@@ -306,8 +307,9 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
 void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
   if (not pending_crcs.try_push(crc_ind)) {
-    logger.warning(
-        "cell={}: CRC indication for slot={} discarded. Cause: Event queue is full", crc_ind.cell_index, crc_ind.sl_rx);
+    logger.warning("cell={}: CRC indication for slot={} discarded. Cause: Event queue is full",
+                   fmt::underlying(crc_ind.cell_index),
+                   crc_ind.sl_rx);
   }
 }
 
@@ -321,9 +323,9 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
       auto& pending_msg3 = pending_msg3s[to_value(crc.rnti) % MAX_NOF_MSG3];
       if (pending_msg3.preamble.tc_rnti != crc.rnti or pending_msg3.msg3_harq_ent.empty()) {
         logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: Nonexistent tc-rnti",
-                       cell_cfg.cell_index,
+                       fmt::underlying(cell_cfg.cell_index),
                        crc.rnti,
-                       crc.harq_id);
+                       fmt::underlying(crc.harq_id));
         continue;
       }
 
@@ -332,9 +334,9 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
       std::optional<ul_harq_process_handle> h_ul = pending_msg3.msg3_harq_ent.ul_harq(h_id);
       if (not h_ul.has_value() or crc.harq_id != h_id) {
         logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: HARQ-Id 0 must be used in Msg3",
-                       cell_cfg.cell_index,
+                       fmt::underlying(cell_cfg.cell_index),
                        crc.rnti,
-                       crc.harq_id);
+                       fmt::underlying(crc.harq_id));
         continue;
       }
 

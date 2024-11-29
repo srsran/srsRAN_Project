@@ -12,8 +12,8 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/srslog/logger.h"
-#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/io/unique_fd.h"
+#include "fmt/std.h"
 #include <chrono>
 #include <cstdint>
 #include <sys/socket.h>
@@ -90,7 +90,7 @@ struct formatter<srsran::sctp_socket_params> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::sctp_socket_params& cfg, FormatContext& ctx)
+  auto format(const srsran::sctp_socket_params& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "if_name={} ai_family={} ai_socktype={} reuse_addr={} non_blockin_mode={} rx_timeout={} "

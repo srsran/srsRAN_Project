@@ -12,8 +12,8 @@
 #include "du_high_rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/engineering_notation.h"
-#include "srsran/support/math/math_utils.h"
-#include <iomanip>
+#include "fmt/ranges.h"
+#include "fmt/std.h"
 #include <ostream>
 
 using namespace srsran;
@@ -307,9 +307,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
   }
 
   // log cell-wide metrics
-  fmt::format_to(buffer, "Cell Scheduler Metrics:");
+  fmt::format_to(std::back_inserter(buffer), "Cell Scheduler Metrics:");
   fmt::format_to(
-      buffer,
+      std::back_inserter(buffer),
       " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} error_indications={} "
       "mean_latency={}usec latency_hist=[{}]",
       float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
@@ -321,10 +321,10 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       metrics.average_decision_latency.count(),
       fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
   if (not metrics.events.empty()) {
-    fmt::format_to(buffer, " events=[");
+    fmt::format_to(std::back_inserter(buffer), " events=[");
     bool first = true;
     for (const auto& event : metrics.events) {
-      fmt::format_to(buffer,
+      fmt::format_to(std::back_inserter(buffer),
                      "{}{{rnti={} slot={} type={}}}",
                      first ? "" : ", ",
                      event.rnti,
@@ -332,101 +332,109 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
                      event_to_string(event.type));
       first = false;
     }
-    fmt::format_to(buffer, "]");
+    fmt::format_to(std::back_inserter(buffer), "]");
   }
   logger.info("{}", to_c_str(buffer));
   buffer.clear();
 
   // log ue-specific metrics
   for (const auto& ue : metrics.ue_metrics) {
-    fmt::format_to(buffer, "Scheduler UE Metrics:");
-    fmt::format_to(buffer, " pci={}", ue.pci);
-    fmt::format_to(buffer, " rnti={:x}", to_value(ue.rnti));
+    fmt::format_to(std::back_inserter(buffer), "Scheduler UE Metrics:");
+    fmt::format_to(std::back_inserter(buffer), " pci={}", ue.pci);
+    fmt::format_to(std::back_inserter(buffer), " rnti={:x}", to_value(ue.rnti));
     if (ue.cqi_stats.get_nof_observations() > 0) {
-      fmt::format_to(buffer, " cqi={}", static_cast<unsigned>(std::roundf(ue.cqi_stats.get_mean())));
+      fmt::format_to(
+          std::back_inserter(buffer), " cqi={}", static_cast<unsigned>(std::roundf(ue.cqi_stats.get_mean())));
     } else {
-      fmt::format_to(buffer, " cqi=n/a");
+      fmt::format_to(std::back_inserter(buffer), " cqi=n/a");
     }
 
     if (ue.ri_stats.get_nof_observations() > 0) {
-      fmt::format_to(buffer, " ri={:.1f}", ue.ri_stats.get_mean());
+      fmt::format_to(std::back_inserter(buffer), " ri={:.1f}", ue.ri_stats.get_mean());
     } else {
-      fmt::format_to(buffer, " ri=n/a");
+      fmt::format_to(std::back_inserter(buffer), " ri=n/a");
     }
 
-    fmt::format_to(buffer, " dl_mcs={}", int(ue.dl_mcs.to_uint()));
+    fmt::format_to(std::back_inserter(buffer), " dl_mcs={}", int(ue.dl_mcs.to_uint()));
     if (ue.dl_brate_kbps > 0) {
-      fmt::format_to(buffer, " dl_brate={}bps", float_to_eng_string(ue.dl_brate_kbps * 1e3, 1, false));
+      fmt::format_to(
+          std::back_inserter(buffer), " dl_brate={}bps", float_to_eng_string(ue.dl_brate_kbps * 1e3, 1, false));
     } else {
-      fmt::format_to(buffer, " dl_brate={}bps", 0);
+      fmt::format_to(std::back_inserter(buffer), " dl_brate={}bps", 0);
     }
-    fmt::format_to(buffer, " dl_nof_ok={}", ue.dl_nof_ok);
-    fmt::format_to(buffer, " dl_nof_nok={}", ue.dl_nof_nok);
+    fmt::format_to(std::back_inserter(buffer), " dl_nof_ok={}", ue.dl_nof_ok);
+    fmt::format_to(std::back_inserter(buffer), " dl_nof_nok={}", ue.dl_nof_nok);
     unsigned dl_total = ue.dl_nof_ok + ue.dl_nof_nok;
-    fmt::format_to(buffer, " dl_error_rate={}%", dl_total > 0 ? to_percentage<int>(ue.dl_nof_nok, dl_total) : 0);
-    fmt::format_to(buffer, " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
-    fmt::format_to(buffer, " dl_nof_prbs={}", ue.tot_dl_prbs_used);
+    fmt::format_to(std::back_inserter(buffer),
+                   " dl_error_rate={}%",
+                   dl_total > 0 ? to_percentage<int>(ue.dl_nof_nok, dl_total) : 0);
+    fmt::format_to(std::back_inserter(buffer), " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
+    fmt::format_to(std::back_inserter(buffer), " dl_nof_prbs={}", ue.tot_dl_prbs_used);
     if (ue.last_dl_olla.has_value()) {
-      fmt::format_to(buffer, " dl_olla={}", ue.last_dl_olla);
+      fmt::format_to(std::back_inserter(buffer), " dl_olla={}", ue.last_dl_olla);
     }
 
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
-      fmt::format_to(buffer, " pusch_snr_db={:.1f}", std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
+      fmt::format_to(std::back_inserter(buffer), " pusch_snr_db={:.1f}", std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
     } else {
-      fmt::format_to(buffer, " pusch_snr_db=n/a");
+      fmt::format_to(std::back_inserter(buffer), " pusch_snr_db=n/a");
     }
 
     if (!std::isinf(ue.pusch_rsrp_db) && !std::isnan(ue.pusch_rsrp_db)) {
       if (ue.pusch_rsrp_db >= 0.0F) {
-        fmt::format_to(buffer, " pusch_rsrp_db=ovl");
+        fmt::format_to(std::back_inserter(buffer), " pusch_rsrp_db=ovl");
       } else {
-        fmt::format_to(buffer, " pusch_rsrp_db={:.1f}", std::clamp(ue.pusch_rsrp_db, -99.9F, 0.0F));
+        fmt::format_to(std::back_inserter(buffer), " pusch_rsrp_db={:.1f}", std::clamp(ue.pusch_rsrp_db, -99.9F, 0.0F));
       }
     } else {
-      fmt::format_to(buffer, " pusch_rsrp_db=n/a");
+      fmt::format_to(std::back_inserter(buffer), " pusch_rsrp_db=n/a");
     }
 
-    fmt::format_to(buffer, " ul_mcs={}", ue.ul_mcs.to_uint());
+    fmt::format_to(std::back_inserter(buffer), " ul_mcs={}", ue.ul_mcs.to_uint());
     if (ue.ul_brate_kbps > 0) {
-      fmt::format_to(buffer, " ul_brate={}bps", float_to_eng_string(ue.ul_brate_kbps * 1e3, 1, false));
+      fmt::format_to(
+          std::back_inserter(buffer), " ul_brate={}bps", float_to_eng_string(ue.ul_brate_kbps * 1e3, 1, false));
     } else {
-      fmt::format_to(buffer, " ul_brate={}bps", 0);
+      fmt::format_to(std::back_inserter(buffer), " ul_brate={}bps", 0);
     }
-    fmt::format_to(buffer, " ul_nof_ok={}", ue.ul_nof_ok);
-    fmt::format_to(buffer, " ul_nof_nok={}", ue.ul_nof_nok);
+    fmt::format_to(std::back_inserter(buffer), " ul_nof_ok={}", ue.ul_nof_ok);
+    fmt::format_to(std::back_inserter(buffer), " ul_nof_nok={}", ue.ul_nof_nok);
 
     unsigned ul_total = ue.ul_nof_ok + ue.ul_nof_nok;
-    fmt::format_to(buffer, " ul_error_rate={}%", ul_total > 0 ? to_percentage<int>(ue.ul_nof_nok, ul_total) : 0);
+    fmt::format_to(std::back_inserter(buffer),
+                   " ul_error_rate={}%",
+                   ul_total > 0 ? to_percentage<int>(ue.ul_nof_nok, ul_total) : 0);
     if (ul_total > 0) {
-      fmt::format_to(buffer, " crc_delay_ms={:.3}", ue.ul_delay_ms);
+      fmt::format_to(std::back_inserter(buffer), " crc_delay_ms={:.3}", ue.ul_delay_ms);
     } else {
-      fmt::format_to(buffer, " crc_delay_ms=n/a");
+      fmt::format_to(std::back_inserter(buffer), " crc_delay_ms=n/a");
     }
-    fmt::format_to(buffer, " ul_nof_prbs={}", ue.tot_ul_prbs_used);
-    fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr, false));
-    fmt::format_to(buffer, " sr_count={}", ue.sr_count);
+    fmt::format_to(std::back_inserter(buffer), " ul_nof_prbs={}", ue.tot_ul_prbs_used);
+    fmt::format_to(std::back_inserter(buffer), " bsr={}", scaled_fmt_integer(ue.bsr, false));
+    fmt::format_to(std::back_inserter(buffer), " sr_count={}", ue.sr_count);
     if (ue.last_ul_olla.has_value()) {
-      fmt::format_to(buffer, " ul_olla={}", ue.last_ul_olla);
+      fmt::format_to(std::back_inserter(buffer), " ul_olla={}", ue.last_ul_olla);
     }
     if (ue.ta_stats.get_nof_observations() > 0) {
-      fmt::format_to(buffer, " ta={}s", float_to_eng_string(ue.ta_stats.get_mean(), 0, false));
+      fmt::format_to(std::back_inserter(buffer), " ta={}s", float_to_eng_string(ue.ta_stats.get_mean(), 0, false));
     } else {
-      fmt::format_to(buffer, " ta=n/a");
+      fmt::format_to(std::back_inserter(buffer), " ta=n/a");
     }
     if (ue.srs_ta_stats.get_nof_observations() > 0) {
-      fmt::format_to(buffer, " srs_ta={}s", float_to_eng_string(ue.srs_ta_stats.get_mean(), 0, false));
+      fmt::format_to(
+          std::back_inserter(buffer), " srs_ta={}s", float_to_eng_string(ue.srs_ta_stats.get_mean(), 0, false));
     } else {
-      fmt::format_to(buffer, " srs_ta=n/a");
+      fmt::format_to(std::back_inserter(buffer), " srs_ta=n/a");
     }
     if (ue.last_phr.has_value()) {
-      fmt::format_to(buffer, " last_phr={}", ue.last_phr.value());
+      fmt::format_to(std::back_inserter(buffer), " last_phr={}", ue.last_phr.value());
     } else {
-      fmt::format_to(buffer, " last_phr=n/a");
+      fmt::format_to(std::back_inserter(buffer), " last_phr=n/a");
     }
     if (ue.mean_ce_delay_msec.has_value()) {
-      fmt::format_to(buffer, " ul_ce_delay={:.2}ms", ue.mean_ce_delay_msec.value());
+      fmt::format_to(std::back_inserter(buffer), " ul_ce_delay={:.2}ms", ue.mean_ce_delay_msec.value());
     } else {
-      fmt::format_to(buffer, " ul_ce_delay=n/a");
+      fmt::format_to(std::back_inserter(buffer), " ul_ce_delay=n/a");
     }
 
     logger.info("{}", to_c_str(buffer));

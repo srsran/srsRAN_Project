@@ -156,7 +156,8 @@ private:
     };
 
     if (!ue_exec_mapper->ctrl_executor().execute(std::move(fn))) {
-      logger.log_warning("Could not handle expired UE inactivity handler, queue is full. ue={}", index);
+      logger.log_warning("Could not handle expired UE inactivity handler, queue is full. ue={}",
+                         fmt::underlying(index));
     }
   }
 };

@@ -75,26 +75,26 @@ enum class csi_resource_periodicity {
   slots640 = 640
 };
 
-inline unsigned csi_resource_periodicity_to_uint(csi_resource_periodicity val)
+constexpr unsigned csi_resource_periodicity_to_uint(csi_resource_periodicity val)
 {
   return static_cast<unsigned>(val);
 }
 
-inline const span<const csi_resource_periodicity> csi_resource_periodicity_options()
+inline span<const csi_resource_periodicity> csi_resource_periodicity_options()
 {
-  static const std::array<csi_resource_periodicity, 13> list{csi_resource_periodicity::slots4,
-                                                             csi_resource_periodicity::slots5,
-                                                             csi_resource_periodicity::slots8,
-                                                             csi_resource_periodicity::slots10,
-                                                             csi_resource_periodicity::slots16,
-                                                             csi_resource_periodicity::slots20,
-                                                             csi_resource_periodicity::slots32,
-                                                             csi_resource_periodicity::slots40,
-                                                             csi_resource_periodicity::slots64,
-                                                             csi_resource_periodicity::slots80,
-                                                             csi_resource_periodicity::slots160,
-                                                             csi_resource_periodicity::slots320,
-                                                             csi_resource_periodicity::slots640};
+  static constexpr std::array<csi_resource_periodicity, 13> list{csi_resource_periodicity::slots4,
+                                                                 csi_resource_periodicity::slots5,
+                                                                 csi_resource_periodicity::slots8,
+                                                                 csi_resource_periodicity::slots10,
+                                                                 csi_resource_periodicity::slots16,
+                                                                 csi_resource_periodicity::slots20,
+                                                                 csi_resource_periodicity::slots32,
+                                                                 csi_resource_periodicity::slots40,
+                                                                 csi_resource_periodicity::slots64,
+                                                                 csi_resource_periodicity::slots80,
+                                                                 csi_resource_periodicity::slots160,
+                                                                 csi_resource_periodicity::slots320,
+                                                                 csi_resource_periodicity::slots640};
   return span<const csi_resource_periodicity>{list};
 }
 

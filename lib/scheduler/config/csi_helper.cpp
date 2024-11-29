@@ -102,7 +102,7 @@ bool srsran::csi_helper::derive_valid_csi_rs_slot_offsets(csi_builder_params&   
 {
   srsran_assert(is_csi_rs_period_valid(csi_params.csi_rs_period, tdd_cfg),
                 "Invalid CSI-RS period {} for provided TDD pattern",
-                csi_params.csi_rs_period);
+                fmt::underlying(csi_params.csi_rs_period));
 
   // Fill the pre-specified parameters and verify if valid.
   if (meas_csi_slot_offset.has_value()) {

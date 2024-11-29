@@ -33,7 +33,7 @@ struct formatter<srsran::dci_0_0_size> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::dci_0_0_size& dci_size, FormatContext& ctx)
+  auto format(const srsran::dci_0_0_size& dci_size, FormatContext& ctx) const
   {
     helper.format_always(ctx, "Total:                {}", dci_size.total);
     helper.format_always(ctx, "Frequency resource:   {}", dci_size.frequency_resource);
@@ -59,7 +59,7 @@ struct formatter<srsran::dci_1_0_size> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::dci_1_0_size& dci_size, FormatContext& ctx)
+  auto format(const srsran::dci_1_0_size& dci_size, FormatContext& ctx) const
   {
     helper.format_always(ctx, "Total:              {}", dci_size.total);
     helper.format_always(ctx, "Frequency resource: {}", dci_size.frequency_resource);
@@ -85,7 +85,7 @@ struct formatter<srsran::dci_0_1_size> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::dci_0_1_size& dci_size, FormatContext& ctx)
+  auto format(const srsran::dci_0_1_size& dci_size, FormatContext& ctx) const
   {
     helper.format_always(ctx, "Total:                 {}", dci_size.total);
     helper.format_always(ctx, "Carrier indicator:     {}", dci_size.carrier_indicator);
@@ -127,7 +127,7 @@ struct formatter<srsran::dci_1_1_size> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::dci_1_1_size& dci_size, FormatContext& ctx)
+  auto format(const srsran::dci_1_1_size& dci_size, FormatContext& ctx) const
   {
     helper.format_always(ctx, "Total:                   {}", dci_size.total);
     helper.format_always(ctx, "Carrier indicator:       {}", dci_size.carrier_indicator);

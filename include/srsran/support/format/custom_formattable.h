@@ -79,19 +79,25 @@ template <typename FormatFunc>
 struct formatter<srsran::detail::custom_formattable<FormatFunc>> : public basic_parser {
 public:
   template <typename FormatContext>
-  auto format(const srsran::detail::custom_formattable<FormatFunc>& f, FormatContext& ctx)
+  auto format(const srsran::detail::custom_formattable<FormatFunc>& f, FormatContext& ctx) const
   {
     return f.format(ctx);
   }
 };
 
 template <typename T>
-struct formatter<srsran::detail::optional_prefix_formatter<T>> : public formatter<std::optional<T>> {
+struct formatter<srsran::detail::optional_prefix_formatter<T>> : public basic_parser {
   template <typename FormatContext>
-  auto format(const srsran::detail::optional_prefix_formatter<T>& f, FormatContext& ctx)
+  auto format(const srsran::detail::optional_prefix_formatter<T>& f, FormatContext& ctx) const
   {
-    if (f.value.has_value()) {
-      return fmt::format_to(ctx.out(), "{}{}", f.prefix, f.value);
+    if constexpr (std::is_enum_v<T>) {
+      if (f.value.has_value()) {
+        return fmt::format_to(ctx.out(), "{}{}", f.prefix, fmt::underlying(*f.value));
+      }
+    } else {
+      if (f.value.has_value()) {
+        return fmt::format_to(ctx.out(), "{}{}", f.prefix, *f.value);
+      }
     }
     return ctx.out();
   }

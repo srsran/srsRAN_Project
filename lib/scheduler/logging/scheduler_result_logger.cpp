@@ -25,27 +25,30 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
 {
   if (log_broadcast) {
     for (const ssb_information& ssb_info : result.dl.bc.ssb_info) {
-      fmt::format_to(
-          fmtbuf, "\n- SSB: ssbIdx={}, crbs={}, symb={}", ssb_info.ssb_index, ssb_info.crbs, ssb_info.symbols);
+      fmt::format_to(std::back_inserter(fmtbuf),
+                     "\n- SSB: ssbIdx={}, crbs={}, symb={}",
+                     ssb_info.ssb_index,
+                     ssb_info.crbs,
+                     ssb_info.symbols);
     }
   }
   for (const pdcch_dl_information& pdcch : result.dl.dl_pdcchs) {
     if (not log_broadcast and pdcch.ctx.rnti == rnti_t::SI_RNTI) {
       continue;
     }
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "\n- DL PDCCH: rnti={} type={} cs_id={} ss_id={} format={} cce={} al={} ",
                    pdcch.ctx.rnti,
                    dci_dl_rnti_config_rnti_type(pdcch.dci.type),
-                   pdcch.ctx.coreset_cfg->id,
-                   pdcch.ctx.context.ss_id,
+                   fmt::underlying(pdcch.ctx.coreset_cfg->id),
+                   fmt::underlying(pdcch.ctx.context.ss_id),
                    dci_dl_rnti_config_format(pdcch.dci.type),
                    pdcch.ctx.cces.ncce,
                    to_nof_cces(pdcch.ctx.cces.aggr_lvl));
     switch (pdcch.dci.type) {
       case dci_dl_rnti_config_type::c_rnti_f1_0: {
         const auto& dci = pdcch.dci.c_rnti_f1_0;
-        fmt::format_to(fmtbuf,
+        fmt::format_to(std::back_inserter(fmtbuf),
                        " dci: h_id={} ndi={} rv={} mcs={} res_ind={}",
                        dci.harq_process_number,
                        dci.new_data_indicator,
@@ -55,7 +58,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
         const auto& dci = pdcch.dci.tc_rnti_f1_0;
-        fmt::format_to(fmtbuf,
+        fmt::format_to(std::back_inserter(fmtbuf),
                        " dci: h_id={} ndi={} rv={} mcs={} res_ind={}",
                        dci.harq_process_number,
                        dci.new_data_indicator,
@@ -65,7 +68,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       } break;
       case dci_dl_rnti_config_type::c_rnti_f1_1: {
         const auto& dci = pdcch.dci.c_rnti_f1_1;
-        fmt::format_to(fmtbuf,
+        fmt::format_to(std::back_inserter(fmtbuf),
                        " dci: h_id={} ndi={} rv={} mcs={} res_ind={}",
                        dci.harq_process_number,
                        dci.tb1_new_data_indicator,
@@ -73,7 +76,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                        dci.tb1_modulation_coding_scheme,
                        dci.pucch_resource_indicator);
         if (dci.downlink_assignment_index.has_value()) {
-          fmt::format_to(fmtbuf, " dai={}", *dci.downlink_assignment_index);
+          fmt::format_to(std::back_inserter(fmtbuf), " dai={}", *dci.downlink_assignment_index);
         }
       } break;
       default:
@@ -81,19 +84,19 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
     }
   }
   for (const pdcch_ul_information& pdcch : result.dl.ul_pdcchs) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "\n- UL PDCCH: rnti={} type={} cs_id={} ss_id={} format={} cce={} al={} ",
                    pdcch.ctx.rnti,
                    dci_ul_rnti_config_rnti_type(pdcch.dci.type),
-                   pdcch.ctx.coreset_cfg->id,
-                   pdcch.ctx.context.ss_id,
+                   fmt::underlying(pdcch.ctx.coreset_cfg->id),
+                   fmt::underlying(pdcch.ctx.context.ss_id),
                    dci_ul_rnti_config_format(pdcch.dci.type),
                    pdcch.ctx.cces.ncce,
                    to_nof_cces(pdcch.ctx.cces.aggr_lvl));
     switch (pdcch.dci.type) {
       case dci_ul_rnti_config_type::c_rnti_f0_0: {
         const auto& dci = pdcch.dci.c_rnti_f0_0;
-        fmt::format_to(fmtbuf,
+        fmt::format_to(std::back_inserter(fmtbuf),
                        " h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
                        dci.new_data_indicator ? 1 : 0,
@@ -102,7 +105,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       } break;
       case dci_ul_rnti_config_type::tc_rnti_f0_0: {
         const auto& dci = pdcch.dci.tc_rnti_f0_0;
-        fmt::format_to(fmtbuf,
+        fmt::format_to(std::back_inserter(fmtbuf),
                        "h_id=0 ndi=1 rv={} mcs={} tpc={}",
                        dci.redundancy_version,
                        dci.modulation_coding_scheme,
@@ -110,7 +113,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       } break;
       case dci_ul_rnti_config_type::c_rnti_f0_1: {
         const auto& dci = pdcch.dci.c_rnti_f0_1;
-        fmt::format_to(fmtbuf,
+        fmt::format_to(std::back_inserter(fmtbuf),
                        " h_id={} ndi={} rv={} mcs={} dai={} tpc={} mimo={} ant={}",
                        dci.harq_process_number,
                        dci.new_data_indicator ? 1 : 0,
@@ -128,7 +131,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
 
   if (log_broadcast) {
     for (const csi_rs_info& csi_rs : result.dl.csi_rs) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      "\n- CSI-RS: type={} crbs={} row={} freq={} symb0={} cdm_type={} freq_density={}",
                      csi_rs.type == csi_rs_type::CSI_RS_NZP ? "nzp" : "zp",
                      csi_rs.crbs,
@@ -138,12 +141,12 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                      to_string(csi_rs.cdm_type),
                      to_string(csi_rs.freq_density));
       if (csi_rs.type == csi_rs_type::CSI_RS_NZP) {
-        fmt::format_to(fmtbuf, " scramb_id={}", csi_rs.scrambling_id);
+        fmt::format_to(std::back_inserter(fmtbuf), " scramb_id={}", csi_rs.scrambling_id);
       }
     }
 
     for (const sib_information& sib : result.dl.bc.sibs) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      "\n- SI{} PDSCH: rb={} symb={} tbs={} mcs={} rv={}",
                      sib.si_indicator == sib_information::sib1 ? "B1" : "",
                      sib.pdsch_cfg.rbs,
@@ -155,7 +158,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
   }
 
   for (const rar_information& rar : result.dl.rar_grants) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "\n- RAR PDSCH: ra-rnti={} rb={} symb={} tbs={} mcs={} rv={} grants ({}): ",
                    rar.pdsch_cfg.rnti,
                    rar.pdsch_cfg.rbs,
@@ -165,7 +168,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                    rar.pdsch_cfg.codewords[0].rv_index,
                    rar.grants.size());
     for (const rar_ul_grant& grant : rar.grants) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      "{}tc-rnti={}: rapid={} ta={} time_res={}",
                      (&grant == &rar.grants.front()) ? "" : ", ",
                      grant.temp_crnti,
@@ -175,11 +178,11 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
     }
   }
   for (const dl_msg_alloc& ue_dl_grant : result.dl.ue_grants) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "\n- UE PDSCH: ue={} c-rnti={} h_id={} rb={} symb={} tbs={} mcs={} rv={} nrtx={} k1={}",
-                   ue_dl_grant.context.ue_index,
+                   fmt::underlying(ue_dl_grant.context.ue_index),
                    ue_dl_grant.pdsch_cfg.rnti,
-                   ue_dl_grant.pdsch_cfg.harq_id,
+                   fmt::underlying(ue_dl_grant.pdsch_cfg.harq_id),
                    ue_dl_grant.pdsch_cfg.rbs,
                    ue_dl_grant.pdsch_cfg.symbols,
                    ue_dl_grant.pdsch_cfg.codewords[0].tb_size_bytes,
@@ -189,16 +192,17 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                    ue_dl_grant.context.k1);
     if (ue_dl_grant.pdsch_cfg.precoding.has_value() and not ue_dl_grant.pdsch_cfg.precoding.value().prg_infos.empty()) {
       const auto& prg_type = ue_dl_grant.pdsch_cfg.precoding->prg_infos[0].type;
-      fmt::format_to(fmtbuf, " ri={} {}", ue_dl_grant.pdsch_cfg.nof_layers, csi_report_pmi{prg_type});
+      fmt::format_to(
+          std::back_inserter(fmtbuf), " ri={} {}", ue_dl_grant.pdsch_cfg.nof_layers, csi_report_pmi{prg_type});
     }
     if (ue_dl_grant.pdsch_cfg.codewords[0].new_data) {
-      fmt::format_to(fmtbuf, " dl_bo={}", ue_dl_grant.context.buffer_occupancy);
+      fmt::format_to(std::back_inserter(fmtbuf), " dl_bo={}", ue_dl_grant.context.buffer_occupancy);
     }
     if (ue_dl_grant.context.olla_offset.has_value()) {
-      fmt::format_to(fmtbuf, " olla={:.3}", ue_dl_grant.context.olla_offset.value());
+      fmt::format_to(std::back_inserter(fmtbuf), " olla={:.3}", ue_dl_grant.context.olla_offset.value());
     }
     for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].lc_chs_to_sched) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      "{}lcid={}: size={}",
                      (&lc == &ue_dl_grant.tb_list[0].lc_chs_to_sched.front()) ? " grants: " : ", ",
                      lc.lcid,
@@ -206,7 +210,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
     }
   }
   for (const dl_paging_allocation& pg : result.dl.paging_grants) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "\n- PCCH: rb={} symb={} tbs={} mcs={} rv={}",
                    pg.pdsch_cfg.rbs,
                    pg.pdsch_cfg.symbols,
@@ -215,7 +219,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                    pg.pdsch_cfg.codewords[0].rv_index);
 
     for (const paging_ue_info& ue : pg.paging_ue_list) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      "{}{}-pg-id={:#x}",
                      (&ue == &pg.paging_ue_list.front()) ? " ues: " : ", ",
                      ue.paging_type_indicator == paging_ue_info::paging_identity_type::cn_ue_paging_identity ? "cn"
@@ -225,9 +229,9 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
   }
 
   for (const ul_sched_info& ul_info : result.ul.puschs) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "\n- UE PUSCH: ue={} {}c-rnti={} h_id={} rb={} symb={} tbs={} rv={} nrtx={}",
-                   ul_info.context.ue_index,
+                   fmt::underlying(ul_info.context.ue_index),
                    ul_info.context.ue_index == INVALID_DU_UE_INDEX ? "t" : "",
                    ul_info.pusch_cfg.rnti,
                    ul_info.pusch_cfg.harq_id,
@@ -237,18 +241,18 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                    ul_info.pusch_cfg.rv_index,
                    ul_info.context.nof_retxs);
     if (ul_info.context.olla_offset.has_value()) {
-      fmt::format_to(fmtbuf, " olla={:.3}", ul_info.context.olla_offset.value());
+      fmt::format_to(std::back_inserter(fmtbuf), " olla={:.3}", ul_info.context.olla_offset.value());
     }
     if (ul_info.context.ue_index == INVALID_DU_UE_INDEX and ul_info.context.nof_retxs == 0 and
         ul_info.context.msg3_delay.has_value()) {
-      fmt::format_to(fmtbuf, " msg3_delay={}", ul_info.context.msg3_delay.value());
+      fmt::format_to(std::back_inserter(fmtbuf), " msg3_delay={}", ul_info.context.msg3_delay.value());
     } else {
-      fmt::format_to(fmtbuf, " k2={}", ul_info.context.k2);
+      fmt::format_to(std::back_inserter(fmtbuf), " k2={}", ul_info.context.k2);
     }
 
     if (ul_info.uci.has_value()) {
       fmt::format_to(
-          fmtbuf,
+          std::back_inserter(fmtbuf),
           " uci: harq_bits={} csi-1_bits={} csi-2_present={}",
           ul_info.uci.value().harq.has_value() ? ul_info.uci.value().harq.value().harq_ack_nof_bits : 0U,
           ul_info.uci.value().csi.has_value() ? ul_info.uci.value().csi.value().csi_part1_nof_bits : 0U,
@@ -261,19 +265,25 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
     if (pucch.format == pucch_format::FORMAT_0) {
       const unsigned nof_harq_bits = pucch.format_0.harq_ack_nof_bits;
       const unsigned nof_sr_bits   = sr_nof_bits_to_uint(pucch.format_0.sr_bits);
-      fmt::format_to(fmtbuf, "\n- PUCCH: c-rnti={} format=0 prb={}", pucch.crnti, pucch.resources.prbs);
+      fmt::format_to(
+          std::back_inserter(fmtbuf), "\n- PUCCH: c-rnti={} format=0 prb={}", pucch.crnti, pucch.resources.prbs);
       if (not pucch.resources.second_hop_prbs.empty()) {
-        fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
+        fmt::format_to(std::back_inserter(fmtbuf), " second_prbs={}", pucch.resources.second_hop_prbs);
       }
-      fmt::format_to(fmtbuf, " symb={} uci: harq_bits={} sr={}", pucch.resources.symbols, nof_harq_bits, nof_sr_bits);
+      fmt::format_to(std::back_inserter(fmtbuf),
+                     " symb={} uci: harq_bits={} sr={}",
+                     pucch.resources.symbols,
+                     nof_harq_bits,
+                     nof_sr_bits);
     } else if (pucch.format == pucch_format::FORMAT_1) {
       const unsigned nof_harq_bits = pucch.format_1.harq_ack_nof_bits;
       const unsigned nof_sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
-      fmt::format_to(fmtbuf, "\n- PUCCH: c-rnti={} format=1 prb={}", pucch.crnti, pucch.resources.prbs);
+      fmt::format_to(
+          std::back_inserter(fmtbuf), "\n- PUCCH: c-rnti={} format=1 prb={}", pucch.crnti, pucch.resources.prbs);
       if (not pucch.resources.second_hop_prbs.empty()) {
-        fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
+        fmt::format_to(std::back_inserter(fmtbuf), " second_prbs={}", pucch.resources.second_hop_prbs);
       }
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      " symb={} cs={} occ={} uci: harq_bits={} sr={}",
                      pucch.resources.symbols,
                      pucch.format_1.initial_cyclic_shift,
@@ -284,11 +294,15 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       const unsigned nof_harq_bits      = pucch.format_2.harq_ack_nof_bits;
       const unsigned nof_sr_bits        = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
       unsigned       nof_csi_part1_bits = pucch.format_2.csi_part1_bits;
-      fmt::format_to(fmtbuf, "\n- PUCCH: c-rnti={} format={} prb={}", pucch.crnti, pucch.format, pucch.resources.prbs);
+      fmt::format_to(std::back_inserter(fmtbuf),
+                     "\n- PUCCH: c-rnti={} format={} prb={}",
+                     pucch.crnti,
+                     fmt::underlying(pucch.format),
+                     pucch.resources.prbs);
       if (not pucch.resources.second_hop_prbs.empty()) {
-        fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
+        fmt::format_to(std::back_inserter(fmtbuf), " second_prbs={}", pucch.resources.second_hop_prbs);
       }
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
                      pucch.resources.symbols,
                      nof_harq_bits,
@@ -298,7 +312,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
   }
 
   for (const auto& srs : result.ul.srss) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "\n- SRS: c-rnti={} symb={} tx-comb=(n{} o={} cs={}) c_srs={} f_sh={} seq_id={}",
                    srs.crnti,
                    srs.symbols,
@@ -312,7 +326,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
 
   if (log_broadcast) {
     for (const prach_occasion_info& prach : result.ul.prachs) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      "\n- PRACH: pci={} format={} nof_occasions={} nof_preambles={}",
                      prach.pci,
                      to_string(prach.format),
@@ -341,7 +355,7 @@ void scheduler_result_logger::log_info(const sched_result& result, std::chrono::
 {
   if (log_broadcast) {
     for (const sib_information& sib_info : result.dl.bc.sibs) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      "{}SI{}: rb={} tbs={}",
                      fmtbuf.size() == 0 ? "" : ", ",
                      sib_info.si_indicator == sib_information::sib1 ? "B1" : "",
@@ -350,7 +364,7 @@ void scheduler_result_logger::log_info(const sched_result& result, std::chrono::
     }
   }
   for (const rar_information& rar_info : result.dl.rar_grants) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "{}RAR: ra-rnti={} rb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    rar_info.pdsch_cfg.rnti,
@@ -358,49 +372,50 @@ void scheduler_result_logger::log_info(const sched_result& result, std::chrono::
                    rar_info.pdsch_cfg.codewords[0].tb_size_bytes);
   }
   for (const dl_msg_alloc& ue_msg : result.dl.ue_grants) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "{}DL: ue={} c-rnti={} rb={} h_id={} ss_id={} k1={} newtx={} rv={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
-                   ue_msg.context.ue_index,
+                   fmt::underlying(ue_msg.context.ue_index),
                    ue_msg.pdsch_cfg.rnti,
                    ue_msg.pdsch_cfg.rbs,
-                   ue_msg.pdsch_cfg.harq_id,
-                   ue_msg.context.ss_id,
+                   fmt::underlying(ue_msg.pdsch_cfg.harq_id),
+                   fmt::underlying(ue_msg.context.ss_id),
                    ue_msg.context.k1,
                    ue_msg.pdsch_cfg.codewords[0].new_data,
                    ue_msg.pdsch_cfg.codewords[0].rv_index,
                    ue_msg.pdsch_cfg.codewords[0].tb_size_bytes);
     if (ue_msg.pdsch_cfg.codewords[0].new_data) {
-      fmt::format_to(fmtbuf, " ri={} dl_bo={}", ue_msg.pdsch_cfg.nof_layers, ue_msg.context.buffer_occupancy);
+      fmt::format_to(
+          std::back_inserter(fmtbuf), " ri={} dl_bo={}", ue_msg.pdsch_cfg.nof_layers, ue_msg.context.buffer_occupancy);
     }
   }
   for (const ul_sched_info& ue_msg : result.ul.puschs) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "{}UL: ue={} rnti={} h_id={} ss_id={} rb={} newtx={} rv={} tbs={} ",
                    fmtbuf.size() == 0 ? "" : ", ",
-                   ue_msg.context.ue_index,
+                   fmt::underlying(ue_msg.context.ue_index),
                    ue_msg.pusch_cfg.rnti,
                    ue_msg.pusch_cfg.harq_id,
-                   ue_msg.context.ss_id,
+                   fmt::underlying(ue_msg.context.ss_id),
                    ue_msg.pusch_cfg.rbs,
                    ue_msg.pusch_cfg.new_data,
                    ue_msg.pusch_cfg.rv_index,
                    ue_msg.pusch_cfg.tb_size_bytes);
     if (ue_msg.context.ue_index == INVALID_DU_UE_INDEX and ue_msg.context.nof_retxs == 0 and
         ue_msg.context.msg3_delay.has_value()) {
-      fmt::format_to(fmtbuf, "msg3_delay={}", ue_msg.context.msg3_delay.value());
+      fmt::format_to(std::back_inserter(fmtbuf), "msg3_delay={}", ue_msg.context.msg3_delay.value());
     } else {
-      fmt::format_to(fmtbuf, "k2={}", ue_msg.context.k2);
+      fmt::format_to(std::back_inserter(fmtbuf), "k2={}", ue_msg.context.k2);
     }
   }
   for (const dl_paging_allocation& pg_info : result.dl.paging_grants) {
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "{}PG: rb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    pg_info.pdsch_cfg.rbs,
                    pg_info.pdsch_cfg.codewords[0].tb_size_bytes);
     for (const paging_ue_info& ue : pg_info.paging_ue_list) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(std::back_inserter(fmtbuf),
                      "{}{}-pg-id={:#x}",
                      (&ue == &pg_info.paging_ue_list.front()) ? " ues: " : ", ",
                      ue.paging_type_indicator == paging_ue_info::paging_identity_type::cn_ue_paging_identity ? "cn"

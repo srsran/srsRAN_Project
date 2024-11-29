@@ -212,7 +212,7 @@ static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pu
       fill_format4_parameters(builder, mac_pdu);
       break;
     default:
-      srsran_assert(0, "Invalid PUCCH format={}", mac_pdu.format);
+      srsran_assert(0, "Invalid PUCCH format={}", fmt::underlying(mac_pdu.format));
   }
 }
 

@@ -127,7 +127,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::units::bits> : public formatter<srsran::units::bits::value_type> {
   template <typename FormatContext>
-  auto format(srsran::units::bits s, FormatContext& ctx)
+  auto format(srsran::units::bits s, FormatContext& ctx) const
   {
     return fmt::format_to(ctx.out(), "{}{}", s.value(), srsran::units::bits::tag_type::str());
   }
@@ -152,7 +152,7 @@ struct formatter<srsran::units::bytes> : public formatter<srsran::units::bytes::
   }
 
   template <typename FormatContext>
-  auto format(srsran::units::bytes s, FormatContext& ctx)
+  auto format(srsran::units::bytes s, FormatContext& ctx) const
   {
     return fmt::format_to(ctx.out(), "{}{}", s.value(), print_units ? srsran::units::bytes::tag_type::str() : "");
   }

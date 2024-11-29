@@ -103,7 +103,7 @@ void rlc_metrics_consumer_json::handle_metric(const app_services::metrics_set& m
   auto& output = ctx.get<mlist_drbs>().back();
 
   output.write<metric_du_id>(static_cast<uint32_t>(drb.du_index));
-  output.write<metric_ue_id>(drb.ue_index);
+  output.write<metric_ue_id>(static_cast<uint32_t>(drb.ue_index));
   output.write<metric_drb_id>(static_cast<uint8_t>(drb.rb_id.get_drb_id()));
 
   // TX metrics
@@ -144,13 +144,13 @@ void rlc_metrics_consumer_log::handle_metric(const app_services::metrics_set& me
   const rlc_metrics& drb = static_cast<const rlc_metrics_impl&>(metric).get_metrics();
 
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "RLC Metrics:");
-  fmt::format_to(buffer, " du={}", static_cast<uint32_t>(drb.du_index));
-  fmt::format_to(buffer, " ue={}", drb.ue_index);
-  fmt::format_to(buffer, " rb={}", drb.rb_id);
-  fmt::format_to(buffer, " mode={}", drb.rx.mode);
-  fmt::format_to(buffer, " TX=[{}]", format_rlc_tx_metrics(drb.metrics_period, drb.tx));
-  fmt::format_to(buffer, " RX=[{}]  ", format_rlc_rx_metrics(drb.metrics_period, drb.rx));
+  fmt::format_to(std::back_inserter(buffer), "RLC Metrics:");
+  fmt::format_to(std::back_inserter(buffer), " du={}", static_cast<uint32_t>(drb.du_index));
+  fmt::format_to(std::back_inserter(buffer), " ue={}", static_cast<uint32_t>(drb.ue_index));
+  fmt::format_to(std::back_inserter(buffer), " rb={}", drb.rb_id);
+  fmt::format_to(std::back_inserter(buffer), " mode={}", drb.rx.mode);
+  fmt::format_to(std::back_inserter(buffer), " TX=[{}]", format_rlc_tx_metrics(drb.metrics_period, drb.tx));
+  fmt::format_to(std::back_inserter(buffer), " RX=[{}]  ", format_rlc_rx_metrics(drb.metrics_period, drb.rx));
   logger.info("{}", to_c_str(buffer));
 }
 

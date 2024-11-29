@@ -63,7 +63,7 @@ static constexpr unsigned MAX_CONFIG_FILES = 10;
 static void populate_cli11_generic_args(CLI::App& app)
 {
   fmt::memory_buffer buffer;
-  format_to(buffer, "srsRAN 5G DU version {} ({})", get_version(), get_build_hash());
+  format_to(std::back_inserter(buffer), "srsRAN 5G DU version {} ({})", get_version(), get_build_hash());
   app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
   app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }

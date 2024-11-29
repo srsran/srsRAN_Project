@@ -119,7 +119,7 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
         if (not h_dl.has_value() or not h_dl->is_waiting_ack()) {
           logger.warning(
               "ue={} rnti={}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index={}",
-              user->ue_index,
+              fmt::underlying(user->ue_index),
               user->crnti,
               slot_alloc.slot,
               harq_bit_idx);

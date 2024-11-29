@@ -60,7 +60,7 @@ struct formatter<srsran::socket_name_info> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::socket_name_info& val, FormatContext& ctx)
+  auto format(const srsran::socket_name_info& val, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}:{}", val.address, val.port);
   }

@@ -54,7 +54,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::resource_usage::diff> : public basic_parser {
   template <typename FormatContext>
-  auto format(const srsran::resource_usage::diff& diff, FormatContext& ctx)
+  auto format(const srsran::resource_usage::diff& diff, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "nof_vol_ctxt_switch={} nof_invol_ctxt_switch={}",

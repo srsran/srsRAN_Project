@@ -338,7 +338,7 @@ struct formatter<srsran::log_likelihood_ratio> {
 
   /// Formatter.
   template <typename FormatContext>
-  auto format(srsran::log_likelihood_ratio llr, FormatContext& ctx)
+  auto format(srsran::log_likelihood_ratio llr, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", static_cast<srsran::log_likelihood_ratio::value_type>(llr));
   }

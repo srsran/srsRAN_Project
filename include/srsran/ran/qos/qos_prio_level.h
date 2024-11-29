@@ -51,8 +51,7 @@ struct formatter<srsran::qos_prio_level_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::qos_prio_level_t& qos_prio_level, FormatContext& ctx)
-
+  auto format(const srsran::qos_prio_level_t& qos_prio_level, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "QoS Priority Level={:#x}", qos_prio_level_to_uint(qos_prio_level));
   }

@@ -92,7 +92,8 @@ static void usage(const char* prog, const bench_params& params, const app_params
   fmt::print("\t-p Number of SDUs per repetition [Default {}]\n", params.nof_sdus);
   fmt::print("\t-s SDU length [Default {}]\n", params.sdu_len);
   fmt::print("\t-q Queue size of crypto worker pool [Default {}]\n", params.crypto_queue_size);
-  fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n", app.log_level);
+  fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n",
+             fmt::underlying(app.log_level));
   fmt::print("\t-f Log filename to use [Default {}]\n", app.log_filename);
   fmt::print("\t-h Show this message\n");
 }
@@ -203,7 +204,12 @@ void benchmark_pdcp_rx(bench_params                  params,
                        security::ciphering_algorithm ciph_algo)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "Benchmark PDCP RX. NIA{} ({}) NEA{} ({})", int_algo, int_enabled, ciph_algo, ciph_enabled);
+  fmt::format_to(std::back_inserter(buffer),
+                 "Benchmark PDCP RX. NIA{} ({}) NEA{} ({})",
+                 int_algo,
+                 int_enabled,
+                 ciph_algo,
+                 ciph_enabled);
 
   std::vector<byte_buffer_chain> pdu_list;
 

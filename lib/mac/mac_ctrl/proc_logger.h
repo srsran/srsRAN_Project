@@ -39,12 +39,12 @@ struct formatter<srsran::mac_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::mac_log_prefix& prefix, FormatContext& ctx)
+  auto format(const srsran::mac_log_prefix& prefix, FormatContext& ctx) const
   {
     bool first_id = true;
     auto get_sep  = [&first_id]() { return std::exchange(first_id, false) ? "" : " "; };
     if (prefix.ue_index != srsran::INVALID_DU_UE_INDEX) {
-      format_to(ctx.out(), "{}ue={}", get_sep(), prefix.ue_index);
+      format_to(ctx.out(), "{}ue={}", get_sep(), fmt::underlying(prefix.ue_index));
     }
     if (prefix.rnti != srsran::rnti_t::INVALID_RNTI) {
       format_to(ctx.out(), "{}crnti={}", get_sep(), prefix.rnti);

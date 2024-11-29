@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/srslog/formatter.h"
+#include <memory>
 
 namespace srslog {
 

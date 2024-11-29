@@ -313,8 +313,7 @@ struct formatter<srsran::gtpu_header::gtpu_flags> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_header::gtpu_flags& flags, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_header::gtpu_flags& flags, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "v={} pt={} e={} s={} pn={}",
@@ -335,7 +334,7 @@ struct formatter<srsran::gtpu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_header& hdr, FormatContext& ctx)
+  auto format(const srsran::gtpu_header& hdr, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{} len={} teid={:#x}", hdr.flags, hdr.length, hdr.teid);
   }
@@ -350,8 +349,7 @@ struct formatter<srsran::gtpu_extension_header_type> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_extension_header_type& ext_type, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_extension_header_type& ext_type, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", to_string(ext_type));
   }
@@ -366,7 +364,7 @@ struct formatter<srsran::gtpu_ie_teid_i> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_ie_teid_i& ie, FormatContext& ctx)
+  auto format(const srsran::gtpu_ie_teid_i& ie, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "teid_i={:#x}", ie.teid_i);
   }
@@ -381,8 +379,7 @@ struct formatter<srsran::gtpu_ie_gtpu_peer_address> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_ie_gtpu_peer_address& ie, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_ie_gtpu_peer_address& ie, FormatContext& ctx) const
   {
     if (std::holds_alternative<srsran::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address)) {
       auto& addr = std::get<srsran::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address);
@@ -422,8 +419,7 @@ struct formatter<srsran::gtpu_msg_error_indication> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_msg_error_indication& err_ind, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_msg_error_indication& err_ind, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{} {}", err_ind.teid_i, err_ind.gtpu_peer_address);
   }

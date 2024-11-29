@@ -9,7 +9,7 @@
  */
 
 #include "srsran/support/executors/unique_thread.h"
-#include "fmt/ostream.h"
+#include "fmt/std.h"
 #include <cstdio>
 #include <pthread.h>
 #include <sys/types.h>
@@ -35,8 +35,9 @@ static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bi
 {
   auto invalid_ids = bitmap.subtract(os_sched_affinity_bitmask::available_cpus());
   if (invalid_ids.size() > 0) {
-    fmt::print(
-        "Warning: The CPU affinity of thread \"{}\" contains the following invalid CPU ids: {}\n", name, invalid_ids);
+    fmt::print("Warning: The CPU affinity of thread \"{}\" contains the following invalid CPU ids: {}\n",
+               name,
+               span<const size_t>(invalid_ids));
   }
 
   ::cpu_set_t* cpusetp     = CPU_ALLOC(bitmap.size());

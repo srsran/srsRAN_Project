@@ -19,8 +19,8 @@
 #include "srsran/ran/ssb_gscn.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/sched_consts.h"
-#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/srsran_assert.h"
+#include "fmt/std.h"
 
 using namespace srsran;
 
@@ -792,7 +792,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
                       raster_band.dl_nref_step));
     }
   }
-  return make_unexpected(fmt::format("Band {} is not valid", band));
+  return make_unexpected(fmt::format("Band {} is not valid", fmt::underlying(band)));
 }
 
 error_type<std::string>
@@ -819,7 +819,7 @@ srsran::band_helper::is_ul_arfcn_valid_given_band(nr_band band, uint32_t arfcn_f
         return make_unexpected(
             fmt::format("Asymmetrical UL and DL channel BWs are not supported. The UL ARFCN resulting from the DL "
                         "ARFCN for band n{} must not exceed the band upper-bound={}",
-                        band,
+                        fmt::underlying(band),
                         raster_band.ul_nref_last));
       }
       if (arfcn_f_ref >= raster_band.ul_nref_first and arfcn_f_ref <= raster_band.ul_nref_last and
@@ -833,7 +833,7 @@ srsran::band_helper::is_ul_arfcn_valid_given_band(nr_band band, uint32_t arfcn_f
                       raster_band.ul_nref_step));
     }
   }
-  return make_unexpected(fmt::format("Band {} is not valid", band));
+  return make_unexpected(fmt::format("Band {} is not valid", fmt::underlying(band)));
 }
 
 uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, std::optional<nr_band> band)
@@ -1562,7 +1562,8 @@ error_type<std::string> srsran::band_helper::is_ssb_arfcn_valid_given_band(uint3
   // Convert the ARFCN to GSCN.
   std::optional<unsigned> gscn = band_helper::get_gscn_from_ss_ref(nr_arfcn_to_freq(ssb_arfcn));
   if (not gscn.has_value()) {
-    return make_unexpected(fmt::format("GSCN {} is not valid for band {} with SSB SCS {}", gscn, band, ssb_scs));
+    return make_unexpected(fmt::format(
+        "GSCN {} is not valid for band {} with SSB SCS {}", gscn, fmt::underlying(band), fmt::underlying(ssb_scs)));
   }
   // If the GCSN exists, check if it is a valid one.
   return band_helper::is_gscn_valid_given_band(gscn.value(), band, ssb_scs, bw);

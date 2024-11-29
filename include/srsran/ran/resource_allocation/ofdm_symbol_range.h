@@ -47,7 +47,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::ofdm_symbol_range> : public formatter<srsran::interval<uint8_t>> {
   template <typename FormatContext>
-  auto format(const srsran::ofdm_symbol_range& symbols, FormatContext& ctx)
+  auto format(const srsran::ofdm_symbol_range& symbols, FormatContext& ctx) const
   {
     return formatter<srsran::interval<uint8_t>>::format(symbols, ctx);
   }

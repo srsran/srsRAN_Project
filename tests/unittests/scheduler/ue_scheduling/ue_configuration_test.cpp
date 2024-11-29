@@ -38,16 +38,16 @@ TEST_F(ue_configuration_test, configuration_valid_on_creation)
   TESTASSERT(ue_cfg.find_bwp(to_bwp_id(0)) != nullptr);
   TESTASSERT(ue_cfg.bwp(to_bwp_id(0)).dl_common->generic_params == cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
   TESTASSERT(ue_cfg.coreset(to_coreset_id(0)).id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id);
-  TESTASSERT_EQ(0, ue_cfg.search_space(to_search_space_id(0)).cfg->get_id());
+  TESTASSERT_EQ(0, fmt::underlying(ue_cfg.search_space(to_search_space_id(0)).cfg->get_id()));
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(0)).cfg ==
              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0]);
-  TESTASSERT_EQ(1, ue_cfg.search_space(to_search_space_id(1)).cfg->get_id());
+  TESTASSERT_EQ(1, fmt::underlying(ue_cfg.search_space(to_search_space_id(1)).cfg->get_id()));
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(1)).cfg ==
              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1]);
 
   // Test Dedicated Config.
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) == nullptr);
-  TESTASSERT_EQ(2, ue_cfg.search_space(to_search_space_id(2)).cfg->get_id());
+  TESTASSERT_EQ(2, fmt::underlying(ue_cfg.search_space(to_search_space_id(2)).cfg->get_id()));
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(2)).cfg ==
              (*ue_create_msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]);
   TESTASSERT(ue_cfg.find_search_space(to_search_space_id(3)) == nullptr);
@@ -67,7 +67,7 @@ TEST_F(ue_configuration_test, configuration_valid_on_reconfiguration)
   ue_cfg.reconfigure(ue_cell_reconf.serv_cell_cfg);
 
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) != nullptr);
-  TESTASSERT_EQ(2, ue_cfg.coreset(to_coreset_id(2)).id);
+  TESTASSERT_EQ(2, fmt::underlying(ue_cfg.coreset(to_coreset_id(2)).id));
   TESTASSERT(ue_cfg.coreset(to_coreset_id(2)) == ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back());
 }
 

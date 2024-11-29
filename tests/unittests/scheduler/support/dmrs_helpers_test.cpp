@@ -69,7 +69,7 @@ dmrs_information generate_expected_dmrs_info(const dmrs_symbol_mask& mask, unsig
 void verify_dmrs_info(const dmrs_information& expected_dmrs, const dmrs_information& dmrs_under_test)
 {
   TESTASSERT(expected_dmrs.dmrs_symb_pos == dmrs_under_test.dmrs_symb_pos);
-  TESTASSERT_EQ(expected_dmrs.config_type, dmrs_under_test.config_type);
+  TESTASSERT_EQ(fmt::underlying(expected_dmrs.config_type), fmt::underlying(dmrs_under_test.config_type));
   TESTASSERT_EQ(expected_dmrs.dmrs_scrambling_id, dmrs_under_test.dmrs_scrambling_id);
   TESTASSERT_EQ(expected_dmrs.low_papr_dmrs, dmrs_under_test.low_papr_dmrs);
   TESTASSERT_EQ(expected_dmrs.n_scid, dmrs_under_test.n_scid);

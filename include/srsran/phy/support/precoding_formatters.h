@@ -31,8 +31,7 @@ struct formatter<srsran::precoding_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::precoding_configuration& config, FormatContext& ctx)
-
+  auto format(const srsran::precoding_configuration& config, FormatContext& ctx) const
   {
     format_to(ctx.out(), "prg_size={} ", config.get_prg_size());
 

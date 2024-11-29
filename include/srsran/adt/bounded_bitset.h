@@ -1468,8 +1468,7 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::bounded_bitset<N, LowestInfoBitIsMSB>& s, FormatContext& ctx)
-
+  auto format(const srsran::bounded_bitset<N, LowestInfoBitIsMSB>& s, FormatContext& ctx) const
   {
     if (mode == hexadecimal) {
       return s.template to_string_of_hex<decltype(std::declval<FormatContext>().out())>(ctx.out(), order == reverse);

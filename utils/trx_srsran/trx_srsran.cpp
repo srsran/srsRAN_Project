@@ -39,7 +39,7 @@ public:
   {
     if ((description.source == event_source::TRANSMIT) &&
         ((description.type == event_type::UNDERFLOW) || (description.type == event_type::LATE))) {
-      fmt::print("Underflow!\n");
+      fmt::println("Underflow!");
       ++tx_underflow_count;
       return;
     }
@@ -214,12 +214,12 @@ static void trx_srsran_write2(TRXState*         s1,
   }
 
   if (harq_ack_present) {
-    fmt::print("HARQ ACK is not implemented.\n");
+    fmt::println("HARQ ACK is not implemented.");
     return;
   }
 
   if (ta_present) {
-    fmt::print("TA is not implemented.\n");
+    fmt::println("TA is not implemented.");
     return;
   }
 
@@ -301,7 +301,7 @@ static int trx_srsran_read2(TRXState*        s1,
   baseband_gateway_receiver& receiver = context.session->get_baseband_gateway(rf_port_index).get_receiver();
 
   // if (md != nullptr && md->flags) {
-  //   fmt::print("Read2 flags {} not implemented.", md->flags);
+  //   fmt::println("Read2 flags {} not implemented.", md->flags);
   // }
 
   // Prepare buffer.
@@ -358,7 +358,7 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
   // Create factory.
   context.factory = create_radio_factory(context.factory_str);
   if (!context.factory) {
-    fmt::print("Failed to create Radio factory {}.", context.factory_str);
+    fmt::println("Failed to create Radio factory {}.", context.factory_str);
     return -1;
   }
 
@@ -577,7 +577,7 @@ int trx_driver_init(TRXState* s1)
   for (unsigned port = 0; port < RADIO_MAX_NOF_PORTS; ++port) {
     // Create port field name.
     fmt::memory_buffer fmt_format_buf;
-    fmt::format_to(fmt_format_buf, "tx_port{}", port);
+    fmt::format_to(std::back_inserter(fmt_format_buf), "tx_port{}", port);
 
     // Get parameter from configuration.
     char* tx_port_char = trx_get_param_string(s1, to_string(fmt_format_buf).c_str());
@@ -593,7 +593,7 @@ int trx_driver_init(TRXState* s1)
   for (unsigned port = 0; port < RADIO_MAX_NOF_PORTS; ++port) {
     // Create port field name.
     fmt::memory_buffer fmt_format_buf;
-    fmt::format_to(fmt_format_buf, "rx_port{}", port);
+    fmt::format_to(std::back_inserter(fmt_format_buf), "rx_port{}", port);
 
     // Get parameter from configuration.
     char* rx_port_char = trx_get_param_string(s1, to_string(fmt_format_buf).c_str());

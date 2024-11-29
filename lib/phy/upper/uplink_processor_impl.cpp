@@ -131,7 +131,7 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
       l1_tracer << trace_event("pucch4", tp);
       break;
     default:
-      srsran_assert(0, "Invalid PUCCH format={}", pdu.context.format);
+      srsran_assert(0, "Invalid PUCCH format={}", fmt::underlying(pdu.context.format));
   }
 
   // Write the results.

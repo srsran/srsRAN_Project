@@ -97,12 +97,13 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index)
 {
   if (not ues.contains(ue_index)) {
-    logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not found in the scheduler", ue_index);
+    logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not found in the scheduler",
+                 fmt::underlying(ue_index));
     return;
   }
   ue& u = ues[ue_index];
   if (not u.get_pcell().is_in_fallback_mode()) {
-    logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not in fallback mode", ue_index);
+    logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not in fallback mode", fmt::underlying(ue_index));
     return;
   }
 
@@ -121,7 +122,7 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
 void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
 {
   if (not ues.contains(ue_index)) {
-    logger.error("ue={}: ConRes CE discarded. Cause: UE is not found in the scheduler", ue_index);
+    logger.error("ue={}: ConRes CE discarded. Cause: UE is not found in the scheduler", fmt::underlying(ue_index));
     return;
   }
   auto& u = ues[ue_index];
@@ -129,7 +130,7 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
     // Note: In Test mode, the UE can skip fallback mode. However, since it was created via UL-CCCH, there is still an
     // attempt to schedule the ConRes CE. If we want to change this log to warning, we need to create test mode UEs
     // in a different manner.
-    logger.info("ue={}: ConRes CE discarded. Cause: UE is not in fallback state", ue_index);
+    logger.info("ue={}: ConRes CE discarded. Cause: UE is not in fallback state", fmt::underlying(ue_index));
     return;
   }
 
@@ -151,7 +152,7 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
 void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind)
 {
   if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
-    logger.error("ue_index={} not found in the scheduler or not in fallback", ue_index);
+    logger.error("ue_index={} not found in the scheduler or not in fallback", fmt::underlying(ue_index));
     return;
   }
 
@@ -179,7 +180,7 @@ void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, con
 void ue_fallback_scheduler::handle_sr_indication(du_ue_index_t ue_index)
 {
   if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
-    logger.error("ue_index={} not found in the scheduler or not in fallback", ue_index);
+    logger.error("ue_index={} not found in the scheduler or not in fallback", fmt::underlying(ue_index));
     return;
   }
 
@@ -242,7 +243,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     if (alloc_type == dl_new_tx_alloc_type::error) {
       // The UE is not in a state for scheduling
       logger.error("ue={}: UE is an inconsistent state in the fallback scheduler. Pending bytes={}",
-                   next_ue->ue_index,
+                   fmt::underlying(next_ue->ue_index),
                    u.pending_dl_newtx_bytes());
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
       continue;
@@ -898,7 +899,7 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
       if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
         logger.warning(
             "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
-            u.ue_index,
+            fmt::underlying(u.ue_index),
             u.crnti,
             pusch_alloc.slot);
         continue;
@@ -909,7 +910,7 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
       if (pusch_alloc.result.ul.puschs.size() >=
           expert_cfg.max_ul_grants_per_slot - static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size())) {
         logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
-                    u.ue_index,
+                    fmt::underlying(u.ue_index),
                     u.crnti,
                     expert_cfg.max_puschs_per_slot);
         continue;
@@ -987,12 +988,14 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
 
   // Search for empty HARQ.
   if (not h_ul_retx.has_value() and not ue_pcell.harqs.has_empty_ul_harqs()) {
-    logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: no HARQ available", u.ue_index, u.crnti);
+    logger.debug(
+        "ue={} rnti={} PUSCH allocation skipped. Cause: no HARQ available", fmt::underlying(u.ue_index), u.crnti);
     return ul_srb_sched_outcome::next_ue;
   }
 
   if (used_crbs.all()) {
-    logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: No more RBs available", u.ue_index, u.crnti);
+    logger.debug(
+        "ue={} rnti={} PUSCH allocation skipped. Cause: No more RBs available", fmt::underlying(u.ue_index), u.crnti);
     return ul_srb_sched_outcome::next_slot;
   }
 
@@ -1012,7 +1015,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, final_nof_prbs, 0);
     if (ue_grant_crbs.empty() or ue_grant_crbs.length() < final_nof_prbs) {
       logger.debug("ue={} rnti={} PUSCH SRB allocation for re-tx skipped. Cause: available RBs {} < required RBs {}",
-                   u.ue_index,
+                   fmt::underlying(u.ue_index),
                    u.crnti,
                    ue_grant_crbs.length(),
                    final_nof_prbs);
@@ -1055,7 +1058,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
       if (!corrected_nof_prbs) {
         logger.debug(
             "ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: not possible to select a valid number of PRBs",
-            u.ue_index,
+            fmt::underlying(u.ue_index),
             u.crnti);
         return ul_srb_sched_outcome::next_slot;
       }
@@ -1067,14 +1070,16 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
 
     if (ue_grant_crbs.empty()) {
-      logger.debug("ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: no PRBs available", u.ue_index, u.crnti);
+      logger.debug("ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: no PRBs available",
+                   fmt::underlying(u.ue_index),
+                   u.crnti);
       return ul_srb_sched_outcome::next_slot;
     }
 
     if (ue_grant_crbs.length() <= min_allocable_prbs and mcs < min_mcs_for_1_prb) {
       logger.debug("ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: the scheduler couldn't allocate the min. "
                    "number of PRBs={} for MCS={}",
-                   u.ue_index,
+                   fmt::underlying(u.ue_index),
                    u.crnti,
                    prbs_tbs.nof_prbs,
                    mcs.to_uint());
@@ -1090,7 +1095,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
     if (not mcs_tbs_info.has_value()) {
       logger.warning("ue={} rnti={}: Failed to allocate PUSCH for SRB1. Cause: no MCS such that code rate <= 0.95",
-                     u.ue_index,
+                     fmt::underlying(u.ue_index),
                      u.crnti);
       return ul_srb_sched_outcome::next_slot;
     }
@@ -1101,7 +1106,8 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
   pdcch_ul_information* pdcch =
       pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
+    logger.info(
+        "ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", fmt::underlying(u.ue_index), u.crnti);
     return ul_srb_sched_outcome::stop_ul_scheduling;
   }
 

@@ -252,17 +252,17 @@ public:
     }
     scheduler_cell_metrics metrics;
     while (pending_metrics.try_pop(metrics)) {
-      fmt::format_to(fmtbuf, "Latency=[{}]", fmt::join(metrics.latency_histogram, ", "));
+      fmt::format_to(std::back_inserter(fmtbuf), "Latency=[{}]", fmt::join(metrics.latency_histogram, ", "));
       if (not metrics.events.empty()) {
-        fmt::format_to(fmtbuf, " Events: [");
+        fmt::format_to(std::back_inserter(fmtbuf), " Events: [");
         for (const auto& ev : metrics.events) {
-          fmt::format_to(fmtbuf,
+          fmt::format_to(std::back_inserter(fmtbuf),
                          "{}rnti={} type={}",
                          &ev == &metrics.events.front() ? "" : ", ",
                          ev.rnti,
                          sched_event_to_string(ev.type));
         }
-        fmt::format_to(fmtbuf, "]");
+        fmt::format_to(std::back_inserter(fmtbuf), "]");
       }
       logger.info("cell metrics: {}", to_c_str(fmtbuf));
       fmtbuf.clear();
@@ -329,7 +329,7 @@ private:
         handle_success_outcome(msg);
         break;
       default:
-        report_fatal_error("Received invalid PDU type {} in this benchmark", msg.pdu.type().value);
+        report_fatal_error("Received invalid PDU type {} in this benchmark", fmt::underlying(msg.pdu.type().value));
     }
   }
 
@@ -571,7 +571,7 @@ public:
 
     // Instantiate a DU-high object.
     cfg.ran.gnb_du_id   = (gnb_du_id_t)1;
-    cfg.ran.gnb_du_name = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
+    cfg.ran.gnb_du_name = fmt::format("srsgnb{}", fmt::underlying(cfg.ran.gnb_du_id));
 
     cfg.ran.cells                                  = {config_helpers::make_default_du_cell_config(params)};
     cfg.ran.sched_cfg                              = config_helpers::make_default_scheduler_expert_config();
@@ -816,7 +816,7 @@ public:
     // Mark the UE as fully setup.
     ue_created_flag_list[ue_idx] = true;
 
-    test_logger.info("ue={}: Creation completed successfully", ue_idx);
+    test_logger.info("ue={}: Creation completed successfully", fmt::underlying(ue_idx));
   }
 
   // \brief Push a DL PDUs to DU-high via F1-U interface.

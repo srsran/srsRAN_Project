@@ -31,7 +31,7 @@ struct formatter<srsran::re_pattern> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::re_pattern& pattern, FormatContext& ctx)
+  auto format(const srsran::re_pattern& pattern, FormatContext& ctx) const
   {
     helper.format_always(
         ctx, "symb={:n}", static_cast<srsran::bounded_bitset<srsran::MAX_NSYMB_PER_SLOT>>(pattern.symbols));

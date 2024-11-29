@@ -45,6 +45,10 @@ std::ostream& operator<<(std::ostream& os, const f2_code_rate_param& value)
 
 } // namespace pucch_info_test
 
+template <>
+struct fmt::formatter<pucch_info_test::f2_code_rate_param> : ostream_formatter {
+};
+
 using namespace pucch_info_test;
 
 class pucch_f2_code_rate_test : public ::testing::TestWithParam<f2_code_rate_param>

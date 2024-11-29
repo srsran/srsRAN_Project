@@ -15,6 +15,7 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/serv_cell_index.h"
 
 namespace srsran {
 namespace srs_du {

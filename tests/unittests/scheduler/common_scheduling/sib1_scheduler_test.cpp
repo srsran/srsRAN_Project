@@ -32,7 +32,8 @@ public:
                                               search_space_id               ss_id,
                                               aggregation_level             aggr_lvl) override
   {
-    TESTASSERT_EQ(ss_id, slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id);
+    TESTASSERT_EQ(fmt::underlying(ss_id),
+                  fmt::underlying(slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id));
     slot_alloc.result.dl.dl_pdcchs.emplace_back();
     slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti    = rnti;
     slot_alloc.result.dl.dl_pdcchs.back().ctx.bwp_cfg = &slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params;
@@ -268,7 +269,7 @@ struct sib_test_bench {
   {
     // Test SIB_information message
     const sib_information& test_sib1 = res_grid[0].result.dl.bc.sibs.back();
-    TESTASSERT_EQ(sib_information::si_indicator_type::sib1, test_sib1.si_indicator);
+    TESTASSERT_EQ(fmt::underlying(sib_information::si_indicator_type::sib1), fmt::underlying(test_sib1.si_indicator));
     TESTASSERT_EQ(rnti_t::SI_RNTI, test_sib1.pdsch_cfg.rnti);
 
     // Test PDCCH_grant and DCI
@@ -277,7 +278,7 @@ struct sib_test_bench {
                      res_grid[0].result.dl.dl_pdcchs.end(),
                      [](const auto& pdcch_) { return pdcch_.ctx.rnti == rnti_t::SI_RNTI; });
     TESTASSERT(pdcch != nullptr);
-    TESTASSERT_EQ(dci_dl_rnti_config_type::si_f1_0, pdcch->dci.type);
+    TESTASSERT_EQ(fmt::underlying(dci_dl_rnti_config_type::si_f1_0), fmt::underlying(pdcch->dci.type));
     TESTASSERT_EQ(si_cfg.sib1_mcs_index, pdcch->dci.si_f1_0.modulation_coding_scheme);
     TESTASSERT_EQ(0, pdcch->dci.si_f1_0.redundancy_version);
   }

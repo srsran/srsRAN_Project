@@ -15,14 +15,14 @@
 
 using namespace srsran;
 
-/// Static configuration that the gnb supports.
-static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
-
 /// Fills the given low PHY configuration from the given gnb configuration.
 static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_config& config,
                                                        const ru_sdr_unit_config&     ru_cfg,
                                                        unsigned                      max_processing_delay_slot)
 {
+  /// Static configuration that the gnb supports.
+  static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
+
   lower_phy_configuration out_cfg;
 
   out_cfg.scs                        = config.scs_common;

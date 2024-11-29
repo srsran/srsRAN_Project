@@ -89,7 +89,7 @@ struct formatter<srsran::pdcp_dc_field> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_dc_field dc, FormatContext& ctx)
+  auto format(srsran::pdcp_dc_field dc, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
@@ -105,7 +105,7 @@ struct formatter<srsran::pdcp_control_pdu_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_control_pdu_type cpt, FormatContext& ctx)
+  auto format(srsran::pdcp_control_pdu_type cpt, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"status_report", "rohc_feedback", "ehc_feedback"};
     return format_to(ctx.out(), "{}", options[to_number(cpt)]);
@@ -121,8 +121,7 @@ struct formatter<srsran::pdcp_data_pdu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcp_data_pdu_header& hdr, FormatContext& ctx)
-
+  auto format(const srsran::pdcp_data_pdu_header& hdr, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "sn={}", hdr.sn);
   }
@@ -137,8 +136,7 @@ struct formatter<srsran::pdcp_control_pdu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcp_control_pdu_header& hdr, FormatContext& ctx)
-
+  auto format(const srsran::pdcp_control_pdu_header& hdr, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "cpt={}", hdr.cpt);
   }

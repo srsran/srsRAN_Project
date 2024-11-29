@@ -72,7 +72,7 @@ struct formatter<srsran::nru_pdu_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::nru_pdu_type pdu_type, FormatContext& ctx)
+  auto format(srsran::nru_pdu_type pdu_type, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"dl_user_data", "dl_data_delivery_status", "assistance_information"};
     if (nru_pdu_type_to_uint(pdu_type) < nru_pdu_type_to_uint(srsran::nru_pdu_type::reserved)) {

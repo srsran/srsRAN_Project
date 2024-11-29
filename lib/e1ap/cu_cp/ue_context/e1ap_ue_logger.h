@@ -29,12 +29,15 @@ public:
                      gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_t::invalid)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(
-        buffer,
-        "ue={}{}{}: ",
-        ue_index,
-        cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid ? fmt::format(" cu_cp_ue={}", cu_cp_ue_e1ap_id) : "",
-        cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid ? fmt::format(" cu_up_ue={}", cu_up_ue_e1ap_id) : "");
+    fmt::format_to(std::back_inserter(buffer),
+                   "ue={}{}{}: ",
+                   ue_index,
+                   cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid
+                       ? fmt::format(" cu_cp_ue={}", fmt::underlying(cu_cp_ue_e1ap_id))
+                       : "",
+                   cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid
+                       ? fmt::format(" cu_up_ue={}", fmt::underlying(cu_up_ue_e1ap_id))
+                       : "");
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
@@ -60,8 +63,7 @@ struct formatter<srsran::srs_cu_cp::e1ap_ue_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::e1ap_ue_log_prefix o, FormatContext& ctx)
-
+  auto format(srsran::srs_cu_cp::e1ap_ue_log_prefix o, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

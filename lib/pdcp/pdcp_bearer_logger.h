@@ -24,7 +24,7 @@ public:
   pdcp_bearer_log_prefix(uint32_t ue_index, rb_id_t rb_id, const char* dir)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={} {} {}: ", ue_index, rb_id, dir);
+    fmt::format_to(std::back_inserter(buffer), "ue={} {} {}: ", ue_index, rb_id, dir);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
@@ -49,7 +49,7 @@ struct formatter<srsran::pdcp_bearer_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_bearer_log_prefix o, FormatContext& ctx)
+  auto format(srsran::pdcp_bearer_log_prefix o, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

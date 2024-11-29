@@ -47,11 +47,11 @@ static std::function<std::string()> get_vector_default_function(span<const Integ
     }
 
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "[");
+    fmt::format_to(std::back_inserter(buffer), "[");
     for (unsigned i = 0, e = value.size() - 1; i != e; ++i) {
-      fmt::format_to(buffer, "{},", value[i]);
+      fmt::format_to(std::back_inserter(buffer), "{},", value[i]);
     }
-    fmt::format_to(buffer, "{}]", value.back());
+    fmt::format_to(std::back_inserter(buffer), "{}]", value.back());
 
     return to_c_str(buffer);
   };

@@ -26,7 +26,7 @@ public:
   rrc_ue_log_prefix(ue_index_t ue_index, rnti_t c_rnti)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={} c-rnti={}: ", ue_index, c_rnti);
+    fmt::format_to(std::back_inserter(buffer), "ue={} c-rnti={}: ", ue_index, c_rnti);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
@@ -52,8 +52,7 @@ struct formatter<srsran::srs_cu_cp::rrc_ue_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::rrc_ue_log_prefix o, FormatContext& ctx)
-
+  auto format(srsran::srs_cu_cp::rrc_ue_log_prefix o, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

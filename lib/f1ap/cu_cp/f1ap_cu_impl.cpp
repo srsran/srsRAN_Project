@@ -204,30 +204,31 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const asn1::f1ap::init_ul_rrc_m
 
   expected<nr_cell_global_id_t> cgi = cgi_from_asn1(msg->nr_cgi);
   if (not cgi.has_value()) {
-    logger.warning("du_ue={}: Dropping \"InitialULRRCMessageTransfer\". Invalid CGI", du_ue_id);
+    logger.warning("du_ue={}: Dropping \"InitialULRRCMessageTransfer\". Invalid CGI", fmt::underlying(du_ue_id));
     return;
   }
 
   rnti_t crnti = to_rnti(msg->c_rnti);
   if (crnti == rnti_t::INVALID_RNTI) {
-    logger.warning("du_ue={}: Dropping \"InitialULRRCMessageTransfer\". Cause: Invalid C-RNTI", du_ue_id);
+    logger.warning("du_ue={}: Dropping \"InitialULRRCMessageTransfer\". Cause: Invalid C-RNTI",
+                   fmt::underlying(du_ue_id));
     return;
   }
 
   if (msg->sul_access_ind_present) {
-    logger.debug("du_ue={}: Ignoring SUL access indicator", du_ue_id);
+    logger.debug("du_ue={}: Ignoring SUL access indicator", fmt::underlying(du_ue_id));
   }
 
   if (msg->rrc_container_rrc_setup_complete_present) {
     logger.warning("du_ue={}: Ignoring RRC Container RRCSetupComplete. Cause: Network Sharing with multiple cell-ID "
                    "broadcast is not supported",
-                   du_ue_id);
+                   fmt::underlying(du_ue_id));
   }
 
   const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.allocate_gnb_cu_ue_f1ap_id();
   if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.warning("du_ue={}: Dropping \"InitialULRRCMessageTransfer\". Cause: Failed to allocate CU-UE-F1AP-ID",
-                   du_ue_id);
+                   fmt::underlying(du_ue_id));
     return;
   }
 
@@ -242,7 +243,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const asn1::f1ap::init_ul_rrc_m
     // We will forward an empty container to the RRC UE entity, that will trigger an RRC Reject
     logger.debug("du_ue={}: Forwarding \"InitialULRRCMessageTransfer\" to RRC to reject the UE. Cause: Missing DU "
                  "to CU container",
-                 du_ue_id);
+                 fmt::underlying(du_ue_id));
   }
   ue_rrc_context_creation_outcome resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
 
@@ -339,7 +340,7 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
     f1ap_ue_context* ue_ctxt = ue_ctxt_list.find(*cu_ue_id);
     if (ue_ctxt == nullptr) {
       logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
-                     *cu_ue_id,
+                     fmt::underlying(*cu_ue_id),
                      outcome_.value.type().to_string());
       return nullptr;
     }
@@ -380,7 +381,7 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
     f1ap_ue_context* ue_ctxt = ue_ctxt_list.find(*cu_ue_id);
     if (ue_ctxt == nullptr) {
       logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
-                     *cu_ue_id,
+                     fmt::underlying(*cu_ue_id),
                      outcome_.value.type().to_string());
       return nullptr;
     }

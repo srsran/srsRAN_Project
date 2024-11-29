@@ -215,8 +215,7 @@ struct formatter<srsran::rb_allocation> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rb_allocation& rb_alloc, FormatContext& ctx)
-
+  auto format(const srsran::rb_allocation& rb_alloc, FormatContext& ctx) const
   {
     if (rb_alloc.is_contiguous()) {
       return format_to(

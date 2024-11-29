@@ -12,7 +12,9 @@
 
 #include "srsran/ran/du_types.h"
 #include "srsran/support/executors/task_executor.h"
+#include <memory>
 #include <variant>
+#include <vector>
 
 namespace srsran {
 namespace srs_du {

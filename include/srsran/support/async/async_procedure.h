@@ -12,6 +12,7 @@
 
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/coroutine.h"
+#include <functional>
 
 namespace srsran {
 

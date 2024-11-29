@@ -296,7 +296,7 @@ TEST_P(fxt_nia3, integrity_engine_generic_nia3)
 std::string test_param_info_to_string(const ::testing::TestParamInfo<nia_test_set>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}", info.param.name);
+  fmt::format_to(std::back_inserter(buffer), "{}", info.param.name);
   return fmt::to_string(buffer);
 }
 

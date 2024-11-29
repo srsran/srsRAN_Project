@@ -12,7 +12,6 @@
 #include "f1ap_asn1_utils.h"
 #include "srsran/support/format/custom_formattable.h"
 #include "srsran/support/format/fmt_basic_parser.h"
-#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 
@@ -21,7 +20,7 @@ namespace fmt {
 template <>
 struct formatter<asn1::f1ap::f1ap_pdu_c> : public basic_parser {
   template <typename FormatContext>
-  auto format(const asn1::f1ap::f1ap_pdu_c& p, FormatContext& ctx)
+  auto format(const asn1::f1ap::f1ap_pdu_c& p, FormatContext& ctx) const
   {
     asn1::json_writer js;
     p.to_json(js);
@@ -50,13 +49,13 @@ void srsran::log_f1ap_pdu(srslog::basic_logger&         logger,
   const char*                        msg_name       = get_message_type_str(msg.pdu);
 
   // Create PDU formatter that runs in log backend.
-  // Note: msg_name is a string literal and therefore it is ok to pass by pointer.
+  // Note: msg_name is a string literal, and therefore it is ok to pass by pointer.
   auto pdu_description =
       make_formattable([is_rx, du_id, cu_ue_id, du_ue_id, ue_id, transaction_id, msg_name = msg_name](auto& ctx) {
         return fmt::format_to(ctx.out(),
                               "{} PDU du={}{}{}{}{}: {}",
                               is_rx ? "Rx" : "Tx",
-                              du_id,
+                              fmt::underlying(du_id),
                               add_prefix_if_set(" tid=", transaction_id),
                               add_prefix_if_set(" ue=", ue_id),
                               add_prefix_if_set(" cu_ue=", cu_ue_id),

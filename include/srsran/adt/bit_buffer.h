@@ -462,7 +462,7 @@ struct formatter<srsran::bit_buffer> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::bit_buffer& s, FormatContext& ctx)
+  auto format(const srsran::bit_buffer& s, FormatContext& ctx) const
   {
     if (mode == hexadecimal) {
       return s.template to_hex_string<decltype(std::declval<FormatContext>().out())>(ctx.out());

@@ -11,7 +11,8 @@
 #pragma once
 
 #include "srsran/srslog/context.h"
-#include "fmt/format.h"
+#include "fmt/ranges.h"
+#include <memory>
 
 namespace srslog {
 
@@ -35,7 +36,7 @@ struct metric_value_formatter<metric<Ty, Name, Units>> {
   template <typename T>
   void format(const T& v, fmt::memory_buffer& buffer)
   {
-    fmt::format_to(buffer, "{}", v);
+    fmt::format_to(std::back_inserter(buffer), "{}", v);
   }
 };
 
@@ -44,7 +45,7 @@ struct metric_value_formatter<metric<std::vector<Ty>, Name, Units>> {
   template <typename T>
   void format(const T& v, fmt::memory_buffer& buffer)
   {
-    fmt::format_to(buffer, "[{}]", fmt::join(v.cbegin(), v.cend(), ", "));
+    fmt::format_to(std::back_inserter(buffer), "[{}]", fmt::join(v.cbegin(), v.cend(), ", "));
   }
 };
 

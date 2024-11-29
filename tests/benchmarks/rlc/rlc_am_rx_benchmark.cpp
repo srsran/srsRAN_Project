@@ -220,7 +220,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
 void benchmark_rx_pdu(const bench_params& params, rx_order order)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "Benchmark RLC AM RX PDUs ({})", order);
+  fmt::format_to(std::back_inserter(buffer), "Benchmark RLC AM RX PDUs ({})", order);
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   auto tester = std::make_unique<rlc_rx_am_test_frame>();
@@ -318,7 +318,7 @@ struct formatter<rx_order> {
   }
 
   template <typename FormatContext>
-  auto format(rx_order order, FormatContext& ctx)
+  auto format(rx_order order, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"in order", "swapped edges", "reverse order", "even odd"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(order)]);

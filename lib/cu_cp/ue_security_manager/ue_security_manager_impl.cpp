@@ -9,6 +9,7 @@
  */
 
 #include "ue_security_manager_impl.h"
+#include "fmt/ranges.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -55,8 +56,8 @@ bool ue_security_manager::init_security_context(const security::security_context
     return false;
   }
   logger.debug("Selected security algorithms integrity=NIA{} ciphering=NEA{}",
-               sec_context.sel_algos.integ_algo,
-               sec_context.sel_algos.cipher_algo);
+               fmt::underlying(sec_context.sel_algos.integ_algo),
+               fmt::underlying(sec_context.sel_algos.cipher_algo));
 
   // Generate K_rrc_enc and K_rrc_int
   sec_context.generate_as_keys();

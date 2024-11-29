@@ -64,7 +64,7 @@ static bool is_header_valid(const uplane_message_params& params,
 
   if (params.filter_index == filter_index_type::reserved) {
     logger.info("Dropped received Open Fronthaul message as its filter index value is reserved '{}'",
-                params.filter_index);
+                fmt::underlying(params.filter_index));
 
     return false;
   }

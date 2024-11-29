@@ -17,7 +17,6 @@
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/rlc/rlc_config.h"
-#include "srsran/support/format/fmt_optional.h"
 #include <algorithm>
 
 using namespace srsran;
@@ -211,7 +210,7 @@ static bool validate_pdcch_unit_config(const du_high_unit_base_cell_config& base
                  "cell bandwidth={}Mhz\n",
                  cs0_idx,
                  ss0_idx,
-                 base_cell.channel_bw_mhz);
+                 fmt::underlying(base_cell.channel_bw_mhz));
       return false;
     }
     // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has
@@ -834,14 +833,16 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
   // Obtain the minimum bandwidth for the subcarrier and band combination.
   min_channel_bandwidth min_chan_bw = band_helper::get_min_channel_bw(band, config.common_scs);
   if (min_chan_bw == min_channel_bandwidth::invalid) {
-    fmt::print("Invalid combination for band n{} and subcarrier spacing {}.\n", band, to_string(config.common_scs));
+    fmt::print("Invalid combination for band n{} and subcarrier spacing {}.\n",
+               fmt::underlying(band),
+               to_string(config.common_scs));
     return false;
   }
 
   // Check that the configured bandwidth is greater than or equal to the minimum bandwidth
   if (bs_channel_bandwidth_to_MHz(config.channel_bw_mhz) < min_channel_bandwidth_to_MHz(min_chan_bw)) {
     fmt::print("Minimum supported bandwidth for n{} with SCS {} is {}MHz.\n",
-               band,
+               fmt::underlying(band),
                to_string(config.common_scs),
                min_channel_bandwidth_to_MHz(min_chan_bw));
     return false;
@@ -852,7 +853,8 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
     error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(
         *config.band, config.dl_f_ref_arfcn, config.common_scs, config.channel_bw_mhz);
     if (not ret.has_value()) {
-      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
+      fmt::print(
+          "Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, fmt::underlying(band), ret.error());
       return false;
     }
     // Check if also the corresponding UL ARFCN is valid.
@@ -860,7 +862,8 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
     ret                     = band_helper::is_ul_arfcn_valid_given_band(*config.band, ul_arfcn, config.channel_bw_mhz);
     if (not ret.has_value()) {
       // NOTE: The message must say that it's the DL ARFCN that is invalid, as that is the parameters set by the user.
-      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
+      fmt::print(
+          "Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, fmt::underlying(band), ret.error());
       return false;
     }
   } else {
