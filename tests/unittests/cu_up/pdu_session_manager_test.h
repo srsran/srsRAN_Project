@@ -103,23 +103,6 @@ protected:
   void TearDown() override { finish(); }
 };
 
-/// Fixture class for PDU session manager tests with configurable N3 ext addr
-class pdu_session_manager_test_set_n3_ext_addr : public pdu_session_manager_test_base,
-                                                 public ::testing::TestWithParam<const char*>
-{
-protected:
-  // TODO is this still needed?
-  /*
-network_interface_config get_net_config() override
-{
-    cfg.n3_ext_addr              = GetParam();
-    return cfg;
-}
-  */
-  void SetUp() override { init(); }
-  void TearDown() override { finish(); }
-};
-
 inline e1ap_pdu_session_res_to_setup_item
 generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qos_flow_id_t qfi, five_qi_t five_qi)
 {
