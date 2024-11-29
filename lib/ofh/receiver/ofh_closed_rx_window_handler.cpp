@@ -89,7 +89,7 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
 
   if (log_unreceived_messages) {
     logger.warning("Missed incoming User-Plane PRACH messages for slot '{}' and sector#{}",
-                   ctx_value.context.sector,
+                   ctx_value.context.slot,
                    ctx_value.context.sector);
   }
 
