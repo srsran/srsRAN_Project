@@ -95,7 +95,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp_cfg.f1ap.json_log_enabled = true;
 
   // > Mobility config
-  cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = true;
+  cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = params.trigger_ho_from_measurements;
   {
     // > Meas manager config
     cell_meas_manager_cfg meas_mng_cfg;

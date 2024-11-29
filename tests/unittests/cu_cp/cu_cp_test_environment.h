@@ -41,11 +41,13 @@ struct cu_cp_test_env_params {
       const std::vector<std::vector<supported_tracking_area>>& amf_config_          = {{supported_tracking_area{
           7,
           {plmn_item{plmn_identity::test_value(),
-                     std::vector<s_nssai_t>{s_nssai_t{slice_service_type{1}, slice_differentiator{}}}}}}}}) :
+                     std::vector<s_nssai_t>{s_nssai_t{slice_service_type{1}, slice_differentiator{}}}}}}}},
+      bool                                                     trigger_ho_from_measurements_ = true) :
     max_nof_cu_ups(max_nof_cu_ups_),
     max_nof_dus(max_nof_dus_),
     max_nof_ues(max_nof_ues_),
-    max_nof_drbs_per_ue(max_nof_drbs_per_ue_)
+    max_nof_drbs_per_ue(max_nof_drbs_per_ue_),
+    trigger_ho_from_measurements(trigger_ho_from_measurements_)
   {
     uint16_t amf_idx = 0;
     for (const auto& supported_tas : amf_config_) {
@@ -58,6 +60,7 @@ struct cu_cp_test_env_params {
   unsigned                                  max_nof_ues;
   unsigned                                  max_nof_drbs_per_ue;
   std::map<unsigned, cu_cp_test_amf_config> amf_configs;
+  bool                                      trigger_ho_from_measurements;
 };
 
 class cu_cp_test_environment
