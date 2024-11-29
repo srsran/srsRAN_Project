@@ -88,8 +88,6 @@ std::optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t
     for (const auto& nci : ssb_freq_to_ncis.at(ssb_freq)) {
       ue_meas_context.nci_to_meas_obj_id.emplace(nci, meas_obj_to_add.meas_obj_id);
     }
-    // add ncis for meas obj id to helper lookup
-    ue_meas_context.meas_obj_id_to_ncis.emplace(meas_obj_to_add.meas_obj_id, ssb_freq_to_ncis.at(ssb_freq));
 
     if (cell_config.serving_cell_cfg.ssb_arfcn.value() == ssb_freq && cell_config.periodic_report_cfg_id.has_value()) {
       logger.debug("ue={}: Adding periodic report config for nci={:#x}", ue_index, serving_nci);
