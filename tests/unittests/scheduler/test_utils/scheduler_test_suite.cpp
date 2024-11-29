@@ -15,6 +15,7 @@
 #include "lib/scheduler/support/pdsch/pdsch_default_time_allocation.h"
 #include "scheduler_output_test_helpers.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/test_utils.h"
@@ -270,10 +271,56 @@ void srsran::test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<
   }
 }
 
+static ulsch_configuration get_ulsch_config(const ul_sched_info& grant)
+{
+  ulsch_configuration ulsch_cfg{};
+  ulsch_cfg.tbs       = units::bytes{grant.pusch_cfg.tb_size_bytes}.to_bits();
+  ulsch_cfg.mcs_descr = grant.pusch_cfg.mcs_descr;
+
+  if (grant.uci.has_value()) {
+    ulsch_cfg.alpha_scaling = alpha_scaling_to_float(grant.uci.value().alpha);
+    if (grant.uci.value().harq.has_value()) {
+      const auto& harq_info          = grant.uci.value().harq.value();
+      ulsch_cfg.nof_harq_ack_bits    = units::bits{harq_info.harq_ack_nof_bits};
+      ulsch_cfg.beta_offset_harq_ack = harq_info.beta_offset_harq_ack;
+    }
+    if (grant.uci.value().csi.has_value()) {
+      const auto& csi_info            = grant.uci.value().csi.value();
+      ulsch_cfg.nof_csi_part1_bits    = units::bits{csi_info.csi_part1_nof_bits};
+      ulsch_cfg.nof_csi_part2_bits    = units::bits{0U}; // TODO
+      ulsch_cfg.beta_offset_csi_part1 = csi_info.beta_offset_csi_1;
+      ulsch_cfg.beta_offset_csi_part2 = csi_info.beta_offset_csi_2.has_value() ? csi_info.beta_offset_csi_2.value() : 0;
+    }
+  }
+
+  ulsch_cfg.nof_rb                      = grant.pusch_cfg.rbs.type1().length();
+  ulsch_cfg.start_symbol_index          = grant.pusch_cfg.symbols.start();
+  ulsch_cfg.nof_symbols                 = grant.pusch_cfg.symbols.length();
+  ulsch_cfg.dmrs_type                   = grant.pusch_cfg.dmrs.config_type;
+  ulsch_cfg.dmrs_symbol_mask            = grant.pusch_cfg.dmrs.dmrs_symb_pos;
+  ulsch_cfg.nof_cdm_groups_without_data = grant.pusch_cfg.dmrs.num_dmrs_cdm_grps_no_data;
+  ulsch_cfg.nof_layers                  = grant.pusch_cfg.nof_layers;
+  if (grant.pusch_cfg.tx_direct_current_location < 3300) {
+    // Check if DC overlaps with PUSCH in RBs.
+    const unsigned     dc_position_crbs = grant.pusch_cfg.tx_direct_current_location / NRE;
+    const vrb_interval vrbs             = grant.pusch_cfg.rbs.type1();
+    const crb_interval crbs = prb_to_crb(grant.pusch_cfg.bwp_cfg->crbs, prb_interval{vrbs.start(), vrbs.stop()});
+    ulsch_cfg.contains_dc   = crbs.contains(dc_position_crbs);
+  }
+
+  return ulsch_cfg;
+}
+
 void srsran::test_pusch_ue_consistency(const cell_configuration& cell_cfg, span<const ul_sched_info> grants)
 {
   for (const ul_sched_info& grant : grants) {
     ASSERT_GT(grant.pusch_cfg.nof_layers, 0);
+
+    // Check code rate.
+    const ulsch_configuration ulsch_cfg           = get_ulsch_config(grant);
+    const ulsch_information   ulsch_information   = get_ulsch_information(ulsch_cfg);
+    float                     effective_code_rate = ulsch_information.get_effective_code_rate();
+    ASSERT_LE(effective_code_rate, 0.95);
 
     // Check CRBs within BWP.
     const vrb_interval vrbs = grant.pusch_cfg.rbs.type1();
