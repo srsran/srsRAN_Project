@@ -1080,9 +1080,9 @@ public:
   // | LCG7 | LCG6 |    ...   | LCG0 |  Octet 3
   // |         Buffer Size 1         |  Octet 4
 
-  // Construct LBSR MAC subPDU for LCG 1.
+  // Construct LBSR MAC subPDU for LCG 2.
   // NOTE: LBSR buffer size is populated in the constructor.
-  byte_buffer bsr_mac_subpdu = byte_buffer::create({0x3e, 0x02, 0x02}).value();
+  byte_buffer bsr_mac_subpdu = byte_buffer::create({0x3e, 0x02, 0x04}).value();
 
   /// Size of the UL Buffer status report to push for UL Tx.
   unsigned ul_bsr_bytes;
@@ -1185,15 +1185,30 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
   bench.stop();
   srslog::flush();
 
+  const subcarrier_spacing scs = bench.cfg.ran.cells[0].scs_common;
+  double pdschs_per_slot       = bench.sim_phy.metrics.nof_dl_grants / (double)bench.sim_phy.metrics.slot_dl_count;
+  double puschs_per_slot       = bench.sim_phy.metrics.nof_ul_grants / (double)bench.sim_phy.metrics.slot_ul_count;
   fmt::print("\nStats: #slots={}, #PDSCHs={}, #PDSCHs-per-slot={:.3}, dl_bitrate={:.3} Mbps, #PUSCHs={}, "
              "#PUSCHs-per-slot={:.3}, ul_bitrate={:.3} Mbps\n",
              bench.sim_phy.metrics.slot_count,
              bench.sim_phy.metrics.nof_dl_grants,
-             bench.sim_phy.metrics.nof_dl_grants / (double)bench.sim_phy.metrics.slot_dl_count,
-             bench.sim_phy.metrics.dl_mbps(bench.cfg.ran.cells[0].scs_common),
+             pdschs_per_slot,
+             bench.sim_phy.metrics.dl_mbps(scs),
              bench.sim_phy.metrics.nof_ul_grants,
-             bench.sim_phy.metrics.nof_ul_grants / (double)bench.sim_phy.metrics.slot_ul_count,
-             bench.sim_phy.metrics.ul_mbps(bench.cfg.ran.cells[0].scs_common));
+             puschs_per_slot,
+             bench.sim_phy.metrics.ul_mbps(scs));
+
+  // Some sanity checks to avoid regressions.
+  if (dl_buffer_state_bytes > 0) {
+    report_fatal_error_if_not(pdschs_per_slot > 0.5, "The scheduler is not scheduling enough DL grants");
+  } else {
+    report_fatal_error_if_not(pdschs_per_slot < 0.1, "The scheduler is not scheduling enough DL grants");
+  }
+  if (ul_bsr_bytes > 0) {
+    report_fatal_error_if_not(puschs_per_slot > 0.1, "The scheduler is not scheduling enough UL grants");
+  } else {
+    report_fatal_error_if_not(puschs_per_slot < 0.1, "The scheduler is scheduling too many UL grants");
+  }
 }
 
 /// \brief Configure main thread priority and affinity to avoid interference from other processes (including stressors).
@@ -1234,13 +1249,14 @@ int main(int argc, char** argv)
   static const std::size_t byte_buffer_segment_size = 2048;
 
   // Set DU-high logging.
+  auto all_log_level  = srslog::basic_levels::warning;
   auto test_log_level = srslog::basic_levels::warning;
   srslog::fetch_basic_logger("TEST").set_level(test_log_level);
-  srslog::fetch_basic_logger("RLC").set_level(test_log_level);
+  srslog::fetch_basic_logger("RLC").set_level(all_log_level);
   srslog::fetch_basic_logger("MAC", true).set_level(test_log_level);
   srslog::fetch_basic_logger("SCHED", true).set_level(test_log_level);
   srslog::fetch_basic_logger("DU-F1").set_level(test_log_level);
-  srslog::fetch_basic_logger("DU-F1-U").set_level(test_log_level);
+  srslog::fetch_basic_logger("DU-F1-U").set_level(all_log_level);
   srslog::fetch_basic_logger("UE-MNG").set_level(test_log_level);
   srslog::fetch_basic_logger("DU-MNG").set_level(test_log_level);
   srslog::fetch_basic_logger("METRICS").set_level(test_log_level);
