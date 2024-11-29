@@ -474,7 +474,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
         config.pucch_cfg.f1_enable_occ ? format1_symb_to_spreading_factor(pucch_f1_nof_symbols) : 1U;
 
     // We define a block as a set of Resources (either F0/F1 or F2) aligned over the same starting PRB.
-    const unsigned nof_f1_per_block = nof_occ_codes * config.pucch_cfg.nof_cyclic_shift;
+    const unsigned nof_f1_per_block = nof_occ_codes * config.pucch_cfg.f1_nof_cyclic_shifts;
     // Each PUCCH resource F0/F1 occupies 1 RB (per block).
     nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(
         static_cast<float>(config.pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
@@ -489,10 +489,10 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
   constexpr unsigned pucch_f2_nof_symbols = 2U;
   const unsigned     f2_max_rbs =
-      config.pucch_cfg.max_payload_bits.has_value()
-              ? get_pucch_format2_max_nof_prbs(config.pucch_cfg.max_payload_bits.value(),
+      config.pucch_cfg.f2_max_payload_bits.has_value()
+              ? get_pucch_format2_max_nof_prbs(config.pucch_cfg.f2_max_payload_bits.value(),
                                            pucch_f2_nof_symbols,
-                                           to_max_code_rate_float(config.pucch_cfg.max_code_rate))
+                                           to_max_code_rate_float(config.pucch_cfg.f2_max_code_rate))
               : config.pucch_cfg.f2_max_nof_rbs;
 
   const unsigned nof_f2_blocks = max_nof_pucch_symbols / pucch_f2_nof_symbols;

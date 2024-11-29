@@ -32,7 +32,7 @@ static du_high_env_sim_params create_custom_params()
       tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}};
   params.pucch_cfg.emplace();
   params.pucch_cfg->nof_ue_pucch_f0_or_f1_res_harq = 8;
-  params.pucch_cfg->nof_ue_pucch_f2_res_harq       = 8;
+  params.pucch_cfg->nof_ue_pucch_f2_or_f3_res_harq = 8;
   params.pucch_cfg->nof_sr_resources               = 1;
   // Set the PRACH frequency start to avoid PRACH collisions with the PUCCH on the upper RBs of the BWP (this would
   // trigger an error and abort the test).

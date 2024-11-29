@@ -759,10 +759,10 @@ check_outcome srs_du::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(srs_du::pucch_parameters_validator(
       pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * pucch_cfg.nof_cell_harq_pucch_res_sets +
           pucch_cfg.nof_sr_resources,
-      pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() * pucch_cfg.nof_cell_harq_pucch_res_sets +
+      pucch_cfg.nof_ue_pucch_f2_or_f3_res_harq.to_uint() * pucch_cfg.nof_cell_harq_pucch_res_sets +
           pucch_cfg.nof_csi_resources,
       pucch_cfg.f0_or_f1_params,
-      pucch_cfg.f2_params,
+      pucch_cfg.f2_or_f3_params,
       cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
       pucch_cfg.max_nof_symbols));
   HANDLE_ERROR(check_prach_config(cell_cfg));

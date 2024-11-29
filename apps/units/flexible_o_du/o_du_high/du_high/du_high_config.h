@@ -260,6 +260,8 @@ struct du_high_unit_pucch_config {
   /// \c PUCCH-Config parameters.
   /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
   bool use_format_0 = false;
+  /// Select the format for the PUCCH resources belonging to PUCCH resource set 1 {2, 3, 4}.
+  unsigned set1_format = 2;
   /// Number of PUCCH resources per UE (per PUCCH resource set) for HARQ-ACK reporting.
   /// Values {3,...,8} if \c use_format_0 is set. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
@@ -284,6 +286,7 @@ struct du_high_unit_pucch_config {
   /// Set true for PUCCH Format 0 intra-slot frequency hopping.
   bool f0_intraslot_freq_hopping = false;
 
+  /// PUCCH F1 resource parameters.
   /// \defgroup pucch_f1_params
   /// \brief PUCCH F1 resource parameters.
   /// @{
@@ -291,20 +294,45 @@ struct du_high_unit_pucch_config {
   bool f1_enable_occ = false;
   /// \brief Number of different Initial Cyclic Shifts that can be used for PUCCH Format 1.
   /// Values: {1, 2, 3, 4, 6, 12}; 0 corresponds to "no cyclic shift".
-  unsigned nof_cyclic_shift = 2;
+  unsigned f1_nof_cyclic_shifts = 2;
   /// Set true for PUCCH Format 1 intra-slot frequency hopping.
   bool f1_intraslot_freq_hopping = false;
   /// @}
 
+  /// PUCCH F2 resource parameters.
+  /// \defgroup pucch_f2_params
+  /// \brief PUCCH F2 resource parameters.
+  /// @{
   /// Max number of PRBs for PUCCH Format 2. Values {1,...,16}.
   unsigned f2_max_nof_rbs = 1;
   /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {-1,...,11}.
   /// Value -1 to unset. If this is set, \ref f2_max_nof_rbs is ignored.
-  std::optional<unsigned> max_payload_bits;
+  std::optional<unsigned> f2_max_payload_bits;
+  /// Max code rate for PUCCH Format 2.
+  max_pucch_code_rate f2_max_code_rate = max_pucch_code_rate::dot_35;
   /// Set true for PUCCH Format 2 intra-slot frequency hopping. This field is ignored if f2_nof_symbols == 1.
   bool f2_intraslot_freq_hopping = false;
-  /// Max code rate.
-  max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
+  /// @}
+
+  /// PUCCH F3 resource parameters.
+  /// \defgroup pucch_f3_params
+  /// \brief PUCCH F3 resource parameters.
+  /// @{
+  /// Max number of PRBs for PUCCH Format 3. Values {1,...,16}.
+  unsigned f3_max_nof_rbs = 1;
+  /// \brief Maximum payload in bits that can be carried by PUCCH Format 3. Values {-1,...,11}.
+  /// Value -1 to unset. If this is set, \ref f2_max_nof_rbs is ignored.
+  std::optional<unsigned> f3_max_payload_bits;
+  /// Max code rate for PUCCH Format 3.
+  max_pucch_code_rate f3_max_code_rate = max_pucch_code_rate::dot_35;
+  /// Set true for PUCCH Format 3 intra-slot frequency hopping.
+  bool f3_intraslot_freq_hopping = false;
+  /// Set true for PUCCH Format 3 additional DM-RS.
+  bool f3_additional_dmrs = false;
+  /// Set true to use pi/2-BPSK as the modulation for PUCCH Format 3.
+  bool f3_pi2_bpsk = false;
+  /// @}
+
   /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 7}.
   /// [Implementation-defined] As min_k1 is used for both common and dedicated PUCCH configuration, and in the UE
   /// fallback scheduler only allow max k1 = 7, we restrict min_k1 to 7.

@@ -126,7 +126,7 @@ static void fill_format3_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   builder.set_common_parameters(mac_pdu.format, f3.slot_repetition, f3.pi_2_bpsk);
 
   // Scrambling.
-  builder.set_scrambling_parameters(f3.n_id_scambling);
+  builder.set_scrambling_parameters(f3.n_id_scrambling);
 
   // DM-RS.
   builder.set_dmrs_parameters(f3.additional_dmrs, f3.n_id_0_scrambling, f3.m_0_cyclic_shift);

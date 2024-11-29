@@ -116,9 +116,10 @@ protected:
     const du_cell_config& du_cfg                = cell_cfg_list[0];
     const unsigned        nof_sr_f1_res_per_ue  = 1U;
     const unsigned        nof_csi_f2_res_per_ue = 1U;
-    bool pucch_checker = pucch_cfg.pucch_res_list.size() == du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() +
-                                                                du_cfg.pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() +
-                                                                nof_sr_f1_res_per_ue + nof_csi_f2_res_per_ue;
+    bool                  pucch_checker =
+        pucch_cfg.pucch_res_list.size() == du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() +
+                                               du_cfg.pucch_cfg.nof_ue_pucch_f2_or_f3_res_harq.to_uint() +
+                                               nof_sr_f1_res_per_ue + nof_csi_f2_res_per_ue;
 
     // Check whether the SR resource point to the correct one (we give a range where the SR resource is located), each
     // UE can have different values within this range.
@@ -133,7 +134,7 @@ protected:
       pucch_checker =
           pucch_checker and csi_pucch_res.value() >= du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() +
                                                          du_cfg.pucch_cfg.nof_sr_resources +
-                                                         du_cfg.pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
+                                                         du_cfg.pucch_cfg.nof_ue_pucch_f2_or_f3_res_harq.to_uint();
     }
 
     return pucch_checker;
@@ -325,7 +326,7 @@ static du_cell_config make_custom_du_cell_config(const pucch_cfg_builder_params&
   du_cell_config du_cfg                       = config_helpers::make_default_du_cell_config();
   auto&          pucch_params                 = du_cfg.pucch_cfg;
   pucch_params.nof_ue_pucch_f0_or_f1_res_harq = pucch_params_.nof_res_f1_harq;
-  pucch_params.nof_ue_pucch_f2_res_harq       = pucch_params_.nof_res_f2_harq;
+  pucch_params.nof_ue_pucch_f2_or_f3_res_harq = pucch_params_.nof_res_f2_harq;
   pucch_params.nof_sr_resources               = pucch_params_.nof_res_sr;
   pucch_params.nof_csi_resources              = pucch_params_.nof_res_csi;
   pucch_params.nof_cell_harq_pucch_res_sets   = pucch_params_.nof_harq_cfg;
@@ -365,7 +366,7 @@ protected:
     const auto&    pucch_res_set    = pucch_cfg.pucch_res_set[pucch_res_set_id].pucch_res_id_list;
     const unsigned expected_pucch_res_set_size =
         format == pucch_format::FORMAT_1 ? cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint()
-                                         : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
+                                         : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_or_f3_res_harq.to_uint();
     if (expected_pucch_res_set_size != pucch_res_set.size()) {
       return {};
     }
@@ -386,7 +387,7 @@ protected:
   {
     const unsigned expected_nof_pucch_res = format == pucch_format::FORMAT_1
                                                 ? cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint()
-                                                : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
+                                                : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_or_f3_res_harq.to_uint();
 
     if (expected_nof_pucch_res == 0) {
       return interval<unsigned, true>{};
@@ -798,7 +799,7 @@ static du_cell_config make_custom_pucch_srs_du_cell_config(bool pucch_has_more_r
   du_cell_config du_cfg                       = config_helpers::make_default_du_cell_config();
   auto&          pucch_params                 = du_cfg.pucch_cfg;
   pucch_params.nof_ue_pucch_f0_or_f1_res_harq = 6U;
-  pucch_params.nof_ue_pucch_f2_res_harq       = 6U;
+  pucch_params.nof_ue_pucch_f2_or_f3_res_harq = 6U;
   pucch_params.nof_sr_resources               = pucch_has_more_res_than_srs ? 10U : 1U;
   pucch_params.nof_csi_resources              = pucch_has_more_res_than_srs ? 10U : 1U;
   pucch_params.nof_cell_harq_pucch_res_sets   = 1U;

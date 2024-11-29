@@ -853,6 +853,12 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
       ->capture_default_str();
   add_option(app,
+             "--set1_format",
+             pucch_params.set1_format,
+             "Format to use for the resources from resource set 1 {2, 3, 4}. Default: 2")
+      ->capture_default_str()
+      ->check(CLI::Range(2, 4));
+  add_option(app,
              "--nof_ue_res_harq_per_set",
              pucch_params.nof_ue_pucch_res_harq_per_set,
              "Number of PUCCH resources available per UE for HARQ for each PUCCH resource set")
@@ -872,7 +878,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f1_enable_occ", pucch_params.f1_enable_occ, "Enable OCC for PUCCH F1")->capture_default_str();
   add_option(app,
              "--f1_nof_cyclic_shifts",
-             pucch_params.nof_cyclic_shift,
+             pucch_params.f1_nof_cyclic_shifts,
              "Number of possible cyclic shifts available for PUCCH F1 resources")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 3, 4, 6, 12}));
@@ -897,26 +903,27 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
-  add_option(app, "--f2_max_payload", pucch_params.max_payload_bits, "Max number payload bits for PUCCH F2 resources")
+  add_option(
+      app, "--f2_max_payload", pucch_params.f2_max_payload_bits, "Max number payload bits for PUCCH F2 resources")
       ->check(CLI::Range(1, 11));
   add_option_function<std::string>(
       app,
       "--f2_max_code_rate",
       [&pucch_params](const std::string& value) {
         if (value == "dot08") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_08;
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_08;
         } else if (value == "dot15") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_15;
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_15;
         } else if (value == "dot25") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_25;
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_25;
         } else if (value == "dot35") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_35;
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_35;
         } else if (value == "dot45") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_45;
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_45;
         } else if (value == "dot60") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_60;
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_60;
         } else if (value == "dot80") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_80;
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_80;
         }
       },
       "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
@@ -925,6 +932,43 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              "--f2_intraslot_freq_hop",
              pucch_params.f2_intraslot_freq_hopping,
              "Enable intra-slot frequency hopping for PUCCH F2")
+      ->capture_default_str();
+  add_option(app, "--f3_max_nof_rbs", pucch_params.f3_max_nof_rbs, "Max number of RBs for PUCCH F3 resources")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 16));
+  add_option(
+      app, "--f3_max_payload", pucch_params.f3_max_payload_bits, "Max number payload bits for PUCCH F3 resources")
+      ->check(CLI::Range(1, 11));
+  add_option_function<std::string>(
+      app,
+      "--f3_max_code_rate",
+      [&pucch_params](const std::string& value) {
+        if (value == "dot08") {
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_08;
+        } else if (value == "dot15") {
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_15;
+        } else if (value == "dot25") {
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_25;
+        } else if (value == "dot35") {
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_35;
+        } else if (value == "dot45") {
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_45;
+        } else if (value == "dot60") {
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_60;
+        } else if (value == "dot80") {
+          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_80;
+        }
+      },
+      "PUCCH F3 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
+      ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
+  add_option(app,
+             "--f3_intraslot_freq_hop",
+             pucch_params.f3_intraslot_freq_hopping,
+             "Enable intra-slot frequency hopping for PUCCH F3")
+      ->capture_default_str();
+  add_option(app, "--f3_additional_dmrs", pucch_params.f3_additional_dmrs, "Enable additional DM-RS for PUCCH F3")
+      ->capture_default_str();
+  add_option(app, "--f3_pi2_bpsk", pucch_params.f3_pi2_bpsk, "Enable pi/2-BPSK modulation for PUCCH F3")
       ->capture_default_str();
   add_option(app,
              "--min_k1",

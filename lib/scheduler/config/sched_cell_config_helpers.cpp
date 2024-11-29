@@ -23,10 +23,10 @@ srsran::config_helpers::build_pucch_guardbands_list(const srs_du::pucch_builder_
   std::vector<pucch_resource> res_list = srs_du::generate_cell_pucch_res_list(
       user_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_sr_resources,
-      user_params.nof_ue_pucch_f2_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
+      user_params.nof_ue_pucch_f2_or_f3_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_csi_resources,
       user_params.f0_or_f1_params,
-      user_params.f2_params,
+      user_params.f2_or_f3_params,
       bwp_size,
       user_params.max_nof_symbols);
 
@@ -42,20 +42,16 @@ srsran::config_helpers::build_pucch_guardbands_list(const srs_du::pucch_builder_
     srsran_assert(std::holds_alternative<pucch_format_0_cfg>(pucch_res.format_params) or
                       std::holds_alternative<pucch_format_1_cfg>(pucch_res.format_params) or
                       std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params),
-                  "Only PUCCH format 0, 1 and 2 are currently supported");
+                  "Only PUCCH format 0, 1 and 2 and 3 are currently supported");
 
     unsigned starting_sym = 0;
     unsigned nof_symbols  = 0;
-    if (std::holds_alternative<pucch_format_0_cfg>(pucch_res.format_params)) {
-      starting_sym = std::get<pucch_format_0_cfg>(pucch_res.format_params).starting_sym_idx;
-      nof_symbols  = std::get<pucch_format_0_cfg>(pucch_res.format_params).nof_symbols;
-    } else if (std::holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)) {
-      starting_sym = std::get<pucch_format_1_cfg>(pucch_res.format_params).starting_sym_idx;
-      nof_symbols  = std::get<pucch_format_1_cfg>(pucch_res.format_params).nof_symbols;
-    } else {
-      starting_sym = std::get<pucch_format_2_3_cfg>(pucch_res.format_params).starting_sym_idx;
-      nof_symbols  = std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_symbols;
-    }
+    std::visit(
+        [&starting_sym, &nof_symbols](const auto& format_params) {
+          starting_sym = format_params.starting_sym_idx;
+          nof_symbols  = format_params.nof_symbols;
+        },
+        pucch_res.format_params);
 
     // For PUCCH format 1, the resource has 1 PRB only.
     const unsigned nof_prbs = std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)

@@ -68,10 +68,10 @@ srsran::config_helpers::find_largest_prb_interval_without_pucch(const srs_du::pu
   const std::vector<pucch_resource>& res_list = srs_du::generate_cell_pucch_res_list(
       user_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_sr_resources,
-      user_params.nof_ue_pucch_f2_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
+      user_params.nof_ue_pucch_f2_or_f3_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_csi_resources,
       user_params.f0_or_f1_params,
-      user_params.f2_params,
+      user_params.f2_or_f3_params,
       bwp_size,
       user_params.max_nof_symbols);
   srsran_assert(not res_list.empty(), "The PUCCH resource list cannot be empty");
