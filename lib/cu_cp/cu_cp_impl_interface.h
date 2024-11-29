@@ -274,7 +274,8 @@ public:
   virtual ~cu_cp_positioning_measurement_handler() = default;
 
   /// \brief Handle a valid UE measurement report.
-  virtual void handle_valid_ue_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_result) = 0;
+  virtual void handle_valid_ue_measurement(const ue_index_t                         ue_index,
+                                           const cell_measurement_positioning_info& meas_result) = 0;
 };
 
 /// Interface to request handover.

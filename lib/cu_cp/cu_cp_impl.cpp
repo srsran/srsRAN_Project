@@ -645,8 +645,8 @@ bool cu_cp_impl::handle_cell_config_update_request(nr_cell_identity nci, const s
   return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
 }
 
-SRSRAN_WEAK_SYMB void cu_cp_impl::handle_valid_ue_measurement(const ue_index_t        ue_index,
-                                                              const rrc_meas_results& meas_results)
+SRSRAN_WEAK_SYMB void cu_cp_impl::handle_valid_ue_measurement(const ue_index_t                         ue_index,
+                                                              const cell_measurement_positioning_info& meas_result)
 {
   logger.info("NRPPa messages are not supported");
 }

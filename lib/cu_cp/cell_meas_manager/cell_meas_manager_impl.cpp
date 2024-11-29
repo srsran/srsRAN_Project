@@ -206,7 +206,7 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
   auto& meas_ctxt = ue_meas_context.meas_id_to_meas_context.at(meas_results.meas_id);
 
   // Forward measurement to CU-CP.
-  cu_cp_notifier.on_valid_ue_measurement(ue_index, meas_results);
+  send_positioning_measurement(ue_index, meas_results);
 
   // Ignore id with periodic measurements.
 
@@ -290,6 +290,7 @@ void cell_meas_manager::update_measurement_object(nr_cell_identity              
   } else {
     ssb_freq_to_ncis.emplace(ssb_freq, std::vector<nr_cell_identity>{nci});
   }
+  nci_to_serving_cell_meas_config.emplace(serving_cell_cfg.nci, serving_cell_cfg);
 
   if (ssb_freq_to_meas_object.find(ssb_freq) != ssb_freq_to_meas_object.end()) {
     // If the measurement object is already present, we ignore the duplicate.
@@ -297,4 +298,10 @@ void cell_meas_manager::update_measurement_object(nr_cell_identity              
     return;
   }
   ssb_freq_to_meas_object.emplace(ssb_freq, generate_measurement_object(serving_cell_cfg));
+}
+
+SRSRAN_WEAK_SYMB void cell_meas_manager::send_positioning_measurement(ue_index_t              ue_index,
+                                                                      const rrc_meas_results& meas_results)
+{
+  logger.info("Positioning measurements are not supported");
 }

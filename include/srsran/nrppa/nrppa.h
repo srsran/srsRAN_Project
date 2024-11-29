@@ -57,6 +57,17 @@ public:
   virtual void handle_new_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
 };
 
+struct cell_measurement_positioning_info {
+  struct cell_measurement_item_t {
+    nr_cell_global_id_t nr_cgi;
+    uint32_t            nr_arfcn;
+    rrc_meas_result_nr  meas_result;
+  };
+
+  nr_cell_global_id_t                                 serving_cell_id;
+  std::map<nr_cell_identity, cell_measurement_item_t> cell_measurements;
+};
+
 /// This interface is used to push UE measurements to the NRPPA interface.
 class nrppa_measurement_handler
 {
@@ -64,7 +75,7 @@ public:
   virtual ~nrppa_measurement_handler() = default;
 
   /// Handle the incoming UE measurement.
-  virtual void handle_ue_measurement(ue_index_t ue_index, const rrc_meas_results& meas_result) = 0;
+  virtual void handle_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) = 0;
 };
 
 /// Combined entry point for the NRPPA object.

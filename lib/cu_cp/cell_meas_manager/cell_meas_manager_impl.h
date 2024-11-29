@@ -40,7 +40,7 @@ public:
   virtual ~cell_meas_manager_cu_cp_notifier() = default;
 
   /// \brief Notifies about a valid UE measurement.
-  virtual void on_valid_ue_measurement(ue_index_t ue_index, const rrc_meas_results& meas_result) = 0;
+  virtual void on_valid_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) = 0;
 };
 
 /// Basic cell manager implementation
@@ -66,6 +66,8 @@ private:
 
   void update_measurement_object(nr_cell_identity nci, const serving_cell_meas_config& serving_cell_cfg);
 
+  void send_positioning_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
+
   cell_meas_manager_cfg                cfg;
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;
   cell_meas_manager_cu_cp_notifier&    cu_cp_notifier;
@@ -74,6 +76,7 @@ private:
   std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>
       ssb_freq_to_meas_object; // unique measurement objects, indexed by SSB frequency.
   std::unordered_map<ssb_frequency_t, std::vector<nr_cell_identity>> ssb_freq_to_ncis;
+  std::map<nr_cell_identity, serving_cell_meas_config>               nci_to_serving_cell_meas_config;
 
   srslog::basic_logger& logger;
 };
