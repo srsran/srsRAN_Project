@@ -45,10 +45,10 @@ public:
 
   void connect_cu_cp(cu_cp_positioning_measurement_handler& handler_) { handler = &handler_; }
 
-  void on_valid_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) override
+  void on_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) override
   {
     srsran_assert(handler != nullptr, "Positioning measurement handler must not be nullptr");
-    handler->handle_valid_ue_measurement(ue_index, meas_result);
+    handler->handle_ue_measurement(ue_index, meas_result);
   }
 
 private:

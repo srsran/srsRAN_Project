@@ -39,8 +39,8 @@ class cell_meas_manager_cu_cp_notifier
 public:
   virtual ~cell_meas_manager_cu_cp_notifier() = default;
 
-  /// \brief Notifies about a valid UE measurement.
-  virtual void on_valid_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) = 0;
+  /// \brief Notifies about a UE measurement.
+  virtual void on_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) = 0;
 };
 
 /// Basic cell manager implementation

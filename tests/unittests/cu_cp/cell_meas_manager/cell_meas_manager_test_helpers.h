@@ -32,9 +32,9 @@ public:
 class dummy_cell_meas_manager_cu_cp_adapter : public cell_meas_manager_cu_cp_notifier
 {
 public:
-  void on_valid_ue_measurement(const ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) override
+  void on_ue_measurement(const ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) override
   {
-    fmt::print("on_valid_ue_measurement() called.\n");
+    fmt::print("on_ue_measurement() called.\n");
   }
 };
 
