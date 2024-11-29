@@ -10,12 +10,24 @@
 
 #include "scheduler_test_message_validators.h"
 #include "srsran/ran/pusch/ulsch_info.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
-#define TRUE_OR_RETURN(cond)                                                                                           \
-  if (not(cond))                                                                                                       \
-    return false;
+template <typename... Args>
+void print_if_present(Args... args)
+{
+  if constexpr (sizeof...(args) > 0) {
+    srslog::fetch_basic_logger("TEST").warning(args...);
+    srslog::flush();
+  }
+}
+
+#define TRUE_OR_RETURN(cond, ...)                                                                                      \
+  if (not(cond)) {                                                                                                     \
+    print_if_present(__VA_ARGS__);                                                                                     \
+    return false;                                                                                                      \
+  }
 
 bool test_helper::is_valid_dl_msg_alloc(const dl_msg_alloc& grant)
 {
@@ -84,14 +96,18 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
   const ulsch_configuration ulsch_cfg           = get_ulsch_config(grant);
   const ulsch_information   ulsch_information   = get_ulsch_information(ulsch_cfg);
   float                     effective_code_rate = ulsch_information.get_effective_code_rate();
-  TRUE_OR_RETURN(effective_code_rate <= max_code_rate);
+  TRUE_OR_RETURN(effective_code_rate <= max_code_rate,
+                 "rnti={}: Invalid PUSCH code rate ({}>{})",
+                 grant.pusch_cfg.rnti,
+                 effective_code_rate,
+                 max_code_rate);
 
   // Check CRBs within BWP.
   if (grant.pusch_cfg.rbs.is_type1()) {
     const vrb_interval vrbs = grant.pusch_cfg.rbs.type1();
     TRUE_OR_RETURN(vrbs.length() > 0);
     const crb_interval crbs = prb_to_crb(grant.pusch_cfg.bwp_cfg->crbs, prb_interval{vrbs.start(), vrbs.stop()});
-    TRUE_OR_RETURN(grant.pusch_cfg.bwp_cfg->crbs.contains(crbs));
+    TRUE_OR_RETURN(grant.pusch_cfg.bwp_cfg->crbs.contains(crbs), "PUSCH outside of BWP boundaries");
   }
 
   return true;
