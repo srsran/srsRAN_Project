@@ -58,14 +58,15 @@ static ulsch_configuration get_ulsch_config(const ul_sched_info& grant)
     if (grant.uci.value().harq.has_value()) {
       const auto& harq_info          = grant.uci.value().harq.value();
       ulsch_cfg.nof_harq_ack_bits    = units::bits{harq_info.harq_ack_nof_bits};
-      ulsch_cfg.beta_offset_harq_ack = harq_info.beta_offset_harq_ack;
+      ulsch_cfg.beta_offset_harq_ack = beta_harq_ack_to_float(harq_info.beta_offset_harq_ack);
     }
     if (grant.uci.value().csi.has_value()) {
       const auto& csi_info            = grant.uci.value().csi.value();
       ulsch_cfg.nof_csi_part1_bits    = units::bits{csi_info.csi_part1_nof_bits};
       ulsch_cfg.nof_csi_part2_bits    = units::bits{0U}; // TODO
-      ulsch_cfg.beta_offset_csi_part1 = csi_info.beta_offset_csi_1;
-      ulsch_cfg.beta_offset_csi_part2 = csi_info.beta_offset_csi_2.has_value() ? csi_info.beta_offset_csi_2.value() : 0;
+      ulsch_cfg.beta_offset_csi_part1 = beta_csi_to_float(csi_info.beta_offset_csi_1);
+      ulsch_cfg.beta_offset_csi_part2 =
+          csi_info.beta_offset_csi_2.has_value() ? beta_csi_to_float(csi_info.beta_offset_csi_2.value()) : 0;
     }
   }
 
