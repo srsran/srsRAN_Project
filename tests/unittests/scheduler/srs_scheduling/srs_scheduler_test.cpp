@@ -21,6 +21,7 @@
  */
 
 #include "lib/scheduler/srs/srs_scheduler_impl.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
@@ -63,7 +64,7 @@ static unsigned compute_c_srs(unsigned nof_ul_crbs)
 
 static sched_cell_configuration_request_message make_custom_sched_cell_configuration_request(bool is_tdd = false)
 {
-  sched_cell_configuration_request_message req = test_helpers::make_default_sched_cell_configuration_request(
+  sched_cell_configuration_request_message req = sched_config_helper::make_default_sched_cell_configuration_request(
       cell_config_builder_params{.scs_common     = is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15,
                                  .channel_bw_mhz = bs_channel_bandwidth::MHz20,
                                  .dl_f_ref_arfcn = is_tdd ? 520000U : 365000U});
@@ -81,7 +82,7 @@ create_sched_ue_creation_request_for_srs_cfg(srs_periodicity                    
                                              unsigned                                     nof_ul_crbs,
                                              const std::optional<tdd_ul_dl_config_common> tdd_cfg)
 {
-  sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request();
+  sched_ue_creation_request_message ue_req = sched_config_helper::create_default_sched_ue_creation_request();
   auto& ue_srs_cfg = ue_req.cfg.cells.value().front().serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value();
 
   // Set SRS resource set periodic.

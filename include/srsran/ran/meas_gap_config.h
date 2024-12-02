@@ -41,10 +41,16 @@ struct meas_gap_config {
   meas_gap_length mgl;
   /// Measurement Gap Repetition Period (MGRP).
   meas_gap_repetition_period mgrp;
+
+  bool operator==(const meas_gap_config& other) const
+  {
+    return offset == other.offset && mgl == other.mgl && mgrp == other.mgrp;
+  }
+  bool operator!=(const meas_gap_config& other) const { return !(*this == other); }
 };
 
 /// Convert measurement gap length into a float in milliseconds.
-inline unsigned meas_gap_length_to_msec(meas_gap_length len)
+inline float meas_gap_length_to_msec(meas_gap_length len)
 {
   constexpr static std::array<float, 6> vals{1.5, 3, 3.5, 4, 5.5, 6};
   return vals[static_cast<unsigned>(len)];
@@ -54,7 +60,7 @@ inline unsigned meas_gap_length_to_msec(meas_gap_length len)
 inline bool is_inside_meas_gap(const meas_gap_config& gap, slot_point sl)
 {
   unsigned period_slots = static_cast<uint8_t>(gap.mgrp) * sl.nof_slots_per_subframe();
-  unsigned length_slots = meas_gap_length_to_msec(gap.mgl) * sl.nof_slots_per_subframe();
+  unsigned length_slots = std::ceil(meas_gap_length_to_msec(gap.mgl) * sl.nof_slots_per_subframe());
   unsigned slot_mod     = sl.to_uint() % period_slots;
   return slot_mod <= length_slots;
 }

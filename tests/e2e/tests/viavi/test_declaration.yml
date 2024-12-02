@@ -33,6 +33,8 @@
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
 gnb_extra_commands: &gnb_extra_commands "log --metrics_level=info metrics --rlc_report_period=1000"
+gnb_extra_commands_no_warn: &gnb_extra_commands_no_warn "log --all_level=error metrics --stdout_metrics_period=5000 --rlc_report_period=5000"
+
 test_timeout: &test_timeout 2400
 
 tests:
@@ -77,6 +79,8 @@ tests:
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
+    warning_allowlist:
+      - is not associated with any existing UE
 
   - campaign_filename: *campaign_filename
     test_name: "1UE fading noise UDP uplink"
@@ -91,6 +95,8 @@ tests:
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
+    warning_allowlist:
+      - is not associated with any existing UE
 
   - campaign_filename: *campaign_filename
     test_name: "1UE ideal TCP downlink"
@@ -133,12 +139,30 @@ tests:
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
+    warning_allowlist:
+      - is not associated with any existing UE
 
   - campaign_filename: *campaign_filename
     test_name: "32UE fading UDP attach-detach with traffic"
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE fading UDP attach-detach with traffic"
+    max_pdschs_per_slot: 1
+    max_puschs_per_slot: 4
+    enable_qos_viavi: false
+    # test/fail criteria
+    expected_dl_bitrate: 14.0e+3
+    expected_ul_bitrate: 1.0e+3
+    expected_nof_kos: .inf
+    warning_as_errors: false
+    warning_allowlist:
+      - is not associated with any existing UE
+
+  - campaign_filename: *campaign_filename
+    test_name: "32UE ideal UDP attach-detach with traffic 24h"
+    test_timeout: 93600
+    gnb_extra_commands: *gnb_extra_commands_no_warn
+    id: "32UE ideal UDP attach-detach with traffic 24h extended"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 4
     enable_qos_viavi: false

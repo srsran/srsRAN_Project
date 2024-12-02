@@ -33,6 +33,7 @@
 #include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/srslog/logger.h"
+#include "srsran/support/math/accumulators.h"
 
 namespace srsran {
 
@@ -45,10 +46,13 @@ public:
 
   const std::optional<csi_report_data>& get_latest_csi_report() const { return latest_csi_report; }
 
-  void update_pusch_snr(float snr_db) { pusch_snr_db = snr_db; }
+  void update_pusch_snr(float snr_db);
 
   /// \brief Get PUSCH SNR in dB.
   float get_pusch_snr() const { return pusch_snr_db; }
+
+  /// \brief Get average PUSCH SNR in dB.
+  float get_pusch_average_sinr() const { return average_pusch_sinr_dB.get_average_value(); }
 
   csi_report_wideband_cqi_type get_wideband_cqi() const { return wideband_cqi; }
 
@@ -82,24 +86,11 @@ public:
   /// Update UE with the latest Sounding Reference Signal (SRS) channel matrix.
   void update_srs_channel_matrix(const srs_channel_matrix& channel_matrix, tx_scheme_codebook codebook_cfg);
 
-  /// Update UE with the latest PHR for a given cell.
-  void handle_phr(const cell_ph_report& phr);
-
-  /// Save the number of PUSCH PRBs allocated for a given slot.
-  void save_pusch_nof_prbs(slot_point slot, unsigned nof_prbs);
-
-  /// Adapt the number of PUSCH PRBs to the PHR.
-  unsigned adapt_pusch_prbs_to_phr(unsigned nof_prbs) const;
-
 private:
   /// \brief Number of indexes -> nof_layers for precoding (Options: 1, 2, 3, 4 layers).
   static constexpr size_t NOF_LAYER_CHOICES = 4;
-
-  /// This variable defines how many PUSCH PRB allocations needs to be stored in the internal ring-buffer; it is the
-  /// maximum expected delay (in slots) between the for which slot the PUSCH is scheduled and the slot at which the PHR
-  /// is received; this delay depends on the PHY processing capabilities. For simplicity, we take round the number to a
-  /// multiple of 10.
-  static constexpr size_t MAX_PHR_IND_DELAY_SLOTS = 40;
+  /// Defines the alpha value for the exponential moving average of the PUSCH SINR.
+  static constexpr float alpha_ema_sinr = 0.5f;
 
   /// Mapping of number of layers to array index.
   static size_t nof_layers_to_index(unsigned nof_layers) { return nof_layers - 1U; }
@@ -109,6 +100,9 @@ private:
 
   /// Estimated PUSCH SNR, in dB.
   float pusch_snr_db;
+
+  /// Time-averaged PUSCH SINR, in dB.
+  exp_average_fast_start<float> average_pusch_sinr_dB;
 
   /// \brief Recommended CQI to be used to derive the DL MCS.
   csi_report_wideband_cqi_type wideband_cqi;
@@ -122,15 +116,6 @@ private:
   /// Latest CSI report received from the UE.
   std::optional<csi_report_data> latest_csi_report;
 
-  /// \brief Latest PHR received from the UE.
-  struct ue_phr_report {
-    cell_ph_report       phr;
-    std::optional<float> ph_times_rbs;
-  };
-
-  /// Latest PHR received from the UE.
-  std::optional<ue_phr_report> latest_phr;
-
   /// \brief Latest PUSCH Transmit Precoding Matrix Indication (TPMI) information.
   ///
   /// The TPMI selection information is calculated assuming a noise variance equal to the square of channel coefficients
@@ -138,17 +123,6 @@ private:
   ///
   /// Set to \c std::nullopt if no SRS channel coefficients have been reported.
   std::optional<pusch_tpmi_select_info> last_pusch_tpmi_select_info;
-
-  /// \brief Entry for PUSCH number of PRBs allocation.
-  struct pusch_prbs_entry {
-    slot_point slot_rx;
-    unsigned   nof_prbs;
-  };
-
-  /// \brief Ring of PUSCH number of PRBs allocation indexed by slot.
-  circular_array<pusch_prbs_entry, get_allocator_ring_size_gt_min(MAX_PHR_IND_DELAY_SLOTS)> pusch_nof_prbs_grid;
-
-  srslog::basic_logger& logger;
 };
 
 } // namespace srsran

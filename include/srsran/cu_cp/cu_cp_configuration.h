@@ -137,12 +137,6 @@ struct cu_cp_configuration {
   metrics_params metrics;
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
-  /// E2AP configuration.
-  e2ap_configuration e2ap_config;
-  /// E2 connection client.
-  e2_connection_client* e2_client = nullptr;
-  /// E2 CU metrics interface.
-  e2_cu_metrics_interface* e2_cu_metric_iface = nullptr;
   /// PDCP metrics notifier.
   pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
 };

@@ -45,8 +45,8 @@ public:
     // cancel pending tasks.
     *cancelled = true;
 
-    // extend life-time of cancelled flag by moving it into an executor.
-    while (not exec->defer([flag_moved = std::move(cancelled)]() mutable {
+    // extend life-time of cancelled flag by copying it (ref count) into an executor.
+    while (not exec->defer([flag_moved = cancelled]() mutable {
       // flag is finally destroyed.
       flag_moved.reset();
     })) {
@@ -77,7 +77,7 @@ public:
 
 private:
   task_executor*        exec;
-  std::unique_ptr<bool> cancelled = std::make_unique<bool>(false);
+  std::shared_ptr<bool> cancelled = std::make_shared<bool>(false);
 };
 
 /// Implementation of the UE executor mapper.

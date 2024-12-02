@@ -21,10 +21,12 @@
  */
 
 #include "f1ap_du_impl.h"
+#include "../f1ap_asn1_utils.h"
 #include "asn1_helpers.h"
 #include "f1ap_du_connection_handler.h"
 #include "log_helpers.h"
 #include "procedures/f1ap_du_removal_procedure.h"
+#include "procedures/f1ap_du_reset_procedure.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/f1ap_du_ue_context_setup_procedure.h"
@@ -33,9 +35,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/f1ap_message.h"
-#include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/support/async/event_signal.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;
@@ -152,7 +152,12 @@ void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
   ues.remove_ue(ue_index);
 }
 
-void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
+void f1ap_du_impl::handle_reset(const reset_s& msg)
+{
+  du_mng.schedule_async_task(launch_async<reset_procedure>(msg, du_mng, ues, *tx_pdu_notifier));
+}
+
+void f1ap_du_impl::handle_gnb_cu_configuration_update(const gnb_cu_cfg_upd_s& msg)
 {
   du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, *tx_pdu_notifier));
 }
@@ -378,7 +383,10 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
-    case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cfg_upd:
+    case f1ap_elem_procs_o::init_msg_c::types_opts::reset:
+      handle_reset(msg.value.reset());
+      break;
+    case f1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cfg_upd:
       handle_gnb_cu_configuration_update(msg.value.gnb_cu_cfg_upd());
       break;
     case f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer:
@@ -390,7 +398,7 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
       handle_ue_context_modification_request(msg.value.ue_context_mod_request());
       break;
-    case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
+    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
     case f1ap_elem_procs_o::init_msg_c::types_opts::paging:

@@ -122,6 +122,7 @@ private:
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
   execution_config_helper::worker_pool create_low_prio_workers(unsigned                  nof_low_prio_threads,
+                                                               unsigned int              low_prio_task_queue_size,
                                                                os_sched_affinity_bitmask low_prio_mask);
   void                                 create_low_prio_executors(const worker_manager_config& config);
   void                                 associate_low_prio_executors(const worker_manager_config& config);

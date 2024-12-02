@@ -93,11 +93,17 @@ smoke zmq:
       allow_failure: false
   interruptible: true
   variables:
-    TESTBED: zmq
-    MARKERS: "smoke"
-    PYTEST_ARGS: "-x"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
-    E2E_LOG_LEVEL: "info"
+    TESTBED: "" # Check before_script
+    MARKERS: smoke
+    PYTEST_ARGS: -x ${EXTRA_SMOKE_ZMQ}
+    RETINA_PARAM_ARGS: gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True
+    E2E_LOG_LEVEL: info
+  before_script:
+    - |
+      export TESTBED=zmq
+      if [ -n "${EXTRA_SMOKE_ZMQ}" ]; then
+        export TESTBED=zmq_smoke
+      fi
   timeout: 1 hour
   needs:
     - job: "smoke relwithdeb cached"
@@ -210,7 +216,11 @@ amari 8UE:
   parallel:
     matrix:
       - KEYWORDS:
-          ["reestablishment and sequentially", "handover and sequentially", "attach_detach"]
+          [
+            "reestablishment and sequentially",
+            "handover and sequentially",
+            "attach_detach",
+          ]
 
 amari 8UE beta:
   extends: amari 8UE
@@ -470,7 +480,7 @@ viavi:
       - KEYWORDS:
           [
             "ideal and 1UE",
-            "ideal and 32UE and not experimental and not tdd",
+            "ideal and 32UE and not experimental and not tdd and not extended",
             "tdd",
             "fading and 1UE",
             "fading and 32UE",
@@ -483,7 +493,18 @@ viavi-extended:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
-    KEYWORDS: "extended"
+    KEYWORDS: "extended and not 24h"
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
+
+viavi-extended-24h:
+  extends: .viavi
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    KEYWORDS: "extended and 24h"
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
@@ -508,6 +529,8 @@ retina setup:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: always
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: always
   interruptible: false
   image:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
@@ -519,3 +542,28 @@ retina setup:
       retina-garbage-collector --mode demolition
   needs:
     - *retina-needs
+
+retina runners:
+  stage: ci
+  allow_failure: true
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      variables:
+        CI_DESCRIPTION: "Lab Runner Manager"
+        DISABLE_MODE: "nightly"
+        ON_SCHEDULE: "true"
+        NOTIFY_SLACK: "false"
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      variables:
+        CI_DESCRIPTION: "Lab Runner Manager"
+        DISABLE_MODE: "weekly"
+        ON_SCHEDULE: "true"
+        NOTIFY_SLACK: "false"
+  inherit:
+    variables: false
+  trigger:
+    project: softwareradiosystems/ci/infrastructure
+    branch: main
+  needs:
+    - job: "retina setup"
+      artifacts: false

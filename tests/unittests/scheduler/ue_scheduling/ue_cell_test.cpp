@@ -23,6 +23,7 @@
 #include "lib/scheduler/ue_context/ue_cell.h"
 #include "lib/scheduler/ue_context/ue_drx_controller.h"
 #include "lib/scheduler/ue_context/ul_logical_channel_manager.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include <gtest/gtest.h>
 
@@ -33,7 +34,7 @@ class ue_cell_tester : public ::testing::Test
 {
 protected:
   ue_cell_tester() :
-    sched_cfg(test_helpers::make_default_sched_cell_configuration_request()),
+    sched_cfg(sched_config_helper::make_default_sched_cell_configuration_request()),
     expert_cfg(config_helpers::make_default_scheduler_expert_config()),
     cell_cfg(expert_cfg, sched_cfg),
     serv_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),

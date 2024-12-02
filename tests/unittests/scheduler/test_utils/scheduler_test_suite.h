@@ -72,6 +72,14 @@ void test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span<const s
 /// - Consistent content in DCI of RARs (e.g. has to be f1_0, PRBs fall within CORESET#0 RB limits).
 void test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<const rar_information> rars);
 
+/// \brief Verify UE PDSCH content is valid. Current checks:
+/// - PRBs fall within BWP boundaries.
+void test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<const dl_msg_alloc> ue_grants);
+
+/// \brief Verify UE PUSCH content is valid. Current checks:
+/// - PRBs fall within BWP boundaries.
+void test_pusch_ue_consistency(const cell_configuration& cell_cfg, span<const ul_sched_info> ue_grants);
+
 /// \brief Current checks:
 /// - PRACH occasions parameters match RACH-ConfigCommon present in cell_cfg.
 /// \param cell_cfg Cell configuration.

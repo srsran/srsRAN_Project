@@ -73,6 +73,8 @@ struct du_ue_resource_config {
   slotted_id_vector<drb_id_t, du_ue_drb_config> drbs;
   /// CellGroupConfiguration of the RAN resources allocated to a UE.
   cell_group_config cell_group;
+  /// measGapConfig chosen for the UE.
+  std::optional<meas_gap_config> meas_gap;
 };
 
 } // namespace srs_du

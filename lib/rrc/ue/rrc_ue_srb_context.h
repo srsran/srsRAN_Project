@@ -24,6 +24,7 @@
 
 #include "adapters/pdcp_adapters.h"
 #include "srsran/pdcp/pdcp_factory.h"
+#include "srsran/support/executors/inline_task_executor.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -52,12 +53,17 @@ struct pdcp_rx_result {
 
 /// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
 struct srb_pdcp_context {
+  inline_task_executor           inline_executor; // TODO: refactor F1AP msg handling to support async PDCP execution
   std::unique_ptr<pdcp_entity>   entity;
   pdcp_rrc_ue_tx_adapter         pdcp_tx_notifier;
   pdcp_tx_control_rrc_ue_adapter rrc_tx_control_notifier;
   pdcp_rrc_ue_rx_adapter         rrc_rx_data_notifier;
 
-  srb_pdcp_context(const ue_index_t ue_index, const srb_id_t srb_id, timer_factory timers, task_executor& executor)
+  srb_pdcp_context(const ue_index_t ue_index,
+                   const srb_id_t   srb_id,
+                   timer_factory    timers,
+                   task_executor&   executor,
+                   uint32_t         max_nof_crypto_workers)
   {
     // prepare PDCP creation message
     pdcp_entity_creation_message srb_pdcp{};
@@ -73,9 +79,10 @@ struct srb_pdcp_context {
     srb_pdcp.ue_ul_timer_factory   = timers;
     srb_pdcp.ue_ctrl_timer_factory = timers;
     // Uplink, Downlink, Control and Crypto run in the same executor
-    srb_pdcp.ue_dl_executor  = &executor;
-    srb_pdcp.ue_ul_executor  = &executor;
-    srb_pdcp.crypto_executor = &executor;
+    srb_pdcp.ue_dl_executor         = &executor;
+    srb_pdcp.ue_ul_executor         = &inline_executor; // synchronous inline execution required to unpack RRC msgs
+    srb_pdcp.crypto_executor        = &inline_executor; // synchronous inline execution required to unpack RRC msgs
+    srb_pdcp.max_nof_crypto_workers = max_nof_crypto_workers;
 
     // create PDCP entity
     entity = create_pdcp_entity(srb_pdcp);
@@ -86,8 +93,12 @@ struct srb_pdcp_context {
 class ue_srb_context
 {
 public:
-  ue_srb_context(const ue_index_t ue_index, const srb_id_t srb_id, timer_factory timers, task_executor& executor) :
-    pdcp_context(ue_index, srb_id, timers, executor)
+  ue_srb_context(const ue_index_t ue_index,
+                 const srb_id_t   srb_id,
+                 timer_factory    timers,
+                 task_executor&   executor,
+                 uint32_t         max_nof_crypto_workers) :
+    pdcp_context(ue_index, srb_id, timers, executor, max_nof_crypto_workers)
   {
   }
 

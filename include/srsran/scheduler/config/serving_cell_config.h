@@ -268,8 +268,6 @@ struct cell_config_dedicated {
   serv_cell_index_t serv_cell_idx;
   /// Serving Cell Configuration as per TS 38.331.
   serving_cell_config serv_cell_cfg;
-  /// Measurement Gap Configuration for the cell.
-  std::optional<meas_gap_config> meas_gap_cfg;
 };
 
 } // namespace srsran

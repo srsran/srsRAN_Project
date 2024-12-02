@@ -115,17 +115,12 @@ protected:
     upf_addr_str = "127.0.0.1";
   }
 
-  cu_up_configuration get_default_cu_up_config()
+  cu_up_config get_default_cu_up_config()
   {
     // create config
-    cu_up_configuration cfg;
-    cfg.exec_mapper                  = exec_pool.get();
-    cfg.e1ap.e1_conn_client          = &e1ap_client;
-    cfg.f1u_gateway                  = f1u_gw.get();
-    cfg.ngu_gw                       = ngu_gw.get();
-    cfg.timers                       = app_timers.get();
+    cu_up_config cfg;
+
     cfg.qos[uint_to_five_qi(9)]      = {};
-    cfg.gtpu_pcap                    = &dummy_pcap;
     cfg.net_cfg.n3_bind_port         = 0; // Random free port selected by the OS.
     cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);
     cfg.n3_cfg.warn_on_drop          = false;
@@ -134,7 +129,19 @@ protected:
     return cfg;
   }
 
-  void init(const cu_up_configuration& cfg)
+  cu_up_dependencies get_defatul_cu_up_dependencies()
+  {
+    cu_up_dependencies deps;
+    deps.gtpu_pcap      = &dummy_pcap;
+    deps.exec_mapper    = exec_pool.get();
+    deps.e1_conn_client = &e1ap_client;
+    deps.f1u_gateway    = f1u_gw.get();
+    deps.ngu_gw         = ngu_gw.get();
+    deps.timers         = app_timers.get();
+    return deps;
+  }
+
+  void init(const cu_up_config& cfg, cu_up_dependencies&& deps)
   {
     udp_network_gateway_config udp_cfg{};
     udp_cfg.bind_interface = cfg.net_cfg.n3_bind_interface;
@@ -142,9 +149,9 @@ protected:
     udp_cfg.bind_port      = cfg.net_cfg.n3_bind_port;
     ngu_gw                 = create_udp_ngu_gateway(udp_cfg, *broker, *executor);
 
-    auto cfg_copy   = cfg;
-    cfg_copy.ngu_gw = ngu_gw.get();
-    cu_up           = std::make_unique<srs_cu_up::cu_up>(cfg_copy);
+    auto cfg_copy = cfg;
+    deps.ngu_gw   = ngu_gw.get();
+    cu_up         = std::make_unique<srs_cu_up::cu_up>(cfg_copy, std::move(deps));
   }
 
   void TearDown() override
@@ -233,7 +240,7 @@ protected:
 
 TEST_F(cu_up_test, when_e1ap_connection_established_then_e1ap_connected)
 {
-  init(get_default_cu_up_config());
+  init(get_default_cu_up_config(), get_defatul_cu_up_dependencies());
 
   // Connect E1AP
   cu_up->get_cu_up_manager()->on_e1ap_connection_establish();
@@ -247,7 +254,7 @@ TEST_F(cu_up_test, when_e1ap_connection_established_then_e1ap_connected)
 //////////////////////////////////////////////////////////////////////////////////////
 TEST_F(cu_up_test, dl_data_flow)
 {
-  cu_up_configuration cfg = get_default_cu_up_config();
+  cu_up_config cfg = get_default_cu_up_config();
   test_logger.debug("Using network_interface_config: {}", cfg.net_cfg);
 
   // Initialize UPF simulator on a random port.
@@ -255,8 +262,10 @@ TEST_F(cu_up_test, dl_data_flow)
   cfg.net_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
   ASSERT_GE(upf_info.sock_fd, 0);
 
+  cu_up_dependencies dependencies = get_defatul_cu_up_dependencies();
+
   // Initialize CU-UP
-  init(cfg);
+  init(cfg, std::move(dependencies));
 
   // Create DRB
   create_drb();
@@ -333,7 +342,7 @@ TEST_F(cu_up_test, dl_data_flow)
 
 TEST_F(cu_up_test, ul_data_flow)
 {
-  cu_up_configuration cfg = get_default_cu_up_config();
+  cu_up_config cfg = get_default_cu_up_config();
 
   //> Test preamble: listen on a free port
   upf_info_t upf_info = init_upf();
@@ -341,7 +350,9 @@ TEST_F(cu_up_test, ul_data_flow)
   //> Test main part: create CU-UP and transmit data
   cfg.net_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
   test_logger.debug("Using network_interface_config: {}", cfg.net_cfg);
-  init(cfg);
+
+  cu_up_dependencies dependencies = get_defatul_cu_up_dependencies();
+  init(cfg, std::move(dependencies));
 
   create_drb();
 

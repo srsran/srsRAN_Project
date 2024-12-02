@@ -111,8 +111,6 @@ tox python in builder:
     matrix:
       - os_version: "22.04"
         uhd_version: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
-      - os_version: "23.10"
-        uhd_version: ["4.7.0.0", "4.6.0.0"] # "4.4.0.0" default
       - os_version: "24.04"
         uhd_version: ["4.7.0.0"] # "4.6.0.0" default
       # - os_version: "24.10"
@@ -210,9 +208,6 @@ ubuntu-uhd-builder arm64:
       - &dpdk_2204_matrix
         os_version: "22.04"
         dpdk_version: ["21.08", "22.11.6", "23.11.1"]
-      - &dpdk_2310_matrix
-        os_version: "23.10"
-        dpdk_version: ["22.11.6", "23.11.1"]
       - &dpdk_2404_matrix
         os_version: "24.04"
         dpdk_version: ["23.11.1"]
@@ -242,7 +237,6 @@ ubuntu-dpdk-builder avx2:
   parallel:
     matrix:
       - *dpdk_2204_matrix
-      - *dpdk_2310_matrix
       - *dpdk_2404_matrix
       - *dpdk_2410_matrix
 
@@ -257,7 +251,6 @@ ubuntu-dpdk-builder avx512:
   parallel:
     matrix:
       - *dpdk_2204_matrix
-      - *dpdk_2310_matrix
       - *dpdk_2404_matrix
       - *dpdk_2410_matrix
 
@@ -282,6 +275,8 @@ ubuntu-dpdk-builder arm64:
     MULTI_ARCH_BUILD: "false"
     RHEL_CT_VERSION: none
     MODE: publish
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
   tags:
     - $PLATFORM
   rules:
@@ -459,93 +454,6 @@ manifest [ubuntu, 22.04]:
       - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
-# Ubuntu 23.10
-################################################################################
-image-build-publish [ubuntu, 23.10, amd64]:
-  extends:
-    - .image-build-publish
-  variables:
-    OS_FAMILY: debian
-    OS_NAME: ubuntu
-    OS_VERSION: "23.10"
-    PLATFORM: amd64
-  needs:
-    - builder version
-    - job: ubuntu-uhd-builder avx2
-      parallel:
-        matrix:
-          - os_version: "23.10"
-            uhd_version: ["4.7.0.0", "4.6.0.0"] # "4.4.0.0" default
-    - job: ubuntu-dpdk-builder avx2
-      parallel:
-        matrix:
-          - os_version: "23.10"
-            dpdk_version: ["22.11.6", "23.11.1"]
-    - job: ubuntu-dpdk-builder avx512
-      parallel:
-        matrix:
-          - os_version: "23.10"
-            dpdk_version: ["22.11.6", "23.11.1"]
-
-alternative-tag [ubuntu, 23.10, amd64]:
-  extends:
-    - .alternative-tag
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "23.10"
-    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
-  needs:
-    - builder version
-    - image-build-publish [ubuntu, 23.10, amd64]
-
-image-build-publish [ubuntu, 23.10, arm64]:
-  extends:
-    - .image-build-publish
-  variables:
-    OS_FAMILY: debian
-    OS_NAME: ubuntu
-    OS_VERSION: "23.10"
-    PLATFORM: arm64
-  needs:
-    - builder version
-    - job: ubuntu-uhd-builder arm64
-      parallel:
-        matrix:
-          - os_version: "23.10"
-            uhd_version: ["4.7.0.0", "4.6.0.0"] # "4.4.0.0" default
-    - job: ubuntu-dpdk-builder arm64
-      parallel:
-        matrix:
-          - os_version: "23.10"
-            dpdk_version: ["22.11.6", "23.11.1"]
-
-alternative-tag [ubuntu, 23.10, arm64]:
-  extends:
-    - .alternative-tag
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "23.10"
-    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
-  needs:
-    - builder version
-    - image-build-publish [ubuntu, 23.10, arm64]
-
-manifest [ubuntu, 23.10]:
-  extends: .manifest
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "23.10"
-  needs:
-    - builder version
-    - job: alternative-tag [ubuntu, 23.10, amd64]
-      optional: false
-    - job: alternative-tag [ubuntu, 23.10, arm64]
-      optional: false
-  parallel:
-    matrix:
-      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
-
-################################################################################
 # Ubuntu 24.04
 ################################################################################
 image-build-publish [ubuntu, 24.04, amd64]:
@@ -562,7 +470,7 @@ image-build-publish [ubuntu, 24.04, amd64]:
       parallel:
         matrix:
           - os_version: "24.04"
-            uhd_version: ["4.7.0.0"] # "4.6.0.0" default    
+            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:

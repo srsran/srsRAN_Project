@@ -242,6 +242,8 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
       // Re-apply nof. PDSCH RBs to allocate limits.
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.start());
       mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.stop());
+      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.start());
+      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop());
     }
 
     if (mcs_prbs.n_prbs == 0) {
@@ -526,11 +528,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
                    grant.cell_index);
     return {alloc_status::skip_ue};
   }
-
-  if (ue_cc->is_in_fallback_mode()) {
-    // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
-    return {alloc_status::skip_ue};
-  }
+  srsran_assert(not ue_cc->is_in_fallback_mode(), "Invalid UE candidate");
 
   const ue_cell_configuration&          ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&             cell_cfg    = ue_cell_cfg.cell_cfg_common;
@@ -728,6 +726,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       // Re-apply nof. PUSCH RBs to allocate limits.
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.start());
       mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.stop());
+      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.start());
+      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.stop());
       // Ensure the number of PRB is valid if the transform precoder is used. The condition the PUSCH bandwidth with
       // transform precoder is defined in TS 38.211 Section 6.1.3. The number of PRB must be lower than or equal to
       // current number of PRB.
@@ -770,10 +770,17 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       return {alloc_status::skip_ue};
     }
 
+    // Compute TPC command before computing the nof_prbs adaptation based on PHR; this is because, when the TPC gets
+    // computed, the channel state manager will update close-loop power control adjustment.
+    static constexpr uint8_t default_tpc_command = 1U;
+    const uint8_t            tpc_command         = dci_type != dci_ul_rnti_config_type::tc_rnti_f0_0
+                                                       ? ue_cc->get_ul_power_controller().compute_tpc_command(pusch_slot)
+                                                       : default_tpc_command;
+
     // If this is not a retx, then we need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the
     // nominal TX power to meet the max TX power.
     if (not is_retx) {
-      const unsigned nof_prbs_adjusted_to_phr = ue_cc->channel_state_manager().adapt_pusch_prbs_to_phr(crbs.length());
+      const unsigned nof_prbs_adjusted_to_phr = ue_cc->get_ul_power_controller().adapt_pusch_prbs_to_phr(crbs.length());
       if (nof_prbs_adjusted_to_phr < crbs.length()) {
         crbs.resize(nof_prbs_adjusted_to_phr);
       }
@@ -930,7 +937,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
                               param_candidate.pusch_td_res_index(),
                               mcs_tbs_info.value().mcs,
                               rv,
-                              *h_ul);
+                              *h_ul,
+                              tpc_command);
         break;
       case dci_ul_rnti_config_type::c_rnti_f0_1:
         build_dci_f0_1_c_rnti(pdcch->dci,
@@ -943,7 +951,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
                               *h_ul,
                               dai,
                               pusch_cfg.nof_layers,
-                              ue_cc->channel_state_manager().get_recommended_pusch_tpmi(pusch_cfg.nof_layers));
+                              ue_cc->channel_state_manager().get_recommended_pusch_tpmi(pusch_cfg.nof_layers),
+                              tpc_command);
         break;
       default:
         report_fatal_error("Unsupported PDCCH UL DCI format");
@@ -1008,7 +1017,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     ue_cc->last_pusch_allocated_slot = pusch_alloc.slot;
 
     // Update the number of PRBs used in the PUSCH allocation.
-    ue_cc->channel_state_manager().save_pusch_nof_prbs(pusch_alloc.slot, crbs.length());
+    ue_cc->get_ul_power_controller().update_pusch_pw_ctrl_state(pusch_alloc.slot, crbs.length());
 
     h_ul->save_grant_params(pusch_sched_ctx, msg.pusch_cfg);
 

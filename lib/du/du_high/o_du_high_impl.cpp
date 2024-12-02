@@ -64,6 +64,10 @@ void o_du_high_impl::start()
   logger.info("Starting DU...");
   du_hi->start();
 
+  if (e2agent) {
+    e2agent->start();
+  }
+
   // Configure the FAPI -> DU interface.
   for (unsigned i = 0, e = du_high_adaptor.size(); i != e; ++i) {
     du_cell_index_t cell_id = to_du_cell_index(i);
@@ -81,6 +85,10 @@ void o_du_high_impl::stop()
   srsran_assert(du_hi, "Invalid DU high");
 
   logger.info("Stopping DU...");
+  if (e2agent) {
+    e2agent->stop();
+  }
+
   du_hi->stop();
   logger.info("DU stopped successfully");
 }
@@ -93,8 +101,13 @@ du_high& o_du_high_impl::get_du_high()
 void o_du_high_impl::set_du_high(std::unique_ptr<du_high> updated_du_high)
 {
   du_hi = std::move(updated_du_high);
-
   srsran_assert(du_hi, "Invalid DU high");
+}
+
+void o_du_high_impl::set_e2_agent(std::unique_ptr<e2_agent> agent)
+{
+  e2agent = std::move(agent);
+  srsran_assert(e2agent, "Invalid E2 agent");
 }
 
 fapi::slot_data_message_notifier& o_du_high_impl::get_slot_data_message_notifier(unsigned cell_id)

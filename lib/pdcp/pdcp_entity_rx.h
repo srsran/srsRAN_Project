@@ -74,6 +74,7 @@ public:
                  timer_factory                   ue_ul_timer_factory_,
                  task_executor&                  ue_ul_executor_,
                  task_executor&                  crypto_executor_,
+                 uint32_t                        max_nof_crypto_workers_,
                  pdcp_metrics_aggregator&        metrics_agg_);
 
   ~pdcp_entity_rx() override;
@@ -125,7 +126,8 @@ private:
   const pdcp_rx_config cfg;
   bool                 stopped = false;
 
-  std::unique_ptr<security::security_engine_rx> sec_engine;
+  using sec_engine_vec = std::vector<std::unique_ptr<security::security_engine_rx>>;
+  sec_engine_vec sec_engine_pool;
 
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
@@ -143,8 +145,12 @@ private:
   // Handling of different PDU types
 
   /// \brief Handles a received data PDU.
-  /// \param buf The data PDU to be handled (including header and payload)
-  void handle_data_pdu(byte_buffer buf);
+  /// \param pdu The data PDU to be handled (including header and payload)
+  void handle_data_pdu(byte_buffer pdu);
+
+  void apply_security(pdcp_rx_sdu_info pdu_info);
+
+  void apply_reordering(pdcp_rx_sdu_info pdu_info);
 
   /// \brief Handles a received control PDU.
   /// \param buf The control PDU to be handled (including header and payload)
@@ -157,7 +163,7 @@ private:
   void record_reordering_dealy(std::chrono::system_clock::time_point time_of_arrival);
 
   /// Apply deciphering and integrity check to the PDU
-  expected<byte_buffer> apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count);
+  security::security_result apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count);
 
   /*
    * Notifiers and handlers
@@ -170,6 +176,7 @@ private:
 
   task_executor& ue_ul_executor;
   task_executor& crypto_executor;
+  uint32_t       max_nof_crypto_workers;
 
   pdcp_rx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;

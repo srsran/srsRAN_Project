@@ -31,6 +31,7 @@
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/sc_prod.h"
+#include "srsran/srsvec/subtract.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/transform_optional.h"
 
@@ -59,13 +60,11 @@ static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                   
 /// \param[in] estimates             Estimated channel frequency response.
 /// \param[in] beta                  DM-RS-to-data amplitude gain (linear scale).
 /// \param[in] dmrs_mask             Boolean mask identifying the OFDM symbols carrying DM-RS within the slot.
-/// \param[in] scs                   Subcarrier spacing.
 /// \param[in] cfo                   Carrier frequency offset.
 /// \param[in] symbol_start_epochs   Cumulative duration of all CPs in the slot.
 /// \param[in] compensate_cfo        Boolean flag to activate the CFO compensation.
 /// \param[in] first_hop_symbol      Index of the first OFDM symbol of the current hop, within the slot.
 /// \param[in] last_hop_symbol       Index of the last OFDM symbol of the current hop (not included), within the slot.
-/// \param[in] hop_symbols           Number of OFDM symbols containing DM-RS pilots in the current hop.
 /// \param[in] hop_offset            Number of OFDM symbols containing DM-RS pilots in the previous hop (set to 0 if the
 ///                                  current hop is the first/only one).
 /// \return The noise energy for the current hop.
@@ -74,13 +73,11 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             const re_buffer_reader<cf_t>&             estimates,
                             float                                     beta,
                             const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
-                            const subcarrier_spacing&                 scs,
                             std::optional<float>                      cfo,
                             span<const float>                         symbol_start_epochs,
                             bool                                      compensate_cfo,
                             unsigned                                  first_hop_symbol,
                             unsigned                                  last_hop_symbol,
-                            unsigned                                  hop_symbols,
                             unsigned                                  hop_offset);
 
 SRSRAN_WEAK_SYMB
@@ -291,13 +288,11 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
                               filtered_pilots_lse,
                               beta_scaling,
                               pattern.symbols,
-                              cfg.scs,
                               cfo_hop,
                               symbol_start_epochs,
                               compensate_cfo,
                               first_symbol,
                               last_symbol,
-                              nof_dmrs_symbols,
                               hop_offset);
 }
 
@@ -435,62 +430,57 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             const re_buffer_reader<cf_t>&             estimates,
                             float                                     beta,
                             const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
-                            const subcarrier_spacing&                 scs,
                             std::optional<float>                      cfo,
                             span<const float>                         symbol_start_epochs,
                             bool                                      compensate_cfo,
                             unsigned                                  first_hop_symbol,
                             unsigned                                  last_hop_symbol,
-                            unsigned                                  hop_symbols,
                             unsigned                                  hop_offset)
 {
-  constexpr unsigned                        one_layer = 1;
-  constexpr unsigned                        layer0    = 0;
-  static_re_buffer<one_layer, MAX_RB * NRE> scaled_estimates(one_layer, estimates.get_slice(0).size());
-  srsvec::sc_prod(estimates.get_slice(layer0), cf_t(-beta, 0), scaled_estimates.get_slice(layer0));
+  static constexpr unsigned one_layer = 1;
+  static constexpr unsigned layer0    = 0;
 
-  std::array<cf_t, MAX_RB * NRE> predicted_obs_buffer;
-  span<cf_t>                     predicted_obs = span<cf_t>(predicted_obs_buffer).first(estimates.get_slice(0).size());
+  // Deduce the number of RE to process.
+  unsigned nof_re = estimates.get_nof_re();
 
+  // Scale channel estimates.
+  static_re_buffer<one_layer, MAX_RB * NRE> scaled_estimates(one_layer, nof_re);
+  srsvec::sc_prod(estimates.get_slice(layer0), beta, scaled_estimates.get_slice(layer0));
+
+  // Temporary data buffers.
+  static_re_buffer<1, MAX_RB * NRE> temp_buffer(1, nof_re);
+
+  // Noise energy accumulator for each OFDM symbol containing DM-RS.
   float noise_energy = 0.0F;
 
-  if (compensate_cfo && cfo.has_value()) {
-    auto noise_cfo = [&, i_dmrs = 0](size_t i_symbol) mutable {
-      std::array<cf_t, MAX_RB * NRE> noise_samples_buffer;
-      span<cf_t> noise_samples = span<cf_t>(noise_samples_buffer).first(estimates.get_slice(0).size());
+  auto estimate_noise_symbol = [&, i_dmrs = 0](size_t i_symbol) mutable {
+    // Select temporary buffers.
+    span<cf_t> predicted_obs = temp_buffer.get_slice(layer0);
+    span<cf_t> noise_samples = temp_buffer.get_slice(layer0);
 
-      span<const cf_t> symbol_pilots = pilots.get_symbol(hop_offset + i_dmrs, layer0);
+    // Get original symbol pilots.
+    span<const cf_t> symbol_pilots = pilots.get_symbol(hop_offset + i_dmrs, layer0);
 
-      srsvec::prod(scaled_estimates.get_slice(layer0), symbol_pilots, predicted_obs);
+    // Apply estimated channel response to the original symbol pilots.
+    srsvec::prod(scaled_estimates.get_slice(layer0), symbol_pilots, predicted_obs);
+
+    // Compensate for CFO only if present.
+    if (compensate_cfo && cfo.has_value()) {
       srsvec::sc_prod(
           predicted_obs, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo.value()), predicted_obs);
-      srsvec::add(predicted_obs, noise_samples, noise_samples);
+    }
 
-      span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_dmrs, 0);
-      srsvec::add(symbol_rx_pilots, noise_samples, noise_samples);
-      noise_energy += srsvec::average_power(noise_samples) * noise_samples.size();
-      ++i_dmrs;
-    };
+    // Estimate receiver error as the subtraction of the regenerated symbols to the received pilots.
+    span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_dmrs, 0);
+    srsvec::subtract(noise_samples, symbol_rx_pilots, predicted_obs);
 
-    dmrs_mask.for_each(first_hop_symbol, last_hop_symbol, noise_cfo);
+    // Accumulate received power.
+    noise_energy += srsvec::average_power(noise_samples) * noise_samples.size();
+    ++i_dmrs;
+  };
 
-  } else {
-    auto noise_no_cfo = [&, i_dmrs = 0](size_t i_symbol) mutable {
-      std::array<cf_t, MAX_RB * NRE> noise_samples_buffer;
-      span<cf_t> noise_samples = span<cf_t>(noise_samples_buffer).first(estimates.get_slice(0).size());
-
-      span<const cf_t> symbol_pilots = pilots.get_symbol(hop_offset + i_dmrs, layer0);
-
-      srsvec::prod(scaled_estimates.get_slice(layer0), symbol_pilots, predicted_obs);
-      srsvec::add(predicted_obs, noise_samples, noise_samples);
-
-      span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_dmrs, 0);
-      srsvec::add(symbol_rx_pilots, noise_samples, noise_samples);
-      noise_energy += srsvec::average_power(noise_samples) * noise_samples.size();
-      ++i_dmrs;
-    };
-    dmrs_mask.for_each(first_hop_symbol, last_hop_symbol, noise_no_cfo);
-  }
+  // Process each OFDM containing DM-RS.
+  dmrs_mask.for_each(first_hop_symbol, last_hop_symbol, estimate_noise_symbol);
 
   return noise_energy;
 }

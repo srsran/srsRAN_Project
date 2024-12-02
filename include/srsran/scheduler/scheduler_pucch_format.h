@@ -49,7 +49,7 @@ inline sr_nof_bits operator+(sr_nof_bits x, sr_nof_bits y)
 }
 
 /// PUCCH Format 4 spreading factor.
-enum class pucch_format_4_sf { sf2, sf4 };
+enum class pucch_format_4_sf { sf2 = 2, sf4 = 4 };
 
 /// PRBs and symbols used for PUCCH resources.
 struct pucch_resources {
@@ -109,12 +109,9 @@ struct pucch_format_3 {
   unsigned                 harq_ack_nof_bits;
   unsigned                 csi_part1_bits;
   pucch_repetition_tx_slot slot_repetition;
-  /// \c timeDomainOCC as per TS 38.331, or equivalent to index \f$n\f$ in Table 6.3.2.4.1-2, TS 38.211. Only for PUCCH
-  /// Format 1 only.
-  uint16_t n_id_scambling;
-  uint8_t  time_domain_occ;
-  bool     pi_2_bpsk;
-  uint8_t  max_code_rate;
+  uint16_t                 n_id_scambling;
+  bool                     pi_2_bpsk;
+  max_pucch_code_rate      max_code_rate;
   /// DMRS parameters.
   bool     additional_dmrs;
   uint16_t n_id_0_scrambling;
@@ -133,14 +130,11 @@ struct pucch_format_4 {
   unsigned                 harq_ack_nof_bits;
   unsigned                 csi_part1_bits;
   pucch_repetition_tx_slot slot_repetition;
-  /// \c timeDomainOCC as per TS 38.331, or equivalent to index \f$n\f$ in Table 6.3.2.4.1-2, TS 38.211. Only for PUCCH
-  /// Format 1 only.
-  uint16_t n_id_scambling;
-  uint8_t  time_domain_occ;
-  bool     pi_2_bpsk;
-  uint8_t  max_code_rate;
-
-  /// Orthogonal sequence \f$n\f$, as per TS 38.211, Section 6.3.2.6.3. Only for PUCCH Format 4.
+  uint16_t                 n_id_scambling;
+  bool                     pi_2_bpsk;
+  max_pucch_code_rate      max_code_rate;
+  /// \c occ-Index as per TS 38.331, or equivalent to index \f$n\f$ in Tables 6.3.2.6.3-1/2, TS 38.211. Only for PUCCH
+  /// Format 4.
   uint8_t orthog_seq_idx;
   /// Spreading Factor \f$N_{SF}^{PUCCH,4}\f$, as per TS 38.211, Section 6.3.2.6.3. Only for PUCCH Format 4.
   /// TODO: check if this corresponds to \ref pucch_f4_occ_len.

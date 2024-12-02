@@ -61,7 +61,7 @@ protected:
       drb.dluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(test_rgen::uniform_int<uint32_t>());
       drb.dluptnl_info_list[0].tp_address = transport_layer_address::create_from_string("127.0.0.1");
     }
-    this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container =
+    this->f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg =
         byte_buffer::create({0x1, 0x2, 0x3}).value();
 
     // Initiate procedure in F1AP.
@@ -164,7 +164,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
           .dluptnl_info_list[0]
           .tp_address.to_bitstring());
   ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
-            this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg);
 }
 
 TEST_F(
@@ -196,7 +196,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
   this->f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
   this->f1ap_du_cfg_handler.next_ue_context_update_response.failed_drbs_setups.push_back(
       {drb_id_t::drb1, f1ap_cause_radio_network_t::no_radio_res_available});
-  this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container =
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg =
       byte_buffer::create({0x1, 0x2, 0x3}).value();
 
   // Initiate procedure in F1AP.
@@ -220,7 +220,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_FALSE(resp->drbs_setup_mod_list_present);
   ASSERT_EQ(resp->drbs_setup_mod_list.size(), 0);
   ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
-            this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg);
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,

@@ -22,6 +22,7 @@
 
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/simd.h"
+#include "srsran/support/math/math_utils.h"
 #include <cmath>
 
 using namespace srsran;
@@ -151,6 +152,57 @@ static void prod_conj_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_
   }
 }
 
+static void prod_cexp_simd(cf_t* out, const cf_t* in, float cfo, float initial_phase, unsigned len)
+{
+  // Phase increment for each sample.
+  cf_t osc = std::polar<float>(1.0F, TWOPI * cfo);
+  // Current phase, initially with the initial phase.
+  cf_t phase = std::polar<float>(1.0F, initial_phase);
+  // Current sample index.
+  unsigned i = 0;
+
+#if SRSRAN_SIMD_CF_SIZE
+  if (len >= SRSRAN_SIMD_CF_SIZE) {
+    // Prepare current phase vector with the initial phases.
+    std::array<cf_t, SRSRAN_SIMD_CF_SIZE> temp_phase;
+    temp_phase[0] = phase;
+    for (int k = 1; k != SRSRAN_SIMD_CF_SIZE; ++k) {
+      temp_phase[k] = temp_phase[k - 1] * osc;
+    }
+
+    // Load the current phase SIMD register with the initial phases;
+    simd_cf_t simd_phase = srsran_simd_cfi_loadu(temp_phase.data());
+
+    // Prepare SIMD oscillator phase shift.
+    simd_cf_t simd_osc = srsran_simd_cf_set1(std::polar<float>(1.0F, SRSRAN_SIMD_CF_SIZE * TWOPI * cfo));
+
+    // Process in blocks of the SIMD register size.
+    for (unsigned end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != end; i += SRSRAN_SIMD_CF_SIZE) {
+      // Load input.
+      simd_cf_t simd_in = srsran_simd_cfi_loadu(&in[i]);
+
+      // Apply current phase to the input.
+      simd_cf_t simd_out = srsran_simd_cf_prod(simd_in, simd_phase);
+
+      // Store result.
+      srsran_simd_cfi_storeu(&out[i], simd_out);
+
+      // Increment current phase.
+      simd_phase = srsran_simd_cf_prod(simd_phase, simd_osc);
+    }
+
+    // Store phase SIMD register and update the current phase with the next phase.
+    srsran_simd_cfi_storeu(temp_phase.data(), simd_phase);
+    phase = temp_phase.front();
+  }
+#endif
+
+  for (; i != len; ++i) {
+    out[i] = in[i] * phase;
+    phase *= osc;
+  }
+}
+
 void srsran::srsvec::prod(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
 {
   srsran_srsvec_assert_size(x, y);
@@ -181,4 +233,11 @@ void srsran::srsvec::prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t
   srsran_srsvec_assert_size(x, z);
 
   prod_conj_ccc_simd(x.data(), y.data(), z.data(), x.size());
+}
+
+void srsran::srsvec::prod_cexp(span<cf_t> out, span<const cf_t> in, float norm_cfo, float initial_phase)
+{
+  srsran_srsvec_assert_size(out, in);
+
+  prod_cexp_simd(out.data(), in.data(), norm_cfo, initial_phase, in.size());
 }

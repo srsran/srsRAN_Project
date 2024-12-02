@@ -26,33 +26,21 @@
 using namespace srsran;
 using namespace srs_cu_up;
 
-ue_manager::ue_manager(network_interface_config&                   net_config_,
-                       n3_interface_config&                        n3_config_,
-                       cu_up_test_mode_config&                     test_mode_config_,
-                       e1ap_control_message_handler&               e1ap_,
-                       timer_manager&                              timers_,
-                       f1u_cu_up_gateway&                          f1u_gw_,
-                       gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
-                       gtpu_demux_ctrl&                            gtpu_rx_demux_,
-                       gtpu_teid_pool&                             n3_teid_allocator_,
-                       gtpu_teid_pool&                             f1u_teid_allocator_,
-                       cu_up_executor_mapper&                      exec_pool_,
-                       dlt_pcap&                                   gtpu_pcap_,
-                       srslog::basic_logger&                       logger_) :
-  net_config(net_config_),
-  n3_config(n3_config_),
-  test_mode_config(test_mode_config_),
-  e1ap(e1ap_),
-  f1u_gw(f1u_gw_),
-  gtpu_tx_notifier(gtpu_tx_notifier_),
-  gtpu_rx_demux(gtpu_rx_demux_),
-  n3_teid_allocator(n3_teid_allocator_),
-  f1u_teid_allocator(f1u_teid_allocator_),
-  exec_pool(exec_pool_),
+ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_dependencies& dependencies) :
+  net_config(config.net_config),
+  n3_config(config.n3_config),
+  test_mode_config(config.test_mode_config),
+  e1ap(dependencies.e1ap),
+  f1u_gw(dependencies.f1u_gw),
+  gtpu_tx_notifier(dependencies.gtpu_tx_notifier),
+  gtpu_rx_demux(dependencies.gtpu_rx_demux),
+  n3_teid_allocator(dependencies.n3_teid_allocator),
+  f1u_teid_allocator(dependencies.f1u_teid_allocator),
+  exec_pool(dependencies.exec_pool),
   ctrl_executor(exec_pool.ctrl_executor()),
-  gtpu_pcap(gtpu_pcap_),
-  timers(timers_),
-  logger(logger_)
+  gtpu_pcap(dependencies.gtpu_pcap),
+  timers(dependencies.timers),
+  logger(dependencies.logger)
 {
   // Initialize a ue task schedulers for all UE indexes.
   for (size_t i = 0; i < MAX_NOF_UES; ++i) {

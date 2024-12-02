@@ -353,6 +353,9 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
   // > Fetch an existing UE with the same old C-RNTI.
   new_ctx.ue_index = rnti_table[new_ctx.pdu_rx.rnti];
   if (new_ctx.ue_index == INVALID_DU_UE_INDEX) {
+    // This situation can occur when the UE returns by naming its previous RNTI via "C-RNTI CE", but so much time has
+    // passed in the meantime that the previous context has already been deleted.
+    // Example: the UE did not finish its de-registration procedure and only came back to finish that procedure.
     logger.warning("{}: Discarding PDU. Cause: C-RNTI in C-RNTI CE is not associated with any existing UE. "
                    "It is likely that the old UE context has already been discarded",
                    create_prefix(new_ctx, subpdu));

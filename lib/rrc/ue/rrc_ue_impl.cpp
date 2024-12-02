@@ -24,6 +24,7 @@
 #include "rrc_ue_helpers.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ho_prep_info.h"
+#include "srsran/support/cpu_architecture_info.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -84,12 +85,17 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
     // SRB0 is already set up
     return;
   } else if (msg.srb_id <= srb_id_t::srb2) {
+    auto&    cpu_desc  = cpu_architecture_info::get();
+    uint32_t nof_cores = cpu_desc.get_host_nof_available_cpus();
+
     // create PDCP entity for this SRB
-    context.srbs.emplace(
-        std::piecewise_construct,
-        std::forward_as_tuple(msg.srb_id),
-        std::forward_as_tuple(
-            msg.ue_index, msg.srb_id, cu_cp_ue_notifier.get_timer_factory(), cu_cp_ue_notifier.get_executor()));
+    context.srbs.emplace(std::piecewise_construct,
+                         std::forward_as_tuple(msg.srb_id),
+                         std::forward_as_tuple(msg.ue_index,
+                                               msg.srb_id,
+                                               cu_cp_ue_notifier.get_timer_factory(),
+                                               cu_cp_ue_notifier.get_executor(),
+                                               nof_cores));
     auto& srb_context = context.srbs.at(msg.srb_id);
 
     if (msg.srb_id == srb_id_t::srb2 || msg.enable_security) {

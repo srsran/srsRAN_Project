@@ -188,8 +188,6 @@ struct pdcp_config_common {
   pdcp_rlc_mode           rlc_mode;
   pdcp_sn_size            sn_size;
   pdcp_security_direction direction;
-  bool                    integrity_protection_required;
-  bool                    ciphering_required;
 };
 
 struct pdcp_tx_config : pdcp_config_common {
@@ -232,27 +230,25 @@ struct pdcp_config {
   pdcp_tx_config get_tx_config() const
   {
     pdcp_tx_config cfg;
-    cfg.rb_type                       = rb_type;
-    cfg.rlc_mode                      = rlc_mode;
-    cfg.integrity_protection_required = integrity_protection_required;
-    cfg.sn_size                       = tx.sn_size;
-    cfg.direction                     = tx.direction;
-    cfg.discard_timer                 = tx.discard_timer;
-    cfg.status_report_required        = tx.status_report_required;
-    cfg.custom                        = custom.tx;
+    cfg.rb_type                = rb_type;
+    cfg.rlc_mode               = rlc_mode;
+    cfg.sn_size                = tx.sn_size;
+    cfg.direction              = tx.direction;
+    cfg.discard_timer          = tx.discard_timer;
+    cfg.status_report_required = tx.status_report_required;
+    cfg.custom                 = custom.tx;
     return cfg;
   }
   pdcp_rx_config get_rx_config() const
   {
     pdcp_rx_config cfg;
-    cfg.rb_type                       = rb_type;
-    cfg.rlc_mode                      = rlc_mode;
-    cfg.integrity_protection_required = integrity_protection_required;
-    cfg.sn_size                       = rx.sn_size;
-    cfg.direction                     = rx.direction;
-    cfg.out_of_order_delivery         = rx.out_of_order_delivery;
-    cfg.t_reordering                  = rx.t_reordering;
-    cfg.custom                        = custom.rx;
+    cfg.rb_type               = rb_type;
+    cfg.rlc_mode              = rlc_mode;
+    cfg.sn_size               = rx.sn_size;
+    cfg.direction             = rx.direction;
+    cfg.out_of_order_delivery = rx.out_of_order_delivery;
+    cfg.t_reordering          = rx.t_reordering;
+    cfg.custom                = custom.rx;
     return cfg;
   }
 };
@@ -281,6 +277,7 @@ inline pdcp_config pdcp_make_default_srb_config()
 
   // Custom config
   config.custom = {};
+
   return config;
 }
 } // namespace srsran
@@ -335,7 +332,6 @@ struct formatter<srsran::pdcp_t_reordering> {
 
   template <typename FormatContext>
   auto format(srsran::pdcp_t_reordering t_reordering, FormatContext& ctx)
-
   {
     if (t_reordering == srsran::pdcp_t_reordering::infinity) {
       return format_to(ctx.out(), "infinity");
@@ -355,7 +351,6 @@ struct formatter<srsran::pdcp_discard_timer> {
 
   template <typename FormatContext>
   auto format(srsran::pdcp_discard_timer discard_timer, FormatContext& ctx)
-
   {
     if (discard_timer == srsran::pdcp_discard_timer::infinity) {
       return format_to(ctx.out(), "infinity");

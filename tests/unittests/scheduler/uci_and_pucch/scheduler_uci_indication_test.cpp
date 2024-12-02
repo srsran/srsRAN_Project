@@ -25,8 +25,9 @@
 /// The objective here is to mainly cover and verify the correct integration of the scheduler building blocks.
 
 #include "lib/scheduler/config/cell_configuration.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_bench.h"
+#include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/scheduler/scheduler_factory.h"
 #include "srsran/support/test_utils.h"
@@ -48,14 +49,14 @@ protected:
   void add_cell()
   {
     sched_cell_configuration_request_message cell_cfg_msg =
-        test_helpers::make_default_sched_cell_configuration_request();
+        sched_config_helper::make_default_sched_cell_configuration_request();
     cell_cfg.emplace(sched_cfg, cell_cfg_msg);
     sched->handle_cell_configuration_request(cell_cfg_msg);
   }
 
   void add_ue()
   {
-    sched_ue_creation_request_message ue_cfg_msg = test_helpers::create_default_sched_ue_creation_request();
+    sched_ue_creation_request_message ue_cfg_msg = sched_config_helper::create_default_sched_ue_creation_request();
     ue_cfg_msg.crnti                             = ue_rnti;
     sched->handle_ue_creation_request(ue_cfg_msg);
   }

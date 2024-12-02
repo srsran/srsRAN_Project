@@ -114,7 +114,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
   list[0].load_info_obj(ASN1_E2AP_ID_E2NODE_COMPONENT_CFG_ADDITION_ITEM);
   e2node_component_cfg_addition_item_s& e2node_cfg_item = list[0].value().e2node_component_cfg_addition_item();
   e2node_cfg_item.e2node_component_interface_type       = e2node_component_interface_type_opts::ng;
-  e2node_cfg_item.e2node_component_id.set_e2node_component_interface_type_ng().amf_name.from_string("test_amf_name");
+  e2node_cfg_item.e2node_component_id.set_e2node_component_interface_type_ng().amf_name.from_string("test-amf-name");
 
   uint8_t ngap_request[] = {0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1,
                             0x10, 0x00, 0x00, 0x06, 0x6c, 0x00, 0x52, 0x40, 0x0a, 0x03, 0x80, 0x63, 0x75, 0x5f,

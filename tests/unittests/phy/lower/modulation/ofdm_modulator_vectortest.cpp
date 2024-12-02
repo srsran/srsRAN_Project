@@ -68,7 +68,7 @@ protected:
     ASSERT_TRUE(modulator);
   }
 
-  static float get_max_abs_error(cf_t expected) { return std::abs(expected) / 128; }
+  static float get_max_abs_error(cf_t expected) { return std::max(std::abs(expected) / 128, 0.001F); }
 };
 
 TEST_P(ofdm_modulator_tester, vector)
@@ -106,13 +106,13 @@ TEST_P(ofdm_modulator_tester, vector)
   for (unsigned i = 0; i != expected.size(); ++i) {
     float max_error = get_max_abs_error(expected[i]);
     float error     = std::abs(output[i] - expected[i]);
-    TESTASSERT(error < max_error,
-               "Sample index {} error {} exceeds maximum allowed ({}). Expected symbol {} but got {}.",
-               i,
-               error,
-               max_error,
-               expected[i],
-               output[i]);
+    ASSERT_LT(error, max_error) << fmt::format(
+        "Sample index {} error {} exceeds maximum allowed ({}). Expected symbol {} but got {}.",
+        i,
+        error,
+        max_error,
+        expected[i],
+        output[i]);
   }
 }
 

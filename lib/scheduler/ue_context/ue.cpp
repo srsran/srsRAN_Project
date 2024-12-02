@@ -113,6 +113,11 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
   dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
   ul_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
 
+  // DRX config.
+  if (cmd.cfg.drx_cfg().has_value()) {
+    drx.reconfigure(cmd.cfg.drx_cfg());
+  }
+
   // Cell configuration.
   // Handle removed cells.
   for (unsigned i = 0, e = ue_du_cells.size(); i != e; ++i) {

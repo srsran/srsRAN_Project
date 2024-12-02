@@ -122,7 +122,7 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
   cu_notifier.last_f1ap_msgs.clear();
   f1ap_message                    msg = generate_ue_context_release_command();
   const ue_context_release_cmd_s& cmd = msg.pdu.init_msg().value.ue_context_release_cmd();
-  this->du_hi->get_f1ap_message_handler().handle_message(msg);
+  this->du_hi->get_f1ap_du().handle_message(msg);
 
   const unsigned MAX_COUNT = 1000;
   for (unsigned i = 0; i != MAX_COUNT; ++i) {
@@ -159,7 +159,7 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   // DU receives F1AP UE Context Release Command.
   cu_notifier.last_f1ap_msgs.clear();
   f1ap_message msg = generate_ue_context_release_command();
-  this->du_hi->get_f1ap_message_handler().handle_message(msg);
+  this->du_hi->get_f1ap_du().handle_message(msg);
   this->test_logger.info("STATUS: UEContextReleaseCommand received by DU. Waiting for rrcRelease being transmitted...");
 
   // Ensure that once SRB1 (RRC Release) is scheduled.
@@ -185,6 +185,42 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
       }
     }
   }
+}
+
+TEST_F(du_high_tester, when_f1ap_reset_received_then_ues_are_removed)
+{
+  // Create UE.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  // CU-UP forwards many DRB PDUs.
+  const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    nru_dl_message f1u_pdu{
+        .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
+    cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
+  }
+
+  // DU receives F1 RESET.
+  cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message msg = test_helpers::create_f1ap_reset_message();
+  this->du_hi->get_f1ap_du().handle_message(msg);
+  this->test_logger.info("STATUS: RESET received by DU. Waiting for F1AP RESET ACK...");
+
+  // Wait for F1 RESET ACK to be sent to the CU.
+  EXPECT_TRUE(this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }));
+  ASSERT_TRUE(test_helpers::is_valid_f1_reset_ack(msg, cu_notifier.last_f1ap_msgs.back()));
+
+  // Confirm that no traffic is being sent for the reset UE.
+  const unsigned NOF_SLOT_CHECKS = 100;
+  ASSERT_FALSE(this->run_until(
+      [this, rnti]() {
+        const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+        return pdsch != nullptr;
+      },
+      NOF_SLOT_CHECKS));
 }
 
 TEST_F(du_high_tester, when_du_high_is_stopped_then_ues_are_removed)
@@ -216,7 +252,7 @@ TEST_F(du_high_tester, when_ue_context_setup_received_for_inexistent_ue_then_ue_
       int_to_gnb_cu_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(0, (uint64_t)gnb_cu_ue_f1ap_id_t::max));
   f1ap_message cu_cp_msg = test_helpers::create_ue_context_setup_request(
       cu_ue_id, std::nullopt, 0, {drb_id_t::drb1}, {plmn_identity::test_value(), nr_cell_identity::create(0).value()});
-  this->du_hi->get_f1ap_message_handler().handle_message(cu_cp_msg);
+  this->du_hi->get_f1ap_du().handle_message(cu_cp_msg);
 
   ASSERT_TRUE(this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }));
 
@@ -251,7 +287,7 @@ TEST_F(du_high_tester, when_ue_context_modification_with_rem_drbs_is_received_th
   auto&        u   = ues[rnti];
   f1ap_message msg = test_helpers::generate_ue_context_modification_request(
       u.du_ue_id.value(), u.cu_ue_id.value(), {}, {}, {drb_id_t::drb1}, {});
-  this->du_hi->get_f1ap_message_handler().handle_message(msg);
+  this->du_hi->get_f1ap_du().handle_message(msg);
 
   // Wait for DU to send F1AP UE Context Modification Response.
   this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });

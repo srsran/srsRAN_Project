@@ -134,8 +134,14 @@ public:
   byte_buffer get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                        unsigned                                     transaction_id_) override
   {
-    logger.info("Received a new request to get a RRC Handover Command.");
+    logger.info("Received a new request to get a RRC Handover Command");
     return byte_buffer{};
+  }
+
+  bool handle_rrc_handover_preparation_info(byte_buffer pdu) override
+  {
+    logger.info("Received HandoverPreparationInfo");
+    return true;
   }
 
   void create_srb(const srb_creation_message& msg) override

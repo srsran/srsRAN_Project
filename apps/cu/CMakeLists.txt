@@ -19,21 +19,21 @@
 #
 
 add_executable(srscu
-    cu.cpp
-	cu_appconfig_cli11_schema.cpp
-	cu_appconfig_validator.cpp
-	cu_appconfig_yaml_writer.cpp
+        cu.cpp
+        cu_appconfig_cli11_schema.cpp
+        cu_appconfig_validator.cpp
+        cu_appconfig_yaml_writer.cpp
 )
 
 install(TARGETS srscu
         RUNTIME)
 
-target_link_libraries(srscu
+target_link_libraries(srscu PRIVATE
         srsran_app_services
         srsran_support
         srsran_versioning
-        srsran_cu_cp_app_unit
-        srsran_cu_up_app_unit
+        srsran_o_cu_cp_app_unit
+        srsran_o_cu_up_app_unit
         srsran_ngap
         srsran_f1c_gateway
         srsran_e1_gateway
@@ -41,9 +41,9 @@ target_link_libraries(srscu
         srsran_f1u_cu_up_split_connector
         srsran_pcap
         ngap_asn1
-        )
+)
 
 add_backward(srscu)
 
 target_include_directories(srscu PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
-
+notify_binary_target(srscu)

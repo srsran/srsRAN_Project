@@ -72,14 +72,34 @@ struct scheduler_ue_expert_config {
   interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
   /// Set boundaries, in number of RBs, for UE PUSCH grants.
   interval<unsigned> pusch_nof_rbs{1, MAX_NOF_PRBS};
+  /// \defgroup ta_manager_params
+  /// \brief Time Advance (TA) manager parameters.
+  ///
+  /// These parameters define the behaviour of the Time Advance manager and on how the Time Advance Command (\f$T_A\f$)
+  /// is triggered.
+  ///
+  /// The TA measurement is reported from the physical layer, averaged over a \ref ta_measurement_slot_period and
+  /// outliers are filtered out. The final estimated TA is rounded to the nearest TA unit.
+  ///
+  /// \remark T_A is defined in TS 38.213, clause 4.2.
+  /// @{
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
   unsigned ta_measurement_slot_period{80};
-  /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
-  /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
-  /// \remark T_A is defined in TS 38.213, clause 4.2.
+  /// \brief Timing Advance Command (T_A) offset threshold.
+  ///
+  /// A TA command is triggered if the estimated TA is equal to or greater than this threshold. Possible valid values
+  /// are {0,...,32}.
+  ///
+  /// If set to less than zero, issuing of TA Command is disabled.
   int8_t ta_cmd_offset_threshold;
+  /// \brief Timing Advance target in units of TA.
+  ///
+  /// Offsets the target TA measurements so the signal from the UE is kept delayed. This parameter is useful for
+  /// avoiding negative TA when the UE is getting away.
+  int8_t ta_target;
   /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
   float ta_update_measurement_ul_sinr_threshold;
+  /// @}
   /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
   /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".
   dc_offset_t initial_ul_dc_offset{dc_offset_t::center};
@@ -97,6 +117,11 @@ struct scheduler_ue_expert_config {
   uint8_t min_k1 = 4;
   /// Maximum number of PDCCH grant allocation attempts per slot. Default: Unlimited.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
+  /// Target PUSCH SINR to be achieved with Close-loop power control, in dB.
+  float target_pusch_sinr{10.0f};
+  /// Path-loss at which the Target PUSCH SINR is expected to be achieved, in dB.
+  /// This is used to compute the path loss compensation for PUSCH fractional power control.
+  float path_loss_for_target_pusch_sinr{70.0f};
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.

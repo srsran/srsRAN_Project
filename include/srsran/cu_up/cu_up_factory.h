@@ -23,12 +23,14 @@
 #pragma once
 
 #include "srsran/cu_up/cu_up.h"
-#include "srsran/cu_up/cu_up_configuration.h"
+#include "srsran/cu_up/cu_up_config.h"
 #include <memory>
 
 namespace srsran {
+namespace srs_cu_up {
 
-/// Creates an instance of an CU-UP.
-std::unique_ptr<srs_cu_up::cu_up_interface> create_cu_up(const srs_cu_up::cu_up_configuration& cfg_);
+/// Creates an instance of a CU-UP with the given parameters.
+std::unique_ptr<cu_up_interface> create_cu_up(const cu_up_config& cfg, const cu_up_dependencies& dependencies);
 
+} // namespace srs_cu_up
 } // namespace srsran

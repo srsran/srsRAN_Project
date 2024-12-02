@@ -286,6 +286,11 @@ public:
   /// \returns The handover RRC Reconfiguration PDU. If the handover command is invalid, the PDU is empty.
   virtual byte_buffer handle_rrc_handover_command(byte_buffer cmd) = 0;
 
+  /// \brief Handle the handover preparation info RRC PDU.
+  /// \param[in] pdu The handover preparation info RRC PDU.
+  /// \returns True if the handover preparation info was successfully handled, false otherwise.
+  virtual bool handle_rrc_handover_preparation_info(byte_buffer pdu) = 0;
+
   /// \brief Get the packed RRC Handover Command.
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The RRC Handover Command.

@@ -28,13 +28,13 @@
 namespace srsran {
 namespace srs_du {
 
-/// ORAN DU configuration.
+/// O-RAN DU configuration.
 struct o_du_config {
   o_du_high_config du_high_cfg;
   o_du_low_config  du_low_cfg;
 };
 
-/// ORAN DU dependencies.
+/// O-RAN DU dependencies.
 struct o_du_dependencies {
   o_du_high_dependencies du_high_deps;
 };

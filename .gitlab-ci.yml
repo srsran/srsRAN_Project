@@ -88,7 +88,7 @@ trigger builder:
   stage: ci
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-builder/
-      when: never  
+      when: never
     - if: $ON_MR
       changes:
         paths:
@@ -103,7 +103,7 @@ trigger docker:
   stage: ci
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-docker/
-      when: never  
+      when: never
     - if: $ON_MR
       changes:
         paths:
@@ -132,8 +132,6 @@ matlab nightly:
         CI_DESCRIPTION: Nightly
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
-      when: delayed
-      start_in: 5 hours
   inherit:
     variables: false
   trigger:
@@ -149,8 +147,6 @@ plugin nightly:
         CI_DESCRIPTION: Nightly
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
-      when: delayed
-      start_in: 7 hours
   inherit:
     variables: false
   trigger:
@@ -166,32 +162,11 @@ matlab weekly:
         CI_DESCRIPTION: Weekly
         SRSRAN_COMMIT: $CI_COMMIT_SHA
         NOTIFY_SLACK: "true"
-      when: delayed
-      start_in: 20 hours
   inherit:
     variables: false
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
-
-helm weekly:
-  stage: ci
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      variables:
-        ON_SCHEDULE: "true"
-        CI_DESCRIPTION: Synchronization with srsGNB
-        NOTIFY_SLACK: "true"
-      when: delayed
-      start_in: 20 hours
-  inherit:
-    variables: false
-  trigger:
-    project: softwareradiosystems/ci/srsgnb_k8s
-    branch: main
-  needs:
-    - job: trigger docker
-      artifacts: false
 
 ################################################################################
 ## Static

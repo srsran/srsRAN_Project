@@ -427,7 +427,7 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
           cell_phr.serv_cell_id < u.nof_cells(), "Invalid serving cell index={}", cell_phr.serv_cell_id);
       auto& ue_cc = u.get_cell(cell_phr.serv_cell_id);
 
-      ue_cc.channel_state_manager().handle_phr(cell_phr);
+      ue_cc.get_ul_power_controller().handle_phr(cell_phr);
 
       // Log event.
       scheduler_event_logger::phr_event event{};
@@ -554,6 +554,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                   // Log SR event.
                   du_cells[ue_cc.cell_index].ev_logger->enqueue(
                       scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
+
+                  // Report SR to metrics.
+                  du_cells[ue_cc.cell_index].metrics->handle_sr_indication(ue_cc.ue_index);
                 }
 
                 const bool is_uci_valid = not pucch_f0f1->harqs.empty() or pucch_f0f1->sr_detected;
@@ -589,6 +592,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                   // Log SR event.
                   du_cells[ue_cc.cell_index].ev_logger->enqueue(
                       scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
+
+                  // Report SR to metrics.
+                  du_cells[ue_cc.cell_index].metrics->handle_sr_indication(ue_cc.ue_index);
                 }
 
                 // Process CSI.
@@ -646,6 +652,9 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
                              // Notify UL TA update.
                              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
                                  ue_cc.cell_index, sinr_dB, srs_ptr->time_advance_offset.value());
+
+                             // Report the SRS PDU to the metrics handler.
+                             du_cells[ue_cc.cell_index].metrics->handle_srs_indication(*srs_ptr);
                            }
                          },
                          "SRS",

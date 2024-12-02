@@ -50,8 +50,17 @@ TEST_P(pdcp_rx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
+
+  // Wait for crypto and reordering
+  crypto_worker_pool.wait_pending_tasks();
+  worker.run_pending_tasks();
   ASSERT_EQ(0, test_frame->sdu_queue.size());
+
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
+
+  // Wait for crypto and reordering
+  crypto_worker_pool.wait_pending_tasks();
+  worker.run_pending_tasks();
   ASSERT_EQ(0, test_frame->sdu_queue.size());
 
   // Check PDCP state.
@@ -74,6 +83,10 @@ TEST_P(pdcp_rx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
   byte_buffer test_pdu_nxa3;
   get_test_pdu(count, test_pdu_nxa3, 3);
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu_nxa3)).value());
+
+  // Wait for crypto and reordering
+  crypto_worker_pool.wait_pending_tasks();
+  worker.run_pending_tasks();
   ASSERT_EQ(1, test_frame->sdu_queue.size());
 }
 
@@ -97,8 +110,16 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_um_reestablish_then_pdus_forwared)
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
+
+  // Wait for crypto and reordering
+  crypto_worker_pool.wait_pending_tasks();
+  worker.run_pending_tasks();
   ASSERT_EQ(0, test_frame->sdu_queue.size());
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
+
+  // Wait for crypto and reordering
+  crypto_worker_pool.wait_pending_tasks();
+  worker.run_pending_tasks();
   ASSERT_EQ(0, test_frame->sdu_queue.size());
 
   // Check PDCP state.
@@ -144,8 +165,16 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
+
+  // Wait for crypto and reordering
+  crypto_worker_pool.wait_pending_tasks();
+  worker.run_pending_tasks();
   ASSERT_EQ(0, test_frame->sdu_queue.size());
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
+
+  // Wait for crypto and reordering
+  crypto_worker_pool.wait_pending_tasks();
+  worker.run_pending_tasks();
   ASSERT_EQ(0, test_frame->sdu_queue.size());
 
   // Check PDCP state.
@@ -170,6 +199,10 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
 
   // Deliver first PDU
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
+
+  // Wait for crypto and reordering
+  crypto_worker_pool.wait_pending_tasks();
+  worker.run_pending_tasks();
   ASSERT_EQ(3, test_frame->sdu_queue.size());
 }
 

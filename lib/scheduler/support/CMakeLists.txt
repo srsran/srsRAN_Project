@@ -33,4 +33,5 @@ add_library(sched_support STATIC
         sr_helper.cpp
         dci_builder.cpp
         sch_pdu_builder.cpp
-        csi_report_helpers.cpp)
+        csi_report_helpers.cpp
+        ul_power_controller.cpp)

@@ -1353,10 +1353,22 @@ inline simd_cf_t operator+(simd_cf_t left, simd_cf_t right)
   return srsran_simd_cf_add(left, right);
 }
 
+/// Subtracts two complex SIMD registers.
+inline simd_cf_t operator-(simd_cf_t left, simd_cf_t right)
+{
+  return srsran_simd_cf_sub(left, right);
+}
+
 /// Multiplies two complex SIMD registers.
 inline simd_cf_t operator*(simd_cf_t left, simd_cf_t right)
 {
   return srsran_simd_cf_prod(left, right);
+}
+
+/// Multiplies a complex and a real SIMD registers.
+inline simd_cf_t operator*(simd_cf_t left, simd_f_t right)
+{
+  return srsran_simd_cf_mul(left, right);
 }
 
 /// Multiplies two complex SIMD registers.
@@ -1540,7 +1552,7 @@ inline simd_sel_t srsran_simd_sel_set_ones()
   return _mm256_castsi256_ps(_mm256_set1_epi32(0xffffffff));
 #else
 #ifdef __SSE4_1__
-  return _mm_castsi256_ps(_mm_set1_epi32(0xffffffff));
+  return _mm_castsi128_ps(_mm_set1_epi32(0xffffffff));
 #else
 #ifdef __ARM_NEON
   return vdupq_n_u32(0xffffffff);

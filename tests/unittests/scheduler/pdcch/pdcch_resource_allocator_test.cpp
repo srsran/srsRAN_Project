@@ -20,10 +20,12 @@
  *
  */
 
-#include "../test_utils/config_generators.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/support/pdcch/pdcch_mapping.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -71,9 +73,10 @@ protected:
   };
 
   base_pdcch_resource_allocator_tester(
-      rnti_t                                   crnti   = to_rnti(0x4601),
-      sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request(),
-      cell_config_dedicated                    ue_cell = test_helpers::create_test_initial_ue_spcell_cell_config()) :
+      rnti_t                                   crnti = to_rnti(0x4601),
+      sched_cell_configuration_request_message msg =
+          sched_config_helper::make_default_sched_cell_configuration_request(),
+      cell_config_dedicated ue_cell = sched_config_helper::create_test_initial_ue_spcell_cell_config()) :
     cell_cfg{sched_cfg, msg}, default_ue_cfg{crnti, cell_cfg, ue_cell.serv_cell_cfg}
   {
     test_logger.set_level(srslog::basic_levels::debug);
@@ -97,7 +100,7 @@ protected:
 
   sched_ue_creation_request_message create_ue_cfg(rnti_t rnti)
   {
-    sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+    sched_ue_creation_request_message ue_creation_req = sched_config_helper::create_default_sched_ue_creation_request();
     ue_creation_req.crnti                             = rnti;
     ue_creation_req.starts_in_fallback                = false;
     (*ue_creation_req.cfg.cells)[0].serv_cell_cfg     = default_ue_cfg.cfg_dedicated();
@@ -446,7 +449,8 @@ TEST(pdcch_resource_allocator_test, monitoring_period)
         unsigned randint  = test_rgen::uniform_int<unsigned>(0, 10239);
         unsigned first_sl = (((randint / period) * period) + offset + 10239) % 10240;
 
-        sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
+        sched_cell_configuration_request_message msg =
+            sched_config_helper::make_default_sched_cell_configuration_request();
         msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_monitoring_slot_periodicity(period);
         msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_monitoring_slot_offset(offset,
                                                                                                        msg.scs_common);
@@ -544,12 +548,13 @@ protected:
     base_pdcch_resource_allocator_tester(
         to_rnti(0x4601),
         [tparams = GetParam()]() {
-          sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request(
-              cell_config_builder_params{.channel_bw_mhz = tparams.cell_bw});
+          sched_cell_configuration_request_message msg =
+              sched_config_helper::make_default_sched_cell_configuration_request(
+                  cell_config_builder_params{.channel_bw_mhz = tparams.cell_bw});
           return msg;
         }(),
         [tparams = GetParam()]() {
-          cell_config_dedicated ue_cell = test_helpers::create_test_initial_ue_spcell_cell_config(
+          cell_config_dedicated ue_cell = sched_config_helper::create_test_initial_ue_spcell_cell_config(
               cell_config_builder_params{.channel_bw_mhz = tparams.cell_bw});
           if (tparams.ss2_nof_candidates.has_value()) {
             ue_cell.serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0].set_non_ss0_nof_candidates(

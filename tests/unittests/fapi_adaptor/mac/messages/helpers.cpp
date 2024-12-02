@@ -677,6 +677,60 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_2_pdu()
   return helper;
 }
 
+pucch_info_test_helper srsran::unittests::build_valid_pucch_format_3_pdu()
+{
+  pucch_info_test_helper helper;
+  pucch_info&            pucch = helper.info;
+
+  helper.bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
+
+  pucch.crnti                      = to_rnti(0x4444);
+  pucch.bwp_cfg                    = &helper.bwp_cfg;
+  pucch.format                     = pucch_format::FORMAT_3;
+  pucch.resources.prbs             = {1, 4};
+  pucch.resources.symbols          = {0, 3};
+  pucch.resources.second_hop_prbs  = {1, 11};
+  pucch.format_3.max_code_rate     = max_pucch_code_rate::dot_08;
+  pucch.format_3.csi_part1_bits    = 102;
+  pucch.format_3.harq_ack_nof_bits = 100;
+  pucch.format_3.sr_bits           = sr_nof_bits::one;
+  pucch.format_3.n_id_0_scrambling = 256;
+  pucch.format_3.n_id_scambling    = 382;
+  pucch.format_3.n_id_hopping      = 180;
+  pucch.format_3.additional_dmrs   = false;
+  pucch.format_3.pi_2_bpsk         = true;
+
+  return helper;
+}
+
+pucch_info_test_helper srsran::unittests::build_valid_pucch_format_4_pdu()
+{
+  pucch_info_test_helper helper;
+  pucch_info&            pucch = helper.info;
+
+  helper.bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
+
+  pucch.crnti                      = to_rnti(0x4444);
+  pucch.bwp_cfg                    = &helper.bwp_cfg;
+  pucch.format                     = pucch_format::FORMAT_4;
+  pucch.resources.prbs             = {1, 2};
+  pucch.resources.symbols          = {0, 3};
+  pucch.resources.second_hop_prbs  = {10, 11};
+  pucch.format_4.max_code_rate     = max_pucch_code_rate::dot_08;
+  pucch.format_4.csi_part1_bits    = 102;
+  pucch.format_4.harq_ack_nof_bits = 100;
+  pucch.format_4.sr_bits           = sr_nof_bits::one;
+  pucch.format_4.n_id_0_scrambling = 256;
+  pucch.format_4.n_id_scambling    = 382;
+  pucch.format_4.n_id_hopping      = 180;
+  pucch.format_4.additional_dmrs   = false;
+  pucch.format_4.pi_2_bpsk         = true;
+  pucch.format_4.n_sf_pucch_f4     = pucch_format_4_sf::sf2;
+  pucch.format_4.orthog_seq_idx    = 1;
+
+  return helper;
+}
+
 mac_ul_sched_result_test_helper srsran::unittests::build_valid_mac_ul_sched_result()
 {
   mac_ul_sched_result_test_helper helper{{}, {}, {}, build_valid_srs_pdu(), {}, {}};

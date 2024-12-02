@@ -376,26 +376,6 @@ smoke relwithdeb cached:
   cache:
     - *cache_build_get
 
-smoke split 7.2 cached:
-  extends: smoke relwithdeb cached
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
-      when: never
-    - if: $ON_MR
-      changes: &split_changes
-        paths:
-          - apps/units/flexible_du/split_*/**/*
-  variables:
-    BUILD_ARGS: -DDU_SPLIT_TYPE=SPLIT_7_2
-    ENABLE_ZEROMQ:
-  after_script: []
-  artifacts:
-
-smoke split 8 cached:
-  extends: smoke split 7.2 cached
-  variables:
-    BUILD_ARGS: -DDU_SPLIT_TYPE=SPLIT_8
-
 smoke tsan cached:
   extends: .smoke tsan
   stage: manual
@@ -522,23 +502,6 @@ smoke relwithdeb clean:
   artifacts:
     <<: *build_artifacts
 
-smoke split 7.2 clean:
-  extends: smoke relwithdeb clean
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
-      changes:
-        <<: *split_changes
-  variables:
-    BUILD_ARGS: -DDU_SPLIT_TYPE=SPLIT_7_2
-    ENABLE_ZEROMQ:
-  after_script: []
-  artifacts:
-
-smoke split 8 clean:
-  extends: smoke split 7.2 clean
-  variables:
-    BUILD_ARGS: -DDU_SPLIT_TYPE=SPLIT_8
-
 smoke tsan clean:
   extends: .smoke tsan
   rules:
@@ -664,6 +627,8 @@ check builders ubuntu versions:
   stage: static
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 15 minutes
   variables:
     VERSIONS_TO_IGNORE: "20.04"
   script:
@@ -676,7 +641,7 @@ smoke release update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   after_script:
@@ -692,7 +657,7 @@ smoke relwithdeb update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -703,7 +668,7 @@ smoke tsan update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   interruptible: false
   retry: 2
   cache:
@@ -714,7 +679,7 @@ smoke rhel update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -725,7 +690,7 @@ smoke archlinux update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -736,7 +701,7 @@ smoke dpdk update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -747,7 +712,7 @@ smoke valgrind update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   interruptible: false
   retry: 2
   after_script:
@@ -763,7 +728,7 @@ smoke avx512 update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   interruptible: false
   retry: 2
   cache:
@@ -774,7 +739,7 @@ smoke arm update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -785,7 +750,7 @@ smoke arm neon update cache:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   cache:
@@ -796,7 +761,7 @@ smoke asan:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   retry: 2
   interruptible: false
   variables:
@@ -817,7 +782,7 @@ package:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 30 minutes
+      start_in: 45 minutes
   variables: &package_variables
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
@@ -832,7 +797,6 @@ package:
   parallel:
     matrix:
       - OS_VERSION: "22.04"
-      - OS_VERSION: "23.10"
       - OS_VERSION: "24.04"
       - OS_VERSION: "24.10"
   needs: []
@@ -851,7 +815,6 @@ install-package:
   parallel:
     matrix:
       - OS_VERSION: "22.04"
-      - OS_VERSION: "23.10"
       - OS_VERSION: "24.04"
       - OS_VERSION: "24.10"
   needs:
@@ -862,6 +825,8 @@ check package ubuntu versions:
   stage: static
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 15 minutes
 
 # Validate export on, enabled for test vector generation
 
@@ -870,7 +835,7 @@ export on amd64:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 60 minutes
+      start_in: 75 minutes
   interruptible: false
   variables:
     COMPILER: gcc
@@ -879,8 +844,8 @@ export on amd64:
     INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-22.04]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-22.04]
         MARCH: x86-64-v3
 
 export on amd64 avx512:
@@ -889,7 +854,7 @@ export on amd64 avx512:
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
+      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-22.04]
         MARCH: x86-64-v4
 
 # Build + unit tests combinations
@@ -899,7 +864,7 @@ ubuntu-24.10 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 210 minutes
+      start_in: 105 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -914,7 +879,7 @@ ubuntu-24.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 120 minutes
+      start_in: 135 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -929,40 +894,10 @@ ubuntu-24.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 120 minutes
+      start_in: 135 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
-    MARCH: x86-64-v4
-    INFRASTRUCTURE_TAG: amd64-avx2-avx512
-  parallel:
-    matrix:
-      - <<: *basic_combinations
-
-ubuntu-23.10 amd64 avx2:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      when: delayed
-      start_in: 150 minutes
-  interruptible: false
-  variables:
-    OS: ubuntu-23.10
-    MARCH: x86-64-v3
-    INFRASTRUCTURE_TAG: amd64-avx2
-  parallel:
-    matrix:
-      - <<: *basic_combinations
-
-ubuntu-23.10 amd64 avx512:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      when: delayed
-      start_in: 150 minutes
-  interruptible: false
-  variables:
-    OS: ubuntu-23.10
     MARCH: x86-64-v4
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
@@ -974,7 +909,7 @@ ubuntu-22.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 180 minutes
+      start_in: 165 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -989,7 +924,7 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 240 minutes
+      start_in: 195 minutes
   interruptible: false
   variables:
     OS: rhel-8
@@ -1006,25 +941,10 @@ ubuntu-24.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 60 minutes
+      start_in: 75 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
-    MARCH: armv8.2-a+crypto+fp16+dotprod
-    INFRASTRUCTURE_TAG: arm64
-  parallel:
-    matrix:
-      - <<: *basic_combinations
-
-ubuntu-23.10 arm neon:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      when: delayed
-      start_in: 90 minutes
-  interruptible: false
-  variables:
-    OS: ubuntu-23.10
     MARCH: armv8.2-a+crypto+fp16+dotprod
     INFRASTRUCTURE_TAG: arm64
   parallel:
@@ -1038,7 +958,7 @@ ubuntu dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 90 minutes
+      start_in: 225 minutes
   interruptible: false
   variables:
     ENABLE_UHD: "False"
@@ -1055,9 +975,6 @@ ubuntu dpdk:
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["23.11.1_avx2"]
-      - OS: ubuntu-23.10
-        COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
@@ -1172,7 +1089,7 @@ debian 12 amd64 avx512:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1182,7 +1099,7 @@ debian 12 amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
@@ -1199,7 +1116,7 @@ sanitizers amd64 native:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1209,7 +1126,7 @@ sanitizers amd64 native:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
@@ -1224,7 +1141,7 @@ sanitizers amd64 avx2:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1234,7 +1151,7 @@ sanitizers amd64 avx2:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
@@ -1252,7 +1169,7 @@ sanitizers amd64 avx512:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1262,7 +1179,7 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-24.10, ubuntu-24.04, ubuntu-23.10]
+      - OS: [ubuntu-24.10, ubuntu-24.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
@@ -1300,9 +1217,6 @@ build uhd alt:
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.7.0.0", "4.6.0.0"]
-      - OS: ubuntu-23.10
-        COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.7.0.0", "4.6.0.0", "4.4.0.0"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
@@ -1314,7 +1228,7 @@ ubuntu-24.10 amd64 native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 30 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -1328,7 +1242,7 @@ ubuntu-24.10 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 30 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -1343,7 +1257,7 @@ ubuntu-24.10 arm native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 30 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -1357,7 +1271,7 @@ ubuntu-24.10 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 30 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -1372,7 +1286,7 @@ ubuntu-24.04 amd64 native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -1386,38 +1300,10 @@ ubuntu-24.04 arm native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
-    INFRASTRUCTURE_TAG: arm64
-  parallel:
-    matrix:
-      - <<: *basic_combinations
-
-ubuntu-23.10 amd64 native:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 30 minutes
-  interruptible: false
-  variables:
-    OS: ubuntu-23.10
-    INFRASTRUCTURE_TAG: amd64
-  parallel:
-    matrix:
-      - <<: *basic_combinations
-
-ubuntu-23.10 arm native:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 30 minutes
-  interruptible: false
-  variables:
-    OS: ubuntu-23.10
     INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
@@ -1428,7 +1314,7 @@ ubuntu-22.04 amd64 native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 90 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1442,7 +1328,7 @@ ubuntu-22.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 90 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1457,7 +1343,7 @@ ubuntu-22.04 arm native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 90 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1471,7 +1357,7 @@ ubuntu-22.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 90 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1553,7 +1439,7 @@ ubuntu-22.04 amd64 avx2 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 240 minutes
+      start_in: 210 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1569,42 +1455,10 @@ ubuntu-22.04 amd64 avx512 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 270 minutes
+      start_in: 240 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
-    MARCH: x86-64-v4
-    INFRASTRUCTURE_TAG: amd64-avx2-avx512
-  parallel:
-    matrix:
-      - <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.6_avx512", "23.11.1_avx512"]
-
-ubuntu-23.10 amd64 avx2 dpdk:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 300 minutes
-  interruptible: false
-  variables:
-    OS: ubuntu-23.10
-    MARCH: x86-64-v3
-    INFRASTRUCTURE_TAG: amd64-avx2
-  parallel:
-    matrix:
-      - <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
-
-ubuntu-23.10 amd64 avx512 dpdk:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 330 minutes
-  interruptible: false
-  variables:
-    OS: ubuntu-23.10
     MARCH: x86-64-v4
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
@@ -1617,7 +1471,7 @@ ubuntu-24.04 amd64 avx2 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 360 minutes
+      start_in: 270 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -1633,7 +1487,7 @@ ubuntu-24.04 amd64 avx512 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 390 minutes
+      start_in: 270 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -1649,7 +1503,7 @@ ubuntu-24.10 amd64 avx2 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 420 minutes
+      start_in: 300 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -1665,7 +1519,7 @@ ubuntu-24.10 amd64 avx512 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 450 minutes
+      start_in: 300 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10

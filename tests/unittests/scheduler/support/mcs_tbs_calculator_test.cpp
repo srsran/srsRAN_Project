@@ -23,9 +23,10 @@
 #include "lib/scheduler/support/dmrs_helpers.h"
 #include "lib/scheduler/support/mcs_tbs_calculator.h"
 #include "lib/scheduler/support/sch_pdu_builder.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/ran/sch/tbs_calculator.h"
-#include "srsran/ran/uci/uci_mapping.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -49,7 +50,7 @@ class dl_mcs_tbs_calculator_test_bench : public ::testing::TestWithParam<mcs_tes
 {
 public:
   dl_mcs_tbs_calculator_test_bench() :
-    cell_cfg(expert_cfg, test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(expert_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pdsch_cfg(get_pdsch_config_f1_0_c_rnti(
@@ -101,7 +102,7 @@ class ul_mcs_tbs_prbs_calculator_test_bench : public ::testing::TestWithParam<mc
 {
 public:
   ul_mcs_tbs_prbs_calculator_test_bench() :
-    cell_cfg(sched_cfg, test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pusch_cfg(get_pusch_config_f0_0_tc_rnti(
@@ -151,7 +152,7 @@ class ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench : public ::testing::TestWith
 {
 public:
   ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench() :
-    cell_cfg(sched_cfg, test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
@@ -204,7 +205,7 @@ class ul_mcs_tbs_prbs_calculator_low_mcs_test_bench : public ::testing::Test
 {
 public:
   ul_mcs_tbs_prbs_calculator_low_mcs_test_bench() :
-    cell_cfg(sched_cfg, test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
@@ -272,7 +273,7 @@ class ul_mcs_tbs_prbs_calculator_with_harq_ack : public ::testing::Test
 {
 public:
   ul_mcs_tbs_prbs_calculator_with_harq_ack() :
-    cell_cfg(sched_cfg, test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pusch_cfg(get_pusch_config_f0_1_c_rnti(

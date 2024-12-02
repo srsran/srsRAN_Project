@@ -31,13 +31,13 @@
 namespace srsran {
 namespace srs_du {
 
-/// ORAN DU implementation dependencies.
+/// O-RAN DU implementation dependencies.
 struct o_du_impl_dependencies {
   std::unique_ptr<o_du_low>  du_lo;
   std::unique_ptr<o_du_high> du_hi;
 };
 
-/// ORAN DU implementation.
+/// O-RAN DU implementation.
 class o_du_impl final : public o_du, public du_power_controller
 {
 public:

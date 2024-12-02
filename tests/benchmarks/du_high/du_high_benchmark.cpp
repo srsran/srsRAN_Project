@@ -55,8 +55,8 @@
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/format/custom_formattable.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include <pthread.h>
@@ -590,23 +590,25 @@ public:
     report_fatal_error_if_not(bsr_mac_subpdu.append(lbsr_buff_sz), "Failed to allocate PDU");
 
     // Instantiate a DU-high object.
-    cfg.ran.gnb_du_id                              = (gnb_du_id_t)1;
-    cfg.ran.gnb_du_name                            = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
-    cfg.exec_mapper                                = &workers->get_exec_mapper();
-    cfg.f1c_client                                 = &sim_cu_cp;
-    cfg.f1u_gw                                     = &sim_cu_up;
-    cfg.phy_adapter                                = &sim_phy;
-    cfg.timers                                     = &timers;
+    cfg.ran.gnb_du_id   = (gnb_du_id_t)1;
+    cfg.ran.gnb_du_name = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
+
     cfg.ran.cells                                  = {config_helpers::make_default_du_cell_config(params)};
     cfg.ran.sched_cfg                              = config_helpers::make_default_scheduler_expert_config();
     cfg.ran.sched_cfg.log_high_latency_diagnostics = sched_tracing_enabled;
     cfg.ran.sched_cfg.ue.strategy_cfg              = strategy_cfg;
     cfg.ran.sched_cfg.ue.pdsch_nof_rbs             = {1, max_nof_rbs_per_dl_grant};
     cfg.ran.mac_cfg                                = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.ran.qos                   = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
-    cfg.mac_p                     = &mac_pcap;
-    cfg.rlc_p                     = &rlc_pcap;
-    cfg.sched_ue_metrics_notifier = &metrics_handler;
+    cfg.ran.qos = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
+
+    dependencies.exec_mapper               = &workers->get_exec_mapper();
+    dependencies.f1c_client                = &sim_cu_cp;
+    dependencies.f1u_gw                    = &sim_cu_up;
+    dependencies.phy_adapter               = &sim_phy;
+    dependencies.timers                    = &timers;
+    dependencies.mac_p                     = &mac_pcap;
+    dependencies.rlc_p                     = &rlc_pcap;
+    dependencies.sched_ue_metrics_notifier = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     cfg.ran.cells[0].pucch_cfg.nof_sr_resources               = 30;
@@ -621,7 +623,7 @@ public:
     cfg.ran.sched_cfg.ue.max_puschs_per_slot    = 61;
     cfg.ran.sched_cfg.ue.max_ul_grants_per_slot = 64;
 
-    du_hi = std::make_unique<du_high_impl>(cfg);
+    du_hi = std::make_unique<du_high_impl>(cfg, dependencies);
 
     // Create PDCP PDU Payload.
     report_fatal_error_if_not(
@@ -1054,6 +1056,7 @@ public:
   const unsigned             tx_rx_delay = 4;
   cell_config_builder_params params;
   du_high_configuration      cfg{};
+  du_high_dependencies       dependencies{};
   /// Size of the DL buffer status to push for DL Tx.
   unsigned     f1u_dl_pdu_bytes_per_slot;
   units::bytes f1u_pdu_size{DEFAULT_DL_PDU_SIZE};
@@ -1089,9 +1092,9 @@ public:
   // | LCG7 | LCG6 |    ...   | LCG0 |  Octet 3
   // |         Buffer Size 1         |  Octet 4
 
-  // Construct LBSR MAC subPDU for LCG 1.
+  // Construct LBSR MAC subPDU for LCG 2.
   // NOTE: LBSR buffer size is populated in the constructor.
-  byte_buffer bsr_mac_subpdu = byte_buffer::create({0x3e, 0x02, 0x02}).value();
+  byte_buffer bsr_mac_subpdu = byte_buffer::create({0x3e, 0x02, 0x04}).value();
 
   /// Size of the UL Buffer status report to push for UL Tx.
   unsigned ul_bsr_bytes;
@@ -1194,15 +1197,30 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
   bench.stop();
   srslog::flush();
 
+  const subcarrier_spacing scs = bench.cfg.ran.cells[0].scs_common;
+  const double pdschs_per_slot = bench.sim_phy.metrics.nof_dl_grants / (double)bench.sim_phy.metrics.slot_dl_count;
+  const double puschs_per_slot = bench.sim_phy.metrics.nof_ul_grants / (double)bench.sim_phy.metrics.slot_ul_count;
   fmt::print("\nStats: #slots={}, #PDSCHs={}, #PDSCHs-per-slot={:.3}, dl_bitrate={:.3} Mbps, #PUSCHs={}, "
              "#PUSCHs-per-slot={:.3}, ul_bitrate={:.3} Mbps\n",
              bench.sim_phy.metrics.slot_count,
              bench.sim_phy.metrics.nof_dl_grants,
-             bench.sim_phy.metrics.nof_dl_grants / (double)bench.sim_phy.metrics.slot_dl_count,
-             bench.sim_phy.metrics.dl_mbps(bench.cfg.ran.cells[0].scs_common),
+             pdschs_per_slot,
+             bench.sim_phy.metrics.dl_mbps(scs),
              bench.sim_phy.metrics.nof_ul_grants,
-             bench.sim_phy.metrics.nof_ul_grants / (double)bench.sim_phy.metrics.slot_ul_count,
-             bench.sim_phy.metrics.ul_mbps(bench.cfg.ran.cells[0].scs_common));
+             puschs_per_slot,
+             bench.sim_phy.metrics.ul_mbps(scs));
+
+  // Some sanity checks to avoid regressions.
+  if (dl_buffer_state_bytes > 0) {
+    report_fatal_error_if_not(pdschs_per_slot > 0.5, "The scheduler is not scheduling enough DL grants");
+  } else {
+    report_fatal_error_if_not(pdschs_per_slot < 0.1, "The scheduler is not scheduling enough DL grants");
+  }
+  if (ul_bsr_bytes > 0) {
+    report_fatal_error_if_not(puschs_per_slot > 0.1, "The scheduler is not scheduling enough UL grants");
+  } else {
+    report_fatal_error_if_not(puschs_per_slot < 0.1, "The scheduler is scheduling too many UL grants");
+  }
 }
 
 /// \brief Configure main thread priority and affinity to avoid interference from other processes (including stressors).
@@ -1243,13 +1261,14 @@ int main(int argc, char** argv)
   static const std::size_t byte_buffer_segment_size = 2048;
 
   // Set DU-high logging.
+  auto all_log_level  = srslog::basic_levels::warning;
   auto test_log_level = srslog::basic_levels::warning;
   srslog::fetch_basic_logger("TEST").set_level(test_log_level);
-  srslog::fetch_basic_logger("RLC").set_level(test_log_level);
+  srslog::fetch_basic_logger("RLC").set_level(all_log_level);
   srslog::fetch_basic_logger("MAC", true).set_level(test_log_level);
   srslog::fetch_basic_logger("SCHED", true).set_level(test_log_level);
   srslog::fetch_basic_logger("DU-F1").set_level(test_log_level);
-  srslog::fetch_basic_logger("DU-F1-U").set_level(test_log_level);
+  srslog::fetch_basic_logger("DU-F1-U").set_level(all_log_level);
   srslog::fetch_basic_logger("UE-MNG").set_level(test_log_level);
   srslog::fetch_basic_logger("DU-MNG").set_level(test_log_level);
   srslog::fetch_basic_logger("METRICS").set_level(test_log_level);

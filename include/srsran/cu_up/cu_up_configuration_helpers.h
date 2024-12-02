@@ -41,8 +41,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
     cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
-
-    qos_list[uint_to_five_qi(1)] = cfg;
+    qos_list[uint_to_five_qi(1)]        = cfg;
   }
   {
     // 5QI=2
@@ -51,8 +50,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
     cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
-
-    qos_list[uint_to_five_qi(2)] = cfg;
+    qos_list[uint_to_five_qi(2)]        = cfg;
   }
   {
     // 5QI=5
@@ -61,8 +59,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
     cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
-
-    qos_list[uint_to_five_qi(5)] = cfg;
+    qos_list[uint_to_five_qi(5)]        = cfg;
   }
   {
     // 5QI=7
@@ -71,10 +68,8 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
     cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
-
-    cfg.f1u_cfg.warn_on_drop = warn_on_drop;
-
-    qos_list[uint_to_five_qi(7)] = cfg;
+    cfg.f1u_cfg.warn_on_drop            = warn_on_drop;
+    qos_list[uint_to_five_qi(7)]        = cfg;
   }
   {
     // 5QI=9
@@ -83,10 +78,8 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
     cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
-
-    cfg.f1u_cfg.warn_on_drop = warn_on_drop;
-
-    qos_list[uint_to_five_qi(9)] = cfg;
+    cfg.f1u_cfg.warn_on_drop            = warn_on_drop;
+    qos_list[uint_to_five_qi(9)]        = cfg;
   }
   return qos_list;
 }

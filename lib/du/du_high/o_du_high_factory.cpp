@@ -23,6 +23,7 @@
 #include "srsran/du/du_high/o_du_high_factory.h"
 #include "o_du_high_impl.h"
 #include "srsran/du/du_high/du_high_factory.h"
+#include "srsran/e2/e2_du_factory.h"
 #include "srsran/fapi/buffered_decorator_factories.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi/messages.h"
@@ -238,52 +239,78 @@ private:
 
 } // namespace
 
-std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config&  config,
-                                                          o_du_high_dependencies&& odu_dependencies)
+static o_du_high_impl_dependencies
+resolve_o_du_high_impl_dependencies(const o_du_high_config&             config,
+                                    span<o_du_high_sector_dependencies> odu_dependencies)
 {
-  srsran_assert(config.du_hi.ran.cells.size() == odu_dependencies.sectors.size(),
+  srsran_assert(config.du_hi.ran.cells.size() == odu_dependencies.size(),
                 "DU high number of cells '{}' does not match number sectors '{}' in O-DU dependencies",
                 config.du_hi.ran.cells.size(),
-                odu_dependencies.sectors.size());
+                odu_dependencies.size());
 
   o_du_high_impl_dependencies dependencies;
+  dependencies.logger = &srslog::fetch_basic_logger("DU");
 
-  for (unsigned i = 0, e = odu_dependencies.sectors.size(); i != e; ++i) {
+  for (unsigned i = 0, e = odu_dependencies.size(); i != e; ++i) {
     if (config.fapi.log_level == srslog::basic_levels::debug) {
       if (config.fapi.l2_nof_slots_ahead == 0) {
-        dependencies.du_high_adaptor.push_back(std::make_unique<mac_fapi_adaptor_with_logger_impl>(
-            config.du_hi.ran.cells[i], odu_dependencies.sectors[i], i));
+        dependencies.du_high_adaptor.push_back(
+            std::make_unique<mac_fapi_adaptor_with_logger_impl>(config.du_hi.ran.cells[i], odu_dependencies[i], i));
       } else {
-        srsran_assert(odu_dependencies.sectors[i].fapi_executor, "Invalid executor for the FAPI buffered decorator");
+        srsran_assert(odu_dependencies[i].fapi_executor, "Invalid executor for the FAPI buffered decorator");
         dependencies.du_high_adaptor.push_back(
             std::make_unique<mac_fapi_adaptor_with_logger_and_message_buffering_impl>(
-                config.du_hi.ran.cells[i], odu_dependencies.sectors[i], i, config.fapi.l2_nof_slots_ahead));
+                config.du_hi.ran.cells[i], odu_dependencies[i], i, config.fapi.l2_nof_slots_ahead));
       }
     } else {
       if (config.fapi.l2_nof_slots_ahead == 0) {
-        dependencies.du_high_adaptor.push_back(
-            build_fapi_adaptors(config.du_hi.ran.cells[i], odu_dependencies.sectors[i], i));
+        dependencies.du_high_adaptor.push_back(build_fapi_adaptors(config.du_hi.ran.cells[i], odu_dependencies[i], i));
       } else {
-        srsran_assert(odu_dependencies.sectors[i].fapi_executor, "Invalid executor for the FAPI buffered decorator");
+        srsran_assert(odu_dependencies[i].fapi_executor, "Invalid executor for the FAPI buffered decorator");
         dependencies.du_high_adaptor.push_back(std::make_unique<mac_fapi_adaptor_with_message_buffering_impl>(
-            config.du_hi.ran.cells[i], odu_dependencies.sectors[i], i, config.fapi.l2_nof_slots_ahead));
+            config.du_hi.ran.cells[i], odu_dependencies[i], i, config.fapi.l2_nof_slots_ahead));
       }
     }
   }
 
-  auto& logger        = srslog::fetch_basic_logger("DU");
-  dependencies.logger = &logger;
+  return dependencies;
+}
 
-  logger.debug("FAPI adaptors created successfully");
+std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config&  config,
+                                                          o_du_high_dependencies&& odu_dependencies)
+{
+  o_du_high_impl_dependencies dependencies = resolve_o_du_high_impl_dependencies(config, odu_dependencies.sectors);
+
+  dependencies.logger->debug("FAPI adaptors created successfully");
+
+  srs_du::du_high_configuration du_hi_cfg = config.du_hi;
 
   auto odu = std::make_unique<o_du_high_impl>(std::move(dependencies));
 
   // Instantiate DU-high.
-  srs_du::du_high_configuration du_hi_cfg = config.du_hi;
-  du_hi_cfg.phy_adapter                   = &odu->get_mac_result_notifier();
-  odu->set_du_high(make_du_high(du_hi_cfg));
+  odu_dependencies.du_hi.phy_adapter = &odu->get_mac_result_notifier();
 
-  logger.info("DU created successfully");
+  if (!odu_dependencies.e2_client) {
+    odu->set_du_high(make_du_high(du_hi_cfg, odu_dependencies.du_hi));
+    dependencies.logger->info("DU created successfully");
+
+    return odu;
+  }
+
+  auto du_hi = make_du_high(du_hi_cfg, odu_dependencies.du_hi);
+
+  auto e2agent = create_e2_du_agent(
+      config.e2ap_config,
+      *odu_dependencies.e2_client,
+      odu_dependencies.e2_du_metric_iface,
+      &du_hi->get_f1ap_du(),
+      &du_hi->get_du_configurator(),
+      timer_factory{*odu_dependencies.du_hi.timers, odu_dependencies.du_hi.exec_mapper->du_e2_executor()},
+      odu_dependencies.du_hi.exec_mapper->du_e2_executor());
+
+  odu->set_e2_agent(std::move(e2agent));
+  odu->set_du_high(std::move(du_hi));
+  dependencies.logger->info("DU created successfully");
 
   return odu;
 }

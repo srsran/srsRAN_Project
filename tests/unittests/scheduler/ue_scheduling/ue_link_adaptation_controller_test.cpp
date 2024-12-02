@@ -22,6 +22,7 @@
 
 #include "lib/scheduler/support/mcs_calculator.h"
 #include "lib/scheduler/ue_context/ue_link_adaptation_controller.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -50,9 +51,9 @@ public:
   {
   }
 
-  scheduler_expert_config       sched_cfg;
-  cell_configuration            cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
-  ue_channel_state_manager      ue_channel_state{sched_cfg.ue, 1};
+  scheduler_expert_config  sched_cfg;
+  cell_configuration       cell_cfg{sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()};
+  ue_channel_state_manager ue_channel_state{sched_cfg.ue, 1};
   ue_link_adaptation_controller controller{cell_cfg, ue_channel_state};
 
   const pdsch_mcs_table dl_mcs_table = pdsch_mcs_table::qam64;

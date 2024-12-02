@@ -27,6 +27,7 @@
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/support/math/stats.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -47,6 +48,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned count_uci_harqs        = 0;
       unsigned count_crc_acks         = 0;
       unsigned count_crc_pdus         = 0;
+      unsigned count_sr               = 0;
       unsigned dl_mcs                 = 0;
       unsigned nof_dl_cws             = 0;
       unsigned ul_mcs                 = 0;
@@ -62,6 +64,14 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned nof_pusch_rsrp_reports = 0;
       unsigned tot_dl_prbs_used       = 0;
       unsigned tot_ul_prbs_used       = 0;
+      /// TA statistics over the metrics report interval, in seconds.
+      sample_statistics<float> ta;
+      /// PUSCH TA statistics over the metrics report interval, in seconds.
+      sample_statistics<float> pusch_ta;
+      /// PUCCH TA statistics over the metrics report interval, in seconds.
+      sample_statistics<float> pucch_ta;
+      /// SRS TA statistics over the metrics report interval, in seconds.
+      sample_statistics<float> srs_ta;
       /// CQI statistics over the metrics report interval.
       sample_statistics<unsigned> cqi;
       /// RI statistics over the metrics report interval.
@@ -77,8 +87,9 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     rnti_t                                 rnti;
     unsigned                               last_bsr = 0;
     std::optional<int>                     last_phr;
-    std::optional<phy_time_unit>           last_ta;
     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
+    std::optional<float>                   last_dl_olla;
+    std::optional<float>                   last_ul_olla;
     non_persistent_data                    data;
 
     scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period);
@@ -136,6 +147,9 @@ public:
   /// \brief Register CRC indication.
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
+  /// \brief Handle SRS indication.
+  void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu);
+
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
 
@@ -144,6 +158,9 @@ public:
 
   /// \brief Handle UCI PDU indication.
   void handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu);
+
+  /// \brief Handle SR indication.
+  void handle_sr_indication(du_ue_index_t ue_index);
 
   /// \brief Handle UL BSR indication.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr);

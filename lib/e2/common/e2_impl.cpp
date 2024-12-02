@@ -31,13 +31,13 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using namespace asn1;
 
-e2_impl::e2_impl(e2ap_configuration&      cfg_,
-                 e2ap_e2agent_notifier&   agent_notifier_,
-                 timer_factory            timers_,
-                 e2_connection_client&    e2_client_,
-                 e2_subscription_manager& subscription_mngr_,
-                 e2sm_manager&            e2sm_mngr_,
-                 task_executor&           task_exec_) :
+e2_impl::e2_impl(const e2ap_configuration& cfg_,
+                 e2ap_e2agent_notifier&    agent_notifier_,
+                 timer_factory             timers_,
+                 e2_connection_client&     e2_client_,
+                 e2_subscription_manager&  subscription_mngr_,
+                 e2sm_manager&             e2sm_mngr_,
+                 task_executor&            task_exec_) :
   logger(srslog::fetch_basic_logger("E2")),
   cfg(cfg_),
   timers(timers_),

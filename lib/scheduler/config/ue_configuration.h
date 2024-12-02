@@ -202,6 +202,18 @@ public:
     return std::get<tx_scheme_codebook>(cell_cfg_ded.ul_config.value().init_ul_bwp.pusch_cfg.value().tx_cfg.value());
   }
 
+  /// \brief Gets the SRS transmit number of ports.
+  /// \remark An assertion is triggered if no SRS resource is present.
+  const auto& get_srs_nof_ports() const
+  {
+    srsran_assert(cell_cfg_ded.ul_config.has_value(), "Missing dedicated UL configuration.");
+    srsran_assert(cell_cfg_ded.ul_config.value().init_ul_bwp.srs_cfg.has_value(),
+                  "Missing dedicated SRS configuration.");
+    srsran_assert(cell_cfg_ded.ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_list.size() == 1,
+                  "SRS resource list size must be one.");
+    return cell_cfg_ded.ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_list.front().nof_ports;
+  }
+
 private:
   void configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common);
   void configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_uplink_common& bwp_ul_common);

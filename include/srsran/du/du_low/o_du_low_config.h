@@ -29,7 +29,7 @@ namespace srs_du {
 
 using cell_prach_ports_entry = std::vector<uint8_t>;
 
-/// ORAN DU low configuration.
+/// O-RAN DU low configuration.
 struct o_du_low_config {
   du_low_config du_low_cfg;
   /// PRACH ports.

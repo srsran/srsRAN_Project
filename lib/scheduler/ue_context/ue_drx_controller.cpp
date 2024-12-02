@@ -33,19 +33,34 @@ ue_drx_controller::ue_drx_controller(subcarrier_spacing                scs_commo
                                      srslog::basic_logger&             logger_) :
   scs_common(scs_common_),
   conres_timer(conres_timer_),
-  drx_cfg(drx_cfg_),
   ul_lc_mng(ul_lc_mng_),
   ul_ccch_slot_rx(ul_ccch_slot_rx_),
   logger(logger_)
 {
-  if (drx_cfg.has_value()) {
-    const unsigned nof_slots_per_sf = get_nof_slots_per_subframe(scs_common);
+  reconfigure(drx_cfg_);
+}
 
-    active_window_period = drx_cfg.value().long_cycle.count() * nof_slots_per_sf;
-    unsigned win_start   = drx_cfg.value().long_start_offset.count() * nof_slots_per_sf;
-    active_window        = {win_start, win_start + drx_cfg.value().on_duration_timer.count() * nof_slots_per_sf};
-    inactivity_dur       = drx_cfg.value().inactivity_timer.count() * nof_slots_per_sf;
+void ue_drx_controller::reconfigure(const std::optional<drx_config>& new_drx_cfg)
+{
+  if (drx_cfg == new_drx_cfg) {
+    // Nothing happens.
+    return;
   }
+  if (not new_drx_cfg.has_value()) {
+    // DRX is disabled.
+    drx_cfg.reset();
+    return;
+  }
+
+  drx_cfg = new_drx_cfg;
+
+  const unsigned nof_slots_per_sf = get_nof_slots_per_subframe(scs_common);
+
+  // Convert milliseconds to slots.
+  active_window_period = drx_cfg.value().long_cycle.count() * nof_slots_per_sf;
+  unsigned win_start   = drx_cfg.value().long_start_offset.count() * nof_slots_per_sf;
+  active_window        = {win_start, win_start + drx_cfg.value().on_duration_timer.count() * nof_slots_per_sf};
+  inactivity_dur       = drx_cfg.value().inactivity_timer.count() * nof_slots_per_sf;
 }
 
 void ue_drx_controller::slot_indication(slot_point dl_slot)
@@ -58,25 +73,25 @@ void ue_drx_controller::slot_indication(slot_point dl_slot)
     active_time_end = {};
   }
 
-  const unsigned slot_mod = dl_slot.to_uint() % active_window_period;
-  if (slot_mod >= active_window.start() and slot_mod < active_window.stop()) {
-    // "the Active Time includes the time while [...] drx-onDuration [...] is running."
-    slot_point new_end = dl_slot + (active_window.stop() - slot_mod);
-    if (not active_time_end.valid() or new_end > active_time_end) {
-      active_time_end = new_end;
+  if (not active_time_end.valid()) {
+    const unsigned slot_mod = dl_slot.to_uint() % active_window_period;
+    if (slot_mod >= active_window.start() and slot_mod < active_window.stop()) {
+      // "the Active Time includes the time while [...] drx-onDuration [...] is running."
+      slot_point new_end = dl_slot + (active_window.stop() - slot_mod);
+      active_time_end    = new_end;
     }
   }
 }
 
-bool ue_drx_controller::is_pdcch_enabled(slot_point dl_slot) const
+bool ue_drx_controller::is_pdcch_enabled() const
 {
   if (not drx_cfg.has_value()) {
     return true;
   }
-  return is_active_time(dl_slot);
+  return is_active_time();
 }
 
-bool ue_drx_controller::is_active_time(slot_point dl_slot) const
+bool ue_drx_controller::is_active_time() const
 {
   if (active_time_end.valid()) {
     // active_time_end is set during drx-onDurationTimer or drx-InactivityTimer.
@@ -97,11 +112,14 @@ void ue_drx_controller::on_new_pdcch_alloc(slot_point pdcch_slot)
     return;
   }
 
-  if (is_active_time(pdcch_slot)) {
+  if (inactivity_dur != 0 and is_active_time()) {
     // "1> if the MAC entity is in Active Time
     // "  2> if the PDCCH indicates a new transmission (DL or UL) [...] start or restart drx-InactivityTimer in the
     // first symbol after the end of the PDCCH reception."
-    active_time_end = pdcch_slot + inactivity_dur;
+    slot_point new_end = pdcch_slot + inactivity_dur;
+    if (not active_time_end.valid() or active_time_end < new_end) {
+      active_time_end = new_end;
+    }
   }
 }
 

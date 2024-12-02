@@ -25,7 +25,6 @@
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/rlc/rlc_factory.h"
-#include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -400,9 +399,22 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
 
   // Pack cellGroupConfig.
   {
-    asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
+    asn1::bit_ref     bref{resp.cell_group_cfg};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
+  }
+
+  // Calculate ASN.1 measGapConfig to be sent in DU-to-CU RRC container.
+  if (prev_ue_res_cfg.meas_gap != ue->resources->meas_gap) {
+    asn1::rrc_nr::meas_gap_cfg_s meas_gap;
+    calculate_meas_gap_config_diff(meas_gap, prev_ue_res_cfg.meas_gap, ue->resources->meas_gap);
+
+    // Pack measGapConfig.
+    {
+      asn1::bit_ref     bref{resp.meas_gap_cfg};
+      asn1::SRSASN_CODE code = meas_gap.pack(bref);
+      srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid measGapConfig");
+    }
   }
 
   return resp;
@@ -423,7 +435,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_empty_ue_config
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
   // Pack cellGroupConfig.
   {
-    asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
+    asn1::bit_ref     bref{resp.cell_group_cfg};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }

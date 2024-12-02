@@ -36,18 +36,25 @@ const std::array<uint8_t, 16> k_128_enc =
 class pdcp_tx_gen_frame : public pdcp_tx_lower_notifier, public pdcp_tx_upper_control_notifier
 {
 public:
+  uint32_t num_pdus              = 0;
+  uint32_t num_discards          = 0;
+  uint32_t num_protocol_failures = 0;
+  uint32_t num_max_count_reached = 0;
+
   /// PDCP TX upper layer control notifier
-  void on_max_count_reached() final {}
-  void on_protocol_failure() final {}
+  void on_max_count_reached() final { num_max_count_reached++; }
+  void on_protocol_failure() final { num_protocol_failures++; }
 
   /// PDCP TX lower layer data notifier
-  void on_new_pdu(byte_buffer pdu, bool is_retx) final {}
-  void on_discard_pdu(uint32_t pdcp_sn) final {}
+  void on_new_pdu(byte_buffer pdu, bool is_retx) final { num_pdus++; }
+  void on_discard_pdu(uint32_t pdcp_sn) final { num_discards++; }
 };
 
 struct bench_params {
-  unsigned nof_repetitions   = 1000;
+  unsigned nof_repetitions   = 8;
   bool     print_timing_info = false;
+  unsigned nof_sdus          = 1024;
+  unsigned sdu_len           = 1500;
 };
 
 struct app_params {
@@ -62,6 +69,8 @@ static void usage(const char* prog, const bench_params& params, const app_params
   fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", app.algo);
   fmt::print("\t-t Print timing information [Default {}]\n", params.print_timing_info);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  fmt::print("\t-p Number of SDUs per repetition [Default {}]\n", params.nof_sdus);
+  fmt::print("\t-s SDU length [Default {}]\n", params.sdu_len);
   fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n", app.log_level);
   fmt::print("\t-f Log filename to use [Default {}]\n", app.log_filename);
   fmt::print("\t-h Show this message\n");
@@ -70,10 +79,16 @@ static void usage(const char* prog, const bench_params& params, const app_params
 static void parse_args(int argc, char** argv, bench_params& params, app_params& app)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "a:R:l:f:th")) != -1) {
+  while ((opt = getopt(argc, argv, "a:R:p:s:l:f:th")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'p':
+        params.nof_sdus = std::strtol(optarg, nullptr, 10);
+        break;
+      case 's':
+        params.sdu_len = std::strtol(optarg, nullptr, 10);
         break;
       case 'a':
         app.algo = std::strtol(optarg, nullptr, 10);
@@ -104,16 +119,17 @@ void benchmark_pdcp_tx(bench_params                  params,
                        security::ciphering_algorithm ciph_algo)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer,
-                 "Benchmark PDCP TX. int={} ciph={} int_algo={} ciph_algo={}",
-                 int_enabled,
-                 ciph_enabled,
-                 int_algo,
-                 ciph_algo);
+  fmt::format_to(buffer, "Benchmark PDCP RX. NIA{} ({}) NEA{} ({})", int_algo, int_enabled, ciph_algo, ciph_enabled);
+
+  std::vector<byte_buffer> sdu_list;
+
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   timer_manager      timers;
   manual_task_worker worker{64};
+
+  int nof_sdus = params.nof_sdus;
+  int sdu_len  = params.sdu_len;
 
   // Set TX config
   pdcp_tx_config config         = {};
@@ -139,38 +155,54 @@ void benchmark_pdcp_tx(bench_params                  params,
   sec_cfg.cipher_algo = ciph_algo;
 
   // Create test frame
-  pdcp_tx_gen_frame frame = {};
+  std::unique_ptr<pdcp_tx_gen_frame>       frame;
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
+  std::unique_ptr<pdcp_entity_tx>          pdcp_tx;
 
-  // Create PDCP entities
-  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
-      std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
-  std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
-  pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
-
-  const uint32_t sdu_size     = 1500;
-  const uint32_t max_pdu_size = sdu_size + 9;
-  pdcp_tx->handle_desired_buffer_size_notification(params.nof_repetitions * max_pdu_size);
-
-  // Prepare SDU list for benchmark
-  std::vector<byte_buffer> sdu_list  = {};
-  int                      num_sdus  = params.nof_repetitions;
-  int                      num_bytes = sdu_size;
-  for (int i = 0; i < num_sdus; i++) {
-    byte_buffer sdu_buf = {};
-    for (int j = 0; j < num_bytes; ++j) {
-      report_fatal_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU buffer");
+  // Prepare
+  auto prepare = [&]() mutable {
+    // Print errors if statistics are different than expected
+    if (frame != nullptr) {
+      if (frame->num_pdus < (uint32_t)nof_sdus) {
+        srslog::fetch_basic_logger("PDCP").error("Transmitted only {} of {} SDUs", frame->num_pdus, nof_sdus);
+      }
+      if (frame->num_protocol_failures > 0) {
+        srslog::fetch_basic_logger("PDCP").error("Unexpected num_protocol_failures={}", frame->num_protocol_failures);
+      }
+      if (frame->num_max_count_reached > 0) {
+        srslog::fetch_basic_logger("PDCP").error("Unexpected num_max_count_reached={}", frame->num_max_count_reached);
+      }
     }
-    sdu_list.push_back(std::move(sdu_buf));
-  }
+    pdcp_tx.reset();
+
+    // Prepare SDU list for benchmark
+    sdu_list.clear();
+    for (int i = 0; i < nof_sdus; i++) {
+      byte_buffer sdu_buf = {};
+      for (int j = 0; j < sdu_len; ++j) {
+        report_fatal_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
+      }
+      sdu_list.push_back(std::move(sdu_buf));
+    }
+    frame       = std::make_unique<pdcp_tx_gen_frame>();
+    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
+    pdcp_tx     = std::make_unique<pdcp_entity_tx>(
+        0, drb_id_t::drb1, config, *frame, *frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
+    pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
+
+    const uint32_t max_pdu_size = sdu_len + 9;
+    pdcp_tx->handle_desired_buffer_size_notification(nof_sdus * max_pdu_size);
+  };
 
   // Run benchmark.
-  int  pdcp_sn = 0;
-  auto measure = [&pdcp_tx, &sdu_list, pdcp_sn]() mutable {
-    pdcp_tx->handle_sdu(sdu_list[pdcp_sn].copy());
-    pdcp_sn++;
+  auto measure = [&pdcp_tx, &sdu_list]() mutable {
+    for (auto& sdu : sdu_list) {
+      pdcp_tx->handle_sdu(std::move(sdu));
+    }
   };
-  bm->new_measure("PDCP TX", 1500 * 8, measure);
+
+  prepare();
+  bm->new_measure("TX SDU", nof_sdus * sdu_len * 8, measure, prepare);
 
   // Output results.
   if (params.print_timing_info) {
@@ -192,7 +224,16 @@ int run_benchmark(bench_params params, int algo)
   auto int_algo  = static_cast<security::integrity_algorithm>(algo);
   auto ciph_algo = static_cast<security::ciphering_algorithm>(algo);
 
-  init_byte_buffer_segment_pool(1048576, byte_buffer_segment_pool_default_segment_size());
+  // coarsely estimate number of required byte_buffer segments; round up to next power of 2 that is larger than 64
+  size_t segments_per_sdu     = 1 + (params.sdu_len / byte_buffer_segment_pool_default_segment_size());
+  size_t segments_per_hdr     = 1;
+  size_t nof_segments_per_run = (segments_per_sdu + segments_per_hdr) * params.nof_sdus;
+  size_t nof_segments_pow_2   = 128;
+  while (nof_segments_pow_2 < nof_segments_per_run) {
+    nof_segments_pow_2 = nof_segments_pow_2 << 1;
+  }
+  srslog::fetch_basic_logger("ALL").debug("Init byte_buffer pool with nof_segments_pow_2={}", nof_segments_pow_2);
+  init_byte_buffer_segment_pool(nof_segments_pow_2, byte_buffer_segment_pool_default_segment_size());
 
   if (algo == 0) {
     benchmark_pdcp_tx(params,
@@ -223,6 +264,7 @@ int main(int argc, char** argv)
     return -1;
   }
   srslog::set_default_sink(*log_sink);
+  srslog::fetch_basic_logger("ALL").set_level(app_params.log_level);
   srslog::fetch_basic_logger("PDCP").set_level(app_params.log_level);
 
   if (app_params.algo != -1) {

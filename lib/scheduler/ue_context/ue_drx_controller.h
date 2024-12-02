@@ -44,11 +44,14 @@ public:
                     std::optional<slot_point>         ul_ccch_slot_rx,
                     srslog::basic_logger&             logger);
 
+  /// Update UE DRX configuration.
+  void reconfigure(const std::optional<drx_config>& new_drx_cfg);
+
   /// Update DRX controller state.
   void slot_indication(slot_point dl_slot);
 
   /// Determines whether the PDCCH can be allocated for a given slot.
-  bool is_pdcch_enabled(slot_point dl_slot) const;
+  bool is_pdcch_enabled() const;
 
   /// Update DRX active time based on new PDCCH allocations.
   void on_new_pdcch_alloc(slot_point dl_slot);
@@ -58,14 +61,16 @@ public:
 
 private:
   /// Whether the UE is within DRX active time.
-  bool is_active_time(slot_point dl_slot) const;
+  bool is_active_time() const;
 
   const subcarrier_spacing          scs_common;
   std::chrono::milliseconds         conres_timer;
-  const std::optional<drx_config>   drx_cfg;
   const ul_logical_channel_manager& ul_lc_mng;
   std::optional<slot_point>         ul_ccch_slot_rx;
   srslog::basic_logger&             logger;
+
+  // Current UE DRX config.
+  std::optional<drx_config> drx_cfg;
 
   // Converted config parameters from milliseconds to slots.
   unsigned           active_window_period;

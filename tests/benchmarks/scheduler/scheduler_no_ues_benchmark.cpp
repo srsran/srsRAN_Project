@@ -22,9 +22,11 @@
 
 #include "lib/scheduler/config/cell_configuration.h"
 #include "scheduler_test_doubles.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "srsran/du/du_cell_config_helpers.h"
+#include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "srsran/scheduler/scheduler_factory.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/benchmark_utils.h"
 #include <getopt.h>
 
@@ -67,9 +69,10 @@ void benchmark_sib_scheduling()
       scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif, metric_notif});
 
   // Add Cell.
-  scheduler_expert_config                  sched_cfg    = config_helpers::make_default_scheduler_expert_config();
-  sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{sched_cfg, cell_cfg_msg};
+  scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  sched_cell_configuration_request_message cell_cfg_msg =
+      sched_config_helper::make_default_sched_cell_configuration_request();
+  cell_configuration cell_cfg{sched_cfg, cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
   auto& logger = srslog::fetch_basic_logger("SCHED", true);
@@ -91,14 +94,16 @@ void benchmark_rach_scheduling()
       scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif, metric_notif});
 
   // Add Cell.
-  scheduler_expert_config                  sched_cfg    = config_helpers::make_default_scheduler_expert_config();
-  sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{sched_cfg, cell_cfg_msg};
+  scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  sched_cell_configuration_request_message cell_cfg_msg =
+      sched_config_helper::make_default_sched_cell_configuration_request();
+  cell_configuration cell_cfg{sched_cfg, cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
   auto&                   logger = srslog::fetch_basic_logger("SCHED", true);
   slot_point              sl_tx{0, 0};
-  rach_indication_message rach_ind = test_helpers::generate_rach_ind_msg(sl_tx - 4, to_rnti(0x4601));
+  rach_indication_message rach_ind =
+      test_helper::create_rach_indication(sl_tx - 4, {test_helper::create_preamble(0, to_rnti(0x4601))});
 
   // Run benchmark.
   bm->new_measure("SSB+SIB+RACH scheduling", 1, [&sch, &sl_tx, &rach_ind, &logger]() mutable {

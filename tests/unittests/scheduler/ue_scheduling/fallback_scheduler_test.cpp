@@ -30,6 +30,7 @@
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
@@ -236,7 +237,7 @@ protected:
       builder_params.tdd_ul_dl_cfg_common = *tdd_cfg;
     }
     sched_cell_configuration_request_message msg =
-        test_helpers::make_default_sched_cell_configuration_request(builder_params);
+        sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = k0;
     return msg;
   }
@@ -300,8 +301,9 @@ protected:
   bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index, bool remove_ded_cfg = false)
   {
     // Add cell to UE cell grid allocator.
-    auto ue_create_req     = remove_ded_cfg ? test_helpers::create_empty_spcell_cfg_sched_ue_creation_request()
-                                            : test_helpers::create_default_sched_ue_creation_request(bench->builder_params);
+    auto ue_create_req     = remove_ded_cfg
+                                 ? sched_config_helper::create_empty_spcell_cfg_sched_ue_creation_request()
+                                 : sched_config_helper::create_default_sched_ue_creation_request(bench->builder_params);
     ue_create_req.crnti    = tc_rnti;
     ue_create_req.ue_index = ue_index;
     return bench->add_ue(ue_create_req);
@@ -1256,7 +1258,7 @@ protected:
   ul_fallback_scheduler_tester() : base_fallback_tester(GetParam().duplx_mode)
   {
     setup_sched(config_helpers::make_default_scheduler_expert_config(),
-                test_helpers::make_default_sched_cell_configuration_request(builder_params));
+                sched_config_helper::make_default_sched_cell_configuration_request(builder_params));
   }
 
   class ue_ul_tester
@@ -1364,7 +1366,7 @@ protected:
   ul_fallback_sched_tester_sr_indication() : base_fallback_tester(GetParam().duplx_mode)
   {
     setup_sched(config_helpers::make_default_scheduler_expert_config(),
-                test_helpers::make_default_sched_cell_configuration_request(builder_params));
+                sched_config_helper::make_default_sched_cell_configuration_request(builder_params));
     slot_generate_srb_traffic =
         slot_point{to_numerology_value(bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
                    test_rgen::uniform_int(20U, 40U)};

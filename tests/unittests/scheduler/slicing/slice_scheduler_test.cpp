@@ -23,6 +23,7 @@
 #include "lib/scheduler/slicing/slice_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 

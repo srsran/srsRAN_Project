@@ -100,6 +100,7 @@ public:
   srs_du::cu_up_simulator cu_up_sim;
 
   du_high_configuration    du_high_cfg;
+  du_high_dependencies     du_hi_dependencies;
   std::unique_ptr<du_high> du_hi;
   phy_test_dummy           phy;
   null_mac_pcap            mac_pcap;

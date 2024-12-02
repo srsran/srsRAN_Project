@@ -28,20 +28,87 @@
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_measurement.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/srsvec/compare.h"
-#include "srsran/srsvec/zero.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/dot_prod.h"
+#include "srsran/srsvec/modulus_square.h"
 #include <algorithm>
 #include <utility>
 
 using namespace srsran;
 
-template <typename IndexType>
-static double to_seconds(IndexType index, unsigned dft_size, subcarrier_spacing scs)
+/// \brief Estimates a fractional sample delay from samples around a maximum.
+///
+/// It uses a quadratic curve fitting of the input values to estimate the peak position. The result is expressed as a
+/// fraction of the sampling time with respect to the center input sample.
+///
+/// When the peak estimation is not meaningful, the function returns zero, meaning that one should consider the
+/// maximum input as the peak and no fractional refinement is possible. This happens if:
+///   - the number of input samples is neither three nor five; or
+///   - the estimation results in NaN or infinity.
+///
+/// \param[in] peak_center_correlation Odd number of samples containing a peak maximum in the center.
+/// \return The fractional sample estimation where the maximum is located if the result is valid.
+float fractional_sample_delay(span<const float> peak_center_correlation)
 {
-  // Calculate DFT sampling rate.
-  unsigned sampling_rate = dft_size * scs_to_khz(scs) * 1000;
+  // Calculation coefficients for solving the equations.
+  static constexpr std::array<float, 5> num_weights_5 = {{-0.400000, -0.200000, 0.000000, 0.200000, 0.400000}};
+  static constexpr std::array<float, 5> den_weights_5 = {{0.571429, -0.285714, -0.571429, -0.285714, 0.571429}};
+  static constexpr std::array<float, 3> num_weights_3 = {{-0.5, 0.0, 0.5}};
+  static constexpr std::array<float, 3> den_weights_3 = {{0.5, -1.0, 0.5}};
 
-  // Calculate time.
-  return static_cast<double>(index) / static_cast<double>(sampling_rate);
+  float             correction = 1.0F;
+  span<const float> num_weights;
+  span<const float> den_weights;
+
+  // Select weight depending on the number of samples.
+  if (peak_center_correlation.size() == 5) {
+    num_weights = num_weights_5;
+    den_weights = den_weights_5;
+  } else if (peak_center_correlation.size() == 3) {
+    correction  = 0.5;
+    num_weights = num_weights_3;
+    den_weights = den_weights_3;
+  } else {
+    // The size is invalid.
+    return 0.0F;
+  }
+
+  // Solve equation.
+  float num    = srsvec::dot_prod(num_weights, peak_center_correlation, 0.0F);
+  float den    = srsvec::dot_prod(den_weights, peak_center_correlation, 0.0F);
+  float result = -correction * num / den;
+
+  // Make sure the function does not return a result greater than one, lower than minus one, infinity or NaN.
+  if (std::isnan(result) || std::isinf(result) || std::abs(result) > 1.0F) {
+    return 0.0F;
+  }
+
+  return result;
+}
+
+const unsigned time_alignment_estimator_dft_impl::min_dft_size = pow2(log2_ceil(static_cast<unsigned>(
+    1.0F / (15000 * phy_time_unit::from_timing_advance(1, subcarrier_spacing::kHz15).to_seconds()))));
+
+const unsigned time_alignment_estimator_dft_impl::max_dft_size = pow2(log2_ceil(max_nof_re));
+
+time_alignment_estimator_dft_impl::time_alignment_estimator_dft_impl(
+    srsran::time_alignment_estimator_dft_impl::collection_dft_processors dft_processors_) :
+  dft_processors(std::move(dft_processors_)), idft_abs2(max_dft_size)
+{
+  // Make sure all the possible powers of 2 between the minimum and the maximum DFT sizes are present and valid.
+  for (unsigned dft_size     = time_alignment_estimator_dft_impl::min_dft_size,
+                dft_size_max = time_alignment_estimator_dft_impl::max_dft_size;
+       dft_size <= dft_size_max;
+       dft_size *= 2) {
+    // Check the IDFT size is present.
+    srsran_assert(dft_processors.count(dft_size), "Missing DFT.");
+
+    // Select IDFT and validate.
+    const auto& idft = dft_processors.at(dft_size);
+    srsran_assert(idft, "Invalid DFT processor.");
+    srsran_assert(idft->get_size() == dft_size, "Invalid DFT size.");
+    srsran_assert(idft->get_direction() == dft_processor::direction::INVERSE, "Invalid DFT direction.");
+  }
 }
 
 time_alignment_measurement time_alignment_estimator_dft_impl::estimate(const re_buffer_reader<cf_t>&   symbols,
@@ -49,33 +116,48 @@ time_alignment_measurement time_alignment_estimator_dft_impl::estimate(const re_
                                                                        subcarrier_spacing              scs,
                                                                        double                          max_ta)
 {
-  srsran_assert(mask.size() <= idft->get_size(),
-                "The mask size {} is larger than the maximum allowed number of subcarriers {}.",
-                mask.size(),
-                idft->get_size());
-
   srsran_assert(mask.count() == symbols.get_slice(0).size(),
                 "The number of complex symbols per port {} does not match the mask size {}.",
                 symbols.get_slice(0).size(),
                 mask.count());
+  unsigned       mask_highest = mask.find_highest();
+  unsigned       mask_lowest  = mask.find_lowest();
+  dft_processor& idft         = get_idft(mask_highest - mask_lowest + 1);
 
-  span<cf_t> channel_observed_freq = idft->get_input();
+  // Get IDFT input buffer.
+  span<cf_t> channel_observed_freq = idft.get_input();
+
+  // Zero input buffer.
   srsvec::zero(channel_observed_freq);
-  srsvec::zero(idft_abs2);
 
+  // Prepare correlation temporary buffer.
+  span<float> correlation = span<float>(idft_abs2).first(idft.get_size());
+
+  // Correlate each of the symbol slices.
   for (unsigned i_in = 0, max_in = symbols.get_nof_slices(); i_in != max_in; ++i_in) {
-    mask.for_each(0, mask.size(), [&channel_observed_freq, &symbols, i_in, i_lse = 0U](unsigned i_re) mutable {
-      channel_observed_freq[i_re] = symbols.get_slice(i_in)[i_lse++];
-    });
+    // Get view of the input symbols for the given slice.
+    span<const cf_t> symbols_in = symbols.get_slice(i_in);
 
-    span<const cf_t> channel_observed_time = idft->run();
-    std::transform(
-        idft_abs2.cbegin(), idft_abs2.cend(), channel_observed_time.begin(), idft_abs2.begin(), [](float a, cf_t b) {
-          return a + std::norm(b);
+    // Write the symbols in their corresponding positions.
+    mask.for_each(
+        0, mask.size(), [&channel_observed_freq, &symbols_in, mask_lowest, i_lse = 0U](unsigned i_re) mutable {
+          channel_observed_freq[i_re - mask_lowest] = symbols_in[i_lse++];
         });
+
+    // Perform correlation in frequency domain.
+    span<const cf_t> channel_observed_time = idft.run();
+
+    // Calculate the absolute square of the correlation.
+    if (i_in == 0) {
+      srsvec::modulus_square(correlation, channel_observed_time);
+    } else {
+      // Accumulate the correlation.
+      srsvec::modulus_square_and_add(correlation, channel_observed_time, correlation);
+    }
   }
 
-  return estimate(scs, max_ta);
+  // Estimate the time alignment from the correlation.
+  return estimate_ta_correlation(correlation, scs, max_ta);
 }
 
 time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<const cf_t>                symbols,
@@ -94,36 +176,48 @@ time_alignment_measurement time_alignment_estimator_dft_impl::estimate(const re_
                                                                        srsran::subcarrier_spacing    scs,
                                                                        double                        max_ta)
 {
-  srsran_assert(
-      symbols.get_slice(0).size() * stride <= idft->get_size(),
-      "The number of complex symbols (i.e., {}) times the stride (i.e., {}) exceeds the IDFT size (i.e., {}).",
-      symbols.get_slice(0).size(),
-      stride,
-      idft->get_size());
-  span<cf_t> channel_observed_freq = idft->get_input();
-  srsvec::zero(channel_observed_freq);
-  srsvec::zero(idft_abs2);
+  unsigned       nof_symbols = symbols.get_nof_re();
+  dft_processor& idft        = get_idft(nof_symbols * stride);
 
+  // Get IDFT input buffer.
+  span<cf_t> channel_observed_freq = idft.get_input();
+
+  // Zero input buffer.
+  srsvec::zero(channel_observed_freq);
+
+  // Prepare correlation temporary buffer.
+  span<float> correlation = span<float>(idft_abs2).first(idft.get_size());
+
+  // Correlate each of the symbol slices.
   for (unsigned i_in = 0, max_in = symbols.get_nof_slices(); i_in != max_in; ++i_in) {
-    for (unsigned i_symbol = 0, i_re = 0, i_end = stride * symbols.get_slice(i_in).size(); i_re != i_end;
-         i_re += stride) {
-      channel_observed_freq[i_re] = symbols.get_slice(i_in)[i_symbol++];
+    // Get view of the input symbols for the given slice.
+    span<const cf_t> symbols_in = symbols.get_slice(i_in);
+
+    // Write the symbols in their corresponding positions.
+    for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
+      channel_observed_freq[stride * i_symbol] = symbols_in[i_symbol];
     }
 
-    span<const cf_t> channel_observed_time = idft->run();
-    std::transform(
-        idft_abs2.cbegin(), idft_abs2.cend(), channel_observed_time.begin(), idft_abs2.begin(), [](float a, cf_t b) {
-          return a + std::norm(b);
-        });
+    // Perform correlation in frequency domain.
+    span<const cf_t> channel_observed_time = idft.run();
+
+    // Calculate the absolute square of the correlation.
+    if (i_in == 0) {
+      srsvec::modulus_square(correlation, channel_observed_time);
+    } else {
+      // Accumulate the correlation.
+      srsvec::modulus_square_and_add(correlation, channel_observed_time, correlation);
+    }
   }
 
-  return estimate(scs, max_ta);
+  // Estimate the time alignment from the correlation.
+  return estimate_ta_correlation(correlation, scs, max_ta);
 }
 
-time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<const cf_t>           symbols,
-                                                                       unsigned                   stride,
-                                                                       srsran::subcarrier_spacing scs,
-                                                                       double                     max_ta)
+time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<const cf_t>   symbols,
+                                                                       unsigned           stride,
+                                                                       subcarrier_spacing scs,
+                                                                       double             max_ta)
 {
   modular_re_buffer_reader<cf_t, 1> symbols_view(1, symbols.size());
   symbols_view.set_slice(0, symbols);
@@ -131,30 +225,80 @@ time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<cons
   return estimate(symbols_view, stride, scs, max_ta);
 }
 
-time_alignment_measurement time_alignment_estimator_dft_impl::estimate(srsran::subcarrier_spacing scs, double max_ta)
+dft_processor& time_alignment_estimator_dft_impl::get_idft(unsigned nof_required_re)
 {
-  unsigned max_ta_samples = ((144 / 2) * dft_size) / 2048;
+  // Ensure the number of required RE is smaller than the maximum DFT size.
+  srsran_assert(nof_required_re <= max_nof_re,
+                "The number of required RE (i.e., {}) is larger than the maximum allowed number of RE (i.e., {}).",
+                nof_required_re,
+                max_nof_re);
 
+  // Leave some guards to avoid circular interference.
+  nof_required_re = (nof_required_re * max_dft_size) / max_nof_re;
+
+  // Get the next power of 2 DFT size.
+  unsigned dft_size = pow2(log2_ceil(nof_required_re));
+  dft_size          = std::max(min_dft_size, dft_size);
+
+  // Select the DFT processor.
+  return *dft_processors[dft_size];
+}
+
+time_alignment_measurement time_alignment_estimator_dft_impl::estimate_ta_correlation(span<const float>  correlation,
+                                                                                      subcarrier_spacing scs,
+                                                                                      double             max_ta)
+{
+  // Calculate half cyclic prefix duration.
+  phy_time_unit half_cyclic_prefix_duration =
+      phy_time_unit::from_units_of_kappa(144) / pow2(to_numerology_value(scs) + 1);
+
+  // Deduce sampling rate.
+  double sampling_rate_Hz = correlation.size() * scs_to_khz(scs) * 1000;
+
+  // Maximum number of samples limited by half cyclic prefix.
+  unsigned max_ta_samples = std::floor(half_cyclic_prefix_duration.to_seconds() * sampling_rate_Hz);
+
+  // Select the most limiting number of samples.
   if (std::isnormal(max_ta)) {
-    max_ta_samples = static_cast<unsigned>(std::floor(max_ta * static_cast<double>(scs_to_khz(scs) * 1000 * dft_size)));
+    max_ta_samples = std::min(max_ta_samples, static_cast<unsigned>(std::floor(max_ta * sampling_rate_Hz)));
   }
 
-  span<float>                channel_observed_time(idft_abs2);
-  std::pair<unsigned, float> observed_max_delay   = srsvec::max_element(channel_observed_time.first(max_ta_samples));
-  std::pair<unsigned, float> observed_max_advance = srsvec::max_element(channel_observed_time.last(max_ta_samples));
+  // Find the maximum of the delayed taps.
+  std::pair<unsigned, float> observed_max_delay = srsvec::max_element(correlation.first(max_ta_samples));
 
-  double t_align_seconds;
+  // Find the maximum of the advanced taps.
+  std::pair<unsigned, float> observed_max_advance = srsvec::max_element(correlation.last(max_ta_samples));
+
+  // Determine the number of taps the signal is advanced or delayed (negative).
+  int idx = -(max_ta_samples - observed_max_advance.first);
   if (observed_max_delay.second >= observed_max_advance.second) {
-    t_align_seconds = to_seconds(observed_max_delay.first, dft_size, scs);
-  } else {
-    t_align_seconds = -to_seconds(max_ta_samples - observed_max_advance.first, dft_size, scs);
+    idx = observed_max_delay.first;
   }
 
-  // Fill results.
-  time_alignment_measurement result;
-  result.time_alignment = t_align_seconds;
-  result.min            = -to_seconds(max_ta_samples, dft_size, scs);
-  result.max            = to_seconds(max_ta_samples, dft_size, scs);
-  result.resolution     = to_seconds(1, dft_size, scs);
-  return result;
+  // Calculate the fractional sample.
+  double fractional_sample_index = 0.0F;
+  if (correlation.size() != max_dft_size) {
+    // Select the number of samples for the fractional sample calculation depending on the maximum number of samples.
+    unsigned nof_taps = (max_ta_samples > 2) ? 5 : 3;
+
+    // Extract samples around the peak.
+    static_vector<float, 5> peak_center_correlation(nof_taps);
+    for (unsigned i = 0; i != nof_taps; ++i) {
+      peak_center_correlation[i] = correlation[(idx + i + correlation.size() - nof_taps / 2) % correlation.size()];
+    }
+
+    // Calculate the fractional sample.
+    fractional_sample_index = fractional_sample_delay(peak_center_correlation);
+  }
+
+  // Final calculation of the time alignment in seconds.
+  double t_align_seconds = (static_cast<double>(idx) + fractional_sample_index) / sampling_rate_Hz;
+
+  // Produce results.
+  return time_alignment_measurement{
+      .time_alignment = t_align_seconds,
+      .resolution     = 1.0 / sampling_rate_Hz,
+      .min            = -static_cast<double>(max_ta_samples) / sampling_rate_Hz,
+      .max            = static_cast<double>(max_ta_samples) / sampling_rate_Hz,
+  };
 }

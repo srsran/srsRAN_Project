@@ -35,28 +35,35 @@ namespace srsran {
 
 /// \brief Snapshot of the metrics for a UE.
 struct scheduler_ue_metrics {
-  pci_t                        pci;
-  rnti_t                       rnti;
-  sch_mcs_index                dl_mcs;
-  unsigned                     tot_dl_prbs_used;
-  double                       mean_dl_prbs_used;
-  double                       dl_brate_kbps;
-  unsigned                     dl_nof_ok;
-  unsigned                     dl_nof_nok;
-  float                        pusch_snr_db;
-  float                        pusch_rsrp_db;
-  float                        pucch_snr_db;
-  sch_mcs_index                ul_mcs;
-  unsigned                     tot_ul_prbs_used;
-  double                       mean_ul_prbs_used;
-  double                       ul_brate_kbps;
-  double                       ul_delay_ms;
-  unsigned                     ul_nof_ok;
-  unsigned                     ul_nof_nok;
-  unsigned                     bsr;
-  unsigned                     dl_bs;
-  std::optional<phy_time_unit> last_ta;
-  std::optional<int>           last_phr;
+  pci_t                pci;
+  rnti_t               rnti;
+  sch_mcs_index        dl_mcs;
+  unsigned             tot_dl_prbs_used;
+  double               mean_dl_prbs_used;
+  double               dl_brate_kbps;
+  unsigned             dl_nof_ok;
+  unsigned             dl_nof_nok;
+  float                pusch_snr_db;
+  float                pusch_rsrp_db;
+  float                pucch_snr_db;
+  sch_mcs_index        ul_mcs;
+  unsigned             tot_ul_prbs_used;
+  double               mean_ul_prbs_used;
+  double               ul_brate_kbps;
+  double               ul_delay_ms;
+  unsigned             ul_nof_ok;
+  unsigned             ul_nof_nok;
+  unsigned             bsr;
+  unsigned             sr_count;
+  unsigned             dl_bs;
+  std::optional<float> last_dl_olla;
+  std::optional<float> last_ul_olla;
+  std::optional<int>   last_phr;
+  /// Time advance statistics in seconds.
+  sample_statistics<float> ta_stats;
+  sample_statistics<float> pusch_ta_stats;
+  sample_statistics<float> pucch_ta_stats;
+  sample_statistics<float> srs_ta_stats;
   /// CQI statistics over the metrics report interval.
   sample_statistics<unsigned> cqi_stats;
   /// RI statistics over the metrics report interval.

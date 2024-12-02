@@ -59,7 +59,8 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   drx_ctrl(drx_ctrl_),
   logger(srslog::fetch_basic_logger("SCHED")),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
-  ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state)
+  ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state),
+  ul_pwr_controller(ue_cell_cfg_, channel_state)
 {
 }
 
@@ -131,7 +132,7 @@ bool ue_cell::is_pdcch_enabled(slot_point dl_slot) const
   if (not active) {
     return false;
   }
-  return cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled(dl_slot);
+  return cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled();
 }
 
 bool ue_cell::is_pdsch_enabled(slot_point dl_slot) const

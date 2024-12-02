@@ -29,7 +29,7 @@ namespace srsran {
 namespace srs_du {
 
 /// Create a DU-high instance, which comprises MAC, RLC and F1 layers.
-std::unique_ptr<du_high> make_du_high(const srs_du::du_high_configuration& du_hi_cfg);
+std::unique_ptr<du_high> make_du_high(const du_high_configuration& du_hi_cfg, const du_high_dependencies& dependencies);
 
 } // namespace srs_du
 } // namespace srsran

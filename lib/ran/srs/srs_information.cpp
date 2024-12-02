@@ -91,14 +91,13 @@ srs_information srsran::get_srs_information(const srs_resource_configuration& re
   unsigned initial_subcarrier = k0_bar + sum;
 
   // Fill derived parameters.
-  srs_information info;
-  info.n_cs_max                   = n_cs_max;
-  info.sequence_length            = sequence_length;
-  info.sequence_group             = u;
-  info.sequence_number            = v;
-  info.n_cs                       = cyclic_shift_port;
-  info.n_cs_max                   = n_cs_max;
-  info.mapping_initial_subcarrier = initial_subcarrier;
-  info.comb_size                  = comb_size;
+  srs_information info = {.sequence_length            = sequence_length,
+                          .sequence_group             = u,
+                          .sequence_number            = v,
+                          .n_cs                       = cyclic_shift_port,
+                          .n_cs_max                   = n_cs_max,
+                          .mapping_initial_subcarrier = initial_subcarrier,
+                          .comb_size                  = comb_size};
+
   return info;
 }

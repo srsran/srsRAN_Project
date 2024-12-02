@@ -42,7 +42,7 @@ class test_pucch_resource_manager : public ::testing::Test
 {
 public:
   test_pucch_resource_manager() :
-    cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()},
+    cell_cfg{sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()},
     // TODO: when the CSI is enabled in the main config, replace create_initial_ue_serving_cell_config_with_csi() with
     //       config_helpers::create_default_initial_ue_serving_cell_config().
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, create_initial_ue_serving_cell_config_with_csi()),
@@ -629,7 +629,7 @@ protected:
                                              cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
                                              NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     for (unsigned ue_idx = 0; ue_idx != nof_ues; ++ue_idx) {
-      sched_ue_creation_request_message ue_req   = test_helpers::create_default_sched_ue_creation_request();
+      sched_ue_creation_request_message ue_req   = sched_config_helper::create_default_sched_ue_creation_request();
       serving_cell_config&              serv_cfg = ue_req.cfg.cells->front().serv_cell_cfg;
       generate_ue_serv_cell_cfg(serv_cfg, ue_idx, nof_configurations, cell_pucch_res_list);
       ues.emplace_back(std::make_unique<dummy_ue>(to_rnti(0x4601 + ue_idx), cell_cfg, serv_cfg));

@@ -24,9 +24,12 @@
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/support/ssb_helpers.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
@@ -195,7 +198,7 @@ struct sib_test_bench {
     cell_cfg.search_space0_index = pdcch_config_sib1 & 0b00001111U;
 
     sched_cell_configuration_request_message msg =
-        test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
+        sched_config_helper::make_default_sched_cell_configuration_request(cell_cfg);
 
     msg.ssb_config.ssb_bitmap = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
     msg.ssb_config.ssb_period = ssb_period;
@@ -244,7 +247,7 @@ struct sib_test_bench {
     cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
 
     sched_cell_configuration_request_message msg =
-        test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
+        sched_config_helper::make_default_sched_cell_configuration_request(cell_cfg);
     msg.dl_cfg_common.freq_info_dl.offset_to_point_a = offset_to_point_A;
     msg.ssb_config.ssb_bitmap                        = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
     msg.ssb_config.ssb_period                        = ssb_periodicity::ms10;

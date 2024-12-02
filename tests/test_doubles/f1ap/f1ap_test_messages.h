@@ -62,6 +62,11 @@ f1ap_message generate_f1_removal_request(unsigned transaction_id);
 /// \brief Generates dummy F1 REMOVAL RESPONSE message based on the request.
 f1ap_message generate_f1_removal_response(const f1ap_message& f1_removal_request);
 
+/// \brief Generates dummy F1 RESET message.
+f1ap_message create_f1ap_reset_message(
+    const std::vector<std::pair<std::optional<gnb_du_ue_f1ap_id_t>, std::optional<gnb_cu_ue_f1ap_id_t>>>& ues_to_reset =
+        {});
+
 /// \brief Generates dummy F1AP UE CONTEXT SETUP REQUEST message.
 f1ap_message create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t                cu_ue_id,
                                              std::optional<gnb_du_ue_f1ap_id_t> du_ue_id,

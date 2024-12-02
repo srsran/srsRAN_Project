@@ -26,7 +26,6 @@
 #include "f1ap_du_connection_handler.h"
 #include "f1ap_du_context.h"
 #include "srsran/asn1/f1ap/f1ap.h"
-#include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include <memory>
 
@@ -93,6 +92,9 @@ private:
   /// \brief Notify the DU about the reception of an unsuccessful outcome message.
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
+
+  /// \brief Handle RESET as per TS 38.473, Section 8.2.1.
+  void handle_reset(const asn1::f1ap::reset_s& msg);
 
   /// \brief Handle GNB-CU CONFIGURATION UPDATE as per TS38.473, Section 8.2.5.2.
   void handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg);

@@ -27,7 +27,8 @@
 #include "test_utils/config_generators.h"
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
-#include "test_utils/scheduler_test_bench.h"
+#include "test_utils/scheduler_test_simulator.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -35,7 +36,7 @@ using namespace srsran;
 class base_scheduler_retx_tester
 {
 protected:
-  base_scheduler_retx_tester() { bench.add_cell(test_helpers::make_default_sched_cell_configuration_request()); }
+  base_scheduler_retx_tester() { bench.add_cell(sched_config_helper::make_default_sched_cell_configuration_request()); }
 
   const ul_sched_info* run_until_next_pusch_alloc(unsigned max_slot_delay)
   {
@@ -88,7 +89,7 @@ protected:
 
   const rnti_t ue_rnti = to_rnti(0x4601);
 
-  scheduler_test_bench bench;
+  scheduler_test_simulator bench;
 };
 
 struct test_params {
@@ -110,7 +111,7 @@ TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
   const size_t MAX_PUSCH_DELAY = 16, MAX_RETX_DELAY = 16;
 
   bench.sched->handle_rach_indication(
-      create_rach_indication(bench.next_slot_rx(), {create_preamble(0, this->ue_rnti)}));
+      test_helper::create_rach_indication(bench.next_slot_rx(), {test_helper::create_preamble(0, this->ue_rnti)}));
 
   const ul_sched_info* grant = run_until_next_pusch_alloc(MAX_PUSCH_DELAY);
   ASSERT_NE(grant, nullptr) << "No Msg3 was scheduled";
@@ -162,7 +163,7 @@ TEST_F(scheduler_missing_ack_tester, when_no_harq_ack_arrives_then_harq_eventual
 {
   static constexpr unsigned         nof_harqs     = 16;
   static constexpr rnti_t           rnti          = to_rnti(0x4601);
-  sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
+  sched_ue_creation_request_message ue_create_req = sched_config_helper::create_default_sched_ue_creation_request();
   ue_create_req.crnti                             = rnti;
   ue_create_req.ue_index                          = to_du_ue_index(0);
   (*ue_create_req.cfg.cells)[0].serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
@@ -203,7 +204,7 @@ TEST_F(scheduler_missing_ack_tester, when_no_crc_arrives_then_ul_harq_eventually
 {
   static constexpr unsigned         nof_harqs     = 16;
   static constexpr rnti_t           rnti          = to_rnti(0x4601);
-  sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
+  sched_ue_creation_request_message ue_create_req = sched_config_helper::create_default_sched_ue_creation_request();
   ue_create_req.crnti                             = rnti;
   ue_create_req.ue_index                          = to_du_ue_index(0);
   bench.add_ue(ue_create_req);
@@ -252,7 +253,7 @@ class scheduler_error_indication_tester : public base_scheduler_retx_tester, pub
 TEST_F(scheduler_error_indication_tester, when_uci_lost_due_to_error_indication_then_dl_harq_is_retx)
 {
   static constexpr rnti_t           rnti          = to_rnti(0x4601);
-  sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
+  sched_ue_creation_request_message ue_create_req = sched_config_helper::create_default_sched_ue_creation_request();
   ue_create_req.crnti                             = rnti;
   ue_create_req.ue_index                          = to_du_ue_index(0);
   bench.add_ue(ue_create_req);
@@ -299,7 +300,7 @@ TEST_F(scheduler_error_indication_tester,
        when_pusch_with_new_data_is_lost_due_to_error_indication_then_ul_harq_is_reset)
 {
   static constexpr rnti_t           rnti          = to_rnti(0x4601);
-  sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
+  sched_ue_creation_request_message ue_create_req = sched_config_helper::create_default_sched_ue_creation_request();
   ue_create_req.crnti                             = rnti;
   ue_create_req.ue_index                          = to_du_ue_index(0);
   bench.add_ue(ue_create_req);

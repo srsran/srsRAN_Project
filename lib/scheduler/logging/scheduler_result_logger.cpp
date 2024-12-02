@@ -113,17 +113,24 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       } break;
       case dci_ul_rnti_config_type::tc_rnti_f0_0: {
         const auto& dci = pdcch.dci.tc_rnti_f0_0;
-        fmt::format_to(fmtbuf, "h_id=0 ndi=1 rv={} mcs={}", dci.redundancy_version, dci.modulation_coding_scheme);
+        fmt::format_to(fmtbuf,
+                       "h_id=0 ndi=1 rv={} mcs={} tpc={}",
+                       dci.redundancy_version,
+                       dci.modulation_coding_scheme,
+                       dci.tpc_command);
       } break;
       case dci_ul_rnti_config_type::c_rnti_f0_1: {
         const auto& dci = pdcch.dci.c_rnti_f0_1;
         fmt::format_to(fmtbuf,
-                       " h_id={} ndi={} rv={} mcs={} dai={}",
+                       " h_id={} ndi={} rv={} mcs={} dai={} tpc={} mimo={} ant={}",
                        dci.harq_process_number,
                        dci.new_data_indicator ? 1 : 0,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme,
-                       dci.first_dl_assignment_index);
+                       dci.first_dl_assignment_index,
+                       dci.tpc_command,
+                       dci.precoding_info_nof_layers,
+                       dci.antenna_ports);
       } break;
       default:
         break;
@@ -312,6 +319,17 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                    srs.config_index,
                    srs.freq_shift,
                    srs.sequence_id);
+  }
+
+  if (log_broadcast) {
+    for (const prach_occasion_info& prach : result.ul.prachs) {
+      fmt::format_to(fmtbuf,
+                     "\n- PRACH: pci={} format={} nof_occasions={} nof_preambles={}",
+                     prach.pci,
+                     to_string(prach.format),
+                     prach.nof_prach_occasions,
+                     prach.nof_preamble_indexes);
+    }
   }
 
   if (fmtbuf.size() > 0) {

@@ -20,9 +20,12 @@
  *
  */
 
-#include "../test_utils/config_generators.h"
 #include "../test_utils/dummy_test_components.h"
+#include "../test_utils/sched_random_utils.h"
 #include "lib/scheduler/ue_context/ue.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -39,17 +42,18 @@ protected:
     cell_config_builder_params params{};
     params.nof_dl_ports = 4;
     const sched_cell_configuration_request_message sched_cell_cfg_req =
-        test_helpers::make_default_sched_cell_configuration_request(params);
+        sched_config_helper::make_default_sched_cell_configuration_request(params);
 
     cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, sched_cell_cfg_req));
     cell_cfg = cell_cfg_list[to_du_cell_index(0)].get();
 
-    next_slot = test_helpers::generate_random_slot_point(cell_cfg->dl_cfg_common.init_dl_bwp.generic_params.scs);
+    next_slot = test_helper::generate_random_slot_point(cell_cfg->dl_cfg_common.init_dl_bwp.generic_params.scs);
 
     // Create UE.
-    sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request(params);
-    ue_creation_req.ue_index                          = to_du_ue_index(0);
-    ue_creation_req.crnti                             = to_rnti(0x4601 + (unsigned)ue_creation_req.ue_index);
+    sched_ue_creation_request_message ue_creation_req =
+        sched_config_helper::create_default_sched_ue_creation_request(params);
+    ue_creation_req.ue_index = to_du_ue_index(0);
+    ue_creation_req.crnti    = to_rnti(0x4601 + (unsigned)ue_creation_req.ue_index);
     for (const lcid_t lcid : std::array<lcid_t, 3>{uint_to_lcid(1), uint_to_lcid(2), uint_to_lcid(4)}) {
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }

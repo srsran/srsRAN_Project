@@ -118,6 +118,8 @@ public:
     return it == f1ap_ue_id_to_du_ue_id_map.end() ? INVALID_DU_UE_INDEX : it->second;
   }
 
+  size_t nof_ues() const { return ues.size(); }
+
 private:
   f1ap_du_configurator&       du_handler;
   f1ap_message_notifier*      f1ap_msg_notifier = nullptr;

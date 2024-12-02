@@ -52,19 +52,17 @@ protected:
     ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, std::chrono::seconds(0)};
 
     // create DUT object
-    ue_mng = std::make_unique<ue_manager>(net_config,
-                                          n3_config,
-                                          test_mode_config,
-                                          *e1ap,
-                                          timers,
-                                          *f1u_gw,
-                                          *gtpu_tx_notifier,
-                                          *gtpu_rx_demux,
-                                          *gtpu_n3_allocator,
-                                          *gtpu_f1u_allocator,
-                                          *cu_up_exec_mapper,
-                                          gtpu_pcap,
-                                          test_logger);
+    ue_mng = std::make_unique<ue_manager>(ue_manager_config{net_config, n3_config, test_mode_config},
+                                          ue_manager_dependencies{*e1ap,
+                                                                  timers,
+                                                                  *f1u_gw,
+                                                                  *gtpu_tx_notifier,
+                                                                  *gtpu_rx_demux,
+                                                                  *gtpu_n3_allocator,
+                                                                  *gtpu_f1u_allocator,
+                                                                  *cu_up_exec_mapper,
+                                                                  gtpu_pcap,
+                                                                  test_logger});
   }
 
   void TearDown() override

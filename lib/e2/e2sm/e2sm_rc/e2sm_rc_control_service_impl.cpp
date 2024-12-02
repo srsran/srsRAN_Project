@@ -67,7 +67,7 @@ bool e2sm_rc_control_service_base::fill_ran_function_description(
     // TODO: fill outcome properly
     ctrl_outcome_ran_param_item_s ctrl_outcome_ran_param_item;
     ctrl_outcome_ran_param_item.ran_param_id = 1;
-    ctrl_outcome_ran_param_item.ran_param_name.from_string("test_outcome_ran_param");
+    ctrl_outcome_ran_param_item.ran_param_name.from_string("test-outcome-ran-param");
     ctrl_item.ran_ctrl_outcome_params_list.push_back(ctrl_outcome_ran_param_item);
   }
 

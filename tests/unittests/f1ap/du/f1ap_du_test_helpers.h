@@ -74,6 +74,7 @@ public:
   f1ap_ue_context_update_response                 next_ue_context_update_response;
   std::optional<f1ap_ue_delete_request>           last_ue_delete_req;
   std::optional<du_ue_index_t>                    last_ue_cfg_applied;
+  std::optional<std::vector<du_ue_index_t>>       last_ues_to_reset;
 
   explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -84,6 +85,12 @@ public:
   void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
 
   void on_f1c_disconnection() override {}
+
+  async_task<void> request_reset(const std::vector<du_ue_index_t>& ues_to_reset) override
+  {
+    last_ues_to_reset = ues_to_reset;
+    return launch_no_op_task();
+  }
 
   du_ue_index_t find_free_ue_index() override { return next_ue_creation_req.ue_index; }
 

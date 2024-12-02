@@ -20,61 +20,34 @@
  *
  */
 
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_bench.h"
+#include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
 #include "srsran/ran/duplex_mode.h"
-#include "srsran/ran/prach/prach_helper.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
-class scheduler_ta_cmd_tester : public scheduler_test_bench, public ::testing::TestWithParam<duplex_mode>
+class scheduler_ta_cmd_tester : public scheduler_test_simulator, public ::testing::TestWithParam<duplex_mode>
 {
 protected:
   scheduler_ta_cmd_tester() :
-    scheduler_test_bench(4, GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
+    scheduler_test_simulator(4, GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
     // Add Cell.
     this->add_cell([this, duplex_mode = GetParam()]() {
-      if (duplex_mode == duplex_mode::TDD) {
-        params.scs_common     = subcarrier_spacing::kHz30;
-        params.dl_f_ref_arfcn = 520002;
-        params.band           = nr_band::n41;
-        params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
-      } else {
-        params.scs_common     = subcarrier_spacing::kHz15;
-        params.dl_f_ref_arfcn = 365000;
-        params.band           = nr_band::n3;
-        params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
-      }
-      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-          params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
-      static const uint8_t                                   ss0_idx = 0;
-      std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-          band_helper::get_ssb_coreset0_freq_location(params.dl_f_ref_arfcn,
-                                                      *params.band,
-                                                      nof_crbs,
-                                                      params.scs_common,
-                                                      params.scs_common,
-                                                      ss0_idx,
-                                                      params.max_coreset0_duration);
-      if (!ssb_freq_loc.has_value()) {
-        report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", params.pci);
-      }
-      params.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
-      params.k_ssb             = (*ssb_freq_loc).k_ssb;
-      params.coreset0_index    = (*ssb_freq_loc).coreset0_idx;
-      params.csi_rs_enabled    = true;
+      params =
+          duplex_mode == duplex_mode::FDD ? cell_config_builder_profiles::fdd() : cell_config_builder_profiles::tdd();
 
       sched_cell_configuration_request_message sched_cfg_req =
-          test_helpers::make_default_sched_cell_configuration_request(params);
+          sched_config_helper::make_default_sched_cell_configuration_request(params);
 
       return sched_cfg_req;
     }());
 
     // Add UE
-    this->add_ue(test_helpers::create_default_sched_ue_creation_request(params, {ue_drb_lcid}));
+    this->add_ue(sched_config_helper::create_default_sched_ue_creation_request(params, {ue_drb_lcid}));
   }
 
   uci_indication create_uci_indication(slot_point        uci_sl,

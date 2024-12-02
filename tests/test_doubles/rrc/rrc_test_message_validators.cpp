@@ -168,3 +168,21 @@ bool srsran::test_helpers::is_valid_rrc_reconfiguration(
   return is_valid_rrc_reconfiguration(
       dcch, contains_nas_pdu, expected_srbs_to_add_mod, expected_drbs_to_add_mod, expected_drbs_to_release);
 }
+
+bool srsran::test_helpers::is_valid_rrc_handover_preparation_info(const asn1::rrc_nr::ho_prep_info_s& ho_prep_info)
+{
+  TRUE_OR_RETURN(ho_prep_info.crit_exts.type().value == asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::types_opts::c1);
+  TRUE_OR_RETURN(ho_prep_info.crit_exts.c1().type().value ==
+                 asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::c1_c_::types_opts::ho_prep_info);
+  TRUE_OR_RETURN(ho_prep_info.crit_exts.c1().ho_prep_info().ue_cap_rat_list.size() > 0U);
+
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_rrc_handover_preparation_info(const byte_buffer& ho_prep_info)
+{
+  asn1::cbit_ref               bref{ho_prep_info};
+  asn1::rrc_nr::ho_prep_info_s msg;
+  TRUE_OR_RETURN(msg.unpack(bref) == asn1::SRSASN_SUCCESS);
+  return is_valid_rrc_handover_preparation_info(msg);
+}

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/e2/e2ap_configuration.h"
-#include "srsran/ran/s_nssai.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace config_helpers {

@@ -23,7 +23,7 @@ Launch tests in Viavi
 """
 import logging
 import operator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -73,6 +73,7 @@ class _ViaviConfiguration:
     enable_dddsu: bool = False
     ul_heavy_7u2d: bool = False
     ul_heavy_6u3d: bool = False
+    warning_allowlist: List[str] = field(default_factory=list)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -115,6 +116,7 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 enable_dddsu=test_declaration.get("enable_dddsu", False),
                 ul_heavy_7u2d=test_declaration.get("ul_heavy_7u2d", False),
                 ul_heavy_6u3d=test_declaration.get("ul_heavy_6u3d", False),
+                warning_allowlist=test_declaration.get("warning_allowlist", []),
             )
         )
     return test_declaration_list
@@ -369,6 +371,11 @@ def _test_viavi(
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
                 "rlc_metrics": True,
+                "warning_extra_regex": (
+                    (r"(?!.*" + r")(?!.*".join(test_declaration.warning_allowlist) + r")")
+                    if test_declaration.warning_allowlist
+                    else ""
+                ),
             },
         },
     }
@@ -509,14 +516,13 @@ def check_metrics_criteria(
         )
     )
 
-    criteria_nof_ko_dl_viavi = check_criteria(
-        viavi_kpis.dl_data.num_tbs_errors, test_configuration.expected_nof_kos, operator.lt
-    )
+    viavi_dl_kos = viavi_kpis.dl_data.num_tbs_errors if viavi_kpis.dl_data.num_tbs_errors is not None else 0
+    criteria_nof_ko_dl_viavi = check_criteria(viavi_dl_kos, test_configuration.expected_nof_kos, operator.lt)
     criteria_result.append(
         _ViaviResult(
             "DL KOs (viavi)",
             test_configuration.expected_nof_kos,
-            viavi_kpis.dl_data.num_tbs_errors,
+            viavi_dl_kos,
             criteria_nof_ko_dl_viavi,
         )
     )
@@ -531,14 +537,13 @@ def check_metrics_criteria(
         )
     )
 
-    criteria_nof_ko_ul_viavi = check_criteria(
-        viavi_kpis.ul_data.num_tbs_nack, test_configuration.expected_nof_kos, operator.lt
-    )
+    viavi_ul_kos = viavi_kpis.ul_data.num_tbs_nack if viavi_kpis.ul_data.num_tbs_nack is not None else 0
+    criteria_nof_ko_ul_viavi = check_criteria(viavi_ul_kos, test_configuration.expected_nof_kos, operator.lt)
     criteria_result.append(
         _ViaviResult(
             "UL KOs (viavi)",
             test_configuration.expected_nof_kos,
-            viavi_kpis.ul_data.num_tbs_nack,
+            viavi_ul_kos,
             criteria_nof_ko_ul_viavi,
         )
     )

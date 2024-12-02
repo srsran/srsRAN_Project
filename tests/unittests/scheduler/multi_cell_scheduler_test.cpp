@@ -20,8 +20,12 @@
  *
  */
 
+#include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_bench.h"
+#include "tests/unittests/scheduler/test_utils/indication_generators.h"
+#include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
+#include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 
@@ -32,38 +36,16 @@ struct multi_cell_scheduler_test_params {
   unsigned    nof_cells = 2;
 };
 
-class base_multi_cell_scheduler_tester : public scheduler_test_bench
+class base_multi_cell_scheduler_tester : public scheduler_test_simulator
 {
 protected:
   base_multi_cell_scheduler_tester(const multi_cell_scheduler_test_params& test_params) :
-    scheduler_test_bench(4,
-                         test_params.dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15
-                                                                   : subcarrier_spacing::kHz30)
+    scheduler_test_simulator(4,
+                             test_params.dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15
+                                                                       : subcarrier_spacing::kHz30)
   {
-    cell_config_builder_params params{};
-    params.scs_common =
-        test_params.dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
-    params.dl_f_ref_arfcn   = test_params.dplx_mode == duplex_mode::FDD ? 530000 : 520002;
-    params.band             = band_helper::get_band_from_dl_arfcn(params.dl_f_ref_arfcn);
-    params.channel_bw_mhz   = bs_channel_bandwidth::MHz20;
-    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-        params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
-    static const uint8_t                                   ss0_idx = 0;
-    std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-        band_helper::get_ssb_coreset0_freq_location(params.dl_f_ref_arfcn,
-                                                    *params.band,
-                                                    nof_crbs,
-                                                    params.scs_common,
-                                                    params.scs_common,
-                                                    ss0_idx,
-                                                    params.max_coreset0_duration);
-    if (!ssb_freq_loc.has_value()) {
-      report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", params.pci);
-    }
-    params.offset_to_point_a   = (*ssb_freq_loc).offset_to_point_A;
-    params.k_ssb               = (*ssb_freq_loc).k_ssb;
-    params.coreset0_index      = (*ssb_freq_loc).coreset0_idx;
-    params.search_space0_index = ss0_idx;
+    cell_config_builder_params params = test_params.dplx_mode == duplex_mode::FDD ? cell_config_builder_profiles::fdd()
+                                                                                  : cell_config_builder_profiles::tdd();
 
     // Add Cells.
     for (unsigned cell_idx = 0; cell_idx < test_params.nof_cells; ++cell_idx) {
@@ -71,7 +53,7 @@ protected:
       auto& added_cell = cell_cfg_builder_params_list.back();
       added_cell.pci   = cell_idx + 1;
 
-      auto sched_cell_cfg_req             = test_helpers::make_default_sched_cell_configuration_request(added_cell);
+      auto sched_cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(added_cell);
       sched_cell_cfg_req.cell_group_index = static_cast<du_cell_group_index_t>(cell_idx);
       sched_cell_cfg_req.cell_index       = to_du_cell_index(cell_idx);
       this->add_cell(sched_cell_cfg_req);
@@ -106,14 +88,14 @@ protected:
   void add_ue(uint16_t cell_idx, uint16_t ue_idx)
   {
     // Add UE
-    auto ue_cfg =
-        test_helpers::create_default_sched_ue_creation_request(cell_cfg_builder_params_list[cell_idx], {LCID_MIN_DRB});
+    auto ue_cfg = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg_builder_params_list[cell_idx],
+                                                                                {LCID_MIN_DRB});
     ue_cfg.ue_index                                 = to_du_ue_index(ue_idx);
     ue_cfg.crnti                                    = get_ue_crnti(ue_idx);
     (*ue_cfg.cfg.cells)[0].serv_cell_cfg.cell_index = to_du_cell_index(cell_idx);
     (*ue_cfg.cfg.cells)[0].serv_cell_idx            = to_serv_cell_index(cell_idx);
 
-    scheduler_test_bench::add_ue(ue_cfg);
+    scheduler_test_simulator::add_ue(ue_cfg);
   }
 
   static rach_indication_message::preamble create_preamble()
@@ -121,30 +103,24 @@ protected:
     static auto next_rnti = test_rgen::uniform_int<unsigned>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI));
     static const auto rnti_inc = test_rgen::uniform_int<unsigned>(1, 5);
 
-    rach_indication_message::preamble preamble{};
-    preamble.preamble_id = test_rgen::uniform_int<unsigned>(0, 63);
+    rach_indication_message::preamble preamble =
+        test_helper::create_preamble(test_rgen::uniform_int<unsigned>(0, 63), to_rnti(next_rnti));
     preamble.time_advance =
         phy_time_unit::from_seconds(std::uniform_real_distribution<double>{0, 2005e-6}(test_rgen::get()));
-    preamble.tc_rnti = to_rnti(next_rnti);
+
     next_rnti += rnti_inc;
     return preamble;
   }
 
   rach_indication_message create_rach_indication(unsigned nof_preambles, du_cell_index_t cell_idx)
   {
-    rach_indication_message rach_ind{};
-    rach_ind.cell_index = cell_idx;
-    rach_ind.slot_rx    = next_slot_rx() - 1;
-    if (nof_preambles == 0) {
-      return rach_ind;
-    }
-    rach_ind.occasions.emplace_back();
-    rach_ind.occasions.back().start_symbol    = 0;
-    rach_ind.occasions.back().frequency_index = 0;
-
+    std::vector<rach_indication_message::preamble> preambles(nof_preambles);
     for (unsigned i = 0; i != nof_preambles; ++i) {
-      rach_ind.occasions.back().preambles.emplace_back(create_preamble());
+      preambles[i] = this->create_preamble();
     }
+    rach_indication_message rach_ind = test_helper::create_rach_indication(next_slot_rx() - 1, preambles);
+    rach_ind.cell_index              = cell_idx;
+
     return rach_ind;
   }
 

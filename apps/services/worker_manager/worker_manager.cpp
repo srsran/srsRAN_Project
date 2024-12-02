@@ -311,6 +311,7 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
 }
 
 execution_config_helper::worker_pool worker_manager::create_low_prio_workers(unsigned nof_low_prio_threads,
+                                                                             unsigned low_prio_task_queue_size,
                                                                              os_sched_affinity_bitmask low_prio_mask)
 {
   using namespace execution_config_helper;
@@ -319,8 +320,8 @@ execution_config_helper::worker_pool worker_manager::create_low_prio_workers(uns
   worker_pool non_rt_pool{
       "non_rt_pool",
       nof_low_prio_threads,
-      {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}, // two task priority levels.
-       {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
+      {{concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size}, // two task priority levels.
+       {concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size}},
       // Left empty, is filled later.
       {},
       std::chrono::microseconds{100},
@@ -334,8 +335,8 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
 {
   using namespace execution_config_helper;
   // TODO: split executor creation and association to workers
-  worker_pool non_rt_pool =
-      create_low_prio_workers(worker_cfg.nof_low_prio_threads, worker_cfg.low_prio_sched_config.mask);
+  worker_pool non_rt_pool = create_low_prio_workers(
+      worker_cfg.nof_low_prio_threads, worker_cfg.low_prio_task_queue_size, worker_cfg.low_prio_sched_config.mask);
 
   // Associate executors to the worker pool.
   // Used for PCAP writing and CU-UP.

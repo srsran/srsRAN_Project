@@ -19,9 +19,7 @@
 #
 
 add_subdirectory(mac)
-if (NOT DU_SPLIT_6)
-    add_subdirectory(phy)
-endif ()
+add_subdirectory(phy)
 
 set(PRECODING_SOURCES
         precoding_matrix_mapper.cpp

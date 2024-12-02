@@ -16,7 +16,6 @@ variables:
     options:
       - "ubuntu-24.10"
       - "ubuntu-24.04"
-      - "ubuntu-23.10"
       - "ubuntu-22.04"
       - "debian-12"
       - "debian-11"
@@ -75,6 +74,8 @@ variables:
     KUBERNETES_CPU_LIMIT: 6
     KUBERNETES_MEMORY_REQUEST: 12Gi
     KUBERNETES_MEMORY_LIMIT: 12Gi
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "40G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "40G"
   tags:
     - ${INFRASTRUCTURE_TAG}
   before_script:

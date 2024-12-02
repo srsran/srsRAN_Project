@@ -110,7 +110,8 @@ void build_dci_f0_0_c_rnti(dci_ul_info&                  dci,
                            unsigned                      time_resource,
                            sch_mcs_index                 mcs_index,
                            uint8_t                       rv,
-                           const ul_harq_process_handle& h_ul);
+                           const ul_harq_process_handle& h_ul,
+                           uint8_t                       tpc_command);
 
 /// Builds DCI f0_1 for C-RNTI.
 void build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
@@ -123,6 +124,7 @@ void build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
                            const ul_harq_process_handle& h_ul,
                            unsigned                      total_dai,
                            unsigned                      nof_layers,
-                           unsigned                      tpmi);
+                           unsigned                      tpmi,
+                           uint8_t                       tpc_command);
 
 } // namespace srsran

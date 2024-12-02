@@ -170,14 +170,24 @@ float srsran::estimate_time_alignment(const re_buffer_reader<cf_t>&             
 {
   const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
 
+  // Handle contiguous RB mask cases.
+  if (hop_rb_mask.is_contiguous()) {
+    // RE pattern for PUCCH Format 1, 3 and 4.
+    if (pattern.re_pattern.all()) {
+      return ta_estimator.estimate(pilots_lse, 1, scs).time_alignment;
+    }
+
+    // RE pattern for PUCCH Format 2.
+    const bounded_bitset<NRE> re_pattern_stride3{
+        false, true, false, false, true, false, false, true, false, false, true, false};
+    if (pattern.re_pattern == re_pattern_stride3) {
+      return ta_estimator.estimate(pilots_lse, 3, scs).time_alignment;
+    }
+  }
+
   // Prepare RE mask, common for all symbols carrying DM-RS.
   bounded_bitset<MAX_RB* NRE> re_mask = hop_rb_mask.kronecker_product<NRE>(pattern.re_pattern);
 
-  static constexpr unsigned DFT_SIZE = port_channel_estimator_average_impl::DFT_SIZE;
-  srsran_assert(re_mask.size() < DFT_SIZE,
-                "The resource grid size {} is larger than the port channel estimator DFT size {}.",
-                re_mask.size(),
-                DFT_SIZE);
   srsran_assert(pilots_lse.get_slice(0).size() == re_mask.count(),
                 "Expected {} channel estimates, provided {}.",
                 re_mask.size(),

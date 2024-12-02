@@ -468,7 +468,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
       }
       case fapi::ul_pdu_type::SRS: {
         uplink_processor::srs_pdu& ul_pdu = pdus.srs.emplace_back();
-        convert_srs_fapi_to_phy(ul_pdu, pdu.srs_pdu, msg.sfn, msg.slot);
+        convert_srs_fapi_to_phy(ul_pdu, pdu.srs_pdu, carrier_cfg.num_rx_ant, msg.sfn, msg.slot);
         error_type<std::string> srs_validation = ul_pdu_validator.is_valid(ul_pdu.config);
         if (!srs_validation.has_value()) {
           logger.warning("Skipping UL_TTI.request: SRS PDU flagged as invalid with the following error\n    {}",

@@ -21,8 +21,10 @@
  */
 
 #include "lib/scheduler/ue_context/ue.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
@@ -32,8 +34,8 @@ class ue_configuration_test : public ::testing::Test
 {
 protected:
   scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  sched_cell_configuration_request_message msg       = test_helpers::make_default_sched_cell_configuration_request();
-  sched_ue_creation_request_message        ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
+  sched_cell_configuration_request_message msg = sched_config_helper::make_default_sched_cell_configuration_request();
+  sched_ue_creation_request_message ue_create_msg = sched_config_helper::create_default_sched_ue_creation_request();
 
   cell_common_configuration_list cell_cfg_db;
   cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
@@ -128,8 +130,8 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
   params.dl_f_ref_arfcn = 520002;
   params.band           = nr_band::n41;
   params.channel_bw_mhz = bs_channel_bandwidth::MHz50;
-  msg                   = test_helpers::make_default_sched_cell_configuration_request(params);
-  ue_create_msg         = test_helpers::create_default_sched_ue_creation_request(params);
+  msg                   = sched_config_helper::make_default_sched_cell_configuration_request(params);
+  ue_create_msg         = sched_config_helper::create_default_sched_ue_creation_request(params);
 
   auto&                        pdcch_cfg = *(*ue_create_msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg;
   const coreset_configuration& cset_cfg  = pdcch_cfg.coresets[0];

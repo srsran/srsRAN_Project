@@ -197,6 +197,11 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
     du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
   }
 
+  // > measConfig IE.
+  // [TS 38.473, 8.3.1.2] If the MeasConfig IE is included in the CU to DU RRC Information IE in the UE CONTEXT SETUP
+  // REQUEST message, the gNB-DU shall deduce that changes to the measurements configuration need to be applied.
+  du_request.meas_cfg = msg->cu_to_du_rrc_info.meas_cfg.copy();
+
   if (msg->cu_to_du_rrc_info.ie_exts_present) {
     // > Add HO preparation information in case of Handover.
     if (msg->cu_to_du_rrc_info.ie_exts.ho_prep_info_present) {
@@ -227,11 +232,11 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   resp->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);
   resp->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
 
-  // > DU-to-CU RRC Container.
-  if (not resp->du_to_cu_rrc_info.cell_group_cfg.append(du_ue_cfg_response.du_to_cu_rrc_container)) {
-    logger.error("{}: Failed to append DU-to-CU RRC container.", f1ap_log_prefix{ue->context, name()});
-    return;
-  }
+  // Prepare DU to CU RRC Container.
+  // > cellGroupConfig
+  resp->du_to_cu_rrc_info.cell_group_cfg = du_ue_cfg_response.cell_group_cfg.copy();
+  // > measGapConfig
+  resp->du_to_cu_rrc_info.meas_gap_cfg = du_ue_cfg_response.meas_gap_cfg.copy();
 
   // > Check if DU-to-CU RRC Container is a full cellGroupConfig or a delta.
   if (du_ue_cfg_response.full_config_present) {

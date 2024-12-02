@@ -40,6 +40,9 @@ public:
   /// \brief Request a currently unused and unallocated UE index from the DU.
   virtual du_ue_index_t find_unused_du_ue_index() = 0;
 
+  /// \brief Handle reset of UE contexts as per request from the F1AP.
+  virtual async_task<void> handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset) = 0;
+
   /// \brief Create a new UE context in the DU with an assigned UE index.
   virtual async_task<f1ap_ue_context_creation_response>
   handle_ue_context_creation(const f1ap_ue_context_creation_request& request) = 0;

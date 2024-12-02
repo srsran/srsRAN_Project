@@ -26,6 +26,7 @@
 #include "lib/scheduler/support/config_helpers.h"
 #include "lib/scheduler/support/pdsch/pdsch_default_time_allocation.h"
 #include "scheduler_output_test_helpers.h"
+#include "tests/test_doubles/scheduler/scheduler_test_message_validators.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/support/error_handling.h"
@@ -259,10 +260,24 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
         rar.pdsch_cfg.rbs.type1().start() + rar.pdsch_cfg.coreset_cfg->get_coreset_start_crb(),
         rar.pdsch_cfg.rbs.type1().stop() + rar.pdsch_cfg.coreset_cfg->get_coreset_start_crb()};
     crb_interval rar_crbs = prb_to_crb(init_bwp_cfg, rar_vrbs);
-    TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
+    ASSERT_TRUE(coreset0_lims.contains(rar_crbs)) << "RAR outside of initial active DL BWP RB limits";
 
-    TESTASSERT(not ra_rntis.count(ra_rnti), "Repeated RA-rnti={} detected", ra_rnti);
+    ASSERT_FALSE(ra_rntis.count(ra_rnti)) << fmt::format("Repeated RA-rnti={} detected", ra_rnti);
     ra_rntis.emplace(ra_rnti);
+  }
+}
+
+void srsran::test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<const dl_msg_alloc> grants)
+{
+  for (const dl_msg_alloc& grant : grants) {
+    ASSERT_TRUE(test_helper::is_valid_dl_msg_alloc(grant));
+  }
+}
+
+void srsran::test_pusch_ue_consistency(const cell_configuration& cell_cfg, span<const ul_sched_info> grants)
+{
+  for (const ul_sched_info& grant : grants) {
+    ASSERT_TRUE(test_helper::is_valid_ul_sched_info(grant));
   }
 }
 
@@ -444,6 +459,8 @@ void srsran::test_scheduler_result_consistency(const cell_configuration& cell_cf
   ASSERT_NO_FATAL_FAILURE(test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs));
   ASSERT_NO_FATAL_FAILURE(test_prach_opportunity_validity(cell_cfg, result.ul.prachs));
   ASSERT_NO_FATAL_FAILURE(test_pdsch_rar_consistency(cell_cfg, result.dl.rar_grants));
+  ASSERT_NO_FATAL_FAILURE(test_pdsch_ue_consistency(cell_cfg, result.dl.ue_grants));
+  ASSERT_NO_FATAL_FAILURE(test_pusch_ue_consistency(cell_cfg, result.ul.puschs));
   ASSERT_NO_FATAL_FAILURE(test_pdcch_common_consistency(cell_cfg, sl_tx, result.dl.dl_pdcchs));
   ASSERT_NO_FATAL_FAILURE(test_dl_resource_grid_collisions(cell_cfg, result.dl));
   ASSERT_NO_FATAL_FAILURE(test_ul_resource_grid_collisions(cell_cfg, result.ul));

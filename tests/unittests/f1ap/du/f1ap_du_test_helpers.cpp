@@ -304,9 +304,8 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
   }
 
   // Generate DU manager response to UE context update.
-  f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
-  f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container =
-      byte_buffer::create({0x1, 0x2, 0x3}).value();
+  f1ap_du_cfg_handler.next_ue_context_update_response.result         = true;
+  f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg = byte_buffer::create({0x1, 0x2, 0x3}).value();
 
   // Send UE CONTEXT SETUP REQUEST message to F1AP.
   f1ap->handle_message(msg);

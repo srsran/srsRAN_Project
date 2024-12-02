@@ -51,6 +51,12 @@
                     },
                     "ul_heavy_6u3d": {
                         "type": "boolean"
+                    },
+                    "warning_allowlist": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
                 "required": [

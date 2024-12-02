@@ -413,6 +413,24 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   return {};
 }
 
+validator_result srsran::config_validators::validate_pusch_cfg(const uplink_config& ul_config)
+{
+  VERIFY(ul_config.init_ul_bwp.pusch_cfg.has_value(), "Missing configuration for pusch-Config in spCellConfig");
+
+  const auto& pusch_cfg = ul_config.init_ul_bwp.pusch_cfg.value();
+
+  VERIFY(pusch_cfg.pusch_pwr_ctrl.has_value(), "Missing configuration for pusch-PowerControl in uplinkConfig");
+
+  VERIFY(not pusch_cfg.pusch_pwr_ctrl.value().is_tpc_accumulation_disabled,
+         "TPC accumulation for PUSCH power control is expected to be enabled");
+
+  VERIFY(pusch_cfg.pusch_pwr_ctrl.value().p0_alphasets.size() == 1 and
+             pusch_cfg.pusch_pwr_ctrl.value().p0_alphasets.front().p0.has_value(),
+         "The P0-alphaSet list for PUSCH power control is expected to have size 1 with p0 value configured");
+
+  return {};
+}
+
 validator_result srsran::config_validators::validate_srs_cfg(const serving_cell_config& ue_cell_cfg)
 {
   VERIFY(ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.has_value(),

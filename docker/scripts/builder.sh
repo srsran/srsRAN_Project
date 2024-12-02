@@ -46,7 +46,7 @@ FOLDER=""
 BUILD_FOLDER="build"
 CACHE_FOLDER="ccache"
 CLEAN_BUILD="True"
-MAKE_EXTRA="-j $(nproc)"
+MAKE_EXTRA="-j$(nproc)"
 COMPILER="gcc"
 UHD_VERSION=""
 DPDK_VERSION=""
@@ -221,6 +221,31 @@ fi
 ccache -z || true
 mkdir -p "$BUILD_FOLDER"
 cd "$BUILD_FOLDER" || exit
-cmake $CCACHE_CMAKE_ARGS "$@" ..
+
+# First cmake call to setup. Saving output to later get targets if required
+cmake $CCACHE_CMAKE_ARGS "$@" .. 2>&1 | tee cmake_output.log
+
+# If no targets are provided, get the targets from the cmake output
+# This scripts considers a target each word in MAKE_ARGS that doesn't start with an hyphen
+if [[ "$MAKE_EXTRA" =~ (^|[[:space:]])[^-][^[:space:]]* ]]; then
+    :
+else
+    TARGETS=$(awk '/-- Adding binary target:/ {print substr($0, index($0,"target:")+7)}' cmake_output.log | tr '\n' ' ')
+    MAKE_EXTRA="$MAKE_EXTRA $TARGETS all"
+fi
+
+found=false
+for word in $MAKE_EXTRA; do
+  if [[ "$word" =~ ^[^-] ]]; then
+    echo "-- Selecting target $word"
+    found=true
+  fi
+done
+
+if [[ $found == false ]]; then
+  echo "-- Selecting default target"
+fi
+
+# Second cmake call to build
 cmake --build . -- $MAKE_EXTRA
 ccache -sv 2>/dev/null || true

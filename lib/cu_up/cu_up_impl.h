@@ -27,10 +27,9 @@
 #include "adapters/gw_adapters.h"
 #include "ue_manager.h"
 #include "srsran/cu_up/cu_up.h"
-#include "srsran/cu_up/cu_up_configuration.h"
+#include "srsran/cu_up/cu_up_config.h"
 #include "srsran/cu_up/cu_up_manager.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsran/e2/e2_cu_factory.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
@@ -41,7 +40,7 @@ namespace srsran::srs_cu_up {
 class cu_up final : public cu_up_interface
 {
 public:
-  explicit cu_up(const cu_up_configuration& cfg_);
+  explicit cu_up(const cu_up_config& cfg_, const cu_up_dependencies& dependencies);
   ~cu_up() override;
 
   // cu_up_interface
@@ -61,7 +60,8 @@ private:
   handle_bearer_context_modification_request_impl(ue_context&                                     ue_ctxt,
                                                   const e1ap_bearer_context_modification_request& msg);
 
-  cu_up_configuration cfg;
+  cu_up_config   cfg;
+  task_executor& ctrl_executor;
 
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
@@ -91,8 +91,6 @@ private:
   fifo_async_task_scheduler main_ctrl_loop;
 
   unique_timer statistics_report_timer;
-  // E2 Agent.
-  std::unique_ptr<e2_agent> e2agent;
 };
 
 } // namespace srsran::srs_cu_up

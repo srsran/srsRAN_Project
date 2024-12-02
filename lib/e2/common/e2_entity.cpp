@@ -39,7 +39,7 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using metrics_interface = std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*>;
 
-e2_entity::e2_entity(e2ap_configuration&            cfg_,
+e2_entity::e2_entity(const e2ap_configuration&      cfg_,
                      e2_connection_client&          e2_client_,
                      metrics_interface              e2_metrics_,
                      srs_du::f1ap_ue_id_translator* f1ap_ue_id_translator_,

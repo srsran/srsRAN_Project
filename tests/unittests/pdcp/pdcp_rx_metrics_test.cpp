@@ -49,6 +49,10 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
+    // Wait for crypto and reordering
+    crypto_worker_pool.wait_pending_tasks();
+    worker.run_pending_tasks();
+
     tick_all(150);
     if (metrics_notif.metrics_list.size() == 0) {
       FAIL() << "No metrics notification received";
@@ -99,6 +103,10 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
+    // Wait for crypto and reordering
+    crypto_worker_pool.wait_pending_tasks();
+    worker.run_pending_tasks();
+
     tick_all(100);
     if (metrics_notif.metrics_list.size() == 0) {
       FAIL() << "No metrics notification received";
@@ -145,6 +153,9 @@ TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
+    // Wait for crypto and reordering
+    crypto_worker_pool.wait_pending_tasks();
+    worker.run_pending_tasks();
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     tick_all(150);
     if (metrics_notif.metrics_list.size() == 0) {

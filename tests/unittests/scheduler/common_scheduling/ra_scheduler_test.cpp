@@ -24,11 +24,12 @@
 #include "lib/scheduler/logging/scheduler_event_logger.h"
 #include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <ostream>
@@ -123,7 +124,7 @@ protected:
     }
 
     sched_cell_configuration_request_message req =
-        test_helpers::make_default_sched_cell_configuration_request(builder_params);
+        sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
 
     if (dplx_mode == srsran::duplex_mode::TDD and t_params.tdd_config.has_value()) {
       req.tdd_ul_dl_cfg_common = t_params.tdd_config;

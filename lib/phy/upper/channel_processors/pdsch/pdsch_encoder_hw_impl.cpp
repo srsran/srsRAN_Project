@@ -207,16 +207,18 @@ void pdsch_encoder_hw_impl::set_hw_enc_tb_configuration(hal::hw_pdsch_encoder_co
   unsigned nof_segments = segment_buffer->get_nof_codeblocks();
   hw_cfg.nof_segments   = nof_segments;
 
-  // Compute the TB CRC bits (needed for both FPGA and bbdev).
-  crc_calculator_checksum_t tb_crc     = compute_tb_crc(transport_block, hw_cfg.nof_tb_crc_bits);
-  uint8_t                   crc_byte_0 = (static_cast<uint32_t>(tb_crc) >> 16) & 0xff;
-  uint8_t                   crc_byte_1 = (static_cast<uint32_t>(tb_crc) >> 8) & 0xff;
-  uint8_t                   crc_byte_2 = static_cast<uint32_t>(tb_crc) & 0xff;
-  if (hw_cfg.nof_tb_crc_bits > 16) {
-    hw_cfg.tb_crc = {crc_byte_0, crc_byte_1, crc_byte_2};
-  } else {
-    hw_cfg.tb_crc.resize(2);
-    hw_cfg.tb_crc = {crc_byte_1, crc_byte_2};
+  // Compute the TB CRC bits (needed in TB mode).
+  if (!cb_mode) {
+    crc_calculator_checksum_t tb_crc     = compute_tb_crc(transport_block, hw_cfg.nof_tb_crc_bits);
+    uint8_t                   crc_byte_0 = (static_cast<uint32_t>(tb_crc) >> 16) & 0xff;
+    uint8_t                   crc_byte_1 = (static_cast<uint32_t>(tb_crc) >> 8) & 0xff;
+    uint8_t                   crc_byte_2 = static_cast<uint32_t>(tb_crc) & 0xff;
+    if (hw_cfg.nof_tb_crc_bits > 16) {
+      hw_cfg.tb_crc = {crc_byte_0, crc_byte_1, crc_byte_2};
+    } else {
+      hw_cfg.tb_crc.resize(2);
+      hw_cfg.tb_crc = {crc_byte_1, crc_byte_2};
+    }
   }
 
   // Number of segments that will have a short rate-matched length. In TS38.212 Section 5.4.2.1, these correspond to

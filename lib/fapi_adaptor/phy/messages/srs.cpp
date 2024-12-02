@@ -27,6 +27,7 @@ using namespace fapi_adaptor;
 
 void srsran::fapi_adaptor::convert_srs_fapi_to_phy(uplink_processor::srs_pdu& pdu,
                                                    const fapi::ul_srs_pdu&    fapi_pdu,
+                                                   unsigned                   nof_rx_antennas,
                                                    uint16_t                   sfn,
                                                    uint16_t                   slot)
 {
@@ -56,7 +57,7 @@ void srsran::fapi_adaptor::convert_srs_fapi_to_phy(uplink_processor::srs_pdu& pd
 
   // GCC gives a false positive of type Werror=stringop-overflow.
   // Fill the antenna port indices starting from 0.
-  static_vector<unsigned, srs_constants::max_nof_rx_ports> ports(static_cast<unsigned>(fapi_pdu.num_ant_ports));
+  static_vector<unsigned, srs_constants::max_nof_rx_ports> ports(nof_rx_antennas);
   std::iota(ports.begin(), ports.end(), 0);
   pdu.config.ports.assign(ports.begin(), ports.end());
 }

@@ -19,9 +19,7 @@
 #
 
 add_subdirectory(du_high)
-if (NOT DU_SPLIT_6)
-   add_subdirectory(du_low)
-endif ()
+add_subdirectory(du_low)
 
 set(SOURCES du_cell_config_validation.cpp du_update_config_helpers.cpp)
 add_library(srsran_du_config_validators STATIC ${SOURCES})

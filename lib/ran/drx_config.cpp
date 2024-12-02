@@ -44,3 +44,13 @@ span<const std::chrono::milliseconds> srsran::drx_helper::valid_on_duration_time
                                                msec{500}, msec{600}, msec{800}, msec{1000}, msec{1200}, msec{1600}};
   return values;
 }
+
+span<const std::chrono::milliseconds> srsran::drx_helper::valid_inactivity_timer_values()
+{
+  using msec = std::chrono::milliseconds;
+  static constexpr std::array<msec, 24> values{msec{0},   msec{1},   msec{2},    msec{3},    msec{4},   msec{5},
+                                               msec{6},   msec{8},   msec{10},   msec{20},   msec{30},  msec{40},
+                                               msec{50},  msec{60},  msec{80},   msec{100},  msec{200}, msec{300},
+                                               msec{500}, msec{750}, msec{1280}, msec{1920}, msec{2560}};
+  return values;
+}

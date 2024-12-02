@@ -69,5 +69,8 @@ bool is_valid_ue_context_release_command(const f1ap_message& msg);
 
 bool is_valid_paging(const f1ap_message& msg);
 
+bool is_valid_f1_reset_ack(const f1ap_message& msg);
+bool is_valid_f1_reset_ack(const f1ap_message& req, const f1ap_message& resp);
+
 } // namespace test_helpers
 } // namespace srsran

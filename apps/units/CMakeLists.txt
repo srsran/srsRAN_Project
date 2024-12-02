@@ -18,6 +18,9 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_subdirectory(cu_cp)
-add_subdirectory(cu_up)
-add_subdirectory(flexible_du)
+# Do not build by default.
+set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+add_subdirectory(flexible_o_du)
+add_subdirectory(o_cu_cp)
+add_subdirectory(o_cu_up)

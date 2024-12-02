@@ -31,6 +31,7 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/test_utils.h"
 
@@ -163,17 +164,11 @@ static void init_loggers()
 
 du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
   cu_notifier(workers.test_worker),
-  du_high_cfg([this, params]() {
+  du_high_cfg([params]() {
     init_loggers();
 
     du_high_configuration cfg{};
-    cfg.exec_mapper                          = workers.exec_mapper.get();
-    cfg.f1c_client                           = &cu_notifier;
-    cfg.f1u_gw                               = &cu_up_sim;
-    cfg.phy_adapter                          = &phy;
-    cfg.timers                               = &timers;
     cfg.ran.sched_cfg.log_broadcast_messages = false;
-
     cfg.ran.cells.reserve(params.nof_cells);
     auto builder_params =
         params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
@@ -194,12 +189,21 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
     cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
     cfg.ran.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.mac_p         = &mac_pcap;
-    cfg.rlc_p         = &rlc_pcap;
 
     return cfg;
   }()),
-  du_hi(make_du_high(du_high_cfg)),
+  du_hi_dependencies([this]() {
+    du_high_dependencies dependencies;
+    dependencies.exec_mapper = workers.exec_mapper.get();
+    dependencies.f1c_client  = &cu_notifier;
+    dependencies.f1u_gw      = &cu_up_sim;
+    dependencies.phy_adapter = &phy;
+    dependencies.timers      = &timers;
+    dependencies.mac_p       = &mac_pcap;
+    dependencies.rlc_p       = &rlc_pcap;
+    return dependencies;
+  }()),
+  du_hi(make_du_high(du_high_cfg, du_hi_dependencies)),
   phy(params.nof_cells, workers.test_worker),
   next_slot(to_numerology_value(du_high_cfg.ran.cells[0].scs_common),
             test_rgen::uniform_int<unsigned>(0, 10239) *
@@ -346,7 +350,7 @@ bool du_high_env_simulator::run_rrc_reestablishment(rnti_t rnti, rnti_t old_rnti
   // Run F1AP UE Context Modification procedure.
   msg = test_helpers::generate_ue_context_modification_request(*u.du_ue_id, *u.cu_ue_id, {}, {drb_id_t::drb1}, {});
   cu_notifier.last_f1ap_msgs.clear();
-  du_hi->get_f1ap_message_handler().handle_message(msg);
+  du_hi->get_f1ap_du().handle_message(msg);
   bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
   if (not ret) {
     test_logger.error("rnti={}: F1AP UE Context Modification Request not sent back to the CU-CP", u.rnti);
@@ -400,7 +404,7 @@ bool du_high_env_simulator::send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_co
   lcid_t dl_lcid = uint_to_lcid(dl_msg.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id);
   lcid_t ul_lcid = dl_lcid == LCID_SRB0 ? LCID_SRB1 : dl_lcid;
 
-  du_hi->get_f1ap_message_handler().handle_message(dl_msg);
+  du_hi->get_f1ap_du().handle_message(dl_msg);
 
   // Wait for DL message to be sent to the PHY.
   if (not await_dl_msg_sched(u, dl_lcid)) {
@@ -454,7 +458,7 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
       .five_qi = 7U;
   cmd->drbs_to_be_setup_list[0].value().drbs_to_be_setup_item().rlc_mode.value =
       asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
-  this->du_hi->get_f1ap_message_handler().handle_message(msg);
+  this->du_hi->get_f1ap_du().handle_message(msg);
 
   // Wait until DU sends UE Context Setup Response and the whole RRC container is scheduled.
   const unsigned MAX_SLOT_COUNT   = 1000;
@@ -509,7 +513,7 @@ bool du_high_env_simulator::run_ue_context_release(rnti_t rnti, srb_id_t srb_id)
   // Send UE Context Release Command which contains dummy RRC Release.
   cu_notifier.last_f1ap_msgs.clear();
   f1ap_message msg = test_helpers::generate_ue_context_release_command(*u.cu_ue_id, *u.du_ue_id, srb_id);
-  du_hi->get_f1ap_message_handler().handle_message(msg);
+  du_hi->get_f1ap_du().handle_message(msg);
 
   // Await for RRC container to be scheduled in the MAC.
   lcid_t lcid = srb_id_to_lcid(srb_id);

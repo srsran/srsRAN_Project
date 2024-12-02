@@ -119,10 +119,6 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
 {
   trace_point tp = l1_tracer.now();
 
-  srsran_assert(pdu.context.format == pucch_format::FORMAT_0 || pdu.context.format == pucch_format::FORMAT_1 ||
-                    pdu.context.format == pucch_format::FORMAT_2,
-                "Currently supporting PUCCH Format 0, 1 and 2 only.");
-
   pucch_processor_result proc_result;
   // Process the PUCCH.
   switch (pdu.context.format) {

@@ -25,6 +25,7 @@ target_link_libraries(srs_sched_test
         scheduler_test_suite
         srslog
         sched_config
+        sched_test_doubles
         gtest
         gtest_main)
 gtest_discover_tests(srs_sched_test)

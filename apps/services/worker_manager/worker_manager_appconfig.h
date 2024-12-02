@@ -40,6 +40,8 @@ struct cpu_affinities_appconfig {
 struct non_rt_threads_appconfig {
   /// Number of non real time threads for processing of CP and UP data in the upper layers
   unsigned nof_non_rt_threads = 4;
+  /// Non real time task worker queue size
+  unsigned non_rt_task_queue_size = 2048;
 };
 
 /// Expert threads configuration of the application.
