@@ -1836,85 +1836,42 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   slots_with_no_pdxch_space[(sl - 1).to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
   last_sl_ind                                                                     = sl;
 
-  // Remove any DL UE that is no longer in fallback mode; this can happen in case of overallocation, or when the GNB
-  // detects a false NACK from PUCCH. Existing the fallback mode is an indication that the fallback transmission was
-  // completed successfully.
+  // Remove any DL UE that is no longer in fallback mode. This happens when the higher layers confirm that the UE has
+  // successfully received its config.
   for (auto ue_it = pending_dl_ues_new_tx.begin(); ue_it != pending_dl_ues_new_tx.end();) {
     if (not ues.contains(ue_it->ue_index)) {
+      // UE was removed in the meantime.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
-    // For SRB1, due to segmentation and to pre-allocation, the scheduler might not be able to estimate precisely when
-    // the UE has received the SRB1 full buffer; we assume the UE has received the full SRB1 buffer data if UE exits
-    // fallback mode. This is not needed for SRB0, which doesn't allow segmentation.
-    if ((ue_it->is_srb0.has_value() and not ue_it->is_srb0.value()) and
-        (not ues[ue_it->ue_index].get_pcell().is_in_fallback_mode())) {
+    auto& u = ues[ue_it->ue_index];
+    if (not u.get_pcell().is_in_fallback_mode()) {
+      // UE exited fallback.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
+
+    // Remove UE when the SRB1 buffer status is empty and when there are no HARQ processes scheduled for future
+    // transmissions.
+    // TODO: Verify if this is still needed.
+    if (ue_it->is_srb0.has_value() and ue_it->is_srb0.value()) {
+      // NOTE: the UEs that have pending RE-TXs are handled by the \ref ongoing_ues_ack_retxs and can be removed from
+      // \ref pending_dl_ues_new_tx.
+      const bool remove_ue = ue_it->pending_srb1_buffer_bytes == 0 and
+                             ongoing_ues_ack_retxs.end() ==
+                                 std::find_if(ongoing_ues_ack_retxs.begin(),
+                                              ongoing_ues_ack_retxs.end(),
+                                              [ue_idx = ue_it->ue_index, sl](const ack_and_retx_tracker& tracker) {
+                                                return tracker.ue_index == ue_idx and tracker.h_dl->is_waiting_ack() and
+                                                       tracker.h_dl->nof_retxs() == 0 and
+                                                       tracker.h_dl->pdsch_slot() >= sl;
+                                              });
+      if (remove_ue) {
+        ue_it = pending_dl_ues_new_tx.erase(ue_it);
+      }
+    }
+
     ++ue_it;
-  }
-
-  // Only remove the {UE, HARQ-process} elements that have been retransmitted and positively acked. The rest of the
-  // elements are potential candidate for retransmissions.
-  for (auto it_ue_harq = ongoing_ues_ack_retxs.begin(); it_ue_harq != ongoing_ues_ack_retxs.end();) {
-    if (not ues.contains(it_ue_harq->ue_index)) {
-      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
-      continue;
-    }
-
-    // If the SRB1 UE is no longer in fallback mode, it's safe to cancel all ongoing HARQ processes.
-    // For SRB1, due to segmentation and to pre-allocation, the scheduler might not be able to estimate precisely when
-    // the UE has received the SRB1 full buffer; we assume the UE has received the full SRB1 buffer data if UE exits
-    // fallback mode. This is not needed for SRB0, which doesn't allow segmentation.
-    if ((it_ue_harq->is_srb0.has_value() and not it_ue_harq->is_srb0.value()) and
-        (not ues[it_ue_harq->ue_index].get_pcell().is_in_fallback_mode())) {
-      it_ue_harq->h_dl->cancel_retxs();
-      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
-      continue;
-    }
-
-    if (not it_ue_harq->h_dl.has_value() or it_ue_harq->h_dl->empty()) {
-      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
-      continue;
-    }
-
-    // If the HARQ process has the "fallback" flag set to false, it means that the HARQ process got reset by its
-    // timeout, and in the meantime got reused by the non-fallback scheduler. In this case, it cannot be processed by
-    // the fallback scheduler. NOTE: this very unlikely to happen, but not impossible under certain extreme conditions.
-    if (not it_ue_harq->h_dl->get_grant_params().is_fallback) {
-      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
-      continue;
-    }
-    ++it_ue_harq;
-  }
-
-  // Remove UE when the SRB1 buffer status is empty and when there are no HARQ processes scheduled for future
-  // transmissions.
-  for (auto ue_it = pending_dl_ues_new_tx.begin(); ue_it != pending_dl_ues_new_tx.end();) {
-    auto& ue = *ue_it;
-    if (not ue.is_srb0.has_value() or ue.is_srb0.value()) {
-      ++ue_it;
-      continue;
-    }
-
-    // NOTE: the UEs that have pending RE-TXs are handled by the \ref ongoing_ues_ack_retxs and can be removed from
-    // \ref pending_dl_ues_new_tx.
-    const bool remove_ue = ue.pending_srb1_buffer_bytes == 0 and
-                           ongoing_ues_ack_retxs.end() ==
-                               std::find_if(ongoing_ues_ack_retxs.begin(),
-                                            ongoing_ues_ack_retxs.end(),
-                                            [ue_idx = ue.ue_index, sl](const ack_and_retx_tracker& tracker) {
-                                              return tracker.ue_index == ue_idx and tracker.h_dl->is_waiting_ack() and
-                                                     tracker.h_dl->nof_retxs() == 0 and
-                                                     tracker.h_dl->pdsch_slot() >= sl;
-                                            });
-
-    if (remove_ue) {
-      ue_it = pending_dl_ues_new_tx.erase(ue_it);
-    } else {
-      ++ue_it;
-    }
   }
 
   // Remove UL UE if the UE has left fallback or if the UE has been deleted from the scheduler.
@@ -1923,19 +1880,25 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       ue_it = pending_ul_ues.erase(ue_it);
       continue;
     }
-
-    // Remove UE when it leaves the fallback.
     auto& ue = ues[*ue_it];
     if (not ue.get_pcell().is_in_fallback_mode()) {
-      for (uint32_t h_id = 0; h_id != ue.get_pcell().harqs.nof_ul_harqs(); ++h_id) {
-        auto h_ul = ue.get_pcell().harqs.ul_harq(to_harq_id(h_id));
-        if (h_ul.has_value()) {
-          h_ul->cancel_retxs();
-        }
-      }
       ue_it = pending_ul_ues.erase(ue_it);
       continue;
     }
     ++ue_it;
+  }
+
+  // Only remove the {UE, HARQ-process} elements that have been retransmitted and positively acked. The rest of the
+  // elements are potential candidate for retransmissions.
+  for (auto it_ue_harq = ongoing_ues_ack_retxs.begin(); it_ue_harq != ongoing_ues_ack_retxs.end();) {
+    if (not ues.contains(it_ue_harq->ue_index) or not ues[it_ue_harq->ue_index].get_pcell().is_in_fallback_mode()) {
+      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
+      continue;
+    }
+    if (not it_ue_harq->h_dl.has_value() or it_ue_harq->h_dl->empty()) {
+      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
+      continue;
+    }
+    ++it_ue_harq;
   }
 }
