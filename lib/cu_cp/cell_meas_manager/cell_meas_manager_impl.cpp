@@ -301,5 +301,6 @@ void cell_meas_manager::update_measurement_object(nr_cell_identity              
 SRSRAN_WEAK_SYMB void cell_meas_manager::send_positioning_measurement(ue_index_t              ue_index,
                                                                       const rrc_meas_results& meas_results)
 {
+  (void)&cu_cp_notifier;
   logger.info("Positioning measurements are not supported");
 }
