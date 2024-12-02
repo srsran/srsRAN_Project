@@ -64,6 +64,7 @@ std::vector<o_du_high_unit> srsran::make_multicell_with_multi_du(const o_du_high
     tmp_cfg.du_high_cfg.config.cells_cfg.resize(1);
     tmp_cfg.du_high_cfg.config.cells_cfg[0] = du_hi.cells_cfg[i];
     tmp_cfg.fapi_cfg                        = o_du_high_unit_cfg.fapi_cfg;
+    tmp_cfg.e2_cfg                          = o_du_high_unit_cfg.e2_cfg;
     srs_du::o_du_high_dependencies sector_deps;
     sector_deps.sectors.push_back(dependencies.o_du_hi_dependencies.sectors[i]);
 

@@ -94,9 +94,9 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       e2sm_kpm_supported_metric_t{
           NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency});
 
-  supported_metrics.emplace(
-      "RACH.PreambleDedCell",
-      e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_prach_cell_count});
+  supported_metrics.emplace("RACH.PreambleDedCell",
+                            e2sm_kpm_supported_metric_t{
+                                NO_LABEL, E2_NODE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prach_cell_count});
 
   // Check if the supported metrics are matching e2sm_kpm metrics definitions.
   check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_28_552_metrics());
