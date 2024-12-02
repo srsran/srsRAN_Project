@@ -312,7 +312,7 @@ protected:
     }
 
     // Notify scheduler of DL buffer state.
-    bench->fallback_sched.handle_dl_buffer_state_indication_srb(ue_idx, is_srb0, sl, buffer_size);
+    bench->fallback_sched.handle_dl_buffer_state_indication(ue_idx, is_srb0, sl, buffer_size);
   }
 
   void push_buffer_state_to_ul_ue(du_ue_index_t ue_idx, slot_point sl, unsigned buffer_size)

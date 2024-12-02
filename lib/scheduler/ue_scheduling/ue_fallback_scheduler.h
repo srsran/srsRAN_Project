@@ -35,7 +35,7 @@ public:
   /// \param[in] sl Slot at which the DL Buffer State Indication was received.
   /// \param[in] srb_buffer_bytes Number of SRB bytes reported by Buffer State Indication.
   void
-  handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index, bool is_srb0, slot_point sl, unsigned srb_buffer_bytes);
+  handle_dl_buffer_state_indication(du_ue_index_t ue_index, bool is_srb0, slot_point sl, unsigned srb_buffer_bytes);
 
   /// Handle Contention Resolution indication sent by the MAC.
   /// \param[in] ue_index UE's DU Index for which Contention Resolution CE needs to be scheduled.

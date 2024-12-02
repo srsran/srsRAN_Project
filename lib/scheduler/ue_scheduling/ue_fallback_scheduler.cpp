@@ -95,13 +95,19 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
   schedule_dl_new_tx_srb1(res_alloc);
 }
 
-void ue_fallback_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index,
-                                                                  bool          is_srb0,
-                                                                  slot_point    sl,
-                                                                  unsigned      srb_buffer_bytes)
+void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index,
+                                                              bool          is_srb0,
+                                                              slot_point    sl,
+                                                              unsigned      srb_buffer_bytes)
 {
   if (not ues.contains(ue_index)) {
     logger.error("ue_index={} not found in the scheduler", ue_index);
+    return;
+  }
+  ue& u = ues[ue_index];
+  if (not u.get_pcell().is_in_fallback_mode()) {
+    logger.error("Discarding DL buffer state indication in fallback scheduler. Cause: ue_index={} not in fallback mode",
+                 ue_index);
     return;
   }
 
@@ -109,8 +115,6 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t 
       pending_dl_ues_new_tx.begin(), pending_dl_ues_new_tx.end(), [ue_index, is_srb0](const fallback_ue& ue) {
         return ue.ue_index == ue_index and (not ue.is_srb0.has_value() or ue.is_srb0.value() == is_srb0);
       });
-
-  ue& u = ues[ue_index];
 
   if (ue_it != pending_dl_ues_new_tx.end()) {
     // This case can happen when ConRes indication is received first and then receive Msg4 indication from upper layers.
@@ -140,11 +144,13 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t 
 
 void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
 {
-  if (not ues.contains(ue_index)) {
-    logger.error("ue_index={} not found in the scheduler", ue_index);
+  if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
+    logger.error("ue_index={} not found in the scheduler or not in fallback", ue_index);
     return;
   }
   auto& u = ues[ue_index];
+
+  // Mark the start of the conRes timer.
   u.drx_controller().on_con_res_start();
 
   auto ue_it = std::find_if(pending_dl_ues_new_tx.begin(),
@@ -162,8 +168,8 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
 
 void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind)
 {
-  if (not ues.contains(ue_index)) {
-    logger.error("ue_index={} not found in the scheduler", ue_index);
+  if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
+    logger.error("ue_index={} not found in the scheduler or not in fallback", ue_index);
     return;
   }
 
@@ -174,21 +180,24 @@ void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, con
         return lcg_report.lcg_id == srb_lcg_id;
       });
   const unsigned bsr_bytes = srb_lcg_report != bsr_ind.reported_lcgs.end() ? srb_lcg_report->nof_bytes : 0U;
+  if (bsr_bytes == 0) {
+    return;
+  }
 
   auto ue_it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index);
 
   // For UL UEs, we don't keep an internal estimate of the UL traffic, but we rely on the UL logical channel manager for
   // that task. Thus, compared to the DL case, the only operation that is needed for the UL is the addition of a new UE
   // to the pending UL UEs list.
-  if (ue_it == pending_ul_ues.end() and bsr_bytes != 0) {
+  if (ue_it == pending_ul_ues.end()) {
     pending_ul_ues.emplace_back(ue_index);
   }
 }
 
 void ue_fallback_scheduler::handle_sr_indication(du_ue_index_t ue_index)
 {
-  if (not ues.contains(ue_index)) {
-    logger.error("ue_index={} not found in the scheduler", ue_index);
+  if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
+    logger.error("ue_index={} not found in the scheduler or not in fallback", ue_index);
     return;
   }
 

@@ -83,7 +83,7 @@ public:
       auto& du_pcell = parent.du_cells[u.get_pcell().cell_index];
       if (dl_bo.lcid == LCID_SRB0 or (u.get_pcell().is_in_fallback_mode() and dl_bo.lcid == LCID_SRB1)) {
         // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-        du_pcell.fallback_sched->handle_dl_buffer_state_indication_srb(
+        du_pcell.fallback_sched->handle_dl_buffer_state_indication(
             dl_bo.ue_index, dl_bo.lcid == LCID_SRB0, sl, dl_bo.bs);
       }
 
@@ -537,7 +537,10 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                 if (pucch_f0f1->sr_detected) {
                   // Handle SR indication.
                   ue_db[ue_cc.ue_index].handle_sr_indication();
-                  du_cells[ue_cc.cell_index].fallback_sched->handle_sr_indication(ue_cc.ue_index);
+
+                  if (ue_cc.is_in_fallback_mode()) {
+                    du_cells[ue_cc.cell_index].fallback_sched->handle_sr_indication(ue_cc.ue_index);
+                  }
 
                   // Log SR event.
                   du_cells[ue_cc.cell_index].ev_logger->enqueue(
