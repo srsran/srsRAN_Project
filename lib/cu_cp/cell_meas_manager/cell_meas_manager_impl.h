@@ -68,10 +68,10 @@ private:
 
   void send_positioning_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
 
-  cell_meas_manager_cfg                cfg;
-  cell_meas_mobility_manager_notifier& mobility_mng_notifier;
-  cell_meas_manager_cu_cp_notifier&    cu_cp_notifier;
-  ue_manager&                          ue_mng;
+  cell_meas_manager_cfg                              cfg;
+  cell_meas_mobility_manager_notifier&               mobility_mng_notifier;
+  [[maybe_unused]] cell_meas_manager_cu_cp_notifier& cu_cp_notifier;
+  ue_manager&                                        ue_mng;
 
   std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>
       ssb_freq_to_meas_object; // unique measurement objects, indexed by SSB frequency.
