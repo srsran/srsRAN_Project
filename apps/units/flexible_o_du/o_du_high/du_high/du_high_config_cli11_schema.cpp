@@ -572,7 +572,7 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
       ->check(CLI::Range(-1, 31));
   add_option(app, "--ta_target", ta_params.ta_target, "Timing Advance target in units of TA")
       ->capture_default_str()
-      ->check(CLI::Range(-30, 30));
+      ->check(CLI::Range(-30.0, 30.0));
   add_option(app,
              "--ta_update_measurement_ul_sinr_threshold",
              ta_params.ta_update_measurement_ul_sinr_threshold,

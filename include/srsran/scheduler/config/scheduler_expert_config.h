@@ -84,7 +84,7 @@ struct scheduler_ue_expert_config {
   ///
   /// Offsets the target TA measurements so the signal from the UE is kept delayed. This parameter is useful for
   /// avoiding negative TA when the UE is getting away.
-  int8_t ta_target;
+  float ta_target;
   /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
   float ta_update_measurement_ul_sinr_threshold;
   /// @}

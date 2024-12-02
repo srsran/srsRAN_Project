@@ -109,9 +109,9 @@ int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
 
 unsigned ta_manager::compute_new_t_a(int64_t n_ta_diff)
 {
-  return static_cast<int>(std::round(static_cast<float>(n_ta_diff * pow2(to_numerology_value(ul_scs))) /
-                                     static_cast<float>(16U * 64))) +
-         ta_cmd_offset_zero - expert_cfg.ta_target;
+  return static_cast<unsigned>(
+      std::round(static_cast<float>(n_ta_diff * pow2(to_numerology_value(ul_scs))) / static_cast<float>(16U * 64) +
+                 static_cast<float>(ta_cmd_offset_zero) - expert_cfg.ta_target));
 }
 
 void ta_manager::reset_measurements(uint8_t tag_id)

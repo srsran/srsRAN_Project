@@ -69,7 +69,7 @@ struct du_high_unit_ta_sched_expert_config {
   /// \remark T_A is defined in TS 38.213, clause 4.2.
   int ta_cmd_offset_threshold = 1;
   /// Timing Advance target in units of TA.
-  int ta_target = 0;
+  float ta_target = 0.0F;
   /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
   float ta_update_measurement_ul_sinr_threshold = 0.0F;
 };
