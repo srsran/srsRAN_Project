@@ -145,7 +145,11 @@ protected:
 
     // Check out-of-window
     if (!inside_rx_window(sn)) {
-      logger.log_warning("SN falls out of Rx window. sn={} pdu_len={} {}", sn, pdu_len, st);
+      logger.log_warning("SN falls out of Rx window. sn={} pdu_len={} {} reordering_timer_running={}",
+                         sn,
+                         pdu_len,
+                         st,
+                         reordering_timer.is_running());
       gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id, sn};
       deliver_sdu(rx_sdu_info);
       return;
