@@ -211,7 +211,7 @@ void ue_fallback_scheduler::handle_sr_indication(du_ue_index_t ue_index)
 bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
 {
   for (auto& next_ue_harq_retx : ongoing_ues_ack_retxs) {
-    auto&                                  u    = *ues.find(next_ue_harq_retx.ue_index);
+    auto&                                  u    = ues[next_ue_harq_retx.ue_index];
     std::optional<dl_harq_process_handle>& h_dl = next_ue_harq_retx.h_dl;
 
     if (h_dl->has_pending_retx()) {
@@ -227,16 +227,11 @@ bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
 
 void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator& res_alloc)
 {
-  // Processes all the UL UE at once, including UE with new transmissions and UE with retransmissions.
+  // Processes all the UL UEs at once, including UEs with new transmissions and UEs with retransmissions.
   for (auto next_ue = pending_ul_ues.begin(); next_ue != pending_ul_ues.end();) {
-    // next_ue must be in the ues list, else it would have been removed by the \ref slot_indication() function.
     auto&                                 u         = ues[*next_ue];
     std::optional<ul_harq_process_handle> h_ul_retx = u.get_pcell().harqs.find_pending_ul_retx();
-    if (not h_ul_retx.has_value() and not u.pending_ul_newtx_bytes()) {
-      ++next_ue;
-      continue;
-    }
-    ul_srb_sched_outcome outcome = schedule_ul_ue(res_alloc, u, h_ul_retx);
+    ul_srb_sched_outcome                  outcome   = schedule_ul_ue(res_alloc, u, h_ul_retx);
     if (outcome == ul_srb_sched_outcome::stop_ul_scheduling) {
       // If there is no PDCCH space, then stop the scheduling for all UL UEs.
       return;
@@ -365,11 +360,12 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
   // TODO: Make this compatible with k0 > 0.
   slot_point sched_ref_slot = res_alloc[0].slot;
 
+  std::optional<most_recent_tx_slots> most_recent_tx_ack_slots = get_most_recent_slot_tx(u.ue_index);
+
   // This is to prevent the edge case of the scheduler trying to allocate an SRB PDSCH in the farthest possible slot
   // in the future when, in the same slot, there is already an SRB PDSCH allocated. This can happen, for example, if
   // there is a retransmission (previously) allocated at slot sched_ref_slot + max_dl_slots_ahead_sched, and then the
   // scheduler attempt to allocate a new TX on the same slot.
-  std::optional<most_recent_tx_slots> most_recent_tx_ack_slots = get_most_recent_slot_tx(u.ue_index);
   if (most_recent_tx_ack_slots.has_value() and
       sched_ref_slot + max_dl_slots_ahead_sched <= most_recent_tx_ack_slots.value().most_recent_tx_slot) {
     return dl_sched_outcome::next_ue;
@@ -1843,14 +1839,21 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     ++ue_it;
   }
 
-  // Remove UL UE if the UE has left fallback or if the UE has been deleted from the scheduler.
   for (auto ue_it = pending_ul_ues.begin(); ue_it != pending_ul_ues.end();) {
     if (not ues.contains(*ue_it)) {
+      // UE was removed in the meantime.
       ue_it = pending_ul_ues.erase(ue_it);
       continue;
     }
     auto& ue = ues[*ue_it];
     if (not ue.get_pcell().is_in_fallback_mode()) {
+      // UE has left fallback mode.
+      ue_it = pending_ul_ues.erase(ue_it);
+      continue;
+    }
+    std::optional<ul_harq_process_handle> h_ul_retx = ue.get_pcell().harqs.find_pending_ul_retx();
+    if (not h_ul_retx.has_value() and not ue.pending_ul_newtx_bytes()) {
+      // UE has no pending data.
       ue_it = pending_ul_ues.erase(ue_it);
       continue;
     }
