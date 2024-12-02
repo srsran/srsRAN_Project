@@ -20,21 +20,22 @@ except ImportError:
 DEFAULT_BUILD_ARGS = '-DCMAKE_BUILD_TYPE=Release -DFORCE_DEBUG_INFO=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DMARCH="x86-64-v4"'
 DEFAULT_DPDK_VERSION = "23.11.1_avx512"
 
+
 # pylint: disable=too-many-instance-attributes
 @dataclass
 class _TestDefinition:
-    """
-    """
+    """ """
 
-    campaign_filename: str = ""
     id: str = ""
+    campaign_filename: str = ""
+    test_name: str = ""
     description: str = ""
+
 
 # pylint: disable=too-many-instance-attributes
 @dataclass
 class _ArgsDefinition:
-    """
-    """
+    """ """
 
     testlist: bool = False
     token: str = ""
@@ -46,19 +47,24 @@ class _ArgsDefinition:
     build_args: str = DEFAULT_BUILD_ARGS
     dpdk_version: str = DEFAULT_DPDK_VERSION
 
+
 def get_viavi_tests():
-    viavi_test_declaration = (pathlib.Path(__file__).parent / '..' / 'tests' / 'e2e' / 'tests' / 'viavi' / 'test_declaration.yml').resolve()
-    with open(viavi_test_declaration, 'r') as file:
+    viavi_test_declaration = (
+        pathlib.Path(__file__).parent / ".." / "tests" / "e2e" / "tests" / "viavi" / "test_declaration.yml"
+    ).resolve()
+    with open(viavi_test_declaration, "r", encoding="utf-8") as file:
         data = yaml.safe_load(file)
 
-    test_list : List[_TestDefinition] = []
-    for test in data['tests']:
+    test_list: List[_TestDefinition] = []
+    for test in data["tests"]:
         test_definition = _TestDefinition()
-        test_definition.campaign_filename = test['campaign_filename']
-        test_definition.id = test['id']
-        test_definition.description = test.get('description', '')
+        test_definition.id = test["id"]
+        test_definition.campaign_filename = test["campaign_filename"]
+        test_definition.test_name = test["test_name"]
+        test_definition.description = test.get("description", "")
         test_list.append(test_definition)
     return test_list
+
 
 def validate_args(args) -> _ArgsDefinition:
     args_definition = _ArgsDefinition()
@@ -87,6 +93,7 @@ def validate_args(args) -> _ArgsDefinition:
             exit(1)
     return args_definition
 
+
 def show_test_list():
     test_list = get_viavi_tests()
     print("Available tests:")
@@ -114,7 +121,7 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     TESTBED = "viavi"
     MARKERS = "viavi_manual"
 
-    PYARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
+    PYARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.test_name}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
     if args_definition.gnb_extra:
         PYARGS += f' --viavi-manual-extra-gnb-arguments "{args_definition.gnb_extra}"'
 
@@ -153,6 +160,8 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     pipeline_url = pipeline.web_url
 
     print(f"Pipeline created: {pipeline_url}")
+
+
 def main():
     """
     Entrypoint runner.
@@ -173,7 +182,7 @@ def main():
 
     parser.add_argument(
         "--testid",
-        help='[REQUIRED] Testid in the campaign.',
+        help="[REQUIRED] Testid in the campaign.",
     )
 
     parser.add_argument(
@@ -194,9 +203,7 @@ def main():
         default=DEFAULT_DPDK_VERSION,
     )
 
-    parser.add_argument(
-        "--timeout", help="Timeout in seconds for the test"
-    )
+    parser.add_argument("--timeout", help="Timeout in seconds for the test")
 
     args_definition = validate_args(parser.parse_args())
     if args_definition.testlist:
@@ -210,6 +217,7 @@ def main():
         else:
             print(f"Testid {args_definition.testid} not found.")
         exit(1)
+
 
 if __name__ == "__main__":
     main()
