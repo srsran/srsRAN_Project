@@ -37,10 +37,6 @@ struct grant_prbs_mcs {
 class ue_cell
 {
 public:
-  struct metrics {
-    unsigned consecutive_pusch_kos = 0;
-  };
-
   ue_cell(du_ue_index_t                ue_index_,
           rnti_t                       crnti_val,
           const ue_cell_configuration& ue_cell_cfg_,
@@ -117,10 +113,6 @@ public:
   /// Update UE with the latest CSI report for a given cell.
   void handle_csi_report(const csi_report_data& csi_report);
 
-  /// \brief Get the current UE cell metrics.
-  const metrics& get_metrics() const { return ue_metrics; }
-  metrics&       get_metrics() { return ue_metrics; }
-
   sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
 
   /// \brief Get recommended aggregation level for PDCCH at a given CQI.
@@ -166,8 +158,6 @@ private:
   /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
   /// cellConfigCommon are used.
   bool in_fallback_mode = true;
-
-  metrics ue_metrics;
 
   ue_channel_state_manager channel_state;
 

@@ -81,7 +81,7 @@ public:
       // Forward DL BO update to UE.
       u.handle_dl_buffer_state_indication(dl_bo);
       auto& du_pcell = parent.du_cells[u.get_pcell().cell_index];
-      if (dl_bo.lcid == LCID_SRB0 or (u.get_pcell().is_in_fallback_mode() and dl_bo.lcid == LCID_SRB1)) {
+      if (u.get_pcell().is_in_fallback_mode()) {
         // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
         du_pcell.fallback_sched->handle_dl_buffer_state_indication(
             dl_bo.ue_index, dl_bo.lcid == LCID_SRB0, sl, dl_bo.bs);
