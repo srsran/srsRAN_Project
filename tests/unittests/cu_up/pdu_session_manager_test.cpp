@@ -36,7 +36,6 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   ASSERT_TRUE(setup_result.success);
   ASSERT_EQ(setup_result.gtp_tunnel.gtp_teid.value(), 1);
 
-  // TODO fixup
   const std::string tp_address_expect = "127.0.0.2"; // address of dummy gateway
   ASSERT_EQ(setup_result.gtp_tunnel.tp_address.to_string(), tp_address_expect);
   ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 1);

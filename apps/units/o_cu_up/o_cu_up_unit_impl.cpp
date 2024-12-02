@@ -17,7 +17,7 @@ o_cu_up_unit_impl::o_cu_up_unit_impl(std::vector<std::unique_ptr<srs_cu_up::ngu_
                                      std::unique_ptr<srs_cu_up::o_cu_up>                  cu_up_) :
   gateways(std::move(gateways_)), e2_metric_connector(std::move(e2_metric_connector_)), cu_up(std::move(cu_up_))
 {
-  srsran_assert(not gateways.empty(), "Invlid NGU gateway");
+  srsran_assert(not gateways.empty(), "Invalid NG-U gateway");
   srsran_assert(cu_up, "Invalid CU-UP");
 }
 

@@ -104,7 +104,7 @@ protected:
 
     // Set default UDP configs
     cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
-    cu_up_udp_cfg.bind_address = "127.0.0.2"; // Random free port selected by the OS.
+    cu_up_udp_cfg.bind_address = "127.0.0.2"; // NG-U bind address
   }
 
   cu_up_config get_default_cu_up_config()

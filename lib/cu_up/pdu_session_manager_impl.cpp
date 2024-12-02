@@ -107,7 +107,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   // TODO select correct GW based on slice or UE info.
   std::string n3_addr;
   if (not ngu_gws[0]->get_bind_address(n3_addr)) {
-    report_error("Could not get NG-U bind addres to report to core.");
+    report_error("Could not get NG-U bind address to report to core.");
   }
   pdu_session_result.gtp_tunnel =
       up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);

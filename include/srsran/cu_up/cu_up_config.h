@@ -27,27 +27,6 @@ class io_broker;
 namespace srs_cu_up {
 
 struct network_interface_config {
-  /// Port of UPF for NG-U connection (TODO: Refactor to use UPF port that we get from E1).
-
-  /// Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
-  std::string n3_bind_addr = "127.0.1.1";
-
-  /// External IP address that is advertised to receive GTP-U packets from UPF via N3 interface.
-  /// It defaults to \c n3_bind_addr but may differ in case the CU-UP is behind a NAT.
-  std::string n3_ext_addr = "auto";
-
-  /// Interface name to bind the N3. `auto` does not force a specific interface and uses a normal `bind()`.
-  std::string n3_bind_interface = "auto";
-
-  /// Local port to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
-  int n3_bind_port = GTPU_PORT; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
-
-  /// Maximum amount of packets received in a single syscall.
-  int n3_rx_max_mmsg = 256;
-
-  /// Pool occupancy threshold after which we drop packets.
-  float pool_threshold = 0.9;
-
   /// Local IP address to bind for connection from DU to receive uplink user-plane traffic.
   std::string f1u_bind_addr = "127.0.2.1";
 
@@ -122,12 +101,7 @@ struct formatter<srsran::srs_cu_up::network_interface_config> {
   template <typename FormatContext>
   auto format(const srsran::srs_cu_up::network_interface_config& cfg, FormatContext& ctx)
   {
-    return format_to(ctx.out(),
-                     "n3_bind_addr={}, n3_bind_port={}, f1u_bind_addr={}, f1u_bind_port={}",
-                     cfg.n3_bind_addr,
-                     cfg.n3_bind_port,
-                     cfg.f1u_bind_addr,
-                     cfg.f1u_bind_port);
+    return format_to(ctx.out(), "f1u_bind_addr={} f1u_bind_port={}", cfg.f1u_bind_addr, cfg.f1u_bind_port);
   }
 };
 } // namespace fmt
