@@ -41,8 +41,9 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   ongoing_ues_ack_retxs.reserve(MAX_NOF_DU_UES);
   // NOTE 1: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
   // value of k1, passed through the expert config.
-  // NOTE 2: Although the TS 38.213, Section 9.2.3 specifies that the k1 possible values are {1, ..., 8}, some UEs do
-  // not handle well the value k1=8, which can result in collision between PRACH and PUCCH.
+  // NOTE 2: Although the TS 38.213, Section 9.2.3 specifies that the k1 possible values are {1, ..., 8}, some UE
+  // implementations that we work with do not handle well the value k1=8. Instead, in the particular context of RRC
+  // Reestablishment, they PRACH instead of sending the PUCCH.
   const unsigned max_k1 = 7U;
   srsran_sanity_check(expert_cfg.min_k1 <= max_k1, "Invalid min_k1 value");
   for (unsigned k1_value = expert_cfg.min_k1; k1_value <= max_k1; ++k1_value) {
@@ -81,18 +82,14 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
-  // Schedule ConRes CE.
-  if (not schedule_dl_conres_new_tx(res_alloc)) {
+  // Schedule DL new txs with the following priority: ConRes CE, SRB0 and SRB1.
+  if (not schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::conres_only)) {
     return;
   }
-
-  // Schedule SRB0 messages before SRB1, as we prioritize SRB0 over SRB1.
-  if (not schedule_dl_new_tx_srb0(res_alloc)) {
+  if (not schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::srb0)) {
     return;
   }
-
-  // Keep SRB1 with lower priority than SRB0.
-  schedule_dl_new_tx_srb1(res_alloc);
+  schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::srb1);
 }
 
 void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index,
@@ -215,8 +212,7 @@ bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
     std::optional<dl_harq_process_handle>& h_dl = next_ue_harq_retx.h_dl;
 
     if (h_dl->has_pending_retx()) {
-      std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-      dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, h_dl, most_recent_tx_ack, next_ue_harq_retx.is_srb0);
+      dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, h_dl, next_ue_harq_retx.is_srb0);
       // This is the case of the scheduler reaching the maximum number of sched attempts.
       if (outcome == dl_sched_outcome::stop_dl_scheduling) {
         return false;
@@ -246,132 +242,91 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
   }
 }
 
-bool ue_fallback_scheduler::schedule_dl_conres_new_tx(cell_resource_allocator& res_alloc)
+ue_fallback_scheduler::dl_new_tx_alloc_type
+ue_fallback_scheduler::get_dl_new_tx_alloc_type(const fallback_ue& next_ue) const
 {
-  auto next_ue = pending_dl_ues_new_tx.begin();
-  while (next_ue != pending_dl_ues_new_tx.end()) {
-    // The UE might have been deleted in the meantime, check if still exists.
-    if (not ues.contains(next_ue->ue_index)) {
+  auto& u = ues[next_ue.ue_index];
+  if (not next_ue.is_srb0.has_value()) {
+    // No SRB0 or SRB1. Verify if ConRes CE needs to be scheduled.
+    return next_ue.is_conres_pending ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
+  }
+
+  if (next_ue.is_srb0.value()) {
+    return u.has_pending_dl_newtx_bytes(LCID_SRB0) ? dl_new_tx_alloc_type::srb0 : dl_new_tx_alloc_type::error;
+  }
+
+  // NOTE: Since SRB1 data can be segmented, it could happen that not all the SRB1 bytes are scheduled at once. The
+  // scheduler will attempt to allocate those remaining bytes in the following slots. The policy we adopt in this
+  // scheduler is to schedule first all possible grants to a given UE (to speed up the re-establishment and
+  // re-configuration). Only after the SRB1 buffer of that UE is emptied, we move on to the next UE.
+  if (has_pending_bytes_for_srb1(next_ue.ue_index)) {
+    return dl_new_tx_alloc_type::srb1;
+  }
+
+  return dl_new_tx_alloc_type::skip;
+}
+
+bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_alloc,
+                                               dl_new_tx_alloc_type     selected_alloc_type)
+{
+  for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
+    // Determine if we should schedule ConRes, SRB0, SRB1 for the given UE.
+    const auto alloc_type = get_dl_new_tx_alloc_type(*next_ue);
+    if (alloc_type == dl_new_tx_alloc_type::error) {
+      // The UE is not in a state for scheduling
+      logger.error("ue={}: UE is an inconsistent state in the fallback scheduler", next_ue->ue_index);
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
       continue;
     }
-
-    // Check whether UE has any pending ConRes CE to be scheduled.
-    if (not next_ue->is_conres_pending) {
+    if (alloc_type != selected_alloc_type) {
+      // This type of alloc is not being prioritized.
       ++next_ue;
       continue;
     }
 
-    // Check whether Msg4 over SRB has been received or not.
-    // NOTE: UE with both pending ConRes + Msg4 is handled by \c schedule_dl_new_tx_srb0 and \c schedule_dl_new_tx_srb1.
-    if (next_ue->is_srb0.has_value()) {
+    // Make the scheduling attempt.
+    auto&            u       = ues[next_ue->ue_index];
+    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt, next_ue->is_srb0);
+    if (outcome == dl_sched_outcome::next_ue) {
+      // Allocation failed but we can attempt with another UE.
       ++next_ue;
       continue;
     }
-
-    auto& u = ues[next_ue->ue_index];
-    if (not u.is_conres_ce_pending()) {
-      ++next_ue;
-      continue;
-    }
-
-    std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt, most_recent_tx_ack, next_ue->is_srb0);
-    if (outcome == dl_sched_outcome::success) {
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
-    } else if (outcome == dl_sched_outcome::next_ue) {
-      ++next_ue;
-    } else {
+    if (outcome == dl_sched_outcome::stop_dl_scheduling) {
       // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
       // returns \ref stop_dl_scheduling.
       return false;
     }
-  }
-  return true;
-}
 
-bool ue_fallback_scheduler::schedule_dl_new_tx_srb0(cell_resource_allocator& res_alloc)
-{
-  for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
-    // The UE might have been deleted in the meantime, check if still exists.
-    if (not ues.contains(next_ue->ue_index)) {
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
-      continue;
-    }
+    // There was an allocation. This does not, however, mean that the pending data was completely flushed.
 
-    // Check whether UE has any pending SRB0 data to be scheduled.
-    if (not next_ue->is_srb0.has_value() or not next_ue->is_srb0.value()) {
-      ++next_ue;
-      continue;
-    }
+    // We assume that there is always space for ConRes CE when an allocation takes place.
+    next_ue->is_conres_pending = false;
 
-    auto&                               u                  = ues[next_ue->ue_index];
-    std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-    if (not u.has_pending_dl_newtx_bytes(LCID_SRB0)) {
-      ++next_ue;
-      continue;
-    }
+    if (alloc_type == dl_new_tx_alloc_type::conres_only or alloc_type == dl_new_tx_alloc_type::srb0) {
+      // ConRes-only, SRB0-ony and ConRes+SRB0 cases
 
-    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt, most_recent_tx_ack, next_ue->is_srb0);
-    if (outcome == dl_sched_outcome::success) {
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
-    } else if (outcome == dl_sched_outcome::next_ue) {
-      ++next_ue;
-    } else if (outcome == dl_sched_outcome::srb_pending) {
-      next_ue->is_conres_pending = false;
-      ++next_ue;
-    } else {
-      // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
-      // returns \ref stop_dl_scheduling.
-      return false;
-    }
-  }
-  return true;
-}
-
-void ue_fallback_scheduler::schedule_dl_new_tx_srb1(cell_resource_allocator& res_alloc)
-{
-  for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
-    // The UE might have been deleted in the meantime, check if still exists.
-    if (not ues.contains(next_ue->ue_index)) {
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
-      continue;
-    }
-
-    // Check whether UE has any pending SRB1 data to be scheduled.
-    if (not next_ue->is_srb0.has_value() or next_ue->is_srb0.value()) {
-      ++next_ue;
-      continue;
-    }
-
-    auto&                               u                  = ues[next_ue->ue_index];
-    std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-    // NOTE: Since SRB1 data can be segmented, it could happen that not all the SRB1 bytes are scheduled at once. The
-    // scheduler will attempt to allocate those remaining bytes in the following slots. The policy we adopt in this
-    // scheduler is to schedule first all possible grants to a given UE (to speed up the re-establishment and
-    // re-configuration). Only after the SRB1 buffer of that UE is emptied, we move on to the next UE.
-    if (not has_pending_bytes_for_srb1(u.ue_index)) {
-      ++next_ue;
-      continue;
-    }
-
-    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt, most_recent_tx_ack, next_ue->is_srb0);
-    if (outcome == dl_sched_outcome::success) {
-      next_ue->is_conres_pending = false;
-      // Move to the next UE ONLY IF the UE has no more pending bytes for SRB1. This is to give priority to the same UE,
-      // if there are still some SRB1 bytes left in the buffer. At the next iteration, the scheduler will try again with
-      // the same scheduler, but starting from the next available slot.
-      if (not has_pending_bytes_for_srb1(u.ue_index)) {
+      if (outcome == dl_sched_outcome::success) {
+        next_ue = pending_dl_ues_new_tx.erase(next_ue);
+      } else {
+        // ConRes CE was scheduled but SRB0 wasn't.
         ++next_ue;
       }
-    } else if (outcome == dl_sched_outcome::next_ue) {
-      ++next_ue;
     } else {
-      // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
-      // returns \ref stop_dl_scheduling.
-      return;
+      // SRB1-ony and ConRes+SRB1 cases
+
+      if (outcome == dl_sched_outcome::success) {
+        // Move to the next UE ONLY IF the UE has no more pending bytes for SRB1. This is to give priority to the same
+        // UE, if there are still some SRB1 bytes left in the buffer. At the next iteration, the scheduler will try
+        // again with the same scheduler, but starting from the next available slot.
+        if (not has_pending_bytes_for_srb1(u.ue_index)) {
+          ++next_ue;
+        }
+      }
     }
   }
+
+  return true;
 }
 
 static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_point sl_tx)
@@ -394,7 +349,6 @@ ue_fallback_scheduler::dl_sched_outcome
 ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res_alloc,
                                        ue&                                   u,
                                        std::optional<dl_harq_process_handle> h_dl_retx,
-                                       std::optional<most_recent_tx_slots>   most_recent_tx_ack_slots,
                                        std::optional<bool>                   is_srb0)
 {
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
@@ -412,6 +366,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
   // in the future when, in the same slot, there is already an SRB PDSCH allocated. This can happen, for example, if
   // there is a retransmission (previously) allocated at slot sched_ref_slot + max_dl_slots_ahead_sched, and then the
   // scheduler attempt to allocate a new TX on the same slot.
+  std::optional<most_recent_tx_slots> most_recent_tx_ack_slots = get_most_recent_slot_tx(u.ue_index);
   if (most_recent_tx_ack_slots.has_value() and
       sched_ref_slot + max_dl_slots_ahead_sched <= most_recent_tx_ack_slots.value().most_recent_tx_slot) {
     return dl_sched_outcome::next_ue;
@@ -1847,6 +1802,17 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     auto& u = ues[ue_it->ue_index];
     if (not u.get_pcell().is_in_fallback_mode()) {
       // UE exited fallback.
+      ue_it = pending_dl_ues_new_tx.erase(ue_it);
+      continue;
+    }
+
+    if (ue_it->is_conres_pending != u.is_conres_ce_pending()) {
+      logger.error("ue={}: Invalid ConRes state detected", ue_it->ue_index);
+      ue_it->is_conres_pending = u.is_conres_ce_pending();
+    }
+
+    if (not ue_it->is_conres_pending and not ue_it->is_srb0.has_value()) {
+      // UE has no new txs pending. It can be removed.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
