@@ -239,7 +239,7 @@ variables:
     - launch_tests
   variables:
     OS: ubuntu-24.04
-    COMPILER: gcc
+    COMPILER: clang
     CMAKE_BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
@@ -288,8 +288,8 @@ variables:
   script:
     - *smoke_script
   variables:
-    OS: ubuntu-24.04
-    COMPILER: clang
+    OS: ubuntu-22.04
+    COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
