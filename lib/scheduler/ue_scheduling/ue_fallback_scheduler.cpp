@@ -98,13 +98,12 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
                                                               unsigned      srb_buffer_bytes)
 {
   if (not ues.contains(ue_index)) {
-    logger.error("ue_index={} not found in the scheduler", ue_index);
+    logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not found in the scheduler", ue_index);
     return;
   }
   ue& u = ues[ue_index];
   if (not u.get_pcell().is_in_fallback_mode()) {
-    logger.error("Discarding DL buffer state indication in fallback scheduler. Cause: ue_index={} not in fallback mode",
-                 ue_index);
+    logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not in fallback mode", ue_index);
     return;
   }
 
@@ -141,11 +140,15 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
 
 void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
 {
-  if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
-    logger.error("ue_index={} not found in the scheduler or not in fallback", ue_index);
+  if (not ues.contains(ue_index)) {
+    logger.error("ue={}: ConRes CE discarded. Cause: UE is not found in the scheduler", ue_index);
     return;
   }
   auto& u = ues[ue_index];
+  if (not u.get_pcell().is_in_fallback_mode()) {
+    logger.error("ue={}: ConRes CE discarded. Cause: UE is not in fallback state", ue_index);
+    return;
+  }
 
   // Mark the start of the conRes timer.
   u.drx_controller().on_con_res_start();
