@@ -79,7 +79,7 @@ public:
 };
 
 /// Combined entry point for the NRPPA object.
-class nrppa_interface : public nrppa_message_handler, public nrppa_measurement_handler
+class nrppa_interface
 {
 public:
   virtual ~nrppa_interface() = default;
