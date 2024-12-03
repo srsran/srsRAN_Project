@@ -33,7 +33,7 @@
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
 gnb_extra_commands: &gnb_extra_commands "log --metrics_level=info metrics --rlc_report_period=1000"
-gnb_extra_commands_no_warn: &gnb_extra_commands_no_warn "log --all_level=error metrics --stdout_metrics_period=5000 --rlc_report_period=5000"
+gnb_extra_commands_no_warn: &gnb_extra_commands_no_warn "log --all_level=error metrics --sched_report_period=5000 --rlc_report_period=5000"
 
 test_timeout: &test_timeout 2400
 

@@ -651,6 +651,7 @@ def get_viavi_configuration_from_testname(
     """
     Get Viavi configuration from dict
     """
+    test_declaration = None
     config = load_yaml_config("test_declaration.yml")
     for test_config in config:
         if test_config.test_name == test_name:

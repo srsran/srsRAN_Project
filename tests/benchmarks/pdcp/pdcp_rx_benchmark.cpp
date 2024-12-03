@@ -79,7 +79,7 @@ public:
 };
 
 struct bench_params {
-  unsigned nof_repetitions    = 8;
+  unsigned nof_repetitions    = 10;
   unsigned nof_crypto_threads = 8;
   unsigned crypto_queue_size  = 4096;
   bool     print_timing_info  = false;

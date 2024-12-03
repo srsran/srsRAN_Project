@@ -51,7 +51,7 @@ public:
 };
 
 struct bench_params {
-  unsigned nof_repetitions   = 8;
+  unsigned nof_repetitions   = 10;
   bool     print_timing_info = false;
   unsigned nof_sdus          = 1024;
   unsigned sdu_len           = 1500;

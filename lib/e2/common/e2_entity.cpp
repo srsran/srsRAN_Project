@@ -39,7 +39,7 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using metrics_interface = std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*>;
 
-e2_entity::e2_entity(const e2ap_configuration&      cfg_,
+e2_entity::e2_entity(const e2ap_configuration       cfg_,
                      e2_connection_client&          e2_client_,
                      metrics_interface              e2_metrics_,
                      srs_du::f1ap_ue_id_translator* f1ap_ue_id_translator_,
@@ -76,7 +76,7 @@ e2_entity::e2_entity(const e2ap_configuration&      cfg_,
     e2sm_mngr->add_e2sm_service(e2sm_rc_asn1_packer::oid, std::move(e2sm_rc_iface));
   }
 
-  e2ap = std::make_unique<e2_impl>(cfg_, *this, timers_, e2_client_, *subscription_mngr, *e2sm_mngr, task_exec_);
+  e2ap = std::make_unique<e2_impl>(cfg, *this, timers_, e2_client_, *subscription_mngr, *e2sm_mngr, task_exec_);
 }
 
 void e2_entity::build_e2_kpm_du(metrics_interface e2_metrics_, srs_du::f1ap_ue_id_translator* f1ap_ue_id_translator)
