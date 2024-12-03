@@ -86,6 +86,14 @@ bool ng_setup_procedure::retry_required()
 
   const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
 
+  // No point in retrying when the failure is due to misconfiguration.
+  if (is_failure_misconfiguration(ng_fail->cause)) {
+    logger.warning("\"{}\": Stopping procedure. Cause: misconfiguration between gNB and AMF", name());
+    logger.warning("\"{}\" failed. AMF NGAP cause: \"{}\"", name(), get_cause_str(ng_fail->cause));
+    fmt::print("\"{}\" failed. AMF NGAP cause: \"{}\"\n", name(), get_cause_str(ng_fail->cause));
+    return false;
+  }
+
   if (not ng_fail->time_to_wait_present) {
     // AMF didn't command a waiting time.
     logger.warning("\"{}\": Stopping procedure. Cause: AMF did not set any retry waiting time", name());
@@ -126,4 +134,23 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
   }
 
   return res;
+}
+
+bool ng_setup_procedure::is_failure_misconfiguration(const cause_c& cause)
+{
+  switch (cause.type()) {
+    case cause_c::types_opts::radio_network:
+      return false;
+    case cause_c::types_opts::transport:
+      return false;
+    case cause_c::types_opts::nas:
+      return false;
+    case cause_c::types_opts::protocol:
+      return false;
+    case cause_c::types_opts::misc:
+      return cause.misc() == asn1::ngap::cause_misc_opts::unknown_plmn_or_sn_pn;
+    default:
+      break;
+  }
+  return false;
 }
