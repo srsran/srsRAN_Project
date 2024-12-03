@@ -22,6 +22,7 @@ from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.base_pb2 import PLMN
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
@@ -202,6 +203,60 @@ def test_srsue(
         always_download_artifacts=True,
         common_search_space_enable=True,
         prach_config_index=1,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq_ric
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_ric(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    ric: NearRtRicStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=11520000,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        always_download_artifacts=True,
+        common_search_space_enable=True,
+        prach_config_index=1,
+        ric=ric,
     )
 
 
@@ -682,6 +737,7 @@ def _iperf(
     nof_antennas_dl: int = 1,
     nof_antennas_ul: int = 1,
     inter_ue_start_period=INTER_UE_START_PERIOD,
+    ric: Optional[NearRtRicStub] = None,
 ):
     wait_before_power_off = 5
 
@@ -709,7 +765,13 @@ def _iperf(
     )
 
     ue_attach_info_dict = start_and_attach(
-        ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn, inter_ue_start_period=inter_ue_start_period
+        ue_array,
+        gnb,
+        fivegc,
+        gnb_post_cmd=gnb_post_cmd,
+        plmn=plmn,
+        inter_ue_start_period=inter_ue_start_period,
+        ric=ric,
     )
 
     iperf_parallel(
@@ -723,4 +785,12 @@ def _iperf(
     )
 
     sleep(wait_before_power_off)
-    stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=ue_stop_timeout, warning_as_errors=warning_as_errors)
+    stop(
+        ue_array,
+        gnb,
+        fivegc,
+        retina_data,
+        ue_stop_timeout=ue_stop_timeout,
+        warning_as_errors=warning_as_errors,
+        ric=ric,
+    )

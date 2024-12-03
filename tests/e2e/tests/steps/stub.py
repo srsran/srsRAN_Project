@@ -28,8 +28,10 @@ from retina.protocol.base_pb2 import Metrics, PingRequest, PingResponse, PLMN, S
 from retina.protocol.exit_codes import exit_code_to_message
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
+from retina.protocol.ric_pb2 import NearRtRicStartInfo
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import (
     HandoverInfo,
     IPerfDir,
@@ -64,6 +66,7 @@ def start_and_attach(
     attach_timeout: int = ATTACH_TIMEOUT,
     plmn: Optional[PLMN] = None,
     inter_ue_start_period=INTER_UE_START_PERIOD,
+    ric: Optional[NearRtRicStub] = None,
 ) -> Dict[UEStub, UEAttachedInfo]:
     """
     Start stubs & wait until attach
@@ -77,6 +80,7 @@ def start_and_attach(
         gnb_pre_cmd,
         gnb_post_cmd,
         plmn=plmn,
+        ric=ric,
     )
 
     return ue_start_and_attach(
@@ -109,9 +113,10 @@ def start_network(
     gnb_pre_cmd: Tuple[str, ...] = tuple(),
     gnb_post_cmd: Tuple[str, ...] = tuple(),
     plmn: Optional[PLMN] = None,
+    ric: Optional[NearRtRicStub] = None,
 ):
     """
-    Start Network (5GC + gNB)
+    Start Network (5GC + gNB + RIC(optional))
     """
 
     ue_def_for_gnb = UEDefinition()
@@ -144,6 +149,19 @@ def start_network(
             )
         )
 
+    ric_definition = None
+    if ric:
+        ric_startup_timeout = fivegc_startup_timeout
+        with handle_start_error(name=f"RIC [{id(ric)}]"):
+            # Near-RT RIC Start
+            ric.Start(
+                NearRtRicStartInfo(
+                    start_info=StartInfo(timeout=ric_startup_timeout),
+                )
+            )
+            ric_definition = ric.GetDefinition(Empty())
+            logging.info("RIC: %s", MessageToString(ric_definition, indent=2))
+
     with handle_start_error(name=f"GNB [{id(gnb)}]"):
         # GNB Start
         gnb.Start(
@@ -151,6 +169,7 @@ def start_network(
                 plmn=plmn,
                 ue_definition=ue_def_for_gnb,
                 fivegc_definition=fivegc.GetDefinition(Empty()),
+                ric_definition=ric_definition,
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
                     pre_commands=gnb_pre_cmd,
@@ -597,9 +616,10 @@ def stop(
     log_search: bool = True,
     warning_as_errors: bool = True,
     fail_if_kos: bool = False,
+    ric: Optional[NearRtRicStub] = None,
 ):
     """
-    Stop ue(s), gnb and 5gc
+    Stop ue(s), gnb and 5gc, ric
     """
     # Stop
     error_msg_array = []
@@ -626,6 +646,10 @@ def stop(
             log_search,
             warning_as_errors,
         )
+        error_msg_array.append(error_message)
+
+    if ric is not None:
+        error_message, _ = _stop_stub(ric, "RIC", retina_data, gnb_stop_timeout, log_search, warning_as_errors)
         error_msg_array.append(error_message)
 
     # Fail if stop errors

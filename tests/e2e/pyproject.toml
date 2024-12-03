@@ -37,6 +37,7 @@ markers = [
   "zmq_2x2_mimo",
   "zmq_4x4_mimo",
   "zmq_srsue",
+  "zmq_ric",
   "test_mode",
   "test_mode_acc100",
   "test_mode_not_crash",
