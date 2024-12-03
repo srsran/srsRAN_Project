@@ -90,6 +90,9 @@ ngap_message generate_ng_setup_response(plmn_identity plmn = plmn_identity::test
 /// \brief Generate a dummy NG Setup Failure.
 ngap_message generate_ng_setup_failure();
 
+/// \brief Generate a dummy NG Setup Failure with bad PLMN.
+ngap_message generate_ng_setup_failure_with_bad_plmn(asn1::ngap::time_to_wait_e time_to_wait);
+
 /// \brief Generate a dummy NG Setup Failure with a time to wait.
 ngap_message generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wait_e time_to_wait);
 

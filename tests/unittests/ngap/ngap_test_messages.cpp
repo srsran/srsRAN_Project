@@ -108,6 +108,24 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_failure()
   return ng_setup_failure;
 }
 
+ngap_message srsran::srs_cu_cp::generate_ng_setup_failure_with_bad_plmn(time_to_wait_e time_to_wait)
+{
+  ngap_message ng_setup_failure = {};
+
+  ng_setup_failure.pdu.set_unsuccessful_outcome();
+  ng_setup_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
+
+  auto& setup_fail = ng_setup_failure.pdu.unsuccessful_outcome().value.ng_setup_fail();
+  setup_fail->cause.set_misc();
+  setup_fail->cause.misc()             = asn1::ngap::cause_misc_opts::unknown_plmn_or_sn_pn;
+  setup_fail->time_to_wait_present     = true;
+  setup_fail->time_to_wait.value       = time_to_wait;
+  setup_fail->crit_diagnostics_present = false;
+  // add critical diagnostics
+
+  return ng_setup_failure;
+}
+
 ngap_message srsran::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time_to_wait_e time_to_wait)
 {
   ngap_message ng_setup_failure = generate_ng_setup_failure();
