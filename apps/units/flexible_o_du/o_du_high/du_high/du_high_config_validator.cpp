@@ -399,13 +399,13 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   const du_high_unit_pucch_config& pucch_cfg = config.pucch_cfg;
   if (not config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources > 0) {
     fmt::print(
-        "Number of PUCCH Format 2 cell resources for CSI must be zero when CSI-RS and CSI report are disabled.\n");
+        "Number of PUCCH Format 2/3 cell resources for CSI must be zero when CSI-RS and CSI report are disabled.\n");
     return false;
   }
 
   if (config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources == 0) {
-    fmt::print("Number of PUCCH Format 2 cell resources for CSI must be greater than 0 when CSI-RS and CSI report are "
-               "enabled.\n");
+    fmt::print("Number of PUCCH Format 2/3 cell resources for CSI must be greater than 0 when CSI-RS and CSI report "
+               "are enabled.\n");
     return false;
   }
 
@@ -437,7 +437,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   }
 
   // We need to count pucch_cfg.nof_ue_pucch_res_harq_per_set twice, as we have 2 sets of PUCCH resources for HARQ-ACK
-  // (PUCCH Resource Set Id 0 with Format 0/1 and PUCCH Resource Set Id 1 with Format 2).
+  // (PUCCH Resource Set Id 0 with Format 0/1 and PUCCH Resource Set Id 1 with Format 2/3).
   if (pucch_cfg.nof_ue_pucch_res_harq_per_set * 2U * pucch_cfg.nof_cell_harq_pucch_sets +
           pucch_cfg.nof_cell_sr_resources + pucch_cfg.nof_cell_csi_resources >
       pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
@@ -463,7 +463,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                                      pucch_cfg.nof_cell_sr_resources) /
                   static_cast<float>(nof_f0_per_block)));
     // With intraslot_freq_hopping, the nof of RBs is an even number.
-    if (config.pucch_cfg.f0_intraslot_freq_hopping) {
+    if (pucch_cfg.f0_intraslot_freq_hopping) {
       nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f0_f1_rbs) / 2.0F)) * 2;
     }
   } else {
@@ -471,47 +471,78 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     // symbols available for PUCCH within a slot.
     const unsigned pucch_f1_nof_symbols = max_nof_pucch_symbols;
     const unsigned nof_occ_codes =
-        config.pucch_cfg.f1_enable_occ ? format1_symb_to_spreading_factor(pucch_f1_nof_symbols) : 1U;
+        pucch_cfg.f1_enable_occ ? format1_symb_to_spreading_factor(pucch_f1_nof_symbols) : 1U;
 
     // We define a block as a set of Resources (either F0/F1 or F2) aligned over the same starting PRB.
-    const unsigned nof_f1_per_block = nof_occ_codes * config.pucch_cfg.f1_nof_cyclic_shifts;
+    const unsigned nof_f1_per_block = nof_occ_codes * pucch_cfg.f1_nof_cyclic_shifts;
     // Each PUCCH resource F0/F1 occupies 1 RB (per block).
-    nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(
-        static_cast<float>(config.pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
-                           pucch_cfg.nof_cell_sr_resources) /
-        static_cast<float>(nof_f1_per_block)));
+    nof_f0_f1_rbs = static_cast<unsigned>(
+        std::ceil(static_cast<float>(pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
+                                     pucch_cfg.nof_cell_sr_resources) /
+                  static_cast<float>(nof_f1_per_block)));
     // With intraslot_freq_hopping, the nof of RBs is an even number.
-    if (config.pucch_cfg.f1_intraslot_freq_hopping) {
+    if (pucch_cfg.f1_intraslot_freq_hopping) {
       nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f0_f1_rbs) / 2.0F)) * 2;
     }
   }
 
-  // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
-  constexpr unsigned pucch_f2_nof_symbols = 2U;
-  const unsigned     f2_max_rbs =
-      config.pucch_cfg.f2_max_payload_bits.has_value()
-              ? get_pucch_format2_max_nof_prbs(config.pucch_cfg.f2_max_payload_bits.value(),
-                                           pucch_f2_nof_symbols,
-                                           to_max_code_rate_float(config.pucch_cfg.f2_max_code_rate))
-              : config.pucch_cfg.f2_max_nof_rbs;
+  unsigned       nof_f2_f3_f4_rbs;
+  const unsigned nof_res_f2_f3_f4 =
+      pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets + pucch_cfg.nof_cell_csi_resources;
+  switch (pucch_cfg.set1_format) {
+    case 2: {
+      // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
+      constexpr unsigned pucch_f2_nof_symbols = 2U;
+      const unsigned     f2_max_rbs =
+          pucch_cfg.f2_max_payload_bits.has_value()
+                  ? get_pucch_format2_max_nof_prbs(pucch_cfg.f2_max_payload_bits.value(),
+                                               pucch_f2_nof_symbols,
+                                               to_max_code_rate_float(pucch_cfg.f2_max_code_rate))
+                  : pucch_cfg.f2_max_nof_rbs;
 
-  const unsigned nof_f2_blocks = max_nof_pucch_symbols / pucch_f2_nof_symbols;
-  unsigned       nof_f2_rbs =
-      static_cast<unsigned>(std::ceil(
-          static_cast<float>(config.pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
-                             pucch_cfg.nof_cell_csi_resources) /
-          static_cast<float>(nof_f2_blocks))) *
-      f2_max_rbs;
-  // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
-  if (config.pucch_cfg.f2_intraslot_freq_hopping) {
-    nof_f2_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_rbs) / 2.0F)) * 2;
+      const unsigned nof_f2_blocks = max_nof_pucch_symbols / pucch_f2_nof_symbols;
+      nof_f2_f3_f4_rbs =
+          static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f2_f3_f4) / static_cast<float>(nof_f2_blocks))) *
+          f2_max_rbs;
+      // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
+      if (pucch_cfg.f2_intraslot_freq_hopping) {
+        nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
+      }
+    } break;
+    case 3: {
+      // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F3, we use all
+      // symbols available for PUCCH within a slot.
+      const unsigned pucch_f3_nof_symbols = max_nof_pucch_symbols;
+      const unsigned f3_max_rbs =
+          pucch_cfg.f3_max_payload_bits.has_value()
+              ? get_pucch_format3_max_nof_prbs(pucch_cfg.f3_max_payload_bits.value(),
+                                               pucch_f3_nof_symbols,
+                                               to_max_code_rate_float(pucch_cfg.f3_max_code_rate),
+                                               // Since we are forcing 14 symbols intraslot_freq_hopping doesn't matter.
+                                               false,
+                                               pucch_cfg.f3_additional_dmrs,
+                                               pucch_cfg.f3_pi2_bpsk)
+              : pucch_cfg.f3_max_nof_rbs;
+
+      const unsigned nof_f3_blocks = max_nof_pucch_symbols / pucch_f3_nof_symbols;
+      nof_f2_f3_f4_rbs =
+          static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f2_f3_f4) / static_cast<float>(nof_f3_blocks))) *
+          f3_max_rbs;
+      // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
+      if (pucch_cfg.f3_intraslot_freq_hopping) {
+        nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
+      }
+    } break;
+    default:
+      fmt::print("Invalid PUCCH format for Set Id 1.\n");
+      return false;
   }
 
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
   // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
   // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
   constexpr float max_allowed_prbs_usage = 0.5F;
-  if (static_cast<float>(nof_f0_f1_rbs + nof_f2_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
+  if (static_cast<float>(nof_f0_f1_rbs + nof_f2_f3_f4_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
     fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");
     return false;
   }

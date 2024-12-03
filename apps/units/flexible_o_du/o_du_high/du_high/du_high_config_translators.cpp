@@ -536,7 +536,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
     du_pucch_cfg.nof_csi_resources                  = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
 
-    if (user_pucch_cfg.use_format_0) {
+    if (user_pucch_cfg.use_format_0 and user_pucch_cfg.set1_format == 2) {
       auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<srs_du::pucch_f0_params>();
       // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
       // allocator when the DU create the UE configuration.
@@ -559,8 +559,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
         f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
         f2_params.max_payload_bits       = user_pucch_cfg.f2_max_payload_bits;
-        break;
-      }
+      } break;
       case 3: {
         auto& f3_params                  = du_pucch_cfg.f2_or_f3_params.emplace<srs_du::pucch_f3_params>();
         f3_params.max_code_rate          = user_pucch_cfg.f3_max_code_rate;
@@ -569,8 +568,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         f3_params.max_payload_bits       = user_pucch_cfg.f3_max_payload_bits;
         f3_params.additional_dmrs        = user_pucch_cfg.f3_additional_dmrs;
         f3_params.pi2_bpsk               = user_pucch_cfg.f3_pi2_bpsk;
-        break;
-      }
+      } break;
       default:
         break;
     }
@@ -683,10 +681,15 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // the configuration; therefore, the maximum number of symbols for PUCCH resources is computed only for periodic
     // SRS.
     du_pucch_cfg.max_nof_symbols = config_helpers::compute_max_nof_pucch_symbols(du_srs_cfg);
-    if (user_srs_cfg.srs_period_ms.has_value() and
-        std::holds_alternative<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params)) {
-      auto& f1_params       = std::get<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params);
-      f1_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f1_params.nof_symbols.to_uint());
+    if (user_srs_cfg.srs_period_ms.has_value()) {
+      if (std::holds_alternative<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params)) {
+        auto& f1_params       = std::get<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params);
+        f1_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f1_params.nof_symbols.to_uint());
+      }
+      if (std::holds_alternative<srs_du::pucch_f3_params>(du_pucch_cfg.f2_or_f3_params)) {
+        auto& f3_params       = std::get<srs_du::pucch_f3_params>(du_pucch_cfg.f2_or_f3_params);
+        f3_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f3_params.nof_symbols.to_uint());
+      }
     }
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(

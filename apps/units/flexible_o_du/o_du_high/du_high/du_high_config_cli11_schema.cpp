@@ -853,9 +853,9 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
       ->capture_default_str();
   add_option(app,
-             "--set1_format",
+             "--pucch_set1_format",
              pucch_params.set1_format,
-             "Format to use for the resources from resource set 1 {2, 3, 4}. Default: 2")
+             "Format to use for the resources from resource set 1. Values: {2, 3, 4}. Default: 2")
       ->capture_default_str()
       ->check(CLI::Range(2, 4));
   add_option(app,
@@ -935,7 +935,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->capture_default_str();
   add_option(app, "--f3_max_nof_rbs", pucch_params.f3_max_nof_rbs, "Max number of RBs for PUCCH F3 resources")
       ->capture_default_str()
-      ->check(CLI::Range(1, 16));
+      ->check(CLI::IsMember({1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16}));
   add_option(
       app, "--f3_max_payload", pucch_params.f3_max_payload_bits, "Max number payload bits for PUCCH F3 resources")
       ->check(CLI::Range(1, 11));

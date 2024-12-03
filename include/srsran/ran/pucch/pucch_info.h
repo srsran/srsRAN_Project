@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_integer.h"
+#include "srsran/adt/to_array.h"
 #include "srsran/phy/constants.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/resource_block.h"
@@ -19,26 +20,26 @@
 
 namespace srsran {
 
-/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per TS38.212 Table 6.3.1.4-1.
+/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per TS 38.212 Table 6.3.1.4-1.
 inline unsigned get_pucch_format2_E_total(unsigned nof_prb, unsigned nof_symbols)
 {
   return 16U * nof_symbols * nof_prb;
 }
 
-/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per TS38.212 Table 6.3.1.4-1.
+/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per TS 38.212 Table 6.3.1.4-1.
 inline unsigned get_pucch_format3_E_total(unsigned nof_prb, unsigned nof_symbols, bool pi2_bpsk)
 {
   return (pi2_bpsk ? 12U : 24U) * nof_symbols * nof_prb;
 }
 
-/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per TS38.212 Table 6.3.1.4-1.
+/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per TS 38.212 Table 6.3.1.4-1.
 inline unsigned get_pucch_format4_E_total(unsigned spreading_factor, unsigned nof_symbols, bool pi2_bpsk)
 {
   return (pi2_bpsk ? 12U : 24U) * nof_symbols / spreading_factor;
 }
 
 /// \brief Calculates the effective code rate for a PUCCH Format 2 transmission, for CSI of 1 part only.
-/// \param[in] nof_prb           Transmission bandwidth in PRB.
+/// \param[in] nof_prb           Transmission bandwidth in PRBs.
 /// \param[in] nof_symbols       Transmission duration in symbols.
 /// \param[in] nof_payload_bits  Total number of payload bits.
 /// \return The effective code rate of the PUCCH Format 2 transmission.
@@ -61,7 +62,7 @@ inline float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, uns
 }
 
 /// \brief Calculates the effective code rate for a PUCCH Format 3 transmission, for CSI Part 1 only.
-/// \param[in] nof_prb           Transmission bandwidth in PRB.
+/// \param[in] nof_prb           Transmission bandwidth in PRBs.
 /// \param[in] nof_data_symbols  Number of symbols in the resource that contain data.
 /// \param[in] nof_payload_bits  Total number of payload bits.
 /// \return The effective code rate of the PUCCH Format 3 transmission.
@@ -72,7 +73,7 @@ pucch_format3_code_rate(unsigned nof_prb, unsigned nof_data_symbols, bool pi2_bp
   // \f$E_{UCI}\f$ = \f$E_{tot}\f$.
   const unsigned e_uci = get_pucch_format3_E_total(nof_prb, nof_data_symbols, pi2_bpsk);
 
-  // As per TS38.212 Sections 6.3.1.2.1 and 6.3.1.4.1, the parameter \f$E\f$ used to derive the number of
+  // As per TS 38.212 Sections 6.3.1.2.1 and 6.3.1.4.1, the parameter \f$E\f$ used to derive the number of
   // code-blocks is \f$E_{UCI}\f$.
   const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
 
@@ -92,7 +93,7 @@ pucch_format3_code_rate(unsigned nof_prb, unsigned nof_data_symbols, bool pi2_bp
 inline float
 pucch_format4_code_rate(unsigned spreading_factor, unsigned nof_data_symbols, bool pi2_bpsk, unsigned nof_payload_bits)
 {
-  // As per TS38.212 Table 6.3.1.4.1-1, for UCI of transmissions of CSI of one part only,
+  // As per TS 38.212 Table 6.3.1.4.1-1, for UCI of transmissions of CSI of one part only,
   // \f$E_{UCI}\f$ = \f$E_{tot}\f$.
   const unsigned e_uci = get_pucch_format4_E_total(spreading_factor, nof_data_symbols, pi2_bpsk);
 
@@ -116,6 +117,7 @@ pucch_format4_code_rate(unsigned spreading_factor, unsigned nof_data_symbols, bo
 /// \return The number of PRBs required for the transmission of nof_payload_bits with PUCCH format 2.
 /// \remark The returned number of PRBs is not capped to the maximum value of \ref FORMAT2_MAX_NPRB; it's up to the
 ///         caller to perform this check.
+/// \remark In case nof_payload_bits or nof_symbols is set to 0, the function returns 0.
 inline unsigned get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsigned nof_symbols, float max_code_rate)
 {
   if (nof_payload_bits == 0 or nof_symbols == 0) {
@@ -172,14 +174,14 @@ get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, uns
 }
 
 /// \brief Calculates the maximum payload for a PUCCH Format 2 transmission.
-/// \param[in] nof_prb        Transmission bandwidth in PRB.
+/// \param[in] nof_prb        Transmission bandwidth in PRBs.
 /// \param[in] nof_symbols    Transmission duration in symbols.
-/// \param[in] max_code_rate  Maximum allowed PUCCH Format2 code rate.
+/// \param[in] max_code_rate  Maximum allowed PUCCH Format 2 code rate.
 /// \return The maximum payload for a PUCCH Format 2 transmission.
 inline unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate)
 {
   const unsigned NOF_BITS_QPSK_SYMBOL = 2;
-  // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.1, TS 38.213; the
+  // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.2, TS 38.213; the
   // max payloads is obtained by using the floor operation from the maximum PHY capacity, given the PRBs, symbols and
   // max_code_rate.
   // NOTE: The maximum number of bits that can be carried by a PUCCH Format 2 resource is 409, which is obtained for 16
@@ -215,9 +217,11 @@ inline unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned no
 
 /// \brief Calculates the number of OFDM symbols filled with DM-RS in a PUCCH Format 3/4 resource.
 /// \param[in] nof_symbols            Transmission duration in OFDM symbols.
-/// \param[in] intraslot_freq_hopping Flag indicating if intra slot frequency hopping is enabled.
-/// \param[in] additional_dmrs        Flag indicating if additional DM-RS is enabled.
-/// \return The number of DM-RS OFDM symbols within the PUCCH Format 3/4 transmission.
+/// \param[in] intraslot_freq_hopping Flag indicating if intra slot frequency hopping is enabled. Only used if
+///                                   nof_symbols == 4.
+/// \param[in] additional_dmrs        Flag indicating if additional DM-RS is enabled. Only used if nof_symbols > 10.
+/// \return The number of DM-RS OFDM symbols within the PUCCH Format 3/4 transmission, as per TS 38.211
+/// Table 6.4.1.3.3.2-1.
 inline unsigned get_pucch_format3_4_nof_dmrs_symbols(bounded_integer<unsigned, 4, 14> nof_symbols,
                                                      bool                             intraslot_freq_hopping,
                                                      bool                             additional_dmrs)
@@ -238,18 +242,32 @@ inline unsigned get_pucch_format3_4_nof_dmrs_symbols(bounded_integer<unsigned, 4
 ///                                   \c PUCCH-FormatConfig, TS 38.331.
 /// \param[in] intraslot_freq_hopping Flag indicating if intra slot frequency hopping is enabled.
 /// \param[in] additional_dmrs        Flag indicating if additional DM-RS is enabled.
-/// \param[in] pi2_bpsk               Flag indicating if intra slot frequency hopping is enabled.
+/// \param[in] pi2_bpsk               Flag indicating if pi/2-BPSK modulation is used.
 /// \return The number of PRBs required for the transmission of nof_payload_bits with PUCCH format 3.
 /// \remark The returned number of PRBs is not capped to the maximum value of \ref FORMAT3_MAX_NPRB; it's up to the
 ///         caller to perform this check.
-inline unsigned get_pucch_format3_max_nof_prbs(unsigned nof_payload_bits,
-                                               unsigned nof_symbols,
-                                               float    max_code_rate,
-                                               bool     intraslot_freq_hopping,
-                                               bool     additional_dmrs,
-                                               bool     pi2_bpsk)
+/// \remark In case nof_payload_bits is set to 0, the function returns 0.
+inline unsigned get_pucch_format3_max_nof_prbs(unsigned                         nof_payload_bits,
+                                               bounded_integer<unsigned, 4, 14> nof_symbols,
+                                               float                            max_code_rate,
+                                               bool                             intraslot_freq_hopping,
+                                               bool                             additional_dmrs,
+                                               bool                             pi2_bpsk)
 {
-  if (nof_payload_bits == 0 or nof_symbols == 0) {
+  static constexpr auto valid_num_prbs          = to_array({1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16});
+  const auto            round_to_valid_nof_prbs = [](unsigned& value) {
+    if (value > pucch_constants::FORMAT3_MAX_NPRB) {
+      return;
+    }
+
+    // Round up to the nearest valid number of PRBs for PUCCH Format 3.
+    const int* it = std::lower_bound(valid_num_prbs.begin(), valid_num_prbs.end(), value);
+    if (it != valid_num_prbs.end()) {
+      value = *it;
+    }
+  };
+
+  if (nof_payload_bits == 0) {
     return 0;
   }
 
@@ -258,59 +276,51 @@ inline unsigned get_pucch_format3_max_nof_prbs(unsigned nof_payload_bits,
   const unsigned mod_order = pi2_bpsk ? 1 : 2;
 
   // Compute the number of PRBs first without taking into account the CRC bits.
-  // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.1, TS 38.213. The
+  // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.2, TS 38.213. The
   // ceil operation guarantees that the number of PRBs is enough to satisfy the effective code rate constraint.
   unsigned nof_prbs = static_cast<unsigned>(
       std::ceil(static_cast<float>(nof_payload_bits) /
-                (static_cast<float>((nof_symbols - nof_dmrs_symbols) * NRE * mod_order) * max_code_rate)));
+                (static_cast<float>((nof_symbols.value() - nof_dmrs_symbols) * NRE * mod_order) * max_code_rate)));
 
-  static const std::set<unsigned> valid_num_prbs          = {1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16};
-  auto                            round_to_valid_nof_prbs = [](unsigned value) {
-    // Round up to the nearest valid number of PRBs for PUCCH Format 3.
-    while (valid_num_prbs.find(value) == valid_num_prbs.end()) {
-      value++;
-    }
-    return value;
-  };
+  round_to_valid_nof_prbs(nof_prbs);
 
   // The resulting number of PRBs is too big for PUCCH Format 3, so just return.
   if (nof_prbs > pucch_constants::FORMAT3_MAX_NPRB) {
     return nof_prbs;
   }
 
-  // Since the number of PRBs was rounded up there's no need to check that the CRC bits actually fit into the resource.
-  if (unsigned rounded_nof_prbs = round_to_valid_nof_prbs(nof_prbs); rounded_nof_prbs != nof_prbs) {
-    return rounded_nof_prbs;
-  }
-
   // Compute the total number of bits (including CRC) using the resulting PRB number.
-  const unsigned e_uci = get_pucch_format2_E_total(nof_prbs, nof_symbols);
+  unsigned e_uci = get_pucch_format3_E_total(nof_prbs, nof_symbols.value(), pi2_bpsk);
   // As per Sections 6.3.1.2.1 and 6.3.1.4.1, TS 38.212, the parameter \f$E\f$ used to derive the number of
   // code-blocks is \f$E_{UCI}\f$.
   unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
 
   // Check that the number of PRBs can hold the total number of bits after rate matching.
-  if (static_cast<unsigned>(std::ceil(static_cast<float>(payload_plus_crc_bits) / max_code_rate)) >
-      (nof_dmrs_symbols * NRE * nof_prbs * mod_order)) {
-    nof_prbs++;
+  while (static_cast<unsigned>(std::ceil(static_cast<float>(payload_plus_crc_bits) / max_code_rate)) >
+         (nof_dmrs_symbols * NRE * nof_prbs * mod_order)) {
+    round_to_valid_nof_prbs(++nof_prbs);
 
     // The resulting number of PRBs is too big for PUCCH Format 3, so just return.
     if (nof_prbs > pucch_constants::FORMAT3_MAX_NPRB) {
       return nof_prbs;
     }
 
-    return round_to_valid_nof_prbs(nof_prbs);
+    // Compute the total number of bits (including CRC) using the resulting PRB number.
+    e_uci = get_pucch_format3_E_total(nof_prbs, nof_symbols.value(), pi2_bpsk);
+    // As per Sections 6.3.1.2.1 and 6.3.1.4.1, TS 38.212, the parameter \f$E\f$ used to derive the number of
+    // code-blocks is \f$E_{UCI}\f$.
+    payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
   }
   return nof_prbs;
 }
 
 /// \brief Calculates the maximum payload for a PUCCH Format 3 transmission.
-/// \param[in] max_nof_prbs           Transmission bandwidth in PRB.
+/// \param[in] max_nof_prbs           Transmission bandwidth in PRBs.
 /// \param[in] nof_symbols            Transmission duration in symbols.
-/// \param[in] max_code_rate          Maximum allowed PUCCH Format2 code rate.
+/// \param[in] max_code_rate          Maximum allowed PUCCH Format 3 code rate.
 /// \param[in] intraslot_freq_hopping Flag indicating if intra slot frequency hopping is enabled.
 /// \param[in] additional_dmrs        Flag indicating if additional DM-RS is enabled.
-/// \param[in] pi2_bpsk               Flag indicating if intra slot frequency hopping is enabled.
+/// \param[in] pi2_bpsk               Flag indicating if pi/2-BPSK modulation is used.
 /// \return The maximum payload for a PUCCH Format 3 transmission.
 inline unsigned get_pucch_format3_max_payload(unsigned max_nof_prbs,
                                               unsigned nof_symbols,

@@ -42,6 +42,8 @@ struct pucch_gen_params {
   bool                             f3_pi2_bpsk{false};
 };
 
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
 std::ostream& operator<<(std::ostream& os, const pucch_gen_params& params)
 {
   std::string f0_f1_str;
@@ -60,25 +62,26 @@ std::ostream& operator<<(std::ostream& os, const pucch_gen_params& params)
   }
   std::string f2_f3_str;
   if (params.nof_res_f2 != 0) {
-    f2_f3_str =
-        fmt::format("F2: nof_res={} nof_symbols={} max_nof_rbs={} max_payload_bits={} max_code_rate={} freq_hop={}",
-                    params.nof_res_f2,
-                    params.f2_nof_symbols,
-                    params.max_nof_rbs,
-                    params.max_payload_bits,
-                    params.max_code_rate,
-                    params.f2_intraslot_freq_hopping);
+    f2_f3_str = fmt::format(
+        "F2: nof_res={} nof_symbols={} max_nof_rbs={} {} max_code_rate={} freq_hop={}",
+        params.nof_res_f2,
+        params.f2_nof_symbols,
+        params.max_nof_rbs,
+        params.max_payload_bits.has_value() ? fmt::format("max_payload_bits={}", params.max_payload_bits.value()) : "",
+        to_max_code_rate_float(params.max_code_rate),
+        params.f2_intraslot_freq_hopping);
   } else {
-    f2_f3_str = fmt::format("F3: nof_res={} nof_symbols={} max_nof_rbs={} max_payload_bits={} max_code_rate={} "
-                            "freq_hop={} add_dmrs={} pi2_bpsk={}",
-                            params.nof_res_f3,
-                            params.f3_nof_symbols,
-                            params.max_nof_rbs,
-                            params.max_payload_bits,
-                            params.max_code_rate,
-                            params.f3_intraslot_freq_hopping,
-                            params.f3_additional_dmrs,
-                            params.f3_pi2_bpsk);
+    f2_f3_str = fmt::format(
+        "F3: nof_res={} nof_symbols={} max_nof_rbs={} max_payload_bits={} max_code_rate={} "
+        "freq_hop={} add_dmrs={} pi2_bpsk={}",
+        params.nof_res_f3,
+        params.f3_nof_symbols,
+        params.max_nof_rbs,
+        params.max_payload_bits.has_value() ? fmt::format("max_payload_bits={}", params.max_payload_bits.value()) : "",
+        to_max_code_rate_float(params.max_code_rate),
+        params.f3_intraslot_freq_hopping,
+        params.f3_additional_dmrs,
+        params.f3_pi2_bpsk);
   }
   fmt::print(os, "{} {}", f0_f1_str, f2_f3_str);
 

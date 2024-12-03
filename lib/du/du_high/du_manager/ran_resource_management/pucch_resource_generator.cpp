@@ -96,7 +96,7 @@ static std::vector<pucch_grant> compute_f0_res(unsigned                         
       }
     }
   }
-  // With intraslot freq. hopping.
+  // Without intraslot freq. hopping.
   else {
     for (unsigned rb_idx = 0; rb_idx < bwp_size_rbs / 2 - 1U; ++rb_idx) {
       const prb_interval prbs_low_spectrum{rb_idx, rb_idx + 1U};
@@ -119,7 +119,8 @@ static std::vector<pucch_grant> compute_f0_res(unsigned                         
 
       // Repeat the resource allocation on the upper part of the spectrum, to spread the PUCCH resource on both sides of
       // the BWP.
-      for (unsigned sym_idx = 0; sym_idx + nof_f0_symbols <= 14; sym_idx += nof_f0_symbols) {
+      for (unsigned sym_idx = 0; sym_idx + nof_f0_symbols <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+           sym_idx += nof_f0_symbols) {
         const ofdm_symbol_range symbols{sym_idx, sym_idx + nof_f0_symbols};
         res_list.emplace_back(
             pucch_grant{.format = srsran::pucch_format::FORMAT_0, .symbols = symbols, .prbs = prbs_hi_spectrum});
@@ -310,7 +311,7 @@ static std::vector<pucch_grant> compute_f2_res(unsigned                         
       }
     }
   }
-  // With intraslot freq. hopping.
+  // Without intraslot freq. hopping.
   else {
     for (unsigned rb_idx = 0; rb_idx < bwp_size_rbs / 2 - f2_max_rbs; rb_idx += f2_max_rbs) {
       const prb_interval prbs_low_spectrum{rb_idx, rb_idx + f2_max_rbs};
@@ -333,7 +334,8 @@ static std::vector<pucch_grant> compute_f2_res(unsigned                         
 
       // Repeat the resource allocation on the upper part of the spectrum, to spread the PUCCH resource on both sides of
       // the BWP.
-      for (unsigned sym_idx = 0; sym_idx + nof_f2_symbols <= 14; sym_idx += nof_f2_symbols) {
+      for (unsigned sym_idx = 0; sym_idx + nof_f2_symbols <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+           sym_idx += nof_f2_symbols) {
         const ofdm_symbol_range symbols{sym_idx, sym_idx + nof_f2_symbols};
         res_list.emplace_back(
             pucch_grant{.format = srsran::pucch_format::FORMAT_2, .symbols = symbols, .prbs = prbs_hi_spectrum});
@@ -403,7 +405,7 @@ static std::vector<pucch_grant> compute_f3_res(unsigned                         
       }
     }
   }
-  // With intraslot freq. hopping.
+  // Without intraslot freq. hopping.
   else {
     for (unsigned rb_idx = 0; rb_idx < bwp_size_rbs / 2 - f3_max_rbs; rb_idx += f3_max_rbs) {
       const prb_interval prbs_low_spectrum{rb_idx, rb_idx + f3_max_rbs};
@@ -426,7 +428,8 @@ static std::vector<pucch_grant> compute_f3_res(unsigned                         
 
       // Repeat the resource allocation on the upper part of the spectrum, to spread the PUCCH resource on both sides of
       // the BWP.
-      for (unsigned sym_idx = 0; sym_idx + nof_f3_symbols <= 14; sym_idx += nof_f3_symbols) {
+      for (unsigned sym_idx = 0; sym_idx + nof_f3_symbols <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+           sym_idx += nof_f3_symbols) {
         const ofdm_symbol_range symbols{sym_idx, sym_idx + nof_f3_symbols};
         res_list.emplace_back(
             pucch_grant{.format = pucch_format::FORMAT_3, .symbols = symbols, .prbs = prbs_hi_spectrum});
@@ -453,7 +456,6 @@ error_type<std::string> srs_du::pucch_parameters_validator(unsigned             
 {
   const bool has_f0        = std::holds_alternative<pucch_f0_params>(f0_f1_params);
   unsigned   nof_f0_f1_rbs = 0;
-  srsran_assert(max_nof_symbols.to_uint() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "Invalid number of symbols");
 
   if (has_f0) {
     const auto& f0_params = std::get<pucch_f0_params>(f0_f1_params);
@@ -524,6 +526,10 @@ error_type<std::string> srs_du::pucch_parameters_validator(unsigned             
     }
   } else {
     const auto& f3_params = std::get<pucch_f3_params>(f2_f3_params);
+    if (f3_params.nof_symbols.to_uint() > max_nof_symbols.to_uint()) {
+      return make_unexpected("The number of symbols for PUCCH Format 3 exceeds the maximum number of symbols available "
+                             "for PUCCH resources");
+    }
 
     const unsigned f3_max_rbs = f3_params.max_payload_bits.has_value()
                                     ? get_pucch_format3_max_nof_prbs(f3_params.max_payload_bits.value(),
@@ -656,6 +662,7 @@ merge_f0_f1_f2_f3_resource_lists(const std::vector<pucch_grant>& pucch_f0_f1_res
     }
   }
 
+  // TODO: when the list is empty, we are assuming F3.
   const bool has_f2 =
       not pucch_f2_f3_resource_list.empty() ? pucch_f2_f3_resource_list[0].format == pucch_format::FORMAT_2 : false;
 
