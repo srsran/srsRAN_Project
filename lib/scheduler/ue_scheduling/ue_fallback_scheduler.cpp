@@ -1833,6 +1833,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
                                               });
       if (remove_ue) {
         ue_it = pending_dl_ues_new_tx.erase(ue_it);
+        continue;
       }
     }
 

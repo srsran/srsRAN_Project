@@ -66,7 +66,7 @@ private:
     // SRB0/SRB1 is not yet received.
     std::optional<bool> is_srb0;
     // This field indicated whether ConRes CE pending to be sent or not.
-    bool is_conres_pending;
+    bool is_conres_pending = false;
     // Represents the number of LCID-1 bytes (excluding any overhead) that are pending for this UE.
     // This is only meaningful for SRB1 and gets updated every time an RLC buffer state update is received or when we
     // schedule a new PDSCH TX for this UE.
