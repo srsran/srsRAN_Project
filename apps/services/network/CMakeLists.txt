@@ -6,7 +6,9 @@
 # the distribution.
 #
 
-set(SOURCES udp_cli11_schema.cpp)
+set(SOURCES udp_cli11_schema.cpp
+	udp_config_yaml_writer.cpp
+)
 
 add_library(srsran_network_app_service STATIC ${SOURCES})
 target_include_directories(srsran_network_app_service PRIVATE ${CMAKE_SOURCE_DIR})

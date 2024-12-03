@@ -14,6 +14,7 @@
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "cu_appconfig.h"
 #include "srsran/support/cli11_utils.h"
+#include "srsran/support/config_parsers.h"
 
 using namespace srsran;
 
@@ -22,22 +23,37 @@ static void configure_cli11_f1ap_args(CLI::App& app, srs_cu::cu_f1ap_appconfig& 
   add_option(app, "--bind_addr", f1ap_params.bind_addr, "F1-C bind address")->capture_default_str();
 }
 
-static void configure_cli11_nru_args(CLI::App& app, srs_cu::cu_nru_appconfig& nru_cfg)
+static void configure_cli11_f1u_socket_args(CLI::App& app, srs_cu::cu_f1u_socket_appconfig& f1u_cfg)
 {
   add_option(app,
              "--bind_addr",
-             nru_cfg.bind_addr,
+             f1u_cfg.bind_addr,
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
   app.add_option(
-      "--ext_addr", nru_cfg.ext_addr, "External IP address that is advertised to receive F1-U packets from the DU");
-  add_option(app, "--udp_max_rx_msgs", nru_cfg.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
-  add_option(app,
-             "--pool_threshold",
-             nru_cfg.pool_occupancy_threshold,
-             "Pool occupancy threshold after which packets are dropped")
-      ->check(CLI::Range(0.0, 1.0));
-  ;
+      "--ext_addr", f1u_cfg.ext_addr, "External IP address that is advertised to receive F1-U packets from the DU");
+
+  configure_cli11_with_udp_config_schema(app, f1u_cfg.udp_config);
+}
+
+static void configure_cli11_f1u_args(CLI::App& app, srs_cu::cu_f1u_appconfig& f1u_params)
+{
+  // Add option for multiple sockets, for usage with different slices, 5QIs or parallization.
+  auto sock_lambda = [&f1u_params](const std::vector<std::string>& values) {
+    // Prepare the radio bearers
+    f1u_params.f1u_socket_cfg.resize(values.size());
+
+    // Format every F1-U socket configuration.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("NG-U socket parameters", "NG-U socket config, item #" + std::to_string(i));
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::capture);
+      configure_cli11_f1u_socket_args(subapp, f1u_params.f1u_socket_cfg[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  add_option_cell(app, "--socket", sock_lambda, "Configures UDP/IP socket parameters of the N3 interface");
 }
 
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)
@@ -58,6 +74,6 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfi
 
   // NR-U section.
   CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
-  CLI::App* nru_subcmd   = add_subcommand(*cu_up_subcmd, "nru", "NR-U parameters")->configurable();
-  configure_cli11_nru_args(*nru_subcmd, cu_cfg.nru_cfg);
+  CLI::App* f1u_subcmd   = add_subcommand(*cu_up_subcmd, "f1u", "NR-U parameters")->configurable();
+  configure_cli11_f1u_args(*f1u_subcmd, cu_cfg.f1u_cfg);
 }
