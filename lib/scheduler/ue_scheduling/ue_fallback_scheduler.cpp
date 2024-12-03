@@ -243,13 +243,13 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
 ue_fallback_scheduler::dl_new_tx_alloc_type
 ue_fallback_scheduler::get_dl_new_tx_alloc_type(const fallback_ue& next_ue) const
 {
-  auto& u = ues[next_ue.ue_index];
   if (not next_ue.is_srb0.has_value()) {
     // No SRB0 or SRB1. Verify if ConRes CE needs to be scheduled.
     return next_ue.is_conres_pending ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
   }
 
   if (next_ue.is_srb0.value()) {
+    auto& u = ues[next_ue.ue_index];
     return u.has_pending_dl_newtx_bytes(LCID_SRB0) ? dl_new_tx_alloc_type::srb0 : dl_new_tx_alloc_type::error;
   }
 
@@ -1819,7 +1819,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     // Remove UE when the SRB1 buffer status is empty and when there are no HARQ processes scheduled for future
     // transmissions.
     // TODO: Verify if this is still needed.
-    if (ue_it->is_srb0.has_value() and ue_it->is_srb0.value()) {
+    if (ue_it->is_srb0.has_value() and not ue_it->is_srb0.value()) {
       // NOTE: the UEs that have pending RE-TXs are handled by the \ref ongoing_ues_ack_retxs and can be removed from
       // \ref pending_dl_ues_new_tx.
       const bool remove_ue = ue_it->pending_srb1_buffer_bytes == 0 and
