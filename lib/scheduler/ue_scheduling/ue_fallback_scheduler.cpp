@@ -363,24 +363,14 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
   slot_point sched_ref_slot = res_alloc[0].slot;
 
   // Retrieve the slot of the last PDSCH for this UE.
-  slot_point last_pdsch_slot = u.get_pcell().harqs.last_pdsch_slot();
-  slot_point last_slot_ack   = u.get_pcell().harqs.last_ack_slot();
+  const slot_point last_pdsch_slot = u.get_pcell().harqs.last_pdsch_slot();
+  const slot_point last_slot_ack   = u.get_pcell().harqs.last_ack_slot();
 
-  // This is to prevent the edge case of the scheduler trying to allocate an SRB PDSCH in the farthest possible slot
-  // in the future when, in the same slot, there is already an SRB PDSCH allocated. This can happen, for example, if
-  // there is a retransmission (previously) allocated at slot sched_ref_slot + max_dl_slots_ahead_sched, and then the
-  // scheduler attempt to allocate a new TX on the same slot.
-  if (last_pdsch_slot.valid() and sched_ref_slot + max_dl_slots_ahead_sched <= last_pdsch_slot) {
-    return dl_sched_outcome::next_ue;
-  }
-
-  // \ref starting_slot is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned
-  // a PDSCH grant for SRB1 that was fragmented, we want to avoid allocating the second part of SRB1 in a PDSCH that
-  // is scheduled for an earlier slot than the PDSCH of the first part of the SRB1.
-  // NOTE: The \c last_pdsch_slot is not necessarily more recent than sched_ref_slot; hence we need to check that
-  // last_pdsch_slot >= sched_ref_slot.
+  // \ref starting_slot is the slot from which the scheduler will search for PDSCH space for a given UE.
+  // As per TS 38.214, clause 5.1, the PDSCHs need to follow the same order as PDCCHs for a given UE. Thus, we set the
+  // starting_slot to be always higher than the slot of the last PDSCH for the same UE (if it exists).
   slot_point starting_slot =
-      last_pdsch_slot.valid() and last_pdsch_slot > sched_ref_slot ? last_pdsch_slot : sched_ref_slot;
+      last_pdsch_slot.valid() ? std::max(get_next_srb_slot(cell_cfg, last_pdsch_slot), sched_ref_slot) : sched_ref_slot;
 
   for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
        next_slot            = get_next_srb_slot(cell_cfg, next_slot)) {
@@ -1654,7 +1644,8 @@ ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common&        
       if (h_dl_retx->get_grant_params().nof_symbols != pdsch_td_cfg.symbols.length()) {
         continue;
       }
-      return candidate_pdsch_time_res_idx = time_res_idx;
+      candidate_pdsch_time_res_idx = time_res_idx;
+      return candidate_pdsch_time_res_idx;
     }
     // For new transmissions, we want to search for the PDSCH time domain resource with the largest number of symbols.
     if (candidate_pdsch_time_res_idx.has_value() and
