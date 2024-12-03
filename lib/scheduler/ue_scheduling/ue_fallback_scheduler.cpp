@@ -362,26 +362,25 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
   // TODO: Make this compatible with k0 > 0.
   slot_point sched_ref_slot = res_alloc[0].slot;
 
-  std::optional<most_recent_tx_slots> most_recent_tx_ack_slots = get_most_recent_slot_tx(u.ue_index);
+  // Retrieve the slot of the last PDSCH for this UE.
+  slot_point last_pdsch_slot = u.get_pcell().harqs.last_pdsch_slot();
+  slot_point last_slot_ack   = u.get_pcell().harqs.last_ack_slot();
 
   // This is to prevent the edge case of the scheduler trying to allocate an SRB PDSCH in the farthest possible slot
   // in the future when, in the same slot, there is already an SRB PDSCH allocated. This can happen, for example, if
   // there is a retransmission (previously) allocated at slot sched_ref_slot + max_dl_slots_ahead_sched, and then the
   // scheduler attempt to allocate a new TX on the same slot.
-  if (most_recent_tx_ack_slots.has_value() and
-      sched_ref_slot + max_dl_slots_ahead_sched <= most_recent_tx_ack_slots.value().most_recent_tx_slot) {
+  if (last_pdsch_slot.valid() and sched_ref_slot + max_dl_slots_ahead_sched <= last_pdsch_slot) {
     return dl_sched_outcome::next_ue;
   }
 
   // \ref starting_slot is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned
   // a PDSCH grant for SRB1 that was fragmented, we want to avoid allocating the second part of SRB1 in a PDSCH that
   // is scheduled for an earlier slot than the PDSCH of the first part of the SRB1.
-  // NOTE: The \c most_recent_tx_slot is not necessarily more recent than sched_ref_slot; hence we need to check that
-  // most_recent_tx_ack_slots.value().most_recent_tx_slot >= sched_ref_slot.
+  // NOTE: The \c last_pdsch_slot is not necessarily more recent than sched_ref_slot; hence we need to check that
+  // last_pdsch_slot >= sched_ref_slot.
   slot_point starting_slot =
-      most_recent_tx_ack_slots.has_value() and most_recent_tx_ack_slots.value().most_recent_tx_slot > sched_ref_slot
-          ? most_recent_tx_ack_slots.value().most_recent_tx_slot
-          : sched_ref_slot;
+      last_pdsch_slot.valid() and last_pdsch_slot > sched_ref_slot ? last_pdsch_slot : sched_ref_slot;
 
   for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
        next_slot            = get_next_srb_slot(cell_cfg, next_slot)) {
@@ -444,11 +443,11 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     // the most recent already scheduled ACK slot (for the same UE), whenever we detect this is the case we skip the
     // allocation in advance.
     slot_point most_recent_ack_slot = pdsch_alloc.slot;
-    if (most_recent_tx_ack_slots.has_value()) {
-      if (pdsch_alloc.slot + dci_1_0_k1_values.back() <= most_recent_tx_ack_slots.value().most_recent_ack_slot) {
+    if (last_slot_ack.valid()) {
+      if (pdsch_alloc.slot + dci_1_0_k1_values.back() <= last_slot_ack) {
         continue;
       }
-      most_recent_ack_slot = most_recent_tx_ack_slots.value().most_recent_ack_slot;
+      most_recent_ack_slot = last_slot_ack;
     }
 
     sched_srb_results sched_res;
@@ -501,7 +500,8 @@ static dci_dl_rnti_config_type get_dci_type(const ue& u, const std::optional<dl_
 {
   if (h_dl.has_value()) {
     return h_dl->get_grant_params().dci_cfg_type;
-  } else if (u.is_conres_ce_pending()) {
+  }
+  if (u.is_conres_ce_pending()) {
     return dci_dl_rnti_config_type::tc_rnti_f1_0;
   }
   return dci_dl_rnti_config_type::c_rnti_f1_0;
@@ -1665,30 +1665,6 @@ ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common&        
   }
 
   return candidate_pdsch_time_res_idx;
-}
-
-std::optional<ue_fallback_scheduler::most_recent_tx_slots>
-ue_fallback_scheduler::get_most_recent_slot_tx(du_ue_index_t ue_idx) const
-{
-  std::optional<ue_fallback_scheduler::most_recent_tx_slots> most_recent_tx_ack_slot;
-  for (const auto& ue_proc : ongoing_ues_ack_retxs) {
-    if (ue_proc.ue_index == ue_idx) {
-      slot_point h_dl_slot_tx  = ue_proc.h_dl->pdsch_slot();
-      slot_point h_dl_slot_ack = ue_proc.h_dl->uci_slot();
-      if (not most_recent_tx_ack_slot.has_value()) {
-        most_recent_tx_ack_slot.emplace(
-            most_recent_tx_slots{.most_recent_tx_slot = h_dl_slot_tx, .most_recent_ack_slot = h_dl_slot_ack});
-        continue;
-      }
-      if (h_dl_slot_tx > most_recent_tx_ack_slot.value().most_recent_tx_slot) {
-        most_recent_tx_ack_slot.value().most_recent_tx_slot = h_dl_slot_tx;
-      }
-      if (h_dl_slot_ack > most_recent_tx_ack_slot.value().most_recent_ack_slot) {
-        most_recent_tx_ack_slot.value().most_recent_ack_slot = h_dl_slot_ack;
-      }
-    }
-  }
-  return most_recent_tx_ack_slot;
 }
 
 void ue_fallback_scheduler::store_harq_tx(du_ue_index_t                         ue_index,

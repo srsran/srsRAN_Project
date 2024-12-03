@@ -91,12 +91,6 @@ private:
   /// Erase the UEs' HARQ processes that have been acked from the SRB scheduler cache.
   void slot_indication(slot_point sl);
 
-  // Holds the most recent slot with PDSCH for SRB0/SRB1 and the most recent slot with the corresponding PUCCH.
-  struct most_recent_tx_slots {
-    slot_point most_recent_tx_slot;
-    slot_point most_recent_ack_slot;
-  };
-
   /// \remark srb_pending => Only ConRes was scheduled and Msg4 is yet to be scheduled.
   enum class dl_sched_outcome { success, next_ue, stop_dl_scheduling, srb_pending };
 
@@ -241,10 +235,6 @@ private:
                      std::optional<dl_harq_process_handle> h_dl,
                      unsigned                              srb_payload_bytes,
                      std::optional<bool>                   is_srb0 = std::nullopt);
-
-  // If there are any pending SRB0, SRB1 transmissions or ConRes CE for the UE, the function returns the most recent
-  // slot with PDSCH for SRB0/SRB1/ConRes CE allocation and the most recent slot with the corresponding PUCCH.
-  std::optional<most_recent_tx_slots> get_most_recent_slot_tx(du_ue_index_t ue_idx) const;
 
   // Returns the total number of bytes pending for SRB1 for a given UE, including MAC CE and MAC subheaders.
   unsigned get_srb1_pending_tot_bytes(du_ue_index_t ue_idx) const;
