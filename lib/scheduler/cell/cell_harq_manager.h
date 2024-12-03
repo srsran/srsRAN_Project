@@ -128,6 +128,8 @@ struct cell_harq_repository {
   struct ue_harq_entity_impl {
     std::vector<harq_type> harqs;
     std::vector<harq_id_t> free_harq_ids;
+    slot_point             last_slot_tx;
+    slot_point             last_slot_ack;
   };
 
   cell_harq_repository(unsigned               max_ues,
@@ -475,6 +477,11 @@ public:
   bool   has_empty_ul_harqs() const { return not get_ul_ue().free_harq_ids.empty(); }
   size_t nof_empty_dl_harqs() const { return get_dl_ue().free_harq_ids.size(); }
   size_t nof_empty_ul_harqs() const { return get_ul_ue().free_harq_ids.size(); }
+
+  /// Check the last HARQ allocations for the given UE.
+  slot_point last_pdsch_slot() const { return get_dl_ue().last_slot_tx; }
+  slot_point last_ack_slot() const { return get_dl_ue().last_slot_ack; }
+  slot_point last_pusch_slot() const { return get_ul_ue().last_slot_tx; }
 
   /// Deallocate UE HARQ entity.
   void reset();

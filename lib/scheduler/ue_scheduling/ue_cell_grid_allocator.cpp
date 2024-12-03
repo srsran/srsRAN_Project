@@ -143,11 +143,17 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
     // Fetch PDSCH resource grid allocator.
     cell_slot_resource_allocator& pdsch_alloc = get_res_alloc(grant.cell_index)[pdsch_td_cfg.k0];
 
-    // Verify only one PDSCH exists for an RNTI.
-    // See TS 38.214, clause 5.1, "For any HARQ process ID(s) in a given scheduled cell, the UE is not
-    // expected to receive a PDSCH that overlaps in time with another PDSCH".
-    if (ue_cc->last_pdsch_allocated_slot.valid() and pdsch_alloc.slot <= ue_cc->last_pdsch_allocated_slot) {
-      // Try next candidate.
+    // Verify only one PDSCH exists for the same RNTI in the same slot, and that the PDSCHs are in the same order as
+    // PDCCHs.
+    // [TS 38.214, 5.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to receive a
+    // PDSCH that overlaps in time with another PDSCH".
+    // [TS 38.214, 5.1] "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start
+    // receiving a first PDSCH starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be
+    // scheduled to receive a PDSCH starting earlier than the end of the first PDSCH with a PDCCH that ends later
+    // than symbol i.".
+    slot_point last_pdsch_slot = ue_cc->harqs.last_pdsch_slot();
+    if (last_pdsch_slot.valid() and pdsch_alloc.slot <= last_pdsch_slot) {
+      // Try next k0 candidate.
       continue;
     }
 
@@ -465,8 +471,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
           ue_cc->link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);
       pdsch_sched_ctx.slice_id = slice_id;
     }
-    pdsch_sched_ctx.cqi              = ue_cc->channel_state_manager().get_wideband_cqi();
-    ue_cc->last_pdsch_allocated_slot = pdsch_alloc.slot;
+    pdsch_sched_ctx.cqi = ue_cc->channel_state_manager().get_wideband_cqi();
 
     if (is_new_data) {
       // Set MAC logical channels to schedule in this PDU if it is a newtx.
@@ -581,13 +586,15 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     // Fetch PUSCH resource grid allocators.
     cell_slot_resource_allocator& pusch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + final_k2];
 
-    // Verify only one PUSCH exists for an RNTI.
-    // See TS 38.214, clause 6.1, "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to
-    // transmit a PUSCH that overlaps in time with another PUSCH".
-    // "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start a first PUSCH
-    // transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be scheduled to
+    // Verify that the order of PUSCHs for the same UE matches the order of PDCCHs and that there is at most one PUSCH
+    // per slot.
+    // [TS 38.214, 6.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to transmit a
+    // PUSCH that overlaps in time with another PUSCH".
+    // [TS 38.214, 6.1] "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start a first
+    // PUSCH transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be scheduled to
     // transmit a PUSCH starting earlier than the end of the first PUSCH by a PDCCH that ends later than symbol i".
-    if (ue_cc->last_pusch_allocated_slot.valid() and pusch_alloc.slot <= ue_cc->last_pusch_allocated_slot) {
+    slot_point last_pusch_slot = ue_cc->harqs.last_pusch_slot();
+    if (last_pusch_slot.valid() and pusch_alloc.slot <= last_pusch_slot) {
       return {alloc_status::skip_ue};
     }
 
@@ -999,7 +1006,6 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       pusch_sched_ctx.olla_mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
       pusch_sched_ctx.slice_id = slice_id;
     }
-    ue_cc->last_pusch_allocated_slot = pusch_alloc.slot;
 
     // Update the number of PRBs used in the PUSCH allocation.
     ue_cc->get_ul_power_controller().update_pusch_pw_ctrl_state(pusch_alloc.slot, crbs.length());
