@@ -1,0 +1,14 @@
+cu_up:
+  f1u:
+    socket:
+      - 
+        bind_addr: 127.0.3.1  # address that the NG-U socket will bind to.
+        udp:
+          max_rx_msgs: 256        # maximum packets read from the socket in a single syscall.
+          pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
+
+      - 
+        bind_addr: 127.0.3.2
+        udp:
+          max_rx_msgs: 256        # maximum packets read from the socket in a single syscall.
+          pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
