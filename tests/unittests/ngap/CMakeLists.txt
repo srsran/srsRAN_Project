@@ -13,6 +13,7 @@ target_link_libraries(ngap_test_helpers srsran_support ngap_asn1 srslog)
 set(SOURCES
         ngap_asn1_packer_test.cpp
         ngap_validators_test.cpp
+        ngap_ue_context_test.cpp
         ng_setup_procedure_test.cpp
         ngap_nas_message_test.cpp
         ngap_ue_context_management_procedure_test.cpp

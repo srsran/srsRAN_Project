@@ -410,5 +410,38 @@ private:
   byte_buffer           ho_preparation_message;
 };
 
+class dummy_ngap_cu_cp_ue_notifier : public ngap_cu_cp_ue_notifier
+{
+public:
+  ~dummy_ngap_cu_cp_ue_notifier() = default;
+
+  void set_ue_index(ue_index_t ue_index_) { ue_index = ue_index_; }
+  void set_rrc_ue_notifier(dummy_ngap_rrc_ue_notifier& rrc_ue_notifier_) { rrc_ue_notifier = &rrc_ue_notifier_; }
+
+  /// \brief Get the UE index of the UE.
+  ue_index_t get_ue_index() override { return ue_index.value(); };
+
+  /// \brief Schedule an async task for the UE.
+  bool schedule_async_task(async_task<void> task) override { return true; };
+
+  /// \brief Get the RRC UE notifier of the UE.
+  ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() override
+  {
+    srsran_assert(rrc_ue_notifier != nullptr, "RRC UE notifier must not be nullptr");
+    return *rrc_ue_notifier;
+  };
+
+  /// \brief Notify the CU-CP about a security context
+  /// \param[in] sec_ctxt The received security context
+  /// \return True if the security context was successfully initialized, false otherwise
+  bool init_security_context(security::security_context sec_ctxt) override { return true; };
+
+  /// \brief Check if security is enabled
+  [[nodiscard]] bool is_security_enabled() const override { return true; };
+
+  std::optional<ue_index_t>   ue_index;
+  dummy_ngap_rrc_ue_notifier* rrc_ue_notifier = nullptr;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran

@@ -238,6 +238,14 @@ public:
       return ran_ue_id_t::invalid;
     }
 
+    // Check if the next_ran_ue_id is available
+    if (ues.find(next_ran_ue_id) == ues.end()) {
+      ran_ue_id_t ret = next_ran_ue_id;
+      // increase the next cu ue f1ap id
+      increase_next_ran_ue_id();
+      return ret;
+    }
+
     // iterate over all ids starting with the next_ran_ue_id to find the available id
     while (true) {
       // Iterate over ue_index_to_ran_ue_id
