@@ -118,8 +118,10 @@ private:
   };
 
   /// \brief For a number of pending bytes, select the appropriate MCS.
-  std::tuple<unsigned, sch_mcs_index, units::bytes>
-  select_mcs(const pdsch_config_params& pdsch_cfg, unsigned pending_bytes, unsigned nof_rbs_available);
+  std::tuple<unsigned, sch_mcs_index, units::bytes> select_tbs(const pdsch_config_params&          pdsch_cfg,
+                                                               unsigned                            pending_bytes,
+                                                               const crb_interval&                 unused_crbs,
+                                                               const std::optional<sch_mcs_index>& fixed_mcs) const;
 
   /// \brief Allocate DL grant for a UE and for a specific PDSCH slot.
   sched_srb_results alloc_grant(ue&                                   u,
@@ -129,40 +131,6 @@ private:
                                 slot_point                            most_recent_ack_slot,
                                 std::optional<dl_harq_process_handle> h_dl_retx,
                                 std::optional<bool>                   is_srb0);
-
-  /// \brief Tries to schedule DL ConRes CE for a UE and for a specific PDSCH slot.
-  /// \remark This function handles the following scenarios:
-  ///     - Schedules ConRes CE only if ConRes indication is received from MAC but no buffer status update is received
-  ///       for SRB0/SRB1.
-  sched_srb_results schedule_dl_conres_ce(ue&                                   u,
-                                          cell_resource_allocator&              res_alloc,
-                                          unsigned                              pdsch_time_res,
-                                          unsigned                              slot_offset,
-                                          slot_point                            most_recent_ack_slot,
-                                          std::optional<dl_harq_process_handle> h_dl_retx);
-
-  /// \brief Tries to schedule DL SRB0 message for a UE and for a specific PDSCH slot.
-  /// \remark This function handles the following scenarios:
-  ///     - Schedules SRB0 only (not empty) if ConRes CE has already sent.
-  ///     - Schedules SRB0 (not empty) + ConRes CE (if pending) if there is enough space in PDSCH resource grid.
-  ///     - Schedules ConRes CE only (if pending) if there is not enough space in PDSCH resource grid to fit SRB0 (not
-  ///       empty) + ConRes CE.
-  sched_srb_results schedule_dl_srb0(ue&                                   u,
-                                     cell_resource_allocator&              res_alloc,
-                                     unsigned                              pdsch_time_res,
-                                     unsigned                              slot_offset,
-                                     slot_point                            most_recent_ack_slot,
-                                     std::optional<dl_harq_process_handle> h_dl_retx);
-
-  /// \brief Tries to schedule DL SRB1 message for a UE and for a specific PDSCH slot.
-  /// \remark This function handles the following scenarios:
-  ///     - Schedules SRB1 (not empty) + ConRes CE (if pending).
-  sched_srb_results schedule_dl_srb1(ue&                                   u,
-                                     cell_resource_allocator&              res_alloc,
-                                     unsigned                              pdsch_time_res,
-                                     unsigned                              slot_offset,
-                                     slot_point                            most_recent_ack_slot,
-                                     std::optional<dl_harq_process_handle> h_dl_retx = std::nullopt);
 
   /// \brief Tries to schedule SRB1 message for a specific PUSCH time domain resource.
   ul_srb_sched_outcome schedule_ul_srb(ue&                                          u,
