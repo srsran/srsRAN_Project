@@ -71,13 +71,15 @@ variables:
       echo "DPDK_VERSION=${DPDK_VERSION}"
 
       build_srsgnb() {
+        target="$1"
+
         start_time=$(date +%s)
         if [ -e "/usr/local/bin/ram_reporter.py" ]; then
           /usr/local/builder_tools/bin/python3 /usr/local/bin/ram_reporter.py ${CI_PROJECT_DIR}/ram_usage.txt &
           ram_reporter_pid=$!
         fi
 
-        build_srsran "" ${CMAKE_FLAGS_CMD}
+        build_srsran "${target}" ${CMAKE_FLAGS_CMD}
         if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
           echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"
           cd build
@@ -185,7 +187,7 @@ variables:
 
         exit $ret
       }
-    - build_srsgnb
+    - build_srsgnb ${SRS_TARGET}
     - launch_tests
   timeout: 6h
 
@@ -193,9 +195,9 @@ variables:
   after_script: &build_after_script
     - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
     - |
-      mv ${CI_PROJECT_DIR}/build/apps/gnb/gnb /tmp/gnb
-      mv ${CI_PROJECT_DIR}/build/apps/cu/srscu /tmp/srscu
-      mv ${CI_PROJECT_DIR}/build/apps/du/srsdu /tmp/srsdu
+      find ${CI_PROJECT_DIR}/build -name "gnb" -type f -executable -exec mv {} /tmp/gnb \;
+      find ${CI_PROJECT_DIR}/build -name "srscu" -type f -executable -exec mv {} /tmp/srscu \;
+      find ${CI_PROJECT_DIR}/build -name "srsdu" -type f -executable -exec mv {} /tmp/srsdu \;
       cd build
       make clean
       mv /tmp/gnb ${CI_PROJECT_DIR}/build/apps/gnb/gnb
@@ -236,6 +238,9 @@ variables:
       fi
     - *srs_functions
     - build_srsgnb
+    - |
+      rm ${CI_PROJECT_DIR}/build/apps/gnb_split_7_2/gnb
+      rm ${CI_PROJECT_DIR}/build/apps/gnb_split_8/gnb
     - launch_tests
   variables:
     OS: ubuntu-24.04
@@ -1574,20 +1579,6 @@ check-affinity-manager-nocpu:
 ###############
 # E2E Nightly #
 ###############
-basic relwithdeb:
-  extends: .smoke relwithdeb
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  retry: 2
-  interruptible: false
-  variables:
-    TEST_MODE: none
-  after_script:
-    - *build_after_script
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 3 day
-
 basic package:
   extends: .deb-package
   stage: build and unit tests
@@ -1601,50 +1592,92 @@ basic package:
     INFRASTRUCTURE_TAG: amd64-avx2
   needs: []
 
-basic tsan:
-  extends: .smoke tsan
+basic relwithdeb:
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   retry: 2
   interruptible: false
   variables:
-    TEST_MODE: none
-  after_script:
-    - *build_after_script
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 3 day
-
-basic asan:
-  extends: smoke asan
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  retry: 2
-  interruptible: false
-  variables:
+    SRS_TARGET: srscu srsdu gnb
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: RelWithDebInfo
+    ASSERT_LEVEL: PARANOID
     TEST_MODE: none
     MARCH: x86-64-v3
-    BUILD_ARGS: -DEXIT_TIMEOUT=60
     INFRASTRUCTURE_TAG: amd64-avx2
   after_script:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
-    expire_in: 3 day
+    expire_in: 3 days
 
-basic memcheck:
-  extends: .smoke valgrind
+basic tsan:
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   retry: 2
   interruptible: false
   variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04
+    COMPILER: clang
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_TSAN: "True"
     TEST_MODE: none
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   after_script:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
-    expire_in: 3 day
+    expire_in: 3 days
+
+basic asan:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04
+    COMPILER: clang
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_ASAN: "True"
+    TEST_MODE: none
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+    BUILD_ARGS: -DEXIT_TIMEOUT=60
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
+
+basic memcheck:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: none
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2  
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
 
 basic avx512 dpdk:
   extends: .build_and_unit
@@ -1654,6 +1687,7 @@ basic avx512 dpdk:
   retry: 2
   interruptible: false
   variables:
+    SRS_TARGET: gnb_split_7_2
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -1670,7 +1704,7 @@ basic avx512 dpdk:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
-    expire_in: 3 day
+    expire_in: 3 days
 
 basic avx512 dpdk withassert:
   extends: basic avx512 dpdk
