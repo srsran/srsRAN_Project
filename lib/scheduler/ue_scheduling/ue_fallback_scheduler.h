@@ -145,7 +145,6 @@ private:
   /// \remark This function handles the following scenarios:
   ///     - Schedules SRB1 (not empty) + ConRes CE (if pending).
   sched_srb_results schedule_dl_srb1(ue&                                   u,
-                                     slot_point                            sched_ref_slot,
                                      cell_resource_allocator&              res_alloc,
                                      unsigned                              pdsch_time_res,
                                      unsigned                              slot_offset,
@@ -209,7 +208,6 @@ private:
   public:
     explicit ack_and_retx_tracker(du_ue_index_t                                ue_idx,
                                   const std::optional<dl_harq_process_handle>& h_dl_,
-                                  ue_repository&                               ues_,
                                   unsigned                                     srb_payload_bytes_,
                                   std::optional<bool>                          is_srb0_ = std::nullopt) :
       ue_index(ue_idx), is_srb0(is_srb0_), h_dl(h_dl_), srb1_payload_bytes(srb_payload_bytes_)

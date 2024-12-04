@@ -113,3 +113,16 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
 
   return true;
 }
+
+bool test_helper::is_valid_dl_msg_alloc_list(span<const dl_msg_alloc> grants)
+{
+  static_vector<rnti_t, MAX_UE_PDUS_PER_SLOT> rntis;
+  for (const auto& grant : grants) {
+    // Ensure uniqueness of RNTI.
+    TRUE_OR_RETURN(std::count(rntis.begin(), rntis.end(), grant.pdsch_cfg.rnti) == 0,
+                   "Duplicate RNTI in list of PDSCHs",
+                   grant.pdsch_cfg.rnti);
+    rntis.push_back(grant.pdsch_cfg.rnti);
+  }
+  return true;
+}

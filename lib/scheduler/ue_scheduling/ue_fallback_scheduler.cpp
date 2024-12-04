@@ -360,7 +360,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
   // slot_indication().
   // NOTE: we guarantee that \ref sched_ref_slot is a DL slot in the caller.
   // TODO: Make this compatible with k0 > 0.
-  slot_point sched_ref_slot = res_alloc[0].slot;
+  const slot_point sched_ref_slot = res_alloc[0].slot;
 
   // Retrieve the slot of the last PDSCH for this UE.
   const slot_point last_pdsch_slot = u.get_pcell().harqs.last_pdsch_slot();
@@ -420,18 +420,9 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
       continue;
     }
 
-    // Check whether PDSCH for the UE already exists or not.
-    const auto* ue_pdsch_exists_it =
-        std::find_if(pdsch_alloc.result.dl.ue_grants.begin(),
-                     pdsch_alloc.result.dl.ue_grants.end(),
-                     [rnti = u.crnti](const dl_msg_alloc& pdsch) { return pdsch.pdsch_cfg.rnti == rnti; });
-    if (ue_pdsch_exists_it != pdsch_alloc.result.dl.ue_grants.end()) {
-      return dl_sched_outcome::next_ue;
-    }
-
-    // As it is not possible to schedule a PDSCH whose related PUCCH falls in a slot that is the same as or older than
-    // the most recent already scheduled ACK slot (for the same UE), whenever we detect this is the case we skip the
-    // allocation in advance.
+    // As per TS 38.214, clause 5.1, it is not possible to schedule a PDSCH whose related PUCCH falls in a slot that
+    // is the same as or older than the most recent already scheduled ACK slot (for the same UE). Whenever we detect
+    // this is the case we skip the allocation in advance.
     slot_point most_recent_ack_slot = pdsch_alloc.slot;
     if (last_slot_ack.valid()) {
       if (pdsch_alloc.slot + dci_1_0_k1_values.back() <= last_slot_ack) {
@@ -444,19 +435,12 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     if (not is_srb0.has_value()) {
       sched_res = schedule_dl_conres_ce(
           u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
+    } else if (is_srb0.value()) {
+      sched_res = schedule_dl_srb0(
+          u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
     } else {
-      if (is_srb0.value()) {
-        sched_res = schedule_dl_srb0(
-            u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
-      } else {
-        sched_res = schedule_dl_srb1(u,
-                                     sched_ref_slot,
-                                     res_alloc,
-                                     time_res_idx.value(),
-                                     offset_to_sched_ref_slot,
-                                     most_recent_ack_slot,
-                                     h_dl_retx);
-      }
+      sched_res = schedule_dl_srb1(
+          u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
     }
 
     const bool alloc_successful = sched_res.h_dl.has_value();
@@ -550,7 +534,7 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                                
   const bool is_retx = h_dl_retx.has_value();
 
   // Search for empty HARQ.
-  if (not h_dl_retx.has_value() and not ue_pcell.harqs.has_empty_dl_harqs()) {
+  if (not is_retx and not ue_pcell.harqs.has_empty_dl_harqs()) {
     logger.warning("rnti={}: UE must have empty HARQs during ConRes CE allocation", u.crnti);
     return {};
   }
@@ -716,13 +700,13 @@ ue_fallback_scheduler::schedule_dl_srb0(ue&                                   u,
 
   const bool is_retx = h_dl_retx.has_value();
 
-  ue_fallback_scheduler::sched_srb_results result{};
-
   // Search for empty HARQ.
   if (not is_retx and not ue_pcell.harqs.has_empty_dl_harqs()) {
     logger.warning("rnti={}: UE must have empty HARQs during SRB0 PDU allocation", u.crnti);
     return {};
   }
+
+  sched_srb_results result{};
 
   dci_dl_rnti_config_type dci_type = get_dci_type(u, h_dl_retx);
 
@@ -921,7 +905,6 @@ ue_fallback_scheduler::schedule_dl_srb0(ue&                                   u,
 
 ue_fallback_scheduler::sched_srb_results
 ue_fallback_scheduler::schedule_dl_srb1(ue&                                   u,
-                                        slot_point                            sched_ref_slot,
                                         cell_resource_allocator&              res_alloc,
                                         unsigned                              pdsch_time_res,
                                         unsigned                              slot_offset,
@@ -1671,7 +1654,7 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t                         
                                        }),
                       "This UE and HARQ process were already in the list");
 
-  ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl, ues, srb_payload_bytes, is_srb0);
+  ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl, srb_payload_bytes, is_srb0);
 }
 
 unsigned ue_fallback_scheduler::get_srb1_pending_tot_bytes(du_ue_index_t ue_idx) const
