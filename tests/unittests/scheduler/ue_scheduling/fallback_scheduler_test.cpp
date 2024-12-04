@@ -23,18 +23,10 @@
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
-#include <random>
 
 using namespace srsran;
-
-std::random_device rd;
-std::mt19937       g(rd());
-
-unsigned get_random_uint(unsigned min, unsigned max)
-{
-  return std::uniform_int_distribution<unsigned>{min, max}(g);
-}
 
 static cell_config_builder_params test_builder_params(duplex_mode duplx_mode)
 {
@@ -108,6 +100,10 @@ struct test_bench {
     fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db),
     csi_rs_sched(cell_cfg)
   {
+    srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
+    srslog::init();
+
     ue_alloc.add_cell(cell_cfg.cell_index, pdcch_sch, uci_alloc, res_grid);
   }
 
@@ -582,13 +578,13 @@ TEST_P(fallback_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_i
 
 TEST_P(fallback_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
 {
-  const sch_mcs_index max_msg4_mcs = get_random_uint(0, 27);
+  const sch_mcs_index max_msg4_mcs = test_rgen::uniform_int<unsigned>(0, 27);
   setup_sched(create_expert_config(max_msg4_mcs), create_custom_cell_config_request(params.k0));
   // Add UE.
   const du_ue_index_t ue_idx = to_du_ue_index(0);
   add_ue(to_rnti(0x4601), ue_idx);
   // Random payload size.
-  const unsigned mac_srb0_sdu_size = get_random_uint(1, 458);
+  const unsigned mac_srb0_sdu_size = test_rgen::uniform_int<unsigned>(1, 458);
   push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, mac_srb0_sdu_size, true);
 
   srslog::basic_logger& logger(srslog::fetch_basic_logger("TEST"));
@@ -1274,7 +1270,6 @@ protected:
 
         std::optional<ul_harq_process_handle> h_ul = test_ue.get_pcell().harqs.ul_harq(h_id);
         if (h_ul.has_value() and h_ul->is_waiting_ack() and h_ul->pusch_slot() == sl) {
-          test_ue.pending_ul_newtx_bytes();
           bool           ack             = ack_harq_process(sl, *h_ul);
           const unsigned delivered_bytes = ack ? h_ul->get_grant_params().tbs_bytes - 10U : 0U;
           buffer_bytes > delivered_bytes ? buffer_bytes -= delivered_bytes : buffer_bytes = 0U;
@@ -1400,7 +1395,7 @@ INSTANTIATE_TEST_SUITE_P(test_fdd_and_tdd,
 class fallback_sched_ue_w_out_pucch_cfg : public base_fallback_tester, public ::testing::Test
 {
 protected:
-  fallback_sched_ue_w_out_pucch_cfg() : base_fallback_tester(srsran::duplex_mode::TDD)
+  fallback_sched_ue_w_out_pucch_cfg() : base_fallback_tester(duplex_mode::TDD)
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;
@@ -1457,17 +1452,4 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
   }
 
   ASSERT_TRUE(srb_transmitted);
-}
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-
-  (void)(::testing::GTEST_FLAG(death_test_style) = "fast");
-
-  return RUN_ALL_TESTS();
 }
