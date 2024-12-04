@@ -35,7 +35,7 @@ public:
     harq_pool(parent_), ntn_cs_koffset(ntn_cs_koffset_)
   {
     srsran_assert(ntn_cs_koffset > 0 and ntn_cs_koffset <= NTN_CELL_SPECIFIC_KOFFSET_MAX, "Invalid NTN koffset");
-    unsigned ring_size = get_allocator_ring_size_gt_min(ntn_cs_koffset);
+    unsigned ring_size = get_allocator_ring_size_gt_min(NTN_CELL_SPECIFIC_KOFFSET_MAX * 2);
     history.resize(ring_size);
   }
 
@@ -48,7 +48,7 @@ public:
     }
 
     // Clear old entries.
-    unsigned idx = get_current_index(sl_tx - 1);
+    unsigned idx = get_current_index(sl_tx - SCHEDULER_MAX_K1);
     history[idx].clear();
   }
 
@@ -99,10 +99,11 @@ public:
 
   std::optional<dl_harq_process_handle> find_dl_harq(du_ue_index_t ue_idx, slot_point uci_slot, unsigned harq_bit_idx)
   {
-    unsigned idx = get_offset_index(uci_slot);
+    auto     adjusted_slot = uci_slot - ntn_cs_koffset;
+    unsigned idx           = get_offset_index(adjusted_slot);
     for (dl_harq_process_impl& h_impl : history[idx]) {
-      if (h_impl.ue_idx == ue_idx and h_impl.status == harq_state_t::waiting_ack and h_impl.slot_ack == uci_slot and
-          h_impl.harq_bit_idx == harq_bit_idx) {
+      if (h_impl.ue_idx == ue_idx and h_impl.status == harq_state_t::waiting_ack and
+          h_impl.slot_ack == adjusted_slot and h_impl.harq_bit_idx == harq_bit_idx) {
         return dl_harq_process_handle{harq_pool, h_impl};
       }
     }
@@ -497,8 +498,8 @@ cell_harq_manager::cell_harq_manager(unsigned                               max_
   timeout_notifier(notifier != nullptr and ntn_cs_koffset == 0 ? std::move(notifier)
                                                                : std::make_unique<noop_harq_timeout_notifier>()),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl(max_ues, max_ack_wait_timeout, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger),
-  ul(max_ues, max_ack_wait_timeout, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger)
+  dl(max_ues, max_ack_wait_timeout + ntn_cs_koffset, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger),
+  ul(max_ues, max_ack_wait_timeout + ntn_cs_koffset, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger)
 {
 }
 

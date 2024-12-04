@@ -122,7 +122,10 @@ protected:
 class base_single_harq_entity_test : public base_harq_manager_test
 {
 protected:
-  base_single_harq_entity_test(unsigned ntn_cs_koffset = 0) : base_harq_manager_test(1, ntn_cs_koffset) {}
+  base_single_harq_entity_test(unsigned ntn_cs_koffset_ = 0) : base_harq_manager_test(1, ntn_cs_koffset_)
+  {
+    ntn_cs_koffset = ntn_cs_koffset_;
+  }
 
   const du_ue_index_t   ue_index  = to_du_ue_index(0);
   const rnti_t          rnti      = to_rnti(0x4601);
@@ -132,6 +135,7 @@ protected:
   unsigned max_retxs = 4;
   unsigned k1        = 4;
   unsigned k2        = 6;
+  unsigned ntn_cs_koffset;
 };
 
 // Test for multiple UEs managed by a single HARQ manager instance.
@@ -152,7 +156,7 @@ class single_ue_harq_entity_test : public base_single_harq_entity_test, public :
 class single_harq_process_test : public base_single_harq_entity_test, public ::testing::Test
 {
 protected:
-  single_harq_process_test(unsigned ntn_cs_koffset = 0) : base_single_harq_entity_test(ntn_cs_koffset)
+  single_harq_process_test(unsigned ntn_cs_koffset_ = 0) : base_single_harq_entity_test(ntn_cs_koffset_)
   {
     pdsch_info = make_dummy_pdsch_info();
     dl_harq_alloc_context harq_ctxt{dci_dl_rnti_config_type::c_rnti_f1_0};
@@ -165,7 +169,7 @@ protected:
   pdsch_information      pdsch_info;
   pusch_information      pusch_info;
   dl_harq_process_handle h_dl{harq_ent.alloc_dl_harq(current_slot, k1, max_retxs, 0).value()};
-  ul_harq_process_handle h_ul{harq_ent.alloc_ul_harq(current_slot + k2, max_retxs).value()};
+  ul_harq_process_handle h_ul{harq_ent.alloc_ul_harq(current_slot + k2 + ntn_cs_koffset, max_retxs).value()};
 };
 
 class dl_harq_process_multi_pucch_test : public base_single_harq_entity_test, public ::testing::Test
@@ -1054,15 +1058,15 @@ TEST_F(single_ntn_ue_harq_process_test, harq_history_is_reachable_after_timeout)
 {
   slot_point uci_slot     = current_slot + k1;
   slot_point pusch_slot   = current_slot + k2;
-  slot_point slot_timeout = std::max(uci_slot, pusch_slot) + 1;
+  slot_point slot_timeout = current_slot + ntn_cs_koffset + k2 + 1;
   while (current_slot != slot_timeout) {
     run_slot();
   }
   ASSERT_FALSE(harq_ent.dl_harq(to_harq_id(0)).has_value());
   ASSERT_FALSE(harq_ent.ul_harq(to_harq_id(0)).has_value());
 
-  h_dl = harq_ent.find_dl_harq_waiting_ack(uci_slot, 0).value();
-  h_ul = harq_ent.find_ul_harq_waiting_ack(pusch_slot).value();
+  h_dl = harq_ent.find_dl_harq_waiting_ack(uci_slot + ntn_cs_koffset, 0).value();
+  h_ul = harq_ent.find_ul_harq_waiting_ack(pusch_slot + ntn_cs_koffset).value();
   ASSERT_FALSE(h_dl.empty() and h_ul.empty());
   ASSERT_EQ(h_dl.get_grant_params().tbs_bytes, pdsch_info.codewords[0].tb_size_bytes);
   ASSERT_EQ(h_ul.get_grant_params().tbs_bytes, pusch_info.tb_size_bytes);
@@ -1074,17 +1078,16 @@ TEST_F(single_ntn_ue_harq_process_test, when_harq_gets_acked_then_it_reports_the
 {
   slot_point pusch_slot   = current_slot + k2;
   slot_point uci_slot     = current_slot + k1;
-  slot_point slot_timeout = std::max(pusch_slot, uci_slot) + 1;
+  slot_point slot_timeout = current_slot + ntn_cs_koffset + k2 + 1;
   while (current_slot != slot_timeout) {
     run_slot();
   }
 
-  h_ul = harq_ent.find_ul_harq_waiting_ack(pusch_slot).value();
+  h_ul = harq_ent.find_ul_harq_waiting_ack(pusch_slot + ntn_cs_koffset).value();
   ASSERT_EQ(harq_ent.total_ul_bytes_waiting_ack(), pusch_info.tb_size_bytes);
   ASSERT_EQ(h_ul.ul_crc_info(true), pusch_info.tb_size_bytes);
   ASSERT_EQ(harq_ent.total_ul_bytes_waiting_ack(), 0);
-
-  h_dl = harq_ent.find_dl_harq_waiting_ack(uci_slot, 0).value();
+  h_dl = harq_ent.find_dl_harq_waiting_ack(uci_slot + ntn_cs_koffset, 0).value();
   ASSERT_EQ(h_dl.dl_ack_info(mac_harq_ack_report_status::ack, std::nullopt),
             dl_harq_process_handle::status_update::acked);
   ASSERT_EQ(h_dl.get_grant_params().tbs_bytes, pdsch_info.codewords[0].tb_size_bytes);

@@ -873,17 +873,15 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     // Mark resources as occupied in the ResourceGrid.
     pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, crbs});
 
-    // Remove NTN offset when adding slot to HARQ process.
-    slot_point harq_slot = pusch_alloc.slot - ue_cell_cfg.cell_cfg_common.ntn_cs_koffset;
     // Allocate UE UL HARQ.
     bool is_new_data = not is_retx;
     if (is_new_data) {
       // It is a new tx.
-      h_ul = ue_cc->harqs.alloc_ul_harq(harq_slot, expert_cfg.max_nof_harq_retxs);
+      h_ul = ue_cc->harqs.alloc_ul_harq(pusch_alloc.slot, expert_cfg.max_nof_harq_retxs);
       srsran_assert(h_ul.has_value(), "Failed to allocate HARQ");
     } else {
       // It is a retx.
-      bool result = h_ul->new_retx(harq_slot);
+      bool result = h_ul->new_retx(pusch_alloc.slot);
       srsran_assert(result, "Failed to allocate HARQ retx");
     }
 
