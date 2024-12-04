@@ -13,13 +13,14 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include <cstdint>
+#include <srsran/support/signal_observer.h>
 
 namespace srsran {
 
 class task_executor;
 
 /// \brief Interface class for writing a DLT PCAP to a file.
-class dlt_pcap
+class dlt_pcap : public signal_observer
 {
 public:
   virtual ~dlt_pcap() = default;
@@ -46,6 +47,7 @@ public:
   bool is_write_enabled() const override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}
   void push_pdu(byte_buffer pdu) override {}
+  void handle_signal(int signal) override {}
 };
 
 } // namespace srsran

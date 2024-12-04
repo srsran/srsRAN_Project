@@ -45,6 +45,8 @@ public:
 
   void push_pdu(const mac_nr_context_info& context, byte_buffer pdu) override;
 
+  void handle_signal(int signal) override { close(); }
+
 private:
   srslog::basic_logger& logger;
   mac_pcap_type         type;

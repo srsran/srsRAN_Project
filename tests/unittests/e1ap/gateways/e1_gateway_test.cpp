@@ -33,6 +33,7 @@ public:
   bool         is_write_enabled() const override { return enabled; }
   void         push_pdu(const_span<uint8_t> pdu) override { last_sdus.push_blocking(byte_buffer::create(pdu).value()); }
   virtual void push_pdu(byte_buffer pdu) override { last_sdus.push_blocking(std::move(pdu)); }
+  void         handle_signal(int signal) override { close(); }
 };
 
 class e1_link : public srs_cu_cp::cu_cp_e1_handler

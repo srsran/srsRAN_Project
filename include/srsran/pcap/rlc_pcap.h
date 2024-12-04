@@ -14,6 +14,7 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/rlc/rlc_config.h"
+#include "srsran/support/signal_observer.h"
 #include "fmt/format.h"
 #include <cstdint>
 
@@ -22,7 +23,7 @@ namespace srsran {
 struct pcap_rlc_pdu_context;
 
 /// \brief Interface class for writing a RLC PCAP to a file.
-class rlc_pcap
+class rlc_pcap : public signal_observer
 {
 public:
   virtual ~rlc_pcap() = default;
@@ -98,6 +99,7 @@ public:
   bool is_write_enabled() const override { return false; }
   void push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu) override {}
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override {}
+  void handle_signal(int signal) override {}
 };
 
 // Pre-defined values for data fields of the PCAP PDU context as defined in Wireshark's "packet-rlc-nr.h"

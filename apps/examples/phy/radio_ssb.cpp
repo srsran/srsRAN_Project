@@ -274,13 +274,13 @@ static void stop_execution()
 }
 
 /// Function to call when the application is interrupted.
-static void interrupt_signal_handler()
+static void interrupt_signal_handler(int signal)
 {
   stop_execution();
 }
 
 /// Function to call when the application is going to be forcefully shutdown.
-static void cleanup_signal_handler()
+static void cleanup_signal_handler(int signal)
 {
   srslog::flush();
 }

@@ -38,7 +38,7 @@ static void signal_handler(int signal)
     case SIGALRM:
       fmt::print(stderr, "Could not stop application after {} seconds. Forcing exit.\n", TERMINATION_TIMEOUT_S);
       if (auto handler = cleanup_handler.exchange(nullptr)) {
-        handler();
+        handler(signal);
       }
       ::raise(SIGKILL);
       [[fallthrough]];
@@ -46,7 +46,7 @@ static void signal_handler(int signal)
       // All other registered signals try to stop the application gracefully.
       // Call the user handler, if present, and remove it so that further signals are treated by the default handler.
       if (auto handler = interrupt_handler.exchange(nullptr)) {
-        handler();
+        handler(signal);
       } else {
         return;
       }

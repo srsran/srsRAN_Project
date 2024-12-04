@@ -43,6 +43,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/io/io_timer_source.h"
 #include "srsran/support/signal_handling.h"
+#include "srsran/support/signal_observer_impl.h"
 #include "srsran/support/sysinfo.h"
 #include "srsran/support/timers.h"
 #include "srsran/support/tracing/event_tracing.h"
@@ -78,14 +79,17 @@ static void populate_cli11_generic_args(CLI::App& app)
 }
 
 /// Function to call when the application is interrupted.
-static void interrupt_signal_handler()
+static void interrupt_signal_handler(int signal)
 {
   is_app_running = false;
 }
 
+static signal_observable_impl cleanup_signal_observable;
+
 /// Function to call when the application is going to be forcefully shutdown.
-static void cleanup_signal_handler()
+static void cleanup_signal_handler(int signal)
 {
+  cleanup_signal_observable.notify_signal(signal);
   srslog::flush();
 }
 
@@ -264,10 +268,10 @@ int main(int argc, char** argv)
   worker_manager workers{worker_manager_cfg};
 
   // Create layer specific PCAPs.
-  o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
-      create_o_cu_cp_dlt_pcap(o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter());
-  o_cu_up_dlt_pcaps cu_up_dlt_pcaps =
-      create_o_cu_up_dlt_pcaps(o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter());
+  o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
+      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter(), cleanup_signal_observable);
+  o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
+      o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter(), cleanup_signal_observable);
 
   // Create IO broker.
   const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -412,8 +416,8 @@ int main(int argc, char** argv)
 
   // Close PCAPs
   cu_logger.info("Closing PCAP files...");
-  cu_cp_dlt_pcaps.close();
-  cu_up_dlt_pcaps.close();
+  cu_cp_dlt_pcaps.reset();
+  cu_up_dlt_pcaps.reset();
   cu_logger.info("PCAP files successfully closed.");
 
   // Stop workers

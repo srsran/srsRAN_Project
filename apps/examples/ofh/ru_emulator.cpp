@@ -777,13 +777,13 @@ static std::atomic<bool> is_app_running = {true};
 static constexpr unsigned MAX_CONFIG_FILES = 6;
 
 /// Function to call when the application is interrupted.
-static void interrupt_signal_handler()
+static void interrupt_signal_handler(int signal)
 {
   is_app_running = false;
 }
 
 /// Function to call when the application is going to be forcefully shutdown.
-static void cleanup_signal_handler()
+static void cleanup_signal_handler(int signal)
 {
   srslog::flush();
 }

@@ -12,6 +12,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
+#include "srsran/support/signal_observer.h"
 #include <cstdint>
 
 namespace srsran {
@@ -58,7 +59,7 @@ struct mac_nr_context_info {
 enum class mac_pcap_type { udp, dlt };
 
 /// \brief Interface class for writing a MAC PCAP to a file.
-class mac_pcap
+class mac_pcap : public signal_observer
 {
 public:
   virtual ~mac_pcap() = default;
@@ -82,6 +83,7 @@ public:
   bool is_write_enabled() const override { return false; }
   void push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu) override {}
   void push_pdu(const mac_nr_context_info& context, byte_buffer pdu) override {}
+  void handle_signal(int signal) override {}
 };
 
 } // namespace srsran

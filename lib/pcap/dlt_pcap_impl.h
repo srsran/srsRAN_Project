@@ -40,6 +40,8 @@ public:
 
   void push_pdu(const_span<uint8_t> pdu) override;
 
+  void handle_signal(int signal) override { close(); }
+
 private:
   srslog::basic_logger& logger;
   backend_pcap_writer   writer;
