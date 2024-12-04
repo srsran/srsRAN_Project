@@ -33,23 +33,12 @@ public:
                                               pci_t            neighbor_pci) = 0;
 };
 
-/// Methods used by cell measurement manager to signal measurement events to the positioning manager.
-class cell_meas_manager_cu_cp_notifier
-{
-public:
-  virtual ~cell_meas_manager_cu_cp_notifier() = default;
-
-  /// \brief Notifies about a UE measurement.
-  virtual void on_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) = 0;
-};
-
 /// Basic cell manager implementation
 class cell_meas_manager
 {
 public:
   cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
                     cell_meas_mobility_manager_notifier& mobility_mng_notifier_,
-                    cell_meas_manager_cu_cp_notifier&    cu_cp_notifier_,
                     ue_manager&                          ue_mng_);
   ~cell_meas_manager() = default;
 
@@ -60,17 +49,18 @@ public:
   bool update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg);
   void report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
 
+  expected<cell_measurement_positioning_info, std::string> get_meas_results(ue_index_t ue_index);
+
 private:
   /// \brief Generate measurement objects for the given cell configuration.
   void generate_measurement_objects_for_serving_cells();
 
   void update_measurement_object(nr_cell_identity nci, const serving_cell_meas_config& serving_cell_cfg);
 
-  void send_positioning_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
+  void store_measurement_results(ue_index_t ue_index, const rrc_meas_results& meas_results);
 
   cell_meas_manager_cfg                cfg;
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;
-  cell_meas_manager_cu_cp_notifier&    cu_cp_notifier;
   ue_manager&                          ue_mng;
 
   std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>

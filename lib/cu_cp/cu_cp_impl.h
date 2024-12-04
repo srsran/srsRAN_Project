@@ -109,6 +109,9 @@ public:
   void handle_n2_disconnection() override;
 
   // cu_cp_nrppa_handler.
+  nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) override;
+  expected<cell_measurement_positioning_info, std::string>
+       handle_measurement_results_required(ue_index_t ue_index) override;
   void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override;
 
   // cu_cp_measurement_handler.
@@ -120,9 +123,6 @@ public:
 
   // cu_cp_measurement_config_handler.
   bool handle_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override;
-
-  // cu_cp_positioning_measurement_handler
-  void handle_ue_measurement(const ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) override;
 
   // cu_cp_mobility_manager_handler.
   async_task<cu_cp_intra_cu_handover_response>
@@ -148,7 +148,6 @@ public:
   cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
   cu_cp_measurement_handler&             get_cu_cp_measurement_handler() override { return *this; }
   cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() override { return *this; }
-  cu_cp_positioning_measurement_handler& get_cu_cp_positioning_measurement_handler() override { return *this; }
   cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler() override { return *this; }
   cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
   cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
@@ -163,9 +162,6 @@ private:
 
   // NGAP UE creation handler.
   ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) override;
-
-  // NRPPA UE creation handler.
-  nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) override;
 
   // cu_cp_task_scheduler_handler.
   bool schedule_ue_task(ue_index_t ue_index, async_task<void> task) override;
@@ -194,9 +190,6 @@ private:
 
   // Cell Measurement Manager to mobility manager adapters.
   cell_meas_mobility_manager_adapter cell_meas_mobility_notifier;
-
-  // Cell Measurement Manager to positioning manager adapters.
-  cell_meas_manager_cu_cp_adapter cell_meas_ev_notifier;
 
   // E1AP to CU-CP adapter.
   e1ap_cu_cp_adapter e1ap_ev_notifier;

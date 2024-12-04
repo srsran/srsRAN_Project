@@ -53,7 +53,7 @@ static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(cfg),
-  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_mobility_notifier, cell_meas_ev_notifier, ue_mng),
+  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_mobility_notifier, ue_mng),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
@@ -78,7 +78,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
-  cell_meas_ev_notifier.connect_cu_cp(get_cu_cp_positioning_measurement_handler());
 
   ngap_db = std::make_unique<ngap_repository>(
       ngap_repository_config{cfg, get_cu_cp_ngap_handler(), paging_handler, srslog::fetch_basic_logger("CU-CP")});
@@ -623,6 +622,12 @@ SRSRAN_WEAK_SYMB nrppa_cu_cp_ue_notifier* cu_cp_impl::handle_new_nrppa_ue(ue_ind
   return nullptr;
 }
 
+SRSRAN_WEAK_SYMB expected<cell_measurement_positioning_info, std::string>
+                 cu_cp_impl::handle_measurement_results_required(ue_index_t ue_index)
+{
+  return make_unexpected("UL NRPPa messages are not supported");
+}
+
 SRSRAN_WEAK_SYMB void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
 {
   logger.info("UL NRPPa messages are not supported");
@@ -644,12 +649,6 @@ void cu_cp_impl::handle_measurement_report(const ue_index_t ue_index, const rrc_
 bool cu_cp_impl::handle_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg)
 {
   return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
-}
-
-SRSRAN_WEAK_SYMB void cu_cp_impl::handle_ue_measurement(const ue_index_t                         ue_index,
-                                                        const cell_measurement_positioning_info& meas_result)
-{
-  logger.info("NRPPa messages are not supported");
 }
 
 async_task<cu_cp_intra_cu_handover_response>

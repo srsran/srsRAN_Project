@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/nrppa/nrppa.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
@@ -87,8 +88,9 @@ public:
   slotted_array<meas_id_t, MAX_NOF_MEAS>         meas_ids;     // 0 is reserved for invalid meas_id
   slotted_array<meas_obj_id_t, MAX_NOF_MEAS_OBJ> meas_obj_ids; // 0 is reserved for invalid meas_obj_id
 
-  std::map<meas_id_t, meas_context_t>       meas_id_to_meas_context;
-  std::map<nr_cell_identity, meas_obj_id_t> nci_to_meas_obj_id;
+  std::map<meas_id_t, meas_context_t>              meas_id_to_meas_context;
+  std::map<nr_cell_identity, meas_obj_id_t>        nci_to_meas_obj_id;
+  std::optional<cell_measurement_positioning_info> meas_results;
 
   cell_meas_manager_ue_context()
   {

@@ -37,23 +37,5 @@ private:
   mobility_manager_measurement_handler* handler = nullptr;
 };
 
-/// Adapter between cell measurement manager and CU-CP.
-class cell_meas_manager_cu_cp_adapter : public cell_meas_manager_cu_cp_notifier
-{
-public:
-  cell_meas_manager_cu_cp_adapter() = default;
-
-  void connect_cu_cp(cu_cp_positioning_measurement_handler& handler_) { handler = &handler_; }
-
-  void on_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) override
-  {
-    srsran_assert(handler != nullptr, "Positioning measurement handler must not be nullptr");
-    handler->handle_ue_measurement(ue_index, meas_result);
-  }
-
-private:
-  cu_cp_positioning_measurement_handler* handler = nullptr;
-};
-
 } // namespace srs_cu_cp
 } // namespace srsran

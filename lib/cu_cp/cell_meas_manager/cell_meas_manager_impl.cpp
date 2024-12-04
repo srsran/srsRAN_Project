@@ -12,6 +12,7 @@
 #include "cell_meas_manager_helpers.h"
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/rrc/meas_types.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 #include <utility>
 
@@ -20,13 +21,8 @@ using namespace srs_cu_cp;
 
 cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
                                      cell_meas_mobility_manager_notifier& mobility_mng_notifier_,
-                                     cell_meas_manager_cu_cp_notifier&    cu_cp_notifier_,
                                      ue_manager&                          ue_mng_) :
-  cfg(cfg_),
-  mobility_mng_notifier(mobility_mng_notifier_),
-  cu_cp_notifier(cu_cp_notifier_),
-  ue_mng(ue_mng_),
-  logger(srslog::fetch_basic_logger("CU-CP"))
+  cfg(cfg_), mobility_mng_notifier(mobility_mng_notifier_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
   srsran_assert(is_valid_configuration(cfg, ssb_freq_to_meas_object), "Invalid cell measurement configuration");
   generate_measurement_objects_for_serving_cells();
@@ -201,10 +197,10 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
     return;
   }
 
-  auto& meas_ctxt = ue_meas_context.meas_id_to_meas_context.at(meas_results.meas_id);
+  // Store measurement results.
+  store_measurement_results(ue_index, meas_results);
 
-  // Forward measurement to CU-CP.
-  send_positioning_measurement(ue_index, meas_results);
+  auto& meas_ctxt = ue_meas_context.meas_id_to_meas_context.at(meas_results.meas_id);
 
   // Ignore id with periodic measurements.
 
@@ -298,9 +294,13 @@ void cell_meas_manager::update_measurement_object(nr_cell_identity              
   ssb_freq_to_meas_object.emplace(ssb_freq, generate_measurement_object(serving_cell_cfg));
 }
 
-SRSRAN_WEAK_SYMB void cell_meas_manager::send_positioning_measurement(ue_index_t              ue_index,
-                                                                      const rrc_meas_results& meas_results)
+SRSRAN_WEAK_SYMB expected<cell_measurement_positioning_info, std::string>
+                 cell_meas_manager::get_meas_results(ue_index_t ue_index)
 {
-  (void)&cu_cp_notifier;
-  logger.info("Positioning measurements are not supported");
+  return make_unexpected("Positioning measurements are not supported");
+}
+
+SRSRAN_WEAK_SYMB void cell_meas_manager::store_measurement_results(ue_index_t              ue_index,
+                                                                   const rrc_meas_results& meas_results)
+{
 }

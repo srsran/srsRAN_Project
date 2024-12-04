@@ -16,10 +16,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class nrppa_dummy_impl : public nrppa_interface,
-                         public nrppa_message_handler,
-                         public nrppa_measurement_handler,
-                         public nrppa_ue_context_removal_handler
+class nrppa_dummy_impl : public nrppa_interface, public nrppa_message_handler, public nrppa_ue_context_removal_handler
 {
 public:
   nrppa_dummy_impl();
@@ -28,14 +25,10 @@ public:
   // See nrppa_message_handler for documentation.
   void handle_new_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override;
 
-  // See nrppa_measurement_handler for documentation.
-  void handle_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) override;
-
   // See nrppa_ue_context_removal_handle for documentation.
   void remove_ue_context(ue_index_t ue_index) override;
 
   nrppa_message_handler&            get_nrppa_message_handler() override { return *this; }
-  nrppa_measurement_handler&        get_nrppa_measurement_handler() override { return *this; }
   nrppa_ue_context_removal_handler& get_nrppa_ue_context_removal_handler() override { return *this; }
 
 private:

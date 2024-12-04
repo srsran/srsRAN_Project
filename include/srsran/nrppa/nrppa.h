@@ -30,6 +30,17 @@ public:
   virtual bool schedule_async_task(async_task<void> task) = 0;
 };
 
+struct cell_measurement_positioning_info {
+  struct cell_measurement_item_t {
+    nr_cell_global_id_t nr_cgi;
+    uint32_t            nr_arfcn;
+    rrc_meas_result_nr  meas_result;
+  };
+
+  nr_cell_global_id_t                                 serving_cell_id;
+  std::map<nr_cell_identity, cell_measurement_item_t> cell_measurements;
+};
+
 /// Methods used by NRPPa to signal events to the CU-CP.
 class nrppa_cu_cp_notifier
 {
@@ -40,6 +51,12 @@ public:
   /// \param[in] ue_index The index of the new NRPPA UE.
   /// \returns Pointer to the NRPPA UE notifier.
   virtual nrppa_cu_cp_ue_notifier* on_new_nrppa_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Notifies the CU-CP about a required UE measurement.
+  /// \param[in] ue_index The index of the UE.
+  /// \returns The measurement results if successful, an error string otherwise.
+  virtual expected<cell_measurement_positioning_info, std::string>
+  on_measurement_results_required(ue_index_t ue_index) = 0;
 
   /// \brief Notifies about a NRPPa PDU.
   /// \param[in] nrppa_pdu The NRPPa PDU.
@@ -55,27 +72,6 @@ public:
 
   /// Handle the incoming NRPPA message.
   virtual void handle_new_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
-};
-
-struct cell_measurement_positioning_info {
-  struct cell_measurement_item_t {
-    nr_cell_global_id_t nr_cgi;
-    uint32_t            nr_arfcn;
-    rrc_meas_result_nr  meas_result;
-  };
-
-  nr_cell_global_id_t                                 serving_cell_id;
-  std::map<nr_cell_identity, cell_measurement_item_t> cell_measurements;
-};
-
-/// This interface is used to push UE measurements to the NRPPA interface.
-class nrppa_measurement_handler
-{
-public:
-  virtual ~nrppa_measurement_handler() = default;
-
-  /// Handle the incoming UE measurement.
-  virtual void handle_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) = 0;
 };
 
 /// Handle ue context removal.
@@ -96,7 +92,6 @@ public:
   virtual ~nrppa_interface() = default;
 
   virtual nrppa_message_handler&            get_nrppa_message_handler()            = 0;
-  virtual nrppa_measurement_handler&        get_nrppa_measurement_handler()        = 0;
   virtual nrppa_ue_context_removal_handler& get_nrppa_ue_context_removal_handler() = 0;
 };
 
