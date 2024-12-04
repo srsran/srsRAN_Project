@@ -16,8 +16,8 @@ using namespace srsran;
 
 static void fill_cu_up_udp_section(YAML::Node node, const udp_appconfig& config)
 {
-  node["max_rx_msgs"]              = config.rx_max_mmsg;
-  node["pool_occupancy_threshold"] = config.pool_occupancy_threshold;
+  node["max_rx_msgs"]    = config.rx_max_msgs;
+  node["pool_threshold"] = config.pool_threshold;
 }
 
 static void fill_cu_up_ngu_socket_entry(YAML::Node& node, const cu_up_unit_ngu_socket_config& config)

@@ -25,9 +25,6 @@ public:
 
   /// \brief Stop the CU-UP. This call is blocking and only returns once all tasks in the CU-UP are completed.
   virtual void stop() = 0;
-
-  /// \brief Get the N3 bind port.
-  virtual std::optional<uint16_t> get_n3_bind_port() = 0;
 };
 
 } // namespace srsran::srs_cu_up

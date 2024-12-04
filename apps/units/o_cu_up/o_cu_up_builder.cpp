@@ -69,10 +69,10 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
       udp_network_gateway_config n3_udp_cfg = {};
       n3_udp_cfg.bind_address               = sock_cfg.bind_addr;
       n3_udp_cfg.bind_interface             = sock_cfg.bind_interface;
-      n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_occupancy_threshold;
+      n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
       n3_udp_cfg.bind_port                  = GTPU_PORT;
-      n3_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_mmsg;
-      n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_occupancy_threshold;
+      n3_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+      n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
       n3_udp_cfg.reuse_addr                 = false; // TODO allow reuse_addr for multiple sockets
 
       std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw = srs_cu_up::create_udp_ngu_gateway(

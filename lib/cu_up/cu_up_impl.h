@@ -36,7 +36,7 @@ public:
   void stop() override;
 
   /// helper functions for testing
-  std::optional<uint16_t> get_n3_bind_port() override // TODO include index?
+  std::optional<uint16_t> get_n3_bind_port() // TODO include index?
   {
     return ngu_sessions[0]->get_bind_port();
   }

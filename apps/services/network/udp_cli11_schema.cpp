@@ -15,12 +15,10 @@ using namespace srsran;
 
 static void configure_cli11_udp_args(CLI::App& app, udp_appconfig& udp_params)
 {
-  add_option(app, "--max_rx_msgs", udp_params.rx_max_mmsg, "Maximum amount of messages RX in a single syscall")
+  add_option(app, "--max_rx_msgs", udp_params.rx_max_msgs, "Maximum amount of messages RX in a single syscall")
       ->capture_default_str();
-  add_option(app,
-             "--pool_threshold",
-             udp_params.pool_occupancy_threshold,
-             "Pool accupancy threshold after which packets are dropped")
+  add_option(
+      app, "--pool_threshold", udp_params.pool_threshold, "Pool accupancy threshold after which packets are dropped")
       ->capture_default_str();
 }
 
