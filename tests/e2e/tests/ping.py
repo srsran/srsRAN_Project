@@ -190,7 +190,7 @@ def test_android_hp(
     "band, common_scs, bandwidth, ciphering",
     (
         param(3, 15, 5, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
-        param(3, 15, 10, False, marks=mark.test, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
+        param(3, 15, 10, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
         param(3, 15, 20, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
         param(3, 15, 50, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
         param(3, 15, 50, True, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
@@ -241,6 +241,36 @@ def test_zmq_32(
         time_alignment_calibration=0,
         ue_stop_timeout=3,
         enable_security_mode=ciphering,
+        post_command=("cu_cp --inactivity_timer=600", ""),
+    )
+
+
+@mark.example
+def test_example(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_4: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+):
+    """
+    ZMQ Pings
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_4,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=3,
+        common_scs=15,
+        bandwidth=10,
+        sample_rate=None,  # default from testbed
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        ue_stop_timeout=3,
+        enable_security_mode=False,
         post_command=("cu_cp --inactivity_timer=600", ""),
     )
 

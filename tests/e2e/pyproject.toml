@@ -16,6 +16,7 @@ log_date_format = "%Y-%m-%d %H:%M:%S"
 log_format = "%(asctime)s [%(levelname)s] %(message)s"
 log_level = "INFO"
 markers = [
+  "example",
   "smoke",
   "zmq",
   "zmq_single_ue",
@@ -33,7 +34,6 @@ markers = [
   "rf_n300",
   "rf_not_crash",
   "reattach",
-  "test",
   "zmq_2x2_mimo",
   "zmq_4x4_mimo",
   "zmq_srsue",
