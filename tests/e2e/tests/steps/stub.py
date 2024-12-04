@@ -28,9 +28,9 @@ from retina.protocol.base_pb2 import Metrics, PingRequest, PingResponse, PLMN, S
 from retina.protocol.exit_codes import exit_code_to_message
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
-from retina.protocol.ric_pb2 import NearRtRicStartInfo
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.ric_pb2 import KpmMonXappRequest, NearRtRicStartInfo
 from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import (
     HandoverInfo,
@@ -219,6 +219,23 @@ def ue_start_and_attach(
         pytest.fail("Attach timeout reached")
 
     return ue_attach_info_dict
+
+
+def start_kpm_mon_xapp(ric: NearRtRicStub, report_service_style: int = 1, metrics: str = "DRB.UEThpDl") -> None:
+    """
+    Start KPM Monitor xAPP in RIC
+    """
+    xapp_request = KpmMonXappRequest()
+    xapp_request.report_service_style = report_service_style
+    xapp_request.metrics = metrics
+    ric.StartKpmMonXapp(xapp_request)
+
+
+def stop_kpm_mon_xapp(ric: NearRtRicStub) -> None:
+    """
+    Stop KPM Monitor xAPP in RIC
+    """
+    ric.StopKpmMonXapp(Empty())
 
 
 @contextmanager
@@ -603,6 +620,40 @@ def validate_ue_registered_via_ims(ue_stub_array: Sequence[UEStub], core: FiveGC
     logging.info("IMSI of registered UEs in IMS: %s", registered_subscriber_array)
     if expected_subscriber_array != registered_subscriber_array:
         pytest.fail("IMS Registered Subscriber array mismatch!")
+
+
+def ric_validate_e2_interface(ric: NearRtRicStub, kpm_expected: bool = False, rc_expected: bool = False) -> None:
+    """
+    Fails if E2 was not operating correctly
+    """
+    ric_summary = ric.GetNearRtRicSummary(Empty())
+    logging.info("RIC summary: %s", MessageToString(ric_summary, indent=2))
+
+    if not ric_summary.nof_connected_agents:
+        pytest.fail("No E2 agent connected to RIC.")
+
+    if kpm_expected:
+        if not ric_summary.nof_connected_xapps:
+            pytest.fail("No xApp connected, but expected.")
+
+        if not ric_summary.nof_subscription_reqs or not ric_summary.nof_subscription_reps:
+            pytest.fail("No valid RIC subscription received, but expected.")
+
+        if ric_summary.nof_subscription_reqs != ric_summary.nof_subscription_reps:
+            pytest.fail("Different number of Subscription Request and Replies.")
+
+        if not ric_summary.nof_ric_indication:
+            pytest.fail("No RIC Indiation messages after a successful subscription.")
+
+    if rc_expected:
+        if not ric_summary.nof_connected_xapps:
+            pytest.fail("No xApp connected, but expected.")
+
+        if not ric_summary.nof_control_reqs or not ric_summary.nof_control_reps:
+            pytest.fail("No RIC Control Request received, but expected.")
+
+        if ric_summary.nof_control_reqs != ric_summary.nof_control_reps:
+            pytest.fail("Different number of RIC Control Request and Replies.")
 
 
 def stop(

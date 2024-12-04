@@ -27,7 +27,15 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth, is_tdd
-from .steps.stub import INTER_UE_START_PERIOD, iperf_parallel, start_and_attach, stop
+from .steps.stub import (
+    INTER_UE_START_PERIOD,
+    iperf_parallel,
+    ric_validate_e2_interface,
+    start_and_attach,
+    start_kpm_mon_xapp,
+    stop,
+    stop_kpm_mon_xapp,
+)
 
 TINY_DURATION = 10
 SHORT_DURATION = 20
@@ -774,6 +782,9 @@ def _iperf(
         ric=ric,
     )
 
+    if ric:
+        start_kpm_mon_xapp(ric, report_service_style=1, metrics="DRB.UEThpDl,DRB.UEThpUl")
+
     iperf_parallel(
         ue_attach_info_dict,
         fivegc,
@@ -784,7 +795,12 @@ def _iperf(
         bitrate_threshold,
     )
 
+    if ric:
+        stop_kpm_mon_xapp(ric)
+
     sleep(wait_before_power_off)
+    if ric:
+        ric_validate_e2_interface(ric, kpm_expected=True)
     stop(
         ue_array,
         gnb,
