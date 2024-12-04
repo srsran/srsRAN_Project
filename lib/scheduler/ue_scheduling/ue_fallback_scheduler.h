@@ -117,6 +117,19 @@ private:
     unsigned nof_srb1_scheduled_bytes = 0;
   };
 
+  /// \brief For a number of pending bytes, select the appropriate MCS.
+  std::tuple<unsigned, sch_mcs_index, units::bytes>
+  select_mcs(const pdsch_config_params& pdsch_cfg, unsigned pending_bytes, unsigned nof_rbs_available);
+
+  /// \brief Allocate DL grant for a UE and for a specific PDSCH slot.
+  sched_srb_results alloc_grant(ue&                                   u,
+                                cell_resource_allocator&              res_alloc,
+                                unsigned                              pdsch_time_res,
+                                unsigned                              slot_offset,
+                                slot_point                            most_recent_ack_slot,
+                                std::optional<dl_harq_process_handle> h_dl_retx,
+                                std::optional<bool>                   is_srb0);
+
   /// \brief Tries to schedule DL ConRes CE for a UE and for a specific PDSCH slot.
   /// \remark This function handles the following scenarios:
   ///     - Schedules ConRes CE only if ConRes indication is received from MAC but no buffer status update is received

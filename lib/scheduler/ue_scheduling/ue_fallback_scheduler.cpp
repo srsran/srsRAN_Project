@@ -433,11 +433,11 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
 
     sched_srb_results sched_res;
     if (not is_srb0.has_value()) {
-      sched_res = schedule_dl_conres_ce(
-          u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
+      sched_res = alloc_grant(
+          u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx, is_srb0);
     } else if (is_srb0.value()) {
-      sched_res = schedule_dl_srb0(
-          u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
+      sched_res = alloc_grant(
+          u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx, is_srb0);
     } else {
       sched_res = schedule_dl_srb1(
           u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
@@ -517,6 +517,233 @@ allocate_ue_fallback_pucch(ue&                         u,
     }
   }
   return std::make_pair(std::nullopt, last_valid_k1);
+}
+
+ue_fallback_scheduler::sched_srb_results
+ue_fallback_scheduler::alloc_grant(ue&                                   u,
+                                   cell_resource_allocator&              res_alloc,
+                                   unsigned                              pdsch_time_res,
+                                   unsigned                              slot_offset,
+                                   slot_point                            most_recent_ack_slot,
+                                   std::optional<dl_harq_process_handle> h_dl_retx,
+                                   std::optional<bool>                   is_srb0)
+{
+  ue_cell&                                     ue_pcell     = u.get_pcell();
+  const subcarrier_spacing                     scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
+  const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
+  const bool                                   is_retx      = h_dl_retx.has_value();
+
+  // Search for empty HARQ in case of newTx.
+  if (not is_retx and not ue_pcell.harqs.has_empty_dl_harqs()) {
+    logger.warning("rnti={}: UE must have empty HARQs during ConRes CE allocation", u.crnti);
+    return {};
+  }
+
+  const dci_dl_rnti_config_type dci_type  = get_dci_type(u, h_dl_retx);
+  const pdsch_config_params     pdsch_cfg = dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0
+                                                ? get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg)
+                                                : get_pdsch_config_f1_0_c_rnti(cell_cfg, nullptr, pdsch_td_cfg);
+
+  // For DCI 1-0 scrambled with TC-RNTI, as per TS 38.213, Section 7.3.1.2.1, we should consider the size of CORESET#0
+  // as the size for the BWP.
+  // For DCI 1-0 scrambled with C-RNTI, if the DCI is monitored in a common search space and CORESET#0 is configured
+  // for the cell, as per TS 38.213, Section 7.3.1.0, we should consider the size of CORESET#0 as the size for the
+  // BWP.
+  cell_slot_resource_allocator& pdsch_alloc = res_alloc[slot_offset + pdsch_td_cfg.k0];
+  auto cset0_crbs_lim = pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.get_id());
+  prb_bitmap used_crbs =
+      pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp.scs, cset0_crbs_lim, pdsch_cfg.symbols);
+
+  crb_interval unused_crbs =
+      rb_helper::find_next_empty_interval(used_crbs, cset0_crbs_lim.start(), cset0_crbs_lim.stop());
+  if (unused_crbs.empty()) {
+    logger.debug("rnti={}: Postponed PDU scheduling for slot={}. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
+    // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
+    slots_with_no_pdxch_space[pdsch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+    return {};
+  }
+
+  crb_interval  ue_grant_crbs;
+  sch_prbs_tbs  prbs_tbs{};
+  sch_mcs_index mcs_idx                 = 0;
+  bool          pending_bytes_segmented = false;
+  if (is_retx) {
+    // Use the same MCS, nof PRBs and TBS as the last allocation.
+    mcs_idx            = h_dl_retx->get_grant_params().mcs;
+    prbs_tbs.nof_prbs  = h_dl_retx->get_grant_params().rbs.type1().length();
+    prbs_tbs.tbs_bytes = h_dl_retx->get_grant_params().tbs_bytes;
+
+    if (unused_crbs.length() < prbs_tbs.nof_prbs) {
+      // In case of HARQ retxs, the number of RBs cannot change.
+      logger.debug("rnti={}: Fallback retx postponed. Cause: Not enough RBs for PDSCH", u.crnti);
+      return {};
+    }
+    ue_grant_crbs = {unused_crbs.start(), unused_crbs.start() + prbs_tbs.nof_prbs};
+
+  } else {
+    const unsigned only_conres_bytes = u.pending_conres_ce_bytes();
+    const unsigned only_srb0_bytes   = u.pending_dl_newtx_bytes(LCID_SRB0);
+    const unsigned only_srb1_bytes   = u.pending_dl_newtx_bytes(LCID_SRB1);
+    const unsigned pending_bytes     = only_conres_bytes + only_srb0_bytes + only_srb1_bytes;
+    // There must be space for ConRes CE, if it is pending. If only SRB0 is pending, there must be space for it, as it
+    // cannot be segmented.
+    const unsigned min_pending_bytes =
+        only_conres_bytes > 0 ? only_conres_bytes : (only_srb0_bytes > 0 ? only_srb0_bytes : 0);
+    srsran_assert(pending_bytes > 0, "Unexpected number of pending bytes");
+
+    std::tuple<unsigned, sch_mcs_index, units::bytes> result =
+        select_mcs(pdsch_cfg, pending_bytes, unused_crbs.length());
+    unsigned chosen_tbs = std::get<2>(result).value();
+    if (chosen_tbs < min_pending_bytes) {
+      // We could not even fulfill the minimum pending bytes.
+      logger.debug(
+          "rnti={}: Postpone fallback allocation. Cause: Pending non-segmentable bytes exceed TBS calculated ({})",
+          u.crnti,
+          min_pending_bytes,
+          chosen_tbs);
+      if (only_conres_bytes > 0) {
+        // In case not even a ConRes CE can fit, we can start ignoring this slot.
+        slots_with_no_pdxch_space[pdsch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+      }
+      return {};
+    }
+    if (chosen_tbs < pending_bytes) {
+      // We will need to break down the pending bytes in multiple grants.
+      if (only_conres_bytes > 0 and only_srb0_bytes > 0) {
+        // In case of both ConResCE and SRB0 are pending, we recompute the MCS, this time, just for scheduling ConRes
+        // CE.
+        result     = select_mcs(pdsch_cfg, min_pending_bytes, unused_crbs.length());
+        chosen_tbs = std::get<2>(result).value();
+        srsran_assert(chosen_tbs >= min_pending_bytes, "Unexpected result for TBS");
+      }
+      pending_bytes_segmented = true;
+    }
+
+    // Selection of Nof RBs, TBS and MCS complete.
+    prbs_tbs      = {std::get<0>(result), std::get<2>(result).value()};
+    mcs_idx       = std::get<1>(result);
+    ue_grant_crbs = {unused_crbs.start(), unused_crbs.start() + prbs_tbs.nof_prbs};
+  }
+
+  // Allocate PDCCH resources.
+  cell_slot_resource_allocator& pdcch_alloc = res_alloc[slot_offset];
+  pdcch_dl_information*         pdcch =
+      pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
+  if (pdcch == nullptr) {
+    logger.debug("rnti={}: Postponed PDU scheduling for slot={}. Cause: No space in PDCCH.", u.crnti, pdcch_alloc.slot);
+    // If there is no PDCCH space on this slot for this UE, then this slot should be avoided by the other UEs too.
+    slots_with_no_pdxch_space[pdcch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+    return {};
+  }
+
+  // Allocate PUCCH resources.
+  // NOTEs:
+  // - The dedicated resources are needed as, at this point, the UE object in the scheduler (not the actual terminal)
+  // could have a complete configuration; if so, (i) the UCI scheduler can start allocating SRs and CSIs in advance, as
+  // the scheduler doesn't know exactly when the UE will start transmitting SRs and CSIs; (ii) if the actual UE has
+  // received the RRCSetup (with configuration) but the GNB doesn't receive an ACK = 1, the UE can use the PUCCH
+  // dedicated resource to ack the RRCSetup retx (as per TS 38.213, Section 9.2.1, "If a UE has dedicated PUCCH resource
+  // configuration, the UE is provided by higher layers with one or more PUCCH resources [...]").
+  // - If the UE object in the scheduler doesn't have a complete configuration (i.e., when SRB0 is for RRC Reject),
+  // don't use the PUCCH ded. resources.
+  const bool use_common_and_ded_res =
+      u.ue_cfg_dedicated()->is_ue_cfg_complete() and (is_retx or dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0);
+  // TODO: Fix use_common_and_ded_res check
+  auto [pucch_res_indicator, chosen_k1] = allocate_ue_fallback_pucch(u,
+                                                                     res_alloc,
+                                                                     pucch_alloc,
+                                                                     *pdcch,
+                                                                     dci_1_0_k1_values,
+                                                                     pdsch_alloc.slot,
+                                                                     most_recent_ack_slot,
+                                                                     use_common_and_ded_res);
+  if (not pucch_res_indicator.has_value()) {
+    if (chosen_k1.has_value()) {
+      // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
+      logger.debug("rnti={}: Failed to allocate fallback PDSCH for slot={}. Cause: No space in PUCCH",
+                   u.crnti,
+                   pdsch_alloc.slot);
+    }
+    pdcch_sch.cancel_last_pdcch(pdcch_alloc);
+    slots_with_no_pdxch_space[pdcch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+    return {};
+  }
+
+  // Mark resources as occupied in the ResourceGrid.
+  pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
+
+  // Update DRX controller state.
+  u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
+
+  // Fill ConRes and/or SRB grant.
+  auto [nof_srb1_scheduled_bytes, h_dl] = fill_dl_srb_grant(u,
+                                                            pdsch_alloc.slot,
+                                                            h_dl_retx,
+                                                            *pdcch,
+                                                            dci_type,
+                                                            pdsch_alloc.result.dl.ue_grants.emplace_back(),
+                                                            pucch_res_indicator.value(),
+                                                            pdsch_time_res,
+                                                            chosen_k1.value(),
+                                                            mcs_idx,
+                                                            ue_grant_crbs,
+                                                            pdsch_cfg,
+                                                            prbs_tbs.tbs_bytes,
+                                                            is_retx,
+                                                            is_srb0);
+
+  return sched_srb_results{.h_dl                     = h_dl,
+                           .is_srb_data_pending      = pending_bytes_segmented,
+                           .nof_srb1_scheduled_bytes = nof_srb1_scheduled_bytes};
+}
+
+std::tuple<unsigned, sch_mcs_index, units::bytes>
+ue_fallback_scheduler::select_mcs(const pdsch_config_params& pdsch_cfg,
+                                  unsigned                   pending_bytes,
+                                  unsigned                   nof_rbs_available)
+{
+  sch_mcs_index chosen_mcs_idx = 0;
+  sch_prbs_tbs  prbs_tbs{};
+
+  unsigned nof_dmrs_per_rb = calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs);
+
+  // Try to find least MCS to fit PDU.
+  sch_mcs_index next_mcs_idx = 0;
+  do {
+    // As per TS 38.214, clause 5.1.3.1, if the PDSCH is scheduled by a PDCCH with CRC scrambled by TC-RNTI, the UE
+    // use "Table 5.1.3.1-1: MCS index table 1" for MCS mapping. This is not stated explicitly, but can be inferred
+    // from the sentence "... the UE shall use I_MCS and Table 5.1.3.1-1 to determine the modulation order (Qm) and
+    // Target code rate (R) used in the physical downlink shared channel.".
+
+    // At this point, xOverhead is not configured yet. As per TS 38.214, Clause 5.1.3.2, xOverhead is assumed to be
+    // 0.
+    const sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, next_mcs_idx);
+    prbs_tbs                             = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
+                                                       pdsch_cfg.symbols.length(),
+                                                       nof_dmrs_per_rb,
+                                                       pdsch_cfg.nof_oh_prb,
+                                                       mcs_config,
+                                                       pdsch_cfg.nof_layers});
+    chosen_mcs_idx                       = next_mcs_idx;
+    ++next_mcs_idx;
+  } while (next_mcs_idx <= expert_cfg.max_msg4_mcs and nof_rbs_available < prbs_tbs.nof_prbs);
+
+  if (prbs_tbs.nof_prbs > nof_rbs_available) {
+    // Could not find an MCS for which pending bytes < TBS, given nof_rbs_available. In this case, we just compute
+    // the TBS for nof_rbs=nof_rbs_available and mcs=max_msg4_mcs.
+
+    tbs_calculator_configuration tbs_cfg{pdsch_cfg.symbols.length(),
+                                         nof_dmrs_per_rb,
+                                         pdsch_cfg.nof_oh_prb,
+                                         pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.max_msg4_mcs),
+                                         pdsch_cfg.nof_layers,
+                                         pdsch_cfg.tb_scaling_field,
+                                         nof_rbs_available};
+    unsigned                     tbs_bits = tbs_calculator_calculate(tbs_cfg);
+    return std::make_tuple(nof_rbs_available, expert_cfg.max_msg4_mcs, units::bits{tbs_bits}.round_up_to_bytes());
+  }
+
+  return std::make_tuple(prbs_tbs.nof_prbs, chosen_mcs_idx, units::bytes{prbs_tbs.tbs_bytes});
 }
 
 ue_fallback_scheduler::sched_srb_results
