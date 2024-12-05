@@ -471,8 +471,10 @@ public:
   unsigned nof_ul_harqs() const { return get_ul_ue().harqs.size(); }
 
   /// Checks whether there are free HARQ processes.
-  bool has_empty_dl_harqs() const { return not get_dl_ue().free_harq_ids.empty(); }
-  bool has_empty_ul_harqs() const { return not get_ul_ue().free_harq_ids.empty(); }
+  bool   has_empty_dl_harqs() const { return not get_dl_ue().free_harq_ids.empty(); }
+  bool   has_empty_ul_harqs() const { return not get_ul_ue().free_harq_ids.empty(); }
+  size_t nof_empty_dl_harqs() const { return get_dl_ue().free_harq_ids.size(); }
+  size_t nof_empty_ul_harqs() const { return get_ul_ue().free_harq_ids.size(); }
 
   /// Deallocate UE HARQ entity.
   void reset();

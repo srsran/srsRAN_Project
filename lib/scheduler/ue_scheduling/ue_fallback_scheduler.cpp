@@ -1855,8 +1855,9 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       ue_it = pending_ul_ues.erase(ue_it);
       continue;
     }
-    std::optional<ul_harq_process_handle> h_ul_retx = ue.get_pcell().harqs.find_pending_ul_retx();
-    if (not h_ul_retx.has_value() and not ue.pending_ul_newtx_bytes()) {
+    const auto& harqs               = ue.get_pcell().harqs;
+    bool        all_harqs_are_empty = harqs.nof_ul_harqs() == harqs.nof_empty_ul_harqs();
+    if (all_harqs_are_empty and ue.pending_ul_newtx_bytes() == 0) {
       // UE has no pending data.
       ue_it = pending_ul_ues.erase(ue_it);
       continue;
