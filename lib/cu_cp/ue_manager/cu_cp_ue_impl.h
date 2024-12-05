@@ -132,6 +132,12 @@ public:
   /// \brief Get the RRC UE of the UE.
   rrc_ue_interface* get_rrc_ue() const { return rrc_ue; }
 
+  /// \brief Get the measurement results of the UE.
+  std::optional<cell_measurement_positioning_info>& get_measurement_results() override
+  {
+    return meas_context.meas_results;
+  }
+
 private:
   // common context
   ue_index_t             ue_index = ue_index_t::invalid;

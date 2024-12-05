@@ -294,12 +294,6 @@ void cell_meas_manager::update_measurement_object(nr_cell_identity              
   ssb_freq_to_meas_object.emplace(ssb_freq, generate_measurement_object(serving_cell_cfg));
 }
 
-SRSRAN_WEAK_SYMB expected<cell_measurement_positioning_info, std::string>
-                 cell_meas_manager::get_meas_results(ue_index_t ue_index)
-{
-  return make_unexpected("Positioning measurements are not supported");
-}
-
 SRSRAN_WEAK_SYMB void cell_meas_manager::store_measurement_results(ue_index_t              ue_index,
                                                                    const rrc_meas_results& meas_results)
 {

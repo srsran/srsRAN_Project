@@ -12,6 +12,7 @@
 
 #include "../ue_security_manager/ue_security_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/nrppa/nrppa.h"
 
 namespace srsran {
 
@@ -43,6 +44,9 @@ public:
 
   /// \brief Get the RRC UE notifier of the UE.
   virtual ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() = 0;
+
+  /// \brief Get the measurement results of the UE.
+  virtual std::optional<cell_measurement_positioning_info>& get_measurement_results() = 0;
 };
 
 } // namespace srs_cu_cp

@@ -622,12 +622,6 @@ SRSRAN_WEAK_SYMB nrppa_cu_cp_ue_notifier* cu_cp_impl::handle_new_nrppa_ue(ue_ind
   return nullptr;
 }
 
-SRSRAN_WEAK_SYMB expected<cell_measurement_positioning_info, std::string>
-                 cu_cp_impl::handle_measurement_results_required(ue_index_t ue_index)
-{
-  return make_unexpected("UL NRPPa messages are not supported");
-}
-
 SRSRAN_WEAK_SYMB void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
 {
   logger.info("UL NRPPa messages are not supported");

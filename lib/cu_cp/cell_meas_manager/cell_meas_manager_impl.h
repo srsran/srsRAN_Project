@@ -49,8 +49,6 @@ public:
   bool update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg);
   void report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
 
-  expected<cell_measurement_positioning_info, std::string> get_meas_results(ue_index_t ue_index);
-
 private:
   /// \brief Generate measurement objects for the given cell configuration.
   void generate_measurement_objects_for_serving_cells();

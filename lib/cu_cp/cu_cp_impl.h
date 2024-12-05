@@ -110,8 +110,6 @@ public:
 
   // cu_cp_nrppa_handler.
   nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) override;
-  expected<cell_measurement_positioning_info, std::string>
-       handle_measurement_results_required(ue_index_t ue_index) override;
   void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override;
 
   // cu_cp_measurement_handler.

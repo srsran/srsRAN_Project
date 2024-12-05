@@ -124,12 +124,6 @@ public:
   /// \returns Pointer to the NRPPA UE notifier.
   virtual nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) = 0;
 
-  /// \brief Handle a UE measurement request.
-  /// \param[in] ue_index The index of the UE.
-  /// \returns The measurement results if successful, an error string otherwise.
-  virtual expected<cell_measurement_positioning_info, std::string>
-  handle_measurement_results_required(ue_index_t ue_index) = 0;
-
   /// \brief Handle a UL NRPPa PDU.
   /// \param[in] msg The NRPPa PDU.
   /// \param[in] ue_index For UE associated messages the index of the UE.

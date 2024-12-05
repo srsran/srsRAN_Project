@@ -32,12 +32,6 @@ public:
     return cu_cp_handler->handle_new_nrppa_ue(ue_index);
   }
 
-  expected<cell_measurement_positioning_info, std::string> on_measurement_results_required(ue_index_t ue_index) override
-  {
-    srsran_assert(cu_cp_handler != nullptr, "CU-CP NRPPA handler must not be nullptr");
-    return cu_cp_handler->handle_measurement_results_required(ue_index);
-  }
-
   void on_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NRPPA handler must not be nullptr");
@@ -61,6 +55,12 @@ public:
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_ue_index();
+  }
+
+  std::optional<cell_measurement_positioning_info>& on_measurement_results_required() override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_measurement_results();
   }
 
   /// \brief Schedule an async task for the UE.

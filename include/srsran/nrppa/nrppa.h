@@ -17,19 +17,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// NRPPA notifier to the CU-CP UE
-class nrppa_cu_cp_ue_notifier
-{
-public:
-  virtual ~nrppa_cu_cp_ue_notifier() = default;
-
-  /// \brief Get the UE index of the UE.
-  virtual ue_index_t get_ue_index() = 0;
-
-  /// \brief Schedule an async task for the UE.
-  virtual bool schedule_async_task(async_task<void> task) = 0;
-};
-
 struct cell_measurement_positioning_info {
   struct cell_measurement_item_t {
     nr_cell_global_id_t nr_cgi;
@@ -39,6 +26,22 @@ struct cell_measurement_positioning_info {
 
   nr_cell_global_id_t                                 serving_cell_id;
   std::map<nr_cell_identity, cell_measurement_item_t> cell_measurements;
+};
+
+/// NRPPA notifier to the CU-CP UE
+class nrppa_cu_cp_ue_notifier
+{
+public:
+  virtual ~nrppa_cu_cp_ue_notifier() = default;
+
+  /// \brief Get the UE index of the UE.
+  virtual ue_index_t get_ue_index() = 0;
+
+  /// \brief Get the measurement results of the UE.
+  virtual std::optional<cell_measurement_positioning_info>& on_measurement_results_required() = 0;
+
+  /// \brief Schedule an async task for the UE.
+  virtual bool schedule_async_task(async_task<void> task) = 0;
 };
 
 /// Methods used by NRPPa to signal events to the CU-CP.
@@ -51,12 +54,6 @@ public:
   /// \param[in] ue_index The index of the new NRPPA UE.
   /// \returns Pointer to the NRPPA UE notifier.
   virtual nrppa_cu_cp_ue_notifier* on_new_nrppa_ue(ue_index_t ue_index) = 0;
-
-  /// \brief Notifies the CU-CP about a required UE measurement.
-  /// \param[in] ue_index The index of the UE.
-  /// \returns The measurement results if successful, an error string otherwise.
-  virtual expected<cell_measurement_positioning_info, std::string>
-  on_measurement_results_required(ue_index_t ue_index) = 0;
 
   /// \brief Notifies about a NRPPa PDU.
   /// \param[in] nrppa_pdu The NRPPa PDU.
