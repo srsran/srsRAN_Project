@@ -10,6 +10,7 @@
 
 #include "gnb_appconfig_validators.h"
 #include "apps/services/logger/logger_appconfig_validator.h"
+#include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h"
 
@@ -34,6 +35,10 @@ static bool validate_hal_config(const std::optional<hal_appconfig>& config)
 bool srsran::validate_appconfig(const gnb_appconfig& config)
 {
   if (!validate_logger_appconfig(config.log_cfg)) {
+    return false;
+  }
+
+  if (!validate_expert_execution_appconfig(config.expert_execution_cfg)) {
     return false;
   }
 

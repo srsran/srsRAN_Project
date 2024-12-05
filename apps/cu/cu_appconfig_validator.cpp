@@ -10,11 +10,20 @@
 
 #include "cu_appconfig_validator.h"
 #include "apps/services/logger/logger_appconfig_validator.h"
+#include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
 #include "cu_appconfig.h"
 
 using namespace srsran;
 
 bool srsran::validate_cu_appconfig(const cu_appconfig& config)
 {
-  return validate_logger_appconfig(config.log_cfg);
+  if (!validate_logger_appconfig(config.log_cfg)) {
+    return false;
+  }
+
+  if (!validate_expert_execution_appconfig(config.expert_execution_cfg)) {
+    return false;
+  }
+
+  return true;
 }
