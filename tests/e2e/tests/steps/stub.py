@@ -30,7 +30,7 @@ from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
-from retina.protocol.ric_pb2 import KpmMonXappRequest, NearRtRicStartInfo
+from retina.protocol.ric_pb2 import KpmMonXappRequest, NearRtRicStartInfo, RcXappRequest
 from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import (
     HandoverInfo,
@@ -236,6 +236,37 @@ def stop_kpm_mon_xapp(ric: NearRtRicStub) -> None:
     Stop KPM Monitor xAPP in RIC
     """
     ric.StopKpmMonXapp(Empty())
+
+
+def start_rc_xapp(ric: NearRtRicStub, control_service_style: int = 2, action_id: int = 6) -> None:
+    """
+    Start RC xAPP in RIC, currently only Slice-level PRB quota (Control Style 2, Action Id 6) is supported in Flexric.
+    Also, Flexric does not parse the control parameters.
+    """
+    xapp_request = RcXappRequest()
+    xapp_request.control_service_style = control_service_style
+    xapp_request.action_id = action_id
+    # Parameters
+    xapp_request.parameters[7].name = "PLMN Identity"
+    xapp_request.parameters[7].value = 1
+    xapp_request.parameters[9].name = "SST"
+    xapp_request.parameters[9].value = 1
+    xapp_request.parameters[10].name = "SD"
+    xapp_request.parameters[10].value = 1
+    xapp_request.parameters[11].name = "Min PRB Policy Ratio"
+    xapp_request.parameters[11].value = 20
+    xapp_request.parameters[12].name = "Max PRB Policy Ratio"
+    xapp_request.parameters[12].value = 60
+    xapp_request.parameters[13].name = "Dedicated PRB Policy Ratio"
+    xapp_request.parameters[13].value = 80
+    ric.StartRcXapp(xapp_request)
+
+
+def stop_rc_xapp(ric: NearRtRicStub) -> None:
+    """
+    Stop RC xAPP in RIC
+    """
+    ric.StopRcXapp(Empty())
 
 
 @contextmanager

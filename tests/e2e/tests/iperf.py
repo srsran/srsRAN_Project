@@ -33,8 +33,10 @@ from .steps.stub import (
     ric_validate_e2_interface,
     start_and_attach,
     start_kpm_mon_xapp,
+    start_rc_xapp,
     stop,
     stop_kpm_mon_xapp,
+    stop_rc_xapp,
 )
 
 TINY_DURATION = 10
@@ -783,6 +785,7 @@ def _iperf(
     )
 
     if ric:
+        start_rc_xapp(ric, control_service_style=2, action_id=6)
         start_kpm_mon_xapp(ric, report_service_style=1, metrics="DRB.UEThpDl,DRB.UEThpUl")
 
     iperf_parallel(
@@ -796,11 +799,12 @@ def _iperf(
     )
 
     if ric:
+        stop_rc_xapp(ric)
         stop_kpm_mon_xapp(ric)
 
     sleep(wait_before_power_off)
     if ric:
-        ric_validate_e2_interface(ric, kpm_expected=True)
+        ric_validate_e2_interface(ric, kpm_expected=True, rc_expected=True)
     stop(
         ue_array,
         gnb,
