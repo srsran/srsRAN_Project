@@ -17,9 +17,9 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
-#include "srsran/gtpu/ngu_gateway.h"
 #include <chrono>
 #include <condition_variable>
 #include <list>
@@ -255,7 +255,7 @@ public:
   std::list<gtpu_teid_t> removed_ul_teid_list  = {};
 };
 
-class dummy_ngu_gateway final : public srs_cu_up::ngu_tnl_pdu_session
+class dummy_ngu_gateway final : public ngu_tnl_pdu_session
 {
   bool get_bind_address(std::string& ip_address) const override
   {

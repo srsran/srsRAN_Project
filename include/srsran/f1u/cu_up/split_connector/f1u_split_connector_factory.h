@@ -13,7 +13,7 @@
 
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
-#include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include <cstdint>
 

@@ -33,7 +33,7 @@
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
-#include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
@@ -287,8 +287,8 @@ int main(int argc, char** argv)
   cu_f1u_gw_config.bind_port                    = GTPU_PORT;
   cu_f1u_gw_config.reuse_addr                   = false;
   cu_f1u_gw_config.pool_occupancy_threshold     = cu_cfg.nru_cfg.pool_occupancy_threshold;
-  std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
-      srs_cu_up::create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor());
+  std::unique_ptr<ngu_gateway> cu_f1u_gw =
+      create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor());
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
       {*cu_f1u_gw, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT, cu_cfg.nru_cfg.ext_addr});
 

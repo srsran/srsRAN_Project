@@ -17,8 +17,6 @@ namespace srsran {
 
 class io_broker;
 
-namespace srs_cu_up {
-
 /// \brief Handler of the transmission and reception of User-plane (UP) Transport Network Layer (TNL) PDUs by the CU-UP
 /// via the NG-U interface.
 ///
@@ -70,5 +68,4 @@ create_udp_ngu_gateway(const udp_network_gateway_config& config, io_broker& io_b
 /// \return Returns the instantiated NG-U gateway.
 std::unique_ptr<ngu_gateway> create_no_core_ngu_gateway();
 
-} // namespace srs_cu_up
 } // namespace srsran

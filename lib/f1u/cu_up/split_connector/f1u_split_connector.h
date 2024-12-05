@@ -15,10 +15,10 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/gtpu/gtpu_tunnel_nru.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
-#include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/srslog/srslog.h"
 #include <cstdint>

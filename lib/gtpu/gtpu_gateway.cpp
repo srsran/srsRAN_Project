@@ -8,13 +8,12 @@
  *
  */
 
-#include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/io/io_broker.h"
 
 using namespace srsran;
-using namespace srs_cu_up;
 
 namespace {
 
@@ -102,9 +101,9 @@ private:
 
 } // namespace
 
-std::unique_ptr<ngu_gateway> srsran::srs_cu_up::create_udp_ngu_gateway(const udp_network_gateway_config& config,
-                                                                       io_broker&                        io_brk,
-                                                                       task_executor&                    io_tx_executor)
+std::unique_ptr<ngu_gateway> srsran::create_udp_ngu_gateway(const udp_network_gateway_config& config,
+                                                            io_broker&                        io_brk,
+                                                            task_executor&                    io_tx_executor)
 {
   return std::make_unique<udp_ngu_gateway>(config, io_brk, io_tx_executor);
 }
@@ -144,7 +143,7 @@ public:
 
 } // namespace
 
-std::unique_ptr<ngu_gateway> srsran::srs_cu_up::create_no_core_ngu_gateway()
+std::unique_ptr<ngu_gateway> srsran::create_no_core_ngu_gateway()
 {
   return std::make_unique<no_core_ngu_gateway>();
 }

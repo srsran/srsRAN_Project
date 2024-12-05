@@ -28,11 +28,11 @@ public:
     }
   }
 
-  void connect(srs_cu_up::ngu_tnl_pdu_session& handler_) { handler = &handler_; }
+  void connect(ngu_tnl_pdu_session& handler_) { handler = &handler_; }
 
   void disconnect() { handler = nullptr; }
 
-  srs_cu_up::ngu_tnl_pdu_session* handler = nullptr;
+  ngu_tnl_pdu_session* handler = nullptr;
 };
 
 class srs_cu_up::gtpu_rx_f1u_adapter : public srsran::gtpu_tunnel_nru_rx_lower_layer_notifier

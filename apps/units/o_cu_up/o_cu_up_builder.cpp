@@ -63,7 +63,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
   srsran_assert(address.has_value(), "Invalid F1-U bind address");
 
   // Create NG-U gateway(s).
-  std::vector<std::unique_ptr<srs_cu_up::ngu_gateway>> ngu_gws;
+  std::vector<std::unique_ptr<ngu_gateway>> ngu_gws;
   if (not unit_cfg.cu_up_cfg.ngu_cfg.no_core) {
     for (const cu_up_unit_ngu_socket_config& sock_cfg : unit_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg) {
       udp_network_gateway_config n3_udp_cfg = {};
@@ -75,12 +75,12 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
       n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
       n3_udp_cfg.reuse_addr                 = false; // TODO allow reuse_addr for multiple sockets
 
-      std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw = srs_cu_up::create_udp_ngu_gateway(
+      std::unique_ptr<ngu_gateway> ngu_gw = create_udp_ngu_gateway(
           n3_udp_cfg, *dependencies.io_brk, dependencies.workers->cu_up_exec_mapper->io_ul_executor());
       ngu_gws.push_back(std::move(ngu_gw));
     }
   } else {
-    std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
+    std::unique_ptr<ngu_gateway> ngu_gw = create_no_core_ngu_gateway();
     ngu_gws.push_back(std::move(ngu_gw));
   }
 

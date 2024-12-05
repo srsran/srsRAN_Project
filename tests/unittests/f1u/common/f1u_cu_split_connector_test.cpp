@@ -131,7 +131,7 @@ protected:
     nru_gw_config.bind_address               = cu_gw_bind_address;
     nru_gw_config.bind_port                  = 0;
     nru_gw_config.reuse_addr                 = true;
-    udp_gw = srs_cu_up::create_udp_ngu_gateway(nru_gw_config, *epoll_broker, io_tx_executor);
+    udp_gw                                   = create_udp_ngu_gateway(nru_gw_config, *epoll_broker, io_tx_executor);
 
     f1u_cu_up_split_gateway_creation_msg cu_create_msg{
         *udp_gw, *demux, dummy_pcap, tester_bind_port.value(), get_external_bind_address()};

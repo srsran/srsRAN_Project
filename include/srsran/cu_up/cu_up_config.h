@@ -15,7 +15,7 @@
 #include "srsran/e1ap/gateways/e1_connection_client.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
-#include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/timers.h"
 #include <map>
@@ -81,7 +81,7 @@ struct cu_up_dependencies {
   /// E1AP connection client.
   e1_connection_client* e1_conn_client = nullptr;
   /// NG-U gateways
-  std::vector<srs_cu_up::ngu_gateway*> ngu_gws;
+  std::vector<ngu_gateway*> ngu_gws;
 };
 
 } // namespace srs_cu_up
