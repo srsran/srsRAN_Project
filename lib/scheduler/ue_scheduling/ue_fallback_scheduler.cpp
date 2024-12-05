@@ -146,7 +146,10 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
   }
   auto& u = ues[ue_index];
   if (not u.get_pcell().is_in_fallback_mode()) {
-    logger.error("ue={}: ConRes CE discarded. Cause: UE is not in fallback state", ue_index);
+    // Note: In Test mode, the UE can skip fallback mode. However, since it was created via UL-CCCH, there is still an
+    // attempt to schedule the ConRes CE. If we want to change this log to warning, we need to create test mode UEs
+    // in a different manner.
+    logger.info("ue={}: ConRes CE discarded. Cause: UE is not in fallback state", ue_index);
     return;
   }
 
