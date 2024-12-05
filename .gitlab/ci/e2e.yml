@@ -293,6 +293,13 @@ cudu amari 64UE:
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
     KEYWORDS: "ping and 64"
 
+ric:
+  extends: .zmq
+  variables:
+    TESTBED: "zmq_ric"
+    MARKERS: "zmq_ric"
+  allow_failure: true
+
 ################################################################################
 # TEST MODE
 ################################################################################
