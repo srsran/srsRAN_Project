@@ -212,7 +212,7 @@ static units::bits ul_precoding_info_size_2port_maxrank1(tx_scheme_codebook_subs
     return 3_bits;
   }
 
-  return 2_bits;
+  return 1_bits;
 }
 
 // Computes the UL precoding information field size for DCI format 0_1.
