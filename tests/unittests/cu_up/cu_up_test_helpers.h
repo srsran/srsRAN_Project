@@ -255,7 +255,7 @@ public:
   std::list<gtpu_teid_t> removed_ul_teid_list  = {};
 };
 
-class dummy_ngu_gateway final : public ngu_tnl_pdu_session
+class dummy_ngu_gateway final : public gtpu_tnl_pdu_session
 {
   bool get_bind_address(std::string& ip_address) const override
   {

@@ -38,13 +38,13 @@ static cu_up_manager_impl_config generate_cu_up_manager_impl_config(const cu_up_
 }
 
 static cu_up_manager_impl_dependencies
-generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&                                dependencies,
-                                         e1ap_interface&                                          e1ap,
-                                         gtpu_network_gateway_adapter&                            gtpu_gw_adapter,
-                                         gtpu_demux&                                              ngu_demux,
-                                         const std::vector<std::unique_ptr<ngu_tnl_pdu_session>>& ngu_gws,
-                                         gtpu_teid_pool&                                          n3_teid_allocator,
-                                         gtpu_teid_pool&                                          f1u_teid_allocator)
+generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&                                 dependencies,
+                                         e1ap_interface&                                           e1ap,
+                                         gtpu_network_gateway_adapter&                             gtpu_gw_adapter,
+                                         gtpu_demux&                                               ngu_demux,
+                                         const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& ngu_gws,
+                                         gtpu_teid_pool&                                           n3_teid_allocator,
+                                         gtpu_teid_pool&                                           f1u_teid_allocator)
 {
   return {e1ap,
           gtpu_gw_adapter,
@@ -88,8 +88,8 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
 
   // Establish new NG-U session and connect the instantiated session to the GTP-U DEMUX adapter, so that the latter
   // is called when new NG-U DL PDUs are received.
-  for (ngu_gateway* gw : dependencies.ngu_gws) {
-    std::unique_ptr<ngu_tnl_pdu_session> ngu_session = gw->create(gw_data_gtpu_demux_adapter);
+  for (gtpu_gateway* gw : dependencies.ngu_gws) {
+    std::unique_ptr<gtpu_tnl_pdu_session> ngu_session = gw->create(gw_data_gtpu_demux_adapter);
     if (ngu_session == nullptr) {
       report_error("Unable to allocate the required NG-U network resources");
     }

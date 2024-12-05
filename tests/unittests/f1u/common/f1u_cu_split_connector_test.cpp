@@ -195,12 +195,12 @@ protected:
 
   virtual std::string get_external_bind_address() { return "auto"; }
 
-  manual_task_worker           ue_worker{128};
-  std::unique_ptr<io_broker>   epoll_broker;
-  manual_task_worker           io_tx_executor{128};
-  std::unique_ptr<gtpu_demux>  demux;
-  std::unique_ptr<ngu_gateway> udp_gw;
-  null_dlt_pcap                dummy_pcap = {};
+  manual_task_worker            ue_worker{128};
+  std::unique_ptr<io_broker>    epoll_broker;
+  manual_task_worker            io_tx_executor{128};
+  std::unique_ptr<gtpu_demux>   demux;
+  std::unique_ptr<gtpu_gateway> udp_gw;
+  null_dlt_pcap                 dummy_pcap = {};
 
   // Tester UDP gw to TX/RX PDUs to F1-U CU GW
   std::unique_ptr<udp_network_gateway>              udp_tester;

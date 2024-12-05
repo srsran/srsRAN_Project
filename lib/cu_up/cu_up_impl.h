@@ -61,14 +61,14 @@ private:
   std::unique_ptr<ue_executor_mapper> ctrl_exec_mapper;
 
   // Components
-  std::atomic<bool>                                 e1ap_connected = {false};
-  std::unique_ptr<e1ap_interface>                   e1ap;
-  std::vector<std::unique_ptr<ngu_tnl_pdu_session>> ngu_sessions;
-  std::unique_ptr<gtpu_demux>                       ngu_demux;
-  std::unique_ptr<gtpu_echo>                        ngu_echo;
-  std::unique_ptr<gtpu_teid_pool>                   n3_teid_allocator;
-  std::unique_ptr<gtpu_teid_pool>                   f1u_teid_allocator;
-  std::unique_ptr<cu_up_manager>                    cu_up_mng;
+  std::atomic<bool>                                  e1ap_connected = {false};
+  std::unique_ptr<e1ap_interface>                    e1ap;
+  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> ngu_sessions;
+  std::unique_ptr<gtpu_demux>                        ngu_demux;
+  std::unique_ptr<gtpu_echo>                         ngu_echo;
+  std::unique_ptr<gtpu_teid_pool>                    n3_teid_allocator;
+  std::unique_ptr<gtpu_teid_pool>                    f1u_teid_allocator;
+  std::unique_ptr<cu_up_manager>                     cu_up_mng;
 
   // Adapters
   network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;

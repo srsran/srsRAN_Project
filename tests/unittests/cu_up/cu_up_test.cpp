@@ -152,7 +152,7 @@ protected:
   dummy_inner_f1u_bearer                       f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>           f1u_gw;
   std::unique_ptr<io_broker>                   broker;
-  std::unique_ptr<ngu_gateway>                 ngu_gw;
+  std::unique_ptr<gtpu_gateway>                ngu_gw;
   std::unique_ptr<dummy_cu_up_executor_mapper> exec_pool;
   std::unique_ptr<srs_cu_up::cu_up>            cu_up;
   srslog::basic_logger&                        test_logger = srslog::fetch_basic_logger("TEST");

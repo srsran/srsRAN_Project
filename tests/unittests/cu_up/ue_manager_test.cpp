@@ -72,7 +72,7 @@ protected:
   dummy_inner_f1u_bearer                                      f1u_bearer;
   null_dlt_pcap                                               gtpu_pcap;
   std::unique_ptr<f1u_cu_up_gateway>                          f1u_gw;
-  std::vector<std::unique_ptr<ngu_tnl_pdu_session>>           ngu_gws;
+  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>          ngu_gws;
   timer_manager                                               timers;
   ue_context_cfg                                              ue_cfg;
   std::unique_ptr<ue_manager_ctrl>                            ue_mng;

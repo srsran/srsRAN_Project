@@ -18,7 +18,7 @@ using namespace srsran;
 namespace {
 
 /// Implementation of a NG-U TNL PDU session that uses a UDP connection.
-class udp_ngu_tnl_session final : public ngu_tnl_pdu_session
+class udp_ngu_tnl_session final : public gtpu_tnl_pdu_session
 {
   // private ctor.
   udp_ngu_tnl_session(network_gateway_data_notifier_with_src_addr& data_notifier_) :
@@ -80,7 +80,7 @@ private:
 };
 
 /// Implementation of the NG-U gateway for the case a UDP connection is used to a remote UPF.
-class udp_ngu_gateway final : public ngu_gateway
+class udp_ngu_gateway final : public gtpu_gateway
 {
 public:
   udp_ngu_gateway(const udp_network_gateway_config& cfg_, io_broker& io_brk_, task_executor& io_tx_executor_) :
@@ -88,7 +88,7 @@ public:
   {
   }
 
-  std::unique_ptr<ngu_tnl_pdu_session> create(network_gateway_data_notifier_with_src_addr& data_notifier) override
+  std::unique_ptr<gtpu_tnl_pdu_session> create(network_gateway_data_notifier_with_src_addr& data_notifier) override
   {
     return udp_ngu_tnl_session::create(cfg, data_notifier, io_brk, io_tx_executor);
   }
@@ -101,9 +101,9 @@ private:
 
 } // namespace
 
-std::unique_ptr<ngu_gateway> srsran::create_udp_ngu_gateway(const udp_network_gateway_config& config,
-                                                            io_broker&                        io_brk,
-                                                            task_executor&                    io_tx_executor)
+std::unique_ptr<gtpu_gateway> srsran::create_udp_ngu_gateway(const udp_network_gateway_config& config,
+                                                             io_broker&                        io_brk,
+                                                             task_executor&                    io_tx_executor)
 {
   return std::make_unique<udp_ngu_gateway>(config, io_brk, io_tx_executor);
 }
@@ -113,7 +113,7 @@ std::unique_ptr<ngu_gateway> srsran::create_udp_ngu_gateway(const udp_network_ga
 namespace {
 
 /// Implementation of an NG-U TNL PDU session when a local UPF stub is used.
-class no_core_ngu_tnl_pdu_session final : public ngu_tnl_pdu_session
+class no_core_ngu_tnl_pdu_session final : public gtpu_tnl_pdu_session
 {
 public:
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) override
@@ -132,10 +132,10 @@ public:
 };
 
 /// Implementation of the NG-U gateway for the case a local UPF stub is used.
-class no_core_ngu_gateway : public ngu_gateway
+class no_core_ngu_gateway : public gtpu_gateway
 {
 public:
-  std::unique_ptr<ngu_tnl_pdu_session> create(network_gateway_data_notifier_with_src_addr& data_notifier) override
+  std::unique_ptr<gtpu_tnl_pdu_session> create(network_gateway_data_notifier_with_src_addr& data_notifier) override
   {
     return std::make_unique<no_core_ngu_tnl_pdu_session>();
   }
@@ -143,7 +143,7 @@ public:
 
 } // namespace
 
-std::unique_ptr<ngu_gateway> srsran::create_no_core_ngu_gateway()
+std::unique_ptr<gtpu_gateway> srsran::create_no_core_ngu_gateway()
 {
   return std::make_unique<no_core_ngu_gateway>();
 }

@@ -81,7 +81,7 @@ struct cu_up_dependencies {
   /// E1AP connection client.
   e1_connection_client* e1_conn_client = nullptr;
   /// NG-U gateways
-  std::vector<ngu_gateway*> ngu_gws;
+  std::vector<gtpu_gateway*> ngu_gws;
 };
 
 } // namespace srs_cu_up

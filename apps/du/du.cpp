@@ -265,7 +265,7 @@ int main(int argc, char** argv)
   du_f1u_gw_config.bind_port                    = GTPU_PORT;
   du_f1u_gw_config.reuse_addr                   = false;
   du_f1u_gw_config.pool_occupancy_threshold     = du_cfg.nru_cfg.pool_threshold;
-  std::unique_ptr<ngu_gateway> du_f1u_gw =
+  std::unique_ptr<gtpu_gateway> du_f1u_gw =
       create_udp_ngu_gateway(du_f1u_gw_config,
                              *epoll_broker,
                              workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)));
