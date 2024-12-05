@@ -9,6 +9,7 @@
  */
 
 #include "ngap_validators.h"
+#include "srsran/ran/cause/common.h"
 #include <unordered_set>
 
 using namespace srsran;
@@ -23,9 +24,9 @@ pdu_session_resource_setup_validation_outcome srsran::srs_cu_cp::verify_pdu_sess
 
   std::unordered_set<pdu_session_id_t> psis;
   std::unordered_set<pdu_session_id_t> failed_psis;
-  for (const auto& pdu_session_item : asn1_request->pdu_session_res_setup_list_su_req) {
-    pdu_session_id_t psi = uint_to_pdu_session_id(pdu_session_item.pdu_session_id);
-    // Check for duplicate PDU Session IDs
+  for (const auto& asn1_pdu_session_item : asn1_request->pdu_session_res_setup_list_su_req) {
+    pdu_session_id_t psi = uint_to_pdu_session_id(asn1_pdu_session_item.pdu_session_id);
+    // Check for duplicate PDU Session IDs.
     if (!psis.emplace(psi).second) {
       ue_logger.log_warning("Duplicate {} in PduSessionResourceSetupRequest", psi);
       // Make sure to only add each duplicate psi once
@@ -39,6 +40,20 @@ pdu_session_resource_setup_validation_outcome srsran::srs_cu_cp::verify_pdu_sess
     }
   }
 
+  // Check for unsupported PDU Session Types.
+  for (const auto& pdu_session_item : request.pdu_session_res_setup_items) {
+    if (pdu_session_item.pdu_session_type == "ipv4v6") {
+      ue_logger.log_warning("Unsupported PDU Session Type: ipv4v6");
+      failed_psis.emplace(pdu_session_item.pdu_session_id);
+      // Add failed psi to response.
+      cu_cp_pdu_session_res_setup_failed_item failed_item;
+      failed_item.pdu_session_id              = pdu_session_item.pdu_session_id;
+      failed_item.unsuccessful_transfer.cause = cause_protocol_t::unspecified;
+      verification_outcome.response.pdu_session_res_failed_to_setup_items.emplace(pdu_session_item.pdu_session_id,
+                                                                                  failed_item);
+    }
+  }
+
   // Remove failed psis from psis
   for (const auto& failed_psi : failed_psis) {
     psis.erase(failed_psi);
@@ -49,8 +64,8 @@ pdu_session_resource_setup_validation_outcome srsran::srs_cu_cp::verify_pdu_sess
     return verification_outcome;
   }
 
-  // If Non-GBR QoS flow present then PDU Session Aggregate Maximum Bit Rate must be present
-  for (auto& psi : psis) {
+  // If Non-GBR QoS flow present then PDU Session Aggregate Maximum Bit Rate must be present.
+  for (const auto& psi : psis) {
     for (const auto& qos_flow_item : request.pdu_session_res_setup_items[psi].qos_flow_setup_request_items) {
       if (qos_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_subject_to ||
           qos_flow_item.qos_flow_level_qos_params.add_qos_flow_info) {

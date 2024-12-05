@@ -266,7 +266,15 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
         asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_ul;
   }
 
-  // id-UL-NGU-UP-TNLInformation
+  // id-UL-NGU-UP-TNLInformation.
+  if (asn1_setup_req_transfer->ul_ngu_up_tnl_info.type() ==
+          asn1::ngap::up_transport_layer_info_c::types_opts::gtp_tunnel &&
+      asn1_setup_req_transfer->ul_ngu_up_tnl_info.gtp_tunnel().transport_layer_address.length() == 160) {
+    srslog::fetch_basic_logger("NGAP").error("Invalid PDU Session Resource Setup Request Transfer PDU. Cause: Combined "
+                                             "IPv4 and IPv6 addresses are currently not supported");
+    return false;
+  }
+
   setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(asn1_setup_req_transfer->ul_ngu_up_tnl_info);
 
   // id-PDUSessionType
