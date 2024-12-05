@@ -24,6 +24,7 @@ void srsran::srs_cu_cp::log_rrc_message(rrc_ue_logger&    logger,
                                         const direction_t dir,
                                         byte_buffer_view  pdu,
                                         const T&          msg,
+                                        srb_id_t          srb_id,
                                         const char*       msg_type)
 {
   if (logger.get_basic_logger().debug.enabled()) {
@@ -31,8 +32,9 @@ void srsran::srs_cu_cp::log_rrc_message(rrc_ue_logger&    logger,
     msg.to_json(js);
     logger.log_debug(pdu.begin(),
                      pdu.end(),
-                     "{} {} {} ({} B)",
+                     "{} {} {} {} ({} B)",
                      (dir == Rx) ? "Rx" : "Tx",
+                     srb_id,
                      msg_type,
                      msg.msg.c1().type().to_string(),
                      pdu.length());
@@ -47,22 +49,26 @@ template void srsran::srs_cu_cp::log_rrc_message<asn1::rrc_nr::ul_ccch_msg_s>(rr
                                                                               const direction_t                  dir,
                                                                               byte_buffer_view                   pdu,
                                                                               const asn1::rrc_nr::ul_ccch_msg_s& msg,
+                                                                              srb_id_t                           srb_id,
                                                                               const char* msg_type);
 
 template void srsran::srs_cu_cp::log_rrc_message<asn1::rrc_nr::ul_dcch_msg_s>(rrc_ue_logger&                     logger,
                                                                               const direction_t                  dir,
                                                                               byte_buffer_view                   pdu,
                                                                               const asn1::rrc_nr::ul_dcch_msg_s& msg,
+                                                                              srb_id_t                           srb_id,
                                                                               const char* msg_type);
 
 template void srsran::srs_cu_cp::log_rrc_message<asn1::rrc_nr::dl_ccch_msg_s>(rrc_ue_logger&                     logger,
                                                                               const direction_t                  dir,
                                                                               byte_buffer_view                   pdu,
                                                                               const asn1::rrc_nr::dl_ccch_msg_s& msg,
+                                                                              srb_id_t                           srb_id,
                                                                               const char* msg_type);
 
 template void srsran::srs_cu_cp::log_rrc_message<asn1::rrc_nr::dl_dcch_msg_s>(rrc_ue_logger&                     logger,
                                                                               const direction_t                  dir,
                                                                               byte_buffer_view                   pdu,
                                                                               const asn1::rrc_nr::dl_dcch_msg_s& msg,
+                                                                              srb_id_t                           srb_id,
                                                                               const char* msg_type);

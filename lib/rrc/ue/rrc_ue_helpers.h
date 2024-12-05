@@ -19,7 +19,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-// Helper to create PDU from RRC message
+// Helper to create PDU from RRC message.
 template <class T>
 byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
 {
@@ -32,7 +32,7 @@ byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
   return pdu;
 }
 
-// Logging
+// Logging.
 typedef enum { Rx = 0, Tx } direction_t;
 
 template <class T>
@@ -40,6 +40,7 @@ void log_rrc_message(rrc_ue_logger&    logger,
                      const direction_t dir,
                      byte_buffer_view  pdu,
                      const T&          msg,
+                     srb_id_t          srb_id,
                      const char*       msg_type);
 
 } // namespace srs_cu_cp
