@@ -288,7 +288,7 @@ int main(int argc, char** argv)
   cu_f1u_gw_config.reuse_addr                   = false;
   cu_f1u_gw_config.pool_occupancy_threshold     = cu_cfg.nru_cfg.pool_occupancy_threshold;
   std::unique_ptr<gtpu_gateway> cu_f1u_gw =
-      create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor());
+      create_udp_gtpu_gateway(cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor());
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
       {*cu_f1u_gw, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT, cu_cfg.nru_cfg.ext_addr});
 

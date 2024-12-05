@@ -101,9 +101,9 @@ private:
 
 } // namespace
 
-std::unique_ptr<gtpu_gateway> srsran::create_udp_ngu_gateway(const udp_network_gateway_config& config,
-                                                             io_broker&                        io_brk,
-                                                             task_executor&                    io_tx_executor)
+std::unique_ptr<gtpu_gateway> srsran::create_udp_gtpu_gateway(const udp_network_gateway_config& config,
+                                                              io_broker&                        io_brk,
+                                                              task_executor&                    io_tx_executor)
 {
   return std::make_unique<udp_ngu_gateway>(config, io_brk, io_tx_executor);
 }
@@ -143,7 +143,7 @@ public:
 
 } // namespace
 
-std::unique_ptr<gtpu_gateway> srsran::create_no_core_ngu_gateway()
+std::unique_ptr<gtpu_gateway> srsran::create_no_core_gtpu_gateway()
 {
   return std::make_unique<no_core_ngu_gateway>();
 }

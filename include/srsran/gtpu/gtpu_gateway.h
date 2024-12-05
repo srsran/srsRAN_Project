@@ -60,12 +60,12 @@ public:
 /// \param[in] io_tx_executor Executor that will be used to handle the transmission of PDUs to the UDP socket.
 /// \return Returns the instantiated GTP-U gateway. Returns nullptr, if the GTP-U gateway could not be established.
 std::unique_ptr<gtpu_gateway>
-create_udp_ngu_gateway(const udp_network_gateway_config& config, io_broker& io_brk, task_executor& io_tx_executor);
+create_udp_gtpu_gateway(const udp_network_gateway_config& config, io_broker& io_brk, task_executor& io_tx_executor);
 
 /// \brief Creates a GTP-U gateway that establishes a connection to a null/dummy UPF.
 ///
 /// This type of GTP-U gateway is useful when testing the CU-UP without a real UPF.
 /// \return Returns the instantiated GTP-U gateway.
-std::unique_ptr<gtpu_gateway> create_no_core_ngu_gateway();
+std::unique_ptr<gtpu_gateway> create_no_core_gtpu_gateway();
 
 } // namespace srsran
