@@ -266,14 +266,14 @@ TEST_F(
   fill_cu_cp_pdu_session_resource_setup_request(request, asn1_request->pdu_session_res_setup_list_su_req);
 
   ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
-  // Verify PDU Session Resource Setup Request
+  // Verify PDU Session Resource Setup Request.
   auto verification_outcome = verify_pdu_session_resource_setup_request(request, asn1_request, ue_logger);
 
   ASSERT_TRUE(verification_outcome.request.pdu_session_res_setup_items.empty());
   ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_setup_items.size(), 1U);
 }
 
-// Test handling of valid PDU Session Resource Modification Request
+// Test handling of valid PDU Session Resource Modification Request.
 TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_modify_succeeds)
 {
   pdu_session_id_t psi       = uint_to_pdu_session_id(1);

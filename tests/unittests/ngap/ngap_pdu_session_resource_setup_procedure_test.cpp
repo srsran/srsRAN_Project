@@ -164,7 +164,26 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   ASSERT_TRUE(was_pdu_session_resource_setup_request_invalid());
 }
 
-/// Test invalid PDU Session Resource Setup Request
+/// Test invalid PDU Session Resource Setup Request.
+TEST_F(ngap_pdu_session_resource_setup_procedure_test,
+       when_pdu_session_resource_setup_request_with_invalid_tpl_received_then_pdu_session_setup_failed)
+{
+  // Test preamble.
+  ue_index_t ue_index = this->start_procedure();
+
+  auto& ue = test_ues.at(ue_index);
+
+  // Inject invalid PDU Session Resource Setup Request.
+  ngap_message pdu_session_resource_setup_request =
+      generate_pdu_session_resource_setup_request_with_pdu_session_type_ipv4_and_ipv4v6_transport_layer_address(
+          ue.amf_ue_id.value(), ue.ran_ue_id.value());
+  ngap->handle_message(pdu_session_resource_setup_request);
+
+  // Check that Error Indication has been sent to AMF.
+  ASSERT_TRUE(was_error_indication_sent());
+}
+
+/// Test invalid PDU Session Resource Setup Request.
 TEST_F(ngap_pdu_session_resource_setup_procedure_test, when_security_not_enabled_then_pdu_session_setup_failed)
 {
   // Test preamble

@@ -487,6 +487,24 @@ ngap_message srsran::srs_cu_cp::generate_invalid_pdu_session_resource_setup_requ
   return ngap_msg;
 }
 
+ngap_message srsran::srs_cu_cp::
+    generate_pdu_session_resource_setup_request_with_pdu_session_type_ipv4_and_ipv4v6_transport_layer_address(
+        amf_ue_id_t amf_ue_id,
+        ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg = generate_valid_pdu_session_resource_setup_request_message(
+      amf_ue_id, ran_ue_id, {{uint_to_pdu_session_id(1), {{uint_to_qos_flow_id(1), 9}}}});
+
+  // Add invalid PDU Session Resource Setup Request Transfer.
+  auto& pdu_session_res_setup_req = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
+  pdu_session_res_setup_req->pdu_session_res_setup_list_su_req.begin()
+      ->pdu_session_res_setup_request_transfer.from_string("0000040082000a0c1dcd6500301dcd6500008b001a09f00a0c01bbfdf66"
+                                                           "cf3768500000000000000000bf1010000010086000100008800"
+                                                           "0700010000093800");
+
+  return ngap_msg;
+}
+
 cu_cp_pdu_session_resource_setup_response
 srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id)
 {
