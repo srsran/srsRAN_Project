@@ -9,13 +9,15 @@
  */
 
 #include "ngu_session_manager_test.h"
-#include "cu_up_test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_cu_up;
 
-TEST_F(ngu_session_manager_test, round_robin_gw_selection) {}
+TEST_F(ngu_session_manager_test, mngr_creation)
+{
+  ngu_session_mngr = std::make_unique<ngu_session_manager_impl>(ngu_gws);
+}
 
 int main(int argc, char** argv)
 {

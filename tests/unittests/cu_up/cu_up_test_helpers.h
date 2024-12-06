@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "lib/cu_up/ngu_session_manager.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/e1ap/common/e1ap_common.h"
@@ -268,6 +269,15 @@ class dummy_ngu_gateway final : public gtpu_tnl_pdu_session
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) override {}
 
   void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override {}
+};
+
+class dummy_ngu_session_manager final : public srs_cu_up::ngu_session_manager
+{
+public:
+  const gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; };
+
+private:
+  dummy_ngu_gateway ngu_gw;
 };
 
 class dummy_e1ap final : public srs_cu_up::e1ap_control_message_handler

@@ -13,6 +13,7 @@
 #include "adapters/e1ap_adapters.h"
 #include "adapters/gtpu_adapters.h"
 #include "adapters/gw_adapters.h"
+#include "ngu_session_manager.h"
 #include "ue_manager.h"
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_config.h"
@@ -63,6 +64,7 @@ private:
   // Components
   std::atomic<bool>                                  e1ap_connected = {false};
   std::unique_ptr<e1ap_interface>                    e1ap;
+  std::unique_ptr<ngu_session_manager>               ngu_session_mngr;
   std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> ngu_sessions;
   std::unique_ptr<gtpu_demux>                        ngu_demux;
   std::unique_ptr<gtpu_echo>                         ngu_echo;

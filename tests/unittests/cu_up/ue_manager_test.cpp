@@ -33,11 +33,12 @@ protected:
     gtpu_f1u_allocator = std::make_unique<dummy_gtpu_teid_pool>();
     gtpu_tx_notifier   = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
-    auto ngu_gw        = std::make_unique<dummy_ngu_gateway>();
-    ngu_gws.push_back(std::move(ngu_gw));
-    e1ap = std::make_unique<dummy_e1ap>();
+    e1ap               = std::make_unique<dummy_e1ap>();
+
+    ngu_session_mngr = std::make_unique<dummy_ngu_session_manager>();
 
     cu_up_exec_mapper = std::make_unique<dummy_cu_up_executor_mapper>(&worker);
+
     // Create UE cfg
     ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, std::chrono::seconds(0)};
 
@@ -46,7 +47,7 @@ protected:
                                           ue_manager_dependencies{*e1ap,
                                                                   timers,
                                                                   *f1u_gw,
-                                                                  ngu_gws,
+                                                                  *ngu_session_mngr,
                                                                   *gtpu_tx_notifier,
                                                                   *gtpu_rx_demux,
                                                                   *gtpu_n3_allocator,
@@ -58,7 +59,6 @@ protected:
 
   void TearDown() override
   {
-    ngu_gws.clear();
     // flush logger after each test
     srslog::flush();
   }
@@ -72,7 +72,7 @@ protected:
   dummy_inner_f1u_bearer                                      f1u_bearer;
   null_dlt_pcap                                               gtpu_pcap;
   std::unique_ptr<f1u_cu_up_gateway>                          f1u_gw;
-  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>          ngu_gws;
+  std::unique_ptr<ngu_session_manager>                        ngu_session_mngr;
   timer_manager                                               timers;
   ue_context_cfg                                              ue_cfg;
   std::unique_ptr<ue_manager_ctrl>                            ue_mng;

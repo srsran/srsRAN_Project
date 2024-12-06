@@ -10,6 +10,7 @@
 
 #include "cu_up_impl.h"
 #include "cu_up_manager_impl.h"
+#include "ngu_session_manager_impl.h"
 #include "routines/initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
@@ -38,18 +39,18 @@ static cu_up_manager_impl_config generate_cu_up_manager_impl_config(const cu_up_
 }
 
 static cu_up_manager_impl_dependencies
-generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&                                 dependencies,
-                                         e1ap_interface&                                           e1ap,
-                                         gtpu_network_gateway_adapter&                             gtpu_gw_adapter,
-                                         gtpu_demux&                                               ngu_demux,
-                                         const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& ngu_gws,
-                                         gtpu_teid_pool&                                           n3_teid_allocator,
-                                         gtpu_teid_pool&                                           f1u_teid_allocator)
+generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&     dependencies,
+                                         e1ap_interface&               e1ap,
+                                         gtpu_network_gateway_adapter& gtpu_gw_adapter,
+                                         gtpu_demux&                   ngu_demux,
+                                         ngu_session_manager&          ngu_session_mngr,
+                                         gtpu_teid_pool&               n3_teid_allocator,
+                                         gtpu_teid_pool&               f1u_teid_allocator)
 {
   return {e1ap,
           gtpu_gw_adapter,
           ngu_demux,
-          ngu_gws,
+          ngu_session_mngr,
           n3_teid_allocator,
           f1u_teid_allocator,
           *dependencies.exec_mapper,
@@ -95,6 +96,7 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
     }
     ngu_sessions.push_back(std::move(ngu_session));
   }
+  ngu_session_mngr = std::make_unique<ngu_session_manager_impl>(ngu_sessions);
 
   // Connect GTPU GW adapter to NG-U session in order to send UL PDUs.
   // We use the first UDP GW for UL.
@@ -117,10 +119,14 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
                      dependencies.exec_mapper->ctrl_executor());
 
   /// > Create CU-UP manager
-  cu_up_mng = std::make_unique<cu_up_manager_impl>(
-      generate_cu_up_manager_impl_config(cfg),
-      generate_cu_up_manager_impl_dependencies(
-          dependencies, *e1ap, gtpu_gw_adapter, *ngu_demux, ngu_sessions, *n3_teid_allocator, *f1u_teid_allocator));
+  cu_up_mng = std::make_unique<cu_up_manager_impl>(generate_cu_up_manager_impl_config(cfg),
+                                                   generate_cu_up_manager_impl_dependencies(dependencies,
+                                                                                            *e1ap,
+                                                                                            gtpu_gw_adapter,
+                                                                                            *ngu_demux,
+                                                                                            *ngu_session_mngr,
+                                                                                            *n3_teid_allocator,
+                                                                                            *f1u_teid_allocator));
 
   /// > Connect E1AP to CU-UP manager
   e1ap_cu_up_mng_adapter.connect_cu_up_manager(*cu_up_mng);

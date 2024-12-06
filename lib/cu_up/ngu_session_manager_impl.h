@@ -13,11 +13,12 @@
 #include "ngu_session_manager.h"
 
 namespace srsran::srs_cu_up {
-class ngu_session_manager_impl : ngu_session_manager
+
+class ngu_session_manager_impl : public ngu_session_manager
 {
 public:
-  ngu_session_manager_impl(const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& ngu_gws_);
   ~ngu_session_manager_impl() override = default;
+  explicit ngu_session_manager_impl(const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& ngu_gws_);
 
   const gtpu_tnl_pdu_session& get_next_ngu_gateway() override;
 
