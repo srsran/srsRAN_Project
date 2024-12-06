@@ -526,7 +526,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
 
   // Search for empty HARQ in case of newTx.
   if (not is_retx and not ue_pcell.harqs.has_empty_dl_harqs()) {
-    logger.warning("rnti={}: UE must have empty HARQs during ConRes CE allocation", u.crnti);
+    logger.warning("rnti={}: UE must have empty HARQs during fallback newtx allocation", u.crnti);
     return {};
   }
 
@@ -669,7 +669,10 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
                    pdsch_alloc.slot);
     }
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
-    slots_with_no_pdxch_space[pdcch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+    if (not use_common_and_ded_res) {
+      // If there isn't enough space for common PUCCH, then there is no point of repeating this slot.
+      slots_with_no_pdxch_space[pdcch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+    }
     return {};
   }
 
