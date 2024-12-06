@@ -11,9 +11,10 @@ set(SOURCES
         cu_up_factory.cpp
         cu_up_impl.cpp
         cu_up_manager_impl.cpp
-        pdu_session_manager_impl.cpp
-        routines/initial_cu_up_setup_routine.cpp
         ue_manager.cpp
+        pdu_session_manager_impl.cpp
+        ngu_session_manager_impl.cpp
+        routines/initial_cu_up_setup_routine.cpp
 )
 
 add_library(srsran_cu_up STATIC ${SOURCES})

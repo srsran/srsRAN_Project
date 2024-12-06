@@ -22,3 +22,8 @@ add_executable(pdu_session_manager_test pdu_session_manager_test.cpp)
 target_link_libraries(pdu_session_manager_test srsran_cu_up srsran_support e1ap_asn1 srslog gtest gtest_main)
 target_include_directories(pdu_session_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(pdu_session_manager_test)
+
+add_executable(ngu_session_manager_test ngu_session_manager_test.cpp)
+target_link_libraries(ngu_session_manager_test srsran_cu_up srsran_support srslog gtest gtest_main)
+target_include_directories(ngu_session_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(ngu_session_manager_test)
