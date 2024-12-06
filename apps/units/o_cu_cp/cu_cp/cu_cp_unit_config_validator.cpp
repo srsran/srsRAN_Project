@@ -140,8 +140,8 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
 
   // verify that each configured neighbor cell is present
   for (const auto& cell : config.cells) {
-    nr_cell_identity nci = nr_cell_identity::create(cell.nr_cell_id).value();
     for (const auto& ncell : cell.ncells) {
+      nr_cell_identity nci = nr_cell_identity::create(ncell.nr_cell_id).value();
       if (ncis.find(nci) == ncis.end()) {
         fmt::print("Neighbor cell config for nci={:#x} incomplete. No valid configuration for cell nci={:#x} found.\n",
                    cell.nr_cell_id,
