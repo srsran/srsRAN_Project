@@ -232,9 +232,8 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
 {
   // Processes all the UL UEs at once, including UEs with new transmissions and UEs with retransmissions.
   for (auto next_ue = pending_ul_ues.begin(); next_ue != pending_ul_ues.end();) {
-    auto&                                 u         = ues[*next_ue];
-    std::optional<ul_harq_process_handle> h_ul_retx = u.get_pcell().harqs.find_pending_ul_retx();
-    ul_srb_sched_outcome                  outcome   = schedule_ul_ue(res_alloc, u, h_ul_retx);
+    auto&                u       = ues[*next_ue];
+    ul_srb_sched_outcome outcome = schedule_ul_ue(res_alloc, u);
     if (outcome == ul_srb_sched_outcome::stop_ul_scheduling) {
       // If there is no PDCCH space, then stop the scheduling for all UL UEs.
       return;
@@ -1281,11 +1280,16 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
   return std::make_pair(srb1_bytes_allocated, *h_dl);
 }
 
-ue_fallback_scheduler::ul_srb_sched_outcome
-ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator&              res_alloc,
-                                      ue&                                   u,
-                                      std::optional<ul_harq_process_handle> h_ul_retx)
+ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc,
+                                                                                  ue&                      u)
 {
+  std::optional<ul_harq_process_handle> h_ul_retx     = u.get_pcell().harqs.find_pending_ul_retx();
+  const bool                            is_retx       = h_ul_retx.has_value();
+  const unsigned                        pending_bytes = u.pending_ul_newtx_bytes();
+  if (not is_retx and pending_bytes == 0) {
+    return ul_srb_sched_outcome::next_ue;
+  }
+
   // The caller ensures the slot is Ul enabled.
   const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   slot_point                          pdcch_slot  = pdcch_alloc.slot;
@@ -1293,8 +1297,6 @@ ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator&              res_
   // Fetch applicable PUSCH Time Domain resource index list.
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
       get_pusch_td_resource_indices(cell_cfg, pdcch_slot);
-
-  bool is_retx = h_ul_retx.has_value();
 
   if (is_retx) {
     srsran_sanity_check(h_ul_retx->get_grant_params().dci_cfg_type == dci_ul_rnti_config_type::c_rnti_f0_0,

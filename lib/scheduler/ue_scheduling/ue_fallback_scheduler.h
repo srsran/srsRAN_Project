@@ -112,8 +112,7 @@ private:
 
   /// \brief Tries to schedule UL SRB1 message for a UE iterating over the possible k2 values. Returns true if the
   /// scheduler should keep allocating the next UL UE, false if it should stop the UL allocation.
-  ul_srb_sched_outcome
-  schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, std::optional<ul_harq_process_handle> h_ul_retx);
+  ul_srb_sched_outcome schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u);
 
   struct sched_srb_results {
     std::optional<dl_harq_process_handle> h_dl;

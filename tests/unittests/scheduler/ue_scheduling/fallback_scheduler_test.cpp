@@ -1266,7 +1266,7 @@ protected:
         parent->push_buffer_state_to_ul_ue(test_ue.ue_index, sl, srb_buffer);
         buffer_bytes            = srb_buffer;
         initied_with_ul_traffic = true;
-        test_logger.info("rnti={}, slot={}: generating initial BSR indication", test_ue.crnti, sl);
+        test_logger.info("rnti={}, slot={}: generating initial BSR indication {}", test_ue.crnti, sl, srb_buffer);
       }
 
       for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
