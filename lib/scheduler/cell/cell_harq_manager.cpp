@@ -667,8 +667,11 @@ void dl_harq_process_handle::increment_pucch_counter()
   ++impl->pucch_ack_to_receive;
 }
 
-void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx, const pdsch_information& pdsch)
+void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx, const dl_msg_alloc& ue_pdsch)
 {
+  constexpr static size_t CW_INDEX = 0;
+
+  const pdsch_information& pdsch = ue_pdsch.pdsch_cfg;
   srsran_assert(pdsch.codewords.size() == 1, "Only one codeword supported");
   srsran_sanity_check(pdsch.rnti == impl->rnti, "RNTI mismatch");
   srsran_sanity_check(pdsch.harq_id == impl->h_id, "HARQ-id mismatch");
@@ -676,7 +679,7 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx,
                 "Setting allocation parameters for DL HARQ process id={} in invalid state",
                 id());
 
-  const pdsch_codeword&               cw          = pdsch.codewords[0];
+  const pdsch_codeword&               cw          = pdsch.codewords[CW_INDEX];
   dl_harq_process_impl::alloc_params& prev_params = impl->prev_tx_params;
 
   if (impl->nof_retxs == 0) {
@@ -687,6 +690,10 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx,
     prev_params.slice_id     = ctx.slice_id;
     prev_params.cqi          = ctx.cqi.has_value() ? ctx.cqi.value() : cqi_value{1};
     prev_params.is_fallback  = ctx.is_fallback;
+    prev_params.lc_sched_info.clear();
+    for (const dl_msg_lc_info& lc : ue_pdsch.tb_list[CW_INDEX].lc_chs_to_sched) {
+      prev_params.lc_sched_info.push_back({lc.lcid, units::bytes{lc.sched_bytes}});
+    }
   } else {
     srsran_assert(ctx.dci_cfg_type == prev_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during DL HARQ retxs");

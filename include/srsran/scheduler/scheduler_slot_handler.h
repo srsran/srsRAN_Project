@@ -217,10 +217,12 @@ struct dl_msg_tb_info {
   static_vector<dl_msg_lc_info, MAX_LC_PER_TB> lc_chs_to_sched;
 };
 
+using dl_msg_tb_info_list = static_vector<dl_msg_tb_info, MAX_CODEWORDS_PER_PDSCH>;
+
 /// Dedicated DL Grant for UEs.
 struct dl_msg_alloc {
-  pdsch_information                             pdsch_cfg;
-  static_vector<dl_msg_tb_info, MAX_NOF_LAYERS> tb_list;
+  pdsch_information   pdsch_cfg;
+  dl_msg_tb_info_list tb_list;
 
   /// \brief Information relative to a PDSCH allocation decision that is used for the purpose of logging or
   /// tracing, but not passed to the PHY.

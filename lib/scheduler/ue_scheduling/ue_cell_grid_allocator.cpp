@@ -482,7 +482,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
       msg.context.buffer_occupancy = u.pending_dl_newtx_bytes();
     }
 
-    h_dl->save_grant_params(pdsch_sched_ctx, msg.pdsch_cfg);
+    h_dl->save_grant_params(pdsch_sched_ctx, msg);
 
     // Update DRX state given the new allocation.
     u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);

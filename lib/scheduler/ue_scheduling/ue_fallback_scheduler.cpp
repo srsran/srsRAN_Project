@@ -930,7 +930,7 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
   dl_harq_alloc_context ctxt{pdcch.dci.type, std::nullopt, std::nullopt, std::nullopt, true};
-  h_dl->save_grant_params(ctxt, msg.pdsch_cfg);
+  h_dl->save_grant_params(ctxt, msg);
 
   return std::make_pair(srb1_bytes_allocated, *h_dl);
 }

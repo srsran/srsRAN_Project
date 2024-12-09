@@ -14,8 +14,10 @@
 #include "srsran/adt/intrusive_list.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/scheduler_dci.h"
@@ -23,7 +25,7 @@
 
 namespace srsran {
 
-struct pdsch_information;
+struct dl_msg_alloc;
 struct pusch_information;
 
 class unique_ue_harq_entity;
@@ -71,15 +73,21 @@ struct dl_harq_process_impl : public base_harq_process {
 
   /// \brief Parameters relative to the last used PDSCH PDU that get stored in the HARQ process for future reuse.
   struct alloc_params {
-    dci_dl_rnti_config_type dci_cfg_type;
-    vrb_alloc               rbs;
-    unsigned                nof_symbols;
-    unsigned                nof_layers{1};
-    bool                    is_fallback{false};
-    cqi_value               cqi;
-    pdsch_mcs_table         mcs_table;
-    sch_mcs_index           mcs;
-    unsigned                tbs_bytes;
+    struct lc_alloc_info {
+      lcid_dl_sch_t lcid;
+      units::bytes  sched_bytes;
+    };
+
+    dci_dl_rnti_config_type                     dci_cfg_type;
+    vrb_alloc                                   rbs;
+    unsigned                                    nof_symbols;
+    unsigned                                    nof_layers{1};
+    bool                                        is_fallback{false};
+    cqi_value                                   cqi;
+    pdsch_mcs_table                             mcs_table;
+    sch_mcs_index                               mcs;
+    unsigned                                    tbs_bytes;
+    static_vector<lc_alloc_info, MAX_LC_PER_TB> lc_sched_info;
     /// RAN slice identifier.
     std::optional<ran_slice_id_t> slice_id;
     /// \brief MCS originally suggested by the OLLA. It might differ from the actual MCS used.
@@ -274,7 +282,7 @@ public:
 
   /// \brief Stores grant parameters that are associated with the HARQ process (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
-  void save_grant_params(const dl_harq_alloc_context& ctx, const pdsch_information& pdsch);
+  void save_grant_params(const dl_harq_alloc_context& ctx, const dl_msg_alloc& ue_pdsch);
 
   slot_point pdsch_slot() const { return impl->slot_tx; }
   slot_point uci_slot() const { return impl->slot_ack; }
