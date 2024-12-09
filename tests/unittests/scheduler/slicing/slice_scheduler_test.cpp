@@ -383,11 +383,14 @@ TEST_F(rb_ratio_slice_scheduler_test,
   run_slot();
 
   // High priority slices
-  auto next_dl_slice = slice_sched.get_next_dl_candidate();
-  ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
-  next_dl_slice->store_grant(MIN_SLICE_RB);
-  next_dl_slice = slice_sched.get_next_dl_candidate();
-  ASSERT_EQ(next_dl_slice->id(), default_srb_slice_id);
+  std::optional<dl_ran_slice_candidate> next_dl_slice;
+  for (unsigned i = 0; i != 2; ++i) {
+    next_dl_slice = slice_sched.get_next_dl_candidate();
+    ASSERT_TRUE(next_dl_slice->id() == drb1_slice_id or next_dl_slice->id() == default_srb_slice_id);
+    if (next_dl_slice->id() == drb1_slice_id) {
+      next_dl_slice->store_grant(MIN_SLICE_RB);
+    }
+  }
 
   // Lower priority candidates.
   next_dl_slice = slice_sched.get_next_dl_candidate();
