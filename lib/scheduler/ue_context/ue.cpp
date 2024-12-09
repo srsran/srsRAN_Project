@@ -127,19 +127,6 @@ unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
   return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
 }
 
-unsigned ue::pending_dl_srb_newtx_bytes() const
-{
-  return dl_lc_ch_mgr.pending_bytes(LCID_SRB1) + dl_lc_ch_mgr.pending_bytes(LCID_SRB2);
-}
-
-unsigned ue::pending_ul_srb_newtx_bytes() const
-{
-  // LCG ID 0 is used by default for SRBs as per TS 38.331, clause 9.2.1.
-  // NOTE: Ensure SRB LCG ID matches the one sent to UE.
-  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
-  return ul_lc_ch_mgr.pending_bytes(srb_lcg_id);
-}
-
 unsigned ue::pending_ul_newtx_bytes() const
 {
   static constexpr unsigned SR_GRANT_BYTES = 512;

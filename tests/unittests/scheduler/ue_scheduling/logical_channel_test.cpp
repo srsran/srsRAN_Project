@@ -249,7 +249,7 @@ TEST(dl_logical_channel_test, pending_ue_con_res_id_ce_bytes_does_not_include_ot
   const unsigned dummy_ce_payload = 0;
   lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
 
-  ASSERT_EQ(lch_mng.pending_ue_con_res_id_ce_bytes(), 0);
+  ASSERT_EQ(lch_mng.pending_con_res_ce_bytes(), 0);
 }
 
 TEST(ul_logical_channel_test, when_logical_channel_groups_are_inactive_then_no_ul_bytes_are_pending)

@@ -69,7 +69,7 @@ public:
   bool is_con_res_id_pending() const { return pending_con_res_id; }
 
   /// \brief Checks whether UE has pending CEs to be scheduled (ConRes excluded).
-  bool has_pending_ces() const { return not pending_ces.empty(); }
+  bool has_pending_ces() const { return pending_con_res_id or not pending_ces.empty(); }
 
   /// \brief Calculates total number of DL bytes, including MAC header overhead.
   /// \remark Excludes data for SRB0 and UE Contention Resolution Identity CE.
@@ -86,7 +86,7 @@ public:
   /// \brief Returns the UE pending CEs' bytes to be scheduled, if any.
   unsigned pending_ce_bytes() const
   {
-    unsigned bytes = pending_ue_con_res_id_ce_bytes();
+    unsigned bytes = pending_con_res_ce_bytes();
     for (const auto& ce : pending_ces) {
       bytes += ce.ce_lcid.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.ce_lcid.sizeof_ce())
                                           : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.ce_lcid.sizeof_ce();
@@ -95,7 +95,7 @@ public:
   }
 
   /// \brief Checks whether UE has pending UE Contention Resolution Identity CE to be scheduled.
-  unsigned pending_ue_con_res_id_ce_bytes() const
+  unsigned pending_con_res_ce_bytes() const
   {
     static const auto ce_size = lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce();
     return is_con_res_id_pending() ? FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce_size : 0;
@@ -118,6 +118,7 @@ public:
   void handle_mac_ce_indication(const mac_ce_info& ce)
   {
     if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+      // CON RES is a special case, as it needs to be always scheduled first.
       pending_con_res_id = true;
       return;
     }
