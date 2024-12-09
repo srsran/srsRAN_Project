@@ -31,6 +31,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ran/tac.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/srslog/srslog.h"
 #include <map>
@@ -661,7 +662,7 @@ struct du_high_unit_base_cell_config {
   /// Human readable full PLMN (without possible filler digit).
   std::string plmn = "00101";
   /// TAC.
-  unsigned tac = 7;
+  tac_t tac = 7;
   /// \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
   int q_rx_lev_min = -70;
   /// \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.

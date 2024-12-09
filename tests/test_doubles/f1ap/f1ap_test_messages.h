@@ -23,6 +23,7 @@
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ran/tac.h"
 
 namespace srsran {
 
@@ -38,7 +39,7 @@ struct served_cell_item_info {
 
   nr_cell_identity   nci      = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value();
   pci_t              pci      = 0;
-  unsigned           tac      = 7;
+  tac_t              tac      = 7;
   nr_band            band     = nr_band::n78;
   uint32_t           nr_arfcn = 626748;
   meas_timing_config meas_timing_cfg;

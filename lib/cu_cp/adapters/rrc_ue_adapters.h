@@ -68,7 +68,7 @@ public:
 
   void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
                                                   const nr_cell_global_id_t& cgi,
-                                                  const unsigned             tac) override
+                                                  const tac_t                tac) override
   {
     srsran_assert(ngap != nullptr, "ue={}: NGAP for not found", ue_index);
     ngap->get_ngap_control_message_handler().handle_inter_cu_ho_rrc_recfg_complete(ue_index, cgi, tac);

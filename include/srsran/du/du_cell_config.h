@@ -18,6 +18,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_configuration.h"
+#include "srsran/ran/tac.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
@@ -179,7 +180,7 @@ struct mac_cell_group_params {
 /// other layers (e.g. scheduler).
 struct du_cell_config {
   pci_t               pci;
-  uint32_t            tac;
+  tac_t               tac;
   nr_cell_global_id_t nr_cgi;
 
   carrier_configuration dl_carrier;

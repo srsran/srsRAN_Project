@@ -26,7 +26,7 @@ struct ngap_broadcast_plmn_item {
 };
 
 struct ngap_supported_ta_item {
-  uint32_t                              tac;
+  tac_t                                 tac;
   std::vector<ngap_broadcast_plmn_item> broadcast_plmn_list;
 };
 

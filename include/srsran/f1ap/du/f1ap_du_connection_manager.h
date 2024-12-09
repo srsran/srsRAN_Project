@@ -18,6 +18,7 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ran/tac.h"
 #include "srsran/support/async/async_task.h"
 #include <optional>
 
@@ -28,7 +29,7 @@ namespace srs_du {
 struct f1_cell_setup_params {
   nr_cell_global_id_t                  nr_cgi;
   pci_t                                pci;
-  uint32_t                             tac;
+  tac_t                                tac;
   duplex_mode                          duplx_mode;
   subcarrier_spacing                   scs_common;
   carrier_configuration                dl_carrier;

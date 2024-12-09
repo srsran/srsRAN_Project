@@ -17,6 +17,7 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/s_nssai.h"
+#include "srsran/ran/tac.h"
 #include <vector>
 
 namespace srsran {
@@ -33,7 +34,7 @@ struct cu_cp_unit_plmn_item {
 };
 
 struct cu_cp_unit_supported_ta_item {
-  unsigned                          tac;
+  tac_t                             tac;
   std::vector<cu_cp_unit_plmn_item> plmn_list;
 };
 

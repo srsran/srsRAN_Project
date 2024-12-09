@@ -24,6 +24,7 @@
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/ran/tac.h"
 #include "srsran/security/security.h"
 #include <string>
 #include <vector>
@@ -1108,7 +1109,7 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_s&          
 /// \param[in] cgi The nr_cell_global_id common type struct of the UE.
 /// \param[in] tac The tac of the UE.
 inline void
-fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_global_id_t& cgi, const unsigned tac)
+fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_global_id_t& cgi, const tac_t tac)
 {
   auto& user_loc_info_nr       = asn1_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi      = nr_cgi_to_ngap_asn1(cgi);

@@ -17,6 +17,7 @@
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/f1ap/cu_cp/f1ap_configuration.h"
+#include "srsran/ran/tac.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/executors/task_executor.h"
@@ -36,7 +37,7 @@ struct plmn_item {
 };
 
 struct supported_tracking_area {
-  unsigned               tac;
+  tac_t                  tac;
   std::vector<plmn_item> plmn_list;
 };
 

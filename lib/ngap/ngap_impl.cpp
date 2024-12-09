@@ -964,7 +964,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
 
 void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
                                                       const nr_cell_global_id_t& cgi,
-                                                      const unsigned             tac)
+                                                      const tac_t                tac)
 {
   if (!ue_ctxt_list.contains(ue_index)) {
     logger.warning("ue={}: Dropping RrcReconfigurationComplete. UE context does not exist", ue_index);

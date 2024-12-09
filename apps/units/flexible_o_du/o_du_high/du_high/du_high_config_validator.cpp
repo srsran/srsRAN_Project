@@ -1031,7 +1031,7 @@ static bool validate_cell_unit_config(const du_high_unit_cell_config& config, bo
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
 static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config, const gnb_id_t& gnb_id, bool ntn)
 {
-  unsigned tac = config[0].cell.tac;
+  tac_t tac = config[0].cell.tac;
   for (const auto& cell : config) {
     if (!validate_cell_unit_config(cell, ntn)) {
       return false;

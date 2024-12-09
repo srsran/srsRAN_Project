@@ -11,6 +11,7 @@
 #include "paging_message_handler.h"
 #include "../du_processor/du_processor_repository.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/tac.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -33,7 +34,7 @@ void paging_message_handler::handle_paging_message(const cu_cp_paging_message& m
   }
 }
 
-static bool is_tac_in_list(span<const cu_cp_tai_list_for_paging_item> tai_list, unsigned tac)
+static bool is_tac_in_list(span<const cu_cp_tai_list_for_paging_item> tai_list, tac_t tac)
 {
   return std::any_of(tai_list.begin(), tai_list.end(), [&tac](const auto& tai) { return tai.tai.tac == tac; });
 }
