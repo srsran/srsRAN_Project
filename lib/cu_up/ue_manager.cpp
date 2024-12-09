@@ -20,7 +20,6 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
   e1ap(dependencies.e1ap),
   f1u_gw(dependencies.f1u_gw),
   ngu_session_mngr(dependencies.ngu_session_mngr),
-  gtpu_tx_notifier(dependencies.gtpu_tx_notifier),
   gtpu_rx_demux(dependencies.gtpu_rx_demux),
   n3_teid_allocator(dependencies.n3_teid_allocator),
   f1u_teid_allocator(dependencies.f1u_teid_allocator),
@@ -80,7 +79,6 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      ngu_session_mngr,
                                                                      n3_teid_allocator,
                                                                      f1u_teid_allocator,
-                                                                     gtpu_tx_notifier,
                                                                      gtpu_rx_demux,
                                                                      gtpu_pcap);
 

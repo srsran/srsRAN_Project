@@ -27,21 +27,20 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    const n3_interface_config&                       n3_config_,
                                                    const cu_up_test_mode_config&                    test_mode_config_,
                                                    cu_up_ue_logger&                                 logger_,
-                                                   unique_timer&                               ue_inactivity_timer_,
-                                                   timer_factory                               ue_dl_timer_factory_,
-                                                   timer_factory                               ue_ul_timer_factory_,
-                                                   timer_factory                               ue_ctrl_timer_factory_,
-                                                   f1u_cu_up_gateway&                          f1u_gw_,
-                                                   ngu_session_manager&                        ngu_session_mngr_,
-                                                   gtpu_teid_pool&                             n3_teid_allocator_,
-                                                   gtpu_teid_pool&                             f1u_teid_allocator_,
-                                                   gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
-                                                   gtpu_demux_ctrl&                            gtpu_rx_demux_,
-                                                   task_executor&                              ue_dl_exec_,
-                                                   task_executor&                              ue_ul_exec_,
-                                                   task_executor&                              ue_ctrl_exec_,
-                                                   task_executor&                              crypto_exec_,
-                                                   dlt_pcap&                                   gtpu_pcap_) :
+                                                   unique_timer&        ue_inactivity_timer_,
+                                                   timer_factory        ue_dl_timer_factory_,
+                                                   timer_factory        ue_ul_timer_factory_,
+                                                   timer_factory        ue_ctrl_timer_factory_,
+                                                   f1u_cu_up_gateway&   f1u_gw_,
+                                                   ngu_session_manager& ngu_session_mngr_,
+                                                   gtpu_teid_pool&      n3_teid_allocator_,
+                                                   gtpu_teid_pool&      f1u_teid_allocator_,
+                                                   gtpu_demux_ctrl&     gtpu_rx_demux_,
+                                                   task_executor&       ue_dl_exec_,
+                                                   task_executor&       ue_ul_exec_,
+                                                   task_executor&       ue_ctrl_exec_,
+                                                   task_executor&       crypto_exec_,
+                                                   dlt_pcap&            gtpu_pcap_) :
   ue_index(ue_index_),
   qos_cfg(std::move(qos_cfg_)),
   security_info(security_info_),
@@ -52,7 +51,6 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_dl_timer_factory(ue_dl_timer_factory_),
   ue_ul_timer_factory(ue_ul_timer_factory_),
   ue_ctrl_timer_factory(ue_ctrl_timer_factory_),
-  gtpu_tx_notifier(gtpu_tx_notifier_),
   n3_teid_allocator(n3_teid_allocator_),
   f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
@@ -105,8 +103,8 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Advertise either local or external IP address of N3 interface
   // TODO select correct GW based on slice or UE info.
-  std::string                 n3_addr;
-  const gtpu_tnl_pdu_session& n3_gw = ngu_session_mngr.get_next_ngu_gateway();
+  std::string           n3_addr;
+  gtpu_tnl_pdu_session& n3_gw = ngu_session_mngr.get_next_ngu_gateway();
   if (not n3_gw.get_bind_address(n3_addr)) {
     report_error("Could not get NG-U bind address to report to core.");
   }
@@ -128,7 +126,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
   msg.cfg.rx.test_mode                 = test_mode_config.enabled;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
-  msg.tx_upper                         = &gtpu_tx_notifier;
+  msg.tx_upper                         = &new_session->gtpu_to_udp_adapter;
   msg.gtpu_pcap                        = &gtpu_pcap;
   msg.ue_dl_timer_factory              = ue_dl_timer_factory;
   new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
@@ -136,6 +134,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   // Connect adapters
   new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
   new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
+  new_session->gtpu_to_udp_adapter.connect_network_gateway(n3_gw);
 
   // Register tunnel at demux
   if (!gtpu_rx_demux.add_tunnel(

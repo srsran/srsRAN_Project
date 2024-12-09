@@ -17,8 +17,8 @@ namespace srsran::srs_cu_up {
 class ngu_session_manager
 {
 public:
-  virtual ~ngu_session_manager()                             = default;
-  virtual const gtpu_tnl_pdu_session& get_next_ngu_gateway() = 0;
+  virtual ~ngu_session_manager()                       = default;
+  virtual gtpu_tnl_pdu_session& get_next_ngu_gateway() = 0;
 };
 
 } // namespace srsran::srs_cu_up

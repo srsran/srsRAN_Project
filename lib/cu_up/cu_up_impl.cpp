@@ -38,17 +38,14 @@ static cu_up_manager_impl_config generate_cu_up_manager_impl_config(const cu_up_
   return {config.qos, config.n3_cfg, config.test_mode_cfg};
 }
 
-static cu_up_manager_impl_dependencies
-generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&     dependencies,
-                                         e1ap_interface&               e1ap,
-                                         gtpu_network_gateway_adapter& gtpu_gw_adapter,
-                                         gtpu_demux&                   ngu_demux,
-                                         ngu_session_manager&          ngu_session_mngr,
-                                         gtpu_teid_pool&               n3_teid_allocator,
-                                         gtpu_teid_pool&               f1u_teid_allocator)
+static cu_up_manager_impl_dependencies generate_cu_up_manager_impl_dependencies(const cu_up_dependencies& dependencies,
+                                                                                e1ap_interface&           e1ap,
+                                                                                gtpu_demux&               ngu_demux,
+                                                                                ngu_session_manager& ngu_session_mngr,
+                                                                                gtpu_teid_pool&      n3_teid_allocator,
+                                                                                gtpu_teid_pool&      f1u_teid_allocator)
 {
   return {e1ap,
-          gtpu_gw_adapter,
           ngu_demux,
           ngu_session_mngr,
           n3_teid_allocator,
@@ -119,14 +116,10 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
                      dependencies.exec_mapper->ctrl_executor());
 
   /// > Create CU-UP manager
-  cu_up_mng = std::make_unique<cu_up_manager_impl>(generate_cu_up_manager_impl_config(cfg),
-                                                   generate_cu_up_manager_impl_dependencies(dependencies,
-                                                                                            *e1ap,
-                                                                                            gtpu_gw_adapter,
-                                                                                            *ngu_demux,
-                                                                                            *ngu_session_mngr,
-                                                                                            *n3_teid_allocator,
-                                                                                            *f1u_teid_allocator));
+  cu_up_mng = std::make_unique<cu_up_manager_impl>(
+      generate_cu_up_manager_impl_config(cfg),
+      generate_cu_up_manager_impl_dependencies(
+          dependencies, *e1ap, *ngu_demux, *ngu_session_mngr, *n3_teid_allocator, *f1u_teid_allocator));
 
   /// > Connect E1AP to CU-UP manager
   e1ap_cu_up_mng_adapter.connect_cu_up_manager(*cu_up_mng);

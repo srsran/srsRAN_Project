@@ -280,7 +280,7 @@ private:
 class dummy_ngu_session_manager final : public srs_cu_up::ngu_session_manager
 {
 public:
-  const gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; };
+  gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; };
 
 private:
   dummy_ngu_gateway ngu_gw;

@@ -20,7 +20,7 @@ ngu_session_manager_impl::ngu_session_manager_impl(const std::vector<std::unique
   srsran_assert(not ngu_gws.empty(), "NG-U gateways cannot be empty");
 }
 
-const gtpu_tnl_pdu_session& ngu_session_manager_impl::get_next_ngu_gateway()
+gtpu_tnl_pdu_session& ngu_session_manager_impl::get_next_ngu_gateway()
 {
   uint32_t index = next_gw % ngu_gws.size();
   next_gw++;

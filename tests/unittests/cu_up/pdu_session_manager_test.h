@@ -60,7 +60,6 @@ protected:
                                                                  *ngu_session_mngr,
                                                                  *n3_allocator,
                                                                  *f1u_allocator,
-                                                                 *gtpu_tx_notifier,
                                                                  *gtpu_rx_demux,
                                                                  teid_worker,
                                                                  teid_worker,
