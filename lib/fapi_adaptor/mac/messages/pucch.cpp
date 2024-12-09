@@ -153,7 +153,7 @@ static void fill_format4_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   builder.set_common_parameters(mac_pdu.format, f4.slot_repetition, f4.pi_2_bpsk);
 
   // Scrambling.
-  builder.set_scrambling_parameters(f4.n_id_scambling);
+  builder.set_scrambling_parameters(f4.n_id_scrambling);
 
   // DM-RS.
   builder.set_dmrs_parameters(f4.additional_dmrs, f4.n_id_0_scrambling, f4.m_0_cyclic_shift);

@@ -337,6 +337,21 @@ struct du_high_unit_pucch_config {
   bool f3_pi2_bpsk = false;
   /// @}
 
+  /// PUCCH F4 resource parameters.
+  /// \defgroup pucch_f4_params
+  /// \brief PUCCH F4 resource parameters.
+  /// @{
+  /// Max code rate for PUCCH Format 4.
+  max_pucch_code_rate f4_max_code_rate = max_pucch_code_rate::dot_35;
+  /// Set true for PUCCH Format 4 intra-slot frequency hopping.
+  bool f4_intraslot_freq_hopping = false;
+  /// Set true for PUCCH Format 4 additional DM-RS.
+  bool f4_additional_dmrs = false;
+  /// Set true to use pi/2-BPSK as the modulation for PUCCH Format 4.
+  bool     f4_pi2_bpsk   = false;
+  unsigned f4_occ_length = 2;
+  /// @}
+
   /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 7}.
   /// [Implementation-defined] As min_k1 is used for both common and dedicated PUCCH configuration, and in the UE
   /// fallback scheduler only allow max k1 = 7, we restrict min_k1 to 7.

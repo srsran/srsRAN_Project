@@ -118,10 +118,10 @@ protected:
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
 
-    srs_du::pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq = 8,
-                                                    .nof_ue_pucch_f2_or_f3_res_harq = 8,
-                                                    .nof_sr_resources               = 8,
-                                                    .nof_csi_resources              = 8};
+    srs_du::pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
+                                                    .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
+                                                    .nof_sr_resources                     = 8,
+                                                    .nof_csi_resources                    = 8};
     auto&                        f1_params = pucch_basic_params.f0_or_f1_params.emplace<srs_du::pucch_f1_params>();
     f1_params.nof_cyc_shifts               = srs_du::nof_cyclic_shifts::twelve;
     f1_params.occ_supported                = true;

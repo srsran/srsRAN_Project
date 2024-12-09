@@ -709,7 +709,7 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_4_pdu()
   pucch.format_4.harq_ack_nof_bits = 100;
   pucch.format_4.sr_bits           = sr_nof_bits::one;
   pucch.format_4.n_id_0_scrambling = 256;
-  pucch.format_4.n_id_scambling    = 382;
+  pucch.format_4.n_id_scrambling   = 382;
   pucch.format_4.n_id_hopping      = 180;
   pucch.format_4.additional_dmrs   = false;
   pucch.format_4.pi_2_bpsk         = true;

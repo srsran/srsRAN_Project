@@ -158,7 +158,7 @@ TEST(mac_fapi_ul_pucch_format4_pdu_conversor_test, ul_pucch_format4_pdu_valid_sh
   const pucch_format_4& f4 = mac_pdu.format_4;
   ASSERT_EQ(static_cast<unsigned>(f4.max_code_rate), fapi_pdu.pucch_maintenance_v3.max_code_rate);
   ASSERT_EQ(f4.n_id_0_scrambling, fapi_pdu.nid0_pucch_dmrs_scrambling);
-  ASSERT_EQ(f4.n_id_scambling, fapi_pdu.nid_pucch_scrambling);
+  ASSERT_EQ(f4.n_id_scrambling, fapi_pdu.nid_pucch_scrambling);
   ASSERT_EQ(f4.n_id_hopping, fapi_pdu.nid_pucch_hopping);
   ASSERT_EQ(static_cast<unsigned>(f4.sr_bits), fapi_pdu.sr_bit_len);
   ASSERT_EQ(f4.harq_ack_nof_bits, fapi_pdu.bit_len_harq);

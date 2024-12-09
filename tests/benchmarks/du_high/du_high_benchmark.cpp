@@ -599,11 +599,11 @@ public:
     dependencies.sched_ue_metrics_notifier = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
-    cfg.ran.cells[0].pucch_cfg.nof_sr_resources               = 30;
-    cfg.ran.cells[0].pucch_cfg.nof_csi_resources              = 30;
-    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f2_or_f3_res_harq = 8;
-    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = 8;
-    cfg.ran.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets   = 4;
+    cfg.ran.cells[0].pucch_cfg.nof_sr_resources                     = 30;
+    cfg.ran.cells[0].pucch_cfg.nof_csi_resources                    = 30;
+    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8;
+    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = 8;
+    cfg.ran.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets         = 4;
     auto& f1_params                             = cfg.ran.cells[0].pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
     f1_params.nof_cyc_shifts                    = nof_cyclic_shifts::six;
     f1_params.occ_supported                     = true;

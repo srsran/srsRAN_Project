@@ -400,13 +400,14 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   const du_high_unit_pucch_config& pucch_cfg = config.pucch_cfg;
   if (not config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources > 0) {
     fmt::print(
-        "Number of PUCCH Format 2/3 cell resources for CSI must be zero when CSI-RS and CSI report are disabled.\n");
+        "Number of PUCCH Format 2/3/4 cell resources for CSI must be zero when CSI-RS and CSI report are disabled.\n");
     return false;
   }
 
   if (config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources == 0) {
-    fmt::print("Number of PUCCH Format 2/3 cell resources for CSI must be greater than 0 when CSI-RS and CSI report "
-               "are enabled.\n");
+    fmt::print(
+        "Number of PUCCH Format 2/3/4 cell resources for CSI must be greater than 0 when CSI-RS and CSI report are "
+        "enabled.\n");
     return false;
   }
 
@@ -440,7 +441,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   }
 
   // We need to count pucch_cfg.nof_ue_pucch_res_harq_per_set twice, as we have 2 sets of PUCCH resources for HARQ-ACK
-  // (PUCCH Resource Set Id 0 with Format 0/1 and PUCCH Resource Set Id 1 with Format 2/3).
+  // (PUCCH Resource Set Id 0 with Format 0/1 and PUCCH Resource Set Id 1 with Format 2/3/4).
   if (pucch_cfg.nof_ue_pucch_res_harq_per_set * 2U * pucch_cfg.nof_cell_harq_pucch_sets +
           pucch_cfg.nof_cell_sr_resources + pucch_cfg.nof_cell_csi_resources >
       pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
@@ -533,6 +534,18 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
           f3_max_rbs;
       // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
       if (pucch_cfg.f3_intraslot_freq_hopping) {
+        nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
+      }
+    } break;
+    case 4: {
+      // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F4, we use all
+      // symbols available for PUCCH within a slot.
+      const unsigned pucch_f4_nof_symbols = max_nof_pucch_symbols;
+      const unsigned nof_f4_blocks        = max_nof_pucch_symbols / pucch_f4_nof_symbols;
+      nof_f2_f3_f4_rbs =
+          static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f2_f3_f4) / static_cast<float>(nof_f4_blocks)));
+      // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
+      if (pucch_cfg.f4_intraslot_freq_hopping) {
         nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
       }
     } break;

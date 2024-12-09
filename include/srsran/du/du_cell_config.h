@@ -80,6 +80,16 @@ struct pucch_f3_params {
   bool                    pi2_bpsk{false};
 };
 
+/// Collects the parameters for PUCCH Format 4 that can be configured.
+struct pucch_f4_params {
+  bounded_integer<unsigned, 4, 14> nof_symbols{14};
+  max_pucch_code_rate              max_code_rate{max_pucch_code_rate::dot_25};
+  bool                             intraslot_freq_hopping{false};
+  bool                             additional_dmrs{false};
+  bool                             pi2_bpsk{false};
+  pucch_f4_occ_len                 occ_length{pucch_f4_occ_len::n2};
+};
+
 /// \brief Parameters for PUCCH configuration.
 /// Defines the parameters that are used for the PUCCH configuration builder. These parameters are used to define the
 /// number of PUCCH resources, as well as the PUCCH format-specific parameters.
@@ -87,9 +97,9 @@ struct pucch_builder_params {
   /// UE specific parameters. Use to set the number of resources per UE for HARQ-ACK reporting (not including SR/CSI
   /// dedicated resources). NOTE: by default, each UE is assigned 1 SR and 1 CSI resource.
   /// \remark Format 0 and Format 1 resources are mutually exclusive.
-  /// \remark Format 2 and Format 3 resources are mutually exclusive.
-  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_or_f1_res_harq = 6;
-  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_or_f3_res_harq = 6;
+  /// \remark Format 2 and Format 3 and Format 4 resources are mutually exclusive.
+  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_or_f1_res_harq       = 6;
+  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
   /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
   /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of resources.
@@ -98,14 +108,14 @@ struct pucch_builder_params {
   /// Defines how many PUCCH F0 or F1 resources should be dedicated for SR at cell level; each UE will be allocated 1
   /// resource for SR.
   unsigned nof_sr_resources = 2;
-  /// Defines how many PUCCH F2 or F3 resources should be dedicated for CSI at cell level; each UE will be allocated 1
-  /// resource for CSI.
+  /// Defines how many PUCCH F2 or F3 or F4 resources should be dedicated for CSI at cell level; each UE will be
+  /// allocated 1 resource for CSI.
   unsigned nof_csi_resources = 1;
 
   /// PUCCH Format specific parameters.
   // NOTE: Having \c pucch_f1_params first forces the variant to use the Format 1 in the default constructor.
-  std::variant<pucch_f1_params, pucch_f0_params> f0_or_f1_params;
-  std::variant<pucch_f2_params, pucch_f3_params> f2_or_f3_params;
+  std::variant<pucch_f1_params, pucch_f0_params>                  f0_or_f1_params;
+  std::variant<pucch_f2_params, pucch_f3_params, pucch_f4_params> f2_or_f3_or_f4_params;
   /// Maximum number of symbols per UL slot dedicated for PUCCH.
   /// \remark In case of Sounding Reference Signals (SRS) being used, the number of symbols should be reduced so that
   /// the PUCCH resources do not overlap in symbols with the SRS resources.

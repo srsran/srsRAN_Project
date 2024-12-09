@@ -13,6 +13,7 @@
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/support/error_handling.h"
 #include <cstdint>
+#include <optional>
 
 namespace srsran {
 

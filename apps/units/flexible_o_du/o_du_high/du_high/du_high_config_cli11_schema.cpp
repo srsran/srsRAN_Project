@@ -824,6 +824,27 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
 
 static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config& pucch_params)
 {
+  // Lambda function to map the argument values to max_pucch_code_rate values.
+  auto map_max_code_rate = [](max_pucch_code_rate& max_code_rate) {
+    return [&max_code_rate](const std::string& value) {
+      if (value == "dot08") {
+        max_code_rate = max_pucch_code_rate::dot_08;
+      } else if (value == "dot15") {
+        max_code_rate = max_pucch_code_rate::dot_15;
+      } else if (value == "dot25") {
+        max_code_rate = max_pucch_code_rate::dot_25;
+      } else if (value == "dot35") {
+        max_code_rate = max_pucch_code_rate::dot_35;
+      } else if (value == "dot45") {
+        max_code_rate = max_pucch_code_rate::dot_45;
+      } else if (value == "dot60") {
+        max_code_rate = max_pucch_code_rate::dot_60;
+      } else if (value == "dot80") {
+        max_code_rate = max_pucch_code_rate::dot_80;
+      }
+    };
+  };
+
   add_option(app,
              "--p0_nominal",
              pucch_params.p0_nominal,
@@ -909,23 +930,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option_function<std::string>(
       app,
       "--f2_max_code_rate",
-      [&pucch_params](const std::string& value) {
-        if (value == "dot08") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_08;
-        } else if (value == "dot15") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_15;
-        } else if (value == "dot25") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_25;
-        } else if (value == "dot35") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_35;
-        } else if (value == "dot45") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_45;
-        } else if (value == "dot60") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_60;
-        } else if (value == "dot80") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_80;
-        }
-      },
+      map_max_code_rate(pucch_params.f2_max_code_rate),
       "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
       ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
   add_option(app,
@@ -942,23 +947,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option_function<std::string>(
       app,
       "--f3_max_code_rate",
-      [&pucch_params](const std::string& value) {
-        if (value == "dot08") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_08;
-        } else if (value == "dot15") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_15;
-        } else if (value == "dot25") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_25;
-        } else if (value == "dot35") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_35;
-        } else if (value == "dot45") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_45;
-        } else if (value == "dot60") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_60;
-        } else if (value == "dot80") {
-          pucch_params.f2_max_code_rate = max_pucch_code_rate::dot_80;
-        }
-      },
+      map_max_code_rate(pucch_params.f3_max_code_rate),
       "PUCCH F3 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
       ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
   add_option(app,
@@ -970,6 +959,24 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->capture_default_str();
   add_option(app, "--f3_pi2_bpsk", pucch_params.f3_pi2_bpsk, "Enable pi/2-BPSK modulation for PUCCH F3")
       ->capture_default_str();
+  add_option_function<std::string>(
+      app,
+      "--f4_max_code_rate",
+      map_max_code_rate(pucch_params.f3_max_code_rate),
+      "PUCCH F4 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
+      ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
+  add_option(app,
+             "--f4_intraslot_freq_hop",
+             pucch_params.f4_intraslot_freq_hopping,
+             "Enable intra-slot frequency hopping for PUCCH F4")
+      ->capture_default_str();
+  add_option(app, "--f4_additional_dmrs", pucch_params.f4_additional_dmrs, "Enable additional DM-RS for PUCCH F4")
+      ->capture_default_str();
+  add_option(app, "--f4_pi2_bpsk", pucch_params.f4_pi2_bpsk, "Enable pi/2-BPSK modulation for PUCCH F4")
+      ->capture_default_str();
+  add_option(app, "--f4_occ_length", pucch_params.f4_occ_length, "OCC length for PUCCH F4")
+      ->capture_default_str()
+      ->check(CLI::IsMember({2, 4}));
   add_option(app,
              "--min_k1",
              pucch_params.min_k1,
@@ -1373,8 +1380,8 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   configure_cli11_prach_args(*prach_subcmd, cell_params.prach_cfg);
 
   // TDD UL DL configuration.
-  // NOTE: As the cell TDD pattern can be configured in the common cell and not in the cell, use a different variable to
-  // parse the cell TDD property. If the TDD pattern is present for the cell, update the cell TDD pattern value,
+  // NOTE: As the cell TDD pattern can be configured in the common cell and not in the cell, use a different variable
+  // to parse the cell TDD property. If the TDD pattern is present for the cell, update the cell TDD pattern value,
   // otherwise do nothing (this will cause that the cell TDD pattern value equals than the common cell TDD pattern).
   // CLI11 needs that the life of the variable last longer than the call of callback function. Therefore, the
   // cell_tdd_pattern variable needs to be static.

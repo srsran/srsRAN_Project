@@ -182,3 +182,49 @@ unsigned srsran::get_pucch_format3_max_payload(unsigned max_nof_prbs,
   const unsigned     nof_crc_bits    = get_uci_nof_crc_bits(estimated_pucch_f3_capacity - long_crc_length, e_uci);
   return std::min(estimated_pucch_f3_capacity - long_crc_length, estimated_pucch_f3_capacity - nof_crc_bits);
 }
+
+unsigned srsran::get_pucch_format4_max_payload(unsigned         nof_symbols,
+                                               float            max_code_rate,
+                                               bool             intraslot_freq_hopping,
+                                               bool             additional_dmrs,
+                                               bool             pi2_bpsk,
+                                               pucch_f4_occ_len occ_length)
+{
+  const unsigned nof_dmrs_symbols =
+      get_pucch_format3_4_nof_dmrs_symbols(nof_symbols, intraslot_freq_hopping, additional_dmrs);
+  const unsigned mod_order        = pi2_bpsk ? 1 : 2;
+  const float    spreading_factor = occ_length == pucch_f4_occ_len::n2 ? 2.0f : 4.0f;
+
+  // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.1, TS 38.213; the
+  // max payloads is obtained by using the floor operation from the maximum PHY capacity, given the PRBs, symbols and
+  // max_code_rate.
+  // NOTE: The maximum number of bits that can be carried by a PUCCH Format 4 resource is 115, which is obtained for 14
+  // symbols, a spreading factor of 2, QPSK, no additional DM-RS and 0.8 max code rate.
+  const unsigned estimated_pucch_f4_capacity = static_cast<unsigned>(std::floor(
+      static_cast<float>((nof_symbols - nof_dmrs_symbols) * NRE * mod_order) * max_code_rate / spreading_factor));
+
+  // Get the payload depending on the estimated PUCCH F4 capacity (which we define as the nof bits that the PUCCH F4 can
+  // carry).
+  // NOTE: Given the max capacity of PUCCH, which is 144 bits (see above), the UCI in PUCCH F4 can have max 1 codeword
+  // (as per Section 6.3.1.2.1, TS 38.212); this implies only 6-bit and 11-bit can be added as CRC to the PUCCH F4
+  // payload.
+
+  // Case: no CRC for payload <= 11 bits.
+  constexpr unsigned min_capacity_for_more_than_11_bit_payload = 18U;
+  constexpr unsigned max_payload_without_crc_addition          = 11U;
+  if (estimated_pucch_f4_capacity < min_capacity_for_more_than_11_bit_payload) {
+    return std::min(estimated_pucch_f4_capacity, max_payload_without_crc_addition);
+  }
+
+  // Case: 6-bit CRC for 12 <= payload <= 19 bits.
+  constexpr unsigned min_capacity_for_more_than_19_bit_payload = 31U;
+  constexpr unsigned max_payload_with_6_bit_crc_addition       = 19U;
+  constexpr unsigned short_crc_length                          = 6U;
+  if (estimated_pucch_f4_capacity < min_capacity_for_more_than_19_bit_payload) {
+    return std::min(estimated_pucch_f4_capacity - short_crc_length, max_payload_with_6_bit_crc_addition);
+  }
+
+  // Case: 11-bit CRC for payload >= 20.
+  const unsigned long_crc_length = 11U;
+  return estimated_pucch_f4_capacity - long_crc_length;
+}

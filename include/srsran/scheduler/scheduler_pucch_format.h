@@ -118,7 +118,7 @@ struct pucch_format_4 {
   unsigned                 harq_ack_nof_bits;
   unsigned                 csi_part1_bits;
   pucch_repetition_tx_slot slot_repetition;
-  uint16_t                 n_id_scambling;
+  uint16_t                 n_id_scrambling;
   bool                     pi_2_bpsk;
   max_pucch_code_rate      max_code_rate;
   /// \c occ-Index as per TS 38.331, or equivalent to index \f$n\f$ in Tables 6.3.2.6.3-1/2, TS 38.211. Only for PUCCH

@@ -80,12 +80,12 @@ public:
     next_sl_tx(builder_params.scs_common, 0)
   {
     du_cell_cfgs = {config_helpers::make_default_du_cell_config(builder_params)};
-    std::get<srs_du::pucch_f2_params>(du_cell_cfgs[0].pucch_cfg.f2_or_f3_params).max_code_rate =
+    std::get<srs_du::pucch_f2_params>(du_cell_cfgs[0].pucch_cfg.f2_or_f3_or_f4_params).max_code_rate =
         max_pucch_code_rate::dot_35;
-    du_cell_cfgs[0].pucch_cfg.nof_csi_resources              = 4;
-    du_cell_cfgs[0].pucch_cfg.nof_sr_resources               = 2;
-    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = 3;
-    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f2_or_f3_res_harq = 6;
+    du_cell_cfgs[0].pucch_cfg.nof_csi_resources                    = 4;
+    du_cell_cfgs[0].pucch_cfg.nof_sr_resources                     = 2;
+    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = 3;
+    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
 
     sched_cell_configuration_request_message cell_cfg_msg =
         sched_config_helper::make_default_sched_cell_configuration_request(builder_params);

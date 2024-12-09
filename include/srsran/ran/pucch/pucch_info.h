@@ -13,6 +13,7 @@
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/to_array.h"
 #include "srsran/phy/constants.h"
+#include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/uci/uci_info.h"
 
@@ -45,7 +46,6 @@ inline float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, uns
 {
   // As per Table 6.3.1.4.1-1, TS 38.212, for UCI of transmissions of CSI of one part only,
   // \f$E_{UCI}\f$ = \f$E_{tot}\f$.
-  // TODO: replace this with a function that returns the e_uci for the general case.
   const unsigned e_uci = get_pucch_format2_E_total(nof_prb, nof_symbols);
 
   // As per Sections 6.3.1.2.1 and 6.3.1.4.1, TS 38.212, the parameter \f$E\f$ used to derive the number of
@@ -148,9 +148,9 @@ get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, uns
 }
 
 /// \brief Calculates the maximum payload for a PUCCH Format 2 transmission.
-/// \param[in] max_nof_prbs        Transmission bandwidth in PRBs.
-/// \param[in] nof_symbols    Transmission duration in symbols.
-/// \param[in] max_code_rate  Maximum allowed PUCCH Format 2 code rate.
+/// \param[in] max_nof_prbs  Transmission bandwidth in PRBs.
+/// \param[in] nof_symbols   Transmission duration in symbols.
+/// \param[in] max_code_rate Maximum allowed PUCCH Format 2 code rate.
 /// \return The maximum payload for a PUCCH Format 2 transmission.
 unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate);
 
@@ -207,6 +207,21 @@ unsigned get_pucch_format3_max_payload(unsigned max_nof_prbs,
                                        bool     intraslot_freq_hopping,
                                        bool     additional_dmrs,
                                        bool     pi2_bpsk);
+
+/// \brief Calculates the maximum payload for a PUCCH Format 4 transmission.
+/// \param[in] nof_symbols            Transmission duration in symbols.
+/// \param[in] max_code_rate          Maximum allowed PUCCH Format 4 code rate.
+/// \param[in] intraslot_freq_hopping Flag indicating if intra slot frequency hopping is enabled.
+/// \param[in] additional_dmrs        Flag indicating if additional DM-RS is enabled.
+/// \param[in] pi2_bpsk               Flag indicating if intra slot frequency hopping is enabled.
+/// \param[in] occ_length             OCC length.
+/// \return The maximum payload for a PUCCH Format 4 transmission.
+unsigned get_pucch_format4_max_payload(unsigned         nof_symbols,
+                                       float            max_code_rate,
+                                       bool             intraslot_freq_hopping,
+                                       bool             additional_dmrs,
+                                       bool             pi2_bpsk,
+                                       pucch_f4_occ_len occ_length);
 
 /// Returns the number of possible spreading factors which is a function of the number of symbols.
 inline unsigned format1_symb_to_spreading_factor(bounded_integer<unsigned, 4, 14> f1_symbols)
