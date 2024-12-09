@@ -325,7 +325,9 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
   delay_prio = std::min(delay_prio, delay_prio_bitmask);
 
   // Round-robin across slices with the same slice and delay priorities.
-  priority_type rr_prio = ((inst.id.value() + current_slot_count) % nof_slices) & ((1U << rr_bitsize) - 1U);
+  float          rbs_per_slot = is_dl ? inst.average_pdsch_rbs_per_slot() : inst.average_pusch_rbs_per_slot();
+  const unsigned rr_prio_max  = (1U << rr_bitsize) - 1U;
+  priority_type  rr_prio      = rr_prio_max - std::min((unsigned)std::round(rbs_per_slot), rr_prio_max);
 
   return (slot_dist << (delay_prio_bitsize + rr_bitsize + slice_prio_bitsize)) +
          (slice_prio << (delay_prio_bitsize + rr_bitsize)) + (delay_prio << rr_bitsize) + rr_prio;

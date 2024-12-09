@@ -25,12 +25,19 @@ ran_slice_instance::ran_slice_instance(ran_slice_id_t                 id_,
 
 void ran_slice_instance::slot_indication(slot_point slot_tx)
 {
+  static constexpr float exp_avg_coeff = 0.1;
+  avg_pdsch_rbs_per_slot += exp_avg_coeff * (static_cast<float>(pdsch_rb_count) - avg_pdsch_rbs_per_slot);
   pdsch_rb_count = 0;
-  // Clear RB count in previous slots.
+
+  // Clear PUSCH RB count in previous slots.
   // NOTE: RB count in \c nof_slots_to_clear number of slots are cleared because \c slot_indication() is called only
   // during DL slots.
   for (unsigned count = 0; count < nof_slots_to_clear; ++count) {
-    pusch_rb_count_per_slot[(slot_tx - 1 - count).to_uint() % pusch_rb_count_per_slot.size()] = 0;
+    slot_point old_slot = slot_tx - (nof_slots_to_clear - count);
+    unsigned   idx      = old_slot.to_uint() % pusch_rb_count_per_slot.size();
+    avg_pusch_rbs_per_slot +=
+        exp_avg_coeff * (static_cast<float>(pusch_rb_count_per_slot[idx]) - avg_pusch_rbs_per_slot);
+    pusch_rb_count_per_slot[idx] = 0;
   }
 
   // Reset last alloc slot if the difference becomes too large, to avoid ambiguity.
