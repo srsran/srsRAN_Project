@@ -127,7 +127,7 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
     // in the fallback scheduler, the RLC buffer state update can only be 0.
     // For SRB1, due to the segmentation, we need to update the internal SRB1 buffer state.
     else if (not is_srb0) {
-      update_srb1_buffer_after_rlc_bsu(ue_index, sl, srb_buffer_bytes);
+      ue_it->pending_srb1_buffer_bytes = update_srb1_buffer_after_rlc_bsu(ue_index, sl, srb_buffer_bytes);
     }
     return;
   }
@@ -1379,36 +1379,30 @@ void ue_fallback_scheduler::update_srb1_buffer_state_after_alloc(du_ue_index_t u
   }
 }
 
-void ue_fallback_scheduler::update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_idx,
-                                                             slot_point    sl,
-                                                             unsigned      buffer_status_report)
+unsigned ue_fallback_scheduler::update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_idx,
+                                                                 slot_point    sl,
+                                                                 unsigned      dl_rlc_bo_update) const
 {
-  // Retrieve the UE from the list of UEs that need to be scheduled.
-  auto ue_it =
-      std::find_if(pending_dl_ues_new_tx.begin(), pending_dl_ues_new_tx.end(), [ue_idx](const fallback_ue& ue) {
-        return ue.ue_index == ue_idx and ue.is_srb0.has_value() and not ue.is_srb0.value();
-      });
-  if (ue_it == pending_dl_ues_new_tx.end() or not ues.contains(ue_idx)) {
-    return;
-  }
+  unsigned srb1_buffer_bytes = dl_rlc_bo_update;
 
-  unsigned srb1_buffer_bytes = buffer_status_report;
-
-  // Remove the LCID-1 bytes that are already scheduled for future new transmissions, but yet to be transmitted, from
-  // the RLC buffer state update received from upper layers.
-  for (auto& ack_tracker : ongoing_ues_ack_retxs) {
-    if (ack_tracker.ue_index != ue_idx or not ack_tracker.is_srb0.has_value() or
-        (ack_tracker.is_srb0.has_value() and ack_tracker.is_srb0.value())) {
-      continue;
-    }
-    if (ack_tracker.h_dl->is_waiting_ack() and ack_tracker.h_dl->pdsch_slot() >= sl and
-        ack_tracker.h_dl->nof_retxs() == 0) {
-      unsigned tx_ed_bytes = ack_tracker.srb1_payload_bytes;
-      srb1_buffer_bytes    = srb1_buffer_bytes > tx_ed_bytes ? srb1_buffer_bytes - tx_ed_bytes : 0;
+  // Subtract the LCID1 bytes that are scheduled but not yet transmitted.
+  auto& u        = ues[ue_idx];
+  auto& ue_pcell = u.get_pcell();
+  for (unsigned i = 0, e = ue_pcell.harqs.nof_dl_harqs(); i < e; ++i) {
+    auto h_dl = ue_pcell.harqs.dl_harq(to_harq_id(i));
+    if (h_dl.has_value() and h_dl->is_waiting_ack() and h_dl->pdsch_slot() >= sl and h_dl->nof_retxs() == 0) {
+      for (const auto& lc : h_dl->get_grant_params().lc_sched_info) {
+        if (lc.lcid.to_lcid() == LCID_SRB1) {
+          srb1_buffer_bytes -= std::min(srb1_buffer_bytes, lc.sched_bytes.value());
+          if (srb1_buffer_bytes == 0) {
+            return 0;
+          }
+        }
+      }
     }
   }
 
-  ue_it->pending_srb1_buffer_bytes = srb1_buffer_bytes;
+  return srb1_buffer_bytes;
 }
 
 void ue_fallback_scheduler::slot_indication(slot_point sl)

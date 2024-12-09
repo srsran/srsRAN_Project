@@ -238,7 +238,7 @@ private:
   // \param[in] sl Slot at which the Buffer State Update was received.
   // \param[in] buffer_status_report Number of pending LCID 1 bytes reported by the RLC buffer state update (only LCID 1
   // bytes, without any overhead).
-  void update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_idx, slot_point sl, unsigned buffer_status_report);
+  unsigned update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_idx, slot_point sl, unsigned dl_rlc_bo_update) const;
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
