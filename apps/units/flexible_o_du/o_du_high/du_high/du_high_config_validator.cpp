@@ -394,7 +394,8 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config& config,
                                             subcarrier_spacing                   scs_common,
-                                            unsigned                             nof_crbs)
+                                            unsigned                             nof_crbs,
+                                            bool                                 ntn)
 {
   const du_high_unit_pucch_config& pucch_cfg = config.pucch_cfg;
   if (not config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources > 0) {
@@ -426,14 +427,16 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                get_nof_slots_per_subframe(scs_common));
     return false;
   }
-  span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
-  if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
-      valid_sr_period_slots.end()) {
-    fmt::print("SR period of {}ms (i.e. {} slots) is not valid for {}kHz SCS.\n",
-               pucch_cfg.sr_period_msec,
-               sr_period_slots,
-               scs_to_khz(scs_common));
-    return false;
+  if (!ntn) {
+    span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
+    if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
+        valid_sr_period_slots.end()) {
+      fmt::print("SR period of {}ms (i.e. {} slots) is not valid for {}kHz SCS.\n",
+                 pucch_cfg.sr_period_msec,
+                 sr_period_slots,
+                 scs_to_khz(scs_common));
+      return false;
+    }
   }
 
   // We need to count pucch_cfg.nof_ue_pucch_res_harq_per_set twice, as we have 2 sets of PUCCH resources for HARQ-ACK
@@ -909,7 +912,7 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
 }
 
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
-static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config)
+static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config, bool ntn)
 {
   if (config.pci >= INVALID_PCI) {
     fmt::print("Invalid PCI (i.e. {}). PCI ranges from 0 to {}.\n", config.pci, MAX_PCI);
@@ -972,7 +975,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs)) {
+  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs, ntn)) {
     return false;
   }
 
@@ -1007,17 +1010,17 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   return true;
 }
 
-static bool validate_cell_unit_config(const du_high_unit_cell_config& config)
+static bool validate_cell_unit_config(const du_high_unit_cell_config& config, bool ntn)
 {
-  return validate_base_cell_unit_config(config.cell);
+  return validate_base_cell_unit_config(config.cell, ntn);
 }
 
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
-static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config, const gnb_id_t& gnb_id)
+static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config, const gnb_id_t& gnb_id, bool ntn)
 {
   unsigned tac = config[0].cell.tac;
   for (const auto& cell : config) {
-    if (!validate_cell_unit_config(cell)) {
+    if (!validate_cell_unit_config(cell, ntn)) {
       return false;
     }
     if (cell.cell.tac != tac) {
@@ -1336,7 +1339,13 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
 
 bool srsran::validate_du_high_config(const du_high_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
 {
-  if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id)) {
+  bool ntn = false;
+  if (config.ntn_cfg.has_value()) {
+    if (config.ntn_cfg.has_value()) {
+      ntn = true;
+    }
+  }
+  if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id, ntn)) {
     return false;
   }
 
