@@ -36,7 +36,7 @@ constexpr size_t MAX_NOF_UE_PUCCH_RESOURCES = 128;
 constexpr size_t MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET = 32;
 
 /// Options for \c occ-Length in \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
-enum class pucch_f4_occ_len { n2, n4 };
+enum class pucch_f4_occ_len { n2 = 2, n4 = 4 };
 
 /// Options for \c occ-Index in \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
 enum class pucch_f4_occ_idx { n0, n1, n2, n3 };

@@ -98,7 +98,7 @@ std::ostream& operator<<(std::ostream& os, const pucch_gen_params& params)
         params.f4_intraslot_freq_hopping,
         params.f4_additional_dmrs,
         params.f4_pi2_bpsk,
-        params.f4_occ_length == pucch_f4_occ_len::n2 ? 2 : 4);
+        static_cast<unsigned>(params.f4_occ_length));
   }
   fmt::print(os, "{} {}", f0_f1_str, f2_f3_f4_str);
 
@@ -163,22 +163,25 @@ public:
       if (res.second_hop_prb.has_value()) {
         srsran_assert(res_f0.nof_symbols == 2U, "Intra-slot freq. hopping for PUCCH Format 0 requires 2 symbols");
         // First hop.
-        for (unsigned sym_idx = res_f0.starting_sym_idx; sym_idx < res_f0.starting_sym_idx + res_f0.nof_symbols / 2;
+        for (unsigned sym_idx = res_f0.starting_sym_idx, sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols / 2;
+             sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem        = grid[sym_idx + nof_symbols * res.starting_prb];
           grid_elem.format       = pucch_format::FORMAT_0;
           grid_elem.element_used = true;
         }
         // Second hop.
-        for (unsigned sym_idx = res_f0.starting_sym_idx + res_f0.nof_symbols / 2;
-             sym_idx < res_f0.starting_sym_idx + res_f0.nof_symbols;
+        for (unsigned sym_idx  = res_f0.starting_sym_idx + res_f0.nof_symbols / 2,
+                      sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols;
+             sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem        = grid[sym_idx + nof_symbols * res.second_hop_prb.value()];
           grid_elem.format       = pucch_format::FORMAT_0;
           grid_elem.element_used = true;
         }
       } else {
-        for (unsigned sym_idx = res_f0.starting_sym_idx; sym_idx < res_f0.starting_sym_idx + res_f0.nof_symbols;
+        for (unsigned sym_idx = res_f0.starting_sym_idx, sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols;
+             sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem        = grid[sym_idx + nof_symbols * res.starting_prb];
           grid_elem.format       = pucch_format::FORMAT_0;
@@ -192,7 +195,8 @@ public:
 
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned sym_idx = res_f1.starting_sym_idx; sym_idx < res_f1.starting_sym_idx + res_f1.nof_symbols / 2;
+        for (unsigned sym_idx = res_f1.starting_sym_idx, sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols / 2;
+             sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem           = grid[sym_idx + nof_symbols * res.starting_prb];
           grid_elem.format          = pucch_format::FORMAT_1;
@@ -203,8 +207,9 @@ public:
           grid_elem.allocated_occ_cs_list[occ_cs_idx] = true;
         }
         // Second hop.
-        for (unsigned sym_idx = res_f1.starting_sym_idx + res_f1.nof_symbols / 2;
-             sym_idx < res_f1.starting_sym_idx + res_f1.nof_symbols;
+        for (unsigned sym_idx  = res_f1.starting_sym_idx + res_f1.nof_symbols / 2,
+                      sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols;
+             sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem           = grid[sym_idx + nof_symbols * res.second_hop_prb.value()];
           grid_elem.format          = pucch_format::FORMAT_1;
@@ -215,7 +220,8 @@ public:
           grid_elem.allocated_occ_cs_list[occ_cs_idx] = true;
         }
       } else {
-        for (unsigned sym_idx = res_f1.starting_sym_idx; sym_idx < res_f1.starting_sym_idx + res_f1.nof_symbols;
+        for (unsigned sym_idx = res_f1.starting_sym_idx, sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols;
+             sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem           = grid[sym_idx + nof_symbols * res.starting_prb];
           grid_elem.format          = pucch_format::FORMAT_1;
@@ -233,8 +239,10 @@ public:
       if (res.second_hop_prb.has_value()) {
         srsran_assert(res_f2.nof_symbols == 2U, "Intra-slot freq. hopping for PUCCH Format 0 requires 2 symbols");
         // First hop.
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + res_f2.nof_prbs; ++rb_idx) {
-          for (unsigned sym_idx = res_f2.starting_sym_idx; sym_idx < res_f2.starting_sym_idx + res_f2.nof_symbols / 2;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f2.nof_prbs; rb_idx != rb_stop;
+             ++rb_idx) {
+          for (unsigned sym_idx = res_f2.starting_sym_idx, sym_stop = res_f2.starting_sym_idx + res_f2.nof_symbols / 2;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -242,10 +250,12 @@ public:
           }
         }
         // Second hop.
-        for (unsigned rb_idx = res.second_hop_prb.value(); rb_idx < res.second_hop_prb.value() + res_f2.nof_prbs;
+        for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + res_f2.nof_prbs;
+             rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx = res_f2.starting_sym_idx + res_f2.nof_symbols / 2;
-               sym_idx < res_f2.starting_sym_idx + res_f2.nof_symbols;
+          for (unsigned sym_idx  = res_f2.starting_sym_idx + res_f2.nof_symbols / 2,
+                        sym_stop = res_f2.starting_sym_idx + res_f2.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -253,8 +263,10 @@ public:
           }
         }
       } else {
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + res_f2.nof_prbs; ++rb_idx) {
-          for (unsigned sym_idx = res_f2.starting_sym_idx; sym_idx < res_f2.starting_sym_idx + res_f2.nof_symbols;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f2.nof_prbs; rb_idx != rb_stop;
+             ++rb_idx) {
+          for (unsigned sym_idx = res_f2.starting_sym_idx, sym_stop = res_f2.starting_sym_idx + res_f2.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -268,8 +280,10 @@ public:
 
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + res_f3.nof_prbs; ++rb_idx) {
-          for (unsigned sym_idx = res_f3.starting_sym_idx; sym_idx < res_f3.starting_sym_idx + res_f3.nof_symbols / 2;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f3.nof_prbs; rb_idx != rb_stop;
+             ++rb_idx) {
+          for (unsigned sym_idx = res_f3.starting_sym_idx, sym_stop = res_f3.starting_sym_idx + res_f3.nof_symbols / 2;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -277,10 +291,12 @@ public:
           }
         }
         // Second hop.
-        for (unsigned rb_idx = res.second_hop_prb.value(); rb_idx < res.second_hop_prb.value() + res_f3.nof_prbs;
+        for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + res_f3.nof_prbs;
+             rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx = res_f3.starting_sym_idx + res_f3.nof_symbols / 2;
-               sym_idx < res_f3.starting_sym_idx + res_f3.nof_symbols;
+          for (unsigned sym_idx  = res_f3.starting_sym_idx + res_f3.nof_symbols / 2,
+                        sym_stop = res_f3.starting_sym_idx + res_f3.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -288,8 +304,10 @@ public:
           }
         }
       } else {
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + res_f3.nof_prbs; ++rb_idx) {
-          for (unsigned sym_idx = res_f3.starting_sym_idx; sym_idx < res_f3.starting_sym_idx + res_f3.nof_symbols;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f3.nof_prbs; rb_idx != rb_stop;
+             ++rb_idx) {
+          for (unsigned sym_idx = res_f3.starting_sym_idx, sym_stop = res_f3.starting_sym_idx + res_f3.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -303,8 +321,9 @@ public:
 
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + 1; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx; sym_idx < res_f4.starting_sym_idx + res_f4.nof_symbols / 2;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + 1; rb_idx != rb_stop; ++rb_idx) {
+          for (unsigned sym_idx = res_f4.starting_sym_idx, sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols / 2;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -312,9 +331,11 @@ public:
           }
         }
         // Second hop.
-        for (unsigned rb_idx = res.second_hop_prb.value(); rb_idx < res.second_hop_prb.value() + 1; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx + res_f4.nof_symbols / 2;
-               sym_idx < res_f4.starting_sym_idx + res_f4.nof_symbols;
+        for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + 1; rb_idx != rb_stop;
+             ++rb_idx) {
+          for (unsigned sym_idx  = res_f4.starting_sym_idx + res_f4.nof_symbols / 2,
+                        sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -322,8 +343,9 @@ public:
           }
         }
       } else {
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + 1; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx; sym_idx < res_f4.starting_sym_idx + res_f4.nof_symbols;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + 1; rb_idx != rb_stop; ++rb_idx) {
+          for (unsigned sym_idx = res_f4.starting_sym_idx, sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
             grid_elem.element_used = true;
@@ -343,7 +365,8 @@ public:
       // Intra-slot frequency hopping.
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned sym_idx = res_f0.starting_sym_idx; sym_idx < res_f0.starting_sym_idx + res_f0.nof_symbols / 2;
+        for (unsigned sym_idx = res_f0.starting_sym_idx, sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols / 2;
+             sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.starting_prb];
           if (grid_elem.element_used) {
@@ -351,8 +374,9 @@ public:
           }
         }
         // Second hop.
-        for (unsigned sym_idx = res_f0.starting_sym_idx + res_f0.nof_symbols / 2;
-             sym_idx < res_f0.starting_sym_idx + res_f0.nof_symbols;
+        for (unsigned sym_idx  = res_f0.starting_sym_idx + res_f0.nof_symbols / 2,
+                      sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols;
+             sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.second_hop_prb.value()];
           if (grid_elem.element_used) {
@@ -363,7 +387,8 @@ public:
       }
       // No intra-slot frequency hopping.
       else {
-        for (unsigned sym_idx = res_f0.starting_sym_idx; sym_idx < res_f0.starting_sym_idx + res_f0.nof_symbols;
+        for (unsigned sym_idx = res_f0.starting_sym_idx, sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols;
+             sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.starting_prb];
           if (grid_elem.element_used) {
@@ -377,7 +402,8 @@ public:
       // Intra-slot frequency hopping.
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned sym_idx = res_f1.starting_sym_idx; sym_idx < res_f1.starting_sym_idx + res_f1.nof_symbols / 2;
+        for (unsigned sym_idx = res_f1.starting_sym_idx, sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols / 2;
+             sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.starting_prb];
           if (grid_elem.element_used) {
@@ -393,8 +419,9 @@ public:
           }
         }
         // Second hop.
-        for (unsigned sym_idx = res_f1.starting_sym_idx + res_f1.nof_symbols / 2;
-             sym_idx < res_f1.starting_sym_idx + res_f1.nof_symbols;
+        for (unsigned sym_idx  = res_f1.starting_sym_idx + res_f1.nof_symbols / 2,
+                      sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols;
+             sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.second_hop_prb.value()];
           if (grid_elem.element_used) {
@@ -413,7 +440,8 @@ public:
       }
       // No intra-slot frequency hopping.
       else {
-        for (unsigned sym_idx = res_f1.starting_sym_idx; sym_idx < res_f1.starting_sym_idx + res_f1.nof_symbols;
+        for (unsigned sym_idx = res_f1.starting_sym_idx, sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols;
+             sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.starting_prb];
           if (grid_elem.element_used) {
@@ -436,9 +464,11 @@ public:
       // Intra-slot frequency hopping.
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + res_f2_f3.nof_prbs; ++rb_idx) {
-          for (unsigned sym_idx = res_f2_f3.starting_sym_idx;
-               sym_idx < res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols / 2;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f2_f3.nof_prbs; rb_idx != rb_stop;
+             ++rb_idx) {
+          for (unsigned sym_idx  = res_f2_f3.starting_sym_idx,
+                        sym_stop = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols / 2;
+               sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
             if (grid_unit.element_used) {
@@ -447,10 +477,12 @@ public:
           }
         }
         // Second hop.
-        for (unsigned rb_idx = res.second_hop_prb.value(); rb_idx < res.second_hop_prb.value() + res_f2_f3.nof_prbs;
+        for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + res_f2_f3.nof_prbs;
+             rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols / 2;
-               sym_idx < res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols;
+          for (unsigned sym_idx  = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols / 2,
+                        sym_stop = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
             if (grid_unit.element_used) {
@@ -461,9 +493,11 @@ public:
       }
       // No intra-slot frequency hopping.
       else {
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + res_f2_f3.nof_prbs; ++rb_idx) {
-          for (unsigned sym_idx = res_f2_f3.starting_sym_idx;
-               sym_idx < res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f2_f3.nof_prbs; rb_idx != rb_stop;
+             ++rb_idx) {
+          for (unsigned sym_idx  = res_f2_f3.starting_sym_idx,
+                        sym_stop = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
             if (grid_unit.element_used) {
@@ -479,8 +513,9 @@ public:
       // Intra-slot frequency hopping.
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + 1; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx; sym_idx < res_f4.starting_sym_idx + res_f4.nof_symbols / 2;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + 1; rb_idx != rb_stop; ++rb_idx) {
+          for (unsigned sym_idx = res_f4.starting_sym_idx, sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols / 2;
+               sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
             if (grid_unit.element_used) {
@@ -488,8 +523,7 @@ public:
                 return true;
               }
               const unsigned occ_index = static_cast<unsigned>(res_f4.occ_index);
-              srsran_assert(occ_index < (res_f4.occ_length == pucch_f4_occ_len::n2 ? 2 : 4),
-                            " OCC index exceeds OCC length");
+              srsran_assert(occ_index < static_cast<unsigned>(res_f4.occ_length), " OCC index exceeds OCC length");
               if (grid_unit.allocated_occ_cs_list[occ_index]) {
                 return true;
               }
@@ -497,9 +531,11 @@ public:
           }
         }
         // Second hop.
-        for (unsigned rb_idx = res.second_hop_prb.value(); rb_idx < res.second_hop_prb.value() + 1; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx + res_f4.nof_symbols / 2;
-               sym_idx < res_f4.starting_sym_idx + res_f4.nof_symbols;
+        for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + 1; rb_idx != rb_stop;
+             ++rb_idx) {
+          for (unsigned sym_idx  = res_f4.starting_sym_idx + res_f4.nof_symbols / 2,
+                        sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
             if (grid_unit.element_used) {
@@ -507,8 +543,7 @@ public:
                 return true;
               }
               const unsigned occ_index = static_cast<unsigned>(res_f4.occ_index);
-              srsran_assert(occ_index < (res_f4.occ_length == pucch_f4_occ_len::n2 ? 2 : 4),
-                            " OCC index exceeds OCC length");
+              srsran_assert(occ_index < static_cast<unsigned>(res_f4.occ_length), " OCC index exceeds OCC length");
               if (grid_unit.allocated_occ_cs_list[occ_index]) {
                 return true;
               }
@@ -518,8 +553,9 @@ public:
       }
       // No intra-slot frequency hopping.
       else {
-        for (unsigned rb_idx = res.starting_prb; rb_idx < res.starting_prb + 1; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx; sym_idx < res_f4.starting_sym_idx + res_f4.nof_symbols;
+        for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + 1; rb_idx != rb_stop; ++rb_idx) {
+          for (unsigned sym_idx = res_f4.starting_sym_idx, sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols;
+               sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
             if (grid_unit.element_used) {
@@ -527,8 +563,7 @@ public:
                 return true;
               }
               const unsigned occ_index = static_cast<unsigned>(res_f4.occ_index);
-              srsran_assert(occ_index < (res_f4.occ_length == pucch_f4_occ_len::n2 ? 2 : 4),
-                            " OCC index exceeds OCC length");
+              srsran_assert(occ_index < static_cast<unsigned>(res_f4.occ_length), " OCC index exceeds OCC length");
               if (grid_unit.allocated_occ_cs_list[occ_index]) {
                 return true;
               }

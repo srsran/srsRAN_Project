@@ -193,7 +193,7 @@ unsigned srsran::get_pucch_format4_max_payload(unsigned         nof_symbols,
   const unsigned nof_dmrs_symbols =
       get_pucch_format3_4_nof_dmrs_symbols(nof_symbols, intraslot_freq_hopping, additional_dmrs);
   const unsigned mod_order        = pi2_bpsk ? 1 : 2;
-  const float    spreading_factor = occ_length == pucch_f4_occ_len::n2 ? 2.0f : 4.0f;
+  const float    spreading_factor = static_cast<unsigned>(occ_length);
 
   // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.1, TS 38.213; the
   // max payloads is obtained by using the floor operation from the maximum PHY capacity, given the PRBs, symbols and
@@ -205,7 +205,7 @@ unsigned srsran::get_pucch_format4_max_payload(unsigned         nof_symbols,
 
   // Get the payload depending on the estimated PUCCH F4 capacity (which we define as the nof bits that the PUCCH F4 can
   // carry).
-  // NOTE: Given the max capacity of PUCCH, which is 144 bits (see above), the UCI in PUCCH F4 can have max 1 codeword
+  // NOTE: Given the max capacity of PUCCH, which is 115 bits (see above), the UCI in PUCCH F4 can have max 1 codeword
   // (as per Section 6.3.1.2.1, TS 38.212); this implies only 6-bit and 11-bit can be added as CRC to the PUCCH F4
   // payload.
 

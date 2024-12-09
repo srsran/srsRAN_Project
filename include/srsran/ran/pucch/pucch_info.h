@@ -151,7 +151,7 @@ get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, uns
 /// \param[in] max_nof_prbs  Transmission bandwidth in PRBs.
 /// \param[in] nof_symbols   Transmission duration in symbols.
 /// \param[in] max_code_rate Maximum allowed PUCCH Format 2 code rate.
-/// \return The maximum payload for a PUCCH Format 2 transmission.
+/// \return The maximum payload (in bits) for a PUCCH Format 2 transmission.
 unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate);
 
 /// \brief Calculates the number of OFDM symbols filled with DM-RS in a PUCCH Format 3/4 resource.
@@ -200,7 +200,7 @@ unsigned get_pucch_format3_max_nof_prbs(unsigned                         nof_pay
 /// \param[in] intraslot_freq_hopping Flag indicating if intra slot frequency hopping is enabled.
 /// \param[in] additional_dmrs        Flag indicating if additional DM-RS is enabled.
 /// \param[in] pi2_bpsk               Flag indicating if pi/2-BPSK modulation is used.
-/// \return The maximum payload for a PUCCH Format 3 transmission.
+/// \return The maximum payload (in bits) for a PUCCH Format 3 transmission.
 unsigned get_pucch_format3_max_payload(unsigned max_nof_prbs,
                                        unsigned nof_symbols,
                                        float    max_code_rate,
@@ -213,9 +213,9 @@ unsigned get_pucch_format3_max_payload(unsigned max_nof_prbs,
 /// \param[in] max_code_rate          Maximum allowed PUCCH Format 4 code rate.
 /// \param[in] intraslot_freq_hopping Flag indicating if intra slot frequency hopping is enabled.
 /// \param[in] additional_dmrs        Flag indicating if additional DM-RS is enabled.
-/// \param[in] pi2_bpsk               Flag indicating if intra slot frequency hopping is enabled.
+/// \param[in] pi2_bpsk               Flag indicating if pi/2-BPSK modulation is used.
 /// \param[in] occ_length             OCC length.
-/// \return The maximum payload for a PUCCH Format 4 transmission.
+/// \return The maximum payload (in bits) for a PUCCH Format 4 transmission.
 unsigned get_pucch_format4_max_payload(unsigned         nof_symbols,
                                        float            max_code_rate,
                                        bool             intraslot_freq_hopping,
