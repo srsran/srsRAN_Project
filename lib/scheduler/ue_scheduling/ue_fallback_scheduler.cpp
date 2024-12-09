@@ -591,16 +591,17 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
         select_tbs(pdsch_cfg, pending_bytes, unused_crbs, fixed_mcs);
     unsigned chosen_tbs = std::get<2>(result).value();
     if (chosen_tbs == 0) {
-      logger.error("rnti={}: Unable to compute TBS for fallback allocation", u.crnti);
+      logger.info("rnti={}: Fallback newTx allocation postponed. Cause: Unable to compute valid TBS for available RBs",
+                  u.crnti);
       return {};
     }
     if (chosen_tbs < min_pending_bytes) {
       // We could not even fulfill the minimum pending bytes.
-      logger.debug(
-          "rnti={}: Postpone fallback allocation. Cause: Pending non-segmentable bytes exceed TBS calculated ({})",
-          u.crnti,
-          min_pending_bytes,
-          chosen_tbs);
+      logger.debug("rnti={}: Fallback newTx allocation postponed. Cause: Pending non-segmentable bytes exceed TBS "
+                   "calculated ({})",
+                   u.crnti,
+                   min_pending_bytes,
+                   chosen_tbs);
       if (only_conres_bytes > 0) {
         // In case not even a ConRes CE can fit, we can start ignoring this slot.
         slots_with_no_pdxch_space[pdsch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
@@ -615,7 +616,9 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
         result     = select_tbs(pdsch_cfg, min_pending_bytes, unused_crbs, std::nullopt);
         chosen_tbs = std::get<2>(result).value();
         if (chosen_tbs == 0) {
-          logger.error("rnti={}: Unable to compute TBS for fallback allocation", u.crnti);
+          logger.info(
+              "rnti={}: Fallback newTx allocation postponed. Cause: Unable to compute valid TBS for available RBs",
+              u.crnti);
           return {};
         }
       }
