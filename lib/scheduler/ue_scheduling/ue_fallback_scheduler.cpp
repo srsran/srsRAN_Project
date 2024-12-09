@@ -107,35 +107,25 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
     return;
   }
 
+  if ((srb_buffer_bytes > 0) != u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
+    logger.error("ue={}: UE logical channel state is inconsistent with RLC buffer update");
+    return;
+  }
+
   auto ue_it = std::find_if(
       pending_dl_ues_new_tx.begin(), pending_dl_ues_new_tx.end(), [ue_index, is_srb0](const fallback_ue& ue) {
         return ue.ue_index == ue_index and (not ue.is_srb0.has_value() or ue.is_srb0.value() == is_srb0);
       });
 
   if (ue_it != pending_dl_ues_new_tx.end()) {
-    // This case can happen when ConRes indication is received first and then receive Msg4 indication from upper layers.
-    if (not ue_it->is_srb0.has_value()) {
-      ue_it->is_srb0                   = is_srb0;
-      ue_it->pending_srb1_buffer_bytes = srb_buffer_bytes;
-      return;
-    }
-    // Remove the UE from the pending UE list when the Buffer Status Update is 0.
-    if (not u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
-      pending_dl_ues_new_tx.erase(ue_it);
-    }
-    // This case can happen only for SRB1; note that for SRB0 there is no segmentation and, when the UE already exists
-    // in the fallback scheduler, the RLC buffer state update can only be 0.
-    // For SRB1, due to the segmentation, we need to update the internal SRB1 buffer state.
-    else if (not is_srb0) {
-      ue_it->pending_srb1_buffer_bytes = update_srb1_buffer_after_rlc_bsu(ue_index, sl, srb_buffer_bytes);
-    }
+    // The UE has already data pending.
+    ue_it->is_srb0                   = is_srb0;
+    ue_it->pending_srb1_buffer_bytes = get_pending_dl_srb_bytes(ue_index, sl, is_srb0, srb_buffer_bytes);
     return;
   }
 
   // The UE doesn't exist in the internal fallback scheduler list, add it.
-  if (u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
-    pending_dl_ues_new_tx.push_back({ue_index, is_srb0, u.is_conres_ce_pending(), srb_buffer_bytes});
-  }
+  pending_dl_ues_new_tx.push_back({ue_index, is_srb0, u.is_conres_ce_pending(), srb_buffer_bytes});
 }
 
 void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
@@ -413,9 +403,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     if (pdcch_alloc.result.dl.dl_pdcchs.full() or pdsch_alloc.result.dl.ue_grants.full()) {
       logger.debug("rnti={}: Failed to allocate PDSCH for {}. Cause: No space available in scheduler output list",
                    u.crnti,
-                   not is_srb0.has_value() ? "ConRes CE"
-                   : *is_srb0              ? "SRB0 PDU"
-                                           : "SRB1 PDU");
+                   not is_srb0.has_value() ? "ConRes CE" : (*is_srb0 ? "SRB0 PDU" : "SRB1 PDU"));
       slots_with_no_pdxch_space[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
       continue;
     }
@@ -437,8 +425,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     const bool alloc_successful = sched_res.h_dl.has_value();
     if (alloc_successful) {
       if (not is_retx) {
-        // The srb1_payload_bytes is meaningful only for SRB1.
-        store_harq_tx(u.ue_index, sched_res.h_dl, sched_res.nof_srb1_scheduled_bytes, is_srb0);
+        store_harq_tx(u.ue_index, sched_res.h_dl, is_srb0);
       }
       if (sched_res.is_srb_data_pending) {
         return dl_sched_outcome::srb_pending;
@@ -452,9 +439,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
   // No resource found in UE's carriers and Search spaces.
   logger.debug("rnti={}: Skipped {} allocation in slots:[{},{}). Cause: no PDCCH/PDSCH/PUCCH resources available",
                u.crnti,
-               not is_srb0.has_value() ? "ConRes CE"
-               : *is_srb0              ? "SRB0 PDU"
-                                       : "SRB1 PDU",
+               not is_srb0.has_value() ? "ConRes CE" : (*is_srb0 ? "SRB0 PDU" : "SRB1 PDU"),
                starting_slot,
                sched_ref_slot + max_dl_slots_ahead_sched + 1);
   return dl_sched_outcome::next_ue;
@@ -1325,7 +1310,6 @@ ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common&        
 
 void ue_fallback_scheduler::store_harq_tx(du_ue_index_t                         ue_index,
                                           std::optional<dl_harq_process_handle> h_dl,
-                                          unsigned                              srb_payload_bytes,
                                           std::optional<bool>                   is_srb0)
 {
   srsran_sanity_check(ongoing_ues_ack_retxs.end() ==
@@ -1336,7 +1320,7 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t                         
                                        }),
                       "This UE and HARQ process were already in the list");
 
-  ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl, srb_payload_bytes, is_srb0);
+  ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl, is_srb0);
 }
 
 unsigned ue_fallback_scheduler::get_srb1_pending_tot_bytes(du_ue_index_t ue_idx) const
@@ -1379,10 +1363,15 @@ void ue_fallback_scheduler::update_srb1_buffer_state_after_alloc(du_ue_index_t u
   }
 }
 
-unsigned ue_fallback_scheduler::update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_idx,
-                                                                 slot_point    sl,
-                                                                 unsigned      dl_rlc_bo_update) const
+unsigned ue_fallback_scheduler::get_pending_dl_srb_bytes(du_ue_index_t ue_idx,
+                                                         slot_point    sl,
+                                                         bool          is_srb0,
+                                                         unsigned      dl_rlc_bo_update) const
 {
+  if (not is_srb0) {
+    return dl_rlc_bo_update;
+  }
+
   unsigned srb1_buffer_bytes = dl_rlc_bo_update;
 
   // Subtract the LCID1 bytes that are scheduled but not yet transmitted.

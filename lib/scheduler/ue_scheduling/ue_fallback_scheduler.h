@@ -189,9 +189,8 @@ private:
   public:
     explicit ack_and_retx_tracker(du_ue_index_t                                ue_idx,
                                   const std::optional<dl_harq_process_handle>& h_dl_,
-                                  unsigned                                     srb_payload_bytes_,
                                   std::optional<bool>                          is_srb0_ = std::nullopt) :
-      ue_index(ue_idx), is_srb0(is_srb0_), h_dl(h_dl_), srb1_payload_bytes(srb_payload_bytes_)
+      ue_index(ue_idx), is_srb0(is_srb0_), h_dl(h_dl_)
     {
     }
     explicit ack_and_retx_tracker(const ack_and_retx_tracker& other) = default;
@@ -205,14 +204,10 @@ private:
     // This field is empty if HARQ is used to schedule ConRes CE only.
     std::optional<bool>                   is_srb0;
     std::optional<dl_harq_process_handle> h_dl;
-    // Represents the number of LCID-1 bytes (excluding any overhead) that have been allocated for this TX.
-    // This is only meaningful for SRB1,
-    unsigned srb1_payload_bytes = 0;
   };
 
   void store_harq_tx(du_ue_index_t                         ue_index,
                      std::optional<dl_harq_process_handle> h_dl,
-                     unsigned                              srb_payload_bytes,
                      std::optional<bool>                   is_srb0 = std::nullopt);
 
   // Returns the total number of bytes pending for SRB1 for a given UE, including MAC CE and MAC subheaders.
@@ -238,7 +233,7 @@ private:
   // \param[in] sl Slot at which the Buffer State Update was received.
   // \param[in] buffer_status_report Number of pending LCID 1 bytes reported by the RLC buffer state update (only LCID 1
   // bytes, without any overhead).
-  unsigned update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_idx, slot_point sl, unsigned dl_rlc_bo_update) const;
+  unsigned get_pending_dl_srb_bytes(du_ue_index_t ue_idx, slot_point sl, bool is_srb0, unsigned dl_rlc_bo_update) const;
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
