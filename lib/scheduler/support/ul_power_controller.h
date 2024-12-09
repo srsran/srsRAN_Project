@@ -53,8 +53,9 @@ private:
   /// low.
   static constexpr int min_f_cl_pw_control = -30;
 
-  const bool                                       cl_pw_control_enabled;
-  const int                                        p0_nominal_pusch;
+  const bool cl_pw_control_enabled;
+  const int  p0_nominal_pusch;
+  // Configuration for the PUSCH power control.
   std::optional<pusch_config::pusch_power_control> pusch_pwr_ctrl;
   const ue_channel_state_manager&                  channel_state_manager;
 

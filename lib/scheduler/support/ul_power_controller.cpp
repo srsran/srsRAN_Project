@@ -16,12 +16,13 @@ using namespace srsran;
 
 ul_power_controller::ul_power_controller(const ue_cell_configuration&    ue_cell_cfg,
                                          const ue_channel_state_manager& ch_state_manager) :
-  cl_pw_control_enabled(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.enable_closed_loop_pw_control),
+  cl_pw_control_enabled(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control),
   p0_nominal_pusch(
       ue_cell_cfg.cell_cfg_common.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().p0_nominal_with_grant.to_int()),
   channel_state_manager(ch_state_manager),
-  pusch_sinr_target_dB(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.target_pusch_sinr),
-  ref_path_loss_for_target_sinr(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.path_loss_for_target_pusch_sinr),
+  pusch_sinr_target_dB(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.target_pusch_sinr),
+  ref_path_loss_for_target_sinr(
+      ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.path_loss_for_target_pusch_sinr),
   tpc_adjust_prohibit_time_sl([&ue_cell_cfg]() -> unsigned {
     return tpc_adjust_prohibit_time_ms << to_numerology_value(
                ue_cell_cfg.cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs);
@@ -39,6 +40,7 @@ ul_power_controller::ul_power_controller(const ue_cell_configuration&    ue_cell
             pusch_pw_ctrl_data{slot_point{}, init_nof_prbs, init_f_pw_control});
 
   // Dummy casts only needed to prevent Clang from complaining about unused variables.
+  static_cast<void>(cl_pw_control_enabled);
   static_cast<void>(channel_state_manager);
   static_cast<void>(ref_path_loss_for_target_sinr);
   static_cast<void>(pusch_sinr_target_dB);

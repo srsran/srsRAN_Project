@@ -237,7 +237,7 @@ struct du_high_unit_pusch_config {
   unsigned end_rb = MAX_NOF_PRBS;
 
   /// Enable closed-loop PUSCH power control.
-  bool enable_closed_loop_pw_control = true;
+  bool enable_closed_loop_pw_control = false;
   /// Target PUSCH SINR to be achieved with close-loop power control, in dB. Only relevant if \c
   /// enable_closed_loop_pw_control is set to true.
   float target_pusch_sinr{10.0f};
