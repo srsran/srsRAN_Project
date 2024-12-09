@@ -1059,7 +1059,7 @@ protected:
       if (sl == slot_update_srb_traffic and nof_packet_to_tx > 0) {
         // Notify about SRB1 message in DL.
         pending_srb1_bytes = generate_srb1_buffer_size();
-        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
+        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false, false);
         latest_rlc_update_slot.emplace(sl);
         --nof_packet_to_tx;
         test_logger.debug("rnti={}, slot={}: pushing SRB1 traffic of {} bytes", test_ue.crnti, sl, pending_srb1_bytes);
@@ -1089,7 +1089,7 @@ protected:
                             sl,
                             to_harq_id(h_dl->id()),
                             pending_srb1_bytes);
-          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
+          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false, false);
           latest_rlc_update_slot.emplace(sl);
         }
       }
@@ -1104,7 +1104,7 @@ protected:
                           test_ue.crnti,
                           sl,
                           pending_srb1_bytes);
-        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
+        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false, false);
         latest_rlc_update_slot.emplace(sl);
       }
     }
@@ -1125,7 +1125,7 @@ protected:
                             sl,
                             to_harq_id(h_dl->id()),
                             pending_srb1_bytes);
-          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
+          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false, false);
         }
 
         // Check if any HARQ process with pending transmissions is re-set by the scheduler.

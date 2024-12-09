@@ -171,7 +171,7 @@ unsigned srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_ma
 {
   unsigned rem_tbs = total_tbs;
 
-  while ((lch_mng.is_con_res_id_pending() or lch_mng.has_pending_ces()) and not tb_info.lc_chs_to_sched.full()) {
+  while (lch_mng.has_pending_ces() and not tb_info.lc_chs_to_sched.full()) {
     dl_msg_lc_info subpdu;
     unsigned       alloc_bytes = lch_mng.allocate_mac_ce(subpdu, rem_tbs);
     if (alloc_bytes == 0) {
