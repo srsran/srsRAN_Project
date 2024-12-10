@@ -26,6 +26,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/nrppa/nrppa.h"
+#include "srsran/nrppa/nrppa_factory.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/support/compiler.h"
 #include <chrono>
@@ -158,7 +159,7 @@ bool cu_cp_impl::amfs_are_connected()
 SRSRAN_WEAK_SYMB std::unique_ptr<srsran::srs_cu_cp::nrppa_interface>
 cu_cp_impl::create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg, nrppa_cu_cp_notifier& cu_cp_notif)
 {
-  return nullptr;
+  return create_nrppa(cu_cp_cfg, cu_cp_notif);
 }
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)

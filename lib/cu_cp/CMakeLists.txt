@@ -60,6 +60,7 @@ target_link_libraries(srsran_cu_cp
         srsran_e1ap_cu_cp
         srsran_f1ap_cu
         srsran_ngap
+        srsran_nrppa
         srsran_rrc
         srsran_ran
         srslog
