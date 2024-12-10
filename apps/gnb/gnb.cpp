@@ -173,7 +173,6 @@ static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_c
     sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
     cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
   }
-  cu_up_cfg.ngu_cfg.no_core = cu_cp_cfg.amf_config.no_core;
 }
 
 int main(int argc, char** argv)

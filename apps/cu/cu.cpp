@@ -150,7 +150,6 @@ static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o
     sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
     o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
   }
-  o_cu_up_cfg.cu_up_cfg.ngu_cfg.no_core = cu_cp_cfg.amf_config.no_core;
   o_cu_up_cfg.e2_cfg.pcaps.enabled = o_cu_up_cfg.e2_cfg.base_config.enable_unit_e2 && o_cu_up_cfg.e2_cfg.pcaps.enabled;
 }
 
