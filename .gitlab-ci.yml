@@ -140,6 +140,7 @@ plugin nightly:
   trigger:
     project: ${PLUGIN_REPO}
     branch: main
+    strategy: depend
 
 matlab weekly:
   stage: ci
