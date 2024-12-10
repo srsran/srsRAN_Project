@@ -207,19 +207,6 @@ private:
   // Checks if there are bytes pending for SRB1 for a given UE (including MAC CE and MAC subheaders).
   unsigned has_pending_bytes_for_srb1(du_ue_index_t ue_idx) const;
 
-  // \brief Updates the UE's SRB1 buffer state (only LCID 1 bytes, without any overhead) after receiving the RLC buffer
-  // state update from upper layers.
-  //
-  // This function updates the fallback scheduler internal SRB1 buffer state for a given UE by subtracting the bytes for
-  // the new allocations (that have been already completed but not yet transmitted) from the RLC buffer state update
-  // that was received.
-  //
-  // \param[in] ue_idx UE's DU Index for which SRB1 buffer state needs to be updated.
-  // \param[in] sl Slot at which the Buffer State Update was received.
-  // \param[in] buffer_status_report Number of pending LCID 1 bytes reported by the RLC buffer state update (only LCID 1
-  // bytes, without any overhead).
-  unsigned get_pending_dl_srb_bytes(du_ue_index_t ue_idx, slot_point sl, bool is_srb0, unsigned dl_rlc_bo_update) const;
-
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
   // TODO: Find proper values for these 2 parameters.

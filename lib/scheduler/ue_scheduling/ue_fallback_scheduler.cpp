@@ -1306,37 +1306,6 @@ unsigned ue_fallback_scheduler::get_srb1_pending_tot_bytes(du_ue_index_t ue_idx)
   return mac_bytes + ce_bytes + overallocation;
 }
 
-unsigned ue_fallback_scheduler::get_pending_dl_srb_bytes(du_ue_index_t ue_idx,
-                                                         slot_point    sl,
-                                                         bool          is_srb0,
-                                                         unsigned      dl_rlc_bo_update) const
-{
-  if (is_srb0) {
-    return dl_rlc_bo_update;
-  }
-
-  unsigned srb1_buffer_bytes = dl_rlc_bo_update;
-
-  // Subtract the LCID1 bytes that are scheduled but not yet transmitted.
-  auto& u        = ues[ue_idx];
-  auto& ue_pcell = u.get_pcell();
-  for (unsigned i = 0, e = ue_pcell.harqs.nof_dl_harqs(); i < e; ++i) {
-    auto h_dl = ue_pcell.harqs.dl_harq(to_harq_id(i));
-    if (h_dl.has_value() and h_dl->is_waiting_ack() and h_dl->pdsch_slot() >= sl and h_dl->nof_retxs() == 0) {
-      for (const auto& lc : h_dl->get_grant_params().lc_sched_info) {
-        if (lc.lcid.to_lcid() == LCID_SRB1) {
-          srb1_buffer_bytes -= std::min(srb1_buffer_bytes, lc.sched_bytes.value());
-          if (srb1_buffer_bytes == 0) {
-            return 0;
-          }
-        }
-      }
-    }
-  }
-
-  return srb1_buffer_bytes;
-}
-
 void ue_fallback_scheduler::slot_indication(slot_point sl)
 {
   // If there is any skipped slot, reset \ref slots_with_no_pdxch_space for all the skipped slots.

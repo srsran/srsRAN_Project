@@ -71,7 +71,7 @@ public:
 
   lcid_t to_lcid() const
   {
-    srsran_assert(is_sdu(), "Invalid to_lcid() access");
+    srsran_assert(is_sdu(), "Invalid to_lcid() access to lcid={}", lcid_val);
     return (lcid_t)lcid_val;
   }
 
