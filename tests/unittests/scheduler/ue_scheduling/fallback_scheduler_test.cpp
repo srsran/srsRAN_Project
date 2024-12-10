@@ -195,6 +195,8 @@ protected:
 
     bench->csi_rs_sched.run_slot(bench->res_grid[0]);
 
+    bench->ue_db.slot_indication(current_slot);
+
     bench->fallback_sched.run_slot(bench->res_grid);
 
     result_logger.on_scheduler_result(bench->res_grid[0].result);
@@ -217,7 +219,7 @@ protected:
   sched_cell_configuration_request_message
   create_custom_cell_config_request(unsigned k0, const std::optional<tdd_ul_dl_config_common>& tdd_cfg = {})
   {
-    if (duplx_mode == srsran::duplex_mode::TDD and tdd_cfg.has_value()) {
+    if (duplx_mode == duplex_mode::TDD and tdd_cfg.has_value()) {
       builder_params.tdd_ul_dl_cfg_common = *tdd_cfg;
     }
     sched_cell_configuration_request_message msg =

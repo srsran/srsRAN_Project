@@ -107,11 +107,6 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
     return;
   }
 
-  if ((srb_buffer_bytes > 0) != u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
-    logger.error("ue={}: UE logical channel state is inconsistent with RLC buffer update");
-    return;
-  }
-
   auto ue_it = std::find_if(
       pending_dl_ues_new_tx.begin(), pending_dl_ues_new_tx.end(), [ue_index, is_srb0](const fallback_ue& ue) {
         return ue.ue_index == ue_index and (not ue.is_srb0.has_value() or ue.is_srb0.value() == is_srb0);
@@ -121,6 +116,17 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
     // The UE has already data pending.
     ue_it->is_srb0                   = is_srb0;
     ue_it->pending_srb1_buffer_bytes = get_pending_dl_srb_bytes(ue_index, sl, is_srb0, srb_buffer_bytes);
+
+    if ((ue_it->pending_srb1_buffer_bytes > 0) != u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
+      logger.error("ue={}: UE logical channel state is inconsistent with RLC buffer update", ue_index);
+      return;
+    }
+
+    return;
+  }
+
+  if ((srb_buffer_bytes > 0) != u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
+    logger.error("ue={}: UE logical channel state is inconsistent with RLC buffer update", ue_index);
     return;
   }
 
@@ -369,7 +375,6 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     }
 
     if (slots_with_no_pdxch_space[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE]) {
-      logger.debug("rnti={}: Skipping slot {}. Cause: no PDSCH/PDCCH space available", u.crnti, next_slot);
       continue;
     }
 
@@ -1368,7 +1373,7 @@ unsigned ue_fallback_scheduler::get_pending_dl_srb_bytes(du_ue_index_t ue_idx,
                                                          bool          is_srb0,
                                                          unsigned      dl_rlc_bo_update) const
 {
-  if (not is_srb0) {
+  if (is_srb0) {
     return dl_rlc_bo_update;
   }
 

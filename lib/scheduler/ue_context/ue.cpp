@@ -43,6 +43,7 @@ ue::ue(const ue_creation_command& cmd) :
 
 void ue::slot_indication(slot_point sl_tx)
 {
+  last_sl_tx = sl_tx;
   ta_mgr.slot_indication(sl_tx);
   drx.slot_indication(sl_tx);
 }
@@ -120,6 +121,36 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
         ue_du_cells[ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index];
     ue_cells[ue_cell_index] = ue_cell_inst.get();
   }
+}
+
+void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg)
+{
+  unsigned pending_bytes = msg.bs;
+
+  // Subtract bytes pending for this LCID in scheduled HARQ allocations before forwarding to DL logical channel.
+  // Note: The RLC buffer occupancy updates never account for bytes associated with future HARQ transmissions.
+  for (unsigned c = 0, ce = nof_cells(); c != ce; ++c) {
+    auto& ue_cc = *ue_cells[c];
+
+    if (last_sl_tx.valid() and ue_cc.harqs.last_pdsch_slot().valid() and ue_cc.harqs.last_pdsch_slot() > last_sl_tx) {
+      unsigned rem_harqs = ue_cc.harqs.nof_dl_harqs() - ue_cc.harqs.nof_empty_dl_harqs();
+      for (unsigned i = 0, e = ue_cc.harqs.nof_dl_harqs(); i != e and rem_harqs > 0; ++i) {
+        auto h_dl = ue_cc.harqs.dl_harq(to_harq_id(i));
+        if (h_dl.has_value()) {
+          rem_harqs--;
+          if (h_dl->pdsch_slot() >= last_sl_tx and h_dl->nof_retxs() == 0 and h_dl->is_waiting_ack()) {
+            for (const auto& lc : h_dl->get_grant_params().lc_sched_info) {
+              if (lc.lcid.to_lcid() == msg.lcid) {
+                pending_bytes -= std::min(pending_bytes, lc.sched_bytes.value());
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, pending_bytes);
 }
 
 unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const

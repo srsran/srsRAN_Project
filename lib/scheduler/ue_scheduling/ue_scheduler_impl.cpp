@@ -38,9 +38,6 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
 {
-  // Update all UEs state.
-  ue_db.slot_indication(slot_tx);
-
   if (not ue_res_grid_view.get_cell_cfg_common(cell_index).is_dl_enabled(slot_tx)) {
     // This slot is inactive for PDCCH in this cell. We therefore, can skip the scheduling strategy.
     // Note: we are currently assuming that all cells have the same TDD pattern and that the scheduling strategy
@@ -194,6 +191,9 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
 
     // Process any pending events that are directed at UEs.
     event_mng.run(slot_tx, cell_index);
+
+    // Update all UEs state.
+    ue_db.slot_indication(slot_tx);
 
     // Mark the start of a new slot in the UE grid allocator.
     ue_alloc.slot_indication(slot_tx);

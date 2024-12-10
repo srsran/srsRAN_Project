@@ -110,13 +110,10 @@ public:
     dl_lc_ch_mgr.handle_mac_ce_indication({.ce_lcid = msg.ce_lcid, .ce_payload = dummy_ce_payload{}});
   }
 
-  /// \brief Handles DL Buffer State indication.
-  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg)
-  {
-    dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, msg.bs);
-  }
-
   void handle_reconfiguration_request(const ue_reconf_command& params);
+
+  /// \brief Handles DL Buffer State indication.
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg);
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
@@ -195,6 +192,8 @@ private:
 
   /// UE UL Logical Channel Manager.
   ul_logical_channel_manager ul_lc_ch_mgr;
+
+  slot_point last_sl_tx;
 
   /// UE Timing Advance Manager.
   ta_manager ta_mgr;
