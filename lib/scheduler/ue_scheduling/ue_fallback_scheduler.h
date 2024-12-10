@@ -62,8 +62,6 @@ private:
     // This field is empty if only ConRes indication is received from MAC and buffer status from upper layers for
     // SRB0/SRB1 is not yet received.
     std::optional<bool> is_srb0;
-    // This field indicated whether ConRes CE pending to be sent or not.
-    bool is_conres_pending = false;
   };
 
   /// Helper that schedules DL SRB0 and SRB1 retx. Returns false if the DL fallback schedule should stop the DL

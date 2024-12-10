@@ -116,7 +116,7 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
   }
 
   // The UE doesn't exist in the internal fallback scheduler list, add it.
-  pending_dl_ues_new_tx.push_back({ue_index, is_srb0, u.is_conres_ce_pending()});
+  pending_dl_ues_new_tx.push_back({ue_index, is_srb0});
 }
 
 void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
@@ -143,11 +143,10 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
 
   // Entry for this UE already exists.
   if (ue_it != pending_dl_ues_new_tx.end()) {
-    ue_it->is_conres_pending = true;
     return;
   }
 
-  pending_dl_ues_new_tx.push_back({ue_index, std::nullopt, true});
+  pending_dl_ues_new_tx.push_back({ue_index, std::nullopt});
 }
 
 void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind)
@@ -226,13 +225,13 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
 ue_fallback_scheduler::dl_new_tx_alloc_type
 ue_fallback_scheduler::get_dl_new_tx_alloc_type(const fallback_ue& next_ue) const
 {
+  auto& u = ues[next_ue.ue_index];
   if (not next_ue.is_srb0.has_value()) {
     // No SRB0 or SRB1. Verify if ConRes CE needs to be scheduled.
-    return next_ue.is_conres_pending ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
+    return u.is_conres_ce_pending() ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
   }
 
   if (next_ue.is_srb0.value()) {
-    auto& u = ues[next_ue.ue_index];
     return u.has_pending_dl_newtx_bytes(LCID_SRB0) ? dl_new_tx_alloc_type::srb0 : dl_new_tx_alloc_type::error;
   }
 
@@ -280,9 +279,6 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     }
 
     // There was an allocation. This does not, however, mean that the pending data was completely flushed.
-
-    // We assume that there is always space for ConRes CE when an allocation takes place.
-    next_ue->is_conres_pending = false;
 
     if (alloc_type == dl_new_tx_alloc_type::conres_only or alloc_type == dl_new_tx_alloc_type::srb0) {
       // ConRes-only, SRB0-ony and ConRes+SRB0 cases
@@ -1372,12 +1368,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    if (ue_it->is_conres_pending != u.is_conres_ce_pending()) {
-      logger.error("ue={}: Invalid ConRes state detected", ue_it->ue_index);
-      ue_it->is_conres_pending = u.is_conres_ce_pending();
-    }
-
-    if (not ue_it->is_conres_pending and not ue_it->is_srb0.has_value()) {
+    if (not u.is_conres_ce_pending() and not ue_it->is_srb0.has_value()) {
       // UE has no new txs pending. It can be removed.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
