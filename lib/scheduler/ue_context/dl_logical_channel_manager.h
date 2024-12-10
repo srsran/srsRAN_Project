@@ -57,9 +57,8 @@ public:
   /// \remark Excludes data for SRB0.
   bool has_pending_bytes() const
   {
-    return has_pending_ces() or std::any_of(channels.begin() + 1, channels.end(), [](const auto& ch) {
-             return ch.active and ch.buf_st > 0;
-           });
+    return has_pending_ces() or
+           std::any_of(channels.begin(), channels.end(), [](const auto& ch) { return ch.active and ch.buf_st > 0; });
   }
 
   /// \brief Checks whether a logical channel has pending data.

@@ -1336,32 +1336,10 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
-
-    if (not u.is_conres_ce_pending() and not ue_it->is_srb0.has_value()) {
+    if (not u.has_pending_dl_newtx_bytes()) {
       // UE has no new txs pending. It can be removed.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
-    }
-
-    // Remove UE when the SRB1 buffer status is empty and when there are no HARQ processes scheduled for future
-    // transmissions.
-    // TODO: Verify if this is still needed.
-    if (ue_it->is_srb0.has_value() and not ue_it->is_srb0.value()) {
-      // NOTE: the UEs that have pending RE-TXs are handled by the \ref ongoing_ues_ack_retxs and can be removed from
-      // \ref pending_dl_ues_new_tx.
-      const bool remove_ue = not u.has_pending_dl_newtx_bytes(LCID_SRB1) and
-                             ongoing_ues_ack_retxs.end() ==
-                                 std::find_if(ongoing_ues_ack_retxs.begin(),
-                                              ongoing_ues_ack_retxs.end(),
-                                              [ue_idx = ue_it->ue_index, sl](const ack_and_retx_tracker& tracker) {
-                                                return tracker.ue_index == ue_idx and tracker.h_dl->is_waiting_ack() and
-                                                       tracker.h_dl->nof_retxs() == 0 and
-                                                       tracker.h_dl->pdsch_slot() >= sl;
-                                              });
-      if (remove_ue) {
-        ue_it = pending_dl_ues_new_tx.erase(ue_it);
-        continue;
-      }
     }
 
     ++ue_it;
