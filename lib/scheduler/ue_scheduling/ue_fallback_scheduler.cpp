@@ -92,10 +92,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
   schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::srb1);
 }
 
-void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index,
-                                                              bool          is_srb0,
-                                                              slot_point    sl,
-                                                              unsigned      srb_buffer_bytes)
+void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index, bool is_srb0)
 {
   if (not ues.contains(ue_index)) {
     logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not found in the scheduler", ue_index);
@@ -114,24 +111,12 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
 
   if (ue_it != pending_dl_ues_new_tx.end()) {
     // The UE has already data pending.
-    ue_it->is_srb0                   = is_srb0;
-    ue_it->pending_srb1_buffer_bytes = get_pending_dl_srb_bytes(ue_index, sl, is_srb0, srb_buffer_bytes);
-
-    if ((ue_it->pending_srb1_buffer_bytes > 0) != u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
-      logger.error("ue={}: UE logical channel state is inconsistent with RLC buffer update", ue_index);
-      return;
-    }
-
-    return;
-  }
-
-  if ((srb_buffer_bytes > 0) != u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
-    logger.error("ue={}: UE logical channel state is inconsistent with RLC buffer update", ue_index);
+    ue_it->is_srb0 = is_srb0;
     return;
   }
 
   // The UE doesn't exist in the internal fallback scheduler list, add it.
-  pending_dl_ues_new_tx.push_back({ue_index, is_srb0, u.is_conres_ce_pending(), srb_buffer_bytes});
+  pending_dl_ues_new_tx.push_back({ue_index, is_srb0, u.is_conres_ce_pending()});
 }
 
 void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
@@ -162,7 +147,7 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
     return;
   }
 
-  pending_dl_ues_new_tx.push_back({ue_index, std::nullopt, true, 0});
+  pending_dl_ues_new_tx.push_back({ue_index, std::nullopt, true});
 }
 
 void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind)
@@ -873,15 +858,6 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
       // Set MAC logical channels to schedule in this PDU.
       if (not is_retx) {
         u.build_dl_fallback_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
-        if (is_srb0.has_value() and not is_srb0.value()) {
-          auto* msg_lcid_it =
-              std::find_if(msg.tb_list.back().lc_chs_to_sched.begin(),
-                           msg.tb_list.back().lc_chs_to_sched.end(),
-                           [](const dl_msg_lc_info& lc_info) { return lc_info.lcid == lcid_t::LCID_SRB1; });
-          srb1_bytes_allocated = msg_lcid_it != msg.tb_list.back().lc_chs_to_sched.end() ? msg_lcid_it->sched_bytes : 0;
-          // Update the internal state of the SRB1 buffer for LCID-1 bytes left to transmit (exclude overhead).
-          update_srb1_buffer_state_after_alloc(u.ue_index, srb1_bytes_allocated);
-        }
       }
       break;
     }
@@ -901,15 +877,6 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
       // Set MAC logical channels to schedule in this PDU.
       if (not is_retx) {
         u.build_dl_fallback_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
-        if (is_srb0.has_value() and not is_srb0.value()) {
-          auto* mcs_lcid_it =
-              std::find_if(msg.tb_list.back().lc_chs_to_sched.begin(),
-                           msg.tb_list.back().lc_chs_to_sched.end(),
-                           [](const dl_msg_lc_info& lc_info) { return lc_info.lcid == lcid_t::LCID_SRB1; });
-          srb1_bytes_allocated = mcs_lcid_it != msg.tb_list.back().lc_chs_to_sched.end() ? mcs_lcid_it->sched_bytes : 0;
-          // Update the internal state of the SRB1 buffer for LCID-1 bytes left to transmit (exclude overhead).
-          update_srb1_buffer_state_after_alloc(u.ue_index, srb1_bytes_allocated);
-        }
       }
       break;
     }
@@ -1330,15 +1297,8 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t                         
 
 unsigned ue_fallback_scheduler::get_srb1_pending_tot_bytes(du_ue_index_t ue_idx) const
 {
-  auto it = std::find_if(pending_dl_ues_new_tx.begin(), pending_dl_ues_new_tx.end(), [ue_idx](const fallback_ue& ue) {
-    return ue.ue_index == ue_idx and ue.is_srb0.has_value() and not ue.is_srb0.value();
-  });
-  if (it == pending_dl_ues_new_tx.end()) {
-    return 0U;
-  }
-
   // Note: this function assumes the ues[ue_idx] exists, which is guaranteed by the caller.
-  const unsigned mac_bytes = get_mac_sdu_required_bytes(it->pending_srb1_buffer_bytes);
+  const unsigned mac_bytes = ues[ue_idx].pending_dl_newtx_bytes(LCID_SRB1);
   const unsigned ce_bytes  = ues[ue_idx].pending_ce_bytes();
   // Each RLC buffer state update includes extra 4 bytes compared to the number of bytes left to transmit; this is to
   // account for the segmentation overhead. Suppose that (i) we need to compute the PDSCH TBS to allocate the last
@@ -1348,24 +1308,6 @@ unsigned ue_fallback_scheduler::get_srb1_pending_tot_bytes(du_ue_index_t ue_idx)
   const unsigned overallocation_size = 4U;
   const unsigned overallocation      = mac_bytes != 0 ? overallocation_size : 0U;
   return mac_bytes + ce_bytes + overallocation;
-}
-
-void ue_fallback_scheduler::update_srb1_buffer_state_after_alloc(du_ue_index_t ue_idx, unsigned allocated_bytes)
-{
-  // Retrieve the UE from the list of UEs that need to be scheduled.
-  auto ue_it =
-      std::find_if(pending_dl_ues_new_tx.begin(), pending_dl_ues_new_tx.end(), [ue_idx](const fallback_ue& ue) {
-        return ue.ue_index == ue_idx and ue.is_srb0.has_value() and not ue.is_srb0.value();
-      });
-  if (ue_it == pending_dl_ues_new_tx.end() or not ues.contains(ue_idx)) {
-    return;
-  }
-
-  if (ue_it->pending_srb1_buffer_bytes > allocated_bytes) {
-    ue_it->pending_srb1_buffer_bytes -= allocated_bytes;
-  } else {
-    ue_it->pending_srb1_buffer_bytes = 0U;
-  }
 }
 
 unsigned ue_fallback_scheduler::get_pending_dl_srb_bytes(du_ue_index_t ue_idx,
@@ -1447,7 +1389,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     if (ue_it->is_srb0.has_value() and not ue_it->is_srb0.value()) {
       // NOTE: the UEs that have pending RE-TXs are handled by the \ref ongoing_ues_ack_retxs and can be removed from
       // \ref pending_dl_ues_new_tx.
-      const bool remove_ue = ue_it->pending_srb1_buffer_bytes == 0 and
+      const bool remove_ue = not u.has_pending_dl_newtx_bytes(LCID_SRB1) and
                              ongoing_ues_ack_retxs.end() ==
                                  std::find_if(ongoing_ues_ack_retxs.begin(),
                                               ongoing_ues_ack_retxs.end(),

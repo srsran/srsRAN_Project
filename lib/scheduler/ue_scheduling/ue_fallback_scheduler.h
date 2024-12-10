@@ -30,10 +30,7 @@ public:
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
   /// \param[in] is_srb0 Defines whether the DL Buffer State Indication is for SRB0/SRB1.
-  /// \param[in] sl Slot at which the DL Buffer State Indication was received.
-  /// \param[in] srb_buffer_bytes Number of SRB bytes reported by Buffer State Indication.
-  void
-  handle_dl_buffer_state_indication(du_ue_index_t ue_index, bool is_srb0, slot_point sl, unsigned srb_buffer_bytes);
+  void handle_dl_buffer_state_indication(du_ue_index_t ue_index, bool is_srb0);
 
   /// Handle Contention Resolution indication sent by the MAC.
   /// \param[in] ue_index UE's DU Index for which Contention Resolution CE needs to be scheduled.
@@ -67,10 +64,6 @@ private:
     std::optional<bool> is_srb0;
     // This field indicated whether ConRes CE pending to be sent or not.
     bool is_conres_pending = false;
-    // Represents the number of LCID-1 bytes (excluding any overhead) that are pending for this UE.
-    // This is only meaningful for SRB1 and gets updated every time an RLC buffer state update is received or when we
-    // schedule a new PDSCH TX for this UE.
-    unsigned pending_srb1_buffer_bytes = 0;
   };
 
   /// Helper that schedules DL SRB0 and SRB1 retx. Returns false if the DL fallback schedule should stop the DL
@@ -215,12 +208,6 @@ private:
 
   // Checks if there are bytes pending for SRB1 for a given UE (including MAC CE and MAC subheaders).
   unsigned has_pending_bytes_for_srb1(du_ue_index_t ue_idx) const;
-
-  // \brief Updates the UE's SRB1 buffer state (only LCID 1 bytes, without any overhead) after the allocation of a HARQ
-  // process for a new transmission.
-  // \param[in] ue_idx UE's DU Index for which SRB1 buffer state needs to be updated.
-  // \param[in] allocated_bytes Number of bytes (only LCID 1 bytes, without any overhead) allocated on the PDSCH.
-  void update_srb1_buffer_state_after_alloc(du_ue_index_t ue_idx, unsigned allocated_bytes);
 
   // \brief Updates the UE's SRB1 buffer state (only LCID 1 bytes, without any overhead) after receiving the RLC buffer
   // state update from upper layers.
