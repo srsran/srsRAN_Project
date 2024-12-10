@@ -71,9 +71,61 @@ static void fill_du_low_expert_section(YAML::Node node, const du_low_unit_expert
   node["max_request_headroom_slots"]  = config.nof_slots_request_headroom;
 }
 
+static void fill_du_low_bbdev_pdsch_enc_section(YAML::Node node, const hwacc_pdsch_appconfig& config)
+{
+  node["nof_hwacc"]       = config.nof_hwacc;
+  node["cb_mode"]         = config.cb_mode;
+  node["dedicated_queue"] = config.dedicated_queue;
+  if (config.max_buffer_size) {
+    node["max_buffer_size"] = config.max_buffer_size.value();
+  }
+}
+
+static void fill_du_low_bbdev_pusch_dec_section(YAML::Node node, const hwacc_pusch_appconfig& config)
+{
+  node["nof_hwacc"]       = config.nof_hwacc;
+  node["ext_softbuffer"]  = config.ext_softbuffer;
+  node["dedicated_queue"] = config.dedicated_queue;
+  if (config.harq_context_size) {
+    node["harq_context_size"] = config.harq_context_size.value();
+  }
+}
+
+static void fill_du_low_bbdev_section(YAML::Node node, const bbdev_appconfig& config)
+{
+  node["hwacc_type"] = config.hwacc_type;
+  node["id"]         = config.id;
+
+  if (config.pdsch_enc) {
+    fill_du_low_bbdev_pdsch_enc_section(node["pdsch_enc"], config.pdsch_enc.value());
+  }
+  if (config.pusch_dec) {
+    fill_du_low_bbdev_pusch_dec_section(node["pusch_dec"], config.pusch_dec.value());
+  }
+  if (config.msg_mbuf_size) {
+    node["msg_mbuf_size"] = config.msg_mbuf_size.value();
+  }
+  if (config.rm_mbuf_size) {
+    node["rm_mbuf_size"] = config.rm_mbuf_size.value();
+  }
+  if (config.nof_mbuf) {
+    node["nof_mbuf"] = config.nof_mbuf.value();
+  }
+}
+
+static void fill_du_low_hal_section(YAML::Node node, const du_low_unit_hal_config& config)
+{
+  if (config.bbdev_hwacc) {
+    fill_du_low_bbdev_section(node["bbdev_hwacc"], config.bbdev_hwacc.value());
+  }
+}
+
 void srsran::fill_du_low_config_in_yaml_schema(YAML::Node& node, const du_low_unit_config& config)
 {
   fill_du_low_log_section(node["log"], config.loggers);
   fill_du_low_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_du_low_expert_section(node["expert_phy"], config.expert_phy_cfg);
+  if (config.hal_config) {
+    fill_du_low_hal_section(node["hal"], config.hal_config.value());
+  }
 }
