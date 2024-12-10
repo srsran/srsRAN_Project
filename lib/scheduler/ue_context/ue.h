@@ -117,8 +117,7 @@ public:
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
-  /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
-  bool has_pending_dl_newtx_bytes() const { return dl_lc_ch_mgr.has_pending_bytes(); }
+  bool has_pending_dl_newtx_bytes() const;
 
   /// \brief Checks if there are DL pending bytes for a specific LCID that are yet to be allocated in a DL HARQ.
   bool has_pending_dl_newtx_bytes(lcid_t lcid) const { return dl_lc_ch_mgr.has_pending_bytes(lcid); }

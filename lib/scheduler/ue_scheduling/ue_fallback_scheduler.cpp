@@ -850,11 +850,6 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
                                pdcch.dci.tc_rnti_f1_0,
                                ue_grant_crbs,
                                not is_retx);
-
-      // Set MAC logical channels to schedule in this PDU.
-      if (not is_retx) {
-        u.build_dl_fallback_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
-      }
       break;
     }
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
@@ -870,15 +865,17 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
                               pdcch.dci.c_rnti_f1_0,
                               ue_grant_crbs,
                               not is_retx);
-      // Set MAC logical channels to schedule in this PDU.
-      if (not is_retx) {
-        u.build_dl_fallback_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
-      }
       break;
     }
     default: {
       srsran_assert(false, "Invalid DCI type for SRB0 or SRB1");
     }
+  }
+
+  // Set MAC logical channels to schedule in this PDU.
+  if (not is_retx) {
+    u.build_dl_fallback_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
+    msg.context.buffer_occupancy = u.pending_dl_newtx_bytes();
   }
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
