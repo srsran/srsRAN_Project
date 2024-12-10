@@ -26,6 +26,7 @@ public:
                      e1ap_bearer_context_removal_handler* e1ap_removal_handler_,
                      f1ap_ue_context_removal_handler&     f1ap_removal_handler_,
                      ngap_ue_context_removal_handler&     ngap_removal_handler_,
+                     nrppa_ue_context_removal_handler*    nrppa_removal_handler_,
                      ue_manager&                          ue_mng_,
                      srslog::basic_logger&                logger_);
 
@@ -34,13 +35,16 @@ public:
   static const char* name() { return "UE Removal Routine"; }
 
 private:
-  const ue_index_t                     ue_index;
-  rrc_ue_handler&                      rrc_du_notifier;      // to trigger removal of the UE at the RRC
-  e1ap_bearer_context_removal_handler* e1ap_removal_handler; // to trigger removal of the UE at the E1AP
-  f1ap_ue_context_removal_handler&     f1ap_removal_handler; // to trigger removal of the UE at the F1AP
-  ngap_ue_context_removal_handler&     ngap_removal_handler; // to trigger removal of the UE at the NGAP
-  ue_manager&                          ue_mng;               // to remove UE context from DU processor
-  srslog::basic_logger&                logger;
+  const ue_index_t ue_index;
+  // Handlers to trigger UE removal in the respective layers.
+  rrc_ue_handler&                      rrc_du_notifier;
+  e1ap_bearer_context_removal_handler* e1ap_removal_handler = nullptr;
+  f1ap_ue_context_removal_handler&     f1ap_removal_handler;
+  ngap_ue_context_removal_handler&     ngap_removal_handler;
+  nrppa_ue_context_removal_handler*    nrppa_removal_handler = nullptr;
+  // To remove UE context from DU processor.
+  ue_manager&           ue_mng;
+  srslog::basic_logger& logger;
 };
 
 } // namespace srs_cu_cp

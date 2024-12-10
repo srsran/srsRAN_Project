@@ -24,6 +24,11 @@ void nrppa_dummy_impl::handle_ue_measurement(ue_index_t ue_index, const cell_mea
   logger.info("NRPPa messages are not supported");
 }
 
+void nrppa_dummy_impl::remove_ue_context(ue_index_t ue_index)
+{
+  logger.info("NRPPa messages are not supported");
+}
+
 void nrppa_dummy_impl::handle_new_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
 {
   logger.info("NRPPa messages are not supported");

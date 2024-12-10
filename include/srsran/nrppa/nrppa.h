@@ -78,14 +78,26 @@ public:
   virtual void handle_ue_measurement(ue_index_t ue_index, const cell_measurement_positioning_info& meas_result) = 0;
 };
 
+/// Handle ue context removal.
+class nrppa_ue_context_removal_handler
+{
+public:
+  virtual ~nrppa_ue_context_removal_handler() = default;
+
+  /// \brief Remove the context of an UE.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void remove_ue_context(ue_index_t ue_index) = 0;
+};
+
 /// Combined entry point for the NRPPA object.
 class nrppa_interface
 {
 public:
   virtual ~nrppa_interface() = default;
 
-  virtual nrppa_message_handler&     get_nrppa_message_handler()     = 0;
-  virtual nrppa_measurement_handler& get_nrppa_measurement_handler() = 0;
+  virtual nrppa_message_handler&            get_nrppa_message_handler()            = 0;
+  virtual nrppa_measurement_handler&        get_nrppa_measurement_handler()        = 0;
+  virtual nrppa_ue_context_removal_handler& get_nrppa_ue_context_removal_handler() = 0;
 };
 
 } // namespace srs_cu_cp

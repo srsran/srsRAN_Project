@@ -703,11 +703,15 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
     });
   }
 
+  nrppa_ue_context_removal_handler* nrppa_removal_handler = nullptr;
+  nrppa_removal_handler                                   = &nrppa_entity->get_nrppa_ue_context_removal_handler();
+
   return launch_async<ue_removal_routine>(ue_index,
                                           du_db.get_du_processor(du_index).get_rrc_du_handler(),
                                           e1ap_removal_handler,
                                           du_db.get_du_processor(du_index).get_f1ap_handler(),
                                           ngap->get_ngap_ue_context_removal_handler(),
+                                          nrppa_removal_handler,
                                           ue_mng,
                                           logger);
 }
