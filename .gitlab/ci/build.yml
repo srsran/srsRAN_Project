@@ -187,6 +187,10 @@ variables:
 
         exit $ret
       }
+      if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* && -n $PLUGIN_BRANCH ]]; then
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH} >/dev/null
+        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH}
+      fi
     - build_srsgnb ${SRS_TARGET}
     - launch_tests
   timeout: 6h
@@ -231,11 +235,7 @@ variables:
 
 .smoke relwithdeb:
   extends: .build_and_unit
-  script: &smoke_script
-    - |
-      if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* ]]; then
-        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
-      fi
+  script:
     - *srs_functions
     - build_srsgnb
     - |
@@ -243,6 +243,7 @@ variables:
       rm ${CI_PROJECT_DIR}/build/apps/gnb_split_8/gnb
     - launch_tests
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: clang
     CMAKE_BUILD_TYPE: RelWithDebInfo
@@ -253,9 +254,8 @@ variables:
 
 .smoke tsan:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: clang
     CMAKE_BUILD_TYPE: Debug
@@ -279,6 +279,7 @@ variables:
 .smoke archlinux:
   extends: .build_and_unit
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: archlinux-latest
     ENABLE_WERROR: "False"
     COMPILER: gcc
@@ -290,9 +291,8 @@ variables:
 
 .smoke dpdk:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-22.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -307,6 +307,7 @@ variables:
 .smoke valgrind:
   extends: .build_and_unit
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Debug
@@ -317,9 +318,8 @@ variables:
 
 .smoke avx512:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -330,9 +330,8 @@ variables:
 
 .smoke arm:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -343,9 +342,8 @@ variables:
 
 .smoke arm neon:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -1672,7 +1670,7 @@ basic memcheck:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: none
     MARCH: x86-64-v3
-    INFRASTRUCTURE_TAG: amd64-avx2  
+    INFRASTRUCTURE_TAG: amd64-avx2
   after_script:
     - *build_after_script
   artifacts:
