@@ -109,8 +109,8 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
     srs_du::control_config_params cur_control_params = {};
     cur_control_params.rrm_policy_group.emplace();
     if (ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().size() != 3) {
-      logger.warning("E2SM-RC Slice-level PRB quota Control Request: PLMN (param_id={}) encoded not correctly.",
-                     ran_param_id);
+      logger.info("E2SM-RC Slice-level PRB quota Control Request: PLMN (param_id={}) encoded not correctly.",
+                  ran_param_id);
       return;
     }
     std::array<uint8_t, 3> plmn_bytes;
