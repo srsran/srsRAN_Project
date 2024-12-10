@@ -212,8 +212,8 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
 
   //  Preprocess the pilots and compute the hop contribution to the CFO. Recall that this method updates
   //  pilot_products and pilots_lse.
-  std::optional<float> cfo_hop = preprocess_pilots_and_cfo(
-      pilots, pattern.symbols, cfg.scs, first_symbol, last_symbol, hop_offset, layer0, layer0 + 1);
+  std::optional<float> cfo_hop = preprocess_pilots_and_estimate_cfo(
+      pilots, pattern.symbols, first_symbol, last_symbol, hop_offset, layer0, layer0 + 1);
   if (cfo_hop.has_value()) {
     cfo_normalized = evaluate_or(
         cfo_normalized, cfo_hop.value(), [](float a, float b) { return (a + b) / 2.0F; }, cfo_hop.value());
@@ -284,15 +284,14 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
                               hop_offset);
 }
 
-std::optional<float>
-port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
-                                                               const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
-                                                               const subcarrier_spacing&                 scs,
-                                                               unsigned first_hop_symbol,
-                                                               unsigned last_hop_symbol,
-                                                               unsigned hop_offset,
-                                                               unsigned /* unused */,
-                                                               unsigned /* unused */)
+std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_estimate_cfo(
+    const dmrs_symbol_list&                   pilots,
+    const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
+    unsigned                                  first_hop_symbol,
+    unsigned                                  last_hop_symbol,
+    unsigned                                  hop_offset,
+    unsigned /* unused */,
+    unsigned /* unused */)
 {
   constexpr unsigned layer0 = 0;
 
@@ -353,6 +352,18 @@ port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol
   }
 
   return cfo;
+}
+
+// In this version of the code, the preprocess_pilots_and_estimate_cfo method takes care of compensating the CFO.
+void port_channel_estimator_average_impl::
+    compensate_cfo_and_accumulate( // NOLINT(readability-convert-member-functions-to-static)
+        const dmrs_symbol_list& /* unused */,
+        const bounded_bitset<MAX_NSYMB_PER_SLOT>& /* unused */,
+        unsigned /* unused */,
+        unsigned /* unused */,
+        std::optional<float> /* unused */)
+{
+  srsran_assertion_failure("Function not implemented.");
 }
 
 static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
