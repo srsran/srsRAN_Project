@@ -114,12 +114,12 @@ TEST_P(ChannelEstFixture, test)
 
   const port_channel_estimator::configuration& cfg = test_params.cfg;
 
-  // For now, we consider at most 2 layers.
+  // For now, we consider at most 4 layers.
   unsigned nof_layers = cfg.dmrs_pattern.size();
-  ASSERT_LE(nof_layers, 2) << "For now, at most two transmission layers are supported.";
+  ASSERT_LE(nof_layers, 4) << "For now, at most four transmission layers are supported.";
 
-  if ((nof_layers == 2) && (get_pusch_processor_phy_capabilities().max_nof_layers < 2)) {
-    GTEST_SKIP() << "The 2-layer channel estimator is not supported in this version - skipping the test.";
+  if ((nof_layers > 1) && (get_pusch_processor_phy_capabilities().max_nof_layers < 2)) {
+    GTEST_SKIP() << "The channel estimator for 2 or more layers is not supported in this version - skipping the test.";
   }
 
   // The test only considers a single port.
@@ -137,8 +137,9 @@ TEST_P(ChannelEstFixture, test)
   ASSERT_EQ(pilots.size(), nof_dmrs_pilots * nof_layers) << fmt::format(
       "Number of DM-RS pilots mismatch: configured {}, provided {}.", nof_dmrs_pilots * nof_layers, pilots.size());
 
+  unsigned                                                nof_cdms     = divide_ceil(nof_layers, 2);
   std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_params.grid.read();
-  ASSERT_EQ(grid_entries.size(), nof_dmrs_pilots) << fmt::format(
+  ASSERT_EQ(grid_entries.size(), nof_dmrs_pilots * nof_cdms) << fmt::format(
       "Number of received pilots mismatch: configured {}, read {}.", nof_dmrs_pilots, grid_entries.size());
 
   unsigned nof_allocated_res = nof_allocatd_rblocks * NRE * cfg.nof_symbols;
