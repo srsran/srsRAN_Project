@@ -58,6 +58,8 @@ private:
   /// Counts the number of PUCCH grants that are allocated for a given user at a specific slot.
   void update_harq_pucch_counter(cell_resource_allocator& cell_alloc);
 
+  void update_pucch_power_controller(cell_resource_allocator& cell_alloc);
+
   struct cell {
     cell_resource_allocator* cell_res_alloc;
 

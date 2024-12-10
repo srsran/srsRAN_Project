@@ -360,6 +360,18 @@ struct du_high_unit_pucch_config {
 
   /// Maximum number of consecutive undecoded PUCCH Format 2 for CSI before an RLF is reported.
   unsigned max_consecutive_kos = 100;
+
+  /// Enable closed-loop PUCCH power control.
+  bool enable_closed_loop_pw_control = false;
+  /// Target PUSCH SINR to be achieved with close-loop power control, in dB. Only relevant if \c
+  /// enable_closed_loop_pw_control is set to true and if the corresponding PUCCH format is used.
+  /// SINR target are based on the requirements in terms of 1% ACK missed detection probability, as per TS 38.104,
+  /// Tables 8.3.2.2-1 and 8.3.2.2-1 for Format 0, Table 8.3.4.1.2-1 and Table 8.3.4.1.2-2 for Format 2; while, for
+  /// Format 3, they are based on the UCI block error probability not exceeding 1%, as per Table 8.3.5.2-1
+  /// and 8.3.5.2-2.
+  float pucch_f0_sinr_target_dB{10.0f};
+  float pucch_f2_sinr_target_dB{6.0f};
+  float pucch_f3_sinr_target_dB{1.0f};
 };
 
 struct du_high_unit_srs_config {

@@ -936,9 +936,14 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
       app_sched_expert_cfg.ta_sched_cfg.ta_update_measurement_ul_sinr_threshold;
 
   // PUCCH and scheduler expert parameters.
-  out_cfg.ue.max_ul_grants_per_slot = cell.ul_common_cfg.max_ul_grants_per_slot;
-  out_cfg.ue.max_pucchs_per_slot    = cell.ul_common_cfg.max_pucchs_per_slot;
-  out_cfg.ue.min_k1                 = cell.pucch_cfg.min_k1;
+  out_cfg.ue.max_ul_grants_per_slot                   = cell.ul_common_cfg.max_ul_grants_per_slot;
+  out_cfg.ue.max_pucchs_per_slot                      = cell.ul_common_cfg.max_pucchs_per_slot;
+  out_cfg.ue.min_k1                                   = cell.pucch_cfg.min_k1;
+  const du_high_unit_pucch_config& pucch              = cell.pucch_cfg;
+  out_cfg.ue.ul_power_ctrl.enable_pucch_cl_pw_control = pucch.enable_closed_loop_pw_control;
+  out_cfg.ue.ul_power_ctrl.pucch_f0_sinr_target_dB    = pucch.pucch_f0_sinr_target_dB;
+  out_cfg.ue.ul_power_ctrl.pucch_f2_sinr_target_dB    = pucch.pucch_f2_sinr_target_dB;
+  out_cfg.ue.ul_power_ctrl.pucch_f3_sinr_target_dB    = pucch.pucch_f3_sinr_target_dB;
 
   // RA parameters.
   const du_high_unit_prach_config& prach = cell.prach_cfg;

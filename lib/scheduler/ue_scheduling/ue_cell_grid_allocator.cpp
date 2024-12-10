@@ -399,6 +399,9 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
       srsran_assert(result, "Harq is in invalid state");
     }
 
+    // Compute TPC for PUCCH.
+    uint8_t tpc = ue_cc->get_pucch_power_controller().compute_tpc_command(pdsch_alloc.slot + k1);
+
     // Fill DL PDCCH DCI PDU.
     // Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
     static constexpr unsigned DAI_MOD = 4U;
@@ -432,7 +435,8 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
                               mcs_tbs_info.value().mcs,
                               rv,
                               *h_dl,
-                              nof_dl_layers);
+                              nof_dl_layers,
+                              tpc);
         break;
       default:
         report_fatal_error("Unsupported RNTI type for PDSCH allocation");

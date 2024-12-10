@@ -13,6 +13,7 @@
 #include "../cell/cell_harq_manager.h"
 #include "../config/ue_configuration.h"
 #include "../support/bwp_helpers.h"
+#include "../support/pucch_power_controller.h"
 #include "../support/sch_pdu_builder.h"
 #include "../support/ul_power_controller.h"
 #include "ue_channel_state_manager.h"
@@ -108,6 +109,10 @@ public:
   /// Update UE with the latest CSI report for a given cell.
   void handle_csi_report(const csi_report_data& csi_report);
 
+  /// \brief Handle PUCCH SINR for PUCCH Format 0/1 and 2/3/4.
+  void handle_pucch_sinr_f0_f1(slot_point slor_rx, float sinr_db);
+  void handle_pucch_sinr_f2_f3_f4(slot_point slor_rx, float sinr_db, bool has_harq_bits, bool has_csi_bits);
+
   sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
 
   /// \brief Get recommended aggregation level for PDCCH at a given CQI.
@@ -131,6 +136,9 @@ public:
 
   ul_power_controller&       get_ul_power_controller() { return ul_pwr_controller; }
   const ul_power_controller& get_ul_power_controller() const { return ul_pwr_controller; }
+
+  pucch_power_controller&       get_pucch_power_controller() { return pucch_pwr_controller; }
+  const pucch_power_controller& get_pucch_power_controller() const { return pucch_pwr_controller; }
 
   /// \brief Returns an estimated DL rate in bytes per slot based on the given input parameters.
   double get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
@@ -159,7 +167,8 @@ private:
 
   ue_link_adaptation_controller ue_mcs_calculator;
 
-  ul_power_controller ul_pwr_controller;
+  ul_power_controller    ul_pwr_controller;
+  pucch_power_controller pucch_pwr_controller;
 };
 
 } // namespace srsran

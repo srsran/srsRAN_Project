@@ -60,6 +60,12 @@ struct ul_power_control {
   /// This is used to compute the path loss compensation for PUSCH fractional power control.
   /// Only relevant if \c enable_closed_loop_pw_control is set to true.
   float path_loss_for_target_pusch_sinr{70.0f};
+  /// Enable closed-loop PUCCH power control.
+  bool enable_pucch_cl_pw_control = false;
+  /// Target PUCCH SINR to be achieved with Close-loop power control, in dB, for the PUCCH formats 0, 2 and 3.
+  float pucch_f0_sinr_target_dB = 6.0f;
+  float pucch_f2_sinr_target_dB = 3.0f;
+  float pucch_f3_sinr_target_dB = -3.0f;
 };
 
 /// \brief UE scheduling statically configurable expert parameters.

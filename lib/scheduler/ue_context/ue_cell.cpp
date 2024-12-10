@@ -48,7 +48,8 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   logger(srslog::fetch_basic_logger("SCHED")),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
   ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state),
-  ul_pwr_controller(ue_cell_cfg_, channel_state)
+  ul_pwr_controller(ue_cell_cfg_, channel_state),
+  pucch_pwr_controller(ue_cell_cfg_)
 {
 }
 
@@ -313,6 +314,16 @@ void ue_cell::handle_csi_report(const csi_report_data& csi_report)
   if (not channel_state.handle_csi_report(csi_report)) {
     logger.warning("ue={} rnti={}: Invalid CSI report received", fmt::underlying(ue_index), rnti());
   }
+}
+
+void ue_cell::handle_pucch_sinr_f0_f1(slot_point slor_rx, float sinr_db)
+{
+  pucch_pwr_controller.update_pucch_sinr_f0_f1(slor_rx, sinr_db);
+}
+
+void ue_cell::handle_pucch_sinr_f2_f3_f4(slot_point slor_rx, float sinr_db, bool has_harq_bits, bool has_csi_bits)
+{
+  pucch_pwr_controller.update_pucch_sinr_f2_f3_f4(slor_rx, sinr_db, has_harq_bits, has_csi_bits);
 }
 
 template <typename FilterSearchSpace>

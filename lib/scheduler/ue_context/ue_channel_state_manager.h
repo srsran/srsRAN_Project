@@ -92,6 +92,12 @@ private:
   /// Time-averaged PUSCH SINR, in dB.
   exp_average_fast_start<float> average_pusch_sinr_dB;
 
+  /// Estimated PUCCH SNR for PUCCH in Resource Set 0, in dB. This includes Format 0 and Format 1.
+  float pucch_set_0_snr_db;
+
+  /// Estimated PUCCH SNR for PUCCH in Resource Set 1, in dB. This includes Format 2, 3 and 4.
+  float pucch_set_1_snr_db;
+
   /// \brief Recommended CQI to be used to derive the DL MCS.
   csi_report_wideband_cqi_type wideband_cqi;
 
