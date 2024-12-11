@@ -258,9 +258,13 @@ public:
 
 class dummy_ngu_gateway final : public gtpu_tnl_pdu_session
 {
+public:
+  void set_bind_address(const std::string& ip_address) { ip_addr = ip_address; }
+
+private:
   bool get_bind_address(std::string& ip_address) const override
   {
-    ip_address = "127.0.0.2";
+    ip_address = ip_addr;
     return true;
   }
 
@@ -269,6 +273,8 @@ class dummy_ngu_gateway final : public gtpu_tnl_pdu_session
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) override {}
 
   void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override {}
+
+  std::string ip_addr = "127.0.0.2";
 };
 
 class dummy_ngu_session_manager final : public srs_cu_up::ngu_session_manager

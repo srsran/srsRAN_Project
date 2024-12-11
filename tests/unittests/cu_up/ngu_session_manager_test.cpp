@@ -16,7 +16,29 @@ using namespace srs_cu_up;
 
 TEST_F(ngu_session_manager_test, mngr_creation)
 {
-  ngu_session_mngr = std::make_unique<ngu_session_manager_impl>(ngu_gws);
+  ASSERT_NE(ngu_session_mngr, nullptr);
+}
+
+TEST_F(ngu_session_manager_test, rr_session_selection)
+{
+  {
+    const auto& ngu_gw = ngu_session_mngr->get_next_ngu_gateway();
+    std::string ip_addr;
+    ASSERT_TRUE(ngu_gw.get_bind_address(ip_addr));
+    ASSERT_EQ(ip_addr, "127.0.0.1");
+  }
+  {
+    const auto& ngu_gw = ngu_session_mngr->get_next_ngu_gateway();
+    std::string ip_addr;
+    ASSERT_TRUE(ngu_gw.get_bind_address(ip_addr));
+    ASSERT_EQ(ip_addr, "127.0.0.2");
+  }
+  {
+    const auto& ngu_gw = ngu_session_mngr->get_next_ngu_gateway();
+    std::string ip_addr;
+    ASSERT_TRUE(ngu_gw.get_bind_address(ip_addr));
+    ASSERT_EQ(ip_addr, "127.0.0.1");
+  }
 }
 
 int main(int argc, char** argv)
