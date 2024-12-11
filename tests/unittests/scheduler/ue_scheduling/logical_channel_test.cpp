@@ -115,8 +115,7 @@ TEST(dl_logical_channel_test, total_pending_bytes_equal_sum_of_logical_channel_p
     lch_mng.handle_dl_buffer_status_indication(lcid, dl_bs);
   }
 
-  ASSERT_EQ(lch_mng.pending_bytes() + lch_mng.pending_bytes(LCID_SRB0),
-            std::accumulate(buf_st_inds.begin(), buf_st_inds.end(), 0));
+  ASSERT_EQ(lch_mng.pending_bytes(), std::accumulate(buf_st_inds.begin(), buf_st_inds.end(), 0));
   ASSERT_FALSE(lch_mng.has_pending_ces());
   for (unsigned i = 0; i != lcids.size(); ++i) {
     ASSERT_EQ(lch_mng.pending_bytes(lcids[i]), buf_st_inds[i]);

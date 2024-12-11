@@ -54,15 +54,25 @@ public:
   }
 
   /// \brief Checks whether the UE has pending data.
-  /// \remark Excludes data for SRB0.
   bool has_pending_bytes() const
   {
     return has_pending_ces() or
            std::any_of(channels.begin(), channels.end(), [](const auto& ch) { return ch.active and ch.buf_st > 0; });
   }
 
+  /// \brief Check whether the UE has pending data, given its current state.
+  bool has_pending_bytes(bool fallback_enabled) const
+  {
+    if (fallback_enabled) {
+      return is_con_res_id_pending() or has_pending_bytes(LCID_SRB0) or has_pending_bytes(LCID_SRB1);
+    }
+    return has_pending_ces() or std::any_of(channels.begin() + 1, channels.end(), [](const auto& ch) {
+             return ch.active and ch.buf_st > 0;
+           });
+  }
+
   /// \brief Checks whether a logical channel has pending data.
-  bool has_pending_bytes(lcid_t lcid) const { return pending_bytes(lcid) > 0; }
+  bool has_pending_bytes(lcid_t lcid) const { return channels[lcid].active and channels[lcid].buf_st > 0; }
 
   /// \brief Checks whether a ConRes CE is pending for transmission.
   bool is_con_res_id_pending() const { return pending_con_res_id; }
@@ -71,11 +81,22 @@ public:
   bool has_pending_ces() const { return pending_con_res_id or not pending_ces.empty(); }
 
   /// \brief Calculates total number of DL bytes, including MAC header overhead.
-  /// \remark Excludes data for SRB0 and UE Contention Resolution Identity CE.
   unsigned pending_bytes() const
   {
     unsigned bytes = pending_ce_bytes();
-    // Skip index 0 ==> SRB0.
+    for (unsigned i = 0; i <= MAX_LCID; ++i) {
+      bytes += pending_bytes((lcid_t)i);
+    }
+    return bytes;
+  }
+
+  /// \brief Calculates number of DL pending bytes, including MAC header overhead, and taking UE state into account.
+  unsigned pending_bytes(bool fallback_enabled) const
+  {
+    if (fallback_enabled) {
+      return pending_con_res_ce_bytes() + pending_bytes(LCID_SRB0) + pending_bytes(LCID_SRB1);
+    }
+    unsigned bytes = pending_ce_bytes();
     for (unsigned i = 1; i <= MAX_LCID; ++i) {
       bytes += pending_bytes((lcid_t)i);
     }

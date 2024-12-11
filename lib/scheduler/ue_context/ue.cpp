@@ -155,23 +155,13 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
 
 bool ue::has_pending_dl_newtx_bytes() const
 {
-  if (get_pcell().is_in_fallback_mode()) {
-    return dl_lc_ch_mgr.has_pending_ces() or dl_lc_ch_mgr.has_pending_bytes(LCID_SRB0) or
-           dl_lc_ch_mgr.has_pending_bytes(LCID_SRB1);
-  }
-  return dl_lc_ch_mgr.has_pending_bytes();
+  return dl_lc_ch_mgr.has_pending_bytes(get_pcell().is_in_fallback_mode());
 }
 
 unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
 {
-  if (lcid != INVALID_LCID) {
-    return dl_lc_ch_mgr.pending_bytes(lcid);
-  }
-  if (get_pcell().is_in_fallback_mode()) {
-    return dl_lc_ch_mgr.pending_ce_bytes() + dl_lc_ch_mgr.pending_bytes(LCID_SRB0) +
-           dl_lc_ch_mgr.pending_bytes(LCID_SRB1);
-  }
-  return dl_lc_ch_mgr.pending_bytes();
+  return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid)
+                              : dl_lc_ch_mgr.pending_bytes(get_pcell().is_in_fallback_mode());
 }
 
 unsigned ue::pending_ul_newtx_bytes() const
