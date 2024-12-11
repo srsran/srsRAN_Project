@@ -86,7 +86,7 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lc
   //  - If it is last PDU of the TBS.
   //  - [Implementation-defined] If \c leftover_bytes is < 5 bytes, as it results in small SDU size.
   unsigned leftover_bytes = rem_bytes - alloc_bytes;
-  if (leftover_bytes > 0 and ((leftover_bytes <= MAX_MAC_SDU_SUBHEADER_SIZE + 1) or pending_bytes() == 0)) {
+  if (leftover_bytes > 0 and ((leftover_bytes <= MAX_MAC_SDU_SUBHEADER_SIZE + 1) or total_pending_bytes() == 0)) {
     alloc_bytes += leftover_bytes;
   }
   if (alloc_bytes == MAC_SDU_SUBHEADER_LENGTH_THRES + MIN_MAC_SDU_SUBHEADER_SIZE) {

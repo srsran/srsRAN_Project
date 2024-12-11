@@ -53,7 +53,7 @@ public:
     return channels[lcid].active;
   }
 
-  /// \brief Checks whether the UE has pending data.
+  /// \brief Checks whether the UE has pending data, regardless of the state it is in.
   bool has_pending_bytes() const
   {
     return has_pending_ces() or
@@ -80,12 +80,13 @@ public:
   /// \brief Checks whether UE has pending CEs to be scheduled (ConRes excluded).
   bool has_pending_ces() const { return pending_con_res_id or not pending_ces.empty(); }
 
-  /// \brief Calculates total number of DL bytes, including MAC header overhead.
-  unsigned pending_bytes() const
+  /// \brief Calculates total number of DL bytes, including MAC header overhead, and without taking into account
+  /// the UE state.
+  unsigned total_pending_bytes() const
   {
     unsigned bytes = pending_ce_bytes();
     for (unsigned i = 0; i <= MAX_LCID; ++i) {
-      bytes += pending_bytes((lcid_t)i);
+      bytes += pending_bytes(static_cast<lcid_t>(i));
     }
     return bytes;
   }
@@ -98,7 +99,7 @@ public:
     }
     unsigned bytes = pending_ce_bytes();
     for (unsigned i = 1; i <= MAX_LCID; ++i) {
-      bytes += pending_bytes((lcid_t)i);
+      bytes += pending_bytes(static_cast<lcid_t>(i));
     }
     return bytes;
   }
