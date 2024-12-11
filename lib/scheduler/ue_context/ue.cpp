@@ -32,7 +32,7 @@ ue::ue(const ue_creation_command& cmd) :
       logger)
 {
   // Apply configuration.
-  handle_reconfiguration_request(ue_reconf_command{cmd.cfg});
+  set_config(cmd.cfg);
 
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
@@ -77,16 +77,32 @@ void ue::release_resources()
 
 void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
 {
-  srsran_assert(cmd.cfg.nof_cells() > 0, "Creation of a UE requires at least PCell configuration.");
-  ue_ded_cfg = &cmd.cfg;
+  // UE enters fallback mode when a Reconfiguration takes place.
+  reconf_ongoing = true;
+  get_pcell().set_fallback_state(true);
+
+  // Update UE config.
+  set_config(cmd.cfg);
+}
+
+void ue::handle_config_applied()
+{
+  get_pcell().set_fallback_state(false);
+  reconf_ongoing = false;
+}
+
+void ue::set_config(const ue_configuration& new_cfg)
+{
+  srsran_assert(new_cfg.nof_cells() > 0, "Creation of a UE requires at least PCell configuration.");
+  ue_ded_cfg = &new_cfg;
 
   // Configure Logical Channels.
   dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
   ul_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
 
   // DRX config.
-  if (cmd.cfg.drx_cfg().has_value()) {
-    drx.reconfigure(cmd.cfg.drx_cfg());
+  if (ue_ded_cfg->drx_cfg().has_value()) {
+    drx.reconfigure(ue_ded_cfg->drx_cfg());
   }
 
   // Cell configuration.

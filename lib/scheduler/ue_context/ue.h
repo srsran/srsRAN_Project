@@ -110,7 +110,14 @@ public:
     dl_lc_ch_mgr.handle_mac_ce_indication({.ce_lcid = msg.ce_lcid, .ce_payload = dummy_ce_payload{}});
   }
 
+  /// Called when a new UE configuration is passed to the scheduler, as part of the RRC Reconfiguration procedure.
   void handle_reconfiguration_request(const ue_reconf_command& params);
+
+  /// Called when the UE confirms that it applied the new configuration.
+  void handle_config_applied();
+
+  /// Determines whether a UE reconfiguration is being processed.
+  bool is_reconfig_ongoing() const { return reconf_ongoing; }
 
   /// \brief Handles DL Buffer State indication.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg);
@@ -168,6 +175,9 @@ public:
   unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
 private:
+  /// Update UE configuration.
+  void set_config(const ue_configuration& new_cfg);
+
   // Expert config parameters used for UE scheduler.
   const scheduler_ue_expert_config& expert_cfg;
   // Cell configuration. This is common to all UEs within the same cell.
@@ -193,6 +203,9 @@ private:
   ul_logical_channel_manager ul_lc_ch_mgr;
 
   slot_point last_sl_tx;
+
+  /// Whether a UE reconfiguration is taking place.
+  bool reconf_ongoing = false;
 
   /// UE Timing Advance Manager.
   ta_manager ta_mgr;

@@ -417,7 +417,8 @@ allocate_ue_fallback_pucch(ue&                         u,
                            span<const uint8_t>         k1_values,
                            slot_point                  pdsch_slot,
                            slot_point                  min_ack_slot,
-                           bool                        common_and_ded_alloc)
+                           bool                        common_alloc,
+                           bool                        ded_alloc)
 {
   const unsigned pdsch_delay = pdsch_slot - res_alloc.slot_tx();
 
@@ -434,11 +435,18 @@ allocate_ue_fallback_pucch(ue&                         u,
     }
     last_valid_k1 = k1_candidate;
 
-    std::optional<unsigned> pucch_res_indicator =
-        common_and_ded_alloc
-            ? pucch_alloc.alloc_common_and_ded_harq_res(
-                  res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate, pdcch_info)
-            : pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_delay, k1_candidate, pdcch_info);
+    std::optional<unsigned> pucch_res_indicator;
+    if (common_alloc and ded_alloc) {
+      pucch_res_indicator = pucch_alloc.alloc_common_and_ded_harq_res(
+          res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate, pdcch_info);
+    } else if (common_alloc) {
+      pucch_res_indicator =
+          pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_delay, k1_candidate, pdcch_info);
+    } else {
+      srsran_assert(ded_alloc, "Invalid params passed to this function");
+      pucch_res_indicator =
+          pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate);
+    }
     if (pucch_res_indicator.has_value()) {
       return std::make_pair(*pucch_res_indicator, k1_candidate);
     }
@@ -585,7 +593,8 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // configuration, the UE is provided by higher layers with one or more PUCCH resources [...]").
   // - If the UE object in the scheduler doesn't have a complete configuration (i.e., when SRB0 is for RRC Reject),
   // don't use the PUCCH ded. resources.
-  const bool use_common_and_ded_res     = u.ue_cfg_dedicated()->is_ue_cfg_complete() and is_retx;
+  const bool use_common    = not u.is_reconfig_ongoing();
+  const bool use_dedicated = u.is_reconfig_ongoing() or (u.ue_cfg_dedicated()->is_ue_cfg_complete() and is_retx);
   auto [pucch_res_indicator, chosen_k1] = allocate_ue_fallback_pucch(u,
                                                                      res_alloc,
                                                                      pucch_alloc,
@@ -593,7 +602,8 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
                                                                      dci_1_0_k1_values,
                                                                      pdsch_alloc.slot,
                                                                      most_recent_ack_slot,
-                                                                     use_common_and_ded_res);
+                                                                     use_common,
+                                                                     use_dedicated);
   if (not pucch_res_indicator.has_value()) {
     if (chosen_k1.has_value()) {
       // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
@@ -602,10 +612,6 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
                    pdsch_alloc.slot);
     }
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
-    if (not use_common_and_ded_res) {
-      // If there isn't enough space for common PUCCH, then there is no point of repeating this slot.
-      slots_with_no_pdxch_space[pdcch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
-    }
     return {};
   }
 

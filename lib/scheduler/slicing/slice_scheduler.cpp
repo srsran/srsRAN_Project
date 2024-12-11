@@ -132,7 +132,6 @@ void slice_scheduler::reconf_ue(du_ue_index_t ue_idx)
   if (u == nullptr) {
     return;
   }
-  add_impl(*u);
 
   // Check if any UE HARQs need to be cancelled in case the UE got removed from the respective slice.
   ue_cell& ue_cell = *u->find_cell(cell_cfg.cell_index);
