@@ -92,7 +92,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
   schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::srb1);
 }
 
-void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index, bool is_srb0)
+void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index)
 {
   if (not ues.contains(ue_index)) {
     logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not found in the scheduler", ue_index);
@@ -104,19 +104,16 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_i
     return;
   }
 
-  auto ue_it = std::find_if(
-      pending_dl_ues_new_tx.begin(), pending_dl_ues_new_tx.end(), [ue_index, is_srb0](const fallback_ue& ue) {
-        return ue.ue_index == ue_index and (not ue.is_srb0.has_value() or ue.is_srb0.value() == is_srb0);
-      });
+  auto ue_it = std::find_if(pending_dl_ues_new_tx.begin(),
+                            pending_dl_ues_new_tx.end(),
+                            [ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; });
 
   if (ue_it != pending_dl_ues_new_tx.end()) {
-    // The UE has already data pending.
-    ue_it->is_srb0 = is_srb0;
     return;
   }
 
   // The UE doesn't exist in the internal fallback scheduler list, add it.
-  pending_dl_ues_new_tx.push_back({ue_index, is_srb0});
+  pending_dl_ues_new_tx.push_back({ue_index});
 }
 
 void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
@@ -146,7 +143,7 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
     return;
   }
 
-  pending_dl_ues_new_tx.push_back({ue_index, std::nullopt});
+  pending_dl_ues_new_tx.push_back({ue_index});
 }
 
 void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind)
@@ -194,11 +191,11 @@ void ue_fallback_scheduler::handle_sr_indication(du_ue_index_t ue_index)
 bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
 {
   for (auto& next_ue_harq_retx : ongoing_ues_ack_retxs) {
-    auto&                                  u    = ues[next_ue_harq_retx.ue_index];
-    std::optional<dl_harq_process_handle>& h_dl = next_ue_harq_retx.h_dl;
+    auto&                   u    = ues[next_ue_harq_retx.ue_index];
+    dl_harq_process_handle& h_dl = next_ue_harq_retx.h_dl;
 
-    if (h_dl->has_pending_retx()) {
-      dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, h_dl, next_ue_harq_retx.is_srb0);
+    if (h_dl.has_pending_retx()) {
+      dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, h_dl);
       // This is the case of the scheduler reaching the maximum number of sched attempts.
       if (outcome == dl_sched_outcome::stop_dl_scheduling) {
         return false;
@@ -222,21 +219,15 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
   }
 }
 
-ue_fallback_scheduler::dl_new_tx_alloc_type
-ue_fallback_scheduler::get_dl_new_tx_alloc_type(const fallback_ue& next_ue) const
+ue_fallback_scheduler::dl_new_tx_alloc_type ue_fallback_scheduler::get_dl_new_tx_alloc_type(const ue& u)
 {
-  auto& u = ues[next_ue.ue_index];
-  if (not next_ue.is_srb0.has_value()) {
-    // No SRB0 or SRB1. Verify if ConRes CE needs to be scheduled.
-    return u.is_conres_ce_pending() ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
-  }
-  if (next_ue.is_srb0.value()) {
-    return u.has_pending_dl_newtx_bytes(LCID_SRB0) ? dl_new_tx_alloc_type::srb0 : dl_new_tx_alloc_type::error;
+  if (u.has_pending_dl_newtx_bytes(LCID_SRB0)) {
+    return dl_new_tx_alloc_type::srb0;
   }
   if (u.has_pending_dl_newtx_bytes(LCID_SRB1)) {
     return dl_new_tx_alloc_type::srb1;
   }
-  return dl_new_tx_alloc_type::skip;
+  return u.is_conres_ce_pending() ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
 }
 
 bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_alloc,
@@ -244,7 +235,8 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
 {
   for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
     // Determine if we should schedule ConRes, SRB0, SRB1 for the given UE.
-    const auto alloc_type = get_dl_new_tx_alloc_type(*next_ue);
+    auto&      u          = ues[next_ue->ue_index];
+    const auto alloc_type = get_dl_new_tx_alloc_type(u);
     if (alloc_type == dl_new_tx_alloc_type::error) {
       // The UE is not in a state for scheduling
       logger.error("ue={}: UE is an inconsistent state in the fallback scheduler", next_ue->ue_index);
@@ -258,8 +250,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     }
 
     // Make the scheduling attempt.
-    auto&            u       = ues[next_ue->ue_index];
-    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt, next_ue->is_srb0);
+    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt);
     if (outcome == dl_sched_outcome::next_ue) {
       // Allocation failed but we can attempt with another UE.
       ++next_ue;
@@ -271,28 +262,12 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
       return false;
     }
 
-    // There was an allocation. This does not, however, mean that the pending data was completely flushed.
-
-    if (alloc_type == dl_new_tx_alloc_type::conres_only or alloc_type == dl_new_tx_alloc_type::srb0) {
-      // ConRes-only, SRB0-ony and ConRes+SRB0 cases
-
-      if (outcome == dl_sched_outcome::success) {
-        next_ue = pending_dl_ues_new_tx.erase(next_ue);
-      } else {
-        // ConRes CE was scheduled but SRB0 wasn't.
-        ++next_ue;
-      }
-    } else {
-      // SRB1-ony and ConRes+SRB1 cases
-
-      if (outcome == dl_sched_outcome::success) {
-        // Move to the next UE ONLY IF the UE has no more pending bytes for SRB1. This is to give priority to the same
-        // UE, if there are still some SRB1 bytes left in the buffer. At the next iteration, the scheduler will try
-        // again with the same scheduler, but starting from the next available slot.
-        if (not u.has_pending_dl_newtx_bytes()) {
-          ++next_ue;
-        }
-      }
+    // There was a successful allocation. This does not, however, mean that the pending data was completely flushed.
+    // Move to the next UE ONLY IF the UE has no more pending bytes. This is to give priority to the same UE, if
+    // there are still some bytes left in the buffer. At the next iteration, the scheduler will try
+    // again with the same scheduler, but starting from the next available slot.
+    if (not u.has_pending_dl_newtx_bytes()) {
+      ++next_ue;
     }
   }
 
@@ -318,8 +293,7 @@ static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_poi
 ue_fallback_scheduler::dl_sched_outcome
 ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res_alloc,
                                        ue&                                   u,
-                                       std::optional<dl_harq_process_handle> h_dl_retx,
-                                       std::optional<bool>                   is_srb0)
+                                       std::optional<dl_harq_process_handle> h_dl_retx)
 {
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
   // Search valid PDSCH time domain resource.
@@ -380,9 +354,8 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
 
     // Verify there is space in PDSCH and PDCCH result lists for new allocations.
     if (pdcch_alloc.result.dl.dl_pdcchs.full() or pdsch_alloc.result.dl.ue_grants.full()) {
-      logger.debug("rnti={}: Failed to allocate PDSCH for {}. Cause: No space available in scheduler output list",
-                   u.crnti,
-                   not is_srb0.has_value() ? "ConRes CE" : (*is_srb0 ? "SRB0 PDU" : "SRB1 PDU"));
+      logger.debug("rnti={}: Failed to allocate fallback PDSCH. Cause: No space available in scheduler output list",
+                   u.crnti);
       slots_with_no_pdxch_space[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
       continue;
     }
@@ -398,16 +371,13 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
       most_recent_ack_slot = last_slot_ack;
     }
 
-    sched_srb_results sched_res = alloc_grant(
-        u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx, is_srb0);
+    auto h_dl =
+        alloc_grant(u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
 
-    const bool alloc_successful = sched_res.h_dl.has_value();
+    const bool alloc_successful = h_dl.has_value();
     if (alloc_successful) {
       if (not is_retx) {
-        store_harq_tx(u.ue_index, sched_res.h_dl, is_srb0);
-      }
-      if (sched_res.is_srb_data_pending) {
-        return dl_sched_outcome::srb_pending;
+        store_harq_tx(u.ue_index, h_dl.value());
       }
       return dl_sched_outcome::success;
     }
@@ -416,11 +386,11 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
   }
 
   // No resource found in UE's carriers and Search spaces.
-  logger.debug("rnti={}: Skipped {} allocation in slots:[{},{}). Cause: no PDCCH/PDSCH/PUCCH resources available",
-               u.crnti,
-               not is_srb0.has_value() ? "ConRes CE" : (*is_srb0 ? "SRB0 PDU" : "SRB1 PDU"),
-               starting_slot,
-               sched_ref_slot + max_dl_slots_ahead_sched + 1);
+  logger.debug(
+      "rnti={}: Skipped fallback PDSCH allocation in slots:[{},{}). Cause: no PDCCH/PDSCH/PUCCH resources available",
+      u.crnti,
+      starting_slot,
+      sched_ref_slot + max_dl_slots_ahead_sched + 1);
   return dl_sched_outcome::next_ue;
 }
 
@@ -474,14 +444,13 @@ allocate_ue_fallback_pucch(ue&                         u,
   return std::make_pair(std::nullopt, last_valid_k1);
 }
 
-ue_fallback_scheduler::sched_srb_results
+std::optional<dl_harq_process_handle>
 ue_fallback_scheduler::alloc_grant(ue&                                   u,
                                    cell_resource_allocator&              res_alloc,
                                    unsigned                              pdsch_time_res,
                                    unsigned                              slot_offset,
                                    slot_point                            most_recent_ack_slot,
-                                   std::optional<dl_harq_process_handle> h_dl_retx,
-                                   std::optional<bool>                   is_srb0)
+                                   std::optional<dl_harq_process_handle> h_dl_retx)
 {
   ue_cell&                                     ue_pcell     = u.get_pcell();
   const subcarrier_spacing                     scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
@@ -520,8 +489,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
 
   crb_interval  ue_grant_crbs;
   sch_prbs_tbs  prbs_tbs{};
-  sch_mcs_index mcs_idx                 = 0;
-  bool          pending_bytes_segmented = false;
+  sch_mcs_index mcs_idx = 0;
   if (is_retx) {
     // Use the same MCS, nof PRBs and TBS as the last allocation.
     mcs_idx            = h_dl_retx->get_grant_params().mcs;
@@ -536,17 +504,18 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
     ue_grant_crbs = {unused_crbs.start(), unused_crbs.start() + prbs_tbs.nof_prbs};
 
   } else {
-    const unsigned pending_bytes = u.pending_dl_newtx_bytes();
-    srsran_assert(pending_bytes > 0, "Unexpected number of pending bytes");
     const unsigned only_conres_bytes = u.pending_conres_ce_bytes();
     const unsigned only_srb0_bytes   = u.pending_dl_newtx_bytes(LCID_SRB0);
+    const unsigned only_srb1_bytes   = u.pending_dl_newtx_bytes(LCID_SRB1);
+    const unsigned pending_bytes     = only_conres_bytes + only_srb0_bytes + only_srb1_bytes;
+    srsran_assert(pending_bytes > 0, "Unexpected number of pending bytes");
     // There must be space for ConRes CE, if it is pending. If only SRB0 is pending (no ConRes), there must be space
     // for it, as the SRB0 cannot be segmented.
     const unsigned min_pending_bytes =
         only_conres_bytes > 0 ? only_conres_bytes : (only_srb0_bytes > 0 ? only_srb0_bytes : 0);
 
     std::optional<sch_mcs_index> fixed_mcs;
-    if (is_srb0.has_value() and not is_srb0.value()) {
+    if (only_srb1_bytes > 0) {
       fixed_mcs = map_cqi_to_mcs(expert_cfg.initial_cqi, pdsch_cfg.mcs_table);
       srsran_assert(fixed_mcs.has_value(), "Invalid Initial CQI {}", expert_cfg.initial_cqi);
     }
@@ -585,7 +554,6 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
           return {};
         }
       }
-      pending_bytes_segmented = true;
     }
 
     // Selection of Nof RBs, TBS and MCS complete.
@@ -615,10 +583,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // configuration, the UE is provided by higher layers with one or more PUCCH resources [...]").
   // - If the UE object in the scheduler doesn't have a complete configuration (i.e., when SRB0 is for RRC Reject),
   // don't use the PUCCH ded. resources.
-  const bool use_common_and_ded_res =
-      u.ue_cfg_dedicated()->is_ue_cfg_complete() and
-      (is_retx or (is_srb0.has_value() and not is_srb0.value() and dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0));
-  // TODO: Fix use_common_and_ded_res check
+  const bool use_common_and_ded_res     = u.ue_cfg_dedicated()->is_ue_cfg_complete() and is_retx;
   auto [pucch_res_indicator, chosen_k1] = allocate_ue_fallback_pucch(u,
                                                                      res_alloc,
                                                                      pucch_alloc,
@@ -649,25 +614,20 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 
   // Fill ConRes and/or SRB grant.
-  auto [nof_srb1_scheduled_bytes, h_dl] = fill_dl_srb_grant(u,
-                                                            pdsch_alloc.slot,
-                                                            h_dl_retx,
-                                                            *pdcch,
-                                                            dci_type,
-                                                            pdsch_alloc.result.dl.ue_grants.emplace_back(),
-                                                            pucch_res_indicator.value(),
-                                                            pdsch_time_res,
-                                                            chosen_k1.value(),
-                                                            mcs_idx,
-                                                            ue_grant_crbs,
-                                                            pdsch_cfg,
-                                                            prbs_tbs.tbs_bytes,
-                                                            is_retx,
-                                                            is_srb0);
-
-  return sched_srb_results{.h_dl                     = h_dl,
-                           .is_srb_data_pending      = pending_bytes_segmented,
-                           .nof_srb1_scheduled_bytes = nof_srb1_scheduled_bytes};
+  return fill_dl_srb_grant(u,
+                           pdsch_alloc.slot,
+                           h_dl_retx,
+                           *pdcch,
+                           dci_type,
+                           pdsch_alloc.result.dl.ue_grants.emplace_back(),
+                           pucch_res_indicator.value(),
+                           pdsch_time_res,
+                           chosen_k1.value(),
+                           mcs_idx,
+                           ue_grant_crbs,
+                           pdsch_cfg,
+                           prbs_tbs.tbs_bytes,
+                           is_retx);
 }
 
 std::tuple<unsigned, sch_mcs_index, units::bytes>
@@ -762,22 +722,20 @@ ue_fallback_scheduler::select_tbs(const pdsch_config_params&          pdsch_cfg,
   return std::make_tuple(prbs_tbs.nof_prbs, chosen_mcs_idx, units::bytes{prbs_tbs.tbs_bytes});
 }
 
-std::pair<unsigned, dl_harq_process_handle>
-ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u,
-                                         slot_point                            pdsch_slot,
-                                         std::optional<dl_harq_process_handle> h_dl,
-                                         pdcch_dl_information&                 pdcch,
-                                         dci_dl_rnti_config_type               dci_type,
-                                         dl_msg_alloc&                         msg,
-                                         unsigned                              pucch_res_indicator,
-                                         unsigned                              pdsch_time_res,
-                                         unsigned                              k1,
-                                         sch_mcs_index                         mcs_idx,
-                                         const crb_interval&                   ue_grant_crbs,
-                                         const pdsch_config_params&            pdsch_params,
-                                         unsigned                              tbs_bytes,
-                                         bool                                  is_retx,
-                                         std::optional<bool>                   is_srb0)
+dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u,
+                                                                slot_point                            pdsch_slot,
+                                                                std::optional<dl_harq_process_handle> h_dl,
+                                                                pdcch_dl_information&                 pdcch,
+                                                                dci_dl_rnti_config_type               dci_type,
+                                                                dl_msg_alloc&                         msg,
+                                                                unsigned                   pucch_res_indicator,
+                                                                unsigned                   pdsch_time_res,
+                                                                unsigned                   k1,
+                                                                sch_mcs_index              mcs_idx,
+                                                                const crb_interval&        ue_grant_crbs,
+                                                                const pdsch_config_params& pdsch_params,
+                                                                unsigned                   tbs_bytes,
+                                                                bool                       is_retx)
 {
   // Allocate DL HARQ.
   // NOTE: We do not multiplex the SRB1 PUCCH with existing PUCCH HARQs, thus both DAI and HARQ-ACK bit index are 0.
@@ -831,7 +789,6 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
   msg.context.nof_retxs   = h_dl->nof_retxs();
   msg.context.olla_offset = 0;
 
-  unsigned srb1_bytes_allocated = 0;
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
       build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg,
@@ -845,9 +802,6 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
       break;
     }
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
-      srsran_assert(is_srb0.has_value(),
-                    "Invalid DCI type={} used for scheduling ConRes CE only",
-                    dci_dl_rnti_config_rnti_type(dci_type));
       build_pdsch_f1_0_c_rnti(msg.pdsch_cfg,
                               pdsch_params,
                               tbs_bytes,
@@ -874,7 +828,7 @@ ue_fallback_scheduler::fill_dl_srb_grant(ue&                                   u
   dl_harq_alloc_context ctxt{pdcch.dci.type, std::nullopt, std::nullopt, std::nullopt, true};
   h_dl->save_grant_params(ctxt, msg);
 
-  return std::make_pair(srb1_bytes_allocated, *h_dl);
+  return *h_dl;
 }
 
 ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc,
@@ -1260,9 +1214,7 @@ ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common&        
   return candidate_pdsch_time_res_idx;
 }
 
-void ue_fallback_scheduler::store_harq_tx(du_ue_index_t                         ue_index,
-                                          std::optional<dl_harq_process_handle> h_dl,
-                                          std::optional<bool>                   is_srb0)
+void ue_fallback_scheduler::store_harq_tx(du_ue_index_t ue_index, const dl_harq_process_handle& h_dl)
 {
   srsran_sanity_check(ongoing_ues_ack_retxs.end() ==
                           std::find_if(ongoing_ues_ack_retxs.begin(),
@@ -1272,7 +1224,7 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t                         
                                        }),
                       "This UE and HARQ process were already in the list");
 
-  ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl, is_srb0);
+  ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl);
 }
 
 void ue_fallback_scheduler::slot_indication(slot_point sl)
@@ -1343,7 +1295,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
     }
-    if (not it_ue_harq->h_dl.has_value() or it_ue_harq->h_dl->empty()) {
+    if (it_ue_harq->h_dl.empty()) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
     }

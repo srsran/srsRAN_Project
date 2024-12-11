@@ -30,7 +30,7 @@ public:
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
   /// \param[in] is_srb0 Defines whether the DL Buffer State Indication is for SRB0/SRB1.
-  void handle_dl_buffer_state_indication(du_ue_index_t ue_index, bool is_srb0);
+  void handle_dl_buffer_state_indication(du_ue_index_t ue_index);
 
   /// Handle Contention Resolution indication sent by the MAC.
   /// \param[in] ue_index UE's DU Index for which Contention Resolution CE needs to be scheduled.
@@ -59,9 +59,6 @@ private:
   /// Defines the information that is needed to track the DL UEs that are pending for new SRB0/SRB1/ConRes CE TX.
   struct fallback_ue {
     du_ue_index_t ue_index;
-    // This field is empty if only ConRes indication is received from MAC and buffer status from upper layers for
-    // SRB0/SRB1 is not yet received.
-    std::optional<bool> is_srb0;
   };
 
   /// Helper that schedules DL SRB0 and SRB1 retx. Returns false if the DL fallback schedule should stop the DL
@@ -72,7 +69,7 @@ private:
   void schedule_ul_new_tx_and_retx(cell_resource_allocator& res_alloc);
 
   /// Determine which type of DL allocation is required for a given UE candidate.
-  dl_new_tx_alloc_type get_dl_new_tx_alloc_type(const fallback_ue& next_ue) const;
+  static dl_new_tx_alloc_type get_dl_new_tx_alloc_type(const ue& u);
 
   /// Helper that schedules pending DL new txs for ConRes CE, SRB0 or SRB1.
   /// \param[in] selected_alloc_type Type of allocation to make. Options: ConRes CE only, SRB0 and SRB1.
@@ -83,30 +80,19 @@ private:
   void slot_indication(slot_point sl);
 
   /// \remark srb_pending => Only ConRes was scheduled and Msg4 is yet to be scheduled.
-  enum class dl_sched_outcome { success, next_ue, stop_dl_scheduling, srb_pending };
+  enum class dl_sched_outcome { success, next_ue, stop_dl_scheduling };
 
   /// \brief Tries to schedule DL SRB0/SRB1 message and/or ConRes CE only for a UE, iterating over several PDSCH slots
   /// ahead of the current reference slot.
   /// \remark If \c is_srb0 is empty, then only ConRes CE is scheduled.
-  dl_sched_outcome schedule_dl_srb(cell_resource_allocator&              res_alloc,
-                                   ue&                                   u,
-                                   std::optional<dl_harq_process_handle> h_dl_retx,
-                                   std::optional<bool>                   is_srb0 = std::nullopt);
+  dl_sched_outcome
+  schedule_dl_srb(cell_resource_allocator& res_alloc, ue& u, std::optional<dl_harq_process_handle> h_dl_retx);
 
   enum class ul_srb_sched_outcome { next_ue, next_slot, stop_ul_scheduling };
 
   /// \brief Tries to schedule UL SRB1 message for a UE iterating over the possible k2 values. Returns true if the
   /// scheduler should keep allocating the next UL UE, false if it should stop the UL allocation.
   ul_srb_sched_outcome schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u);
-
-  struct sched_srb_results {
-    std::optional<dl_harq_process_handle> h_dl;
-    // This field represents whether SRB data was scheduled along with ConRes CE or only ConRes CE was scheduled.
-    bool is_srb_data_pending = false;
-    // This is only meaningful for SRB1, and represents the number of LCID-1 bytes (excluding any overhead) that have
-    // been scheduled for transmission.
-    unsigned nof_srb1_scheduled_bytes = 0;
-  };
 
   /// \brief For a number of pending bytes, select the appropriate MCS.
   std::tuple<unsigned, sch_mcs_index, units::bytes> select_tbs(const pdsch_config_params&          pdsch_cfg,
@@ -115,13 +101,12 @@ private:
                                                                const std::optional<sch_mcs_index>& fixed_mcs) const;
 
   /// \brief Allocate DL grant for a UE and for a specific PDSCH slot.
-  sched_srb_results alloc_grant(ue&                                   u,
-                                cell_resource_allocator&              res_alloc,
-                                unsigned                              pdsch_time_res,
-                                unsigned                              slot_offset,
-                                slot_point                            most_recent_ack_slot,
-                                std::optional<dl_harq_process_handle> h_dl_retx,
-                                std::optional<bool>                   is_srb0);
+  std::optional<dl_harq_process_handle> alloc_grant(ue&                                   u,
+                                                    cell_resource_allocator&              res_alloc,
+                                                    unsigned                              pdsch_time_res,
+                                                    unsigned                              slot_offset,
+                                                    slot_point                            most_recent_ack_slot,
+                                                    std::optional<dl_harq_process_handle> h_dl_retx);
 
   /// \brief Tries to schedule SRB1 message for a specific PUSCH time domain resource.
   ul_srb_sched_outcome schedule_ul_srb(ue&                                          u,
@@ -131,21 +116,20 @@ private:
                                        std::optional<ul_harq_process_handle>        h_ul_retx);
 
   /// \return A pair with the number of SRB bytes allocated and which DL HARQ process was used.
-  std::pair<unsigned, dl_harq_process_handle> fill_dl_srb_grant(ue&                                   u,
-                                                                slot_point                            pdsch_slot,
-                                                                std::optional<dl_harq_process_handle> h_dl,
-                                                                pdcch_dl_information&                 pdcch,
-                                                                dci_dl_rnti_config_type               dci_type,
-                                                                dl_msg_alloc&                         msg,
-                                                                unsigned                   pucch_res_indicator,
-                                                                unsigned                   pdsch_time_res,
-                                                                unsigned                   k1,
-                                                                sch_mcs_index              mcs_idx,
-                                                                const crb_interval&        ue_grant_crbs,
-                                                                const pdsch_config_params& pdsch_params,
-                                                                unsigned                   tbs_bytes,
-                                                                bool                       is_retx,
-                                                                std::optional<bool>        is_srb0 = std::nullopt);
+  dl_harq_process_handle fill_dl_srb_grant(ue&                                   u,
+                                           slot_point                            pdsch_slot,
+                                           std::optional<dl_harq_process_handle> h_dl,
+                                           pdcch_dl_information&                 pdcch,
+                                           dci_dl_rnti_config_type               dci_type,
+                                           dl_msg_alloc&                         msg,
+                                           unsigned                              pucch_res_indicator,
+                                           unsigned                              pdsch_time_res,
+                                           unsigned                              k1,
+                                           sch_mcs_index                         mcs_idx,
+                                           const crb_interval&                   ue_grant_crbs,
+                                           const pdsch_config_params&            pdsch_params,
+                                           unsigned                              tbs_bytes,
+                                           bool                                  is_retx);
 
   void fill_ul_srb_grant(ue&                                   u,
                          slot_point                            pdcch_slot,
@@ -178,28 +162,23 @@ private:
   class ack_and_retx_tracker
   {
   public:
-    explicit ack_and_retx_tracker(du_ue_index_t                                ue_idx,
-                                  const std::optional<dl_harq_process_handle>& h_dl_,
-                                  std::optional<bool>                          is_srb0_ = std::nullopt) :
-      ue_index(ue_idx), is_srb0(is_srb0_), h_dl(h_dl_)
+    explicit ack_and_retx_tracker(du_ue_index_t ue_idx, const dl_harq_process_handle& h_dl_) :
+      ue_index(ue_idx), h_dl(h_dl_)
     {
     }
     explicit ack_and_retx_tracker(const ack_and_retx_tracker& other) = default;
 
-    bool match_ue_harq(du_ue_index_t ue_idx_, const std::optional<dl_harq_process_handle>& h_dl_) const
+    bool match_ue_harq(du_ue_index_t ue_idx_, const dl_harq_process_handle& h_dl_) const
     {
       return ue_index == ue_idx_ and h_dl == h_dl_;
     }
 
     du_ue_index_t ue_index;
     // This field is empty if HARQ is used to schedule ConRes CE only.
-    std::optional<bool>                   is_srb0;
-    std::optional<dl_harq_process_handle> h_dl;
+    dl_harq_process_handle h_dl;
   };
 
-  void store_harq_tx(du_ue_index_t                         ue_index,
-                     std::optional<dl_harq_process_handle> h_dl,
-                     std::optional<bool>                   is_srb0 = std::nullopt);
+  void store_harq_tx(du_ue_index_t ue_index, const dl_harq_process_handle& h_dl);
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
