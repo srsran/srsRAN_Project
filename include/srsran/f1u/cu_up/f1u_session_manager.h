@@ -17,8 +17,8 @@ namespace srsran::srs_cu_up {
 class f1u_session_manager
 {
 public:
-  virtual ~f1u_session_manager()                        = default;
-  virtual f1u_cu_up_udp_gateway& get_next_f1u_gateway() = 0;
+  virtual ~f1u_session_manager()                    = default;
+  virtual f1u_cu_up_gateway& get_next_f1u_gateway() = 0;
 };
 
 } // namespace srsran::srs_cu_up

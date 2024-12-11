@@ -25,6 +25,7 @@
 #include <condition_variable>
 #include <list>
 #include <mutex>
+#include <utility>
 
 constexpr auto default_wait_timeout = std::chrono::seconds(3);
 
@@ -221,6 +222,7 @@ class dummy_f1u_gateway final : public f1u_cu_up_gateway
 {
 private:
   dummy_inner_f1u_bearer& bearer;
+  std::string             bind_ip_addr = "127.0.0.1";
 
 public:
   explicit dummy_f1u_gateway(dummy_inner_f1u_bearer& bearer_) : bearer(bearer_) {}
@@ -249,7 +251,9 @@ public:
     removed_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
   }
 
-  expected<std::string> get_cu_bind_address() const override { return "127.0.0.1"; }
+  expected<std::string> get_cu_bind_address() const override { return bind_ip_addr; }
+
+  void set_cu_bind_address(std::string ip_addr) { bind_ip_addr = std::move(ip_addr); }
 
   std::list<gtpu_teid_t> created_ul_teid_list  = {};
   std::list<gtpu_teid_t> attached_ul_teid_list = {};
