@@ -487,6 +487,18 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
     return false;
   }
 
+  // Await for Reconfiguration Complete that signals the UE config update completion.
+  if (srb1_pdu_size > 0) {
+    cu_notifier.last_f1ap_msgs.clear();
+    du_hi->get_pdu_handler().handle_rx_data_indication(
+        test_helpers::create_pdu_with_sdu(next_slot, u.rnti, LCID_SRB1, 1));
+    bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+    if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), srb_id_t::srb1)) {
+      test_logger.error("rnti={}: F1AP UL RRC Message not sent or is invalid", u.rnti);
+      return false;
+    }
+  }
+
   return true;
 }
 
