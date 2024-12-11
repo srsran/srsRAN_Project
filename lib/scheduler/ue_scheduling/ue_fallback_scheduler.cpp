@@ -239,7 +239,9 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     const auto alloc_type = get_dl_new_tx_alloc_type(u);
     if (alloc_type == dl_new_tx_alloc_type::error) {
       // The UE is not in a state for scheduling
-      logger.error("ue={}: UE is an inconsistent state in the fallback scheduler", next_ue->ue_index);
+      logger.error("ue={}: UE is an inconsistent state in the fallback scheduler. Pending bytes={}",
+                   next_ue->ue_index,
+                   u.pending_dl_newtx_bytes());
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
       continue;
     }
@@ -267,7 +269,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     // there are still some bytes left in the buffer. At the next iteration, the scheduler will try
     // again with the same scheduler, but starting from the next available slot.
     if (not u.has_pending_dl_newtx_bytes()) {
-      ++next_ue;
+      next_ue = pending_dl_ues_new_tx.erase(next_ue);
     }
   }
 
