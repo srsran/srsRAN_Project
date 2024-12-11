@@ -201,12 +201,6 @@ private:
                      std::optional<dl_harq_process_handle> h_dl,
                      std::optional<bool>                   is_srb0 = std::nullopt);
 
-  // Returns the total number of bytes pending for SRB1 for a given UE, including MAC CE and MAC subheaders.
-  unsigned get_srb1_pending_tot_bytes(du_ue_index_t ue_idx) const;
-
-  // Checks if there are bytes pending for SRB1 for a given UE (including MAC CE and MAC subheaders).
-  unsigned has_pending_bytes_for_srb1(du_ue_index_t ue_idx) const;
-
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
   // TODO: Find proper values for these 2 parameters.

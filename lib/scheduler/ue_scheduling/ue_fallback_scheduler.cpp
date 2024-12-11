@@ -230,19 +230,12 @@ ue_fallback_scheduler::get_dl_new_tx_alloc_type(const fallback_ue& next_ue) cons
     // No SRB0 or SRB1. Verify if ConRes CE needs to be scheduled.
     return u.is_conres_ce_pending() ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
   }
-
   if (next_ue.is_srb0.value()) {
     return u.has_pending_dl_newtx_bytes(LCID_SRB0) ? dl_new_tx_alloc_type::srb0 : dl_new_tx_alloc_type::error;
   }
-
-  // NOTE: Since SRB1 data can be segmented, it could happen that not all the SRB1 bytes are scheduled at once. The
-  // scheduler will attempt to allocate those remaining bytes in the following slots. The policy we adopt in this
-  // scheduler is to schedule first all possible grants to a given UE (to speed up the re-establishment and
-  // re-configuration). Only after the SRB1 buffer of that UE is emptied, we move on to the next UE.
-  if (has_pending_bytes_for_srb1(next_ue.ue_index)) {
+  if (u.has_pending_dl_newtx_bytes(LCID_SRB1)) {
     return dl_new_tx_alloc_type::srb1;
   }
-
   return dl_new_tx_alloc_type::skip;
 }
 
@@ -296,7 +289,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
         // Move to the next UE ONLY IF the UE has no more pending bytes for SRB1. This is to give priority to the same
         // UE, if there are still some SRB1 bytes left in the buffer. At the next iteration, the scheduler will try
         // again with the same scheduler, but starting from the next available slot.
-        if (not has_pending_bytes_for_srb1(u.ue_index)) {
+        if (not u.has_pending_dl_newtx_bytes()) {
           ++next_ue;
         }
       }
@@ -543,21 +536,20 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
     ue_grant_crbs = {unused_crbs.start(), unused_crbs.start() + prbs_tbs.nof_prbs};
 
   } else {
-    const unsigned only_conres_bytes = u.pending_conres_ce_bytes();
-    const unsigned only_srb0_bytes = is_srb0.has_value() and is_srb0.value() ? u.pending_dl_newtx_bytes(LCID_SRB0) : 0;
-    unsigned       pending_bytes   = only_conres_bytes + only_srb0_bytes;
-    std::optional<sch_mcs_index> fixed_mcs;
-    if (is_srb0.has_value() and not is_srb0.value()) {
-      pending_bytes = std::max(pending_bytes, get_srb1_pending_tot_bytes(u.ue_index));
-      fixed_mcs     = map_cqi_to_mcs(expert_cfg.initial_cqi, pdsch_cfg.mcs_table);
-      srsran_assert(fixed_mcs.has_value(), "Invalid Initial CQI {}", expert_cfg.initial_cqi);
-    }
+    const unsigned pending_bytes = u.pending_dl_newtx_bytes();
     srsran_assert(pending_bytes > 0, "Unexpected number of pending bytes");
+    const unsigned only_conres_bytes = u.pending_conres_ce_bytes();
+    const unsigned only_srb0_bytes   = u.pending_dl_newtx_bytes(LCID_SRB0);
     // There must be space for ConRes CE, if it is pending. If only SRB0 is pending (no ConRes), there must be space
     // for it, as the SRB0 cannot be segmented.
     const unsigned min_pending_bytes =
         only_conres_bytes > 0 ? only_conres_bytes : (only_srb0_bytes > 0 ? only_srb0_bytes : 0);
 
+    std::optional<sch_mcs_index> fixed_mcs;
+    if (is_srb0.has_value() and not is_srb0.value()) {
+      fixed_mcs = map_cqi_to_mcs(expert_cfg.initial_cqi, pdsch_cfg.mcs_table);
+      srsran_assert(fixed_mcs.has_value(), "Invalid Initial CQI {}", expert_cfg.initial_cqi);
+    }
     std::tuple<unsigned, sch_mcs_index, units::bytes> result =
         select_tbs(pdsch_cfg, pending_bytes, unused_crbs, fixed_mcs);
     unsigned chosen_tbs = std::get<2>(result).value();
@@ -1226,11 +1218,6 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
   u.reset_sr_indication();
 }
 
-unsigned ue_fallback_scheduler::has_pending_bytes_for_srb1(du_ue_index_t ue_idx) const
-{
-  return get_srb1_pending_tot_bytes(ue_idx) > 0U;
-}
-
 const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const
 {
   return cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_idx];
@@ -1286,21 +1273,6 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t                         
                       "This UE and HARQ process were already in the list");
 
   ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl, is_srb0);
-}
-
-unsigned ue_fallback_scheduler::get_srb1_pending_tot_bytes(du_ue_index_t ue_idx) const
-{
-  // Note: this function assumes the ues[ue_idx] exists, which is guaranteed by the caller.
-  const unsigned mac_bytes = ues[ue_idx].pending_dl_newtx_bytes(LCID_SRB1);
-  const unsigned ce_bytes  = ues[ue_idx].pending_ce_bytes();
-  // Each RLC buffer state update includes extra 4 bytes compared to the number of bytes left to transmit; this is to
-  // account for the segmentation overhead. Suppose that (i) we need to compute the PDSCH TBS to allocate the last
-  // remaining SRB1 bytes and (ii) we expect an RLC buffer state update before the PDSCH will be transmitted. By
-  // over-allocating 4 bytes to the MAC PDU, we ensure that the PDSCH will be able to fit all remaining bytes, including
-  // the 4 extra bytes added by the latest RLC buffer state update.
-  const unsigned overallocation_size = 4U;
-  const unsigned overallocation      = mac_bytes != 0 ? overallocation_size : 0U;
-  return mac_bytes + ce_bytes + overallocation;
 }
 
 void ue_fallback_scheduler::slot_indication(slot_point sl)

@@ -127,8 +127,14 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
 {
   unsigned pending_bytes = msg.bs;
 
-  // Subtract bytes pending for this LCID in scheduled HARQ allocations before forwarding to DL logical channel.
+  // Subtract bytes pending for this LCID in scheduled DL HARQ allocations (but not yet sent to the lower layers)
+  // before forwarding to DL logical channel manager.
   // Note: The RLC buffer occupancy updates never account for bytes associated with future HARQ transmissions.
+  // Note: The TB in the HARQ should also include RLC header segmentation overhead which is not accounted yet in the
+  // reported RLC DL buffer occupancy report (reminder: we haven't built the RLC PDU yet!). If we account for this
+  // overhead in the computation of pending bytes, the final value will be too low, which will lead to one extra
+  // tiny grant. To avoid this, we make the pessimization that every HARQ contains one RLC header due to segmentation.
+  constexpr static unsigned RLC_AM_HEADER_SIZE_ESTIM = 4;
   for (unsigned c = 0, ce = nof_cells(); c != ce; ++c) {
     auto& ue_cc = *ue_cells[c];
 
@@ -141,7 +147,9 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
           if (h_dl->pdsch_slot() >= last_sl_tx and h_dl->nof_retxs() == 0 and h_dl->is_waiting_ack()) {
             for (const auto& lc : h_dl->get_grant_params().lc_sched_info) {
               if (lc.lcid.is_sdu() and lc.lcid.to_lcid() == msg.lcid) {
-                pending_bytes -= std::min(pending_bytes, lc.sched_bytes.value());
+                unsigned bytes_sched =
+                    lc.sched_bytes.value() - std::min(lc.sched_bytes.value(), RLC_AM_HEADER_SIZE_ESTIM);
+                pending_bytes -= std::min(pending_bytes, bytes_sched);
               }
             }
           }
