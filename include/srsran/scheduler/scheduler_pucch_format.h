@@ -101,7 +101,6 @@ struct pucch_format_3 {
   /// DMRS parameters.
   bool     additional_dmrs;
   uint16_t n_id_0_scrambling;
-  uint16_t m_0_cyclic_shift;
 };
 
 /// Scheduler output for PUCCH Format 4.
@@ -127,7 +126,6 @@ struct pucch_format_4 {
   /// DMRS parameters.
   bool     additional_dmrs;
   uint16_t n_id_0_scrambling;
-  uint16_t m_0_cyclic_shift;
 };
 
 } // namespace srsran

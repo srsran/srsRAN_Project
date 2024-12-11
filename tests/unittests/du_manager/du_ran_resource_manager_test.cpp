@@ -114,8 +114,8 @@ protected:
   bool verify_pucch_cfg(const pucch_config& pucch_cfg, std::optional<unsigned> csi_pucch_res)
   {
     const du_cell_config& du_cfg                = cell_cfg_list[0];
-    const unsigned        nof_sr_f1_res_per_ue  = 1U;
-    const unsigned        nof_csi_f2_res_per_ue = 1U;
+    constexpr unsigned    nof_sr_f1_res_per_ue  = 1U;
+    constexpr unsigned    nof_csi_f2_res_per_ue = 1U;
     bool                  pucch_checker =
         pucch_cfg.pucch_res_list.size() == du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() +
                                                du_cfg.pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() +
@@ -129,7 +129,7 @@ protected:
                     pucch_cfg.sr_res_list.front().pucch_res_id.cell_res_id <
                         du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() + du_cfg.pucch_cfg.nof_sr_resources;
 
-    // We always put the CSI PUCCH resource is always at the end of the list.
+    // We always put the CSI PUCCH resource at the end of the list.
     if (csi_pucch_res.has_value()) {
       pucch_checker = pucch_checker and
                       csi_pucch_res.value() >= du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() +
@@ -302,8 +302,8 @@ struct pucch_cnt_builder_params {
   unsigned               nof_res_sr               = 2;
   unsigned               nof_res_csi              = 1;
   unsigned               max_allowed_pucch_grants = 4;
-  sr_periodicity         sr_period                = srsran::sr_periodicity::sl_40;
-  csi_report_periodicity csi_period               = srsran::csi_report_periodicity::slots80;
+  sr_periodicity         sr_period                = sr_periodicity::sl_40;
+  csi_report_periodicity csi_period               = csi_report_periodicity::slots80;
 };
 
 std::ostream& operator<<(std::ostream& out, const pucch_cnt_builder_params& params)

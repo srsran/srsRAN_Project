@@ -366,6 +366,7 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
       pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
   unsigned ue_first_res_id = ue_res_id_set_for_harq.front().cell_res_id;
 
+  // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
   const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
   const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
 
@@ -443,8 +444,10 @@ const pucch_resource* pucch_resource_manager::reserve_harq_res_by_res_indicator(
   // Get PUCCH resource ID from the PUCCH resource set.
   const auto pucch_res_id = ue_res_id_set_for_harq[res_indicator];
 
+  // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
   const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
   const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
+
   // For Format 0 and Format 2, the resources indexed by PUCCH res. indicators >= ue_res_id_set_for_harq.size() - 2 are
   // reserved for CSI and SR slots. In the case, we don't need to reserve these in the PUCCH resource manager, we only
   // need to return the resouces.
@@ -508,6 +511,7 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
   const pucch_resource_usage res_usage =
       res_set_idx == pucch_res_set_idx::set_0 ? pucch_resource_usage::HARQ_SET_0 : pucch_resource_usage::HARQ_SET_1;
 
+  // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
   const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
   const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
 

@@ -103,8 +103,7 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
           expected_f.csi_part1_bits == test_f.csi_part1_bits && expected_f.slot_repetition == test_f.slot_repetition &&
           expected_f.n_id_scrambling == test_f.n_id_scrambling && expected_f.pi_2_bpsk == test_f.pi_2_bpsk &&
           expected_f.max_code_rate == test_f.max_code_rate && expected_f.additional_dmrs == test_f.additional_dmrs &&
-          expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling &&
-          expected_f.m_0_cyclic_shift == test_f.m_0_cyclic_shift;
+          expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling;
     } break;
     case pucch_format::FORMAT_4: {
       const pucch_format_4& expected_f = expected.format_4;
@@ -117,8 +116,7 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
           expected_f.n_id_scrambling == test_f.n_id_scrambling && expected_f.pi_2_bpsk == test_f.pi_2_bpsk &&
           expected_f.max_code_rate == test_f.max_code_rate && expected_f.orthog_seq_idx == test_f.orthog_seq_idx &&
           expected_f.n_sf_pucch_f4 == test_f.n_sf_pucch_f4 && expected_f.additional_dmrs == test_f.additional_dmrs &&
-          expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling &&
-          expected_f.m_0_cyclic_shift == test_f.m_0_cyclic_shift;
+          expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling;
     } break;
     default: {
       return false;
