@@ -170,18 +170,20 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
         (csi_rs_period + csi_res_offset_candidate.second - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) %
         csi_rs_period;
 
-    if (sr_res_cfg.format == pucch_format::FORMAT_0) {
-      const pucch_resource& candidate_csi_res_cfg =
-          default_pucch_res_list[csi_du_res_idx_to_pucch_res_idx(csi_res_offset_candidate.first)];
+    const pucch_resource& candidate_csi_res_cfg =
+        default_pucch_res_list[csi_du_res_idx_to_pucch_res_idx(csi_res_offset_candidate.first)];
+    if (sr_res_cfg.format == pucch_format::FORMAT_0 and candidate_csi_res_cfg.format == pucch_format::FORMAT_2) {
       srsran_assert(std::holds_alternative<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params),
-                    "PUCCH resource for CSI must be of format 2 or 3");
-      const ofdm_symbol_range csi_symbols = {
-          std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).starting_sym_idx,
-          std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).starting_sym_idx +
-              std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).nof_symbols};
-      const ofdm_symbol_range sr_symbols = {std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).starting_sym_idx,
-                                            std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).starting_sym_idx +
-                                                std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).nof_symbols};
+                    "PUCCH resource for CSI must be of format 2");
+
+      const auto&             csi_params  = std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params);
+      const ofdm_symbol_range csi_symbols = {csi_params.starting_sym_idx,
+                                             csi_params.starting_sym_idx + csi_params.nof_symbols};
+
+      const auto&             sr_params  = std::get<pucch_format_0_cfg>(sr_res_cfg.format_params);
+      const ofdm_symbol_range sr_symbols = {sr_params.starting_sym_idx,
+                                            sr_params.starting_sym_idx + sr_params.nof_symbols};
+
       if (not csi_symbols.overlaps(sr_symbols)) {
         weight += 2 * csi_rs_period;
         return weight;

@@ -73,9 +73,7 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
                  expected_f.n_id_hopping == test_f.n_id_hopping &&
                  expected_f.initial_cyclic_shift == test_f.initial_cyclic_shift &&
                  expected_f.sr_bits == test_f.sr_bits && expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits;
-
-      break;
-    }
+    } break;
     case pucch_format::FORMAT_1: {
       const pucch_format_1& expected_f = expected.format_1;
       const pucch_format_1& test_f     = test.format_1;
@@ -85,8 +83,7 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
                  expected_f.sr_bits == test_f.sr_bits && expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
                  expected_f.slot_repetition == test_f.slot_repetition &&
                  expected_f.time_domain_occ == test_f.time_domain_occ;
-      break;
-    }
+    } break;
     case pucch_format::FORMAT_2: {
       const pucch_format_2& expected_f = expected.format_2;
       const pucch_format_2& test_f     = test.format_2;
@@ -95,8 +92,34 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
                  expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling && expected_f.sr_bits == test_f.sr_bits &&
                  expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
                  expected_f.csi_part1_bits == test_f.csi_part1_bits;
-      break;
-    }
+    } break;
+    case pucch_format::FORMAT_3: {
+      const pucch_format_3& expected_f = expected.format_3;
+      const pucch_format_3& test_f     = test.format_3;
+      is_equal =
+          is_equal && expected_f.group_hopping == test_f.group_hopping &&
+          expected_f.n_id_hopping == test_f.n_id_hopping && expected_f.sr_bits == test_f.sr_bits &&
+          expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
+          expected_f.csi_part1_bits == test_f.csi_part1_bits && expected_f.slot_repetition == test_f.slot_repetition &&
+          expected_f.n_id_scrambling == test_f.n_id_scrambling && expected_f.pi_2_bpsk == test_f.pi_2_bpsk &&
+          expected_f.max_code_rate == test_f.max_code_rate && expected_f.additional_dmrs == test_f.additional_dmrs &&
+          expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling &&
+          expected_f.m_0_cyclic_shift == test_f.m_0_cyclic_shift;
+    } break;
+    case pucch_format::FORMAT_4: {
+      const pucch_format_4& expected_f = expected.format_4;
+      const pucch_format_4& test_f     = test.format_4;
+      is_equal =
+          is_equal && expected_f.group_hopping == test_f.group_hopping &&
+          expected_f.n_id_hopping == test_f.n_id_hopping && expected_f.sr_bits == test_f.sr_bits &&
+          expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
+          expected_f.csi_part1_bits == test_f.csi_part1_bits && expected_f.slot_repetition == test_f.slot_repetition &&
+          expected_f.n_id_scrambling == test_f.n_id_scrambling && expected_f.pi_2_bpsk == test_f.pi_2_bpsk &&
+          expected_f.max_code_rate == test_f.max_code_rate && expected_f.orthog_seq_idx == test_f.orthog_seq_idx &&
+          expected_f.n_sf_pucch_f4 == test_f.n_sf_pucch_f4 && expected_f.additional_dmrs == test_f.additional_dmrs &&
+          expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling &&
+          expected_f.m_0_cyclic_shift == test_f.m_0_cyclic_shift;
+    } break;
     default: {
       return false;
     };

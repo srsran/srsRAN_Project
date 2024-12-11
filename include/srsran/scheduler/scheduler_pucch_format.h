@@ -90,9 +90,7 @@ struct pucch_format_3 {
   /// \c pucch-GroupHopping, as per TS 38.331
   pucch_group_hopping group_hopping;
   /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
-  unsigned n_id_hopping;
-  /// \c initialCyclicShift, as per TS 38.331, or Section 9.2.1, TS 38.211.
-  uint8_t                  initial_cyclic_shift;
+  unsigned                 n_id_hopping;
   sr_nof_bits              sr_bits;
   unsigned                 harq_ack_nof_bits;
   unsigned                 csi_part1_bits;
@@ -111,9 +109,7 @@ struct pucch_format_4 {
   /// \c pucch-GroupHopping, as per TS 38.331
   pucch_group_hopping group_hopping;
   /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
-  unsigned n_id_hopping;
-  /// \c initialCyclicShift, as per TS 38.331, or Section 9.2.1, TS 38.211.
-  uint8_t                  initial_cyclic_shift;
+  unsigned                 n_id_hopping;
   sr_nof_bits              sr_bits;
   unsigned                 harq_ack_nof_bits;
   unsigned                 csi_part1_bits;

@@ -23,7 +23,7 @@ static int get_pucch_res_idx_for_csi(const ue_cell_configuration& ue_cell_cfg)
   const unsigned csi_report_cfg_idx = 0;
   // We assume we use the First BWP.
   // TODO: extend by passing the BWP id.
-  const bwp_id_t bwp_id      = srsran::MIN_BWP_ID;
+  const bwp_id_t bwp_id      = MIN_BWP_ID;
   const auto& csi_report_cfg = ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
   span<const csi_report_config::pucch_csi_resource> csi_pucch_res_list =
       std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
@@ -367,13 +367,14 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
   unsigned ue_first_res_id = ue_res_id_set_for_harq.front().cell_res_id;
 
   const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
+  const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
 
   srsran_assert(ue_first_res_id + ue_res_id_set_for_harq.size() <= slot_res_array.size(),
                 "Indexing of PUCCH resource set exceeds the size of the cell resource array");
-  // For PUCCH format 0, we don't use the last 2 resources of the PUCCH resource set; these are reserved the UE for CSI
-  // and SR slots and should only be picked for through the specific PUCCH resource indicator.
+  // For PUCCH format 0 and format 2, we don't use the last 2 resources of the PUCCH resource set; these are reserved
+  // the UE for CSI and SR slots and should only be picked for through the specific PUCCH resource indicator.
   const unsigned nof_eligible_resource =
-      is_format0 ? ue_res_id_set_for_harq.size() - 2U : ue_res_id_set_for_harq.size();
+      is_format0 and is_format2 ? ue_res_id_set_for_harq.size() - 2U : ue_res_id_set_for_harq.size();
   srsran_assert(nof_eligible_resource >= 1U,
                 "rnti={}: Not enough eligible resources from PUCCH resource set={}",
                 crnti,
@@ -443,10 +444,11 @@ const pucch_resource* pucch_resource_manager::reserve_harq_res_by_res_indicator(
   const auto pucch_res_id = ue_res_id_set_for_harq[res_indicator];
 
   const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
-  // For Format 0, the resources indexed by PUCCH res. indicators >= ue_res_id_set_for_harq.size() - 2 are reserved for
-  // CSI and SR slots. In the case, we don't need to reserve these in the PUCCH resource manager, we only need to return
-  // the resouces.
-  if (is_format0 and res_indicator >= ue_res_id_set_for_harq.size() - 2U) {
+  const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
+  // For Format 0 and Format 2, the resources indexed by PUCCH res. indicators >= ue_res_id_set_for_harq.size() - 2 are
+  // reserved for CSI and SR slots. In the case, we don't need to reserve these in the PUCCH resource manager, we only
+  // need to return the resouces.
+  if (is_format0 and is_format2 and res_indicator >= ue_res_id_set_for_harq.size() - 2U) {
     const auto* res_cfg = std::find_if(
         pucch_cfg.pucch_res_list.begin(), pucch_cfg.pucch_res_list.end(), [pucch_res_id](const pucch_resource& res) {
           return res.res_id.ue_res_id == pucch_res_id.ue_res_id;
@@ -507,6 +509,7 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
       res_set_idx == pucch_res_set_idx::set_0 ? pucch_resource_usage::HARQ_SET_0 : pucch_resource_usage::HARQ_SET_1;
 
   const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
+  const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
 
   // Get the span over the array of resources for the specific UE.
   const auto& ue_res_id_set_for_harq =
@@ -514,10 +517,10 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
   unsigned ue_first_res_id = ue_res_id_set_for_harq.front().cell_res_id;
   srsran_assert(ue_first_res_id + ue_res_id_set_for_harq.size() <= slot_res_array.size(),
                 "Indexing of PUCCH resource set exceeds the size of the cell resource array");
-  // For PUCCH format 0, we don't use the last 2 resources of the PUCCH resource set; these are reserved the UE for CSI
-  // and SR slots and should only be picked for through the specific PUCCH resource indicator.
+  // For PUCCH format 0 and format 2, we don't use the last 2 resources of the PUCCH resource set; these are reserved
+  // the UE for CSI and SR slots and should only be picked for through the specific PUCCH resource indicator.
   const unsigned nof_eligible_resource =
-      is_format0 ? ue_res_id_set_for_harq.size() - 2U : ue_res_id_set_for_harq.size();
+      is_format0 and is_format2 ? ue_res_id_set_for_harq.size() - 2U : ue_res_id_set_for_harq.size();
   srsran_assert(nof_eligible_resource >= 1U,
                 "rnti={}: Not enough eligible resources from PUCCH resource set={}",
                 crnti,

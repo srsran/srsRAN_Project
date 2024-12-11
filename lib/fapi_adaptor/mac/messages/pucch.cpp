@@ -120,7 +120,7 @@ static void fill_format3_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   const prb_interval& hop_prbs            = mac_pdu.resources.second_hop_prbs;
   const bool          intra_slot_freq_hop = hop_prbs.empty() ? false : true;
   builder.set_hopping_information_parameters(
-      intra_slot_freq_hop, hop_prbs.start(), f3.group_hopping, f3.n_id_hopping, f3.initial_cyclic_shift);
+      intra_slot_freq_hop, hop_prbs.start(), f3.group_hopping, f3.n_id_hopping, 0);
 
   // Common parameters.
   builder.set_common_parameters(mac_pdu.format, f3.slot_repetition, f3.pi_2_bpsk);
@@ -147,7 +147,7 @@ static void fill_format4_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   const prb_interval& hop_prbs            = mac_pdu.resources.second_hop_prbs;
   const bool          intra_slot_freq_hop = hop_prbs.empty() ? false : true;
   builder.set_hopping_information_parameters(
-      intra_slot_freq_hop, hop_prbs.start(), f4.group_hopping, f4.n_id_hopping, f4.initial_cyclic_shift);
+      intra_slot_freq_hop, hop_prbs.start(), f4.group_hopping, f4.n_id_hopping, 0);
 
   // Common parameters.
   builder.set_common_parameters(mac_pdu.format, f4.slot_repetition, f4.pi_2_bpsk);
