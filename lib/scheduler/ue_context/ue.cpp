@@ -144,7 +144,7 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
         auto h_dl = ue_cc.harqs.dl_harq(to_harq_id(i));
         if (h_dl.has_value()) {
           rem_harqs--;
-          if (h_dl->pdsch_slot() >= last_sl_tx and h_dl->nof_retxs() == 0 and h_dl->is_waiting_ack()) {
+          if (h_dl->pdsch_slot() > last_sl_tx and h_dl->nof_retxs() == 0 and h_dl->is_waiting_ack()) {
             for (const auto& lc : h_dl->get_grant_params().lc_sched_info) {
               if (lc.lcid.is_sdu() and lc.lcid.to_lcid() == msg.lcid) {
                 unsigned bytes_sched =

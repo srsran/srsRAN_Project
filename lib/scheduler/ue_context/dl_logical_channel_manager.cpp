@@ -50,8 +50,8 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, un
   subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
   subpdu.sched_bytes = 0;
 
-  lcid_t lcid_with_prio = lcid == lcid_t::INVALID_LCID ? get_max_prio_lcid() : lcid;
-  if (lcid_with_prio == lcid_t::INVALID_LCID) {
+  lcid_t lcid_with_prio = lcid == INVALID_LCID ? get_max_prio_lcid() : lcid;
+  if (lcid_with_prio == INVALID_LCID) {
     return 0;
   }
 
@@ -97,6 +97,15 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lc
 
   // Update DL Buffer Status to avoid reallocating the same LCID bytes.
   channels[lcid].buf_st -= std::min(sdu_size, channels[lcid].buf_st);
+
+  if (lcid != LCID_SRB0 and channels[lcid].buf_st > 0) {
+    constexpr static unsigned RLC_SEGMENTATION_OVERHEAD = 4;
+    // Allocation was not enough to empty the logical channel. In this specific case, we add some bytes to account
+    // for the RLC segmentation overhead.
+    // Note: This update is only relevant for PDSCH allocations for slots > slot_tx. For the case of PDSCH
+    // slot==slot_tx, there will be an RLC Buffer Occupancy update right away, which will set a new buffer value.
+    channels[lcid].buf_st += RLC_SEGMENTATION_OVERHEAD;
+  }
 
   subpdu.lcid        = (lcid_dl_sch_t::options)lcid;
   subpdu.sched_bytes = sdu_size;
