@@ -460,6 +460,22 @@ android x300:
       artifacts: true
     - *retina-needs
 
+android x300 drx:
+  stage: rf
+  extends: .e2e-run
+  allow_failure: true
+  variables:
+    GROUP: "rf"
+    TESTBED: "android_x300"
+    MARKERS: "android_hp_drx"
+    E2E_LOG_LEVEL: "info"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *retina-needs
+
 ################################################################################
 # VIAVI
 ###############################################################################

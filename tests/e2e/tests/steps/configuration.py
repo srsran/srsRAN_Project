@@ -45,6 +45,7 @@ def configure_test_parameters(
     nof_antennas_dl: int = 1,
     nof_antennas_ul: int = 1,
     ims_mode: str = "",
+    enable_drx: bool = False,
 ):
     """
     Configure test parameters
@@ -84,6 +85,7 @@ def configure_test_parameters(
                 "enable_dddsu": enable_dddsu,
                 "nof_antennas_dl": nof_antennas_dl,
                 "nof_antennas_ul": nof_antennas_ul,
+                "enable_drx": enable_drx,
             },
         },
         "5gc": {"parameters": {"ims_mode": ims_mode}},

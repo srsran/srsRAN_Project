@@ -23,6 +23,7 @@ markers = [
   "rf",
   "android",
   "android_hp",
+  "android_hp_drx",
   "udp",
   "tcp",
   "downlink",

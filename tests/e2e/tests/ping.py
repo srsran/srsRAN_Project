@@ -187,6 +187,57 @@ def test_android_hp(
 
 
 @mark.parametrize(
+    "reattach_count",
+    (param(0, id="reattach:%s"),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (
+        param(7, 15, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 90, id="band:%s-scs:%s-bandwidth:%s"),
+    ),
+)
+@mark.android_hp_drx
+@mark.flaky(
+    reruns=2,
+    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_android_hp_drx(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    reattach_count: int,
+):
+    """
+    Android high performance Pings
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        warning_as_errors=False,
+        always_download_artifacts=True,
+        reattach_count=reattach_count,
+        enable_drx=True,
+    )
+
+
+@mark.parametrize(
     "band, common_scs, bandwidth, ciphering",
     (
         param(3, 15, 5, False, id="band:%s-scs:%s-bandwidth:%s-ciphering:%s"),
@@ -493,6 +544,7 @@ def _ping(
     plmn: Optional[PLMN] = None,
     enable_security_mode: bool = False,
     ims_mode: str = "",
+    enable_drx: bool = False,
 ):
     logging.info("Ping Test")
 
@@ -509,6 +561,7 @@ def _ping(
         log_ip_level="debug",
         enable_security_mode=enable_security_mode,
         ims_mode=ims_mode,
+        enable_drx=enable_drx,
     )
     configure_artifacts(
         retina_data=retina_data,
