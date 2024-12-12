@@ -15,7 +15,7 @@ cell_cfg:
     nof_ue_res_harq_per_set: 8
     nof_cell_harq_pucch_res_sets: 2    # Increase this if UEs are not scheduled PDSCH due to PUCCH resources starvation.
     f0_or_f1_nof_cell_res_sr: 80
-    f2_nof_cell_res_csi: 80
+    f2_or_f3_or_f4_nof_cell_res_csi: 80
   csi:
     csi_rs_period: 40  # This can be set to 20 only with TDD 6D-3U.
   ul_common:
