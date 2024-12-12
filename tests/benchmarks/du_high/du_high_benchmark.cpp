@@ -319,8 +319,6 @@ public:
   void send_message(const f1ap_message& msg) { du_rx_pdu_notifier->on_new_message(msg); }
 
 private:
-  std::array<bool, MAX_NOF_DU_UES> ue_rrc_setup_complete_received = {false};
-
   void handle_message(const f1ap_message& msg)
   {
     switch (msg.pdu.type().value) {
