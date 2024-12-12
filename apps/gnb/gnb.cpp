@@ -225,6 +225,7 @@ int main(int argc, char** argv)
     }
 
     o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
+    o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
     autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg,
                                               o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
   });

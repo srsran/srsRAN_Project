@@ -150,7 +150,6 @@ static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o
     sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
     o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
   }
-  o_cu_up_cfg.e2_cfg.pcaps.enabled = o_cu_up_cfg.e2_cfg.base_config.enable_unit_e2 && o_cu_up_cfg.e2_cfg.pcaps.enabled;
 }
 
 int main(int argc, char** argv)
@@ -188,6 +187,7 @@ int main(int argc, char** argv)
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &o_cu_cp_app_unit, &o_cu_up_app_unit]() {
     o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
+    o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
 
     autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config(),
                                               o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);

@@ -25,7 +25,7 @@ public:
   void on_parsing_configuration_registration(CLI::App& app) override;
 
   // See interface for documentation.
-  void on_configuration_parameters_autoderivation(CLI::App& app) override {}
+  void on_configuration_parameters_autoderivation(CLI::App& app) override;
 
   // See interface for documentation.
   bool on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const override;
