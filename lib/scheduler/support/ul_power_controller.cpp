@@ -16,6 +16,7 @@ using namespace srsran;
 
 ul_power_controller::ul_power_controller(const ue_cell_configuration&    ue_cell_cfg,
                                          const ue_channel_state_manager& ch_state_manager) :
+  rnti(ue_cell_cfg.crnti),
   cl_pw_control_enabled(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control),
   p0_nominal_pusch(
       ue_cell_cfg.cell_cfg_common.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().p0_nominal_with_grant.to_int()),
@@ -40,6 +41,7 @@ ul_power_controller::ul_power_controller(const ue_cell_configuration&    ue_cell
             pusch_pw_ctrl_data{slot_point{}, init_nof_prbs, init_f_pw_control});
 
   // Dummy casts only needed to prevent Clang from complaining about unused variables.
+  static_cast<void>(rnti);
   static_cast<void>(cl_pw_control_enabled);
   static_cast<void>(channel_state_manager);
   static_cast<void>(ref_path_loss_for_target_sinr);

@@ -43,7 +43,7 @@ private:
   /// maximum expected delay (in slots) between the for which slot the PUSCH is scheduled and the slot at which the PHR
   /// is received; this delay depends on the PHY processing capabilities. For simplicity, we take round the number to a
   /// multiple of 10.
-  static constexpr size_t MAX_PHR_IND_DELAY_SLOTS = 40;
+  static constexpr size_t MAX_PHR_IND_DELAY_SLOTS = 80;
   /// This variable defines a time window after a PUSCH transmission, in slots, in which TPC adjustments are forbidden.
   /// This is to prevent the PUSCH TPC to be adjusted too quickly, leading to oscillations in the SINR.
   //  [Implementation-defined] This value should be enough to guarantee that the CRC indication (reporting the PUSCH
@@ -53,8 +53,9 @@ private:
   /// low.
   static constexpr int min_f_cl_pw_control = -30;
 
-  const bool cl_pw_control_enabled;
-  const int  p0_nominal_pusch;
+  const rnti_t rnti;
+  const bool   cl_pw_control_enabled;
+  const int    p0_nominal_pusch;
   // Configuration for the PUSCH power control.
   std::optional<pusch_config::pusch_power_control> pusch_pwr_ctrl;
   const ue_channel_state_manager&                  channel_state_manager;
