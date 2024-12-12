@@ -20,14 +20,14 @@ Rebaser:
       value: "false"
       raw: false
 
-Nightly Build Unit Tests:
-  cron: "45 23 * * 0-5"
+Nightly Build Unit Tests Plugin:
+  cron: "45 23 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
-      value: "Nightly Build Unit Tests"
+      value: "Nightly Build Unit Tests Plugin"
       raw: false
     - variable_type: env_var
       key: NOTIFY_SLACK
@@ -36,16 +36,20 @@ Nightly Build Unit Tests:
     - variable_type: env_var
       key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
+      raw: false
+    - variable_type: env_var
+      key: PLUGIN_BRANCH
+      value: "main"
       raw: false
 
-Nightly E2E Tests:
-  cron: "30 22 * * 0-5"
+Nightly E2E Tests Plugin:
+  cron: "30 22 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
-      value: "Nightly E2E Tests"
+      value: "Nightly E2E Tests Plugin"
       raw: false
     - variable_type: env_var
       key: NOTIFY_SLACK
@@ -54,6 +58,10 @@ Nightly E2E Tests:
     - variable_type: env_var
       key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
+      raw: false
+    - variable_type: env_var
+      key: PLUGIN_BRANCH
+      value: "main"
       raw: false
 
 Weekly:
@@ -73,6 +81,10 @@ Weekly:
       key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
       raw: false
+    - variable_type: env_var
+      key: PLUGIN_BRANCH
+      value: "main"
+      raw: false
 
 Alternative OSs:
   cron: "00 10 * * 6"
@@ -82,6 +94,46 @@ Alternative OSs:
     - variable_type: env_var
       key: CI_DESCRIPTION
       value: "Alternative OSs"
+      raw: false
+    - variable_type: env_var
+      key: NOTIFY_SLACK
+      value: "true"
+      raw: false
+    - variable_type: env_var
+      key: SLACK_CHANNEL_OK
+      value: "#ci_gnb"
+      raw: false
+    - variable_type: env_var
+      key: PLUGIN_BRANCH
+      value: "main"
+      raw: false
+
+Nightly Build Unit Tests OpenSource:
+  cron: "45 23 * * 1-5"
+  cron_timezone: "Europe/Madrid"
+  ref: refs/heads/dev
+  variables:
+    - variable_type: env_var
+      key: CI_DESCRIPTION
+      value: "Nightly Build Unit Tests OpenSource"
+      raw: false
+    - variable_type: env_var
+      key: NOTIFY_SLACK
+      value: "true"
+      raw: false
+    - variable_type: env_var
+      key: SLACK_CHANNEL_OK
+      value: "#ci_gnb"
+      raw: false
+
+Nightly E2E Tests OpenSource:
+  cron: "30 22 * * 1-5"
+  cron_timezone: "Europe/Madrid"
+  ref: refs/heads/dev
+  variables:
+    - variable_type: env_var
+      key: CI_DESCRIPTION
+      value: "Nightly E2E Tests OpenSource"
       raw: false
     - variable_type: env_var
       key: NOTIFY_SLACK

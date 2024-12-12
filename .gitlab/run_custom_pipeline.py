@@ -11,7 +11,7 @@ import sys
 
 GITLAB_URL = "https://gitlab.com"
 NEEDS_REGEX = re.compile(r"Downloading artifacts for .* \((\d+)\)...", flags=re.MULTILINE)
-VARIABLE_REGEX = re.compile(r"^(\w+)=(.*)?$", flags=re.MULTILINE)
+VARIABLE_REGEX = re.compile(r"^(?:\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z \d{2}O )?(\w+)=(.*)?$", flags=re.MULTILINE)
 
 
 try:
@@ -22,7 +22,7 @@ except ImportError:
     sys.exit(1)
 
 
-def _parse_args() -> Tuple[str, str, str, str, int, bool]:
+def _parse_args() -> Tuple[str, str, str, str, str, int, bool]:
     parser = argparse.ArgumentParser(description="Run a custom pipeline")
     parser.add_argument(
         "--token",
@@ -45,13 +45,20 @@ def _parse_args() -> Tuple[str, str, str, str, int, bool]:
         help='Job name. Please use "" when the job name contains spaces',
     )
     parser.add_argument(
+        "--plugin-branch",
+        required=False,
+        type=str,
+        help="Remote branch for plugin repository. Set to '' to skip plugin repository.",
+        default="",
+    )
+    parser.add_argument(
         "--timeout", required=False, type=int, default=300, help="Search for job timeout (default: %(default)s)"
     )
     parser.add_argument(
         "--dryrun", action="store_true", help="Search the job but skip pipeline creation (default: false)"
     )
     args = parser.parse_args()
-    return args.token, args.project, args.branch, args.job.strip(), args.timeout, args.dryrun
+    return args.token, args.project, args.branch, args.plugin_branch, args.job.strip(), args.timeout, args.dryrun
 
 
 def _get_project(token: str, instance: str, project: str) -> Project:
@@ -114,9 +121,10 @@ def main():
     Entrypoint runner.
     """
     try:
-        token, project_name, branch, job, timeout, dryrun = _parse_args()
+        token, project_name, branch, plugin_branch, job, timeout, dryrun = _parse_args()
         project = _get_project(token=token, instance=GITLAB_URL, project=project_name)
         variable_dict = _search_job_by_name(project=project, job_name=job, timeout=timeout)
+        variable_dict["PLUGIN_BRANCH"] = plugin_branch
         _create_pipeline(project=project, branch=branch, variables=variable_dict, dryrun=dryrun)
     except KeyboardInterrupt:
         print()

@@ -64,14 +64,14 @@ job cleaner:
   extends: .job cleaner
   timeout: 4h
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
 pr reminder:
   extends: .pr reminder
   rules:
     - if: $NOTIFY_SLACK != "true"
       when: never
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
 trigger builder:
   stage: ci
@@ -100,7 +100,7 @@ trigger docker:
           - docker/**/*.{yml,env,json,toml,py,sh,csv,py,toml}
           - docker/**/Dockerfile
           - .gdbinit
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       variables:
         CI_DESCRIPTION: $CI_DESCRIPTION
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -115,7 +115,7 @@ trigger docker:
 matlab nightly:
   stage: ci
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       variables:
         ON_SCHEDULE: "true"
         CI_DESCRIPTION: Nightly
@@ -126,22 +126,6 @@ matlab nightly:
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
-
-plugin nightly:
-  stage: ci
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      variables:
-        ON_SCHEDULE: "true"
-        CI_DESCRIPTION: Nightly
-        SRSRAN_COMMIT: $CI_COMMIT_SHA
-        NOTIFY_SLACK: "true"
-  inherit:
-    variables: false
-  trigger:
-    project: ${PLUGIN_REPO}
-    branch: main
-    strategy: depend
 
 matlab weekly:
   stage: ci
@@ -191,7 +175,7 @@ full-code-format:
     - if: $ON_MR
       changes:
         - .clang-format
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
 .codechecker:
   image: ${CR_REGISTRY_URI}/srsgnb/codechecker:${DOCKER_BUILDER_VERSION}
@@ -443,7 +427,7 @@ unit coverage:
 unit coverage dev:
   extends: unit coverage
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       variables:
         coverage_report: full
       when: always # Even if previous stages/required jobs fail
@@ -454,7 +438,7 @@ unit coverage dev:
 pages:
   stage: documentation
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: always # Even if previous stages/required jobs fail
       allow_failure: true
   image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.9.8-1.2023.7
@@ -507,7 +491,7 @@ update agpl main dryrun:
   extends: update private branch
   stage: .post
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: always
   variables:
     PRIVATE_BRANCH: agpl_main
@@ -519,7 +503,7 @@ create-tags:
   extends: .create-tag
   stage: .post
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 3 hours
   script:
