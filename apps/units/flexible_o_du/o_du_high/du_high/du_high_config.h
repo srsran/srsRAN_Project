@@ -135,7 +135,7 @@ struct du_high_unit_pdsch_config {
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
   std::vector<unsigned> rv_sequence = {0, 2, 3, 1};
   /// MCS table to use for PDSCH
-  pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  pdsch_mcs_table mcs_table = pdsch_mcs_table::qam256;
   /// Minimum number of RBs for resource allocation of UE PDSCHs.
   unsigned min_rb_size = 1;
   /// Maximum number of RBs for resource allocation of UE PDSCHs.

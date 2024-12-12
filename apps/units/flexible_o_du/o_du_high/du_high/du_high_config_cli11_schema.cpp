@@ -255,7 +255,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
         }
       },
       "MCS table to use PDSCH")
-      ->default_str("qam64")
+      ->default_str("qam256")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
   add_option(app, "--min_rb_size", pdsch_params.min_rb_size, "Minimum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
