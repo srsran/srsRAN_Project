@@ -410,7 +410,7 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
   node["p0_nominal"]                      = config.p0_nominal;
   node["pucch_resource_common"]           = config.pucch_resource_common;
   node["use_format_0"]                    = config.use_format_0;
-  node["set1_format"]                     = config.set1_format;
+  node["pucch_set1_format"]               = config.set1_format;
   node["sr_period_ms"]                    = config.sr_period_msec;
   node["nof_ue_pucch_res_harq_per_set"]   = config.nof_ue_pucch_res_harq_per_set;
   node["f0_or_f1_nof_cell_res_sr"]        = config.nof_cell_sr_resources;
@@ -429,9 +429,9 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
   node["f3_additional_dmrs"]              = config.f3_additional_dmrs;
   node["f3_pi2_bpsk"]                     = config.f3_pi2_bpsk;
   node["f4_intraslot_freq_hop"]           = config.f4_intraslot_freq_hopping;
+  node["f4_max_code_rate"]                = to_string(config.f4_max_code_rate);
   node["f4_additional_dmrs"]              = config.f4_additional_dmrs;
   node["f4_pi2_bpsk"]                     = config.f4_pi2_bpsk;
-  node["f4_occ_length"]                   = config.f4_occ_length;
   node["f4_occ_length"]                   = config.f4_occ_length;
   node["min_k1"]                          = config.min_k1;
   node["max_consecutive_kos"]             = config.max_consecutive_kos;

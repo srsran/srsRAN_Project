@@ -411,6 +411,11 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
+  if (pucch_cfg.use_format_0 and pucch_cfg.set1_format != 2) {
+    fmt::print("Using PUCCH Formats 3 and 4 is not supported when Format 0 is used.\n");
+    return false;
+  }
+
   // See \c periodicityAndOffset in \c SchedulingRequestResourceConfig of TS 38.331.
   static const std::map<unsigned, std::vector<unsigned>> mu_to_valid_sr_period_slots_lookup{
       {0, {1, 2, 4, 5, 8, 10, 16, 20, 40, 80}},

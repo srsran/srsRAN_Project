@@ -888,7 +888,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app,
              "--f0_or_f1_nof_cell_res_sr",
              pucch_params.nof_cell_sr_resources,
-             "Number of PUCCH F1 resources available per cell for SR")
+             "Number of PUCCH F0/F1 resources available per cell for SR")
       ->capture_default_str()
       ->check(CLI::Range(1, 100));
   add_option(app,
@@ -916,9 +916,9 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->capture_default_str()
       ->check(CLI::Range(1, 10));
   add_option(app,
-             "--f2_nof_cell_res_csi",
+             "--f2_or_f3_or_f4_nof_cell_res_csi",
              pucch_params.nof_cell_csi_resources,
-             "Number of PUCCH F2 resources available per cell for CSI")
+             "Number of PUCCH F2/F3/F4 resources available per cell for CSI")
       ->capture_default_str()
       ->check(CLI::Range(0, 100));
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
@@ -962,7 +962,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option_function<std::string>(
       app,
       "--f4_max_code_rate",
-      map_max_code_rate(pucch_params.f3_max_code_rate),
+      map_max_code_rate(pucch_params.f4_max_code_rate),
       "PUCCH F4 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
       ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
   add_option(app,

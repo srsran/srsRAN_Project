@@ -40,17 +40,17 @@ static pucch_config build_default_pucch_cfg(const pucch_config& pucch_cfg, const
   if (not std::holds_alternative<pucch_f1_params>(user_params.f0_or_f1_params)) {
     target_pucch_cfg.format_1_common_param.reset();
   }
-  std::visit(
-      [&target_pucch_cfg](const auto& params) {
-        if constexpr (std::is_same_v<decltype(params), pucch_f2_params>) {
-          target_pucch_cfg.format_2_common_param.value().max_c_rate = params.max_code_rate;
-        } else if constexpr (std::is_same_v<decltype(params), pucch_f3_params>) {
-          target_pucch_cfg.format_3_common_param.value().max_c_rate = params.max_code_rate;
-        } else if constexpr (std::is_same_v<decltype(params), pucch_f4_params>) {
-          target_pucch_cfg.format_4_common_param.value().max_c_rate = params.max_code_rate;
-        }
-      },
-      user_params.f2_or_f3_or_f4_params);
+
+  if (std::holds_alternative<pucch_f2_params>(user_params.f2_or_f3_or_f4_params)) {
+    const auto& f2_params = std::get<pucch_f2_params>(user_params.f2_or_f3_or_f4_params);
+    target_pucch_cfg.format_2_common_param.value().max_c_rate = f2_params.max_code_rate;
+  } else if (std::holds_alternative<pucch_f3_params>(user_params.f2_or_f3_or_f4_params)) {
+    const auto& f3_params = std::get<pucch_f3_params>(user_params.f2_or_f3_or_f4_params);
+    target_pucch_cfg.format_3_common_param.value().max_c_rate = f3_params.max_code_rate;
+  } else {
+    const auto& f4_params = std::get<pucch_f4_params>(user_params.f2_or_f3_or_f4_params);
+    target_pucch_cfg.format_4_common_param.value().max_c_rate = f4_params.max_code_rate;
+  }
 
   return target_pucch_cfg;
 }

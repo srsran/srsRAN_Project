@@ -536,12 +536,13 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
     du_pucch_cfg.nof_csi_resources                  = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
 
-    if (user_pucch_cfg.use_format_0 and user_pucch_cfg.set1_format == 2) {
+    if (user_pucch_cfg.use_format_0) {
       auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<srs_du::pucch_f0_params>();
       // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
       // allocator when the DU create the UE configuration.
-      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
-      du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
+      const unsigned extra_res_harq                     = user_pucch_cfg.set1_format == 2U ? 2U : 0U;
+      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
+      du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
       f0_params.intraslot_freq_hopping                  = user_pucch_cfg.f0_intraslot_freq_hopping;
     } else {
       auto& f1_params                             = du_pucch_cfg.f0_or_f1_params.emplace<srs_du::pucch_f1_params>();
