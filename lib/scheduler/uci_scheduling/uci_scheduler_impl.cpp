@@ -109,6 +109,11 @@ void uci_scheduler_impl::rem_resource(rnti_t crnti, unsigned res_offset, unsigne
 
 void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
 {
+  add_ue_to_grid(ue_cfg, false);
+}
+
+void uci_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf)
+{
   if (not ue_cfg.cfg_dedicated().ul_config.has_value() or
       not ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
     return;
@@ -136,7 +141,12 @@ void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
   }
 
   // Register the UE in the list of recently configured UEs.
-  updated_ues.push_back(ue_cfg.crnti);
+  // Note: We skip this step during RRC Reconfiguration because it would involve cancelling already scheduled UCIs
+  // in the grid. While we don't fully support this feature, we leave the old SR/CSI UCIs in the grid. The worst that
+  // can happen is some missed SRs or CSI in a short period of time.
+  if (not is_reconf) {
+    updated_ues.push_back(ue_cfg.crnti);
+  }
 }
 
 void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg)
@@ -157,7 +167,7 @@ void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, cons
   }
 
   rem_ue(old_ue_cfg);
-  add_ue(new_ue_cfg);
+  add_ue_to_grid(new_ue_cfg, true);
 }
 
 void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
