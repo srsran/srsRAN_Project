@@ -35,7 +35,7 @@ cell_cfg:
     sr_period_ms: 10
     min_k1: 2
     f0_or_f1_nof_cell_res_sr: 6
-    f2_nof_cell_res_csi: 6
+    f2_or_f3_or_f4_nof_cell_res_csi: 6
     nof_cell_harq_pucch_res_sets: 1
     f1_nof_cyclic_shifts: 6
   csi:
