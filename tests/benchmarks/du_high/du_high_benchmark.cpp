@@ -31,6 +31,7 @@
 #include "lib/mac/mac_ul/ul_bsr.h"
 #include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
@@ -286,12 +287,7 @@ public:
 class cu_cp_simulator : public srs_du::f1c_connection_client
 {
 public:
-  cu_cp_simulator() : du_rx_pdu_notifier(nullptr)
-  {
-    for (auto& flag : ue_created_flag_list) {
-      flag.store(false, std::memory_order_relaxed);
-    }
-  }
+  cu_cp_simulator() : rx_f1ap_pdus(MAX_NOF_DU_UES) {}
 
 private:
   class f1ap_du_tx_pdu_notifier : public f1ap_message_notifier
@@ -307,8 +303,11 @@ private:
   };
 
 public:
-  std::unique_ptr<f1ap_message_notifier>        du_rx_pdu_notifier;
-  std::array<std::atomic<bool>, MAX_NOF_DU_UES> ue_created_flag_list;
+  using rx_f1ap_pdu_queue = concurrent_queue<std::unique_ptr<f1ap_message>,
+                                             concurrent_queue_policy::lockfree_mpmc,
+                                             concurrent_queue_wait_policy::non_blocking>;
+
+  rx_f1ap_pdu_queue rx_f1ap_pdus;
 
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_) override
@@ -317,7 +316,11 @@ public:
     return std::make_unique<f1ap_du_tx_pdu_notifier>(*this);
   }
 
+  void send_message(const f1ap_message& msg) { du_rx_pdu_notifier->on_new_message(msg); }
+
 private:
+  std::array<bool, MAX_NOF_DU_UES> ue_rrc_setup_complete_received = {false};
+
   void handle_message(const f1ap_message& msg)
   {
     switch (msg.pdu.type().value) {
@@ -325,7 +328,7 @@ private:
         handle_init_msg(msg);
         break;
       case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
-        handle_success_outcome(msg.pdu.successful_outcome());
+        handle_success_outcome(msg);
         break;
       default:
         report_fatal_error("Received invalid PDU type {} in this benchmark", msg.pdu.type().value);
@@ -355,40 +358,27 @@ private:
         du_rx_pdu_notifier->on_new_message(dl_msg);
       } break;
       case init_opts::ul_rrc_msg_transfer: {
-        // Send UE Context Setup to create DRB1.
-        gnb_du_ue_f1ap_id_t du_ue_id =
-            int_to_gnb_du_ue_f1ap_id(init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
-        gnb_cu_ue_f1ap_id_t cu_ue_id =
-            int_to_gnb_cu_ue_f1ap_id(init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
-        f1ap_message uectxt_msg = test_helpers::create_ue_context_setup_request(
-            cu_ue_id, du_ue_id, 0, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
-        auto& ue_ctxt_setup = *uectxt_msg.pdu.init_msg().value.ue_context_setup_request();
-        // Do not send RRC container, otherwise we have to send an RLC ACK.
-        ue_ctxt_setup.rrc_container_present = false;
-        // Note: Use UM because AM requires status PDUs.
-        auto& drb1          = ue_ctxt_setup.drbs_to_be_setup_list[0]->drbs_to_be_setup_item();
-        drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
-        drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
-            7; // UM in default configs
-        du_rx_pdu_notifier->on_new_message(uectxt_msg);
+        report_fatal_error_if_not(rx_f1ap_pdus.try_push(std::make_unique<f1ap_message>(msg)), "Failed to push Rx PDU");
       } break;
       default:
         report_fatal_error("Unhandled PDU type {} in this benchmark", init_msg.value.type().to_string());
     }
   }
 
-  void handle_success_outcome(const asn1::f1ap::successful_outcome_s& succ_outcome)
+  void handle_success_outcome(const f1ap_message& msg)
   {
     using namespace asn1::f1ap;
+    auto& succ_outcome = msg.pdu.successful_outcome();
     switch (succ_outcome.value.type().value) {
       case f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
-        ue_created_flag_list[succ_outcome.value.ue_context_setup_resp()->gnb_du_ue_f1ap_id].store(
-            true, std::memory_order_relaxed);
+        report_fatal_error_if_not(rx_f1ap_pdus.try_push(std::make_unique<f1ap_message>(msg)), "Failed to push Rx PDU");
       } break;
       default:
         report_fatal_error("Unreachable code in this benchmark");
     }
   }
+
+  std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier;
 };
 
 /// \brief Dummy F1-U bearer for the purpose of benchmark.
@@ -472,6 +462,10 @@ public:
 
   void new_slot()
   {
+    slot_dl_data_result.rar_pdus.clear();
+    slot_dl_data_result.si_pdus.clear();
+    slot_dl_data_result.paging_pdus.clear();
+    slot_dl_data_result.ue_pdus.clear();
     slot_dl_result.dl_res = nullptr;
     slot_ul_result.ul_res = nullptr;
   }
@@ -754,8 +748,7 @@ public:
     report_fatal_error_if_not(run_slot_until(dl_pdu_sched), "Msg4 with RRC Setup was not scheduled");
     test_logger.info("rnti={}: DU-high scheduled Msg4 (containing RRC Setup)", rnti);
 
-    // Push MAC UL SDU that will trigger UE Context Setup.
-    // Note: MAC UL SDU will make the UE go out of fallback mode.
+    // Push MAC UL SDU that corresponds to the RRC Setup Complete.
     rx_ind             = {};
     rx_ind.sl_rx       = next_sl_tx - tx_rx_delay;
     rx_ind.cell_index  = to_du_cell_index(0);
@@ -763,13 +756,69 @@ public:
     rx_ind.pdus.push_back(mac_rx_pdu{du_ue_index_to_rnti(ue_idx), 0, 0, ul_pdu.copy()});
     du_hi->get_pdu_handler().handle_rx_data_indication(rx_ind);
 
-    // Wait for UE Context Modification Response to arrive to CU.
-    while (not sim_cu_cp.ue_created_flag_list[ue_idx]) {
-      // Need to run one slot for scheduler to handle pending events.
-      run_slot();
-      process_results();
-      std::this_thread::sleep_for(std::chrono::milliseconds{1});
+    // Wait for RRC Setup Complete.
+    std::unique_ptr<f1ap_message> pdu;
+    auto                          ul_rrc_msg_rx = [this, &pdu]() {
+      return sim_cu_cp.rx_f1ap_pdus.try_pop(pdu) and
+             pdu->pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
+             pdu->pdu.init_msg().value.type().value ==
+                 asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ul_rrc_msg_transfer;
+    };
+    report_fatal_error_if_not(run_slot_until(ul_rrc_msg_rx), "F1AP UL RRC Message missing");
+
+    // Start UE Context Setup.
+    {
+      gnb_du_ue_f1ap_id_t du_ue_id =
+          int_to_gnb_du_ue_f1ap_id(pdu->pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+      gnb_cu_ue_f1ap_id_t cu_ue_id =
+          int_to_gnb_cu_ue_f1ap_id(pdu->pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+      f1ap_message uectxt_msg = test_helpers::create_ue_context_setup_request(
+          cu_ue_id, du_ue_id, 0, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
+      auto& ue_ctxt_setup = *uectxt_msg.pdu.init_msg().value.ue_context_setup_request();
+      // Do not send RRC container, otherwise we have to send an RLC ACK.
+      ue_ctxt_setup.rrc_container_present = false;
+      // Note: Use UM because AM requires status PDUs.
+      auto& drb1          = ue_ctxt_setup.drbs_to_be_setup_list[0]->drbs_to_be_setup_item();
+      drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
+      drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
+          7; // UM in default configs
+      sim_cu_cp.send_message(uectxt_msg);
     }
+
+    // Wait for UE Context Setup Response.
+    auto ue_setup_resp_rx = [this, &pdu]() {
+      return sim_cu_cp.rx_f1ap_pdus.try_pop(pdu) and
+             pdu->pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome and
+             pdu->pdu.successful_outcome().value.type().value ==
+                 asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp;
+    };
+    report_fatal_error_if_not(run_slot_until(ue_setup_resp_rx), "F1AP UL RRC Message missing");
+
+    // Push MAC UL SDU that will serve as RRC Reconf Complete and make the UE go out of fallback mode.
+    rx_ind = test_helpers::create_pdu_with_sdu(next_sl_tx - tx_rx_delay, rnti, LCID_SRB1, 1);
+    du_hi->get_pdu_handler().handle_rx_data_indication(rx_ind);
+
+    // Wait for RRC Reconf Complete to arrive to F1AP and that the RLC sends status report.
+    auto dl_pdu_sched_srb1 = [this, rnti]() {
+      if (sim_phy.slot_dl_result.dl_res != nullptr) {
+        return find_ue_pdsch_with_lcid(rnti, LCID_SRB1, sim_phy.slot_dl_result.dl_res->ue_grants) != nullptr;
+      }
+      return false;
+    };
+    bool rlc_status_rx      = false;
+    bool rrc_reconf_comp_rx = false;
+    report_fatal_error_if_not(run_slot_until([&]() {
+                                rlc_status_rx |= dl_pdu_sched_srb1();
+                                rrc_reconf_comp_rx |= ul_rrc_msg_rx();
+                                return rlc_status_rx & rrc_reconf_comp_rx;
+                              }),
+                              rrc_reconf_comp_rx ? "RLC Status Report was not scheduled"
+                                                 : "F1AP UL RRC Message missing");
+
+    // Mark the UE as fully setup.
+    ue_created_flag_list[ue_idx] = true;
+
+    test_logger.info("ue={}: Creation completed successfully", ue_idx);
   }
 
   // \brief Push a DL PDUs to DU-high via F1-U interface.
@@ -938,8 +987,8 @@ public:
         return;
       }
 
-      // Encode MAC SDU for LCID 4 only if UE Context Modification Response has arrived to CU and LCID 4 is configured.
-      if (sim_cu_cp.ue_created_flag_list[rnti_to_du_ue_index(pusch.pusch_cfg.rnti)]) {
+      // Encode MAC SDU for LCID 4 only if UE Configuration is completed and LCID 4 is configured.
+      if (ue_created_flag_list[rnti_to_du_ue_index(pusch.pusch_cfg.rnti)]) {
         // Prepare MAC SDU for LCID 4.
         static const lcid_t drb_lcid = uint_to_lcid(4);
         mac_rx_pdu          rx_pdu{pusch.pusch_cfg.rnti, 0, pusch.pusch_cfg.harq_id, {}};
@@ -1061,6 +1110,9 @@ public:
   cu_up_simulator                                       sim_cu_up;
   phy_simulator                                         sim_phy;
   slot_point                                            next_sl_tx{0, 0};
+
+  /// Determines whether a UE setup has completed.
+  std::array<bool, MAX_NOF_DU_UES> ue_created_flag_list{false};
 
   /// Queue of MAC UCI indication message to be sent in their expected receive slot.
   std::deque<mac_uci_indication_message> pending_ucis;
