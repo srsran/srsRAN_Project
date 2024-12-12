@@ -29,6 +29,7 @@
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
+#include "srsran/f1u/cu_up/f1u_session_manager_factory.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
@@ -277,21 +278,26 @@ int main(int argc, char** argv)
       {f1c_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
-  // Create F1-U GW (TODO factory and cleanup).
-  gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
-  cu_f1u_gtpu_msg.cfg.warn_on_drop              = true;
-  cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
-  std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
-  udp_network_gateway_config  cu_f1u_gw_config  = {};
-  cu_f1u_gw_config.bind_address                 = cu_cfg.f1u_cfg.f1u_socket_cfg[0].bind_addr;
-  cu_f1u_gw_config.bind_port                    = GTPU_PORT;
-  cu_f1u_gw_config.reuse_addr                   = false;
-  cu_f1u_gw_config.pool_occupancy_threshold     = cu_cfg.f1u_cfg.f1u_socket_cfg[0].udp_config.pool_threshold;
-  cu_f1u_gw_config.rx_max_mmsg                  = cu_cfg.f1u_cfg.f1u_socket_cfg[0].udp_config.rx_max_msgs;
-  std::unique_ptr<gtpu_gateway> cu_f1u_gw       = create_udp_gtpu_gateway(
-      cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
-  std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
-      {*cu_f1u_gw, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT, cu_cfg.f1u_cfg.f1u_socket_cfg[0].ext_addr});
+  // Create F1-U GW.
+  std::vector<std::unique_ptr<f1u_cu_up_gateway>> f1u_gws;
+  for (const srs_cu::cu_f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
+    gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
+    cu_f1u_gtpu_msg.cfg.warn_on_drop              = true;
+    cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
+    std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
+    udp_network_gateway_config  cu_f1u_gw_config  = {};
+    cu_f1u_gw_config.bind_address                 = sock_cfg.bind_addr;
+    cu_f1u_gw_config.bind_port                    = GTPU_PORT;
+    cu_f1u_gw_config.reuse_addr                   = false;
+    cu_f1u_gw_config.pool_occupancy_threshold     = sock_cfg.udp_config.pool_threshold;
+    cu_f1u_gw_config.rx_max_mmsg                  = sock_cfg.udp_config.rx_max_msgs;
+    std::unique_ptr<gtpu_gateway> cu_f1u_gw       = create_udp_gtpu_gateway(
+        cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
+    std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
+        {*cu_f1u_gw, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT, sock_cfg.ext_addr});
+    f1u_gws.push_back(std::move(cu_f1u_conn));
+  }
+  std::unique_ptr<srs_cu_up::f1u_session_manager> f1u_session_mngr = create_f1u_cu_up_session_manager(f1u_gws);
 
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =
@@ -362,7 +368,7 @@ int main(int argc, char** argv)
   o_cuup_unit_deps.workers          = &workers;
   o_cuup_unit_deps.cu_up_e2_exec    = workers.cu_e2_exec;
   o_cuup_unit_deps.e1ap_conn_client = e1_gw.get();
-  o_cuup_unit_deps.f1u_gateway      = cu_f1u_conn.get();
+  o_cuup_unit_deps.f1u_gateway      = f1u_gws[0].get();
   o_cuup_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();
   o_cuup_unit_deps.timers           = cu_timers;
   o_cuup_unit_deps.io_brk           = epoll_broker.get();
