@@ -12,8 +12,7 @@
 #include "o_du_high_impl.h"
 #include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/e2/e2_du_factory.h"
-#include "srsran/fapi/buffered_decorator_factories.h"
-#include "srsran/fapi/logging_decorator_factories.h"
+#include "srsran/fapi/decorator_factory.h"
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
@@ -50,7 +49,7 @@ build_mac_fapi_adaptor(unsigned                                                 
 }
 
 static std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>
-build_fapi_adaptors(const du_cell_config& du_cell, const o_du_high_sector_dependencies& dependencies, unsigned sector)
+build_fapi_adaptor(const du_cell_config& du_cell, const o_du_high_sector_dependencies& dependencies, unsigned sector)
 {
   srsran_assert(dependencies.gateway, "Invalid gateway");
   srsran_assert(dependencies.last_msg_notifier, "Invalid last message notifier");
@@ -71,158 +70,80 @@ build_fapi_adaptors(const du_cell_config& du_cell, const o_du_high_sector_depend
 
 namespace {
 
-/// MAC-FAPI adaptor with logging decorator.
-class mac_fapi_adaptor_with_logger_impl : public fapi_adaptor::mac_fapi_adaptor
+/// MAC-FAPI adaptor wrapper that wraps an adaptor and a FAPI decorator.
+class mac_fapi_adaptor_wrapper : public fapi_adaptor::mac_fapi_adaptor
 {
 public:
-  mac_fapi_adaptor_with_logger_impl(const du_cell_config&                du_cell,
-                                    const o_du_high_sector_dependencies& dependencies,
-                                    unsigned                             sector) :
-    logging_slot_gateway(fapi::create_logging_slot_gateway(*dependencies.gateway)),
-    adaptor([](const du_cell_config&                du_cell_adapt,
-               const o_du_high_sector_dependencies& dependencies_adapt,
-               unsigned                             sector_id,
-               fapi::slot_message_gateway&          gateway) {
+  mac_fapi_adaptor_wrapper(const du_cell_config&                 du_cell,
+                           const o_du_high_sector_dependencies&  dependencies,
+                           unsigned                              sector,
+                           std::unique_ptr<fapi::fapi_decorator> decorator_) :
+    decorator(std::move(decorator_)),
+    adaptor([](const du_cell_config&             du_cell_adapt,
+               unsigned                          sector_id,
+               fapi::slot_message_gateway&       gateway,
+               fapi::slot_last_message_notifier& last_msg_notifier) {
       o_du_high_sector_dependencies adaptor_dependencies;
-      adaptor_dependencies.last_msg_notifier = dependencies_adapt.last_msg_notifier;
+      adaptor_dependencies.last_msg_notifier = &last_msg_notifier;
       adaptor_dependencies.gateway           = &gateway;
-      return build_fapi_adaptors(du_cell_adapt, adaptor_dependencies, sector_id);
-    }(du_cell, dependencies, sector, *logging_slot_gateway)),
-    logging_slot_time_notifier(fapi::create_logging_slot_time_notifier(adaptor->get_slot_time_notifier())),
-    logging_slot_error_notifier(fapi::create_logging_slot_error_notifier(adaptor->get_slot_error_notifier())),
-    logging_slot_data_notifier(fapi::create_logging_slot_data_notifier(adaptor->get_slot_data_notifier()))
+      return build_fapi_adaptor(du_cell_adapt, adaptor_dependencies, sector_id);
+    }(du_cell,
+            sector,
+            decorator ? decorator->get_slot_message_gateway() : *dependencies.gateway,
+            decorator ? decorator->get_slot_last_message_notifier() : *dependencies.last_msg_notifier))
   {
+    if (decorator) {
+      decorator->set_slot_data_message_notifier(adaptor->get_slot_data_message_notifier());
+      decorator->set_slot_error_message_notifier(adaptor->get_slot_error_message_notifier());
+      decorator->set_slot_time_message_notifier(adaptor->get_slot_time_message_notifier());
+    }
   }
-  fapi::slot_time_message_notifier&  get_slot_time_notifier() override { return *logging_slot_time_notifier; }
-  fapi::slot_error_message_notifier& get_slot_error_notifier() override { return *logging_slot_error_notifier; }
-  fapi::slot_data_message_notifier&  get_slot_data_notifier() override { return *logging_slot_data_notifier; }
-  mac_cell_result_notifier&          get_cell_result_notifier() override { return adaptor->get_cell_result_notifier(); }
-  void                               set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override
+
+  // See interface for documentation.
+  fapi::slot_time_message_notifier& get_slot_time_message_notifier() override
+  {
+    return decorator ? decorator->get_slot_time_message_notifier() : adaptor->get_slot_time_message_notifier();
+  }
+
+  // See interface for documentation.
+  fapi::slot_error_message_notifier& get_slot_error_message_notifier() override
+  {
+    return decorator ? decorator->get_slot_error_message_notifier() : adaptor->get_slot_error_message_notifier();
+  }
+
+  // See interface for documentation.
+  fapi::slot_data_message_notifier& get_slot_data_message_notifier() override
+  {
+    return decorator ? decorator->get_slot_data_message_notifier() : adaptor->get_slot_data_message_notifier();
+  }
+
+  // See interface for documentation.
+  mac_cell_result_notifier& get_cell_result_notifier() override { return adaptor->get_cell_result_notifier(); }
+
+  // See interface for documentation.
+  void set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override
   {
     adaptor->set_cell_slot_handler(mac_slot_handler);
   }
+
+  // See interface for documentation.
   void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler) override
   {
     adaptor->set_cell_rach_handler(mac_rach_handler);
   }
+
+  // See interface for documentation.
   void set_cell_pdu_handler(mac_pdu_handler& handler) override { adaptor->set_cell_pdu_handler(handler); }
+
+  // See interface for documentation.
   void set_cell_crc_handler(mac_cell_control_information_handler& handler) override
   {
     adaptor->set_cell_crc_handler(handler);
   }
 
 private:
-  std::unique_ptr<fapi::slot_message_gateway>        logging_slot_gateway;
-  std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>    adaptor;
-  std::unique_ptr<fapi::slot_time_message_notifier>  logging_slot_time_notifier;
-  std::unique_ptr<fapi::slot_error_message_notifier> logging_slot_error_notifier;
-  std::unique_ptr<fapi::slot_data_message_notifier>  logging_slot_data_notifier;
-};
-
-/// MAC-FAPI adaptor with message buffering decorator.
-class mac_fapi_adaptor_with_message_buffering_impl : public fapi_adaptor::mac_fapi_adaptor
-{
-public:
-  mac_fapi_adaptor_with_message_buffering_impl(const du_cell_config&                du_cell,
-                                               const o_du_high_sector_dependencies& dependencies,
-                                               unsigned                             sector,
-                                               unsigned                             l2_nof_slots_ahead) :
-    buffered_modules(fapi::create_buffered_decorator(l2_nof_slots_ahead,
-                                                     du_cell.scs_common,
-                                                     *dependencies.gateway,
-                                                     *dependencies.fapi_executor.value())),
-    adaptor([](const du_cell_config&                du_cell_adapt,
-               const o_du_high_sector_dependencies& dependencies_adapt,
-               unsigned                             sector_id,
-               fapi::slot_message_gateway&          gateway) {
-      o_du_high_sector_dependencies adaptor_dependencies;
-      adaptor_dependencies.last_msg_notifier = dependencies_adapt.last_msg_notifier;
-      adaptor_dependencies.gateway           = &gateway;
-      return build_fapi_adaptors(du_cell_adapt, adaptor_dependencies, sector_id);
-    }(du_cell, dependencies, sector, buffered_modules->get_slot_message_gateway()))
-  {
-    buffered_modules->set_slot_time_notifier(adaptor->get_slot_time_notifier());
-  }
-  fapi::slot_time_message_notifier& get_slot_time_notifier() override
-  {
-    return buffered_modules->get_slot_time_message_notifier();
-  }
-  fapi::slot_error_message_notifier& get_slot_error_notifier() override { return adaptor->get_slot_error_notifier(); }
-  fapi::slot_data_message_notifier&  get_slot_data_notifier() override { return adaptor->get_slot_data_notifier(); }
-  mac_cell_result_notifier&          get_cell_result_notifier() override { return adaptor->get_cell_result_notifier(); }
-  void                               set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override
-  {
-    adaptor->set_cell_slot_handler(mac_slot_handler);
-  }
-  void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler) override
-  {
-    adaptor->set_cell_rach_handler(mac_rach_handler);
-  }
-  void set_cell_pdu_handler(mac_pdu_handler& handler) override { adaptor->set_cell_pdu_handler(handler); }
-  void set_cell_crc_handler(mac_cell_control_information_handler& handler) override
-  {
-    adaptor->set_cell_crc_handler(handler);
-  }
-
-private:
-  std::unique_ptr<fapi::buffered_decorator>       buffered_modules;
+  std::unique_ptr<fapi::fapi_decorator>           decorator;
   std::unique_ptr<fapi_adaptor::mac_fapi_adaptor> adaptor;
-};
-
-/// MAC-FAPI adaptor with logging and message buffering decorators.
-class mac_fapi_adaptor_with_logger_and_message_buffering_impl : public fapi_adaptor::mac_fapi_adaptor
-{
-public:
-  mac_fapi_adaptor_with_logger_and_message_buffering_impl(const du_cell_config&                du_cell,
-                                                          const o_du_high_sector_dependencies& dependencies,
-                                                          unsigned                             sector,
-                                                          unsigned                             l2_nof_slots_ahead) :
-    logging_slot_gateway(fapi::create_logging_slot_gateway(*dependencies.gateway)),
-    buffered_modules(fapi::create_buffered_decorator(l2_nof_slots_ahead,
-                                                     du_cell.scs_common,
-                                                     *logging_slot_gateway,
-                                                     *dependencies.fapi_executor.value())),
-    adaptor([](const du_cell_config&                du_cell_adapt,
-               const o_du_high_sector_dependencies& dependencies_adapt,
-               unsigned                             sector_id,
-               fapi::slot_message_gateway&          gateway) {
-      o_du_high_sector_dependencies adaptor_dependencies;
-      adaptor_dependencies.last_msg_notifier = dependencies_adapt.last_msg_notifier;
-      adaptor_dependencies.gateway           = &gateway;
-      return build_fapi_adaptors(du_cell_adapt, adaptor_dependencies, sector_id);
-    }(du_cell, dependencies, sector, buffered_modules->get_slot_message_gateway())),
-    logging_slot_time_notifier(
-        fapi::create_logging_slot_time_notifier(buffered_modules->get_slot_time_message_notifier())),
-    logging_slot_error_notifier(fapi::create_logging_slot_error_notifier(adaptor->get_slot_error_notifier())),
-    logging_slot_data_notifier(fapi::create_logging_slot_data_notifier(adaptor->get_slot_data_notifier()))
-  {
-    buffered_modules->set_slot_time_notifier(adaptor->get_slot_time_notifier());
-  }
-  fapi::slot_time_message_notifier&  get_slot_time_notifier() override { return *logging_slot_time_notifier; }
-  fapi::slot_error_message_notifier& get_slot_error_notifier() override { return *logging_slot_error_notifier; }
-  fapi::slot_data_message_notifier&  get_slot_data_notifier() override { return *logging_slot_data_notifier; }
-  mac_cell_result_notifier&          get_cell_result_notifier() override { return adaptor->get_cell_result_notifier(); }
-  void                               set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override
-  {
-    adaptor->set_cell_slot_handler(mac_slot_handler);
-  }
-  void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler) override
-  {
-    adaptor->set_cell_rach_handler(mac_rach_handler);
-  }
-  void set_cell_pdu_handler(mac_pdu_handler& handler) override { adaptor->set_cell_pdu_handler(handler); }
-  void set_cell_crc_handler(mac_cell_control_information_handler& handler) override
-  {
-    adaptor->set_cell_crc_handler(handler);
-  }
-
-private:
-  std::unique_ptr<fapi::slot_message_gateway>        logging_slot_gateway;
-  std::unique_ptr<fapi::buffered_decorator>          buffered_modules;
-  std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>    adaptor;
-  std::unique_ptr<fapi::slot_time_message_notifier>  logging_slot_time_notifier;
-  std::unique_ptr<fapi::slot_error_message_notifier> logging_slot_error_notifier;
-  std::unique_ptr<fapi::slot_data_message_notifier>  logging_slot_data_notifier;
 };
 
 } // namespace
@@ -240,25 +161,26 @@ resolve_o_du_high_impl_dependencies(const o_du_high_config&             config,
   dependencies.logger = &srslog::fetch_basic_logger("DU");
 
   for (unsigned i = 0, e = odu_dependencies.size(); i != e; ++i) {
+    fapi::decorator_config decorator_cfg;
+
     if (config.fapi.log_level == srslog::basic_levels::debug) {
-      if (config.fapi.l2_nof_slots_ahead == 0) {
-        dependencies.du_high_adaptor.push_back(
-            std::make_unique<mac_fapi_adaptor_with_logger_impl>(config.du_hi.ran.cells[i], odu_dependencies[i], i));
-      } else {
-        srsran_assert(odu_dependencies[i].fapi_executor, "Invalid executor for the FAPI buffered decorator");
-        dependencies.du_high_adaptor.push_back(
-            std::make_unique<mac_fapi_adaptor_with_logger_and_message_buffering_impl>(
-                config.du_hi.ran.cells[i], odu_dependencies[i], i, config.fapi.l2_nof_slots_ahead));
-      }
-    } else {
-      if (config.fapi.l2_nof_slots_ahead == 0) {
-        dependencies.du_high_adaptor.push_back(build_fapi_adaptors(config.du_hi.ran.cells[i], odu_dependencies[i], i));
-      } else {
-        srsran_assert(odu_dependencies[i].fapi_executor, "Invalid executor for the FAPI buffered decorator");
-        dependencies.du_high_adaptor.push_back(std::make_unique<mac_fapi_adaptor_with_message_buffering_impl>(
-            config.du_hi.ran.cells[i], odu_dependencies[i], i, config.fapi.l2_nof_slots_ahead));
-      }
+      decorator_cfg.logging_cfg.emplace(fapi::logging_decorator_config{srslog::fetch_basic_logger("FAPI", true),
+                                                                       *odu_dependencies[i].gateway,
+                                                                       *odu_dependencies[i].last_msg_notifier});
     }
+
+    if (config.fapi.l2_nof_slots_ahead != 0) {
+      srsran_assert(odu_dependencies[i].fapi_executor, "Invalid executor for the FAPI message bufferer decorator");
+      decorator_cfg.bufferer_cfg.emplace(
+          fapi::message_bufferer_decorator_config{config.fapi.l2_nof_slots_ahead,
+                                                  config.du_hi.ran.cells[i].scs_common,
+                                                  *odu_dependencies[i].fapi_executor.value(),
+                                                  *odu_dependencies[i].gateway,
+                                                  *odu_dependencies[i].last_msg_notifier});
+    }
+
+    dependencies.du_high_adaptor.push_back(std::make_unique<mac_fapi_adaptor_wrapper>(
+        config.du_hi.ran.cells[i], odu_dependencies[i], i, fapi::create_decorators(decorator_cfg)));
   }
 
   return dependencies;

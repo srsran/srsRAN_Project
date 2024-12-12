@@ -11,17 +11,14 @@
 #pragma once
 
 #include "srsran/fapi/slot_data_message_notifier.h"
-#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace fapi {
 
-/// Adds logging information over the implemented interface.
-class logging_slot_data_notifier_decorator : public slot_data_message_notifier
+/// Dummy slot data message notifier implementation that will terminate the application if its methods are called.
+class slot_data_message_notifier_dummy : public slot_data_message_notifier
 {
 public:
-  explicit logging_slot_data_notifier_decorator(srslog::basic_logger& logger_);
-
   // See interface for documentation.
   void on_rx_data_indication(const rx_data_indication_message& msg) override;
 
@@ -36,14 +33,6 @@ public:
 
   // See interface for documentation.
   void on_rach_indication(const rach_indication_message& msg) override;
-
-  /// Sets the slot data message notifier to the given one.
-  void set_slot_data_message_notifier(slot_data_message_notifier& data_notifier);
-
-private:
-  /// FAPI logger.
-  srslog::basic_logger&       logger;
-  slot_data_message_notifier* notifier;
 };
 
 } // namespace fapi

@@ -7,10 +7,11 @@
 #
 
 set(SOURCES
-        buffered_decorator_factories.cpp
-        buffered_decorator_impl.cpp
-        buffered_slot_gateway_impl.cpp
-        buffered_slot_gateway_task_dispatcher.cpp
-        buffered_slot_time_notifier_decorator.cpp)
+        message_bufferer_decorator_impl.cpp
+        message_bufferer_slot_gateway_impl.cpp
+        message_bufferer_slot_gateway_task_dispatcher.cpp
+        message_bufferer_slot_time_notifier_decorator.cpp)
 
 add_library(srsran_fapi_message_buffering STATIC ${SOURCES})
+target_include_directories(srsran_fapi_message_buffering PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi)
+target_link_libraries(srsran_fapi_message_buffering PRIVATE srsran_fapi_decorator_helpers)

@@ -15,26 +15,27 @@
 
 namespace srsran {
 namespace fapi {
-class buffered_slot_gateway_task_dispatcher;
+class message_bufferer_slot_gateway_task_dispatcher;
 
 /// Advances the slot indication message by the value configured in construction.
-class buffered_slot_time_notifier_decorator : public slot_time_message_notifier
+class message_bufferer_slot_time_notifier_decorator : public slot_time_message_notifier
 {
 public:
-  buffered_slot_time_notifier_decorator(unsigned                               l2_nof_slots_ahead_,
-                                        subcarrier_spacing                     scs_,
-                                        buffered_slot_gateway_task_dispatcher& gateway_task_dispatcher_);
+  message_bufferer_slot_time_notifier_decorator(
+      unsigned                                       l2_nof_slots_ahead_,
+      subcarrier_spacing                             scs_,
+      message_bufferer_slot_gateway_task_dispatcher& gateway_task_dispatcher_);
 
   // See interface for documentation.
   void on_slot_indication(const slot_indication_message& msg) override;
 
-  // Configures the buffered notifier to the given one.
+  // Configures the message bufferer notifier to the given one.
   void set_slot_time_notifier(slot_time_message_notifier& time_notifier) { notifier = std::ref(time_notifier); }
 
 private:
   const unsigned                                     l2_nof_slots_ahead;
   const subcarrier_spacing                           scs;
-  buffered_slot_gateway_task_dispatcher&             gateway_task_dispatcher;
+  message_bufferer_slot_gateway_task_dispatcher&     gateway_task_dispatcher;
   std::reference_wrapper<slot_time_message_notifier> notifier;
 };
 

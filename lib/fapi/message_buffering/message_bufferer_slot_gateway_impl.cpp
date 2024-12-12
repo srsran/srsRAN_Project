@@ -8,15 +8,15 @@
  *
  */
 
-#include "buffered_slot_gateway_impl.h"
+#include "message_bufferer_slot_gateway_impl.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace fapi;
 
-buffered_slot_gateway_impl::buffered_slot_gateway_impl(unsigned              l2_nof_slots_ahead_,
-                                                       subcarrier_spacing    scs_,
-                                                       slot_message_gateway& gateway_) :
+message_bufferer_slot_gateway_impl::message_bufferer_slot_gateway_impl(unsigned              l2_nof_slots_ahead_,
+                                                                       subcarrier_spacing    scs_,
+                                                                       slot_message_gateway& gateway_) :
   l2_nof_slots_ahead(l2_nof_slots_ahead_), scs(scs_), gateway(gateway_), logger(srslog::fetch_basic_logger("FAPI"))
 {
   // Pool size is 1 unit bigger than the number of slots the L2 is ahead of the L1, in case that an incoming message
@@ -35,7 +35,7 @@ buffered_slot_gateway_impl::buffered_slot_gateway_impl(unsigned              l2_
 }
 
 template <typename T, typename P, typename Function>
-void buffered_slot_gateway_impl::handle_message(T&& msg, P pool, Function func)
+void message_bufferer_slot_gateway_impl::handle_message(T&& msg, P pool, Function func)
 {
   slot_point msg_slot(scs, msg.sfn, msg.slot);
   slot_point current_slot = get_current_slot();
@@ -43,10 +43,12 @@ void buffered_slot_gateway_impl::handle_message(T&& msg, P pool, Function func)
   int difference = msg_slot - current_slot;
 
   if (difference > int(l2_nof_slots_ahead)) {
-    logger.warning("Skipping FAPI message as the difference between the slot of the message and the current slot '{}' "
-                   "is bigger than the configured delay '{}'",
-                   difference,
-                   l2_nof_slots_ahead);
+    logger.warning(
+        "Skipping FAPI message as the difference '{}' between the slot of the message and the current slot '{}' "
+        "is bigger than the configured delay '{}'",
+        difference,
+        current_slot,
+        l2_nof_slots_ahead);
 
     return;
   }
@@ -93,7 +95,7 @@ static void send_message(slot_point             slot,
   pool_entry.reset();
 }
 
-void buffered_slot_gateway_impl::forward_cached_messages(slot_point slot)
+void message_bufferer_slot_gateway_impl::forward_cached_messages(slot_point slot)
 {
   send_message<dl_tti_request_message>(
       slot, scs, logger, dl_tti_pool, [this](const dl_tti_request_message& msg) { gateway.dl_tti_request(msg); });
@@ -108,28 +110,28 @@ void buffered_slot_gateway_impl::forward_cached_messages(slot_point slot)
       slot, scs, logger, tx_data_pool, [this](const tx_data_request_message& msg) { gateway.tx_data_request(msg); });
 }
 
-void buffered_slot_gateway_impl::handle_dl_tti_request(const dl_tti_request_message& msg)
+void message_bufferer_slot_gateway_impl::handle_dl_tti_request(const dl_tti_request_message& msg)
 {
   handle_message(msg,
                  span<std::optional<dl_tti_request_message>>(dl_tti_pool),
                  [this](const dl_tti_request_message& message) { gateway.dl_tti_request(message); });
 }
 
-void buffered_slot_gateway_impl::handle_ul_tti_request(const ul_tti_request_message& msg)
+void message_bufferer_slot_gateway_impl::handle_ul_tti_request(const ul_tti_request_message& msg)
 {
   handle_message(msg,
                  span<std::optional<ul_tti_request_message>>(ul_tti_pool),
                  [this](const ul_tti_request_message& message) { gateway.ul_tti_request(message); });
 }
 
-void buffered_slot_gateway_impl::handle_ul_dci_request(const ul_dci_request_message& msg)
+void message_bufferer_slot_gateway_impl::handle_ul_dci_request(const ul_dci_request_message& msg)
 {
   handle_message(msg,
                  span<std::optional<ul_dci_request_message>>(ul_dci_pool),
                  [this](const ul_dci_request_message& message) { gateway.ul_dci_request(message); });
 }
 
-void buffered_slot_gateway_impl::handle_tx_data_request(const tx_data_request_message& msg)
+void message_bufferer_slot_gateway_impl::handle_tx_data_request(const tx_data_request_message& msg)
 {
   handle_message(msg,
                  span<std::optional<tx_data_request_message>>(tx_data_pool),

@@ -38,13 +38,13 @@ public:
   virtual ~mac_fapi_adaptor() = default;
 
   /// \brief Returns a reference to the slot time notifier used by the adaptor.
-  virtual fapi::slot_time_message_notifier& get_slot_time_notifier() = 0;
+  virtual fapi::slot_time_message_notifier& get_slot_time_message_notifier() = 0;
 
   /// \brief Returns a reference to the slot error notifier used by the adaptor.
-  virtual fapi::slot_error_message_notifier& get_slot_error_notifier() = 0;
+  virtual fapi::slot_error_message_notifier& get_slot_error_message_notifier() = 0;
 
   /// \brief Returns a reference to the slot data notifier used by the adaptor.
-  virtual fapi::slot_data_message_notifier& get_slot_data_notifier() = 0;
+  virtual fapi::slot_data_message_notifier& get_slot_data_message_notifier() = 0;
 
   /// \brief Returns a reference to the MAC cell results notifier used by the adaptor.
   virtual mac_cell_result_notifier& get_cell_result_notifier() = 0;

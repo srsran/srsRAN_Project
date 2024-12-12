@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "buffered_slot_gateway_impl.h"
+#include "message_bufferer_slot_gateway_impl.h"
 #include "srsran/fapi/slot_time_message_notifier.h"
 
 namespace srsran {
@@ -20,15 +20,15 @@ class task_executor;
 namespace fapi {
 
 /// Buffered slot gateway task dispatcher.
-class buffered_slot_gateway_task_dispatcher : public slot_message_gateway
+class message_bufferer_slot_gateway_task_dispatcher : public slot_message_gateway
 {
 public:
-  buffered_slot_gateway_task_dispatcher(unsigned              l2_nof_slots_ahead,
-                                        subcarrier_spacing    scs_,
-                                        slot_message_gateway& gateway,
-                                        task_executor&        executor_);
+  message_bufferer_slot_gateway_task_dispatcher(unsigned              l2_nof_slots_ahead,
+                                                subcarrier_spacing    scs_,
+                                                slot_message_gateway& gateway,
+                                                task_executor&        executor_);
 
-  /// Updates the current slot of the buffered slot gateway.
+  /// Updates the current slot of the message bufferer slot gateway.
   void update_current_slot(slot_point slot);
 
   /// Forwards cached messages for the given slot.
@@ -47,10 +47,10 @@ public:
   void tx_data_request(const tx_data_request_message& msg) override;
 
 private:
-  const subcarrier_spacing   scs;
-  srslog::basic_logger&      logger;
-  task_executor&             executor;
-  buffered_slot_gateway_impl buffered_gateway;
+  const subcarrier_spacing           scs;
+  srslog::basic_logger&              logger;
+  task_executor&                     executor;
+  message_bufferer_slot_gateway_impl message_bufferer_gateway;
 };
 
 } // namespace fapi

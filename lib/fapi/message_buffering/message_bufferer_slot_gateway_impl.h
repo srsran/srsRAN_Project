@@ -35,10 +35,12 @@ constexpr unsigned MAX_NUM_BUFFERED_MESSAGES = 8U;
 ///   message is forwarded.
 /// - In the rest of the cases, the incoming message is stored in a buffer, waiting to be forwarded when the current
 ///   slot matches the message slot.
-class buffered_slot_gateway_impl
+class message_bufferer_slot_gateway_impl
 {
 public:
-  buffered_slot_gateway_impl(unsigned l2_nof_slots_ahead_, subcarrier_spacing scs_, slot_message_gateway& gateway_);
+  message_bufferer_slot_gateway_impl(unsigned              l2_nof_slots_ahead_,
+                                     subcarrier_spacing    scs_,
+                                     slot_message_gateway& gateway_);
 
   /// Handles a DL_TTI.request message.
   void handle_dl_tti_request(const dl_tti_request_message& msg);

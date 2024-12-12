@@ -8,8 +8,8 @@
  *
  */
 
-#include "buffered_slot_time_notifier_decorator.h"
-#include "buffered_slot_gateway_task_dispatcher.h"
+#include "message_bufferer_slot_time_notifier_decorator.h"
+#include "message_bufferer_slot_gateway_task_dispatcher.h"
 #include "srsran/fapi/message_builders.h"
 #include "srsran/fapi/messages.h"
 #include "srsran/ran/slot_point.h"
@@ -31,10 +31,10 @@ public:
 
 static slot_time_message_notifier_dummy dummy_notifier;
 
-buffered_slot_time_notifier_decorator::buffered_slot_time_notifier_decorator(
-    unsigned                               l2_nof_slots_ahead_,
-    subcarrier_spacing                     scs_,
-    buffered_slot_gateway_task_dispatcher& gateway_task_dispatcher_) :
+message_bufferer_slot_time_notifier_decorator::message_bufferer_slot_time_notifier_decorator(
+    unsigned                                       l2_nof_slots_ahead_,
+    subcarrier_spacing                             scs_,
+    message_bufferer_slot_gateway_task_dispatcher& gateway_task_dispatcher_) :
   l2_nof_slots_ahead(l2_nof_slots_ahead_),
   scs(scs_),
   gateway_task_dispatcher(gateway_task_dispatcher_),
@@ -42,7 +42,7 @@ buffered_slot_time_notifier_decorator::buffered_slot_time_notifier_decorator(
 {
 }
 
-void buffered_slot_time_notifier_decorator::on_slot_indication(const slot_indication_message& msg)
+void message_bufferer_slot_time_notifier_decorator::on_slot_indication(const slot_indication_message& msg)
 {
   slot_point slot(scs, msg.sfn, msg.slot);
 

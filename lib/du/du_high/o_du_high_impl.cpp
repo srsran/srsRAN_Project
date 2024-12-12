@@ -105,7 +105,7 @@ fapi::slot_data_message_notifier& o_du_high_impl::get_slot_data_message_notifier
                 cell_id,
                 du_high_adaptor.size());
 
-  return du_high_adaptor[cell_id]->get_slot_data_notifier();
+  return du_high_adaptor[cell_id]->get_slot_data_message_notifier();
 }
 
 fapi::slot_error_message_notifier& o_du_high_impl::get_slot_error_message_notifier(unsigned cell_id)
@@ -115,7 +115,7 @@ fapi::slot_error_message_notifier& o_du_high_impl::get_slot_error_message_notifi
                 cell_id,
                 du_high_adaptor.size());
 
-  return du_high_adaptor[cell_id]->get_slot_error_notifier();
+  return du_high_adaptor[cell_id]->get_slot_error_message_notifier();
 }
 
 fapi::slot_time_message_notifier& o_du_high_impl::get_slot_time_message_notifier(unsigned cell_id)
@@ -125,5 +125,5 @@ fapi::slot_time_message_notifier& o_du_high_impl::get_slot_time_message_notifier
                 cell_id,
                 du_high_adaptor.size());
 
-  return du_high_adaptor[cell_id]->get_slot_time_notifier();
+  return du_high_adaptor[cell_id]->get_slot_time_message_notifier();
 }
