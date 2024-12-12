@@ -113,11 +113,6 @@ TEST_P(PuschTpmiSelectFixture, VectorTest)
   unsigned nof_rx_ports   = test_case.channel_matrix.get_nof_rx_ports();
   unsigned max_nof_layers = std::min(nof_tx_ports, nof_rx_ports);
 
-  // Only one layer is currently supported.
-  if (max_nof_layers > 2) {
-    GTEST_SKIP();
-  }
-
   // Get UL-SCH information parameters.
   pusch_tpmi_select_info info = get_tpmi_select_info(
       test_case.channel_matrix, test_case.noise_variance, max_nof_layers, test_case.codebook_subset);
