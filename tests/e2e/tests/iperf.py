@@ -522,20 +522,12 @@ def test_zmq_4x4_mimo(
 
 
 @mark.parametrize(
-    "direction",
+    "direction, nof_antennas",
     (
-        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
-        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
-        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+        param(IPerfDir.DOWNLINK, 1, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, 1, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, 4, id="bidirectional 4x4 mimo", marks=mark.bidirectional),
     ),
-)
-@mark.parametrize(
-    "protocol",
-    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
-)
-@mark.parametrize(
-    "band, common_scs, bandwidth, bitrate",
-    (param(41, 30, 20, LOW_BITRATE, id=ZMQ_ID),),
 )
 @mark.zmq
 @mark.smoke
@@ -546,12 +538,8 @@ def test_smoke(
     ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    bitrate: int,
-    protocol: IPerfProto,
     direction: IPerfDir,
+    nof_antennas: int,
 ):
     """
     ZMQ IPerfs
@@ -563,14 +551,16 @@ def test_smoke(
         ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
+        band=41,
+        common_scs=30,
+        bandwidth=20,
         sample_rate=None,  # default from testbed
         iperf_duration=TINY_DURATION,
-        bitrate=bitrate,
-        protocol=protocol,
+        bitrate=LOW_BITRATE,
+        protocol=IPerfProto.UDP,
         direction=direction,
+        nof_antennas_dl=nof_antennas,
+        nof_antennas_ul=nof_antennas,
         global_timing_advance=0,
         time_alignment_calibration=0,
         always_download_artifacts=False,
