@@ -155,7 +155,9 @@ def test_ru_acc100(
     """
     Run gnb in test mode ru dummy.
     """
-    _test_ru(retina_manager, retina_data, gnb, ru_config="config_ru_acc100.yml")
+    _test_ru(
+        retina_manager, retina_data, gnb, ru_config="config_ru_acc100.yml", extra_cli_config="log --hal_level=debug"
+    )
 
 
 @mark.test_mode
@@ -221,6 +223,7 @@ def _test_ru(
     log_search: bool = True,
     warning_as_errors: bool = True,
     fail_if_kos: bool = True,
+    extra_cli_config: str = "",
 ):  # pylint: disable=too-many-locals
     # Configuration
     with tempfile.NamedTemporaryFile(mode="w+") as tmp_file:
@@ -260,7 +263,7 @@ def _test_ru(
                 fivegc_definition=FiveGCDefinition(amf_ip=gnb_def.zmq_ip, amf_port=38412),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
-                    post_commands=("cu_cp amf --no_core 1",),
+                    post_commands=(f"cu_cp amf --no_core 1 {extra_cli_config}",),
                 ),
             )
         )
