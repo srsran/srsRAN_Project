@@ -300,7 +300,6 @@ ric:
   variables:
     TESTBED: "zmq_ric"
     MARKERS: "zmq_ric"
-  allow_failure: true
 
 ################################################################################
 # TEST MODE
