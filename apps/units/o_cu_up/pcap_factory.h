@@ -26,6 +26,7 @@ struct o_cu_up_dlt_pcaps {
     n3.reset();
     f1u.reset();
     e1ap.reset();
+    e2ap.reset();
   }
 };
 
