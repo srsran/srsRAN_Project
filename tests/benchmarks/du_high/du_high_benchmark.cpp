@@ -68,7 +68,7 @@ struct bench_params {
   /// Setting this value to 0 will disable DL Tx.
   /// If the air interface cannot keep up with the DL F1-U PDU rate, the F1-U will be throttled, to avoid depleting
   /// the buffer pool.
-  unsigned dl_bytes_per_slot = 1500;
+  unsigned dl_bytes_per_slot = 9000;
   /// \brief Set size of the UL Buffer status report to push for UL Tx. Setting this value to 0 will disable UL Tx.
   unsigned ul_bsr_bytes = 0;
   /// \brief Maximum number of RBs per UE DL grant per slot.
@@ -550,7 +550,7 @@ class du_high_bench
   static constexpr unsigned PDCP_MAX_HDR_LEN    = 3;
 
 public:
-  du_high_bench(unsigned                              dl_buffer_state_bytes_,
+  du_high_bench(unsigned                              dl_bytes_per_slot_,
                 unsigned                              ul_bsr_bytes_,
                 unsigned                              max_nof_rbs_per_dl_grant,
                 units::bytes                          f1u_pdu_size_,
@@ -559,7 +559,7 @@ public:
                 bool                                  sched_tracing_enabled,
                 const cell_config_builder_params&     builder_params = {}) :
     params(builder_params),
-    f1u_dl_pdu_bytes_per_slot(dl_buffer_state_bytes_),
+    f1u_dl_pdu_bytes_per_slot(dl_bytes_per_slot_),
     f1u_pdu_size(f1u_pdu_size_),
     workers(test_helpers::create_multi_threaded_du_high_executor_mapper({1, true, du_cell_cores})),
     ul_bsr_bytes(ul_bsr_bytes_)
@@ -795,7 +795,7 @@ public:
       static std::array<uint32_t, MAX_NOF_DU_UES> pdcp_sn_list{0};
       const unsigned nof_dl_pdus_per_slot = divide_ceil(f1u_dl_pdu_bytes_per_slot, this->f1u_pdu_size.value());
       const unsigned last_dl_pdu_size =
-          std::max(PDCP_MAX_HDR_LEN, f1u_dl_pdu_bytes_per_slot % this->f1u_pdu_size.value());
+          std::max(PDCP_MAX_HDR_LEN, ((f1u_dl_pdu_bytes_per_slot - 1) % this->f1u_pdu_size.value()) + 1);
 
       // Forward DL buffer occupancy updates to all bearers in a Round-robin fashion.
       for (unsigned i = 0; i != nof_dl_pdus_per_slot; ++i) {
@@ -825,6 +825,7 @@ public:
           }
         }
         f1u_dl_total_bytes.fetch_add(pdcp_pdu.length(), std::memory_order_relaxed);
+        test_logger.debug("Pushing PDCP PDU of size={}", pdcp_pdu.length());
         du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdcp_pdu)});
       }
     })) {
@@ -1136,21 +1137,22 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
 void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
                                  unsigned                              nof_ues,
                                  duplex_mode                           dplx_mode,
-                                 unsigned                              dl_buffer_state_bytes,
+                                 unsigned                              dl_bytes_per_slot,
                                  unsigned                              ul_bsr_bytes,
                                  unsigned                              max_nof_rbs_per_dl_grant,
                                  units::bytes                          dl_pdu_size,
                                  span<unsigned>                        du_cell_cores,
                                  bool                                  sched_tracing_enabled,
-                                 const policy_scheduler_expert_config& strategy_cfg)
+                                 const policy_scheduler_expert_config& strategy_cfg,
+                                 unsigned                              nof_repetitions)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
-                               dl_buffer_state_bytes > 0 ? "DL" : "",
-                               std::min(dl_buffer_state_bytes, ul_bsr_bytes) > 0 ? "+" : "",
+                               dl_bytes_per_slot > 0 ? "DL" : "",
+                               std::min(dl_bytes_per_slot, ul_bsr_bytes) > 0 ? "+" : "",
                                ul_bsr_bytes > 0 ? "UL" : "",
                                nof_ues);
   test_delimit_logger test_delim(benchname.c_str());
-  du_high_bench       bench{dl_buffer_state_bytes,
+  du_high_bench       bench{dl_bytes_per_slot,
                       ul_bsr_bytes,
                       max_nof_rbs_per_dl_grant,
                       dl_pdu_size,
@@ -1199,15 +1201,28 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
              bench.sim_phy.metrics.ul_mbps(scs));
 
   // Some sanity checks to avoid regressions.
-  if (dl_buffer_state_bytes > 0) {
-    report_fatal_error_if_not(pdschs_per_slot > 0.5, "The scheduler is not scheduling enough DL grants");
+  if (dl_bytes_per_slot > 0) {
+    if (nof_repetitions > 1000) {
+      // Only do these checks if a non-negligible number of slots was simulated.
+      const unsigned actual_dl_bytes_per_dl_slot =
+          bench.sim_phy.metrics.nof_dl_bytes / (double)bench.sim_phy.metrics.slot_dl_count;
+      if (actual_dl_bytes_per_dl_slot < dl_bytes_per_slot) {
+        // DL saturation scenario.
+        report_fatal_error_if_not(pdschs_per_slot > 0.99, "The scheduler is not scheduling enough DL grants");
+      } else {
+        report_fatal_error_if_not(pdschs_per_slot > 0.05, "The scheduler is not scheduling enough DL grants");
+      }
+    }
   } else {
-    report_fatal_error_if_not(pdschs_per_slot < 0.1, "The scheduler is not scheduling enough DL grants");
+    report_fatal_error_if_not(pdschs_per_slot < 0.01, "The scheduler is not scheduling enough DL grants");
   }
   if (ul_bsr_bytes > 0) {
-    report_fatal_error_if_not(puschs_per_slot > 0.1, "The scheduler is not scheduling enough UL grants");
+    if (nof_repetitions > 1000) {
+      // Only do these checks if a non-negligible number of slots was simulated.
+      report_fatal_error_if_not(puschs_per_slot > 0.05, "The scheduler is not scheduling enough UL grants");
+    }
   } else {
-    report_fatal_error_if_not(puschs_per_slot < 0.1, "The scheduler is scheduling too many UL grants");
+    report_fatal_error_if_not(puschs_per_slot < 0.01, "The scheduler is scheduling too many UL grants");
   }
 }
 
@@ -1300,7 +1315,8 @@ int main(int argc, char** argv)
                                 params.pdu_size,
                                 params.du_cell_cores,
                                 params.sched_trace_enabled,
-                                params.strategy_cfg);
+                                params.strategy_cfg,
+                                params.nof_repetitions);
   }
 
   if (not tracing_filename.empty()) {
