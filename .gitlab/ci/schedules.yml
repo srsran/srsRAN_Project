@@ -109,7 +109,7 @@ Alternative OSs:
       raw: false
 
 Nightly Build Unit Tests OpenSource:
-  cron: "45 23 * * 1-5"
+  cron: "45 23 * * 0"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
@@ -127,7 +127,7 @@ Nightly Build Unit Tests OpenSource:
       raw: false
 
 Nightly E2E Tests OpenSource:
-  cron: "30 22 * * 1-5"
+  cron: "30 22 * * 0"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
