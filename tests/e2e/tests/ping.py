@@ -326,6 +326,36 @@ def test_example(
     )
 
 
+@mark.example_srsue
+def test_example_srsue(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+):
+    """
+    ZMQ Pings
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=3,
+        common_scs=15,
+        bandwidth=10,
+        sample_rate=11520000,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        common_search_space_enable=True,
+        prach_config_index=1,
+        ue_stop_timeout=3,
+    )
+
+
 @mark.parametrize(
     "band, common_scs, bandwidth, ciphering",
     (
@@ -545,6 +575,8 @@ def _ping(
     enable_security_mode: bool = False,
     ims_mode: str = "",
     enable_drx: bool = False,
+    common_search_space_enable: bool = False,
+    prach_config_index=-1,
 ):
     logging.info("Ping Test")
 
@@ -562,6 +594,8 @@ def _ping(
         enable_security_mode=enable_security_mode,
         ims_mode=ims_mode,
         enable_drx=enable_drx,
+        common_search_space_enable=common_search_space_enable,
+        prach_config_index=prach_config_index,
     )
     configure_artifacts(
         retina_data=retina_data,
