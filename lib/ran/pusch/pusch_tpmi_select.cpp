@@ -321,8 +321,7 @@ static void subchannel_matrix(cf_t out[N - 1][N - 1], const cf_t in[N][N], unsig
       if (i_col == i_skip_col) {
         continue;
       }
-      out[i_col_count][i_row_count] = in[i_col][i_row];
-      i_col_count++;
+      out[i_col_count++][i_row_count] = in[i_col][i_row];
     }
     ++i_row_count;
   }
@@ -350,6 +349,15 @@ template <>
 cf_t det_channel_matrix<2>(const cf_t in[2][2])
 {
   return in[0][0] * in[1][1] - in[0][1] * in[1][0];
+}
+
+// Calculate the determinant of a matrix of size 3.
+template <>
+cf_t det_channel_matrix<3>(const cf_t in[3][3])
+{
+  return in[0][0] * (in[1][1] * in[2][2] - in[1][2] * in[2][1]) +
+         in[0][1] * (in[1][2] * in[2][0] - in[2][2] * in[1][0]) +
+         in[0][2] * (in[1][0] * in[2][1] - in[1][1] * in[2][0]);
 }
 
 // Calculate the determinant of a matrix of size 1.
@@ -380,7 +388,7 @@ float calculate_mean_layer_sinr(const precoding_weight_matrix& channel_weights, 
   cf_t                         temp_sub[NofLayers - 1][NofLayers - 1];
   for (unsigned i = 0; i != NofLayers; ++i) {
     subchannel_matrix(temp_sub, gram_matrix, i, i);
-    inv_diagonal[i] = det_channel_matrix(temp_sub).real() / det;
+    inv_diagonal[i] = det_channel_matrix<NofLayers - 1>(temp_sub).real() / det;
   }
 
   // Estimate noise variances.
