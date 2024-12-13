@@ -27,9 +27,9 @@ class f1u_session_manager_test : public ::testing::Test
 
     unsigned nof_gws = 2;
     for (unsigned i = 0; i < nof_gws; i++) {
-      std::unique_ptr<dummy_f1u_gateway> f1u_gw = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
-      std::string                        addr   = fmt::format("127.0.0.{}", 1 + i);
-      f1u_gw->set_cu_bind_address(addr);
+      auto        f1u_gw = std::make_unique<dummy_gtpu_gateway>();
+      std::string addr   = fmt::format("127.0.0.{}", 1 + i);
+      f1u_gw->set_bind_address(addr);
       f1u_gws.push_back(std::move(f1u_gw));
     }
 
@@ -47,9 +47,9 @@ class f1u_session_manager_test : public ::testing::Test
   }
 
 protected:
-  std::unique_ptr<f1u_session_manager>            f1u_session_mngr;
-  std::vector<std::unique_ptr<f1u_cu_up_gateway>> f1u_gws;
-  dummy_inner_f1u_bearer                          f1u_bearer;
+  std::unique_ptr<f1u_session_manager>               f1u_session_mngr;
+  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> f1u_gws;
+  dummy_inner_f1u_bearer                             f1u_bearer;
 };
 
 } // namespace srsran::srs_cu_up

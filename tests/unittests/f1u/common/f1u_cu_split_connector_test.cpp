@@ -134,8 +134,10 @@ protected:
     nru_gw_config.reuse_addr                 = true;
     udp_gw = create_udp_gtpu_gateway(nru_gw_config, *epoll_broker, io_tx_executor, rx_executor);
 
+    std::vector<std::unique_ptr<gtpu_gateway>> cu_f1u_gws;
+    cu_f1u_gws.push_back(std::move(udp_gw));
     f1u_cu_up_split_gateway_creation_msg cu_create_msg{
-        *udp_gw, *demux, dummy_pcap, tester_bind_port.value(), get_external_bind_address()};
+        cu_f1u_gws, *demux, dummy_pcap, tester_bind_port.value(), get_external_bind_address()};
     cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());

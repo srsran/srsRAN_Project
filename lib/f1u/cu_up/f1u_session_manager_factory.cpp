@@ -17,7 +17,7 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 std::unique_ptr<f1u_session_manager>
-srsran::srs_cu_up::create_f1u_cu_up_session_manager(const std::vector<std::unique_ptr<f1u_cu_up_gateway>>& f1u_gws)
+srsran::srs_cu_up::create_f1u_cu_up_session_manager(const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& f1u_gws)
 {
   return std::make_unique<f1u_session_manager_impl>(f1u_gws);
 }

@@ -17,6 +17,6 @@ namespace srsran::srs_cu_up {
 
 /// \brief Creates an F1-U bearer for the CU-UP.
 std::unique_ptr<f1u_session_manager>
-create_f1u_cu_up_session_manager(const std::vector<std::unique_ptr<f1u_cu_up_gateway>>& f1u_gws);
+create_f1u_cu_up_session_manager(const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& f1u_gws);
 
 } // namespace srsran::srs_cu_up

@@ -20,11 +20,11 @@
 namespace srsran::srs_cu_up {
 
 struct f1u_cu_up_split_gateway_creation_msg {
-  gtpu_gateway& udp_gw;
-  gtpu_demux&   demux;
-  dlt_pcap&     gtpu_pcap;
-  uint16_t      peer_port;
-  std::string   f1u_ext_addr = "auto";
+  const std::vector<std::unique_ptr<gtpu_gateway>>& udp_gws;
+  gtpu_demux&                                       demux;
+  dlt_pcap&                                         gtpu_pcap;
+  uint16_t                                          peer_port;
+  std::string                                       f1u_ext_addr = "auto";
 };
 
 std::unique_ptr<srsran::f1u_cu_up_udp_gateway> create_split_f1u_gw(f1u_cu_up_split_gateway_creation_msg msg);

@@ -104,17 +104,17 @@ public:
 class f1u_split_connector final : public f1u_cu_up_udp_gateway
 {
 public:
-  f1u_split_connector(f1u_session_manager& f1u_session_mngr,
-                      gtpu_gateway&        udp_gw_,
-                      gtpu_demux&          demux_,
-                      dlt_pcap&            gtpu_pcap_,
-                      uint16_t             peer_port_ = GTPU_PORT,
-                      std::string          ext_addr_  = "auto");
+  f1u_split_connector(const std::vector<std::unique_ptr<gtpu_gateway>>& udp_gws,
+                      gtpu_demux&                                       demux_,
+                      dlt_pcap&                                         gtpu_pcap_,
+                      uint16_t                                          peer_port_ = GTPU_PORT,
+                      std::string                                       ext_addr_  = "auto");
   ~f1u_split_connector() override;
 
-  f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
+  f1u_cu_up_udp_gateway* get_f1u_cu_up_gateway() { return this; }
 
-  std::optional<uint16_t> get_bind_port() const override { return udp_session->get_bind_port(); }
+  /// TODO this should get a ue_index and drb id to be able to find the right port/ip
+  std::optional<uint16_t> get_bind_port() const override { return udp_sessions[0]->get_bind_port(); }
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
@@ -136,11 +136,10 @@ private:
   std::unordered_map<up_transport_layer_info, f1u_split_gateway_cu_bearer*> cu_map;
   std::mutex map_mutex; // shared mutex for access to cu_map
 
-  f1u_session_manager&                                     f1u_session_mngr;
+  std::unique_ptr<f1u_session_manager>                     f1u_session_mngr;
   uint16_t                                                 peer_port;
   std::string                                              ext_addr;
-  gtpu_gateway&                                            udp_gw;
-  std::unique_ptr<gtpu_tnl_pdu_session>                    udp_session;
+  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>       udp_sessions;
   gtpu_demux&                                              demux;
   std::unique_ptr<network_gateway_data_gtpu_demux_adapter> gw_data_gtpu_demux_adapter;
   dlt_pcap&                                                gtpu_pcap;

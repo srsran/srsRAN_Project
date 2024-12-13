@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 
 namespace srsran::srs_cu_up {
 
 class f1u_session_manager
 {
 public:
-  virtual ~f1u_session_manager()                    = default;
-  virtual f1u_cu_up_gateway& get_next_f1u_gateway() = 0;
+  virtual ~f1u_session_manager()                       = default;
+  virtual gtpu_tnl_pdu_session& get_next_f1u_gateway() = 0;
 };
 
 } // namespace srsran::srs_cu_up

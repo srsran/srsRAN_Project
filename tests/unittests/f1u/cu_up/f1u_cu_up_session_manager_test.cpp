@@ -22,25 +22,22 @@ TEST_F(f1u_session_manager_test, mngr_creation)
 TEST_F(f1u_session_manager_test, rr_session_selection)
 {
   {
-    const auto&           ngu_gw = f1u_session_mngr->get_next_f1u_gateway();
-    expected<std::string> ip_addr;
-    ip_addr = ngu_gw.get_cu_bind_address();
-    ASSERT_TRUE(ip_addr.has_value());
-    ASSERT_EQ(ip_addr.value(), "127.0.0.1");
+    const auto& ngu_gw = f1u_session_mngr->get_next_f1u_gateway();
+    std::string ip_addr;
+    ASSERT_TRUE(ngu_gw.get_bind_address(ip_addr));
+    ASSERT_EQ(ip_addr, "127.0.0.1");
   }
   {
-    const auto&           ngu_gw = f1u_session_mngr->get_next_f1u_gateway();
-    expected<std::string> ip_addr;
-    ip_addr = ngu_gw.get_cu_bind_address();
-    ASSERT_TRUE(ip_addr.has_value());
-    ASSERT_EQ(ip_addr.value(), "127.0.0.2");
+    const auto& ngu_gw = f1u_session_mngr->get_next_f1u_gateway();
+    std::string ip_addr;
+    ASSERT_TRUE(ngu_gw.get_bind_address(ip_addr));
+    ASSERT_EQ(ip_addr, "127.0.0.2");
   }
   {
-    const auto&           ngu_gw = f1u_session_mngr->get_next_f1u_gateway();
-    expected<std::string> ip_addr;
-    ip_addr = ngu_gw.get_cu_bind_address();
-    ASSERT_TRUE(ip_addr.has_value());
-    ASSERT_EQ(ip_addr.value(), "127.0.0.1");
+    const auto& ngu_gw = f1u_session_mngr->get_next_f1u_gateway();
+    std::string ip_addr;
+    ASSERT_TRUE(ngu_gw.get_bind_address(ip_addr));
+    ASSERT_EQ(ip_addr, "127.0.0.1");
   }
 }
 

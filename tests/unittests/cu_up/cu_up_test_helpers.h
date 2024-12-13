@@ -260,7 +260,7 @@ public:
   std::list<gtpu_teid_t> removed_ul_teid_list  = {};
 };
 
-class dummy_ngu_gateway final : public gtpu_tnl_pdu_session
+class dummy_gtpu_gateway final : public gtpu_tnl_pdu_session
 {
 public:
   void set_bind_address(const std::string& ip_address) { ip_addr = ip_address; }
@@ -287,7 +287,7 @@ public:
   gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; };
 
 private:
-  dummy_ngu_gateway ngu_gw;
+  dummy_gtpu_gateway ngu_gw;
 };
 
 class dummy_e1ap final : public srs_cu_up::e1ap_control_message_handler

@@ -26,7 +26,7 @@ class ngu_session_manager_test : public ::testing::Test
 
     unsigned nof_gws = 2;
     for (unsigned i = 0; i < nof_gws; i++) {
-      auto        ngu_gw = std::make_unique<dummy_ngu_gateway>();
+      auto        ngu_gw = std::make_unique<dummy_gtpu_gateway>();
       std::string addr   = fmt::format("127.0.0.{}", 1 + i);
       ngu_gw->set_bind_address(addr);
       ngu_gws.push_back(std::move(ngu_gw));
