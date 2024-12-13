@@ -10,8 +10,8 @@
 
 #include "dl_sch_pdu_assembler.h"
 #include "cell_dl_harq_buffer_pool.h"
-#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 

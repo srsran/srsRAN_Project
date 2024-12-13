@@ -9,6 +9,8 @@
  */
 
 #include "mac_test_mode_helpers.h"
+#include "srsran/scheduler/result/pucch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 using namespace srsran;
 using namespace srs_du;

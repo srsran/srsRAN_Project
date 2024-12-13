@@ -11,12 +11,14 @@
 #pragma once
 
 #include "srsran/ran/csi_report/csi_report_data.h"
+#include "srsran/ran/logical_channel/lcid_dl_sch.h"
+#include "srsran/ran/pdcch/dci_format.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/precoding/precoding_constants.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/harq_id.h"
-#include "srsran/scheduler/result/dci_info.h"
 #include "srsran/scheduler/result/dmrs_info.h"
 
 namespace srsran {

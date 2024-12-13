@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/srslog/logger.h"
 #include <vector>
 

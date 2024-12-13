@@ -9,6 +9,7 @@
  */
 
 #include "srsran_scheduler_adapter.h"
+#include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_factory.h"
 
 using namespace srsran;

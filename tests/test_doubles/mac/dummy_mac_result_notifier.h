@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/scheduler/result/sched_result.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {

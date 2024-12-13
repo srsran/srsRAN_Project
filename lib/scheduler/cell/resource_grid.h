@@ -15,8 +15,8 @@
 #include "../support/rb_helper.h"
 #include "srsran/adt/circular_array.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/scheduler/resource_grid_util.h"
+#include "srsran/scheduler/result/sched_result.h"
 
 namespace srsran {
 

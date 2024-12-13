@@ -18,6 +18,8 @@
 namespace srsran {
 
 struct pucch_info;
+struct uci_info;
+struct ul_sched_info;
 
 namespace test_helpers {
 

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/sched_result.h"
 
 namespace srsran {
 

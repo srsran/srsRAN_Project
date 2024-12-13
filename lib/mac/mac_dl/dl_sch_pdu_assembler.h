@@ -20,6 +20,9 @@ namespace srsran {
 
 class byte_buffer_chain;
 class cell_dl_harq_buffer_pool;
+struct ta_cmd_ce_payload;
+struct dl_msg_tb_info;
+struct dl_msg_lc_info;
 
 /// \brief This class represents and encodes a MAC DL-SCH PDU that may contain multiple subPDUs.
 ///

@@ -10,6 +10,7 @@
 
 #include "scheduler_result_logger.h"
 #include "srsran/ran/csi_report/csi_report_formatters.h"
+#include "srsran/scheduler/result/sched_result.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 

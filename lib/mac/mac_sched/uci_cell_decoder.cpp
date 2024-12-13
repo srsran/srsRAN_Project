@@ -10,6 +10,8 @@
 
 #include "uci_cell_decoder.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
+#include "srsran/scheduler/result/pucch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 using namespace srsran;
 

@@ -10,7 +10,8 @@
 
 #include "cell_harq_manager.h"
 #include "srsran/scheduler/resource_grid_util.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/pdsch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 using namespace srsran;
 using namespace harq_utils;

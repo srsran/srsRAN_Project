@@ -10,10 +10,12 @@
 
 #pragma once
 
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/ran/pci.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
+
+struct sched_result;
 
 class scheduler_result_logger
 {

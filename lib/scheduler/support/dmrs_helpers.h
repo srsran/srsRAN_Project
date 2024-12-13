@@ -15,7 +15,7 @@
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/pdsch/pdsch_antenna_ports_mapping.h"
 #include "srsran/scheduler/config/dmrs.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/dmrs_info.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {

@@ -10,6 +10,7 @@
 
 #include "paging_pdu_assembler.h"
 #include "srsran/asn1/rrc_nr/pcch_msg.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 
 using namespace srsran;
 

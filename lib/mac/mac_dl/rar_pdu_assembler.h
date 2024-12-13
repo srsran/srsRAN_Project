@@ -11,10 +11,11 @@
 #pragma once
 
 #include "srsran/mac/cell_configuration.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {
+
+struct rar_information;
 
 /// Encodes RAR PDUs based on RAR information provided by the scheduler.
 class rar_pdu_assembler

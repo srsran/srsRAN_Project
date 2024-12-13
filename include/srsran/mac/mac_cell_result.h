@@ -2,15 +2,19 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/dci_packing.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/ssb_properties.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/shared_transport_block.h"
 
 namespace srsran {
+
+struct dl_sched_result;
+struct ul_sched_result;
 
 /// \brief Describes part of the parameters that are encoded in the MIB payload as per TS38.331 Section 6.2.2 - MIB.
 struct ssb_mib_data_pdu {

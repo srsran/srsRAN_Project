@@ -18,6 +18,7 @@ namespace srsran {
 
 struct cell_resource_allocator;
 struct cell_slot_resource_allocator;
+struct srs_info;
 
 class srs_scheduler_impl : public srs_scheduler
 {

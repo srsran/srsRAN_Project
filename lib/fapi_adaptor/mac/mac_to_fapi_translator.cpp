@@ -19,6 +19,7 @@
 #include "srsran/fapi_adaptor/mac/messages/pusch.h"
 #include "srsran/fapi_adaptor/mac/messages/srs.h"
 #include "srsran/fapi_adaptor/mac/messages/ssb.h"
+#include "srsran/scheduler/result/sched_result.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

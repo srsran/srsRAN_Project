@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/fapi/message_builders.h"
-#include "srsran/mac/mac_cell_result.h"
+#include "srsran/scheduler/result/pdcch_info.h"
 
 namespace srsran {
 namespace fapi_adaptor {

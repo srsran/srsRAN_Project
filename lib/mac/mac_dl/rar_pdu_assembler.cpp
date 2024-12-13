@@ -9,6 +9,7 @@
  */
 
 #include "rar_pdu_assembler.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 
 using namespace srsran;
 

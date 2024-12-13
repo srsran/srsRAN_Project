@@ -10,10 +10,11 @@
 
 #pragma once
 
-#include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {
+
+struct dl_paging_allocation;
 
 /// Encodes Paging PDUs based on Paging information provided by the scheduler.
 class paging_pdu_assembler

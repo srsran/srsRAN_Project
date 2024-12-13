@@ -13,8 +13,9 @@
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 #include <queue>
+#include <variant>
 
 namespace srsran {
 

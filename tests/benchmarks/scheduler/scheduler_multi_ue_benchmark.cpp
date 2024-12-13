@@ -14,6 +14,7 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/adt/circular_array.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_factory.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/benchmark_utils.h"
