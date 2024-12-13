@@ -90,7 +90,7 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
       cell_to_report_cfg_id.emplace(nci, std::set<unsigned>());
       auto& report_cfg_ids = cell_to_report_cfg_id.at(nci);
       if (!report_cfg_ids.emplace(cell.periodic_report_cfg_id.value()).second) {
-        fmt::print("cell={}: report_config_id={} already configured for this cell)\n",
+        fmt::print("cell={:#x}: report_config_id={} already configured for this cell)\n",
                    cell.nr_cell_id,
                    cell.periodic_report_cfg_id.value());
         return false;
