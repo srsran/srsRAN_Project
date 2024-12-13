@@ -129,9 +129,8 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
     for (const auto& ncell : cell.ncells) {
       // try to add report config ids to cell_to_report_cfg_id map
       for (const auto& id : ncell.report_cfg_ids) {
-        if (cell_to_report_cfg_id.find(nci) != cell_to_report_cfg_id.end() &&
-            !cell_to_report_cfg_id.at(nci).emplace(id).second) {
-          fmt::print("cell={}: report_config_id={} already configured for this cell\n", ncell.nr_cell_id, id);
+        if (report_cfg_ids_to_report_type.at(id) == "periodical") {
+          fmt::print("cell={:#x}: For neighbor cells no periodic reports are allowed\n", cell.nr_cell_id);
           return false;
         }
       }
