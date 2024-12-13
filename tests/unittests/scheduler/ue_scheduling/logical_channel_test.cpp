@@ -214,10 +214,15 @@ TEST(dl_logical_channel_test, mac_sdu_is_scheduled_if_tb_has_space)
       ASSERT_FALSE(lch_mng.has_pending_bytes()) << "subPDU is large enough to deplete all the pending tx bytes";
     } else {
       rem_sdu_size -= subpdu.sched_bytes;
-      // Note: In the case the logical channel was totally flushed, the manager adds some extra bytes to account for
+      // Note: In the case the logical channel was not totally flushed, the manager adds some extra bytes to account for
       // RLC overhead.
       const unsigned RLC_SEGMENTATION_OVERHEAD = 4;
-      ASSERT_EQ(get_mac_sdu_required_bytes(rem_sdu_size), lch_mng.total_pending_bytes() - RLC_SEGMENTATION_OVERHEAD)
+      unsigned       req_bytes                 = get_mac_sdu_required_bytes(rem_sdu_size);
+      if (req_bytes == 256) {
+        // Note: account for ambiguity in transition between MAC subheader sizes.
+        req_bytes++;
+      }
+      ASSERT_EQ(req_bytes, lch_mng.total_pending_bytes() - RLC_SEGMENTATION_OVERHEAD)
           << "incorrect calculation of remaining pending tx bytes";
     }
 
