@@ -69,6 +69,7 @@ variables:
       echo "MAKE_ARGS=${MAKE_ARGS}"
       echo "UHD_VERSION=${UHD_VERSION}"
       echo "DPDK_VERSION=${DPDK_VERSION}"
+      echo "SRS_TARGET=${SRS_TARGET}"
       echo "PLUGIN_BRANCH=${PLUGIN_BRANCH}"
 
       build_srsgnb() {
@@ -1654,6 +1655,32 @@ basic memcheck:
     TEST_MODE: none
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
+
+basic ru dummy:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Release
+    TEST_MODE: none
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    DPDK_VERSION: "23.11.1_avx512"
+    MARCH: x86-64-v4
+    FORCE_DEBUG_INFO: "True"
+    ASSERT_LEVEL: AUTO
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
   after_script:
     - *build_after_script
   artifacts:

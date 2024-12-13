@@ -343,7 +343,7 @@ test mode ru:
     E2E_LOG_LEVEL: "warning"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   needs:
-    - job: "basic avx512 dpdk"
+    - job: "basic ru dummy"
       artifacts: true
     - *txrx-lib
     - *retina-needs
