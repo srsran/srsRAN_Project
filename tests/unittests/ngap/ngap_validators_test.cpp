@@ -30,19 +30,19 @@ public:
 
     pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(psi);
 
-    // Add PDU Session NAS PDU
+    // Fill PDU Session NAS PDU.
     pdu_session_res_item.pdu_session_nas_pdu.from_string("7e02e9b0a23c027e006801006e2e0115c211000901000631310101ff08060"
                                                          "6014a06014a2905010c02010c2204010027db79000608204101"
                                                          "01087b002080802110030000108106ac1503648306ac150364000d04ac150"
                                                          "364001002054e251c036f61690469707634066d6e6330393906"
                                                          "6d636332303804677072731201");
 
-    // Add S-NSSAI
+    // Fill S-NSSAI.
     pdu_session_res_item.s_nssai.sst.from_number(1);
     pdu_session_res_item.s_nssai.sd_present = true;
     pdu_session_res_item.s_nssai.sd.from_string("0027db");
 
-    // Add PDU Session Resource Setup Request Transfer
+    // Fill PDU Session Resource Setup Request Transfer.
     pdu_session_res_item.pdu_session_res_setup_request_transfer.from_string(
         "0000040082000a0c400000003040000000008b000a01f00a321302000028d600860001000088000700010000091c00");
 
@@ -57,7 +57,7 @@ public:
 
     auto& pdu_session_res_setup_req = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
 
-    // Add unique PDU session
+    // Fill unique PDU session.
     pdu_session_id_t unique_psi = uint_to_pdu_session_id(2);
     pdu_session_res_setup_req->pdu_session_res_setup_list_su_req.push_back(
         generate_pdu_session_resource_setup_item(unique_psi));
@@ -75,7 +75,7 @@ public:
 
     auto& pdu_session_res_setup_req = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
 
-    // Add unique PDU session
+    // Fill unique PDU session.
     pdu_session_id_t new_psi = uint_to_pdu_session_id(2);
     pdu_session_res_setup_req->pdu_session_res_setup_list_su_req.push_back(
         generate_pdu_session_resource_setup_item(new_psi));
@@ -94,7 +94,7 @@ public:
     auto& asn1_request                         = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
     asn1_request->ue_aggr_max_bit_rate_present = false;
 
-    // Add PDU Session Resource Setup Request Transfer
+    // Fill PDU Session Resource Setup Request Transfer.
     asn1::ngap::pdu_session_res_setup_request_transfer_s asn1_setup_req_transfer;
 
     asn1_setup_req_transfer->ul_ngu_up_tnl_info.set_gtp_tunnel();
@@ -128,7 +128,7 @@ public:
 
     asn1_setup_req_transfer->qos_flow_setup_request_list.push_back(asn1_qos_flow_item);
 
-    // Pack pdu_session_res_release_resp_transfer_s
+    // Pack pdu_session_res_release_resp_transfer_s.
     asn1_request->pdu_session_res_setup_list_su_req.begin()->pdu_session_res_setup_request_transfer =
         pack_into_pdu(asn1_setup_req_transfer);
 
@@ -141,14 +141,14 @@ public:
 
     pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(psi);
 
-    // Add PDU Session Resource Modify Request Transfer
+    // Fill PDU session resource modify request transfer.
     asn1::ngap::pdu_session_res_modify_request_transfer_s pdu_session_res_modify_request_transfer;
 
-    // Add qos flow add or modify request item
+    // Fill QoS flow add or modify request item.
     pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list_present = true;
     asn1::ngap::qos_flow_add_or_modify_request_item_s qos_flow_add_item;
 
-    // qosFlowIdentifier
+    // Fill QoS flow identifier.
     qos_flow_add_item.qos_flow_id = 1;
 
     pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list.push_back(qos_flow_add_item);
@@ -170,7 +170,7 @@ public:
 
     auto& pdu_session_res_modify_req = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
 
-    // Add unique PDU session
+    // Fill unique PDU session.
     pdu_session_res_modify_req->pdu_session_res_modify_list_mod_req.push_back(
         generate_pdu_session_resource_modify_item(unique_psi));
 
@@ -178,7 +178,7 @@ public:
   }
 };
 
-// Test handling of valid PDU Session Resource Modification Request
+// Test handling of valid PDU session resource modification request.
 TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_setup_succeeds)
 {
   ue_index_t  ue_index  = uint_to_ue_index(0);
@@ -194,7 +194,7 @@ TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_setup_s
   fill_cu_cp_pdu_session_resource_setup_request(request, asn1_request->pdu_session_res_setup_list_su_req);
 
   ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
-  // Verify PDU Session Resource Setup Request
+  // Verify PDU session resource setup request.
   auto verification_outcome = verify_pdu_session_resource_setup_request(request, asn1_request, ue_logger);
 
   ASSERT_EQ(verification_outcome.request.pdu_session_res_setup_items.size(), 1U);
@@ -202,7 +202,7 @@ TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_setup_s
   ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_setup_items.size(), 0U);
 }
 
-// Test handling of duplicate PDU Session IDs in PDU Session Resource Setup Request
+// Test handling of duplicate PDU session ids in PDU session resource setup request.
 TEST_F(ngap_validator_test, when_duplicate_pdu_session_id_then_pdu_session_setup_fails)
 {
   ue_index_t  ue_index  = uint_to_ue_index(0);
@@ -217,7 +217,7 @@ TEST_F(ngap_validator_test, when_duplicate_pdu_session_id_then_pdu_session_setup
   fill_cu_cp_pdu_session_resource_setup_request(request, asn1_request->pdu_session_res_setup_list_su_req);
 
   ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
-  // Verify PDU Session Resource Setup Request
+  // Verify PDU session resource setup request.
   auto verification_outcome = verify_pdu_session_resource_setup_request(request, asn1_request, ue_logger);
 
   ASSERT_TRUE(verification_outcome.request.pdu_session_res_setup_items.empty());
@@ -239,14 +239,15 @@ TEST_F(ngap_validator_test, when_unique_and_duplicate_pdu_session_id_then_pdu_se
   fill_cu_cp_pdu_session_resource_setup_request(request, asn1_request->pdu_session_res_setup_list_su_req);
 
   ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
-  // Verify PDU Session Resource Setup Request
+  // Verify PDU session resource setup request.
   auto verification_outcome = verify_pdu_session_resource_setup_request(request, asn1_request, ue_logger);
 
   ASSERT_EQ(verification_outcome.request.pdu_session_res_setup_items.size(), 1U);
   ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_setup_items.size(), 1U);
 }
 
-// Test handling of PduSessionResourceSetupRequest with non-GBR QoS flows but no PDU Session Aggregate Maximum Bit Rate
+// Test handling of PDU session resource setup request with non-GBR QoS flows but no PDU session aggregate maximum bit
+// rate.
 TEST_F(
     ngap_validator_test,
     when_request_pdu_session_contains_non_gbr_qos_flows_but_no_aggregate_maximum_bitrate_then_pdu_session_setup_fails)
@@ -266,14 +267,14 @@ TEST_F(
   fill_cu_cp_pdu_session_resource_setup_request(request, asn1_request->pdu_session_res_setup_list_su_req);
 
   ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
-  // Verify PDU Session Resource Setup Request.
+  // Verify PDU session resource setup request.
   auto verification_outcome = verify_pdu_session_resource_setup_request(request, asn1_request, ue_logger);
 
   ASSERT_TRUE(verification_outcome.request.pdu_session_res_setup_items.empty());
   ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_setup_items.size(), 1U);
 }
 
-// Test handling of valid PDU Session Resource Modification Request.
+// Test handling of valid PDU session resource modification request.
 TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_modify_succeeds)
 {
   pdu_session_id_t psi       = uint_to_pdu_session_id(1);
@@ -289,7 +290,7 @@ TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_modify_
   fill_cu_cp_pdu_session_resource_modify_request(request, asn1_request->pdu_session_res_modify_list_mod_req);
 
   ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
-  // Verify PDU Session Resource Modify Request
+  // Verify PDU session resource modify request.
   auto verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, ue_logger);
 
   ASSERT_EQ(verification_outcome.request.pdu_session_res_modify_items.size(), 1U);
@@ -297,7 +298,7 @@ TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_modify_
   ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_modify_list.size(), 0U);
 }
 
-// Test handling of duplicate PDU Session IDs in PDU Session Resource Modification Request
+// Test handling of duplicate PDU session ids in PDU session resource modification request.
 TEST_F(ngap_validator_test, when_duplicate_pdu_session_id_then_pdu_session_modification_fails)
 {
   ue_index_t  ue_index  = uint_to_ue_index(0);
@@ -313,7 +314,7 @@ TEST_F(ngap_validator_test, when_duplicate_pdu_session_id_then_pdu_session_modif
   fill_cu_cp_pdu_session_resource_modify_request(request, asn1_request->pdu_session_res_modify_list_mod_req);
 
   ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
-  // Verify PDU Session Resource Modify Request
+  // Verify PDU session resource modify request.
   auto verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, ue_logger);
 
   ASSERT_TRUE(verification_outcome.request.pdu_session_res_modify_items.empty());
@@ -337,7 +338,7 @@ TEST_F(ngap_validator_test, when_unique_and_duplicate_pdu_session_id_then_pdu_se
   fill_cu_cp_pdu_session_resource_modify_request(request, asn1_request->pdu_session_res_modify_list_mod_req);
 
   ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
-  // Verify PDU Session Resource Modify Request
+  // Verify PDU session resource modify request.
   auto verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, ue_logger);
 
   ASSERT_EQ(verification_outcome.request.pdu_session_res_modify_items.size(), 1U);

@@ -103,7 +103,7 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_failure()
   setup_fail->cause.radio_network()    = cause_radio_network_opts::options::unspecified;
   setup_fail->time_to_wait_present     = false;
   setup_fail->crit_diagnostics_present = false;
-  // add critical diagnostics
+  // TODO: Add critical diagnostics.
 
   return ng_setup_failure;
 }
@@ -121,7 +121,7 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_failure_with_bad_plmn(time_to_
   setup_fail->time_to_wait_present     = true;
   setup_fail->time_to_wait.value       = time_to_wait;
   setup_fail->crit_diagnostics_present = false;
-  // add critical diagnostics
+  // Fill critical diagnostics
 
   return ng_setup_failure;
 }
@@ -331,7 +331,7 @@ ngap_message srsran::srs_cu_cp::generate_invalid_initial_context_setup_request_m
 {
   ngap_message ngap_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
 
-  // NIA0 is not allowed
+  // NIA0 is not allowed.
   auto& init_context_setup_req = ngap_msg.pdu.init_msg().value.init_context_setup_request();
   init_context_setup_req->ue_security_cap.nr_encryption_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap.nr_integrity_protection_algorithms.from_number(0);
@@ -395,46 +395,46 @@ ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_setup_reques
 
     pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
 
-    // Add PDU Session NAS PDU
+    // Fill PDU session NAS PDU.
     pdu_session_res_item.pdu_session_nas_pdu.from_string("7e02e9b0a23c027e006801006e2e0115c211000901000631310101ff08060"
                                                          "6014a06014a2905010c02010c2204010027db79000608204101"
                                                          "01087b002080802110030000108106ac1503648306ac150364000d04ac150"
                                                          "364001002054e251c036f61690469707634066d6e6330393906"
                                                          "6d636332303804677072731201");
 
-    // Add S-NSSAI
+    // Fill S-NSSAI.
     pdu_session_res_item.s_nssai.sst.from_number(1);
     pdu_session_res_item.s_nssai.sd_present = true;
     pdu_session_res_item.s_nssai.sd.from_string("0027db");
 
-    // Add PDU Session Resource Setup Request Transfer
+    // Fill PDU session resource setup request transfer.
     asn1::ngap::pdu_session_res_setup_request_transfer_s asn1_setup_req_transfer;
     {
-      // Add PDU Session Aggregate Maximum Bit Rate
+      // Fill PDU session aggregate maximum bit rate.
       asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate_present                          = true;
       asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_dl = 1000000000U;
       asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_ul = 1000000000U;
 
-      // Add UL NGU UP TNL Info
+      // Fill UL NGU UP TNL Info.
       asn1_setup_req_transfer->ul_ngu_up_tnl_info.set_gtp_tunnel();
       auto addr = transport_layer_address::create_from_string("127.0.0.1");
       asn1_setup_req_transfer->ul_ngu_up_tnl_info.gtp_tunnel().transport_layer_address.from_string(addr.to_bitstring());
       asn1_setup_req_transfer->ul_ngu_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x00005e6c);
 
-      // Add PDU Session Type
+      // Fill PDU session type.
       asn1_setup_req_transfer->pdu_session_type = asn1::ngap::pdu_session_type_opts::ipv4;
 
-      // Add QoS Flow Setup Request List
+      // Fill QoS flow setup request list.
       for (const auto& qos_flow_test_item : qos_flows) {
         qos_flow_setup_request_item_s qos_flow_setup_req_item;
         qos_flow_setup_req_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_test_item.qos_flow_id);
 
-        // Add QoS Characteristics
+        // Fill QoS characteristics.
         qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn5qi();
         qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi =
             qos_flow_test_item.five_qi;
 
-        // Add Allocation and Retention Priority
+        // Fill allocation and retention priority.
         qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp = 8;
         qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
             pre_emption_cap_opts::shall_not_trigger_pre_emption;
@@ -459,25 +459,25 @@ ngap_message srsran::srs_cu_cp::generate_invalid_pdu_session_resource_setup_requ
 
   auto& pdu_session_res_setup_req = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
 
-  // Add pdu sessions with duplicate IDs
+  // Fill PDU sessions with duplicate ids.
   for (auto it = 0; it < 2; ++it) {
     pdu_session_res_setup_item_su_req_s pdu_session_res_item;
 
     pdu_session_res_item.pdu_session_id = 1;
 
-    // Add PDU Session NAS PDU
+    // Fill PDU session NAS PDU.
     pdu_session_res_item.pdu_session_nas_pdu.from_string("7e02e9b0a23c027e006801006e2e0115c211000901000631310101ff08060"
                                                          "6014a06014a2905010c02010c2204010027db79000608204101"
                                                          "01087b002080802110030000108106ac1503648306ac150364000d04ac150"
                                                          "364001002054e251c036f61690469707634066d6e6330393906"
                                                          "6d636332303804677072731201");
 
-    // Add S-NSSAI
+    // Fill S-NSSAI.
     pdu_session_res_item.s_nssai.sst.from_number(1);
     pdu_session_res_item.s_nssai.sd_present = true;
     pdu_session_res_item.s_nssai.sd.from_string("0027db");
 
-    // Add PDU Session Resource Setup Request Transfer
+    // Fill PDU session resource setup request transfer.
     pdu_session_res_item.pdu_session_res_setup_request_transfer.from_string(
         "0000040082000a0c400000003040000000008b000a01f00a321302000028d600860001000088000700010000091c00");
 
@@ -495,7 +495,7 @@ ngap_message srsran::srs_cu_cp::
   ngap_message ngap_msg = generate_valid_pdu_session_resource_setup_request_message(
       amf_ue_id, ran_ue_id, {{uint_to_pdu_session_id(1), {{uint_to_qos_flow_id(1), 9}}}});
 
-  // Add invalid PDU Session Resource Setup Request Transfer.
+  // Fill invalid PDU session resource setup request transfer.
   auto& pdu_session_res_setup_req = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
   pdu_session_res_setup_req->pdu_session_res_setup_list_su_req.begin()
       ->pdu_session_res_setup_request_transfer.from_string("0000040082000a0c1dcd6500301dcd6500008b001a09f00a0c01bbfdf66"
@@ -550,11 +550,11 @@ ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_release_comm
 
   auto& pdu_session_res_release_cmd = ngap_msg.pdu.init_msg().value.pdu_session_res_release_cmd();
 
-  // Add PDU Session NAS PDU
+  // Fill PDU session NAS PDU.
   pdu_session_res_release_cmd->nas_pdu_present = true;
   pdu_session_res_release_cmd->nas_pdu         = make_byte_buffer("7e02bcb47dc1137e00680100052e01b3d3241201").value();
 
-  // Add  PDU session resource to release list
+  // Fill  PDU session resource to release list.
   asn1::ngap::pdu_session_res_to_release_item_rel_cmd_s pdu_session_res_to_release_item_rel_cmd;
   pdu_session_res_to_release_item_rel_cmd.pdu_session_id                       = pdu_session_id_to_uint(pdu_session_id);
   pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer = make_byte_buffer("10").value();
@@ -616,26 +616,26 @@ ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_modify_reque
 
   pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
 
-  // Add PDU Session Resource Modify Request Transfer
+  // Fill PDU session resource modify request transfer.
   asn1::ngap::pdu_session_res_modify_request_transfer_s pdu_session_res_modify_request_transfer;
   {
-    // Add QoS flow add or modify
+    // Fill QoS flow add or modify.
     pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list_present =
         !qos_flow_add_or_modify_list.empty();
     for (const auto& qos_flow_id : qos_flow_add_or_modify_list) {
-      // Add QoS Flow Modify Request List
+      // Fill QoS flow modify request list.
 
       asn1::ngap::qos_flow_add_or_modify_request_item_s qos_flow_add_item;
 
-      // qosFlowIdentifier
+      // Fill QoS flow identifier.
       qos_flow_add_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
 
-      // Add QoS Characteristics
+      // Fill QoS characteristics.
       qos_flow_add_item.qos_flow_level_qos_params_present = true;
       qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn5qi();
       qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi = 9;
 
-      // Add Allocation and Retention Priority
+      // Fill allocation and retention priority.
       qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp = 8;
       qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
           asn1::ngap::pre_emption_cap_opts::shall_not_trigger_pre_emption;
@@ -645,15 +645,15 @@ ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_modify_reque
       pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list.push_back(qos_flow_add_item);
     }
 
-    // Add QoS flow to release
+    // Fill QoS flow to release.
     pdu_session_res_modify_request_transfer->qos_flow_to_release_list_present = !qos_flow_to_release_list.empty();
     for (const auto& qos_flow_id : qos_flow_to_release_list) {
       asn1::ngap::qos_flow_with_cause_item_s qos_flow_release_item;
 
-      // qosFlowIdentifier
+      // Fill QoS flow identifier.
       qos_flow_release_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
 
-      // cause
+      // Fill cause.
       qos_flow_release_item.cause.set_radio_network();
       qos_flow_release_item.cause.radio_network() = asn1::ngap::cause_radio_network_opts::options::unspecified;
 
@@ -677,20 +677,20 @@ srsran::srs_cu_cp::generate_invalid_pdu_session_resource_modify_request_message(
 
   auto& pdu_session_res_modify_req = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
 
-  // Add pdu sessions with duplicate IDs
+  // Fill pdu sessions with duplicate IDs.
   for (auto it = 0; it < 2; ++it) {
     pdu_session_res_modify_item_mod_req_s pdu_session_res_item;
 
     pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
 
-    // Add PDU Session Resource Modify Request Transfer
+    // Fill PDU session resource modify request transfer.
     pdu_session_res_modify_request_transfer_s pdu_session_res_modify_request_transfer;
 
-    // Add qos flow add or modify request item
+    // Fill QoS flow add or modify request item.
     pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list_present = true;
     qos_flow_add_or_modify_request_item_s qos_flow_add_item;
 
-    // qosFlowIdentifier
+    // Fill QoS flow identifier.
     qos_flow_add_item.qos_flow_id = 1;
 
     pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list.push_back(qos_flow_add_item);
@@ -737,13 +737,13 @@ ngap_message srsran::srs_cu_cp::generate_valid_minimal_paging_message()
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PAGING);
   auto& paging = ngap_msg.pdu.init_msg().value.paging();
 
-  // add ue paging id
+  // Fill UE paging id.
   auto& five_g_s_tmsi = paging->ue_paging_id.set_five_g_s_tmsi();
   five_g_s_tmsi.amf_set_id.from_number(1);
   five_g_s_tmsi.amf_pointer.from_number(0);
   five_g_s_tmsi.five_g_tmsi.from_number(4211117727);
 
-  // add tai list for paging
+  // Fill TAI list for paging.
   asn1::ngap::tai_list_for_paging_item_s paging_item;
   paging_item.tai.plmn_id.from_string("00f110");
   paging_item.tai.tac.from_number(7);
@@ -760,35 +760,35 @@ ngap_message srsran::srs_cu_cp::generate_valid_paging_message()
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PAGING);
   auto& paging = ngap_msg.pdu.init_msg().value.paging();
 
-  // add ue paging id
+  // Fill UE paging id.
   auto& five_g_s_tmsi = paging->ue_paging_id.set_five_g_s_tmsi();
   five_g_s_tmsi.amf_set_id.from_number(1);
   five_g_s_tmsi.amf_pointer.from_number(0);
   five_g_s_tmsi.five_g_tmsi.from_number(4211117727);
 
-  // add paging drx
+  // Fill paging DRX.
   paging->paging_drx_present = true;
   paging->paging_drx.value   = asn1::ngap::paging_drx_opts::options::v64;
 
-  // add tai list for paging
+  // Fill TAI list for paging.
   asn1::ngap::tai_list_for_paging_item_s paging_item;
   paging_item.tai.plmn_id.from_string("00f110");
   paging_item.tai.tac.from_number(7);
   paging->tai_list_for_paging.push_back(paging_item);
 
-  // add paging prio
+  // Fill paging prio.
   paging->paging_prio_present = true;
   paging->paging_prio.value   = asn1::ngap::paging_prio_opts::options::priolevel5;
 
-  // add ue radio cap for paging
+  // Fill UE radio capabilities for paging.
   paging->ue_radio_cap_for_paging_present                       = true;
   paging->ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr = make_byte_buffer("deadbeef").value();
 
-  // add paging origin
+  // Fill paging origin.
   paging->paging_origin_present = true;
   paging->paging_origin.value   = asn1::ngap::paging_origin_opts::options::non_neg3gpp;
 
-  // add assist data for paging
+  // Fill assist data for paging.
   paging->assist_data_for_paging_present                                   = true;
   paging->assist_data_for_paging.assist_data_for_recommended_cells_present = true;
 
@@ -820,7 +820,7 @@ ngap_message srsran::srs_cu_cp::generate_invalid_paging_message()
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PAGING);
 
-  // add ue paging id
+  // Fill UE paging id.
   auto& paging = ngap_msg.pdu.init_msg().value.paging();
   paging->ue_paging_id.set_choice_exts();
   return ngap_msg;
@@ -858,25 +858,25 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
   auto& ho_request = ngap_msg.pdu.init_msg().value.ho_request();
 
   ho_request->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
-  // handov type
+  // Fill Handover type.
   ho_request->handov_type = asn1::ngap::handov_type_opts::options::intra5gs;
-  // cause
+  // Fill cause.
   ho_request->cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::options::ho_desirable_for_radio_reason;
-  // ue aggr max bit rate
+  // Fill UE aggregated max bit rate.
   ho_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl = 1073741824;
   ho_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul = 1073741824;
-  // ue security cap
+  // Fill UE security capabilities.
   ho_request->ue_security_cap.nr_encryption_algorithms.from_number(49152);
   ho_request->ue_security_cap.nr_integrity_protection_algorithms.from_number(49152);
   ho_request->ue_security_cap.eutr_aencryption_algorithms.from_number(0);
   ho_request->ue_security_cap.eutr_aintegrity_protection_algorithms.from_number(0);
-  // security context
+  // Fill security context
   ho_request->security_context.next_hop_chaining_count = 2;
   ho_request->security_context.next_hop_nh.from_string(
       "1000100100100011110101001110000001001000000001111000010110011110001010011100101010110010000001010110110000100111"
       "0110101111001100000001100111100010001011111000111111101000100110011101110111100010101101000101000010100001000001"
       "00000101010000111100001010001001"); // 8923d4e04807859e29cab2056c276bcc06788be3fa267778ad1428410543c289
-  // pdu session resource setup list ho req
+  // Fill PDU session resource setup list HO req.
   asn1::ngap::pdu_session_res_setup_item_ho_req_s setup_item;
   setup_item.pdu_session_id = 1;
   setup_item.s_nssai.sst.from_number(1);
@@ -885,34 +885,34 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
           "0000050082000a0c400000003040000000008b000a01f00a32130200001b13007f00010000860001000088000700010000091c00")
           .value();
   ho_request->pdu_session_res_setup_list_ho_req.push_back(setup_item);
-  // allowed nssai
+  // Fill allowed S-NSSAI.
   asn1::ngap::allowed_nssai_item_s allowed_nssai;
   allowed_nssai.s_nssai.sst.from_number(1);
   ho_request->allowed_nssai.push_back(allowed_nssai);
-  // masked imeisv
+  // Fill masked IMEISV
   ho_request->masked_imeisv_present = true;
   ho_request->masked_imeisv.from_number(81985526923525889); // 0123456700ffff01
-  // source to target transparent container
+  // Fill source to target transparent container.
   asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
-  // rrc container
+  // Fill RRC container.
   transparent_container.rrc_container =
       make_byte_buffer("0021930680ce811d1968097e340e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007a071e"
                        "439f0000240400e03"
                        "00000000100186c0000700809df0000000000000103a0002000012cb2800281c50f0007000f00000004008010240a0")
           .value();
-  // pdu session res info list
+  // Fill PDU session resource info list.
   asn1::ngap::pdu_session_res_info_item_s session_item;
   session_item.pdu_session_id = 1;
   asn1::ngap::qos_flow_info_item_s flow_item;
   flow_item.qos_flow_id = 0;
   session_item.qos_flow_info_list.push_back(flow_item);
   transparent_container.pdu_session_res_info_list.push_back(session_item);
-  // cgi
+  // Fill NR CGI.
   auto& cgi = transparent_container.target_cell_id.set_nr_cgi();
   cgi.plmn_id.from_string("00f110");
   nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
   cgi.nr_cell_id.from_number(nci.value());
-  // ue history info
+  // Fill UE history info.
   asn1::ngap::last_visited_cell_item_s cell_item;
   auto&                                cell       = cell_item.last_visited_cell_info.set_ngran_cell();
   auto&                                ngran_cell = cell.global_cell_id.set_nr_cgi();
@@ -929,7 +929,7 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
   }
   ho_request->source_to_target_transparent_container = pdu.copy();
 
-  // guami
+  // Fill GUAMI.
   ho_request->guami.plmn_id.from_string("00f110");
   ho_request->guami.amf_region_id.from_number(2);
   ho_request->guami.amf_set_id.from_number(1);
@@ -950,7 +950,7 @@ ngap_message srsran::srs_cu_cp::generate_handover_preparation_failure(amf_ue_id_
   ho_prep_fail->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   ho_prep_fail->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
-  // cause
+  // Fill cause.
   ho_prep_fail->cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::options::unspecified;
 
   return ngap_msg;
@@ -967,19 +967,19 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_command(amf_ue_id_t amf_
 
   ho_cmd->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   ho_cmd->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
-  // handov type
+  // Fill handover type.
   ho_cmd->handov_type = asn1::ngap::handov_type_opts::options::intra5gs;
 
-  // pdu session resource ho list
+  // Fill PDU session resource HO list.
   ho_cmd->pdu_session_res_ho_list_present = true;
   asn1::ngap::pdu_session_res_ho_item_s ho_item;
   ho_item.pdu_session_id  = 1;
   ho_item.ho_cmd_transfer = make_byte_buffer("00").value();
   ho_cmd->pdu_session_res_ho_list.push_back(ho_item);
 
-  // target to source transparent container
+  // Fill target to source transparent container.
   asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s transparent_container;
-  // rrc container
+  // Fill RRC container.
   transparent_container.rrc_container = make_byte_buffer("08190115200204d00f00102f1f852020605701ac00445ebb1c041878002c0"
                                                          "0445ebb1c041878002c24445ebb1c041878002c700d3133b414"
                                                          "831f0203e0102341e0400024a771002900000000c000140000034ec00187c"
@@ -1011,7 +1011,7 @@ ngap_handover_preparation_request srsran::srs_cu_cp::generate_handover_preparati
   request.ue_index                          = ue_index;
   request.gnb_id                            = nci.gnb_id(gnb_id_bit_length);
   request.nci                               = nci;
-  // create a map of all PDU sessions and their associated QoS flows
+  // Fill create a map of all PDU sessions and their associated QoS flows.
   for (const auto& pdu_session : pdu_sessions) {
     std::vector<qos_flow_id_t> qos_flows;
     for (const auto& drb : pdu_session.second.drbs) {
