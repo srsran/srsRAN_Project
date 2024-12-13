@@ -23,14 +23,14 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
 {
   std::map<unsigned, std::string> report_cfg_ids_to_report_type;
   for (const auto& report_cfg : config.report_configs) {
-    // check that report config ids are unique
+    // Check that report config ids are unique.
     if (report_cfg_ids_to_report_type.find(report_cfg.report_cfg_id) != report_cfg_ids_to_report_type.end()) {
       fmt::print("Report config ids must be unique\n");
       return false;
     }
     report_cfg_ids_to_report_type.emplace(report_cfg.report_cfg_id, report_cfg.report_type);
 
-    // check that report configs are valid
+    // Check that report configs are valid.
     if (report_cfg.report_type == "event_triggered") {
       if (!report_cfg.event_triggered_report_type.has_value()) {
         fmt::print("Invalid CU-CP configuration. If report type is set to \"event_triggered\" then "
@@ -70,7 +70,7 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
 
   std::map<nr_cell_identity, std::set<unsigned>> cell_to_report_cfg_id;
 
-  // check cu_cp_cell_config
+  // Check cu_cp_cell_config.
   std::set<nr_cell_identity> ncis;
   for (const auto& cell : config.cells) {
     nr_cell_identity nci = nr_cell_identity::create(cell.nr_cell_id).value();
@@ -86,7 +86,7 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
     }
 
     if (cell.periodic_report_cfg_id.has_value()) {
-      // try to add report config id to cell_to_report_cfg_id map
+      // Try to add report config id to cell_to_report_cfg_id map.
       cell_to_report_cfg_id.emplace(nci, std::set<unsigned>());
       auto& report_cfg_ids = cell_to_report_cfg_id.at(nci);
       if (!report_cfg_ids.emplace(cell.periodic_report_cfg_id.value()).second) {
@@ -95,14 +95,14 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
                    cell.periodic_report_cfg_id.value());
         return false;
       }
-      // check that for the serving cell only periodic reports are configured
+      // Check that for the serving cell only periodic reports are configured.
       if (report_cfg_ids_to_report_type.at(cell.periodic_report_cfg_id.value()) != "periodical") {
         fmt::print("For the serving cell only periodic reports are allowed\n");
         return false;
       }
     }
 
-    // check if cell is an external managed cell
+    // Check if cell is an external managed cell.
     if (nci.gnb_id(gnb_id.bit_length) != gnb_id) {
       if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
           !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
@@ -125,9 +125,8 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
       }
     }
 
-    // check that for neighbor cells managed by this CU-CP no periodic reports are configured
+    // Check that for neighbor cells managed by this CU-CP no periodic reports are configured.
     for (const auto& ncell : cell.ncells) {
-      // try to add report config ids to cell_to_report_cfg_id map
       for (const auto& id : ncell.report_cfg_ids) {
         if (report_cfg_ids_to_report_type.at(id) == "periodical") {
           fmt::print("cell={:#x}: For neighbor cells no periodic reports are allowed\n", cell.nr_cell_id);
@@ -137,7 +136,7 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
     }
   }
 
-  // verify that each configured neighbor cell is present
+  // Verify that each configured neighbor cell is present.
   for (const auto& cell : config.cells) {
     for (const auto& ncell : cell.ncells) {
       nr_cell_identity nci = nr_cell_identity::create(ncell.nr_cell_id).value();
