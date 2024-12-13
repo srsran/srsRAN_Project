@@ -21,98 +21,48 @@
 using namespace srsran;
 using namespace srs_du;
 
-static fapi::prach_config generate_prach_config_tlv(const du_cell_config& cell_cfg)
+static fapi_adaptor::phy_fapi_adaptor_config generate_fapi_adaptor_config(const o_du_low_config&     odu_low_cfg,
+                                                                          span<const du_cell_config> du_cell)
 {
-  fapi::prach_config config     = {};
-  config.prach_res_config_index = 0;
-  config.prach_sequence_length  = fapi::prach_sequence_length_type::long_sequence;
-  config.prach_scs              = prach_subcarrier_spacing::kHz1_25;
-  config.prach_ul_bwp_pusch_scs = cell_cfg.scs_common;
-  config.restricted_set         = restricted_set_config::UNRESTRICTED;
-  config.num_prach_fd_occasions = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_fdm;
-  config.prach_config_index =
-      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index;
-  config.prach_format           = prach_format_type::zero;
-  config.num_prach_td_occasions = 1;
-  config.num_preambles          = 1;
-  config.start_preamble_index   = 0;
+  fapi_adaptor::phy_fapi_adaptor_config out_config;
 
-  // Add FD occasion info.
-  fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.emplace_back();
-  fd_occasion.prach_root_sequence_index =
-      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().prach_root_seq_index;
-  fd_occasion.prach_freq_offset =
-      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start;
-  fd_occasion.prach_zero_corr_conf =
-      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.zero_correlation_zone_config;
+  for (unsigned i = 0, e = du_cell.size(); i != e; ++i) {
+    const upper_phy_config& upper_cfg = odu_low_cfg.du_low_cfg.cells[i].upper_phy_cfg;
+    const du_cell_config&   cell_cfg  = du_cell[i];
+    out_config.sectors.push_back(
+        {upper_cfg.sector_id,
+         upper_cfg.nof_slots_request_headroom,
+         cell_cfg,
+         std::vector<uint8_t>(odu_low_cfg.prach_ports[i].begin(), odu_low_cfg.prach_ports[i].end())});
+  }
 
-  return config;
+  return out_config;
 }
 
-static fapi::carrier_config generate_carrier_config_tlv(const du_cell_config& du_cell)
+static fapi_adaptor::phy_fapi_adaptor_dependencies
+generate_fapi_adaptor_dependencies(du_low& du_low, span<const du_cell_config> du_cell)
 {
-  // Deduce common numerology and grid size for DL and UL.
-  unsigned numerology = to_numerology_value(du_cell.scs_common);
-  unsigned grid_size_bw_prb =
-      band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(du_cell.dl_carrier.carrier_bw_mhz),
-                                     du_cell.scs_common,
-                                     band_helper::get_freq_range(du_cell.dl_carrier.band));
+  fapi_adaptor::phy_fapi_adaptor_dependencies out_dependencies;
 
-  fapi::carrier_config fapi_config = {};
+  for (unsigned i = 0, e = du_cell.size(); i != e; ++i) {
+    auto&      dependencies = out_dependencies.sectors.emplace_back();
+    upper_phy& upper        = du_low.get_upper_phy(i);
 
-  // NOTE; for now we only need to fill the nof_prb_ul_grid and nof_prb_dl_grid for the common SCS.
-  fapi_config.dl_grid_size             = {};
-  fapi_config.dl_grid_size[numerology] = grid_size_bw_prb;
-  fapi_config.ul_grid_size             = {};
-  fapi_config.ul_grid_size[numerology] = grid_size_bw_prb;
+    dependencies.logger               = &srslog::fetch_basic_logger("FAPI");
+    dependencies.dl_processor_pool    = &upper.get_downlink_processor_pool();
+    dependencies.dl_rg_pool           = &upper.get_downlink_resource_grid_pool();
+    dependencies.dl_pdu_validator     = &upper.get_downlink_pdu_validator();
+    dependencies.ul_request_processor = &upper.get_uplink_request_processor();
+    dependencies.ul_rg_pool           = &upper.get_uplink_resource_grid_pool();
+    dependencies.ul_pdu_repository    = &upper.get_uplink_slot_pdu_repository();
+    dependencies.ul_pdu_validator     = &upper.get_uplink_pdu_validator();
+    dependencies.pm_repo              = std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(
+        fapi_adaptor::generate_precoding_matrix_tables(du_cell[i].dl_carrier.nof_ant)));
+    dependencies.part2_repo = std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(
+        fapi_adaptor::generate_uci_part2_correspondence(1)));
+  }
 
-  // Number of transmit and receive antenna ports.
-  fapi_config.num_tx_ant = du_cell.dl_carrier.nof_ant;
-  fapi_config.num_rx_ant = du_cell.ul_carrier.nof_ant;
-
-  return fapi_config;
-}
-
-static std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> create_phy_fapi_adaptor(upper_phy&              upper,
-                                                                               const upper_phy_config& upper_cfg,
-                                                                               const du_cell_config&   du_cell,
-                                                                               span<const uint8_t>     prach_ports)
-{
-  const subcarrier_spacing scs             = du_cell.scs_common;
-  auto                     pm_tools        = fapi_adaptor::generate_precoding_matrix_tables(du_cell.dl_carrier.nof_ant);
-  auto                     uci_part2_tools = fapi_adaptor::generate_uci_part2_correspondence(1);
-
-  std::unique_ptr<fapi_adaptor::phy_fapi_adaptor_factory> adaptor_factory =
-      fapi_adaptor::create_phy_fapi_adaptor_factory();
-  report_error_if_not(adaptor_factory, "Invalid PHY adaptor factory.");
-
-  auto prach_tlv   = generate_prach_config_tlv(du_cell);
-  auto carrier_tlv = generate_carrier_config_tlv(du_cell);
-
-  fapi_adaptor::phy_fapi_adaptor_factory_config phy_fapi_config;
-  phy_fapi_config.sector_id                  = upper_cfg.sector_id;
-  phy_fapi_config.nof_slots_request_headroom = upper_cfg.nof_slots_request_headroom;
-  phy_fapi_config.scs                        = scs;
-  phy_fapi_config.scs_common                 = scs;
-  phy_fapi_config.prach_cfg                  = &prach_tlv;
-  phy_fapi_config.carrier_cfg                = &carrier_tlv;
-  phy_fapi_config.prach_ports                = std::vector<uint8_t>(prach_ports.begin(), prach_ports.end());
-
-  fapi_adaptor::phy_fapi_adaptor_factory_dependencies phy_fapi_dependencies;
-  phy_fapi_dependencies.logger               = &srslog::fetch_basic_logger("FAPI");
-  phy_fapi_dependencies.dl_processor_pool    = &upper.get_downlink_processor_pool();
-  phy_fapi_dependencies.dl_rg_pool           = &upper.get_downlink_resource_grid_pool();
-  phy_fapi_dependencies.dl_pdu_validator     = &upper.get_downlink_pdu_validator();
-  phy_fapi_dependencies.ul_request_processor = &upper.get_uplink_request_processor();
-  phy_fapi_dependencies.ul_rg_pool           = &upper.get_uplink_resource_grid_pool();
-  phy_fapi_dependencies.ul_pdu_repository    = &upper.get_uplink_slot_pdu_repository();
-  phy_fapi_dependencies.ul_pdu_validator     = &upper.get_uplink_pdu_validator();
-  phy_fapi_dependencies.pm_repo =
-      std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools));
-  phy_fapi_dependencies.part2_repo =
-      std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(uci_part2_tools));
-
-  return adaptor_factory->create(phy_fapi_config, std::move(phy_fapi_dependencies));
+  return out_dependencies;
 }
 
 std::unique_ptr<o_du_low> srsran::srs_du::make_o_du_low(const o_du_low_config&     config,
@@ -133,16 +83,8 @@ std::unique_ptr<o_du_low> srsran::srs_du::make_o_du_low(const o_du_low_config&  
   report_error_if_not(du_lo != nullptr, "Unable to create DU low.");
   logger.debug("DU low created successfully");
 
-  // Instantiate adaptor of FAPI to DU-low.
-  std::vector<std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>> fapi_adaptors(config.du_low_cfg.cells.size());
-  for (unsigned i = 0, e = config.du_low_cfg.cells.size(); i != e; ++i) {
-    fapi_adaptors[i] = create_phy_fapi_adaptor(
-        du_lo->get_upper_phy(i), config.du_low_cfg.cells[i].upper_phy_cfg, du_cells[i], config.prach_ports[i]);
+  auto fapi_adaptor = fapi_adaptor::create_phy_fapi_adaptor_factory()->create(
+      generate_fapi_adaptor_config(config, du_cells), generate_fapi_adaptor_dependencies(*du_lo, du_cells));
 
-    report_error_if_not(fapi_adaptors[i], "Unable to create PHY adaptor for cell '{}'", i);
-  }
-
-  logger.debug("O-DU low created successfully");
-
-  return std::make_unique<o_du_low_impl>(std::move(du_lo), std::move(fapi_adaptors));
+  return std::make_unique<o_du_low_impl>(std::move(du_lo), std::move(fapi_adaptor), du_cells.size());
 }

@@ -95,8 +95,8 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
   error_notifier(dummy_error_notifier),
   scs(config.scs),
   scs_common(config.scs_common),
-  prach_cfg(*config.prach_cfg),
-  carrier_cfg(*config.carrier_cfg),
+  prach_cfg(config.prach_cfg),
+  carrier_cfg(config.carrier_cfg),
   prach_ports(config.prach_ports.begin(), config.prach_ports.end())
 {
   srsran_assert(pm_repo, "Invalid precoding matrix repository");

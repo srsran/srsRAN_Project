@@ -34,7 +34,3 @@ void du_low_impl::stop()
     cell->stop();
   }
 }
-span<upper_phy*> du_low_impl::get_all_upper_phys()
-{
-  return upper_ptrs;
-}

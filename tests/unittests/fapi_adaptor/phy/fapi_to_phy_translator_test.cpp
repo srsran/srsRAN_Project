@@ -166,7 +166,7 @@ protected:
   uplink_pdu_validator_dummy          ul_pdu_validator;
   slot_error_message_notifier_spy     error_notifier_spy;
   manual_task_worker                  worker;
-  fapi_to_phy_translator_config       config = {sector_id, headroom_in_slots, scs, scs, &prach_cfg, &carrier_cfg, {0}};
+  fapi_to_phy_translator_config       config = {sector_id, headroom_in_slots, scs, scs, prach_cfg, carrier_cfg, {0}};
   fapi_to_phy_translator_dependencies dependencies = {
       &srslog::fetch_basic_logger("FAPI"),
       &dl_processor_pool,

@@ -16,7 +16,7 @@ set(SOURCES
 
 add_library(srsran_o_du_low_unit_helpers STATIC ${SOURCES})
 target_include_directories(srsran_o_du_low_unit_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-set(DU_LOW_UNIT_HELPERS_LIBRARIES srsran_upper_phy srsran_cpu_affinities_helper)
+set(DU_LOW_UNIT_HELPERS_LIBRARIES srsran_upper_phy srsran_cpu_affinities_helper srsran_o_du_low)
 
 # Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
 if (DPDK_FOUND)

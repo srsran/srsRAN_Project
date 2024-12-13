@@ -26,7 +26,7 @@ class radio_unit;
 class flexible_o_du_impl : public srs_du::du, public du_power_controller
 {
 public:
-  explicit flexible_o_du_impl(unsigned nof_cells);
+  explicit flexible_o_du_impl(unsigned nof_cells_);
 
   // See interface for documentation.
   du_power_controller& get_power_controller() override { return *this; }
@@ -51,6 +51,7 @@ public:
   upper_phy_ru_ul_request_adapter& get_upper_ru_ul_request_adapter() { return ru_ul_request_adapt; }
 
 private:
+  const unsigned                  nof_cells;
   upper_phy_ru_ul_adapter         ru_ul_adapt;
   upper_phy_ru_timing_adapter     ru_timing_adapt;
   upper_phy_ru_error_adapter      ru_error_adapt;

@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
+#include <memory>
 
 namespace srsran {
 
@@ -21,8 +23,8 @@ class phy_fapi_adaptor_factory_impl : public phy_fapi_adaptor_factory
 {
 public:
   // See interface for documentation.
-  std::unique_ptr<phy_fapi_adaptor> create(const phy_fapi_adaptor_factory_config&  config,
-                                           phy_fapi_adaptor_factory_dependencies&& dependencies) override;
+  std::unique_ptr<phy_fapi_adaptor> create(const phy_fapi_adaptor_config&  config,
+                                           phy_fapi_adaptor_dependencies&& dependencies) override;
 };
 
 } // namespace fapi_adaptor
