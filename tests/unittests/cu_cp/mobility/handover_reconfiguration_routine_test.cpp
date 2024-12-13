@@ -109,12 +109,24 @@ public:
     return release_context;
   }
 
-  rrc_ue_transfer_context get_transfer_context() override { return rrc_ue_transfer_context{}; }
-
-  std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) override
+  rrc_ue_transfer_context get_transfer_context() override
   {
+    logger.info("Received a new request to get RRC UE trasnfer context");
+    return rrc_ue_transfer_context{};
+  }
+
+  std::optional<rrc_meas_cfg>
+  generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override
+  {
+    logger.info("Received a new request to generate RRC UE meas config");
     std::optional<rrc_meas_cfg> meas_config;
     return meas_config;
+  }
+
+  byte_buffer get_packed_meas_config() override
+  {
+    logger.info("Received a new request to get packed RRC UE meas config");
+    return {};
   }
 
   byte_buffer handle_rrc_handover_command(byte_buffer cmd) override { return byte_buffer{}; }

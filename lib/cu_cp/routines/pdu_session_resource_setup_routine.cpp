@@ -154,6 +154,7 @@ void pdu_session_resource_setup_routine::operator()(
     ue_context_mod_request.cu_to_du_rrc_info.emplace();
     ue_context_mod_request.cu_to_du_rrc_info.value().ue_cap_rat_container_list =
         rrc_ue->get_packed_ue_capability_rat_container_list();
+    ue_context_mod_request.cu_to_du_rrc_info.value().meas_cfg = rrc_ue->get_packed_meas_config();
 
     // DRB setup have already added above.
     CORO_AWAIT_VALUE(ue_context_modification_response,
@@ -217,7 +218,7 @@ void pdu_session_resource_setup_routine::operator()(
                                   {} /* No extra DRB to be removed */,
                                   ue_context_modification_response.du_to_cu_rrc_info,
                                   nas_pdus,
-                                  next_config.initial_context_creation ? rrc_ue->generate_meas_config()
+                                  next_config.initial_context_creation ? rrc_ue->generate_meas_config(std::nullopt)
                                                                        : std::optional<rrc_meas_cfg>{},
                                   false,
                                   false,

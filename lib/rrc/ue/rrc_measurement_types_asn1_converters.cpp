@@ -1099,52 +1099,6 @@ asn1::rrc_nr::meas_cfg_s srsran::srs_cu_cp::meas_config_to_rrc_asn1(const rrc_me
     }
   }
 
-  // meas gap cfg
-  if (meas_cfg.meas_gap_cfg.has_value()) {
-    asn1_meas_cfg.meas_gap_cfg_present = true;
-    if (meas_cfg.meas_gap_cfg.value().gap_fr2.has_value()) {
-      asn1_meas_cfg.meas_gap_cfg.gap_fr2_present = true;
-      if (meas_cfg.meas_gap_cfg.value().gap_fr2.value().is_release) {
-        asn1_meas_cfg.meas_gap_cfg.gap_fr2.set_release();
-      } else if (meas_cfg.meas_gap_cfg.value().gap_fr2.value().setup.has_value()) {
-        asn1_meas_cfg.meas_gap_cfg.gap_fr2.set_setup();
-        // gap offset
-        asn1_meas_cfg.meas_gap_cfg.gap_fr2.setup().gap_offset =
-            meas_cfg.meas_gap_cfg.value().gap_fr2.value().setup.value().gap_offset;
-        // mgl
-        asn1::number_to_enum(asn1_meas_cfg.meas_gap_cfg.gap_fr2.setup().mgl,
-                             meas_cfg.meas_gap_cfg.value().gap_fr2.value().setup.value().mgl);
-        // mgrp
-        asn1::number_to_enum(asn1_meas_cfg.meas_gap_cfg.gap_fr2.setup().mgrp,
-                             meas_cfg.meas_gap_cfg.value().gap_fr2.value().setup.value().mgrp);
-        // mgta
-        asn1::number_to_enum(asn1_meas_cfg.meas_gap_cfg.gap_fr2.setup().mgta,
-                             meas_cfg.meas_gap_cfg.value().gap_fr2.value().setup.value().mgta);
-      } else {
-        // error
-        report_fatal_error("Cannot convert gap fr2 to ASN.1 type");
-      }
-    }
-  }
-
-  // meas gap sharing cfg
-  if (meas_cfg.meas_gap_sharing_cfg.has_value()) {
-    asn1_meas_cfg.meas_gap_sharing_cfg_present = true;
-    if (meas_cfg.meas_gap_sharing_cfg.value().gap_sharing_fr2.has_value()) {
-      asn1_meas_cfg.meas_gap_sharing_cfg.gap_sharing_fr2_present = true;
-      if (meas_cfg.meas_gap_sharing_cfg.value().gap_sharing_fr2.value().is_release) {
-        asn1_meas_cfg.meas_gap_sharing_cfg.gap_sharing_fr2.set_release();
-      } else if (!meas_cfg.meas_gap_sharing_cfg.value().gap_sharing_fr2.value().setup.value().empty()) {
-        asn1_meas_cfg.meas_gap_sharing_cfg.gap_sharing_fr2.set_setup();
-        asn1::string_to_enum(asn1_meas_cfg.meas_gap_sharing_cfg.gap_sharing_fr2.setup(),
-                             meas_cfg.meas_gap_sharing_cfg.value().gap_sharing_fr2.value().setup.value());
-      } else {
-        // error
-        report_fatal_error("Cannot convert gap sharing fr2 to ASN.1 type");
-      }
-    }
-  }
-
   return asn1_meas_cfg;
 }
 

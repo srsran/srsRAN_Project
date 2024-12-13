@@ -214,6 +214,19 @@ void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recf
   if (rrc_reconf.meas_cfg.has_value()) {
     asn1_reconfig_ies.meas_cfg_present = true;
     asn1_reconfig_ies.meas_cfg         = meas_config_to_rrc_asn1(rrc_reconf.meas_cfg.value());
+
+    // Fill measurement gap config.
+    if (!rrc_reconf.meas_gap_cfg.empty()) {
+      asn1_reconfig_ies.meas_cfg.meas_gap_cfg_present = true;
+
+      // Unpack measurement gap config PDU.
+      asn1::rrc_nr::meas_gap_cfg_s asn1_meas_gap_cfg;
+      asn1::cbit_ref               bref(rrc_reconf.meas_gap_cfg);
+
+      if (asn1_reconfig_ies.meas_cfg.meas_gap_cfg.unpack(bref) != asn1::SRSASN_SUCCESS) {
+        report_fatal_error("Couldn't unpack MeasGapConfig RRC container");
+      }
+    }
   }
 
   // non crit ext

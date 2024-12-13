@@ -172,6 +172,11 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
 
   rrc_reconfig_args.meas_cfg = rrc_meas_cfg;
 
+  // Fill meas gap config.
+  if (!du_to_cu_rrc_info.meas_gap_cfg.empty()) {
+    rrc_reconfig_args.meas_gap_cfg = du_to_cu_rrc_info.meas_gap_cfg.copy();
+  }
+
   if (!sib1.empty()) {
     rrc_reconfig_args.non_crit_ext.value().ded_sib1_delivery = std::move(sib1);
   }

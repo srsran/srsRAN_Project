@@ -18,6 +18,7 @@
 #include "ue/rrc_measurement_types_asn1_converters.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
+#include "srsran/asn1/rrc_nr/meas_cfg.h"
 #include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
 #include "srsran/ran/rb_id.h"
 
@@ -578,7 +579,21 @@ std::optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(std::optional<rrc_
 {
   // (Re-)generate measurement config and return result.
   context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, current_meas_config);
+
   return context.meas_cfg;
+}
+
+byte_buffer rrc_ue_impl::get_packed_meas_config()
+{
+  // (Re-)generate measurement config.
+  context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, context.meas_cfg);
+
+  if (context.meas_cfg.has_value()) {
+    // Convert to ASN1, pack and return.
+    return pack_into_pdu(meas_config_to_rrc_asn1(context.meas_cfg.value()), "RRCMeasConfig");
+  }
+
+  return {};
 }
 
 rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()

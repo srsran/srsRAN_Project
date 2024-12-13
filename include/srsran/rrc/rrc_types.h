@@ -101,7 +101,9 @@ struct rrc_reconfiguration_procedure_request {
   std::optional<rrc_radio_bearer_config> radio_bearer_cfg;
   byte_buffer                            secondary_cell_group;
   std::optional<rrc_meas_cfg>            meas_cfg;
-  std::optional<rrc_recfg_v1530_ies>     non_crit_ext;
+  // Optional measurement gap config to include in Reconfiguration.
+  byte_buffer                        meas_gap_cfg;
+  std::optional<rrc_recfg_v1530_ies> non_crit_ext;
 };
 
 struct rrc_ue_capability_transfer_request {
