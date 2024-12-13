@@ -225,7 +225,7 @@ unsigned ue::build_dl_transport_block_info(dl_msg_tb_info&                      
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
   for (const auto lcid : dl_lc_ch_mgr.get_prioritized_logical_channels()) {
-    if (lcids.test(lcid)) {
+    if (lcid < lcids.size() and lcids.test(lcid)) {
       total_subpdu_bytes +=
           allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
     }

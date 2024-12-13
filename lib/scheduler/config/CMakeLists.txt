@@ -7,7 +7,6 @@
 #
 
 set(SOURCES serving_cell_config_factory.cpp
-        logical_channel_config_factory.cpp
         sched_cell_config_helpers.cpp
         scheduler_cell_config_validator.cpp
         scheduler_ue_config_validator.cpp
