@@ -11,6 +11,7 @@
 
 #include "f1u_split_connector.h"
 #include "srsran/f1u/cu_up/f1u_session_manager.h"
+#include "srsran/f1u/cu_up/f1u_session_manager_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/ran/rb_id.h"
 
@@ -122,12 +123,13 @@ f1u_split_connector::f1u_split_connector(const std::vector<std::unique_ptr<gtpu_
   demux(demux_),
   gtpu_pcap(gtpu_pcap_)
 {
-  srsran_assert(udp_gws.empty(), "Cannot create CU F1-U split connector");
+  srsran_assert(not udp_gws.empty(), "Cannot create CU F1-U split connector");
   gw_data_gtpu_demux_adapter = std::make_unique<srs_cu_up::network_gateway_data_gtpu_demux_adapter>();
-  for (unsigned i = 0; i < udp_gws.size(); ++i) {
-    udp_sessions[i] = udp_gws[i]->create(*gw_data_gtpu_demux_adapter);
+  for (const std::unique_ptr<gtpu_gateway>& udp_gw : udp_gws) {
+    udp_sessions.push_back(udp_gw->create(*gw_data_gtpu_demux_adapter));
     gw_data_gtpu_demux_adapter->connect_gtpu_demux(demux);
   }
+  f1u_session_mngr = create_f1u_cu_up_session_manager(udp_sessions);
 }
 
 f1u_split_connector::~f1u_split_connector() = default;
@@ -141,9 +143,9 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
                                       task_executor&                        ul_exec)
 {
   logger_cu.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_up_tnl_info);
-  [[maybe_unused]] auto& ugw_session2 = f1u_session_mngr->get_next_f1u_gateway();
-  auto                   cu_bearer    = std::make_unique<f1u_split_gateway_cu_bearer>(
-      ue_index, drb_id, ul_up_tnl_info, rx_notifier, *udp_sessions[0], ul_exec, *this);
+  auto& udp_session = f1u_session_mngr->get_next_f1u_gateway();
+  auto  cu_bearer   = std::make_unique<f1u_split_gateway_cu_bearer>(
+      ue_index, drb_id, ul_up_tnl_info, rx_notifier, udp_session, ul_exec, *this);
   std::unique_lock<std::mutex> lock(map_mutex);
   srsran_assert(cu_map.find(ul_up_tnl_info) == cu_map.end(),
                 "Cannot create CU gateway local bearer with already existing UL GTP Tunnel={}",
