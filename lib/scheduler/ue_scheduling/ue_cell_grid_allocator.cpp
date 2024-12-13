@@ -15,9 +15,8 @@
 #include "../ue_context/ue_drx_controller.h"
 #include "ue_pdsch_alloc_param_candidate_searcher.h"
 #include "ue_pusch_alloc_param_candidate_searcher.h"
-#include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
-#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/result/dci_info.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;

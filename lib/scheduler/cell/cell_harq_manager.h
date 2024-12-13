@@ -20,7 +20,8 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/harq_id.h"
-#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/result/dci_info.h"
+#include "srsran/scheduler/vrb_alloc.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/ran/pdcch/search_space.h"
-#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/result/dci_info.h"
 
 namespace srsran {
 namespace pdcch_helper {

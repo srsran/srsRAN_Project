@@ -11,11 +11,8 @@
 #pragma once
 
 #include "srsran/ran/pdcch/aggregation_level.h"
+#include "srsran/ran/pdcch/dci_format.h"
 #include "srsran/ran/pdcch/dci_packing.h"
-#include "srsran/ran/rnti.h"
-#include "srsran/ran/slot_point.h"
-#include "srsran/scheduler/vrb_alloc.h"
-#include <cstdint>
 
 namespace srsran {
 
@@ -25,9 +22,6 @@ struct cce_position {
   /// Aggregation level of the DCI.
   aggregation_level aggr_lvl;
 };
-
-enum class dci_dl_format { f1_0, f1_1, f2_0 };
-enum class dci_ul_format { f0_0, f0_1 };
 
 /// Defines which fields are stored in the DCI payload, based on the chosen DCI format and RNTI type.
 enum class dci_dl_rnti_config_type { si_f1_0, ra_f1_0, c_rnti_f1_0, tc_rnti_f1_0, p_rnti_f1_0, c_rnti_f1_1 };
@@ -40,16 +34,14 @@ inline dci_dl_format get_dci_dl_format(dci_dl_rnti_config_type rnti_dci_type)
 
 inline const char* dci_dl_rnti_config_rnti_type(dci_dl_rnti_config_type type)
 {
-  std::array<const char*, 6> rnti_types = {"si-rnti", "ra-rnti", "c-rnti", "tc-rnti", "p-rnti", "c-rnti"};
+  static constexpr std::array<const char*, 6> rnti_types = {
+      "si-rnti", "ra-rnti", "c-rnti", "tc-rnti", "p-rnti", "c-rnti"};
   return (unsigned)type < rnti_types.size() ? rnti_types[(unsigned)type] : "invalid";
 }
 
 inline const char* dci_dl_rnti_config_format(dci_dl_rnti_config_type type)
 {
-  if (type != dci_dl_rnti_config_type::c_rnti_f1_1) {
-    return "1_0";
-  }
-  return "1_1";
+  return dci_dl_format_to_string(get_dci_dl_format(type));
 }
 
 /// \brief Describes an unpacked DL DCI message.
@@ -77,12 +69,15 @@ inline const char* dci_ul_rnti_config_rnti_type(dci_ul_rnti_config_type type)
   return (unsigned)type < rnti_types.size() ? rnti_types[(unsigned)type] : "invalid";
 }
 
+/// Retrieve DCI format from DCI UL payload format.
+inline dci_ul_format get_dci_ul_format(dci_ul_rnti_config_type rnti_dci_type)
+{
+  return rnti_dci_type == dci_ul_rnti_config_type::c_rnti_f0_1 ? dci_ul_format::f0_1 : dci_ul_format::f0_0;
+}
+
 inline const char* dci_ul_rnti_config_format(dci_ul_rnti_config_type type)
 {
-  if (type != dci_ul_rnti_config_type::c_rnti_f0_1) {
-    return "0_0";
-  }
-  return "0_1";
+  return dci_ul_format_to_string(get_dci_ul_format(type));
 }
 
 struct dci_ul_info {

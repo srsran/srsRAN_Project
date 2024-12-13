@@ -14,7 +14,7 @@
 #include "../config/ue_configuration.h"
 #include "pucch_allocator.h"
 #include "pucch_resource_manager.h"
-#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/result/dci_info.h"
 #include <variant>
 
 namespace srsran {

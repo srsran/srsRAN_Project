@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/result/dci_info.h"
 
 namespace srsran {
 

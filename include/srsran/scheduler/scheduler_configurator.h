@@ -36,7 +36,7 @@
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/config/si_scheduling_config.h"
 #include "srsran/scheduler/config/slice_rrm_policy_config.h"
-#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/result/dci_info.h"
 
 namespace srsran {
 

@@ -14,7 +14,7 @@
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/result/dci_info.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {

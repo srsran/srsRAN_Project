@@ -15,232 +15,24 @@
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/prach/prach_format_type.h"
-#include "srsran/ran/precoding/precoding_constants.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/srs/srs_configuration.h"
-#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/uci/uci_configuration.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include "srsran/scheduler/config/dmrs.h"
-#include "srsran/scheduler/harq_id.h"
-#include "srsran/scheduler/sched_consts.h"
-#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/result/pdcch_info.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/scheduler/scheduler_pucch_format.h"
 #include "srsran/scheduler/vrb_alloc.h"
-#include <cstddef>
 
 namespace srsran {
-
-/// The precoding information associated with PDCCH PDUs.
-struct pdcch_precoding_info {};
-
-/// The precoding information associated with PDSCH PDUs.
-struct pdsch_precoding_info {
-  /// Precoding Resource Block Group (PRG) information.
-  using prg_info = csi_report_pmi;
-
-  /// \brief Size in RBs of a precoding resource block group (PRG) to which same precoding and digital beamforming gets
-  /// applied. Values: {1,...,275}.
-  unsigned nof_rbs_per_prg;
-  /// PRG list.
-  static_vector<prg_info, precoding_constants::MAX_NOF_PRG> prg_infos;
-};
-
-/// Transmit power information associated with PDCCH PDU.
-struct tx_power_pdcch_information {
-  /// Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE. See 3GPP TS 38.214, clause 5.2.2.3.1. Values {-3, 0, 3, 6} dB.
-  /// \remark If the UE has not been provided dedicated higher layer parameters, the UE may assume that the ratio of
-  /// PDCCH DMRS EPRE to SSS EPRE is within -8 dB and 8 dB when the UE monitors PDCCHs for a DCI format 1_0 with CRC
-  /// scrambled by SI-RNTI, P-RNTI, or RA-RNTI. See TS 38.213, clause 4.1.
-  /// \remark [Implementation-defined] In case UE is not configured with powerControlOffsetSS we assume it to be 0dB.
-  int8_t pwr_ctrl_offset_ss{0};
-};
-
-struct dmrs_information {
-  /// Bitmap of DM-RS position symbols.
-  dmrs_symbol_mask dmrs_symb_pos;
-  dmrs_config_type config_type;
-  /// \brief DMRS-Scrambling-ID (see TS 38.211 sec 7.4.1.1.1) as provided by parameter \f$N^{n_{SCID}}_{ID}\f$.
-  /// Values: (0..65535).
-  unsigned dmrs_scrambling_id;
-  /// PHY shall disregard this parameter if lowPaprDmrs=0.
-  unsigned dmrs_scrambling_id_complement;
-  /// False means that dmrs_scrambling_id == dmrs_scrambling_id_complement.
-  bool low_papr_dmrs;
-  /// \brief DMRS sequence initialization (see TS 38.211 sec 7.4.1.1.2), as provided by parameter n_{SCID}.
-  /// Values: false -> 0, true -> 1.
-  bool n_scid;
-  /// Values: (1..3).
-  uint8_t num_dmrs_cdm_grps_no_data;
-  /// \brief Bitmap of antenna ports. Bit 0 corresponds to antenna port 1000 and bit 11 to antenna port 1011, and
-  /// each bit=1 mean DM-RS port used.
-  bounded_bitset<12> dmrs_ports;
-};
-
-struct dci_context_information {
-  const bwp_configuration*     bwp_cfg;
-  const coreset_configuration* coreset_cfg;
-  /// RNTI used to identify the destination of this DCI (e.g. UE, RA-RNTI, SI, Paging).
-  rnti_t rnti;
-  /// Parameter \f$n_{ID}\f$ used for PDCCH Data scrambling as per 3GPP TS 38.211 [2], sec 7.3.2.3. Values: (0..65535).
-  /// For a UE-specific search space it equals the higherlayer parameter PDCCH-DMRS-Scrambling-ID if configured,
-  /// otherwise it should be set to the phy cell ID.
-  unsigned n_id_pdcch_data;
-  /// Parameter \f$n_{RNTI}\f$ used for PDCCH data scrambling, as per 3GPP TS 38.211 [2], sec 7.3.2.3.
-  /// Values: (0..65535). For a UE-specific search space where PDCCH-DMRSScrambling-ID is configured, this param
-  /// equals the CRNTI. Otherwise, it should be set to 0.
-  unsigned n_rnti_pdcch_data;
-  /// CCE position of the allocated PDCCH.
-  cce_position cces;
-  /// Starting symbol of the Search Space.
-  unsigned starting_symbol;
-  /// Precoding info used for this DCI. This field is empty in case of 1 antenna port.
-  std::optional<pdcch_precoding_info> precoding_info;
-  /// Transmission power information used for this DCI.
-  tx_power_pdcch_information tx_pwr;
-  /// Parameter \f$N_{ID}\f$ used for PDCCH DMRS scrambling as per TS38.211, 7.4.1.3.1. Values: {0, ..., 65535}.
-  unsigned n_id_pdcch_dmrs;
-
-  /// \brief Information relative to a PDCCH allocation decision that is used for the purpose of logging or
-  /// tracing, but not passed to the PHY.
-  struct decision_context {
-    /// Chosen SearchSpace-Id.
-    search_space_id ss_id;
-    /// DCI format string.
-    const char* dci_format;
-    /// Number of slots the UE is expected to wait before transmitting a DL HARQ-ACK, upon a PDSCH reception.
-    std::optional<unsigned> harq_feedback_timing;
-  } context;
-};
-
-/// PDCCH DL allocation.
-struct pdcch_dl_information {
-  /// Context associated with PDCCH allocation.
-  dci_context_information ctx;
-  /// DL DCI unpacked content.
-  dci_dl_info dci;
-};
-
-/// PDCCH UL allocation.
-struct pdcch_ul_information {
-  /// Context associated with PDCCH allocation.
-  dci_context_information ctx;
-  /// UL DCI unpacked content.
-  dci_ul_info dci;
-};
-
-/// PDSCH codeword.
-struct pdsch_codeword {
-  /// Modulation and coding scheme.
-  sch_mcs_description mcs_descr;
-  /// \brief MCS index, range {0, ..., 31} (See TS38.214 Section 5.1.3.1).
-  /// \note Should match value sent in DCI.
-  sch_mcs_index mcs_index;
-  /// MCS table (See TS38.214 Section 5.1.3.1).
-  pdsch_mcs_table mcs_table;
-  /// Redundancy version index (see TS38.212 Table 5.4.2.1-2, and TS38.214 Table 5.1.2.1-2).
-  uint8_t rv_index;
-  /// Transport block size, in bytes (see TS38.214 Section 5.1.3.2).
-  uint32_t tb_size_bytes;
-  /// Whether this is the first Tx or retx of the HARQ codeword.
-  bool new_data;
-};
-
-/// Transmit power information associated with PDSCH PDU.
-struct tx_power_pdsch_information {
-  /// Ratio of PDSCH EPRE to NZP CSI-RS EPRE when UE derives CSI feedback. See 3GPP TS 38.214, clause 5.2.2.3.1. Values
-  /// {-8,...,15} dB with 1 dB step size.
-  /// \remark [Implementation-defined] In case UE is not configured with powerControlOffset we assume it to be 0dB.
-  int8_t pwr_ctrl_offset{0};
-  /// Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE. See 3GPP TS 38.214, clause 5.2.2.3.1. Values {-3, 0, 3, 6} dB.
-  /// \remark [Implementation-defined] In case UE is not configured with powerControlOffsetSS we assume it to be 0dB.
-  int8_t pwr_ctrl_offset_ss{0};
-};
-
-/// \brief Information relative to a PDSCH grant in a given slot.
-struct pdsch_information {
-  rnti_t                                                 rnti;
-  const bwp_configuration*                               bwp_cfg;
-  const coreset_configuration*                           coreset_cfg;
-  vrb_alloc                                              rbs;
-  ofdm_symbol_range                                      symbols;
-  static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH> codewords;
-  dmrs_information                                       dmrs;
-  /// Parameter n_ID, used for scrambling, as per TS 38.211, Section 7.3.1.1.
-  unsigned n_id;
-  /// Number of layers as per TS 38.211, Section 7.3.1.3. Values: {1,...,8}.
-  unsigned nof_layers;
-  /// Whether the PDSCH is interleaved via VRB-to-PRB mapping.
-  bool                  is_interleaved;
-  search_space_set_type ss_set_type;
-  dci_dl_format         dci_fmt;
-  /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
-  harq_id_t harq_id;
-  /// Precoding information for the PDSCH. This field is empty in case of 1-antenna port setups.
-  std::optional<pdsch_precoding_info> precoding;
-  /// Transmit power information for the PDSCH.
-  tx_power_pdsch_information tx_pwr_info;
-};
-
-/// Dummy MAC CE payload.
-/// To be replaced by other MAC CE payload when its supported.
-using dummy_ce_payload = unsigned;
-
-/// Timing Advance Command CE payload.
-struct ta_cmd_ce_payload {
-  uint8_t  tag_id;
-  unsigned ta_cmd;
-};
-
-struct dl_msg_lc_info {
-  /// Values of LCID for DL-SCH. See TS 38.321, Table 6.2.1-1.
-  lcid_dl_sch_t lcid;
-  /// Number of scheduled bytes for this specific logical channel. {0..65535}.
-  unsigned sched_bytes;
-  /// Holds payload of CE except UE Contention Resolution Identity.
-  std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
-};
-
-struct dl_msg_tb_info {
-  /// List of logical channels to schedule in this TB.
-  static_vector<dl_msg_lc_info, MAX_LC_PER_TB> lc_chs_to_sched;
-};
-
-using dl_msg_tb_info_list = static_vector<dl_msg_tb_info, MAX_CODEWORDS_PER_PDSCH>;
-
-/// Dedicated DL Grant for UEs.
-struct dl_msg_alloc {
-  pdsch_information   pdsch_cfg;
-  dl_msg_tb_info_list tb_list;
-
-  /// \brief Information relative to a PDSCH allocation decision that is used for the purpose of logging or
-  /// tracing, but not passed to the PHY.
-  struct decision_context {
-    /// UE index of allocated UE.
-    du_ue_index_t ue_index;
-    /// Chosen k1 delay to receive UCI HARQ-ACK.
-    unsigned k1;
-    /// Chosen search space id
-    search_space_id ss_id;
-    /// Number of times the HARQ process has been retransmitted.
-    unsigned nof_retxs;
-    /// Current UE DL buffer occupancy, after this PDSCH grant.
-    unsigned buffer_occupancy;
-    /// Offset that the OLLA algorithm applied to the DL MCS candidate to account for channel impairments.
-    std::optional<float> olla_offset;
-  } context;
-};
 
 struct pusch_information {
   rnti_t                   rnti;
@@ -327,66 +119,6 @@ struct uci_info {
   alpha_scaling_opt alpha;
 };
 
-/// \brief RAR grant composed of subheader as per TS38.321 6.2.2, payload as per TS38.321 6.2.3,
-/// with UL grant as per TS38.213, Table 8.2-1.
-struct rar_ul_grant {
-  // MAC subheader.
-  uint16_t rapid;
-
-  // RAR payload.
-  uint16_t ta;
-  rnti_t   temp_crnti;
-
-  // UL Grant Payload.
-  bool          freq_hop_flag;
-  uint8_t       time_resource_assignment;
-  uint16_t      freq_resource_assignment;
-  sch_mcs_index mcs;
-  int8_t        tpc;
-  bool          csi_req;
-};
-
-/// Stores the information associated with a RAR.
-struct rar_information {
-  pdsch_information                                  pdsch_cfg;
-  static_vector<rar_ul_grant, MAX_RAR_PDUS_PER_SLOT> grants;
-};
-
-/// Stores the information associated with an SSB.
-struct ssb_information {
-  unsigned          ssb_index;
-  crb_interval      crbs;
-  ofdm_symbol_range symbols;
-};
-
-/// Stores the information associated with an SIB1 or other SI allocation.
-struct sib_information {
-  enum si_indicator_type { sib1, other_si } si_indicator;
-  std::optional<uint8_t> si_msg_index;
-  unsigned               nof_txs;
-  pdsch_information      pdsch_cfg;
-};
-
-/// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.
-struct dl_broadcast_allocation {
-  static_vector<ssb_information, MAX_SSB_PER_SLOT>     ssb_info;
-  static_vector<sib_information, MAX_SI_PDUS_PER_SLOT> sibs;
-};
-
-struct paging_ue_info {
-  /// Type of Paging. RAN initiated or CN initiated.
-  enum paging_identity_type { ran_ue_paging_identity, cn_ue_paging_identity } paging_type_indicator;
-  /// Paging identity assigned to UE. Possible values are \c I-RNTI-Value (Bit string of size 40) and \c NG-5G-S-TMSI
-  /// (Bit string of size 48). See TS 38.331.
-  uint64_t paging_identity;
-};
-
-/// Stores the information associated with Paging allocation.
-struct dl_paging_allocation {
-  static_vector<paging_ue_info, MAX_PAGING_RECORDS_PER_PAGING_PDU> paging_ue_list;
-  pdsch_information                                                pdsch_cfg;
-};
-
 /// Stores the information associated with a CSI-RS signalling.
 struct csi_rs_info {
   const bwp_configuration* bwp_cfg;
@@ -419,10 +151,10 @@ struct dl_sched_result {
   unsigned nof_dl_symbols;
 
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
-  static_vector<pdcch_dl_information, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_pdcchs;
+  pdcch_dl_info_list dl_pdcchs;
 
   /// Allocated UL PDCCHs.
-  static_vector<pdcch_ul_information, MAX_UL_PDCCH_PDUS_PER_SLOT> ul_pdcchs;
+  pdcch_ul_info_list ul_pdcchs;
 
   /// Allocation of SSB and SIBs.
   dl_broadcast_allocation bc;
