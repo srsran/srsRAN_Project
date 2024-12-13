@@ -248,7 +248,7 @@ public:
   virtual std::optional<rrc_meas_cfg>
   handle_measurement_config_request(ue_index_t                  ue_index,
                                     nr_cell_identity            nci,
-                                    std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+                                    std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) = 0;
 
   /// \brief Handle a measurement report for given UE.
   virtual void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;

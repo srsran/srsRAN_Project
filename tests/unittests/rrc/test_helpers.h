@@ -136,7 +136,8 @@ public:
   }
 
   std::optional<rrc_meas_cfg>
-  on_measurement_config_request(nr_cell_identity nci, std::optional<rrc_meas_cfg> current_meas_config = {}) override
+  on_measurement_config_request(nr_cell_identity            nci,
+                                std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override
   {
     std::optional<rrc_meas_cfg> meas_cfg;
     return meas_cfg;

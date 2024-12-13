@@ -116,7 +116,7 @@ public:
   std::optional<rrc_meas_cfg>
        handle_measurement_config_request(ue_index_t                  ue_index,
                                          nr_cell_identity            nci,
-                                         std::optional<rrc_meas_cfg> current_meas_config = {}) override;
+                                         std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override;
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
   // cu_cp_measurement_config_handler.

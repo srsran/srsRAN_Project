@@ -111,14 +111,14 @@ void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recf
 
   rrc_recfg_ies_s& asn1_reconfig_ies = asn1_rrc_reconf.crit_exts.set_rrc_recfg();
 
-  // radio bearer cfg
+  // Fill radio bearer config.
   if (rrc_reconf.radio_bearer_cfg.has_value()) {
     asn1_reconfig_ies.radio_bearer_cfg_present = true;
     auto& asn1_radio_bearer_cfg                = asn1_reconfig_ies.radio_bearer_cfg;
 
     auto& cu_cp_radio_bearer_cfg = rrc_reconf.radio_bearer_cfg.value();
 
-    // srb to add mod list
+    // Fill SRB to add mod list.
     for (const auto& srb_to_add : cu_cp_radio_bearer_cfg.srb_to_add_mod_list) {
       srsran_assert(srb_to_add.srb_id != srb_id_t::nulltype, "Invalid SRB ID");
 
@@ -129,7 +129,7 @@ void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recf
 
       asn1_srb_to_add.discard_on_pdcp_present = srb_to_add.discard_on_pdcp_present;
 
-      // PDCP config
+      // Fill PDCP config.
       if (srb_to_add.pdcp_cfg.has_value()) {
         asn1_srb_to_add.pdcp_cfg_present = true;
         asn1_srb_to_add.pdcp_cfg         = pdcp_config_to_rrc_nr_asn1(srb_to_add.pdcp_cfg.value());
@@ -138,7 +138,7 @@ void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recf
       asn1_radio_bearer_cfg.srb_to_add_mod_list.push_back(asn1_srb_to_add);
     }
 
-    // drb to add mod list
+    // Fill DRB to add mod list.
     for (const auto& drb_to_add : cu_cp_radio_bearer_cfg.drb_to_add_mod_list) {
       srsran_assert(drb_to_add.drb_id != drb_id_t::invalid, "Invalid DRB ID");
 
@@ -147,13 +147,13 @@ void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recf
 
       asn1_drb_to_add.reestablish_pdcp_present = drb_to_add.reestablish_pdcp_present;
 
-      // PDCP config
+      // Fill PDCP config.
       if (drb_to_add.pdcp_cfg.has_value()) {
         asn1_drb_to_add.pdcp_cfg_present = true;
         asn1_drb_to_add.pdcp_cfg         = pdcp_config_to_rrc_nr_asn1(drb_to_add.pdcp_cfg.value());
       }
 
-      // Add CN association and SDAP config
+      // Fill CN association and SDAP config.
       if (drb_to_add.cn_assoc.has_value()) {
         asn1_drb_to_add.cn_assoc_present = true;
         if (drb_to_add.cn_assoc.value().sdap_cfg.has_value()) {
@@ -168,27 +168,27 @@ void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recf
       asn1_radio_bearer_cfg.drb_to_add_mod_list.push_back(asn1_drb_to_add);
     }
 
-    // drb to release list
+    // Fill DRB to release list.
     for (const auto& drb_to_release : cu_cp_radio_bearer_cfg.drb_to_release_list) {
       srsran_assert(drb_to_release != drb_id_t::invalid, "Invalid DRB ID");
       asn1_radio_bearer_cfg.drb_to_release_list.push_back(drb_id_to_uint(drb_to_release));
     }
 
-    // security cfg
+    // Fill security config.
     if (cu_cp_radio_bearer_cfg.security_cfg.has_value()) {
       asn1_radio_bearer_cfg.security_cfg_present = true;
 
       const auto& security_cfg = cu_cp_radio_bearer_cfg.security_cfg.value();
 
-      // security algorithm cfg
+      // Fill security algorithm config.
       if (security_cfg.security_algorithm_cfg.has_value()) {
         asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg_present = true;
 
-        // ciphering algorithm
+        // Fill ciphering algorithm config.
         asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg.ciphering_algorithm =
             ciphering_algorithm_to_rrc_asn1(security_cfg.security_algorithm_cfg.value().ciphering_algorithm);
 
-        // integrity prot algorithm
+        // Fill integrity prot algorithm config.
         if (security_cfg.security_algorithm_cfg.value().integrity_prot_algorithm.has_value()) {
           asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg.integrity_prot_algorithm_present = true;
           asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg.integrity_prot_algorithm =
@@ -196,21 +196,21 @@ void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recf
                   security_cfg.security_algorithm_cfg.value().integrity_prot_algorithm.value());
         }
       }
-      // key to use
+      // Fill key to use.
       if (security_cfg.key_to_use.has_value()) {
         asn1_radio_bearer_cfg.security_cfg.key_to_use_present = true;
         asn1::string_to_enum(asn1_radio_bearer_cfg.security_cfg.key_to_use, security_cfg.key_to_use.value());
       }
     }
 
-    // srb3 to release present
+    // Fill SRB3 to release present.
     asn1_radio_bearer_cfg.srb3_to_release_present = cu_cp_radio_bearer_cfg.srb3_to_release_present;
   }
 
-  // secondary cell group
+  // Fill secondary cell group.
   asn1_reconfig_ies.secondary_cell_group = rrc_reconf.secondary_cell_group.copy();
 
-  // meas config
+  // Fill measurement config.
   if (rrc_reconf.meas_cfg.has_value()) {
     asn1_reconfig_ies.meas_cfg_present = true;
     asn1_reconfig_ies.meas_cfg         = meas_config_to_rrc_asn1(rrc_reconf.meas_cfg.value());
