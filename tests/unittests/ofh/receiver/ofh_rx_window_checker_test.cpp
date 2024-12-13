@@ -26,7 +26,7 @@ TEST(ofh_rx_window_checker, on_time_packet_counts_one_packet)
   logger.set_level(srslog::basic_levels::info);
 
   // Create window checker with timing parameters corresponding to Ta4_min=50us, Ta4_max=300us.
-  rx_window_checker rx_window(logger, {2, 9}, symbol_duration);
+  rx_window_checker rx_window(logger, 0, {2, 9}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
@@ -50,7 +50,7 @@ TEST(ofh_rx_window_checker, packet_on_the_window_start_count_as_valid)
       std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs))));
 
   // Create window checker with timing parameters corresponding to Ta4_min=50us, Ta4_max=300us.
-  rx_window_checker rx_window(logger, {2, 9}, symbol_duration);
+  rx_window_checker rx_window(logger, 0, {2, 9}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
@@ -74,7 +74,7 @@ TEST(ofh_rx_window_checker, packet_on_the_window_end_count_as_valid)
       std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs))));
 
   // Create window checker with timing parameters corresponding to Ta4_min=50us, Ta4_max=510us.
-  rx_window_checker rx_window(logger, {2, 15}, symbol_duration);
+  rx_window_checker rx_window(logger, 0, {2, 15}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
@@ -98,7 +98,7 @@ TEST(ofh_rx_window_checker, early_packet_counts_one_packet)
       std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs))));
 
   // Create window checker with timing parameters corresponding to Ta4_min=80us, Ta4_max=300us.
-  rx_window_checker rx_window(logger, {3, 9}, symbol_duration);
+  rx_window_checker rx_window(logger, 0, {3, 9}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
@@ -122,7 +122,7 @@ TEST(ofh_rx_window_checker, late_packet_counts_one_packet)
       std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs))));
 
   // Create window checker with timing parameters corresponding to Ta4_min=50us, Ta4_max=300us.
-  rx_window_checker rx_window(logger, {2, 9}, symbol_duration);
+  rx_window_checker rx_window(logger, 1, {2, 9}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
@@ -146,7 +146,7 @@ TEST(ofh_rx_window_checker, window_change_slot_works)
       std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs))));
 
   // Create window checker with timing parameters corresponding to Ta4_min=50us, Ta4_max=300us.
-  rx_window_checker rx_window(logger, {2, 9}, symbol_duration);
+  rx_window_checker rx_window(logger, 1, {2, 9}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 0}, 1, 14);
@@ -170,7 +170,7 @@ TEST(ofh_rx_window_checker, window_change_sfn_works)
       std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs))));
 
   // Create window checker with timing parameters corresponding to Ta4_min=50us, Ta4_max=300us.
-  rx_window_checker rx_window(logger, {2, 9}, symbol_duration);
+  rx_window_checker rx_window(logger, 1, {2, 9}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 0, 0}, 1, 14);
@@ -194,7 +194,7 @@ TEST(ofh_rx_window_checker, window_change_sfn_byte_works)
       std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs))));
 
   // Create window checker with timing parameters corresponding to Ta4_min=50us, Ta4_max=300us.
-  rx_window_checker rx_window(logger, {2, 9}, symbol_duration);
+  rx_window_checker rx_window(logger, 1, {2, 9}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 0, 0, 0}, 1, 14);
@@ -218,7 +218,7 @@ TEST(ofh_rx_window_checker, window_change_sfn_byte_and_message_is_in_sfn_0)
       std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs))));
 
   // Create window checker with timing parameters corresponding to Ta4_min=50us, Ta4_max=300us.
-  rx_window_checker rx_window(logger, {2, 9}, symbol_duration);
+  rx_window_checker rx_window(logger, 1, {2, 9}, symbol_duration);
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 0, 0, 0}, 3, 14);

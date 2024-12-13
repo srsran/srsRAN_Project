@@ -155,7 +155,7 @@ public:
                            std::make_shared<prach_context_repository>(20),
                            std::make_shared<uplink_context_repository>(20),
                            std::make_shared<dummy_uplane_rx_symbol_notifier>()}),
-    window_checker(srslog::fetch_basic_logger("TEST"), {}, {}),
+    window_checker(srslog::fetch_basic_logger("TEST"), 0, {}, {}),
     ul_handler(generate_config(), generate_dependencies())
   {
     window_checker.on_new_symbol({{1, 0}, 0, 14});

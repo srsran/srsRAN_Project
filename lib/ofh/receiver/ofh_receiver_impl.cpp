@@ -77,6 +77,7 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
   closed_window_handler(get_closed_rx_window_handler_config(config),
                         std::move(dependencies.window_handler_dependencies)),
   window_checker(*dependencies.logger,
+                 config.sector,
                  config.rx_timing_params,
                  std::chrono::duration<double, std::nano>(
                      1e6 / (get_nsymb_per_slot(config.cp) * get_nof_slots_per_subframe(config.scs)))),

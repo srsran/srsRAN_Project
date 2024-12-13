@@ -24,6 +24,8 @@ namespace ofh {
 
 /// Open Fronthaul receiver configuration.
 struct receiver_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// Subcarrier spacing.
   subcarrier_spacing scs;
   /// Cyclic prefix.

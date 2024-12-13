@@ -40,6 +40,7 @@ std::unique_ptr<timing_manager> srsran::ofh::create_ofh_timing_manager(const con
 static receiver_config generate_receiver_config(const sector_configuration& config)
 {
   receiver_config rx_config;
+  rx_config.sector                             = config.sector_id;
   rx_config.ru_operating_bw                    = config.ru_operating_bw;
   rx_config.scs                                = config.scs;
   rx_config.cp                                 = config.cp;

@@ -16,13 +16,14 @@ using namespace ofh;
 static constexpr unsigned OFH_MAX_NOF_SFN = 256U;
 
 rx_window_checker::rx_window_checker(srslog::basic_logger&                    logger_,
+                                     unsigned                                 sector_id,
                                      const rx_window_timing_parameters&       params,
                                      std::chrono::duration<double, std::nano> symbol_duration) :
   timing_parameters(params),
   nof_symbols_in_one_second(std::ceil(std::chrono::seconds(1) / symbol_duration)),
   is_disabled(!is_log_enabled(logger_)),
   nof_symbols(0),
-  statistics(logger_)
+  statistics(logger_, sector_id)
 {
 }
 
@@ -127,7 +128,8 @@ void rx_window_checker::rx_window_checker_statistics::print_statistics()
   uint64_t nof_early   = current_nof_early - last_early_value_printed;
   uint64_t nof_late    = current_nof_late - last_late_value_printed;
 
-  logger.info("Received packets: rx_total={} rx_early={}, rx_on_time={}, rx_late={}",
+  logger.info("Sector#{} received packets: rx_total={} rx_early={}, rx_on_time={}, rx_late={}",
+              sector_id,
               nof_on_time + nof_late + nof_early,
               nof_early,
               nof_on_time,
