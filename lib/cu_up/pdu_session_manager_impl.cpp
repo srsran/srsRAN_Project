@@ -314,21 +314,17 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
   gtpu_teid_t f1u_ul_teid = ret.value();
 
+  new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(
+      ue_index, drb_to_setup.drb_id, new_drb->f1u_cfg, f1u_ul_teid, new_drb->f1u_gateway_rx_to_nru_adapter, ue_ul_exec);
+
   // Create UL UP TNL address.
-  expected<std::string> bind_addr = f1u_gw.get_cu_bind_address();
+  expected<std::string> bind_addr = new_drb->f1u_gw_bearer->get_bind_address();
   if (not bind_addr.has_value()) {
     logger.log_error("Could not get bind address for F1-U tunnel");
     return drb_result;
   }
   up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(bind_addr.value()),
                                              f1u_ul_teid);
-
-  new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
-                                                   drb_to_setup.drb_id,
-                                                   new_drb->f1u_cfg,
-                                                   f1u_ul_tunnel_addr,
-                                                   new_drb->f1u_gateway_rx_to_nru_adapter,
-                                                   ue_ul_exec);
 
   new_drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
                                               new_drb->drb_id,
@@ -431,7 +427,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
       drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(
-          ue_index, drb->drb_id, drb->f1u_cfg, f1u_ul_tunnel_addr, drb->f1u_gateway_rx_to_nru_adapter, ue_ul_exec);
+          ue_index, drb->drb_id, drb->f1u_cfg, drb->f1u_ul_teid, drb->f1u_gateway_rx_to_nru_adapter, ue_ul_exec);
 
       drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
                                               drb->drb_id,

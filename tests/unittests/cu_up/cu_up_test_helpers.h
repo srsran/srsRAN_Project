@@ -211,6 +211,8 @@ public:
 
   void on_new_pdu(nru_dl_message sdu) final { inner.on_new_pdu(std::move(sdu)); }
 
+  expected<std::string> get_bind_address() const override { return {}; }
+
 private:
   bool                                stopped = false;
   dummy_inner_f1u_bearer&             inner;
@@ -231,12 +233,13 @@ public:
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
                                                              const srs_cu_up::f1u_config&          config,
-                                                             const up_transport_layer_info&        ul_up_tnl_info,
+                                                             const gtpu_teid_t&                    ul_teid,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                                              task_executor&                        ul_exec) override
   {
-    created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
+    created_ul_teid_list.push_back(ul_teid);
     bearer.connect_f1u_rx_sdu_notifier(rx_notifier);
+    up_transport_layer_info ul_up_tnl_info{transport_layer_address::create_from_string("127.0.0.2"), ul_teid};
     return std::make_unique<dummy_f1u_gateway_bearer>(bearer, *this, ul_up_tnl_info);
   }
 

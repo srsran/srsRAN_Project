@@ -55,6 +55,8 @@ public:
     stopped = true;
   }
 
+  expected<std::string> get_bind_address() const override { return "127.0.0.2"; }
+
   void attach_du_notifier(srs_du::f1u_du_gateway_bearer_rx_notifier& notifier_,
                           const up_transport_layer_info&             dl_tnl_info_)
   {
@@ -179,7 +181,7 @@ public:
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
                                                              const srs_cu_up::f1u_config&          config,
-                                                             const up_transport_layer_info&        ul_up_tnl_info,
+                                                             const gtpu_teid_t&                    ul_up_tnl_info,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                                              task_executor&                        ul_exec) override;
 

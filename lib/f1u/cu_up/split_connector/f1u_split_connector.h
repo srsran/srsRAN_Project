@@ -52,6 +52,8 @@ public:
 
   void stop() override;
 
+  expected<std::string> get_bind_address() const override;
+
   void on_new_pdu(nru_dl_message msg) override
   {
     if (tunnel_tx == nullptr) {
@@ -85,6 +87,7 @@ private:
   srs_cu_up::f1u_bearer_logger                                 logger;
   srs_cu_up::f1u_bearer_disconnector&                          disconnector;
   up_transport_layer_info                                      ul_tnl_info;
+  gtpu_tnl_pdu_session&                                        udp_session;
   std::unique_ptr<gtpu_tunnel_common_rx_upper_layer_interface> tunnel_rx;
   std::unique_ptr<gtpu_tunnel_nru_tx_lower_layer_interface>    tunnel_tx;
 
@@ -119,7 +122,7 @@ public:
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
                                                              const srs_cu_up::f1u_config&          config,
-                                                             const up_transport_layer_info&        ul_up_tnl_info,
+                                                             const gtpu_teid_t&                    ul_teid,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                                              task_executor&                        ul_exec) override;
 
@@ -133,7 +136,7 @@ public:
 private:
   srslog::basic_logger& logger_cu;
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)
-  std::unordered_map<up_transport_layer_info, f1u_split_gateway_cu_bearer*> cu_map;
+  std::unordered_map<gtpu_teid_t, f1u_split_gateway_cu_bearer*, gtpu_teid_hasher_t> cu_map;
   std::mutex map_mutex; // shared mutex for access to cu_map
 
   std::unique_ptr<f1u_session_manager>                     f1u_session_mngr;
