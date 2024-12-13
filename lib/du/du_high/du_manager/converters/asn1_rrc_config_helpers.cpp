@@ -3305,6 +3305,7 @@ static gap_cfg_s make_gap_cfg(const meas_gap_config& cfg)
   if (not asn1::number_to_enum(gap.mgrp, (uint8_t)cfg.mgrp)) {
     gap.mgrp.value = asn1::rrc_nr::gap_cfg_s::mgrp_opts::nulltype;
   }
+  gap.mgta.value = gap_cfg_s::mgta_opts::ms0;
 
   return gap;
 }
