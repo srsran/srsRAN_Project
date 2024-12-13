@@ -52,6 +52,8 @@ private:
   // Helper that fills the SRS PDU fields.
   void fill_srs_pdu(srs_info& pdu, const srs_config::srs_resource& srs_res_cfg, const ue_cell_configuration& ue_cfg);
 
+  void add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf);
+
   void add_resource(rnti_t crnti, srs_periodicity period, unsigned offset, srs_config::srs_res_id res_id);
   void rem_resource(rnti_t crnti, srs_periodicity period, unsigned offset, srs_config::srs_res_id res_id);
 
