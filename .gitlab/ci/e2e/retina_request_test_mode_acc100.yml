@@ -45,5 +45,5 @@
       requests: "6G"
       limits: "6G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  labels: 
+  labels:
     - ${ZMQ_HOSTLABEL_0}
