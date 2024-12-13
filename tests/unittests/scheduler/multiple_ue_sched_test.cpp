@@ -19,7 +19,6 @@
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/scheduler/result/dci_info.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <unordered_map>

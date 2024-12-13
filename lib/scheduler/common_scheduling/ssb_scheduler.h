@@ -14,7 +14,6 @@
 #include "../config/cell_configuration.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {

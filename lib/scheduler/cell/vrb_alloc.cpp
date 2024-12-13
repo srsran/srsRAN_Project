@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsran/scheduler/vrb_alloc.h"
-#include "srsran/scheduler/resource_block_group.h"
+#include "srsran/scheduler/result/vrb_alloc.h"
+#include "srsran/scheduler/result/resource_block_group.h"
 
 using namespace srsran;
 

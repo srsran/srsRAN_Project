@@ -11,9 +11,11 @@
 #pragma once
 
 #include "lib/scheduler/cell/resource_grid.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
+
+struct dl_sched_result;
+struct ul_sched_result;
 
 /// Parameters of a grant allocation in the cell resource grid.
 

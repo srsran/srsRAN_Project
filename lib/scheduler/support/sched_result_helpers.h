@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/scheduler/config/scheduler_expert_config.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

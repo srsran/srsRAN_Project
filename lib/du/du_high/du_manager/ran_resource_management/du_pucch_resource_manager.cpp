@@ -12,7 +12,7 @@
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
-#include "srsran/scheduler/scheduler_pucch_format.h"
+#include "srsran/scheduler/result/pucch_format.h"
 #include <numeric>
 
 using namespace srsran;

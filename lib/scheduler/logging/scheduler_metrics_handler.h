@@ -14,7 +14,6 @@
 #include "srsran/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/math/stats.h"
 #include <unordered_map>
 
@@ -22,6 +21,7 @@ namespace srsran {
 
 class cell_configuration;
 struct rach_indication_message;
+struct sched_result;
 
 ///\brief Handler of scheduler slot metrics for a given cell.
 class cell_metrics_handler final : public sched_metrics_ue_configurator

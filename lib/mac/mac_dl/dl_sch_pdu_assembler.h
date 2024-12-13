@@ -11,10 +11,8 @@
 #pragma once
 
 #include "mac_dl_ue_repository.h"
-#include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/harq_id.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

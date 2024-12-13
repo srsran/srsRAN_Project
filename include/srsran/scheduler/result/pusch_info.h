@@ -14,7 +14,7 @@
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/uci/uci_configuration.h"
 #include "srsran/scheduler/result/dmrs_info.h"
-#include "srsran/scheduler/vrb_alloc.h"
+#include "srsran/scheduler/result/vrb_alloc.h"
 
 namespace srsran {
 

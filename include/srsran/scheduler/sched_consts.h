@@ -10,9 +10,6 @@
 
 #pragma once
 
-#include "srsran/ran/resource_block.h"
-#include <cstddef>
-
 namespace srsran {
 
 /// SSB constants.

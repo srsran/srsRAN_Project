@@ -12,7 +12,6 @@
 
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

@@ -10,7 +10,6 @@
 
 #include "lib/scheduler/cell/cell_harq_manager.h"
 #include "srsran/scheduler/result/sched_result.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

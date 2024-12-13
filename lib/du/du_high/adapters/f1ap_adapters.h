@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/slotted_array.h"
 #include "srsran/du/du_high/du_manager/du_manager.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/support/timers.h"
