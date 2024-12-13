@@ -13,6 +13,7 @@
 
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/f1u/cu_up/f1u_session_manager.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_gateway.h"
@@ -103,11 +104,12 @@ public:
 class f1u_split_connector final : public f1u_cu_up_udp_gateway
 {
 public:
-  f1u_split_connector(gtpu_gateway& udp_gw_,
-                      gtpu_demux&   demux_,
-                      dlt_pcap&     gtpu_pcap_,
-                      uint16_t      peer_port_ = GTPU_PORT,
-                      std::string   ext_addr_  = "auto");
+  f1u_split_connector(f1u_session_manager& f1u_session_mngr,
+                      gtpu_gateway&        udp_gw_,
+                      gtpu_demux&          demux_,
+                      dlt_pcap&            gtpu_pcap_,
+                      uint16_t             peer_port_ = GTPU_PORT,
+                      std::string          ext_addr_  = "auto");
   ~f1u_split_connector() override;
 
   f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
@@ -134,6 +136,7 @@ private:
   std::unordered_map<up_transport_layer_info, f1u_split_gateway_cu_bearer*> cu_map;
   std::mutex map_mutex; // shared mutex for access to cu_map
 
+  f1u_session_manager&                                     f1u_session_mngr;
   uint16_t                                                 peer_port;
   std::string                                              ext_addr;
   gtpu_gateway&                                            udp_gw;

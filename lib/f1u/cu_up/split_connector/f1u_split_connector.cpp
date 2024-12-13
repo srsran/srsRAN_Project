@@ -10,6 +10,7 @@
  */
 
 #include "f1u_split_connector.h"
+#include "srsran/f1u/cu_up/f1u_session_manager.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/ran/rb_id.h"
 
@@ -110,12 +111,14 @@ void f1u_split_gateway_cu_bearer::stop()
   stopped = true;
 }
 
-f1u_split_connector::f1u_split_connector(gtpu_gateway& udp_gw_,
-                                         gtpu_demux&   demux_,
-                                         dlt_pcap&     gtpu_pcap_,
-                                         uint16_t      peer_port_,
-                                         std::string   ext_addr_) :
+f1u_split_connector::f1u_split_connector(f1u_session_manager& f1u_session_mngr_,
+                                         gtpu_gateway&        udp_gw_,
+                                         gtpu_demux&          demux_,
+                                         dlt_pcap&            gtpu_pcap_,
+                                         uint16_t             peer_port_,
+                                         std::string          ext_addr_) :
   logger_cu(srslog::fetch_basic_logger("CU-F1-U")),
+  f1u_session_mngr(f1u_session_mngr_),
   peer_port(peer_port_),
   ext_addr(std::move(ext_addr_)),
   udp_gw(udp_gw_),
@@ -138,7 +141,8 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
                                       task_executor&                        ul_exec)
 {
   logger_cu.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_up_tnl_info);
-  auto cu_bearer = std::make_unique<f1u_split_gateway_cu_bearer>(
+  [[maybe_unused]] auto& ugw_session2 = f1u_session_mngr.get_next_f1u_gateway();
+  auto                   cu_bearer    = std::make_unique<f1u_split_gateway_cu_bearer>(
       ue_index, drb_id, ul_up_tnl_info, rx_notifier, *udp_session, ul_exec, *this);
   std::unique_lock<std::mutex> lock(map_mutex);
   srsran_assert(cu_map.find(ul_up_tnl_info) == cu_map.end(),
