@@ -529,6 +529,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocates_pdsch_with_gbr_lc_priort
                                              .gbr_qos_info = gbr_qos_flow_information{128000, 128000, 128000, 128000}};
   ue_config_update_event ev = cfg_mng.update_ue(reconf_msg);
   u1.handle_reconfiguration_request({ev.next_config()});
+  u1.handle_config_applied();
 
   // Add LCID to the bearers of the UE belonging to this slice.
   for (const auto& lc_cfg : *cfg_req.lc_config_list) {
