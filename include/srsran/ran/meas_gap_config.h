@@ -47,9 +47,10 @@ inline float meas_gap_length_to_msec(meas_gap_length len)
 /// Determines whether a slot is inside the measurement gap.
 inline bool is_inside_meas_gap(const meas_gap_config& gap, slot_point sl)
 {
-  unsigned period_slots = static_cast<uint8_t>(gap.mgrp) * sl.nof_slots_per_subframe();
-  unsigned length_slots = std::ceil(meas_gap_length_to_msec(gap.mgl) * sl.nof_slots_per_subframe());
-  unsigned slot_mod     = sl.to_uint() % period_slots;
+  const unsigned slot_per_sf  = sl.nof_slots_per_subframe();
+  unsigned       period_slots = static_cast<uint8_t>(gap.mgrp) * slot_per_sf;
+  unsigned       length_slots = std::ceil(meas_gap_length_to_msec(gap.mgl) * slot_per_sf);
+  unsigned       slot_mod     = (sl - gap.offset * slot_per_sf).to_uint() % period_slots;
   return slot_mod <= length_slots;
 }
 
