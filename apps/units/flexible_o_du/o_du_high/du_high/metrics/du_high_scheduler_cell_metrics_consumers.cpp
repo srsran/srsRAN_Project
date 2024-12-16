@@ -304,7 +304,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
   fmt::format_to(buffer, "Cell Scheduler Metrics:");
   fmt::format_to(
       buffer,
-      " total_dl_bitrate_kbps={} total_ul_bitrate_kbps={} error_indications={} mean_latency={}usec latency_hist=[{}]",
+      " total_dl_brate={}bps total_ul_brate={}bps error_indications={} mean_latency={}usec latency_hist=[{}]",
       float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
       float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
       metrics.nof_error_indications,
@@ -346,9 +346,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
 
     fmt::format_to(buffer, " dl_mcs={}", int(ue.dl_mcs.to_uint()));
     if (ue.dl_brate_kbps > 0) {
-      fmt::format_to(buffer, " dl_brate_kbps={}", float_to_eng_string(ue.dl_brate_kbps * 1e3, 1, false));
+      fmt::format_to(buffer, " dl_brate={}bps", float_to_eng_string(ue.dl_brate_kbps * 1e3, 1, false));
     } else {
-      fmt::format_to(buffer, " dl_brate_kbps={}", 0);
+      fmt::format_to(buffer, " dl_brate={}bps", 0);
     }
     fmt::format_to(buffer, " dl_nof_ok={}", ue.dl_nof_ok);
     fmt::format_to(buffer, " dl_nof_nok={}", ue.dl_nof_nok);
@@ -382,9 +382,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
 
     fmt::format_to(buffer, " ul_mcs={}", ue.ul_mcs.to_uint());
     if (ue.ul_brate_kbps > 0) {
-      fmt::format_to(buffer, " ul_brate_kbps={}", float_to_eng_string(ue.ul_brate_kbps * 1e3, 1, false));
+      fmt::format_to(buffer, " ul_brate={}bps", float_to_eng_string(ue.ul_brate_kbps * 1e3, 1, false));
     } else {
-      fmt::format_to(buffer, " ul_brate_kbps={}", 0);
+      fmt::format_to(buffer, " ul_brate={}bps", 0);
     }
     fmt::format_to(buffer, " ul_nof_ok={}", ue.ul_nof_ok);
     fmt::format_to(buffer, " ul_nof_nok={}", ue.ul_nof_nok);
@@ -392,7 +392,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     unsigned ul_total = ue.ul_nof_ok + ue.ul_nof_nok;
     if (ul_total > 0) {
       fmt::format_to(buffer, " ul_error_rate={}%", int((float)100 * ue.ul_nof_nok / ul_total));
-      fmt::format_to(buffer, " crc_delay_ms={}", ue.ul_delay_ms);
+      fmt::format_to(buffer, " crc_delay_ms={:.3}", ue.ul_delay_ms);
     } else {
       fmt::format_to(buffer, " ul_error_rate={}%", 0);
       fmt::format_to(buffer, " crc_delay_ms=n/a");
