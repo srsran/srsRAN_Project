@@ -464,16 +464,7 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   ASSERT_FALSE(rx_sdu2.has_value());
 }
 
-TEST_P(f1u_cu_split_connector_external_address_test, external_address)
-{
-  expected<std::string> addr = cu_gw->get_cu_bind_address();
-  ASSERT_TRUE(addr.has_value());
-  if (external_address == "" || external_address == "auto") {
-    ASSERT_EQ(addr.value(), cu_gw_bind_address);
-  } else {
-    ASSERT_EQ(addr.value(), external_address);
-  }
-}
+// TODO external address should be checked on F1-U bearer itself.
 
 INSTANTIATE_TEST_SUITE_P(f1u_cu_split_connector_test_external_address,
                          f1u_cu_split_connector_external_address_test,

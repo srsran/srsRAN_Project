@@ -59,9 +59,6 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
   ocu_up_dependencies.cu_dependencies.gtpu_pcap      = dependencies.gtpu_pcap;
   ocu_up_dependencies.cu_dependencies.timers         = dependencies.timers;
 
-  auto address = dependencies.f1u_gateway->get_cu_bind_address();
-  srsran_assert(address.has_value(), "Invalid F1-U bind address");
-
   // Create NG-U gateway(s).
   std::vector<std::unique_ptr<gtpu_gateway>> ngu_gws;
   if (not unit_cfg.cu_up_cfg.ngu_cfg.no_core) {

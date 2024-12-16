@@ -131,8 +131,6 @@ public:
 
   void disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info) override;
 
-  expected<std::string> get_cu_bind_address() const override;
-
 private:
   srslog::basic_logger& logger_cu;
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)

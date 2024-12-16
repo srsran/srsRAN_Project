@@ -255,18 +255,3 @@ void f1u_split_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
   }
   logger_cu.debug("Removed CU F1-U bearer with UL GTP Tunnel={}.", ul_up_tnl_info);
 }
-
-// TODO this should get the ue_index and drb id to get the right bind address
-expected<std::string> f1u_split_connector::get_cu_bind_address() const
-{
-  std::string ip_address;
-
-  if (ext_addr == "auto" || ext_addr == "") {
-    if (not udp_sessions[0]->get_bind_address(ip_address)) {
-      return make_unexpected(default_error_t{});
-    }
-  } else {
-    ip_address = ext_addr;
-  }
-  return ip_address;
-}

@@ -206,8 +206,6 @@ public:
     return fmt::format("127.0.0.{}", 1 + static_cast<uint32_t>(gnb_du_id));
   }
 
-  expected<std::string> get_cu_bind_address() const override { return {"127.0.2.1"}; }
-
 private:
   srslog::basic_logger& logger_cu;
   srslog::basic_logger& logger_du;

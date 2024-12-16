@@ -416,18 +416,18 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       drb->f1u_ul_teid            = ret.value();
       logger.log_info("Replacing F1-U tunnel. old_ul_teid={} new_ul_teid={}", old_f1u_ul_teid, drb->f1u_ul_teid);
 
+      // create new F1-U and connect it. This will automatically disconnect the old F1-U.
+      drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(
+          ue_index, drb->drb_id, drb->f1u_cfg, drb->f1u_ul_teid, drb->f1u_gateway_rx_to_nru_adapter, ue_ul_exec);
+
       // Create UL UP TNL address.
-      expected<std::string> bind_addr = f1u_gw.get_cu_bind_address();
+      expected<std::string> bind_addr = drb->f1u_gw_bearer->get_bind_address();
       if (not bind_addr.has_value()) {
         logger.log_error("Could not get bind address for F1-U tunnel");
         continue;
       }
       up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(bind_addr.value()),
                                                  drb->f1u_ul_teid);
-
-      // create new F1-U and connect it. This will automatically disconnect the old F1-U.
-      drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(
-          ue_index, drb->drb_id, drb->f1u_cfg, drb->f1u_ul_teid, drb->f1u_gateway_rx_to_nru_adapter, ue_ul_exec);
 
       drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
                                               drb->drb_id,
@@ -463,11 +463,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                       drb_to_mod.dl_up_params[0].up_tnl_info,
                       drb_iter->second->f1u_ul_teid);
 
-      expected<std::string> bind_addr = f1u_gw.get_cu_bind_address();
+      expected<std::string> bind_addr = drb_iter->second->f1u_gw_bearer->get_bind_address();
       if (not bind_addr.has_value()) {
         logger.log_error("Could not get bind address for F1-U tunnel");
         continue;
       }
+
       f1u_gw.attach_dl_teid(up_transport_layer_info(transport_layer_address::create_from_string(bind_addr.value()),
                                                     drb_iter->second->f1u_ul_teid),
                             drb_to_mod.dl_up_params[0].up_tnl_info);
