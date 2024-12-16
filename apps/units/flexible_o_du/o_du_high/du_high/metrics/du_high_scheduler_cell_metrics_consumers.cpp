@@ -308,14 +308,16 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
 
   // log cell-wide metrics
   fmt::format_to(buffer, "Cell Scheduler Metrics:");
-  fmt::format_to(
-      buffer,
-      " total_dl_brate={}bps total_ul_brate={}bps error_indications={} mean_latency={}usec latency_hist=[{}]",
-      float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
-      float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
-      metrics.nof_error_indications,
-      metrics.average_decision_latency.count(),
-      fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
+  fmt::format_to(buffer,
+                 " total_dl_brate={}bps total_ul_brate={}bps total_dl_prbs={} total_ul_prbs={} error_indications={} "
+                 "mean_latency={}usec latency_hist=[{}]",
+                 float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
+                 float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
+                 metrics.nof_dl_slots * metrics.nof_prbs,
+                 metrics.nof_ul_slots * metrics.nof_prbs,
+                 metrics.nof_error_indications,
+                 metrics.average_decision_latency.count(),
+                 fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
   if (not metrics.events.empty()) {
     fmt::format_to(buffer, " events=[");
     bool first = true;
