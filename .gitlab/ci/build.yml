@@ -258,7 +258,7 @@ variables:
   extends: .build_and_unit
   variables:
     PLUGIN_BRANCH: $MR_PLUGIN_REF
-    OS: ubuntu-24.04
+    OS: ubuntu-24.10
     COMPILER: clang
     CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
