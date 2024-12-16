@@ -308,16 +308,18 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
 
   // log cell-wide metrics
   fmt::format_to(buffer, "Cell Scheduler Metrics:");
-  fmt::format_to(buffer,
-                 " total_dl_brate={}bps total_ul_brate={}bps total_dl_prbs={} total_ul_prbs={} error_indications={} "
-                 "mean_latency={}usec latency_hist=[{}]",
-                 float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
-                 float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
-                 metrics.nof_dl_slots * metrics.nof_prbs,
-                 metrics.nof_ul_slots * metrics.nof_prbs,
-                 metrics.nof_error_indications,
-                 metrics.average_decision_latency.count(),
-                 fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
+  fmt::format_to(
+      buffer,
+      " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} error_indications={} "
+      "mean_latency={}usec latency_hist=[{}]",
+      float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
+      float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
+      metrics.nof_prbs,
+      metrics.nof_dl_slots,
+      metrics.nof_ul_slots,
+      metrics.nof_error_indications,
+      metrics.average_decision_latency.count(),
+      fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
   if (not metrics.events.empty()) {
     fmt::format_to(buffer, " events=[");
     bool first = true;
@@ -363,12 +365,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     unsigned dl_total = ue.dl_nof_ok + ue.dl_nof_nok;
     fmt::format_to(buffer, " dl_error_rate={}%", dl_total > 0 ? to_percentage<int>(ue.dl_nof_nok, dl_total) : 0);
     fmt::format_to(buffer, " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
-    fmt::format_to(buffer,
-                   " dl_nof_prbs={} dl_prb_ratio={:.2}%",
-                   ue.tot_dl_prbs_used,
-                   metrics.nof_dl_slots > 0
-                       ? to_percentage<double>(ue.tot_dl_prbs_used, metrics.nof_dl_slots * metrics.nof_prbs)
-                       : 0);
+    fmt::format_to(buffer, " dl_nof_prbs={}", ue.tot_dl_prbs_used);
     if (ue.last_dl_olla.has_value()) {
       fmt::format_to(buffer, " dl_olla={}", ue.last_dl_olla);
     }
@@ -399,19 +396,13 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     fmt::format_to(buffer, " ul_nof_nok={}", ue.ul_nof_nok);
 
     unsigned ul_total = ue.ul_nof_ok + ue.ul_nof_nok;
+    fmt::format_to(buffer, " ul_error_rate={}%", ul_total > 0 ? to_percentage<int>(ue.ul_nof_nok, ul_total) : 0);
     if (ul_total > 0) {
-      fmt::format_to(buffer, " ul_error_rate={}%", int((float)100 * ue.ul_nof_nok / ul_total));
       fmt::format_to(buffer, " crc_delay_ms={:.3}", ue.ul_delay_ms);
     } else {
-      fmt::format_to(buffer, " ul_error_rate={}%", 0);
       fmt::format_to(buffer, " crc_delay_ms=n/a");
     }
-    fmt::format_to(buffer,
-                   " ul_nof_prbs={} ul_prb_ratio={:.2}%",
-                   ue.tot_ul_prbs_used,
-                   metrics.nof_ul_slots > 0
-                       ? to_percentage<double>(ue.tot_ul_prbs_used, metrics.nof_ul_slots * metrics.nof_prbs)
-                       : 0);
+    fmt::format_to(buffer, " ul_nof_prbs={}", ue.tot_ul_prbs_used);
     fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr, false));
     fmt::format_to(buffer, " sr_count={}", ue.sr_count);
     if (ue.last_ul_olla.has_value()) {
