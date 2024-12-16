@@ -118,7 +118,7 @@ struct pucch_format_1_cfg {
   bool operator!=(const pucch_format_1_cfg& rhs) const { return !(rhs == *this); }
 };
 
-/// Configuration for \c PUCCH-format2, in \c PUCCH-Config, TS 38.331.
+/// Configuration for \c PUCCH-format2 or \c PUCCH-format3, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_2_3_cfg {
   uint8_t nof_prbs;
   uint8_t nof_symbols;
