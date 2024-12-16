@@ -352,6 +352,8 @@ def test_example_srsue(
         time_alignment_calibration=0,
         common_search_space_enable=True,
         prach_config_index=1,
+        pdsch_mcs_table="qam64",
+        pusch_mcs_table="qam64",
         ue_stop_timeout=3,
     )
 
@@ -577,6 +579,8 @@ def _ping(
     enable_drx: bool = False,
     common_search_space_enable: bool = False,
     prach_config_index=-1,
+    pdsch_mcs_table: str = "qam256",
+    pusch_mcs_table: str = "qam256",
 ):
     logging.info("Ping Test")
 
@@ -596,6 +600,8 @@ def _ping(
         enable_drx=enable_drx,
         common_search_space_enable=common_search_space_enable,
         prach_config_index=prach_config_index,
+        pdsch_mcs_table=pdsch_mcs_table,
+        pusch_mcs_table=pusch_mcs_table,
     )
     configure_artifacts(
         retina_data=retina_data,

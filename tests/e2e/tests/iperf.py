@@ -213,6 +213,8 @@ def test_srsue(
         always_download_artifacts=True,
         common_search_space_enable=True,
         prach_config_index=1,
+        pdsch_mcs_table="qam64",
+        pusch_mcs_table="qam64",
     )
 
 
@@ -266,6 +268,8 @@ def test_ric(
         always_download_artifacts=True,
         common_search_space_enable=True,
         prach_config_index=1,
+        pdsch_mcs_table="qam64",
+        pusch_mcs_table="qam64",
         ric=ric,
     )
 
@@ -746,6 +750,8 @@ def _iperf(
     enable_dddsu: bool = False,
     nof_antennas_dl: int = 1,
     nof_antennas_ul: int = 1,
+    pdsch_mcs_table: str = "qam256",
+    pusch_mcs_table: str = "qam256",
     inter_ue_start_period=INTER_UE_START_PERIOD,
     ric: Optional[NearRtRicStub] = None,
 ):
@@ -768,6 +774,8 @@ def _iperf(
         enable_dddsu=enable_dddsu,
         nof_antennas_dl=nof_antennas_dl,
         nof_antennas_ul=nof_antennas_ul,
+        pdsch_mcs_table=pdsch_mcs_table,
+        pusch_mcs_table=pusch_mcs_table,
     )
     configure_artifacts(
         retina_data=retina_data,
