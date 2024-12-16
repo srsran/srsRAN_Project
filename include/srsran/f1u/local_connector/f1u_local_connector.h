@@ -210,7 +210,7 @@ private:
   srslog::basic_logger& logger_cu;
   srslog::basic_logger& logger_du;
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)
-  std::unordered_map<up_transport_layer_info, f1u_gateway_cu_bearer*> cu_map;
+  std::unordered_map<gtpu_teid_t, f1u_gateway_cu_bearer*, gtpu_teid_hasher_t> cu_map;
   // Key is the DL UP TNL Info (DU address and DL TEID reserved by DU)
   std::unordered_map<up_transport_layer_info, f1u_gateway_du_bearer*> du_map;
 
