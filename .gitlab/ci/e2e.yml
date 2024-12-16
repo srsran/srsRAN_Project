@@ -537,6 +537,7 @@ viavi-extended:
 
 viavi-extended-24h:
   extends: .viavi
+  timeout: 28 hours
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
