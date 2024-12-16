@@ -36,7 +36,7 @@ public:
     other.mbuf = nullptr;
   };
 
-  /// Move assigment operator.
+  /// Move assignment operator.
   dpdk_rx_buffer_impl& operator=(dpdk_rx_buffer_impl&& other) noexcept
   {
     // Free stored mbuf.

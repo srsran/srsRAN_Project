@@ -28,8 +28,8 @@ static void test_dl_processor_ok()
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  slot_point          slot(to_numerology_value(scs), 0, 0);
-  downlink_processor& dl_processor = dl_proc_pool->get_processor(slot, id);
+  slot_point                     slot(to_numerology_value(scs), 0, 0);
+  downlink_processor_controller& dl_processor = dl_proc_pool->get_processor_controller(slot, id);
 
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor).get_id(), id);
 }
@@ -48,9 +48,9 @@ void test_pass_same_slot_gets_same_processor()
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  slot_point          slot(to_numerology_value(scs), 0, 0);
-  downlink_processor& dl_processor_0 = dl_proc_pool->get_processor(slot, sector);
-  downlink_processor& dl_processor_1 = dl_proc_pool->get_processor(slot, sector);
+  slot_point                     slot(to_numerology_value(scs), 0, 0);
+  downlink_processor_controller& dl_processor_0 = dl_proc_pool->get_processor_controller(slot, sector);
+  downlink_processor_controller& dl_processor_1 = dl_proc_pool->get_processor_controller(slot, sector);
 
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_0).get_id(), id);
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_1).get_id(), id);
@@ -71,10 +71,10 @@ static void test_consecutive_dl_processor_ok()
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  slot_point          first(to_numerology_value(scs), 0, 0);
-  downlink_processor& dl_processor_0 = dl_proc_pool->get_processor(first, sector);
-  slot_point          second(to_numerology_value(scs), 0, 1);
-  downlink_processor& dl_processor_1 = dl_proc_pool->get_processor(second, sector);
+  slot_point                     first(to_numerology_value(scs), 0, 0);
+  downlink_processor_controller& dl_processor_0 = dl_proc_pool->get_processor_controller(first, sector);
+  slot_point                     second(to_numerology_value(scs), 0, 1);
+  downlink_processor_controller& dl_processor_1 = dl_proc_pool->get_processor_controller(second, sector);
 
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_0).get_id(), 0);
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_1).get_id(), 1);
@@ -94,14 +94,14 @@ static void test_2sectors_2dl_processor_ok()
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  slot_point          first(to_numerology_value(scs), 0, 0);
-  downlink_processor& dl_processor_00 = dl_proc_pool->get_processor(first, 0);
-  slot_point          second(to_numerology_value(scs), 0, 1);
-  downlink_processor& dl_processor_01 = dl_proc_pool->get_processor(second, 0);
-  slot_point          third(to_numerology_value(scs), 0, 0);
-  downlink_processor& dl_processor_10 = dl_proc_pool->get_processor(third, 1);
-  slot_point          fourth(to_numerology_value(scs), 0, 1);
-  downlink_processor& dl_processor_11 = dl_proc_pool->get_processor(fourth, 1);
+  slot_point                     first(to_numerology_value(scs), 0, 0);
+  downlink_processor_controller& dl_processor_00 = dl_proc_pool->get_processor_controller(first, 0);
+  slot_point                     second(to_numerology_value(scs), 0, 1);
+  downlink_processor_controller& dl_processor_01 = dl_proc_pool->get_processor_controller(second, 0);
+  slot_point                     third(to_numerology_value(scs), 0, 0);
+  downlink_processor_controller& dl_processor_10 = dl_proc_pool->get_processor_controller(third, 1);
+  slot_point                     fourth(to_numerology_value(scs), 0, 1);
+  downlink_processor_controller& dl_processor_11 = dl_proc_pool->get_processor_controller(fourth, 1);
 
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_00).get_id(), 0);
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_01).get_id(), 1);
@@ -122,12 +122,12 @@ static void test_circular_buffer_ok()
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  slot_point          first(to_numerology_value(scs), 0, 0);
-  downlink_processor& dl_processor_0 = dl_proc_pool->get_processor(first, sector);
-  slot_point          second(to_numerology_value(scs), 0, 1);
-  downlink_processor& dl_processor_1 = dl_proc_pool->get_processor(second, sector);
-  slot_point          third(to_numerology_value(scs), 0, 2);
-  downlink_processor& dl_processor_2 = dl_proc_pool->get_processor(third, sector);
+  slot_point                     first(to_numerology_value(scs), 0, 0);
+  downlink_processor_controller& dl_processor_0 = dl_proc_pool->get_processor_controller(first, sector);
+  slot_point                     second(to_numerology_value(scs), 0, 1);
+  downlink_processor_controller& dl_processor_1 = dl_proc_pool->get_processor_controller(second, sector);
+  slot_point                     third(to_numerology_value(scs), 0, 2);
+  downlink_processor_controller& dl_processor_2 = dl_proc_pool->get_processor_controller(third, sector);
 
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_0).get_id(), 0);
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_1).get_id(), 1);
@@ -149,18 +149,18 @@ static void test_2sectors_2numerologies_2dl_processor_ok()
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  slot_point          first(1, 0, 0);
-  downlink_processor& dl_processor_010 = dl_proc_pool->get_processor(first, 0);
-  slot_point          second(1, 0, 1);
-  downlink_processor& dl_processor_011 = dl_proc_pool->get_processor(second, 0);
-  slot_point          third(3, 0, 0);
-  downlink_processor& dl_processor_030 = dl_proc_pool->get_processor(third, 0);
-  slot_point          fourth(3, 0, 1);
-  downlink_processor& dl_processor_031 = dl_proc_pool->get_processor(fourth, 0);
-  downlink_processor& dl_processor_110 = dl_proc_pool->get_processor(first, 1);
-  downlink_processor& dl_processor_111 = dl_proc_pool->get_processor(second, 1);
-  downlink_processor& dl_processor_130 = dl_proc_pool->get_processor(third, 1);
-  downlink_processor& dl_processor_131 = dl_proc_pool->get_processor(fourth, 1);
+  slot_point                     first(1, 0, 0);
+  downlink_processor_controller& dl_processor_010 = dl_proc_pool->get_processor_controller(first, 0);
+  slot_point                     second(1, 0, 1);
+  downlink_processor_controller& dl_processor_011 = dl_proc_pool->get_processor_controller(second, 0);
+  slot_point                     third(3, 0, 0);
+  downlink_processor_controller& dl_processor_030 = dl_proc_pool->get_processor_controller(third, 0);
+  slot_point                     fourth(3, 0, 1);
+  downlink_processor_controller& dl_processor_031 = dl_proc_pool->get_processor_controller(fourth, 0);
+  downlink_processor_controller& dl_processor_110 = dl_proc_pool->get_processor_controller(first, 1);
+  downlink_processor_controller& dl_processor_111 = dl_proc_pool->get_processor_controller(second, 1);
+  downlink_processor_controller& dl_processor_130 = dl_proc_pool->get_processor_controller(third, 1);
+  downlink_processor_controller& dl_processor_131 = dl_proc_pool->get_processor_controller(fourth, 1);
 
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_010).get_id(), 10);
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_011).get_id(), 11);

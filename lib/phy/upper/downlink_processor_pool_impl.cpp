@@ -22,11 +22,11 @@ downlink_processor_pool_impl::downlink_processor_pool_impl(downlink_processor_po
   }
 }
 
-downlink_processor& downlink_processor_pool_impl::get_processor(slot_point slot, unsigned sector_id)
+downlink_processor_controller& downlink_processor_pool_impl::get_processor_controller(slot_point slot,
+                                                                                      unsigned   sector_id)
 {
   srsran_assert(sector_id < processors.size(), "Invalid sector ({}) when requesting a downlink processor", sector_id);
   srsran_assert(slot.valid(), "Invalid slot ({}) when requesting a downlink processor", slot);
 
-  downlink_processor& proc = processors[sector_id].get_processor(slot);
-  return proc;
+  return processors[sector_id].get_processor(slot);
 }

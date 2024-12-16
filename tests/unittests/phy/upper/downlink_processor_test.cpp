@@ -48,17 +48,19 @@ TEST(downlinkProcessorTest, worksInOrder)
   ssb_processor_spy&    ssb_ref    = *ssb_processor;
   csi_rs_processor_spy& csi_rs_ref = *csi_rs_processor;
 
-  auto       dl_processor = std::make_unique<downlink_processor_single_executor_impl>(gw,
-                                                                                std::move(pdcch_processor),
-                                                                                std::move(pdsch_processor),
-                                                                                std::move(ssb_processor),
-                                                                                std::move(csi_rs_processor),
-                                                                                executor,
-                                                                                logger);
+  std::unique_ptr<downlink_processor_controller> dl_proc_control =
+      std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                std::move(pdcch_processor),
+                                                                std::move(pdsch_processor),
+                                                                std::move(ssb_processor),
+                                                                std::move(csi_rs_processor),
+                                                                executor,
+                                                                logger);
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
+  unique_downlink_processor dl_processor = dl_proc_control->configure_resource_grid({slot, sector}, get_dummy_grid());
+  ASSERT_TRUE(dl_processor.is_valid());
 
   ASSERT_FALSE(pdcch_ref.is_process_called());
   ASSERT_FALSE(pdsch_ref.is_process_called());
@@ -83,7 +85,7 @@ TEST(downlinkProcessorTest, worksInOrder)
 
   ASSERT_FALSE(gw.sent);
 
-  dl_processor->finish_processing_pdus();
+  dl_processor.release();
 
   ASSERT_TRUE(gw.sent);
 }
@@ -103,18 +105,20 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   ssb_processor_spy&    ssb_ref    = *ssb_processor;
   csi_rs_processor_spy& csi_rs_ref = *csi_rs_processor;
 
-  auto dl_processor = std::make_unique<downlink_processor_single_executor_impl>(gw,
-                                                                                std::move(pdcch_processor),
-                                                                                std::move(pdsch_processor),
-                                                                                std::move(ssb_processor),
-                                                                                std::move(csi_rs_processor),
-                                                                                executor,
-                                                                                logger);
+  std::unique_ptr<downlink_processor_controller> dl_proc_control =
+      std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                std::move(pdcch_processor),
+                                                                std::move(pdsch_processor),
+                                                                std::move(ssb_processor),
+                                                                std::move(csi_rs_processor),
+                                                                executor,
+                                                                logger);
 
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
+  unique_downlink_processor dl_processor = dl_proc_control->configure_resource_grid({slot, sector}, get_dummy_grid());
+  ASSERT_TRUE(dl_processor.is_valid());
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
@@ -130,7 +134,7 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   ASSERT_FALSE(csi_rs_ref.is_map_called());
   ASSERT_FALSE(gw.sent);
 
-  dl_processor->finish_processing_pdus();
+  dl_processor.release();
   ASSERT_FALSE(gw.sent);
 
   // Run all the queued tasks.
@@ -144,124 +148,12 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   ASSERT_TRUE(gw.sent);
 }
 
-TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
-{
-  upper_phy_rg_gateway_fto gw;
-  manual_task_worker       executor(10);
-
-  auto pdcch_processor  = std::make_unique<pdcch_processor_spy>();
-  auto pdsch_processor  = std::make_unique<pdsch_processor_spy>();
-  auto ssb_processor    = std::make_unique<ssb_processor_spy>();
-  auto csi_rs_processor = std::make_unique<csi_rs_processor_spy>();
-
-  pdcch_processor_spy&  pdcch_ref  = *pdcch_processor;
-  pdsch_processor_spy&  pdsch_ref  = *pdsch_processor;
-  ssb_processor_spy&    ssb_ref    = *ssb_processor;
-  csi_rs_processor_spy& csi_rs_ref = *csi_rs_processor;
-
-  auto dl_processor = std::make_unique<downlink_processor_single_executor_impl>(gw,
-                                                                                std::move(pdcch_processor),
-                                                                                std::move(pdsch_processor),
-                                                                                std::move(ssb_processor),
-                                                                                std::move(csi_rs_processor),
-                                                                                executor,
-                                                                                logger);
-
-  slot_point slot(1, 2, 1);
-  unsigned   sector = 0;
-
-  resource_grid_dummy grid;
-  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
-
-  dl_processor->process_ssb({});
-  pdcch_processor::pdu_t pdu;
-  pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
-  dl_processor->process_pdcch(pdu);
-  std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({shared_transport_block(data)}, {});
-  dl_processor->finish_processing_pdus();
-
-  ASSERT_TRUE(pdcch_ref.is_process_called());
-  ASSERT_TRUE(pdsch_ref.is_process_called());
-  ASSERT_TRUE(ssb_ref.is_process_called());
-  ASSERT_TRUE(gw.sent);
-
-  // Process a PDU after finish_processing_pdus() method has been called.
-  dl_processor->process_nzp_csi_rs({});
-  ASSERT_FALSE(csi_rs_ref.is_map_called());
-}
-
-TEST(downlinkProcessorTest, processPduBeforeConfigureDoesNothing)
-{
-  upper_phy_rg_gateway_fto gw;
-  manual_task_worker       executor(10);
-
-  auto pdcch_processor  = std::make_unique<pdcch_processor_spy>();
-  auto pdsch_processor  = std::make_unique<pdsch_processor_spy>();
-  auto ssb_processor    = std::make_unique<ssb_processor_spy>();
-  auto csi_rs_processor = std::make_unique<csi_rs_processor_spy>();
-
-  pdcch_processor_spy&  pdcch_ref  = *pdcch_processor;
-  pdsch_processor_spy&  pdsch_ref  = *pdsch_processor;
-  ssb_processor_spy&    ssb_ref    = *ssb_processor;
-  csi_rs_processor_spy& csi_rs_ref = *csi_rs_processor;
-
-  auto dl_processor = std::make_unique<downlink_processor_single_executor_impl>(gw,
-                                                                                std::move(pdcch_processor),
-                                                                                std::move(pdsch_processor),
-                                                                                std::move(ssb_processor),
-                                                                                std::move(csi_rs_processor),
-                                                                                executor,
-                                                                                logger);
-
-  dl_processor->process_ssb({});
-  pdcch_processor::pdu_t pdu;
-  pdu.dci.precoding         = precoding_configuration::make_wideband(make_single_port());
-  std::vector<uint8_t> data = {1, 2, 3, 4};
-
-  dl_processor->process_pdcch(pdu);
-  dl_processor->process_pdsch({shared_transport_block(data)}, {});
-  dl_processor->process_nzp_csi_rs({});
-
-  ASSERT_FALSE(pdcch_ref.is_process_called());
-  ASSERT_FALSE(pdsch_ref.is_process_called());
-  ASSERT_FALSE(ssb_ref.is_process_called());
-  ASSERT_FALSE(csi_rs_ref.is_map_called());
-  ASSERT_FALSE(gw.sent);
-}
-
-TEST(downlinkProcessorTest, finishBeforeConfigureDeath)
-{
-  ::testing::GTEST_FLAG(death_test_style) = "threadsafe";
-
-  upper_phy_rg_gateway_fto gw;
-  manual_task_worker       executor(10);
-
-  auto dl_processor =
-      std::make_unique<downlink_processor_single_executor_impl>(gw,
-                                                                std::make_unique<pdcch_processor_spy>(),
-                                                                std::make_unique<pdsch_processor_spy>(),
-                                                                std::make_unique<ssb_processor_spy>(),
-                                                                std::make_unique<csi_rs_processor_spy>(),
-                                                                executor,
-                                                                logger);
-
-  ASSERT_TRUE(!gw.sent);
-
-#ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ dl_processor->finish_processing_pdus(); },
-               R"(DL processor finish was requested in an invalid state\, i\.e\.\, idle.)");
-#endif // ASSERTS_ENABLED
-
-  ASSERT_TRUE(!gw.sent);
-}
-
 TEST(downlinkProcessorTest, twoConsecutiveSlots)
 {
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
 
-  auto dl_processor =
+  std::unique_ptr<downlink_processor_controller> dl_proc_control =
       std::make_unique<downlink_processor_single_executor_impl>(gw,
                                                                 std::make_unique<pdcch_processor_spy>(),
                                                                 std::make_unique<pdsch_processor_spy>(),
@@ -269,11 +161,13 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
                                                                 std::make_unique<csi_rs_processor_spy>(),
                                                                 executor,
                                                                 logger);
+
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  resource_grid_dummy grid;
-  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
+  resource_grid_dummy       grid;
+  unique_downlink_processor dl_processor = dl_proc_control->configure_resource_grid({slot, sector}, get_dummy_grid());
+  ASSERT_TRUE(dl_processor.is_valid());
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
@@ -284,13 +178,13 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   dl_processor->process_nzp_csi_rs({});
   ASSERT_TRUE(!gw.sent);
 
-  dl_processor->finish_processing_pdus();
-
+  dl_processor.release();
   ASSERT_TRUE(gw.sent);
 
   slot_point slot2(1, 2, 2);
   gw.clear_sent();
-  dl_processor->configure_resource_grid({slot2, sector}, get_dummy_grid());
+  dl_processor = dl_proc_control->configure_resource_grid({slot2, sector}, get_dummy_grid());
+  ASSERT_TRUE(dl_processor.is_valid());
 
   dl_processor->process_ssb({});
   dl_processor->process_pdcch(pdu);
@@ -298,7 +192,7 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   dl_processor->process_nzp_csi_rs({});
   ASSERT_FALSE(gw.sent);
 
-  dl_processor->finish_processing_pdus();
+  dl_processor.release();
 
   ASSERT_TRUE(gw.sent);
 }
@@ -308,7 +202,7 @@ TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
   upper_phy_rg_gateway_fto                gw;
   manual_task_worker_always_enqueue_tasks executor(10);
 
-  auto dl_processor =
+  std::unique_ptr<downlink_processor_controller> dl_proc_control =
       std::make_unique<downlink_processor_single_executor_impl>(gw,
                                                                 std::make_unique<pdcch_processor_spy>(),
                                                                 std::make_unique<pdsch_processor_spy>(),
@@ -319,10 +213,12 @@ TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  dl_processor->configure_resource_grid({slot, sector}, get_dummy_grid());
+  resource_grid_dummy       grid;
+  unique_downlink_processor dl_processor = dl_proc_control->configure_resource_grid({slot, sector}, get_dummy_grid());
+  ASSERT_TRUE(dl_processor.is_valid());
 
   // By finishing PDUs, the resource grid should be sent.
-  dl_processor->finish_processing_pdus();
+  dl_processor.release();
 
   ASSERT_FALSE(executor.has_pending_tasks());
   ASSERT_TRUE(gw.sent);

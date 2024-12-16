@@ -177,7 +177,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) override
+  std::unique_ptr<downlink_processor_controller> create(const downlink_processor_config& config) override
   {
     std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create();
     report_fatal_error_if_not(pdcch, "Invalid PDCCH processor.");
@@ -201,7 +201,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<downlink_processor>
+  std::unique_ptr<downlink_processor_controller>
   create(const downlink_processor_config& config, srslog::basic_logger& logger, bool enable_broadcast) override
   {
     std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create(logger, enable_broadcast);
@@ -226,7 +226,7 @@ public:
     }
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
-    std::unique_ptr<downlink_processor> downlink_proc =
+    std::unique_ptr<downlink_processor_controller> downlink_proc =
         std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
                                                                   std::move(pdcch),
                                                                   std::move(pdsch),
@@ -281,7 +281,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
       // Assign an executor to each DL processor from the list in round-robin fashion.
       processor_config.executor = config.dl_executors[i_proc % config.dl_executors.size()];
 
-      std::unique_ptr<downlink_processor> dl_proc;
+      std::unique_ptr<downlink_processor_controller> dl_proc;
       if (config.log_level == srslog::basic_levels::none) {
         dl_proc = factory->create(processor_config);
       } else {
